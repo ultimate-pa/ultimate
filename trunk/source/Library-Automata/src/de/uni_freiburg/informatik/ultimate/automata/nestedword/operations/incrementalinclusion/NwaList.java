@@ -45,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 public class NwaList<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
-	ArrayList<INestedWordAutomaton<LETTER, STATE>> automataCollection;
 	private static ILogger mLogger;
+	ArrayList<INestedWordAutomaton<LETTER, STATE>> automataCollection;
 
 	public NwaList(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> orginalAutomata,
 			final INestedWordAutomaton<LETTER, STATE> newAutomata) {

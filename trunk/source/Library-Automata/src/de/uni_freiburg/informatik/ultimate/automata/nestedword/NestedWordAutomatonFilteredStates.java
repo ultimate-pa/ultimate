@@ -68,8 +68,8 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 	protected final Set<STATE> mNewInitials;
 	protected final Set<STATE> mNewFinals;
 	protected final NestedWordAutomatonReachableStates<LETTER, STATE>.AncestorComputation mAncestorComputation;
-	private final StateBasedTransitionFilterPredicateProvider<LETTER, STATE> mTransitionFilter;
 	protected final boolean mFilterCallTransitionsBasedOnDoubleDeckerInformation;
+	private final StateBasedTransitionFilterPredicateProvider<LETTER, STATE> mTransitionFilter;
 
 	/**
 	 * Constructor without ancestor computation.

@@ -225,30 +225,18 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 		return checkLanguageEquivalence(stateFactory);
 	}
 
-	/**
-	 * Getter for run time.
-	 */
 	public double[] getCpuTime() {
 		return mCpuTime;
 	}
 
-	/**
-	 * Getter of runtime string builder for testing.
-	 */
 	public String getRunTime() {
 		return mSb.toString();
 	}
 
-	/**
-	 * Getter for instance of Hopcroft's algorithm.
-	 */
 	public MinimizeDfaHopcroftParallel<LETTER, STATE> getHopcroft() {
 		return mHopcroftAlgorithm;
 	}
 
-	/**
-	 * Getter for instance of incremental algorithm.
-	 */
 	public MinimizeDfaIncrementalParallel<LETTER, STATE> getIncremental() {
 		return mIncrementalAlgorithm;
 	}

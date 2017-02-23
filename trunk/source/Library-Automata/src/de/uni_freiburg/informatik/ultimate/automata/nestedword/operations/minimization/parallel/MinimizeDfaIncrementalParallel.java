@@ -245,9 +245,6 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 		}
 	}
 
-	/**
-	 * Getter of runtime for testing.
-	 */
 	public double getRunTime() {
 		return mRunTime;
 	}

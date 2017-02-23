@@ -76,336 +76,6 @@ public final class RandomNwaBenchmarkCreator {
 	private static final int PERC_UPPER_BOUND = 100;
 
 	/**
-	 * Shows the usage of the {@link RandomNwaBenchmarkCreator} class.
-	 *
-	 * @param args
-	 *            Not supported
-	 * @throws IOException
-	 *             If an I/O-Exception occurred
-	 */
-	public static void main(final String[] args) throws IOException {
-		// Settings for both methods
-		final int n = 100;
-		final int k = 2;
-		final int amount = 20;
-		final int operationSwitch = 0;
-		final boolean useRandomTvModel = true;
-
-		// Settings for explicit set
-		final float acceptanceInPerc = 50;
-		final float totalityInternalInPerc = 50f;
-		final float totalityCallInPerc = 50f;
-		final float totalityReturnInPerc = 1f;
-		final float totalityHierPredInPerc = 50f;
-
-		// Settings for space coverage sets
-		final float acceptanceInPercMin = 50f;
-		final float acceptanceInPercMax = 50f;
-		final float totalityInternalInPercMin = 1f;
-		final float totalityInternalInPercMax = 300f;
-		final float totalityCallInPercMin = 0f;
-		final float totalityCallInPercMax = 0f;
-		final float totalityReturnInPercMin = 0f;
-		final float totalityReturnInPercMax = 0f;
-		final float totalityHierPredInPercMin = 0f;
-		final float totalityHierPredInPercMax = 0f;
-		final int stepSize = 2;
-		boolean uniformStep = true;
-
-		// Which method to use
-		final boolean createExplicit = false;
-
-		if (createExplicit) {
-			createExplicitSet(n, k, acceptanceInPerc, totalityInternalInPerc, totalityCallInPerc, totalityReturnInPerc,
-					totalityHierPredInPerc, amount, operationSwitch, useRandomTvModel);
-		} else {
-			coverSpaceBenchmark(n, k, amount, operationSwitch, useRandomTvModel, acceptanceInPercMin,
-					acceptanceInPercMax, totalityInternalInPercMin, totalityInternalInPercMax, totalityCallInPercMin,
-					totalityCallInPercMax, totalityReturnInPercMin, totalityReturnInPercMax, totalityHierPredInPercMin,
-					totalityHierPredInPercMax, stepSize, uniformStep);
-		}
-	}
-
-	/**
-	 * Creates benchmark sets that cover the whole given spice by using the
-	 * {@link RandomNwaBenchmarkCreator} class.
-	 * 
-	 * @param n
-	 *            The amount of states generated Nwa automata should have
-	 * @param k
-	 *            The size of the alphabet generated Nwa automata should have
-	 * @param amount
-	 *            Amount of random Nwa automata to generate
-	 * @param operationSwitch
-	 *            Which operation to use
-	 * @param useRandomTvModel
-	 *            If the random TV-Model should be used for generation
-	 * @param acceptanceInPercMin
-	 *            The minimum percentage of how many states should be accepting,
-	 *            between 0 and 100 (both inclusive)
-	 * @param acceptanceInPercMax
-	 *            The maximum percentage of how many states should be accepting,
-	 *            between 0 and 100 (both inclusive)
-	 * @param totalityInternalInPercMin
-	 *            The minimum percentage of how many internal transitions each
-	 *            state should have, greater equals 0
-	 * @param totalityInternalInPercMax
-	 *            The maximum percentage of how many internal transitions each
-	 *            state should have, greater equals 0
-	 * @param totalityCallInPercMin
-	 *            The minimum percentage of how many call transitions each state
-	 *            should have, greater equals 0
-	 * @param totalityCallInPercMax
-	 *            The maximum percentage of how many call transitions each state
-	 *            should have, greater equals 0
-	 * @param totalityReturnInPercMin
-	 *            The minimum percentage of how many return transitions each
-	 *            state should have, greater equals 0
-	 * @param totalityReturnInPercMax
-	 *            The maximum percentage of how many return transitions each
-	 *            state should have, greater equals 0
-	 * @param totalityHierPredInPercMin
-	 *            The minimum percentage of how many hierarchical predecessor
-	 *            for return transitions each state should have, greater equals
-	 *            0
-	 * @param totalityHierPredInPercMax
-	 *            The maximum percentage of how many hierarchical predecessor
-	 *            for return transitions each state should have, greater equals
-	 *            0
-	 * @param stepSize
-	 *            How big the steps between each iteration should be
-	 * @param uniformStep
-	 *            If <tt>true</tt> each parameter will equally be increased at
-	 *            the same time. If <tt>false</tt> they will be changed
-	 *            independently.
-	 * @throws IOException
-	 *             If an I/O-Exception occurred
-	 */
-	private static void coverSpaceBenchmark(final int n, final int k, final int amount, final int operationSwitch,
-			final boolean useRandomTvModel, final float acceptanceInPercMin, final float acceptanceInPercMax,
-			final float totalityInternalInPercMin, final float totalityInternalInPercMax,
-			final float totalityCallInPercMin, final float totalityCallInPercMax, final float totalityReturnInPercMin,
-			final float totalityReturnInPercMax, final float totalityHierPredInPercMin,
-			final float totalityHierPredInPercMax, final float stepSize, final boolean uniformStep) throws IOException {
-		System.out.println("Starting creation of space coverage sets...");
-
-		int acceptanceSteps = (int) Math.ceil((acceptanceInPercMax - acceptanceInPercMin) / stepSize);
-		int internalSteps = (int) Math.ceil((totalityInternalInPercMax - totalityInternalInPercMin) / stepSize);
-		int callSteps = (int) Math.ceil((totalityCallInPercMax - totalityCallInPercMin) / stepSize);
-		int returnSteps = (int) Math.ceil((totalityReturnInPercMax - totalityReturnInPercMin) / stepSize);
-		int hierPredSteps = (int) Math.ceil((totalityHierPredInPercMax - totalityHierPredInPercMin) / stepSize);
-		if (acceptanceSteps == 0) {
-			acceptanceSteps = 1;
-		}
-		if (internalSteps == 0) {
-			internalSteps = 1;
-		}
-		if (callSteps == 0) {
-			callSteps = 1;
-		}
-		if (returnSteps == 0) {
-			returnSteps = 1;
-		}
-		if (hierPredSteps == 0) {
-			hierPredSteps = 1;
-		}
-
-		int stepsToGo;
-		if (uniformStep) {
-			List<Integer> steps = new LinkedList<>();
-			steps.add(acceptanceSteps);
-			steps.add(internalSteps);
-			steps.add(callSteps);
-			steps.add(returnSteps);
-			steps.add(hierPredSteps);
-			stepsToGo = Collections.max(steps);
-		} else {
-			stepsToGo = acceptanceSteps * internalSteps * callSteps * returnSteps * hierPredSteps;
-		}
-		System.out.println("Sets to create: " + stepsToGo);
-		System.out.println("---------------");
-
-		if (uniformStep) {
-			List<Float> minPercentages = new LinkedList<>();
-			minPercentages.add(acceptanceInPercMin);
-			minPercentages.add(totalityInternalInPercMin);
-			minPercentages.add(totalityCallInPercMin);
-			minPercentages.add(totalityReturnInPercMin);
-			minPercentages.add(totalityHierPredInPercMin);
-			float smallestPercentage = Collections.min(minPercentages);
-			List<Float> maxPercentages = new LinkedList<>();
-			maxPercentages.add(acceptanceInPercMax);
-			maxPercentages.add(totalityInternalInPercMax);
-			maxPercentages.add(totalityCallInPercMax);
-			maxPercentages.add(totalityReturnInPercMax);
-			maxPercentages.add(totalityHierPredInPercMax);
-			float greatestPercentage = Collections.max(maxPercentages);
-
-			for (float percentage = smallestPercentage; percentage <= greatestPercentage; percentage += stepSize) {
-				float acceptanceInPerc;
-				if (percentage < acceptanceInPercMin) {
-					acceptanceInPerc = acceptanceInPercMin;
-				} else if (percentage > acceptanceInPercMax) {
-					acceptanceInPerc = acceptanceInPercMax;
-				} else {
-					acceptanceInPerc = percentage;
-				}
-
-				float totalityInternalInPerc;
-				if (percentage < totalityInternalInPercMin) {
-					totalityInternalInPerc = totalityInternalInPercMin;
-				} else if (percentage > totalityInternalInPercMax) {
-					totalityInternalInPerc = totalityInternalInPercMax;
-				} else {
-					totalityInternalInPerc = percentage;
-				}
-
-				float totalityCallInPerc;
-				if (percentage < totalityCallInPercMin) {
-					totalityCallInPerc = totalityCallInPercMin;
-				} else if (percentage > totalityCallInPercMax) {
-					totalityCallInPerc = totalityCallInPercMax;
-				} else {
-					totalityCallInPerc = percentage;
-				}
-
-				float totalityReturnInPerc;
-				if (percentage < totalityReturnInPercMin) {
-					totalityReturnInPerc = totalityReturnInPercMin;
-				} else if (percentage > totalityReturnInPercMax) {
-					totalityReturnInPerc = totalityReturnInPercMax;
-				} else {
-					totalityReturnInPerc = percentage;
-				}
-
-				float totalityHierPredInPerc;
-				if (percentage < totalityHierPredInPercMin) {
-					totalityHierPredInPerc = totalityHierPredInPercMin;
-				} else if (percentage > totalityHierPredInPercMax) {
-					totalityHierPredInPerc = totalityHierPredInPercMax;
-				} else {
-					totalityHierPredInPerc = percentage;
-				}
-
-				createExplicitSet(n, k, acceptanceInPerc, totalityInternalInPerc, totalityCallInPerc,
-						totalityReturnInPerc, totalityHierPredInPerc, amount, operationSwitch, useRandomTvModel);
-				stepsToGo--;
-				System.out.println("Steps to go: " + stepsToGo);
-			}
-
-		} else {
-			for (float acceptanceInPerc =
-					acceptanceInPercMin; acceptanceInPerc <= acceptanceInPercMax; acceptanceInPerc += stepSize) {
-				for (float totalityInternalInPerc =
-						totalityInternalInPercMin; totalityInternalInPerc <= totalityInternalInPercMax; totalityInternalInPerc +=
-								stepSize) {
-					for (float totalityCallInPerc =
-							totalityCallInPercMin; totalityCallInPerc <= totalityCallInPercMax; totalityCallInPerc +=
-									stepSize) {
-						for (float totalityReturnInPerc =
-								totalityReturnInPercMin; totalityReturnInPerc <= totalityReturnInPercMax; totalityReturnInPerc +=
-										stepSize) {
-							for (float totalityHierPredInPerc =
-									totalityHierPredInPercMin; totalityHierPredInPerc <= totalityHierPredInPercMax; totalityHierPredInPerc +=
-											stepSize) {
-								createExplicitSet(n, k, acceptanceInPerc, totalityInternalInPerc, totalityCallInPerc,
-										totalityReturnInPerc, totalityHierPredInPerc, amount, operationSwitch,
-										useRandomTvModel);
-								stepsToGo--;
-								System.out.println("Steps to go: " + stepsToGo);
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * Creates a benchmark set with given explicit settings by using the
-	 * {@link RandomNwaBenchmarkCreator} class.
-	 * 
-	 * @param n
-	 *            The amount of states generated Nwa automata should have
-	 * @param k
-	 *            The size of the alphabet generated Nwa automata should have
-	 * @param acceptanceInPerc
-	 *            The percentage of how many states should be accepting, between
-	 *            0 and 100 (both inclusive)
-	 * @param totalityInternalInPerc
-	 *            The percentage of how many internal transitions each state
-	 *            should have, greater equals 0
-	 * @param totalityCallInPerc
-	 *            The percentage of how many call transitions each state should
-	 *            have, greater equals 0
-	 * @param totalityReturnInPerc
-	 *            The percentage of how many return transitions each state
-	 *            should have, greater equals 0
-	 * @param totalityHierPredInPerc
-	 *            The percentage of how many hierarchical predecessor for return
-	 *            transitions each state should have, greater equals 0
-	 * @param amount
-	 *            Amount of random Nwa automata to generate
-	 * @param operationSwitch
-	 *            Which operation to use
-	 * @param useRandomTvModel
-	 *            If the random TV-Model should be used for generation
-	 * @throws IOException
-	 *             If an I/O-Exception occurred
-	 */
-	private static void createExplicitSet(final int n, final int k, final float acceptanceInPerc,
-			final float totalityInternalInPerc, final float totalityCallInPerc, final float totalityReturnInPerc,
-			final float totalityHierPredInPerc, final int amount, final int operationSwitch,
-			final boolean useRandomTvModel) throws IOException {
-		final String operation;
-		switch (operationSwitch) {
-			case 0:
-				operation = "compareReduceNwaSimulation(removeDeadEnds(nwa));";
-				break;
-			case 1:
-				operation = "reduceNwaDirectSimulation(removeDeadEnds(nwa), false);";
-				break;
-			case 2:
-				operation = "minimizeNwaPmaxSat(removeDeadEnds(nwa));";
-				break;
-			default:
-				operation = "";
-				break;
-		}
-
-		final String timeStamp = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date());
-		final String preamble = "// Random nwa automaton dumped by RandomNwaBenchmarkCreator at " + timeStamp + "\n"
-				+ "// Author: Daniel Tischner {@literal <zabuza.dev@gmail.com>}\n\n" + operation + "\n\n";
-
-		// Create the object and pass settings
-		final RandomNwaBenchmarkCreator creator;
-		if (useRandomTvModel) {
-			creator = new RandomNwaBenchmarkCreator(n, k, acceptanceInPerc, totalityInternalInPerc, totalityCallInPerc,
-					totalityReturnInPerc, totalityHierPredInPerc);
-		} else {
-			creator = new RandomNwaBenchmarkCreator(n, k, acceptanceInPerc, totalityInternalInPerc, totalityCallInPerc,
-					totalityReturnInPerc);
-		}
-		creator.setPreamble(preamble);
-
-		System.out.println("Starting automata generation.");
-		String label;
-		if (useRandomTvModel) {
-			label = "#" + amount + "_n" + n + "_k" + k + "_f" + acceptanceInPerc + "%_ti" + totalityInternalInPerc
-					+ "%_tc" + totalityCallInPerc + "%_tr" + totalityReturnInPerc + "%_th" + totalityHierPredInPerc
-					+ "%";
-		} else {
-			label = "#" + amount + "_n" + n + "_k" + k + "_f" + acceptanceInPerc + "%_ti" + totalityInternalInPerc
-					+ "%_tc" + totalityCallInPerc + "%_tr" + totalityReturnInPerc + "%";
-		}
-
-		creator.createAndSaveABenchmark(amount, label);
-		System.out.println("Finished automata generation.");
-		System.out.println("Overview label:");
-		System.out.println(label);
-	}
-
-	/**
 	 * The percentage of how many states should be accepting, between 0 and 100
 	 * (both inclusive).
 	 */
@@ -421,7 +91,7 @@ public final class RandomNwaBenchmarkCreator {
 	private final float mCallTotality;
 	/**
 	 * The percentage of how many hierarchical predecessor for return
-	 * transitions each state should have, greater equals 0
+	 * transitions each state should have, greater equals 0.
 	 */
 	private final float mHierarchicalPredecessorDensity;
 	/**
@@ -695,5 +365,335 @@ public final class RandomNwaBenchmarkCreator {
 	 */
 	private double percentageToDouble(final float percentage) {
 		return percentage / PERC_TO_DOUBLE;
+	}
+
+	/**
+	 * Shows the usage of the {@link RandomNwaBenchmarkCreator} class.
+	 *
+	 * @param args
+	 *            Not supported
+	 * @throws IOException
+	 *             If an I/O-Exception occurred
+	 */
+	public static void main(final String[] args) throws IOException {
+		// Settings for both methods
+		final int n = 100;
+		final int k = 2;
+		final int amount = 20;
+		final int operationSwitch = 0;
+		final boolean useRandomTvModel = true;
+
+		// Settings for explicit set
+		final float acceptanceInPerc = 50;
+		final float totalityInternalInPerc = 50f;
+		final float totalityCallInPerc = 50f;
+		final float totalityReturnInPerc = 1f;
+		final float totalityHierPredInPerc = 50f;
+
+		// Settings for space coverage sets
+		final float acceptanceInPercMin = 50f;
+		final float acceptanceInPercMax = 50f;
+		final float totalityInternalInPercMin = 1f;
+		final float totalityInternalInPercMax = 300f;
+		final float totalityCallInPercMin = 0f;
+		final float totalityCallInPercMax = 0f;
+		final float totalityReturnInPercMin = 0f;
+		final float totalityReturnInPercMax = 0f;
+		final float totalityHierPredInPercMin = 0f;
+		final float totalityHierPredInPercMax = 0f;
+		final int stepSize = 2;
+		final boolean uniformStep = true;
+
+		// Which method to use
+		final boolean createExplicit = false;
+
+		if (createExplicit) {
+			createExplicitSet(n, k, acceptanceInPerc, totalityInternalInPerc, totalityCallInPerc, totalityReturnInPerc,
+					totalityHierPredInPerc, amount, operationSwitch, useRandomTvModel);
+		} else {
+			coverSpaceBenchmark(n, k, amount, operationSwitch, useRandomTvModel, acceptanceInPercMin,
+					acceptanceInPercMax, totalityInternalInPercMin, totalityInternalInPercMax, totalityCallInPercMin,
+					totalityCallInPercMax, totalityReturnInPercMin, totalityReturnInPercMax, totalityHierPredInPercMin,
+					totalityHierPredInPercMax, stepSize, uniformStep);
+		}
+	}
+
+	/**
+	 * Creates benchmark sets that cover the whole given spice by using the
+	 * {@link RandomNwaBenchmarkCreator} class.
+	 * 
+	 * @param n
+	 *            The amount of states generated Nwa automata should have
+	 * @param k
+	 *            The size of the alphabet generated Nwa automata should have
+	 * @param amount
+	 *            Amount of random Nwa automata to generate
+	 * @param operationSwitch
+	 *            Which operation to use
+	 * @param useRandomTvModel
+	 *            If the random TV-Model should be used for generation
+	 * @param acceptanceInPercMin
+	 *            The minimum percentage of how many states should be accepting,
+	 *            between 0 and 100 (both inclusive)
+	 * @param acceptanceInPercMax
+	 *            The maximum percentage of how many states should be accepting,
+	 *            between 0 and 100 (both inclusive)
+	 * @param totalityInternalInPercMin
+	 *            The minimum percentage of how many internal transitions each
+	 *            state should have, greater equals 0
+	 * @param totalityInternalInPercMax
+	 *            The maximum percentage of how many internal transitions each
+	 *            state should have, greater equals 0
+	 * @param totalityCallInPercMin
+	 *            The minimum percentage of how many call transitions each state
+	 *            should have, greater equals 0
+	 * @param totalityCallInPercMax
+	 *            The maximum percentage of how many call transitions each state
+	 *            should have, greater equals 0
+	 * @param totalityReturnInPercMin
+	 *            The minimum percentage of how many return transitions each
+	 *            state should have, greater equals 0
+	 * @param totalityReturnInPercMax
+	 *            The maximum percentage of how many return transitions each
+	 *            state should have, greater equals 0
+	 * @param totalityHierPredInPercMin
+	 *            The minimum percentage of how many hierarchical predecessor
+	 *            for return transitions each state should have, greater equals
+	 *            0
+	 * @param totalityHierPredInPercMax
+	 *            The maximum percentage of how many hierarchical predecessor
+	 *            for return transitions each state should have, greater equals
+	 *            0
+	 * @param stepSize
+	 *            How big the steps between each iteration should be
+	 * @param uniformStep
+	 *            If <tt>true</tt> each parameter will equally be increased at
+	 *            the same time. If <tt>false</tt> they will be changed
+	 *            independently.
+	 * @throws IOException
+	 *             If an I/O-Exception occurred
+	 */
+	private static void coverSpaceBenchmark(final int n, final int k, final int amount, final int operationSwitch,
+			final boolean useRandomTvModel, final float acceptanceInPercMin, final float acceptanceInPercMax,
+			final float totalityInternalInPercMin, final float totalityInternalInPercMax,
+			final float totalityCallInPercMin, final float totalityCallInPercMax, final float totalityReturnInPercMin,
+			final float totalityReturnInPercMax, final float totalityHierPredInPercMin,
+			final float totalityHierPredInPercMax, final float stepSize, final boolean uniformStep) throws IOException {
+		System.out.println("Starting creation of space coverage sets...");
+
+		int acceptanceSteps = (int) Math.ceil((acceptanceInPercMax - acceptanceInPercMin) / stepSize);
+		if (acceptanceSteps == 0) {
+			acceptanceSteps = 1;
+		}
+		int internalSteps = (int) Math.ceil((totalityInternalInPercMax - totalityInternalInPercMin) / stepSize);
+		if (internalSteps == 0) {
+			internalSteps = 1;
+		}
+		int callSteps = (int) Math.ceil((totalityCallInPercMax - totalityCallInPercMin) / stepSize);
+		if (callSteps == 0) {
+			callSteps = 1;
+		}
+		int returnSteps = (int) Math.ceil((totalityReturnInPercMax - totalityReturnInPercMin) / stepSize);
+		if (returnSteps == 0) {
+			returnSteps = 1;
+		}
+		int hierPredSteps = (int) Math.ceil((totalityHierPredInPercMax - totalityHierPredInPercMin) / stepSize);
+		if (hierPredSteps == 0) {
+			hierPredSteps = 1;
+		}
+
+		int stepsToGo;
+		if (uniformStep) {
+			final List<Integer> steps = new LinkedList<>();
+			steps.add(acceptanceSteps);
+			steps.add(internalSteps);
+			steps.add(callSteps);
+			steps.add(returnSteps);
+			steps.add(hierPredSteps);
+			stepsToGo = Collections.max(steps);
+		} else {
+			stepsToGo = acceptanceSteps * internalSteps * callSteps * returnSteps * hierPredSteps;
+		}
+		System.out.println("Sets to create: " + stepsToGo);
+		System.out.println("---------------");
+
+		if (uniformStep) {
+			final List<Float> minPercentages = new LinkedList<>();
+			minPercentages.add(acceptanceInPercMin);
+			minPercentages.add(totalityInternalInPercMin);
+			minPercentages.add(totalityCallInPercMin);
+			minPercentages.add(totalityReturnInPercMin);
+			minPercentages.add(totalityHierPredInPercMin);
+			final float smallestPercentage = Collections.min(minPercentages);
+			final List<Float> maxPercentages = new LinkedList<>();
+			maxPercentages.add(acceptanceInPercMax);
+			maxPercentages.add(totalityInternalInPercMax);
+			maxPercentages.add(totalityCallInPercMax);
+			maxPercentages.add(totalityReturnInPercMax);
+			maxPercentages.add(totalityHierPredInPercMax);
+			final float greatestPercentage = Collections.max(maxPercentages);
+
+			for (float percentage = smallestPercentage; percentage <= greatestPercentage; percentage += stepSize) {
+				float acceptanceInPerc;
+				if (percentage < acceptanceInPercMin) {
+					acceptanceInPerc = acceptanceInPercMin;
+				} else if (percentage > acceptanceInPercMax) {
+					acceptanceInPerc = acceptanceInPercMax;
+				} else {
+					acceptanceInPerc = percentage;
+				}
+
+				float totalityInternalInPerc;
+				if (percentage < totalityInternalInPercMin) {
+					totalityInternalInPerc = totalityInternalInPercMin;
+				} else if (percentage > totalityInternalInPercMax) {
+					totalityInternalInPerc = totalityInternalInPercMax;
+				} else {
+					totalityInternalInPerc = percentage;
+				}
+
+				float totalityCallInPerc;
+				if (percentage < totalityCallInPercMin) {
+					totalityCallInPerc = totalityCallInPercMin;
+				} else if (percentage > totalityCallInPercMax) {
+					totalityCallInPerc = totalityCallInPercMax;
+				} else {
+					totalityCallInPerc = percentage;
+				}
+
+				float totalityReturnInPerc;
+				if (percentage < totalityReturnInPercMin) {
+					totalityReturnInPerc = totalityReturnInPercMin;
+				} else if (percentage > totalityReturnInPercMax) {
+					totalityReturnInPerc = totalityReturnInPercMax;
+				} else {
+					totalityReturnInPerc = percentage;
+				}
+
+				float totalityHierPredInPerc;
+				if (percentage < totalityHierPredInPercMin) {
+					totalityHierPredInPerc = totalityHierPredInPercMin;
+				} else if (percentage > totalityHierPredInPercMax) {
+					totalityHierPredInPerc = totalityHierPredInPercMax;
+				} else {
+					totalityHierPredInPerc = percentage;
+				}
+
+				createExplicitSet(n, k, acceptanceInPerc, totalityInternalInPerc, totalityCallInPerc,
+						totalityReturnInPerc, totalityHierPredInPerc, amount, operationSwitch, useRandomTvModel);
+				stepsToGo--;
+				System.out.println("Steps to go: " + stepsToGo);
+			}
+
+		} else {
+			for (float acceptanceInPerc =
+					acceptanceInPercMin; acceptanceInPerc <= acceptanceInPercMax; acceptanceInPerc += stepSize) {
+				for (float totalityInternalInPerc =
+						totalityInternalInPercMin; totalityInternalInPerc <= totalityInternalInPercMax; totalityInternalInPerc +=
+								stepSize) {
+					for (float totalityCallInPerc =
+							totalityCallInPercMin; totalityCallInPerc <= totalityCallInPercMax; totalityCallInPerc +=
+									stepSize) {
+						for (float totalityReturnInPerc =
+								totalityReturnInPercMin; totalityReturnInPerc <= totalityReturnInPercMax; totalityReturnInPerc +=
+										stepSize) {
+							for (float totalityHierPredInPerc =
+									totalityHierPredInPercMin; totalityHierPredInPerc <= totalityHierPredInPercMax; totalityHierPredInPerc +=
+											stepSize) {
+								createExplicitSet(n, k, acceptanceInPerc, totalityInternalInPerc, totalityCallInPerc,
+										totalityReturnInPerc, totalityHierPredInPerc, amount, operationSwitch,
+										useRandomTvModel);
+								stepsToGo--;
+								System.out.println("Steps to go: " + stepsToGo);
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * Creates a benchmark set with given explicit settings by using the
+	 * {@link RandomNwaBenchmarkCreator} class.
+	 * 
+	 * @param n
+	 *            The amount of states generated Nwa automata should have
+	 * @param k
+	 *            The size of the alphabet generated Nwa automata should have
+	 * @param acceptanceInPerc
+	 *            The percentage of how many states should be accepting, between
+	 *            0 and 100 (both inclusive)
+	 * @param totalityInternalInPerc
+	 *            The percentage of how many internal transitions each state
+	 *            should have, greater equals 0
+	 * @param totalityCallInPerc
+	 *            The percentage of how many call transitions each state should
+	 *            have, greater equals 0
+	 * @param totalityReturnInPerc
+	 *            The percentage of how many return transitions each state
+	 *            should have, greater equals 0
+	 * @param totalityHierPredInPerc
+	 *            The percentage of how many hierarchical predecessor for return
+	 *            transitions each state should have, greater equals 0
+	 * @param amount
+	 *            Amount of random Nwa automata to generate
+	 * @param operationSwitch
+	 *            Which operation to use
+	 * @param useRandomTvModel
+	 *            If the random TV-Model should be used for generation
+	 * @throws IOException
+	 *             If an I/O-Exception occurred
+	 */
+	private static void createExplicitSet(final int n, final int k, final float acceptanceInPerc,
+			final float totalityInternalInPerc, final float totalityCallInPerc, final float totalityReturnInPerc,
+			final float totalityHierPredInPerc, final int amount, final int operationSwitch,
+			final boolean useRandomTvModel) throws IOException {
+		final String operation;
+		switch (operationSwitch) {
+			case 0:
+				operation = "compareReduceNwaSimulation(removeDeadEnds(nwa));";
+				break;
+			case 1:
+				operation = "reduceNwaDirectSimulation(removeDeadEnds(nwa), false);";
+				break;
+			case 2:
+				operation = "minimizeNwaPmaxSat(removeDeadEnds(nwa));";
+				break;
+			default:
+				operation = "";
+				break;
+		}
+
+		final String timeStamp = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss").format(new Date());
+		final String preamble = "// Random nwa automaton dumped by RandomNwaBenchmarkCreator at " + timeStamp + "\n"
+				+ "// Author: Daniel Tischner {@literal <zabuza.dev@gmail.com>}\n\n" + operation + "\n\n";
+
+		// Create the object and pass settings
+		final RandomNwaBenchmarkCreator creator;
+		if (useRandomTvModel) {
+			creator = new RandomNwaBenchmarkCreator(n, k, acceptanceInPerc, totalityInternalInPerc, totalityCallInPerc,
+					totalityReturnInPerc, totalityHierPredInPerc);
+		} else {
+			creator = new RandomNwaBenchmarkCreator(n, k, acceptanceInPerc, totalityInternalInPerc, totalityCallInPerc,
+					totalityReturnInPerc);
+		}
+		creator.setPreamble(preamble);
+
+		System.out.println("Starting automata generation.");
+		String label;
+		if (useRandomTvModel) {
+			label = "#" + amount + "_n" + n + "_k" + k + "_f" + acceptanceInPerc + "%_ti" + totalityInternalInPerc
+					+ "%_tc" + totalityCallInPerc + "%_tr" + totalityReturnInPerc + "%_th" + totalityHierPredInPerc
+					+ "%";
+		} else {
+			label = "#" + amount + "_n" + n + "_k" + k + "_f" + acceptanceInPerc + "%_ti" + totalityInternalInPerc
+					+ "%_tc" + totalityCallInPerc + "%_tr" + totalityReturnInPerc + "%";
+		}
+
+		creator.createAndSaveABenchmark(amount, label);
+		System.out.println("Finished automata generation.");
+		System.out.println("Overview label:");
+		System.out.println(label);
 	}
 }

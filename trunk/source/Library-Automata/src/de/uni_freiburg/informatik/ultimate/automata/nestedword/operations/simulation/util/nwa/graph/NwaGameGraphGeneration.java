@@ -266,9 +266,6 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 *            simulating get generated, all other will be rejected. If
 	 *            <tt>false</tt> also vertices that are reachable by the initial
 	 *            partition get generated.
-	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
 	 */
 	public NwaGameGraphGeneration(final AutomataLibraryServices services, final IProgressAwareTimer progressTimer,
 			final ILogger logger, final IDoubleDeckerAutomaton<LETTER, STATE> nwa,
@@ -318,10 +315,10 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 
 	/**
 	 * Computes the priorities of all previous generated summarize edges.
-	 *
-	 * @throws IllegalStateException
-	 *             If computing summarize edge priorities could not be done
-	 *             because a live lock occurred.
+	 * <p>
+	 * Throws an IllegalStateException if computing summarize edge priorities could not be done because a live lock
+	 * occurred.
+	 * 
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.

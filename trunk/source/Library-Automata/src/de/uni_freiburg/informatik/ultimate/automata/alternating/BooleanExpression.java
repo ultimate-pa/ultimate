@@ -91,7 +91,7 @@ public class BooleanExpression {
 		return result;
 	}
 
-	/**
+	/*
 	 * TODO Christian 2016-08-16: This does not override the Object.equals()
 	 * method. It may be confusing when using in Collections. Also it does not check for 'null'.
 	 */

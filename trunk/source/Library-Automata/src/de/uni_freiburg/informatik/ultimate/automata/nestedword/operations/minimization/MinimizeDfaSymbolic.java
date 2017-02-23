@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	/***********************************************************************/
 	/**
 	 * Necessary data elements for computing the minimal DFA.
 	 */
@@ -78,14 +77,13 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 
 	private Sort[] mEmptyArray;
 
-	/**************************************************************************/
-
-	/***********************************************************************/
 	/**
 	 * Constructor.
 	 * 
 	 * @param services
 	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
 	 * @param operand
 	 *            operand
 	 */
@@ -125,7 +123,6 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		// initialize partition and worklist.
 		initializePartitionAndWorklist();
 
-		/*******************************************************************/
 		/**
 		 * Start with main algorithm.
 		 */
@@ -473,7 +470,71 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		return isSat == LBool.SAT;
 	}
 
-	/***********************************************************************/
+	/**
+	 * Method for building the result automaton with reduced states and
+	 * transitions.
+	 */
+	private void buildResult() {
+		// Store new states in ArrayList with size = # blocks in partition.
+		final HashMap<Block, STATE> blockToNewStates = new HashMap<>(computeHashCap(mPartition.size()));
+
+		final Block blockWithinInitialState = mPartition.get(mInitialState);
+		// Iterate over blocks in mpartition and build new state out of the
+		// states belonging to one block. Therefor first get values of HashMap.
+		final Collection<Block> blocksInPartition = mPartition.values();
+		Iterator<Block> it = blocksInPartition.iterator();
+		final HashSet<Block> alreadyLookedUp = new HashSet<>(blocksInPartition.size());
+		startResultConstruction();
+		while (it.hasNext()) {
+			final Block blockOfPartition = it.next();
+			if (alreadyLookedUp.contains(blockOfPartition)) {
+				// State for this block was already created.
+				continue;
+			}
+			alreadyLookedUp.add(blockOfPartition);
+			// Get states of this block.
+			final Collection<STATE> statesOfBlock = blockOfPartition.returnStates();
+			// Build the new state by using the minimize-function of
+			// StateFactory.
+			final STATE newState = mStateFactory.merge(statesOfBlock);
+			// Add new state to the new result automaton.
+			final STATE firstOfBlock = blockOfPartition.iterator().next();
+			blockToNewStates.put(blockOfPartition, newState);
+			addState(blockOfPartition == blockWithinInitialState, mOperand.isFinal(firstOfBlock), newState);
+		}
+
+		// Iterate over each block to get the outgoing transitions of every
+		// first element of block.
+		it = blocksInPartition.iterator();
+		while (it.hasNext()) {
+			// Get block of partition.
+			final Block blockOfPartition = it.next();
+			// Get first state of current block.
+			final STATE firstOfBlock = blockOfPartition.iterator().next();
+			// As predecessor for the transition take the states created above.
+			final STATE newPred = blockToNewStates.get(blockOfPartition);
+			// Get all outgoing transitions of firstOfBlock for taking all
+			// existing successors to build new transitions.
+			final Iterator<OutgoingInternalTransition<LETTER, STATE>> transitionIt =
+					mOperand.internalSuccessors(firstOfBlock).iterator();
+			// Iterate over all outgoing transitions of each block to create a
+			// new transition add it to the new automaton.
+			while (transitionIt.hasNext()) {
+				// Get next outgoing transition.
+				final OutgoingInternalTransition<LETTER, STATE> next = transitionIt.next();
+				// Get the successor if the transition.
+				final STATE succ = next.getSucc();
+				// Get block in mpartition succ belongs to.
+				final Block blockOfSucc = mPartition.get(succ);
+				// Get new successor out of new states created above.
+				final STATE newSucc = blockToNewStates.get(blockOfSucc);
+				// Add the new transition to the result automaton.
+				addInternalTransition(newPred, next.getLetter(), newSucc);
+			}
+		}
+		finishResultConstruction(null, false);
+	}
+
 	/**
 	 * Class for representing worklist.
 	 * 
@@ -536,7 +597,6 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 
 	}
 
-	/***********************************************************************/
 	/**
 	 * Class for representing a block of states.
 	 * 
@@ -618,71 +678,5 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 			b.append(')');
 			return b.toString();
 		}
-	}
-
-	/***********************************************************************/
-	/**
-	 * Method for building the result automaton with reduced states and
-	 * transitions.
-	 */
-	private void buildResult() {
-		// Store new states in ArrayList with size = # blocks in partition.
-		final HashMap<Block, STATE> blockToNewStates = new HashMap<>(computeHashCap(mPartition.size()));
-
-		final Block blockWithinInitialState = mPartition.get(mInitialState);
-		// Iterate over blocks in mpartition and build new state out of the
-		// states belonging to one block. Therefor first get values of HashMap.
-		final Collection<Block> blocksInPartition = mPartition.values();
-		Iterator<Block> it = blocksInPartition.iterator();
-		final HashSet<Block> alreadyLookedUp = new HashSet<>(blocksInPartition.size());
-		startResultConstruction();
-		while (it.hasNext()) {
-			final Block blockOfPartition = it.next();
-			if (alreadyLookedUp.contains(blockOfPartition)) {
-				// State for this block was already created.
-				continue;
-			}
-			alreadyLookedUp.add(blockOfPartition);
-			// Get states of this block.
-			final Collection<STATE> statesOfBlock = blockOfPartition.returnStates();
-			// Build the new state by using the minimize-function of
-			// StateFactory.
-			final STATE newState = mStateFactory.merge(statesOfBlock);
-			// Add new state to the new result automaton.
-			final STATE firstOfBlock = blockOfPartition.iterator().next();
-			blockToNewStates.put(blockOfPartition, newState);
-			addState(blockOfPartition == blockWithinInitialState, mOperand.isFinal(firstOfBlock), newState);
-		}
-
-		// Iterate over each block to get the outgoing transitions of every
-		// first element of block.
-		it = blocksInPartition.iterator();
-		while (it.hasNext()) {
-			// Get block of partition.
-			final Block blockOfPartition = it.next();
-			// Get first state of current block.
-			final STATE firstOfBlock = blockOfPartition.iterator().next();
-			// As predecessor for the transition take the states created above.
-			final STATE newPred = blockToNewStates.get(blockOfPartition);
-			// Get all outgoing transitions of firstOfBlock for taking all
-			// existing successors to build new transitions.
-			final Iterator<OutgoingInternalTransition<LETTER, STATE>> transitionIt =
-					mOperand.internalSuccessors(firstOfBlock).iterator();
-			// Iterate over all outgoing transitions of each block to create a
-			// new transition add it to the new automaton.
-			while (transitionIt.hasNext()) {
-				// Get next outgoing transition.
-				final OutgoingInternalTransition<LETTER, STATE> next = transitionIt.next();
-				// Get the successor if the transition.
-				final STATE succ = next.getSucc();
-				// Get block in mpartition succ belongs to.
-				final Block blockOfSucc = mPartition.get(succ);
-				// Get new successor out of new states created above.
-				final STATE newSucc = blockToNewStates.get(blockOfSucc);
-				// Add the new transition to the result automaton.
-				addInternalTransition(newPred, next.getLetter(), newSucc);
-			}
-		}
-		finishResultConstruction(null, false);
 	}
 }

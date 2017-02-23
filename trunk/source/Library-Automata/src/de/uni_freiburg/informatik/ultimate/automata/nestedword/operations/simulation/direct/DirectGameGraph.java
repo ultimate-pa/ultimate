@@ -86,6 +86,9 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Creates a new direct game graph by using the given buechi automaton.
+	 * <p>
+	 * Throws an IllegalArgumentException If the inputed automaton is no Buechi-automaton. It must have an empty call
+	 * and return alphabet.
 	 * 
 	 * @param services
 	 *            Service provider of Ultimate framework
@@ -103,9 +106,6 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
-	 * @throws IllegalArgumentException
-	 *             If the inputed automaton is no Buechi-automaton. It must have
-	 *             an empty call and return alphabet.
 	 */
 	public DirectGameGraph(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final IProgressAwareTimer progressTimer, final ILogger logger,

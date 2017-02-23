@@ -73,6 +73,10 @@ public final class ComparisonTables {
 	 */
 	private static final int SMALL_BUCHI_SIZE = 20;
 
+	private ComparisonTables() {
+		// Utility class, private constructor.
+	}
+
 	/**
 	 * Creates a table that holds information about the actual work the
 	 * algorithm needs to do for each simulation type averaged over all automata
@@ -684,7 +688,7 @@ public final class ComparisonTables {
 				final String name = performanceOfSimulation.getName();
 
 				// Fix fields
-				String row = name + separator + type + separator + performanceOfSimulation.isUsingSCCs() + separator
+				String row = name + separator + type + separator + performanceOfSimulation.isUsingSccs() + separator
 						+ performanceOfSimulation.hasTimedOut() + separator + performanceOfSimulation.isOutOfMemory();
 
 				// Variable fields
@@ -838,7 +842,7 @@ public final class ComparisonTables {
 				}
 
 				// Fix fields
-				String row = name + separator + type + separator + performanceOfSimulation.isUsingSCCs() + separator
+				String row = name + separator + type + separator + performanceOfSimulation.isUsingSccs() + separator
 						+ performanceOfSimulation.hasTimedOut() + separator + performanceOfSimulation.isOutOfMemory();
 
 				// Variable fields
@@ -926,7 +930,7 @@ public final class ComparisonTables {
 				final String name = performanceOfSimulation.getName();
 
 				// Fix fields
-				String row = name + separator + type + separator + performanceOfSimulation.isUsingSCCs() + separator
+				String row = name + separator + type + separator + performanceOfSimulation.isUsingSccs() + separator
 						+ performanceOfSimulation.hasTimedOut() + separator + performanceOfSimulation.isOutOfMemory();
 
 				// Variable fields
@@ -1222,7 +1226,7 @@ public final class ComparisonTables {
 						directoryKey = name;
 					}
 
-					final Pair<ESimulationType, Boolean> simulationKey = new Pair<>(type, performance.isUsingSCCs());
+					final Pair<ESimulationType, Boolean> simulationKey = new Pair<>(type, performance.isUsingSccs());
 					LinkedList<SimulationPerformance> performances =
 							directoryAndSimulationToPerformances.get(directoryKey, simulationKey);
 					if (performances == null) {
@@ -1273,7 +1277,7 @@ public final class ComparisonTables {
 				for (final SimulationPerformance performance : performancesToAdd) {
 					final ESimulationType type = performance.getSimType();
 
-					final Pair<ESimulationType, Boolean> simulationKey = new Pair<>(type, performance.isUsingSCCs());
+					final Pair<ESimulationType, Boolean> simulationKey = new Pair<>(type, performance.isUsingSccs());
 					LinkedList<SimulationPerformance> performances = simulationToPerformances.get(simulationKey);
 					if (performances == null) {
 						performances = new LinkedList<>();
@@ -1364,12 +1368,5 @@ public final class ComparisonTables {
 		BigDecimal valueAsBigDecimal = new BigDecimal(value);
 		valueAsBigDecimal = valueAsBigDecimal.setScale(scale, RoundingMode.HALF_UP);
 		return valueAsBigDecimal.floatValue();
-	}
-
-	/**
-	 * Utility class, private constructor.
-	 */
-	private ComparisonTables() {
-
 	}
 }

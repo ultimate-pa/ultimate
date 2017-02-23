@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * TODO: documentation
+ * TODO: documentation.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
@@ -58,6 +58,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            letter type
  * @param <STATE>
  *            state type
+ * @param <GS>
+ *            game state type
  */
 public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS extends FullMultipebbleGameState<STATE>>
 		extends AbstractMinimizeNwaDd<LETTER, STATE> {
@@ -77,8 +79,6 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 	 *            state factory
 	 * @param operand
 	 *            operand
-	 * @param simulationInfoProvider
-	 *            simulation info provider
 	 * @throws AutomataOperationCanceledException
 	 *             if suboperations fail
 	 */
@@ -168,14 +168,12 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			final NestedMap2<STATE, STATE, GS> gameStateMapping, final IDoubleDeckerAutomaton<LETTER, GS> mRemoved) {
 		if (gameFactory.isImmediatelyWinningForSpoiler(q0, q1, mOperand)) {
 			return false;
-		} else {
-			final GS s1 = gameStateMapping.get(q0, q1);
-			if (mRemoved.isInitial(s1)) {
-				return false;
-			} else {
-				return true;
-			}
 		}
+		final GS s1 = gameStateMapping.get(q0, q1);
+		if (mRemoved.isInitial(s1)) {
+			return false;
+		}
+		return true;
 	}
 
 	private UnionFindBackedSetOfPairs<STATE> readoutSymmetricCoreOfSimulationRelation(
@@ -207,6 +205,16 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			}
 		}
 		return result;
+	}
+
+	@Override
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
+	}
+
+	@Override
+	public AutomataOperationStatistics getAutomataOperationStatistics() {
+		return mStatistics;
 	}
 
 	private class ReadoutSimulation extends InitialPartitionProcessor<STATE> {
@@ -241,15 +249,5 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 		public UnionFind<STATE> getMutuallySimulating() {
 			return mMutuallySimulating;
 		}
-	}
-
-	@Override
-	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
-		return mOperand;
-	}
-
-	@Override
-	public AutomataOperationStatistics getAutomataOperationStatistics() {
-		return mStatistics;
 	}
 }

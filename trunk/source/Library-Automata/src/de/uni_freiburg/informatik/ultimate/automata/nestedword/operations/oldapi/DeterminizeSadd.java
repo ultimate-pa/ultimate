@@ -80,7 +80,6 @@ public final class DeterminizeSadd<LETTER, STATE>
 	 *            Ultimate services
 	 * @param operand
 	 *            operand
-	 * @throws AutomataOperationCanceledException
 	 */
 	public DeterminizeSadd(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {

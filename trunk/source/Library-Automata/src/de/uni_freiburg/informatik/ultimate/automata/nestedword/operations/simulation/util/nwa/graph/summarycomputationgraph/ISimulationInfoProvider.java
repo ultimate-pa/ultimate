@@ -35,7 +35,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
 public interface ISimulationInfoProvider<LETTER, STATE> {
 
@@ -53,5 +55,4 @@ public interface ISimulationInfoProvider<LETTER, STATE> {
 			INestedWordAutomatonSimple<LETTER, STATE> inputAutomaton);
 
 	public boolean mayMergeFinalAndNonFinalStates();
-
 }

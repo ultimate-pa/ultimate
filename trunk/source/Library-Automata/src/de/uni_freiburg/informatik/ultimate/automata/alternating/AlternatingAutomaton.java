@@ -53,7 +53,7 @@ public class AlternatingAutomaton<LETTER, STATE> implements IAutomaton<LETTER, S
 
 	/**
 	 * @param alphabet
-	 *            alphabet
+	 *            alphabet.
 	 * @param stateFactory
 	 *            state factory
 	 */

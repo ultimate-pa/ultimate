@@ -65,7 +65,7 @@ public class WeightedSummaryTargets {
 				return this;
 			case 1:
 			case 0: {
-				final Map<IGameState, Integer> newMap = new HashMap<IGameState, Integer>();
+				final Map<IGameState, Integer> newMap = new HashMap<>();
 				for (final Entry<IGameState, Integer> entry : mTarget2Priority.entrySet()) {
 					newMap.put(entry.getKey(), Math.min(priority, entry.getValue()));
 				}
@@ -73,16 +73,6 @@ public class WeightedSummaryTargets {
 			}
 			default:
 				throw new IllegalArgumentException("unsupported value " + priority);
-		}
-	}
-
-	public static class WeightedSummaryTargetsComparator implements IPartialComparator<WeightedSummaryTargets> {
-		@Override
-		public ComparisonResult compare(final WeightedSummaryTargets o1, final WeightedSummaryTargets o2) {
-			final ComparisonResult result =
-					new CanonicalPartialComparatorForMaps<IGameState, Integer>(new PriorityComparator())
-							.compare(o1.mTarget2Priority, o2.mTarget2Priority);
-			return result;
 		}
 	}
 
@@ -96,23 +86,38 @@ public class WeightedSummaryTargets {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final WeightedSummaryTargets other = (WeightedSummaryTargets) obj;
 		if (mTarget2Priority == null) {
-			if (other.mTarget2Priority != null)
+			if (other.mTarget2Priority != null) {
 				return false;
-		} else if (!mTarget2Priority.equals(other.mTarget2Priority))
+			}
+		} else if (!mTarget2Priority.equals(other.mTarget2Priority)) {
 			return false;
+		}
 		return true;
 	}
 
 	@Override
 	public String toString() {
 		return mTarget2Priority.toString();
+	}
+
+	public static class WeightedSummaryTargetsComparator implements IPartialComparator<WeightedSummaryTargets> {
+		@Override
+		public ComparisonResult compare(final WeightedSummaryTargets o1, final WeightedSummaryTargets o2) {
+			final ComparisonResult result =
+					new CanonicalPartialComparatorForMaps<IGameState, Integer>(new PriorityComparator())
+							.compare(o1.mTarget2Priority, o2.mTarget2Priority);
+			return result;
+		}
 	}
 }

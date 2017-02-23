@@ -94,9 +94,6 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 		return false;
 	}
 
-	/**
-	 * @see java.util.Set#isEmpty()
-	 */
 	public boolean isEmpty() {
 		return mPlaces.isEmpty();
 	}

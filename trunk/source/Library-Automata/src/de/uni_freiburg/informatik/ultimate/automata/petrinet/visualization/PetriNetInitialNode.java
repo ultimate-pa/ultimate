@@ -38,10 +38,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  * Ultimate model of a PetriNet place.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
- *            symbol type
- * @param <C>
- *            place content type
  */
 public final class PetriNetInitialNode extends PetriNetVisualizationNode {
 	private static final long serialVersionUID = 264254789648279608L;

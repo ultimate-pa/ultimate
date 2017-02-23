@@ -71,7 +71,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
 public class SummaryComputation<LETTER, STATE> {
 
@@ -85,21 +87,6 @@ public class SummaryComputation<LETTER, STATE> {
 
 	private final WeightedSummaryTargetsComparator mWeightedSummaryTargetsComparator =
 			new WeightedSummaryTargetsComparator();
-
-	private Integer duplicatorNodePriorityProvider(final IGameLetter<LETTER, STATE> duplicatorNode,
-			final IGameState spoilerNode) {
-		return 2;
-	}
-
-	private Integer spoilerNodePriorityProvider(final IGameState spoilerNode,
-			final IGameLetter<LETTER, STATE> duplicatorNode) {
-		return GameAutomaton.unwrapSpoilerNwaVertex(spoilerNode).getPriority();
-	}
-
-	private Integer callWorkaroundPriorityProvider(final IGameState spoilerNode,
-			final IGameLetter<LETTER, STATE> duplicatorNode) {
-		return 2;
-	}
 
 	private final HashRelation<Set<IGameState>, NestedMap2<IGameState, IGameState, Integer>> mTrigger2Summaries =
 			new HashRelation<>();
@@ -159,12 +146,12 @@ public class SummaryComputation<LETTER, STATE> {
 					final Map<IGameState, Integer> duplicatorResponses =
 							spoilerChoice2Target2Prio.get(spoilerDestinationState);
 					final GameCallReturnSummary<STATE> gameSummary =
-							new GameCallReturnSummary<STATE>(source, spoilerDestinationState, duplicatorResponses);
+							new GameCallReturnSummary<>(source, spoilerDestinationState, duplicatorResponses);
 					mGameSummaries.add(gameSummary);
 				}
 			}
 		}
-		final ArrayList gameSummaries2 = new ArrayList<>(mGameSummaries);
+		final ArrayList<GameCallReturnSummary<STATE>> gameSummaries2 = new ArrayList<>(mGameSummaries);
 		mLogger.info("Found " + mGameSummaries.size() + " summaries");
 	}
 
@@ -176,6 +163,21 @@ public class SummaryComputation<LETTER, STATE> {
 			}
 		}
 		return result;
+	}
+
+	private Integer duplicatorNodePriorityProvider(final IGameLetter<LETTER, STATE> duplicatorNode,
+			final IGameState spoilerNode) {
+		return 2;
+	}
+
+	private Integer spoilerNodePriorityProvider(final IGameState spoilerNode,
+			final IGameLetter<LETTER, STATE> duplicatorNode) {
+		return GameAutomaton.unwrapSpoilerNwaVertex(spoilerNode).getPriority();
+	}
+
+	private Integer callWorkaroundPriorityProvider(final IGameState spoilerNode,
+			final IGameLetter<LETTER, STATE> duplicatorNode) {
+		return 2;
 	}
 
 	private boolean needWinningSink(final IGameState gameState) {
@@ -308,8 +310,7 @@ public class SummaryComputation<LETTER, STATE> {
 			computeDuplicatorPredecessorUnderReturn(
 					final NestedMap2<IGameState, IGameState, WeightedSummaryTargets> source2Current2Targets,
 					final Map<IGameState, HashRelation<IGameLetter<LETTER, STATE>, IGameState>> hier2dupl2spoi) {
-		final NestedMap2<IGameState, IGameLetter<LETTER, STATE>, WeightedSummaryTargets> result =
-				new NestedMap2<IGameState, IGameLetter<LETTER, STATE>, WeightedSummaryTargets>();
+		final NestedMap2<IGameState, IGameLetter<LETTER, STATE>, WeightedSummaryTargets> result = new NestedMap2<>();
 		for (final Entry<IGameState, HashRelation<IGameLetter<LETTER, STATE>, IGameState>> entry : hier2dupl2spoi
 				.entrySet()) {
 			final IGameState source = entry.getKey();
@@ -357,7 +358,7 @@ public class SummaryComputation<LETTER, STATE> {
 	private void constructNode(final NestedMap2<IGameState, IGameState, WeightedSummaryTargets> spoi2Wst,
 			final Set<IGameState> summaryComputationTriggers) {
 		final SummaryComputationGraphNode<LETTER, STATE> node =
-				new SummaryComputationGraphNode<LETTER, STATE>(spoi2Wst, summaryComputationTriggers);
+				new SummaryComputationGraphNode<>(spoi2Wst, summaryComputationTriggers);
 		mLogger.info("constructed node " + node);
 		if (!mNodes.contains(node)) {
 			mLogger.info("added to worklist");
@@ -404,7 +405,7 @@ public class SummaryComputation<LETTER, STATE> {
 			// take only these, where current state and summary source coincide
 			final WeightedSummaryTargets wst = spoi2Wst.get(source, source);
 			if (wst == null) {
-				// do nothing, 
+				// do nothing,
 				// this was a state for a different summary source
 			} else {
 				for (final Entry<IGameState, Integer> target2priority : wst.entrySet()) {
@@ -477,11 +478,6 @@ public class SummaryComputation<LETTER, STATE> {
 		return letter2succ2hier;
 	}
 
-	@FunctionalInterface
-	interface PriorityProvider<P, S> {
-		public Integer getPriority(P p, S s);
-	}
-
 	private <PRED, SUCC> Set<NestedMap2<IGameState, PRED, WeightedSummaryTargets>> computePredecessorsUnderPly(
 			final Set<NestedMap2<IGameState, SUCC, WeightedSummaryTargets>> succNodes,
 			final HashRelation<PRED, SUCC> pred2succ, final PriorityProvider<PRED, SUCC> priorityProvider,
@@ -518,7 +514,7 @@ public class SummaryComputation<LETTER, STATE> {
 		return preds;
 	}
 
-	private <SUCC, PRED> void addPredecessorsToLists(final HashRelation<PRED, SUCC> pred2succ,
+	private static <SUCC, PRED> void addPredecessorsToLists(final HashRelation<PRED, SUCC> pred2succ,
 			final PriorityProvider<PRED, SUCC> priorityProvider, final Map<SUCC, WeightedSummaryTargets> succNode,
 			final List<Pair<IGameState, PRED>> predSourceCurrentPairs,
 			final List<List<WeightedSummaryTargets>> predWeightedSummaryTargets, final IGameState source,
@@ -539,15 +535,10 @@ public class SummaryComputation<LETTER, STATE> {
 				// omit, there was not a single successor of pred in succNode
 			} else {
 				final List<WeightedSummaryTargets> aggregated = aggregation.aggregate(weightedSummaryTargetsSet);
-				predSourceCurrentPairs.add(new Pair<IGameState, PRED>(source, pred));
+				predSourceCurrentPairs.add(new Pair<>(source, pred));
 				predWeightedSummaryTargets.add(aggregated);
 			}
 		}
-	}
-
-	@FunctionalInterface
-	interface Aggregation {
-		public List<WeightedSummaryTargets> aggregate(Set<WeightedSummaryTargets> weightedSummaryTargetsSet);
 	}
 
 	private List<WeightedSummaryTargets>
@@ -579,17 +570,26 @@ public class SummaryComputation<LETTER, STATE> {
 	}
 
 	/**
-	 * @return the needSpoilerWinningSink
+	 * @return the needSpoilerWinningSink.
 	 */
 	public Set<IGameState> getNeedSpoilerWinningSink() {
 		return mNeedSpoilerWinningSink;
 	}
 
 	/**
-	 * @return the gameSummaries
+	 * @return the gameSummaries.
 	 */
 	public LinkedHashSet<GameCallReturnSummary<STATE>> getGameSummaries() {
 		return mGameSummaries;
 	}
 
+	@FunctionalInterface
+	interface Aggregation {
+		public List<WeightedSummaryTargets> aggregate(Set<WeightedSummaryTargets> weightedSummaryTargetsSet);
+	}
+
+	@FunctionalInterface
+	interface PriorityProvider<P, S> {
+		public Integer getPriority(P p, S s);
+	}
 }

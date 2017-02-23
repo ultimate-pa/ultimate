@@ -28,6 +28,10 @@ public final class PlotCsvUtils {
 	 */
 	public static final File DESKTOP = new File(System.getProperty("user.home"), "Desktop");
 
+	private PlotCsvUtils() {
+		// Utility class.
+	}
+
 	/**
 	 * Appends the given column content to the given CSV file.
 	 * 
@@ -203,12 +207,5 @@ public final class PlotCsvUtils {
 		}
 
 		pw.close();
-	}
-
-	/**
-	 * Utility class. No implementation.
-	 */
-	private PlotCsvUtils() {
-
 	}
 }

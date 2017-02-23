@@ -419,7 +419,7 @@ public abstract class AbstractMaxSatSolver<V> {
 	protected abstract void decideOne();
 
 	/**
-	 * current policy: just return the next variable from the set
+	 * current policy: just return the next variable from the set.
 	 * <p>
 	 * TODO other policies, e.g., prefer non-Horn clauses
 	 * 

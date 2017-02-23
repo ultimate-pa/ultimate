@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <STATE>
+ *            state type
  */
 public abstract class FullMultipebbleGameState<STATE> {
 
@@ -60,7 +61,7 @@ public abstract class FullMultipebbleGameState<STATE> {
 		final List<DoubleDecker<STATE>> result = new ArrayList<>();
 		for (final OutgoingInternalTransition<LETTER, STATE> trans : nwa
 				.internalSuccessors(mSpoilerDoubleDecker.getUp(), letter)) {
-			result.add(new DoubleDecker<STATE>(mSpoilerDoubleDecker.getDown(), trans.getSucc()));
+			result.add(new DoubleDecker<>(mSpoilerDoubleDecker.getDown(), trans.getSucc()));
 		}
 		return result;
 	}
@@ -70,7 +71,7 @@ public abstract class FullMultipebbleGameState<STATE> {
 		final List<DoubleDecker<STATE>> result = new ArrayList<>();
 		for (final OutgoingCallTransition<LETTER, STATE> trans : nwa.callSuccessors(mSpoilerDoubleDecker.getUp(),
 				letter)) {
-			result.add(new DoubleDecker<STATE>(mSpoilerDoubleDecker.getUp(), trans.getSucc()));
+			result.add(new DoubleDecker<>(mSpoilerDoubleDecker.getUp(), trans.getSucc()));
 		}
 		return result;
 	}
@@ -83,7 +84,7 @@ public abstract class FullMultipebbleGameState<STATE> {
 		final List<DoubleDecker<STATE>> result = new ArrayList<>();
 		for (final OutgoingReturnTransition<LETTER, STATE> trans : nwa.returnSuccessors(mSpoilerDoubleDecker.getUp(),
 				mSpoilerDoubleDecker.getDown(), letter)) {
-			result.add(new DoubleDecker<STATE>(hier.getDown(), trans.getSucc()));
+			result.add(new DoubleDecker<>(hier.getDown(), trans.getSucc()));
 		}
 		return result;
 	}
@@ -98,18 +99,23 @@ public abstract class FullMultipebbleGameState<STATE> {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		final FullMultipebbleGameState other = (FullMultipebbleGameState) obj;
+		}
+		final FullMultipebbleGameState<?> other = (FullMultipebbleGameState<?>) obj;
 		if (mSpoilerDoubleDecker == null) {
-			if (other.mSpoilerDoubleDecker != null)
+			if (other.mSpoilerDoubleDecker != null) {
 				return false;
-		} else if (!mSpoilerDoubleDecker.equals(other.mSpoilerDoubleDecker))
+			}
+		} else if (!mSpoilerDoubleDecker.equals(other.mSpoilerDoubleDecker)) {
 			return false;
+		}
 		return true;
 	}
 

@@ -76,8 +76,8 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 	}
 
 	/**
-	 * @param content
-	 *            Content.
+	 * @param pair
+	 *            Content/pair.
 	 * @return true iff content is known
 	 */
 	public abstract boolean hasContent(final T pair);

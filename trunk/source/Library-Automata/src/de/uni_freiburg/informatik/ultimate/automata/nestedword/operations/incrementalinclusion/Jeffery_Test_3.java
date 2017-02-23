@@ -45,9 +45,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * 
  * @author jefferyyjhsu@iis.sinica.edu.tw
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
-
 public class Jeffery_Test_3<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 	static long trueSumNodeInTheEnd1 = 0, trueSumNodeInTheEnd2 = 0, trueSumNodeInTheEnd3 = 0, trueSumNodeInTheEnd4 = 0,
 			trueSumNodeInTheEnd5 = 0, trueSumNodeInTheEnd32 = 0, trueSumNodeInTheEnd42 = 0, trueSumNodeInTheEnd52 = 0;
@@ -73,8 +74,8 @@ public class Jeffery_Test_3<LETTER, STATE> implements IOperation<LETTER, STATE, 
 	static long trueAvgNodeInTheEnd = 0, trueAvgNodeGenerated = 0, trueAvgRun = 0, trueTestNum = 0, trueAvgTime = 0;
 	static long falseAvgNodeInTheEnd = 0, falseAvgNodeGenerated = 0, falseAvgRun = 0, falseTestNum = 0,
 			falseAvgTime = 0;
-	ArrayList<INestedWordAutomaton<LETTER, STATE>> automataCollection;
 	private static ILogger mLogger;
+	ArrayList<INestedWordAutomaton<LETTER, STATE>> automataCollection;
 
 	public Jeffery_Test_3(final AutomataLibraryServices services, final IIncrementalInclusionStateFactory<STATE> sf,
 			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b,

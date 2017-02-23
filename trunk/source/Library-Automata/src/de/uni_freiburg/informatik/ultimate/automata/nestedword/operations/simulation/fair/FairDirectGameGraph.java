@@ -85,6 +85,9 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * After construction it mimics the behavior of a FairGameGraph, it can be
 	 * transformed to a DirectGameGraph using
 	 * {@link #transformToDirectGameGraph()}.
+	 * <p>
+	 * Throws an IllegalArgumentException If the input automaton is no Buchi automaton. It must have an empty call and
+	 * return alphabet.
 	 * 
 	 * @param services
 	 *            Service provider of Ultimate framework
@@ -101,9 +104,6 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
-	 * @throws IllegalArgumentException
-	 *             If the inputed automaton is no Buechi-automaton. It must have
-	 *             an empty call and return alphabet.
 	 */
 	public FairDirectGameGraph(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final IProgressAwareTimer progressTimer, final ILogger logger,

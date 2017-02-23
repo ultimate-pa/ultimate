@@ -55,6 +55,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  *            symbol type
  * @param <C>
  *            state/content type
+ * @param <CRSF>
+ *            check result state factory type
  */
 public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonStateFactory<C> & IConcurrentProductStateFactory<C> & INwaInclusionStateFactory<C>>
 		extends UnaryNetOperation<S, C, CRSF> {

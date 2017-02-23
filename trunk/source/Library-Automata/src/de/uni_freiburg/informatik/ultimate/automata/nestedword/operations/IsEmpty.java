@@ -225,7 +225,6 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 *            Ultimate services
 	 * @param operand
 	 *            input NWA
-	 * @throws AutomataOperationCanceledException
 	 */
 	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
@@ -241,7 +240,6 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 *            input NWA
 	 * @param strategy
 	 *            search strategy
-	 * @throws AutomataOperationCanceledException
 	 * @see #IsEmpty(AutomataLibraryServices, INestedWordAutomatonSimple)
 	 */
 	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand,
@@ -266,7 +264,6 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 *            forbidden states
 	 * @param goalStates
 	 *            goal states
-	 * @throws AutomataOperationCanceledException
 	 */
 	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
 			final Set<STATE> startStates, final Set<STATE> forbiddenStates, final Set<STATE> goalStates)
@@ -432,8 +429,6 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	/**
 	 * Get an accepting run of the automaton passed to the constructor. Return
 	 * null if the automaton does not accept any nested word.
-	 * 
-	 * @throws AutomataOperationCanceledException
 	 */
 	@SuppressWarnings("squid:S1698")
 	private NestedRun<LETTER, STATE> getAcceptingRun() throws AutomataOperationCanceledException {

@@ -58,13 +58,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
-	private static final String THE_RESULT_RECOGNIZES_LESS_WORDS_THAN_BEFORE =
-			"The result recognizes less words than before.";
-
 	/**
 	 * Default timeout: 1 second.
 	 */
 	public static final int DEFAULT_TIMEOUT = 1_000;
+
+	private static final String THE_RESULT_RECOGNIZES_LESS_WORDS_THAN_BEFORE =
+			"The result recognizes less words than before.";
 
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 
@@ -135,7 +135,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mOperand = operand;
-		final TimeoutFlag<LETTER, STATE> timeout = new TimeoutFlag<>(time);
+		final TimeoutFlag timeout = new TimeoutFlag(time);
 		final MinimizeSevpa<LETTER, STATE> backgroundMinimizer = new MinimizeSevpa<>(services, stateFactory, operand,
 				initialPartition, addMapOldState2newState, timeout, false);
 		constructResult(backgroundMinimizer.getConstructionInterrupted(), backgroundMinimizer.getResult(),

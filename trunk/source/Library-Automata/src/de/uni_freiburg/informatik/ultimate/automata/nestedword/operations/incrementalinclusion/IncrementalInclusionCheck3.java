@@ -49,22 +49,23 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeSta
  * 
  * @author jefferyyjhsu@iis.sinica.edu.tw
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
-
 public class IncrementalInclusionCheck3<LETTER, STATE> extends AbstractIncrementalInclusionCheck<LETTER, STATE>
 		implements IOperation<LETTER, STATE, IIncrementalInclusionStateFactory<STATE>> {
 	public int counter_run = 0, counter_total_nodes = 0;
-	private final INestedWordAutomatonSimple<LETTER, STATE> local_mA;
-	private final List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB;
-	private final ArrayList<INestedWordAutomatonSimple<LETTER, STATE>> local_mB2;
-	private final AutomataLibraryServices localServiceProvider;
-	private ArrayList<HashSet<STATE>> newBnStates = new ArrayList<>();
 	// public HashMap<STATE,ArrayList<NodeData<LETTER,STATE>>> completeTree,currentTree,terminalNodes;
 	// public HashMap<STATE,HashMap<NodeData<LETTER,STATE>,ArrayList<NodeData<LETTER,STATE>>>> coverage;
 	NestedRun<LETTER, STATE> result;
 	ArrayList<Leaf<LETTER, STATE>> startingLeafs = null, currentTerminalLeafs = null, completeLeafSet;
 	HashSet<Leaf<LETTER, STATE>> bufferedLeaf;
+	private final INestedWordAutomatonSimple<LETTER, STATE> local_mA;
+	private final List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB;
+	private final ArrayList<INestedWordAutomatonSimple<LETTER, STATE>> local_mB2;
+	private final AutomataLibraryServices localServiceProvider;
+	private ArrayList<HashSet<STATE>> newBnStates = new ArrayList<>();
 
 	class Leaf<LET, STA> {
 		public HashMap<LETTER, HashSet<Leaf<LET, STA>>> nextLeaf;

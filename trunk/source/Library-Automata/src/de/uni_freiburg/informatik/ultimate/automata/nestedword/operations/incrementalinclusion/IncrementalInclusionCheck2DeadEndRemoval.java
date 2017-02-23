@@ -51,9 +51,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeSta
  *
  * @author jefferyyjhsu@iis.sinica.edu.tw
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
-
 public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 		extends AbstractIncrementalInclusionCheck<LETTER, STATE>
 		implements IOperation<LETTER, STATE, IIncrementalInclusionStateFactory<STATE>> {

@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <STATE>
- * @param <GS>
+ *            state type
  */
 public abstract class InitialPartitionProcessor<STATE> {
 

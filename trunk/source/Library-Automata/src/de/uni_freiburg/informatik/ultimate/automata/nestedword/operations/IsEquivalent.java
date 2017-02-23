@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperatio
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -71,7 +72,7 @@ public class IsEquivalent<LETTER, STATE> extends BinaryNwaOperation<LETTER, STAT
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
 
-		if (!INestedWordAutomatonSimple.sameAlphabet(mFstOperand, mSndOperand)) {
+		if (!NestedWordAutomataUtils.sameAlphabet(mFstOperand, mSndOperand)) {
 			throw new AutomataLibraryException(this.getClass(), "The operands have different alphabets.");
 		}
 

@@ -215,24 +215,6 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 */
 	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state, final STATE hier);
 
-	/**
-	 * Checks whether two nested word automata have the same internal, call, and return alphabets.
-	 * 
-	 * @param fstOperand
-	 *            first operand
-	 * @param sndOperand
-	 *            second operand
-	 * @return {@code true} iff the automata have the same alphabets
-	 */
-	static <LETTER, STATE> boolean sameAlphabet(final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) {
-		boolean result;
-		result = fstOperand.getInternalAlphabet().equals(sndOperand.getInternalAlphabet());
-		result = result && fstOperand.getCallAlphabet().equals(sndOperand.getCallAlphabet());
-		result = result && fstOperand.getReturnAlphabet().equals(sndOperand.getReturnAlphabet());
-		return result;
-	}
-
 	@Override
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException {

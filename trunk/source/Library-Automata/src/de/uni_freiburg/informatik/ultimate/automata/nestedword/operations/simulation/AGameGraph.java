@@ -413,12 +413,12 @@ public abstract class AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Gets the priority of a given vertex.
+	 * <p>
+	 * Throws an IllegalArgumentException If the given vertex is <tt>null</tt>.
 	 * 
 	 * @param vertex
 	 *            The vertex of interest
 	 * @return The priority of the given vertex
-	 * @throws IllegalArgumentException
-	 *             If the given vertex is <tt>null</tt>.
 	 */
 	public int getPriority(final Vertex<LETTER, STATE> vertex) {
 		if (vertex == null) {
@@ -882,13 +882,11 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Verifies the validity of a given automaton. If the automaton is not valid
-	 * it throws an {@link IllegalArgumentException}.
+	 * Verifies the validity of a given automaton. If the automaton is not valid it throws an
+	 * {@link IllegalArgumentException}.
 	 * 
 	 * @param automaton
 	 *            Automaton to verify validity
-	 * @throws IllegalArgumentException
-	 *             If the given automaton is not valid
 	 */
 	public void verifyAutomatonValidity(final INestedWordAutomaton<LETTER, STATE> automaton) {
 		if (!automaton.getCallAlphabet().isEmpty() || !automaton.getReturnAlphabet().isEmpty()) {

@@ -341,7 +341,7 @@ public class GeneralMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	}
 
 	/**
-	 * @return true iff lowest level was popped
+	 * @return true iff lowest level was popped.
 	 */
 	private boolean popStack() {
 //		if (mLogger.isDebugEnabled()) {

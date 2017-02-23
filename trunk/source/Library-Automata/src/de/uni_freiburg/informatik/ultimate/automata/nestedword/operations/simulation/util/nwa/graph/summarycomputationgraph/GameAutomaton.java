@@ -58,7 +58,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
 public class GameAutomaton<LETTER, STATE>
 		extends NestedWordAutomatonOnDemandStateAndLetter<IGameLetter<LETTER, STATE>, IGameState> {

@@ -71,8 +71,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            letter type
  * @param <STATE>
  *            state type
- * @param <CRSF>
- *            checkResult state factory type
  */
 public abstract class AbstractMinimizeNwa<LETTER, STATE>
 		extends UnaryNwaOperation<LETTER, STATE, IMinimizationCheckResultStateFactory<STATE>> {

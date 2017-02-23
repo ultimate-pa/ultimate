@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <STATE>
+ *            state type
  */
 public class DirectFullMultipebbleGameState<STATE> extends FullMultipebbleGameState<STATE> {
 	private final HashRelation<STATE, STATE> mDuplicatorDoubleDeckers;
@@ -66,18 +67,23 @@ public class DirectFullMultipebbleGameState<STATE> extends FullMultipebbleGameSt
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (!super.equals(obj))
+		}
+		if (!super.equals(obj)) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		final DirectFullMultipebbleGameState other = (DirectFullMultipebbleGameState) obj;
+		}
+		final DirectFullMultipebbleGameState<?> other = (DirectFullMultipebbleGameState<?>) obj;
 		if (mDuplicatorDoubleDeckers == null) {
-			if (other.mDuplicatorDoubleDeckers != null)
+			if (other.mDuplicatorDoubleDeckers != null) {
 				return false;
-		} else if (!mDuplicatorDoubleDeckers.equals(other.mDuplicatorDoubleDeckers))
+			}
+		} else if (!mDuplicatorDoubleDeckers.equals(other.mDuplicatorDoubleDeckers)) {
 			return false;
+		}
 		return true;
 	}
 

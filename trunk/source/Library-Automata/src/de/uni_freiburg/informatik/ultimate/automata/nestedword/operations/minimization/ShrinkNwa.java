@@ -2741,7 +2741,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 		/**
 		 * @param size
-		 *            number of non-singleton
+		 *            number of non-singleton.
 		 */
 		public Matrix(final int size) {
 			mHier2lin2letter2succ = new HashMap<>(computeHashCap(size));
@@ -2770,7 +2770,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 		/**
 		 * @param hier
-		 *            the hierarchical state
+		 *            the hierarchical state.
 		 * @param lin2letter2succ
 		 *            the map (matrix row entries)
 		 */
@@ -2813,7 +2813,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 		/**
 		 * @param size
-		 *            size of the equivalence class
+		 *            size of the equivalence class.
 		 * @param state
 		 *            the first state
 		 * @param blocked

@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -60,7 +60,7 @@ public class VertexV1Delayed<LETTER, STATE> extends VertexV1<LETTER, STATE> {
 	 * @param q1
 	 *            the label of the second Buchi automaton state
 	 */
-	public VertexV1Delayed(int priority, boolean b, STATE q0, STATE q1) {
+	public VertexV1Delayed(final int priority, final boolean b, final STATE q0, final STATE q1) {
 		super(priority, q0, q1);
 		this.b = b;
 	}
@@ -92,17 +92,14 @@ public class VertexV1Delayed<LETTER, STATE> extends VertexV1<LETTER, STATE> {
 	}
 
 	/**
-	 * Returns q0 if stateNumber == false, q1 otherwise
-	 * 
 	 * @param stateNumber
 	 *            number of state to return.
-	 * @return state
+	 * @return state q0 if stateNumber == false, q1 otherwise
 	 */
-	public STATE getQ(boolean stateNumber) {
+	public STATE getQ(final boolean stateNumber) {
 		if (stateNumber) {
 			return getQ1();
-		} else {
-			return getQ0();
 		}
+		return getQ0();
 	}
 }

@@ -1032,7 +1032,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param lin
-		 *            linear predecessor state
+		 *            linear predecessor state.
 		 * @param hier
 		 *            hierarchical predecessor state
 		 * @param succ
@@ -1162,7 +1162,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param partition
-		 *            partition of the states
+		 *            partition of the states.
 		 * @param targetSet
 		 *            target set
 		 */
@@ -1209,7 +1209,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	class InternalPredecessorSetFinder extends APredecessorSetFinder {
 		/**
 		 * @param partition
-		 *            partition of the states
+		 *            partition of the states.
 		 * @param targetSet
 		 *            target set
 		 */
@@ -1239,7 +1239,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	class CallPredecessorSetFinder extends APredecessorSetFinder {
 		/**
 		 * @param partition
-		 *            partition of the states
+		 *            partition of the states.
 		 * @param targetSet
 		 *            target set
 		 */
@@ -1269,7 +1269,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	class ReturnPredecessorLinSetFinder extends APredecessorSetFinder {
 		/**
 		 * @param partition
-		 *            partition of the states
+		 *            partition of the states.
 		 * @param targetSet
 		 *            target set
 		 */
@@ -1305,7 +1305,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param partition
-		 *            partition of the states
+		 *            partition of the states.
 		 * @param targetSet
 		 *            target set
 		 * @param hier
@@ -1339,7 +1339,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	class ReturnSuccessorSetFinder extends APredecessorSetFinder {
 		/**
 		 * @param partition
-		 *            partition of the states
+		 *            partition of the states.
 		 * @param targetSet
 		 *            target set
 		 */
@@ -1500,7 +1500,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param inA
-		 *            true iff equivalence class is in target set
+		 *            true iff equivalence class is in target set.
 		 */
 		void setInTargetSet(final boolean inA) {
 			mInA = inA;
@@ -1520,7 +1520,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param intersected
-		 *            collection of intersected equivalence classes
+		 *            collection of intersected equivalence classes.
 		 *            needed to remember new intersections
 		 * @return collection of states in the intersection
 		 */
@@ -1563,7 +1563,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param state
-		 *            state to add
+		 *            state to add.
 		 * @return true iff state was not contained before
 		 */
 		boolean add(final STATE state) {
@@ -1712,7 +1712,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param operand
-		 *            original nested word automaton
+		 *            original nested word automaton.
 		 * @param states
 		 *            number of states (avoids rehashing)
 		 */
@@ -1778,7 +1778,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param equivalenceClass
-		 *            new equivalence class
+		 *            new equivalence class.
 		 */
 		void addEquivalenceClass(final EquivalenceClass equivalenceClass) {
 			mEquivalenceClasses.add(equivalenceClass);
@@ -1792,7 +1792,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param state
-		 *            state in equivalence class
+		 *            state in equivalence class.
 		 * @return equivalence class containing the state
 		 */
 		EquivalenceClass getEquivalenceClass(final STATE state) {
@@ -1801,7 +1801,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param state
-		 *            state for equivalence class
+		 *            state for equivalence class.
 		 * @param equivalenceClass
 		 *            equivalence class
 		 */
@@ -1818,7 +1818,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param equivalenceClass
-		 *            equivalence class for the work list
+		 *            equivalence class for the work list.
 		 */
 		void addToWorkList(final EquivalenceClass equivalenceClass) {
 			mWorkList.add(equivalenceClass);
@@ -1877,7 +1877,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param state
-		 *            state
+		 *            state.
 		 * @return true iff state has an incoming return transition
 		 */
 		public boolean hasIncomingReturns(final STATE state) {
@@ -2100,7 +2100,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param firstEquivalenceClass
-		 *            first equivalence class
+		 *            first equivalence class.
 		 *            (must not be null)
 		 */
 		public TargetSet(final EquivalenceClass firstEquivalenceClass) {
@@ -2174,7 +2174,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param equivalenceClass
-		 *            new equivalence class
+		 *            new equivalence class.
 		 */
 		void addEquivalenceClass(final EquivalenceClass equivalenceClass) {
 			mEquivalenceClasses.add(equivalenceClass);
@@ -2237,7 +2237,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param equivalenceClass
-		 *            equivalence class to add
+		 *            equivalence class to add.
 		 */
 		public void add(final EquivalenceClass equivalenceClass) {
 			assert (!mQueue.contains(equivalenceClass));
@@ -2285,7 +2285,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param hashSet
-		 *            hash set of states
+		 *            hash set of states.
 		 */
 		public PredecessorSet(final HashSet<STATE> hashSet) {
 			assert hashSet != null;
@@ -2301,7 +2301,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param state
-		 *            state to add
+		 *            state to add.
 		 */
 		void add(final STATE state) {
 			mCollection.add(state);
@@ -2607,7 +2607,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param state
-		 *            the state (must be contained in the original automaton)
+		 *            the state (must be contained in the original automaton).
 		 * @return true iff state was not removed
 		 */
 		boolean contains(final STATE state) {
@@ -2672,7 +2672,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 
 		/**
 		 * @param state
-		 *            state to remove
+		 *            state to remove.
 		 */
 		void removeState(final STATE state) {
 			switch (mMode) {

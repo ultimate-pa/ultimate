@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <STATE>
+ *            state type
  */
 public class GameCallReturnSummary<STATE> {
 	private final IGameState mSummarySource;
@@ -63,29 +64,26 @@ public class GameCallReturnSummary<STATE> {
 	}
 
 	/**
-	 * @return the summarySource
+	 * @return the summarySource.
 	 */
 	public IGameState getSummarySource() {
 		return mSummarySource;
 	}
 
 	/**
-	 * @return the spoilerDestinationState
+	 * @return the spoilerDestinationState.
 	 */
 	public STATE getSpoilerDestinationState() {
 		return mSpoilerDestinationState;
 	}
 
 	/**
-	 * @return the duplicatorResponses
+	 * @return the duplicatorResponses.
 	 */
 	public Map<IGameState, Integer> getDuplicatorResponses() {
 		return mDuplicatorResponses;
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -96,39 +94,42 @@ public class GameCallReturnSummary<STATE> {
 		return result;
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		final GameCallReturnSummary other = (GameCallReturnSummary) obj;
+		}
+		final GameCallReturnSummary<?> other = (GameCallReturnSummary<?>) obj;
 		if (mDuplicatorResponses == null) {
-			if (other.mDuplicatorResponses != null)
+			if (other.mDuplicatorResponses != null) {
 				return false;
-		} else if (!mDuplicatorResponses.equals(other.mDuplicatorResponses))
+			}
+		} else if (!mDuplicatorResponses.equals(other.mDuplicatorResponses)) {
 			return false;
+		}
 		if (mSpoilerDestinationState == null) {
-			if (other.mSpoilerDestinationState != null)
+			if (other.mSpoilerDestinationState != null) {
 				return false;
-		} else if (!mSpoilerDestinationState.equals(other.mSpoilerDestinationState))
+			}
+		} else if (!mSpoilerDestinationState.equals(other.mSpoilerDestinationState)) {
 			return false;
+		}
 		if (mSummarySource == null) {
-			if (other.mSummarySource != null)
+			if (other.mSummarySource != null) {
 				return false;
-		} else if (!mSummarySource.equals(other.mSummarySource))
+			}
+		} else if (!mSummarySource.equals(other.mSummarySource)) {
 			return false;
+		}
 		return true;
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
 	@Override
 	public String toString() {
 		return "Source:" + mSummarySource + ", SpoilerDestinationState:" + mSpoilerDestinationState

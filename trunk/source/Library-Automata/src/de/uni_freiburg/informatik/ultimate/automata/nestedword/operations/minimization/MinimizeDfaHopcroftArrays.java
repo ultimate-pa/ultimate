@@ -44,6 +44,8 @@ import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPai
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
+ * Hopcroft minimization using arrays as data structure.
+ * 
  * @author Björn Hagemeister
  * @param <LETTER>
  *            letter type

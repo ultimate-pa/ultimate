@@ -99,6 +99,10 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  *            State class of buechi automaton
  */
 public abstract class ASimulation<LETTER, STATE> {
+	/**
+	 * The resulting possible reduced buechi automaton.
+	 */
+	protected INestedWordAutomaton<LETTER, STATE> mResult;
 
 	/**
 	 * The logger used by the Ultimate framework.
@@ -113,10 +117,6 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	private final IProgressAwareTimer mProgressTimer;
 	/**
-	 * The resulting possible reduced buechi automaton.
-	 */
-	protected INestedWordAutomaton<LETTER, STATE> mResult;
-	/**
 	 * The object that computes the SCCs of a given buechi automaton.
 	 */
 	private SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>> mSccComp;
@@ -127,7 +127,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	/**
 	 * If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 */
-	private boolean mUseSCCs;
+	private boolean mUseSccs;
 	/**
 	 * Comparator that compares two given vertices by their progress measure whereas a higher measure gets favored
 	 * before a smaller.<br/>
@@ -150,7 +150,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
-	 * @param useSCCs
+	 * @param useSccs
 	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
@@ -159,18 +159,18 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
-	public ASimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
+	public ASimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSccs,
 			final IStateFactory<STATE> stateFactory, final ESimulationType simType)
 			throws AutomataOperationCanceledException {
 		mProgressTimer = progressTimer;
 		mLogger = logger;
-		mUseSCCs = useSCCs;
+		mUseSccs = useSccs;
 		mStateFactory = stateFactory;
 		mVertexComp = new VertexPmReverseComparator<>();
 
 		mSccComp = null;
 
-		mPerformance = new SimulationPerformance(simType, useSCCs);
+		mPerformance = new SimulationPerformance(simType, useSccs);
 	}
 
 	/**
@@ -185,7 +185,7 @@ public abstract class ASimulation<LETTER, STATE> {
 		mPerformance.startTimeMeasure(ETimeMeasure.OVERALL);
 		mPerformance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
 
-		if (mUseSCCs) { // calculate reduction with SCC
+		if (mUseSccs) { // calculate reduction with SCC
 			mPerformance.startTimeMeasure(ETimeMeasure.BUILD_SCC);
 			final DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory =
 					new DefaultStronglyConnectedComponentFactory<>();
@@ -197,14 +197,14 @@ public abstract class ASimulation<LETTER, STATE> {
 			final Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter =
 					new LinkedList<>(mSccComp.getSCCs()).iterator();
 			mPerformance.stopTimeMeasure(ETimeMeasure.BUILD_SCC);
-			int amountOfSCCs = 0;
+			int amountOfSccs = 0;
 			while (iter.hasNext()) {
 				final StronglyConnectedComponent<Vertex<LETTER, STATE>> scc = iter.next();
 				iter.remove();
 				efficientLiftingAlgorithm(calculateInfinityOfSCC(scc), scc.getNodes());
-				amountOfSCCs++;
+				amountOfSccs++;
 			}
-			mPerformance.setCountingMeasure(ECountingMeasure.SCCS, amountOfSCCs);
+			mPerformance.setCountingMeasure(ECountingMeasure.SCCS, amountOfSccs);
 		} else { // calculate reduction w/o SCCs
 			efficientLiftingAlgorithm(getGameGraph().getGlobalInfinity(), null);
 			mPerformance.addTimeMeasureValue(ETimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
@@ -226,7 +226,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 		retrieveGeneralAutomataPerformance();
 
-		mLogger.info((this.mUseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
+		mLogger.info((this.mUseSccs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
 	}
 
 	/**
@@ -561,7 +561,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 		// Initialize working list and the C value of all vertices
 		createWorkingList();
-		if (mUseSCCs) {
+		if (mUseSccs) {
 			for (final Vertex<LETTER, STATE> v : scc) {
 				initWorkingListAndCWithVertex(v, localInfinity, scc);
 			}
@@ -612,7 +612,7 @@ public abstract class ASimulation<LETTER, STATE> {
 				predecessorsToConsider.addAll(game.getPushOverPredecessors(v));
 			}
 			for (final Vertex<LETTER, STATE> w : predecessorsToConsider) {
-				if (mUseSCCs && !scc.contains(w)) {
+				if (mUseSccs && !scc.contains(w)) {
 					continue;
 				}
 
@@ -763,7 +763,7 @@ public abstract class ASimulation<LETTER, STATE> {
 		}
 
 		// Initialize C value of vertex
-		if (mUseSCCs) {
+		if (mUseSccs) {
 			vertex.setC(calcNghbCounter(vertex, localInfinity, scc));
 		} else {
 			if (getGameGraph().hasSuccessors(vertex)) {
@@ -781,7 +781,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * @return True if the simulation calculation gets optimized by using SCC, false if not.
 	 */
 	protected boolean isUsingSCCs() {
-		return mUseSCCs;
+		return mUseSccs;
 	}
 
 	/**
@@ -869,11 +869,11 @@ public abstract class ASimulation<LETTER, STATE> {
 	/**
 	 * Sets if the simulation calculation should be optimized using SCC, Strongly Connected Components or not.
 	 * 
-	 * @param useSCCs
+	 * @param useSccs
 	 *            True if the simulation calculation gets optimized by using SCC, false if not.
 	 */
-	protected void setUseSCCs(final boolean useSCCs) {
-		mUseSCCs = useSCCs;
+	protected void setUseSCCs(final boolean useSccs) {
+		mUseSccs = useSccs;
 	}
 
 	/**

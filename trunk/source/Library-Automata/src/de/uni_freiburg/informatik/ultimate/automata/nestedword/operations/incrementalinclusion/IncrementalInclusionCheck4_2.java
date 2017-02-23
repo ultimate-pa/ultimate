@@ -51,21 +51,21 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeSta
  * 
  * @author jefferyyjhsu@iis.sinica.edu.tw
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
-
 public class IncrementalInclusionCheck4_2<LETTER, STATE> extends AbstractIncrementalInclusionCheck<LETTER, STATE>
 		implements IOperation<LETTER, STATE, IIncrementalInclusionStateFactory<STATE>> {
 	public int counter_run = 0, counter_total_nodes = 0;
+	NestedRun<LETTER, STATE> result;
+	ArrayList<Leaf<LETTER, STATE>> startingLeafs = null, currentTerminalLeafs = null, completeLeafSet;
+	HashSet<Leaf<LETTER, STATE>> bufferedLeaf;
 	private final INestedWordAutomatonSimple<LETTER, STATE> local_mA;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB;
 	private final ArrayList<INestedWordAutomatonSimple<LETTER, STATE>> local_mB2;
 	private final AutomataLibraryServices localServiceProvider;
 	private ArrayList<STATE> newBnStates;
-
-	NestedRun<LETTER, STATE> result;
-	ArrayList<Leaf<LETTER, STATE>> startingLeafs = null, currentTerminalLeafs = null, completeLeafSet;
-	HashSet<Leaf<LETTER, STATE>> bufferedLeaf;
 
 	class Leaf<LET, STA> {
 		public HashMap<LETTER, HashSet<Leaf<LET, STA>>> nextLeaf;

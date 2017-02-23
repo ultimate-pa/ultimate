@@ -47,13 +47,14 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * 
  * @author jefferyyjhsu@iis.sinica.edu.tw
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
-
 public class Jeffery_Test_4<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
-	String folder;
 	static long faster_i = 0, slower_i = 0;
 	static long timeBuffer1, timeBuffer2;
+	String folder;
 
 	public Jeffery_Test_4(final AutomataLibraryServices services, final IIncrementalInclusionStateFactory<STATE> sf,
 			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b)

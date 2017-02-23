@@ -94,6 +94,8 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 	 * Iterator wrapper.
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 * @param <E>
+	 *            element type
 	 */
 	static final class IteratorFromPartition<E> implements Iterator<Pair<E, E>> {
 		private final Iterator<Set<E>> mBlockIt;

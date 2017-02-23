@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class TimeoutFlag<LETTER, STATE> implements IFlag {
+public class TimeoutFlag implements IFlag {
 	private final long mTimeout;
 
 	/**
@@ -39,7 +39,7 @@ public class TimeoutFlag<LETTER, STATE> implements IFlag {
 	 *            The time in milliseconds after which the timeout ends.
 	 */
 	public TimeoutFlag(final int timeout) {
-		this.mTimeout = System.currentTimeMillis() + timeout;
+		mTimeout = System.currentTimeMillis() + timeout;
 	}
 
 	@Override

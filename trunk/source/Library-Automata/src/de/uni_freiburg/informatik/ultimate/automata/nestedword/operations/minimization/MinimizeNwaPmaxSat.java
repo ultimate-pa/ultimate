@@ -239,7 +239,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	/**
 	 * Creates constraints <tt>\bigwedge_{p_h} \geg X_{p,q} \lor \bigvee_{q_h} X_{p_h, q_h}</tt>.
 	 * 
-	 * @return
+	 * @return {@code true} iff states are different
 	 */
 	private boolean generateBuchiConstraintsOneDirection(final STATE state1, final STATE state2) {
 		final Doubleton<STATE> linDoubleton = mStatePairs.get(state1, state2);

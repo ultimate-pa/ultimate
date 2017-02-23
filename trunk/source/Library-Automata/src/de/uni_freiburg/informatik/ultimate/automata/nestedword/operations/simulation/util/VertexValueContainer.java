@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util;
@@ -38,32 +38,6 @@ public final class VertexValueContainer {
 	 * Indicates that a field currently has no valid value.
 	 */
 	private static final int NO_VALUE = -1;
-
-	/**
-	 * Returns if the given value is valid or not.
-	 * 
-	 * @param value
-	 *            The value of interest
-	 * @return True if the value is valid, false if not
-	 */
-	public static boolean isValueValid(final int value) {
-		return value != NO_VALUE;
-	}
-
-	/**
-	 * Ensures that a given value is valid by comparing it to the internal field
-	 * {@link #NO_VALUE}.
-	 * 
-	 * @param value
-	 *            Value to ensure that it is valid
-	 * @throws IllegalArgumentException
-	 *             If the value is equals {@link #NO_VALUE}.
-	 */
-	private static void ensureValueIsValid(final int value) {
-		if (!isValueValid(value)) {
-			throw new IllegalArgumentException("Value must not be equals the internal value for 'NO_VALUE'.");
-		}
-	}
 
 	/**
 	 * The best neighbor measure.
@@ -107,21 +81,47 @@ public final class VertexValueContainer {
 	}
 
 	/**
-	 * @return the bestNeighborMeasure
+	 * Returns if the given value is valid or not.
+	 * 
+	 * @param value
+	 *            The value of interest
+	 * @return True if the value is valid, false if not
+	 */
+	public static boolean isValueValid(final int value) {
+		return value != NO_VALUE;
+	}
+
+	/**
+	 * Ensures that a given value is valid by comparing it to the internal field
+	 * {@link #NO_VALUE}.
+	 * 
+	 * @param value
+	 *            Value to ensure that it is valid
+	 * @throws IllegalArgumentException
+	 *             If the value is equals {@link #NO_VALUE}.
+	 */
+	private static void ensureValueIsValid(final int value) {
+		if (!isValueValid(value)) {
+			throw new IllegalArgumentException("Value must not be equals the internal value for 'NO_VALUE'.");
+		}
+	}
+
+	/**
+	 * @return the bestNeighborMeasure.
 	 */
 	public int getBestNeighborMeasure() {
 		return mBestNeighborMeasure;
 	}
 
 	/**
-	 * @return the neighborCounter
+	 * @return the neighborCounter.
 	 */
 	public int getNeighborCounter() {
 		return mNeighborCounter;
 	}
 
 	/**
-	 * @return the progressMeasure
+	 * @return the progressMeasure.
 	 */
 	public int getProgressMeasure() {
 		return mProgressMeasure;
@@ -129,7 +129,7 @@ public final class VertexValueContainer {
 
 	/**
 	 * @param bestNeighborMeasure
-	 *            the bestNeighborMeasure to set
+	 *            the bestNeighborMeasure to set.
 	 */
 	public void setBestNeighborMeasure(final int bestNeighborMeasure) {
 		ensureValueIsValid(bestNeighborMeasure);
@@ -138,7 +138,7 @@ public final class VertexValueContainer {
 
 	/**
 	 * @param neighborCounter
-	 *            the NeighborCounter to set
+	 *            the NeighborCounter to set.
 	 */
 	public void setNeighborCounter(final int neighborCounter) {
 		ensureValueIsValid(neighborCounter);
@@ -147,7 +147,7 @@ public final class VertexValueContainer {
 
 	/**
 	 * @param progressMeasure
-	 *            the progressMeasure to set
+	 *            the progressMeasure to set.
 	 */
 	public void setProgressMeasure(final int progressMeasure) {
 		ensureValueIsValid(progressMeasure);

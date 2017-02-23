@@ -74,8 +74,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *            letter type
  * @param <STATE>
  *            state type
- * @param <CRSF>
- *            checkResult state factory type
  */
 public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
 	private static final boolean DEFAULT_USE_BISIMULATION = true;

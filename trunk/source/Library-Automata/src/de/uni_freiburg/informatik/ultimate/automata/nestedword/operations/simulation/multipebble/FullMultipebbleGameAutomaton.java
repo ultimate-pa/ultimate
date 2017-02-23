@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonForLetterBasedOnDemandConstruction;
@@ -48,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <STATE>
+ *            state type
  */
 public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipebbleGameState<STATE>>
 		extends NestedWordAutomatonForLetterBasedOnDemandConstruction<LETTER, GS> {
@@ -61,8 +61,8 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 
 	public FullMultipebbleGameAutomaton(final AutomataLibraryServices services,
 			final FullMultipebbleStateFactory<STATE, GS> gameFactory,
-			final ISetOfPairs<STATE, ?> possibleEquivalentClasses, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
-			throws AutomataOperationCanceledException {
+			final ISetOfPairs<STATE, ?> possibleEquivalentClasses,
+			final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
 		mOperand = operand;
 		mStateFactory = gameFactory;
 		mEmptyStackState = gameFactory.createEmptyStackState();
@@ -148,34 +148,31 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 	public Set<LETTER> lettersInternal(final GS state) {
 		if (IFullMultipebbleAuxiliaryGameState.isDuplicatorWinningSink(state)) {
 			return Collections.emptySet();
-		} else {
-			return mOperand.lettersInternal(state.getSpoilerDoubleDecker().getUp());
 		}
+		return mOperand.lettersInternal(state.getSpoilerDoubleDecker().getUp());
 	}
 
 	@Override
 	public Set<LETTER> lettersCall(final GS state) {
 		if (IFullMultipebbleAuxiliaryGameState.isDuplicatorWinningSink(state)) {
 			return Collections.emptySet();
-		} else {
-			return mOperand.lettersCall(state.getSpoilerDoubleDecker().getUp());
 		}
+		return mOperand.lettersCall(state.getSpoilerDoubleDecker().getUp());
 	}
 
 	@Override
 	public Set<LETTER> lettersReturn(final GS state) {
 		if (IFullMultipebbleAuxiliaryGameState.isDuplicatorWinningSink(state)) {
 			return Collections.emptySet();
-		} else {
-			return mOperand.lettersReturn(state.getSpoilerDoubleDecker().getUp());
 		}
+		return mOperand.lettersReturn(state.getSpoilerDoubleDecker().getUp());
 	}
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, GS>> internalSuccessors(final GS state, final LETTER letter) {
 		final List<OutgoingInternalTransition<LETTER, GS>> result = new ArrayList<>();
 		for (final GS succ : mStateFactory.computeSuccessorsInternal(state, letter, mOperand)) {
-			result.add(new OutgoingInternalTransition<LETTER, GS>(letter, succ));
+			result.add(new OutgoingInternalTransition<>(letter, succ));
 		}
 		return result;
 	}
@@ -184,7 +181,7 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 	public Iterable<OutgoingCallTransition<LETTER, GS>> callSuccessors(final GS state, final LETTER letter) {
 		final List<OutgoingCallTransition<LETTER, GS>> result = new ArrayList<>();
 		for (final GS succ : mStateFactory.computeSuccessorsCall(state, letter, mOperand)) {
-			result.add(new OutgoingCallTransition<LETTER, GS>(letter, succ));
+			result.add(new OutgoingCallTransition<>(letter, succ));
 		}
 		return result;
 	}
@@ -194,9 +191,8 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 			final LETTER letter) {
 		final List<OutgoingReturnTransition<LETTER, GS>> result = new ArrayList<>();
 		for (final GS succ : mStateFactory.computeSuccessorsReturn(state, hier, letter, mOperand)) {
-			result.add(new OutgoingReturnTransition<LETTER, GS>(hier, letter, succ));
+			result.add(new OutgoingReturnTransition<>(hier, letter, succ));
 		}
 		return result;
 	}
-
 }

@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -64,7 +64,8 @@ public class VertexV0FairBisimulation<LETTER, STATE> extends VertexV0Delayed<LET
 	 * @param a
 	 *            the label of the Buchi automaton edge
 	 */
-	public VertexV0FairBisimulation(int priority, boolean b1, boolean b2, STATE q0, STATE q1, LETTER a) {
+	public VertexV0FairBisimulation(final int priority, final boolean b1, final boolean b2, final STATE q0,
+			final STATE q1, final LETTER a) {
 		super(priority, b1, q0, q1, a);
 		this.setB2(b2);
 	}
@@ -75,7 +76,7 @@ public class VertexV0FairBisimulation<LETTER, STATE> extends VertexV0Delayed<LET
 	 * @param copy
 	 *            the Vertex to copy
 	 */
-	public VertexV0FairBisimulation(VertexV0FairBisimulation<LETTER, STATE> copy) {
+	public VertexV0FairBisimulation(final VertexV0FairBisimulation<LETTER, STATE> copy) {
 		this(copy.getPriority(), copy.isB1(), copy.isB2(), copy.getQ0(), copy.getQ1(), copy.getA());
 	}
 
@@ -123,22 +124,19 @@ public class VertexV0FairBisimulation<LETTER, STATE> extends VertexV0Delayed<LET
 	 * @param b2
 	 *            the b2 to set
 	 */
-	public void setB2(boolean b2) {
+	public void setB2(final boolean b2) {
 		this.b2 = b2;
 	}
 
 	/**
-	 * Returns q0 if stateNumber == false, q1 otherwise
-	 * 
 	 * @param stateNumber
 	 *            number of state to return.
-	 * @return state
+	 * @return q0 if stateNumber == false, q1 otherwise.
 	 */
-	public STATE getQ(boolean stateNumber) {
+	public STATE getQ(final boolean stateNumber) {
 		if (stateNumber) {
 			return getQ1();
-		} else {
-			return getQ0();
 		}
+		return getQ0();
 	}
 }

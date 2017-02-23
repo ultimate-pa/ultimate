@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Partition implementation of a set of pairs that uses {@link UnionFind}
+ * Partition implementation of a set of pairs that uses {@link UnionFind}.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -50,12 +50,11 @@ public class UnionFindBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 	 * Partition that is returned as result. Constructed on-demand.
 	 * Once constructed we cannot add new elements.
 	 */
-	private Collection<Set<E>> mPartition = null;
-	private PartitionSizeInformation mPartitionSizeInformation = null;
+	private Collection<Set<E>> mPartition;
+	private PartitionSizeInformation mPartitionSizeInformation;
 
 	/**
-	 * @param partition
-	 *            Partition.
+	 * Constructor.
 	 */
 	public UnionFindBackedSetOfPairs() {
 		mUnionFind = new UnionFind<>();
@@ -68,7 +67,7 @@ public class UnionFindBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 		}
 		final Iterator<Set<E>> iterator = mPartition.iterator();
 		if (iterator.hasNext()) {
-			return new PartitionBackedSetOfPairs.IteratorFromPartition<E>(iterator);
+			return new PartitionBackedSetOfPairs.IteratorFromPartition<>(iterator);
 		}
 		return Collections.emptyIterator();
 	}

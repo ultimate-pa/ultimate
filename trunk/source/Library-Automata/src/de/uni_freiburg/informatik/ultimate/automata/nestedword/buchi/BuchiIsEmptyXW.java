@@ -554,11 +554,11 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 					NestedWord.MINUS_INFINITY, returnSuccessor);
 
 			// TODO: xw: line break
-			return callSuccessor == returnPredecessor ?
-			// Reconstruction-C: case 1, version 2010-12-21
-					runOfCall.concatenate(runOfReturn) :
+			return callSuccessor == returnPredecessor
+					// Reconstruction-C: case 1, version 2010-12-21
+					? runOfCall.concatenate(runOfReturn)
 					// Reconstruction: case 2, version 2010-12-21
-					runOfCall.concatenate(reconstructionC(callSuccessor, returnPredecessor)).concatenate(runOfReturn);
+					: runOfCall.concatenate(reconstructionC(callSuccessor, returnPredecessor)).concatenate(runOfReturn);
 		} else if (bridgeRange instanceof BuchiIsEmptyXW.SingletonBridge) {
 			// Reconstruction-C: case 3 and 4, version 2010-12-21
 			final STATE singleton = ((BuchiIsEmptyXW<LETTER, STATE>.SingletonBridge) bridgeRange).mSingleton;
@@ -615,13 +615,11 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 
 			// TODO: xw: breaking line
 			return ((callSuccessor == returnPredecessor) && mOperand.isFinal(callSuccessor))
-			?
-			// Reconstruction-AC: case 3, version 2010-11-22
-					reconstructionC(origin, callPredecessor).concatenate(runOfCall).concatenate(runOfReturn)
+					// Reconstruction-AC: case 3, version 2010-11-22
+					? reconstructionC(origin, callPredecessor).concatenate(runOfCall).concatenate(runOfReturn)
 							.concatenate(reconstructionC(returnSuccessor, destination))
-					:
 					// Reconstruction-AC: case 4, version 2010-11-22
-					reconstructionC(origin, callPredecessor).concatenate(runOfCall)
+					: reconstructionC(origin, callPredecessor).concatenate(runOfCall)
 							.concatenate(reconstructionAc(callSuccessor, returnPredecessor).concatenate(runOfReturn)
 									.concatenate(reconstructionC(returnSuccessor, destination)));
 		}

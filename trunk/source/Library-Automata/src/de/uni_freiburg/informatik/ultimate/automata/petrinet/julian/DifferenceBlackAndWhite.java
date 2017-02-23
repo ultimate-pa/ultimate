@@ -64,6 +64,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
  *            symbol type
  * @param <C>
  *            content type
+ * @param <CRSF>
+ *            check result state factory type
  */
 public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAutomatonStateFactory<C> & INwaInclusionStateFactory<C>>
 		extends UnaryNetOperation<S, C, CRSF> {
@@ -94,8 +96,8 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 	 * @param nwa
 	 *            nested word automaton
 	 */
-	public <FACTORY extends IBlackWhiteStateFactory<C> & ISinkStateFactory<C>> DifferenceBlackAndWhite(
-			final AutomataLibraryServices services, final FACTORY factory, final PetriNetJulian<S, C> net,
+	public <SF extends IBlackWhiteStateFactory<C> & ISinkStateFactory<C>> DifferenceBlackAndWhite(
+			final AutomataLibraryServices services, final SF factory, final PetriNetJulian<S, C> net,
 			final NestedWordAutomaton<S, C> nwa) {
 		super(services);
 		mOperand = net;

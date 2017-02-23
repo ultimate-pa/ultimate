@@ -158,8 +158,10 @@ public final class NestedWordAutomataUtils {
 	}
 
 	/**
-	 * Convert binary relation given as partition into binary relation given
-	 * as {@link HashRelation}
+	 * Convert binary relation given as partition into binary relation given as {@link HashRelation}.
+	 * 
+	 * @param <STATE>
+	 *            state type
 	 */
 	public static <STATE> HashRelation<STATE, STATE> constructHashRelation(final AutomataLibraryServices services,
 			final Collection<Set<STATE>> partition) throws AutomataOperationCanceledException {
@@ -233,6 +235,8 @@ public final class NestedWordAutomataUtils {
 	 *            The return type of, e.g., {@link INestedWordAutomaton#internalSuccessors(Object)}
 	 * @param funGetState
 	 *            A function that extracts a STATE from an element of iterable
+	 * @param <STATE>
+	 *            state type
 	 * @return A set of STATEs extracted from iterable.
 	 */
 	public static <STATE, T> Set<STATE> getStates(final Iterable<T> iterable, final Function<T, STATE> funGetState) {
@@ -268,10 +272,37 @@ public final class NestedWordAutomataUtils {
 	}
 
 	/**
-	 * We can consider an NWA empty if call and return alphabet are empty.
+	 * @param nwa
+	 *            nested word automaton
+	 * @param <LETTER>
+	 *            letter type
+	 * @param <STATE>
+	 *            state type
+	 * @return {@code true} iff both the call alphabet and the return alphabet is empty.
 	 */
 	public static <LETTER, STATE> boolean isFiniteAutomaton(final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		return nwa.getCallAlphabet().isEmpty() && nwa.getReturnAlphabet().isEmpty();
 	}
 
+	/**
+	 * Checks whether two nested word automata have the same internal, call, and return alphabets.
+	 * 
+	 * @param fstOperand
+	 *            first operand
+	 * @param sndOperand
+	 *            second operand
+	 * @param <LETTER>
+	 *            letter type
+	 * @param <STATE>
+	 *            state type
+	 * @return {@code true} iff the automata have the same alphabets
+	 */
+	public static <LETTER, STATE> boolean sameAlphabet(final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) {
+		boolean result;
+		result = fstOperand.getInternalAlphabet().equals(sndOperand.getInternalAlphabet());
+		result = result && fstOperand.getCallAlphabet().equals(sndOperand.getCallAlphabet());
+		result = result && fstOperand.getReturnAlphabet().equals(sndOperand.getReturnAlphabet());
+		return result;
+	}
 }

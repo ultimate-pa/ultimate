@@ -61,6 +61,10 @@ public final class RabitUtil {
 	 */
 	public static final String TOOL = "Reduce_test.jar";
 
+	private RabitUtil() {
+		// utility class
+	}
+
 	/**
 	 * Appends the given content to the output file.
 	 * 
@@ -173,7 +177,6 @@ public final class RabitUtil {
 	 * @param commands
 	 *            A list of Rabit tool commands with each pair having the
 	 *            argument to pass and a name for the argument
-	 * @throws IOException
 	 */
 	public static void processAutomaton(final File automaton, final List<Pair<String, ESimulationType>> commands)
 			throws IOException {
@@ -300,9 +303,9 @@ public final class RabitUtil {
 			return null;
 		}
 
-		String[] result = new String[2];
+		final String[] result = new String[2];
 
-		int pos = fileName.lastIndexOf('.');
+		final int pos = fileName.lastIndexOf('.');
 
 		if (pos == -1) {
 			result[0] = fileName;
@@ -313,12 +316,5 @@ public final class RabitUtil {
 		}
 
 		return result;
-	}
-
-	/**
-	 * Utility class. No implementation.
-	 */
-	private RabitUtil() {
-
 	}
 }

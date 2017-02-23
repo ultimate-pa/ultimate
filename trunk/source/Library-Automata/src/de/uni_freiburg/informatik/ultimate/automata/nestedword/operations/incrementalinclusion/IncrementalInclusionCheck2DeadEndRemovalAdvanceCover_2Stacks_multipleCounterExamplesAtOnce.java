@@ -54,13 +54,18 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * 
  * @author jefferyyjhsu@iis.sinica.edu.tw
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
-
 public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multipleCounterExamplesAtOnce<LETTER, STATE>
 		extends AbstractIncrementalInclusionCheck<LETTER, STATE>
 		implements IOperation<LETTER, STATE, IIncrementalInclusionStateFactory<STATE>> {
 	public int counter_run = 0, counter_total_nodes = 0;
+	public PseudoAutomata workingAutomata;
+	public LinkedList<PseudoAutomata> prvPAutomaton;
+	public int nodeNumberBeforeDelete = 0;
+	public int totalNodes = 0, totalAACNodes = 0, totalCoveredNodes = 0, totalUniqueNodes = 0;
 	private final INestedWordAutomatonSimple<LETTER, STATE> local_mA;
 	private INestedWordAutomatonSimple<LETTER, STATE> current_mB;
 	private final LinkedList<INestedWordAutomatonSimple<LETTER, STATE>> union_mBs;
@@ -69,19 +74,15 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 	private final IDeterminizeStateFactory<STATE> localStateFactory;
 	private final AutomataLibraryServices localServiceProvider;
 	private int counterExampleFlag;
-	public PseudoAutomata workingAutomata;
-	public LinkedList<PseudoAutomata> prvPAutomaton;
-	public int nodeNumberBeforeDelete = 0;
-	public int totalNodes = 0, totalAACNodes = 0, totalCoveredNodes = 0, totalUniqueNodes = 0;
 	private final boolean macc;
 
 	class NfaUnion implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
+		public IStateFactory<STATE> stateFactory;
 		INestedWordAutomatonSimple<LETTER, STATE> orgin, target;
 		NestedWordAutomaton<LETTER, STATE> result;
 		Collection<STATE> state1, state2;
 		Collection<LETTER> letter1, letter2, newLetterSet;
 		private final AutomataLibraryServices mServices;
-		public IStateFactory<STATE> stateFactory;
 
 		public NfaUnion(final AutomataLibraryServices services, final IStateFactory<STATE> sf,
 				final INestedWordAutomatonSimple<LETTER, STATE> in1,

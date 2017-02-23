@@ -63,8 +63,6 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 	 * 
 	 * @param services
 	 *            Ultimate services
-	 * @param stateFactory
-	 *            state factory
 	 * @param fstOperand
 	 *            first operand
 	 * @param sndOperand

@@ -163,9 +163,6 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 	 * Unsupported operation. Use
 	 * {@link #getDuplicatorVertex(Object, Object, Object, boolean, ETransitionType, SummarizeEdge, Sink)}
 	 * instead.
-	 * 
-	 * @throws UnsupportedOperationException
-	 *             Operation is not supported.
 	 */
 	@Override
 	public DuplicatorVertex<LETTER, STATE> getDuplicatorVertex(final STATE q0, final STATE q1, final LETTER a,
@@ -178,9 +175,6 @@ public final class DelayedNwaGameGraph<LETTER, STATE> extends DelayedGameGraph<L
 	 * Unsupported operation. Use
 	 * {@link #getSpoilerVertex(Object, Object, boolean, SummarizeEdge, Sink)}
 	 * instead.
-	 * 
-	 * @throws UnsupportedOperationException
-	 *             Operation is not supported.
 	 */
 	@Override
 	public SpoilerVertex<LETTER, STATE> getSpoilerVertex(final STATE q0, final STATE q1, final boolean bit) {

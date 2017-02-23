@@ -39,13 +39,15 @@ import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <STATE>
+ *            state type
  * @param <GS>
+ *            game state
  */
 public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipebbleGameState<STATE>>
 		implements ISinkStateFactory<GS>, IEmptyStackStateFactory<GS> {
+	protected final GS mSpoilerWinningSink;
 
 	private int mMaxNumberOfDoubleDeckerPebbles = 0;
-	protected final GS mSpoilerWinningSink;
 
 	private final ISetOfPairs<STATE, ?> mInitialPartition;
 

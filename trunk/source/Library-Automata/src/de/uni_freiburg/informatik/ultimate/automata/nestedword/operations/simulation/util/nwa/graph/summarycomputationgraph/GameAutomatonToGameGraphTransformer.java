@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.ETransitionType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorNwaVertex;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorWinningSink;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorSubSummaryChoiceVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorWinningSink;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerSubSummaryPriorityVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameLetter;
@@ -50,7 +50,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
 public class GameAutomatonToGameGraphTransformer<LETTER, STATE> {
 
@@ -68,8 +70,8 @@ public class GameAutomatonToGameGraphTransformer<LETTER, STATE> {
 		mServices = services;
 		mGameAutomaton = gameAutomaton;
 		mSpoilerWinningSink = spoilerWinningSink;
-		mDuplicatorWinningSink = new DuplicatorNwaVertex<LETTER, STATE>(0, false, null, null, null,
-				ETransitionType.SINK, new DuplicatorWinningSink<>(null));
+		mDuplicatorWinningSink = new DuplicatorNwaVertex<>(0, false, null, null, null, ETransitionType.SINK,
+				new DuplicatorWinningSink<>(null));
 		mGameGraph = new AGameGraph<LETTER, STATE>(mServices, null, null, null, operand) {
 
 			@Override
@@ -119,9 +121,8 @@ public class GameAutomatonToGameGraphTransformer<LETTER, STATE> {
 	private SpoilerNwaVertex<LETTER, STATE> getSpoilerVertex(final IGameState gameState) {
 		if (GameAutomaton.isSpoilerSink(gameState)) {
 			return mSpoilerWinningSink;
-		} else {
-			return GameAutomaton.unwrapSpoilerNwaVertex(gameState);
 		}
+		return GameAutomaton.unwrapSpoilerNwaVertex(gameState);
 	}
 
 	private void addEdgeToDuplicatorSink(final IGameState gameState) {

@@ -40,24 +40,24 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFact
  */
 public interface IBlock<STATE> {
 	/**
-	 * @return true iff block contains an initial state
+	 * @return true iff block contains an initial state.
 	 */
 	boolean isInitial();
 
 	/**
-	 * @return true iff block contains an final state
+	 * @return true iff block contains an final state.
 	 */
 	boolean isFinal();
 
 	/**
 	 * @param stateFactory
-	 *            state factory
+	 *            state factory.
 	 * @return state constructed by state factory
 	 */
 	STATE minimize(final IMergeStateFactory<STATE> stateFactory);
 
 	/**
-	 * @return iterator over all states
+	 * @return iterator over all states.
 	 */
 	Iterator<STATE> statesIterator();
 

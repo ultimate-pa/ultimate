@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <STATE>
+ *            state type
  */
 public class DelayedFullMultipebbleGameState<STATE> extends FullMultipebbleGameState<STATE> {
 	private final NestedMap2<STATE, STATE, Boolean> mDuplicatorDoubleDeckers;
@@ -72,14 +73,13 @@ public class DelayedFullMultipebbleGameState<STATE> extends FullMultipebbleGameS
 	protected boolean checkIfEmptyOrSomeBitIsTrue(final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
 		if (mDuplicatorDoubleDeckers.isEmpty()) {
 			return true;
-		} else {
-			for (final Triple<STATE, STATE, Boolean> triple : duplicatorDoubleDeckers.entrySet()) {
-				if (triple.getThird() == true) {
-					return true;
-				}
-			}
-			return false;
 		}
+		for (final Triple<STATE, STATE, Boolean> triple : duplicatorDoubleDeckers.entrySet()) {
+			if (triple.getThird() == true) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	public boolean areAllBitsTrue() {
@@ -106,20 +106,26 @@ public class DelayedFullMultipebbleGameState<STATE> extends FullMultipebbleGameS
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (!super.equals(obj))
+		}
+		if (!super.equals(obj)) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		final DelayedFullMultipebbleGameState other = (DelayedFullMultipebbleGameState) obj;
-		if (mAllBitsAreTrue != other.mAllBitsAreTrue)
+		}
+		final DelayedFullMultipebbleGameState<?> other = (DelayedFullMultipebbleGameState<?>) obj;
+		if (mAllBitsAreTrue != other.mAllBitsAreTrue) {
 			return false;
+		}
 		if (mDuplicatorDoubleDeckers == null) {
-			if (other.mDuplicatorDoubleDeckers != null)
+			if (other.mDuplicatorDoubleDeckers != null) {
 				return false;
-		} else if (!mDuplicatorDoubleDeckers.equals(other.mDuplicatorDoubleDeckers))
+			}
+		} else if (!mDuplicatorDoubleDeckers.equals(other.mDuplicatorDoubleDeckers)) {
 			return false;
+		}
 		return true;
 	}
 

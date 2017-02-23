@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <STATE>
+ *            state type
  */
 public class DelayedFullMultipebbleStateFactory<STATE>
 		extends FullMultipebbleStateFactory<STATE, DelayedFullMultipebbleGameState<STATE>> {
@@ -62,7 +63,7 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 	}
 
 	@Override
-	protected <LETTER> DelayedFullMultipebbleGameState<STATE> constructSpoilerWinningSink() {
+	protected DelayedFullMultipebbleGameState<STATE> constructSpoilerWinningSink() {
 		return new AuxiliaryDelayedFullMultipebbleGameState<>(AuxiliaryGameStateType.SPOILER_WINNING_SINK);
 	}
 
@@ -79,7 +80,7 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 				final boolean succDuplicatorObligationBit = computeSuccDuplicatorObligationBit(spoilerSuccIsFinal,
 						doubleDecker.getThird(), duplicatorSucc.getUp(), nwa);
 				if (!succDuplicatorObligationBit && spoilerSucc.equals(duplicatorSucc)) {
-					// duplicator succs contains spoiler succ, hence spoiler cannot win 
+					// duplicator succs contains spoiler succ, hence spoiler cannot win
 					return null;
 				}
 				if (isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
@@ -93,9 +94,8 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 		}
 		if (duplicatorSuccStates.isEmpty()) {
 			return mSpoilerWinningSink;
-		} else {
-			return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 		}
+		return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 	}
 
 	@Override
@@ -112,7 +112,7 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 				final boolean succDuplicatorObligationBit = computeSuccDuplicatorObligationBit(spoilerSuccIsFinal,
 						doubleDecker.getThird(), duplicatorSucc.getUp(), nwa);
 				if (!succDuplicatorObligationBit && spoilerSucc.equals(duplicatorSucc)) {
-					// duplicator succs contains spoiler succ, hence spoiler cannot win 
+					// duplicator succs contains spoiler succ, hence spoiler cannot win
 					return null;
 				}
 				if (isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
@@ -126,9 +126,8 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 		}
 		if (duplicatorSuccStates.isEmpty()) {
 			return mSpoilerWinningSink;
-		} else {
-			return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 		}
+		return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 	}
 
 	@Override
@@ -150,7 +149,7 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 						final boolean succDuplicatorObligationBit = computeSuccDuplicatorObligationBit(
 								spoilerSuccIsFinal, entry.getValue(), duplicatorSucc.getUp(), nwa);
 						if (!succDuplicatorObligationBit && spoilerSucc.equals(duplicatorSucc)) {
-							// duplicator succs contains spoiler succ, hence spoiler cannot win 
+							// duplicator succs contains spoiler succ, hence spoiler cannot win
 							return null;
 						}
 						if (duplicatorSuccStates.get(duplicatorSucc.getDown(),
@@ -172,9 +171,8 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 		}
 		if (duplicatorSuccStates.isEmpty()) {
 			return mSpoilerWinningSink;
-		} else {
-			return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 		}
+		return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 	}
 
 	private <LETTER> boolean computeSuccDuplicatorObligationBit(final boolean spoilerSuccIsFinal,
@@ -182,6 +180,22 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		return (spoilerSuccIsFinal || predecessorDuplicatorObligationBit) && !nwa.isFinal(duplicatorSucc);
 
+	}
+
+	@Override
+	public <LETTER> boolean isImmediatelyWinningForSpoiler(final STATE q0, final STATE q1,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+		return false;
+	}
+
+	@Override
+	public <LETTER> DelayedFullMultipebbleGameState<STATE> constructInitialState(final STATE q0, final STATE q1,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+		final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers = new NestedMap2<>();
+		final boolean duplicatorObligationBit = operand.isFinal(q0) && !operand.isFinal(q1);
+		duplicatorDoubleDeckers.put(operand.getEmptyStackState(), q1, duplicatorObligationBit);
+		return new DelayedFullMultipebbleGameState<>(new DoubleDecker<>(operand.getEmptyStackState(), q0),
+				duplicatorDoubleDeckers);
 	}
 
 	public static class AuxiliaryDelayedFullMultipebbleGameState<STATE> extends DelayedFullMultipebbleGameState<STATE>
@@ -239,34 +253,20 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 
 		@Override
 		public boolean equals(final Object obj) {
-			if (this == obj)
+			if (this == obj) {
 				return true;
-			if (!super.equals(obj))
+			}
+			if (!super.equals(obj)) {
 				return false;
-			if (getClass() != obj.getClass())
+			}
+			if (getClass() != obj.getClass()) {
 				return false;
-			final AuxiliaryDelayedFullMultipebbleGameState other = (AuxiliaryDelayedFullMultipebbleGameState) obj;
-			if (mAuxiliaryGameStateType != other.mAuxiliaryGameStateType)
+			}
+			final AuxiliaryDelayedFullMultipebbleGameState<?> other = (AuxiliaryDelayedFullMultipebbleGameState<?>) obj;
+			if (mAuxiliaryGameStateType != other.mAuxiliaryGameStateType) {
 				return false;
+			}
 			return true;
 		}
-
 	}
-
-	@Override
-	public <LETTER> boolean isImmediatelyWinningForSpoiler(final STATE q0, final STATE q1,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
-		return false;
-	}
-
-	@Override
-	public <LETTER> DelayedFullMultipebbleGameState<STATE> constructInitialState(final STATE q0, final STATE q1,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
-		final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers = new NestedMap2<>();
-		final boolean duplicatorObligationBit = operand.isFinal(q0) && !operand.isFinal(q1);
-		duplicatorDoubleDeckers.put(operand.getEmptyStackState(), q1, duplicatorObligationBit);
-		return new DelayedFullMultipebbleGameState<>(new DoubleDecker<STATE>(operand.getEmptyStackState(), q0),
-				duplicatorDoubleDeckers);
-	}
-
 }

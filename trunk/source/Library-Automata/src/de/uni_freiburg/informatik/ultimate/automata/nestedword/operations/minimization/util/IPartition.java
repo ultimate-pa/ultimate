@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util;
@@ -39,18 +39,18 @@ import java.util.Iterator;
 public interface IPartition<STATE> {
 	/**
 	 * @param state
-	 *            state
+	 *            state.
 	 * @return (unique) block containing state
 	 */
 	IBlock<STATE> getBlock(final STATE state);
 
 	/**
-	 * @return number of blocks
+	 * @return number of blocks.
 	 */
 	int size();
 
 	/**
-	 * @return iterator over all blocks
+	 * @return iterator over all blocks.
 	 */
 	Iterator<IBlock<STATE>> blocksIterator();
 }

@@ -45,13 +45,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * 
  * @author jefferyyjhsu@iis.sinica.edu.tw
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
-
 public class Jeffery_Test_2<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
-	ArrayList<INestedWordAutomaton<LETTER, STATE>> automataCollection;
 	private static ILogger mLogger;
+	ArrayList<INestedWordAutomaton<LETTER, STATE>> automataCollection;
 	Boolean result1, result2;
 
 	public Jeffery_Test_2(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> sf,

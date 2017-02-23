@@ -35,7 +35,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
 public class DirectSimulationInfoProvider<LETTER, STATE> implements ISimulationInfoProvider<LETTER, STATE> {
 

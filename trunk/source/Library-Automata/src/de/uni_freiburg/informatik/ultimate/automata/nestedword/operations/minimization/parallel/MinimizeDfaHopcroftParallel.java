@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		implements IMinimize {
-	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	/**
 	 * True if Hopcroft algorithm shall help Incremental algorithm, false
 	 * otherwise.
@@ -73,6 +72,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	 */
 	private static boolean sParallel;
 
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	/**
 	 * Whether the result is constructed yet.
 	 */
@@ -571,6 +571,8 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	// Block--------------------------------------
 
 	/**
+	 * Block.
+	 * 
 	 * @author layla
 	 */
 	private static class Block {

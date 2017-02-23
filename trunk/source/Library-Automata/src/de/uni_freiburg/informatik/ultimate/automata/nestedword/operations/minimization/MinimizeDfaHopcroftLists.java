@@ -61,11 +61,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            Class of the states from the automata
  */
 public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
-	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	/**
 	 * Initial amount of blocks.
 	 */
 	private static final int INITIAL_BLOCK_AMOUNT = 2;
+
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	/**
 	 * Next usable unique id for a block.
 	 */
