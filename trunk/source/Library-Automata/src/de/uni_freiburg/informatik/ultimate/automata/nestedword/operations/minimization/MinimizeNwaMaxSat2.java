@@ -90,6 +90,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	protected final Settings<STATE> mSettings;
 	protected final AbstractMaxSatSolver<T> mSolver;
 	protected ScopedTransitivityGenerator<T, STATE> mTransitivityGenerator;
+	protected final boolean mLibraryMode;
 
 	protected int mNumberClausesAcceptance;
 	protected int mNumberClausesTransitions;
@@ -99,6 +100,8 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	protected long mTimer;
 	protected long mTimePreprocessing;
 	protected long mTimeSolving;
+
+	protected long mNumberOfResultPairs;
 
 	/**
 	 * @param services
@@ -113,15 +116,18 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	 *            settings wrapper
 	 * @param statePair2Var
 	 *            mapping from two states to solver variable
+	 * @param libraryMode
+	 *            {@code true} iff solver is called by another operation
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
 	protected MinimizeNwaMaxSat2(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final Settings<STATE> settings, final NestedMap2<STATE, STATE, T> statePair2Var)
+			final Settings<STATE> settings, final NestedMap2<STATE, STATE, T> statePair2Var, final boolean libraryMode)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mTimer = System.currentTimeMillis();
+		mLibraryMode = libraryMode;
 		mOperand = operand;
 		mStatePair2Var = statePair2Var;
 		mSettings = settings;
@@ -190,8 +196,17 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		if (!satisfiable) {
 			throw new AssertionError("Constructed constraints were unsatisfiable");
 		}
-		final UnionFind<STATE> resultingEquivalenceClasses = constructResultEquivalenceClasses();
-		constructResultFromUnionFind(resultingEquivalenceClasses, addMapOldState2newState);
+		final UnionFind<STATE> resultPartition = constructResultEquivalenceClasses();
+		mNumberOfResultPairs = countNumberOfPairs(resultPartition);
+		constructResultFromUnionFind(resultPartition, addMapOldState2newState);
+	}
+
+	private long countNumberOfPairs(final UnionFind<STATE> resultPartition) {
+		long result = 0;
+		for (final Set<STATE> block : resultPartition.getAllEquivalenceClasses()) {
+			result += ((long) block.size()) * ((long) block.size()) - block.size();
+		}
+		return result;
 	}
 
 	protected abstract AbstractMaxSatSolver<T> createTransitivitySolver();
@@ -764,11 +779,16 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
+		addStatistics(statistics);
+		return statistics;
+	}
+
+	public void addStatistics(final AutomataOperationStatistics statistics) {
 		statistics.addKeyValuePair(StatisticsType.TIME_PREPROCESSING, mTimePreprocessing);
 		statistics.addKeyValuePair(StatisticsType.TIME_SOLVING, mTimeSolving);
 		statistics.addKeyValuePair(StatisticsType.NUMBER_OF_VARIABLES, mSolver.getNumberOfVariables());
 		statistics.addKeyValuePair(StatisticsType.NUMBER_OF_CLAUSES, mSolver.getNumberOfClauses());
-		return statistics;
+		statistics.addKeyValuePair(StatisticsType.NUMBER_RESULT_PAIRS, mNumberOfResultPairs);
 	}
 
 	@Override

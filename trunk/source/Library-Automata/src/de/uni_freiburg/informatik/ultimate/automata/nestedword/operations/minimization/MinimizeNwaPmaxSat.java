@@ -68,6 +68,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	private final Iterable<Set<STATE>> mInitialPartition;
 	private final int mLargestBlockInitialPartition;
 	private final int mInitialPartitionSize;
+	private final long mNumberOfInitialPairs;
 
 	/**
 	 * Constructor that should be called by the automata script interpreter.
@@ -85,7 +86,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand,
-				new PartitionBackedSetOfPairs<>(Collections.singleton(operand.getStates())), new Settings<>());
+				new PartitionBackedSetOfPairs<>(Collections.singleton(operand.getStates())), new Settings<>(), false);
 	}
 
 	/**
@@ -108,7 +109,32 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISetOfPairs<STATE, Collection<Set<STATE>>> initialPartition, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, initialPartition, settings, true);
+		this(services, stateFactory, operand, initialPartition, settings, true, true);
+	}
+
+	/**
+	 * Constructor with an initial partition and library mode switch.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            input nested word automaton
+	 * @param initialPartition
+	 *            We only try to merge states that are in one of the blocks.
+	 * @param settings
+	 *            settings wrapper
+	 * @param libraryMode
+	 *            {@code true} iff solver is called by another operation
+	 * @throws AutomataOperationCanceledException
+	 *             thrown by cancel request
+	 */
+	public MinimizeNwaPmaxSat(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final ISetOfPairs<STATE, Collection<Set<STATE>>> initialPartition, final Settings<STATE> settings,
+			final boolean libraryMode) throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand, initialPartition, settings, true, libraryMode);
 	}
 
 	/**
@@ -126,14 +152,17 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	 *            settings wrapper
 	 * @param applyInitialPartitionPreprocessing
 	 *            {@code true} iff preprocessing of the initial partition should be applied
+	 * @param libraryMode
+	 *            {@code true} iff solver is called by another operation
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
 	public MinimizeNwaPmaxSat(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISetOfPairs<STATE, Collection<Set<STATE>>> initialPartition, final Settings<STATE> settings,
-			final boolean applyInitialPartitionPreprocessing) throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand, settings, new NestedMap2<>());
+			final boolean applyInitialPartitionPreprocessing, final boolean libraryMode)
+			throws AutomataOperationCanceledException {
+		super(services, stateFactory, operand, settings, new NestedMap2<>(), libraryMode);
 
 		printStartMessage();
 
@@ -144,15 +173,18 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 		mState2EquivalenceClass = new HashMap<>();
 		int largestBlockInitialPartition = 0;
 		int initialPartitionSize = 0;
-		for (final Set<STATE> equivalenceClass : mInitialPartition) {
-			for (final STATE state : equivalenceClass) {
-				mState2EquivalenceClass.put(state, equivalenceClass);
+		long initialPairsSize = 0;
+		for (final Set<STATE> block : mInitialPartition) {
+			for (final STATE state : block) {
+				mState2EquivalenceClass.put(state, block);
 			}
-			largestBlockInitialPartition = Math.max(largestBlockInitialPartition, equivalenceClass.size());
+			largestBlockInitialPartition = Math.max(largestBlockInitialPartition, block.size());
+			initialPairsSize += ((long) block.size()) * ((long) block.size()) - block.size();
 			++initialPartitionSize;
 		}
 		mLargestBlockInitialPartition = largestBlockInitialPartition;
 		mInitialPartitionSize = initialPartitionSize;
+		mNumberOfInitialPairs = initialPairsSize;
 		mLogger.info("Initial partition has " + initialPartitionSize + " blocks, largest block has "
 				+ largestBlockInitialPartition + " states");
 
@@ -170,12 +202,32 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
-		if (mLargestBlockInitialPartition != 0) {
-			statistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
-					mLargestBlockInitialPartition);
-			statistics.addKeyValuePair(StatisticsType.SIZE_INITIAL_PARTITION, mInitialPartitionSize);
-		}
+		addStatistics(statistics, false);
 		return statistics;
+	}
+
+	@Override
+	public void addStatistics(final AutomataOperationStatistics statistics) {
+		addStatistics(statistics, true);
+	}
+
+	private void addStatistics(final AutomataOperationStatistics statistics, final boolean addSuperStatistics) {
+		if (addSuperStatistics) {
+			super.addStatistics(statistics);
+		}
+		if (mLargestBlockInitialPartition != 0) {
+			statistics.addKeyValuePair(mLibraryMode
+					? StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK_PMAXSAT
+					: StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK, mLargestBlockInitialPartition);
+			statistics.addKeyValuePair(
+					mLibraryMode
+							? StatisticsType.SIZE_INITIAL_PARTITION_PMAXSAT
+							: StatisticsType.SIZE_INITIAL_PARTITION,
+					mInitialPartitionSize);
+			statistics.addKeyValuePair(
+					mLibraryMode ? StatisticsType.NUMBER_INITIAL_PAIRS_PMAXSAT : StatisticsType.NUMBER_INITIAL_PAIRS,
+					mNumberOfInitialPairs);
+		}
 	}
 
 	@Override

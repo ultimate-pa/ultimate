@@ -64,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Computes a simulation relation and applies PMax-SAT-based minimization afterward.
@@ -136,20 +137,21 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 			assert NwaSimulationUtil.areNwaSimulationResultsCorrect(graph, mOperand, getSimulationType(),
 					new NwaSimulationUtil.BinaryRelationPredicateFromPartition<>(possibleEquivalentClasses),
 					mLogger) : "The computed simulation results are incorrect.";
-			IDoubleDeckerAutomaton<LETTER, STATE> result;
+			Pair<IDoubleDeckerAutomaton<LETTER, STATE>, MinimizeNwaMaxSat2<LETTER, STATE, ?>> resultPair;
 			switch (backend) {
 				case FINITE_AUTOMATON:
-					result = useFiniteAutomatonBackend(stateFactory, operand, simulationInfoProvider, graph);
+					resultPair = useFiniteAutomatonBackend(stateFactory, operand, simulationInfoProvider, graph);
 					break;
 				case BISIMULATION:
-					result = useBisimulationBackend(stateFactory, operand, simulationInfoProvider, graph);
+					resultPair = useBisimulationBackend(stateFactory, operand, simulationInfoProvider, graph);
 					break;
 				case SIMULATION:
-					result = useSimulationBackend(stateFactory, operand, simulationInfoProvider, graph);
+					resultPair = useSimulationBackend(stateFactory, operand, simulationInfoProvider, graph);
 					break;
 				default:
 					throw new IllegalArgumentException("Unknown backend type: " + backend);
 			}
+			final IDoubleDeckerAutomaton<LETTER, STATE> result = resultPair.getFirst();
 			super.directResultConstruction(result);
 
 			sim.triggerComputationOfPerformanceData(result);
@@ -158,10 +160,13 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 					mServices);
 			mStatistics = super.getAutomataOperationStatistics();
 			sim.getSimulationPerformance().exportToExistingAutomataOperationStatistics(mStatistics);
-			mStatistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
-					sizeOfLargestEquivalenceClass);
+			mStatistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK, sizeOfLargestEquivalenceClass);
 			mStatistics.addKeyValuePair(StatisticsType.SIZE_GAME_AUTOMATON, gameAutomatonSize);
 			mStatistics.addKeyValuePair(StatisticsType.SIZE_GAME_GRAPH, graph.getSize());
+			final MinimizeNwaMaxSat2<LETTER, STATE, ?> maxSatMinimizer = resultPair.getSecond();
+			if (maxSatMinimizer != null) {
+				maxSatMinimizer.addStatistics(mStatistics);
+			}
 
 		} catch (final AutomataOperationCanceledException aoce) {
 			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
@@ -231,7 +236,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		return computeEquivalenceRelation(simRelation.getRelation(), operand.getStates());
 	}
 
-	private IDoubleDeckerAutomaton<LETTER, STATE> useFiniteAutomatonBackend(
+	private Pair<IDoubleDeckerAutomaton<LETTER, STATE>, MinimizeNwaMaxSat2<LETTER, STATE, ?>> useFiniteAutomatonBackend(
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
 			final AGameGraph<LETTER, STATE> graph) {
@@ -240,10 +245,10 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		final boolean addMapping = false;
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
 				new QuotientNwaConstructor<>(mServices, stateFactory, mOperand, equivalenceRelation, addMapping);
-		return (IDoubleDeckerAutomaton<LETTER, STATE>) quotientNwaConstructor.getResult();
+		return new Pair<>((IDoubleDeckerAutomaton<LETTER, STATE>) quotientNwaConstructor.getResult(), null);
 	}
 
-	private IDoubleDeckerAutomaton<LETTER, STATE> useBisimulationBackend(
+	private Pair<IDoubleDeckerAutomaton<LETTER, STATE>, MinimizeNwaMaxSat2<LETTER, STATE, ?>> useBisimulationBackend(
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider, final AGameGraph<LETTER, STATE> graph)
 			throws AutomataOperationCanceledException {
@@ -253,10 +258,10 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		final MinimizeNwaPmaxSat<LETTER, STATE> maxSatMinimizer = new MinimizeNwaPmaxSat<>(mServices, stateFactory,
 				mOperand, new PartitionBackedSetOfPairs<>(equivalenceRelation.getAllEquivalenceClasses()),
 				new MinimizeNwaMaxSat2.Settings<STATE>().setFinalStateConstraints(!mergeFinalAndNonFinalStates));
-		return maxSatMinimizer.getResult();
+		return new Pair<>(maxSatMinimizer.getResult(), maxSatMinimizer);
 	}
 
-	private IDoubleDeckerAutomaton<LETTER, STATE> useSimulationBackend(
+	private Pair<IDoubleDeckerAutomaton<LETTER, STATE>, MinimizeNwaMaxSat2<LETTER, STATE, ?>> useSimulationBackend(
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider, final AGameGraph<LETTER, STATE> graph)
 			throws AutomataOperationCanceledException {
@@ -266,8 +271,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		final boolean mergeFinalAndNonFinalStates = simulationInfoProvider.mayMergeFinalAndNonFinalStates();
 		final MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> maxSatMinimizer = new MinimizeNwaPmaxSatAsymmetric<>(
 				mServices, stateFactory, mOperand, simRelation.getRelation(),
-				new MinimizeNwaMaxSat2.Settings<STATE>().setFinalStateConstraints(!mergeFinalAndNonFinalStates));
-		return maxSatMinimizer.getResult();
+				new MinimizeNwaMaxSat2.Settings<STATE>().setFinalStateConstraints(!mergeFinalAndNonFinalStates), true);
+		return new Pair<>(maxSatMinimizer.getResult(), maxSatMinimizer);
 	}
 
 	@Override

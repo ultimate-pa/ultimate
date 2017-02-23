@@ -80,7 +80,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	public MinimizeNwaPmaxSatAsymmetric(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, createAtsInitialPairs(services, operand), new Settings<>());
+		this(services, stateFactory, operand, createAtsInitialPairs(services, operand), new Settings<>(), false);
 	}
 
 	/**
@@ -103,7 +103,30 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final Iterable<Pair<STATE, STATE>> initialPairs, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, createNestedMapWithInitialPairs(initialPairs), settings);
+		this(services, stateFactory, operand, createNestedMapWithInitialPairs(initialPairs), settings, true);
+	}
+
+	/**
+	 * Constructor with initial pairs and library switch.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            input nested word automaton
+	 * @param initialPairs
+	 *            allowed pairs of states
+	 * @param settings
+	 *            settings wrapper
+	 * @throws AutomataOperationCanceledException
+	 *             thrown by cancel request
+	 */
+	public MinimizeNwaPmaxSatAsymmetric(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final Iterable<Pair<STATE, STATE>> initialPairs, final Settings<STATE> settings, final boolean libraryMode)
+			throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand, createNestedMapWithInitialPairs(initialPairs), settings, libraryMode);
 	}
 
 	/**
@@ -124,9 +147,9 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	 */
 	public MinimizeNwaPmaxSatAsymmetric(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final NestedMap2<STATE, STATE, Pair<STATE, STATE>> initialStatePairs, final Settings<STATE> settings)
-			throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand, settings.setSolverModeGeneral(), initialStatePairs);
+			final NestedMap2<STATE, STATE, Pair<STATE, STATE>> initialStatePairs, final Settings<STATE> settings,
+			final boolean libraryMode) throws AutomataOperationCanceledException {
+		super(services, stateFactory, operand, settings.setSolverModeGeneral(), initialStatePairs, libraryMode);
 		mEmptyStackState = mOperand.getEmptyStackState();
 
 		printStartMessage();
