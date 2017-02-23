@@ -200,7 +200,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	private static <LETTER, STATE> Iterable<Pair<STATE, STATE>> createAtsInitialPairs(
 			final AutomataLibraryServices services, final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
 		if (USE_PARTITION_PREPROCESSING_IN_ATS_CONSTRUCTOR) {
-			createNestedMapWithInitialPartition(
+			return createPairsWithInitialPartition(
 					new LookaheadPartitionConstructor<>(services, operand, true, true).getPartition().getRelation());
 		}
 		return createPairs(operand.getStates());
@@ -215,14 +215,15 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		return result;
 	}
 
-	private static <STATE> NestedMap2<STATE, STATE, Pair<STATE, STATE>>
-			createNestedMapWithInitialPartition(final Collection<Set<STATE>> partition) {
-		final NestedMap2<STATE, STATE, Pair<STATE, STATE>> result = new NestedMap2<>();
+	private static <STATE> Iterable<Pair<STATE, STATE>>
+			createPairsWithInitialPartition(final Collection<Set<STATE>> partition) {
+		final List<Pair<STATE, STATE>> result = new ArrayList<>();
 		for (final Set<STATE> block : partition) {
 			final ArrayList<STATE> blockAsArray = new ArrayList<>(block);
 			for (final STATE state1 : blockAsArray) {
 				for (final STATE state2 : blockAsArray) {
-					result.put(state1, state2, new Pair<>(state1, state2));
+					result.add(new Pair<>(state1, state2));
+					result.add(new Pair<>(state2, state1));
 				}
 			}
 		}
