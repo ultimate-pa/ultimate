@@ -488,11 +488,12 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			// Compute under-/overapproximation only if we use unsat cores during invariant synthesis
 			final NonInductiveAnnotationGenerator underApprox = new NonInductiveAnnotationGenerator(mServices,
 					mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.UNDERAPPROXIMATION);
-			final NonInductiveAnnotationGenerator overApprox = new NonInductiveAnnotationGenerator(mServices,
-					mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.OVERAPPROXIMATION);
-
 			loc2underApprox =
 					convertHashRelation(underApprox.getResult(), icfg.getCfgSmtToolkit().getManagedScript());
+		}
+		if (useUnsatCores || mUseWeakestPrecondition) {
+			final NonInductiveAnnotationGenerator overApprox = new NonInductiveAnnotationGenerator(mServices,
+					mPredicateUnifier.getPredicateFactory(), pathProgram, Approximation.OVERAPPROXIMATION);
 			loc2overApprox =
 					convertHashRelation(overApprox.getResult(), icfg.getCfgSmtToolkit().getManagedScript());
 		}
