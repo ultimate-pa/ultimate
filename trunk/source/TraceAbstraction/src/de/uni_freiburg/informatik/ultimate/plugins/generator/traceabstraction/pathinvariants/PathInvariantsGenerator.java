@@ -148,10 +148,10 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 			// Populate resulting array
 			mInterpolants = new IPredicate[mRun.getLength()];
 			for (int i = 0; i < mRun.getLength(); i++) {
-				final IcfgLocation locFromRun = ((ISLPredicate) mRun.getStateAtPosition(i)).getProgramPoint();
-				final IcfgLocation locFromPathProgram =
-						invariants.keySet().stream().filter(loc -> loc.toString().endsWith(locFromRun.toString()))
-						.collect(Collectors.toList()).get(0);
+				final IcfgLocation originalLoc = ((ISLPredicate) mRun.getStateAtPosition(i)).getProgramPoint();
+				final IcfgLocation locFromPathProgram = inputIcfgLocs2PathProgramLocs.get(originalLoc);
+//						invariants.keySet().stream().filter(loc -> loc.toString().endsWith(originalLoc.toString()))
+//						.collect(Collectors.toList()).get(0);
 				mInterpolants[i] = invariants.get(locFromPathProgram);
 				mLogger.info("Interpolant no " + i + " " + mInterpolants[i].toString());
 			}
