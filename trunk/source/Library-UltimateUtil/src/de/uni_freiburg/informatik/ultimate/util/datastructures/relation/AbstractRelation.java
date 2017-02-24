@@ -46,9 +46,7 @@ import java.util.Set;
  * </ul>
  * This is an abstract class that does not define which Map data structure is used.
  * 
- * 
  * @author Matthias Heizmann
- *
  * @param <D>
  *            Type of the elements that are in the domain of the relation.
  * @param <R>
@@ -57,10 +55,11 @@ import java.util.Set;
  *            Type of Map that is used to store the relation.
  */
 public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
+	private static final String NOT_YET_IMPLEMENTED = "not yet implemented";
+
 	protected final MAP mMap;
 
 	public AbstractRelation() {
-		super();
 		mMap = newMap();
 	}
 
@@ -128,15 +127,15 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 	}
 
 	/**
-	 * Returns the set of all elements d such that for some r the pair (d,r) is in the relation.
+	 * @return the set of all elements d such that for some r the pair (d,r) is in the relation.
 	 */
 	public Set<D> getDomain() {
 		return mMap.keySet();
 	}
 
 	/**
-	 * Returns the set of all elements r such that for a the given element domainElem, the pair (domainElem, r) is in
-	 * the relation.
+	 * @return the set of all elements r such that for a the given element domainElem, the pair (domainElem, r) is in
+	 *         the relation.
 	 */
 	public Set<R> getImage(final D domainElem) {
 		final Set<R> set = mMap.get(domainElem);
@@ -147,7 +146,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 	}
 
 	/**
-	 * Returns the number of all pairs contained in this relation.
+	 * @return the number of all pairs contained in this relation.
 	 */
 	public int size() {
 		int result = 0;
@@ -158,7 +157,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 	}
 
 	/**
-	 * Returns the number of pairs (d,r) such that the first entry d coincides with the parameter domainElem.
+	 * @return the number of pairs (d,r) such that the first entry d coincides with the parameter domainElem.
 	 */
 	public int numberofPairsWithGivenDomainElement(final D domainElem) {
 		if (getDomain().contains(domainElem)) {
@@ -171,15 +170,13 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 	public String toString() {
 		return mMap.toString();
 	}
-	
+
 	/**
-	 * @return true iff there is no element in this relation
+	 * @return true iff there is no element in this relation.
 	 */
 	public boolean isEmpty() {
 		return mMap.isEmpty();
 	}
-	
-	
 
 	@Override
 	public int hashCode() {
@@ -191,18 +188,23 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		final AbstractRelation other = (AbstractRelation) obj;
+		}
+		final AbstractRelation<?, ?, ?> other = (AbstractRelation<?, ?, ?>) obj;
 		if (mMap == null) {
-			if (other.mMap != null)
+			if (other.mMap != null) {
 				return false;
-		} else if (!mMap.equals(other.mMap))
+			}
+		} else if (!mMap.equals(other.mMap)) {
 			return false;
+		}
 		return true;
 	}
 
@@ -223,12 +225,12 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 
 			@Override
 			public boolean addAll(final Collection<? extends Entry<D, R>> arg0) {
-				throw new UnsupportedOperationException("not yet implemented");
+				throw new UnsupportedOperationException(NOT_YET_IMPLEMENTED);
 			}
 
 			@Override
 			public void clear() {
-				throw new UnsupportedOperationException("not yet implemented");
+				throw new UnsupportedOperationException(NOT_YET_IMPLEMENTED);
 			}
 
 			@SuppressWarnings("unchecked")
@@ -243,7 +245,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 
 			@Override
 			public boolean containsAll(final Collection<?> arg0) {
-				throw new UnsupportedOperationException("not yet implemented");
+				throw new UnsupportedOperationException(NOT_YET_IMPLEMENTED);
 			}
 
 			@Override
@@ -277,8 +279,8 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 							assert mInnerIterator.hasNext();
 							final R next = mInnerIterator.next();
 							return new Entry<D, R>() {
-								final D mKey;
-								final R mValue;
+								private final D mKey;
+								private final R mValue;
 								{
 									mKey = mNextOuter.getKey();
 									mValue = next;
@@ -296,7 +298,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 
 								@Override
 								public R setValue(final R arg0) {
-									throw new UnsupportedOperationException("not yet implemented");
+									throw new UnsupportedOperationException(NOT_YET_IMPLEMENTED);
 								}
 							};
 						}
@@ -330,12 +332,12 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 
 			@Override
 			public boolean removeAll(final Collection<?> arg0) {
-				throw new UnsupportedOperationException("not yet implemented");
+				throw new UnsupportedOperationException(NOT_YET_IMPLEMENTED);
 			}
 
 			@Override
 			public boolean retainAll(final Collection<?> arg0) {
-				throw new UnsupportedOperationException("not yet implemented");
+				throw new UnsupportedOperationException(NOT_YET_IMPLEMENTED);
 			}
 
 			@Override
@@ -345,12 +347,12 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 
 			@Override
 			public Object[] toArray() {
-				throw new UnsupportedOperationException("not yet implemented");
+				throw new UnsupportedOperationException(NOT_YET_IMPLEMENTED);
 			}
 
 			@Override
 			public <T> T[] toArray(final T[] a) {
-				throw new UnsupportedOperationException("not yet implemented");
+				throw new UnsupportedOperationException(NOT_YET_IMPLEMENTED);
 			}
 
 		};
