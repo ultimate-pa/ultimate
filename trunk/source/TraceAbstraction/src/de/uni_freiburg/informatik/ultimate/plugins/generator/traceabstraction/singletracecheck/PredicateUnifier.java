@@ -115,16 +115,16 @@ public class PredicateUnifier implements IPredicateUnifier {
 
 	private final PredicateUnifierStatisticsGenerator mPredicateUnifierBenchmarkGenerator;
 
-	public PredicateUnifier(final IUltimateServiceProvider services, final ManagedScript mgnScript,
+	public PredicateUnifier(final IUltimateServiceProvider services, final ManagedScript mgdScript,
 			final PredicateFactory predicateFactory, final IIcfgSymbolTable symbolTable,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IPredicate... initialPredicates) {
 		mPredicateUnifierBenchmarkGenerator = new PredicateUnifierStatisticsGenerator();
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
-		mMgnScript = mgnScript;
+		mMgnScript = mgdScript;
 		mPredicateFactory = predicateFactory;
-		mScript = mgnScript.getScript();
+		mScript = mgdScript.getScript();
 		mSymbolTable = symbolTable;
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
