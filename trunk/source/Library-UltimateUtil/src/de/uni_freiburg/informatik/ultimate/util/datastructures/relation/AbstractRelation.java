@@ -54,7 +54,7 @@ import java.util.Set;
  * @param <MAP>
  *            Type of Map that is used to store the relation.
  */
-public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
+public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> implements Iterable<Entry<D, R>> {
 	private static final String NOT_YET_IMPLEMENTED = "not yet implemented";
 
 	protected final MAP mMap;
@@ -176,6 +176,11 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 	 */
 	public boolean isEmpty() {
 		return mMap.isEmpty();
+	}
+
+	@Override
+	public Iterator<Entry<D, R>> iterator() {
+		return new EntryIterator();
 	}
 
 	@Override
@@ -356,5 +361,59 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> {
 			}
 
 		};
+	}
+
+	/**
+	 * Iterator for entries in the relation.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	private class EntryIterator implements Iterator<Map.Entry<D, R>> {
+		private final Iterator<Entry<D, Set<R>>> mOuterIterator;
+		private D mLhs;
+		private Iterator<R> mRhsIterator;
+
+		public EntryIterator() {
+			mOuterIterator = mMap.entrySet().iterator();
+			nextLhs();
+		}
+
+		@Override
+		public boolean hasNext() {
+			while (!mRhsIterator.hasNext()) {
+				nextLhs();
+			}
+			return mRhsIterator.hasNext();
+		}
+
+		@Override
+		public Entry<D, R> next() {
+			final D lhs = mLhs;
+			final R rhs = mRhsIterator.next();
+			return new Entry<D, R>() {
+				@Override
+				public D getKey() {
+					return lhs;
+				}
+
+				@Override
+				public R getValue() {
+					return rhs;
+				}
+
+				@Override
+				public R setValue(final R value) {
+					throw new UnsupportedOperationException("setValue() is not allowed.");
+				}
+			};
+		}
+
+		private void nextLhs() {
+			if (mOuterIterator.hasNext()) {
+				final Entry<D, Set<R>> entry = mOuterIterator.next();
+				mLhs = entry.getKey();
+				mRhsIterator = entry.getValue().iterator();
+			}
+		}
 	}
 }
