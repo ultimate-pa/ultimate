@@ -43,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
  * using {@link #getResult()}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- * 
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
@@ -68,7 +67,7 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 */
 	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, false, Collections.emptyList());
 	}
 
@@ -122,14 +121,13 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
 			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, useSCCs, false,
 				new FairDirectSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
 						possibleEquivalentClasses,
-						new FairDirectGameGraph<>(services, stateFactory,
-								services.getProgressAwareTimer(), services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
-								operand)));
+						new FairDirectGameGraph<>(services, stateFactory, services.getProgressAwareTimer(),
+								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand)));
 	}
 
 	@Override

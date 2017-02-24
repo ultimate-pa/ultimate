@@ -50,14 +50,14 @@ public class StateContainerFieldMap<LETTER, STATE> {
 	private static final int TWO = 2;
 	private static final int THREE = 3;
 	private static final int FOUR = 4;
-	
+
 	private final STATE mState;
 	private Object mOut1;
 	private Object mOut2;
 	private Object mOut3;
 	// TODO Christian 2016-09-02: This field is unused.
 	private Object mOut4;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -67,18 +67,18 @@ public class StateContainerFieldMap<LETTER, STATE> {
 	public StateContainerFieldMap(final STATE state) {
 		mState = state;
 	}
-	
+
 	/**
 	 * @return The state.
 	 */
 	public STATE getState() {
 		return mState;
 	}
-	
+
 	private boolean inOutMapMode() {
 		return (mOut1 instanceof Map) || (mOut2 instanceof Map) || (mOut3 instanceof Map) || (mOut4 instanceof Map);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private void addOutgoingInternal(final LETTER letter, final STATE succ) {
 		final OutgoingInternalTransition<LETTER, STATE> trans = new OutgoingInternalTransition<>(letter, succ);
@@ -95,7 +95,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 			addInternalTransitionMap((Map<LETTER, Set<STATE>>) mOut1, letter, succ);
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	private void switchOutMode() {
 		assert mOut1 != null && !(mOut1 instanceof Map);
@@ -115,19 +115,19 @@ public class StateContainerFieldMap<LETTER, STATE> {
 			}
 		}
 	}
-	
+
 	protected Object getOut1() {
 		return mOut1;
 	}
-	
+
 	protected Object getOut2() {
 		return mOut2;
 	}
-	
+
 	protected Object getOut3() {
 		return mOut3;
 	}
-	
+
 	private void addInternalTransitionMap(final Map<LETTER, Set<STATE>> letter2succs, final LETTER letter,
 			final STATE succ) {
 		Set<STATE> succs = letter2succs.get(letter);
@@ -137,14 +137,14 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		}
 		succs.add(succ);
 	}
-	
+
 	/**
 	 * @return All internal outgoing transitions in field mode.
 	 */
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessorsField() {
 		return FieldIterator::new;
 	}
-	
+
 	/**
 	 * @param letter2succ
 	 *            map (letter -> successors)
@@ -152,11 +152,11 @@ public class StateContainerFieldMap<LETTER, STATE> {
 	 *            letter
 	 * @return All internal outgoing transitions for a given map and letter.
 	 */
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessorsMap(
-			final Map<LETTER, Set<STATE>> letter2succ, final LETTER letter) {
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>>
+			internalSuccessorsMap(final Map<LETTER, Set<STATE>> letter2succ, final LETTER letter) {
 		return () -> new MapLetterIterator(letter2succ, letter);
 	}
-	
+
 	/**
 	 * The resulting {@link Iterator} iterates over all {@link OutgoingInternalTransition}s of the state.
 	 * <p>
@@ -167,11 +167,11 @@ public class StateContainerFieldMap<LETTER, STATE> {
 	 *            map (letter -> successors)
 	 * @return All internal outgoing transitions for a given map.
 	 */
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessorsMap(
-			final Map<LETTER, Set<STATE>> letter2succ) {
+	public Iterable<OutgoingInternalTransition<LETTER, STATE>>
+			internalSuccessorsMap(final Map<LETTER, Set<STATE>> letter2succ) {
 		return () -> new MapNoLetterIterator(letter2succ);
 	}
-	
+
 	/**
 	 * Iterator for field mode.
 	 * 
@@ -183,20 +183,20 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		 * Points to next field with {@link OutgoingInternalTransition}.
 		 */
 		private int mPosition;
-		
+
 		public FieldIterator() {
 			updatePosition();
 		}
-		
+
 		private void updatePosition() {
 			mPosition++;
 		}
-		
+
 		@Override
 		public boolean hasNext() {
 			return mPosition < FOUR;
 		}
-		
+
 		@SuppressWarnings("unchecked")
 		@Override
 		public OutgoingInternalTransition<LETTER, STATE> next() {
@@ -220,13 +220,13 @@ public class StateContainerFieldMap<LETTER, STATE> {
 			updatePosition();
 			return (OutgoingInternalTransition<LETTER, STATE>) result;
 		}
-		
+
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException();
 		}
 	}
-	
+
 	/**
 	 * Iterator for map mode and a given letter.
 	 * 
@@ -236,7 +236,7 @@ public class StateContainerFieldMap<LETTER, STATE> {
 	private final class MapLetterIterator implements Iterator<OutgoingInternalTransition<LETTER, STATE>> {
 		private final LETTER mLetter;
 		private Iterator<STATE> mIterator;
-		
+
 		protected MapLetterIterator(final Map<LETTER, Set<STATE>> letter2succ, final LETTER letter) {
 			this.mLetter = letter;
 			if (letter2succ != null) {
@@ -249,12 +249,12 @@ public class StateContainerFieldMap<LETTER, STATE> {
 				mIterator = null;
 			}
 		}
-		
+
 		@Override
 		public boolean hasNext() {
 			return mIterator == null || mIterator.hasNext();
 		}
-		
+
 		@Override
 		public OutgoingInternalTransition<LETTER, STATE> next() {
 			if (mIterator == null) {
@@ -263,13 +263,13 @@ public class StateContainerFieldMap<LETTER, STATE> {
 			final STATE succ = mIterator.next();
 			return new OutgoingInternalTransition<>(mLetter, succ);
 		}
-		
+
 		@Override
 		public void remove() {
 			throw new UnsupportedOperationException();
 		}
 	}
-	
+
 	/**
 	 * Iterator for map mode and no given letter.
 	 * 
@@ -281,13 +281,13 @@ public class StateContainerFieldMap<LETTER, STATE> {
 		private final Iterator<LETTER> mLetterIterator;
 		private LETTER mCurrentLetter;
 		private Iterator<OutgoingInternalTransition<LETTER, STATE>> mCurrentIterator;
-		
+
 		protected MapNoLetterIterator(final Map<LETTER, Set<STATE>> letter2succ) {
 			mLetter2succ = letter2succ;
 			mLetterIterator = letter2succ.keySet().iterator();
 			nextLetter();
 		}
-		
+
 		private void nextLetter() {
 			if (mLetterIterator.hasNext()) {
 				do {
@@ -303,12 +303,12 @@ public class StateContainerFieldMap<LETTER, STATE> {
 				mCurrentIterator = null;
 			}
 		}
-		
+
 		@Override
 		public boolean hasNext() {
 			return mCurrentLetter != null;
 		}
-		
+
 		@Override
 		public OutgoingInternalTransition<LETTER, STATE> next() {
 			if (mCurrentLetter == null) {

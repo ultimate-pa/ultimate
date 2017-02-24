@@ -37,11 +37,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public final class ResultChecker {
 	private static int sResultCheckStackHeight;
 	private static final int MAX_RESULT_CHECK_STACK_HEIGHT = 1;
-	
+
 	private ResultChecker() {
 		// empty private constructor
 	}
-	
+
 	public static <LETTER, STATE> boolean buchiComplement(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final INestedWordAutomatonSimple<LETTER, STATE> result) throws AutomataLibraryException {
@@ -51,7 +51,7 @@ public final class ResultChecker {
 		}
 		sResultCheckStackHeight++;
 		logger.info("Testing correctness of buchiComplement");
-		
+
 		final int maxLength = Math.max(operand.size(), result.size());
 		final int numberOfSamples = 10;
 		boolean correct = true;
@@ -69,17 +69,17 @@ public final class ResultChecker {
 				break;
 			}
 		}
-		
+
 		// INestedWordAutomaton intersection = (new Intersect(true, false, operand, result)).getResult();
 		// NestedLassoRun ctx = new EmptinessCheck().getAcceptingNestedLassoRun(intersection);
 		// boolean correct = (ctx == null);
 		// assert (correct);
-		
+
 		logger.info("Finished testing correctness of complementBuchi");
 		sResultCheckStackHeight--;
 		return correct;
 	}
-	
+
 	public static <LETTER, STATE> NestedLassoWord<LETTER>
 			getRandomNestedLassoWord(final INestedWordAutomatonSimple<LETTER, STATE> automaton, final int size) {
 		final NestedWord<LETTER> stem = (new GetRandomNestedWord<>(null, automaton, size)).getResult();

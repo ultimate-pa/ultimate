@@ -55,19 +55,21 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2Finit
  *            symbol type
  * @param <C>
  *            state/content type
+ * @param <CRSF>
+ *            check result state factory type
  */
 public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonStateFactory<C> & IConcurrentProductStateFactory<C> & INwaInclusionStateFactory<C>>
 		extends UnaryNetOperation<S, C, CRSF> {
 	private final PetriNetJulian<S, C> mOperand;
 	private final INestedWordAutomaton<S, C> mNwa;
 	private final PetriNetJulian<S, C> mResult;
-	
+
 	private final Map<Place<S, C>, Place<S, C>> mOldPlace2newPlace = new HashMap<>();
 	private final Map<C, Place<S, C>> mState2newPlace = new HashMap<>();
-	
+
 	private final Map<S, Collection<ITransition<S, C>>> mSymbol2netTransitions = new HashMap<>();
 	private final Map<S, Collection<AutomatonTransition>> mSymbol2nwaTransitions = new HashMap<>();
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -86,45 +88,44 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 		if (nwa.getInitialStates().size() != 1) {
 			throw new UnsupportedOperationException("PrefixProduct needs an automaton with exactly one inital state");
 		}
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		mResult = computeResult();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "prefixProduct";
 	}
-	
+
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + "First Operand " + mOperand.sizeInformation() + "Second Operand "
 				+ mNwa.sizeInformation();
 	}
-	
+
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName()
-				+ " Result " + mResult.sizeInformation();
+		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}
-	
+
 	@Override
 	protected IPetriNet<S, C> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public PetriNetJulian<S, C> getResult() {
 		return mResult;
 	}
-	
+
 	private void updateSymbol2netTransitions(final S symbol, final ITransition<S, C> netTransition) {
 		Collection<ITransition<S, C>> netTransitions;
 		netTransitions = mSymbol2netTransitions.get(symbol);
@@ -134,7 +135,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 		}
 		netTransitions.add(netTransition);
 	}
-	
+
 	private void updateSymbol2nwaTransitions(final S symbol, final AutomatonTransition nwaTransition) {
 		Collection<AutomatonTransition> nwaTransitions;
 		nwaTransitions = mSymbol2nwaTransitions.get(symbol);
@@ -144,7 +145,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 		}
 		nwaTransitions.add(nwaTransition);
 	}
-	
+
 	private PetriNetJulian<S, C> computeResult() {
 		final HashSet<S> netOnlyAlphabet = new HashSet<>(mOperand.getAlphabet());
 		netOnlyAlphabet.removeAll(mNwa.getInternalAlphabet());
@@ -154,18 +155,18 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 		nwaOnlyAlphabet.removeAll(sharedAlphabet);
 		final HashSet<S> unionAlphabet = new HashSet<>(mOperand.getAlphabet());
 		unionAlphabet.addAll(nwaOnlyAlphabet);
-		
+
 		// prefix product preserves the constantTokenAmount invariant
 		final boolean constantTokenAmount = mOperand.constantTokenAmount();
 		final PetriNetJulian<S, C> result =
 				new PetriNetJulian<>(mServices, unionAlphabet, mOperand.getStateFactory(), constantTokenAmount);
-		
+
 		addPlacesAndStates();
-		
+
 		for (final ITransition<S, C> trans : mOperand.getTransitions()) {
 			updateSymbol2netTransitions(trans.getSymbol(), trans);
 		}
-		
+
 		for (final C state : mNwa.getStates()) {
 			for (final OutgoingInternalTransition<S, C> trans : mNwa.internalSuccessors(state)) {
 				final S letter = trans.getLetter();
@@ -178,13 +179,13 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 				automatonTransitions.add(new AutomatonTransition(state, letter, succ));
 			}
 		}
-		
+
 		addUnsharedTransitions(netOnlyAlphabet, nwaOnlyAlphabet);
-		
+
 		addSharedTransitions(sharedAlphabet);
 		return result;
 	}
-	
+
 	private void addSharedTransitions(final HashSet<S> sharedAlphabet) {
 		for (final S symbol : sharedAlphabet) {
 			if (!mSymbol2netTransitions.containsKey(symbol)) {
@@ -201,7 +202,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 			}
 		}
 	}
-	
+
 	private void addUnsharedTransitions(final HashSet<S> netOnlyAlphabet, final HashSet<S> nwaOnlyAlphabet) {
 		for (final S symbol : netOnlyAlphabet) {
 			for (final ITransition<S, C> trans : mSymbol2netTransitions.get(symbol)) {
@@ -218,13 +219,13 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 				mResult.addTransition(trans.getSymbol(), predecessors, successors);
 			}
 		}
-		
+
 		for (final S symbol : nwaOnlyAlphabet) {
 			for (final AutomatonTransition trans : mSymbol2nwaTransitions.get(symbol)) {
 				final Collection<Place<S, C>> predecessors = new ArrayList<>(1);
 				final Place<S, C> newPlacePred = mState2newPlace.get(trans.getPredecessor());
 				predecessors.add(newPlacePred);
-				
+
 				final Collection<Place<S, C>> successors = new ArrayList<>(1);
 				final Place<S, C> newPlaceSucc = mState2newPlace.get(trans.getSuccessor());
 				successors.add(newPlaceSucc);
@@ -232,7 +233,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 			}
 		}
 	}
-	
+
 	private void addSharedTransitionsHelper(final ITransition<S, C> netTrans, final AutomatonTransition nwaTrans,
 			final Collection<Place<S, C>> predecessors) {
 		for (final Place<S, C> oldPlace : netTrans.getPredecessors()) {
@@ -240,7 +241,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 			predecessors.add(newPlace);
 		}
 		predecessors.add(mState2newPlace.get(nwaTrans.getPredecessor()));
-		
+
 		final Collection<Place<S, C>> successors = new ArrayList<>();
 		for (final Place<S, C> oldPlace : netTrans.getSuccessors()) {
 			final Place<S, C> newPlace = mOldPlace2newPlace.get(oldPlace);
@@ -249,7 +250,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 		successors.add(mState2newPlace.get(nwaTrans.getSuccessor()));
 		mResult.addTransition(netTrans.getSymbol(), predecessors, successors);
 	}
-	
+
 	private void addPlacesAndStates() {
 		//add places of old net
 		for (final Place<S, C> oldPlace : mOperand.getPlaces()) {
@@ -259,7 +260,7 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 			final Place<S, C> newPlace = mResult.addPlace(content, isInitial, isAccepting);
 			mOldPlace2newPlace.put(oldPlace, newPlace);
 		}
-		
+
 		//add states of automaton
 		for (final C state : mNwa.getStates()) {
 			final C content = state;
@@ -269,24 +270,24 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 			mState2newPlace.put(state, newPlace);
 		}
 	}
-	
+
 	@Override
 	public boolean checkResult(final CRSF stateFactory) throws AutomataLibraryException {
 		mLogger.info("Testing correctness of prefixProduct");
-		
-		final INestedWordAutomatonSimple<S, C> op1AsNwa = (new PetriNet2FiniteAutomaton<>(mServices,
-				stateFactory, mOperand)).getResult();
-		final INestedWordAutomatonSimple<S, C> resultAsNwa = (new PetriNet2FiniteAutomaton<>(mServices,
-				stateFactory, mResult)).getResult();
-		final INestedWordAutomatonSimple<S, C> nwaResult = (new ConcurrentProduct<>(mServices,
-				stateFactory, op1AsNwa, mNwa, true)).getResult();
+
+		final INestedWordAutomatonSimple<S, C> op1AsNwa =
+				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult();
+		final INestedWordAutomatonSimple<S, C> resultAsNwa =
+				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mResult)).getResult();
+		final INestedWordAutomatonSimple<S, C> nwaResult =
+				(new ConcurrentProduct<>(mServices, stateFactory, op1AsNwa, mNwa, true)).getResult();
 		boolean correct;
 		correct = (new IsEquivalent<>(mServices, stateFactory, resultAsNwa, nwaResult)).getResult();
-		
+
 		mLogger.info("Finished testing correctness of prefixProduct");
 		return correct;
 	}
-	
+
 	/**
 	 * A transition of the result.
 	 * 
@@ -296,21 +297,21 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 		private final C mPredecessor;
 		private final S mLetter;
 		private final C mSuccessor;
-		
+
 		public AutomatonTransition(final C predecessor, final S letter, final C successor) {
 			mPredecessor = predecessor;
 			mLetter = letter;
 			mSuccessor = successor;
 		}
-		
+
 		public C getPredecessor() {
 			return mPredecessor;
 		}
-		
+
 		public S getSymbol() {
 			return mLetter;
 		}
-		
+
 		public C getSuccessor() {
 			return mSuccessor;
 		}

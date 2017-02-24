@@ -58,7 +58,7 @@ public final class NetWriterToString<LETTER, STATE> extends NetWriter<LETTER, ST
 	public NetWriterToString(final PrintWriter writer, final String name, final PetriNetJulian<LETTER, STATE> net) {
 		super(writer, name, net);
 	}
-	
+
 	@Override
 	protected Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet) {
 		final Map<LETTER, String> alphabetMapping = new HashMap<>();
@@ -67,7 +67,7 @@ public final class NetWriterToString<LETTER, STATE> extends NetWriter<LETTER, ST
 		}
 		return alphabetMapping;
 	}
-	
+
 	@Override
 	protected Map<Place<LETTER, STATE>, String> getPlacesMapping(final Collection<Place<LETTER, STATE>> places) {
 		final HashMap<Place<LETTER, STATE>, String> placesMapping = new HashMap<>();

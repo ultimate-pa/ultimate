@@ -34,8 +34,8 @@ import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
@@ -360,31 +360,32 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 		rtr.add(getPair("examples/svcomp/ntdrivers-simplified/", C));
 		rtr.add(getPair("examples/svcomp/ssh-simplified/", C));
 		rtr.add(getPair("examples/svcomp/locks/", C));
-		rtr.add(getPair("examples/svcomp/ntdrivers/", new String[]{ ".c" }));
-		rtr.add(getPair("examples/svcomp/ssh/", new String[]{ ".c" }));
+		rtr.add(getPair("examples/svcomp/ntdrivers/", C));
+		rtr.add(getPair("examples/svcomp/ssh/", C));
 		rtr.add(getPair("examples/svcomp/eca-rers2012/", C));
-		rtr.add(getPair("examples/svcomp/loops/", new String[]{".i"}));
-		rtr.add(getPair("examples/svcomp/loop-acceleration/", new String[]{".i" }));
-		rtr.add(getPair("examples/svcomp/loop-invgen/", new String[]{".i"}));
+		rtr.add(getPair("examples/svcomp/loops/", I));
+		rtr.add(getPair("examples/svcomp/loop-acceleration/", I));
+		rtr.add(getPair("examples/svcomp/loop-invgen/", I));
 		rtr.add(getPair("examples/svcomp/loop-lit/", I));
-		rtr.add(getPair("examples/svcomp/loop-new/", new String[]{".i"}));
-		rtr.add(getPair("examples/svcomp/recursive/", new String[]{ ".c" }));
-		rtr.add(getPair("examples/svcomp/recursive-simple/", new String[]{ ".c" }));
+		rtr.add(getPair("examples/svcomp/loop-new/", I));
+		rtr.add(getPair("examples/svcomp/loop-industry-pattern/", C));
+		rtr.add(getPair("examples/svcomp/recursive/", C));
+		rtr.add(getPair("examples/svcomp/recursive-simple/", C));
 		rtr.add(getPair("examples/svcomp/product-lines/", C));
-		rtr.add(getPair("examples/svcomp/systemc/", new String[]{ ".c" }));
-		rtr.add(getPair("examples/svcomp/seq-mthreaded/", new String[]{ ".c" }));
+		rtr.add(getPair("examples/svcomp/systemc/", C));
+		rtr.add(getPair("examples/svcomp/seq-mthreaded/", C));
 		rtr.add(getPair("examples/svcomp/seq-pthread/", I));
 		rtr.add(getPair("examples/svcomp/ldv-linux-3.0/", I));
-		rtr.add(getPair("examples/svcomp/ldv-linux-3.4-simple/", new String[]{ ".c" }));
-		rtr.add(getPair("examples/svcomp/ldv-linux-3.7.3/", new String[]{ ".c" }));
-		rtr.add(getPair("examples/svcomp/ldv-commit-tester/", new String[]{ ".c" }));
-		rtr.add(getPair("examples/svcomp/ldv-consumption/", new String[]{ ".c" }));
-		rtr.add(getPair("examples/svcomp/ldv-linux-3.12-rc1/", new String[]{ ".c" }));
-		rtr.add(getPair("examples/svcomp/ldv-linux-3.16-rc1/", new String[]{ ".c" }));
-		rtr.add(getPair("examples/svcomp/ldv-validator-v0.6/", new String[]{ ".c" }));
-		rtr.add(getPair("examples/svcomp/ldv-validator-v0.8/", new String[]{ ".c" }));
-		rtr.add(getPair("examples/svcomp/ldv-linux-4.2-rc1/", new String[]{ ".c" }));
-		rtr.add(getPair("examples/svcomp/ldv-challenges/", new String[]{ ".c" }));
+		rtr.add(getPair("examples/svcomp/ldv-linux-3.4-simple/", C));
+		rtr.add(getPair("examples/svcomp/ldv-linux-3.7.3/", C));
+		rtr.add(getPair("examples/svcomp/ldv-commit-tester/", C));
+		rtr.add(getPair("examples/svcomp/ldv-consumption/", C));
+		rtr.add(getPair("examples/svcomp/ldv-linux-3.12-rc1/", C));
+		rtr.add(getPair("examples/svcomp/ldv-linux-3.16-rc1/", C));
+		rtr.add(getPair("examples/svcomp/ldv-validator-v0.6/", C));
+		rtr.add(getPair("examples/svcomp/ldv-validator-v0.8/", C));
+		rtr.add(getPair("examples/svcomp/ldv-linux-4.2-rc1/", C));
+		rtr.add(getPair("examples/svcomp/ldv-challenges/", C));
 		rtr.add(getPair("examples/svcomp/busybox-1.22.0/", I));
 		return rtr;
 	}
@@ -394,20 +395,23 @@ public abstract class InterpolationTestSuite extends AbstractEvalTestSuite {
 		rtr.add(getPair("examples/svcomp/floats-cdfpl/", I));
 		rtr.add(getPair("examples/svcomp/floats-cbmc-regression/", I));
 		rtr.add(getPair("examples/svcomp/float-benchs/", C));
+		rtr.add(getPair("examples/svcomp/floats-esbmc-regression/", I));
 		return rtr;
 	}
 	public List<DirectoryFileEndingsPair> getMemsafetyDerefSet() {
 		final List<DirectoryFileEndingsPair> rtr = new ArrayList<>();
-		rtr.add(getPair("examples/svcomp/array-memsafety/", I));
 		return rtr;
 	}
 	
 	public List<DirectoryFileEndingsPair> getMemsafetyDerefFreeMemtrackSet() {
 		final List<DirectoryFileEndingsPair> rtr = new ArrayList<>();
+		rtr.add(getPair("examples/svcomp/array-memsafety/", I));
+		rtr.add(getPair("examples/svcomp/array-examples/", I));
 		rtr.add(getPair("examples/svcomp/memsafety/", I) );
 		rtr.add(getPair("examples/svcomp/list-ext-properties/", I) );
 		rtr.add(getPair("examples/svcomp/memory-alloca/", I) );
 		rtr.add(getPair("examples/svcomp/ldv-memsafety/", I) );
+		rtr.add(getPair("examples/svcomp/ldv-memsafety-bitfields/", I) );
 		return rtr;
 	}
 	// @formatter:on

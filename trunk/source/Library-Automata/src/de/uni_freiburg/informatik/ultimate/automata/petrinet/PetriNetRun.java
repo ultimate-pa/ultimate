@@ -43,10 +43,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
  *            place content type
  */
 public class PetriNetRun<S, C> implements IRun<S, C, Marking<S, C>> {
-	
+
 	private final Word<S> mWord;
 	private final ArrayList<Marking<S, C>> mMarkingSequence;
-	
+
 	/**
 	 * Construct Petri net run of length 0.
 	 * 
@@ -58,7 +58,7 @@ public class PetriNetRun<S, C> implements IRun<S, C, Marking<S, C>> {
 		mMarkingSequence = new ArrayList<>();
 		mMarkingSequence.add(m0);
 	}
-	
+
 	/**
 	 * Constructs Petri net run of length 1.
 	 * 
@@ -75,7 +75,7 @@ public class PetriNetRun<S, C> implements IRun<S, C, Marking<S, C>> {
 		mMarkingSequence.add(m0);
 		mMarkingSequence.add(m1);
 	}
-	
+
 	/**
 	 * Constructs Petri net run of arbitrary length.
 	 * 
@@ -91,17 +91,17 @@ public class PetriNetRun<S, C> implements IRun<S, C, Marking<S, C>> {
 		mMarkingSequence = sequenceOfMarkings;
 		mWord = word;
 	}
-	
+
 	@Override
 	public S getSymbol(final int pos) {
 		return mWord.getSymbol(pos);
 	}
-	
+
 	@Override
 	public Word<S> getWord() {
 		return mWord;
 	}
-	
+
 	/**
 	 * @param pos
 	 *            Position.
@@ -110,14 +110,14 @@ public class PetriNetRun<S, C> implements IRun<S, C, Marking<S, C>> {
 	public Marking<S, C> getMarking(final int pos) {
 		return mMarkingSequence.get(pos);
 	}
-	
+
 	/*
 	// use this method only if needed
 	public ArrayList<Marking<S,C>> getMarkingSequence() {
 		return mMarkingSequence;
 	}
 	*/
-	
+
 	/**
 	 * @param run2
 	 *            Another run.
@@ -138,12 +138,12 @@ public class PetriNetRun<S, C> implements IRun<S, C, Marking<S, C>> {
 		final Word<S> concatWord = mWord.concatenate(run2.getWord());
 		return new PetriNetRun<>(concatMarkingSequence, concatWord);
 	}
-	
+
 	@Override
 	public int getLength() {
 		return mMarkingSequence.size();
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();

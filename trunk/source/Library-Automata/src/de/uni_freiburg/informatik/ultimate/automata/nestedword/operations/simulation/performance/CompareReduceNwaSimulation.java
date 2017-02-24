@@ -63,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * The resulting automaton is the input automaton.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- * 
  * @param <LETTER>
  *            Letter class of nwa automaton
  * @param <STATE>
@@ -168,36 +167,38 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 		}
 		final IDoubleDeckerAutomaton<LETTER, STATE> operand = (IDoubleDeckerAutomaton<LETTER, STATE>) operandRaw;
 
-		final PartitionPairsWrapper<STATE> partitionAndPairs = new LookaheadPartitionConstructor<>(
-				services, operand, true).getResult();
+		final boolean separateAcceptingStates =
+				type == ESimulationType.DIRECT || type == ESimulationType.DIRECT_FULL_MULTIPEBBLE;
+		final PartitionPairsWrapper<STATE> partitionAndPairs =
+				new LookaheadPartitionConstructor<>(services, operand, separateAcceptingStates, true).getResult();
 		final Collection<Set<STATE>> possibleEquivalenceClasses = partitionAndPairs.getPartition();
 
 		try {
 			if (type.equals(ESimulationType.DIRECT)) {
 				final PartitionBackedSetOfPairs<STATE> possibleEquivalenceClassesForDirect =
-						new LookaheadPartitionConstructor<>(services, operand, true).getPartition();
+						new LookaheadPartitionConstructor<>(services, operand, true, true).getPartition();
 
 				final DirectNwaGameGraph<LETTER, STATE> graph = new DirectNwaGameGraph<>(services, stateFactory,
 						progressTimer, logger, operand, possibleEquivalenceClassesForDirect.getRelation());
 				graph.generateGameGraphFromAutomaton();
-				final DirectNwaSimulation<LETTER, STATE> sim = new DirectNwaSimulation<>(progressTimer, logger, useSCCs,
-						stateFactory, graph);
+				final DirectNwaSimulation<LETTER, STATE> sim =
+						new DirectNwaSimulation<>(progressTimer, logger, useSCCs, stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
 			} else if (type.equals(ESimulationType.DELAYED)) {
-				final DelayedNwaGameGraph<LETTER, STATE> graph = new DelayedNwaGameGraph<>(services,
-						stateFactory, progressTimer, logger, operand, possibleEquivalenceClasses);
+				final DelayedNwaGameGraph<LETTER, STATE> graph = new DelayedNwaGameGraph<>(services, stateFactory,
+						progressTimer, logger, operand, possibleEquivalenceClasses);
 				graph.generateGameGraphFromAutomaton();
-				final DelayedNwaSimulation<LETTER, STATE> sim = new DelayedNwaSimulation<>(progressTimer, logger,
-						useSCCs, stateFactory, graph);
+				final DelayedNwaSimulation<LETTER, STATE> sim =
+						new DelayedNwaSimulation<>(progressTimer, logger, useSCCs, stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
 			} else if (type.equals(ESimulationType.FAIR)) {
-				final FairNwaGameGraph<LETTER, STATE> graph = new FairNwaGameGraph<>(services,
-						stateFactory, progressTimer, logger, operand, possibleEquivalenceClasses);
+				final FairNwaGameGraph<LETTER, STATE> graph = new FairNwaGameGraph<>(services, stateFactory,
+						progressTimer, logger, operand, possibleEquivalenceClasses);
 				graph.generateGameGraphFromAutomaton();
-				final FairNwaSimulation<LETTER, STATE> sim = new FairNwaSimulation<>(progressTimer, logger, useSCCs,
-						stateFactory, graph);
+				final FairNwaSimulation<LETTER, STATE> sim =
+						new FairNwaSimulation<>(progressTimer, logger, useSCCs, stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
 			} else if (type.equals(ESimulationType.DIRECT_FULL_MULTIPEBBLE)) {
@@ -220,7 +221,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 				final long startTime = System.currentTimeMillis();
 				method = new MinimizeNwaPmaxSat<>(services, stateFactory, operand,
 						new PartitionBackedSetOfPairs<>(possibleEquivalenceClasses),
-						new MinimizeNwaMaxSat2.Settings<>());
+						new MinimizeNwaMaxSat2.Settings<>(), true, false);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
 			}
 		} catch (final AutomataOperationCanceledException e) {
@@ -243,7 +244,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 		// Delayed nwa simulation without SCC
 //		measureMethodPerformance(automatonName, ESimulationType.DELAYED, false, getServices(), timeOutMillis,
 //				stateFactory, reachableOperand);
-		
+
 		// Full multi-pebble simulation
 		measureMethodPerformance(automatonName, ESimulationType.DIRECT_FULL_MULTIPEBBLE, false, getServices(),
 				timeOutMillis, stateFactory, reachableOperand);

@@ -63,10 +63,10 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 		implements IOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>> {
 	private final Map<STATE, STATE> mOld2new = new HashMap<>();
 	private final Map<STATE, STATE> mNew2old = new HashMap<>();
-	
+
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final boolean mComplement;
-	
+
 	/**
 	 * Short constructor which does not use the additional options.
 	 * 
@@ -83,7 +83,7 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, operand, false, false, false, false);
 	}
-	
+
 	/**
 	 * Given an {@link INestedWordAutomatonSimple} return an {@link INestedWordAutomaton} that has
 	 * the same states, but all states that are not reachable are omitted.
@@ -115,8 +115,8 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 		mComplement = complement;
 		mOperand = operand;
 		mLogger.info(startMessage());
-		mTraversedNwa = new DoubleDeckerAutomaton<>(mServices, operand.getInternalAlphabet(),
-				operand.getCallAlphabet(), operand.getReturnAlphabet(), operand.getStateFactory());
+		mTraversedNwa = new DoubleDeckerAutomaton<>(mServices, operand.getInternalAlphabet(), operand.getCallAlphabet(),
+				operand.getReturnAlphabet(), operand.getStateFactory());
 		super.mRemoveDeadEnds = removeDeadEnds;
 		super.mRemoveNonLiveStates = removeNonLiveStates;
 		final boolean operandHasInitialStates = mOperand.getInitialStates().iterator().hasNext();
@@ -133,14 +133,14 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 		// assert (new DownStateConsistencyCheck<LETTER, STATE>(mServices,
 		// 		(IDoubleDeckerAutomaton) mTraversedNwa)).getResult() : "down states inconsistent";
 	}
-	
+
 	private void makeAutomatonTotal(final STATE sinkState) throws AutomataOperationCanceledException {
 		assert sinkState != null : "sink state must not be null";
 		for (final STATE state : mTraversedNwa.getStates()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
-			
+
 			for (final LETTER letter : mTraversedNwa.getInternalAlphabet()) {
 				if (!mTraversedNwa.internalSuccessors(state, letter).iterator().hasNext()) {
 					((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addInternalTransition(state, letter,
@@ -155,7 +155,7 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 			makeAutomatonTotalReturn(sinkState, state);
 		}
 	}
-	
+
 	private void makeAutomatonTotalReturn(final STATE sinkState, final STATE state) {
 		for (final LETTER symbol : mTraversedNwa.getReturnAlphabet()) {
 			for (final STATE hier : mTraversedNwa.getStates()) {
@@ -166,7 +166,7 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 			}
 		}
 	}
-	
+
 	private STATE addSinkState() {
 		// TODO Christian 2017-02-15 Cast is a temporary workaround, where do we get a sink state factory here?
 		final STATE sinkState = ((ISinkStateFactory<STATE>) mTraversedNwa.getStateFactory()).createSinkStateContent();
@@ -175,22 +175,22 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 		((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addState(isInitial, isFinal, sinkState);
 		return sinkState;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "ReachableStatesCopy";
 	}
-	
+
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand " + mOperand.sizeInformation();
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + mTraversedNwa.sizeInformation();
 	}
-	
+
 	@Override
 	protected Collection<STATE> getInitialStates() {
 		final Collection<STATE> newInitialStates = new ArrayList<>();
@@ -200,7 +200,7 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 		}
 		return newInitialStates;
 	}
-	
+
 	private STATE constructOrGetResState(final STATE oldUp, final boolean isInitial) {
 		if (mOld2new.containsKey(oldUp)) {
 			return mOld2new.get(oldUp);
@@ -214,9 +214,9 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 			mNew2old.put(newState, oldUp);
 		}
 		return newState;
-		
+
 	}
-	
+
 	@Override
 	protected Collection<STATE> buildInternalSuccessors(final DoubleDecker<STATE> doubleDecker) {
 		final ArrayList<STATE> succs = new ArrayList<>();
@@ -232,7 +232,7 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 		}
 		return succs;
 	}
-	
+
 	@Override
 	@SuppressWarnings("squid:S1698")
 	protected Collection<STATE> buildReturnSuccessors(final DoubleDecker<STATE> doubleDecker) {
@@ -245,7 +245,7 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 		final STATE newUpState = doubleDecker.getUp();
 		final STATE oldUpState = mNew2old.get(newUpState);
 		final STATE oldDownState = mNew2old.get(newDownState);
-		
+
 		for (final LETTER symbol : mOperand.lettersReturn(oldUpState)) {
 			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(oldUpState,
 					oldDownState, symbol)) {
@@ -257,7 +257,7 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 		}
 		return succs;
 	}
-	
+
 	@Override
 	protected Collection<STATE> buildCallSuccessors(final DoubleDecker<STATE> doubleDecker) {
 		final ArrayList<STATE> succs = new ArrayList<>();
@@ -272,12 +272,12 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 		}
 		return succs;
 	}
-	
+
 	@Override
 	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
 		return (IDoubleDeckerAutomaton<LETTER, STATE>) mTraversedNwa;
 	}
-	
+
 	@Override
 	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;

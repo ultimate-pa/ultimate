@@ -48,14 +48,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * In direct simulation each time <i>Spoiler</i> visits an accepting state
  * <i>Duplicator</i> must also do so.<br/>
  * <br/>
- * 
  * If its impossible for <i>Spoiler</i> to build a word such that
  * <i>Duplicator</i> can not fulfill its condition we say <b>q1 fair simulates
  * q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of
  * <i>Duplicator</i>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
@@ -87,6 +85,9 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * After construction it mimics the behavior of a FairGameGraph, it can be
 	 * transformed to a DirectGameGraph using
 	 * {@link #transformToDirectGameGraph()}.
+	 * <p>
+	 * Throws an IllegalArgumentException If the input automaton is no Buchi automaton. It must have an empty call and
+	 * return alphabet.
 	 * 
 	 * @param services
 	 *            Service provider of Ultimate framework
@@ -103,9 +104,6 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
-	 * @throws IllegalArgumentException
-	 *             If the inputed automaton is no Buechi-automaton. It must have
-	 *             an empty call and return alphabet.
 	 */
 	public FairDirectGameGraph(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final IProgressAwareTimer progressTimer, final ILogger logger,
@@ -113,7 +111,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 		super(services, stateFactory, progressTimer, logger, buechi);
 		final INestedWordAutomaton<LETTER, STATE> preparedBuechi = getAutomaton();
 		verifyAutomatonValidity(preparedBuechi);
-		
+
 		mIsCurrentlyDirectGameGraph = false;
 		mDirectSimulations = new HashSet<>();
 		mEdgesToBeChangedForTransformation = new HashSet<>();
@@ -126,8 +124,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * buchiReduction.fair.FairGameGraph#generateBuchiAutomatonFromGraph()
 	 */
 	@Override
-	public INestedWordAutomaton<LETTER, STATE> generateAutomatonFromGraph()
-			throws AutomataOperationCanceledException {
+	public INestedWordAutomaton<LETTER, STATE> generateAutomatonFromGraph() throws AutomataOperationCanceledException {
 		if (mIsCurrentlyDirectGameGraph) {
 			// For the direct simulation we won't generate an expensive unused
 			// result since we only need the progress measure results for

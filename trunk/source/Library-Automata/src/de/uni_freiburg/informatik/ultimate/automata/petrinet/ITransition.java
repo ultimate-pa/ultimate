@@ -42,17 +42,17 @@ public interface ITransition<S, C> {
 	 * @return The symbol.
 	 */
 	S getSymbol();
-	
+
 	/**
 	 * @return The predecessor places.
 	 */
 	Collection<Place<S, C>> getPredecessors();
-	
+
 	/**
 	 * @return The successor places.
 	 */
 	Collection<Place<S, C>> getSuccessors();
-	
+
 	/*
 	public interface Successors extends Iterable<IPlace> {
 		

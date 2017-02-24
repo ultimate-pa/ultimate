@@ -49,11 +49,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * buechi automaton.<br/>
  * Once started, results can then be get by using {@link #getResult()}.<br/>
  * <br/>
- * 
  * For more information on the type of simulation see {@link DelayedGameGraph}.
  * <br/>
  * <br/>
- * 
  * The algorithm runs in <b>O(n^3 * k)</b> time and <b>O(n * k)</b> space where
  * n is the amount of states and k the amount of transitions from the inputed
  * automaton.<br/>
@@ -65,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * @date 16.01.2012
- * 
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
@@ -84,7 +81,6 @@ public class DelayedSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE>
 	 * After construction the simulation can be started and results can be get
 	 * by using {@link #getResult()}.<br/>
 	 * <br/>
-	 * 
 	 * For correctness its important that the inputed automaton has <b>no dead
 	 * ends</b> nor <b>duplicate transitions</b>.
 	 * 
@@ -106,7 +102,7 @@ public class DelayedSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE>
 	 */
 	public DelayedSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final IStateFactory<STATE> stateFactory, final DelayedGameGraph<LETTER, STATE> game)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		super(progressTimer, logger, useSCCs, stateFactory, ESimulationType.DELAYED);
 
 		mGame = game;

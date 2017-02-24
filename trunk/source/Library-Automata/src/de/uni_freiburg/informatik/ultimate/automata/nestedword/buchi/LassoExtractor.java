@@ -49,10 +49,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public final class LassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
-	
+
 	private final List<NestedLassoRun<LETTER, STATE>> mNestedLassoRuns;
 	private final List<NestedLassoWord<LETTER>> mNestedLassoWords;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -85,27 +85,27 @@ public final class LassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		}
 		mLogger.info(exitMessage());
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public List<NestedLassoWord<LETTER>> getResult() {
 		return mNestedLassoWords;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "getSomeAcceptedLassoRuns";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Found " + mNestedLassoRuns.size() + " examples of accepted words.";
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;

@@ -13,13 +13,16 @@ import java.util.regex.Pattern;
  * Provides utility methods for plotting performance entry tables.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  */
 public final class PlotUtil {
 	/**
 	 * The name for plot data CSV files.
 	 */
 	public static final String FILE_NAME_PLOT_DATA_CSV = "plotData.csv";
+
+	private PlotUtil() {
+		// utility class
+	}
 
 	/**
 	 * Demonstrates the usage of the plot utlity class.
@@ -35,7 +38,7 @@ public final class PlotUtil {
 		writeBenchmarkPlotToTransitionDensityCsv(new File(path, "plot_averagedSimulationPerDirectoryTable.csv"));
 		System.out.println("Terminated");
 	}
-	
+
 	/**
 	 * Reads a given benchmark file in the plot format and writes the benchmark
 	 * data to a CSV file next to it containing the transition densities and
@@ -51,9 +54,9 @@ public final class PlotUtil {
 		final String noValue = CompareReduceBuchiSimulation.PLOT_NO_VALUE;
 
 		// Skips stuff like call and return transition data
-		boolean skipNwaStuff = true;
+		final boolean skipNwaStuff = true;
 		// Skips trying to read data from directory name
-		boolean skipDirectoryNameExtraction = false;
+		final boolean skipDirectoryNameExtraction = false;
 
 		BufferedReader br = null;
 		PrintWriter pw = null;
@@ -196,9 +199,9 @@ public final class PlotUtil {
 				int callDensity = -1;
 				int returnDensity = -1;
 				int hierPredDensity = -1;
-				Pattern directoryPattern = Pattern.compile(
+				final Pattern directoryPattern = Pattern.compile(
 						".*#\\d+_n(\\d+)_k\\d+_f(\\d+)(?:\\.\\d+)?%_ti(\\d+)(?:\\.\\d+)?%_tc(\\d+)(?:\\.\\d+)?%_tr(\\d+)(?:\\.\\d+)?%_th(\\d+)(?:\\.\\d+)?%$");
-				Matcher directoryMatcher = directoryPattern.matcher(directory);
+				final Matcher directoryMatcher = directoryPattern.matcher(directory);
 				if (!skipDirectoryNameExtraction) {
 					if (directoryMatcher.find()) {
 						sizeInitial = Integer.parseInt(directoryMatcher.group(1));
@@ -227,12 +230,5 @@ public final class PlotUtil {
 				pw.close();
 			}
 		}
-	}
-
-	/**
-	 * Utility class. No implementation.
-	 */
-	private PlotUtil() {
-
 	}
 }

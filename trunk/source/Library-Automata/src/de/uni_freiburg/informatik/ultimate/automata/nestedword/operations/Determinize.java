@@ -55,7 +55,7 @@ public final class Determinize<LETTER, STATE>
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
-	
+
 	/**
 	 * Default constructor.
 	 * 
@@ -72,7 +72,7 @@ public final class Determinize<LETTER, STATE>
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null);
 	}
-	
+
 	/**
 	 * Constructor with predefined initial states.
 	 * 
@@ -96,38 +96,38 @@ public final class Determinize<LETTER, STATE>
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		final DeterminizeNwa<LETTER, STATE> determinized = predefinedInitials == null
 				? new DeterminizeNwa<>(mServices, mOperand, mStateDeterminizer, stateFactory)
 				: new DeterminizeNwa<>(mServices, mOperand, mStateDeterminizer, stateFactory, predefinedInitials,
 						false);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, determinized);
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "Determinize";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
-	
+
 	@Override
 	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
@@ -139,12 +139,12 @@ public final class Determinize<LETTER, STATE>
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Start testing correctness of " + operationName());
 			}
-			
+
 			final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
 					(new DeterminizeDD<>(mServices, stateFactory, mOperand)).getResult();
 			// should recognize same language as old computation
 			correct &= new IsEquivalent<>(mServices, stateFactory, resultDd, mResult).getResult();
-			
+
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Finished testing correctness of " + operationName());
 			}

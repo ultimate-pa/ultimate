@@ -38,102 +38,104 @@ import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  * @param <STATE>
+ *            state type
  */
-public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleStateFactory<STATE, DirectFullMultipebbleGameState<STATE>>  {
-	
+public class DirectFullMultipebbleStateFactory<STATE>
+		extends FullMultipebbleStateFactory<STATE, DirectFullMultipebbleGameState<STATE>> {
+
 	public DirectFullMultipebbleStateFactory(final ISetOfPairs<STATE, ?> initialPartition) {
 		super(initialPartition);
 	}
 
 	@Override
 	public DirectFullMultipebbleGameState<STATE> createSinkStateContent() {
-		return new AuxiliaryDirectFullMultipebbleGameState<>(AuxiliaryGameStateType.DEFAULT_SINK_FOR_AUTOMATA_OPERATIONS);
+		return new AuxiliaryDirectFullMultipebbleGameState<>(
+				AuxiliaryGameStateType.DEFAULT_SINK_FOR_AUTOMATA_OPERATIONS);
 	}
 
 	@Override
 	public DirectFullMultipebbleGameState<STATE> createEmptyStackState() {
 		return new AuxiliaryDirectFullMultipebbleGameState<>(AuxiliaryGameStateType.EMPTY_STACK);
 	}
-	
+
 	@Override
-	protected <LETTER> DirectFullMultipebbleGameState<STATE> constructSpoilerWinningSink() {
+	protected DirectFullMultipebbleGameState<STATE> constructSpoilerWinningSink() {
 		return new AuxiliaryDirectFullMultipebbleGameState<>(AuxiliaryGameStateType.SPOILER_WINNING_SINK);
 	}
-	
-	
+
 	@Override
-	protected <LETTER> DirectFullMultipebbleGameState<STATE> computeSuccessorsInternalGivenSpoilerSucc(final DoubleDecker<STATE> spoilerSucc, final DirectFullMultipebbleGameState<STATE> gs, 
-			final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+	protected <LETTER> DirectFullMultipebbleGameState<STATE> computeSuccessorsInternalGivenSpoilerSucc(
+			final DoubleDecker<STATE> spoilerSucc, final DirectFullMultipebbleGameState<STATE> gs, final LETTER letter,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
 		final HashRelation<STATE, STATE> duplicatorSuccStates = new HashRelation<>();
 		for (final Entry<STATE, STATE> doubleDecker : gs.getDuplicatorDoubleDeckers().entrySet()) {
-			for (final OutgoingInternalTransition<LETTER, STATE> trans : nwa.internalSuccessors(doubleDecker.getValue(), letter)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : nwa.internalSuccessors(doubleDecker.getValue(),
+					letter)) {
 				final DoubleDecker<STATE> duplicatorSucc = new DoubleDecker<>(doubleDecker.getKey(), trans.getSucc());
 				if (spoilerSucc.equals(duplicatorSucc)) {
-					// duplicator succs contains spoiler succ, hence spoiler cannot win 
+					// duplicator succs contains spoiler succ, hence spoiler cannot win
 					return null;
 				}
-				if ((!spoilerSuccIsFinal || nwa.isFinal(duplicatorSucc.getUp())) && 
-						isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
+				if ((!spoilerSuccIsFinal || nwa.isFinal(duplicatorSucc.getUp()))
+						&& isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
 					duplicatorSuccStates.addPair(duplicatorSucc.getDown(), duplicatorSucc.getUp());
 				}
 			}
 		}
 		if (duplicatorSuccStates.isEmpty()) {
 			return mSpoilerWinningSink;
-		} else {
-			return new DirectFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 		}
+		return new DirectFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 	}
-	
 
-	
 	@Override
-	protected <LETTER> DirectFullMultipebbleGameState<STATE> computeSuccessorsCallGivenSpoilerSucc(final DoubleDecker<STATE> spoilerSucc, final DirectFullMultipebbleGameState<STATE> gs, 
-			final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+	protected <LETTER> DirectFullMultipebbleGameState<STATE> computeSuccessorsCallGivenSpoilerSucc(
+			final DoubleDecker<STATE> spoilerSucc, final DirectFullMultipebbleGameState<STATE> gs, final LETTER letter,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
 		final HashRelation<STATE, STATE> duplicatorSuccStates = new HashRelation<>();
 		for (final Entry<STATE, STATE> doubleDecker : gs.getDuplicatorDoubleDeckers().entrySet()) {
-			for (final OutgoingCallTransition<LETTER, STATE> trans : nwa.callSuccessors(doubleDecker.getValue(), letter)) {
+			for (final OutgoingCallTransition<LETTER, STATE> trans : nwa.callSuccessors(doubleDecker.getValue(),
+					letter)) {
 				final DoubleDecker<STATE> duplicatorSucc = new DoubleDecker<>(doubleDecker.getValue(), trans.getSucc());
 				if (spoilerSucc.equals(duplicatorSucc)) {
-					// duplicator succs contains spoiler succ, hence spoiler cannot win 
+					// duplicator succs contains spoiler succ, hence spoiler cannot win
 					return null;
 				}
-				if ((!spoilerSuccIsFinal || nwa.isFinal(duplicatorSucc.getUp())) && 
-						isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
+				if ((!spoilerSuccIsFinal || nwa.isFinal(duplicatorSucc.getUp()))
+						&& isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
 					duplicatorSuccStates.addPair(duplicatorSucc.getDown(), duplicatorSucc.getUp());
 				}
 			}
 		}
 		if (duplicatorSuccStates.isEmpty()) {
 			return mSpoilerWinningSink;
-		} else {
-			return new DirectFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 		}
+		return new DirectFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 	}
-	
 
-	
 	@Override
-	protected <LETTER> DirectFullMultipebbleGameState<STATE> computeSuccessorsReturnGivenSpoilerSucc(final DoubleDecker<STATE> spoilerSucc, final DirectFullMultipebbleGameState<STATE> gs, 
-			final DirectFullMultipebbleGameState<STATE> hier, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+	protected <LETTER> DirectFullMultipebbleGameState<STATE> computeSuccessorsReturnGivenSpoilerSucc(
+			final DoubleDecker<STATE> spoilerSucc, final DirectFullMultipebbleGameState<STATE> gs,
+			final DirectFullMultipebbleGameState<STATE> hier, final LETTER letter,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
 		final HashRelation<STATE, STATE> duplicatorSuccStates = new HashRelation<>();
 		for (final Entry<STATE, STATE> hierDoubleDecker : hier.getDuplicatorDoubleDeckers().entrySet()) {
 			for (final STATE up : gs.getDuplicatorDoubleDeckers().getImage(hierDoubleDecker.getValue())) {
-				for (final OutgoingReturnTransition<LETTER, STATE> trans : nwa.returnSuccessors(up, hierDoubleDecker.getValue(), letter)) {
-					final DoubleDecker<STATE> duplicatorSucc = new DoubleDecker<>(hierDoubleDecker.getKey(), trans.getSucc());
+				for (final OutgoingReturnTransition<LETTER, STATE> trans : nwa.returnSuccessors(up,
+						hierDoubleDecker.getValue(), letter)) {
+					final DoubleDecker<STATE> duplicatorSucc =
+							new DoubleDecker<>(hierDoubleDecker.getKey(), trans.getSucc());
 					if (spoilerSucc.equals(duplicatorSucc)) {
-						// duplicator succs contains spoiler succ, hence spoiler cannot win 
+						// duplicator succs contains spoiler succ, hence spoiler cannot win
 						return null;
 					}
-					if ((!spoilerSuccIsFinal || nwa.isFinal(duplicatorSucc.getUp())) && 
-							isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
+					if ((!spoilerSuccIsFinal || nwa.isFinal(duplicatorSucc.getUp()))
+							&& isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
 						duplicatorSuccStates.addPair(duplicatorSucc.getDown(), duplicatorSucc.getUp());
 					}
 				}
@@ -141,19 +143,29 @@ public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleSta
 		}
 		if (duplicatorSuccStates.isEmpty()) {
 			return mSpoilerWinningSink;
-		} else {
-			return new DirectFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 		}
+		return new DirectFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 	}
-	
 
-	
-	
-	
-	
-	
-	
-	public static class AuxiliaryDirectFullMultipebbleGameState<STATE> extends DirectFullMultipebbleGameState<STATE> 
+	@Override
+	public <LETTER> boolean isImmediatelyWinningForSpoiler(final STATE q0, final STATE q1,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+		return operand.isFinal(q0) && !operand.isFinal(q1);
+	}
+
+	@Override
+	public <LETTER> DirectFullMultipebbleGameState<STATE> constructInitialState(final STATE q0, final STATE q1,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+		if (isImmediatelyWinningForSpoiler(q0, q1, operand)) {
+			throw new AssertionError("cannot construct state that is winning for spoiler");
+		}
+		final HashRelation<STATE, STATE> duplicatorDoubleDeckers = new HashRelation<>();
+		duplicatorDoubleDeckers.addPair(operand.getEmptyStackState(), q1);
+		return new DirectFullMultipebbleGameState<>(new DoubleDecker<>(operand.getEmptyStackState(), q0),
+				duplicatorDoubleDeckers);
+	}
+
+	public static class AuxiliaryDirectFullMultipebbleGameState<STATE> extends DirectFullMultipebbleGameState<STATE>
 			implements IFullMultipebbleAuxiliaryGameState {
 
 		private final AuxiliaryGameStateType mAuxiliaryGameStateType;
@@ -167,7 +179,7 @@ public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleSta
 		public HashRelation<STATE, STATE> getDuplicatorDoubleDeckers() {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		@Override
 		public int getNumberOfDoubleDeckerPebbles() {
 			return 0;
@@ -198,44 +210,21 @@ public class DirectFullMultipebbleStateFactory<STATE> extends FullMultipebbleSta
 
 		@Override
 		public boolean equals(final Object obj) {
-			if (this == obj)
+			if (this == obj) {
 				return true;
-			if (!super.equals(obj))
+			}
+			if (!super.equals(obj)) {
 				return false;
-			if (getClass() != obj.getClass())
+			}
+			if (getClass() != obj.getClass()) {
 				return false;
-			final AuxiliaryDirectFullMultipebbleGameState other = (AuxiliaryDirectFullMultipebbleGameState) obj;
-			if (mAuxiliaryGameStateType != other.mAuxiliaryGameStateType)
+			}
+			final AuxiliaryDirectFullMultipebbleGameState<?> other = (AuxiliaryDirectFullMultipebbleGameState<?>) obj;
+			if (mAuxiliaryGameStateType != other.mAuxiliaryGameStateType) {
 				return false;
+			}
 			return true;
 		}
-		
-		
-		
+
 	}
-
-
-
-
-
-
-	@Override
-	public <LETTER> boolean isImmediatelyWinningForSpoiler(final STATE q0, final STATE q1,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
-		return operand.isFinal(q0) && !operand.isFinal(q1);
-	}
-
-	@Override
-	public <LETTER> DirectFullMultipebbleGameState<STATE> constructInitialState(final STATE q0, final STATE q1,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
-		if (isImmediatelyWinningForSpoiler(q0, q1, operand)) {
-			throw new AssertionError("cannot construct state that is winning for spoiler");
-		}
-		final HashRelation<STATE, STATE> duplicatorDoubleDeckers = new HashRelation<>();
-		duplicatorDoubleDeckers.addPair(operand.getEmptyStackState(), q1);
-		return new DirectFullMultipebbleGameState<>(new DoubleDecker<STATE>(operand.getEmptyStackState(), q0), duplicatorDoubleDeckers);
-	}
-	
-
-	
 }

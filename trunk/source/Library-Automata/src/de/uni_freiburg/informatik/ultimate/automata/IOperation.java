@@ -78,7 +78,7 @@ public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 		// use runtime class name by default
 		return getClass().getSimpleName();
 	}
-	
+
 	/**
 	 * @return Message that should be logged when the operation is started.<br>
 	 *         Use some information like:<br>
@@ -87,7 +87,7 @@ public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 	default String startMessage() {
 		return "Started " + operationName() + '.';
 	}
-	
+
 	/**
 	 * @return Message that should be logged when the operation is finished.<br>
 	 *         Use some information like: "Finished operation intersection. Result has 345 states."
@@ -95,12 +95,12 @@ public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 	default String exitMessage() {
 		return "Finished " + operationName() + '.';
 	}
-	
+
 	/**
 	 * @return The result of the operation.
 	 */
 	Object getResult();
-	
+
 	/**
 	 * Run some checks to test correctness of the result.
 	 * 
@@ -111,7 +111,7 @@ public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 	 *             if checks fail or timeout was requested
 	 */
 	boolean checkResult(CRSF stateFactory) throws AutomataLibraryException;
-	
+
 	/**
 	 * Get information about the runtime and resource consumption of the operation.
 	 * <p>

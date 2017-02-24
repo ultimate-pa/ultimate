@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public class NumberOfTransitions<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLACE, IStateFactory<PLACE>> {
 	private final IPetriNet<LETTER, PLACE> mOperand;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -55,17 +55,17 @@ public class NumberOfTransitions<LETTER, PLACE> extends UnaryNetOperation<LETTER
 		super(services);
 		mOperand = operand;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "NumberOfTransitions";
 	}
-	
+
 	@Override
 	protected IPetriNet<LETTER, PLACE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public Integer getResult() {
 		return mOperand.getTransitions().size();

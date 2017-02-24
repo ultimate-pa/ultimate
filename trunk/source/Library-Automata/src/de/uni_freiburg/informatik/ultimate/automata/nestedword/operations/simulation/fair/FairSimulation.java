@@ -62,77 +62,19 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * Simulation that realizes <b>fair simulation</b> for reduction of a given buechi automaton.<br/>
  * Once started, results can then be get by using {@link #getResult()}.<br/>
  * <br/>
- * 
  * For more information on the type of simulation see {@link FairGameGraph}. <br/>
  * <br/>
- * 
  * The algorithm runs in <b>O(n^4 * k^2)</b> time and <b>O(n * k)</b> space where n is the amount of states and k the
  * amount of transitions from the inputed automaton.<br/>
  * The algorithm is based on the paper: <i>Fair simulation minimization</i> by <i>Gurumurthy, Bloem and Somenzi</i>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- * 
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
  *            State class of buechi automaton
  */
 public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
-
-	/**
-	 * Saves a change on the <i>BEff value</i> of a given vertex in the current {@link GameGraphChanges} object if there
-	 * currently is no such value stored.
-	 * 
-	 * @param vertex
-	 *            Vertex to save change
-	 * @param oldValue
-	 *            Value to save
-	 * @param changes
-	 *            Changes object to store change in
-	 */
-	private static <LETTER, STATE> void saveBEffChange(final Vertex<LETTER, STATE> vertex, final int oldValue,
-			final GameGraphChanges<LETTER, STATE> changes) {
-		if (changes != null && oldValue != vertex.getBEff() && !changes.hasBEffEntry(vertex)) {
-			changes.rememberBEffVertex(vertex, oldValue);
-		}
-	}
-
-	/**
-	 * Saves a change on the <i>C value</i> of a given vertex in the current {@link GameGraphChanges} object if there
-	 * currently is no such value stored.
-	 * 
-	 * @param vertex
-	 *            Vertex to save change
-	 * @param oldValue
-	 *            Value to save
-	 * @param changes
-	 *            Changes object to store change in
-	 */
-	private static <LETTER, STATE> void saveCChange(final Vertex<LETTER, STATE> vertex, final int oldValue,
-			final GameGraphChanges<LETTER, STATE> changes) {
-		if (changes != null && oldValue != vertex.getC() && !changes.hasCEntry(vertex)) {
-			changes.rememberCVertex(vertex, oldValue);
-		}
-	}
-
-	/**
-	 * Saves a change on the <i>Progress measure value</i> of a given vertex in the current {@link GameGraphChanges}
-	 * object if there currently is no such value stored.
-	 * 
-	 * @param vertex
-	 *            Vertex to save change
-	 * @param oldValue
-	 *            Value to save
-	 * @param changes
-	 *            Changes object to store change in
-	 */
-	private static <LETTER, STATE> void savePmChange(final Vertex<LETTER, STATE> vertex, final int oldValue,
-			final GameGraphChanges<LETTER, STATE> changes) {
-		if (changes != null && oldValue != vertex.getPM(null, 0) && !changes.hasPmEntry(vertex)) {
-			changes.rememberPmVertex(vertex, oldValue);
-		}
-	}
-
 	/**
 	 * If the simulation process itself should log detailed debugging information.
 	 */
@@ -196,7 +138,6 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * <b>fair simulation</b>.<br/>
 	 * After construction the simulation can be started and results can be get by using {@link #getResult()}.<br/>
 	 * <br/>
-	 * 
 	 * For correctness its important that the inputed automaton has <b>no dead ends</b> nor <b>duplicate transitions</b>
 	 * .
 	 * 
@@ -240,7 +181,6 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 	 * Creates a new fair simulation that tries to reduce the given buechi automaton using <b>fair simulation</b>.<br/>
 	 * After construction the simulation can be started and results can be get by using {@link #getResult()}.<br/>
 	 * <br/>
-	 * 
 	 * For correctness its important that the inputed automaton has <b>no dead ends</b> nor <b>duplicate transitions</b>
 	 * .
 	 * 
@@ -1088,6 +1028,60 @@ public class FairSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> {
 				vertex.setC(mGame.getSuccessors(vertex).size());
 				saveCChange(vertex, oldC, mCurrentChanges);
 			}
+		}
+	}
+
+	/**
+	 * Saves a change on the <i>BEff value</i> of a given vertex in the current {@link GameGraphChanges} object if there
+	 * currently is no such value stored.
+	 * 
+	 * @param vertex
+	 *            Vertex to save change
+	 * @param oldValue
+	 *            Value to save
+	 * @param changes
+	 *            Changes object to store change in
+	 */
+	private static <LETTER, STATE> void saveBEffChange(final Vertex<LETTER, STATE> vertex, final int oldValue,
+			final GameGraphChanges<LETTER, STATE> changes) {
+		if (changes != null && oldValue != vertex.getBEff() && !changes.hasBEffEntry(vertex)) {
+			changes.rememberBEffVertex(vertex, oldValue);
+		}
+	}
+
+	/**
+	 * Saves a change on the <i>C value</i> of a given vertex in the current {@link GameGraphChanges} object if there
+	 * currently is no such value stored.
+	 * 
+	 * @param vertex
+	 *            Vertex to save change
+	 * @param oldValue
+	 *            Value to save
+	 * @param changes
+	 *            Changes object to store change in
+	 */
+	private static <LETTER, STATE> void saveCChange(final Vertex<LETTER, STATE> vertex, final int oldValue,
+			final GameGraphChanges<LETTER, STATE> changes) {
+		if (changes != null && oldValue != vertex.getC() && !changes.hasCEntry(vertex)) {
+			changes.rememberCVertex(vertex, oldValue);
+		}
+	}
+
+	/**
+	 * Saves a change on the <i>Progress measure value</i> of a given vertex in the current {@link GameGraphChanges}
+	 * object if there currently is no such value stored.
+	 * 
+	 * @param vertex
+	 *            Vertex to save change
+	 * @param oldValue
+	 *            Value to save
+	 * @param changes
+	 *            Changes object to store change in
+	 */
+	private static <LETTER, STATE> void savePmChange(final Vertex<LETTER, STATE> vertex, final int oldValue,
+			final GameGraphChanges<LETTER, STATE> changes) {
+		if (changes != null && oldValue != vertex.getPM(null, 0) && !changes.hasPmEntry(vertex)) {
+			changes.rememberPmVertex(vertex, oldValue);
 		}
 	}
 }

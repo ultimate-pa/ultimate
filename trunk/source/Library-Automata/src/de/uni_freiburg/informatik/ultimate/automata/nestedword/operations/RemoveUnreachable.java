@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public final class RemoveUnreachable<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
-	
+
 	/**
 	 * Given an INestedWordAutomaton nwa return a NestedWordAutomaton that has
 	 * the same states, but all states that are not reachable are omitted.
@@ -71,44 +71,44 @@ public final class RemoveUnreachable<LETTER, STATE> extends UnaryNwaOperation<LE
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, mOperand);
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "RemoveUnreachable";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult() {
 		return mResult;
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start testing correctness of " + operationName());
 		}
-		
+
 		boolean correct = true;
 		/*
 		 * correct = correct && (ResultChecker.nwaLanguageInclusion(mInput, mResult) == null);
@@ -116,8 +116,8 @@ public final class RemoveUnreachable<LETTER, STATE> extends UnaryNwaOperation<LE
 		*/
 		assert correct;
 		final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy =
-				(DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy<>(mServices, mOperand,
-						false, false, false, false)).getResult();
+				(DoubleDeckerAutomaton<LETTER, STATE>) (new ReachableStatesCopy<>(mServices, mOperand, false, false,
+						false, false)).getResult();
 		correct &= mResult.getStates().containsAll(reachableStatesCopy.getStates());
 		assert correct : "remove unreachable incorrect: too few states";
 		correct = correct && reachableStatesCopy.getStates().containsAll(mResult.getStates());
@@ -127,13 +127,13 @@ public final class RemoveUnreachable<LETTER, STATE> extends UnaryNwaOperation<LE
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
 					"language is different", mOperand);
 		}
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + operationName());
 		}
 		return correct;
 	}
-	
+
 	private boolean checkEachState(final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy) {
 		boolean correct = true;
 		for (final STATE state : reachableStatesCopy.getStates()) {
@@ -147,11 +147,9 @@ public final class RemoveUnreachable<LETTER, STATE> extends UnaryNwaOperation<LE
 				correct = correct && mResult.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
-			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : reachableStatesCopy
-					.returnSuccessors(state)) {
-				correct =
-						correct && mResult.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(),
-								outTrans.getSucc());
+			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : reachableStatesCopy.returnSuccessors(state)) {
+				correct = correct && mResult.containsReturnTransition(state, outTrans.getHierPred(),
+						outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mResult.internalSuccessors(state)) {
@@ -160,8 +158,7 @@ public final class RemoveUnreachable<LETTER, STATE> extends UnaryNwaOperation<LE
 				assert correct;
 			}
 			for (final OutgoingCallTransition<LETTER, STATE> outTrans : mResult.callSuccessors(state)) {
-				correct &=
-						reachableStatesCopy.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
+				correct &= reachableStatesCopy.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : mResult.returnSuccessors(state)) {

@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public class NumberOfTransitions<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -61,12 +61,12 @@ public class NumberOfTransitions<LETTER, STATE> extends UnaryNwaOperation<LETTER
 		super(services);
 		mOperand = operand;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public Integer getResult() {
 		int number = 0;
@@ -79,12 +79,12 @@ public class NumberOfTransitions<LETTER, STATE> extends UnaryNwaOperation<LETTER
 		}
 		return number;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "NumberOfTransitions";
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;

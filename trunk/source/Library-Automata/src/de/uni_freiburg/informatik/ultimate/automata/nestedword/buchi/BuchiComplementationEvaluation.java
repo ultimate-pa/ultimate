@@ -59,7 +59,7 @@ public final class BuchiComplementationEvaluation<LETTER, STATE>
 		extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final String mResult;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -78,7 +78,7 @@ public final class BuchiComplementationEvaluation<LETTER, STATE>
 		super(services);
 		// TODO Christian 2016-09-18: This conversion is not necessary for receiving the required type. Use operand?
 		mOperand = new NestedWordAutomatonReachableStates<>(mServices, nwa);
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
@@ -87,33 +87,34 @@ public final class BuchiComplementationEvaluation<LETTER, STATE>
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "BuchiComplementationEvaluation";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Operand " + mOperand.sizeInformation() + ". Result " + mResult;
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
-	
+
 	@Override
 	public String getResult() {
 		return mResult;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
-	private <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE> & IDeterminizeStateFactory<STATE>>
+
+	private <
+			SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE> & IDeterminizeStateFactory<STATE>>
 			String evaluate(final SF stateFactory) throws AutomataOperationCanceledException {
 		final LinkedHashMap<String, Integer> results = new LinkedHashMap<>();
 		evaluateBs(stateFactory, results);
@@ -130,7 +131,7 @@ public final class BuchiComplementationEvaluation<LETTER, STATE>
 		}
 		return prettyPrint(results);
 	}
-	
+
 	private void evaluateBs(final IBuchiComplementNcsbStateFactory<STATE> stateFactory,
 			final LinkedHashMap<String, Integer> results) throws AutomataOperationCanceledException {
 		final String name = "BuchiComplementBS";
@@ -138,17 +139,16 @@ public final class BuchiComplementationEvaluation<LETTER, STATE>
 				(new BuchiComplementNCSB<>(mServices, stateFactory, mOperand)).getResult();
 		addToResultsWithSizeReduction(results, name, result);
 	}
-	
+
 	private <SF extends IDeterminizeStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE>> void evaluateFkv(
-			final SF stateFactory, final LinkedHashMap<String, Integer> results,
-			final FkvOptimization fkvOptimization)
+			final SF stateFactory, final LinkedHashMap<String, Integer> results, final FkvOptimization fkvOptimization)
 			throws AutomataOperationCanceledException {
 		final String name = "FKV_" + fkvOptimization;
 		final NestedWordAutomatonReachableStates<LETTER, STATE> result = (new BuchiComplementFKV<>(mServices,
 				stateFactory, mOperand, fkvOptimization.toString(), Integer.MAX_VALUE)).getResult();
 		addToResultsWithSizeReduction(results, name, result);
 	}
-	
+
 	private static String prettyPrint(final LinkedHashMap<String, Integer> results) {
 		final StringBuilder builder = new StringBuilder();
 		for (final Entry<String, Integer> entry : results.entrySet()) {
@@ -161,7 +161,7 @@ public final class BuchiComplementationEvaluation<LETTER, STATE>
 		}
 		return builder.toString();
 	}
-	
+
 	private void addToResultsWithSizeReduction(final LinkedHashMap<String, Integer> results, final String name,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> result) throws AutomataOperationCanceledException {
 		addToResults(results, name, result);
@@ -176,7 +176,7 @@ public final class BuchiComplementationEvaluation<LETTER, STATE>
 						.getResult();
 		addToResults(results, name + "_MsSizeReduction", minmized);
 	}
-	
+
 	private void addToResults(final LinkedHashMap<String, Integer> results, final String name,
 			final INestedWordAutomaton<LETTER, STATE> result) {
 		final int size = result.getStates().size();

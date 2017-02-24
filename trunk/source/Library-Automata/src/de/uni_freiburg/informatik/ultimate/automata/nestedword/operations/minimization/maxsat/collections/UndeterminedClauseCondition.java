@@ -38,13 +38,13 @@ public final class UndeterminedClauseCondition implements IClauseCondition {
 		// should never be hashed
 		throw new AssertionError();
 	}
-	
+
 	@Override
 	public boolean equals(final Object other) {
 		// should never be compared
 		throw new AssertionError();
 	}
-	
+
 	@Override
 	public String toString() {
 		return "ClauseCondition [mClauseStatus=" + getClauseStatus() + "]";

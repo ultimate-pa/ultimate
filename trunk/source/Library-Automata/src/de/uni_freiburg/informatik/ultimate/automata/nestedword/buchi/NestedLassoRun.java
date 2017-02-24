@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 public class NestedLassoRun<LETTER, STATE> {
 	private final NestedRun<LETTER, STATE> mStem;
 	private final NestedRun<LETTER, STATE> mLoop;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -54,19 +54,19 @@ public class NestedLassoRun<LETTER, STATE> {
 		mStem = stem;
 		mLoop = loop;
 	}
-	
+
 	public NestedRun<LETTER, STATE> getStem() {
 		return mStem;
 	}
-	
+
 	public NestedRun<LETTER, STATE> getLoop() {
 		return mLoop;
 	}
-	
+
 	public NestedLassoWord<LETTER> getNestedLassoWord() {
 		return new NestedLassoWord<>(getStem().getWord(), getLoop().getWord());
 	}
-	
+
 	@Override
 	public String toString() {
 		return "Stem: " + mStem + " Loop:" + mLoop;

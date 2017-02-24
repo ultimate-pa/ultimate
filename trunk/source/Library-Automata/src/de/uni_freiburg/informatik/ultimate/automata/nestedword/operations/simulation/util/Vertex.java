@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util;
@@ -35,7 +35,6 @@ import java.util.Set;
  * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph
  * AGameGraph}.<br/>
  * <br/>
- * 
  * The vertex representation is <b>(q0, q1, bit)</b> which means <i>Spoiler</i>
  * is currently at state q0 whereas <i>Duplicator</i> now is at q1. The bit
  * encodes extra information if needed.<br/>
@@ -45,13 +44,18 @@ import java.util.Set;
  * ASimulation}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
  *            State class of buechi automaton
  */
 public class Vertex<LETTER, STATE> {
+	/**
+	 * The progress measure of this vertex as needed for the
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation
+	 * ASimulation}.
+	 */
+	protected int mPm;
 	/**
 	 * The bit encodes extra information if needed.
 	 */
@@ -90,12 +94,6 @@ public class Vertex<LETTER, STATE> {
 	 * currently is at.
 	 */
 	private final STATE mQ1;
-	/**
-	 * The progress measure of this vertex as needed for the
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation
-	 * ASimulation}.
-	 */
-	protected int mPm;
 
 	/**
 	 * Constructs a new vertex with given representation <b>(q0, q1, bit)</b>
@@ -139,8 +137,7 @@ public class Vertex<LETTER, STATE> {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		final
-		Vertex<?, ?> other = (Vertex<?, ?>) obj;
+		final Vertex<?, ?> other = (Vertex<?, ?>) obj;
 		if (mB != other.mB) {
 			return false;
 		}

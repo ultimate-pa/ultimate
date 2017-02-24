@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  * Possible types of a transitions.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  */
 public enum ETransitionType {
 	/**

@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerCraig;
@@ -258,8 +259,7 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 
 		final IIcfg<BoogieIcfgLocation> icfgContainer = mPrefs.getIcfgContainer();
 		final boolean useNonlinearConstraints = mPrefs.getUseNonlinearConstraints();
-		final boolean useVarsFromUnsatCore = mPrefs.getUseVarsFromUnsatCore();
-		final boolean useLiveVariables = mPrefs.getUseLiveVariables();
+		final boolean useUnsatCores = mPrefs.getUseVarsFromUnsatCore();
 		final boolean useAbstractInterpretationPredicates = mPrefs.getUseAbstractInterpretation();
 		final boolean useWeakestPrecondition = mPrefs.getUseWeakestPreconditionForPathInvariants();
 		final boolean dumpSmtScriptToFile = mPrefs.getDumpSmtScriptToFile();
@@ -276,14 +276,16 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 			solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:3000";
 		}
 		final boolean fakeNonIncrementalSolver = false;
-		final Settings settings = new Settings(fakeNonIncrementalSolver, true, solverCommand, -1, null,
+		final Settings solverSettings = new Settings(fakeNonIncrementalSolver, true, solverCommand, -1, null,
 				dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
+		final InvariantSynthesisSettings invariantSynthesisSettings = new InvariantSynthesisSettings(solverSettings,
+				useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWeakestPrecondition);
+		
 
 		return new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate, falsePredicate,
 				new TreeMap<Integer, IPredicate>(), (NestedRun<CodeBlock, IPredicate>) mCounterexample,
 				mPrefs.getCfgSmtToolkit(), mAssertionOrder, mServices, mPrefs.getToolchainStorage(), true,
-				mPredicateUnifier, useNonlinearConstraints, useVarsFromUnsatCore, useLiveVariables, useAbstractInterpretationPredicates,
-				useWeakestPrecondition, settings, xnfConversionTechnique, simplificationTechnique, icfgContainer,
+				mPredicateUnifier, invariantSynthesisSettings, xnfConversionTechnique, simplificationTechnique, icfgContainer,
 				mCegarLoopBenchmark);
 	}
 

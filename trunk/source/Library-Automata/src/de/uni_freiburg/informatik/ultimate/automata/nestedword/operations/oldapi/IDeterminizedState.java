@@ -40,9 +40,10 @@ public interface IDeterminizedState<LETTER, STATE> {
 	 * @return All down states.
 	 */
 	Set<STATE> getDownStates();
-	
+
 	/**
-	 * @param caller A down state.
+	 * @param caller
+	 *            A down state.
 	 * @return all respective up states
 	 */
 	Set<STATE> getUpStates(STATE caller);

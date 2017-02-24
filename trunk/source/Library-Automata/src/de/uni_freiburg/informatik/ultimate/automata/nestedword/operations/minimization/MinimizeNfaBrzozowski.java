@@ -62,7 +62,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -80,25 +80,25 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mOperand = operand;
-		
+
 		printStartMessage();
 		assert super.isFiniteAutomaton() : "The input automaton contains call or return transitions.";
-		
+
 		minimize(stateFactory);
 		printExitMessage();
 	}
-	
+
 	@Override
 	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return checkLanguageEquivalence(stateFactory);
 	}
-	
+
 	/**
 	 * This method simply reverses and determinizes the automaton twice, which
 	 * results in the minimal DFA.
@@ -112,13 +112,13 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 		for (int i = 0; i < 2; ++i) {
 			super.checkForContinuation();
 			automaton = reverse(automaton);
-			
+
 			super.checkForContinuation();
 			automaton = determinize(determinizeStateFactory, automaton);
 		}
 		directResultConstruction(automaton);
 	}
-	
+
 	/**
 	 * This method reverses the automaton.
 	 * <p>
@@ -132,28 +132,25 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	 * @return the reversed automaton
 	 */
 	@SuppressWarnings("squid:S3047")
-	private INestedWordAutomaton<LETTER, STATE> reverse(
-			final INestedWordAutomaton<LETTER, STATE> automaton) {
+	private INestedWordAutomaton<LETTER, STATE> reverse(final INestedWordAutomaton<LETTER, STATE> automaton) {
 		final NestedWordAutomaton<LETTER, STATE> reversed =
 				new NestedWordAutomaton<>(mServices, automaton.getInternalAlphabet(), automaton.getCallAlphabet(),
 						automaton.getReturnAlphabet(), automaton.getStateFactory());
-		
+
 		// add states
 		for (final STATE state : automaton.getStates()) {
-			reversed.addState(automaton.isFinal(state),
-					automaton.isInitial(state), state);
+			reversed.addState(automaton.isFinal(state), automaton.isInitial(state), state);
 		}
 		// add (only internal) transitions
 		for (final STATE state : automaton.getStates()) {
 			for (final OutgoingInternalTransition<LETTER, STATE> trans : automaton.internalSuccessors(state)) {
-				reversed.addInternalTransition(
-						trans.getSucc(), trans.getLetter(), state);
+				reversed.addInternalTransition(trans.getSucc(), trans.getLetter(), state);
 			}
 		}
-		
+
 		return reversed;
 	}
-	
+
 	/**
 	 * This method determinizes the automaton.
 	 * 

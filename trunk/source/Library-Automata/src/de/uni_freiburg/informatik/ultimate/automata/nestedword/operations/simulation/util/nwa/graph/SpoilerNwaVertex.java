@@ -33,17 +33,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph
  * AGameGraph}.<br/>
  * <br/>
- * 
  * The vertex representation is <b>(q0, q1, bit)</b> which means <i>Spoiler</i>
  * is currently at state q0 and must make a move using an arbitrary transition
  * whereas <i>Duplicator</i> now is at q1 and later must respond to
  * <i>Spoiler</i>s decision. The bit encodes extra information if needed.
- * 
  * This object extends regular SpoilerVertices by giving it extra information
  * that only occur in Nwa Game Graphs, like sinks.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- * 
  * @param <LETTER>
  *            Letter class of nwa automaton
  * @param <STATE>

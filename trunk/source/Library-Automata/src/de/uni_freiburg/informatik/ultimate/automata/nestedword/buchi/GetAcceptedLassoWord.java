@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public final class GetAcceptedLassoWord<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedLassoWord<LETTER> mAcceptedWord;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -68,28 +68,28 @@ public final class GetAcceptedLassoWord<LETTER, STATE> extends UnaryNwaOperation
 		mAcceptedWord = isEmpty.getAcceptingNestedLassoRun().getNestedLassoWord();
 		mLogger.info(exitMessage());
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public NestedLassoWord<LETTER> getResult() {
 		return mAcceptedWord;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "GetAcceptedLassoWord";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Length of stem: " + mAcceptedWord.getStem().length()
 				+ " Length of loop:" + mAcceptedWord.getLoop().length();
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;

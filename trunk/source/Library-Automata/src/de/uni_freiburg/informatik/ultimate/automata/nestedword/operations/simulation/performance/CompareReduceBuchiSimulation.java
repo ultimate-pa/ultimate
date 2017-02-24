@@ -78,7 +78,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * The resulting automaton is the input automaton.
  *
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
@@ -154,6 +153,10 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	private static final int SIMULATION_TIMEOUT = 10;
 
 	/**
+	 * Holds counting measures of the comparison.
+	 */
+	protected final LinkedHashMap<ECountingMeasure, Integer> mCountingMeasures;
+	/**
 	 * Overall time an external operation took. Needed since it does not track this measure by itself.
 	 */
 	private long mExternalOverallTime;
@@ -173,14 +176,13 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	 * Holds time measures of the comparison.
 	 */
 	private final LinkedHashMap<ETimeMeasure, Float> mTimeMeasures;
-	/**
-	 * Holds counting measures of the comparison.
-	 */
-	protected final LinkedHashMap<ECountingMeasure, Integer> mCountingMeasures;
 
 	/**
 	 * Compares the different types of simulation methods for buechi reduction. Resulting automaton is the input
 	 * automaton.
+	 * <p>
+	 * Throws an IllegalArgumentException If the input automaton is no Buchi automaton. It must have an empty call and
+	 * return alphabet.
 	 *
 	 * @param services
 	 *            Service provider of Ultimate framework
@@ -190,8 +192,6 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	 *            The buechi automaton to compare with
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate framework.
-	 * @throws IllegalArgumentException
-	 *             If the inputed automaton is no Buechi-automaton. It must have an empty call and return alphabet.
 	 */
 	public CompareReduceBuchiSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory,
@@ -292,8 +292,6 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	 *
 	 * @param automaton
 	 *            Automaton to verify validity
-	 * @throws IllegalArgumentException
-	 *             If the given automaton is not valid
 	 */
 	public void verifyAutomatonValidity(final INestedWordAutomatonSimple<LETTER, STATE> automaton) {
 		if (!automaton.getCallAlphabet().isEmpty() || !automaton.getReturnAlphabet().isEmpty()) {

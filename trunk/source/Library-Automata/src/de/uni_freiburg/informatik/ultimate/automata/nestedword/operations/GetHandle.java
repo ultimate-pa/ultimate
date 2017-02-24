@@ -63,7 +63,7 @@ public final class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private NestedRun<LETTER, STATE> mHandle;
 	private final NoHandleReason mNoHandleReason;
-	
+
 	/**
 	 * Available reasons why the automaton is no handle.
 	 * 
@@ -83,7 +83,7 @@ public final class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 		 */
 		MULTI_INIT_SUCC
 	}
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -94,15 +94,15 @@ public final class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */
-	public GetHandle(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+	public GetHandle(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		if (mOperand.getInitialStates().size() != 1) {
 			mNoHandleReason = NoHandleReason.MULTI_INITIAL;
 		} else {
@@ -114,12 +114,12 @@ public final class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 				mNoHandleReason = aa();
 			}
 		}
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	private NoHandleReason aa() {
 		while (true) {
 			final STATE knownPredecessor = mHandle.getStateAtPosition(mHandle.getLength() - 2);
@@ -142,7 +142,7 @@ public final class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 			}
 		}
 	}
-	
+
 	/**
 	 * TODO Christian 2016-09-04: This method is not used elsewhere. Make it private?
 	 * 
@@ -178,7 +178,7 @@ public final class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 		}
 		return result;
 	}
-	
+
 	/**
 	 * TODO Christian 2016-09-04: This method is not used elsewhere. Make it private?
 	 * 
@@ -222,22 +222,22 @@ public final class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 		assert predecessor == knownPredecessor : "wrong state";
 		return true;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public NestedRun<LETTER, STATE> getResult() {
 		return mHandle;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "GetHandle";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		final StringBuilder builder = new StringBuilder();

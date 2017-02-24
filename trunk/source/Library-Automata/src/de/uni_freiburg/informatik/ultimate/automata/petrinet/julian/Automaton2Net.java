@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public final class Automaton2Net<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final IPetriNet<LETTER, STATE> mNet;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -61,7 +61,7 @@ public final class Automaton2Net<LETTER, STATE> extends UnaryNwaOperation<LETTER
 			throws AutomataLibraryException {
 		super(services);
 		mOperand = operand;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
@@ -70,27 +70,27 @@ public final class Automaton2Net<LETTER, STATE> extends UnaryNwaOperation<LETTER
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public IPetriNet<LETTER, STATE> getResult() {
 		return mNet;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "Automaton2Net";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". PetriNet " + mNet.sizeInformation();
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;

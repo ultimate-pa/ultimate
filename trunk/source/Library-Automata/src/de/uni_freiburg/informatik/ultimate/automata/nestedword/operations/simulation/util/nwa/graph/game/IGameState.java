@@ -31,7 +31,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  * SpoilerVertex in a Nwa game graph.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  */
 public interface IGameState {
 

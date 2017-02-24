@@ -28,32 +28,32 @@ package de.uni_freiburg.informatik.ultimate.automata.alternating;
 
 public final class BitUtil {
 	private static final long[] MASKS_SINGLE_BIT = new long[64];
-	
+
 	static {
 		for (int i = 0; i < MASKS_SINGLE_BIT.length; i++) {
 			MASKS_SINGLE_BIT[i] = ((long) 1) << i;
 		}
 	}
-	
+
 	private BitUtil() {
 		// utility class, do not instantiate
 	}
-	
+
 	public static long setBit(final long bitVector, final int bitIndex, final boolean value) {
 		if (value) {
 			return setBit(bitVector, bitIndex);
 		}
 		return unsetBit(bitVector, bitIndex);
 	}
-	
+
 	public static long setBit(final long bitVector, final int bitIndex) {
 		return bitVector | MASKS_SINGLE_BIT[bitIndex];
 	}
-	
+
 	public static long unsetBit(final long bitVector, final int bitIndex) {
 		return bitVector & (~MASKS_SINGLE_BIT[bitIndex]);
 	}
-	
+
 	public static int getNextSetBit(final long bitVector, final int offset) {
 		for (int i = offset; i < 64; i++) {
 			if (getBit(bitVector, i)) {
@@ -62,11 +62,11 @@ public final class BitUtil {
 		}
 		return -1;
 	}
-	
+
 	public static boolean getBit(final long bitVector, final int bitIndex) {
 		return (bitVector & MASKS_SINGLE_BIT[bitIndex]) != 0;
 	}
-	
+
 	public static String getText(long bitVector) {
 		final StringBuilder text = new StringBuilder();
 		for (int i = 0; i < 64; i++) {

@@ -73,29 +73,29 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	private static final String FILE_NAME_TMP = "dimacs.wcnf.tmp";
 	private static final String ENCODING = "UTF-8";
 	private static final boolean WRITE_TO_STD_OUT = false;
-	
+
 	private static final String FILE_NAME = "dimacs.wcnf";
-	
+
 	private static final String AHMAXSAT_COMMAND = "./ahmaxsat-ls-1.68";
-	
+
 	private static final String RESULT_OUTPUT_BEGINNING = "s OPTIMUM FOUND";
-	
+
 	private static final String HEADER = "c CNF\np wcnf ";
 	private static final char BLANK = ' ';
 	private static final char NEG = '-';
 	private static final String END_LINE = " 0" + LINE_SEPARATOR;
 	private static final String BLANK_STRING = " ";
 	private static final CharSequence SOFT_CLAUSE_WEIGHT = "1 ";
-	
+
 	private static final Object[] EMPTY_ARRAY = new Object[0];
-	
+
 	private final Appendable mWriter;
 	private final Map<V, String> mVar2NumberString;
 	private final ArrayList<V> mNumber2Var;
 	private Map<V, Boolean> mVar2Assignment;
-	
+
 	private final String mMaxWeight;
-	
+
 	/**
 	 * @param services
 	 *            Ultimate services.
@@ -107,13 +107,13 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		mNumber2Var = new ArrayList<>();
 		mMaxWeight = Integer.toString(Integer.MAX_VALUE) + BLANK;
 	}
-	
+
 	@Override
 	public void addVariable(final V var) {
 		mVar2NumberString.put(var, Integer.toString(mVar2NumberString.size() + 1));
 		mNumber2Var.add(var);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public void addHornClause(final V[] negativeAtoms, final V positiveAtom) {
@@ -125,7 +125,7 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		}
 		addClause(negativeAtoms, positiveAtoms);
 	}
-	
+
 	@Override
 	public void addClause(final V[] negativeAtoms, final V[] positiveAtoms) {
 		++mClauses;
@@ -142,7 +142,7 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 			throw new AssertionError(e);
 		}
 	}
-	
+
 	@Override
 	public boolean solve() throws AutomataOperationCanceledException {
 		try {
@@ -150,9 +150,9 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		} catch (final IOException e) {
 			throw new AssertionError(e);
 		}
-		
+
 		fixFile();
-		
+
 		// run external Max-SAT solver
 		final ArrayList<String> commands = new ArrayList<>(1);
 		commands.add(AHMAXSAT_COMMAND);
@@ -166,22 +166,22 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		} catch (final IOException e) {
 			throw new AssertionError(e);
 		}
-		
+
 		return parseResult(p.getInputStream());
 	}
-	
+
 	private static Writer createWriter() {
 		if (WRITE_TO_STD_OUT) {
 			return new BufferedWriter(new OutputStreamWriter(System.out));
 		}
-		
+
 		try {
 			return new OutputStreamWriter(new FileOutputStream(FILE_NAME_TMP), ENCODING);
 		} catch (final IOException e) {
 			throw new AssertionError(e);
 		}
 	}
-	
+
 	@SuppressWarnings("squid:S1141")
 	private void fixFile() {
 		// new, final file
@@ -196,7 +196,7 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 					.append(mMaxWeight)
 					.append(LINE_SEPARATOR);
 			// @formatter:on
-			
+
 			// copy hard clauses
 			try (Scanner scanner = new Scanner(new File(FILE_NAME_TMP), ENCODING)) {
 				scanner.useDelimiter(LINE_SEPARATOR);
@@ -207,23 +207,23 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 			} catch (final FileNotFoundException e) {
 				throw new AssertionError(e);
 			}
-			
+
 			// add soft clauses
 			addSoftClauses(writer);
 		} catch (final IOException e) {
 			throw new AssertionError(e);
 		}
 	}
-	
+
 	private void addSoftClauses(final Writer writer) throws IOException {
 		for (final String var : mVar2NumberString.values()) {
 			writer.append(SOFT_CLAUSE_WEIGHT).append(var).append(END_LINE);
 		}
 	}
-	
+
 	private boolean parseResult(final InputStream inputStream) {
 		mVar2Assignment = new HashMap<>(mVar2NumberString.size());
-		
+
 		try (Scanner scanner = new Scanner(inputStream, ENCODING)) {
 			// find beginning of result output
 			scanner.useDelimiter(LINE_SEPARATOR);
@@ -233,7 +233,7 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 					break;
 				}
 			}
-			
+
 			// parse result output
 			scanner.useDelimiter(BLANK_STRING);
 			if (scanner.hasNext()) {
@@ -259,60 +259,60 @@ public class DimacsMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 				mVar2Assignment.put(var, isPositive);
 			}
 		}
-		
+
 		return true;
 	}
-	
+
 	@Override
 	public Map<V, Boolean> getValues() {
 		return mVar2Assignment;
 	}
-	
+
 	@Override
 	public VariableStatus getValue(final V var) {
 		return VariableStatus.UNSET;
 	}
-	
+
 	@Override
 	public int getNumberOfVariables() {
 		return mVar2NumberString.size();
 	}
-	
+
 	@Override
 	public int getNumberOfClauses() {
 		return mClauses;
 	}
-	
+
 	@Override
 	protected Boolean getPersistentAssignment(final V var) {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	protected void log() {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	protected VariableStatus getTemporaryAssignment(final V var) {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	protected void backtrack(final V var) {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	protected void makeAssignmentPersistent() {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	protected void setVariable(final V var, final boolean newStatus) {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	protected void decideOne() {
 		throw new UnsupportedOperationException();

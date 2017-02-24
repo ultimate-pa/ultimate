@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJuli
 public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	private final Map<LETTER, String> mAlphabet;
 	private final Map<Place<LETTER, STATE>, String> mPlacesMapping;
-	
+
 	/**
 	 * @param writer
 	 *            Print writer.
@@ -63,7 +63,7 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		super(writer);
 		mAlphabet = getAlphabetMapping(net.getAlphabet());
 		mPlacesMapping = getPlacesMapping(net.getPlaces());
-		
+
 		print("PetriNet ");
 		print(name);
 		printAutomatonPrefix();
@@ -74,28 +74,28 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		printAcceptingPlaces(net.getAcceptingPlaces());
 		printAutomatonSuffix();
 	}
-	
+
 	protected abstract Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet);
-	
+
 	protected abstract Map<Place<LETTER, STATE>, String>
 			getPlacesMapping(final Collection<Place<LETTER, STATE>> places);
-	
+
 	protected final void printElementPrefix(final String string) {
 		print(String.format("\t%s = ", string));
 	}
-	
+
 	private void printAlphabet() {
 		printCollectionPrefix("alphabet");
 		printValues(mAlphabet);
 		printCollectionSuffix();
 	}
-	
+
 	private void printPlaces() {
 		printCollectionPrefix("places");
 		printValues(mPlacesMapping);
 		printCollectionSuffix();
 	}
-	
+
 	private void printTransitions(final Collection<ITransition<LETTER, STATE>> transitions) {
 		printlnCollectionPrefix("transitions");
 		for (final ITransition<LETTER, STATE> transition : transitions) {
@@ -103,7 +103,7 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		}
 		printTransitionsSuffix();
 	}
-	
+
 	private void printTransition(final ITransition<LETTER, STATE> transition) {
 		printOneTransitionPrefix();
 		printMarking(transition.getPredecessors());
@@ -113,7 +113,7 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		printMarking(transition.getSuccessors());
 		printOneTransitionSuffix();
 	}
-	
+
 	private void printMarking(final Iterable<Place<LETTER, STATE>> marking) {
 		print('{');
 		for (final Place<LETTER, STATE> place : marking) {
@@ -121,13 +121,13 @@ public abstract class NetWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 		}
 		print('}');
 	}
-	
+
 	private void printInitialMarking(final Iterable<Place<LETTER, STATE>> initialMarking) {
 		printElementPrefix("initialMarking");
 		printMarking(initialMarking);
 		println(',');
 	}
-	
+
 	private void printAcceptingPlaces(final Iterable<Place<LETTER, STATE>> acceptingPlaces) {
 		printElementPrefix("acceptingPlaces");
 		printMarking(acceptingPlaces);

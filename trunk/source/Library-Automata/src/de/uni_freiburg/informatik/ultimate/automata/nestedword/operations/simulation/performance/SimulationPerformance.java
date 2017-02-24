@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * timer and counter to save performance data.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  */
 public final class SimulationPerformance {
 
@@ -53,6 +52,62 @@ public final class SimulationPerformance {
 	 * Value for a non valid time result.
 	 */
 	public static final long NO_TIME_RESULT = -1;
+
+	/**
+	 * Holds all counting measures that are monitored.
+	 */
+	private final LinkedHashMap<ECountingMeasure, Integer> mCountingMeasures;
+
+	/**
+	 * If the simulation uses SCC optimization or not.
+	 */
+	private final boolean mIsUsingSccs;
+	/**
+	 * Name for the performance object to distinguish it from others.
+	 */
+	private String mName;
+	/**
+	 * If the performance object represents a simulation that has thrown an out
+	 * of memory error.
+	 */
+	private boolean mOutOfMemory;
+	/**
+	 * The type of the simulation that is monitored.
+	 */
+	private final ESimulationType mSimType;
+	/**
+	 * If the performance object represents a simulation that has timed out.
+	 */
+	private boolean mTimedOut;
+	/**
+	 * Holds all time measures that are monitored.
+	 */
+	private final LinkedHashMap<ETimeMeasure, List<Long>> mTimeMeasures;
+
+	/**
+	 * Holds all starting timestamps for monitored time measures.
+	 */
+	private final LinkedHashMap<ETimeMeasure, Long> mTimeMeasureStartTimes;
+
+	/**
+	 * Creates a simulation performance object that monitors the performance of
+	 * a given simulation.
+	 * 
+	 * @param simType
+	 *            Type of the simulation
+	 * @param isUsingSccs
+	 *            If the simulation uses a SCC optimization
+	 */
+	public SimulationPerformance(final ESimulationType simType, final boolean isUsingSccs) {
+		mSimType = simType;
+		mTimeMeasures = new LinkedHashMap<>();
+		mTimeMeasureStartTimes = new LinkedHashMap<>();
+		mCountingMeasures = new LinkedHashMap<>();
+		mIsUsingSccs = isUsingSccs;
+		mTimedOut = false;
+		mOutOfMemory = false;
+		mName = "";
+	}
 
 	/**
 	 * Converts a given counting measure type to its equivalent statistics type.
@@ -95,13 +150,13 @@ public final class SimulationPerformance {
 	 * 
 	 * @param type
 	 *            Type of the simulation
-	 * @param useSCCs
+	 * @param useSccs
 	 *            If the simulation usesSCCs
 	 * @return The out of memory simulation performance object
 	 */
 	public static SimulationPerformance createOutOfMemoryPerformance(final ESimulationType type,
-			final boolean useSCCs) {
-		final SimulationPerformance performance = new SimulationPerformance(type, useSCCs);
+			final boolean useSccs) {
+		final SimulationPerformance performance = new SimulationPerformance(type, useSccs);
 		performance.outOfMemory();
 		return performance;
 	}
@@ -111,70 +166,14 @@ public final class SimulationPerformance {
 	 * 
 	 * @param type
 	 *            Type of the simulation
-	 * @param useSCCs
+	 * @param useSccs
 	 *            If the simulation usesSCCs
 	 * @return The timed out simulation performance object
 	 */
-	public static SimulationPerformance createTimedOutPerformance(final ESimulationType type, final boolean useSCCs) {
-		final SimulationPerformance performance = new SimulationPerformance(type, useSCCs);
+	public static SimulationPerformance createTimedOutPerformance(final ESimulationType type, final boolean useSccs) {
+		final SimulationPerformance performance = new SimulationPerformance(type, useSccs);
 		performance.timeOut();
 		return performance;
-	}
-
-	/**
-	 * Holds all counting measures that are monitored.
-	 */
-	private final LinkedHashMap<ECountingMeasure, Integer> mCountingMeasures;
-
-	/**
-	 * If the simulation uses SCC optimization or not.
-	 */
-	private final boolean mIsUsingSCCs;
-	/**
-	 * Name for the performance object to distinguish it from others.
-	 */
-	private String mName;
-	/**
-	 * If the performance object represents a simulation that has thrown an out
-	 * of memory error.
-	 */
-	private boolean mOutOfMemory;
-	/**
-	 * The type of the simulation that is monitored.
-	 */
-	private final ESimulationType mSimType;
-	/**
-	 * If the performance object represents a simulation that has timed out.
-	 */
-	private boolean mTimedOut;
-	/**
-	 * Holds all time measures that are monitored.
-	 */
-	private final LinkedHashMap<ETimeMeasure, List<Long>> mTimeMeasures;
-
-	/**
-	 * Holds all starting timestamps for monitored time measures.
-	 */
-	private final LinkedHashMap<ETimeMeasure, Long> mTimeMeasureStartTimes;
-
-	/**
-	 * Creates a simulation performance object that monitors the performance of
-	 * a given simulation.
-	 * 
-	 * @param simType
-	 *            Type of the simulation
-	 * @param isUsingSCCs
-	 *            If the simulation uses a SCC optimization
-	 */
-	public SimulationPerformance(final ESimulationType simType, final boolean isUsingSCCs) {
-		mSimType = simType;
-		mTimeMeasures = new LinkedHashMap<>();
-		mTimeMeasureStartTimes = new LinkedHashMap<>();
-		mCountingMeasures = new LinkedHashMap<>();
-		mIsUsingSCCs = isUsingSCCs;
-		mTimedOut = false;
-		mOutOfMemory = false;
-		mName = "";
 	}
 
 	/**
@@ -234,15 +233,13 @@ public final class SimulationPerformance {
 		exportToExistingAutomataOperationStatistics(stats);
 		return stats;
 	}
-	
+
 	/**
 	 * Exports this simulation performance object to an
 	 * AutomataOperationStatistics object.
 	 * 
 	 * @param stats
 	 *            existing statistics object to add data to
-	 * @return An AutomataOperationStatistics object holding the equivalent data
-	 *         than this object
 	 */
 	public void exportToExistingAutomataOperationStatistics(final AutomataOperationStatistics stats) {
 		// Meta data
@@ -250,7 +247,7 @@ public final class SimulationPerformance {
 		stats.addKeyValuePair(StatisticsType.ATS_ID, getName());
 		stats.addKeyValuePair(StatisticsType.HAS_TIMED_OUT, hasTimedOut());
 		stats.addKeyValuePair(StatisticsType.IS_OUT_OF_MEMORY, isOutOfMemory());
-		stats.addKeyValuePair(StatisticsType.IS_USING_SCCS, isUsingSCCs());
+		stats.addKeyValuePair(StatisticsType.IS_USING_SCCS, isUsingSccs());
 
 		// Time measures
 		for (final ETimeMeasure measure : getTimeMeasures().keySet()) {
@@ -419,8 +416,8 @@ public final class SimulationPerformance {
 	 * 
 	 * @return If the monitored simulation uses a SCC simulation.
 	 */
-	public boolean isUsingSCCs() {
-		return mIsUsingSCCs;
+	public boolean isUsingSccs() {
+		return mIsUsingSccs;
 	}
 
 	/**

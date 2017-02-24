@@ -39,9 +39,9 @@ import java.util.Map;
 public abstract class GeneralAutomatonPrinter {
 	public static final char QUOTE = '\"';
 	public static final String NEW_LINE = System.lineSeparator();
-	
+
 	private final PrintWriter mPrintWriter;
-	
+
 	/**
 	 * @param printWriter
 	 *            Print writer to write to.
@@ -49,85 +49,85 @@ public abstract class GeneralAutomatonPrinter {
 	protected GeneralAutomatonPrinter(final PrintWriter printWriter) {
 		mPrintWriter = printWriter;
 	}
-	
+
 	protected final void println(final String string) {
 		mPrintWriter.println(string);
 	}
-	
+
 	protected final void println(final char character) {
 		mPrintWriter.println(character);
 	}
-	
+
 	protected final void print(final String string) {
 		mPrintWriter.print(string);
 	}
-	
+
 	protected final void print(final char character) {
 		mPrintWriter.print(character);
 	}
-	
+
 	protected final void print(final StringBuilder builder) {
 		mPrintWriter.print(builder);
 	}
-	
+
 	protected final void printAutomatonPrefix() {
 		println(" = (");
 	}
-	
+
 	protected final void printAutomatonSuffix() {
 		println(");");
 	}
-	
+
 	protected final void printValues(final Map<?, String> alphabet) {
 		printCollection(alphabet.values());
 	}
-	
+
 	private void printCollection(final Collection<String> collection) {
 		for (final String string : collection) {
 			printElement(string);
 		}
 	}
-	
+
 	private static String getCollectionPrefix(final String string) {
 		return String.format("\t%s = {", string);
 	}
-	
+
 	protected final void printCollectionPrefix(final String string) {
 		print(getCollectionPrefix(string));
 	}
-	
+
 	protected final void printlnCollectionPrefix(final String string) {
 		println(getCollectionPrefix(string));
 	}
-	
+
 	protected final void printElement(final String elem) {
 		mPrintWriter.print(elem + ' ');
 	}
-	
+
 	private static String replaceBackslashes(final Object input) {
 		return input.toString().replaceAll("\"", "\\\"");
 	}
-	
+
 	protected static final String quoteAndReplaceBackslashes(final Object input) {
 		return QUOTE + replaceBackslashes(input) + QUOTE;
 	}
-	
+
 	protected static final String quoteAndReplaceBackslashes(final Object input, final String suffix) {
 		return QUOTE + replaceBackslashes(input) + suffix + QUOTE;
 	}
-	
+
 	protected final void printCollectionSuffix() {
 		println("},");
 	}
-	
+
 	protected final void printOneTransitionPrefix() {
 		print("\t\t(");
 	}
-	
+
 	protected final void printOneTransitionSuffix() {
 		println(')');
 	}
-	
+
 	protected final void printTransitionsSuffix() {
 		println("\t},");
 	}

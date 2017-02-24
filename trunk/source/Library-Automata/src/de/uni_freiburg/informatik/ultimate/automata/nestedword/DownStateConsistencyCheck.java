@@ -54,10 +54,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public class DownStateConsistencyCheck<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private static final String DOWN_STATES_INCONSISTENT = "The down states are inconsistent.";
-	
+
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final boolean mResult;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -74,27 +74,27 @@ public class DownStateConsistencyCheck<LETTER, STATE> extends UnaryNwaOperation<
 		mOperand = operand;
 		mResult = consistentForAll();
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "DownStateConsistencyCheck";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Result " + mResult;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public Boolean getResult() {
 		return mResult;
 	}
-	
+
 	private boolean consistentForAll() throws AutomataOperationCanceledException {
 		boolean result;
 		result = consistentForInitials();
@@ -106,7 +106,7 @@ public class DownStateConsistencyCheck<LETTER, STATE> extends UnaryNwaOperation<
 		}
 		return result;
 	}
-	
+
 	private boolean consistentForInitials() {
 		boolean result = true;
 		for (final STATE state : mOperand.getInitialStates()) {
@@ -116,7 +116,7 @@ public class DownStateConsistencyCheck<LETTER, STATE> extends UnaryNwaOperation<
 		assert result : DOWN_STATES_INCONSISTENT;
 		return result;
 	}
-	
+
 	private boolean consistentForState(final STATE state) {
 		boolean result;
 		final Set<STATE> downStates = mOperand.getDownStates(state);
@@ -126,18 +126,18 @@ public class DownStateConsistencyCheck<LETTER, STATE> extends UnaryNwaOperation<
 		assert result : DOWN_STATES_INCONSISTENT;
 		return result;
 	}
-	
+
 	private boolean checkIfEachDownStateIsJustified(final STATE state, final Set<STATE> downStatesIn) {
 		final HashSet<STATE> downStates = new HashSet<>(downStatesIn);
 		for (final IncomingInternalTransition<LETTER, STATE> t : mOperand.internalPredecessors(state)) {
 			final Set<STATE> preDown = mOperand.getDownStates(t.getPred());
 			downStates.removeAll(preDown);
 		}
-		
+
 		for (final IncomingCallTransition<LETTER, STATE> t : mOperand.callPredecessors(state)) {
 			downStates.remove(t.getPred());
 		}
-		
+
 		for (final IncomingReturnTransition<LETTER, STATE> t : mOperand.returnPredecessors(state)) {
 			final Set<STATE> predDownStates = mOperand.getDownStates(t.getLinPred());
 			if (predDownStates.contains(t.getHierPred())) {
@@ -155,7 +155,7 @@ public class DownStateConsistencyCheck<LETTER, STATE> extends UnaryNwaOperation<
 		}
 		return downStates.isEmpty();
 	}
-	
+
 	private boolean checkIfDownStatesArePassedToSuccessors(final STATE state, final Set<STATE> downStates) {
 		boolean result = true;
 		for (final OutgoingInternalTransition<LETTER, STATE> t : mOperand.internalSuccessors(state)) {
@@ -185,7 +185,7 @@ public class DownStateConsistencyCheck<LETTER, STATE> extends UnaryNwaOperation<
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Check if {@link IDoubleDeckerAutomaton#getDownStates(Object)} and
 	 * {@link IDoubleDeckerAutomaton#isDoubleDecker(Object, Object)} are
@@ -194,7 +194,7 @@ public class DownStateConsistencyCheck<LETTER, STATE> extends UnaryNwaOperation<
 	private boolean getIsComparison(final STATE state, final Set<STATE> downStates) {
 		return getIsComparison1(state, downStates) && getIsComparison2(state, downStates);
 	}
-	
+
 	/**
 	 * Check if doubleDeckers claimed by
 	 * {@link IDoubleDeckerAutomaton#isDoubleDecker(Object, Object)}
@@ -208,7 +208,7 @@ public class DownStateConsistencyCheck<LETTER, STATE> extends UnaryNwaOperation<
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Check if doubleDeckers claimed by
 	 * {@link IDoubleDeckerAutomaton#getDownStates(Object)}
@@ -225,7 +225,7 @@ public class DownStateConsistencyCheck<LETTER, STATE> extends UnaryNwaOperation<
 		}
 		return result;
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		// I don't know a useful check

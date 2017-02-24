@@ -46,80 +46,80 @@ final class Solver {
 	public static final char NONE = 0;
 	public static final char TRUE = 1;
 	public static final char FALSE = 2;
-	
+
 	private final AutomataLibraryServices mServices;
-	
+
 	/** The number of boolean variables. */
 	private final int mNumVars;
-	
+
 	/** The problem in CNF. */
 	private final Horn3Array mClauses;
-	
+
 	/** Map variable -> clauses in which it occurs. */
 	private final IntArray[] mOccur;
-	
+
 	/** Map variable -> assigned value (NONE, TRUE, FALSE). */
 	private final char[] mAssign;
-	
+
 	/** Last assignment operations. */
 	private final IntArray mOp;
-	
+
 	/** Pre-allocate a clause to avoid garbage collection overhead. */
 	private final Horn3Clause mClause;
-	
+
 	Solver(final AutomataLibraryServices services, final Horn3Array clauses) {
 		mServices = services;
 		mClauses = clauses;
 		mClause = new Horn3Clause(-1, -1, -1);
-		
+
 		// const true and const false
 		int numVars = 2;
 		for (final Horn3Clause c : clauses) {
 			assert 0 <= c.mX;
 			assert 0 <= c.mY;
 			assert 0 <= c.mZ;
-			
+
 			numVars = Math.max(numVars, c.mX + 1);
 			numVars = Math.max(numVars, c.mY + 1);
 			numVars = Math.max(numVars, c.mZ + 1);
 		}
 		mNumVars = numVars;
-		
+
 		mAssign = new char[mNumVars];
 		mOp = new IntArray();
-		
+
 		mOccur = new IntArray[mNumVars];
 		for (int i = 0; i < mNumVars; i++) {
 			mOccur[i] = new IntArray();
 		}
-		
+
 		for (int i = 0; i < clauses.size(); i++) {
 			clauses.get(i, mClause);
-			
+
 			mOccur[mClause.mX].add(i);
 			mOccur[mClause.mY].add(i);
 			mOccur[mClause.mZ].add(i);
 		}
-		
+
 		for (int i = 0; i < mNumVars; i++) {
 			mAssign[i] = NONE;
 		}
 		mAssign[Horn3Clause.TRUEVAR] = TRUE;
 		mAssign[Horn3Clause.FALSEVAR] = FALSE;
 	}
-	
+
 	private enum Sat {
 		OK,
 		UNSATISFIABLE;
 	}
-	
+
 	private void setVar(final int v, final char a) {
 		assert a != NONE;
 		assert mAssign[v] == NONE;
 		mOp.add(v);
 		mAssign[v] = a;
 	}
-	
+
 	private Sat check(final Horn3Clause c) {
 		if (mAssign[c.mX] == TRUE && mAssign[c.mY] == TRUE && mAssign[c.mZ] == FALSE) {
 			return Sat.UNSATISFIABLE;
@@ -132,7 +132,7 @@ final class Solver {
 		}
 		return Sat.OK;
 	}
-	
+
 	private Sat propagate() {
 		/* NOTE: the termination condition is "flexible" since the
 		 * loop body might insert new elements into `op' */
@@ -145,7 +145,7 @@ final class Solver {
 		}
 		return Sat.OK;
 	}
-	
+
 	private Sat setAndPropagate(final int v, final char a) {
 		assert mOp.size() == 0;
 		setVar(v, a);
@@ -160,7 +160,7 @@ final class Solver {
 		mOp.clear();
 		return Sat.OK;
 	}
-	
+
 	/**
 	 * Solve the thing. Call only once, i.e.
 	 * char[] = new Solver(numVars, theclauses).solve()
@@ -172,7 +172,7 @@ final class Solver {
 	 */
 	char[] solve() {
 		assert mOp.size() == 0;
-		
+
 		for (final Horn3Clause c : mClauses) {
 			if (check(c) == Sat.UNSATISFIABLE) {
 				return null;
@@ -182,33 +182,30 @@ final class Solver {
 			return null;
 		}
 		mOp.clear();
-		
+
 		for (int v = 0; v < mNumVars; v++) {
 			if (mAssign[v] == NONE) {
-				if (setAndPropagate(v, TRUE) == Sat.UNSATISFIABLE
-						&& setAndPropagate(v, FALSE) == Sat.UNSATISFIABLE) {
+				if (setAndPropagate(v, TRUE) == Sat.UNSATISFIABLE && setAndPropagate(v, FALSE) == Sat.UNSATISFIABLE) {
 					/* should not happen */
 					assert false;
 				}
 			}
 		}
-		
+
 		/* test */
 		for (final Horn3Clause c : mClauses) {
-			assert mAssign[c.mX] == FALSE
-					|| mAssign[c.mY] == FALSE
-					|| mAssign[c.mZ] == TRUE;
+			assert mAssign[c.mX] == FALSE || mAssign[c.mY] == FALSE || mAssign[c.mZ] == TRUE;
 		}
-		
+
 		return mAssign;
 	}
-	
+
 	private void checkTimeout() throws AutomataOperationCanceledException {
 		if (!mServices.getProgressAwareTimer().continueProcessing()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 	}
-	
+
 //	// "test" the thing
 //	public static void main(final String[] args) {
 //		Horn3ArrayBuilder builder;

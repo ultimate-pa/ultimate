@@ -38,8 +38,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
  *            letter type
  * @param <STATE>
  *            state type
- * @param <CRSF>
- *            checkResult state factory type
  */
 public abstract class AbstractMinimizeNwaDd<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	/**
@@ -54,7 +52,7 @@ public abstract class AbstractMinimizeNwaDd<LETTER, STATE> extends AbstractMinim
 			final IMinimizationStateFactory<STATE> stateFactory) {
 		super(services, stateFactory);
 	}
-	
+
 	/**
 	 * @return Result as {@link IDoubleDeckerAutomaton}.
 	 */

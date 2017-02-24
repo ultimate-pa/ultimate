@@ -47,7 +47,7 @@ public class DifferenceState<LETTER, STATE> {
 	private final boolean mIsFinal;
 	private final int mHashCode;
 	private STATE mState;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -66,19 +66,19 @@ public class DifferenceState<LETTER, STATE> {
 		// minuend.isFinal(minuendState) && !subtrahendDeterminizedState.containsFinal();
 		this.mHashCode = computehashCode();
 	}
-	
+
 	public STATE getMinuendState() {
 		return mMinuendState;
 	}
-	
+
 	public DeterminizedState<LETTER, STATE> getSubtrahendDeterminizedState() {
 		return mSubtrahendDeterminizedState;
 	}
-	
+
 	public boolean isFinal() {
 		return this.mIsFinal;
 	}
-	
+
 	/**
 	 * @param stateFactory
 	 *            A state factory.
@@ -94,7 +94,7 @@ public class DifferenceState<LETTER, STATE> {
 		}
 		return mState;
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -118,18 +118,17 @@ public class DifferenceState<LETTER, STATE> {
 			if (other.mSubtrahendDeterminizedState != null) {
 				return false;
 			}
-		} else if (!mSubtrahendDeterminizedState
-				.equals(other.mSubtrahendDeterminizedState)) {
+		} else if (!mSubtrahendDeterminizedState.equals(other.mSubtrahendDeterminizedState)) {
 			return false;
 		}
 		return true;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mHashCode;
 	}
-	
+
 	private int computehashCode() {
 		final int prime1 = 31;
 		final int prime2 = 1231;
@@ -140,7 +139,7 @@ public class DifferenceState<LETTER, STATE> {
 				+ ((mSubtrahendDeterminizedState == null) ? 0 : mSubtrahendDeterminizedState.hashCode());
 		return result;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "<[< " + mMinuendState.toString() + " , " + mSubtrahendDeterminizedState.toString() + ">]>";

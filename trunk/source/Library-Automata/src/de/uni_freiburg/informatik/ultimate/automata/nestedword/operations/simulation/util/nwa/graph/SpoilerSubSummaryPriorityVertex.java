@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph;
@@ -32,21 +32,22 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.GameCallReturnSummary;
 
 /**
- * TODO 
- * @author 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * TODO documentation.
  * 
+ * @author 2016 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            Letter class of nwa automaton
  * @param <STATE>
  *            State class of nwa automaton
  */
 public final class SpoilerSubSummaryPriorityVertex<LETTER, STATE> extends SpoilerVertex<LETTER, STATE> {
-	
+
 	private final GameCallReturnSummary<STATE> mSummary;
 	private final IGameState mSubSummaryTarget;
-	
-	public SpoilerSubSummaryPriorityVertex(final GameCallReturnSummary<STATE> summary, final IGameState subSummaryTarget) {
-		super(summary.getDuplicatorResponses().get(subSummaryTarget), 
+
+	public SpoilerSubSummaryPriorityVertex(final GameCallReturnSummary<STATE> summary,
+			final IGameState subSummaryTarget) {
+		super(summary.getDuplicatorResponses().get(subSummaryTarget),
 				GameAutomaton.unwrapSpoilerNwaVertex(summary.getSummarySource()).isB(), null, null);
 		mSummary = summary;
 		mSubSummaryTarget = subSummaryTarget;
@@ -69,23 +70,30 @@ public final class SpoilerSubSummaryPriorityVertex<LETTER, STATE> extends Spoile
 	 */
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (!super.equals(obj))
+		}
+		if (!super.equals(obj)) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final SpoilerSubSummaryPriorityVertex other = (SpoilerSubSummaryPriorityVertex) obj;
 		if (mSubSummaryTarget == null) {
-			if (other.mSubSummaryTarget != null)
+			if (other.mSubSummaryTarget != null) {
 				return false;
-		} else if (!mSubSummaryTarget.equals(other.mSubSummaryTarget))
+			}
+		} else if (!mSubSummaryTarget.equals(other.mSubSummaryTarget)) {
 			return false;
+		}
 		if (mSummary == null) {
-			if (other.mSummary != null)
+			if (other.mSummary != null) {
 				return false;
-		} else if (!mSummary.equals(other.mSummary))
+			}
+		} else if (!mSummary.equals(other.mSummary)) {
 			return false;
+		}
 		return true;
 	}
 
@@ -97,6 +105,5 @@ public final class SpoilerSubSummaryPriorityVertex<LETTER, STATE> extends Spoile
 		return "SpoilerSubSummaryPriorityVertex [mSummary=" + mSummary + ", mSubSummaryTarget=" + mSubSummaryTarget
 				+ "]";
 	}
-	
-	
+
 }

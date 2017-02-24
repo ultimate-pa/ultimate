@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
 public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -69,48 +69,48 @@ public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		final TotalizeNwa<LETTER, STATE> totalized = new TotalizeNwa<>(operand, stateFactory);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, totalized);
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "Totalize";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
-	
+
 	@Override
 	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start testing correctness of " + operationName());
 		}
-		
+
 		final String message;
 		final boolean correct;
-		
+
 		// check language equivalence
 		final IsEquivalent<LETTER, STATE> equivalenceCheck =
 				new IsEquivalent<>(mServices, stateFactory, getOperand(), getResult());
-		
+
 		if (!equivalenceCheck.getResult()) {
 			// language equivalence check failed
 			message = equivalenceCheck.getViolationMessage();
@@ -125,7 +125,7 @@ public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 			message = null;
 			correct = true;
 		}
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + operationName());
 		}

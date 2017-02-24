@@ -45,11 +45,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * automaton.<br/>
  * Once started, results can then be get by using {@link #getResult()}.<br/>
  * <br/>
- * 
  * For more information on the type of simulation see {@link FairNwaGameGraph}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- * 
  * @param <LETTER>
  *            Letter class of nwa automaton
  * @param <STATE>
@@ -64,7 +62,6 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 	 * After construction the simulation can be started and results can be get
 	 * by using {@link #getResult()}.<br/>
 	 * <br/>
-	 * 
 	 * For correctness its important that the inputed automaton has <b>no dead
 	 * ends</b> nor <b>duplicate transitions</b>.
 	 * 
@@ -101,7 +98,6 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 	 * After construction the simulation starts and results can be get by using
 	 * {@link #getResult()}.<br/>
 	 * <br/>
-	 * 
 	 * For correctness its important that the inputed automaton has <b>no dead
 	 * ends</b> nor <b>duplicate transitions</b>.
 	 * 
@@ -123,7 +119,7 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 	 */
 	public FairNwaSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final IStateFactory<STATE> stateFactory, final FairNwaGameGraph<LETTER, STATE> game)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		this(progressTimer, logger, useSCCs, stateFactory, Collections.emptyList(), game);
 	}
 

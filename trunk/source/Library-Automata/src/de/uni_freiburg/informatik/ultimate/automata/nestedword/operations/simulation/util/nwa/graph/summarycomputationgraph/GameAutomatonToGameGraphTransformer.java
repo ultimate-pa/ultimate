@@ -36,8 +36,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.ETransitionType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorNwaVertex;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorWinningSink;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorSubSummaryChoiceVertex;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorWinningSink;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerSubSummaryPriorityVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameLetter;
@@ -49,34 +49,29 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * Construct game graph from given game automaton.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
-public class GameAutomatonToGameGraphTransformer<LETTER, STATE>  {
-	
+public class GameAutomatonToGameGraphTransformer<LETTER, STATE> {
 
 	private final INestedWordAutomaton<IGameLetter<LETTER, STATE>, IGameState> mGameAutomaton;
 	private final AGameGraph<LETTER, STATE> mGameGraph;
 	private final SpoilerNwaVertex<LETTER, STATE> mSpoilerWinningSink;
 	private final DuplicatorNwaVertex<LETTER, STATE> mDuplicatorWinningSink;
 	private AutomataLibraryServices mServices;
-	
-	
-	
-	
-	
-	public GameAutomatonToGameGraphTransformer(
-			final AutomataLibraryServices services,
-			final INestedWordAutomaton<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton, 
-			final SpoilerNwaVertex<LETTER, STATE> spoilerWinningSink, 
-			final INestedWordAutomaton<LETTER, STATE> operand,
+
+	public GameAutomatonToGameGraphTransformer(final AutomataLibraryServices services,
+			final INestedWordAutomaton<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton,
+			final SpoilerNwaVertex<LETTER, STATE> spoilerWinningSink, final INestedWordAutomaton<LETTER, STATE> operand,
 			final Collection<GameCallReturnSummary<STATE>> gameSummaries) throws AutomataOperationCanceledException {
 		super();
 		mServices = services;
 		mGameAutomaton = gameAutomaton;
 		mSpoilerWinningSink = spoilerWinningSink;
-		mDuplicatorWinningSink = new DuplicatorNwaVertex<LETTER, STATE>(0, false, null, null, null, ETransitionType.SINK, new DuplicatorWinningSink<>(null));
+		mDuplicatorWinningSink = new DuplicatorNwaVertex<>(0, false, null, null, null, ETransitionType.SINK,
+				new DuplicatorWinningSink<>(null));
 		mGameGraph = new AGameGraph<LETTER, STATE>(mServices, null, null, null, operand) {
 
 			@Override
@@ -89,21 +84,23 @@ public class GameAutomatonToGameGraphTransformer<LETTER, STATE>  {
 			@Override
 			public void generateGameGraphFromAutomaton() throws AutomataOperationCanceledException {
 				// TODO Auto-generated method stub
-				
+
 			}
 		};
-		
+
 		for (final IGameState gameState : mGameAutomaton.getStates()) {
 			addSpoilerVertex(gameState);
 			boolean hasOutgoingInternalTransitions = false;
-			for (final OutgoingInternalTransition<IGameLetter<LETTER, STATE>, IGameState> trans : mGameAutomaton.internalSuccessors(gameState)) {
+			for (final OutgoingInternalTransition<IGameLetter<LETTER, STATE>, IGameState> trans : mGameAutomaton
+					.internalSuccessors(gameState)) {
 				hasOutgoingInternalTransitions = true;
 				addDuplicatorVertex(trans.getLetter());
 				addSpoilerVertex(trans.getSucc());
 				addEdges(gameState, trans.getLetter(), trans.getSucc());
 			}
 			boolean hasOutgoingCallTransitions = false;
-			for (final OutgoingCallTransition<IGameLetter<LETTER, STATE>, IGameState> trans : mGameAutomaton.callSuccessors(gameState)) {
+			for (final OutgoingCallTransition<IGameLetter<LETTER, STATE>, IGameState> trans : mGameAutomaton
+					.callSuccessors(gameState)) {
 				hasOutgoingCallTransitions = true;
 				addDuplicatorVertex(trans.getLetter());
 				addSpoilerVertex(trans.getSucc());
@@ -113,48 +110,35 @@ public class GameAutomatonToGameGraphTransformer<LETTER, STATE>  {
 				addEdgeToDuplicatorSink(gameState);
 			}
 		}
-		
+
 		for (final GameCallReturnSummary<STATE> gameSummary : gameSummaries) {
 			addGameSummary(gameSummary);
 		}
 		// global infinity has to be one plus the number of prio 1 nodes
 		mGameGraph.increaseGlobalInfinity();
 	}
-	
-
 
 	private SpoilerNwaVertex<LETTER, STATE> getSpoilerVertex(final IGameState gameState) {
 		if (GameAutomaton.isSpoilerSink(gameState)) {
 			return mSpoilerWinningSink;
-		} else {
-			return GameAutomaton.unwrapSpoilerNwaVertex(gameState); 
 		}
+		return GameAutomaton.unwrapSpoilerNwaVertex(gameState);
 	}
-
 
 	private void addEdgeToDuplicatorSink(final IGameState gameState) {
 		mGameGraph.addEdge(getSpoilerVertex(gameState), mDuplicatorWinningSink);
 	}
-
-
-
 
 	private void addEdges(final IGameState gameState, final IGameLetter<LETTER, STATE> letter, final IGameState succ) {
 		mGameGraph.addEdge(getSpoilerVertex(gameState), (Vertex<LETTER, STATE>) letter);
 		mGameGraph.addEdge((Vertex<LETTER, STATE>) letter, getSpoilerVertex(succ));
 	}
 
-
-
-
 	private void addDuplicatorVertex(final IGameLetter<LETTER, STATE> letter) {
 		if (!mGameGraph.getDuplicatorVertices().contains(letter)) {
 			mGameGraph.addDuplicatorVertex((DuplicatorVertex<LETTER, STATE>) letter);
 		}
 	}
-
-
-
 
 	private void addSpoilerVertex(final IGameState gameState) {
 		final SpoilerNwaVertex<LETTER, STATE> spoilerVertex = getSpoilerVertex(gameState);
@@ -168,20 +152,20 @@ public class GameAutomatonToGameGraphTransformer<LETTER, STATE>  {
 			}
 		}
 	}
-	
 
 	private void addGameSummary(final GameCallReturnSummary<STATE> gameSummary) {
 		final SpoilerNwaVertex<LETTER, STATE> sourceVertex = getSpoilerVertex(gameSummary.getSummarySource());
 		assert mGameGraph.getSpoilerVertices().contains(sourceVertex) : "source missing";
-		final DuplicatorSubSummaryChoiceVertex<LETTER, STATE> duplicatorChoice = 
+		final DuplicatorSubSummaryChoiceVertex<LETTER, STATE> duplicatorChoice =
 				new DuplicatorSubSummaryChoiceVertex<>(gameSummary);
 		assert !mGameGraph.getDuplicatorVertices().contains(duplicatorChoice) : "duplicator choice already there";
 		mGameGraph.addDuplicatorVertex(duplicatorChoice);
 		mGameGraph.addEdge(sourceVertex, duplicatorChoice);
 		for (final IGameState duplicatorResponse : gameSummary.getDuplicatorResponses().keySet()) {
-			final SpoilerSubSummaryPriorityVertex<LETTER, STATE> spoilerPrioVertex = 
+			final SpoilerSubSummaryPriorityVertex<LETTER, STATE> spoilerPrioVertex =
 					new SpoilerSubSummaryPriorityVertex<>(gameSummary, duplicatorResponse);
-			assert !mGameGraph.getSpoilerVertices().contains(spoilerPrioVertex) : "spoiler priority vertex already there";
+			assert !mGameGraph.getSpoilerVertices()
+					.contains(spoilerPrioVertex) : "spoiler priority vertex already there";
 			mGameGraph.addSpoilerVertex(spoilerPrioVertex);
 			final SpoilerNwaVertex<LETTER, STATE> targetVertex = getSpoilerVertex(duplicatorResponse);
 			assert mGameGraph.getSpoilerVertices().contains(targetVertex) : "target missing";
@@ -189,11 +173,9 @@ public class GameAutomatonToGameGraphTransformer<LETTER, STATE>  {
 			mGameGraph.addEdge(spoilerPrioVertex, targetVertex);
 		}
 	}
-	
-	
 
 	public AGameGraph<LETTER, STATE> getResult() {
 		return mGameGraph;
 	}
-	
+
 }

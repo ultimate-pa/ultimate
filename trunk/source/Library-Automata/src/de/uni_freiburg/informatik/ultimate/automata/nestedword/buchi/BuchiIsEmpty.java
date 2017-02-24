@@ -52,7 +52,7 @@ public final class BuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 	private NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
 	private AcceptingComponentsAnalysis<LETTER, STATE> mSccs;
 	private final Boolean mResult;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -67,7 +67,7 @@ public final class BuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
@@ -82,32 +82,32 @@ public final class BuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 		} catch (final AutomataOperationCanceledException oce) {
 			throw new AutomataOperationCanceledException(getClass());
 		}
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "BuchiIsEmpty";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result is " + mResult;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public Boolean getResult() {
 		return mResult;
 	}
-	
+
 	/**
 	 * @return An accepting nested lasso run.
 	 * @throws AutomataOperationCanceledException
@@ -125,7 +125,7 @@ public final class BuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 		}
 		return mReach.getOrComputeAcceptingComponents().getNestedLassoRun();
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;

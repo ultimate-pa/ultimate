@@ -13,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
  * usually are Spoiler vertices, as states and GameLetter as letters.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  */
 public final class GameFactory implements ISinkStateFactory<IGameState>, IDeterminizeStateFactory<IGameState>,
 		IEmptyStackStateFactory<IGameState> {

@@ -50,11 +50,9 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * Once created it starts the simulation, results can then be get by using
  * {@link #getResult()}.<br/>
  * <br/>
- * 
  * For more information on the type of simulation see
  * {@link FairDirectGameGraph}.<br/>
  * <br/>
- * 
  * The algorithm runs in <b>O(n^4 * k^2)</b> time and <b>O(n * k)</b> space
  * where n is the amount of states and k the amount of transitions from the
  * inputed automaton.<br/>
@@ -62,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * <i>Gurumurthy, Bloem and Somenzi</i>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- * 
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
@@ -91,7 +88,6 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 * After construction the simulation starts and results can be get by using
 	 * {@link #getResult()}.<br/>
 	 * <br/>
-	 * 
 	 * For correctness its important that the inputed automaton has <b>no dead
 	 * ends</b> nor <b>duplicate transitions</b>.
 	 * 
@@ -113,7 +109,7 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 */
 	public FairDirectSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final IStateFactory<STATE> stateFactory, final FairDirectGameGraph<LETTER, STATE> game)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		this(progressTimer, logger, useSCCs, stateFactory, Collections.emptyList(), game);
 	}
 
@@ -124,7 +120,6 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	 * After construction the simulation starts and results can be get by using
 	 * {@link #getResult()}.<br/>
 	 * <br/>
-	 * 
 	 * For correctness its important that the inputed automaton has <b>no dead
 	 * ends</b> nor <b>duplicate transitions</b>.
 	 * 
@@ -279,8 +274,8 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 			game.rememberAndClearDirectSimulationResults();
 
 			// Remember performance data
-			directSimSimulationSteps = directSim.getSimulationPerformance()
-					.getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS);
+			directSimSimulationSteps =
+					directSim.getSimulationPerformance().getCountingMeasureResult(ECountingMeasure.SIMULATION_STEPS);
 			directSimSCCBuildTime = directSim.getSimulationPerformance().getTimeMeasureResult(ETimeMeasure.BUILD_SCC,
 					EMultipleDataOption.ADDITIVE);
 
@@ -299,8 +294,8 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 		super.doSimulation();
 
 		final SimulationPerformance fairPerformance = super.getSimulationPerformance();
-		final long durationFairSimOnly = fairPerformance.getTimeMeasureResult(ETimeMeasure.SIMULATION_ONLY,
-				EMultipleDataOption.ADDITIVE);
+		final long durationFairSimOnly =
+				fairPerformance.getTimeMeasureResult(ETimeMeasure.SIMULATION_ONLY, EMultipleDataOption.ADDITIVE);
 		if (durationFairSimOnly != SimulationPerformance.NO_TIME_RESULT) {
 			mPerformance.addTimeMeasureValue(ETimeMeasure.SIMULATION_ONLY, durationFairSimOnly);
 		}
@@ -308,8 +303,8 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 		long duration = mPerformance.stopTimeMeasure(ETimeMeasure.OVERALL);
 		// Add time building of the graph took to the overall time since this
 		// happens outside of simulation
-		final long durationGraph = fairPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH,
-				EMultipleDataOption.ADDITIVE);
+		final long durationGraph =
+				fairPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE);
 		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
 			duration += durationGraph;
 			mPerformance.addTimeMeasureValue(ETimeMeasure.OVERALL, duration);

@@ -59,7 +59,7 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mResult;
-	
+
 	/**
 	 * Given an INestedWordAutomaton nwa return a nested word automaton that has
 	 * the same states, but all states that are not reachable or dead ends are
@@ -79,7 +79,7 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
@@ -92,34 +92,34 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 			oce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 			throw oce;
 		}
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 		assert (new TransitionConsistencyCheck<>(mResult)).consistentForAll();
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "RemoveDeadEnds";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Reduced from " + mOperand.size() + " states to "
 				+ mResult.sizeInformation();
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
-	
+
 	/**
 	 * @return Size of the input automaton. If input was an automaton for on-demand construction, this is the size after
 	 *         the on-demand construction.
@@ -127,7 +127,7 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	public int getInputSize() {
 		return mReach.size();
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataOperationCanceledException {
 		if (mLogger.isInfoEnabled()) {
@@ -176,7 +176,7 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		}
 		return correct;
 	}
-	
+
 	private boolean checkEachState(final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy) {
 		boolean correct = true;
 		for (final STATE state : reachableStatesCopy.getStates()) {
@@ -202,13 +202,13 @@ public final class RemoveDeadEnds<LETTER, STATE> extends UnaryNwaOperation<LETTE
 				assert correct;
 			}
 			for (final OutgoingCallTransition<LETTER, STATE> outTrans : mResult.callSuccessors(state)) {
-				correct = correct && reachableStatesCopy.containsCallTransition(state,
-						outTrans.getLetter(), outTrans.getSucc());
+				correct = correct
+						&& reachableStatesCopy.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : mResult.returnSuccessors(state)) {
-				correct = correct && reachableStatesCopy.containsReturnTransition(state,
-						outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
+				correct = correct && reachableStatesCopy.containsReturnTransition(state, outTrans.getHierPred(),
+						outTrans.getLetter(), outTrans.getSucc());
 				assert correct;
 			}
 			final Set<STATE> rCSdownStates = reachableStatesCopy.getDownStates(state);

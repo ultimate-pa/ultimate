@@ -300,7 +300,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	@Override
 	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
 
-		final IRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(mCounterexample,
+		final IRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(mPref.getRefinementStrategy(), mCounterexample,
 				mAbstraction, getIteration(), getCegarLoopBenchmark());
 		try {
 			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy);

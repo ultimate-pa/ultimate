@@ -74,7 +74,7 @@ class RunConstructor<LETTER, STATE> {
 	private final boolean mSummaryMustContainAccepting;
 	private boolean mGoalFound;
 	private final Set<StateContainerWithObligation> mVisited = new HashSet<>();
-	
+
 	/**
 	 * Construction of an initial run whose last state is start.
 	 */
@@ -89,7 +89,7 @@ class RunConstructor<LETTER, STATE> {
 		mSummary = null;
 		mSummaryMustContainAccepting = false;
 	}
-	
+
 	/**
 	 * Construction of run whose last state is start. The state goal can be
 	 * either a down state of start or null.
@@ -111,7 +111,7 @@ class RunConstructor<LETTER, STATE> {
 				new SummaryWithObligation(mSummary, mSummaryMustContainAccepting);
 		mForbiddenSummaries = Collections.singleton(summaryWithObligation);
 	}
-	
+
 	/**
 	 * Run construction for a summary where we may not take any summary in
 	 * forbiddenSummaries. This avoids endless loop in recursive calls (if there
@@ -133,7 +133,7 @@ class RunConstructor<LETTER, STATE> {
 		mForbiddenSummaries = new HashSet<>(forbiddenSummaries);
 		mForbiddenSummaries.add(summaryWithObligation);
 	}
-	
+
 	/**
 	 * Find suitable predecessor in run construction. Returns incoming
 	 * transition from the state with the lowest serial number (that has
@@ -155,7 +155,7 @@ class RunConstructor<LETTER, STATE> {
 		if (resultSingleton != null) {
 			return resultSingleton;
 		}
-		
+
 		final ArrayList<TransitionWithObligation> result = new ArrayList<>();
 		for (final Object value : number2transition.values()) {
 			if (value instanceof RunConstructor.TransitionWithObligation) {
@@ -174,7 +174,7 @@ class RunConstructor<LETTER, STATE> {
 		}
 		return result;
 	}
-	
+
 	@SuppressWarnings("squid:S1168")
 	private Set<RunConstructor<LETTER, STATE>.TransitionWithObligation> findSuitablePredecessorsInternal(
 			final StateContainerWithObligation current, final SortedMap<Integer, Object> number2transition) {
@@ -205,7 +205,7 @@ class RunConstructor<LETTER, STATE> {
 		}
 		return null;
 	}
-	
+
 	@SuppressWarnings("squid:S1168")
 	private Set<RunConstructor<LETTER, STATE>.TransitionWithObligation> findSuitablePredecessorsCall(
 			final StateContainerWithObligation current, final SortedMap<Integer, Object> number2transition) {
@@ -230,13 +230,12 @@ class RunConstructor<LETTER, STATE> {
 			}
 			final Integer predSerialNumber = predSc.getSerialNumber();
 			if (!number2transition.containsKey(predSerialNumber)) {
-				number2transition.put(predSerialNumber,
-						new TransitionWithObligation(inTrans, false));
+				number2transition.put(predSerialNumber, new TransitionWithObligation(inTrans, false));
 			}
 		}
 		return null;
 	}
-	
+
 	@SuppressWarnings({ "squid:S1168", "unchecked" })
 	private Set<RunConstructor<LETTER, STATE>.TransitionWithObligation> findSuitablePredecessorsReturn(
 			final StateContainerWithObligation current, final SortedMap<Integer, Object> number2transition) {
@@ -292,7 +291,7 @@ class RunConstructor<LETTER, STATE> {
 		}
 		return null;
 	}
-	
+
 	private boolean willSummarySatisfyObligation(final StateContainerWithObligation current,
 			final StateContainer<LETTER, STATE> predSc, final Summary<LETTER, STATE> summary) {
 		final boolean summaryWillSatisfyObligation;
@@ -311,7 +310,7 @@ class RunConstructor<LETTER, STATE> {
 		}
 		return summaryWillSatisfyObligation;
 	}
-	
+
 	/**
 	 * Returns run whose first state is mGoal and whose last state is
 	 * mStart.
@@ -321,8 +320,7 @@ class RunConstructor<LETTER, STATE> {
 	 */
 	NestedRun<LETTER, STATE> constructRun() throws AutomataOperationCanceledException {
 		//TODO: Check if this timeout check is responsible for problems.
-		if (mServices.getProgressAwareTimer() != null
-				&& !mServices.getProgressAwareTimer().continueProcessing()) {
+		if (mServices.getProgressAwareTimer() != null && !mServices.getProgressAwareTimer().continueProcessing()) {
 			throw new AutomataOperationCanceledException(this.getClass());
 		}
 		assert !mSummaryMustContainAccepting || mGoal != null;
@@ -337,7 +335,7 @@ class RunConstructor<LETTER, STATE> {
 		final Deque<RunWithObligation> takenStack = new ArrayDeque<>();
 		return constructRunLoop(startStateWithStartObligation, current, predStack, takenStack);
 	}
-	
+
 	private NestedRun<LETTER, STATE> constructRunLoop(final StateContainerWithObligation startStateWithStartObligation,
 			final StateContainerWithObligation currentIn, final Deque<Iterator<TransitionWithObligation>> predStack,
 			final Deque<RunWithObligation> takenStack) throws AutomataOperationCanceledException, AssertionError {
@@ -372,7 +370,7 @@ class RunConstructor<LETTER, STATE> {
 					current = currentPrefix.getStateWithObligation();
 				}
 			}
-			
+
 			final TransitionWithObligation transitionWoToLowest = predStack.peek().next();
 			assert transitionWoToLowest != null;
 			final ITransitionlet<LETTER, STATE> transitionToLowest = transitionWoToLowest.getObject();
@@ -423,7 +421,7 @@ class RunConstructor<LETTER, STATE> {
 			current = predWo;
 		}
 	}
-	
+
 	private NestedRun<LETTER, STATE> constructResult(final Deque<RunWithObligation> stack) {
 		final Iterator<RunWithObligation> it = stack.descendingIterator();
 		NestedRun<LETTER, STATE> result = it.next().getNestedRun();
@@ -438,14 +436,14 @@ class RunConstructor<LETTER, STATE> {
 		}
 		return result;
 	}
-	
+
 	@SuppressWarnings("squid:S1698")
 	private boolean isLastStateInRun(final StateContainer<LETTER, STATE> stateContainer,
 			final NestedRun<LETTER, STATE> run) {
 		// equality intended here
 		return stateContainer.getState() == run.getStateAtPosition(run.getLength() - 1);
 	}
-	
+
 	/**
 	 * Wrapper for object together with a flag.
 	 * 
@@ -456,23 +454,23 @@ class RunConstructor<LETTER, STATE> {
 	private static class ObjectWithObligation<E> {
 		private final E mObject;
 		private final boolean mFlag;
-		
+
 		public ObjectWithObligation(final E object, final boolean flag) {
 			mObject = object;
 			mFlag = flag;
 		}
-		
+
 		public E getObject() {
 			return mObject;
 		}
-		
+
 		/**
 		 * @return The value of the flag.
 		 */
 		public boolean hasObligation() {
 			return mFlag;
 		}
-		
+
 		@Override
 		public int hashCode() {
 			final int prime = 31;
@@ -480,7 +478,7 @@ class RunConstructor<LETTER, STATE> {
 			result = prime * result + ((mObject == null) ? 0 : mObject.hashCode());
 			return result;
 		}
-		
+
 		@Override
 		public boolean equals(final Object obj) {
 			if (this == obj) {
@@ -506,13 +504,13 @@ class RunConstructor<LETTER, STATE> {
 			}
 			return true;
 		}
-		
+
 		@Override
 		public String toString() {
 			return "ObjectWithObligation [mObject=" + mObject + ", mFlag=" + mFlag + "]";
 		}
 	}
-	
+
 	/**
 	 * Wrapper for {@link ITransitionlet} together with a flag.
 	 * 
@@ -523,7 +521,7 @@ class RunConstructor<LETTER, STATE> {
 			super(object, flag);
 		}
 	}
-	
+
 	/**
 	 * Wrapper for {@link StateContainer} together with a flag.
 	 * 
@@ -534,7 +532,7 @@ class RunConstructor<LETTER, STATE> {
 			super(object, flag);
 		}
 	}
-	
+
 	/**
 	 * Wrapper for an object together with a flag and a {@link NestedRun}.
 	 * <p>
@@ -544,22 +542,22 @@ class RunConstructor<LETTER, STATE> {
 	 */
 	private class RunWithObligation extends StateContainerWithObligation {
 		private final NestedRun<LETTER, STATE> mNestedRun;
-		
+
 		public RunWithObligation(final StateContainer<LETTER, STATE> object, final boolean flag,
 				final NestedRun<LETTER, STATE> nestedRun) {
 			super(object, flag);
 			mNestedRun = nestedRun;
 		}
-		
+
 		public NestedRun<LETTER, STATE> getNestedRun() {
 			return mNestedRun;
 		}
-		
+
 		public StateContainerWithObligation getStateWithObligation() {
 			return new StateContainerWithObligation(getObject(), hasObligation());
 		}
 	}
-	
+
 	/**
 	 * Wrapper for {@link Summary} together with a flag.
 	 * 

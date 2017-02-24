@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 public final class AutomatonTransition
 		extends ModifiableMultigraphEdge<AutomatonState, AutomatonTransition, AutomatonState, AutomatonTransition> {
 	private static final long serialVersionUID = -2531826841396458461L;
-	
+
 	/**
 	 * Transition type.
 	 * 
@@ -61,9 +61,9 @@ public final class AutomatonTransition
 		 */
 		INITIAL
 	}
-	
+
 	private String mName;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -103,19 +103,19 @@ public final class AutomatonTransition
 		if (type == Transition.RETURN) {
 			mName = mName + " " + hierPred;
 		}
-		
+
 		if (transitionLabel instanceof IAnnotations) {
 			getPayload().getAnnotations().put("Symbol", (IAnnotations) transitionLabel);
 		}
 		state.addOutgoing(this);
 		succState.addIncoming(this);
 	}
-	
+
 	@Override
 	public String toString() {
 		return mName;
 	}
-	
+
 	@Override
 	public AutomatonTransition getLabel() {
 		return this;

@@ -44,21 +44,23 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 
 /**
- * 
  * This is an implementation of incremental inclusion check based on the Rn Algorithm.<br/>
  * Unlike IncrementalInclusionCheck3, initial Rn set of each new node will be the expansion of its parent node's Rn set.
  * <br/>
  * We use InclusionViaDIfference to check its correctness.
  * 
  * @author jefferyyjhsu@iis.sinica.edu.tw
- *
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
-
 public class IncrementalInclusionCheck4<LETTER, STATE> extends AbstractIncrementalInclusionCheck<LETTER, STATE>
 		implements IOperation<LETTER, STATE, IIncrementalInclusionStateFactory<STATE>> {
 	public int counter_run = 0, counter_total_nodes = 0;
+	NestedRun<LETTER, STATE> result;
+	ArrayList<Leaf<LETTER, STATE>> startingLeafs = null, currentTerminalLeafs = null, completeLeafSet;
+	HashSet<Leaf<LETTER, STATE>> bufferedLeaf;
 	private final INestedWordAutomatonSimple<LETTER, STATE> local_mA;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB;
 	private final ArrayList<INestedWordAutomatonSimple<LETTER, STATE>> local_mB2;
@@ -67,9 +69,6 @@ public class IncrementalInclusionCheck4<LETTER, STATE> extends AbstractIncrement
 	// private int counter;
 	// public HashMap<STATE,ArrayList<NodeData<LETTER,STATE>>> completeTree,currentTree,terminalNodes;
 	// public HashMap<STATE,HashMap<NodeData<LETTER,STATE>,ArrayList<NodeData<LETTER,STATE>>>> coverage;
-	NestedRun<LETTER, STATE> result;
-	ArrayList<Leaf<LETTER, STATE>> startingLeafs = null, currentTerminalLeafs = null, completeLeafSet;
-	HashSet<Leaf<LETTER, STATE>> bufferedLeaf;
 
 	class Leaf<LET, STA> {
 		public HashMap<LETTER, HashSet<Leaf<LET, STA>>> nextLeaf;

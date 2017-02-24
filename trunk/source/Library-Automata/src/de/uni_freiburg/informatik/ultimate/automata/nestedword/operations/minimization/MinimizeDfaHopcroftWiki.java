@@ -69,35 +69,35 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	private ArrayList<int[]> mMapStatesToTransitionTails;
 	// map states to their representatives - needed for constructing result.
 	private int[] mState2representative;
-	
+
 	// Constructor.
 	public MinimizeDfaHopcroftWiki(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services, stateFactory);
 		mOperand = operand;
-		
+
 		// Start minimization.
 		printStartMessage();
-		
+
 		initializeData();
 		mPartition = createInitialPartition();
 		minimizeDfaHopcroft();
 		constructResult();
-		
+
 		printExitMessage();
 	}
-	
+
 	@Override
 	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return checkLanguageEquivalence(stateFactory);
 	}
-	
+
 	/**
 	 * Create and return initial partition for the given automaton.
 	 * 
@@ -107,10 +107,10 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		// create new partition.
 		final Partition ret = new Partition();
 		ret.init();
-		
+
 		return ret;
 	}
-	
+
 	/**
 	 * Get number of states and labels for calling initializeMappings and
 	 * initializeLables.
@@ -121,19 +121,17 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		initializeMappings(nOfStates, nOfLables);
 		initializeLables();
 	}
-	
+
 	/**
 	 * Method for mapping STATE/LETTER to int and vice versa.
 	 */
 	private void initializeMappings(final int numberOfStates, final int numberOfLables) {
 		// Allocate the finite space in ArrayList and HashMap.
 		mInt2state = new ArrayList<>(numberOfStates);
-		mState2int = new HashMap<>(
-				computeHashCap(numberOfStates));
+		mState2int = new HashMap<>(computeHashCap(numberOfStates));
 		mInt2letter = new ArrayList<>(numberOfLables);
-		mLetter2int = new HashMap<>(
-				computeHashCap(numberOfLables));
-		
+		mLetter2int = new HashMap<>(computeHashCap(numberOfLables));
+
 		int index = -1;
 		for (final STATE state : mOperand.getStates()) {
 			mInt2state.add(state);
@@ -145,7 +143,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 			mLetter2int.put(letter, ++index);
 		}
 	}
-	
+
 	// NOTE: Is this necessary - how could the algorithm even use it??
 	/**
 	 * Initialize structure for lables. Iterate over all states and get their
@@ -154,21 +152,19 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	 */
 	private void initializeLables() {
 		final int capacity = (int) Math.min(Integer.MAX_VALUE,
-				(double) mOperand.size() * mOperand.size()
-						* mOperand.getInternalAlphabet().size());
+				(double) mOperand.size() * mOperand.size() * mOperand.getInternalAlphabet().size());
 		mLabels = new int[capacity];
 		mLabelTails = new int[capacity];
 		mLabelHeads = new int[capacity];
 		// Contains arrays of [state_int, firstIndex, numOfIndexes]
 		mMapStatesToTransitionTails = new ArrayList<>();
-		
+
 		// Iterate over all states in mint2state.
 		int index = 0;
 		for (int i = 0; i < mInt2state.size(); ++i) {
 			final STATE st = mInt2state.get(i);
 			// Get outgoing transition.
-			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it = mOperand
-					.internalSuccessors(st).iterator();
+			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it = mOperand.internalSuccessors(st).iterator();
 			// hasNext? --> add to labels.
 			int count = 0;
 			while (it.hasNext()) {
@@ -189,7 +185,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		mLabelTails = Arrays.copyOf(mLabelTails, mNumberOfTransitions);
 		mLabelHeads = Arrays.copyOf(mLabelHeads, mNumberOfTransitions);
 	}
-	
+
 	private void minimizeDfaHopcroft() {
 		final Worklist worklist = mPartition.getWorklist();
 		while (!worklist.isEmpty()) {
@@ -233,8 +229,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 						// set in W
 						final int position = findSet(set, worklist);
 						if (position >= 0) {
-							worklist.replaceSetBy2Sets(position, intersect,
-									comp);
+							worklist.replaceSetBy2Sets(position, intersect, comp);
 						} else {
 							if (intersect.length <= comp.length) {
 								worklist.addToWorklist(intersect);
@@ -246,9 +241,9 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 				}
 			}
 		}
-		
+
 	}
-	
+
 	/**
 	 * @return Natural number (position of set in worklist) if worklist contains
 	 *         set, -1 otherwise.
@@ -261,7 +256,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		}
 		return -1;
 	}
-	
+
 	/**
 	 * Compare equality of two arrays.
 	 * 
@@ -289,7 +284,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		}
 		return true;
 	}
-	
+
 	private static int[] toIntArray(final List<Integer> list) {
 		final int[] ret = new int[list.size()];
 		int i = 0;
@@ -298,7 +293,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * This method constructs the resulting automaton from the set of equivalent
 	 * states.
@@ -306,19 +301,17 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	private void constructResult() {
 		// mapping from states to their representative
 		final HashMap<Integer, ? extends Collection<STATE>> state2equivStates = computeMapState2Equiv();
-		
+
 		// mapping from old state to new state
-		final HashMap<Integer, STATE> oldState2newState = new HashMap<>(
-				computeHashCap(state2equivStates.size()));
-		
+		final HashMap<Integer, STATE> oldState2newState = new HashMap<>(computeHashCap(state2equivStates.size()));
+
 		// add states
 		assert mOperand.getInitialStates().iterator().hasNext() : "There is no initial state in the automaton.";
-		
-		final int initRepresentative = mState2representative[mState2int
-				.get(mOperand.getInitialStates().iterator().next())];
+
+		final int initRepresentative =
+				mState2representative[mState2int.get(mOperand.getInitialStates().iterator().next())];
 		startResultConstruction();
-		for (final Entry<Integer, ? extends Collection<STATE>> entry : state2equivStates
-				.entrySet()) {
+		for (final Entry<Integer, ? extends Collection<STATE>> entry : state2equivStates.entrySet()) {
 			final int representative = entry.getKey();
 			final Collection<STATE> equivStates = entry.getValue();
 			final boolean isInitial = representative == initRepresentative;
@@ -327,7 +320,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 			final STATE newSTate = addState(isInitial, isFinal, equivStates);
 			oldState2newState.put(representative, newSTate);
 		}
-		
+
 		/*
 		 * add transitions
 		 * 
@@ -336,16 +329,13 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		for (final Integer oldStateInt : state2equivStates.keySet()) {
 			for (final OutgoingInternalTransition<LETTER, STATE> out : mOperand
 					.internalSuccessors(mInt2state.get(oldStateInt))) {
-				addInternalTransition(
-						oldState2newState.get(oldStateInt), out.getLetter(),
-						oldState2newState
-								.get(mState2representative[mState2int.get(out
-										.getSucc())]));
+				addInternalTransition(oldState2newState.get(oldStateInt), out.getLetter(),
+						oldState2newState.get(mState2representative[mState2int.get(out.getSucc())]));
 			}
 		}
 		finishResultConstruction(null, false);
 	}
-	
+
 	/**
 	 * This method computes a mapping from old states to new representatives.
 	 * 
@@ -354,8 +344,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	private HashMap<Integer, ? extends Collection<STATE>> computeMapState2Equiv() {
 		// Initialize mapping of states to their representatives.
 		mState2representative = new int[mOperand.size()];
-		final HashMap<Integer, LinkedList<STATE>> state2equivStates = new HashMap<>(
-				computeHashCap(mOperand.size()));
+		final HashMap<Integer, LinkedList<STATE>> state2equivStates = new HashMap<>(computeHashCap(mOperand.size()));
 		for (int i = 0; i < mPartition.getPartitions().size(); i++) {
 			final int[] partitionI = mPartition.getPartitions().get(i);
 			if (partitionI.length > 0) {
@@ -370,7 +359,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		}
 		return state2equivStates;
 	}
-	
+
 	// ---------- Unused methods.---------- //
 	/**
 	 * Returns true if there exists an incoming transition to the state labeled
@@ -387,7 +376,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		final LETTER let = mInt2letter.get(letter);
 		return mOperand.internalPredecessors(st, let).iterator().hasNext();
 	}
-	
+
 	/**
 	 * Returns true, if an outgoing transition from the state labeled with
 	 * the letter exists.
@@ -403,7 +392,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		final LETTER let = mInt2letter.get(letter);
 		return mOperand.internalSuccessors(st, let).iterator().hasNext();
 	}
-	
+
 	// NOTE: There can be several such states in a DFA!!
 	/**
 	 * Returns number of state, which is predecessor of the state with transition
@@ -418,11 +407,10 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	private int getPredecessor(final int state, final int letter) {
 		final STATE st = mInt2state.get(state);
 		final LETTER let = mInt2letter.get(letter);
-		final STATE pred = mOperand.internalPredecessors(st, let).iterator().next()
-				.getPred();
+		final STATE pred = mOperand.internalPredecessors(st, let).iterator().next().getPred();
 		return mState2int.get(pred);
 	}
-	
+
 	/**
 	 * Returns number of state, which is successor of the state with transition
 	 * labeled with the letter.
@@ -436,11 +424,10 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	private int getSuccessor(final int state, final int letter) {
 		final STATE st = mInt2state.get(state);
 		final LETTER let = mInt2letter.get(letter);
-		final STATE succ = mOperand.internalSuccessors(st, let).iterator().next()
-				.getSucc();
+		final STATE succ = mOperand.internalSuccessors(st, let).iterator().next().getSucc();
 		return mState2int.get(succ);
 	}
-	
+
 	// ---------------------------------------------------------------------------------------------//
 	/**
 	 * Class for representing a partition. A partition P contains blocks of
@@ -457,14 +444,14 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		private int[] mNonfinalStates;
 		// WorkList of partition.
 		private Worklist mWorkList;
-		
+
 		/**
 		 * Constructor. Initialize arrays finalStates and nonfinalStates.
 		 */
 		public Partition() {
 			mSize = 0;
 		}
-		
+
 		/**
 		 * Initialize Partition. Transfer collection of finalStates and states
 		 * to int[] mfinalStates and int[] mnonfinalStates and create
@@ -473,14 +460,14 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		public void init() {
 			final Collection<STATE> finalStates = mOperand.getFinalStates();
 			final Collection<STATE> states = mOperand.getStates();
-			
+
 			final int nOfFinalStates = finalStates.size();
 			final int nOfStates = states.size();
-			
+
 			mFinalStates = new int[nOfFinalStates];
 			mNonfinalStates = new int[nOfStates - nOfFinalStates];
 			mSetsOfPartition = new ArrayList<>(nOfStates);
-			
+
 			int finalStatesInd = -1;
 			int nonfinalStatesInd = -1;
 			final Iterator<STATE> it = states.iterator();
@@ -499,7 +486,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 			mWorkList = new Worklist(states.size());
 			mWorkList.addToWorklist(mFinalStates);
 		}
-		
+
 		/**
 		 * Size of partition = number of containing sets.
 		 * 
@@ -508,7 +495,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		public int size() {
 			return mSize;
 		}
-		
+
 		/**
 		 * Replaces one set by another two sets.
 		 */
@@ -518,11 +505,11 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 			mSetsOfPartition.add(b);
 			mSize++;
 		}
-		
+
 		public ArrayList<int[]> getPartitions() {
 			return mSetsOfPartition;
 		}
-		
+
 		/**
 		 * The algorithm needs to operate on the worklist of partition.
 		 * 
@@ -532,7 +519,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 			return mWorkList;
 		}
 	}
-	
+
 	/**
 	 * Class for representing worklist.
 	 * 
@@ -541,7 +528,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	private static class Worklist {
 		private final ArrayList<int[]> mSetsOfStates;
 		private int mSize;
-		
+
 		/**
 		 * Constructor. Initialize ArrayList with maxSize = nOfStates.
 		 */
@@ -549,7 +536,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 			mSetsOfStates = new ArrayList<>(maxSize);
 			mSize = mSetsOfStates.size();
 		}
-		
+
 		/**
 		 * Pop last element of worklist.
 		 */
@@ -559,7 +546,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 			mSize--;
 			return ret;
 		}
-		
+
 		/**
 		 * Add collection of states to worklist.
 		 */
@@ -567,7 +554,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 			mSetsOfStates.add(set);
 			mSize++;
 		}
-		
+
 		/**
 		 * Replace specific Set by two other sets.
 		 */
@@ -578,21 +565,21 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 			mSize++;
 			return aAdded && bAdded;
 		}
-		
+
 		/**
 		 * Returns true, if and only if worklist is empty.
 		 */
 		public boolean isEmpty() {
 			return mSetsOfStates.isEmpty();
 		}
-		
+
 		/**
 		 * Get number of arrays currently in the list.
 		 */
 		public int getSize() {
 			return mSize;
 		}
-		
+
 		public int[] get(final int i) {
 			return mSetsOfStates.get(i);
 		}

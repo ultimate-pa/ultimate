@@ -48,10 +48,10 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
  */
 public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 	private static final int INITIAL_CAPACITY = 1000;
-	
+
 	private final PriorityQueue<Event<S, C>> mPe;
 	private final BranchingProcess<S, C> mBranchingProcess;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -60,21 +60,20 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 	 * @param order
 	 *            order
 	 */
-	public PossibleExtensions(final BranchingProcess<S, C> branchingProcess,
-			final Comparator<Event<S, C>> order) {
+	public PossibleExtensions(final BranchingProcess<S, C> branchingProcess, final Comparator<Event<S, C>> order) {
 		mBranchingProcess = branchingProcess;
-		
+
 		// anonymous implementation of the Order corresponding to McMillan's Algorithm
-		
+
 		// TODO find an appropriate initial Capacity
 		mPe = new PriorityQueue<>(INITIAL_CAPACITY, order);
 	}
-	
+
 	@Override
 	public Event<S, C> remove() {
 		return mPe.remove();
 	}
-	
+
 	@Override
 	public void update(final Event<S, C> event) {
 		final Collection<Candidate<S, C>> candidates = computeCandidates(event);
@@ -82,7 +81,7 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 			evolveCandidate(candidate);
 		}
 	}
-	
+
 	/**
 	 * Evolves a {@code Candidate} for a new possible Event in all possible ways
 	 * and, as a side-effect, adds valid extensions (ones whose predecessors are
@@ -108,9 +107,9 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 		}
 		cand.mPlaces.add(p);
 	}
-	
+
 	// private void evolveCandidate(Transition<S, C> t, Set<Condition<S, C>> chosen, Collection<Place<S, C>> places) {
-	
+
 	/**
 	 * @param event
 	 *            An event.
@@ -136,12 +135,12 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 		}
 		return candidates.values();
 	}
-	
+
 	@Override
 	public boolean isEmpy() {
 		return mPe.isEmpty();
 	}
-	
+
 	@Override
 	public int size() {
 		return mPe.size();

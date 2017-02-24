@@ -47,9 +47,9 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.InhibitorTra
  */
 public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	private static final long serialVersionUID = -357669345268897194L;
-	
+
 	private final Set<Place<S, C>> mPlaces;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -59,7 +59,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	public Marking(final Set<Place<S, C>> places) {
 		mPlaces = places;
 	}
-	
+
 	/**
 	 * @param place
 	 *            The place.
@@ -69,7 +69,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	public boolean contains(final Place<S, C> place) {
 		return mPlaces.contains(place);
 	}
-	
+
 	/**
 	 * @param places
 	 *            The places.
@@ -79,7 +79,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	public boolean containsAll(final Collection<Place<S, C>> places) {
 		return mPlaces.containsAll(places);
 	}
-	
+
 	/**
 	 * @param places
 	 *            The places.
@@ -93,14 +93,11 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 		}
 		return false;
 	}
-	
-	/**
-	 * @see java.util.Set#isEmpty()
-	 */
+
 	public boolean isEmpty() {
 		return mPlaces.isEmpty();
 	}
-	
+
 	/**
 	 * @see java.util.Set#iterator()
 	 */
@@ -108,7 +105,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	public Iterator<Place<S, C>> iterator() {
 		return mPlaces.iterator();
 	}
-	
+
 	/**
 	 * @return The number of places.
 	 * @see java.util.Set#size()
@@ -116,7 +113,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 	public int size() {
 		return mPlaces.size();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(final Object obj) {
@@ -136,13 +133,13 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 		}
 		return true;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		return prime + ((mPlaces == null) ? 0 : mPlaces.hashCode());
 	}
-	
+
 	/**
 	 * @param transition
 	 *            The transition.
@@ -157,7 +154,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 		}
 		return mPlaces.containsAll(transition.getPredecessors());
 	}
-	
+
 	/*
 	/**
 	 * Adds the places of another marking.
@@ -169,7 +166,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 		mPlaces.addAll(other.mPlaces);
 	}
 	*/
-	
+
 	/**
 	 * @param transition
 	 *            The transition.
@@ -181,7 +178,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 		resultSet.addAll(transition.getSuccessors());
 		return new Marking<>(resultSet);
 	}
-	
+
 	/**
 	 * Revokes the occurrence of the specified transition if valid.
 	 * 
@@ -197,7 +194,7 @@ public class Marking<S, C> implements Iterable<Place<S, C>>, Serializable {
 		mPlaces.addAll(transition.getPredecessors());
 		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		return this.mPlaces.toString();

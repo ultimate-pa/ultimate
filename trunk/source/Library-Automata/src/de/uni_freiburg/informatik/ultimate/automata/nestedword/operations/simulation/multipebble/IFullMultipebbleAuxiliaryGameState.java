@@ -27,24 +27,22 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble;
 
 /**
- * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  */
 public interface IFullMultipebbleAuxiliaryGameState {
-	
+
 	public enum AuxiliaryGameStateType {
 		SPOILER_WINNING_SINK,
 		EMPTY_STACK,
 		DEFAULT_SINK_FOR_AUTOMATA_OPERATIONS,
 	}
-	
+
 	public AuxiliaryGameStateType getAuxiliaryGameStateType();
-	
-	
+
 	public static <STATE, GS extends FullMultipebbleGameState<STATE>> boolean isDuplicatorWinningSink(final GS gs) {
 		if (gs instanceof IFullMultipebbleAuxiliaryGameState) {
-			if (((IFullMultipebbleAuxiliaryGameState) gs).getAuxiliaryGameStateType() == AuxiliaryGameStateType.SPOILER_WINNING_SINK) {
+			if (((IFullMultipebbleAuxiliaryGameState) gs)
+					.getAuxiliaryGameStateType() == AuxiliaryGameStateType.SPOILER_WINNING_SINK) {
 				return true;
 			}
 		}

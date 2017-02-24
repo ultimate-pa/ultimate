@@ -31,63 +31,62 @@ import java.util.Comparator;
 /**
  * Comparator for priorities in a priority game in which priorities 0, 1, and 2
  * are used.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  */
 public class PriorityComparator implements Comparator<Integer> {
-	
 
 	/**
-	 * Compares two priorities according to the order 0 > 2 > 1 (i.e., 
-	 * the "better-for-duplicator-order"). 
+	 * Compares two priorities according to the order 0 > 2 > 1 (i.e.,
+	 * the "better-for-duplicator-order").
 	 * Throws an Exception if the priorities are not from the set {0,1,2}.
+	 * 
 	 * @return 1 if the lhs is better for duplicator,
-	 * 0 if lhs und rhs are equal
-	 * -1 if lhs is better for spoiler.
+	 *         0 if lhs und rhs are equal
+	 *         -1 if lhs is better for spoiler.
 	 */
 	@Override
 	public int compare(final Integer lhs, final Integer rhs) {
 		switch (lhs) {
-			case 0:
-			{
+			case 0: {
 				switch (rhs) {
-				case 0:
-					return 0;
-				case 1:
-					return 1;
-				case 2:
-					return 1;
-				default:
-					throw new IllegalArgumentException("unsupported priority " + rhs);
+					case 0:
+						return 0;
+					case 1:
+						return 1;
+					case 2:
+						return 1;
+					default:
+						throw new IllegalArgumentException("unsupported priority " + rhs);
 				}
 			}
 			case 1: {
 				switch (rhs) {
-				case 0:
-					return -1;
-				case 1:
-					return 0;
-				case 2:
-					return -1;
-				default:
-					throw new IllegalArgumentException("unsupported priority " + rhs);
+					case 0:
+						return -1;
+					case 1:
+						return 0;
+					case 2:
+						return -1;
+					default:
+						throw new IllegalArgumentException("unsupported priority " + rhs);
 				}
 			}
 			case 2: {
 				switch (rhs) {
-				case 0:
-					return -1;
-				case 1:
-					return 1;
-				case 2:
-					return 0;
-				default:
-					throw new IllegalArgumentException("unsupported priority " + rhs);
+					case 0:
+						return -1;
+					case 1:
+						return 1;
+					case 2:
+						return 0;
+					default:
+						throw new IllegalArgumentException("unsupported priority " + rhs);
 				}
 			}
 			default:
 				throw new IllegalArgumentException("unsupported priority " + lhs);
-			}
 		}
-	
+	}
+
 }

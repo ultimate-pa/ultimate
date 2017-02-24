@@ -41,17 +41,17 @@ import java.util.Collection;
  */
 public class Place<S, C> implements Serializable {
 	private static final long serialVersionUID = -4577818193149596161L;
-	
+
 	private static int sSerialNumberCounter;
-	
+
 	private final int mSerialNumber;
 	// TODO Christian 2016-09-24: This field is identical to mSerialNumber and hence could be removed.
 	private final int mHashCode;
-	
+
 	private final C mContent;
 	private final ArrayList<ITransition<S, C>> mPredecessors;
 	private final ArrayList<ITransition<S, C>> mSuccessors;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -61,25 +61,25 @@ public class Place<S, C> implements Serializable {
 	public Place(final C content) {
 		mSerialNumber = sSerialNumberCounter;
 		sSerialNumberCounter++;
-		
+
 		mContent = content;
 		mPredecessors = new ArrayList<>();
 		mSuccessors = new ArrayList<>();
 		mHashCode = computeHashCode();
 	}
-	
+
 	public C getContent() {
 		return mContent;
 	}
-	
+
 	public Collection<ITransition<S, C>> getPredecessors() {
 		return mPredecessors;
 	}
-	
+
 	public Collection<ITransition<S, C>> getSuccessors() {
 		return mSuccessors;
 	}
-	
+
 	/**
 	 * @param transition
 	 *            Incoming transition.
@@ -87,7 +87,7 @@ public class Place<S, C> implements Serializable {
 	public void addPredecessor(final ITransition<S, C> transition) {
 		mPredecessors.add(transition);
 	}
-	
+
 	/**
 	 * @param transition
 	 *            Outgoing transition.
@@ -95,24 +95,24 @@ public class Place<S, C> implements Serializable {
 	public void addSuccessor(final ITransition<S, C> transition) {
 		mSuccessors.add(transition);
 	}
-	
+
 	@Override
 	public String toString() {
 		return String.valueOf(mContent);
 	}
-	
+
 	/**
 	 * @return String representation with serial number.
 	 */
 	public String toStringWithSerial() {
 		return "#" + mSerialNumber + "#" + mContent;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mHashCode;
 	}
-	
+
 	private final int computeHashCode() {
 		return mSerialNumber;
 	}

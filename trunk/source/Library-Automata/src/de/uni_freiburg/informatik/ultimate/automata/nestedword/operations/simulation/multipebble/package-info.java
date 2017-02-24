@@ -25,6 +25,6 @@
  * to convey the resulting work.
  */
 /**
- * Package provides classes for computation of full multipebble simulations. 
+ * Package provides classes for computation of full multipebble simulations.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble;

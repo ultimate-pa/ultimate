@@ -48,7 +48,7 @@ public class InterpolationTestSuiteInteger extends InterpolationTestSuite {
 	protected List<Pair<String, String>> getToolchainSettings() {
 		final List<Pair<String, String>> rtr = new ArrayList<>();
 		rtr.addAll(getReachIntegerAutomizer());
-		// rtr.addAll(getReachIntegerKojak());
+		rtr.addAll(getReachIntegerKojak());
 		return rtr;
 	}
 
@@ -65,7 +65,7 @@ public class InterpolationTestSuiteInteger extends InterpolationTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-		return super.createTestCases().stream().limit(5).collect(Collectors.toList());
+		return super.createTestCases().stream().limit(Integer.MAX_VALUE).collect(Collectors.toList());
 	}
 
 }

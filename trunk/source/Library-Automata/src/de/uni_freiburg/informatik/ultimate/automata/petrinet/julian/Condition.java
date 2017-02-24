@@ -45,15 +45,15 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
  **/
 public class Condition<S, C> implements Serializable {
 	private static final long serialVersionUID = -497620137647502376L;
-	
+
 	private static int sSerialNumberCounter;
-	
+
 	private final Event<S, C> mPredecessor;
 	private final Collection<Event<S, C>> mSuccessors;
 	private final Place<S, C> mPlace;
-	
+
 	private final int mSerialNumber;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -65,37 +65,39 @@ public class Condition<S, C> implements Serializable {
 	public Condition(final Event<S, C> predecessor, final Place<S, C> place) {
 		mSerialNumber = sSerialNumberCounter;
 		sSerialNumberCounter++;
-		
+
 		mPredecessor = predecessor;
 		mSuccessors = new HashSet<>();
 		mPlace = place;
 	}
-	
+
 	/**
 	 * Adds successors of an event.
-	 * @param event event
+	 * 
+	 * @param event
+	 *            event
 	 */
 	public void addSuccesssor(final Event<S, C> event) {
 		mSuccessors.add(event);
 	}
-	
+
 	public Collection<Event<S, C>> getSuccessorEvents() {
 		return mSuccessors;
 	}
-	
+
 	public Event<S, C> getPredecessorEvent() {
 		return mPredecessor;
 	}
-	
+
 	public Place<S, C> getPlace() {
 		return mPlace;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "c" + mSerialNumber + ":CorrespPlace: " + mPlace.toString();
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;

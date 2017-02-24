@@ -49,7 +49,7 @@ public final class IsIncluded<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private final Boolean mResult;
 	private final NestedRun<LETTER, STATE> mCounterexample;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -70,46 +70,46 @@ public final class IsIncluded<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		final IsEmpty<LETTER, STATE> emptinessCheck = new IsEmpty<>(services,
 				(new Difference<>(mServices, stateFactory, fstOperand, sndOperand)).getResult());
 		mResult = emptinessCheck.getResult();
 		mCounterexample = emptinessCheck.getNestedRun();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "IsIncluded";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Language is " + (mResult ? "" : "not ") + "included";
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
 		return mFstOperand;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
-	
+
 	@Override
 	public Boolean getResult() {
 		return mResult;
 	}
-	
+
 	public NestedRun<LETTER, STATE> getCounterexample() {
 		return mCounterexample;
 	}

@@ -65,12 +65,12 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mTotalizedOperand;
 	private final IBuchiComplementDeterministicStateFactory<STATE> mContentFactory;
-	
+
 	private final HashMap<STATE, STATE> mNew2Old = new HashMap<>();
-	
+
 	private final HashMap<STATE, STATE> mOld2Final = new HashMap<>();
 	private final HashMap<STATE, STATE> mOld2NonFinal = new HashMap<>();
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -89,11 +89,11 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 		super(services);
 		mOperand = operand;
 		mContentFactory = stateFactory;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		if (new IsTotal<>(mServices, mOperand).getResult()) {
 			mTotalizedOperand = mOperand;
 		} else {
@@ -102,36 +102,34 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 		mTraversedNwa = new NestedWordAutomaton<>(mServices, operand.getInternalAlphabet(), operand.getCallAlphabet(),
 				operand.getReturnAlphabet(), operand.getStateFactory());
 		traverseDoubleDeckerGraph();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "BuchiComplementDeterministic";
 	}
-	
+
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand " + mOperand.sizeInformation();
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Result " + mTraversedNwa.sizeInformation();
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mTraversedNwa;
 	}
-	
+
 	private STATE getOrConstructNewState(final STATE oldState, final boolean isInitial, final boolean isFinal) {
-		STATE newState = isFinal
-				? mOld2Final.get(oldState)
-				: mOld2NonFinal.get(oldState);
+		STATE newState = isFinal ? mOld2Final.get(oldState) : mOld2NonFinal.get(oldState);
 		if (newState == null) {
 			if (isFinal) {
 				newState = mContentFactory.buchiComplementDeterministicFinal(oldState);
@@ -146,7 +144,7 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 		}
 		return newState;
 	}
-	
+
 	@Override
 	protected Collection<STATE> getInitialStates() {
 		final Iterator<STATE> iterator = mTotalizedOperand.getInitialStates().iterator();
@@ -160,7 +158,7 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 		newInitialStates.add(newInit);
 		return newInitialStates;
 	}
-	
+
 	@Override
 	protected Collection<STATE> visitAndGetCallSuccessors(final DoubleDecker<STATE> doubleDecker) {
 		final Collection<STATE> newSuccs = new ArrayList<>();
@@ -187,7 +185,7 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 		}
 		return newSuccs;
 	}
-	
+
 	@Override
 	protected Collection<STATE> visitAndGetInternalSuccessors(final DoubleDecker<STATE> doubleDecker) {
 		final Collection<STATE> newSuccs = new ArrayList<>();
@@ -214,7 +212,7 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 		}
 		return newSuccs;
 	}
-	
+
 	@Override
 	@SuppressWarnings("squid:S1698")
 	protected Collection<STATE> visitAndGetReturnSuccessors(final DoubleDecker<STATE> doubleDecker) {
@@ -225,7 +223,7 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 			return newSuccs;
 		}
 		final STATE oldHier = mNew2Old.get(newHier);
-		
+
 		final STATE newState = doubleDecker.getUp();
 		final boolean isFinal = mTraversedNwa.isFinal(newState);
 		final STATE oldState = mNew2Old.get(newState);
@@ -249,7 +247,7 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 		}
 		return newSuccs;
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return ResultChecker.buchiComplement(mServices, mOperand, mTraversedNwa);

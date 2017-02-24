@@ -50,7 +50,7 @@ public abstract class CommonExternalFormatWriter<LETTER, STATE> extends GeneralA
 	protected final Map<LETTER, String> mAlphabetMapping;
 	protected final Map<STATE, String> mStateMapping;
 	protected final INestedWordAutomaton<LETTER, STATE> mNwa;
-	
+
 	/**
 	 * @param writer
 	 *            Print writer.
@@ -63,7 +63,7 @@ public abstract class CommonExternalFormatWriter<LETTER, STATE> extends GeneralA
 		mStateMapping = getStateMapping(nwa.getStates());
 		mNwa = nwa;
 	}
-	
+
 	private Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet) {
 		int counter = 0;
 		final Map<LETTER, String> alphabetMapping = new LinkedHashMap<>();
@@ -73,7 +73,7 @@ public abstract class CommonExternalFormatWriter<LETTER, STATE> extends GeneralA
 		}
 		return alphabetMapping;
 	}
-	
+
 	private Map<STATE, String> getStateMapping(final Collection<STATE> states) {
 		int counter = 0;
 		final Map<STATE, String> stateMapping = new HashMap<>();
@@ -83,7 +83,7 @@ public abstract class CommonExternalFormatWriter<LETTER, STATE> extends GeneralA
 		}
 		return stateMapping;
 	}
-	
+
 	/**
 	 * Converts a parametric object to a {@link String}.
 	 *
@@ -99,7 +99,7 @@ public abstract class CommonExternalFormatWriter<LETTER, STATE> extends GeneralA
 		 */
 		String convert(E element);
 	}
-	
+
 	/**
 	 * Uses the {@link String#valueOf(Object)} method for printing.
 	 *
@@ -112,7 +112,7 @@ public abstract class CommonExternalFormatWriter<LETTER, STATE> extends GeneralA
 			return elem.toString();
 		}
 	}
-	
+
 	/**
 	 * Uses the {@link String#valueOf(Object)} method and a map for printing.
 	 *
@@ -123,11 +123,11 @@ public abstract class CommonExternalFormatWriter<LETTER, STATE> extends GeneralA
 	 */
 	protected static class MapBasedConverter<E, V> implements IConverter<E> {
 		private final Map<E, V> mMap;
-		
+
 		public MapBasedConverter(final Map<E, V> map) {
 			mMap = map;
 		}
-		
+
 		@Override
 		public String convert(final E elem) {
 			final V value = mMap.get(elem);

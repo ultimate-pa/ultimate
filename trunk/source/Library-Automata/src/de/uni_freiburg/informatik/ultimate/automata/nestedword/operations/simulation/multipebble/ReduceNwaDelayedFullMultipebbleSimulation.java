@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * TODO: documentation
+ * TODO: documentation.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -52,24 +52,26 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public class ReduceNwaDelayedFullMultipebbleSimulation<LETTER, STATE>
-	extends ReduceNwaFullMultipebbleSimulation<LETTER, STATE, DelayedFullMultipebbleGameState<STATE>> {
-	
+		extends ReduceNwaFullMultipebbleSimulation<LETTER, STATE, DelayedFullMultipebbleGameState<STATE>> {
+
 	public ReduceNwaDelayedFullMultipebbleSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, true);
 	}
-		
+
 	@Override
-	protected FullMultipebbleStateFactory<STATE, DelayedFullMultipebbleGameState<STATE>> constructGameFactory(final ISetOfPairs<STATE, ?> initialPartition) {
+	protected FullMultipebbleStateFactory<STATE, DelayedFullMultipebbleGameState<STATE>>
+			constructGameFactory(final ISetOfPairs<STATE, ?> initialPartition) {
 		return new DelayedFullMultipebbleStateFactory<>(initialPartition);
 	}
-	
+
 	@Override
 	protected Pair<IDoubleDeckerAutomaton<LETTER, DelayedFullMultipebbleGameState<STATE>>, Integer> computeSimulation(
 			final FullMultipebbleGameAutomaton<LETTER, STATE, DelayedFullMultipebbleGameState<STATE>> gameAutomaton)
 			throws AutomataOperationCanceledException {
-		final RemoveNonLiveStates<LETTER, DelayedFullMultipebbleGameState<STATE>> rnls = new RemoveNonLiveStates<>(mServices, gameAutomaton);
+		final RemoveNonLiveStates<LETTER, DelayedFullMultipebbleGameState<STATE>> rnls =
+				new RemoveNonLiveStates<>(mServices, gameAutomaton);
 		final int maxGameAutomatonSize = rnls.getInputSize();
 		final IDoubleDeckerAutomaton<LETTER, DelayedFullMultipebbleGameState<STATE>> tmp1 = rnls.getResult();
 		final Set<DelayedFullMultipebbleGameState<STATE>> goodForSpoiler = new HashSet<>();
@@ -79,15 +81,21 @@ public class ReduceNwaDelayedFullMultipebbleSimulation<LETTER, STATE>
 			}
 		}
 		final NestedWordAutomatonFilteredStates<LETTER, DelayedFullMultipebbleGameState<STATE>> tmp2 =
-				new NestedWordAutomatonFilteredStates<>(mServices, (NestedWordAutomatonReachableStates<LETTER, DelayedFullMultipebbleGameState<STATE>>) tmp1, goodForSpoiler, goodForSpoiler, goodForSpoiler);
-		final IDoubleDeckerAutomaton<LETTER, DelayedFullMultipebbleGameState<STATE>> tmp3 = new RemoveNonLiveStates<>(mServices, tmp2).getResult();
-		
+				new NestedWordAutomatonFilteredStates<>(mServices,
+						(NestedWordAutomatonReachableStates<LETTER, DelayedFullMultipebbleGameState<STATE>>) tmp1,
+						goodForSpoiler, goodForSpoiler, goodForSpoiler);
+		final IDoubleDeckerAutomaton<LETTER, DelayedFullMultipebbleGameState<STATE>> tmp3 =
+				new RemoveNonLiveStates<>(mServices, tmp2).getResult();
+
 		final NestedWordAutomatonFilteredStates<LETTER, DelayedFullMultipebbleGameState<STATE>> tmp4 =
-				new NestedWordAutomatonFilteredStates<>(mServices, (NestedWordAutomatonReachableStates<LETTER, DelayedFullMultipebbleGameState<STATE>>) tmp1, tmp1.getStates(), tmp1.getInitialStates(), tmp3.getStates());
-		final IDoubleDeckerAutomaton<LETTER, DelayedFullMultipebbleGameState<STATE>> result = new RemoveDeadEnds<>(mServices, tmp4).getResult();
+				new NestedWordAutomatonFilteredStates<>(mServices,
+						(NestedWordAutomatonReachableStates<LETTER, DelayedFullMultipebbleGameState<STATE>>) tmp1,
+						tmp1.getStates(), tmp1.getInitialStates(), tmp3.getStates());
+		final IDoubleDeckerAutomaton<LETTER, DelayedFullMultipebbleGameState<STATE>> result =
+				new RemoveDeadEnds<>(mServices, tmp4).getResult();
 		return new Pair<>(result, maxGameAutomatonSize);
 	}
-	
+
 	@Override
 	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {

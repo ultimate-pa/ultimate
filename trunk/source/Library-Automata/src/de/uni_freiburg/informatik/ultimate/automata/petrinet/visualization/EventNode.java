@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  */
 public final class EventNode<S, C> extends PetriNetVisualizationNode {
 	private static final long serialVersionUID = -2531826841396458461L;
-	
+
 	/**
 	 * @param event
 	 *            Event.
@@ -56,17 +56,17 @@ public final class EventNode<S, C> extends PetriNetVisualizationNode {
 	@SuppressWarnings("fb-contrib:PRMC_POSSIBLY_REDUNDANT_METHOD_CALLS")
 	public EventNode(final Event<S, C> event) {
 		super(event.getTransition().getSymbol().toString());
-		
+
 		final Transition<S, C> transition = event.getTransition();
 		final DefaultAnnotations annot = new DefaultAnnotations();
 		annot.put("Transition", transition);
 		annot.put("Companion", event.getCompanion());
 		annot.put("Ancestors", event.getAncestors());
 		annot.put("ByLocalConfigurationRepresentedMarking", event.getMark());
-		
+
 		final Map<String, IAnnotations> annotations = getPayload().getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, annot);
-		
+
 		final S symbol = transition.getSymbol();
 		if (symbol instanceof IAnnotations) {
 			annot.put("Symbol", symbol);

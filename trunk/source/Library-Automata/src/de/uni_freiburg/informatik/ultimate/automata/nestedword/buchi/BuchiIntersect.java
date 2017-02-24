@@ -53,7 +53,7 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
 	private NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
-	
+
 	/**
 	 * Full constructor.
 	 * 
@@ -83,39 +83,39 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "BuchiIntersect";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}
-	
+
 	private <SF extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void
 			doIntersect(final SF stateFactory) throws AutomataLibraryException {
 		final BuchiIntersectNwa<LETTER, STATE> intersect =
 				new BuchiIntersectNwa<>(mFstOperand, mSndOperand, stateFactory);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, intersect);
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
 		return mFstOperand;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
-	
+
 	@Override
 	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult() {
 		return mResult;
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
@@ -139,7 +139,7 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 		}
 		return correct;
 	}
-	
+
 	private boolean resultCheckWithRandomWords() throws AutomataLibraryException {
 		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<>();
 		final BuchiIsEmpty<LETTER, STATE> resultEmptiness = new BuchiIsEmpty<>(mServices, mResult);
@@ -171,7 +171,7 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 		}
 		return correct;
 	}
-	
+
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand1,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand2) throws AutomataLibraryException {

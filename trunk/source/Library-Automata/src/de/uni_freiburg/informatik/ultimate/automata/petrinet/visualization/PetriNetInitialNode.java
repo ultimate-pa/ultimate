@@ -38,25 +38,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  * Ultimate model of a PetriNet place.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <S>
- *            symbol type
- * @param <C>
- *            place content type
  */
 public final class PetriNetInitialNode extends PetriNetVisualizationNode {
 	private static final long serialVersionUID = 264254789648279608L;
-	
+
 	/**
 	 * @param acceptingMarkings
 	 *            Accepting markings.
 	 */
 	public PetriNetInitialNode(final Collection<String> acceptingMarkings) {
 		super("My sucessors are the initial marking");
-		
+
 		final IPayload payload = getPayload();
 		final DefaultAnnotations thisPluginsAnnotations = new DefaultAnnotations();
-		thisPluginsAnnotations.put("accepting markings of this petri net",
-				acceptingMarkings);
+		thisPluginsAnnotations.put("accepting markings of this petri net", acceptingMarkings);
 		final Map<String, IAnnotations> annotations = payload.getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, thisPluginsAnnotations);
 	}

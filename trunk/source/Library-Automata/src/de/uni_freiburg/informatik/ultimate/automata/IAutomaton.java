@@ -46,7 +46,7 @@ public interface IAutomaton<LETTER, STATE> {
 	 * @return Alphabet of this automaton.
 	 */
 	Set<LETTER> getAlphabet();
-	
+
 	/**
 	 * Can the alphabet still change after the automaton was constructed?
 	 * Note that the correctness of this property is not checked and the user
@@ -61,24 +61,24 @@ public interface IAutomaton<LETTER, STATE> {
 	default boolean hasModifiableAlphabet() {
 		return false;
 	}
-	
+
 	/**
 	 * @return StateFactory that was used to construct this automaton.
 	 * @deprecated Automata should not provide their state factory anymore.
 	 */
 	@Deprecated
 	IStateFactory<STATE> getStateFactory();
-	
+
 	/**
 	 * @return Size of the automaton. E.g., the number of states.
 	 */
 	int size();
-	
+
 	/**
 	 * @return Some human readable information about the size of the automaton.
 	 */
 	String sizeInformation();
-	
+
 	/**
 	 * Checks whether two automata have the same alphabet.
 	 * 
@@ -96,7 +96,7 @@ public interface IAutomaton<LETTER, STATE> {
 			final IAutomaton<LETTER, STATE> sndOperand) {
 		return fstOperand.getAlphabet().equals(sndOperand.getAlphabet());
 	}
-	
+
 	/**
 	 * @param services
 	 *            Ultimate services.

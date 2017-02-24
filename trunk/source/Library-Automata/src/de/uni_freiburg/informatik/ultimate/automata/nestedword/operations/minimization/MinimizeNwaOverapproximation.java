@@ -58,16 +58,16 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
-	private static final String THE_RESULT_RECOGNIZES_LESS_WORDS_THAN_BEFORE =
-			"The result recognizes less words than before.";
-	
 	/**
 	 * Default timeout: 1 second.
 	 */
 	public static final int DEFAULT_TIMEOUT = 1_000;
-	
+
+	private static final String THE_RESULT_RECOGNIZES_LESS_WORDS_THAN_BEFORE =
+			"The result recognizes less words than before.";
+
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	
+
 	/**
 	 * Basic constructor with default timeout.
 	 * 
@@ -85,7 +85,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, DEFAULT_TIMEOUT);
 	}
-	
+
 	/**
 	 * Basic constructor with given timeout.
 	 * 
@@ -106,7 +106,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null, false, time, Collections.emptyList());
 	}
-	
+
 	/**
 	 * Extended constructor.
 	 * 
@@ -135,28 +135,28 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mOperand = operand;
-		final TimeoutFlag<LETTER, STATE> timeout = new TimeoutFlag<>(time);
-		final MinimizeSevpa<LETTER, STATE> backgroundMinimizer = new MinimizeSevpa<>(services, stateFactory,
-				operand, initialPartition, addMapOldState2newState, timeout, false);
+		final TimeoutFlag timeout = new TimeoutFlag(time);
+		final MinimizeSevpa<LETTER, STATE> backgroundMinimizer = new MinimizeSevpa<>(services, stateFactory, operand,
+				initialPartition, addMapOldState2newState, timeout, false);
 		constructResult(backgroundMinimizer.getConstructionInterrupted(), backgroundMinimizer.getResult(),
 				forbiddenLanguages, stateFactory);
 	}
-	
+
 	@Override
 	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start testing correctness of " + operationName());
 		}
-		
+
 		final boolean correct = new IsIncluded<>(mServices, stateFactory, mOperand, getResult()).getResult();
 		assert correct;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of " + operationName());
 		}
@@ -167,7 +167,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 		}
 		return new Pair<>(correct, null);
 	}
-	
+
 	private void constructResult(final boolean wasInterrrupted,
 			final INestedWordAutomaton<LETTER, STATE> minimizerResult,
 			final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages,
@@ -177,10 +177,10 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 			directResultConstruction(minimizerResult);
 			return;
 		}
-		
+
 		minimizeWithDifferenceRefinement(minimizerResult, forbiddenLanguages, stateFactoryIntersect);
 	}
-	
+
 	/**
 	 * Uses a standard minimization which is interrupted when the time is up. Afterward it checks that the intersection
 	 * of the result with each of the forbidden automata is empty. If not, the result is refined by taking the
@@ -191,7 +191,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 			final INwaInclusionStateFactory<STATE> stateFactoryIntersect)
 			throws AutomataOperationCanceledException, AssertionError {
 		INestedWordAutomaton<LETTER, STATE> refinedResult = minimizerResult;
-		
+
 		for (final INestedWordAutomatonSimple<LETTER, STATE> automaton : forbiddenLanguages) {
 			final INestedWordAutomatonSimple<LETTER, STATE> intersection;
 			try {
@@ -201,7 +201,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 			} catch (final AutomataLibraryException e) {
 				throw new AssertionError(e.getMessage());
 			}
-			
+
 			if (!new IsEmpty<>(mServices, intersection).getResult()) {
 				try {
 					// refine current result

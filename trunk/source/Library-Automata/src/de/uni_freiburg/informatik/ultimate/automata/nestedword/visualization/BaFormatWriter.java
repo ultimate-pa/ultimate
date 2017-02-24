@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 public final class BaFormatWriter<LETTER, STATE> extends CommonExternalFormatWriter<LETTER, STATE> {
 	private static final int MINIMUM_STATE_SIZE = 4;
 	private static final int MINIMUM_TRANSITION_SIZE = 11;
-	
+
 	/**
 	 * @param writer
 	 *            Print writer.
@@ -58,7 +58,7 @@ public final class BaFormatWriter<LETTER, STATE> extends CommonExternalFormatWri
 		super(writer, nwa);
 		doPrint();
 	}
-	
+
 	private void doPrint() {
 		final StringBuilder initStateSb = getStateString(mNwa.getInitialStates(), mStateMapping);
 		final StringBuilder transSb = getTransitionString(mNwa, mStateMapping, mAlphabetMapping);
@@ -67,9 +67,8 @@ public final class BaFormatWriter<LETTER, STATE> extends CommonExternalFormatWri
 		print(transSb);
 		print(finalStateSb);
 	}
-	
-	private StringBuilder getStateString(final Collection<STATE> initialStates,
-			final Map<STATE, String> stateMapping) {
+
+	private StringBuilder getStateString(final Collection<STATE> initialStates, final Map<STATE, String> stateMapping) {
 		final StringBuilder result = new StringBuilder(MINIMUM_STATE_SIZE * initialStates.size());
 		for (final STATE state : initialStates) {
 			// @formatter:off
@@ -81,7 +80,7 @@ public final class BaFormatWriter<LETTER, STATE> extends CommonExternalFormatWri
 		}
 		return result;
 	}
-	
+
 	private StringBuilder getTransitionString(final INestedWordAutomaton<LETTER, STATE> nwa,
 			final Map<STATE, String> stateMapping, final Map<LETTER, String> alphabetMapping) {
 		final StringBuilder result = new StringBuilder(MINIMUM_TRANSITION_SIZE * nwa.size());

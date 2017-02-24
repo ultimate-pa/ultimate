@@ -35,16 +35,13 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 public final class TestAutomaton_2 extends AlternatingAutomaton<String, String> {
 	public static final String a = "a";
 	public static final String b = "b";
-	
+
 	@SuppressWarnings("unchecked")
-	public static final TestCase<String>[] TEST_CASES = new TestCase[] {
-			new TestCase<>(new Word<>(b, b, a), true),
-			new TestCase<>(new Word<>(a, b, b, b, b, b, b, a), true),
-			new TestCase<>(new Word<>(b, a, b, a), false),
+	public static final TestCase<String>[] TEST_CASES = new TestCase[] { new TestCase<>(new Word<>(b, b, a), true),
+			new TestCase<>(new Word<>(a, b, b, b, b, b, b, a), true), new TestCase<>(new Word<>(b, a, b, a), false),
 			new TestCase<>(new Word<>(b, b, a, b, a, a, a), true),
-			new TestCase<>(new Word<>(a, a, a, a, a, a, b, b, a), true)
-	};
-	
+			new TestCase<>(new Word<>(a, a, a, a, a, a, b, b, a), true) };
+
 	//b*a(a|ba)*b(a|b)*
 	public TestAutomaton_2() {
 		super(generateAlphabet(), null);
@@ -63,7 +60,7 @@ public final class TestAutomaton_2 extends AlternatingAutomaton<String, String> 
 		addTransition(b, state3, generateCube(new String[] { state2 }, new String[] {}));
 		addAcceptingConjunction(generateCube(new String[] { state1 }, new String[] {}));
 	}
-	
+
 	private static HashSet<String> generateAlphabet() {
 		final HashSet<String> alphabet = new HashSet<>();
 		alphabet.add(a);

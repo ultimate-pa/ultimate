@@ -17,7 +17,6 @@ import java.util.List;
  * tables.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  */
 public final class PlotCsvUtils {
 	/**
@@ -28,6 +27,10 @@ public final class PlotCsvUtils {
 	 * File representing the users Desktop.
 	 */
 	public static final File DESKTOP = new File(System.getProperty("user.home"), "Desktop");
+
+	private PlotCsvUtils() {
+		// Utility class.
+	}
 
 	/**
 	 * Appends the given column content to the given CSV file.
@@ -204,12 +207,5 @@ public final class PlotCsvUtils {
 		}
 
 		pw.close();
-	}
-
-	/**
-	 * Utility class. No implementation.
-	 */
-	private PlotCsvUtils() {
-
 	}
 }

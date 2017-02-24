@@ -65,7 +65,7 @@ class LassoConstructor<LETTER, STATE> {
 	private NestedRun<LETTER, STATE> mLoop;
 	private final NestedRun<LETTER, STATE> mStem;
 	private final NestedLassoRun<LETTER, STATE> mLasso;
-	
+
 	/**
 	 * Constructor with goal.
 	 * 
@@ -86,7 +86,7 @@ class LassoConstructor<LETTER, STATE> {
 			throws AutomataOperationCanceledException {
 		this(services, nwars, goal, null, scc, false);
 	}
-	
+
 	/**
 	 * Constructor with summary.
 	 * 
@@ -107,7 +107,7 @@ class LassoConstructor<LETTER, STATE> {
 			throws AutomataOperationCanceledException {
 		this(services, nwars, summary.getSucc(), summary, scc, true);
 	}
-	
+
 	private LassoConstructor(final AutomataLibraryServices services,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> nwars, final StateContainer<LETTER, STATE> goal,
 			final Summary<LETTER, STATE> summary, final StronglyConnectedComponent<StateContainer<LETTER, STATE>> scc,
@@ -117,7 +117,7 @@ class LassoConstructor<LETTER, STATE> {
 		mGoal = goal;
 		mScc = scc;
 		mFindAcceptingSummary = findAcceptingSummary;
-		
+
 		// first, find a run, while doing a backward breadth first search
 		mIteration = 0;
 		final Map<StateContainer<LETTER, STATE>, SuccessorInfo> map = new HashMap<>();
@@ -129,13 +129,13 @@ class LassoConstructor<LETTER, STATE> {
 		} else {
 			addPredecessors(mGoal, map);
 		}
-		
+
 		findRunBackwards();
 		constructRunOfLoop();
 		mStem = (new RunConstructor<>(mServices, mNwars, mGoal)).constructRun();
 		mLasso = new NestedLassoRun<>(mStem, mLoop);
 	}
-	
+
 	/**
 	 * Check iteratively precedessors and add SuccInfos to mSuccInfos.
 	 */
@@ -153,7 +153,7 @@ class LassoConstructor<LETTER, STATE> {
 			}
 		}
 	}
-	
+
 	/**
 	 * Use mSuccInfos to construct a run for a loop that has been found.
 	 * 
@@ -195,11 +195,11 @@ class LassoConstructor<LETTER, STATE> {
 			current = info.getSuccessor();
 		}
 	}
-	
+
 	public NestedLassoRun<LETTER, STATE> getNestedLassoRun() {
 		return mLasso;
 	}
-	
+
 	/**
 	 * Add for all predecessors of sc that have not yet been visited the
 	 * successor information to map.
@@ -221,7 +221,7 @@ class LassoConstructor<LETTER, STATE> {
 			checkAndAddPredecessor(stateContainer, succInfo, inTrans, predSc);
 		}
 	}
-	
+
 	/**
 	 * Add successor information for predSc and inTrans, if predSc is in
 	 * SCC and has not been visited before.
@@ -238,7 +238,7 @@ class LassoConstructor<LETTER, STATE> {
 			}
 		}
 	}
-	
+
 	/**
 	 * Information about successor.
 	 * 
@@ -247,17 +247,17 @@ class LassoConstructor<LETTER, STATE> {
 	private class SuccessorInfo {
 		private final ITransitionlet<LETTER, STATE> mTransition;
 		private final StateContainer<LETTER, STATE> mSuccessor;
-		
+
 		public SuccessorInfo(final ITransitionlet<LETTER, STATE> transition,
 				final StateContainer<LETTER, STATE> successor) {
 			mTransition = transition;
 			mSuccessor = successor;
 		}
-		
+
 		public ITransitionlet<LETTER, STATE> getTransition() {
 			return mTransition;
 		}
-		
+
 		public StateContainer<LETTER, STATE> getSuccessor() {
 			return mSuccessor;
 		}

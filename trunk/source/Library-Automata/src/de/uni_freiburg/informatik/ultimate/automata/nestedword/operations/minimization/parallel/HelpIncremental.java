@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.parallel;
@@ -31,11 +31,9 @@ import java.util.Iterator;
 import java.util.Set;
 
 /**
- * Helper Task for processing information from the Hopcroft algorithm for the
- * Incremental algorithm
+ * Helper Task for processing information from the Hopcroft algorithm for the Incremental algorithm.
  * 
  * @author Layla Franke
- *
  */
 public class HelpIncremental implements Runnable {
 	private final MinimizeDfaIncrementalParallel<?, ?> mIncrementalAlgorithm;
@@ -49,8 +47,8 @@ public class HelpIncremental implements Runnable {
 	 * @param incremental
 	 *            Currently running instance of the incremental algorithm
 	 */
-	public HelpIncremental(final MinimizeDfaIncrementalParallel<?, ?> incremental,
-			final Set<Integer> array1, final Set<Integer> array2) {
+	public HelpIncremental(final MinimizeDfaIncrementalParallel<?, ?> incremental, final Set<Integer> array1,
+			final Set<Integer> array2) {
 		mIncrementalAlgorithm = incremental;
 		mArray1 = array1;
 		mArray2 = array2;

@@ -50,7 +50,7 @@ public final class NwaWriterToStringWithHash<LETTER, STATE> extends NwaWriter<LE
 	 * Print hash modulo this number to get shorter identifiers.
 	 */
 	private static int sHashDivisor = 1;
-	
+
 	/**
 	 * @param writer
 	 *            Print writer.
@@ -63,7 +63,7 @@ public final class NwaWriterToStringWithHash<LETTER, STATE> extends NwaWriter<LE
 			final INestedWordAutomaton<LETTER, STATE> nwa) {
 		super(writer, name, nwa);
 	}
-	
+
 	@Override
 	protected Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet, final char symbol) {
 		final Map<LETTER, String> alphabetMapping = new HashMap<>();
@@ -73,7 +73,7 @@ public final class NwaWriterToStringWithHash<LETTER, STATE> extends NwaWriter<LE
 		}
 		return alphabetMapping;
 	}
-	
+
 	@Override
 	protected Map<STATE, String> getStateMapping(final Collection<STATE> states) {
 		final Map<STATE, String> stateMapping = new HashMap<>();

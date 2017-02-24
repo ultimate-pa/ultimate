@@ -52,14 +52,14 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 public final class GetRandomNwa extends GeneralOperation<String, String, IStateFactory<String>> {
 	private final Random mRandom;
 	private final INestedWordAutomaton<String, String> mResult;
-	
+
 	private final int mAlphabetSize;
 	private final int mSize;
 	private final double mInternalTransitionDensity;
 	private final double mCallTransitionDensity;
 	private final double mReturnTransitionDensity;
 	private final double mAcceptanceDensity;
-	
+
 	/**
 	 * Constructor with {@code int} values.
 	 * <p>
@@ -87,7 +87,7 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 		this(services, alphabetSize, size, internalTransitionDensity / 1_000D, callTransitionProbability / 1_000D,
 				returnTransitionProbability / 1_000D, acceptanceDensity / 1_000D);
 	}
-	
+
 	/**
 	 * Constructor with {@code double} values.
 	 * 
@@ -126,30 +126,32 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "GetRandomNwa";
 	}
-	
+
 	@Override
 	public String startMessage() {
-		return MessageFormat.format("Start {0}. Alphabet size {1} Number of states {2} "
-				+ "Density internal transition {3} Density call transition {4} Density return transition {5} "
-				+ "Acceptance density {6}", operationName(), mAlphabetSize, mSize, mInternalTransitionDensity,
-				mCallTransitionDensity, mReturnTransitionDensity, mAcceptanceDensity);
+		return MessageFormat.format(
+				"Start {0}. Alphabet size {1} Number of states {2} "
+						+ "Density internal transition {3} Density call transition {4} Density return transition {5} "
+						+ "Acceptance density {6}",
+				operationName(), mAlphabetSize, mSize, mInternalTransitionDensity, mCallTransitionDensity,
+				mReturnTransitionDensity, mAcceptanceDensity);
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Result " + mResult.sizeInformation() + '.';
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<String, String> getResult() {
 		return mResult;
 	}
-	
+
 	/**
 	 * Generates the automaton.
 	 * 
@@ -175,16 +177,16 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 		// Check user input and compute num. of transitions & accepting states.
 		//
 		checkUserInput();
-		
+
 		final int maxNumOfTransitions = mSize * mAlphabetSize * mSize;
 		final int numOfTransitions = (int) Math.round(mInternalTransitionDensity * maxNumOfTransitions);
 		if ((numOfTransitions < mSize - 1) && (mLogger.isWarnEnabled())) {
 			mLogger.warn("You specified density " + mInternalTransitionDensity + " for internal transition. "
 					+ "This is not sufficient to connect all states with internal transitions.");
 		}
-		
+
 		final int numOfAccStates = (int) Math.round(mAcceptanceDensity * mSize);
-		
+
 		// --------------------------------------------------------------------
 		// Create state and letter objects and store them in two lists.
 		//
@@ -193,12 +195,12 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 			num2State.add("q" + i);
 		}
 		final String initialState = num2State.get(0); // q₀
-		
+
 		final List<String> num2Letter = new ArrayList<>(mAlphabetSize);
 		for (int i = 0; i < mAlphabetSize; ++i) {
 			num2Letter.add("a" + i);
 		}
-		
+
 		// --------------------------------------------------------------------
 		// Create the result automaton.
 		// If both, callTransitionProbability and returnTransitionProbability
@@ -213,26 +215,26 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 			result = new NestedWordAutomaton<>(mServices, new HashSet<>(num2Letter), new HashSet<>(num2Letter),
 					new HashSet<>(num2Letter), new StringFactory());
 		}
-		
+
 		// --------------------------------------------------------------------
 		// Add the states to the result automaton.
 		//
 		addStates(numOfAccStates, num2State, initialState, result);
-		
+
 		// --------------------------------------------------------------------
 		// add internal transitions
 		addInternalTransitions(maxNumOfTransitions, numOfTransitions, num2State, num2Letter, result);
-		
+
 		// --------------------------------------------------------------------
 		// add call/return transitions
-		
+
 		if (!isFiniteAutomaton) {
 			addCallReturnTransitions(num2State, num2Letter, result);
 		}
-		
+
 		return result;
 	}
-	
+
 	private void checkUserInput() {
 		if (mSize <= 0) {
 			throw new IllegalArgumentException("Automaton size must be strictly positive.");
@@ -247,7 +249,7 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 			throw new IllegalArgumentException("Acceptance density must be between 0 and 1.");
 		}
 	}
-	
+
 	private void addStates(final int numOfAccStates, final List<String> num2State, final String initialState,
 			final NestedWordAutomaton<String, String> result) {
 		final List<String> shuffledStateList = new ArrayList<>(num2State);
@@ -271,7 +273,7 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 			}
 		}
 	}
-	
+
 	@SuppressWarnings("squid:S00103")
 	private void addInternalTransitions(final int maxNumOfTransitions, final int numOfTransitions,
 			final List<String> num2State, final List<String> num2Letter,
@@ -301,23 +303,23 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 		 *     “On the Performance of Automata Minimization Algorithms” (2008),
 		 *     Section 4 (“Random Automata Generation”).
 		 */
-		
+
 		// --------------------------------------------------------------------
 		// Add n−1 transitions s.t. every state becomes reachable from q₀.
 		//
 		final List<Integer> reachedStateNbs = new ArrayList<>(mSize);
 		reachedStateNbs.add(0); // [q₀]
-		
+
 		// Q \{q₀} in random order:
 		final List<Integer> shuffledStateNbList = new ArrayList<>(mSize - 1);
 		for (int stateNb = 1; stateNb < mSize; ++stateNb) {
 			shuffledStateNbList.add(stateNb);
 		}
 		Collections.shuffle(shuffledStateNbList, mRandom);
-		
+
 		// Transition numbers that will not be used again:
 		final Set<Integer> usedTransitionNbs = new HashSet<>(mSize - 1);
-		
+
 		for (int i = 0; i < shuffledStateNbList.size(); ++i) {
 			// random reached state
 			final int predStateNb = reachedStateNbs.get(mRandom.nextInt(reachedStateNbs.size()));
@@ -333,20 +335,19 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 			final String succState = num2State.get(succStateNb);
 			result.addInternalTransition(predState, letter, succState);
 		}
-		
+
 		// --------------------------------------------------------------------
 		// Add further random transitions until the desired density is reached.
 		//
 		// Unused transition numbers in random order:
-		final List<Integer> shuffledTransitionNbList =
-				new ArrayList<>(maxNumOfTransitions - mSize + 1);
+		final List<Integer> shuffledTransitionNbList = new ArrayList<>(maxNumOfTransitions - mSize + 1);
 		for (int transNb = 0; transNb < maxNumOfTransitions; ++transNb) {
 			if (!usedTransitionNbs.contains(transNb)) {
 				shuffledTransitionNbList.add(transNb);
 			}
 		}
 		Collections.shuffle(shuffledTransitionNbList, mRandom);
-		
+
 		final int remainingNumOfTransitions = numOfTransitions - mSize + 1;
 		for (int i = 0; i < remainingNumOfTransitions; ++i) {
 			final int transitionNb = shuffledTransitionNbList.get(i);
@@ -359,7 +360,7 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 			result.addInternalTransition(predState, letter, succState);
 		}
 	}
-	
+
 	@SuppressWarnings("squid:S3047")
 	private void addCallReturnTransitions(final List<String> num2State, final List<String> num2Letter,
 			final NestedWordAutomaton<String, String> result) {
@@ -370,7 +371,7 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 				}
 			}
 		}
-		
+
 		for (final String pred : num2State) {
 			for (final String hier : num2State) {
 				for (final String letter : num2Letter) {
@@ -379,14 +380,14 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 			}
 		}
 	}
-	
+
 	private void tryToAddCallTransition(final NestedWordAutomaton<String, String> result, final String pred,
 			final String letter, final String succ) {
 		if (mRandom.nextFloat() < mCallTransitionDensity) {
 			result.addCallTransition(pred, letter, succ);
 		}
 	}
-	
+
 	private void tryToAddReturnTransition(final List<String> num2State,
 			final NestedWordAutomaton<String, String> result, final String pred, final String hier,
 			final String letter) {

@@ -42,23 +42,23 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi
  */
 public class StateDeterminizerCache<LETTER, STATE> implements IStateDeterminizer<LETTER, STATE> {
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
-	
-	private final Map<DeterminizedState<LETTER, STATE>, Map<LETTER, DeterminizedState<LETTER, STATE>>>
-			mInternalSuccessorCache = new HashMap<>();
 
-	private final Map<DeterminizedState<LETTER, STATE>, Map<LETTER, DeterminizedState<LETTER, STATE>>>
-			mCallSuccessorCache = new HashMap<>();
+	private final Map<DeterminizedState<LETTER, STATE>, Map<LETTER, DeterminizedState<LETTER, STATE>>> mInternalSuccessorCache =
+			new HashMap<>();
 
-	private final Map<DeterminizedState<LETTER, STATE>, Map<DeterminizedState<LETTER, STATE>, Map<LETTER,
-			DeterminizedState<LETTER, STATE>>>> mReturnSuccessorCache = new HashMap<>();
-	
+	private final Map<DeterminizedState<LETTER, STATE>, Map<LETTER, DeterminizedState<LETTER, STATE>>> mCallSuccessorCache =
+			new HashMap<>();
+
+	private final Map<DeterminizedState<LETTER, STATE>, Map<DeterminizedState<LETTER, STATE>, Map<LETTER, DeterminizedState<LETTER, STATE>>>> mReturnSuccessorCache =
+			new HashMap<>();
+
 	private int mInternalSuccs;
 	private int mInternalSuccsCache;
 	private int mCallSuccs;
 	private int mCallSuccsCache;
 	private int mReturnSuccs;
 	private int mReturnSuccsCache;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -68,12 +68,12 @@ public class StateDeterminizerCache<LETTER, STATE> implements IStateDeterminizer
 	public StateDeterminizerCache(final IStateDeterminizer<LETTER, STATE> stateDeterminizer) {
 		mStateDeterminizer = stateDeterminizer;
 	}
-	
+
 	@Override
 	public DeterminizedState<LETTER, STATE> initialState() {
 		return mStateDeterminizer.initialState();
 	}
-	
+
 	@Override
 	public DeterminizedState<LETTER, STATE> internalSuccessor(final DeterminizedState<LETTER, STATE> detState,
 			final LETTER symbol) {
@@ -88,7 +88,7 @@ public class StateDeterminizerCache<LETTER, STATE> implements IStateDeterminizer
 		}
 		return detSucc;
 	}
-	
+
 	@Override
 	public DeterminizedState<LETTER, STATE> callSuccessor(final DeterminizedState<LETTER, STATE> detState,
 			final LETTER symbol) {
@@ -103,7 +103,7 @@ public class StateDeterminizerCache<LETTER, STATE> implements IStateDeterminizer
 		}
 		return detSucc;
 	}
-	
+
 	@Override
 	public DeterminizedState<LETTER, STATE> returnSuccessor(final DeterminizedState<LETTER, STATE> detState,
 			final DeterminizedState<LETTER, STATE> hierPred, final LETTER symbol) {
@@ -118,54 +118,50 @@ public class StateDeterminizerCache<LETTER, STATE> implements IStateDeterminizer
 		}
 		return detSucc;
 	}
-	
+
 	@Override
 	public int getMaxDegreeOfNondeterminism() {
 		return mStateDeterminizer.getMaxDegreeOfNondeterminism();
 	}
-	
+
 	private DeterminizedState<LETTER, STATE> internalSuccessorCache(final DeterminizedState<LETTER, STATE> state,
 			final LETTER symbol) {
-		final Map<LETTER, DeterminizedState<LETTER, STATE>> symbol2succ =
-				mInternalSuccessorCache.get(state);
+		final Map<LETTER, DeterminizedState<LETTER, STATE>> symbol2succ = mInternalSuccessorCache.get(state);
 		if (symbol2succ == null) {
 			return null;
 		}
 		return symbol2succ.get(symbol);
 	}
-	
+
 	private void putInternalSuccessorCache(final DeterminizedState<LETTER, STATE> state, final LETTER symbol,
 			final DeterminizedState<LETTER, STATE> succ) {
-		Map<LETTER, DeterminizedState<LETTER, STATE>> symbol2succ =
-				mInternalSuccessorCache.get(state);
+		Map<LETTER, DeterminizedState<LETTER, STATE>> symbol2succ = mInternalSuccessorCache.get(state);
 		if (symbol2succ == null) {
 			symbol2succ = new HashMap<>();
 			mInternalSuccessorCache.put(state, symbol2succ);
 		}
 		symbol2succ.put(symbol, succ);
 	}
-	
+
 	private DeterminizedState<LETTER, STATE> callSuccessorCache(final DeterminizedState<LETTER, STATE> state,
 			final LETTER symbol) {
-		final Map<LETTER, DeterminizedState<LETTER, STATE>> symbol2succ =
-				mCallSuccessorCache.get(state);
+		final Map<LETTER, DeterminizedState<LETTER, STATE>> symbol2succ = mCallSuccessorCache.get(state);
 		if (symbol2succ == null) {
 			return null;
 		}
 		return symbol2succ.get(symbol);
 	}
-	
+
 	private void putCallSuccessorCache(final DeterminizedState<LETTER, STATE> state, final LETTER symbol,
 			final DeterminizedState<LETTER, STATE> succ) {
-		Map<LETTER, DeterminizedState<LETTER, STATE>> symbol2succ =
-				mCallSuccessorCache.get(state);
+		Map<LETTER, DeterminizedState<LETTER, STATE>> symbol2succ = mCallSuccessorCache.get(state);
 		if (symbol2succ == null) {
 			symbol2succ = new HashMap<>();
 			mCallSuccessorCache.put(state, symbol2succ);
 		}
 		symbol2succ.put(symbol, succ);
 	}
-	
+
 	private DeterminizedState<LETTER, STATE> returnSuccessorCache(final DeterminizedState<LETTER, STATE> state,
 			final DeterminizedState<LETTER, STATE> linPred, final LETTER symbol) {
 		final Map<DeterminizedState<LETTER, STATE>, Map<LETTER, DeterminizedState<LETTER, STATE>>> linPred2symbol2succ =
@@ -179,7 +175,7 @@ public class StateDeterminizerCache<LETTER, STATE> implements IStateDeterminizer
 		}
 		return symbol2succ.get(symbol);
 	}
-	
+
 	private void putReturnSuccessorCache(final DeterminizedState<LETTER, STATE> state,
 			final DeterminizedState<LETTER, STATE> linPred, final LETTER symbol,
 			final DeterminizedState<LETTER, STATE> succ) {
@@ -189,20 +185,19 @@ public class StateDeterminizerCache<LETTER, STATE> implements IStateDeterminizer
 			linPred2symbol2succ = new HashMap<>();
 			mReturnSuccessorCache.put(linPred, linPred2symbol2succ);
 		}
-		Map<LETTER, DeterminizedState<LETTER, STATE>> symbol2succ =
-				linPred2symbol2succ.get(state);
+		Map<LETTER, DeterminizedState<LETTER, STATE>> symbol2succ = linPred2symbol2succ.get(state);
 		if (symbol2succ == null) {
 			symbol2succ = new HashMap<>();
 			linPred2symbol2succ.put(state, symbol2succ);
 		}
 		symbol2succ.put(symbol, succ);
 	}
-	
+
 	@Override
 	public boolean useDoubleDeckers() {
 		return mStateDeterminizer.useDoubleDeckers();
 	}
-	
+
 	@Override
 	public STATE getState(final DeterminizedState<LETTER, STATE> determinizedState) {
 		return mStateDeterminizer.getState(determinizedState);

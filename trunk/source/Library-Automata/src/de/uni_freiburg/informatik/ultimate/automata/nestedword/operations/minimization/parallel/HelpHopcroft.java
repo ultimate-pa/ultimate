@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.parallel;
@@ -31,11 +31,9 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 /**
- * Helper Task for processing information from the Incremental algorithm for the
- * Hopcroft algorithm
+ * Helper Task for processing information from the Incremental algorithm for the Hopcroft algorithm.
  * 
  * @author Layla Franke
- *
  */
 public class HelpHopcroft implements Runnable {
 	private final MinimizeDfaIncrementalParallel<?, ?> mIncrementalAlgorithm;
@@ -52,8 +50,7 @@ public class HelpHopcroft implements Runnable {
 	 *            Instance of currently parallel running Hopcroft algorithm
 	 */
 	public HelpHopcroft(final MinimizeDfaIncrementalParallel<?, ?> incremental,
-			final MinimizeDfaHopcroftParallel<?, ?> hopcroft, final int state1,
-			final int state2) {
+			final MinimizeDfaHopcroftParallel<?, ?> hopcroft, final int state1, final int state2) {
 		mIncrementalAlgorithm = incremental;
 		mHopcroftAlgorithm = hopcroft;
 		mState1 = state1;

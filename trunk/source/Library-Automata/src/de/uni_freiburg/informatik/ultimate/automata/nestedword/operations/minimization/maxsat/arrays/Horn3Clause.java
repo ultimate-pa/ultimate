@@ -30,8 +30,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 
 /**
  * Horn clause with at most three literals.
- *
- * <p>By convention literals <code>x</code> and <code>y</code> are negative, and
+ * <p>
+ * By convention literals <code>x</code> and <code>y</code> are negative, and
  * <code>z</code> is positive. For clauses with less than three literals, the
  * special variables <code>FALSEVAR</code> and <code>TRUEVAR</code> are used
  * which are considered "constant" false or true variables.

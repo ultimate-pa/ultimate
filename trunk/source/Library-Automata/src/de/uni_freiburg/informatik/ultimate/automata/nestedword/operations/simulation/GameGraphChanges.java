@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation;
@@ -40,13 +40,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 /**
  * Class that stores information of changes made to a {@link AGameGraph}.<br/>
  * <br/>
- * 
  * It can remember changed edges, vertices and values of vertices.<br/>
  * A GameGraphChanges object can then be used to undo made changes for a game
  * graph by using {@link AGameGraph#undoChanges(GameGraphChanges)}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
@@ -282,8 +280,8 @@ public class GameGraphChanges<LETTER, STATE> {
 		}
 
 		// Merge changed edges
-		final NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedEdges = changes
-				.getChangedEdges();
+		final NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedEdges =
+				changes.getChangedEdges();
 		for (final Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedEdge : changedEdges
 				.entrySet()) {
 			final Vertex<LETTER, STATE> src = changedEdge.getFirst();
@@ -309,8 +307,8 @@ public class GameGraphChanges<LETTER, STATE> {
 		}
 
 		// Merge changed push-over edges
-		final NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedPushOverEdges = changes
-				.getChangedPushOverEdges();
+		final NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedPushOverEdges =
+				changes.getChangedPushOverEdges();
 		for (final Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedPushOverEdge : changedPushOverEdges
 				.entrySet()) {
 			final Vertex<LETTER, STATE> src = changedPushOverEdge.getFirst();
@@ -353,7 +351,8 @@ public class GameGraphChanges<LETTER, STATE> {
 		}
 
 		// Update the remembered values
-		final HashMap<Vertex<LETTER, STATE>, VertexValueContainer> rememberedValues = changes.getRememberedVertexValues();
+		final HashMap<Vertex<LETTER, STATE>, VertexValueContainer> rememberedValues =
+				changes.getRememberedVertexValues();
 		for (final Entry<Vertex<LETTER, STATE>, VertexValueContainer> valuesEntry : rememberedValues.entrySet()) {
 			final Vertex<LETTER, STATE> vertex = valuesEntry.getKey();
 			final VertexValueContainer values = valuesEntry.getValue();
@@ -491,14 +490,14 @@ public class GameGraphChanges<LETTER, STATE> {
 				.entrySet()) {
 			result.append(lineSeparator + "\t\t(" + vertex.getFirst().getQ0() + ", " + vertex.getFirst().getQ1());
 			if (vertex.getFirst() instanceof DuplicatorVertex) {
-				final DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex = (DuplicatorVertex<LETTER, STATE>) vertex
-						.getFirst();
+				final DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex =
+						(DuplicatorVertex<LETTER, STATE>) vertex.getFirst();
 				result.append(", " + vertexAsDuplicatorVertex.getLetter());
 			}
 			result.append(")\t--> (" + vertex.getSecond().getQ0() + ", " + vertex.getSecond().getQ1());
 			if (vertex.getSecond() instanceof DuplicatorVertex) {
-				final DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex = (DuplicatorVertex<LETTER, STATE>) vertex
-						.getSecond();
+				final DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex =
+						(DuplicatorVertex<LETTER, STATE>) vertex.getSecond();
 				result.append(", " + vertexAsDuplicatorVertex.getLetter());
 			}
 			result.append(")\t" + vertex.getThird());
@@ -512,8 +511,8 @@ public class GameGraphChanges<LETTER, STATE> {
 			result.append(lineSeparator + "\t\t(" + vertexContainer.getKey().getQ0() + ", "
 					+ vertexContainer.getKey().getQ1());
 			if (vertexContainer.getKey() instanceof DuplicatorVertex) {
-				final DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex = (DuplicatorVertex<LETTER, STATE>) vertexContainer
-						.getKey();
+				final DuplicatorVertex<LETTER, STATE> vertexAsDuplicatorVertex =
+						(DuplicatorVertex<LETTER, STATE>) vertexContainer.getKey();
 				result.append(", " + vertexAsDuplicatorVertex.getLetter());
 			}
 			result.append(")\tPM:");

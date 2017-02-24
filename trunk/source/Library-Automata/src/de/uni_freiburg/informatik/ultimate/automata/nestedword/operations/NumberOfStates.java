@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public class NumberOfStates<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -57,22 +57,22 @@ public class NumberOfStates<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 		super(services);
 		mOperand = operand;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "NumberOfStates";
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public Integer getResult() {
 		return mOperand.size();
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;

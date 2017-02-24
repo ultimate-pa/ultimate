@@ -57,20 +57,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
-	
+
 	private final Collection<Condition<S, C>> mConditions;
 	private final Collection<Event<S, C>> mEvents;
-	
+
 	private final ICoRelation<S, C> mCoRelation;
-	
+
 	private final Map<Place<S, C>, Set<Condition<S, C>>> mPlace2cond;
-	
+
 	private final Event<S, C> mDummyRoot;
-	
+
 	private final PetriNetJulian<S, C> mNet;
-	
+
 	private final Order<S, C> mOrder;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -81,8 +81,8 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	 * @param order
 	 *            order
 	 */
-	public BranchingProcess(final AutomataLibraryServices services,
-			final PetriNetJulian<S, C> net, final Order<S, C> order) {
+	public BranchingProcess(final AutomataLibraryServices services, final PetriNetJulian<S, C> net,
+			final Order<S, C> order) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mNet = net;
@@ -94,12 +94,12 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		mConditions = new HashSet<>();
 		mEvents = new HashSet<>();
 		mCoRelation = new ConditionEventsCoRelation<>(this);
-		
+
 		// add a dummy event as root. its successors are the initial conditions.
 		mDummyRoot = new Event<>(net);
 		addEvent(mDummyRoot);
 	}
-	
+
 	/**
 	 * @return Gets the "root" event, which is a dummy (has no transition
 	 *         associated) with all initial conditions as successors.
@@ -107,7 +107,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	public Event<S, C> getDummyRoot() {
 		return mDummyRoot;
 	}
-	
+
 	/**
 	 * Adds an Event to the Branching Process with all outgoing Conditions.
 	 * <p>
@@ -135,7 +135,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		assert checkOneSafety(event) : "Net is not one safe!";
 		return someSuccessorIsAccepting;
 	}
-	
+
 	private boolean checkOneSafety(final Event<S, C> event) {
 		for (final Condition<S, C> condition : event.getSuccessorConditions()) {
 			final Set<Condition<S, C>> existing = mPlace2cond.get(condition.getPlace());
@@ -148,11 +148,11 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		}
 		return true;
 	}
-	
+
 	boolean isAccepting(final Condition<S, C> condition) {
 		return mNet.getAcceptingPlaces().contains(condition.getPlace());
 	}
-	
+
 	/**
 	 * Checks if a new event {@code event}, with regards to {@code order} is a
 	 * cut-off event. In that case, companions are computed as a side-effect.
@@ -176,7 +176,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * @param place
 	 *            place
@@ -185,7 +185,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	public Set<Condition<S, C>> place2cond(final Place<S, C> place) {
 		return mPlace2cond.get(place);
 	}
-	
+
 	/**
 	 * @param c1
 	 *            The first condition.
@@ -196,11 +196,11 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	public boolean isInCoRelation(final Condition<S, C> c1, final Condition<S, C> c2) {
 		return mCoRelation.isInCoRelation(c1, c2);
 	}
-	
+
 	public int getCoRelationQueries() {
 		return mCoRelation.getCoRelationQueries();
 	}
-	
+
 	@SuppressWarnings("unused")
 	private boolean isInCoRelationChecker(final Condition<S, C> c1, final Condition<S, C> c2) {
 		/**
@@ -209,9 +209,8 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		 */
 		return !(isAncestorChecker(c1, c2) || isAncestorChecker(c1, c2) || inConflict(c1, c2));
 	}
-	
-	private boolean isAncestorChecker(final Condition<S, C> leaf,
-			final Condition<S, C> ancestor) {
+
+	private boolean isAncestorChecker(final Condition<S, C> leaf, final Condition<S, C> ancestor) {
 		if (leaf == ancestor) {
 			return true;
 		}
@@ -226,7 +225,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		}
 		return false;
 	}
-	
+
 	/*
 	private boolean inConflict(Condition<S, C> c1, Condition<S, C> c2) {
 		Set<Condition<S, C>> pred =
@@ -239,26 +238,26 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		return false;
 	}
 	*/
-	
+
 	boolean isCoset(final Collection<Condition<S, C>> coSet, final Condition<S, C> condition) {
 		return mCoRelation.isCoset(coSet, condition);
 	}
-	
+
 	public Collection<Condition<S, C>> getConditions() {
 		return mConditions;
 	}
-	
+
 	public Collection<Event<S, C>> getEvents() {
 		return mEvents;
 	}
-	
+
 	/**
 	 * @return The initial conditions.
 	 */
 	public Collection<Condition<S, C>> initialConditions() {
 		return mDummyRoot.getSuccessorConditions();
 	}
-	
+
 	/**
 	 * returns all minimal events of the branching process with respect to the
 	 * causal order.
@@ -278,7 +277,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		}
 		return min;
 	}
-	
+
 	/**
 	 * gets the net associated with the branching process.
 	 * 
@@ -287,7 +286,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	public PetriNetJulian<S, C> getNet() {
 		return mNet;
 	}
-	
+
 	/**
 	 * Check if the Conditions c1 and c2 are in causal relation. Conditions c1
 	 * and c2 are in causal relation if
@@ -313,7 +312,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		final Set<Object> c2Ancestors = ancestorNodes(c2);
 		return c2Ancestors.contains(c1);
 	}
-	
+
 	/**
 	 * Check if Condition and Event are in causal relation. This is the case if
 	 * <ul>
@@ -335,7 +334,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		final Set<Object> eAncestors = ancestorNodes(event);
 		return eAncestors.contains(condition);
 	}
-	
+
 	/**
 	 * Check if the Conditions c1 and c2 are in conflict. In a branching process
 	 * Conditions c1 and c2 are in conflict iff c1 != c2 and there exist two
@@ -355,7 +354,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		final Set<Object> c2Ancestors = ancestorNodes(c2);
 		return conflictPathCheck(c1, c2, c2Ancestors);
 	}
-	
+
 	/**
 	 * @return if c1 != c2 and c2 is no ancestor of c1 the result is true iff
 	 *         there is a path from a condition in c2Ancestors to c1 that does
@@ -382,7 +381,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * @return Set containing all Conditions and Events which are (strict)
 	 *         ancestors of a Condition. The dummyRoot is not considered as an
@@ -393,7 +392,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		addAllAncestors(condition, ancestorConditionAndEvents);
 		return ancestorConditionAndEvents;
 	}
-	
+
 	/**
 	 * @return Set containing all Conditions and Events which are ancestors of an
 	 *         Event. The dummyRoot is not considered as an ancestor.
@@ -403,7 +402,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		addAllAncestors(event, ancestorConditionAndEvents);
 		return ancestorConditionAndEvents;
 	}
-	
+
 	/**
 	 * Add to a set that contains only Conditions and Events the Condition and
 	 * all (strict) ancestors. The dummyRoot is not considered as an
@@ -414,7 +413,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		setOfConditionsAndEvents.add(pred);
 		addAllAncestors(pred, setOfConditionsAndEvents);
 	}
-	
+
 	/**
 	 * Add to a set that contains only Conditions and Events the Event and all
 	 * (strict) ancestors. The dummyRoot is not considered as an ancestor.
@@ -428,7 +427,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 			addAllAncestors(pred, setOfConditionsAndEvents);
 		}
 	}
-	
+
 	/**
 	 * @param conditions
 	 *            The conditions.
@@ -448,31 +447,31 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 		}
 		return result;
 	}
-	
+
 	@Override
 	public String sizeInformation() {
 		return "has " + mConditions.size() + "conditions, " + mEvents.size() + " events.";
 	}
-	
+
 	public Order<S, C> getOrder() {
 		return mOrder;
 	}
-	
+
 	@Override
 	public int size() {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	public Set<S> getAlphabet() {
 		return mNet.getAlphabet();
 	}
-	
+
 	@Override
 	public IStateFactory<C> getStateFactory() {
 		throw new UnsupportedOperationException();
 	}
-	
+
 	@Override
 	public IElement transformToUltimateModel(final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException {

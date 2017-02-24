@@ -57,13 +57,437 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * using {@link #getResult()}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- * 
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
  *            State class of buechi automaton
  */
 public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
+
+	/**
+	 * The inputed buechi automaton.
+	 */
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
+
+	/**
+	 * The resulting possible reduced buechi automaton.
+	 */
+	private final INestedWordAutomaton<LETTER, STATE> mResult;
+	/**
+	 * Simulation used for operation.
+	 */
+	private final FairSimulation<LETTER, STATE> mSimulation;
+	/**
+	 * Performance statistics of this operation.
+	 */
+	private final AutomataOperationStatistics mStatistics;
+	/**
+	 * If the simulation calculation should be optimized using SCC, Strongly
+	 * Connected Components.
+	 */
+	private final boolean mUseSCCs;
+
+	/**
+	 * Creates a new buechi reduce object that starts reducing the given buechi
+	 * automaton.<br/>
+	 * Once finished the result can be get by using {@link #getResult()}.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            The state factory used for creating states
+	 * @param operand
+	 *            The buechi automaton to reduce
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand, false, Collections.emptyList(), false);
+	}
+
+	/**
+	 * Creates a new buechi reduce object that starts reducing the given buechi
+	 * automaton.<br/>
+	 * Once finished the result can be get by using {@link #getResult()}.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            The state factory used for creating states
+	 * @param operand
+	 *            The buechi automaton to reduce
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final boolean useSCCs) throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand, useSCCs, Collections.emptyList(), false);
+	}
+
+	/**
+	 * Creates a new buechi reduce object that starts reducing the given buechi
+	 * automaton.<br/>
+	 * Once finished the result can be get by using {@link #getResult()}.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            The state factory used for creating states
+	 * @param operand
+	 *            The buechi automaton to reduce
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @param possibleEquivalentClasses
+	 *            A collection of sets which contains states of the buechi
+	 *            automaton that may be merge-able. States which are not in the
+	 *            same set are definitely not merge-able which is used as an
+	 *            optimization for the simulation
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses)
+			throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand, useSCCs, possibleEquivalentClasses, false);
+	}
+
+	/**
+	 * Creates a new buechi reduce object that starts reducing the given buechi
+	 * automaton.<br/>
+	 * Once finished the result can be get by using {@link #getResult()}.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            The state factory used for creating states
+	 * @param operand
+	 *            The buechi automaton to reduce
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @param possibleEquivalentClasses
+	 *            A collection of sets which contains states of the buechi
+	 *            automaton that may be merge-able. States which are not in the
+	 *            same set are definitely not merge-able which is used as an
+	 *            optimization for the simulation
+	 * @param checkOperationDeeply
+	 *            If true the operation gets deeply checked for correctness,
+	 *            false if that is not desired. This can take some time.
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses,
+			final boolean checkOperationDeeply) throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand, useSCCs, checkOperationDeeply,
+				new FairSimulation<>(services.getProgressAwareTimer(),
+						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
+						possibleEquivalentClasses,
+						new FairGameGraph<>(services, stateFactory, services.getProgressAwareTimer(),
+								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand)));
+	}
+
+	/**
+	 * Creates a new buechi reduce object that starts reducing the given buechi
+	 * automaton using a given fair simulation.<br/>
+	 * Once finished the result can be get by using {@link #getResult()}.
+	 * 
+	 * @param services
+	 *            Service provider of Ultimate framework
+	 * @param stateFactory
+	 *            The state factory used for creating states
+	 * @param operand
+	 *            The buechi automaton to reduce
+	 * @param useSCCs
+	 *            If the simulation calculation should be optimized using SCC,
+	 *            Strongly Connected Components.
+	 * @param checkOperationDeeply
+	 *            If true the operation gets deeply checked for correctness,
+	 *            false if that is not desired. This can take some time.
+	 * @param simulation
+	 *            The simulation used by the operation
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	protected ReduceBuchiFairSimulation(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final boolean useSCCs, final boolean checkOperationDeeply, final FairSimulation<LETTER, STATE> simulation)
+			throws AutomataOperationCanceledException {
+		super(services, stateFactory);
+		mOperand = operand;
+		mUseSCCs = useSCCs;
+		mLogger.info(startMessage());
+		mLogger.debug("Starting generation of Fair Game Graph...");
+		simulation.getGameGraph().generateGameGraphFromAutomaton();
+		mSimulation = simulation;
+		simulation.doSimulation();
+		mResult = mSimulation.getResult();
+		super.directResultConstruction(mResult);
+		mStatistics = simulation.getSimulationPerformance().exportToAutomataOperationStatistics();
+
+		// Debugging flag
+		if (checkOperationDeeply) {
+			mLogger.info("Start testing correctness of operation deeply...");
+			final boolean operationIsNotCorrect = checkOperationDeep(this, false, true);
+			if (operationIsNotCorrect) {
+				mLogger.info("End testing correctness of operation deeply, it is not correct.");
+				// throw new AssertionError("The operation " + operationName() +
+				// " returned a false result.");
+			} else {
+				mLogger.info("End testing correctness of operation deeply, it is correct.");
+			}
+		}
+
+		mLogger.info(exitMessage());
+	}
+
+	@Override
+	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
+			throws AutomataLibraryException {
+		return checkBuchiEquivalence(stateFactory);
+	}
+
+	@Override
+	public AutomataOperationStatistics getAutomataOperationStatistics() {
+		return mStatistics;
+	}
+
+	@Override
+	public INestedWordAutomaton<LETTER, STATE> getResult() {
+		return mResult;
+	}
+
+	@Override
+	public String operationName() {
+		return "reduceBuchiFairSimulation";
+	}
+
+	/**
+	 * Gets the logger used by the Ultimate framework.
+	 * 
+	 * @return The logger used by the Ultimate framework.
+	 */
+	protected ILogger getLogger() {
+		return mLogger;
+	}
+
+	/**
+	 * Gets the inputed automaton.
+	 * 
+	 * @return The inputed automaton.
+	 */
+	@Override
+	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
+		return mOperand;
+	}
+
+	/**
+	 * Gets the service provider of the Ultimate framework.
+	 * 
+	 * @return The service provider of the Ultimate framework.
+	 */
+	protected AutomataLibraryServices getServices() {
+		return mServices;
+	}
+
+	/**
+	 * Checks the operation deeply by using a given instance and comparing
+	 * results of all stages to an instance with no SCC optimization if used SCC
+	 * optimization and vice versa. Also checks the language equivalence of the
+	 * results from both instances.
+	 * 
+	 * @param operation
+	 *            Operation instance for reference
+	 * @param logNoErrorDebug
+	 *            If true some debugging information gets logged
+	 * @param useLogger
+	 *            True if internal logger should be used, false if
+	 *            {@link System#out} should be used.
+	 * @param <LETTER>
+	 *            Letter class of the operation
+	 * @param <STATE>
+	 *            State class of the operation
+	 * @return True if operation is correct, false if not.
+	 * @throws AutomataOperationCanceledException
+	 *             If the operation was canceled, for example from the Ultimate
+	 *             framework.
+	 */
+	private static <LETTER, STATE> boolean checkOperationDeep(final ReduceBuchiFairSimulation<LETTER, STATE> operation,
+			final boolean logNoErrorDebug, final boolean useLogger) throws AutomataOperationCanceledException {
+		ReduceBuchiFairSimulation<LETTER, STATE> operationSCC;
+		FairSimulation<LETTER, STATE> simulationSCC;
+		ReduceBuchiFairSimulation<LETTER, STATE> operationNoSCC;
+		FairSimulation<LETTER, STATE> simulationNoSCC;
+		ILogger logger = null;
+		if (useLogger) {
+			logger = operation.mLogger;
+		}
+
+		// Create instance of other version
+		if (operation.mUseSCCs) {
+			operationSCC = operation;
+			simulationSCC = operationSCC.mSimulation;
+
+			if (logNoErrorDebug) {
+				logMessage("Start Cross-Simulation without SCC...", logger);
+			}
+
+			operationNoSCC = new ReduceBuchiFairSimulation<>(operation.mServices, operation.mStateFactory,
+					operation.mOperand, false);
+			simulationNoSCC = operationNoSCC.mSimulation;
+			if (logNoErrorDebug) {
+				logMessage("", logger);
+			}
+		} else {
+			if (logNoErrorDebug) {
+				logMessage("Start Cross-Simulation with SCC...", logger);
+			}
+			operationSCC = new ReduceBuchiFairSimulation<>(operation.mServices, operation.mStateFactory,
+					operation.mOperand, true);
+			simulationSCC = operationSCC.mSimulation;
+			if (logNoErrorDebug) {
+				logMessage("", logger);
+			}
+
+			operationNoSCC = operation;
+			simulationNoSCC = operationNoSCC.mSimulation;
+		}
+
+		// Start comparing results
+		if (logNoErrorDebug) {
+			logMessage("Start comparing results...", logger);
+		}
+		boolean errorOccurred = false;
+		final FairGameGraph<LETTER, STATE> simNoSCCGraph =
+				(FairGameGraph<LETTER, STATE>) simulationNoSCC.getGameGraph();
+		final Set<Vertex<LETTER, STATE>> simSCCVertices = simulationSCC.getGameGraph().getVertices();
+		final Set<Vertex<LETTER, STATE>> simNoSCCVertices = simulationNoSCC.getGameGraph().getVertices();
+		final int globalInfinity = simNoSCCGraph.getGlobalInfinity();
+
+		// Compare size
+		if (simSCCVertices.size() != simSCCVertices.size()) {
+			logMessage("SimSCC and SimNoSCC have different size: " + simSCCVertices.size() + " & "
+					+ simNoSCCVertices.size(), logger);
+			errorOccurred = true;
+		}
+		// Compare infinity
+		if (globalInfinity != simulationSCC.getGameGraph().getGlobalInfinity()) {
+			logMessage("SimSCC and SimNoSCC have different infinities: "
+					+ simulationSCC.getGameGraph().getGlobalInfinity() + " & " + globalInfinity, logger);
+			errorOccurred = true;
+		}
+		// Compare progress measure of vertices
+		for (final Vertex<LETTER, STATE> simSCCVertex : simSCCVertices) {
+			if (simSCCVertex.isSpoilerVertex()) {
+				final SpoilerVertex<LETTER, STATE> asSV = (SpoilerVertex<LETTER, STATE>) simSCCVertex;
+				final SpoilerVertex<LETTER, STATE> simNoSCCVertex =
+						simNoSCCGraph.getSpoilerVertex(asSV.getQ0(), asSV.getQ1(), false);
+				if (simNoSCCVertex == null) {
+					logMessage("SCCVertex unknown for nonSCC version: " + asSV, logger);
+					errorOccurred = true;
+				} else {
+					final int sccPM = asSV.getPM(null, globalInfinity);
+					final int nonSCCPM = simNoSCCVertex.getPM(null, globalInfinity);
+					if (sccPM < globalInfinity && nonSCCPM >= globalInfinity) {
+						logMessage(
+								"SCCVertex is not infinity but nonSCC is (" + asSV + "): " + sccPM + " & " + nonSCCPM,
+								logger);
+						errorOccurred = true;
+					} else if (sccPM >= globalInfinity && nonSCCPM < globalInfinity) {
+						logMessage(
+								"SCCVertex is infinity but nonSCC is not (" + asSV + "): " + sccPM + " & " + nonSCCPM,
+								logger);
+						errorOccurred = true;
+					}
+				}
+			} else {
+				final DuplicatorVertex<LETTER, STATE> asDV = (DuplicatorVertex<LETTER, STATE>) simSCCVertex;
+				final DuplicatorVertex<LETTER, STATE> simNoSCCVertex =
+						simNoSCCGraph.getDuplicatorVertex(asDV.getQ0(), asDV.getQ1(), asDV.getLetter(), false);
+				if (simNoSCCVertex == null) {
+					logMessage("SCCVertex unknown for nonSCC version: " + asDV, logger);
+					errorOccurred = true;
+				} else {
+					final int sccPM = asDV.getPM(null, globalInfinity);
+					final int nonSCCPM = simNoSCCVertex.getPM(null, globalInfinity);
+					if (sccPM < globalInfinity && nonSCCPM >= globalInfinity) {
+						logMessage(
+								"SCCVertex is not infinity but nonSCC is (" + asDV + "): " + sccPM + " & " + nonSCCPM,
+								logger);
+						errorOccurred = true;
+					} else if (sccPM >= globalInfinity && nonSCCPM < globalInfinity) {
+						logMessage(
+								"SCCVertex is infinity but nonSCC is not (" + asDV + "): " + sccPM + " & " + nonSCCPM,
+								logger);
+						errorOccurred = true;
+					}
+				}
+			}
+		}
+
+		// Check operation correctness
+		try {
+			// TODO Christian 2017-02-16 Casts are temporary workarounds until state factory is made a parameter
+			if (!operationSCC.checkResultHelper((IMinimizationCheckResultStateFactory<STATE>) operation.mStateFactory)
+					.getFirst()) {
+				logMessage("OperationSCC is not correct.", logger);
+				errorOccurred = true;
+			}
+			if (!operationNoSCC.checkResultHelper((IMinimizationCheckResultStateFactory<STATE>) operation.mStateFactory)
+					.getFirst()) {
+				logMessage("OperationNoSCC is not correct.", logger);
+				errorOccurred = true;
+			}
+		} catch (final AutomataLibraryException e) {
+			e.printStackTrace();
+		}
+
+		if (errorOccurred) {
+			logMessage("End comparing results, a problem occurred. Logging buechi...", logger);
+			logMessage(operation.mOperand.toString(), logger);
+		} else {
+			if (logNoErrorDebug) {
+				logMessage("End comparing results, no problem occurred.", logger);
+			}
+		}
+
+		return errorOccurred;
+	}
+
+	/**
+	 * Logs a given message to the debugging channel of a given logger or to
+	 * {@link System#out} if logger is <tt>null</tt>.
+	 * 
+	 * @param message
+	 *            Message to log
+	 * @param logger
+	 *            ILogger to log to or <tt>null</tt> if logging to
+	 *            {@link System#out} is desired
+	 */
+	private static void logMessage(final String message, final ILogger logger) {
+		if (logger != null) {
+			if (logger.isDebugEnabled()) {
+				logger.debug(message);
+			}
+		} else {
+			System.out.println(message);
+		}
+	}
+
 	/**
 	 * Demo usage of fair simulation in general. Also used for debugging
 	 * purpose.
@@ -211,8 +635,8 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 			}
 
 			// Check correctness
-			final ReduceBuchiFairSimulation<String, String> operation = new ReduceBuchiFairSimulation<>(
-					new AutomataLibraryServices(services), snf, buechi);
+			final ReduceBuchiFairSimulation<String, String> operation =
+					new ReduceBuchiFairSimulation<>(new AutomataLibraryServices(services), snf, buechi);
 			boolean errorOccurred = false;
 			/*
 			 * TODO Christian 2017-01-28: There is a NullPointerException because the services object has no "progress
@@ -230,428 +654,5 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 		}
 
 		System.out.println("Program terminated.");
-	}
-
-	/**
-	 * Checks the operation deeply by using a given instance and comparing
-	 * results of all stages to an instance with no SCC optimization if used SCC
-	 * optimization and vice versa. Also checks the language equivalence of the
-	 * results from both instances.
-	 * 
-	 * @param operation
-	 *            Operation instance for reference
-	 * @param logNoErrorDebug
-	 *            If true some debugging information gets logged
-	 * @param useLogger
-	 *            True if internal logger should be used, false if
-	 *            {@link System#out} should be used.
-	 * @param <LETTER>
-	 *            Letter class of the operation
-	 * @param <STATE>
-	 *            State class of the operation
-	 * @return True if operation is correct, false if not.
-	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
-	 */
-	private static <LETTER, STATE> boolean checkOperationDeep(final ReduceBuchiFairSimulation<LETTER, STATE> operation,
-			final boolean logNoErrorDebug, final boolean useLogger) throws AutomataOperationCanceledException {
-		ReduceBuchiFairSimulation<LETTER, STATE> operationSCC;
-		FairSimulation<LETTER, STATE> simulationSCC;
-		ReduceBuchiFairSimulation<LETTER, STATE> operationNoSCC;
-		FairSimulation<LETTER, STATE> simulationNoSCC;
-		ILogger logger = null;
-		if (useLogger) {
-			logger = operation.mLogger;
-		}
-
-		// Create instance of other version
-		if (operation.mUseSCCs) {
-			operationSCC = operation;
-			simulationSCC = operationSCC.mSimulation;
-
-			if (logNoErrorDebug) {
-				logMessage("Start Cross-Simulation without SCC...", logger);
-			}
-
-			operationNoSCC = new ReduceBuchiFairSimulation<>(operation.mServices, operation.mStateFactory,
-					operation.mOperand, false);
-			simulationNoSCC = operationNoSCC.mSimulation;
-			if (logNoErrorDebug) {
-				logMessage("", logger);
-			}
-		} else {
-			if (logNoErrorDebug) {
-				logMessage("Start Cross-Simulation with SCC...", logger);
-			}
-			operationSCC = new ReduceBuchiFairSimulation<>(operation.mServices, operation.mStateFactory,
-					operation.mOperand, true);
-			simulationSCC = operationSCC.mSimulation;
-			if (logNoErrorDebug) {
-				logMessage("", logger);
-			}
-
-			operationNoSCC = operation;
-			simulationNoSCC = operationNoSCC.mSimulation;
-		}
-
-		// Start comparing results
-		if (logNoErrorDebug) {
-			logMessage("Start comparing results...", logger);
-		}
-		boolean errorOccurred = false;
-		final FairGameGraph<LETTER, STATE> simNoSCCGraph = (FairGameGraph<LETTER, STATE>) simulationNoSCC
-				.getGameGraph();
-		final Set<Vertex<LETTER, STATE>> simSCCVertices = simulationSCC.getGameGraph().getVertices();
-		final Set<Vertex<LETTER, STATE>> simNoSCCVertices = simulationNoSCC.getGameGraph().getVertices();
-		final int globalInfinity = simNoSCCGraph.getGlobalInfinity();
-
-		// Compare size
-		if (simSCCVertices.size() != simSCCVertices.size()) {
-			logMessage("SimSCC and SimNoSCC have different size: " + simSCCVertices.size() + " & "
-					+ simNoSCCVertices.size(), logger);
-			errorOccurred = true;
-		}
-		// Compare infinity
-		if (globalInfinity != simulationSCC.getGameGraph().getGlobalInfinity()) {
-			logMessage("SimSCC and SimNoSCC have different infinities: "
-					+ simulationSCC.getGameGraph().getGlobalInfinity() + " & " + globalInfinity, logger);
-			errorOccurred = true;
-		}
-		// Compare progress measure of vertices
-		for (final Vertex<LETTER, STATE> simSCCVertex : simSCCVertices) {
-			if (simSCCVertex.isSpoilerVertex()) {
-				final SpoilerVertex<LETTER, STATE> asSV = (SpoilerVertex<LETTER, STATE>) simSCCVertex;
-				final SpoilerVertex<LETTER, STATE> simNoSCCVertex = simNoSCCGraph.getSpoilerVertex(asSV.getQ0(),
-						asSV.getQ1(), false);
-				if (simNoSCCVertex == null) {
-					logMessage("SCCVertex unknown for nonSCC version: " + asSV, logger);
-					errorOccurred = true;
-				} else {
-					final int sccPM = asSV.getPM(null, globalInfinity);
-					final int nonSCCPM = simNoSCCVertex.getPM(null, globalInfinity);
-					if (sccPM < globalInfinity && nonSCCPM >= globalInfinity) {
-						logMessage(
-								"SCCVertex is not infinity but nonSCC is (" + asSV + "): " + sccPM + " & " + nonSCCPM,
-								logger);
-						errorOccurred = true;
-					} else if (sccPM >= globalInfinity && nonSCCPM < globalInfinity) {
-						logMessage(
-								"SCCVertex is infinity but nonSCC is not (" + asSV + "): " + sccPM + " & " + nonSCCPM,
-								logger);
-						errorOccurred = true;
-					}
-				}
-			} else {
-				final DuplicatorVertex<LETTER, STATE> asDV = (DuplicatorVertex<LETTER, STATE>) simSCCVertex;
-				final DuplicatorVertex<LETTER, STATE> simNoSCCVertex = simNoSCCGraph.getDuplicatorVertex(asDV.getQ0(),
-						asDV.getQ1(), asDV.getLetter(), false);
-				if (simNoSCCVertex == null) {
-					logMessage("SCCVertex unknown for nonSCC version: " + asDV, logger);
-					errorOccurred = true;
-				} else {
-					final int sccPM = asDV.getPM(null, globalInfinity);
-					final int nonSCCPM = simNoSCCVertex.getPM(null, globalInfinity);
-					if (sccPM < globalInfinity && nonSCCPM >= globalInfinity) {
-						logMessage(
-								"SCCVertex is not infinity but nonSCC is (" + asDV + "): " + sccPM + " & " + nonSCCPM,
-								logger);
-						errorOccurred = true;
-					} else if (sccPM >= globalInfinity && nonSCCPM < globalInfinity) {
-						logMessage(
-								"SCCVertex is infinity but nonSCC is not (" + asDV + "): " + sccPM + " & " + nonSCCPM,
-								logger);
-						errorOccurred = true;
-					}
-				}
-			}
-		}
-
-		// Check operation correctness
-		try {
-			// TODO Christian 2017-02-16 Casts are temporary workarounds until state factory is made a parameter
-			if (!operationSCC.checkResultHelper((IMinimizationCheckResultStateFactory<STATE>) operation.mStateFactory).getFirst()) {
-				logMessage("OperationSCC is not correct.", logger);
-				errorOccurred = true;
-			}
-			if (!operationNoSCC.checkResultHelper((IMinimizationCheckResultStateFactory<STATE>) operation.mStateFactory).getFirst()) {
-				logMessage("OperationNoSCC is not correct.", logger);
-				errorOccurred = true;
-			}
-		} catch (final AutomataLibraryException e) {
-			e.printStackTrace();
-		}
-
-		if (errorOccurred) {
-			logMessage("End comparing results, a problem occurred. Logging buechi...", logger);
-			logMessage(operation.mOperand.toString(), logger);
-		} else {
-			if (logNoErrorDebug) {
-				logMessage("End comparing results, no problem occurred.", logger);
-			}
-		}
-
-		return errorOccurred;
-	}
-
-	/**
-	 * Logs a given message to the debugging channel of a given logger or to
-	 * {@link System#out} if logger is <tt>null</tt>.
-	 * 
-	 * @param message
-	 *            Message to log
-	 * @param logger
-	 *            ILogger to log to or <tt>null</tt> if logging to
-	 *            {@link System#out} is desired
-	 */
-	private static void logMessage(final String message, final ILogger logger) {
-		if (logger != null) {
-			if (logger.isDebugEnabled()) {
-				logger.debug(message);
-			}
-		} else {
-			System.out.println(message);
-		}
-	}
-
-	/**
-	 * The inputed buechi automaton.
-	 */
-	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-
-	/**
-	 * The resulting possible reduced buechi automaton.
-	 */
-	private final INestedWordAutomaton<LETTER, STATE> mResult;
-	/**
-	 * Simulation used for operation.
-	 */
-	private final FairSimulation<LETTER, STATE> mSimulation;
-	/**
-	 * Performance statistics of this operation.
-	 */
-	private final AutomataOperationStatistics mStatistics;
-	/**
-	 * If the simulation calculation should be optimized using SCC, Strongly
-	 * Connected Components.
-	 */
-	private final boolean mUseSCCs;
-
-	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton.<br/>
-	 * Once finished the result can be get by using {@link #getResult()}.
-	 * 
-	 * @param services
-	 *            Service provider of Ultimate framework
-	 * @param stateFactory
-	 *            The state factory used for creating states
-	 * @param operand
-	 *            The buechi automaton to reduce
-	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
-	 */
-	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
-			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
-					throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, false, Collections.emptyList(), false);
-	}
-
-	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton.<br/>
-	 * Once finished the result can be get by using {@link #getResult()}.
-	 * 
-	 * @param services
-	 *            Service provider of Ultimate framework
-	 * @param stateFactory
-	 *            The state factory used for creating states
-	 * @param operand
-	 *            The buechi automaton to reduce
-	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
-	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
-	 */
-	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
-			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
-			final boolean useSCCs) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, useSCCs, Collections.emptyList(), false);
-	}
-
-	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton.<br/>
-	 * Once finished the result can be get by using {@link #getResult()}.
-	 * 
-	 * @param services
-	 *            Service provider of Ultimate framework
-	 * @param stateFactory
-	 *            The state factory used for creating states
-	 * @param operand
-	 *            The buechi automaton to reduce
-	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
-	 * @param possibleEquivalentClasses
-	 *            A collection of sets which contains states of the buechi
-	 *            automaton that may be merge-able. States which are not in the
-	 *            same set are definitely not merge-able which is used as an
-	 *            optimization for the simulation
-	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
-	 */
-	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
-			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
-			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses)
-					throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, useSCCs, possibleEquivalentClasses, false);
-	}
-
-	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton.<br/>
-	 * Once finished the result can be get by using {@link #getResult()}.
-	 * 
-	 * @param services
-	 *            Service provider of Ultimate framework
-	 * @param stateFactory
-	 *            The state factory used for creating states
-	 * @param operand
-	 *            The buechi automaton to reduce
-	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
-	 * @param possibleEquivalentClasses
-	 *            A collection of sets which contains states of the buechi
-	 *            automaton that may be merge-able. States which are not in the
-	 *            same set are definitely not merge-able which is used as an
-	 *            optimization for the simulation
-	 * @param checkOperationDeeply
-	 *            If true the operation gets deeply checked for correctness,
-	 *            false if that is not desired. This can take some time.
-	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
-	 */
-	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
-			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
-			final boolean useSCCs, final Collection<Set<STATE>> possibleEquivalentClasses,
-			final boolean checkOperationDeeply) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, useSCCs, checkOperationDeeply,
-				new FairSimulation<>(services.getProgressAwareTimer(),
-						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), useSCCs, stateFactory,
-						possibleEquivalentClasses,
-						new FairGameGraph<>(services, stateFactory,
-								services.getProgressAwareTimer(), services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
-								operand)));
-	}
-
-	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton using a given fair simulation.<br/>
-	 * Once finished the result can be get by using {@link #getResult()}.
-	 * 
-	 * @param services
-	 *            Service provider of Ultimate framework
-	 * @param stateFactory
-	 *            The state factory used for creating states
-	 * @param operand
-	 *            The buechi automaton to reduce
-	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
-	 * @param checkOperationDeeply
-	 *            If true the operation gets deeply checked for correctness,
-	 *            false if that is not desired. This can take some time.
-	 * @param simulation
-	 *            The simulation used by the operation
-	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
-	 */
-	protected ReduceBuchiFairSimulation(final AutomataLibraryServices services,
-			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
-			final boolean useSCCs, final boolean checkOperationDeeply, final FairSimulation<LETTER, STATE> simulation)
-					throws AutomataOperationCanceledException {
-		super(services, stateFactory);
-		mOperand = operand;
-		mUseSCCs = useSCCs;
-		mLogger.info(startMessage());
-		mLogger.debug("Starting generation of Fair Game Graph...");
-		simulation.getGameGraph().generateGameGraphFromAutomaton();
-		mSimulation = simulation;
-		simulation.doSimulation();
-		mResult = mSimulation.getResult();
-		super.directResultConstruction(mResult);
-		mStatistics = simulation.getSimulationPerformance().exportToAutomataOperationStatistics();
-
-		// Debugging flag
-		if (checkOperationDeeply) {
-			mLogger.info("Start testing correctness of operation deeply...");
-			final boolean operationIsNotCorrect = checkOperationDeep(this, false, true);
-			if (operationIsNotCorrect) {
-				mLogger.info("End testing correctness of operation deeply, it is not correct.");
-				// throw new AssertionError("The operation " + operationName() +
-				// " returned a false result.");
-			} else {
-				mLogger.info("End testing correctness of operation deeply, it is correct.");
-			}
-		}
-
-		mLogger.info(exitMessage());
-	}
-	
-	@Override
-	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
-		return checkBuchiEquivalence(stateFactory);
-	}
-
-	@Override
-	public AutomataOperationStatistics getAutomataOperationStatistics() {
-		return mStatistics;
-	}
-
-	@Override
-	public INestedWordAutomaton<LETTER, STATE> getResult() {
-		return mResult;
-	}
-
-	@Override
-	public String operationName() {
-		return "reduceBuchiFairSimulation";
-	}
-
-	/**
-	 * Gets the logger used by the Ultimate framework.
-	 * 
-	 * @return The logger used by the Ultimate framework.
-	 */
-	protected ILogger getLogger() {
-		return mLogger;
-	}
-
-	/**
-	 * Gets the inputed automaton.
-	 * 
-	 * @return The inputed automaton.
-	 */
-	@Override
-	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
-		return mOperand;
-	}
-
-	/**
-	 * Gets the service provider of the Ultimate framework.
-	 * 
-	 * @return The service provider of the Ultimate framework.
-	 */
-	protected AutomataLibraryServices getServices() {
-		return mServices;
 	}
 }

@@ -61,16 +61,20 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderTransformer;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * Minimization test suite.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ */
 public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 	//@formatter:off
 
-	private static final String mToolchain = "examples/toolchains/AutomataScriptInterpreter.xml";
-	private static final File mToolchainFile = new File(TestUtil.getPathFromTrunk(mToolchain));
-	private static int mTimeout = 60 * 1000;
+	private static final String TOOLCHAIN = "examples/toolchains/AutomataScriptInterpreter.xml";
+	private static final File TOOLCHAIN_FILE = new File(TestUtil.getPathFromTrunk(TOOLCHAIN));
+	private static int sTimeout = 60 * 1_000;
 	private static final String[] mDirectories = {
-//			"examples/Automata/finiteAutomata/minimizeDfa",
-//			"examples/Automata/BuchiNwa/reduceBuchiNwa",
-//			"examples/Automata/nwaOperations/MinimizationBenchmarks",
+//			"examples/Automata/regression/nwa/operations/minimization",
 
 			"examples/Automata/nwaOperations/MinimizationBenchmarks/workspace",
 //			"examples/Automata/nwaOperations/MinimizationBenchmarks/quickeval",
@@ -78,56 +82,62 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 	
 	private static final String[] mFileEndings = { ".ats" };
 
-	private static final String[] SETTINGS = { 
-			"AutomataScript/minimizeSevpa.epf", 
+	private static final String[] SETTINGS = {
+			"AutomataScript/minimizeSevpa.epf",
 			"AutomataScript/shrinkNwa.epf",
-			"AutomataScript/minimizeNwaPmaxSat.epf", 
+			"AutomataScript/minimizeNwaPmaxSat.epf",
 			"AutomataScript/minimizeNwaPmaxSatAsymmetric.epf",
 			"AutomataScript/reduceNwaDirectSimulation.epf",
-			"AutomataScript/reduceNwaDirectSimulationB.epf", 
+			"AutomataScript/reduceNwaDirectSimulationB.epf",
 			"AutomataScript/reduceNwaDelayedSimulation.epf",
 			"AutomataScript/reduceNwaDelayedSimulationB.epf",
 			"AutomataScript/reduceNwaDirectFullMultipebbleSimulation.epf",
 			"AutomataScript/reduceNwaDelayedFullMultipebbleSimulation.epf",
 			};
 
-	private static final String[] INTERESTING_COLUMNS = { 
+	private static final String[] INTERESTING_COLUMNS = {
 			"File",
 			// "Settings",
 			// StatisticsType.ATS_ID.toString(),
-			StatisticsType.OPERATION_NAME.toString(), 
+			StatisticsType.OPERATION_NAME.toString(),
 			StatisticsType.RUNTIME_TOTAL.toString(),
-			StatisticsType.STATES_INPUT.toString(), 
+			StatisticsType.STATES_INPUT.toString(),
 			StatisticsType.STATES_OUTPUT.toString(),
-			StatisticsType.STATES_REDUCTION_ABSOLUTE.toString(), 
+			StatisticsType.STATES_REDUCTION_ABSOLUTE.toString(),
 			StatisticsType.STATES_REDUCTION_RELATIVE.toString(),
-			StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS.toString(),
-			StatisticsType.TIME_PREPROCESSING.toString(), 
+			StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK.toString(),
+			StatisticsType.TIME_PREPROCESSING.toString(),
 			StatisticsType.TIME_SOLVING.toString(),
 			StatisticsType.BUCHI_NONDETERMINISTIC_STATES.toString(),
 			StatisticsType.BUCHI_TRANSITION_DENSITY_MILLION.toString(),
-			StatisticsType.SIZE_GAME_AUTOMATON.toString(), 
-			StatisticsType.SIZE_GAME_GRAPH.toString(), 
+			StatisticsType.SIZE_GAME_AUTOMATON.toString(),
+			StatisticsType.SIZE_GAME_GRAPH.toString(),
 			StatisticsType.MAX_NUMBER_OF_DOUBLEDECKER_PEBBLES.toString(),
-			StatisticsType.NUMBER_PAIRS_INITIAL_PARTITION.toString(),
+			StatisticsType.NUMBER_INITIAL_PAIRS.toString(),
+			StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK.toString(),
+			StatisticsType.NUMBER_INITIAL_PAIRS_PMAXSAT.toString(),
+			StatisticsType.NUMBER_RESULT_PAIRS.toString(),
+			StatisticsType.SIZE_INITIAL_PARTITION_PMAXSAT.toString(),
+			StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK_PMAXSAT.toString(),
 	};
 	
 	private static final Set<String> INTERESTING_COLUMNS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));
 
-	private static final Object[] INTERESTING_OPERATIONS ={ 
+	private static final Object[] INTERESTING_OPERATIONS = {
 			"minimizeNwaPmaxSat",
-			"minimizeNwaPmaxSatAsymmetric", 
-			"minimizeSevpa", 
-			"shrinkNwa", 
+			"minimizeNwaPmaxSatAsymmetric",
+			"minimizeSevpa",
+			"shrinkNwa",
 			"reduceNwaDirectSimulation",
-			"reduceNwaDirectSimulationB", 
-			"reduceNwaDelayedSimulation", 
+			"reduceNwaDirectSimulationB",
+			"reduceNwaDelayedSimulation",
 			"reduceNwaDelayedSimulationB",
 			"reduceNwaDirectFullMultipebbleSimulation",
 			"reduceNwaDelayedFullMultipebbleSimulation",
 	};
 	
-	private static final Set<Object> INTERESTING_OPERATIONS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_OPERATIONS));
+	private static final Set<Object> INTERESTING_OPERATIONS_AS_SET =
+			new HashSet<>(Arrays.asList(INTERESTING_OPERATIONS));
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
@@ -135,9 +145,9 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 
 		final ColumnDefinition[] columnDef = new ColumnDefinition[] {
 				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Avg. runtime",
-						ConversionContext.Divide(1000000000, 2, " s"), Aggregate.Sum, Aggregate.Average), };
+						ConversionContext.Divide(1_000_000_000, 2, " s"), Aggregate.Sum, Aggregate.Average), };
 
-		final Predicate<String> columnPredicate = (x -> INTERESTING_COLUMNS_AS_SET.contains(x));
+		final Predicate<String> columnPredicate = INTERESTING_COLUMNS_AS_SET::contains;
 		final Map<String, Set<Object>> column2allowedValues =
 				Collections.singletonMap(StatisticsType.OPERATION_NAME.toString(), INTERESTING_OPERATIONS_AS_SET);
 		final Predicate<Pair<List<Object>, List<String>>> predicate =
@@ -147,11 +157,11 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 		transformers.add(new CsvProviderColumnFilter<>(columnPredicate));
 		transformers.add(new CsvProviderRowFilter<>(predicate));
 
-		return new ITestSummary[] { 
+		return new ITestSummary[] {
 				new AutomataScriptTestSummary(this.getClass()),
 				new CsvConcatenator(this.getClass(), AutomataOperationStatistics.class),
 				new CsvConcatenator(this.getClass(), AutomataOperationStatistics.class, transformers),
-				new LatexOverviewSummary(getClass(), benchmarks, columnDef), 
+				new LatexOverviewSummary(getClass(), benchmarks, columnDef),
 		};
 	}
 
@@ -172,13 +182,13 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 		for (final File inputFile : inputFiles) {
 			for (final String settingFileName : SETTINGS) {
 				final File settingsFile = new File(TestUtil.getPathFromTrunk("/examples/settings/" + settingFileName));
-				final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, mToolchainFile);
-				final UltimateStarter starter = new UltimateStarter(urd, mTimeout);
+				final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, TOOLCHAIN_FILE);
+				final UltimateStarter starter = new UltimateStarter(urd, sTimeout);
 				final UltimateTestCase utc = new UltimateTestCase(
 						urd.generateShortStringRepresentation(),
 						new AutomataScriptTestResultDecider(), starter,
 						// mDescription + "_" + inputFile.getAbsolutePath(),
-						urd, super.getSummaries(), null);
+						urd, UltimateTestSuite.getSummaries(), null);
 				testCases.add(utc);
 			}
 		}
@@ -186,7 +196,7 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 		return testCases;
 	}
 
-	private Collection<File> getInputFiles(final String directory, final String[] fileEndings) {
+	private static Collection<File> getInputFiles(final String directory, final String[] fileEndings) {
 		return TestUtil.getFiles(new File(TestUtil.getPathFromTrunk(directory)), fileEndings);
 	}
 

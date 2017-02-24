@@ -82,8 +82,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @param <STATE>
  *            state type
  */
-public class NestedWordAutomatonReachableStates<LETTER, STATE> implements 
-	IDoubleDeckerAutomaton<LETTER, STATE>, IAutomatonWithSccComputation<LETTER, STATE> {
+public class NestedWordAutomatonReachableStates<LETTER, STATE>
+		implements IDoubleDeckerAutomaton<LETTER, STATE>, IAutomatonWithSccComputation<LETTER, STATE> {
 	/**
 	 * Construct a run for each accepting state. Use this only while developing/debugging/testing the construction of
 	 * runs.
@@ -118,7 +118,12 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	public enum ReachProp {
-		REACHABLE, NODEADEND_AD, NODEADEND_SD, FINANC, LIVE_AD, LIVE_SD
+		REACHABLE,
+		NODEADEND_AD,
+		NODEADEND_SD,
+		FINANC,
+		LIVE_AD,
+		LIVE_SD
 	}
 
 	/**
@@ -127,7 +132,10 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE> implements
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	enum InCaRe {
-		INTERNAL, CALL, RETURN, SUMMARY
+		INTERNAL,
+		CALL,
+		RETURN,
+		SUMMARY
 	}
 
 	/**

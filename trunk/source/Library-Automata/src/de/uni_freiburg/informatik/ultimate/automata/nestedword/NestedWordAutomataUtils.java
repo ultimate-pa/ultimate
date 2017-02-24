@@ -55,7 +55,7 @@ public final class NestedWordAutomataUtils {
 	private NestedWordAutomataUtils() {
 		// prevent instantiation of this class
 	}
-	
+
 	/**
 	 * Applies a function to all direct successors of a state.
 	 *
@@ -84,7 +84,7 @@ public final class NestedWordAutomataUtils {
 			}
 		}
 	}
-	
+
 	/**
 	 * @param operand
 	 *            A double decker automaton.
@@ -105,7 +105,7 @@ public final class NestedWordAutomataUtils {
 			final LETTER letter) {
 		return operand.returnSuccessors(lin, hier, letter).iterator().hasNext();
 	}
-	
+
 	/**
 	 * @param iterable
 	 *            An {@link Iterable} of {@link IOutgoingTransitionlet}.
@@ -122,11 +122,11 @@ public final class NestedWordAutomataUtils {
 		final Set<STATE> result = new HashSet<>();
 		for (final E trans : iterable) {
 			result.add(trans.getSucc());
-			
+
 		}
 		return result;
 	}
-	
+
 	/**
 	 * @param partition
 	 *            A partition of states.
@@ -141,7 +141,7 @@ public final class NestedWordAutomataUtils {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * @param partition
 	 *            A partition of states.
@@ -156,21 +156,23 @@ public final class NestedWordAutomataUtils {
 		}
 		return result;
 	}
-	
+
 	/**
-	 * Convert binary relation given as partition into binary relation given
-	 * as {@link HashRelation}
+	 * Convert binary relation given as partition into binary relation given as {@link HashRelation}.
+	 * 
+	 * @param <STATE>
+	 *            state type
 	 */
 	public static <STATE> HashRelation<STATE, STATE> constructHashRelation(final AutomataLibraryServices services,
 			final Collection<Set<STATE>> partition) throws AutomataOperationCanceledException {
 		final HashRelation<STATE, STATE> result = new HashRelation<>();
 		final InitialPartitionProcessor<STATE> ipp = new InitialPartitionProcessor<STATE>(services) {
-			
+
 			@Override
 			public boolean shouldBeProcessed(final STATE q0, final STATE q1) {
 				return true;
 			}
-			
+
 			@Override
 			public void doProcess(final STATE q0, final STATE q1) {
 				result.addPair(q0, q1);
@@ -179,7 +181,7 @@ public final class NestedWordAutomataUtils {
 		ipp.process(partition);
 		return result;
 	}
-	
+
 	/**
 	 * @param operand
 	 *            A nested word automaton.
@@ -191,22 +193,20 @@ public final class NestedWordAutomataUtils {
 	 *            state type
 	 * @return string summary of initial partition
 	 */
-	public static <LETTER, STATE> String generateGenericMinimizationRunningTaskDescription(
-			final String operationName,
+	public static <LETTER, STATE> String generateGenericMinimizationRunningTaskDescription(final String operationName,
 			final INestedWordAutomaton<LETTER, STATE> operand, final Collection<Set<STATE>> initialPartition) {
 		final int sizeOfLargestEquivalenceClass =
 				NestedWordAutomataUtils.computeSizeOfLargestEquivalenceClass(initialPartition);
 		return generateGenericMinimizationRunningTaskDescription(operationName, operand, initialPartition.size(),
 				sizeOfLargestEquivalenceClass);
 	}
-	
+
 	public static <LETTER, STATE> String generateGenericMinimizationRunningTaskDescription(final String operationName,
-			final INestedWordAutomaton<LETTER, STATE> operand,
-			final PartitionSizeInformation initialPartition) {
+			final INestedWordAutomaton<LETTER, STATE> operand, final PartitionSizeInformation initialPartition) {
 		return "applying " + operationName + " to NWA with " + operand.size() + " states" + " (initial partition has "
 				+ initialPartition.toString() + ")";
 	}
-	
+
 	/**
 	 * @param operand
 	 *            A nested word automaton.
@@ -220,14 +220,13 @@ public final class NestedWordAutomataUtils {
 	 *            state type
 	 * @return string summary of initial partition
 	 */
-	public static <LETTER, STATE> String generateGenericMinimizationRunningTaskDescription(
-			final String operationName,
+	public static <LETTER, STATE> String generateGenericMinimizationRunningTaskDescription(final String operationName,
 			final INestedWordAutomaton<LETTER, STATE> operand, final int initialPartitionSize,
 			final int sizeOfLargestBlock) {
 		return "applying " + operationName + " to NWA with " + operand.size() + " states" + " (initial partition has "
 				+ initialPartitionSize + " blocks, largest block has " + sizeOfLargestBlock + " states)";
 	}
-	
+
 	/**
 	 * Method that helps converting the return type of {@link INestedWordAutomaton#internalSuccessors(Object)} and the
 	 * other similar methods of {@link INestedWordAutomaton} to a {@link Set} of successor states.
@@ -236,12 +235,14 @@ public final class NestedWordAutomataUtils {
 	 *            The return type of, e.g., {@link INestedWordAutomaton#internalSuccessors(Object)}
 	 * @param funGetState
 	 *            A function that extracts a STATE from an element of iterable
+	 * @param <STATE>
+	 *            state type
 	 * @return A set of STATEs extracted from iterable.
 	 */
 	public static <STATE, T> Set<STATE> getStates(final Iterable<T> iterable, final Function<T, STATE> funGetState) {
 		return StreamSupport.stream(iterable.spliterator(), false).map(funGetState).collect(Collectors.toSet());
 	}
-	
+
 	public static <LETTER, STATE> Set<STATE> constructInternalSuccessors(
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final STATE state, final LETTER letter) {
 		if (nwa instanceof NestedWordAutomaton) {
@@ -250,7 +251,7 @@ public final class NestedWordAutomataUtils {
 		final Function<OutgoingInternalTransition<LETTER, STATE>, STATE> funGetState = t -> t.getSucc();
 		return getStates(nwa.internalSuccessors(state, letter), funGetState);
 	}
-	
+
 	public static <LETTER, STATE> Set<STATE> constructCallSuccessors(
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final STATE state, final LETTER letter) {
 		if (nwa instanceof NestedWordAutomaton) {
@@ -259,7 +260,7 @@ public final class NestedWordAutomataUtils {
 		final Function<OutgoingCallTransition<LETTER, STATE>, STATE> funGetState = t -> t.getSucc();
 		return getStates(nwa.callSuccessors(state, letter), funGetState);
 	}
-	
+
 	public static <LETTER, STATE> Set<STATE> constructReturnSuccessors(
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final STATE lin, final STATE hier,
 			final LETTER letter) {
@@ -269,13 +270,39 @@ public final class NestedWordAutomataUtils {
 		final Function<OutgoingReturnTransition<LETTER, STATE>, STATE> funGetState = t -> t.getSucc();
 		return getStates(nwa.returnSuccessors(lin, hier, letter), funGetState);
 	}
-	
+
 	/**
-	 * We can consider an NWA empty if call and return alphabet are empty.
+	 * @param nwa
+	 *            nested word automaton
+	 * @param <LETTER>
+	 *            letter type
+	 * @param <STATE>
+	 *            state type
+	 * @return {@code true} iff both the call alphabet and the return alphabet is empty.
 	 */
 	public static <LETTER, STATE> boolean isFiniteAutomaton(final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		return nwa.getCallAlphabet().isEmpty() && nwa.getReturnAlphabet().isEmpty();
 	}
 
-
+	/**
+	 * Checks whether two nested word automata have the same internal, call, and return alphabets.
+	 * 
+	 * @param fstOperand
+	 *            first operand
+	 * @param sndOperand
+	 *            second operand
+	 * @param <LETTER>
+	 *            letter type
+	 * @param <STATE>
+	 *            state type
+	 * @return {@code true} iff the automata have the same alphabets
+	 */
+	public static <LETTER, STATE> boolean sameAlphabet(final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
+			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) {
+		boolean result;
+		result = fstOperand.getInternalAlphabet().equals(sndOperand.getInternalAlphabet());
+		result = result && fstOperand.getCallAlphabet().equals(sndOperand.getCallAlphabet());
+		result = result && fstOperand.getReturnAlphabet().equals(sndOperand.getReturnAlphabet());
+		return result;
+	}
 }

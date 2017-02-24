@@ -32,7 +32,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * Wrapper that represents a Spoiler vertex as game automaton state.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  * @param <LETTER>
  *            Letter class of nwa automaton
  * @param <STATE>

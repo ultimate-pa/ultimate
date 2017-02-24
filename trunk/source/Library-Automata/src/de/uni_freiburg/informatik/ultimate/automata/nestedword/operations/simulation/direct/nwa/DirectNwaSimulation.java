@@ -40,12 +40,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * nwa automaton.<br/>
  * Once started, results can then be get by using {@link #getResult()}.<br/>
  * <br/>
- * 
  * For more information on the type of simulation see {@link DirectNwaGameGraph}
  * .
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  * @param <LETTER>
  *            Letter class of nwa automaton
  * @param <STATE>
@@ -59,7 +57,6 @@ public final class DirectNwaSimulation<LETTER, STATE> extends DirectSimulation<L
 	 * After construction the simulation can be started and results can be get
 	 * by using {@link #getResult()}.<br/>
 	 * <br/>
-	 * 
 	 * For correctness its important that the inputed automaton has <b>no dead
 	 * ends</b> nor <b>duplicate transitions</b>.
 	 * 
@@ -81,7 +78,7 @@ public final class DirectNwaSimulation<LETTER, STATE> extends DirectSimulation<L
 	 */
 	public DirectNwaSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final IStateFactory<STATE> stateFactory, final DirectNwaGameGraph<LETTER, STATE> game)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		super(progressTimer, logger, useSCCs, stateFactory, game);
 	}
 

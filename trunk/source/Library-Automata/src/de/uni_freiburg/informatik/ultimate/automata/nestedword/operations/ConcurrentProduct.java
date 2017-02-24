@@ -60,11 +60,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
-	
+
 	private final boolean mConcurrentPrefixProduct;
-	
+
 	private final NestedWordAutomaton<LETTER, STATE> mResult;
-	
+
 	/**
 	 * List of state pairs from the input automata for which
 	 * <ul>
@@ -73,20 +73,20 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 	 * </ul>
 	 */
 	private final StatePairQueue mWorklist = new StatePairQueue();
-	
+
 	/**
 	 * Map from state pairs of the input automata to corresponding states
 	 * in the result automaton.
 	 */
 	private final StatePair2StateMap mInputPair2resultState = new StatePair2StateMap();
-	
+
 	/**
 	 * Common symbols of the Alphabets of the input automata.
 	 */
 	private final HashSet<LETTER> mSynchronizationAlphabet;
-	
+
 	private final IConcurrentProductStateFactory<STATE> mContentFactory;
-	
+
 	/**
 	 * @param services
 	 *            Ultimate services
@@ -116,11 +116,10 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 					"same ContentFactory");
 		}
 		*/
-		
-		if (mLogger.isWarnEnabled() && (!fstOperand.getCallAlphabet().isEmpty()
-				|| !fstOperand.getReturnAlphabet().isEmpty()
-				|| !sndOperand.getCallAlphabet().isEmpty()
-				|| !sndOperand.getReturnAlphabet().isEmpty())) {
+
+		if (mLogger.isWarnEnabled()
+				&& (!fstOperand.getCallAlphabet().isEmpty() || !fstOperand.getReturnAlphabet().isEmpty()
+						|| !sndOperand.getCallAlphabet().isEmpty() || !sndOperand.getReturnAlphabet().isEmpty())) {
 			mLogger.warn("Call alphabet and return alphabet are ignored.");
 		}
 		mSynchronizationAlphabet = new HashSet<>(fstOperand.getInternalAlphabet());
@@ -138,17 +137,15 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 			constructOutgoingTransitions(state1, state2);
 		}
 	}
-	
+
 	/**
 	 * Returns the automaton state that represents the state pair
 	 * (state1,state2). If this state is not yet constructed, construct it
 	 * and enqueue the pair (state1,state2). If it has to be
 	 * constructed it is an initial state iff isInitial is true.
 	 */
-	private STATE getState(final STATE state1, final STATE state2,
-			final boolean isInitial) {
-		STATE state =
-				mInputPair2resultState.get(state1, state2);
+	private STATE getState(final STATE state1, final STATE state2, final boolean isInitial) {
+		STATE state = mInputPair2resultState.get(state1, state2);
 		if (state == null) {
 			boolean isFinal;
 			if (mConcurrentPrefixProduct) {
@@ -158,15 +155,14 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 			}
 			final STATE content1 = state1;
 			final STATE content2 = state2;
-			state = mContentFactory.getContentOnConcurrentProduct(
-					content1, content2);
+			state = mContentFactory.getContentOnConcurrentProduct(content1, content2);
 			mResult.addState(isInitial, isFinal, state);
 			mInputPair2resultState.put(state1, state2, state);
 			mWorklist.enqueue(state1, state2);
 		}
 		return state;
 	}
-	
+
 	private void constructOutgoingTransitions(final STATE state1, final STATE state2) {
 		final STATE state = getState(state1, state2, false);
 		final HashSet<LETTER> commonOutSymbols = new HashSet<>(mFstOperand.lettersInternal(state1));
@@ -175,7 +171,7 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 		state1OnlySymbols.removeAll(mSynchronizationAlphabet);
 		final HashSet<LETTER> state2OnlySymbols = new HashSet<>(mSndOperand.lettersInternal(state2));
 		state2OnlySymbols.removeAll(mSynchronizationAlphabet);
-		
+
 		for (final LETTER symbol : commonOutSymbols) {
 			final Iterable<OutgoingInternalTransition<LETTER, STATE>> trans1it =
 					mFstOperand.internalSuccessors(state1, symbol);
@@ -190,7 +186,7 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 				}
 			}
 		}
-		
+
 		for (final LETTER symbol : state1OnlySymbols) {
 			final Iterable<OutgoingInternalTransition<LETTER, STATE>> trans1it =
 					mFstOperand.internalSuccessors(state1, symbol);
@@ -200,7 +196,7 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 				mResult.addInternalTransition(state, symbol, succ);
 			}
 		}
-		
+
 		for (final LETTER symbol : state2OnlySymbols) {
 			final Iterable<OutgoingInternalTransition<LETTER, STATE>> trans2it =
 					mSndOperand.internalSuccessors(state2, symbol);
@@ -210,9 +206,9 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 				mResult.addInternalTransition(state, symbol, succ);
 			}
 		}
-		
+
 	}
-	
+
 	private void constructInitialStates() {
 		for (final STATE state1 : mFstOperand.getInitialStates()) {
 			for (final STATE state2 : mSndOperand.getInitialStates()) {
@@ -220,22 +216,22 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 			}
 		}
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
 		return mFstOperand;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
-	
+
 	/**
 	 * Maps pairs of states to states.
 	 * 
@@ -243,7 +239,7 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 	 */
 	private class StatePair2StateMap {
 		private final Map<STATE, Map<STATE, STATE>> mBackingMap = new HashMap<>();
-		
+
 		protected STATE get(final STATE state1, final STATE state2) {
 			final Map<STATE, STATE> snd2result = mBackingMap.get(state1);
 			if (snd2result == null) {
@@ -252,7 +248,7 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 				return snd2result.get(state2);
 			}
 		}
-		
+
 		protected void put(final STATE state1, final STATE state2, final STATE state) {
 			Map<STATE, STATE> snd2result = mBackingMap.get(state1);
 			if (snd2result == null) {
@@ -262,7 +258,7 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 			snd2result.put(state2, state);
 		}
 	}
-	
+
 	/**
 	 * Queue for pairs of states. Pairs are not dequeued in the same order as
 	 * inserted.
@@ -271,10 +267,10 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 	 */
 	private class StatePairQueue {
 		private final Map<STATE, Set<STATE>> mQueue = new HashMap<>();
-		
+
 		private STATE mDequeuedPairFst;
 		private STATE mDequeuedPairSnd;
-		
+
 		protected void enqueue(final STATE state1, final STATE state2) {
 			Set<STATE> secondComponets = mQueue.get(state1);
 			if (secondComponets == null) {
@@ -283,7 +279,7 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 			}
 			secondComponets.add(state2);
 		}
-		
+
 		protected void dequeuePair() {
 			assert mDequeuedPairFst == null
 					&& mDequeuedPairSnd == null : "Results from last dequeue not yet collected!";
@@ -294,27 +290,27 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 			assert secondComponets != null;
 			final Iterator<STATE> it2 = secondComponets.iterator();
 			mDequeuedPairSnd = it2.next();
-			
+
 			secondComponets.remove(mDequeuedPairSnd);
 			if (secondComponets.isEmpty()) {
 				mQueue.remove(mDequeuedPairFst);
 			}
 		}
-		
+
 		protected STATE getDequeuedPairFst() {
 			assert mDequeuedPairFst != null : "No pair dequeued";
 			final STATE result = mDequeuedPairFst;
 			mDequeuedPairFst = null;
 			return result;
 		}
-		
+
 		public STATE getDequeuedPairSnd() {
 			assert mDequeuedPairSnd != null : "No pair dequeued";
 			final STATE result = mDequeuedPairSnd;
 			mDequeuedPairSnd = null;
 			return result;
 		}
-		
+
 		public boolean isEmpty() {
 			return mQueue.isEmpty();
 		}

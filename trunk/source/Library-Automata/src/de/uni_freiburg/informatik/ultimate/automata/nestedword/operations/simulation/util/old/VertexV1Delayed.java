@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Automata Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Automata Library grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -36,74 +36,70 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  * @author Oleksii Saukh
  * @date 16.12.2011
  */
-public class VertexV1Delayed<LETTER,STATE> extends VertexV1<LETTER, STATE> {
-    /*_______________________________________________________________________*\
-    \* FIELDS / ATTRIBUTES                                                   */
-    
-    /**
-     * The extra bit b.
-     */
-    private final boolean b;
+public class VertexV1Delayed<LETTER, STATE> extends VertexV1<LETTER, STATE> {
+	/*_______________________________________________________________________*\
+	\* FIELDS / ATTRIBUTES                                                   */
 
-    /*_______________________________________________________________________*\
-    \* CONSTRUCTORS                                                          */
-    
-    /**
-     * Vertex constructor.
-     * 
-     * @param priority
-     *            the priority of this vertex
-     * @param b
-     *            the extra bit b
-     * @param q0
-     *            the label of the first Buchi automaton state
-     * @param q1
-     *            the label of the second Buchi automaton state
-     */
-    public VertexV1Delayed(int priority, boolean b, STATE q0, STATE q1) {
-        super(priority, q0, q1);
-        this.b = b;
-    }
+	/**
+	 * The extra bit b.
+	 */
+	private final boolean b;
 
-    /*_______________________________________________________________________*\
-    \* METHODS                                                               */
-    
-    /*_______________________________________________________________________*\
-    \* OVERRIDDEN METHODS                                                    */
+	/*_______________________________________________________________________*\
+	\* CONSTRUCTORS                                                          */
 
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("<").append(isB()).append(",(").append(getQ0()).append(",");
-        sb.append(getQ1()).append("),p:").append(getPriority()).append(",pm:")
-                .append(getPM()).append(">");
-        return sb.toString();
-    }
-    
-    /*_______________________________________________________________________*\
-    \* GETTERS AND SETTERS                                                   */
-    
-    /**
-     * Getter for the extra bit b.
-     * 
-     * @return the b
-     */
-    public boolean isB() {
-        return b;
-    }
-    
-    /**
-     * Returns q0 if stateNumber == false, q1 otherwise
-     * 
-     * @param stateNumber
-     *            number of state to return.
-     * @return state
-     */
-    public STATE getQ(boolean stateNumber) {
-        if (stateNumber) {
+	/**
+	 * Vertex constructor.
+	 * 
+	 * @param priority
+	 *            the priority of this vertex
+	 * @param b
+	 *            the extra bit b
+	 * @param q0
+	 *            the label of the first Buchi automaton state
+	 * @param q1
+	 *            the label of the second Buchi automaton state
+	 */
+	public VertexV1Delayed(final int priority, final boolean b, final STATE q0, final STATE q1) {
+		super(priority, q0, q1);
+		this.b = b;
+	}
+
+	/*_______________________________________________________________________*\
+	\* METHODS                                                               */
+
+	/*_______________________________________________________________________*\
+	\* OVERRIDDEN METHODS                                                    */
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("<").append(isB()).append(",(").append(getQ0()).append(",");
+		sb.append(getQ1()).append("),p:").append(getPriority()).append(",pm:").append(getPM()).append(">");
+		return sb.toString();
+	}
+
+	/*_______________________________________________________________________*\
+	\* GETTERS AND SETTERS                                                   */
+
+	/**
+	 * Getter for the extra bit b.
+	 * 
+	 * @return the b
+	 */
+	public boolean isB() {
+		return b;
+	}
+
+	/**
+	 * @param stateNumber
+	 *            number of state to return.
+	 * @return state q0 if stateNumber == false, q1 otherwise
+	 */
+	public STATE getQ(final boolean stateNumber) {
+		if (stateNumber) {
 			return getQ1();
-		} else {
-			return getQ0();
 		}
-    }
+		return getQ0();
+	}
 }

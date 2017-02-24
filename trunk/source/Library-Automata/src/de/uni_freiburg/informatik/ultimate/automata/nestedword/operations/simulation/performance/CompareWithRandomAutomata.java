@@ -57,7 +57,7 @@ public final class CompareWithRandomAutomata<LETTER, STATE>
 	 * The resulting buechi automaton.
 	 */
 	private final INestedWordAutomatonSimple<LETTER, STATE> mResult;
-	
+
 	/**
 	 * Compares the different types of simulation methods for buechi reduction
 	 * using random automata. Resulting automaton is the input automaton.
@@ -76,10 +76,10 @@ public final class CompareWithRandomAutomata<LETTER, STATE>
 		mOperand = operand;
 		mResult = operand;
 		mLogger.info(startMessage());
-		
+
 		// Use operation with random automata
 		final StringFactory snf = new StringFactory();
-		
+
 		final int n = 100;
 		final int k = 30;
 		final int f = 20;
@@ -87,44 +87,44 @@ public final class CompareWithRandomAutomata<LETTER, STATE>
 		final int logEvery = 100;
 		final int amount = 1000;
 		INestedWordAutomatonSimple<String, String> buechi;
-		
+
 		for (int i = 1; i <= amount; i++) {
 			if (i % logEvery == 0) {
 				mLogger.info("Worked " + i + " automata");
 			}
-			
+
 			final boolean useNwaInsteadDfaMethod = false;
 			if (useNwaInsteadDfaMethod) {
 				buechi = new GetRandomNwa(services, k, n, 0.2, 0, 0, (totalityInPerc + 0.0) / 100).getResult();
 			} else {
 				buechi = new GetRandomDfa(services, n, k, f, totalityInPerc, true, false, false, false).getResult();
 			}
-			
+
 			try {
 				new CompareReduceBuchiSimulation<>(services, snf, buechi);
 			} catch (final AutomataOperationCanceledException e) {
 				e.printStackTrace();
 			}
 		}
-		
+
 		mLogger.info(exitMessage());
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public Object getResult() {
 		return mResult;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "compareWithRandomAutomata";

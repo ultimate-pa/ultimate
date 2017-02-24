@@ -53,12 +53,12 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 	 * Stem of the nested lasso word whose acceptance is checked.
 	 */
 	private final NestedWord<LETTER> mStem;
-	
+
 	/**
 	 * Loop of the nested lasso word whose acceptance is checked.
 	 */
 	private final NestedWord<LETTER> mLoop;
-	
+
 	/**
 	 * Check if a Buchi nested word automaton accepts a nested lasso word.
 	 * <p>
@@ -80,11 +80,11 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 		super(services, operand);
 		mStem = nlw.getStem();
 		mLoop = nlw.getLoop();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		if (mStem.containsPendingReturns()) {
 			if (mLogger.isWarnEnabled()) {
 				mLogger.warn("This implementation of Buchi acceptance rejects lasso words, where the stem contains "
@@ -93,7 +93,7 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 			mIsAccepted = false;
 			return;
 		}
-		
+
 		if (mLoop.containsPendingReturns()) {
 			if (mLogger.isWarnEnabled()) {
 				mLogger.warn("This implementation of Buchi acceptance rejects lasso words, where the loop contains "
@@ -102,7 +102,7 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 			mIsAccepted = false;
 			return;
 		}
-		
+
 		if (mLoop.length() == 0) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("LassoWords with empty lasso are rejected by every Büchi automaton");
@@ -110,32 +110,32 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 			mIsAccepted = false;
 			return;
 		}
-		
+
 		mIsAccepted = buchiAccepts();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "BuchiAccepts";
 	}
-	
+
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " Operand " + mOperand.sizeInformation() + " Stem has " + mStem.length()
 				+ " letters." + " Loop has " + mLoop.length() + " letters.";
 	}
-	
+
 	private boolean buchiAccepts() throws AutomataLibraryException {
 		// First compute all states in which the automaton can be after
 		// processing the stem and lasso^*
 		// Honda denotes the part of the lasso where stem and loop are connected.
 		// Therefore we call theses stats Honda states.
 		final Set<STATE> hondaStates = computeHondaStates();
-		
+
 		Set<STATE> newHondaStates = hondaStates;
 		do {
 			hondaStates.addAll(newHondaStates);
@@ -148,7 +148,7 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 			}
 			newHondaStates = getTopMostStackElemets(currentConfigs);
 		} while (!hondaStates.containsAll(newHondaStates));
-		
+
 		for (final STATE hondaState : hondaStates) {
 			if (repeatedLoopLeadsAgainToHondaState(hondaState)) {
 				return true;
@@ -156,7 +156,7 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 		}
 		return false;
 	}
-	
+
 	private Set<STATE> computeHondaStates() throws AutomataLibraryException {
 		Set<ArrayDeque<STATE>> currentConfigs = emptyStackConfiguration(mOperand.getInitialStates());
 		for (int i = 0; i < mStem.length(); i++) {
@@ -167,7 +167,7 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 		}
 		return getTopMostStackElemets(currentConfigs);
 	}
-	
+
 	/**
 	 * Compute for each hondaState if processing mLoop repeatedly can lead to
 	 * a run that contains an accepting state and brings the automaton back to
@@ -205,13 +205,13 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
 			}
-			
+
 			// since pending returns are not allowed we omit considering stack:
 			// if state was visited at honda we do not need to analyze another
 			// run starting at this state.
 			removeAllWhoseTopmostElementIsOneOf(currentConfigsVisitedAccepting, visitedatHondaAccepting);
 			removeAllWhoseTopmostElementIsOneOf(currentConfigsNotVisitedAccepting, visitedatHondaNonAccepting);
-			
+
 			final Set<STATE> topmostAccepting = getTopMostStackElemets(currentConfigsVisitedAccepting);
 			if (topmostAccepting.contains(hondaState)) {
 				return true;
@@ -222,7 +222,7 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Remove all configurations whose topmost element is in states.
 	 */
@@ -238,7 +238,7 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 			configurations.remove(config);
 		}
 	}
-	
+
 	private Set<STATE> getTopMostStackElemets(final Set<ArrayDeque<STATE>> configurations) {
 		final Set<STATE> result = new HashSet<>();
 		for (final ArrayDeque<STATE> config : configurations) {
@@ -246,7 +246,7 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Remove from the input all accepting configurations. Return all these
 	 * configurations which were accepting.

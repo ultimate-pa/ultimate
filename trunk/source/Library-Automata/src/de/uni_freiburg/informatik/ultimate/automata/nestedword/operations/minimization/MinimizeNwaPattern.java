@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPai
 public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LETTER, STATE> {
 	// minimization algorithms executed from left to right
 	private final MinimizationMethods[] mPattern;
-	
+
 	/**
 	 * AutomataScript constructor with default settings.
 	 * <ul>
@@ -76,7 +76,7 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, null, false, 0);
 	}
-	
+
 	/**
 	 * Constructor with default pattern.
 	 * 
@@ -101,7 +101,7 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 			final int iteration) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, partition, addMapOldState2newState, getDefaultPattern(), iteration);
 	}
-	
+
 	/**
 	 * Constructor using only one minimization operation every {@code k}th iteration.
 	 * 
@@ -129,7 +129,7 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 		this(services, stateFactory, operand, partition, addMapOldState2newState,
 				getEveryNthPattern(indexForMinimization), iteration);
 	}
-	
+
 	/**
 	 * Constructor with user-defined pattern.
 	 * 
@@ -160,7 +160,7 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 		mMode = mPattern[counter];
 		super.run(partition, addMapOldState2newState);
 	}
-	
+
 	/**
 	 * Creates a pattern where minimization is only used in each {@code k}th iteration.
 	 * 
@@ -172,7 +172,7 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 		if (indexForMinimization <= 0) {
 			throw new IllegalArgumentException("The minimization index must be strictly positive.");
 		}
-		
+
 		final MinimizationMethods[] pattern = new MinimizationMethods[indexForMinimization];
 		pattern[indexForMinimization - 1] = MinimizationMethods.SEVPA;
 		for (int i = indexForMinimization - 2; i >= 0; --i) {
@@ -180,14 +180,13 @@ public class MinimizeNwaPattern<LETTER, STATE> extends MinimizeNwaCombinator<LET
 		}
 		return pattern;
 	}
-	
+
 	/**
 	 * @return The default pattern.
 	 */
 	private static MinimizationMethods[] getDefaultPattern() {
-		return new MinimizationMethods[] {
-				MinimizationMethods.NONE, MinimizationMethods.SEVPA,
-				MinimizationMethods.NONE, MinimizationMethods.SEVPA,
-				MinimizationMethods.NONE, MinimizationMethods.SHRINK_NWA };
+		return new MinimizationMethods[] { MinimizationMethods.NONE, MinimizationMethods.SEVPA,
+				MinimizationMethods.NONE, MinimizationMethods.SEVPA, MinimizationMethods.NONE,
+				MinimizationMethods.SHRINK_NWA };
 	}
 }

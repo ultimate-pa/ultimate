@@ -34,16 +34,18 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 /**
  * Node in the graph that we build for computation of summaries.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
 public class SummaryComputationGraphNode<LETTER, STATE> {
-	
+
 	private final NestedMap2<IGameState, IGameState, WeightedSummaryTargets> mSource2Current2Targets;
 	private final Set<IGameState> mSummaryComputationTriggers;
-	
+
 	public SummaryComputationGraphNode(
 			final NestedMap2<IGameState, IGameState, WeightedSummaryTargets> source2Current2Targets,
 			final Set<IGameState> summaryComputationTriggers) {
@@ -52,33 +54,27 @@ public class SummaryComputationGraphNode<LETTER, STATE> {
 		mSummaryComputationTriggers = summaryComputationTriggers;
 	}
 
-
 	public Set<IGameState> getSources() {
 		return mSource2Current2Targets.keySet();
 	}
-	
+
 	public Set<IGameState> getCurrent(final IGameState source) {
 		return mSource2Current2Targets.get(source).keySet();
 	}
-	
+
 	public Map<IGameState, WeightedSummaryTargets> getCurrent2Targets(final IGameState source) {
 		return mSource2Current2Targets.get(source);
 	}
-	
-	
-	
-//	
+
+//
 //	public final WeightedSummaryTargets getWeightedSummaryTargets(final IGameState current) {
 //		return mCurrent2Targets.get(current);
 //	}
-
 
 	public NestedMap2<IGameState, IGameState, WeightedSummaryTargets> getSource2Current2Targets() {
 		return mSource2Current2Targets;
 	}
 
-	
-	
 //	/**
 //	 * @return the current2Targets
 //	 */
@@ -87,16 +83,12 @@ public class SummaryComputationGraphNode<LETTER, STATE> {
 //	}
 
 	/**
-	 * @return the summaryComputationTriggers
+	 * @return the summaryComputationTriggers.
 	 */
 	public Set<IGameState> getSummaryComputationTriggers() {
 		return mSummaryComputationTriggers;
 	}
 
-
-	/* (non-Javadoc)
-	 * @see java.lang.Object#hashCode()
-	 */
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -106,40 +98,38 @@ public class SummaryComputationGraphNode<LETTER, STATE> {
 		return result;
 	}
 
-
-	/* (non-Javadoc)
-	 * @see java.lang.Object#equals(java.lang.Object)
-	 */
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
-		final SummaryComputationGraphNode other = (SummaryComputationGraphNode) obj;
+		}
+		final SummaryComputationGraphNode<?, ?> other = (SummaryComputationGraphNode<?, ?>) obj;
 		if (mSource2Current2Targets == null) {
-			if (other.mSource2Current2Targets != null)
+			if (other.mSource2Current2Targets != null) {
 				return false;
-		} else if (!mSource2Current2Targets.equals(other.mSource2Current2Targets))
+			}
+		} else if (!mSource2Current2Targets.equals(other.mSource2Current2Targets)) {
 			return false;
+		}
 		if (mSummaryComputationTriggers == null) {
-			if (other.mSummaryComputationTriggers != null)
+			if (other.mSummaryComputationTriggers != null) {
 				return false;
-		} else if (!mSummaryComputationTriggers.equals(other.mSummaryComputationTriggers))
+			}
+		} else if (!mSummaryComputationTriggers.equals(other.mSummaryComputationTriggers)) {
 			return false;
+		}
 		return true;
 	}
 
-	
 	@Override
 	public String toString() {
-		return mSource2Current2Targets.keySet().size() + " sources " + mSource2Current2Targets.size() + " source-current pairs";
+		return mSource2Current2Targets.keySet().size() + " sources " + mSource2Current2Targets.size()
+				+ " source-current pairs";
 	}
-	
-	
-	
-	
-
 }

@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LETTER, STATE> {
 	protected final boolean mPredecessorOwasEmpty;
-	
+
 	private final int mUserDefinedMaxRank;
 	/**
 	 * if !mUseDoubleDeckers we always use getEmptyStackState()
@@ -62,13 +62,13 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	 * sets of DoubleDeckers.
 	 */
 	private final boolean mUseDoubleDeckers;
-	
+
 	/**
 	 * Information if the direct predecessor of a DoubleDecker was accepting.
 	 * If this information is used by the LevelRankingGenerator.
 	 */
 	private final Set<DoubleDecker<StateWithRankInfo<STATE>>> mPredecessorWasAccepting = new HashSet<>();
-	
+
 	/**
 	 * Extended constructor.
 	 * 
@@ -88,7 +88,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 		mUserDefinedMaxRank = userDefinedMaxRank;
 		mUseDoubleDeckers = useDoubleDeckers;
 	}
-	
+
 	/**
 	 * Constructor for the constraint that is only satisfied by the
 	 * non accepting sink state.
@@ -99,7 +99,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 		mUserDefinedMaxRank = -1;
 		mUseDoubleDeckers = true;
 	}
-	
+
 	void internalSuccessorConstraints(final IFkvState<LETTER, STATE> state, final LETTER symbol) {
 		for (final StateWithRankInfo<STATE> downState : state.getDownStates()) {
 			for (final StateWithRankInfo<STATE> upState : state.getUpStates(downState)) {
@@ -112,7 +112,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 			}
 		}
 	}
-	
+
 	void callSuccessorConstraints(final IFkvState<LETTER, STATE> state, final LETTER symbol) {
 		for (final StateWithRankInfo<STATE> downState : state.getDownStates()) {
 			for (final StateWithRankInfo<STATE> upState : state.getUpStates(downState)) {
@@ -122,16 +122,15 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 					// if !mUseDoubleDeckers we always use getEmptyStackState()
 					// as down state to obtain sets of states instead of
 					// sets of DoubleDeckers.
-					final StateWithRankInfo<STATE> succDownState = mUseDoubleDeckers
-							? upState
-							: new StateWithRankInfo<>(mOperand.getEmptyStackState());
+					final StateWithRankInfo<STATE> succDownState =
+							mUseDoubleDeckers ? upState : new StateWithRankInfo<>(mOperand.getEmptyStackState());
 					addConstraint(succDownState, trans.getSucc(), inOAndUpRank.getSecond(), inOAndUpRank.getFirst(),
 							mOperand.isFinal(upState.getState()));
 				}
 			}
 		}
 	}
-	
+
 	private Pair<Boolean, Integer> getInOAndUpRankInternalCall(final IFkvState<LETTER, STATE> state,
 			final StateWithRankInfo<STATE> upState) {
 		final Pair<Boolean, Integer> inOAndUpRank;
@@ -144,7 +143,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 		}
 		return inOAndUpRank;
 	}
-	
+
 	void returnSuccessorConstraints(final IFkvState<LETTER, STATE> state, final IFkvState<LETTER, STATE> hier,
 			final LETTER symbol) {
 		for (final StateWithRankInfo<STATE> hierDown : hier.getDownStates()) {
@@ -153,7 +152,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 			}
 		}
 	}
-	
+
 	@SuppressWarnings("squid:S1698")
 	private void returnSuccessorConstraintsHelper(final IFkvState<LETTER, STATE> state, final LETTER symbol,
 			final StateWithRankInfo<STATE> hierDown, final StateWithRankInfo<STATE> hierUp) {
@@ -179,13 +178,11 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 		final Iterable<StateWithRankInfo<STATE>> upStates = state.getUpStates(downState);
 		addReturnSuccessorConstraintsGivenDownState(state, downState, upStates, hierDown, hierUp, symbol);
 	}
-	
+
 	@SuppressWarnings("squid:S1698")
-	private void addReturnSuccessorConstraintsGivenDownState(
-			final IFkvState<LETTER, STATE> state, final StateWithRankInfo<STATE> downState,
-			final Iterable<StateWithRankInfo<STATE>> upStates,
-			final StateWithRankInfo<STATE> hierDown, final StateWithRankInfo<STATE> hierUp,
-			final LETTER symbol) {
+	private void addReturnSuccessorConstraintsGivenDownState(final IFkvState<LETTER, STATE> state,
+			final StateWithRankInfo<STATE> downState, final Iterable<StateWithRankInfo<STATE>> upStates,
+			final StateWithRankInfo<STATE> hierDown, final StateWithRankInfo<STATE> hierUp, final LETTER symbol) {
 		for (final StateWithRankInfo<STATE> stateUp : upStates) {
 			final boolean inO;
 			final Integer upRank;
@@ -208,7 +205,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 			}
 		}
 	}
-	
+
 	/**
 	 * Add constraint to the double decker (down,up). This constraints
 	 * are only obtained from incoming transitions. Further constraints
@@ -238,11 +235,11 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 			mHighestRank = predecessorRank;
 		}
 		if (predecessorIsAccepting) {
-			mPredecessorWasAccepting.add(new DoubleDecker<>(
-					downState, new StateWithRankInfo<>(upState, predecessorRank, oCandidate)));
+			mPredecessorWasAccepting
+					.add(new DoubleDecker<>(downState, new StateWithRankInfo<>(upState, predecessorRank, oCandidate)));
 		}
 	}
-	
+
 	public Set<DoubleDecker<StateWithRankInfo<STATE>>> getPredecessorWasAccepting() {
 		return mPredecessorWasAccepting;
 	}

@@ -50,17 +50,18 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <V> Kind of objects that are used as variables.
+ * @param <V>
+ *            Kind of objects that are used as variables.
  */
 public abstract class AbstractMaxSatSolver<V> {
 	protected final AutomataLibraryServices mServices;
 	protected final ILogger mLogger;
-	
+
 	// TODO remove this data structure which is only used for assertions in the long term
 	protected final Set<V> mVariables = new HashSet<>();
 
 	protected final Map<V, Boolean> mVariablesIrrevocablySet = new HashMap<>();
-	
+
 	/*
 	 * NOTE: The semantics of this variable differ for different solvers.
 	 *       In the old solver, this variable is not always synchronized, which
@@ -77,7 +78,7 @@ public abstract class AbstractMaxSatSolver<V> {
 	protected Map<V, Boolean> mPropagatees = new LinkedHashMap<>();
 	protected boolean mConjunctionEquivalentToFalse;
 	protected Set<Clause<V>> mClausesMarkedForRemoval = new LinkedHashSet<>();
-	
+
 	/*
 	 * NOTE: There is no need to separate the occurrence as positive or negative
 	 *       literal at the moment. Still, having only one relation is slower in
@@ -85,7 +86,7 @@ public abstract class AbstractMaxSatSolver<V> {
 	 */
 	protected final HashRelation<V, Clause<V>> mOccursPositive = new HashRelation<>();
 	protected final HashRelation<V, Clause<V>> mOccursNegative = new HashRelation<>();
-	
+
 	protected int mDecisions;
 	protected int mWrongDecisions;
 	protected int mClauses;
@@ -96,38 +97,41 @@ public abstract class AbstractMaxSatSolver<V> {
 	protected int mTrivialClauses;
 	protected int mCurrentLiveClauses;
 	protected int mMaxLiveClauses;
-	
-	
+
 	/**
 	 * Constructor.
 	 * 
-	 * @param services Ultimate services
+	 * @param services
+	 *            Ultimate services
 	 */
 	public AbstractMaxSatSolver(final AutomataLibraryServices services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		Clause.trues = 0; Clause.falses = 0; Clause.neithers = 0;
+		Clause.trues = 0;
+		Clause.falses = 0;
+		Clause.neithers = 0;
 	}
-	
+
 	/**
 	 * @return The number of variables.
 	 */
 	public int getNumberOfVariables() {
 		return mVariables.size();
 	}
-	
+
 	/**
 	 * @return The number of clauses.
 	 */
 	public int getNumberOfClauses() {
 		return mClauses;
 	}
-	
+
 	/**
 	 * Add a new variable. Variables have to be added before they can be
 	 * used in clauses.
 	 * 
-	 * @param var variable
+	 * @param var
+	 *            variable
 	 */
 	public void addVariable(final V var) {
 		final boolean modified = mVariables.add(var);
@@ -136,37 +140,44 @@ public abstract class AbstractMaxSatSolver<V> {
 		}
 		mUnsetVariables.add(var);
 	}
-	
+
 	/**
 	 * Add a new Horn clause. We call the variables on the left-hand side
 	 * negativeAtoms and the variable on the right-hand side the positive
 	 * atom.
-	 * @param negativeAtoms array of non-null variables
-	 * @param positiveAtom variable that may be null. If the variable is null
-	 *     it considered as true. If you want to assert only a negative atom, you
-	 *     have to use null as positive Atom
+	 * 
+	 * @param negativeAtoms
+	 *            array of non-null variables
+	 * @param positiveAtom
+	 *            variable that may be null. If the variable is null
+	 *            it considered as true. If you want to assert only a negative atom, you
+	 *            have to use null as positive Atom
 	 * @deprecated This method is only present for legacy reasons and just
-	 *     converts the Horn clause to a general clause in the general solver.
-	 *     The caller should instead directly call the general
-	 *     <code>addClause()</code> method.
-	 *     For the old solver, this method is still needed.
+	 *             converts the Horn clause to a general clause in the general solver.
+	 *             The caller should instead directly call the general
+	 *             <code>addClause()</code> method.
+	 *             For the old solver, this method is still needed.
 	 */
 	@Deprecated
 	public abstract void addHornClause(final V[] negativeAtoms, final V positiveAtom);
-	
+
 	/**
 	 * Add a new clause. We call the variables on the left-hand side
 	 * negativeAtoms and the variables on the right-hand side the positive
 	 * atoms.
-	 * @param negativeAtoms array of non-null variables considered negative
-	 * @param positiveAtoms array of non-null variables considered positive.
-	 *     If you want to assert only a negative atom, you have to use an empty
-	 *     array as positive atoms.
+	 * 
+	 * @param negativeAtoms
+	 *            array of non-null variables considered negative
+	 * @param positiveAtoms
+	 *            array of non-null variables considered positive.
+	 *            If you want to assert only a negative atom, you have to use an empty
+	 *            array as positive atoms.
 	 */
 	public abstract void addClause(final V[] negativeAtoms, final V[] positiveAtoms);
-	
+
 	/**
 	 * Solve the given MAX-SAT problem for the given set of Horn clauses.
+	 * 
 	 * @return true iff the given set of Horn clauses is satisfiable.
 	 */
 	public boolean solve() throws AutomataOperationCanceledException {
@@ -198,11 +209,11 @@ public abstract class AbstractMaxSatSolver<V> {
 	/**
 	 * Called after all clauses have been added and pseudo-unit clauses have
 	 * been propagated.
-	 * 
-	 * <p>In other words, this method is called before the first decision in
+	 * <p>
+	 * In other words, this method is called before the first decision in
 	 * case there is at least one unassigned variable left.
-	 * 
-	 * <p>The intention is that implementing solvers are informed about the
+	 * <p>
+	 * The intention is that implementing solvers are informed about the
 	 * beginning of the decision phase.
 	 */
 	protected void firstDecisionOrStop() {
@@ -213,7 +224,7 @@ public abstract class AbstractMaxSatSolver<V> {
 	 * Prints the log message.
 	 */
 	protected abstract void log();
-	
+
 	/**
 	 * @return The locally optimal satisfying assignment.
 	 */
@@ -222,7 +233,8 @@ public abstract class AbstractMaxSatSolver<V> {
 	}
 
 	/**
-	 * @param var variable
+	 * @param var
+	 *            variable
 	 * @return The locally optimal satisfying assignment.
 	 */
 	public VariableStatus getValue(final V var) {
@@ -239,7 +251,8 @@ public abstract class AbstractMaxSatSolver<V> {
 	/**
 	 * Assignment to the variable which is guaranteed to not be backtracked.
 	 * 
-	 * @param var variable
+	 * @param var
+	 *            variable
 	 * @return <code>true</code>/<code>false</code> if assigned,
 	 *         <code>null</code> otherwise
 	 */
@@ -248,11 +261,12 @@ public abstract class AbstractMaxSatSolver<V> {
 	/**
 	 * Assignment to the variable which is not guaranteed to not be backtracked.
 	 * 
-	 * @param var variable
+	 * @param var
+	 *            variable
 	 * @return assignment status
 	 */
 	protected abstract VariableStatus getTemporaryAssignment(V var);
-	
+
 	protected VariableStatus getCurrentVariableStatus(final V var) {
 		assert mVariables.contains(var);
 		final Boolean irr = getPersistentAssignment(var);
@@ -269,15 +283,16 @@ public abstract class AbstractMaxSatSolver<V> {
 	/**
 	 * Backtracking mechanism.
 	 * 
-	 * @param var last set variable which lead to inconsistency
+	 * @param var
+	 *            last set variable which lead to inconsistency
 	 */
 	protected abstract void backtrack(final V var);
-	
+
 	/**
 	 * Make current assignment persistent.
 	 */
 	protected abstract void makeAssignmentPersistent();
-	
+
 	/**
 	 * Propagate and assign all pseudo-unit clauses (under current assignment).
 	 */
@@ -286,7 +301,7 @@ public abstract class AbstractMaxSatSolver<V> {
 			propagateOne();
 		}
 	}
-	
+
 	/**
 	 * Assign pseudo-unit clause (under current assignment).
 	 */
@@ -297,16 +312,16 @@ public abstract class AbstractMaxSatSolver<V> {
 
 	/**
 	 * current policy: just return the next propagatee from the set
-	 * 
-	 * <p>TODO other policies
-	 *      The only goal for optimization here is to find contradictions faster.
-	 *      If no contradiction is found, all policies should take the same time.
-	 * 
-	 *      <p>One policy could be to prefer clauses with positive/negative
-	 *      variable, but it is not clear whether this makes sense.
-	 * 
-	 *      <p>Another possibility could be to prefer variables which also
-	 *      occur in a non-Horn clause to remove the number of such clauses.
+	 * <p>
+	 * TODO other policies
+	 * The only goal for optimization here is to find contradictions faster.
+	 * If no contradiction is found, all policies should take the same time.
+	 * <p>
+	 * One policy could be to prefer clauses with positive/negative
+	 * variable, but it is not clear whether this makes sense.
+	 * <p>
+	 * Another possibility could be to prefer variables which also
+	 * occur in a non-Horn clause to remove the number of such clauses.
 	 * 
 	 * @return pair of unset variable and assignment value
 	 */
@@ -316,26 +331,28 @@ public abstract class AbstractMaxSatSolver<V> {
 		// Do not remove, we remove while updating clause, this will ease debugging.
 		return propagatee;
 	}
-	
+
 	/**
 	 * Sets a status to a variable.
 	 * 
-	 * @param var variable
-	 * @param newStatus new status
+	 * @param var
+	 *            variable
+	 * @param newStatus
+	 *            new status
 	 */
 	protected abstract void setVariable(final V var, final boolean newStatus);
-	
+
 	/**
 	 * Reevaluate all clauses whose variables have been incorrectly set.
+	 * <p>
+	 * NOTE: must be called from backtracking, as we modify the set
 	 * 
-	 * <p>NOTE: must be called from backtracking, as we modify the set
-	 * 
-	 * @param variablesIncorrectlySet variables to be unset (modified here)
-	 * @param varToBeSetFalse variable which is going to be set to false soon
+	 * @param variablesIncorrectlySet
+	 *            variables to be unset (modified here)
+	 * @param varToBeSetFalse
+	 *            variable which is going to be set to false soon
 	 */
-	protected void reEvaluateStatusOfAllClauses(
-			final Set<V> variablesIncorrectlySet,
-			final V varToBeSetFalse) {
+	protected void reEvaluateStatusOfAllClauses(final Set<V> variablesIncorrectlySet, final V varToBeSetFalse) {
 		// exclude the one variable which is going to be set to false soon
 		final boolean wasInSet = variablesIncorrectlySet.remove(varToBeSetFalse);
 		assert wasInSet;
@@ -373,10 +390,8 @@ public abstract class AbstractMaxSatSolver<V> {
 			mClausesMarkedForRemoval.add(clause);
 		} else if (clause.isPseudoUnit()) {
 			final Pair<V, Boolean> propagatee = clause.getPropagatee();
-			final Boolean oldVal =
-					mPropagatees.put(propagatee.getFirst(), propagatee.getSecond());
-			if ((oldVal != null)
-					&& (! oldVal.equals(propagatee.getSecond()))) {
+			final Boolean oldVal = mPropagatees.put(propagatee.getFirst(), propagatee.getSecond());
+			if ((oldVal != null) && (!oldVal.equals(propagatee.getSecond()))) {
 				// The propagatee already existed with a different value.
 				mConjunctionEquivalentToFalse = true;
 			}
@@ -400,13 +415,13 @@ public abstract class AbstractMaxSatSolver<V> {
 	protected void undoAssignment(final V var) {
 		// do nothing in the general case
 	}
-	
+
 	protected abstract void decideOne();
 
 	/**
-	 * current policy: just return the next variable from the set
-	 * 
-	 * <p>TODO other policies, e.g., prefer non-Horn clauses
+	 * current policy: just return the next variable from the set.
+	 * <p>
+	 * TODO other policies, e.g., prefer non-Horn clauses
 	 * 
 	 * @return unset variable
 	 */
@@ -416,13 +431,12 @@ public abstract class AbstractMaxSatSolver<V> {
 		it.remove();
 		return var;
 	}
-	
+
 	protected void removeMarkedClauses() {
 		for (final Clause<V> clause : mClausesMarkedForRemoval) {
 			removeClause(clause);
 		}
-		mCurrentLiveClauses =
-				mCurrentLiveClauses - mClausesMarkedForRemoval.size();
+		mCurrentLiveClauses = mCurrentLiveClauses - mClausesMarkedForRemoval.size();
 		mClausesMarkedForRemoval = new LinkedHashSet<>();
 	}
 
@@ -455,7 +469,7 @@ public abstract class AbstractMaxSatSolver<V> {
 				consistent = false;
 				assert consistent;
 			}
-			
+
 		}
 		for (final Clause<V> clause : allClauses) {
 			if (clause.isPseudoUnit()) {
@@ -464,8 +478,7 @@ public abstract class AbstractMaxSatSolver<V> {
 					assert consistent;
 				}
 			}
-			if (clause.getClauseStatus() == ClauseStatus.TRUE
-					&& (! mClausesMarkedForRemoval.contains(clause))) {
+			if (clause.getClauseStatus() == ClauseStatus.TRUE && (!mClausesMarkedForRemoval.contains(clause))) {
 				consistent = false;
 				assert consistent;
 			}
@@ -487,7 +500,7 @@ public abstract class AbstractMaxSatSolver<V> {
 		}
 		return consistent;
 	}
-	
+
 	private RunningTaskInfo getRunningTaskInfo() {
 		return new RunningTaskInfo(this.getClass(), "Solving system of " + mClauses + " clauses.");
 	}

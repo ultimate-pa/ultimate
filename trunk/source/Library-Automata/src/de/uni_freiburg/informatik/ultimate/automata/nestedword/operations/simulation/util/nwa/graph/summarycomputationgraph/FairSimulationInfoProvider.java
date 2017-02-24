@@ -34,12 +34,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * the game graph and for obtaining simulation results.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
 public class FairSimulationInfoProvider<LETTER, STATE> implements ISimulationInfoProvider<LETTER, STATE> {
-
 	@Override
 	public boolean computeBitForInitialVertex(final boolean isSpoilerAccepting, final boolean isDuplicatorAccepting) {
 		return false;
@@ -56,25 +56,25 @@ public class FairSimulationInfoProvider<LETTER, STATE> implements ISimulationInf
 	}
 
 	@Override
-	public int computePriority(final boolean bit, final boolean isSpoilerAccepting, final boolean isDuplicatorAccepting) {
+	public int computePriority(final boolean bit, final boolean isSpoilerAccepting,
+			final boolean isDuplicatorAccepting) {
 		if (isDuplicatorAccepting) {
 			return 0;
-		} else {
-			if (isSpoilerAccepting) {
-				return 1;
-			} else {
-				return 2;
-			}
 		}
+		if (isSpoilerAccepting) {
+			return 1;
+		}
+		return 2;
 	}
-	
+
 	@Override
-	public boolean isImmediatelyWinningForSpoiler(final boolean isSpoilerAccepting, final boolean isDuplicatorAccepting) {
+	public boolean isImmediatelyWinningForSpoiler(final boolean isSpoilerAccepting,
+			final boolean isDuplicatorAccepting) {
 		return false;
 	}
 
 	@Override
-	public boolean isSimulationInformationProvider(final SpoilerVertex<LETTER, STATE> spoilerVertex, 
+	public boolean isSimulationInformationProvider(final SpoilerVertex<LETTER, STATE> spoilerVertex,
 			final INestedWordAutomatonSimple<LETTER, STATE> inputAutomaton) {
 		if (spoilerVertex.getQ0() == null || spoilerVertex.getQ1() == null) {
 			throw new UnsupportedOperationException("no states are not supported");
@@ -89,6 +89,4 @@ public class FairSimulationInfoProvider<LETTER, STATE> implements ISimulationInf
 	public boolean mayMergeFinalAndNonFinalStates() {
 		return true;
 	}
-
-	
 }

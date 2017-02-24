@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.alternating.visualization;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.AutomatonState;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -49,8 +48,6 @@ public class AAToUltimateModel<LETTER, STATE> {
 	 * @param operand
 	 *            An alternating automaton.
 	 * @return Ultimate model
-	 * @throws AutomataOperationCanceledException
-	 *             if operation was canceled
 	 */
 	public IElement transformToUltimateModel(final AlternatingAutomaton<LETTER, STATE> operand) {
 		/*

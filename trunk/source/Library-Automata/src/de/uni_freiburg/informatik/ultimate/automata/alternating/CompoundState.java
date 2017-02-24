@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  */
 public class CompoundState<STATE> {
 	private final Collection<STATE> mStates;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -49,16 +49,16 @@ public class CompoundState<STATE> {
 	public CompoundState(final Collection<STATE> states) {
 		mStates = states;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mStates.toString();
 	}
-	
+
 	public Collection<STATE> getStates() {
 		return mStates;
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (obj == null) {
@@ -69,7 +69,7 @@ public class CompoundState<STATE> {
 		}
 		return ((CompoundState<?>) obj).getStates().equals(this.getStates());
 	}
-	
+
 	@Override
 	public int hashCode() {
 		int hashCode = 0;

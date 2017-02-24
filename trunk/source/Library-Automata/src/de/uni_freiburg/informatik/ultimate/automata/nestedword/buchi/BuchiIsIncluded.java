@@ -45,11 +45,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public final class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
-	
+
 	private final Boolean mResult;
-	
+
 	private final NestedLassoRun<LETTER, STATE> mCounterexample;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -71,54 +71,54 @@ public final class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LET
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		final INestedWordAutomatonSimple<LETTER, STATE> sndComplement =
 				(new BuchiComplementFKV<>(mServices, stateFactory, mSndOperand)).getResult();
 		final INestedWordAutomatonSimple<LETTER, STATE> difference =
 				(new BuchiIntersectDD<>(mServices, stateFactory, mFstOperand, sndComplement, true)).getResult();
 		final BuchiIsEmpty<LETTER, STATE> emptinessCheck = new BuchiIsEmpty<>(mServices, difference);
-		
+
 		mResult = emptinessCheck.getResult();
 		mCounterexample = emptinessCheck.getAcceptingNestedLassoRun();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "BuchiIsIncluded";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Language is " + (mResult ? "" : "not ") + "included";
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
 		return mFstOperand;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
-	
+
 	@Override
 	public Boolean getResult() {
 		return mResult;
 	}
-	
+
 	public NestedLassoRun<LETTER, STATE> getCounterexample() {
 		return mCounterexample;
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;

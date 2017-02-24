@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class MinimizeNwaMaxSAT<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -69,54 +69,44 @@ public class MinimizeNwaMaxSAT<LETTER, STATE> extends AbstractMinimizeNwa<LETTER
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mOperand = operand;
-		
+
 		printStartMessage();
-		final ILogger convertLog = services.getLoggingService().getLogger(
-				"Converter");
-		final ILogger generateLog = services.getLoggingService().getLogger(
-				"NwaMinimizationClausesGenerator");
-		final ILogger solveLog = services.getLoggingService().getLogger(
-				"Solver");
-		
+		final ILogger convertLog = services.getLoggingService().getLogger("Converter");
+		final ILogger generateLog = services.getLoggingService().getLogger("NwaMinimizationClausesGenerator");
+		final ILogger solveLog = services.getLoggingService().getLogger("Solver");
+
 		convertLog.info("starting conversion");
 		final Converter<LETTER, STATE> converter = new Converter<>(services, stateFactory, operand);
 		final NwaWithArrays nwa = converter.getNwa();
 		// it shouldn't be like this, but...
 		final ArrayList<Hist> history = converter.computeHistoryStates();
-		convertLog.info(
-				"finished conversion. "
-						+ nwa.mNumStates + " states, "
-						+ nwa.mNumISyms + " iSyms, "
-						+ nwa.mNumCSyms + " cSyms, "
-						+ nwa.mNumRSyms + " rSyms, "
-						+ nwa.mITrans.length + " iTrans, "
-						+ nwa.mCTrans.length + " cTrans, "
-						+ nwa.mRTrans.length + " rTrans.");
-		
+		convertLog.info("finished conversion. " + nwa.mNumStates + " states, " + nwa.mNumISyms + " iSyms, "
+				+ nwa.mNumCSyms + " cSyms, " + nwa.mNumRSyms + " rSyms, " + nwa.mITrans.length + " iTrans, "
+				+ nwa.mCTrans.length + " cTrans, " + nwa.mRTrans.length + " rTrans.");
+
 		generateLog.info("starting clauses generation");
 		final Horn3Array clauses = Generator.generateClauses(mServices, nwa, history);
-		generateLog.info("finished clauses generation. "
-				+ clauses.size() + " clauses");
-		
+		generateLog.info("finished clauses generation. " + clauses.size() + " clauses");
+
 		solveLog.info("starting Solver");
 		final char[] assignments = new Solver(mServices, clauses).solve();
 		solveLog.info("finished Solver");
-		
+
 		generateLog.info("making equivalence classes from assignments");
 		final Partition eqCls = Generator.makeMergeRelation(nwa.mNumStates, assignments);
 		generateLog.info("finished making equivalence classes");
-		
+
 		directResultConstruction(converter.constructMerged(eqCls));
 		convertLog.info("constructed minimized automaton");
-		
+
 		printExitMessage();
 	}
-	
+
 	@Override
 	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {

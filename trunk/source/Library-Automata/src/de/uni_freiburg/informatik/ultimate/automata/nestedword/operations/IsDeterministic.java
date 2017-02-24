@@ -48,7 +48,7 @@ public final class IsDeterministic<LETTER, STATE> extends UnaryNwaOperation<LETT
 	private final boolean mResult;
 	private final boolean mNondeterministicTransitions;
 	private final boolean mNondeterministicInitials;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -60,27 +60,26 @@ public final class IsDeterministic<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 *             if timeout exceeds
 	 */
 	public IsDeterministic(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand)
-			throws AutomataOperationCanceledException {
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		if (operand instanceof IDoubleDeckerAutomaton) {
 			mOperand = (IDoubleDeckerAutomaton<LETTER, STATE>) operand;
 		} else {
 			mOperand = new NestedWordAutomatonReachableStates<>(mServices, operand);
 		}
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
 		mNondeterministicInitials = (mOperand.getInitialStates().size() > 1);
 		mNondeterministicTransitions = checkIfOperandhasNondeterministicTransitions();
 		mResult = !mNondeterministicInitials && !mNondeterministicTransitions;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	private boolean checkIfOperandhasNondeterministicTransitions() {
 		for (final STATE upState : mOperand.getStates()) {
 			for (final STATE downState : mOperand.getDownStates(upState)) {
@@ -92,36 +91,36 @@ public final class IsDeterministic<LETTER, STATE> extends UnaryNwaOperation<LETT
 		}
 		return false;
 	}
-	
+
 	/**
 	 * @return {@code true} iff the automaton has nondeterministic transitions.
 	 */
 	public boolean hasNondeterministicTransitions() {
 		return mNondeterministicTransitions;
 	}
-	
+
 	/**
 	 * @return {@code true} iff the automaton has more than one initial state.
 	 */
 	public boolean hasNondeterministicInitials() {
 		return mNondeterministicInitials;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "IsDeterministic";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Operand is " + (mResult ? "" : "not ") + "deterministic.";
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public Boolean getResult() {
 		return mResult;

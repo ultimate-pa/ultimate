@@ -42,20 +42,20 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  */
 public final class TransitionNode extends PetriNetVisualizationNode {
 	private static final long serialVersionUID = -2531826841396458461L;
-	
+
 	/**
 	 * @param transition
 	 *            A transition.
 	 */
 	public TransitionNode(final Transition<?, ?> transition) {
 		super(transition.getSymbol().toString());
-		
+
 		final IPayload payload = getPayload();
 		final DefaultAnnotations thisPluginsAnnotations = new DefaultAnnotations();
 		thisPluginsAnnotations.put("hashCode", transition.hashCode());
 		final Map<String, IAnnotations> annotations = payload.getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, thisPluginsAnnotations);
-		
+
 		final Object symbol = transition.getSymbol();
 		if (symbol instanceof IAnnotations) {
 			thisPluginsAnnotations.put("Symbol", symbol);

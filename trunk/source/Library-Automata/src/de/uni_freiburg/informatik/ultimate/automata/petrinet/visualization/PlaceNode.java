@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
  */
 public final class PlaceNode extends PetriNetVisualizationNode {
 	private static final long serialVersionUID = 7581148770748066703L;
-	
+
 	/**
 	 * @param place
 	 *            A place.
@@ -51,7 +51,7 @@ public final class PlaceNode extends PetriNetVisualizationNode {
 	 */
 	public PlaceNode(final Place<?, ?> place, final Collection<String> participatedAcceptingMarkings) {
 		super(place.getContent().toString());
-		
+
 		final IPayload payload = getPayload();
 		final DefaultAnnotations thisPluginsAnnotations = new DefaultAnnotations();
 		thisPluginsAnnotations.put("accepting markings containing this place", participatedAcceptingMarkings);
@@ -59,7 +59,7 @@ public final class PlaceNode extends PetriNetVisualizationNode {
 		thisPluginsAnnotations.put("hashCode", place.hashCode());
 		final Map<String, IAnnotations> annotations = payload.getAnnotations();
 		annotations.put(LibraryIdentifiers.PLUGIN_ID, thisPluginsAnnotations);
-		
+
 		if (place.getContent() instanceof IAnnotations) {
 			thisPluginsAnnotations.put("Content", place.getContent());
 		}

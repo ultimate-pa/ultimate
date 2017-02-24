@@ -63,14 +63,12 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * In fair simulation each time <i>Spoiler</i> builds an accepting word
  * <i>Duplicator</i>s word must also be accepting.<br/>
  * <br/>
- * 
  * If its impossible for <i>Spoiler</i> to build a word such that
  * <i>Duplicator</i> can not fulfill its condition we say <b>q1 fair simulates
  * q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of
  * <i>Duplicator</i>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
@@ -120,6 +118,9 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Creates a new fair game graph by using the given buechi automaton.
+	 * <p>
+	 * Throws an IllegalArgumentException If the input automaton is no Buchi automaton. It must have an empty call and
+	 * return alphabet.
 	 * 
 	 * @param services
 	 *            Service provider of Ultimate framework
@@ -136,9 +137,6 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate
 	 *             framework.
-	 * @throws IllegalArgumentException
-	 *             If the inputed automaton is no Buechi-automaton. It must have
-	 *             an empty call and return alphabet.
 	 */
 	public FairGameGraph(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final IProgressAwareTimer progressTimer, final ILogger logger,
@@ -186,8 +184,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		final boolean areThereRemoveableTransitions = mTransitionsToRemove != null && !mTransitionsToRemove.isEmpty();
 		Map<STATE, STATE> input2result = null;
 
-		final NestedWordAutomaton<LETTER, STATE> result = new NestedWordAutomaton<>(mServices,
-				mBuechi.getInternalAlphabet(), null, null, getStateFactory());
+		final NestedWordAutomaton<LETTER, STATE> result =
+				new NestedWordAutomaton<>(mServices, mBuechi.getInternalAlphabet(), null, null, getStateFactory());
 
 		// Merge states
 		if (areThereMergeableStates) {
@@ -282,8 +280,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 		// Remove unreachable states which can occur due to transition removal
 		if (areThereRemoveableTransitions) {
-			final NestedWordAutomatonReachableStates<LETTER, STATE> nwaReachableStates = new RemoveUnreachable<>(
-					mServices, result).getResult();
+			final NestedWordAutomatonReachableStates<LETTER, STATE> nwaReachableStates =
+					new RemoveUnreachable<>(mServices, result).getResult();
 			return nwaReachableStates;
 		} else {
 			return result;
@@ -310,14 +308,14 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 				if (priority == 1) {
 					increaseGlobalInfinity();
 				}
-				final SpoilerVertex<LETTER, STATE> spoilerVertex = new SpoilerVertex<>(priority, false, leftState,
-						rightState);
+				final SpoilerVertex<LETTER, STATE> spoilerVertex =
+						new SpoilerVertex<>(priority, false, leftState, rightState);
 				addSpoilerVertex(spoilerVertex);
 
 				// Generate Duplicator vertices (leftState, rightState, letter)
 				for (final LETTER letter : buechi.lettersInternalIncoming(leftState)) {
-					final DuplicatorVertex<LETTER, STATE> duplicatorVertex = new DuplicatorVertex<>(2, false, leftState,
-							rightState, letter);
+					final DuplicatorVertex<LETTER, STATE> duplicatorVertex =
+							new DuplicatorVertex<>(2, false, leftState, rightState, letter);
 					addDuplicatorVertex(duplicatorVertex);
 				}
 
@@ -341,8 +339,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			for (final IncomingInternalTransition<LETTER, STATE> trans : buechi.internalPredecessors(edgeDest)) {
 				for (final STATE fixState : buechi.getStates()) {
 					// Duplicator edges q1 -a-> q2 : (x, q1, a) -> (x, q2)
-					Vertex<LETTER, STATE> src = getDuplicatorVertex(fixState, trans.getPred(), trans.getLetter(),
-							false);
+					Vertex<LETTER, STATE> src =
+							getDuplicatorVertex(fixState, trans.getPred(), trans.getLetter(), false);
 					Vertex<LETTER, STATE> dest = getSpoilerVertex(fixState, edgeDest, false);
 					if (src != null && dest != null) {
 						addEdge(src, dest);
@@ -417,8 +415,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		if (changes instanceof FairGameGraphChanges) {
 			final FairGameGraphChanges<LETTER, STATE> fairChanges = (FairGameGraphChanges<LETTER, STATE>) changes;
 			// Undo buechi transition changes
-			final NestedMap3<STATE, LETTER, STATE, EGameGraphChangeType> changedTransitions = fairChanges
-					.getChangedBuechiTransitions();
+			final NestedMap3<STATE, LETTER, STATE, EGameGraphChangeType> changedTransitions =
+					fairChanges.getChangedBuechiTransitions();
 			for (final STATE changedKey : changedTransitions.keySet()) {
 				for (final Triple<LETTER, STATE, EGameGraphChangeType> changedTrans : changedTransitions.get(changedKey)
 						.entrySet()) {
@@ -574,7 +572,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 				if (getDuplicatorVertex(dest, rightState, a, false) != null) {
 					continue;
 				}
-				final DuplicatorVertex<LETTER, STATE> generatedVertex = new DuplicatorVertex<>(2, false, dest, rightState, a);
+				final DuplicatorVertex<LETTER, STATE> generatedVertex =
+						new DuplicatorVertex<>(2, false, dest, rightState, a);
 				addDuplicatorVertex(generatedVertex);
 				// Remember addition
 				changes.addedVertex(generatedVertex);
@@ -597,8 +596,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 					 * generated and (q2, x, a) -> (q2, succ(x, a)) needs also
 					 * to be generated.
 					 */
-					final Vertex<LETTER, STATE> edgeDest = getSpoilerVertex(generatedVertex.getQ0(), succTrans.getSucc(),
-							false);
+					final Vertex<LETTER, STATE> edgeDest =
+							getSpoilerVertex(generatedVertex.getQ0(), succTrans.getSucc(), false);
 					if (generatedVertex != null && edgeDest != null) {
 						addEdge(generatedVertex, edgeDest);
 						// Remember addition

@@ -83,19 +83,19 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 *         require that they are disjoint.
 	 */
 	Set<LETTER> getInternalAlphabet();
-	
+
 	/**
 	 * @return Set of all letters that can occur as label of a call transition.
 	 * @see #getInternalAlphabet()
 	 */
 	Set<LETTER> getCallAlphabet();
-	
+
 	/**
 	 * @return Set of all letters that can occur as label of a return transition.
 	 * @see #getInternalAlphabet()
 	 */
 	Set<LETTER> getReturnAlphabet();
-	
+
 	/**
 	 * @return Auxiliary state used to model the hierarchical predecessor of a
 	 *         pending return in some operations.<br>
@@ -106,26 +106,26 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 *         be seen as a "bottom letter" of the pushdown alphabet.
 	 */
 	STATE getEmptyStackState();
-	
+
 	/**
 	 * @return All initial states of the automaton.
 	 */
 	Iterable<STATE> getInitialStates();
-	
+
 	/**
 	 * @param state
 	 *            state
 	 * @return true iff the state is initial.
 	 */
 	boolean isInitial(STATE state);
-	
+
 	/**
 	 * @param state
 	 *            state
 	 * @return true iff the state is final.
 	 */
 	boolean isFinal(STATE state);
-	
+
 	/**
 	 * @param state
 	 *            state
@@ -133,7 +133,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 *         internal transition labeled with letter <tt>a</tt>.
 	 */
 	Set<LETTER> lettersInternal(STATE state);
-	
+
 	/**
 	 * @param state
 	 *            state
@@ -141,7 +141,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 *         transition labeled with letter <tt>a</tt>.
 	 */
 	Set<LETTER> lettersCall(STATE state);
-	
+
 	/**
 	 * @param state
 	 *            state
@@ -149,7 +149,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 *         transition labeled with letter <tt>a</tt>.
 	 */
 	Set<LETTER> lettersReturn(STATE state);
-	
+
 	/**
 	 * All internal successor transitions for a given state and letter.
 	 * 
@@ -160,7 +160,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 * @return outgoing internal transitions
 	 */
 	Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state, final LETTER letter);
-	
+
 	/**
 	 * All internal successor transitions for a given state.
 	 * 
@@ -169,7 +169,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 * @return outgoing internal transitions
 	 */
 	Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state);
-	
+
 	/**
 	 * All call successor transitions for a given state and letter.
 	 * 
@@ -180,7 +180,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 * @return outgoing call transitions
 	 */
 	Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter);
-	
+
 	/**
 	 * All call successor transitions for a given state.
 	 * 
@@ -189,7 +189,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 * @return outgoing call transitions
 	 */
 	Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state);
-	
+
 	/**
 	 * All return successor transitions for a given state, hierarchical predecessor, and letter.
 	 * 
@@ -203,7 +203,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 */
 	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
 			final LETTER letter);
-	
+
 	/**
 	 * All return successor transitions for a given state and hierarchical predecessor.
 	 * 
@@ -214,25 +214,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 * @return outgoing return transitions
 	 */
 	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state, final STATE hier);
-	
-	/**
-	 * Checks whether two nested word automata have the same internal, call, and return alphabets.
-	 * 
-	 * @param fstOperand
-	 *            first operand
-	 * @param sndOperand
-	 *            second operand
-	 * @return {@code true} iff the automata have the same alphabets
-	 */
-	static <LETTER, STATE> boolean sameAlphabet(final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) {
-		boolean result;
-		result = fstOperand.getInternalAlphabet().equals(sndOperand.getInternalAlphabet());
-		result = result && fstOperand.getCallAlphabet().equals(sndOperand.getCallAlphabet());
-		result = result && fstOperand.getReturnAlphabet().equals(sndOperand.getReturnAlphabet());
-		return result;
-	}
-	
+
 	@Override
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException {

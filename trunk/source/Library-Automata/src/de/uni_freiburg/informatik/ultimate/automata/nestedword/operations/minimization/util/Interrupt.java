@@ -40,14 +40,14 @@ public final class Interrupt implements IFlag {
 	 * Internal status.
 	 */
 	private boolean mTerminate;
-	
+
 	/**
 	 * Constructor.
 	 */
 	public Interrupt() {
 		mTerminate = false;
 	}
-	
+
 	/**
 	 * @return The internal status.
 	 */
@@ -55,7 +55,7 @@ public final class Interrupt implements IFlag {
 	public boolean getStatus() {
 		return mTerminate;
 	}
-	
+
 	/**
 	 * Sets the status to <code>true</code>.
 	 */

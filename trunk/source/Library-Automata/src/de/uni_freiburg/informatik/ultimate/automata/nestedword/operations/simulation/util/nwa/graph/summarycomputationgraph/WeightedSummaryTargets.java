@@ -39,13 +39,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialCom
 
 /**
  * Node in the graph that we build for computation of summaries.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  */
 public class WeightedSummaryTargets {
-	
+
 	private final Map<IGameState, Integer> mTarget2Priority;
-	
+
 	WeightedSummaryTargets(final Map<IGameState, Integer> target2Priority) {
 		super();
 		mTarget2Priority = target2Priority;
@@ -61,31 +61,20 @@ public class WeightedSummaryTargets {
 
 	public WeightedSummaryTargets computeUpdate(final int priority) {
 		switch (priority) {
-		case 2:
-			return this;
-		case 1:
-		case 0: {
-			final Map<IGameState, Integer> newMap = new HashMap<IGameState, Integer>();
-			for (final Entry<IGameState, Integer> entry : mTarget2Priority.entrySet()) {
-				newMap.put(entry.getKey(), Math.min(priority, entry.getValue()));
+			case 2:
+				return this;
+			case 1:
+			case 0: {
+				final Map<IGameState, Integer> newMap = new HashMap<>();
+				for (final Entry<IGameState, Integer> entry : mTarget2Priority.entrySet()) {
+					newMap.put(entry.getKey(), Math.min(priority, entry.getValue()));
+				}
+				return new WeightedSummaryTargets(newMap);
 			}
-			return new WeightedSummaryTargets(newMap);
-		}
-		default:
-			throw new IllegalArgumentException("unsupported value " + priority);
+			default:
+				throw new IllegalArgumentException("unsupported value " + priority);
 		}
 	}
-
-
-	public static class WeightedSummaryTargetsComparator implements IPartialComparator<WeightedSummaryTargets> {
-		@Override
-		public ComparisonResult compare(final WeightedSummaryTargets o1, final WeightedSummaryTargets o2) {
-			final ComparisonResult result = new CanonicalPartialComparatorForMaps<IGameState, Integer>(
-					new PriorityComparator()).compare(o1.mTarget2Priority, o2.mTarget2Priority); 
-			return result;
-		}
-	}
-
 
 	@Override
 	public int hashCode() {
@@ -95,27 +84,40 @@ public class WeightedSummaryTargets {
 		return result;
 	}
 
-	
 	@Override
 	public boolean equals(final Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (obj == null) {
 			return false;
-		if (getClass() != obj.getClass())
+		}
+		if (getClass() != obj.getClass()) {
 			return false;
+		}
 		final WeightedSummaryTargets other = (WeightedSummaryTargets) obj;
 		if (mTarget2Priority == null) {
-			if (other.mTarget2Priority != null)
+			if (other.mTarget2Priority != null) {
 				return false;
-		} else if (!mTarget2Priority.equals(other.mTarget2Priority))
+			}
+		} else if (!mTarget2Priority.equals(other.mTarget2Priority)) {
 			return false;
+		}
 		return true;
 	}
-
 
 	@Override
 	public String toString() {
 		return mTarget2Priority.toString();
+	}
+
+	public static class WeightedSummaryTargetsComparator implements IPartialComparator<WeightedSummaryTargets> {
+		@Override
+		public ComparisonResult compare(final WeightedSummaryTargets o1, final WeightedSummaryTargets o2) {
+			final ComparisonResult result =
+					new CanonicalPartialComparatorForMaps<IGameState, Integer>(new PriorityComparator())
+							.compare(o1.mTarget2Priority, o2.mTarget2Priority);
+			return result;
+		}
 	}
 }

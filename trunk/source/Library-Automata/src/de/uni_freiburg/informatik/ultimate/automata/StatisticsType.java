@@ -216,7 +216,15 @@ public enum StatisticsType {
 	/**
 	 * Number of pairs in an initial partition.
 	 */
-	NUMBER_PAIRS_INITIAL_PARTITION,
+	NUMBER_INITIAL_PAIRS,
+	/**
+	 * Number of pairs in a preprocessing for PMax-SAT solver.
+	 */
+	NUMBER_INITIAL_PAIRS_PMAXSAT,
+	/**
+	 * Number of pairs in a result.
+	 */
+	NUMBER_RESULT_PAIRS,
 	/**
 	 * Number of variables.
 	 */
@@ -334,9 +342,17 @@ public enum StatisticsType {
 	 */
 	SIZE_INITIAL_PARTITION,
 	/**
+	 * Number of blocks in an initial partition for PMax-SAT solver.
+	 */
+	SIZE_INITIAL_PARTITION_PMAXSAT,
+	/**
 	 * Number of states in the biggest block of an initial partition.
 	 */
-	SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
+	SIZE_MAXIMAL_INITIAL_BLOCK,
+	/**
+	 * Number of states in the biggest block of an initial partition for PMax-SAT solver.
+	 */
+	SIZE_MAXIMAL_INITIAL_BLOCK_PMAXSAT,
 	/**
 	 * The time solving the Max-Sat problem at nwa game graph resulting
 	 * automaton generation took (used in simulation, for compatibility with

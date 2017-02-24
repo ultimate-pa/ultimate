@@ -53,18 +53,18 @@ public abstract class BinaryNwaOperation<LETTER, STATE, CRSF extends IStateFacto
 	public BinaryNwaOperation(final AutomataLibraryServices services) {
 		super(services);
 	}
-	
+
 	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". First operand " + getFirstOperand().sizeInformation()
 				+ " Second operand " + getSecondOperand().sizeInformation();
 	}
-	
+
 	/**
 	 * @return The first operand.
 	 */
 	protected abstract INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand();
-	
+
 	/**
 	 * @return The second operand.
 	 */

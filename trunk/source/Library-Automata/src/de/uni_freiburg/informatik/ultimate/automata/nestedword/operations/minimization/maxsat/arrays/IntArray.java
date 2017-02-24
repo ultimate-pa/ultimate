@@ -38,7 +38,6 @@ import java.util.Iterator;
  * <code>ArrayList&lt;Integer&gt;</code> is too much for the GC.
  *
  * @author stimpflj
- *
  */
 final class IntArray implements Iterable<Integer> {
 
@@ -108,7 +107,7 @@ final class IntArray implements Iterable<Integer> {
 
 		return true;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		throw new UnsupportedOperationException("hashCode() not implemented");

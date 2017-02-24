@@ -88,9 +88,9 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	private final Map<STATE, Map<LETTER, Set<STATE>>> mTransitionsOut = new HashMap<>();
 	private final Map<STATE, Map<LETTER, Set<STATE>>> mTransitionsIn = new HashMap<>();
 	private final Map<STATE, MetaState> mMapState2Ms = new HashMap<>();
-	
+
 	private final ILogger mLogger;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -102,8 +102,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	 *             if operation was canceled
 	 */
 	public <FACTORY extends IBuchiComplementSvwStateFactory<STATE> & IEmptyStackStateFactory<STATE>> BuchiComplementAutomatonSVW(
-			final AutomataLibraryServices services,
-			final FACTORY stateFactory,
+			final AutomataLibraryServices services, final FACTORY stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
@@ -118,7 +117,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		mInitialState = metaInitialState.getOutputState();
 		mInitialStateSet.add(mInitialState);
 	}
-	
+
 	/**
 	 * @return an equivalent {@code NestedWordAutomaton} object <br>
 	 *         <b>Use with caution!</b> The automaton has to be computed
@@ -153,17 +152,17 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		mBuildCompleted = true;
 		return result;
 	}
-	
+
 	@Override
 	public int size() {
 		return getSizeInfo().mTotalSize;
 	}
-	
+
 	@Override
 	public Set<LETTER> getAlphabet() {
 		return mAlphabet;
 	}
-	
+
 	@Override
 	public String sizeInformation() {
 		final SizeInfoContainer sizeInfo = getSizeInfo();
@@ -179,17 +178,17 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		// @formatter:on
 		return sb.toString();
 	}
-	
+
 	@Override
 	public Set<LETTER> getInternalAlphabet() {
 		return mAlphabet;
 	}
-	
+
 	@Override
 	public IStateFactory<STATE> getStateFactory() {
 		return mStateFactory;
 	}
-	
+
 	@Override
 	public Set<STATE> getStates() {
 		if (mBuildCompleted) {
@@ -220,12 +219,12 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		mBuildCompleted = true;
 		return mTransitionsOut.keySet();
 	}
-	
+
 	@Override
 	public Set<STATE> getInitialStates() {
 		return mInitialStateSet;
 	}
-	
+
 	@Override
 	public Collection<STATE> getFinalStates() {
 		if (mFinalStateSet == null) {
@@ -240,7 +239,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		return mFinalStateSet;
 	}
-	
+
 	@Override
 	public boolean isInitial(final STATE state) {
 		if (!knows(state)) {
@@ -248,7 +247,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		return state.equals(mInitialState);
 	}
-	
+
 	@Override
 	public boolean isFinal(final STATE state) {
 		final MetaState metaState = getMetaState2(state);
@@ -258,12 +257,12 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		return metaState.getStateNb().equals(mTma.getInitialState())
 				&& !metaState.getTmaNb().equals(mTma.getInitialTma());
 	}
-	
+
 	@Override
 	public STATE getEmptyStackState() {
 		return this.mEmptyStackState;
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersInternal(final STATE state) {
 		if (!knows(state)) {
@@ -271,7 +270,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		return mAlphabet;
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersInternalIncoming(final STATE state) {
 		if (!knows(state)) {
@@ -286,7 +285,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		return result;
 	}
-	
+
 	private Collection<STATE> succInternal(final STATE state, final LETTER letter) {
 		Map<LETTER, Set<STATE>> map = mTransitionsOut.get(state);
 		if (map == null) {
@@ -331,7 +330,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		return result;
 	}
-	
+
 	private Collection<STATE> predInternal(final STATE state, final LETTER letter) {
 		Map<LETTER, Set<STATE>> map = mTransitionsIn.get(state);
 		if (map == null) {
@@ -355,9 +354,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		// Add the predecessors inherited from the TMA.
 		final Set<Integer> predStateNbSet = mTma.predecessors(mState.getStateNb(), letter);
 		if (predStateNbSet == null) {
-			throw new AssertionError(
-					"20160830 Matthias: This NPE is a known and old bug."
-							+ " I will fix it only when I revise the Ramsey-based complementation.");
+			throw new AssertionError("20160830 Matthias: This NPE is a known and old bug."
+					+ " I will fix it only when I revise the Ramsey-based complementation.");
 		}
 		final Set<MetaState> mResult = new HashSet<>();
 		for (final Integer predStateNb : predStateNbSet) {
@@ -388,7 +386,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		return result;
 	}
-	
+
 	private static boolean finalIsTrap() {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 		// This method can be implemented very easily. There is exactly one
@@ -407,7 +405,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		// return false;
 		// ---------------------------------------------------------------------
 	}
-	
+
 	private static boolean isDeterministic() {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 		// This method can be implemented very easily. By construction the TMA
@@ -420,7 +418,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		// return mTMA.statesWithLeftRejectingPartners().isEmpty();
 		// ---------------------------------------------------------------------
 	}
-	
+
 	private static boolean isTotal() {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 		// This method can be implemented very easily. Since the TMA is always
@@ -430,7 +428,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		// return true;
 		// ---------------------------------------------------------------------
 	}
-	
+
 	@Override
 	public Set<LETTER> getCallAlphabet() {
 		if (mLogger.isWarnEnabled()) {
@@ -438,7 +436,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		return Collections.emptySet();
 	}
-	
+
 	@Override
 	public Set<LETTER> getReturnAlphabet() {
 		if (mLogger.isWarnEnabled()) {
@@ -446,70 +444,70 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		return Collections.emptySet();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersCall(final STATE state) {
 		// mLogger.warn("No nwa. Has no call alphabet.");
 		return Collections.emptySet();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {
 		// mLogger.warn("No nwa. Has no return alphabet.");
 		return Collections.emptySet();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersCallIncoming(final STATE state) {
 		return Collections.emptySet();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersReturnIncoming(final STATE state) {
 		return Collections.emptySet();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersSummary(final STATE state) {
 		return Collections.emptySet();
 	}
-	
+
 	@Override
 	public Collection<STATE> hierarchicalPredecessorsOutgoing(final STATE state, final LETTER letter) {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
-	
+
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier, final LETTER letter) {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
-	
+
 	@Override
 	public Iterable<SummaryReturnTransition<LETTER, STATE>> summarySuccessors(final STATE hier) {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
-	
+
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ,
 			final LETTER letter) {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
-	
+
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ) {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
-	
+
 	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ, final LETTER letter) {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
-	
+
 	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ) {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
-	
+
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
 			final LETTER letter) {
@@ -519,7 +517,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		return result;
 	}
-	
+
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
 		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>();
@@ -530,55 +528,55 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		return result;
 	}
-	
+
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
 		return Collections.emptyList();
 	}
-	
+
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
 		return Collections.emptyList();
 	}
-	
+
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final STATE hier,
 			final LETTER letter) {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
-	
+
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final LETTER letter) {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
-	
+
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ) {
 		throw new UnsupportedOperationException(UNSUPPORTED_OPERATION_MESSAGE);
 	}
-	
+
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
 			final LETTER letter) {
 		return Collections.emptyList();
 	}
-	
+
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final LETTER letter) {
 		return Collections.emptyList();
 	}
-	
+
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
 		return Collections.emptyList();
 	}
-	
+
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
 			final STATE hier) {
 		return Collections.emptyList();
 	}
-	
+
 	private SizeInfoContainer getSizeInfo() {
 		if (mSizeInfo == null) {
 			// Number of states per TMA:
@@ -587,12 +585,12 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			final int r = mTma.statesWithLeftRejectingPartners().size() + 1;
 			// Total number of states:
 			final int totalSize = r * m;
-			
+
 			mSizeInfo = new SizeInfoContainer(m, r, totalSize);
 		}
 		return mSizeInfo;
 	}
-	
+
 	/**
 	 * @return whether {@code state} is known, i.e. if it has already been seen
 	 *         by the automaton
@@ -600,7 +598,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	private boolean knows(final STATE state) {
 		return mMapState2Ms.containsKey(state);
 	}
-	
+
 	private MetaState getMetaState1(final Integer stateNb, final Integer tmaNb) {
 		MetaState metaState = new MetaState(stateNb, tmaNb);
 		// If there is already a MetaState object equal to the computed
@@ -613,11 +611,11 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 		return metaState;
 	}
-	
+
 	private MetaState getMetaState2(final STATE state) {
 		return mMapState2Ms.get(state);
 	}
-	
+
 	private void addIfNotContained1(final NestedWordAutomaton<LETTER, STATE> result, final Set<STATE> alreadySeen,
 			final Queue<STATE> queue, final STATE succState) {
 		if (!alreadySeen.contains(succState)) {
@@ -630,14 +628,14 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			}
 		}
 	}
-	
+
 	private void addIfNotContained2(final Set<STATE> alreadySeen, final Queue<STATE> queue, final STATE succState) {
 		if (!alreadySeen.contains(succState)) {
 			alreadySeen.add(succState);
 			queue.add(succState);
 		}
 	}
-	
+
 	/**
 	 * Container for size info.
 	 * 
@@ -647,14 +645,14 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		protected final int mTotalSize;
 		protected final int mTmaSize;
 		protected final int mNumOfReachableTmas;
-		
+
 		public SizeInfoContainer(final int tmaSize, final int numOfReachableTmas, final int totalSize) {
 			mTmaSize = tmaSize;
 			mNumOfReachableTmas = numOfReachableTmas;
 			mTotalSize = totalSize;
 		}
 	}
-	
+
 	/**
 	 * Copy of a TMA state indexed by the number of the TMA instance.
 	 */
@@ -664,25 +662,25 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		// number of the TMA instance
 		private final Integer mTmaNb;
 		private final STATE mOutputState;
-		
+
 		public MetaState(final Integer stateNb, final Integer tmaNb) {
 			mStateNb = stateNb;
 			mTmaNb = tmaNb;
 			mOutputState = mStateFactory.buchiComplementSvw(stateNb, tmaNb);
 		}
-		
+
 		Integer getStateNb() {
 			return mStateNb;
 		}
-		
+
 		Integer getTmaNb() {
 			return mTmaNb;
 		}
-		
+
 		STATE getOutputState() {
 			return mOutputState;
 		}
-		
+
 		@Override
 		public int hashCode() {
 			final int prime = 31;
@@ -690,7 +688,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			result = prime * result + ((mTmaNb == null) ? 0 : mTmaNb.hashCode());
 			return result;
 		}
-		
+
 		@Override
 		@SuppressWarnings("unchecked")
 		public boolean equals(final Object obj) {
@@ -718,7 +716,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			return true;
 		}
 	}
-	
+
 	// =========================================================================
 	//
 	/**
@@ -729,21 +727,21 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	private class TransitionMonoidAutomaton {
 		// number assigned to copy of τ(ε)
 		private final Integer mInitialStateTma = Integer.valueOf(0);
-		
+
 		private final Integer mInitialTma = mInitialStateTma;
-		
+
 		private final INestedWordAutomaton<LETTER, STATE> mOrigAutomaton;
-		
+
 		// Transitions
 		private final Map<Integer, Map<LETTER, Integer>> mTransitionsOutTma = new HashMap<>();
 		private final Map<Integer, Map<LETTER, Set<Integer>>> mTransitionsInTma = new HashMap<>();
-		
+
 		// Rejecting s-t pairs
 		private final Map<Integer, Set<Integer>> mRejectingPairsL2R;
 		private final Map<Integer, Set<Integer>> mRejectingPairsR2L;
-		
+
 		private Set<Integer> mStatesWithLeftRejectingPartners;
-		
+
 		/**
 		 * Precomputes all the transitions and rejecting s-t-pairs and then
 		 * forgets about the underlying transition profiles. After that, states
@@ -753,12 +751,12 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 				throws AutomataOperationCanceledException {
 			mOrigAutomaton = origAutomaton;
 			final Collection<LETTER> alphabet = origAutomaton.getInternalAlphabet();
-			
+
 			// Map from numbers to corresponding transition profiles
 			final Map<Integer, TransitionProfile> mapNum2Tp = new HashMap<>();
 			// Map for the reverse direction
 			final Map<TransitionProfile, Integer> mapTp2Num = new HashMap<>();
-			
+
 			// Map from letters to their corresponding transition profiles
 			// (to avoid recomputing them many times)
 			final Map<LETTER, TransitionProfile> mapLetter2Tp = new HashMap<>();
@@ -800,7 +798,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 					preds.add(iCurr);
 				}
 			}
-			
+
 			// Compute rejecting s-t pairs
 			final List<TransitionProfile> idempotents = new ArrayList<>();
 			for (final TransitionProfile t : mapTp2Num.keySet()) {
@@ -818,7 +816,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 				if (!mServices.getProgressAwareTimer().continueProcessing()) {
 					throw new AutomataOperationCanceledException(this.getClass());
 				}
-				
+
 				final TransitionProfile s = mapNum2Tp.get(iState);
 				final Set<Integer> rightRejectingPartnersS = mRejectingPairsL2R.get(iState);
 				for (final TransitionProfile t : idempotents) {
@@ -832,26 +830,26 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 				}
 			}
 		}
-		
+
 		public Integer getInitialState() {
 			return mInitialStateTma;
 		}
-		
+
 		public Integer getInitialTma() {
 			return mInitialTma;
 		}
-		
+
 		protected INestedWordAutomaton<LETTER, STATE> getOrigAutomaton() {
 			return mOrigAutomaton;
 		}
-		
+
 		/**
 		 * @return The total number of states.
 		 */
 		public int size() {
 			return mTransitionsOutTma.size();
 		}
-		
+
 		/**
 		 * @param state
 		 *            state
@@ -863,7 +861,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		public Integer successor(final Integer state, final LETTER letter) {
 			return mTransitionsOutTma.get(state).get(letter);
 		}
-		
+
 		/**
 		 * @param state
 		 *            state
@@ -875,7 +873,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		public Set<Integer> predecessors(final Integer state, final LETTER letter) {
 			return mTransitionsInTma.get(state).get(letter);
 		}
-		
+
 		/**
 		 * @param state
 		 *            state
@@ -891,7 +889,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		public Set<Integer> rightRejectingPartners(final Integer state) {
 			return mRejectingPairsL2R.get(state);
 		}
-		
+
 		/**
 		 * @param state
 		 *            state
@@ -907,7 +905,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		public Set<Integer> leftRejectingPartners(final Integer state) {
 			return mRejectingPairsR2L.get(state);
 		}
-		
+
 		/**
 		 * @return The set of states for which {@code leftRejectingPartners()}
 		 *         would return a nonempty set.
@@ -923,7 +921,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			}
 			return mStatesWithLeftRejectingPartners;
 		}
-		
+
 		/**
 		 * Transition profile.
 		 * 
@@ -932,9 +930,9 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		private class TransitionProfile {
 			// only true for the copy of τ(ε)
 			private boolean mIsInitial;
-			
+
 			private final Map<Transition, Boolean> mTransitions = new HashMap<>();
-			
+
 			/**
 			 * @return The copy of the transition profile τ(ε), i.e. the initial
 			 *         state of the TMA.
@@ -949,16 +947,15 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 					}
 				}
 			}
-			
+
 			/**
 			 * @return The transition profile τ(a) for letter {@code a}.
 			 */
 			public TransitionProfile(final LETTER letter) {
 				for (final STATE p : getOrigAutomaton().getStates()) {
 					final boolean pIsFinal = getOrigAutomaton().isFinal(p);
-					for (final OutgoingInternalTransition<LETTER, STATE> trans : getOrigAutomaton().internalSuccessors(
-							p,
-							letter)) {
+					for (final OutgoingInternalTransition<LETTER, STATE> trans : getOrigAutomaton()
+							.internalSuccessors(p, letter)) {
 						final STATE q = trans.getSucc();
 						if (pIsFinal || getOrigAutomaton().isFinal(q)) {
 							mTransitions.put(new Transition(p, q), Boolean.TRUE);
@@ -968,7 +965,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 					}
 				}
 			}
-			
+
 			/**
 			 * @return The transition profile for the concatenation s·t.
 			 */
@@ -987,11 +984,11 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 					}
 				}
 			}
-			
+
 			protected Map<Transition, Boolean> getTransitions() {
 				return mTransitions;
 			}
-			
+
 			/**
 			 * @param transProfile
 			 *            Transition profile.
@@ -1000,14 +997,14 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			public boolean isInvariantUnder(final TransitionProfile transProfile) {
 				return new TransitionProfile(this, transProfile).equals(this);
 			}
-			
+
 			/**
 			 * @return Whether t·t = t, where t = {@code this}.
 			 */
 			public boolean isIdempotent() {
 				return new TransitionProfile(this, this).equals(this);
 			}
-			
+
 			/**
 			 * @param transProfile
 			 *            Transition profile.
@@ -1027,7 +1024,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 				}
 				return false;
 			}
-			
+
 			@Override
 			public int hashCode() {
 				final int prime = 31;
@@ -1035,7 +1032,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 				result = prime * result + mTransitions.hashCode();
 				return result;
 			}
-			
+
 			@Override
 			@SuppressWarnings("unchecked")
 			public boolean equals(final Object obj) {
@@ -1049,29 +1046,29 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 				return mTransitions.equals(other.mTransitions) && mIsInitial == other.mIsInitial;
 			}
 		}
-		
+
 		/**
 		 * Transitions are the basic building blocks of transition profiles.
 		 * They are implemented as tuples of states.
 		 */
 		private final class Transition {
 			private final STATE mQ1;
-			
+
 			private final STATE mQ2;
-			
+
 			public Transition(final STATE state1, final STATE state2) {
 				this.mQ1 = state1;
 				this.mQ2 = state2;
 			}
-			
+
 			STATE getQ1() {
 				return mQ1;
 			}
-			
+
 			STATE getQ2() {
 				return mQ2;
 			}
-			
+
 			@Override
 			public int hashCode() {
 				final int prime = 31;
@@ -1080,7 +1077,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 				result = prime * result + ((mQ2 == null) ? 0 : mQ2.hashCode());
 				return result;
 			}
-			
+
 			@Override
 			@SuppressWarnings("unchecked")
 			public boolean equals(final Object obj) {

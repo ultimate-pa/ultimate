@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final IPetriNet<LETTER, STATE> mOperand;
 	private final BranchingProcess<LETTER, STATE> mResult;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -60,34 +60,34 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
 		final PetriNetUnfolder<LETTER, STATE> unf =
 				new PetriNetUnfolder<>(mServices, operand, UnfoldingOrder.ERV, true, false);
 		mResult = unf.getFinitePrefix();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "FinitePrefix";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}
-	
+
 	@Override
 	protected IPetriNet<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public BranchingProcess<LETTER, STATE> getResult() {
 		return mResult;

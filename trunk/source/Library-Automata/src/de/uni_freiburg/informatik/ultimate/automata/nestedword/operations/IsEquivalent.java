@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperatio
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -51,7 +52,7 @@ public class IsEquivalent<LETTER, STATE> extends BinaryNwaOperation<LETTER, STAT
 	private final boolean mResult;
 	private NestedWord<LETTER> mCounterexample;
 	private String mMessage;
-	
+
 	/**
 	 * @param services
 	 *            Ultimate services.
@@ -70,31 +71,31 @@ public class IsEquivalent<LETTER, STATE> extends BinaryNwaOperation<LETTER, STAT
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
-		
-		if (!INestedWordAutomatonSimple.sameAlphabet(mFstOperand, mSndOperand)) {
+
+		if (!NestedWordAutomataUtils.sameAlphabet(mFstOperand, mSndOperand)) {
 			throw new AutomataLibraryException(this.getClass(), "The operands have different alphabets.");
 		}
-		
+
 		printStartMessage();
 		mResult = checkEquivalence(stateFactory);
 		printExitMessage();
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
 		return mFstOperand;
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
-	
+
 	@Override
 	public Boolean getResult() {
 		return mResult;
 	}
-	
+
 	/**
 	 * @return A counterexample (if available).
 	 */
@@ -104,14 +105,14 @@ public class IsEquivalent<LETTER, STATE> extends BinaryNwaOperation<LETTER, STAT
 		}
 		return mCounterexample;
 	}
-	
+
 	/**
 	 * @return A message describing the violation if available, {@code null} otherwise.
 	 */
 	public String getViolationMessage() {
 		return mMessage;
 	}
-	
+
 	private boolean checkEquivalence(final INwaInclusionStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		if (!checkInclusion(stateFactory, mFstOperand, mSndOperand)) {
@@ -124,7 +125,7 @@ public class IsEquivalent<LETTER, STATE> extends BinaryNwaOperation<LETTER, STAT
 		}
 		return true;
 	}
-	
+
 	private boolean checkInclusion(final INwaInclusionStateFactory<STATE> stateFactory,
 			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {

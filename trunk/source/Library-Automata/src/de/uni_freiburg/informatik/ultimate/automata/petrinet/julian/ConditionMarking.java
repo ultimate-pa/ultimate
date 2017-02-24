@@ -47,9 +47,9 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
  */
 public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serializable {
 	private static final long serialVersionUID = -357669345268897194L;
-	
+
 	private final Set<Condition<S, C>> mConditions;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -59,7 +59,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	public ConditionMarking(final Set<Condition<S, C>> conditions) {
 		mConditions = conditions;
 	}
-	
+
 	/**
 	 * @param condition
 	 *            A condition.
@@ -68,7 +68,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	public boolean contains(final Condition<S, C> condition) {
 		return mConditions.contains(condition);
 	}
-	
+
 	/**
 	 * @param conditions
 	 *            Some conditions.
@@ -78,7 +78,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	public boolean containsAll(final Collection<Condition<S, C>> conditions) {
 		return mConditions.containsAll(conditions);
 	}
-	
+
 	/**
 	 * @return {@code true} iff there is no condition.
 	 * @see java.util.Set#isEmpty()
@@ -86,7 +86,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	public boolean isEmpty() {
 		return mConditions.isEmpty();
 	}
-	
+
 	/**
 	 * @see java.util.Set#iterator()
 	 */
@@ -94,7 +94,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	public Iterator<Condition<S, C>> iterator() {
 		return mConditions.iterator();
 	}
-	
+
 	/**
 	 * @return The number of conditions.
 	 * @see java.util.Set#size()
@@ -102,7 +102,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	public int size() {
 		return mConditions.size();
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -121,13 +121,13 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 		}
 		return true;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		return prime + ((mConditions == null) ? 0 : mConditions.hashCode());
 	}
-	
+
 	/**
 	 * @param event
 	 *            An event.
@@ -136,7 +136,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	public boolean isEventEnabled(final Event<S, C> event) {
 		return mConditions.containsAll(event.getPredecessorConditions());
 	}
-	
+
 	/**
 	 * Adds the conditions of another marking.
 	 * 
@@ -146,7 +146,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	public void add(final ConditionMarking<S, C> other) {
 		mConditions.addAll(other.mConditions);
 	}
-	
+
 	/**
 	 * Adds the markings conditions to another set.
 	 * 
@@ -156,7 +156,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 	public void addTo(final Set<Condition<S, C>> other) {
 		other.addAll(mConditions);
 	}
-	
+
 	/**
 	 * @param event
 	 *            An event.
@@ -169,7 +169,7 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 		resultSet.addAll(event.getSuccessorConditions());
 		return new ConditionMarking<>(resultSet);
 	}
-	
+
 	/**
 	 * Revokes the occurence of the specified transition if valid.
 	 * 
@@ -185,12 +185,12 @@ public class ConditionMarking<S, C> implements Iterable<Condition<S, C>>, Serial
 		mConditions.addAll(event.getPredecessorConditions());
 		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		return this.mConditions.toString();
 	}
-	
+
 	/**
 	 * @return A new marking containing the places corresponding to the conditionMarkings Conditions.
 	 */

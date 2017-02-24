@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.A
  */
 @FunctionalInterface
 public interface IAutomatonWithSccComputation<LETTER, STATE> {
-	
+
 	/**
 	 * Computes all balls of given subset of states.
 	 * 

@@ -61,62 +61,62 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
 	private static final int WARN_SIZE_1 = 2;
 	private static final int WARN_SIZE_2 = 4;
-	
+
 	/**
 	 * Considering O empty for subset component will safe some states.
 	 */
 	private static final boolean O_IS_EMPTY = true;
-	
+
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
-	
+
 	/**
 	 * TODO Allow definition of a maximal rank for cases where you know that
 	 * this is sound. E.g. if the automaton is reverse deterministic a maximal
 	 * rank of 2 is sufficient, see paper of Seth Forgaty.
 	 */
 	private final int mUserDefinedMaxRank;
-	
+
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
-	
+
 	private final NestedWordAutomatonCache<LETTER, STATE> mCache;
-	
+
 	private final IBuchiComplementFkvStateFactory<STATE> mStateFactory;
-	
+
 	/**
 	 * Maps DeterminizedState to its representative in the resulting automaton.
 	 */
 	private final Map<DeterminizedState<LETTER, STATE>, STATE> mDet2res = new HashMap<>();
-	
+
 	/**
 	 * Maps a state in resulting automaton to the FkvSubsetComponentState for which it
 	 * was created.
 	 */
 	private final Map<STATE, FkvSubsetComponentState<LETTER, STATE>> mRes2scs = new HashMap<>();
-	
+
 	/**
 	 * Maps a LevelRankingState to its representative in the resulting automaton.
 	 */
 	private final Map<LevelRankingState<LETTER, STATE>, STATE> mLrk2res = new HashMap<>();
-	
+
 	/**
 	 * Maps a state in resulting automaton to the LevelRankingState for which it
 	 * was created.
 	 */
 	private final Map<STATE, LevelRankingState<LETTER, STATE>> mRes2lrk = new HashMap<>();
-	
+
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
-	
+
 	/**
 	 * Highest rank that occured during the construction. Used only for
 	 * statistics.
 	 */
 	private int mHighestRank = -1;
-	
+
 	private final MultiOptimizationLevelRankingGenerator<LETTER, STATE, LevelRankingConstraint<LETTER, STATE>> mLevelRankingGenerator;
-	
+
 	private final STATE mSinkState;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -139,8 +139,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 			final INestedWordAutomatonSimple<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
 			final IBuchiComplementFkvStateFactory<STATE> stateFactory, final FkvOptimization optimization,
-			final int userDefinedMaxRank)
-			throws AutomataOperationCanceledException {
+			final int userDefinedMaxRank) throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
@@ -153,12 +152,12 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 				new MultiOptimizationLevelRankingGenerator<>(mServices, mOperand, optimization, userDefinedMaxRank);
 		mSinkState = constructSinkState();
 	}
-	
+
 	private void constructInitialState() {
 		final DeterminizedState<LETTER, STATE> detState = mStateDeterminizer.initialState();
 		getOrAdd(detState, true);
 	}
-	
+
 	private STATE constructSinkState() {
 		final DeterminizedState<LETTER, STATE> detSinkState = new DeterminizedState<>(mOperand);
 		final STATE resSinkState = mStateDeterminizer.getState(detSinkState);
@@ -167,7 +166,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 		mRes2scs.put(resSinkState, new FkvSubsetComponentState<>(detSinkState));
 		return resSinkState;
 	}
-	
+
 	/**
 	 * Return state of result automaton that represents lrkState. If no such
 	 * state was constructed yet, construct it.
@@ -189,7 +188,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 		}
 		return resSucc;
 	}
-	
+
 	/**
 	 * Return state of result automaton that represents detState. If no such
 	 * state was constructed yet, construct it.
@@ -209,75 +208,75 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 		}
 		return resSucc;
 	}
-	
+
 	public int getHighesRank() {
 		return mHighestRank;
 	}
-	
+
 	public int getPowersetStates() {
 		return mRes2scs.size();
 	}
-	
+
 	public int getRankStates() {
 		return mRes2lrk.size();
 	}
-	
+
 	@Override
 	public Iterable<STATE> getInitialStates() {
 		constructInitialState();
 		return mCache.getInitialStates();
 	}
-	
+
 	@Override
 	public Set<LETTER> getInternalAlphabet() {
 		return mOperand.getInternalAlphabet();
 	}
-	
+
 	@Override
 	public Set<LETTER> getCallAlphabet() {
 		return mOperand.getCallAlphabet();
 	}
-	
+
 	@Override
 	public Set<LETTER> getReturnAlphabet() {
 		return mOperand.getReturnAlphabet();
 	}
-	
+
 	@Override
 	public IStateFactory<STATE> getStateFactory() {
 		return mStateFactory;
 	}
-	
+
 	@Override
 	public boolean isInitial(final STATE state) {
 		return mCache.isInitial(state);
 	}
-	
+
 	@Override
 	public boolean isFinal(final STATE state) {
 		return mCache.isFinal(state);
 	}
-	
+
 	@Override
 	public STATE getEmptyStackState() {
 		return mCache.getEmptyStackState();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersInternal(final STATE state) {
 		return mOperand.getInternalAlphabet();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersCall(final STATE state) {
 		return mOperand.getCallAlphabet();
 	}
-	
+
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {
 		return mOperand.getReturnAlphabet();
 	}
-	
+
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
 			final LETTER letter) {
@@ -292,7 +291,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 				final STATE resSucc = getOrAdd(detSucc, false);
 				mCache.addInternalTransition(state, letter, resSucc);
 				resSuccs.add(resSucc);
-				
+
 				internalSuccessorsHelper(state, letter, resSuccs, detUp, O_IS_EMPTY, true, WARN_SIZE_1);
 			}
 			final LevelRankingState<LETTER, STATE> complUp = mRes2lrk.get(state);
@@ -302,7 +301,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 		}
 		return mCache.internalSuccessors(state, letter);
 	}
-	
+
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
 		for (final LETTER letter : getInternalAlphabet()) {
@@ -310,10 +309,10 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 		}
 		return mCache.internalSuccessors(state);
 	}
-	
+
 	private void internalSuccessorsHelper(final STATE state, final LETTER letter, final Collection<STATE> resSuccs,
-			final IFkvState<LETTER, STATE> detUp, final boolean isEmpty,
-			final boolean predecessorIsSubsetComponent, final int warnSize) {
+			final IFkvState<LETTER, STATE> detUp, final boolean isEmpty, final boolean predecessorIsSubsetComponent,
+			final int warnSize) {
 		final LevelRankingConstraint<LETTER, STATE> constraints = getLevelRankingConstraintDrdCheck(isEmpty);
 		constraints.internalSuccessorConstraints(detUp, letter);
 		final Collection<LevelRankingState<LETTER, STATE>> result =
@@ -331,7 +330,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 			resSuccs.add(resSucc);
 		}
 	}
-	
+
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
 		final Collection<STATE> succs = mCache.succCall(state, letter);
@@ -345,7 +344,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 				final STATE resSucc = getOrAdd(detSucc, false);
 				mCache.addCallTransition(state, letter, resSucc);
 				resSuccs.add(resSucc);
-				
+
 				callSuccessorsHelper(state, letter, resSuccs, detUp, O_IS_EMPTY, true);
 			}
 			final LevelRankingState<LETTER, STATE> complUp = mRes2lrk.get(state);
@@ -355,7 +354,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 		}
 		return mCache.callSuccessors(state, letter);
 	}
-	
+
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
 		for (final LETTER letter : getCallAlphabet()) {
@@ -363,7 +362,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 		}
 		return mCache.callSuccessors(state);
 	}
-	
+
 	private void callSuccessorsHelper(final STATE state, final LETTER letter, final Collection<STATE> resSuccs,
 			final IFkvState<LETTER, STATE> fkvState, final boolean isEmpty,
 			final boolean predecessorIsSubsetComponent) {
@@ -377,7 +376,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 			resSuccs.add(resSucc);
 		}
 	}
-	
+
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
 			final LETTER letter) {
@@ -388,12 +387,12 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 			final FkvSubsetComponentState<LETTER, STATE> detUp = mRes2scs.get(state);
 			final FkvSubsetComponentState<LETTER, STATE> detDown = mRes2scs.get(hier);
 			if (detUp != null) {
-				final DeterminizedState<LETTER, STATE> detSucc = mStateDeterminizer.returnSuccessor(
-						detUp.getDeterminizedState(), detDown.getDeterminizedState(), letter);
+				final DeterminizedState<LETTER, STATE> detSucc = mStateDeterminizer
+						.returnSuccessor(detUp.getDeterminizedState(), detDown.getDeterminizedState(), letter);
 				final STATE resSucc = getOrAdd(detSucc, false);
 				mCache.addReturnTransition(state, hier, letter, resSucc);
 				resSuccs.add(resSucc);
-				
+
 				returnSuccessorsHelper(state, hier, letter, resSuccs, detUp, detDown, O_IS_EMPTY, true);
 			}
 			final LevelRankingState<LETTER, STATE> complUp = mRes2lrk.get(state);
@@ -410,7 +409,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 		}
 		return mCache.returnSuccessors(state, hier, letter);
 	}
-	
+
 	private void returnSuccessorsHelper(final STATE state, final STATE hier, final LETTER letter,
 			final Collection<STATE> resSuccs, final IFkvState<LETTER, STATE> fkvUp,
 			final IFkvState<LETTER, STATE> fkvDown, final boolean isEmpty, final boolean predecessorIsSubsetComponent) {
@@ -424,17 +423,17 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 			resSuccs.add(resSucc);
 		}
 	}
-	
+
 	private Collection<LevelRankingState<LETTER, STATE>> generateLevelRankings(
 			final boolean predecessorIsSubsetComponent, final LevelRankingConstraint<LETTER, STATE> constraints) {
 		return mLevelRankingGenerator.generateLevelRankings(constraints, predecessorIsSubsetComponent);
 	}
-	
+
 	private LevelRankingConstraint<LETTER, STATE> getLevelRankingConstraintDrdCheck(final boolean isEmpty) {
 		return new LevelRankingConstraintDrdCheck<>(mOperand, isEmpty, mUserDefinedMaxRank,
 				mStateDeterminizer.useDoubleDeckers());
 	}
-	
+
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
 			final STATE hier) {
@@ -443,17 +442,17 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 		}
 		return mCache.returnSuccessorsGivenHier(state, hier);
 	}
-	
+
 	@Override
 	public int size() {
 		return mCache.size();
 	}
-	
+
 	@Override
 	public Set<LETTER> getAlphabet() {
 		return mOperand.getAlphabet();
 	}
-	
+
 	@Override
 	public String sizeInformation() {
 		return "size Information not available";

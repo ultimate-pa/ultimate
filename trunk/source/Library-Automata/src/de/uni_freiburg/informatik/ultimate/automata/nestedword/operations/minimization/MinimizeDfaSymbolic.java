@@ -57,7 +57,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	/***********************************************************************/
 	/**
 	 * Necessary data elements for computing the minimal DFA.
 	 */
@@ -69,23 +68,22 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	private HashMap<STATE, Block> mPartition;
 	// Worklist
 	private Worklist mWorklist;
-	
+
 	private HashMap<LETTER, Term> mLetter2Formular;
 	// Logic solver object.
 	private SMTInterpol mSmtInterpol;
-	
+
 	private Sort mBool;
-	
+
 	private Sort[] mEmptyArray;
-	
-	/**************************************************************************/
-	
-	/***********************************************************************/
+
 	/**
 	 * Constructor.
 	 * 
 	 * @param services
 	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
 	 * @param operand
 	 *            operand
 	 */
@@ -93,45 +91,44 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand) {
 		super(services, stateFactory);
 		mOperand = operand;
-		
+
 		// Start minimization.
 		printStartMessage();
-		
+
 		final long startTime = System.currentTimeMillis();
 		minimizeDfaSymbolic();
 		final long endTime = System.currentTimeMillis();
 		mLogger.info("Symbolic minimization time: " + (endTime - startTime) + " ms.");
-		
+
 		printExitMessage();
 	}
-	
+
 	@Override
 	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return checkLanguageEquivalence(stateFactory);
 	}
-	
+
 	private void minimizeDfaSymbolic() {
 		// initialize logic solver and simplifier.
 		initializeSolver();
-		
+
 		preprocessingData();
-		
+
 		// initialize partition and worklist.
 		initializePartitionAndWorklist();
-		
-		/*******************************************************************/
+
 		/**
 		 * Start with main algorithm.
 		 */
 		final long mainStartTime = System.currentTimeMillis();
 		runLoop();
-		
+
 		/*******************************************************************/
 		/**
 		 * New automaton should be ready, build the result automaton.
@@ -140,20 +137,20 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		final long mainEndTime = System.currentTimeMillis();
 		mLogger.info("Symbolic main time: " + (mainEndTime - mainStartTime) + " ms");
 	}
-	
+
 	/**
 	 * Get number of states and labels for calling initializeMappings and
 	 * initializeLables.
 	 */
 	private void preprocessingData() {
 		mNumberOfStates = mOperand.size();
-		
+
 		// There is only one initial state in a DFA.
 		mInitialState = mOperand.getInitialStates().iterator().next();
-		
+
 		// get internal alphabet of moperand.
 		final Collection<LETTER> alphabet = mOperand.getInternalAlphabet();
-		
+
 		// iterate over whole alphabet and construct letter --> atom mapping.
 		final Iterator<LETTER> alphabetIt = alphabet.iterator();
 		mLetter2Formular = new HashMap<>(computeHashCap(alphabet.size()));
@@ -166,10 +163,10 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 			}
 			final Term var = mSmtInterpol.term(letter.toString());
 			mLetter2Formular.put(letter, var);
-			
+
 		}
 	}
-	
+
 	private void initializePartitionAndWorklist() {
 		// First create initial partition. Therefor create block with final
 		// states and block with nonfinal states.
@@ -190,13 +187,13 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 				mPartition.put(st, nonFinalStates);
 			}
 		}
-		
+
 		// Second, create initial Worklist.
 		mWorklist = new Worklist(2);
 		mWorklist.push(finalStates);
 		mWorklist.push(nonFinalStates);
 	}
-	
+
 	private void runLoop() {
 		// While worklist is not empty.
 		while (!mWorklist.isEmpty()) {
@@ -206,7 +203,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 			final HashMap<STATE, Term> labelMapping = constructMapping(r);
 			// Get all predecessors and store into collection s.
 			Iterator<STATE> s = labelMapping.keySet().iterator();
-			
+
 			// Building collection of blocks P of mpartition for which is known
 			// P intersect with s = NON - EMPTY
 			// and P \ s = NON - EMPTY.
@@ -242,7 +239,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 					}
 				}
 			}
-			
+
 			boolean iterate = true;
 			while (iterate) {
 				iterate = false;
@@ -263,7 +260,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 					Term psi = labelMapping.get(startState);
 					boolean splitterFound = false;
 					p1.add(startState);
-					
+
 					// iterate over rest of currentBlock P. (States).
 					while (pIterator.hasNext()) {
 						final STATE q = pIterator.next();
@@ -322,24 +319,24 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 			}
 		}
 	}
-	
+
 	private void initializeSolver() {
 		mSmtInterpol = new SMTInterpol();
-		
+
 		// Set logic of solver object.
 		mSmtInterpol.setLogic(Logics.QF_UF);
-		
+
 		mBool = mSmtInterpol.sort("Bool");
 		mEmptyArray = new Sort[] {};
 		throw new UnsupportedOperationException("Contact DD about creating SMTInterpol without SolverBuilder");
 	}
-	
+
 	// Construct mapping for transitions of predecessor states leading into
 	// block r.
 	private HashMap<STATE, Term> constructMapping(final Block r) {
 		// create HashMap with max size of number of states.
 		final HashMap<STATE, Term> retMap = new HashMap<>(computeHashCap(mNumberOfStates));
-		
+
 		// Iterate over all containing states of block r.
 		final Iterator<STATE> rIt = r.iterator();
 		while (rIt.hasNext()) {
@@ -373,7 +370,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		}
 		return retMap;
 	}
-	
+
 	private HashSet<Block> buildIntersectingBlocksSet(final Iterator<STATE> s) {
 		final HashSet<Block> ret = new HashSet<>(mNumberOfStates);
 		// Iterate over STATEs in s and lookup to which block they belong to.
@@ -386,7 +383,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		}
 		return ret;
 	}
-	
+
 	private HashMap<Block, Block> buildIntersectingBlocksMap(final Iterator<STATE> s) {
 		final HashMap<Block, Block> ret = new HashMap<>(computeHashCap(mNumberOfStates));
 		// Lookup all Blocks to which the STATEs of s belong to and add to Map.
@@ -406,7 +403,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		}
 		return ret;
 	}
-	
+
 	/**
 	 * Returns true, if there exists an incoming transition to state labeled
 	 * with letter letter.
@@ -420,7 +417,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	private boolean hasIncomingTransitionWithLetter(final STATE state, final LETTER letter) {
 		return mOperand.internalPredecessors(state, letter).iterator().hasNext();
 	}
-	
+
 	/**
 	 * Returns state, which is predecessors of state with transition labeled
 	 * with letter.
@@ -433,14 +430,14 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	 */
 	private LinkedList<STATE> getPredecessor(final STATE state, final LETTER letter) {
 		final LinkedList<STATE> ret = new LinkedList<>();
-		final Iterator<IncomingInternalTransition<LETTER, STATE>> it = mOperand.internalPredecessors(state, letter)
-				.iterator();
+		final Iterator<IncomingInternalTransition<LETTER, STATE>> it =
+				mOperand.internalPredecessors(state, letter).iterator();
 		while (it.hasNext()) {
 			ret.add(it.next().getPred());
 		}
 		return ret;
 	}
-	
+
 	// Create a conjunction from a collection of formulas.
 	private Term conjunct(final Term f1, final Term f2) {
 		final Term[] conjuncts = new Term[2];
@@ -448,7 +445,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		conjuncts[1] = f2;
 		return mSmtInterpol.term("and", conjuncts);
 	}
-	
+
 	// Create a disjunction from a collection of formulas.
 	private Term disjunct(final Term f1, final Term f2) {
 		final Term[] disjuncts = new Term[2];
@@ -456,171 +453,23 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		disjuncts[1] = f2;
 		return mSmtInterpol.term("or", disjuncts);
 	}
-	
+
 	// Negate a given formula.
 	private Term negate(final Term formula) {
 		final Term[] negation = new Term[1];
 		negation[0] = formula;
 		return mSmtInterpol.term("not", negation);
 	}
-	
+
 	private boolean isSatFormula(final Term formula) {
 		mSmtInterpol.push(1);
 		mSmtInterpol.assertTerm(formula);
-		
+
 		final LBool isSat = mSmtInterpol.checkSat();
 		mSmtInterpol.pop(1);
 		return isSat == LBool.SAT;
 	}
-	
-	/***********************************************************************/
-	/**
-	 * Class for representing worklist.
-	 * 
-	 * @author bjoern
-	 */
-	public class Worklist {
-		private final HashSet<Block> mSetsOfStates;
-		
-		// Constructor. Initialize an empty LinkedList<Block>.
-		public Worklist(final int size) {
-			mSetsOfStates = new HashSet<>(size);
-		}
-		
-		// Pop first element of worklist.
-		public Block pop() {
-			if (mSetsOfStates.isEmpty()) {
-				return null;
-			}
-			final Block toPop = mSetsOfStates.iterator().next();
-			mSetsOfStates.remove(toPop);
-			return toPop;
-		}
-		
-		// Push element into worklist.
-		public void push(final Block block) {
-			mSetsOfStates.add(block);
-		}
-		
-		// Remove given block from worklist.
-		public boolean remove(final Block block) {
-			return mSetsOfStates.remove(block);
-		}
-		
-		// Returns if worklist contains given block or not.
-		public boolean contains(final Block block) {
-			return mSetsOfStates.contains(block);
-		}
-		
-		// Return current size of Worklist.
-		public int size() {
-			return mSetsOfStates.size();
-		}
-		
-		// Returns if Worklist is currently empty or not.
-		public boolean isEmpty() {
-			return mSetsOfStates.isEmpty();
-		}
-		
-		@Override
-		public String toString() {
-			final StringBuilder b = new StringBuilder();
-			b.append('(');
-			final Iterator<Block> it = mSetsOfStates.iterator();
-			while (it.hasNext()) {
-				b.append(it.next().toString());
-			}
-			b.append(')');
-			return b.toString();
-		}
-		
-	}
-	
-	/***********************************************************************/
-	/**
-	 * Class for representing a block of states.
-	 * 
-	 * @author bjoern
-	 */
-	public class Block {
-		private HashSet<STATE> mStates;
-		
-		// Constructor.
-		public Block(final Collection<STATE> block) {
-			// create new ArrayList<STATE> with allocated space.
-			mStates = new HashSet<>(block.size());
-			final Iterator<STATE> it = block.iterator();
-			while (it.hasNext()) {
-				mStates.add(it.next());
-			}
-		}
-		
-		// Copy constructor.
-		public Block(final Block block) {
-			this(block.returnStates());
-		}
-		
-		// Default constructor. Just allocates space for HashSet<STATE>
-		// mstates.
-		public Block() {
-			mStates = new HashSet<>(mNumberOfStates);
-		}
-		
-		// Remove state <st> from block.
-		public boolean remove(final STATE st) {
-			return mStates.remove(st);
-		}
-		
-		// Add state <st> to block.
-		public void add(final STATE st) {
-			mStates.add(st);
-		}
-		
-		// Clear current block.
-		public void clear() {
-			mStates.clear();
-		}
-		
-		// Returns iterator for Block - Object.
-		public Iterator<STATE> iterator() {
-			return mStates.iterator();
-		}
-		
-		// Returns current size of block.
-		public int size() {
-			return mStates.size();
-		}
-		
-		// Returns if block contains currently state <state> or not.
-		public boolean contains(final STATE state) {
-			return mStates.contains(state);
-		}
-		
-		// Returns if block is currently empty or not.
-		public boolean isEmpty() {
-			return mStates.isEmpty();
-		}
-		
-		public Set<STATE> returnStates() {
-			return mStates;
-		}
-		
-		@Override
-		public String toString() {
-			final StringBuilder b = new StringBuilder();
-			b.append('(');
-			final Iterator<STATE> it = mStates.iterator();
-			while (it.hasNext()) {
-				b.append('{');
-				b.append(it.next().toString());
-				b.append('}');
-			}
-			b.append(')');
-			return b.toString();
-		}
-	}
-	
-	/***********************************************************************/
+
 	/**
 	 * Method for building the result automaton with reduced states and
 	 * transitions.
@@ -628,7 +477,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	private void buildResult() {
 		// Store new states in ArrayList with size = # blocks in partition.
 		final HashMap<Block, STATE> blockToNewStates = new HashMap<>(computeHashCap(mPartition.size()));
-		
+
 		final Block blockWithinInitialState = mPartition.get(mInitialState);
 		// Iterate over blocks in mpartition and build new state out of the
 		// states belonging to one block. Therefor first get values of HashMap.
@@ -653,7 +502,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 			blockToNewStates.put(blockOfPartition, newState);
 			addState(blockOfPartition == blockWithinInitialState, mOperand.isFinal(firstOfBlock), newState);
 		}
-		
+
 		// Iterate over each block to get the outgoing transitions of every
 		// first element of block.
 		it = blocksInPartition.iterator();
@@ -666,8 +515,8 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 			final STATE newPred = blockToNewStates.get(blockOfPartition);
 			// Get all outgoing transitions of firstOfBlock for taking all
 			// existing successors to build new transitions.
-			final Iterator<OutgoingInternalTransition<LETTER, STATE>> transitionIt = mOperand.internalSuccessors(
-					firstOfBlock).iterator();
+			final Iterator<OutgoingInternalTransition<LETTER, STATE>> transitionIt =
+					mOperand.internalSuccessors(firstOfBlock).iterator();
 			// Iterate over all outgoing transitions of each block to create a
 			// new transition add it to the new automaton.
 			while (transitionIt.hasNext()) {
@@ -684,5 +533,150 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 			}
 		}
 		finishResultConstruction(null, false);
+	}
+
+	/**
+	 * Class for representing worklist.
+	 * 
+	 * @author bjoern
+	 */
+	public class Worklist {
+		private final HashSet<Block> mSetsOfStates;
+
+		// Constructor. Initialize an empty LinkedList<Block>.
+		public Worklist(final int size) {
+			mSetsOfStates = new HashSet<>(size);
+		}
+
+		// Pop first element of worklist.
+		public Block pop() {
+			if (mSetsOfStates.isEmpty()) {
+				return null;
+			}
+			final Block toPop = mSetsOfStates.iterator().next();
+			mSetsOfStates.remove(toPop);
+			return toPop;
+		}
+
+		// Push element into worklist.
+		public void push(final Block block) {
+			mSetsOfStates.add(block);
+		}
+
+		// Remove given block from worklist.
+		public boolean remove(final Block block) {
+			return mSetsOfStates.remove(block);
+		}
+
+		// Returns if worklist contains given block or not.
+		public boolean contains(final Block block) {
+			return mSetsOfStates.contains(block);
+		}
+
+		// Return current size of Worklist.
+		public int size() {
+			return mSetsOfStates.size();
+		}
+
+		// Returns if Worklist is currently empty or not.
+		public boolean isEmpty() {
+			return mSetsOfStates.isEmpty();
+		}
+
+		@Override
+		public String toString() {
+			final StringBuilder b = new StringBuilder();
+			b.append('(');
+			final Iterator<Block> it = mSetsOfStates.iterator();
+			while (it.hasNext()) {
+				b.append(it.next().toString());
+			}
+			b.append(')');
+			return b.toString();
+		}
+
+	}
+
+	/**
+	 * Class for representing a block of states.
+	 * 
+	 * @author bjoern
+	 */
+	public class Block {
+		private HashSet<STATE> mStates;
+
+		// Constructor.
+		public Block(final Collection<STATE> block) {
+			// create new ArrayList<STATE> with allocated space.
+			mStates = new HashSet<>(block.size());
+			final Iterator<STATE> it = block.iterator();
+			while (it.hasNext()) {
+				mStates.add(it.next());
+			}
+		}
+
+		// Copy constructor.
+		public Block(final Block block) {
+			this(block.returnStates());
+		}
+
+		// Default constructor. Just allocates space for HashSet<STATE>
+		// mstates.
+		public Block() {
+			mStates = new HashSet<>(mNumberOfStates);
+		}
+
+		// Remove state <st> from block.
+		public boolean remove(final STATE st) {
+			return mStates.remove(st);
+		}
+
+		// Add state <st> to block.
+		public void add(final STATE st) {
+			mStates.add(st);
+		}
+
+		// Clear current block.
+		public void clear() {
+			mStates.clear();
+		}
+
+		// Returns iterator for Block - Object.
+		public Iterator<STATE> iterator() {
+			return mStates.iterator();
+		}
+
+		// Returns current size of block.
+		public int size() {
+			return mStates.size();
+		}
+
+		// Returns if block contains currently state <state> or not.
+		public boolean contains(final STATE state) {
+			return mStates.contains(state);
+		}
+
+		// Returns if block is currently empty or not.
+		public boolean isEmpty() {
+			return mStates.isEmpty();
+		}
+
+		public Set<STATE> returnStates() {
+			return mStates;
+		}
+
+		@Override
+		public String toString() {
+			final StringBuilder b = new StringBuilder();
+			b.append('(');
+			final Iterator<STATE> it = mStates.iterator();
+			while (it.hasNext()) {
+				b.append('{');
+				b.append(it.next().toString());
+				b.append('}');
+			}
+			b.append(')');
+			return b.toString();
+		}
 	}
 }

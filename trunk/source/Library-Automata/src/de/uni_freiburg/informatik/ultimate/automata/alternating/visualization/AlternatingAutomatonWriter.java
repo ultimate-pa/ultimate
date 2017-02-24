@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutom
  */
 public class AlternatingAutomatonWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	private final AlternatingAutomaton<LETTER, STATE> mAa;
-	
+
 	/**
 	 * @param writer
 	 *            Print writer.
@@ -57,7 +57,7 @@ public class AlternatingAutomatonWriter<LETTER, STATE> extends GeneralAutomatonP
 			final AlternatingAutomaton<LETTER, STATE> automaton) {
 		super(writer);
 		mAa = automaton;
-		
+
 		print("AlternatingAutomaton ");
 		print(name);
 		printAutomatonPrefix();
@@ -70,7 +70,7 @@ public class AlternatingAutomatonWriter<LETTER, STATE> extends GeneralAutomatonP
 		// printInternalTransitions(mAa.getTransitionsMap());
 		printAutomatonSuffix();
 	}
-	
+
 	/*
 	 * private void printAlphabet(Set<LETTER> set) { mprintWriter.print(TAB + "alphabet = { "); for (LETTER letter :
 	 * set) { mprintWriter.print(letter + ' '); } mprintWriter.print("},\n"); }

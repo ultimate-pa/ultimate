@@ -34,25 +34,25 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  * the game graph and for obtaining simulation results.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
 public interface ISimulationInfoProvider<LETTER, STATE> {
-	
-	
+
 	public boolean computeBitForInitialVertex(boolean isSpoilerAccepting, boolean isDuplicatorAccepting);
+
 	public boolean computeBitForSpoilerVertex(boolean predecessorBit, boolean isSpoilerAccepting);
+
 	public boolean computeBitForDuplicatorVertex(boolean predecessorBit, boolean isDuplicatorAccepting);
-	
+
 	public int computePriority(boolean bit, boolean isSpoilerAccepting, boolean isDuplicatorAccepting);
-	
+
 	public boolean isImmediatelyWinningForSpoiler(boolean isSpoilerAccepting, boolean isDuplicatorAccepting);
-	
-	public boolean isSimulationInformationProvider(SpoilerVertex<LETTER, STATE> spoilerVertex, 
+
+	public boolean isSimulationInformationProvider(SpoilerVertex<LETTER, STATE> spoilerVertex,
 			INestedWordAutomatonSimple<LETTER, STATE> inputAutomaton);
+
 	public boolean mayMergeFinalAndNonFinalStates();
-	
-	
-	
 }

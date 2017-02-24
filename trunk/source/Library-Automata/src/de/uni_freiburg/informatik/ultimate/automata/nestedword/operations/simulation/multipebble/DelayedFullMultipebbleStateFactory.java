@@ -40,22 +40,21 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- *
  * @param <STATE>
+ *            state type
  */
-public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleStateFactory<STATE, DelayedFullMultipebbleGameState<STATE>>  {
+public class DelayedFullMultipebbleStateFactory<STATE>
+		extends FullMultipebbleStateFactory<STATE, DelayedFullMultipebbleGameState<STATE>> {
 
-	
 	public DelayedFullMultipebbleStateFactory(final ISetOfPairs<STATE, ?> initialPartition) {
 		super(initialPartition);
 	}
-	
-	
+
 	@Override
 	public DelayedFullMultipebbleGameState<STATE> createSinkStateContent() {
-		return new AuxiliaryDelayedFullMultipebbleGameState<>(AuxiliaryGameStateType.DEFAULT_SINK_FOR_AUTOMATA_OPERATIONS);
+		return new AuxiliaryDelayedFullMultipebbleGameState<>(
+				AuxiliaryGameStateType.DEFAULT_SINK_FOR_AUTOMATA_OPERATIONS);
 	}
 
 	@Override
@@ -64,27 +63,29 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 	}
 
 	@Override
-	protected <LETTER> DelayedFullMultipebbleGameState<STATE> constructSpoilerWinningSink() {
+	protected DelayedFullMultipebbleGameState<STATE> constructSpoilerWinningSink() {
 		return new AuxiliaryDelayedFullMultipebbleGameState<>(AuxiliaryGameStateType.SPOILER_WINNING_SINK);
 	}
-	
-	
-	
+
 	@Override
-	protected <LETTER> DelayedFullMultipebbleGameState<STATE> computeSuccessorsInternalGivenSpoilerSucc(final DoubleDecker<STATE> spoilerSucc, final DelayedFullMultipebbleGameState<STATE> gs, 
-			final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+	protected <LETTER> DelayedFullMultipebbleGameState<STATE> computeSuccessorsInternalGivenSpoilerSucc(
+			final DoubleDecker<STATE> spoilerSucc, final DelayedFullMultipebbleGameState<STATE> gs, final LETTER letter,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
 		final NestedMap2<STATE, STATE, Boolean> duplicatorSuccStates = new NestedMap2<>();
 		for (final Triple<STATE, STATE, Boolean> doubleDecker : gs.getDuplicatorDoubleDeckers().entrySet()) {
-			for (final OutgoingInternalTransition<LETTER, STATE> trans : nwa.internalSuccessors(doubleDecker.getSecond(), letter)) {
+			for (final OutgoingInternalTransition<LETTER, STATE> trans : nwa
+					.internalSuccessors(doubleDecker.getSecond(), letter)) {
 				final DoubleDecker<STATE> duplicatorSucc = new DoubleDecker<>(doubleDecker.getFirst(), trans.getSucc());
-				final boolean succDuplicatorObligationBit = computeSuccDuplicatorObligationBit(spoilerSuccIsFinal, doubleDecker.getThird(), duplicatorSucc.getUp(), nwa);
+				final boolean succDuplicatorObligationBit = computeSuccDuplicatorObligationBit(spoilerSuccIsFinal,
+						doubleDecker.getThird(), duplicatorSucc.getUp(), nwa);
 				if (!succDuplicatorObligationBit && spoilerSucc.equals(duplicatorSucc)) {
-					// duplicator succs contains spoiler succ, hence spoiler cannot win 
+					// duplicator succs contains spoiler succ, hence spoiler cannot win
 					return null;
 				}
 				if (isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
-					duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(), succDuplicatorObligationBit);
+					duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(),
+							succDuplicatorObligationBit);
 				} else {
 					// do nothing
 					// pairs that are not in the initial partition cannot help Duplicator
@@ -93,30 +94,30 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 		}
 		if (duplicatorSuccStates.isEmpty()) {
 			return mSpoilerWinningSink;
-		} else {
-			return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 		}
+		return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 	}
-	
-
-	
-
 
 	@Override
-	protected <LETTER> DelayedFullMultipebbleGameState<STATE> computeSuccessorsCallGivenSpoilerSucc(final DoubleDecker<STATE> spoilerSucc, final DelayedFullMultipebbleGameState<STATE> gs, 
-			final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+	protected <LETTER> DelayedFullMultipebbleGameState<STATE> computeSuccessorsCallGivenSpoilerSucc(
+			final DoubleDecker<STATE> spoilerSucc, final DelayedFullMultipebbleGameState<STATE> gs, final LETTER letter,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
 		final NestedMap2<STATE, STATE, Boolean> duplicatorSuccStates = new NestedMap2<>();
 		for (final Triple<STATE, STATE, Boolean> doubleDecker : gs.getDuplicatorDoubleDeckers().entrySet()) {
-			for (final OutgoingCallTransition<LETTER, STATE> trans : nwa.callSuccessors(doubleDecker.getSecond(), letter)) {
-				final DoubleDecker<STATE> duplicatorSucc = new DoubleDecker<>(doubleDecker.getSecond(), trans.getSucc());
-				final boolean succDuplicatorObligationBit = computeSuccDuplicatorObligationBit(spoilerSuccIsFinal, doubleDecker.getThird(), duplicatorSucc.getUp(), nwa);
+			for (final OutgoingCallTransition<LETTER, STATE> trans : nwa.callSuccessors(doubleDecker.getSecond(),
+					letter)) {
+				final DoubleDecker<STATE> duplicatorSucc =
+						new DoubleDecker<>(doubleDecker.getSecond(), trans.getSucc());
+				final boolean succDuplicatorObligationBit = computeSuccDuplicatorObligationBit(spoilerSuccIsFinal,
+						doubleDecker.getThird(), duplicatorSucc.getUp(), nwa);
 				if (!succDuplicatorObligationBit && spoilerSucc.equals(duplicatorSucc)) {
-					// duplicator succs contains spoiler succ, hence spoiler cannot win 
+					// duplicator succs contains spoiler succ, hence spoiler cannot win
 					return null;
 				}
 				if (isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
-					duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(), succDuplicatorObligationBit);
+					duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(),
+							succDuplicatorObligationBit);
 				} else {
 					// do nothing
 					// pairs that are not in the initial partition cannot help Duplicator
@@ -125,35 +126,39 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 		}
 		if (duplicatorSuccStates.isEmpty()) {
 			return mSpoilerWinningSink;
-		} else {
-			return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 		}
+		return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 	}
-	
 
-	
 	@Override
-	protected <LETTER> DelayedFullMultipebbleGameState<STATE> computeSuccessorsReturnGivenSpoilerSucc(final DoubleDecker<STATE> spoilerSucc, final DelayedFullMultipebbleGameState<STATE> gs, 
-			final DelayedFullMultipebbleGameState<STATE> hier, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+	protected <LETTER> DelayedFullMultipebbleGameState<STATE> computeSuccessorsReturnGivenSpoilerSucc(
+			final DoubleDecker<STATE> spoilerSucc, final DelayedFullMultipebbleGameState<STATE> gs,
+			final DelayedFullMultipebbleGameState<STATE> hier, final LETTER letter,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
 		final NestedMap2<STATE, STATE, Boolean> duplicatorSuccStates = new NestedMap2<>();
 		for (final Triple<STATE, STATE, Boolean> hierDoubleDecker : hier.getDuplicatorDoubleDeckers().entrySet()) {
 			final Map<STATE, Boolean> up = gs.getDuplicatorDoubleDeckers().get(hierDoubleDecker.getSecond());
 			if (up != null) {
 				for (final Entry<STATE, Boolean> entry : up.entrySet()) {
-					for (final OutgoingReturnTransition<LETTER, STATE> trans : nwa.returnSuccessors(entry.getKey(), hierDoubleDecker.getSecond(), letter)) {
-						final DoubleDecker<STATE> duplicatorSucc = new DoubleDecker<>(hierDoubleDecker.getFirst(), trans.getSucc());
+					for (final OutgoingReturnTransition<LETTER, STATE> trans : nwa.returnSuccessors(entry.getKey(),
+							hierDoubleDecker.getSecond(), letter)) {
+						final DoubleDecker<STATE> duplicatorSucc =
+								new DoubleDecker<>(hierDoubleDecker.getFirst(), trans.getSucc());
 
-						final boolean succDuplicatorObligationBit = computeSuccDuplicatorObligationBit(spoilerSuccIsFinal, entry.getValue(), duplicatorSucc.getUp(), nwa);
+						final boolean succDuplicatorObligationBit = computeSuccDuplicatorObligationBit(
+								spoilerSuccIsFinal, entry.getValue(), duplicatorSucc.getUp(), nwa);
 						if (!succDuplicatorObligationBit && spoilerSucc.equals(duplicatorSucc)) {
-							// duplicator succs contains spoiler succ, hence spoiler cannot win 
+							// duplicator succs contains spoiler succ, hence spoiler cannot win
 							return null;
 						}
-						if (duplicatorSuccStates.get(duplicatorSucc.getDown(), duplicatorSucc.getUp()) == Boolean.FALSE) {
+						if (duplicatorSuccStates.get(duplicatorSucc.getDown(),
+								duplicatorSucc.getUp()) == Boolean.FALSE) {
 							// do nothing, DoubleDecker without obligation already contained
 						} else {
 							if (isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
-								duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(), succDuplicatorObligationBit);
+								duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(),
+										succDuplicatorObligationBit);
 							} else {
 								// do nothing
 								// pairs that are not in the initial partition cannot help Duplicator
@@ -162,29 +167,39 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 					}
 				}
 			}
-			
+
 		}
 		if (duplicatorSuccStates.isEmpty()) {
 			return mSpoilerWinningSink;
-		} else {
-			return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 		}
+		return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
 	}
-	
-	
-	
-	private <LETTER> boolean computeSuccDuplicatorObligationBit(final boolean spoilerSuccIsFinal, 
+
+	private <LETTER> boolean computeSuccDuplicatorObligationBit(final boolean spoilerSuccIsFinal,
 			final Boolean predecessorDuplicatorObligationBit, final STATE duplicatorSucc,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
-		return (spoilerSuccIsFinal || predecessorDuplicatorObligationBit) && ! nwa.isFinal(duplicatorSucc);
-		
+		return (spoilerSuccIsFinal || predecessorDuplicatorObligationBit) && !nwa.isFinal(duplicatorSucc);
+
 	}
-	
-	
-	
-	
-	public static class AuxiliaryDelayedFullMultipebbleGameState<STATE> extends DelayedFullMultipebbleGameState<STATE> 
-		implements IFullMultipebbleAuxiliaryGameState {
+
+	@Override
+	public <LETTER> boolean isImmediatelyWinningForSpoiler(final STATE q0, final STATE q1,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+		return false;
+	}
+
+	@Override
+	public <LETTER> DelayedFullMultipebbleGameState<STATE> constructInitialState(final STATE q0, final STATE q1,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+		final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers = new NestedMap2<>();
+		final boolean duplicatorObligationBit = operand.isFinal(q0) && !operand.isFinal(q1);
+		duplicatorDoubleDeckers.put(operand.getEmptyStackState(), q1, duplicatorObligationBit);
+		return new DelayedFullMultipebbleGameState<>(new DoubleDecker<>(operand.getEmptyStackState(), q0),
+				duplicatorDoubleDeckers);
+	}
+
+	public static class AuxiliaryDelayedFullMultipebbleGameState<STATE> extends DelayedFullMultipebbleGameState<STATE>
+			implements IFullMultipebbleAuxiliaryGameState {
 
 		private final AuxiliaryGameStateType mAuxiliaryGameStateType;
 
@@ -197,7 +212,7 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 		public NestedMap2<STATE, STATE, Boolean> getDuplicatorDoubleDeckers() {
 			throw new UnsupportedOperationException();
 		}
-		
+
 		@Override
 		public int getNumberOfDoubleDeckerPebbles() {
 			return 0;
@@ -222,7 +237,7 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 		protected boolean checkIfAllBitsAreTrue(final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
 			return true;
 		}
-		
+
 		@Override
 		protected boolean checkIfEmptyOrSomeBitIsTrue(final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
 			return true;
@@ -238,44 +253,20 @@ public class DelayedFullMultipebbleStateFactory<STATE> extends FullMultipebbleSt
 
 		@Override
 		public boolean equals(final Object obj) {
-			if (this == obj)
+			if (this == obj) {
 				return true;
-			if (!super.equals(obj))
+			}
+			if (!super.equals(obj)) {
 				return false;
-			if (getClass() != obj.getClass())
+			}
+			if (getClass() != obj.getClass()) {
 				return false;
-			final AuxiliaryDelayedFullMultipebbleGameState other = (AuxiliaryDelayedFullMultipebbleGameState) obj;
-			if (mAuxiliaryGameStateType != other.mAuxiliaryGameStateType)
+			}
+			final AuxiliaryDelayedFullMultipebbleGameState<?> other = (AuxiliaryDelayedFullMultipebbleGameState<?>) obj;
+			if (mAuxiliaryGameStateType != other.mAuxiliaryGameStateType) {
 				return false;
+			}
 			return true;
 		}
-		
-		
-		
-		
 	}
-
-
-
-
-
-
-	@Override
-	public <LETTER> boolean isImmediatelyWinningForSpoiler(final STATE q0, final STATE q1,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
-		return false;
-	}
-
-	@Override
-	public <LETTER> DelayedFullMultipebbleGameState<STATE> constructInitialState(final STATE q0, final STATE q1,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
-		final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers = new NestedMap2<>();
-		final boolean duplicatorObligationBit = operand.isFinal(q0) && ! operand.isFinal(q1);
-		duplicatorDoubleDeckers.put(operand.getEmptyStackState(), q1, duplicatorObligationBit);
-		return new DelayedFullMultipebbleGameState<>(new DoubleDecker<STATE>(operand.getEmptyStackState(), q0), duplicatorDoubleDeckers);
-	}
-
-	
-
-	
 }

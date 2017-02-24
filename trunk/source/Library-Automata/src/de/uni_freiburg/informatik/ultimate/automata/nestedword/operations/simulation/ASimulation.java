@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 /**
  * Abstract class for simulations which can be used for <b>reducing buechi automaton</b>.<br/>
  * <br/>
- * 
  * The simulation sets a {@link AGameGraph} object up that is based on the original buechi automaton. It then simulates
  * the game, explained in {@link AGameGraph}, and calculates so called progress measure for every vertex of the graph.
  * <br/>
@@ -73,24 +72,19 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * player is at turn. <i>Duplicator</i> wants to decrease the progress measure, which is done by visiting vertices with
  * priority 0, and <i>Spoiler</i> wants to increase it by visiting odd priorities.<br/>
  * <br/>
- * 
  * For correctness its important that the inputed automaton has <b>no dead ends</b> nor <b>duplicate transitions</b>.
  * <br/>
  * <br/>
- * 
  * The exact conditions are determined by the type of game graph. If, for a vertex (q0, q1), the progress measure does
  * not reach infinity we say q1 simulates q0.<br/>
  * This simulation information can then be used for buechi reduction. In some types of simulation such simulating states
  * can be merged without changing the underlying language.<br/>
  * <br/>
- * 
  * After starting the simulation, its result can be accessed by using {@link #getResult()}.<br/>
  * <br/>
- * 
  * For game graphs see {@link AGameGraph}, for information on the magic infinity bound see
  * {@link AGameGraph#getGlobalInfinity()}.<br/>
  * <br/>
- * 
  * The simulation process runs in <b>O(n^3 * k)</b> time and <b>O(n * k)</b> space where n is the amount of states and k
  * the amount of transitions from the inputed automaton.<br/>
  * The algorithm is based on the paper: <i>Fair simulation relations, parity games, and state space reduction for büchi
@@ -99,13 +93,16 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
- * 
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
  *            State class of buechi automaton
  */
 public abstract class ASimulation<LETTER, STATE> {
+	/**
+	 * The resulting possible reduced buechi automaton.
+	 */
+	protected INestedWordAutomaton<LETTER, STATE> mResult;
 
 	/**
 	 * The logger used by the Ultimate framework.
@@ -120,10 +117,6 @@ public abstract class ASimulation<LETTER, STATE> {
 	 */
 	private final IProgressAwareTimer mProgressTimer;
 	/**
-	 * The resulting possible reduced buechi automaton.
-	 */
-	protected INestedWordAutomaton<LETTER, STATE> mResult;
-	/**
 	 * The object that computes the SCCs of a given buechi automaton.
 	 */
 	private SccComputation<Vertex<LETTER, STATE>, StronglyConnectedComponent<Vertex<LETTER, STATE>>> mSccComp;
@@ -134,7 +127,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	/**
 	 * If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 */
-	private boolean mUseSCCs;
+	private boolean mUseSccs;
 	/**
 	 * Comparator that compares two given vertices by their progress measure whereas a higher measure gets favored
 	 * before a smaller.<br/>
@@ -157,7 +150,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
-	 * @param useSCCs
+	 * @param useSccs
 	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
@@ -166,18 +159,18 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
-	public ASimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
+	public ASimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSccs,
 			final IStateFactory<STATE> stateFactory, final ESimulationType simType)
 			throws AutomataOperationCanceledException {
 		mProgressTimer = progressTimer;
 		mLogger = logger;
-		mUseSCCs = useSCCs;
+		mUseSccs = useSccs;
 		mStateFactory = stateFactory;
 		mVertexComp = new VertexPmReverseComparator<>();
 
 		mSccComp = null;
 
-		mPerformance = new SimulationPerformance(simType, useSCCs);
+		mPerformance = new SimulationPerformance(simType, useSccs);
 	}
 
 	/**
@@ -192,7 +185,7 @@ public abstract class ASimulation<LETTER, STATE> {
 		mPerformance.startTimeMeasure(ETimeMeasure.OVERALL);
 		mPerformance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
 
-		if (mUseSCCs) { // calculate reduction with SCC
+		if (mUseSccs) { // calculate reduction with SCC
 			mPerformance.startTimeMeasure(ETimeMeasure.BUILD_SCC);
 			final DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory =
 					new DefaultStronglyConnectedComponentFactory<>();
@@ -204,14 +197,14 @@ public abstract class ASimulation<LETTER, STATE> {
 			final Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter =
 					new LinkedList<>(mSccComp.getSCCs()).iterator();
 			mPerformance.stopTimeMeasure(ETimeMeasure.BUILD_SCC);
-			int amountOfSCCs = 0;
+			int amountOfSccs = 0;
 			while (iter.hasNext()) {
 				final StronglyConnectedComponent<Vertex<LETTER, STATE>> scc = iter.next();
 				iter.remove();
 				efficientLiftingAlgorithm(calculateInfinityOfSCC(scc), scc.getNodes());
-				amountOfSCCs++;
+				amountOfSccs++;
 			}
-			mPerformance.setCountingMeasure(ECountingMeasure.SCCS, amountOfSCCs);
+			mPerformance.setCountingMeasure(ECountingMeasure.SCCS, amountOfSccs);
 		} else { // calculate reduction w/o SCCs
 			efficientLiftingAlgorithm(getGameGraph().getGlobalInfinity(), null);
 			mPerformance.addTimeMeasureValue(ETimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
@@ -233,7 +226,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 		retrieveGeneralAutomataPerformance();
 
-		mLogger.info((this.mUseSCCs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
+		mLogger.info((this.mUseSccs ? "SCC version" : "nonSCC version") + " took " + duration + " milliseconds.");
 	}
 
 	/**
@@ -354,7 +347,6 @@ public abstract class ASimulation<LETTER, STATE> {
 	/**
 	 * Calculates the best neighbor measure for a given vertex based on its local infinity and its containing SCC.<br/>
 	 * <br/>
-	 * 
 	 * If the vertex has no successors the corresponding player looses, <i>infinity</i> is returned for a
 	 * {@link DuplicatorVertex} and 0 for a {@link SpoilerVertex}.<br/>
 	 * For a {@link DuplicatorVertex} the minimal progress measure of its successor is returned, maximal for a
@@ -569,7 +561,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 		// Initialize working list and the C value of all vertices
 		createWorkingList();
-		if (mUseSCCs) {
+		if (mUseSccs) {
 			for (final Vertex<LETTER, STATE> v : scc) {
 				initWorkingListAndCWithVertex(v, localInfinity, scc);
 			}
@@ -620,7 +612,7 @@ public abstract class ASimulation<LETTER, STATE> {
 				predecessorsToConsider.addAll(game.getPushOverPredecessors(v));
 			}
 			for (final Vertex<LETTER, STATE> w : predecessorsToConsider) {
-				if (mUseSCCs && !scc.contains(w)) {
+				if (mUseSccs && !scc.contains(w)) {
 					continue;
 				}
 
@@ -771,7 +763,7 @@ public abstract class ASimulation<LETTER, STATE> {
 		}
 
 		// Initialize C value of vertex
-		if (mUseSCCs) {
+		if (mUseSccs) {
 			vertex.setC(calcNghbCounter(vertex, localInfinity, scc));
 		} else {
 			if (getGameGraph().hasSuccessors(vertex)) {
@@ -789,7 +781,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 * @return True if the simulation calculation gets optimized by using SCC, false if not.
 	 */
 	protected boolean isUsingSCCs() {
-		return mUseSCCs;
+		return mUseSccs;
 	}
 
 	/**
@@ -877,11 +869,11 @@ public abstract class ASimulation<LETTER, STATE> {
 	/**
 	 * Sets if the simulation calculation should be optimized using SCC, Strongly Connected Components or not.
 	 * 
-	 * @param useSCCs
+	 * @param useSccs
 	 *            True if the simulation calculation gets optimized by using SCC, false if not.
 	 */
-	protected void setUseSCCs(final boolean useSCCs) {
-		mUseSCCs = useSCCs;
+	protected void setUseSCCs(final boolean useSccs) {
+		mUseSccs = useSccs;
 	}
 
 	/**

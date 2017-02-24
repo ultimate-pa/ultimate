@@ -37,7 +37,6 @@ import java.util.ArrayList;
  * A few static print methods.
  *
  * @author stimpflj
- *
  */
 final class Print {
 	private Print() {
@@ -83,11 +82,11 @@ final class Print {
 		final PrintWriter p = new PrintWriter(writer);
 
 		p.printf("numStates %d%n", nwa.mNumStates);
-		p.printf("numISyms %d%n",  nwa.mNumISyms);
-		p.printf("numCSyms %d%n",  nwa.mNumCSyms);
-		p.printf("numRSyms %d%n",  nwa.mNumRSyms);
+		p.printf("numISyms %d%n", nwa.mNumISyms);
+		p.printf("numCSyms %d%n", nwa.mNumCSyms);
+		p.printf("numRSyms %d%n", nwa.mNumRSyms);
 		p.printf("numInitial %d%n", initialStates.size());
-		p.printf("numFinal %d%n",  finalStates.size());
+		p.printf("numFinal %d%n", finalStates.size());
 		p.printf("numITrans %d%n", nwa.mITrans.length);
 		p.printf("numCTrans %d%n", nwa.mCTrans.length);
 		p.printf("numRTrans %d%n", nwa.mRTrans.length);
@@ -113,13 +112,13 @@ final class Print {
 
 	static String makeString(final Partition cls) {
 		final StringWriter w = new StringWriter();
-		Print.printPartition(w,  cls);
+		Print.printPartition(w, cls);
 		return w.toString();
 	}
 
 	static String makeString(final NwaWithArrays nwa) {
 		final StringWriter w = new StringWriter();
-		Print.printNwa(w,  nwa);
+		Print.printNwa(w, nwa);
 		return w.toString();
 	}
 }

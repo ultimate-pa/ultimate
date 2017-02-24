@@ -64,7 +64,7 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mResult;
-	
+
 	/**
 	 * Given an INestedWordAutomaton nwa return a nested word automaton that has
 	 * the same states, but all states that are not reachable or dead ends are
@@ -84,44 +84,44 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		mReach = new NestedWordAutomatonReachableStates<>(mServices, mOperand);
 		mReach.computeNonLiveStates();
 		final NestedWordAutomatonFilteredStates<LETTER, STATE> filtered =
 				new NestedWordAutomatonFilteredStates<>(mServices, mReach, mReach.getOnlyLiveStates());
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, filtered);
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 		// assert (new TransitionConsitenceCheck<LETTER, STATE>(mResult)).consistentForAll();
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "RemoveNonLiveStates";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Reduced from " + mOperand.sizeInformation() + " to "
 				+ mResult.sizeInformation();
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
-	
+
 	/**
 	 * @return Size of the input automaton. If input was an automaton for on-demand construction, this is the size after
 	 *         the on-demand construction.
@@ -129,7 +129,7 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 	public int getInputSize() {
 		return mReach.size();
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
@@ -175,7 +175,7 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 		assert correct;
 		*/
 		correct = correct && checkEachState(reachableStatesCopy);
-		
+
 		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<>();
 		final BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<>(mServices, mOperand);
 		final boolean operandEmpty = operandEmptiness.getResult();
@@ -194,12 +194,12 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 			lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
 			lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mOperand.size()));
 		}
-		
+
 		for (final NestedLassoWord<LETTER> nlw : lassoWords) {
 			correct = correct && checkAcceptance(nlw, mOperand);
 			assert correct;
 		}
-		
+
 		if (!correct) {
 			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
 					"language is different", mOperand);
@@ -209,7 +209,7 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 		}
 		return correct;
 	}
-	
+
 	private boolean checkEachState(final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy) {
 		boolean correct = true;
 		for (final STATE state : mResult.getStates()) {
@@ -252,7 +252,7 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 		}
 		return correct;
 	}
-	
+
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataLibraryException {
 		final boolean op = (new BuchiAccepts<>(mServices, operand, nlw)).getResult();

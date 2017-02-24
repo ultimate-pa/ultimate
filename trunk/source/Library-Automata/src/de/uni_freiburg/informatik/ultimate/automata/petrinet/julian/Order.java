@@ -54,7 +54,7 @@ public abstract class Order<S, C> implements Comparator<Event<S, C>> {
 				+ c1.equals(c2);
 		return compare(c1, c2);
 	}
-	
+
 	/**
 	 * Compares two configurations.
 	 * 

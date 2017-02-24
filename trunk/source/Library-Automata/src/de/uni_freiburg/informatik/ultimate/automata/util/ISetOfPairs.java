@@ -48,7 +48,7 @@ public interface ISetOfPairs<E, T> extends Iterable<Pair<E, E>> {
 	 *            right-hand side entry
 	 */
 	void addPair(E lhs, E rhs);
-	
+
 	/**
 	 * @param lhs
 	 *            Lhs element.
@@ -57,7 +57,7 @@ public interface ISetOfPairs<E, T> extends Iterable<Pair<E, E>> {
 	 * @return {@code true} iff the pair (lhs, rhs) is contained in the set of pairs.
 	 */
 	boolean containsPair(E lhs, E rhs);
-	
+
 	/**
 	 * @return The data structure implementing the relation.
 	 */

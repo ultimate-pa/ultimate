@@ -40,9 +40,9 @@ public class IncrementalInclusionCheckDifference<LETTER, STATE, SF extends IInte
 		extends InclusionViaDifference<LETTER, STATE, SF> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 	public IncrementalInclusionCheckDifference(final AutomataLibraryServices services,
 			final IIncrementalInclusionStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> a,
-			final List<INestedWordAutomatonSimple<LETTER, STATE>> b) throws AutomataLibraryException {
-		super(services,stateFactory,a);
+			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b)
+			throws AutomataLibraryException {
+		super(services, stateFactory, a);
 		mLogger.info(startMessage());
 		for (final INestedWordAutomatonSimple<LETTER, STATE> bi : b) {
 			addSubtrahend(bi);
@@ -50,26 +50,29 @@ public class IncrementalInclusionCheckDifference<LETTER, STATE, SF extends IInte
 		// obtain counterexample, counterexample is null if inclusion holds
 		mLogger.info(exitMessage());
 	}
+
 	@Override
 	public String operationName() {
 		return "IncrementalInclusionCheckDifference";
 	}
+
 	@Override
 	public String startMessage() {
 		return "Start " + operationName();
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Exit " + operationName() + ". Result has " + size() + " states.";
 	}
+
 	@Override
 	public Boolean getResult() {
 		return getCounterexample() == null;
 	}
+
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory)
-			throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		// TODO Auto-generated method stub
 		return true;
 	}

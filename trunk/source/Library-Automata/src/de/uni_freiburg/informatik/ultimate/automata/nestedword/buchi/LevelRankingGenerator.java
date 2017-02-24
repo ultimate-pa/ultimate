@@ -49,7 +49,7 @@ public abstract class LevelRankingGenerator<LETTER, STATE, CONSTRAINT extends Le
 	protected final ILogger mLogger;
 	protected final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	protected final int mUserDefinedMaxRank;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -67,7 +67,7 @@ public abstract class LevelRankingGenerator<LETTER, STATE, CONSTRAINT extends Le
 		mOperand = operand;
 		mUserDefinedMaxRank = userDefinedMaxRank;
 	}
-	
+
 	/**
 	 * @param constraint
 	 *            The constraint.

@@ -58,7 +58,7 @@ public final class NetWriterUniqueId<LETTER, STATE> extends NetWriter<LETTER, ST
 	public NetWriterUniqueId(final PrintWriter writer, final String name, final PetriNetJulian<LETTER, STATE> net) {
 		super(writer, name, net);
 	}
-	
+
 	@Override
 	protected Map<LETTER, String> getAlphabetMapping(final Collection<LETTER> alphabet) {
 		int counter = 0;
@@ -69,7 +69,7 @@ public final class NetWriterUniqueId<LETTER, STATE> extends NetWriter<LETTER, ST
 		}
 		return alphabetMapping;
 	}
-	
+
 	@Override
 	protected Map<Place<LETTER, STATE>, String> getPlacesMapping(final Collection<Place<LETTER, STATE>> places) {
 		int counter = 0;

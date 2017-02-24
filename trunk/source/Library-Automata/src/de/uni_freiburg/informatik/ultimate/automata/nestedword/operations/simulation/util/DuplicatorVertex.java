@@ -35,7 +35,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph
  * AGameGraph}.<br/>
  * <br/>
- * 
  * The vertex representation is <b>(q0, q1, a, bit)</b> which means
  * <i>Spoiler</i> is currently at state q0 and made a move using an a-transition
  * before whereas <i>Duplicator</i> now is at q1 and must try to also use an
@@ -45,7 +44,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
  * @author Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * @date 16.01.2012
- * 
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>

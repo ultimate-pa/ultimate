@@ -74,7 +74,7 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 	 * Performance statistics of this operation.
 	 */
 	private final AutomataOperationStatistics mStatistics;
-	
+
 	/**
 	 * Creates a new buechi reduce object that starts reducing the given buechi
 	 * automaton.<br/>
@@ -95,12 +95,10 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 		this(services, stateFactory, operand,
 				new DelayedSimulation<>(services.getProgressAwareTimer(),
 						services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), false, stateFactory,
-						new DelayedGameGraph<>(services, stateFactory,
-								services.getProgressAwareTimer(),
-								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID),
-								operand)));
+						new DelayedGameGraph<>(services, stateFactory, services.getProgressAwareTimer(),
+								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand)));
 	}
-	
+
 	/**
 	 * Creates a new buechi reduce object that starts reducing the given buechi
 	 * automaton with a given simulation.<br/>
@@ -124,51 +122,51 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 		super(services, stateFactory);
 		mOperand = operand;
 		mLogger.info(startMessage());
-		
+
 		simulation.getGameGraph().generateGameGraphFromAutomaton();
 		simulation.doSimulation();
 		mResult = simulation.getResult();
 		super.directResultConstruction(mResult);
 		mStatistics = simulation.getSimulationPerformance().exportToAutomataOperationStatistics();
-		
+
 		final boolean compareWithSccResult = false;
 		if (compareWithSccResult) {
-			final DelayedGameGraph<LETTER, STATE> graph = new DelayedGameGraph<>(mServices,
-					stateFactory, mServices.getProgressAwareTimer(), mLogger, mOperand);
+			final DelayedGameGraph<LETTER, STATE> graph = new DelayedGameGraph<>(mServices, stateFactory,
+					mServices.getProgressAwareTimer(), mLogger, mOperand);
 			graph.generateGameGraphFromAutomaton();
-			final DelayedSimulation<LETTER, STATE> sccSim = new DelayedSimulation<>(
-					mServices.getProgressAwareTimer(), mLogger, true, stateFactory, graph);
+			final DelayedSimulation<LETTER, STATE> sccSim =
+					new DelayedSimulation<>(mServices.getProgressAwareTimer(), mLogger, true, stateFactory, graph);
 			sccSim.doSimulation();
 			final INestedWordAutomaton<LETTER, STATE> sccResult = sccSim.getResult();
 			if (mResult.size() != sccResult.size()) {
 				throw new AssertionError();
 			}
 		}
-		
+
 		mLogger.info(exitMessage());
 	}
-	
+
 	@Override
 	public Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return checkBuchiEquivalence(stateFactory);
 	}
-	
+
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		return mStatistics;
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "BuchiReduce";
 	}
-	
+
 	/**
 	 * Gets the logger used by the Ultimate framework.
 	 * 
@@ -177,7 +175,7 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 	protected ILogger getLogger() {
 		return mLogger;
 	}
-	
+
 	/**
 	 * Gets the inputed automaton.
 	 * 
@@ -187,7 +185,7 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 	protected INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	/**
 	 * Gets the service provider of the Ultimate framework.
 	 * 

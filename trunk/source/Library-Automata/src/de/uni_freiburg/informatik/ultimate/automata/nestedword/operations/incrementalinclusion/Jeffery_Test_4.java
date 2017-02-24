@@ -41,22 +41,20 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * 
  * compare speed between difference and IncrementalInclusionCheck4. If one algorithm is 10 times slower than the other
  * one, the automaton being used will be dumped to a folder which can be assigned by one of the constructor's
  * parameters.
  * 
- * 
  * @author jefferyyjhsu@iis.sinica.edu.tw
- *
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
-
 public class Jeffery_Test_4<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
-	String folder;
 	static long faster_i = 0, slower_i = 0;
 	static long timeBuffer1, timeBuffer2;
+	String folder;
 
 	public Jeffery_Test_4(final AutomataLibraryServices services, final IIncrementalInclusionStateFactory<STATE> sf,
 			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b)

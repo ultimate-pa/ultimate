@@ -36,12 +36,12 @@ public class BooleanExpression {
 	private final BitSet mAlpha;
 	private final BitSet mBeta;
 	private BooleanExpression mNextConjunctExpression;
-	
+
 	public BooleanExpression(final BitSet alpha, final BitSet beta) {
 		mAlpha = alpha;
 		mBeta = beta;
 	}
-	
+
 	public void addConjunction(final BooleanExpression booleanExpression) {
 		if (!containsConjunction(booleanExpression)) {
 			if (mNextConjunctExpression != null) {
@@ -51,7 +51,7 @@ public class BooleanExpression {
 			}
 		}
 	}
-	
+
 	public boolean containsConjunction(final BooleanExpression booleanExpression) {
 		if (equals(booleanExpression)) {
 			return true;
@@ -60,7 +60,7 @@ public class BooleanExpression {
 		}
 		return false;
 	}
-	
+
 	public boolean getResult(final BitSet bitVector) {
 		final BitSet result = (BitSet) bitVector.clone();
 		result.and(mAlpha);
@@ -72,7 +72,7 @@ public class BooleanExpression {
 		}
 		return false;
 	}
-	
+
 	public BooleanExpression cloneShifted(final Map<Integer, Integer> shiftMap, final int newSize) {
 		final BitSet shiftedAlpha = new BitSet(newSize);
 		final BitSet shiftedBeta = new BitSet(newSize);
@@ -90,15 +90,15 @@ public class BooleanExpression {
 		}
 		return result;
 	}
-	
-	/**
+
+	/*
 	 * TODO Christian 2016-08-16: This does not override the Object.equals()
 	 * method. It may be confusing when using in Collections. Also it does not check for 'null'.
 	 */
 	public boolean equals(final BooleanExpression booleanExpression) {
 		return mAlpha.equals(booleanExpression.mAlpha) && mBeta.equals(booleanExpression.mBeta);
 	}
-	
+
 	public <T> String toString(final List<T> variables) {
 		String text = "";
 		int r = 0;
@@ -122,15 +122,15 @@ public class BooleanExpression {
 		}
 		return text;
 	}
-	
+
 	public BitSet getAlpha() {
 		return mAlpha;
 	}
-	
+
 	public BitSet getBeta() {
 		return mBeta;
 	}
-	
+
 	public BooleanExpression getNextConjunctExpression() {
 		return mNextConjunctExpression;
 	}

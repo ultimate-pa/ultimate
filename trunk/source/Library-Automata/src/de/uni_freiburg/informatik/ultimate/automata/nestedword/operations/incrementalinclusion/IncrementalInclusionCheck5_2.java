@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 
 /**
- * 
  * This is an implementation of incremental inclusion check based on the Rn Algorithm with force covering.(trace base
  * version)<br/>
  * Unlike IncrementalInclusionCheck3, initial Rn set of each new node will be the expansion of its parent node's Rn set.
@@ -52,14 +51,17 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeSta
  * We use InclusionViaDIfference to check its correctness.
  * 
  * @author jefferyyjhsu@iis.sinica.edu.tw
- *
  * @param <LETTER>
+ *            letter type
  * @param <STATE>
+ *            state type
  */
-
 public class IncrementalInclusionCheck5_2<LETTER, STATE> extends AbstractIncrementalInclusionCheck<LETTER, STATE>
 		implements IOperation<LETTER, STATE, IIncrementalInclusionStateFactory<STATE>> {
 	public int counter_run = 0, counter_total_nodes = 0;
+	NestedRun<LETTER, STATE> result;
+	ArrayList<Leaf<LETTER, STATE>> startingLeafs = null, currentTerminalLeafs = null, completeLeafSet;
+	HashSet<Leaf<LETTER, STATE>> bufferedLeaf;
 	private final int counter;
 	private final INestedWordAutomatonSimple<LETTER, STATE> local_mA;
 	private final List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB;
@@ -68,9 +70,6 @@ public class IncrementalInclusionCheck5_2<LETTER, STATE> extends AbstractIncreme
 	// private int counter;
 	// public HashMap<STATE,ArrayList<NodeData<LETTER,STATE>>> completeTree,currentTree,terminalNodes;
 	// public HashMap<STATE,HashMap<NodeData<LETTER,STATE>,ArrayList<NodeData<LETTER,STATE>>>> coverage;
-	NestedRun<LETTER, STATE> result;
-	ArrayList<Leaf<LETTER, STATE>> startingLeafs = null, currentTerminalLeafs = null, completeLeafSet;
-	HashSet<Leaf<LETTER, STATE>> bufferedLeaf;
 
 	class Leaf<LET, STA> {
 		public HashMap<LETTER, HashSet<Leaf<LET, STA>>> nextLeaf;
@@ -123,9 +122,9 @@ public class IncrementalInclusionCheck5_2<LETTER, STATE> extends AbstractIncreme
 		mLogger.info(exitMessage());
 	}
 
-	public IncrementalInclusionCheck5_2(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> sf,
-			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b)
-			throws AutomataLibraryException {
+	public IncrementalInclusionCheck5_2(final AutomataLibraryServices services,
+			final IDeterminizeStateFactory<STATE> sf, final INestedWordAutomatonSimple<LETTER, STATE> a,
+			final List<INestedWordAutomatonSimple<LETTER, STATE>> b) throws AutomataLibraryException {
 		super(services, a);
 		counter = 0;
 		IncrementalInclusionCheck2.abortIfContainsCallOrReturn(a);

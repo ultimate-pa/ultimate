@@ -43,9 +43,9 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
  */
 public class InhibitorTransition<S, C> extends Transition<S, C> {
 	private static final long serialVersionUID = 933451776613619705L;
-	
+
 	private final Collection<Place<S, C>> mInhibitors;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -66,7 +66,7 @@ public class InhibitorTransition<S, C> extends Transition<S, C> {
 		super(symbol, predecessors, successors, totalOrderId);
 		mInhibitors = inhibitors;
 	}
-	
+
 	public Collection<Place<S, C>> getInhibitors() {
 		return mInhibitors;
 	}

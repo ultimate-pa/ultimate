@@ -56,7 +56,7 @@ public abstract class AbstractMinimizeIncremental<LETTER, STATE> extends Abstrac
 	 * The interrupt.
 	 */
 	protected final Interrupt mInterrupt;
-	
+
 	/**
 	 * This constructor should be called by all subclasses and only by them.
 	 * 
@@ -73,15 +73,15 @@ public abstract class AbstractMinimizeIncremental<LETTER, STATE> extends Abstrac
 		mInterrupt = interrupt;
 		assert (mInterrupt == null)
 				|| (!mInterrupt.getStatus()) : "The interrupt tells to terminate right at the beginning.";
-		
+
 		printStartMessage();
 	}
-	
+
 	@Override
 	protected final INestedWordAutomaton<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {

@@ -63,12 +63,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER, STATE, Doubleton<STATE>> {
 	@SuppressWarnings("rawtypes")
 	private static final Doubleton[] EMPTY_LITERALS = new Doubleton[0];
-	
+
 	private final Map<STATE, Set<STATE>> mState2EquivalenceClass;
 	private final Iterable<Set<STATE>> mInitialPartition;
 	private final int mLargestBlockInitialPartition;
 	private final int mInitialPartitionSize;
-	
+	private final long mNumberOfInitialPairs;
+
 	/**
 	 * Constructor that should be called by the automata script interpreter.
 	 * 
@@ -85,9 +86,9 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand,
-				new PartitionBackedSetOfPairs<>(Collections.singleton(operand.getStates())), new Settings<>());
+				new PartitionBackedSetOfPairs<>(Collections.singleton(operand.getStates())), new Settings<>(), false);
 	}
-	
+
 	/**
 	 * Constructor with an initial partition.
 	 * 
@@ -108,9 +109,34 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISetOfPairs<STATE, Collection<Set<STATE>>> initialPartition, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, initialPartition, settings, true);
+		this(services, stateFactory, operand, initialPartition, settings, false, true);
 	}
-	
+
+	/**
+	 * Constructor with an initial partition and library mode switch.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param stateFactory
+	 *            state factory
+	 * @param operand
+	 *            input nested word automaton
+	 * @param initialPartition
+	 *            We only try to merge states that are in one of the blocks.
+	 * @param settings
+	 *            settings wrapper
+	 * @param libraryMode
+	 *            {@code true} iff solver is called by another operation
+	 * @throws AutomataOperationCanceledException
+	 *             thrown by cancel request
+	 */
+	public MinimizeNwaPmaxSat(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final ISetOfPairs<STATE, Collection<Set<STATE>>> initialPartition, final Settings<STATE> settings,
+			final boolean libraryMode) throws AutomataOperationCanceledException {
+		this(services, stateFactory, operand, initialPartition, settings, true, libraryMode);
+	}
+
 	/**
 	 * Full constructor.
 	 * 
@@ -126,17 +152,20 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	 *            settings wrapper
 	 * @param applyInitialPartitionPreprocessing
 	 *            {@code true} iff preprocessing of the initial partition should be applied
+	 * @param libraryMode
+	 *            {@code true} iff solver is called by another operation
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
 	public MinimizeNwaPmaxSat(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISetOfPairs<STATE, Collection<Set<STATE>>> initialPartition, final Settings<STATE> settings,
-			final boolean applyInitialPartitionPreprocessing) throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand, settings, new NestedMap2<>());
-		
+			final boolean applyInitialPartitionPreprocessing, final boolean libraryMode)
+			throws AutomataOperationCanceledException {
+		super(services, stateFactory, operand, settings, new NestedMap2<>(), libraryMode);
+
 		printStartMessage();
-		
+
 		mInitialPartition = applyInitialPartitionPreprocessing
 				? new LookaheadPartitionConstructor<>(services, operand, initialPartition.getRelation(),
 						mSettings.getFinalStateConstraints(), false).getPartition().getRelation()
@@ -144,38 +173,63 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 		mState2EquivalenceClass = new HashMap<>();
 		int largestBlockInitialPartition = 0;
 		int initialPartitionSize = 0;
-		for (final Set<STATE> equivalenceClass : mInitialPartition) {
-			for (final STATE state : equivalenceClass) {
-				mState2EquivalenceClass.put(state, equivalenceClass);
+		long initialPairsSize = 0;
+		for (final Set<STATE> block : mInitialPartition) {
+			for (final STATE state : block) {
+				mState2EquivalenceClass.put(state, block);
 			}
-			largestBlockInitialPartition = Math.max(largestBlockInitialPartition, equivalenceClass.size());
+			largestBlockInitialPartition = Math.max(largestBlockInitialPartition, block.size());
+			initialPairsSize += ((long) block.size()) * ((long) block.size()) - block.size();
 			++initialPartitionSize;
 		}
 		mLargestBlockInitialPartition = largestBlockInitialPartition;
 		mInitialPartitionSize = initialPartitionSize;
+		mNumberOfInitialPairs = initialPairsSize;
 		mLogger.info("Initial partition has " + initialPartitionSize + " blocks, largest block has "
 				+ largestBlockInitialPartition + " states");
-		
+
 		run();
+
+		printExitMessage();
 	}
-	
+
 	@Override
 	protected String createTaskDescription() {
-		return NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(
-				operationName(), mOperand, mInitialPartitionSize, mLargestBlockInitialPartition);
+		return NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(operationName(), mOperand,
+				mInitialPartitionSize, mLargestBlockInitialPartition);
 	}
-	
+
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
-		if (mLargestBlockInitialPartition != 0) {
-			statistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_EQUIVALENCE_CLASS,
-					mLargestBlockInitialPartition);
-			statistics.addKeyValuePair(StatisticsType.SIZE_INITIAL_PARTITION, mInitialPartitionSize);
-		}
+		addStatistics(statistics, false);
 		return statistics;
 	}
-	
+
+	@Override
+	public void addStatistics(final AutomataOperationStatistics statistics) {
+		addStatistics(statistics, true);
+	}
+
+	private void addStatistics(final AutomataOperationStatistics statistics, final boolean addSuperStatistics) {
+		if (addSuperStatistics) {
+			super.addStatistics(statistics);
+		}
+		if (mLargestBlockInitialPartition != 0) {
+			statistics.addKeyValuePair(mLibraryMode
+					? StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK_PMAXSAT
+					: StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK, mLargestBlockInitialPartition);
+			statistics.addKeyValuePair(
+					mLibraryMode
+							? StatisticsType.SIZE_INITIAL_PARTITION_PMAXSAT
+							: StatisticsType.SIZE_INITIAL_PARTITION,
+					mInitialPartitionSize);
+			statistics.addKeyValuePair(
+					mLibraryMode ? StatisticsType.NUMBER_INITIAL_PAIRS_PMAXSAT : StatisticsType.NUMBER_INITIAL_PAIRS,
+					mNumberOfInitialPairs);
+		}
+	}
+
 	@Override
 	protected void generateVariablesAndAcceptingConstraints() throws AutomataOperationCanceledException {
 		for (final Set<STATE> equivalenceClass : mInitialPartition) {
@@ -184,29 +238,29 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			checkTimeout(GENERATING_VARIABLES);
 		}
 	}
-	
+
 	private void generateVariablesHelper(final STATE[] states) {
 		if (states.length <= 1) {
 			return;
 		}
-		
+
 		final boolean separateFinalAndNonfinalStates = mSettings.getFinalStateConstraints();
-		
+
 		for (int i = 0; i < states.length; i++) {
 			final STATE stateI = states[i];
-			
+
 			// add to transitivity generator
 			if (mTransitivityGenerator != null) {
 				mTransitivityGenerator.addContent(stateI);
 			}
-			
+
 			for (int j = 0; j < i; j++) {
 				final STATE stateJ = states[j];
 				final Doubleton<STATE> doubleton = new Doubleton<>(stateI, stateJ);
-				mStatePairs.put(stateI, stateJ, doubleton);
-				mStatePairs.put(stateJ, stateI, doubleton);
+				mStatePair2Var.put(stateI, stateJ, doubleton);
+				mStatePair2Var.put(stateJ, stateI, doubleton);
 				mSolver.addVariable(doubleton);
-				
+
 				if (separateFinalAndNonfinalStates) {
 					// separate final and nonfinal states ("direct bisimulation")
 					if (mOperand.isFinal(stateI) ^ mOperand.isFinal(stateJ)) {
@@ -218,13 +272,13 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			}
 		}
 	}
-	
+
 	private void generateBuchiConstraints(final STATE[] states) {
 		for (int i = 0; i < states.length; i++) {
 			final STATE stateI = states[i];
 			for (int j = 0; j < i; j++) {
 				final STATE stateJ = states[j];
-				
+
 				if (mOperand.isFinal(stateI) ^ mOperand.isFinal(stateJ)) {
 					final boolean statesAreDifferent = generateBuchiConstraintsOneDirection(stateI, stateJ);
 					if (!statesAreDifferent) {
@@ -235,14 +289,14 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			}
 		}
 	}
-	
+
 	/**
 	 * Creates constraints <tt>\bigwedge_{p_h} \geg X_{p,q} \lor \bigvee_{q_h} X_{p_h, q_h}</tt>.
 	 * 
-	 * @return
+	 * @return {@code true} iff states are different
 	 */
 	private boolean generateBuchiConstraintsOneDirection(final STATE state1, final STATE state2) {
-		final Doubleton<STATE> linDoubleton = mStatePairs.get(state1, state2);
+		final Doubleton<STATE> linDoubleton = mStatePair2Var.get(state1, state2);
 		outer: for (final STATE downState1 : getDownStatesArray(state1)) {
 			final STATE[] downStates2 = getDownStatesArray(state2);
 			final ArrayList<Doubleton<STATE>> hierDoubletons = new ArrayList<>(downStates2.length);
@@ -258,86 +312,86 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 					hierDoubletons.add(down12);
 				}
 			}
-			
+
 			if (hierDoubletons.isEmpty()) {
 				// result is a unit clause with only the linear doubleton
 				setStatesDifferent(linDoubleton);
 				return true;
 			}
-			
+
 			addInverseHornClause(linDoubleton, hierDoubletons);
 		}
 		return false;
 	}
-	
+
 	@Override
 	protected void generateTransitionAndTransitivityConstraints(final boolean addTransitivityConstraints)
 			throws AutomataOperationCanceledException {
 		final boolean generateBuchiConstraints = !mSettings.getFinalStateConstraints();
-		
+
 		for (final Set<STATE> equivalenceClass : mInitialPartition) {
 			final STATE[] states = constructStateArray(equivalenceClass);
-			
+
 			if (generateBuchiConstraints) {
 				generateBuchiConstraints(states);
 			}
-			
+
 			for (int i = 0; i < states.length; i++) {
 				generateTransitionConstraints(states, i);
 				checkTimeout(ADDING_TRANSITION_CONSTRAINTS);
 			}
-			
+
 			if (addTransitivityConstraints) {
 				generateTransitivityConstraints(states);
 			}
 		}
 	}
-	
+
 	private void generateTransitionConstraints(final STATE[] states, final int firstStateIndex) {
 		final STATE state1 = states[firstStateIndex];
 		final STATE[] downStates1 = getDownStatesArray(state1);
 		for (int j = 0; j < firstStateIndex; j++) {
 			final STATE state2 = states[j];
-			
+
 			// add transition constraints
 			generateTransitionConstraintsHelper(state1, state2, getVariable(state1, state2, false));
 		}
 		generateTransitionConstraintsHelperReturn2(state1, downStates1);
 	}
-	
+
 	private void generateTransitivityConstraints(final STATE[] states) throws AutomataOperationCanceledException {
 		for (int i = 0; i < states.length; i++) {
 			for (int j = 0; j < i; j++) {
 				for (int k = 0; k < j; k++) {
-					final Doubleton<STATE> doubletonIj = mStatePairs.get(states[i], states[j]);
-					final Doubleton<STATE> doubletonJk = mStatePairs.get(states[j], states[k]);
-					final Doubleton<STATE> doubletonIk = mStatePairs.get(states[i], states[k]);
-					
+					final Doubleton<STATE> doubletonIj = mStatePair2Var.get(states[i], states[j]);
+					final Doubleton<STATE> doubletonJk = mStatePair2Var.get(states[j], states[k]);
+					final Doubleton<STATE> doubletonIk = mStatePair2Var.get(states[i], states[k]);
+
 					addTransitivityClausesToSolver(doubletonIj, doubletonJk, doubletonIk);
 				}
 				checkTimeout(ADDING_TRANSITIVITY_CONSTRAINTS);
 			}
 		}
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	protected Doubleton<STATE>[] getEmptyVariableArray() {
 		return EMPTY_LITERALS;
 	}
-	
+
 	@Override
 	@SuppressWarnings("squid:S1698")
 	protected boolean isInitialPair(final STATE state1, final STATE state2) {
 		// equality intended here
 		return mState2EquivalenceClass.get(state1) == mState2EquivalenceClass.get(state2);
 	}
-	
+
 	@Override
 	protected boolean isInitialPair(final Doubleton<STATE> pair) {
 		return isInitialPair(pair.getOneElement(), pair.getOtherElement());
 	}
-	
+
 	@Override
 	protected UnionFind<STATE> constructResultEquivalenceClasses() throws AssertionError {
 		final UnionFind<STATE> resultingEquivalenceClasses = new UnionFind<>();
@@ -355,7 +409,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 		}
 		return resultingEquivalenceClasses;
 	}
-	
+
 	@Override
 	protected AbstractMaxSatSolver<Doubleton<STATE>> createTransitivitySolver() {
 		mTransitivityGenerator = new ScopedTransitivityGeneratorDoubleton<>(mSettings.isUsePathCompression());

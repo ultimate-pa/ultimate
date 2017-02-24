@@ -50,11 +50,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * buechi automaton.<br/>
  * Once started, results can then be get by using {@link #getResult()}.<br/>
  * <br/>
- * 
  * For more information on the type of simulation see {@link DirectGameGraph}.
  * <br/>
  * <br/>
- * 
  * The algorithm runs in <b>O(n^3 * k)</b> time and <b>O(n * k)</b> space where
  * n is the amount of states and k the amount of transitions from the inputed
  * automaton.<br/>
@@ -63,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
  * and Schuller</i>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
- *
  * @param <LETTER>
  *            Letter class of buechi automaton
  * @param <STATE>
@@ -82,7 +79,6 @@ public class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> 
 	 * After construction the simulation can be started and results can be get
 	 * by using {@link #getResult()}.<br/>
 	 * <br/>
-	 * 
 	 * For correctness its important that the inputed automaton has <b>no dead
 	 * ends</b> nor <b>duplicate transitions</b>.
 	 * 
@@ -104,7 +100,7 @@ public class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> 
 	 */
 	public DirectSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final IStateFactory<STATE> stateFactory, final AGameGraph<LETTER, STATE> game)
-					throws AutomataOperationCanceledException {
+			throws AutomataOperationCanceledException {
 		super(progressTimer, logger, useSCCs, stateFactory, ESimulationType.DIRECT);
 
 		game.setSimulationPerformance(getSimulationPerformance());

@@ -56,7 +56,7 @@ public final class Complement<LETTER, STATE>
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 	private final ISinkStateFactory<STATE> mStateFactory;
-	
+
 	/**
 	 * Constructor with default values.
 	 * 
@@ -74,7 +74,7 @@ public final class Complement<LETTER, STATE>
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, new PowersetDeterminizer<>(operand, true, stateFactory));
 	}
-	
+
 	/**
 	 * Extended constructor.
 	 * 
@@ -96,18 +96,18 @@ public final class Complement<LETTER, STATE>
 		mOperand = operand;
 		mStateDeterminizer = stateDeterminizer;
 		mStateFactory = stateFactory;
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		
+
 		mResult = computeComplement();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	private NestedWordAutomatonReachableStates<LETTER, STATE> computeComplement()
 			throws AutomataOperationCanceledException {
 		DeterminizeNwa<LETTER, STATE> determinized;
@@ -122,22 +122,18 @@ public final class Complement<LETTER, STATE>
 				return result;
 			}
 		}
-		determinized = new DeterminizeNwa<>(mServices, mOperand,
-				mStateDeterminizer, mStateFactory, null, true);
+		determinized = new DeterminizeNwa<>(mServices, mOperand, mStateDeterminizer, mStateFactory, null, true);
 		mComplement = new ComplementDeterministicNwa<>(determinized);
 		return new NestedWordAutomatonReachableStates<>(mServices, mComplement);
 	}
-	
+
 	private NestedWordAutomatonReachableStates<LETTER, STATE> tryWithoutDeterminization()
 			throws AutomataOperationCanceledException {
 		assert mStateDeterminizer instanceof PowersetDeterminizer;
-		final TotalizeNwa<LETTER, STATE> totalized =
-				new TotalizeNwa<>(mOperand, mStateFactory);
-		final ComplementDeterministicNwa<LETTER, STATE> complemented =
-				new ComplementDeterministicNwa<>(totalized);
+		final TotalizeNwa<LETTER, STATE> totalized = new TotalizeNwa<>(mOperand, mStateFactory);
+		final ComplementDeterministicNwa<LETTER, STATE> complemented = new ComplementDeterministicNwa<>(totalized);
 		final NestedWordAutomatonReachableStates<LETTER, STATE> result =
-				new NestedWordAutomatonReachableStates<>(
-						mServices, complemented);
+				new NestedWordAutomatonReachableStates<>(mServices, complemented);
 		if (!totalized.nonDeterminismInInputDetected()) {
 			mComplement = complemented;
 			if (mLogger.isInfoEnabled()) {
@@ -150,28 +146,27 @@ public final class Complement<LETTER, STATE>
 		}
 		return null;
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "Complement";
 	}
-	
+
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Result "
-				+ mResult.sizeInformation();
+		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
-	
+
 	@Override
 	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
@@ -180,19 +175,19 @@ public final class Complement<LETTER, STATE>
 				mLogger.info("Start testing correctness of " + operationName());
 			}
 			// intersection of operand and result should be empty
-			final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult = (new IntersectDD<>(mServices,
-					stateFactory, mOperand, mResult)).getResult();
+			final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
+					(new IntersectDD<>(mServices, stateFactory, mOperand, mResult)).getResult();
 			correct &= (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
 			final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
 					(new ComplementDD<>(mServices, stateFactory, mOperand)).getResult();
-			
+
 			// should have same number of states as old complementation
 			// does not hold, resultDD sometimes has additional sink state
 			//		correct &= (resultDD.size() == mResult.size());
-			
+
 			// should recognize same language as old computation
 			correct &= new IsEquivalent<>(mServices, stateFactory, resultDd, mResult).getResult();
-			
+
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("Finished testing correctness of " + operationName());
 			}

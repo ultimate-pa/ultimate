@@ -26,14 +26,14 @@ import java.util.Set;
  */
 public abstract class ScopedTransitivityGenerator<T, C> {
 	protected final Map<C, NormalNode<C>> mContent2node;
-	
+
 	private final ScopeStack<C> mStack;
-	
+
 	private final TemporaryRootPredicate mTemporaryRootPredicate;
 	private final PersistentRootPredicate mPersistentRootPredicate;
-	
+
 	private final boolean mCompressPaths;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -47,7 +47,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 		mPersistentRootPredicate = new PersistentRootPredicate();
 		mCompressPaths = compressPaths;
 	}
-	
+
 	/**
 	 * Adds a new content if not already present.
 	 * <p>
@@ -60,7 +60,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 	public void addContentIfNotPresent(final C content) {
 		mContent2node.put(content, new NormalNode<>(content));
 	}
-	
+
 	/**
 	 * Adds a new content.
 	 * <p>
@@ -74,14 +74,14 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 		final NormalNode<C> oldValue = mContent2node.put(content, new NormalNode<>(content));
 		assert oldValue == null : "Never add a content twice.";
 	}
-	
+
 	/**
-	 * @param content
-	 *            Content.
+	 * @param pair
+	 *            Content/pair.
 	 * @return true iff content is known
 	 */
 	public abstract boolean hasContent(final T pair);
-	
+
 	/**
 	 * Makes the given contents equal and reports all inferred transitivity information in order to be consistent.
 	 * 
@@ -98,7 +98,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 			// equality is already known, do nothing and report empty information
 			return Collections.emptyList();
 		}
-		
+
 		/*
 		 * Set equality by adding a bridge between the roots of the trees containing the elements.
 		 * <p>
@@ -107,24 +107,24 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 		 * TODO optimize: attach smaller to bigger tree (maybe not worth the extra effort)
 		 */
 		final BridgeNode<C> newBridgeNode = mStack.bridgeTrees(root1, root2);
-		
+
 		return getTransitiveInformation(root1, root2, newBridgeNode, pair);
 	}
-	
+
 	/**
 	 * Makes all current changes (i.e., of all scopes) persistent.
 	 */
 	public void makeAllScopesPersistent() {
 		mStack.makeAllScopesPersistent();
 	}
-	
+
 	/**
 	 * Reverts the last scope of changes.
 	 */
 	public void revertOneScope() {
 		mStack.revertOneScope();
 	}
-	
+
 	/**
 	 * Opens a new (temporary) scope.
 	 * <p>
@@ -134,7 +134,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 	public void addScope() {
 		mStack.addScope();
 	}
-	
+
 	/**
 	 * @param content1
 	 *            Content 1.
@@ -143,21 +143,21 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 	 * @return parametric pair of contents
 	 */
 	protected abstract T createPair(C content1, C content2);
-	
+
 	/**
 	 * @param pair
 	 *            Parametric pair.
 	 * @return first entry
 	 */
 	protected abstract C getFirst(T pair);
-	
+
 	/**
 	 * @param pair
 	 *            Parametric pair.
 	 * @return second entry
 	 */
 	protected abstract C getSecond(T pair);
-	
+
 	@SuppressWarnings("squid:S1698")
 	private NormalNode<C> find(final NormalNode<C> source) {
 		if (mCompressPaths) {
@@ -177,7 +177,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 		}
 		return findNextRoot(source, mTemporaryRootPredicate);
 	}
-	
+
 	private NormalNode<C> findNextRoot(final NormalNode<C> source, final INodePredicate predicate) {
 		INode<C> node = source;
 		while (!predicate.check(node)) {
@@ -186,7 +186,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 		assert node.getClass() == NormalNode.class : "Invalid tree root.";
 		return (NormalNode<C>) node;
 	}
-	
+
 	/**
 	 * Creates all pairs of contents which are also equal as a consequence of melding two trees.
 	 * 
@@ -205,7 +205,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 		// at the moment we only have an array-based implemenation
 		return getTransitiveInformationArrays(root1, root2, newBridgeNode, inputPair);
 	}
-	
+
 	/**
 	 * This implementation first transforms the trees to arrays and then just iterates over the two arrays to create all
 	 * pairs.<br>
@@ -228,7 +228,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 		// transform trees to arrays
 		final ArrayList<C> asList1 = toArrayList(root1, newBridgeNode);
 		final ArrayList<C> asList2 = toArrayList(root2, null);
-		
+
 		// insert all pairs to a list
 		final List<T> result = new ArrayList<>(asList1.size() * asList2.size() - 1);
 		for (final C content1 : asList1) {
@@ -239,17 +239,17 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 				}
 			}
 		}
-		
+
 		assert result.size() == (asList1.size() * asList2.size() - 1);
 		return result;
 	}
-	
+
 	@SuppressWarnings("squid:S1698")
 	private ArrayList<C> toArrayList(final NormalNode<C> root, final BridgeNode<C> newBridgeNode) {
 		final ArrayList<C> result = new ArrayList<>();
 		final ArrayDeque<INode<C>> stack = new ArrayDeque<>();
 		stack.push(root);
-		
+
 		while (!stack.isEmpty()) {
 			final INode<C> node = stack.pop();
 			if (node.getClass() == NormalNode.class) {
@@ -264,7 +264,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Stack of scopes objects which controls the different scopes of reversible information.
 	 * <p>
@@ -276,10 +276,10 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 	 */
 	private static final class ScopeStack<T> {
 		private final Deque<List<BridgeNode<T>>> mStack;
-		
+
 		private final IBridgeAction<T> mRevertBridgeAction;
 		private final IBridgeAction<T> mPersistentBridgeAction;
-		
+
 		/**
 		 * Constructor.
 		 */
@@ -291,18 +291,18 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 			 * reverted!
 			 */
 			addScope();
-			
+
 			mRevertBridgeAction = new TemporaryBridgeAction<>();
 			mPersistentBridgeAction = new PersistentBridgeAction<>();
 		}
-		
+
 		/**
 		 * Opens a new (temporary) scope.
 		 */
 		public void addScope() {
 			mStack.push(new ArrayList<>());
 		}
-		
+
 		/**
 		 * Removes the current scope and returns the stack content.<br>
 		 * If the stack is empty afterward, we automatically add a fresh scope.
@@ -313,40 +313,40 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 		 */
 		private List<BridgeNode<T>> removeScope() {
 			final List<BridgeNode<T>> oldStackContent = mStack.pop();
-			
+
 			if (mStack.isEmpty()) {
 				/*
 				 * TODO see (INIT_SCOPE)
 				 */
 				addScope();
 			}
-			
+
 			return oldStackContent;
 		}
-		
+
 		/**
 		 * Makes all current changes (i.e., of all scopes) persistent.
 		 */
 		public void makeAllScopesPersistent() {
 			for (int i = mStack.size() - 1; i >= 0; --i) {
 				final List<BridgeNode<T>> oldBridges = removeScope();
-				
+
 				// make equalities persistent
 				processBridgeNodes(mPersistentBridgeAction, oldBridges);
 			}
-			
+
 		}
-		
+
 		/**
 		 * Reverts the last scope of changes.
 		 */
 		public void revertOneScope() {
 			final List<BridgeNode<T>> oldBridges = removeScope();
-			
+
 			// revert equalities
 			processBridgeNodes(mRevertBridgeAction, oldBridges);
 		}
-		
+
 		/**
 		 * Creates a temporary bridge between the roots such that the first root becomes the parent and the second root
 		 * becomes the child of the bridge.
@@ -364,7 +364,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 			mStack.peek().add(bridgeNode);
 			return bridgeNode;
 		}
-		
+
 		private void processBridgeNodes(final IBridgeAction<T> action, final List<BridgeNode<T>> bridges) {
 			for (int i = bridges.size() - 1; i >= 0; --i) {
 				assert i == (bridges.size() - 1);
@@ -372,12 +372,12 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 				action.execute(bridgeNode);
 			}
 		}
-		
+
 		@Override
 		public String toString() {
 			return mStack.toString();
 		}
-		
+
 		/**
 		 * Action executed on a {@link BridgeNode}.
 		 * 
@@ -389,7 +389,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 		private interface IBridgeAction<T> {
 			void execute(BridgeNode<T> bridgeNode);
 		}
-		
+
 		/**
 		 * Disconnects a temporary bridge between two trees.
 		 * 
@@ -403,13 +403,13 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 				bridgeNode.getChild().makeRoot();
 				bridgeNode.getParent().removeBridgeChild(bridgeNode);
 			}
-			
+
 			@Override
 			public String toString() {
 				return this.getClass().getSimpleName();
 			}
 		}
-		
+
 		/**
 		 * Removes a temporary bridge between two trees and instead melds the trees persistently.
 		 * 
@@ -426,14 +426,14 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 				parent.addNormalChild(child);
 				parent.removeBridgeChild(bridgeNode);
 			}
-			
+
 			@Override
 			public String toString() {
 				return this.getClass().getSimpleName();
 			}
 		}
 	}
-	
+
 	/**
 	 * Predicate on an {@link INode}.
 	 * 
@@ -443,7 +443,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 	private interface INodePredicate {
 		boolean check(INode<?> node);
 	}
-	
+
 	/**
 	 * Returns true iff the node is a root.
 	 * 
@@ -454,13 +454,13 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 		public boolean check(final INode<?> node) {
 			return node.isRoot();
 		}
-		
+
 		@Override
 		public String toString() {
 			return this.getClass().getSimpleName();
 		}
 	}
-	
+
 	/**
 	 * Returns true iff the node is either a root or a bridge node.
 	 * 
@@ -471,13 +471,13 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 		public boolean check(final INode<?> node) {
 			return node.isTemporaryRootOrBridge();
 		}
-		
+
 		@Override
 		public String toString() {
 			return this.getClass().getSimpleName();
 		}
 	}
-	
+
 	/**
 	 * Doubly-linked tree's node interface.
 	 * 
@@ -487,14 +487,14 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 	 */
 	private interface INode<T> {
 		INode<T> getParent();
-		
+
 		Iterable<INode<T>> getChildren();
-		
+
 		boolean isRoot();
-		
+
 		boolean isTemporaryRootOrBridge();
 	}
-	
+
 	/**
 	 * Normal tree node.
 	 * 
@@ -507,51 +507,51 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 		private final T mContent;
 		private Set<INode<T>> mNormalChildren;
 		private Set<INode<T>> mBridgeChildren;
-		
+
 		public NormalNode(final T content) {
 			mParent = this;
 			mContent = content;
 			mNormalChildren = Collections.emptySet();
 			mBridgeChildren = Collections.emptySet();
 		}
-		
+
 		@Override
 		public INode<T> getParent() {
 			return mParent;
 		}
-		
+
 		@SuppressWarnings("squid:S1698")
 		@Override
 		public boolean isRoot() {
 			// equality is fine here
 			return getParent() == this;
 		}
-		
+
 		@Override
 		public boolean isTemporaryRootOrBridge() {
 			return isRoot() || (mParent.getClass() == BridgeNode.class);
 		}
-		
+
 		public void setParent(final INode<T> parent) {
 			mParent = parent;
 		}
-		
+
 		public T getContent() {
 			return mContent;
 		}
-		
+
 		/**
 		 * Makes the node a new root of its children.
 		 */
 		public void makeRoot() {
 			setParent(this);
 		}
-		
+
 		@Override
 		public Iterable<INode<T>> getChildren() {
 			return new ChildrenIterable<>(mNormalChildren, mBridgeChildren);
 		}
-		
+
 		/**
 		 * @param normalChild
 		 *            A normal node to add as a child.
@@ -562,7 +562,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 			}
 			mNormalChildren.add(normalChild);
 		}
-		
+
 		/**
 		 * @param normalChild
 		 *            A normal node to remove from the children.
@@ -574,7 +574,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 				mNormalChildren = Collections.emptySet();
 			}
 		}
-		
+
 		/**
 		 * @param bridgeChild
 		 *            A bridge node to add as a child.
@@ -585,7 +585,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 			}
 			mBridgeChildren.add(bridgeChild);
 		}
-		
+
 		/**
 		 * @param bridgeChild
 		 *            A bridge node to remove from the children.
@@ -597,15 +597,14 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 				mBridgeChildren = Collections.emptySet();
 			}
 		}
-		
+
 		@Override
 		public String toString() {
 			return "<NN: " + mContent + ", "
 					+ (isTemporaryRootOrBridge() ? (isRoot() ? "Root, " : "TempRoot, ") : "no TempRoot nor Bridge, ")
-					+ mNormalChildren.size() + " NC, "
-					+ mBridgeChildren.size() + " BC>";
+					+ mNormalChildren.size() + " NC, " + mBridgeChildren.size() + " BC>";
 		}
-		
+
 		/**
 		 * Iterable over a node's children.
 		 * 
@@ -616,19 +615,19 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 		private static class ChildrenIterable<T> implements Iterable<INode<T>> {
 			private final Collection<INode<T>> mNormalChildren;
 			private final Collection<INode<T>> mBridgeChildren;
-			
+
 			public ChildrenIterable(final Collection<INode<T>> normalChildren,
 					final Collection<INode<T>> bridgeChildren) {
 				mNormalChildren = normalChildren;
 				mBridgeChildren = bridgeChildren;
 			}
-			
+
 			@Override
 			public Iterator<INode<T>> iterator() {
 				return new ChildrenIterator<>(mNormalChildren, mBridgeChildren);
 			}
 		}
-		
+
 		/**
 		 * Iterator over a node's children.
 		 * 
@@ -640,7 +639,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 			private final Iterator<? extends INode<T>> mBridgeChildrenIterator;
 			private Iterator<? extends INode<T>> mIterator;
 			private boolean mIsAtBridgeNodes;
-			
+
 			public ChildrenIterator(final Collection<INode<T>> normalChildren,
 					final Collection<INode<T>> bridgeChildren) {
 				mBridgeChildrenIterator = bridgeChildren.iterator();
@@ -652,12 +651,12 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 					mIsAtBridgeNodes = false;
 				}
 			}
-			
+
 			@Override
 			public boolean hasNext() {
 				return mIterator.hasNext();
 			}
-			
+
 			@Override
 			public INode<T> next() {
 				assert mIterator.hasNext() : "Iterator not used properly.";
@@ -670,7 +669,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 			}
 		}
 	}
-	
+
 	/**
 	 * Node which acts as a temporary bridge between two trees.
 	 * 
@@ -681,36 +680,36 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 	private static final class BridgeNode<T> implements INode<T> {
 		private final NormalNode<T> mParent;
 		private final NormalNode<T> mChild;
-		
+
 		public BridgeNode(final NormalNode<T> parent, final NormalNode<T> child) {
 			mParent = parent;
 			mChild = child;
 		}
-		
+
 		@Override
 		public NormalNode<T> getParent() {
 			return mParent;
 		}
-		
+
 		@Override
 		public boolean isRoot() {
 			return false;
 		}
-		
+
 		@Override
 		public boolean isTemporaryRootOrBridge() {
 			return true;
 		}
-		
+
 		@Override
 		public Iterable<INode<T>> getChildren() {
 			return Collections.singleton(mChild);
 		}
-		
+
 		public NormalNode<T> getChild() {
 			return mChild;
 		}
-		
+
 		@Override
 		public String toString() {
 			return "<BN: " + mParent + ", " + mChild + ">";

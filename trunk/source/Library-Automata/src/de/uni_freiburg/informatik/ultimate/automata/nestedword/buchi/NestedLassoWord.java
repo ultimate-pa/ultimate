@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 public class NestedLassoWord<LETTER> {
 	private final NestedWord<LETTER> mStem;
 	private final NestedWord<LETTER> mLoop;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -51,15 +51,15 @@ public class NestedLassoWord<LETTER> {
 		this.mStem = stem;
 		this.mLoop = loop;
 	}
-	
+
 	public NestedWord<LETTER> getStem() {
 		return mStem;
 	}
-	
+
 	public NestedWord<LETTER> getLoop() {
 		return mLoop;
 	}
-	
+
 	@Override
 	public String toString() {
 		return "[  " + mStem.toString() + " , " + mLoop.toString() + " ]";

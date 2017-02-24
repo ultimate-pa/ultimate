@@ -40,9 +40,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 public final class AutomatonState extends
 		ModifiableExplicitEdgesMultigraph<AutomatonState, AutomatonTransition, AutomatonState, AutomatonTransition> {
 	private static final long serialVersionUID = 264254789648279608L;
-	
+
 	private final String mName;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -56,19 +56,19 @@ public final class AutomatonState extends
 		acceptance.put("isAccepting", isAccepting);
 		final Map<String, IAnnotations> annotations = getPayload().getAnnotations();
 		annotations.put("isAccepting", acceptance);
-		
+
 		if (content instanceof IAnnotations) {
 			annotations.put("Content", (IAnnotations) content);
 		}
-		
+
 		mName = String.valueOf(content);
 	}
-	
+
 	@Override
 	public String toString() {
 		return mName;
 	}
-	
+
 	@Override
 	public AutomatonState getLabel() {
 		return this;

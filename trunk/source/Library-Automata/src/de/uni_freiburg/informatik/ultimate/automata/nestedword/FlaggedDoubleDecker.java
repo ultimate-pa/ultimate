@@ -35,7 +35,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword;
  */
 public class FlaggedDoubleDecker<STATE> extends DoubleDecker<STATE> {
 	private final boolean mFlag;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -50,14 +50,14 @@ public class FlaggedDoubleDecker<STATE> extends DoubleDecker<STATE> {
 		super(downState, upState);
 		mFlag = flag;
 	}
-	
+
 	/**
 	 * @return Status of the flag.
 	 */
 	public boolean isFlagTrue() {
 		return mFlag;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -65,7 +65,7 @@ public class FlaggedDoubleDecker<STATE> extends DoubleDecker<STATE> {
 		result = prime * result + (mFlag ? 1231 : 1237);
 		return result;
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {

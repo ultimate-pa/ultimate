@@ -68,7 +68,7 @@ public final class NwaSimulationUtil {
 	private NwaSimulationUtil() {
 		// Utility class.
 	}
-	
+
 	/**
 	 * Checks if the simulation results saved in the given game graph are correct.<br>
 	 * This is only a semi-check, i.e., if it returns {@code false}, there is a violation. For instance, we ignore
@@ -96,7 +96,7 @@ public final class NwaSimulationUtil {
 		if (logger.isInfoEnabled()) {
 			logger.info("Starting checking correctness of simulation results.");
 		}
-		
+
 		// We check each supposed simulation and validate
 		// First collect them
 		final HashRelation<STATE, STATE> supposedSimulations = new HashRelation<>();
@@ -105,16 +105,16 @@ public final class NwaSimulationUtil {
 			if (!(spoilerVertex instanceof SpoilerNwaVertex<?, ?>)) {
 				continue;
 			}
-			
+
 			// All the states we need are from Spoiler
 			final STATE state1 = spoilerVertex.getQ0();
 			final STATE state2 = spoilerVertex.getQ1();
-			
+
 			// Ignore special cases
 			if (state1 == null || state2 == null) {
 				continue;
 			}
-			
+
 			final boolean considerVertex;
 			if (simulationType == ESimulationType.DELAYED) {
 				// For delayed simulation we need to choose between the vertex with bit set to true or false
@@ -126,13 +126,13 @@ public final class NwaSimulationUtil {
 			} else {
 				considerVertex = true;
 			}
-			
+
 			if (considerVertex
 					&& (spoilerVertex.getPM(null, gameGraph.getGlobalInfinity()) < gameGraph.getGlobalInfinity())) {
 				supposedSimulations.addPair(spoilerVertex.getQ0(), spoilerVertex.getQ1());
 			}
 		}
-		
+
 		// Validate the supposed simulations
 		for (final Entry<STATE, STATE> supposedSimulation : supposedSimulations.entrySet()) {
 			final STATE leftState = supposedSimulation.getKey();
@@ -141,28 +141,28 @@ public final class NwaSimulationUtil {
 				// ignore states that are not considered by the user
 				continue;
 			}
-			
+
 			// internal successors
 			if (!findSuccessorSimulationWitness(logger, supposedSimulations, leftState, rightState,
 					isInitialPairPredicate, () -> nwa.internalSuccessors(leftState), nwa::internalSuccessors)) {
 				return false;
 			}
-			
+
 			// call successors
 			if (!findSuccessorSimulationWitness(logger, supposedSimulations, leftState, rightState,
 					isInitialPairPredicate, () -> nwa.callSuccessors(leftState), nwa::callSuccessors)) {
 				return false;
 			}
-			
+
 			// Return transitions do not need to get matched
 		}
-		
+
 		if (logger.isInfoEnabled()) {
 			logger.info("Finished checking correctness of simulation results, they are correct.");
 		}
 		return true;
 	}
-	
+
 	private static <LETTER, STATE> boolean findSuccessorSimulationWitness(final ILogger logger,
 			final HashRelation<STATE, STATE> supposedSimulations, final STATE leftState, final STATE rightState,
 			final BiPredicate<STATE, STATE> isInitialPairPredicate,
@@ -176,7 +176,7 @@ public final class NwaSimulationUtil {
 			final STATE leftDest = leftTrans.getSucc();
 			final LETTER letter = leftTrans.getLetter();
 			final Set<STATE> destinationSimulation = supposedSimulations.getImage(leftDest);
-			
+
 			boolean foundMatchingTrans = false;
 			for (final IOutgoingTransitionlet<LETTER, STATE> rightTrans : succFromStateAndLetter.apply(rightState,
 					letter)) {
@@ -192,7 +192,7 @@ public final class NwaSimulationUtil {
 					return true;
 				}
 			}
-			
+
 			// If no matching transition could be found, the underlying
 			// simulation is incorrect
 			if (!foundMatchingTrans) {
@@ -205,7 +205,7 @@ public final class NwaSimulationUtil {
 		}
 		return true;
 	}
-	
+
 	/**
 	 * Computes the <i>inner simulation</i> on a given nwa game graph. The
 	 * simulation makes predecessors of non-simulating vertices also to
@@ -235,14 +235,14 @@ public final class NwaSimulationUtil {
 		if (logger.isDebugEnabled()) {
 			logger.debug("Starting innerSimulation.");
 		}
-		
+
 		// Undo removing of return bridges
 		if (gameGraph instanceof INwaGameGraph<?, ?>) {
 			((INwaGameGraph<LETTER, STATE>) gameGraph).undoRemovedReturnBridgesChanges();
 		} else {
 			throw new IllegalArgumentException("The given gameGraph must be an instance of INwaGameGraph.");
 		}
-		
+
 		// Collect all non simulating vertices
 		final Queue<Vertex<LETTER, STATE>> workingList = new LinkedList<>();
 		final int globalInfinity = gameGraph.getGlobalInfinity();
@@ -252,7 +252,7 @@ public final class NwaSimulationUtil {
 				if (spoilerVertex.getPM(null, globalInfinity) >= globalInfinity) {
 					workingList.add(spoilerVertex);
 				}
-				
+
 				// If operation was canceled, for example from the
 				// Ultimate framework
 				if (progressTimer != null && !progressTimer.continueProcessing()) {
@@ -261,11 +261,11 @@ public final class NwaSimulationUtil {
 				}
 			}
 		}
-		
+
 		// Start the simulation, beginning with all roots
 		while (!workingList.isEmpty()) {
 			final Vertex<LETTER, STATE> workingVertex = workingList.poll();
-			
+
 			// Impose every predecessor, that is no call predecessor, a progress
 			// measure of infinity. If they are Duplicator vertices, do that
 			// only if they have no other simulating successors
@@ -285,7 +285,7 @@ public final class NwaSimulationUtil {
 						continue;
 					}
 				}
-				
+
 				boolean considerVertex = true;
 				// If the predecessor is a duplicator vertex, check if he has an
 				// alternative successor
@@ -306,17 +306,17 @@ public final class NwaSimulationUtil {
 					// alternative
 					considerVertex = !hasAlternative;
 				}
-				
+
 				// Impose a progress measure of infinity and add the element
 				if (considerVertex) {
 					pred.setPM(globalInfinity);
 					workingList.add(pred);
-					
+
 					if (logger.isDebugEnabled()) {
 						logger.debug("\tImposed infinity for: " + pred);
 					}
 				}
-				
+
 				// If operation was canceled, for example from the
 				// Ultimate framework
 				if (progressTimer != null && !progressTimer.continueProcessing()) {
@@ -326,7 +326,7 @@ public final class NwaSimulationUtil {
 			}
 		}
 	}
-	
+
 	/**
 	 * Retrieves general performance data of the input and output nwa automaton.
 	 * Saves the data in the given internal performance object. Only nwa
@@ -350,44 +350,44 @@ public final class NwaSimulationUtil {
 			final SimulationPerformance simulationPerformance, final INestedWordAutomaton<LETTER, STATE> input,
 			final INestedWordAutomaton<LETTER, STATE> result, final AutomataLibraryServices services) {
 		final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(services, input, true);
-		
+
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE_INTERNAL,
 				inputAnalyzer.getNumberOfSymbols(SymbolType.INTERNAL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE_CALL,
 				inputAnalyzer.getNumberOfSymbols(SymbolType.CALL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE_RETURN,
 				inputAnalyzer.getNumberOfSymbols(SymbolType.RETURN));
-		
+
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS_INTERNAL,
 				inputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS_CALL,
 				inputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS_RETURN,
 				inputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
-		
+
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_INTERNAL_DENSITY_MILLION,
 				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.INTERNAL) * 1_000_000));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_CALL_DENSITY_MILLION,
 				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.CALL) * 1_000_000));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_RETURN_DENSITY_MILLION,
 				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.RETURN) * 1_000_000));
-		
+
 		final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, result, true);
-		
+
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE_INTERNAL,
 				outputAnalyzer.getNumberOfSymbols(SymbolType.INTERNAL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE_CALL,
 				outputAnalyzer.getNumberOfSymbols(SymbolType.CALL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE_RETURN,
 				outputAnalyzer.getNumberOfSymbols(SymbolType.RETURN));
-		
+
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS_INTERNAL,
 				outputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS_CALL,
 				outputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS_RETURN,
 				outputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
-		
+
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_INTERNAL_DENSITY_MILLION,
 				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.INTERNAL) * 1_000_000));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_CALL_DENSITY_MILLION,
@@ -395,7 +395,7 @@ public final class NwaSimulationUtil {
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_RETURN_DENSITY_MILLION,
 				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.RETURN) * 1_000_000));
 	}
-	
+
 	/**
 	 * Predicate representing a binary relation that is backed by a partition.
 	 * 
@@ -405,7 +405,7 @@ public final class NwaSimulationUtil {
 	 */
 	public static class BinaryRelationPredicateFromPartition<STATE> implements BiPredicate<STATE, STATE> {
 		private final Map<STATE, Set<STATE>> mState2states;
-		
+
 		/**
 		 * @param partition
 		 *            Partition.
@@ -418,7 +418,7 @@ public final class NwaSimulationUtil {
 				}
 			}
 		}
-		
+
 		@SuppressWarnings("squid:S1698")
 		@Override
 		public boolean test(final STATE state1, final STATE state2) {

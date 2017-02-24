@@ -51,7 +51,7 @@ public final class ComplementDD<LETTER, STATE>
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private INestedWordAutomatonSimple<LETTER, STATE> mDeterminizedOperand;
 	private final INestedWordAutomaton<LETTER, STATE> mResult;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -68,7 +68,7 @@ public final class ComplementDD<LETTER, STATE>
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
-		
+
 		mLogger.info(startMessage());
 		final boolean isDeterministic = new IsDeterministic<>(mServices, mOperand).getResult();
 		if (!isDeterministic) {
@@ -80,39 +80,39 @@ public final class ComplementDD<LETTER, STATE>
 		mResult = new ReachableStatesCopy<>(mServices, mDeterminizedOperand, true, true, false, false).getResult();
 		mLogger.info(exitMessage());
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "ComplementDD";
 	}
-	
+
 	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
 	}
-	
+
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}
-	
+
 	@Override
 	public boolean checkResult(final IIntersectionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Testing correctness of complement");
 		}
-		
+
 		boolean correct;
 		// TODO Christian 2017-02-16 Cast is temporary workaround until state factory becomes class parameter
-		final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult = (new IntersectDD<>(mServices,
-				stateFactory, mOperand, mResult, false)).getResult();
+		final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
+				(new IntersectDD<>(mServices, stateFactory, mOperand, mResult, false)).getResult();
 		correct = (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Finished testing correctness of complement");
 		}

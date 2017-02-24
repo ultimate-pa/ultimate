@@ -43,18 +43,18 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public class ReduceNwaDirectSimulationB<LETTER, STATE> extends ReduceNwaSimulationBased<LETTER, STATE> {
-	
+
 	public ReduceNwaDirectSimulationB(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand, new DirectSimulationInfoProvider<>());
 	}
-	
+
 	@Override
 	protected ESimulationType getSimulationType() {
 		return ESimulationType.DIRECT;
 	}
-	
+
 	@Override
 	protected Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {

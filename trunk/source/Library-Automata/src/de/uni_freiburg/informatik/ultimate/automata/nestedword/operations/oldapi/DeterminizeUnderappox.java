@@ -65,12 +65,12 @@ public class DeterminizeUnderappox<LETTER, STATE> extends DeterminizeDD<LETTER, 
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataOperationCanceledException {
 		super(services, operand, stateDeterminizer);
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "DeterminizeUnderapprox";
 	}
-	
+
 	/**
 	 * As opposed to {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determinize Determinize},
 	 * here a determinized state is only accepting if all its states are accepting.
@@ -85,10 +85,10 @@ public class DeterminizeUnderappox<LETTER, STATE> extends DeterminizeDD<LETTER, 
 		mDet2res.put(detState, resState);
 		mRes2det.put(resState, detState);
 		resInitials.add(resState);
-		
+
 		return resInitials;
 	}
-	
+
 	/**
 	 * Get the state in the resulting automaton that represents a
 	 * DeterminizedState. If this state in the resulting automaton does not
@@ -107,7 +107,7 @@ public class DeterminizeUnderappox<LETTER, STATE> extends DeterminizeDD<LETTER, 
 		mRes2det.put(resState, detState);
 		return resState;
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mTraversedNwa;

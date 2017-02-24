@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * MAX-SAT solver for Horn clauses.
- * The satisfying assignment returned by this solver is a locally optimal 
+ * The satisfying assignment returned by this solver is a locally optimal
  * solution in the following sense. If you replace one false-assignment to
  * a variable by a true-assignment then the resulting mapping is not a valid
  * assignment any more.
@@ -46,15 +46,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * of true-assigned variables is maximal).
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * @param <V> Kind of objects that are used as variables.
+ * @param <V>
+ *            Kind of objects that are used as variables.
  */
 public class HornMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 	protected Map<V, Boolean> mVariablesTemporarilySet = new HashMap<>();
-	
+
 	/**
 	 * Constructor.
 	 * 
-	 * @param services Ultimate services
+	 * @param services
+	 *            Ultimate services
 	 */
 	public HornMaxSatSolver(final AutomataLibraryServices services) {
 		super(services);
@@ -67,15 +69,15 @@ public class HornMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 			throw new UnsupportedOperationException("only legal before decisions were made");
 		}
 		assert mPropagatees.isEmpty();
-		
+
 		final V[] positiveAtoms;
 		if (positiveAtom == null) {
 			positiveAtoms = (V[]) new Object[0];
 		} else {
-			positiveAtoms = (V[]) new Object[]{ positiveAtom };
+			positiveAtoms = (V[]) new Object[] { positiveAtom };
 		}
 		final Clause<V> clause = new Clause<V>(this, positiveAtoms, negativeAtoms);
-		
+
 		if (clause.isEquivalentToTrue()) {
 			mClauses++;
 			mTrivialClauses++;
@@ -87,11 +89,11 @@ public class HornMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 			if (clause.isEquivalentToFalse()) {
 				mConjunctionEquivalentToFalse = true;
 				throw new UnsupportedOperationException("clause set is equivalent to false");
-			} else  {
-				for (final V var :clause.getNegativeAtoms()) {
+			} else {
+				for (final V var : clause.getNegativeAtoms()) {
 					mOccursNegative.addPair(var, clause);
 				}
-				for (final V var :clause.getPositiveAtoms()) {
+				for (final V var : clause.getPositiveAtoms()) {
 					mOccursPositive.addPair(var, clause);
 				}
 				if (clause.isPseudoUnit()) {
@@ -102,18 +104,17 @@ public class HornMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 			propagateAll();
 		}
 	}
-	
+
 	@Override
 	public void addClause(final V[] negativeAtoms, final V[] positiveAtoms) {
-		throw new UnsupportedOperationException(
-				"General clauses are not supported by this Horn solver.");
+		throw new UnsupportedOperationException("General clauses are not supported by this Horn solver.");
 	}
-	
+
 	@Override
 	protected Boolean getPersistentAssignment(final V var) {
 		final Boolean result = mVariablesIrrevocablySet.get(var);
-		assert (result == null) || (! mVariablesTemporarilySet.containsKey(var)) :
-			"Unsynchronized assignment data structures.";
+		assert (result == null)
+				|| (!mVariablesTemporarilySet.containsKey(var)) : "Unsynchronized assignment data structures.";
 		return result;
 	}
 
@@ -123,13 +124,10 @@ public class HornMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		if (result == null) {
 			return VariableStatus.UNSET;
 		}
-		assert !mVariablesIrrevocablySet.containsKey(var) :
-			"Unsynchronized assignment data structures.";
-		return result
-				? VariableStatus.TRUE
-				: VariableStatus.FALSE;
+		assert !mVariablesIrrevocablySet.containsKey(var) : "Unsynchronized assignment data structures.";
+		return result ? VariableStatus.TRUE : VariableStatus.FALSE;
 	}
-	
+
 	@Override
 	protected void setVariable(final V var, final boolean newStatus) {
 		if (mLogger.isDebugEnabled()) {
@@ -156,7 +154,7 @@ public class HornMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		}
 		mVariablesTemporarilySet = new HashMap<>();
 	}
-	
+
 	@Override
 	protected void decideOne() {
 		mDecisions++;
@@ -172,7 +170,7 @@ public class HornMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 
 	@Override
 	protected void backtrack(final V var) {
-		mWrongDecisions ++;
+		mWrongDecisions++;
 		mClausesMarkedForRemoval = new LinkedHashSet<>();
 		final Set<V> variablesIncorrectlySet = mVariablesTemporarilySet.keySet();
 		mVariablesTemporarilySet = new HashMap<>();
@@ -180,7 +178,7 @@ public class HornMaxSatSolver<V> extends AbstractMaxSatSolver<V> {
 		mPropagatees = new HashMap<>();
 		reEvaluateStatusOfAllClauses(variablesIncorrectlySet, var);
 		setVariable(var, false);
-		assert ! mConjunctionEquivalentToFalse : "resetting variable did not help";
+		assert !mConjunctionEquivalentToFalse : "resetting variable did not help";
 	}
 
 	@Override

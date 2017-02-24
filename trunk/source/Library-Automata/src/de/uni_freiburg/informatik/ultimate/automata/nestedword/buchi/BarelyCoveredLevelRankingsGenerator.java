@@ -57,7 +57,7 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 	private final boolean mRestrictToElasticLevelRankings;
 	private final boolean mVoluntaryDecreaseOnlyForStatesInO;
 	private final boolean mAllowDelayedRankDecrease;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -90,7 +90,7 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 		mVoluntaryDecreaseOnlyForStatesInO = voluntaryDecreaseOnlyForStatesInO;
 		mAllowDelayedRankDecrease = allowDelayedRankDecrease;
 	}
-	
+
 	@Override
 	public Collection<LevelRankingState<LETTER, STATE>> generateLevelRankings(
 			final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
@@ -122,31 +122,31 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 		}
 		return succLvls;
 	}
-	
+
 	private boolean complicatedCondition(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
 			final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker) {
 		return evenRankAndNotFinal(constraint, doubleDecker) && condition2(constraint, doubleDecker)
 				&& condition3(constraint, doubleDecker);
 	}
-	
+
 	private boolean evenRankAndNotFinal(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
 			final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker) {
 		return LevelRankingState.isEven(constraint.getRank(doubleDecker.getDown(), doubleDecker.getUp().getState()))
 				&& !mOperand.isFinal(doubleDecker.getUp().getState());
 	}
-	
+
 	private boolean condition2(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
 			final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker) {
-		return mAllowDelayedRankDecrease || constraint.nonAcceptingPredecessorsWithEvenRanksIsEmpty(
-				doubleDecker.getDown(), doubleDecker.getUp().getState());
+		return mAllowDelayedRankDecrease || constraint
+				.nonAcceptingPredecessorsWithEvenRanksIsEmpty(doubleDecker.getDown(), doubleDecker.getUp().getState());
 	}
-	
+
 	private boolean condition3(final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
 			final DoubleDecker<StateWithRankInfo<STATE>> doubleDecker) {
 		return !mVoluntaryDecreaseOnlyForStatesInO
 				|| constraint.inO(doubleDecker.getDown(), doubleDecker.getUp().getState());
 	}
-	
+
 	private LevelRankingState<LETTER, STATE> computeLevelRanking(
 			final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint,
 			final Set<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersWithVoluntaryDecrease) {
@@ -165,7 +165,7 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 		}
 		return result;
 	}
-	
+
 	private Pair<Integer, Boolean> getRankAndInO(
 			final Set<DoubleDecker<StateWithRankInfo<STATE>>> doubleDeckersWithVoluntaryDecrease,
 			final StateWithRankInfo<STATE> downState, final StateWithRankInfo<STATE> upState, final boolean oCandidate,

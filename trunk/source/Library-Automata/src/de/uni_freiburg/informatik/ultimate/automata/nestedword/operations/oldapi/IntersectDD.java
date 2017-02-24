@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE> {
 	private final IIntersectionStateFactory<STATE> mStateFactory;
-	
+
 	/**
 	 * Short constructor.
 	 * 
@@ -63,7 +63,7 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa) throws AutomataLibraryException {
 		this(services, stateFactory, fstNwa, sndNwa, false);
 	}
-	
+
 	/**
 	 * Extended constructor.
 	 * 
@@ -86,19 +86,19 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 			throws AutomataLibraryException {
 		super(services, stateFactory, fstNwa, sndNwa, minimizeResult);
 		mStateFactory = stateFactory;
-		
+
 		run();
-		
+
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
 		}
 	}
-	
+
 	@Override
 	public String operationName() {
 		return "IntersectDD";
 	}
-	
+
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isWarnEnabled()) {
@@ -106,17 +106,17 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 		}
 		return true;
 	}
-	
+
 	@Override
 	protected STATE intersect(final STATE fst, final STATE snd, final int track) {
 		return mStateFactory.intersection(fst, snd);
 	}
-	
+
 	@Override
 	protected int getSuccTrack(final int stateTrack, final STATE fstState, final STATE sndState) {
 		return 1;
 	}
-	
+
 	@Override
 	protected boolean isFinal(final STATE fst, final STATE snd) {
 		return mFstNwa.isFinal(fst) && mSndNwa.isFinal(snd);

@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<Set<E>>> {
 	protected final Collection<Set<E>> mPartition;
 	private PartitionSizeInformation mPartitionSizeInformation;
-	
+
 	/**
 	 * @param partition
 	 *            Partition.
@@ -54,7 +54,7 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 	public PartitionBackedSetOfPairs(final Collection<Set<E>> partition) {
 		mPartition = partition;
 	}
-	
+
 	@Override
 	public Iterator<Pair<E, E>> iterator() {
 		final Iterator<Set<E>> iterator = mPartition.iterator();
@@ -63,23 +63,23 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 		}
 		return Collections.emptyIterator();
 	}
-	
+
 	@Override
 	public void addPair(final E lhs, final E rhs) {
 		throw new UnsupportedOperationException("The partition must be specified at construction time.");
 	}
-	
+
 	@Override
 	public boolean containsPair(final E lhs, final E rhs) {
 		throw new UnsupportedOperationException("This class does not support a contains() method. Use the "
 				+ PartitionAndMapBackedSetOfPairs.class.getSimpleName() + " class instead.");
 	}
-	
+
 	@Override
 	public Collection<Set<E>> getRelation() {
 		return mPartition;
 	}
-	
+
 	/**
 	 * @return Size information of the partition.
 	 */
@@ -89,11 +89,13 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 		}
 		return mPartitionSizeInformation;
 	}
-	
+
 	/**
 	 * Iterator wrapper.
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 * @param <E>
+	 *            element type
 	 */
 	static final class IteratorFromPartition<E> implements Iterator<Pair<E, E>> {
 		private final Iterator<Set<E>> mBlockIt;
@@ -101,12 +103,12 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 		private Iterator<E> mElemRhsIt;
 		private Iterable<E> mBlock;
 		private E mElemLhs;
-		
+
 		public IteratorFromPartition(final Iterator<Set<E>> blockIterator) {
 			mBlockIt = blockIterator;
 			advanceToNextBlock();
 		}
-		
+
 		@Override
 		public boolean hasNext() {
 			if (mElemRhsIt.hasNext()) {
@@ -123,13 +125,13 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 			}
 			return false;
 		}
-		
+
 		@Override
 		public Pair<E, E> next() {
 			final E rhs = mElemRhsIt.next();
 			return new Pair<>(mElemLhs, rhs);
 		}
-		
+
 		private void advanceToNextBlock() {
 			mBlock = mBlockIt.next();
 			mElemLhsIt = mBlock.iterator();
@@ -139,7 +141,7 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 			mElemRhsIt = mBlock.iterator();
 		}
 	}
-	
+
 	/**
 	 * Size information of the partition.
 	 * 
@@ -149,7 +151,7 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 		private long mNumberOfPairs;
 		private int mSizeOfLargestBlock;
 		private final int mNumberOfBlocks;
-		
+
 		/**
 		 * @param partition
 		 *            Partition.
@@ -161,19 +163,19 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 				mNumberOfPairs += ((long) block.size()) * ((long) block.size()) - block.size();
 			}
 		}
-		
+
 		public long getNumberOfPairs() {
 			return mNumberOfPairs;
 		}
-		
+
 		public int getSizeOfLargestBlock() {
 			return mSizeOfLargestBlock;
 		}
-		
+
 		public int getNumberOfBlocks() {
 			return mNumberOfBlocks;
 		}
-		
+
 		@Override
 		public String toString() {
 			final StringBuilder sb = new StringBuilder();
@@ -188,6 +190,6 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 			// @formatter:on
 			return sb.toString();
 		}
-		
+
 	}
 }

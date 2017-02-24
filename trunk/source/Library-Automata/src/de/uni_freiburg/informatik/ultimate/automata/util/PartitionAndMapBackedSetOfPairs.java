@@ -41,7 +41,7 @@ import java.util.Set;
  */
 public class PartitionAndMapBackedSetOfPairs<E> extends PartitionBackedSetOfPairs<E> {
 	private final Map<E, Set<E>> mElem2block;
-	
+
 	/**
 	 * @param partition
 	 *            Partition.
@@ -55,12 +55,12 @@ public class PartitionAndMapBackedSetOfPairs<E> extends PartitionBackedSetOfPair
 			}
 		}
 	}
-	
+
 	@Override
 	public boolean containsPair(final E lhs, final E rhs) {
 		return mElem2block.get(lhs).contains(rhs);
 	}
-	
+
 	public Map<E, Set<E>> getMap() {
 		return mElem2block;
 	}
