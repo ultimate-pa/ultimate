@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ExampleLoopAccelerationTransformulaTransformer;
@@ -52,6 +53,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination.MapEliminationSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.preferences.IcfgTransformationPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.preferences.IcfgTransformationPreferences.TransformationTestType;
 
 /**
  *
@@ -67,12 +70,6 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 	private final SimplificationTechnique mSimplificationTechnique;
 
 	private IIcfg<?> mResult;
-
-	private final TransformationTestType mDefaultTrasformationTestType = TransformationTestType.LOOP_ACCELERATION;
-
-	private enum TransformationTestType {
-		LOOP_ACCELERATION, MAP_ELIMINATION, REMOVE_DIV_MOD,
-	}
 
 	public IcfgTransformationObserver(final ILogger logger, final IUltimateServiceProvider services,
 			final IcfgTransformationBacktranslator backtranslator, final SimplificationTechnique simplTech,
@@ -122,8 +119,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			mResult = createTransformer((IIcfg<BoogieIcfgLocation>) icfg, createBoogieLocationFactory(),
 					BoogieIcfgLocation.class, backtranslationTracker);
 		} else {
-			mResult = createTransformer(icfg, createIcfgLocationFactory(), IcfgLocation.class,
-					backtranslationTracker);
+			mResult = createTransformer(icfg, createIcfgLocationFactory(), IcfgLocation.class, backtranslationTracker);
 		}
 	}
 
@@ -135,54 +131,71 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		// allow chaining of transformers in
 		// icfgtransformer
 		final ReplacementVarFactory fac = new ReplacementVarFactory(icfg.getCfgSmtToolkit(), false);
-		IIcfg<OUTLOC> result;
-		switch (mDefaultTrasformationTestType) {
-		case LOOP_ACCELERATION: {
-			final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
-					icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
-			final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(mLogger, icfg, locFac,
-					backtranslationTracker, outlocClass, "TransformedIcfg", transformer);
-			result = icfgTransformer.getResult();
 
-		}
-			break;
-		case MAP_ELIMINATION: {
-			IIcfg<INLOC> inDnf;
-			{
-				// Note that a NNF transformation would be sufficient.
-				// We do net yet have a NNF transformer, but DNF should be
-				// sufficient for testing.
-				final ITransformulaTransformer transformer = new LocalTransformer(
-						new DNF(mServices, icfg.getCfgSmtToolkit().getManagedScript(), mXnfConversionTechnique),
-						icfg.getCfgSmtToolkit().getManagedScript(), fac);
-				final IcfgTransformer<INLOC, ?> icfgTransformer = new IcfgTransformer<>(mLogger, icfg, locFac,
-						backtranslationTracker, outlocClass, "TransformedIcfg", transformer);
-				inDnf = (IIcfg<INLOC>) icfgTransformer.getResult();
-			}
+		final IPreferenceProvider ups = IcfgTransformationPreferences.getPreferenceProvider(mServices);
+		final TransformationTestType transformation =
+				ups.getEnum(IcfgTransformationPreferences.LABEL_TRANSFORMATION_TYPE, TransformationTestType.class);
 
-			final IEqualityAnalysisResultProvider<IcfgLocation> equalityProvider = new DefaultEqualityAnalysisProvider<>();
-			final MapEliminationSettings settings = new MapEliminationSettings(false, true, true, true,
-					mSimplificationTechnique, mXnfConversionTechnique);
-			final ITransformulaTransformer transformer = new MapEliminationTransformer(inDnf, mServices, mLogger,
-					icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac, settings,
-					equalityProvider);
-			final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(mLogger, inDnf, locFac,
-					backtranslationTracker, outlocClass, "TransformedIcfg", transformer);
-			result = icfgTransformer.getResult();
-		}
-			break;
-		case REMOVE_DIV_MOD: {
-			final ITransformulaTransformer transformer = new LocalTransformer(new RewriteDivision(fac),
-					icfg.getCfgSmtToolkit().getManagedScript(), fac);
-			final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(mLogger, icfg, locFac,
-					backtranslationTracker, outlocClass, "TransformedIcfg", transformer);
-			result = icfgTransformer.getResult();
-
-		}
-			break;
+		switch (transformation) {
+		case LOOP_ACCELERATION:
+			return applyLoopAcceleration(icfg, locFac, outlocClass, backtranslationTracker, fac);
+		case MAP_ELIMINATION:
+			return applyMapElimination(icfg, locFac, outlocClass, backtranslationTracker, fac);
+		case REMOVE_DIV_MOD:
+			return applyRemoveDivMod(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		default:
-			throw new AssertionError("unknown value " + mDefaultTrasformationTestType);
+			throw new UnsupportedOperationException("Unknown transformation type: " + transformation);
 		}
+	}
+
+	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAcceleration(
+			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
+			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
+		IIcfg<OUTLOC> result;
+		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
+				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
+		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(mLogger, icfg, locFac,
+				backtranslationTracker, outlocClass, "TransformedIcfg", transformer);
+		result = icfgTransformer.getResult();
+		return result;
+	}
+
+	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyRemoveDivMod(
+			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
+			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
+		IIcfg<OUTLOC> result;
+		final ITransformulaTransformer transformer =
+				new LocalTransformer(new RewriteDivision(fac), icfg.getCfgSmtToolkit().getManagedScript(), fac);
+		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(mLogger, icfg, locFac,
+				backtranslationTracker, outlocClass, "TransformedIcfg", transformer);
+		result = icfgTransformer.getResult();
+		return result;
+	}
+
+	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyMapElimination(
+			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
+			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
+		IIcfg<OUTLOC> result;
+		IIcfg<INLOC> inDnf;
+		// Note that a NNF transformation would be sufficient.
+		// We do net yet have a NNF transformer, but DNF should be
+		// sufficient for testing.
+		final ITransformulaTransformer dnfTransformer = new LocalTransformer(
+				new DNF(mServices, icfg.getCfgSmtToolkit().getManagedScript(), mXnfConversionTechnique),
+				icfg.getCfgSmtToolkit().getManagedScript(), fac);
+		final IcfgTransformer<INLOC, ?> icfgTransformer = new IcfgTransformer<>(mLogger, icfg, locFac,
+				backtranslationTracker, outlocClass, "TransformedIcfg", dnfTransformer);
+		inDnf = (IIcfg<INLOC>) icfgTransformer.getResult();
+
+		final IEqualityAnalysisResultProvider<IcfgLocation> equalityProvider = new DefaultEqualityAnalysisProvider<>();
+		final MapEliminationSettings settings =
+				new MapEliminationSettings(false, true, true, true, mSimplificationTechnique, mXnfConversionTechnique);
+		final ITransformulaTransformer mapElimTransformer =
+				new MapEliminationTransformer(inDnf, mServices, mLogger, icfg.getCfgSmtToolkit().getManagedScript(),
+						icfg.getCfgSmtToolkit().getSymbolTable(), fac, settings, equalityProvider);
+		final IcfgTransformer<INLOC, OUTLOC> finalIcfgTransformer = new IcfgTransformer<>(mLogger, inDnf, locFac,
+				backtranslationTracker, outlocClass, "TransformedIcfg", mapElimTransformer);
+		result = finalIcfgTransformer.getResult();
 		return result;
 	}
 

@@ -27,7 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.preferences;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.preferences.UltimatePreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePreferenceItem.PreferenceType;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.Activator;
 
 /**
@@ -35,16 +38,41 @@ import de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.Activator;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class PreferenceInitializer extends UltimatePreferenceInitializer {
+public class IcfgTransformationPreferences extends UltimatePreferenceInitializer {
 
-	public PreferenceInitializer() {
+	public static final String LABEL_TRANSFORMATION_TYPE = "TransformationType";
+	private static final String DESC_TRANSFORMATION_TYPE = "";
+
+	/**
+	 * Select which transformation should be performed by this plugin.
+	 * 
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	public enum TransformationTestType {
+		LOOP_ACCELERATION,
+
+		MAP_ELIMINATION,
+
+		REMOVE_DIV_MOD;
+
+	}
+
+	/**
+	 * Default constructor.
+	 */
+	public IcfgTransformationPreferences() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
+				new UltimatePreferenceItem<>(LABEL_TRANSFORMATION_TYPE, TransformationTestType.LOOP_ACCELERATION,
+						DESC_TRANSFORMATION_TYPE, PreferenceType.Combo, TransformationTestType.values()), };
+	}
 
-		};
+	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {
+		return services.getPreferenceProvider(Activator.PLUGIN_ID);
 	}
 }
