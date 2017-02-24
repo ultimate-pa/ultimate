@@ -37,7 +37,7 @@ import java.text.MessageFormat;
  * @param <STATE>
  *            state type
  */
-public class IncomingInternalTransition<LETTER, STATE> implements ITransitionlet<LETTER, STATE> {
+public class IncomingInternalTransition<LETTER, STATE> implements IIncomingTransitionlet<LETTER, STATE> {
 	private final LETTER mLetter;
 	private final STATE mPred;
 
@@ -59,6 +59,7 @@ public class IncomingInternalTransition<LETTER, STATE> implements ITransitionlet
 		return mLetter;
 	}
 
+	@Override
 	public STATE getPred() {
 		return mPred;
 	}

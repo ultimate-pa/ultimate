@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2012-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -26,46 +27,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions;
 
-import java.text.MessageFormat;
-
 /**
- * Call Transition of a successor state.
+ * Interface for incoming transitions of nested word automata.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type
  * @param <STATE>
  *            state type
  */
-public class IncomingCallTransition<LETTER, STATE> implements IIncomingTransitionlet<LETTER, STATE> {
-	private final LETTER mLetter;
-	private final STATE mPred;
-
+public interface IIncomingTransitionlet<LETTER, STATE> extends ITransitionlet<LETTER, STATE> {
 	/**
-	 * Constructor.
-	 * 
-	 * @param pred
-	 *            predecessor state
-	 * @param letter
-	 *            letter
+	 * @return The predecessor state.
 	 */
-	public IncomingCallTransition(final STATE pred, final LETTER letter) {
-		mPred = pred;
-		mLetter = letter;
-	}
-
-	@Override
-	public LETTER getLetter() {
-		return mLetter;
-	}
-
-	@Override
-	public STATE getPred() {
-		return mPred;
-	}
-
-	@Override
-	public String toString() {
-		return MessageFormat.format("( {0} , {1} , _ )", getPred(), getLetter());
-	}
+	STATE getPred();
 }
