@@ -26,14 +26,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 public class ImpRootNode extends AnnotatedProgramPoint {
 
 	private static final long serialVersionUID = 1L;
 
 	public ImpRootNode() {
-		super(null, new BoogieIcfgLocation("root", "", false, null));
+		super(null, new IcfgLocation("root", ""), false);
 	}
 
 	@Override

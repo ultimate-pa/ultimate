@@ -153,8 +153,8 @@ public class RedirectionTargetFinder {
 	private AnnotatedProgramPoint findFirstRedirectionTarget(AppEdge edge) {
 //			AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
 
-//		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);
-		CodeBlock label = edge.getStatement();
+//		IIcfgTransition<?> label = predecessorNode.getOutgoingEdgeLabel(dest);
+		IIcfgTransition<?> label = edge.getStatement();
 		
 		ArrayList <AnnotatedProgramPoint> candidates = edge.getTarget().getNewCopies();
 
@@ -183,7 +183,7 @@ public class RedirectionTargetFinder {
 	private AnnotatedProgramPoint findStrongestRedirectionTarget(AppEdge edge) {
 //			AnnotatedProgramPoint predecessorNode, AnnotatedProgramPoint dest) {
 
-//		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest); 
+//		IIcfgTransition<?> label = predecessorNode.getOutgoingEdgeLabel(dest); 
 		
 		
 		ArrayList <AnnotatedProgramPoint> candidates = edge.getTarget().getNewCopies();
@@ -218,7 +218,7 @@ public class RedirectionTargetFinder {
 			AnnotatedProgramPoint callPred, 
 			AnnotatedProgramPoint dest) {
 
-//		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);
+//		IIcfgTransition<?> label = predecessorNode.getOutgoingEdgeLabel(dest);
 //		
 //		ArrayList <AnnotatedProgramPoint> candidates = dest.getNewCopies();
 //
@@ -249,7 +249,7 @@ public class RedirectionTargetFinder {
 			AnnotatedProgramPoint callPred, 
 			AnnotatedProgramPoint dest) {
 
-//		CodeBlock label = predecessorNode.getOutgoingEdgeLabel(dest);//FIXME
+//		IIcfgTransition<?> label = predecessorNode.getOutgoingEdgeLabel(dest);//FIXME
 //		
 //		ArrayList <AnnotatedProgramPoint> candidates = dest.getNewCopies();
 //

@@ -19,36 +19,36 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CodeCheck plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableMultigraphEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 
 /**
  * An edge in the abstract reachability graph maintained by Kojak.
  * 
  * @author Alexander Nutz
  */
-public class AppEdge extends
-		ModifiableMultigraphEdge<AnnotatedProgramPoint, AppEdge,AnnotatedProgramPoint, AppEdge> {
+public class AppEdge extends ModifiableMultigraphEdge<AnnotatedProgramPoint, AppEdge, AnnotatedProgramPoint, AppEdge> {
 
 	private static final long serialVersionUID = 1L;
-	
-	CodeBlock statement;
 
-	public AppEdge(AnnotatedProgramPoint source, CodeBlock statement, AnnotatedProgramPoint target) {
+	private final IIcfgTransition<?> mStatement;
+
+	public AppEdge(final AnnotatedProgramPoint source, final IIcfgTransition<?> statement,
+			final AnnotatedProgramPoint target) {
 		super(source, target);
 		assert source != null && target != null && statement != null;
-		this.statement = statement;
+		mStatement = statement;
 	}
-	
-	public CodeBlock getStatement() {
-		return statement;
+
+	public IIcfgTransition<?> getStatement() {
+		return mStatement;
 	}
 
 	public void disconnect() {
@@ -59,10 +59,10 @@ public class AppEdge extends
 		mSource = null;
 		mTarget = null;
 	}
-	
+
 	@Override
 	public String toString() {
-		return String.format("%s -- %s --> %s", mSource, statement, mTarget);
+		return String.format("%s -- %s --> %s", mSource, mStatement, mTarget);
 	}
 
 	@Override

@@ -71,13 +71,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
@@ -103,9 +105,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.IEmp
 import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.NWAEmptinessCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.impulse.ImpulseChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.kojak.UltimateChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -146,7 +145,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	private CodeChecker mCodeChecker;
 
-	private IIcfg<BoogieIcfgLocation> mOriginalRoot;
+	private IIcfg<IcfgLocation> mOriginalRoot;
 	private ImpRootNode mGraphRoot;
 
 	private CodeCheckSettings mGlobalSettings;
@@ -155,12 +154,12 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	private GraphWriter mGraphWriter;
 
-	private NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> mSatTriples;
-	private NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> mUnsatTriples;
-	private NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> mSatQuadruples;
-	private NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> mUnsatQuadruples;
+	private NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> mSatTriples;
+	private NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> mUnsatTriples;
+	private NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> mSatQuadruples;
+	private NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> mUnsatQuadruples;
 
-	private Collection<BoogieIcfgLocation> mErrNodesOfAllProc;
+	private Collection<IcfgLocation> mErrNodesOfAllProc;
 
 	private boolean mLoopForever = true;
 	private int mIterationsLimit = -1;
@@ -178,7 +177,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	 * @param root
 	 * @return
 	 */
-	private boolean initialize(final IIcfg<BoogieIcfgLocation> root) {
+	private boolean initialize(final IIcfg<IcfgLocation> root) {
 		readPreferencePage();
 		mOriginalRoot = root;
 		mCsToolkit = mOriginalRoot.getCfgSmtToolkit();
@@ -186,13 +185,13 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE);
 
 		mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
-				mOriginalRoot.getSymboltable(), SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE);
+				mOriginalRoot.getCfgSmtToolkit().getSymbolTable(), SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE);
 
 		final MonolithicHoareTripleChecker edgeChecker = new MonolithicHoareTripleChecker(mCsToolkit);
 
-		final Map<String, Set<BoogieIcfgLocation>> proc2errNodes = mOriginalRoot.getProcedureErrorNodes();
+		final Map<String, Set<IcfgLocation>> proc2errNodes = mOriginalRoot.getProcedureErrorNodes();
 		mErrNodesOfAllProc = new ArrayList<>();
-		for (final Collection<BoogieIcfgLocation> errNodeOfProc : proc2errNodes.values()) {
+		for (final Set<IcfgLocation> errNodeOfProc : proc2errNodes.values()) {
 			mErrNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
@@ -214,8 +213,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			// Run for 20% of the complete time.
 			final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 
-			final IAbstractInterpretationResult<?, CodeBlock, IBoogieVar, BoogieIcfgLocation> result =
-					AbstractInterpreter.run(mOriginalRoot, timer, mServices);
+			final IAbstractInterpretationResult<?, IcfgEdge, IProgramVarOrConst, IcfgLocation> result =
+					AbstractInterpreter.runFuture(mOriginalRoot, timer, mServices, false, mLogger);
 
 			if (result == null) {
 				mLogger.warn(
@@ -229,7 +228,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 		final RCFG2AnnotatedRCFG r2ar = new RCFG2AnnotatedRCFG(mCsToolkit, mPredicateFactory, mLogger,
 				mPredicateUnifier.getTruePredicate(), initialPredicates);
-		mGraphRoot = r2ar.convert(mServices, mOriginalRoot);
+		mGraphRoot = r2ar.convert(mOriginalRoot);
 
 		mGraphWriter.writeGraphAsImage(mGraphRoot,
 				String.format("graph_%s_originalAfterConversion", mGraphWriter.getGraphCounter()));
@@ -357,7 +356,10 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 	@Override
 	public boolean process(final IElement root) {
-		final IIcfg<BoogieIcfgLocation> icfg = (IIcfg<BoogieIcfgLocation>) root;
+		if (!(root instanceof IIcfg<?>)) {
+			return false;
+		}
+		final IIcfg<IcfgLocation> icfg = (IIcfg<IcfgLocation>) root;
 		initialize(icfg);
 
 		mGraphWriter.writeGraphAsImage(mGraphRoot, String.format("graph_%s_original", mGraphWriter.getGraphCounter()));
@@ -416,7 +418,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				benchmarkGenerator.announceNextIteration();
 
 				mLogger.debug(String.format("Iterations = %d%n", iterationsCount));
-				final NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun =
+				final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun =
 						emptinessCheck.checkForEmptiness(procedureRoot);
 
 				if (errorRun == null) {
@@ -436,7 +438,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				if (mGlobalSettings.getPredicateUnification() == PredicateUnification.PER_ITERATION) {
 					mPredicateUnifier =
 							new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
-									mOriginalRoot.getSymboltable(), SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE);
+									mCsToolkit.getSymbolTable(), SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE);
 				}
 
 				ManagedScript mgdScriptTracechecks;
@@ -590,20 +592,20 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	private void createInvariantResults(final List<AnnotatedProgramPoint> procRootsToCheck,
-			final IIcfg<BoogieIcfgLocation> icfg, final CfgSmtToolkit csToolkit,
+			final IIcfg<IcfgLocation> icfg, final CfgSmtToolkit csToolkit,
 			final IBacktranslationService backTranslatorService) {
 		final Term trueterm = csToolkit.getManagedScript().getScript().term("true");
 
-		final Set<BoogieIcfgLocation> locsForLoopLocations = new HashSet<>();
+		final Set<IcfgLocation> locsForLoopLocations = new HashSet<>();
 
 		locsForLoopLocations.addAll(IcfgUtils.getPotentialCycleProgramPoints(icfg));
 		locsForLoopLocations.addAll(icfg.getLoopLocations());
 		// find all locations that have outgoing edges which are annotated with LoopEntry, i.e., all loop candidates
 
 		for (final AnnotatedProgramPoint pr : procRootsToCheck) {
-			final Map<BoogieIcfgLocation, Term> ha = computeHoareAnnotation(pr);
-			for (final Entry<BoogieIcfgLocation, Term> kvp : ha.entrySet()) {
-				final BoogieIcfgLocation locNode = kvp.getKey();
+			final Map<IcfgLocation, Term> ha = computeHoareAnnotation(pr);
+			for (final Entry<IcfgLocation, Term> kvp : ha.entrySet()) {
+				final IcfgLocation locNode = kvp.getKey();
 				if (!locsForLoopLocations.contains(locNode)) {
 					// only compute loop invariants
 					continue;
@@ -628,7 +630,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private InterpolatingTraceChecker createTraceChecker(final NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
+	private InterpolatingTraceChecker createTraceChecker(
+			final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
 			final ManagedScript mgdScriptTracechecks) {
 		switch (mGlobalSettings.getInterpolationMode()) {
 		case Craig_TreeInterpolation:
@@ -707,15 +710,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		return sb.toString();
 	}
 
-	private Map<BoogieIcfgLocation, Term> computeHoareAnnotation(final AnnotatedProgramPoint pr) {
-		final Map<BoogieIcfgLocation, Term> pp2HoareAnnotation = new HashMap<>();
-		final Map<BoogieIcfgLocation, Set<AnnotatedProgramPoint>> pp2app =
-				computeProgramPointToAnnotatedProgramPoints(pr);
+	private Map<IcfgLocation, Term> computeHoareAnnotation(final AnnotatedProgramPoint pr) {
+		final Map<IcfgLocation, Term> pp2HoareAnnotation = new HashMap<>();
+		final Map<IcfgLocation, Set<AnnotatedProgramPoint>> pp2app = computeProgramPointToAnnotatedProgramPoints(pr);
 
 		final IPredicate falsePred =
 				mPredicateFactory.newPredicate(mCsToolkit.getManagedScript().getScript().term("false"));
 
-		for (final Entry<BoogieIcfgLocation, Set<AnnotatedProgramPoint>> kvp : pp2app.entrySet()) {
+		for (final Entry<IcfgLocation, Set<AnnotatedProgramPoint>> kvp : pp2app.entrySet()) {
 			IPredicate annot = falsePred;
 			for (final AnnotatedProgramPoint app : kvp.getValue()) {
 				final Term tvp = mPredicateFactory.or(false, annot, app.getPredicate());
@@ -732,11 +734,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	 * @param annotatedProgramPoint
 	 * @param programPointToAnnotatedProgramPoints
 	 */
-	private static Map<BoogieIcfgLocation, Set<AnnotatedProgramPoint>>
+	private static Map<IcfgLocation, Set<AnnotatedProgramPoint>>
 			computeProgramPointToAnnotatedProgramPoints(final AnnotatedProgramPoint entry) {
 		final Set<AnnotatedProgramPoint> visited = new HashSet<>();
 		final Deque<AnnotatedProgramPoint> queue = new ArrayDeque<>();
-		final Map<BoogieIcfgLocation, Set<AnnotatedProgramPoint>> rtr = new HashMap<>();
+		final Map<IcfgLocation, Set<AnnotatedProgramPoint>> rtr = new HashMap<>();
 		queue.push(entry);
 
 		while (!queue.isEmpty()) {
@@ -795,7 +797,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					final AppHyperEdge outHypEdge = (AppHyperEdge) outEdge;
 					final AnnotatedProgramPoint hier = copy.get(outHypEdge.getHier());
 					if (hier != null) {
-						newNode.connectOutgoingReturn(hier, (Return) outHypEdge.getStatement(),
+						newNode.connectOutgoingReturn(hier, (IIcfgReturnTransition<?, ?>) outHypEdge.getStatement(),
 								copy.get(outHypEdge.getTarget()));
 					}
 				} else {
@@ -814,14 +816,14 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		reportResult(res);
 	}
 
-	private void reportPositiveResults(final Collection<BoogieIcfgLocation> errorLocs) {
+	private void reportPositiveResults(final Collection<IcfgLocation> errorLocs) {
 		final String longDescription;
 		if (errorLocs.isEmpty()) {
 			longDescription = "We were not able to verify any"
 					+ " specifiation because the program does not contain any specification.";
 		} else {
 			longDescription = errorLocs.size() + " specifications checked. All of them hold";
-			for (final BoogieIcfgLocation errorLoc : errorLocs) {
+			for (final IcfgLocation errorLoc : errorLocs) {
 				final PositiveResult<IIcfgElement> pResult =
 						new PositiveResult<>(Activator.PLUGIN_NAME, errorLoc, mServices.getBacktranslationService());
 				reportResult(pResult);
@@ -856,14 +858,13 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		return errorPP;
 	}
 
-	private void reportTimeoutResult(final Collection<BoogieIcfgLocation> errorLocs) {
-		for (final BoogieIcfgLocation errorIpp : errorLocs) {
-			final BoogieIcfgLocation errorLoc = errorIpp;
-			final ILocation origin = errorLoc.getBoogieASTNode().getLocation();
+	private void reportTimeoutResult(final Collection<IcfgLocation> errorLocs) {
+		for (final IcfgLocation errorIpp : errorLocs) {
+			final ILocation origin = ILocation.getAnnotation(errorIpp);
 			String timeOutMessage =
-					"Unable to prove that " + ResultUtil.getCheckedSpecification(errorLoc).getPositiveMessage();
+					"Unable to prove that " + ResultUtil.getCheckedSpecification(errorIpp).getPositiveMessage();
 			timeOutMessage += " (line " + origin.getStartLine() + ")";
-			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorLoc,
+			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorIpp,
 					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
 			reportResult(timeOutRes);
 		}

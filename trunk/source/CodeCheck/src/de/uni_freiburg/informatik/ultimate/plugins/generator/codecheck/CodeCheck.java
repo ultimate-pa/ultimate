@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CodeCheck plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.EdgeCheckOptimization;
 
 /**
  * Main class of Plug-In CodeCheck
@@ -49,31 +48,27 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferenc
  */
 public class CodeCheck implements IGenerator {
 
-	private static final String s_PLUGIN_NAME = Activator.PLUGIN_NAME;
-	private static final String s_PLUGIN_ID = Activator.PLUGIN_ID;
-
 	private CodeCheckObserver mObserver;
 	private ModelType mInputDefinition;
 
-	EdgeCheckOptimization edgeCheckOptimization = EdgeCheckOptimization.SDEC;
 	private IUltimateServiceProvider mServices;
-	private IToolchainStorage mtoolchainStorage;
+	private IToolchainStorage mToolchainStorage;
 	private List<IObserver> mObservers;
 
 	@Override
 	public String getPluginName() {
-		return s_PLUGIN_NAME;
+		return Activator.PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		return s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
 	public void init() {
-		mObserver = new CodeCheckObserver(mServices, mtoolchainStorage);
-		mObservers =  Collections.singletonList((IObserver) mObserver);
+		mObserver = new CodeCheckObserver(mServices, mToolchainStorage);
+		mObservers = Collections.singletonList((IObserver) mObserver);
 	}
 
 	@Override
@@ -83,12 +78,11 @@ public class CodeCheck implements IGenerator {
 
 	@Override
 	public List<String> getDesiredToolIds() {
-		// TODO Auto-generated method stub
-		return null;
+		return Collections.emptyList();
 	}
 
 	@Override
-	public void setInputDefinition(ModelType graphType) {
+	public void setInputDefinition(final ModelType graphType) {
 		mInputDefinition = graphType;
 	}
 
@@ -99,10 +93,6 @@ public class CodeCheck implements IGenerator {
 
 	@Override
 	public ModelType getOutputDefinition() {
-		/*
-		 * TODO This generated method body only assumes a standard case. Adapt
-		 * it if necessary. Otherwise remove this todo-tag.
-		 */
 		return new ModelType(Activator.PLUGIN_ID, mInputDefinition.getType(), mInputDefinition.getFileNames());
 	}
 
@@ -122,18 +112,17 @@ public class CodeCheck implements IGenerator {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage tcStorage) {
-		mtoolchainStorage = tcStorage;
+	public void setToolchainStorage(final IToolchainStorage tcStorage) {
+		mToolchainStorage = tcStorage;
 	}
 
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 	}
 
 	@Override
 	public void finish() {
-		// TODO Auto-generated method stub
-		
+		// not needed
 	}
 }

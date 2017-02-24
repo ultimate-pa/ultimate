@@ -39,60 +39,57 @@ import java.util.Stack;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.DummyCodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.EmptyStackSymbol;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 public class BFSEmptinessCheck implements IEmptinessCheck {
-	private static int c_badNestingRelationInit = -7;
+	private static final int BAD_NESTING_RELATION_INIT = -7;
 
-	ArrayDeque<AppDoubleDecker> openNodes;
-	HashSet<AppDoubleDecker> visitedNodes;
-	HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> summaryEdges;
-	HashMap<Pair<AnnotatedProgramPoint,AnnotatedProgramPoint>, AppDoubleDecker> summaryEdgeToReturnSucc;
+	private ArrayDeque<AppDoubleDecker> mOpenNodes;
+	private HashSet<AppDoubleDecker> mVisitedNodes;
+	private HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>> mSummaryEdges;
+	private HashMap<Pair<AnnotatedProgramPoint, AnnotatedProgramPoint>, AppDoubleDecker> mSummaryEdgeToReturnSucc;
 
 	private final ILogger mLogger;
 
-	
-	public BFSEmptinessCheck(final ILogger logger){
+	public BFSEmptinessCheck(final ILogger logger) {
 		mLogger = logger;
 	}
-	
+
 	/**
-	 * Search for a nested error path within the graph with the given root. Return null
-	 * if there is none.
+	 * Search for a nested error path within the graph with the given root. IIcfgReturnTransition<?,?> null if there is
+	 * none.
+	 * 
 	 * @param root
 	 * @return
 	 */
 	@Override
-	public NestedRun<CodeBlock, AnnotatedProgramPoint> checkForEmptiness(final AnnotatedProgramPoint root) {
-		openNodes = new ArrayDeque<BFSEmptinessCheck.AppDoubleDecker>();
-		visitedNodes = new HashSet<BFSEmptinessCheck.AppDoubleDecker>();
+	public NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> checkForEmptiness(final AnnotatedProgramPoint root) {
+		mOpenNodes = new ArrayDeque<>();
+		mVisitedNodes = new HashSet<>();
 
-		summaryEdges =
-				new HashMap<AnnotatedProgramPoint, HashSet<AnnotatedProgramPoint>>();
-		summaryEdgeToReturnSucc =
-				new HashMap<Pair<AnnotatedProgramPoint,AnnotatedProgramPoint>, AppDoubleDecker>();
+		mSummaryEdges = new HashMap<>();
+		mSummaryEdgeToReturnSucc = new HashMap<>();
 
 		final EmptyStackSymbol emptyStackSymbol = new EmptyStackSymbol();
 
-		openNodes.add(new AppDoubleDecker(root, emptyStackSymbol,
-				new Stack<Call>(), new Stack<AnnotatedProgramPoint>()));
-		Pair<AnnotatedProgramPoint[],NestedWord<CodeBlock>> returnedPath = null;
+		mOpenNodes.add(new AppDoubleDecker(root, emptyStackSymbol, new Stack<IIcfgCallTransition<?>>(),
+				new Stack<AnnotatedProgramPoint>()));
+		Pair<AnnotatedProgramPoint[], NestedWord<IIcfgTransition<?>>> returnedPath = null;
 
-		while (!openNodes.isEmpty() && returnedPath == null) {
-			final AppDoubleDecker currentAdd = openNodes.pollFirst();
-			visitedNodes.add(currentAdd);
+		while (!mOpenNodes.isEmpty() && returnedPath == null) {
+			final AppDoubleDecker currentAdd = mOpenNodes.pollFirst();
+			mVisitedNodes.add(currentAdd);
 
-			for (final AnnotatedProgramPoint app : currentAdd.top.getOutgoingNodes()) {
-//				CodeBlock edge = currentAdd.top.getOutgoingEdgeLabel(app); //FIXME
-				final CodeBlock edge = null;
+			for (final AnnotatedProgramPoint app : currentAdd.mTop.getOutgoingNodes()) {
+				// IIcfgTransition<?> edge = currentAdd.top.getOutgoingEdgeLabel(app); //FIXME
+				final IIcfgTransition<?> edge = null;
 
 				if (edge instanceof Summary) {
 					continue;
@@ -100,161 +97,151 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 
 				AppDoubleDecker newAdd = null;
 
-				if (!(edge instanceof Call || edge instanceof Return)) {
+				if (!(edge instanceof IIcfgCallTransition<?> || edge instanceof IIcfgReturnTransition<?, ?>)) {
 
-					newAdd = new AppDoubleDecker(app, currentAdd.bot,
-							(Stack<Call>) currentAdd.callStack.clone(),
-							(Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone());
+					newAdd = new AppDoubleDecker(app, currentAdd.mBot,
+							(Stack<IIcfgCallTransition<?>>) currentAdd.mCallStack.clone(),
+							(Stack<AnnotatedProgramPoint>) currentAdd.mCallPredStack.clone());
 					if (returnedPath == null) {
 						returnedPath = openNewNode(currentAdd, app, edge, newAdd);
 					}
 
-				} else if (edge instanceof Call) {
+				} else if (edge instanceof IIcfgCallTransition<?>) {
 
-					newAdd = new AppDoubleDecker(app, currentAdd.top,
-							(Stack<Call>) currentAdd.callStack.clone(),
-							(Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone());
-					newAdd.callStack.add((Call) edge);
-					newAdd.callPredStack.add(currentAdd.bot);
+					newAdd = new AppDoubleDecker(app, currentAdd.mTop,
+							(Stack<IIcfgCallTransition<?>>) currentAdd.mCallStack.clone(),
+							(Stack<AnnotatedProgramPoint>) currentAdd.mCallPredStack.clone());
+					newAdd.mCallStack.add((IIcfgCallTransition<?>) edge);
+					newAdd.mCallPredStack.add(currentAdd.mBot);
 
 					if (returnedPath == null) {
 						returnedPath = openNewNode(currentAdd, app, edge, newAdd);
 					}
 
-				} else if (edge instanceof Return) {
-					//only take return edges that return to the current callpredecessor
-					//					if (!((Return) edge).getCallerNode().equals(currentAdd.bot.getProgramPoint()))
-//					if (currentAdd.top.getOutgoingReturnCallPreds().get(currentAdd.top.getOutgoingNodes().indexOf(app)) != currentAdd.bot) //FIXME
-////							old: "!currentAdd.top.outGoingReturnAppToCallPredContains(app, currentAdd.bot))"
-//						continue;
+				} else if (edge instanceof IIcfgReturnTransition<?, ?>) {
+					final Stack<IIcfgCallTransition<?>> currentCallStack =
+							(Stack<IIcfgCallTransition<?>>) currentAdd.mCallStack.clone();
+					final Stack<AnnotatedProgramPoint> currentCpStack =
+							(Stack<AnnotatedProgramPoint>) currentAdd.mCallPredStack.clone();
 
-					final Stack<Call> currentCallStack = (Stack<Call>) currentAdd.callStack.clone();
-					final Stack<AnnotatedProgramPoint> currentCpStack = (Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone();
-
-					final Call poppedCall = currentCallStack.pop();
+					final IIcfgCallTransition<?> poppedCall = currentCallStack.pop();
 					final AnnotatedProgramPoint callPredPred = currentCpStack.pop();
 
-					if (!((Return) edge).getCorrespondingCall().equals(poppedCall)) {
+					if (!((IIcfgReturnTransition<?, ?>) edge).getCorrespondingCall().equals(poppedCall)) {
 						continue;
 					}
 
 					newAdd = new AppDoubleDecker(app, callPredPred, currentCallStack, currentCpStack);
 
-					addSummaryEdge(currentAdd.bot, app);
+					addSummaryEdge(currentAdd.mBot, app);
 					final Pair<AnnotatedProgramPoint, AnnotatedProgramPoint> pairToAdd =
-							new Pair<AnnotatedProgramPoint, AnnotatedProgramPoint>(currentAdd.bot, app); //rausgezogen fuer debugging
-					summaryEdgeToReturnSucc.put(pairToAdd, newAdd);
-//					System.out.println("--------------- " + pairToAdd + " --> " + pairToAdd.hashCode());
+							new Pair<>(currentAdd.mBot, app); // rausgezogen
+																// fuer
+																// debugging
+					mSummaryEdgeToReturnSucc.put(pairToAdd, newAdd);
 					if (returnedPath == null) {
 						returnedPath = openNewNode(currentAdd, app, edge, newAdd);
 					}
 				}
 			}
 
-			//also unwind summaryEdges
-			final HashSet<AnnotatedProgramPoint> targets = summaryEdges.get(currentAdd.top);
+			// also unwind summaryEdges
+			final HashSet<AnnotatedProgramPoint> targets = mSummaryEdges.get(currentAdd.mTop);
 			if (targets != null) {
 				for (final AnnotatedProgramPoint target : targets) {
-					final AppDoubleDecker	newAdd = new AppDoubleDecker(
-							target, currentAdd.bot,
-							(Stack<Call>) currentAdd.callStack.clone(),
-							(Stack<AnnotatedProgramPoint>) currentAdd.callPredStack.clone());
-					if (returnedPath == null)
-					 {
-						returnedPath = openNewNode(currentAdd, target, new DummyCodeBlock(mLogger), newAdd);//convention: AddEdges which are summaries are labeled "null"
+					final AppDoubleDecker newAdd = new AppDoubleDecker(target, currentAdd.mBot,
+							(Stack<IIcfgCallTransition<?>>) currentAdd.mCallStack.clone(),
+							(Stack<AnnotatedProgramPoint>) currentAdd.mCallPredStack.clone());
+					if (returnedPath == null) {
+						// convention: AddEdges which are summaries are labeled "null"
+						returnedPath = openNewNode(currentAdd, target, new DummyCodeBlock(), newAdd);
 					}
 				}
 			}
 		}
-		return returnedPath == null ?
-				null :
-			new NestedRun<CodeBlock, AnnotatedProgramPoint>(returnedPath.getSecond(),
-				new ArrayList<AnnotatedProgramPoint>(Arrays.asList(returnedPath.getFirst())));
+		return returnedPath == null ? null
+				: new NestedRun<>(returnedPath.getSecond(), new ArrayList<>(Arrays.asList(returnedPath.getFirst())));
 	}
 
-
-	private void addSummaryEdge(final AnnotatedProgramPoint bot,
-			final AnnotatedProgramPoint app) {
-		HashSet<AnnotatedProgramPoint> targets = summaryEdges.get(bot);
+	private void addSummaryEdge(final AnnotatedProgramPoint bot, final AnnotatedProgramPoint app) {
+		HashSet<AnnotatedProgramPoint> targets = mSummaryEdges.get(bot);
 		if (targets == null) {
-			targets = new HashSet<AnnotatedProgramPoint>();
+			targets = new HashSet<>();
 		}
 		targets.add(app);
-		summaryEdges.put(bot, targets);
+		mSummaryEdges.put(bot, targets);
 	}
 
-
-	private Pair<AnnotatedProgramPoint[],NestedWord<CodeBlock>> openNewNode(
-			final AppDoubleDecker currentAdd, final AnnotatedProgramPoint app,
-			final CodeBlock edge, final AppDoubleDecker newAdd) {
-		if (!visitedNodes.contains(newAdd)){
+	private Pair<AnnotatedProgramPoint[], NestedWord<IIcfgTransition<?>>> openNewNode(final AppDoubleDecker currentAdd,
+			final AnnotatedProgramPoint app, final IIcfgTransition<?> edge, final AppDoubleDecker newAdd) {
+		if (!mVisitedNodes.contains(newAdd)) {
 			final AddEdge newAddEdge = new AddEdge(currentAdd, newAdd, edge);
-			newAdd.inEdge = newAddEdge;
-			currentAdd.outEdges.add(newAddEdge);
+			newAdd.mInEdge = newAddEdge;
+			currentAdd.mOutEdges.add(newAddEdge);
 			newAdd.setPathToRoot();
 
 			if (app.isErrorLocation()) {
 				return reconstructPath(newAdd);
 			}
 
-			openNodes.add(newAdd);
+			mOpenNodes.add(newAdd);
 		}
 		return null;
 	}
 
-	private Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>> reconstructPath(
-			final AppDoubleDecker errorAdd) {
-		ArrayDeque<AnnotatedProgramPoint> errorPath = new ArrayDeque<AnnotatedProgramPoint>();
-		ArrayDeque<CodeBlock> errorTrace = new ArrayDeque<CodeBlock>();
+	private Pair<AnnotatedProgramPoint[], NestedWord<IIcfgTransition<?>>>
+			reconstructPath(final AppDoubleDecker errorAdd) {
+		ArrayDeque<AnnotatedProgramPoint> errorPath = new ArrayDeque<>();
+		ArrayDeque<IIcfgTransition<?>> errorTrace = new ArrayDeque<>();
 
 		AppDoubleDecker currentAdd = errorAdd;
-		AddEdge currentInEdge = errorAdd.inEdge;
+		AddEdge currentInEdge = errorAdd.mInEdge;
 
 		while (currentInEdge != null) {
-			errorPath.addFirst(currentAdd.top);
-			errorTrace.addFirst(currentInEdge.label);
+			errorPath.addFirst(currentAdd.mTop);
+			errorTrace.addFirst(currentInEdge.mLabel);
 
-			currentAdd = currentInEdge.source;
-			currentInEdge = currentAdd.inEdge;
+			currentAdd = currentInEdge.mSource;
+			currentInEdge = currentAdd.mInEdge;
 		}
-		errorPath.addFirst(currentAdd.top);
+		errorPath.addFirst(currentAdd.mTop);
 
-		final Pair<ArrayDeque<AnnotatedProgramPoint>, ArrayDeque<CodeBlock>> newErrorPathAndTrace =
+		final Pair<ArrayDeque<AnnotatedProgramPoint>, ArrayDeque<IIcfgTransition<?>>> newErrorPathAndTrace =
 				expandSummaries(errorTrace, errorPath);
 
 		errorPath = newErrorPathAndTrace.getFirst();
 		errorTrace = newErrorPathAndTrace.getSecond();
 
-		final CodeBlock[] errorTraceArray = new CodeBlock[errorTrace.size()];
+		final IIcfgTransition<?>[] errorTraceArray = new IIcfgTransition<?>[errorTrace.size()];
 		errorTrace.toArray(errorTraceArray);
-		final NestedWord<CodeBlock> errorNW = new NestedWord<CodeBlock>(
-				errorTraceArray, computeNestingRelation(errorTraceArray));
+		final NestedWord<IIcfgTransition<?>> errorNW =
+				new NestedWord<>(errorTraceArray, computeNestingRelation(errorTraceArray));
 
 		final AnnotatedProgramPoint[] errorPathArray = new AnnotatedProgramPoint[errorPath.size()];
 		errorPath.toArray(errorPathArray);
 
-		return new Pair<AnnotatedProgramPoint[], NestedWord<CodeBlock>>(errorPathArray, errorNW);
+		return new Pair<>(errorPathArray, errorNW);
 	}
 
-	private Pair<ArrayDeque<AnnotatedProgramPoint>, ArrayDeque<CodeBlock>> expandSummaries(final ArrayDeque<CodeBlock> errorTrace,
-			final ArrayDeque<AnnotatedProgramPoint> errorPath) {
-		ArrayDeque<CodeBlock> oldErrorTrace = errorTrace;
+	private Pair<ArrayDeque<AnnotatedProgramPoint>, ArrayDeque<IIcfgTransition<?>>> expandSummaries(
+			final ArrayDeque<IIcfgTransition<?>> errorTrace, final ArrayDeque<AnnotatedProgramPoint> errorPath) {
+		ArrayDeque<IIcfgTransition<?>> oldErrorTrace = errorTrace;
 		ArrayDeque<AnnotatedProgramPoint> oldErrorPath = errorPath;
 
 		boolean repeat = true;
 
 		while (repeat) {
 			repeat = false;
-			final ArrayDeque<CodeBlock> newErrorTrace = new ArrayDeque<CodeBlock>();
-			final ArrayDeque<AnnotatedProgramPoint> newErrorPath = new ArrayDeque<AnnotatedProgramPoint>();
+			final ArrayDeque<IIcfgTransition<?>> newErrorTrace = new ArrayDeque<>();
+			final ArrayDeque<AnnotatedProgramPoint> newErrorPath = new ArrayDeque<>();
 
 			final Iterator<AnnotatedProgramPoint> pathIt = oldErrorPath.iterator();
-			final Iterator<CodeBlock> traceIt = oldErrorTrace.iterator();
+			final Iterator<IIcfgTransition<?>> traceIt = oldErrorTrace.iterator();
 
 			AnnotatedProgramPoint nextApp = pathIt.next();
 
 			while (traceIt.hasNext()) {
-				final CodeBlock currentCodeBlock = traceIt.next();
+				final IIcfgTransition<?> currentCodeBlock = traceIt.next();
 				final AnnotatedProgramPoint previousApp = nextApp;
 
 				newErrorPath.add(previousApp);
@@ -263,32 +250,34 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 				nextApp = pathIt.next();
 
 				if (currentCodeBlock instanceof DummyCodeBlock) {
-					assert summaryEdges.get(previousApp).contains(nextApp);
-					
+					assert mSummaryEdges.get(previousApp).contains(nextApp);
+
 					newErrorTrace.removeLast();
 
 					final Pair<AnnotatedProgramPoint, AnnotatedProgramPoint> sourceAndTarget =
-							new Pair<AnnotatedProgramPoint, AnnotatedProgramPoint>(previousApp, nextApp);
+							new Pair<>(previousApp, nextApp);
 
-					AppDoubleDecker toInsertAdd = summaryEdgeToReturnSucc.get(sourceAndTarget);
+					AppDoubleDecker toInsertAdd = mSummaryEdgeToReturnSucc.get(sourceAndTarget);
 
-					final LinkedList<CodeBlock> traceToInsert = new LinkedList<CodeBlock>();
-					final LinkedList<AnnotatedProgramPoint> pathToInsert = new LinkedList<AnnotatedProgramPoint>();
+					final LinkedList<IIcfgTransition<?>> traceToInsert = new LinkedList<>();
+					final LinkedList<AnnotatedProgramPoint> pathToInsert = new LinkedList<>();
 
-					while (!(toInsertAdd.inEdge.label instanceof Call)) { //is this exit condition adequate? -- mb via source and target?
-						if (toInsertAdd.inEdge.label instanceof DummyCodeBlock)
-						 {
-							repeat = true;// this happens, we have a nested summary --> we need to expand the result again
+					while (!(toInsertAdd.mInEdge.mLabel instanceof IIcfgCallTransition<?>)) { // is this exit condition
+																								// adequate? -- mb via
+																								// source and target?
+						if (toInsertAdd.mInEdge.mLabel instanceof DummyCodeBlock) {
+							repeat = true;// this happens, we have a nested summary --> we need to expand the result
+											// again
 						}
-						traceToInsert.add(toInsertAdd.inEdge.label);
-						pathToInsert.add(toInsertAdd.inEdge.source.top);
-						toInsertAdd = toInsertAdd.inEdge.source;
+						traceToInsert.add(toInsertAdd.mInEdge.mLabel);
+						pathToInsert.add(toInsertAdd.mInEdge.mSource.mTop);
+						toInsertAdd = toInsertAdd.mInEdge.mSource;
 					}
-					if (toInsertAdd.inEdge.label instanceof DummyCodeBlock) {
+					if (toInsertAdd.mInEdge.mLabel instanceof DummyCodeBlock) {
 						repeat = true;
 					}
-					traceToInsert.add(toInsertAdd.inEdge.label);
-					
+					traceToInsert.add(toInsertAdd.mInEdge.mLabel);
+
 					Collections.reverse(pathToInsert);
 					Collections.reverse(traceToInsert);
 					newErrorPath.addAll(pathToInsert);
@@ -296,138 +285,112 @@ public class BFSEmptinessCheck implements IEmptinessCheck {
 				}
 			}
 			newErrorPath.add(nextApp);
-			
+
 			oldErrorTrace = newErrorTrace;
 			oldErrorPath = newErrorPath;
 		}
 
-		return new Pair<ArrayDeque<AnnotatedProgramPoint>, ArrayDeque<CodeBlock>>(oldErrorPath, oldErrorTrace);
+		return new Pair<>(oldErrorPath, oldErrorTrace);
 	}
 
-
 	/**
-	 * Compute the nesting relation for a given error path in the NestedWord format from Matthias.
-	 * Also does a sanity check: If there is a Return following a Call that it does not fit to, a
-	 * special array is returned. This Array is of the form {special constant, first non-matching-
-	 * return-index, non-matching-call index}
+	 * Compute the nesting relation for a given error path in the NestedWord format from Matthias. Also does a sanity
+	 * check: If there is a IIcfgReturnTransition<?,?> following a IIcfgCallTransition<?> that it does not fit to, a
+	 * special array is returned. This Array is of the form {special constant, first non-matching- return-index,
+	 * non-matching-call index}
 	 */
-	private static int[] computeNestingRelation(final CodeBlock[] errorPath) {
-		final int [] nr = new int[errorPath.length];
-		final Stack<Call> callStack = new Stack<Call>();
-		final Stack<Integer> callStackIndizes = new Stack<Integer>();
+	private static int[] computeNestingRelation(final IIcfgTransition<?>[] errorPath) {
+		final int[] nr = new int[errorPath.length];
+		final Stack<IIcfgCallTransition<?>> callStack = new Stack<>();
+		final Stack<Integer> callStackIndizes = new Stack<>();
 		for (int i = 0; i < nr.length; i++) {
-			if (errorPath[i] instanceof Call) {
+			if (errorPath[i] instanceof IIcfgCallTransition<?>) {
 				nr[i] = -2;
-				callStack.push((Call) errorPath[i]);
+				callStack.push((IIcfgCallTransition<?>) errorPath[i]);
 				callStackIndizes.push(i);
-			} else if (errorPath[i] instanceof Return) {
+			} else if (errorPath[i] instanceof IIcfgReturnTransition<?, ?>) {
 				if (callStackIndizes.isEmpty()) {
 					nr[i] = NestedWord.MINUS_INFINITY;
 					break;
 				}
-				final Call matchingCall = callStack.pop();
-				if (((Return) errorPath[i]).getCorrespondingCall().equals(matchingCall)) {
+				final IIcfgCallTransition<?> matchingCall = callStack.pop();
+				if (((IIcfgReturnTransition<?, ?>) errorPath[i]).getCorrespondingCall().equals(matchingCall)) {
 					nr[i] = callStackIndizes.pop();
 					nr[nr[i]] = i;
 				} else {
-					return new int[] {c_badNestingRelationInit , i, callStackIndizes.pop()};
+					return new int[] { BAD_NESTING_RELATION_INIT, i, callStackIndizes.pop() };
 				}
 
 			} else {
 				nr[i] = NestedWord.INTERNAL_POSITION;
 			}
 		}
-		//calls that are still on the stack are pending
+		// calls that are still on the stack are pending
 		for (final Integer i : callStackIndizes) {
 			nr[i] = NestedWord.PLUS_INFINITY;
 		}
 		return nr;
 	}
 
-	class AppDoubleDecker {
-		AnnotatedProgramPoint top;
-		AnnotatedProgramPoint bot;
+	private static final class AppDoubleDecker {
+		private final AnnotatedProgramPoint mTop;
+		private final AnnotatedProgramPoint mBot;
 
-		Stack<Call> callStack;
-		Stack<AnnotatedProgramPoint> callPredStack;
-		ArrayList<AnnotatedProgramPoint> pathToRoot = new ArrayList<AnnotatedProgramPoint>();
+		private final Stack<IIcfgCallTransition<?>> mCallStack;
+		private final Stack<AnnotatedProgramPoint> mCallPredStack;
+		private final ArrayList<AnnotatedProgramPoint> mPathToRoot = new ArrayList<>();
 
-		AddEdge inEdge;
-		ArrayList<AddEdge> outEdges = new ArrayList<AddEdge>();
+		private AddEdge mInEdge;
+		private final ArrayList<AddEdge> mOutEdges = new ArrayList<>();
 
 		AppDoubleDecker(final AnnotatedProgramPoint top, final AnnotatedProgramPoint bot,
-				final Stack<Call> callStack, final Stack<AnnotatedProgramPoint> callPredStack) {
-			this.top = top;
-			this.bot = bot;
-			this.callPredStack = callPredStack;
-			this.callStack = callStack;
+				final Stack<IIcfgCallTransition<?>> callStack, final Stack<AnnotatedProgramPoint> callPredStack) {
+			mTop = top;
+			mBot = bot;
+			mCallPredStack = callPredStack;
+			mCallStack = callStack;
 		}
 
-		//added for debugging purposes
 		void setPathToRoot() {
-			pathToRoot.addAll(inEdge.source.pathToRoot);
-			pathToRoot.add(top);
-			//			if (pathToRoot.size() > 2)
-			//				reconstructPath(this);
+			mPathToRoot.addAll(mInEdge.mSource.mPathToRoot);
+			mPathToRoot.add(mTop);
 		}
 
 		@Override
 		public int hashCode() {
-			return HashUtils.hashJenkins(top.hashCode(), bot.hashCode());
+			return HashUtils.hashJenkins(mTop.hashCode(), mBot.hashCode());
 		}
 
 		@Override
 		public boolean equals(final Object add) {
 			if (add instanceof AppDoubleDecker) {
-				return top.equals(((AppDoubleDecker)add).top) &&
-						bot.equals(((AppDoubleDecker)add).bot);
-			} else {
-				return false;
+				return mTop.equals(((AppDoubleDecker) add).mTop) && mBot.equals(((AppDoubleDecker) add).mBot);
 			}
+			return false;
 		}
 
 		@Override
 		public String toString() {
-			return "(" + top + "|" + bot + ")";
+			return "(" + mTop + "|" + mBot + ")";
 		}
 	}
 
-	class AddEdge {
-		AppDoubleDecker source;
-		AppDoubleDecker target;
-		CodeBlock label;
+	private static final class AddEdge {
+		private final AppDoubleDecker mSource;
+		private final AppDoubleDecker mTarget;
+		private final IIcfgTransition<?> mLabel;
 
-		public AddEdge(final AppDoubleDecker source, final AppDoubleDecker target,
-				final CodeBlock label) {
+		public AddEdge(final AppDoubleDecker source, final AppDoubleDecker target, final IIcfgTransition<?> label) {
 			super();
-			assert (label != null);
-			this.source = source;
-			this.target = target;
-			this.label = label;
+			assert label != null;
+			mSource = source;
+			mTarget = target;
+			mLabel = label;
 		}
 
 		@Override
 		public String toString() {
-			return source + "--" + label + "-->" + target;
-		}
-	}
-
-	class EmptyStackSymbol extends AnnotatedProgramPoint {
-
-		private static final long serialVersionUID = 1L;
-
-		public EmptyStackSymbol() {
-			super((IPredicate) null, (BoogieIcfgLocation) null);
-		}
-
-		@Override
-		public boolean equals(final Object o) {
-			return o instanceof EmptyStackSymbol;
-		}
-
-		@Override
-		public String toString() {
-			return "E";
+			return mSource + "--" + mLabel + "-->" + mTarget;
 		}
 	}
 

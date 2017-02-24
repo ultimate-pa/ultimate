@@ -22,44 +22,64 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CodeCheck plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.ModifiableExplicitEdgesMultigraph;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 /**
- * A node in the abstract reachability graph that Kojak maintains.
- * Contains an IcfgLocation (earlier called ProgramPoint) that is annotated with a Predicate.
+ * A node in the abstract reachability graph that Kojak maintains. Contains an IcfgLocation (earlier called
+ * ProgramPoint) that is annotated with a Predicate.
  * 
- * (Note that it is correct that this should not inherit from IcfgLocation because we may 
- *  have many instances of this class for a single program location -- which are annotated
- *  with different predicates
- *  -- writing this down here because of several attempts to go into that wrong direction)
+ * (Note that it is correct that this should not inherit from IcfgLocation because we may have many instances of this
+ * class for a single program location -- which are annotated with different predicates -- writing this down here
+ * because of several attempts to go into that wrong direction)
  *
  * @author Alexander Nutz
  * @author Mohamed Sherif
  * @author Mostafa Mahmoud
  */
-public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<AnnotatedProgramPoint, AppEdge,AnnotatedProgramPoint, AppEdge> {
+public class AnnotatedProgramPoint
+		extends ModifiableExplicitEdgesMultigraph<AnnotatedProgramPoint, AppEdge, AnnotatedProgramPoint, AppEdge> {
 
 	private static final long serialVersionUID = -4398335480646555023L;
 
-	private final IPredicate _predicate;
-	private final BoogieIcfgLocation _programPoint;
+	private final IPredicate mPredicate;
+	private final IcfgLocation mProgramPoint;
+	private final boolean mIsErrorLoc;
 
-	private final HashSet<AppHyperEdge> _outgoingHyperEdges = new HashSet<AppHyperEdge>();
+	private final Set<AppHyperEdge> mOutgoingHyperEdges;
+	private final Set<AnnotatedProgramPoint> mCopies;
+	private final Set<AnnotatedProgramPoint> mNewCopies;
+
+	private AnnotatedProgramPoint mCloneSource;
+	private final int mNodeID;
+
+	public AnnotatedProgramPoint(final IPredicate predicate, final IcfgLocation programPoint, final boolean isErrorLoc,
+			final int nodeId) {
+		mPredicate = predicate;
+		mProgramPoint = programPoint;
+		mIsErrorLoc = isErrorLoc;
+		mNodeID = nodeId;
+		mOutgoingHyperEdges = new HashSet<>();
+		mCopies = new HashSet<>();
+		mNewCopies = new HashSet<>();
+		mCloneSource = null;
+	}
 
 	/**
 	 * Constructor of a new AnnotatedProgramPoint.
@@ -69,28 +89,21 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 	 * @param programPoint
 	 *            the program point this APP represents
 	 * @param isPEL
-	 *            specifies whether or not this APP is considered to be an error
-	 *            location
+	 *            specifies whether or not this APP is considered to be an error location
 	 */
-
-	public int _nodeID;
-
-	public AnnotatedProgramPoint(IPredicate predicate, BoogieIcfgLocation programPoint) {
-		_predicate = predicate;
-		_programPoint = programPoint;
-		_copies = new HashSet<AnnotatedProgramPoint>();
-		_cloneSource = null;
+	public AnnotatedProgramPoint(final IPredicate predicate, final IcfgLocation programPoint,
+			final boolean isErrorLoc) {
+		this(predicate, programPoint, isErrorLoc, 0);
 	}
 
 	/**
-	 * Constructor that copies an old APP to a new one with the same
-	 * programPoint, predicate, and isPseudoErrorLocation.
+	 * Constructor that copies an old APP to a new one with the same programPoint, predicate, and id.
 	 * 
 	 * @param oldApp
 	 *            the old APP that will be copied
 	 */
-	public AnnotatedProgramPoint(AnnotatedProgramPoint oldApp) {
-		this(oldApp._predicate, oldApp._programPoint);
+	public AnnotatedProgramPoint(final AnnotatedProgramPoint oldApp) {
+		this(oldApp.mPredicate, oldApp.mProgramPoint, oldApp.mIsErrorLoc, oldApp.mNodeID);
 	}
 
 	/**
@@ -101,13 +114,13 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 	 * @param newPred
 	 *            the predicate of the new copy
 	 */
-	public AnnotatedProgramPoint(AnnotatedProgramPoint oldApp, IPredicate newPred) {
-		this(newPred, oldApp._programPoint);
+	public AnnotatedProgramPoint(final AnnotatedProgramPoint oldApp, final IPredicate newPred) {
+		this(newPred, oldApp.mProgramPoint, oldApp.mIsErrorLoc, oldApp.mNodeID);
 	}
 
 	/**
-	 * Constructor that copies an old APP, copies its outgoing edges if
-	 * specified to do so, and gives the copy a new predicate.
+	 * Constructor that copies an old APP, copies its outgoing edges if specified to do so, and gives the copy a new
+	 * predicate.
 	 * 
 	 * @param oldApp
 	 *            the old APP that will be copied
@@ -116,74 +129,75 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 	 * @param copyOutgoingEdges
 	 *            if true, the hyperedges will be copied
 	 */
-	public AnnotatedProgramPoint(AnnotatedProgramPoint oldApp, IPredicate newPred, boolean copyOutgoingEdges, int id) {
-		this(oldApp, newPred);
-		_nodeID = id;
+	public AnnotatedProgramPoint(final AnnotatedProgramPoint oldApp, final IPredicate newPred,
+			final boolean copyOutgoingEdges, final int id) {
+		this(newPred, oldApp.mProgramPoint, oldApp.mIsErrorLoc, id);
 		if (copyOutgoingEdges) {
 			for (final AppEdge oldOutEdge : oldApp.getOutgoingEdges()) {
 				if (oldOutEdge instanceof AppHyperEdge) {
 					connectOutgoingReturn(((AppHyperEdge) oldOutEdge).getHier(),
-							(Return) oldOutEdge.getStatement(), oldOutEdge.getTarget());
+							(IIcfgReturnTransition<?, ?>) oldOutEdge.getStatement(), oldOutEdge.getTarget());
 				} else {
 					connectOutgoing(oldOutEdge.getStatement(), oldOutEdge.getTarget());
 				}
 			}
 
 			for (final AppHyperEdge oldOutHypEdge : oldApp.getOutgoingHyperEdges()) {
-				oldOutHypEdge.getSource().connectOutgoingReturn(this, (Return) oldOutHypEdge.getStatement(),
-						oldOutHypEdge.getTarget());
+				oldOutHypEdge.getSource().connectOutgoingReturn(this,
+						(IIcfgReturnTransition<?, ?>) oldOutHypEdge.getStatement(), oldOutHypEdge.getTarget());
 			}
-			oldApp._copies.add(this);
-			_cloneSource = oldApp;
+			oldApp.mCopies.add(this);
+			mCloneSource = oldApp;
 		}
 	}
 
-	public HashSet<AnnotatedProgramPoint> getNextClones() {
-		return _copies;
+	public Set<AnnotatedProgramPoint> getNextClones() {
+		return mCopies;
 	}
 
 	public IPredicate getPredicate() {
-		return _predicate;
+		return mPredicate;
 	}
 
 	public boolean isErrorLocation() {
-		return _programPoint.isErrorLocation();
+		return mIsErrorLoc;
 	}
 
-	public BoogieIcfgLocation getProgramPoint() {
-		return _programPoint;
+	public IcfgLocation getProgramPoint() {
+		return mProgramPoint;
 	}
 
-	public HashSet<AppHyperEdge> getOutgoingHyperEdges() {
-		return _outgoingHyperEdges;
+	public Set<AppHyperEdge> getOutgoingHyperEdges() {
+		return mOutgoingHyperEdges;
 	}
 
 	public AnnotatedProgramPoint getParentCopy() {
-		return _cloneSource;
+		return mCloneSource;
 	}
 
 	@Override
 	public String toString() {
 		final String ref = CodeChecker.objectReference(this);
-		return _programPoint.toString() + ref.substring(Math.max(ref.length() - 3, 0)) + ":"
-				+ _predicate.getFormula().toString();
+		return mProgramPoint.toString() + ref.substring(Math.max(ref.length() - 3, 0)) + ":"
+				+ mPredicate.getFormula().toString();
 	}
 
-	public void connectOutgoing(CodeBlock statement, AnnotatedProgramPoint target) {
-		assert !(statement instanceof Return);
-		final AppEdge edge = new AppEdge(this, statement, target);
+	public void connectOutgoing(final IIcfgTransition<?> transition, final AnnotatedProgramPoint target) {
+		assert !(transition instanceof IIcfgReturnTransition<?, ?>);
+		final AppEdge edge = new AppEdge(this, transition, target);
 		mOutgoingEdges.add(edge);
 		target.mIncomingEdges.add(edge);
 	}
 
-	public void connectOutgoingReturn(AnnotatedProgramPoint hier, Return returnStm, AnnotatedProgramPoint target) {
+	public void connectOutgoingReturn(final AnnotatedProgramPoint hier, final IIcfgReturnTransition<?, ?> returnStm,
+			final AnnotatedProgramPoint target) {
 		final AppHyperEdge hyperEdge = new AppHyperEdge(this, hier, returnStm, target);
-		hier._outgoingHyperEdges.add(hyperEdge);
+		hier.mOutgoingHyperEdges.add(hyperEdge);
 		mOutgoingEdges.add(hyperEdge);
 		target.mIncomingEdges.add(hyperEdge);
 	}
 
-	public AppEdge getEdge(AnnotatedProgramPoint target) {
+	public AppEdge getEdge(final AnnotatedProgramPoint target) {
 		for (final AppEdge edge : mOutgoingEdges) {
 			if (edge.getTarget() == target) {
 				return edge;
@@ -197,27 +211,10 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 		for (final AppEdge edge : edges) {
 			edge.disconnect();
 		}
-		if (_cloneSource != null) {
-			_cloneSource._copies.remove(this);
+		if (mCloneSource != null) {
+			mCloneSource.mCopies.remove(this);
 		}
 	}
-
-	private final HashSet<AnnotatedProgramPoint> _copies;
-	private AnnotatedProgramPoint _cloneSource;
-	// public void disconnectOutgoing(AppEdge outEdge) {
-	// if (outEdge instanceof AppHyperEdge) {
-	// ((AppHyperEdge) outEdge).hier._outgoingHyperEdges.remove(outEdge);
-	// }
-	// outEdge.getTarget().mIncomingEdges.remove(outEdge);//TODO: maybe make
-	// them HashSets??
-	// this.mOutgoingEdges.remove(outEdge);
-	// }
-
-	// formerly removed now there again.. --> impulse-specific stuff
-
-	private final ArrayList<AnnotatedProgramPoint> copies = new ArrayList<AnnotatedProgramPoint>();
-	private final ArrayList<AnnotatedProgramPoint> newCopies = new ArrayList<AnnotatedProgramPoint>();
-	private AnnotatedProgramPoint cloneSource;
 
 	/**
 	 * Adds an APP to the list of new copies of this APP.
@@ -225,27 +222,26 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 	 * @param copy
 	 *            the APP that will be added as a copy to this APP
 	 */
-	public void addCopy(AnnotatedProgramPoint copy) {
-		newCopies.add(copy);
+	public void addCopy(final AnnotatedProgramPoint copy) {
+		mNewCopies.add(copy);
 	}
 
 	/**
 	 * Moves new copies to the list of old copies.
 	 */
 	public void updateCopies() {
-		copies.addAll(newCopies);
-		newCopies.clear();
+		mCopies.addAll(mNewCopies);
+		mNewCopies.clear();
 	}
 
 	/**
-	 * Sets the clone source of this APP. The clone source is the APP copies to
-	 * form this APP.
+	 * Sets the clone source of this APP. The clone source is the APP copies to form this APP.
 	 * 
 	 * @param source
 	 *            the APP that should be declared to be the clone source
 	 */
-	public void setCloneSource(AnnotatedProgramPoint source) {
-		cloneSource = source;
+	public void setCloneSource(final AnnotatedProgramPoint source) {
+		mCloneSource = source;
 	}
 
 	/**
@@ -253,10 +249,10 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 	 * 
 	 * @return returns a list of copies of this APP
 	 */
-	public ArrayList<AnnotatedProgramPoint> getCopies() {
-		final ArrayList<AnnotatedProgramPoint> ret = new ArrayList<AnnotatedProgramPoint>();
-		ret.addAll(copies);
-		ret.addAll(newCopies);
+	public List<AnnotatedProgramPoint> getCopies() {
+		final ArrayList<AnnotatedProgramPoint> ret = new ArrayList<>();
+		ret.addAll(mCopies);
+		ret.addAll(mNewCopies);
 		return ret;
 	}
 
@@ -265,15 +261,19 @@ public class AnnotatedProgramPoint extends ModifiableExplicitEdgesMultigraph<Ann
 	 * 
 	 * @return returns a list of new copies of this APP
 	 */
-	public ArrayList<AnnotatedProgramPoint> getNewCopies() {
-		final ArrayList<AnnotatedProgramPoint> ret = new ArrayList<AnnotatedProgramPoint>();
-		ret.addAll(newCopies);
+	public List<AnnotatedProgramPoint> getNewCopies() {
+		final ArrayList<AnnotatedProgramPoint> ret = new ArrayList<>();
+		ret.addAll(mNewCopies);
 		return ret;
 	}
 
 	@Override
 	public AnnotatedProgramPoint getLabel() {
 		return this;
+	}
+
+	public int getNodeId() {
+		return mNodeID;
 	}
 
 }
