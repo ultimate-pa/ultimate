@@ -163,9 +163,15 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 				protected IInteractive<Object> getInteractive() {
 					// instead of passing the interactive interface via
 					// constructor, it is necessary to have a getter
-					// because .next() is called in the constructor of the superclass.
+					// because .next() is called in the constructor of the
+					// superclass.
 					return mInteractive;
 				}
+
+				@Override
+				protected IRefinementStrategy<LETTER> createFallbackStrategy(RefinementStrategy strategy) {
+					return createStrategy(strategy, counterexample, abstraction, iteration, benchmark);
+				};
 
 			};
 		default:

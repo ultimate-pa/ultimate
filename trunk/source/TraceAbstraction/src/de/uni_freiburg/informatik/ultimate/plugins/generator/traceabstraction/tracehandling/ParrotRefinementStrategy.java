@@ -44,13 +44,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
  * interactive {@link IRefinementStrategy} that asks the user.
  * <p>
- * The class uses a {@link MultiTrackInterpolantAutomatonBuilder} for
- * constructing the interpolant automaton.
+ * The class uses a {@link MultiTrackInterpolantAutomatonBuilder} for constructing the interpolant automaton.
  *
  * @author Julian Jarecki (julian.jarecki@neptun.uni-freiburg.de)
  */
@@ -67,6 +67,8 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 	}
 
 	protected abstract IInteractive<Object> getInteractive();
+
+	protected abstract IRefinementStrategy<LETTER> createFallbackStrategy(RefinementStrategy strategy);
 
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
