@@ -29,27 +29,23 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
-import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
@@ -67,6 +63,7 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
 	private final IRun<LETTER, IPredicate, ?> mCounterexample;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
+	private final PredicateFactory mPredicateFactory;
 	private final PredicateUnifier mPredicateUnifier;
 
 	// TODO Christian 2016-11-11: Matthias wants to get rid of this
@@ -102,15 +99,16 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	 */
 	public FixedTraceAbstractionRefinementStrategy(final ILogger logger,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final ManagedScript managedScript,
-			final IUltimateServiceProvider services, final PredicateUnifier predicateUnifier,
-			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
-			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
+			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
+			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
+			final IAutomaton<LETTER, IPredicate> abstraction, final TAPreferences taPrefsForInterpolantConsolidation,
+			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
 		mCounterexample = counterexample;
 		mAbstraction = abstraction;
+		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
 		mCegarLoopBenchmark = cegarLoopBenchmarks;
@@ -151,8 +149,8 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	public IInterpolantGenerator getInterpolantGenerator() {
 		if (mInterpolantGenerator == null) {
 			mInterpolantGenerator = RefinementStrategyUtils.constructInterpolantGenerator(mServices, mLogger, mPrefs,
-					mTaPrefsForInterpolantConsolidation, getTraceChecker(), mPredicateUnifier, mCounterexample,
-					mCegarLoopBenchmark);
+					mTaPrefsForInterpolantConsolidation, getTraceChecker(), mPredicateFactory, mPredicateUnifier,
+					mCounterexample, mCegarLoopBenchmark);
 		}
 		return mInterpolantGenerator;
 	}

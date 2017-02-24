@@ -67,13 +67,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Pre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateCoverageChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.poset.IPartialComparator.ComparisonResult;
@@ -97,7 +97,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 public class PredicateUnifier implements IPredicateUnifier {
 
 	private final ManagedScript mMgnScript;
-	private final PredicateFactory mPredicateFactory;
+	private final BasicPredicateFactory mPredicateFactory;
 	private final Map<Term, IPredicate> mTerm2Predicates;
 	private final List<IPredicate> mKnownPredicates = new ArrayList<>();
 	private final Map<IPredicate, IPredicate> mDeprecatedPredicates = new HashMap<>();
@@ -116,7 +116,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	private final PredicateUnifierStatisticsGenerator mPredicateUnifierBenchmarkGenerator;
 
 	public PredicateUnifier(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final PredicateFactory predicateFactory, final IIcfgSymbolTable symbolTable,
+			final BasicPredicateFactory predicateFactory, final IIcfgSymbolTable symbolTable,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IPredicate... initialPredicates) {
 		mPredicateUnifierBenchmarkGenerator = new PredicateUnifierStatisticsGenerator();
@@ -517,7 +517,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	 * @return the predicateFactory
 	 */
 	@Override
-	public PredicateFactory getPredicateFactory() {
+	public BasicPredicateFactory getPredicateFactory() {
 		return mPredicateFactory;
 	}
 
