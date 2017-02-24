@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IcfgTransformer library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers;
@@ -30,30 +30,26 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 
-
 /**
- * A preprocessor performs some modifications to the input formulae for
- * stem and loop.
+ * A preprocessor performs some modifications to the input formulae for stem and loop.
  * 
- * This is the base class for processors that use a TermTransformer on the
- * transition formula. Creates a new TermTransformer instance for each
- * TransFormulaLR that is processed.
+ * This is the base class for processors that use a TermTransformer on the transition formula. Creates a new
+ * TermTransformer instance for each TransFormulaLR that is processed.
  * 
  * @author Jan Leike
  */
 public abstract class TransformerPreprocessor extends TransitionPreprocessor {
-	
+
 	/**
-	 * Create a TermTransformer instance that will be applied to the stem and
-	 * the loop transition formula.
+	 * Create a TermTransformer instance that will be applied to the stem and the loop transition formula.
 	 */
 	protected abstract TermTransformer getTransformer(Script script);
-	
+
 	@Override
-	public ModifiableTransFormula process(Script script, ModifiableTransFormula tf) throws TermException {
+	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
 		final TermTransformer transformer = getTransformer(script);
-		final ModifiableTransFormula new_tf = new ModifiableTransFormula(tf);
-		new_tf.setFormula(transformer.transform(tf.getFormula()));
-		return new_tf;
+		final ModifiableTransFormula newTf = new ModifiableTransFormula(tf);
+		newTf.setFormula(transformer.transform(tf.getFormula()));
+		return newTf;
 	}
 }

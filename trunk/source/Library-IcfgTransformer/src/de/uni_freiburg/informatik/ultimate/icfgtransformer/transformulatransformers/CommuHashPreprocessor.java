@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormal
 public class CommuHashPreprocessor extends TransitionPreprocessor {
 	private final IUltimateServiceProvider mServices;
 	
-	public static final String s_Description = "Simplify formula using CommuhashNormalForm";
+	public static final String DESCRIPTION = "Simplify formula using CommuhashNormalForm";
 	
 	public CommuHashPreprocessor(final IUltimateServiceProvider services) {
 		super();
@@ -56,7 +56,7 @@ public class CommuHashPreprocessor extends TransitionPreprocessor {
 	
 	@Override
 	public String getDescription() {
-		return s_Description;
+		return DESCRIPTION;
 	}
 	
 	@Override

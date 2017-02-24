@@ -180,7 +180,9 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 
 	/**
 	 * Finds backbones.
-	 * @param entryTransition The entry transition of the backbones.
+	 * 
+	 * @param entryTransition
+	 *            The entry transition of the backbones.
 	 * @return A list of backbones.
 	 */
 	private List<Backbone> findBackbones(final IcfgEdge entryTransition) {

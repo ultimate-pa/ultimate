@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IcfgTransformer library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers;
@@ -30,44 +30,49 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransfor
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 
-
 /**
- * A preprocessor takes a {@link ModifiableTransFormula} and returns a 
- * {@link ModifiableTransFormula}.
+ * A preprocessor takes a {@link ModifiableTransFormula} and returns a {@link ModifiableTransFormula}.
  * 
- * @author Jan Leike 
+ * @author Jan Leike
  * @author Matthias Heizmann
  */
 public abstract class TransitionPreprocessor {
-	
+
 	/**
 	 * @return a description of the preprocessing
 	 */
 	public abstract String getDescription();
-	
+
 	/**
 	 * Process a single transition (stem or loop) independently of the other
-	 * @param script the script
-	 * @param tf the transition formula
+	 * 
+	 * @param script
+	 *            the script
+	 * @param tf
+	 *            the transition formula
 	 * @return a new (processed) transition formula
-	 * @throws TermException if processing fails
+	 * @throws TermException
+	 *             if processing fails
 	 */
-	public abstract ModifiableTransFormula process(
-			Script script, ModifiableTransFormula tf) throws TermException;
-	
+	public abstract ModifiableTransFormula process(Script script, ModifiableTransFormula tf) throws TermException;
+
 	/**
 	 * Check if the processing was sound.
 	 * 
-	 * @param script the script
-	 * @param oldTF the old TransFormulaOLR
-	 * @param newTF the new TransFormulaLR (after processing
+	 * @param script
+	 *            the script
+	 * @param oldTF
+	 *            the old TransFormulaOLR
+	 * @param newTF
+	 *            the new TransFormulaLR (after processing
 	 * @return whether the result is ok
 	 */
 	public boolean checkSoundness(final Script script, final ModifiableTransFormula oldTF,
 			final ModifiableTransFormula newTF) {
-		return true; // check nothing
+		// check nothing per default
+		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		return getDescription();

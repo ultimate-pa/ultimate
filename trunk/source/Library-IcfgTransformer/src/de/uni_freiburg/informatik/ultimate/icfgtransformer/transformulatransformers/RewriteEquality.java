@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IcfgTransformer library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers;
@@ -35,59 +35,58 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 
-
 /**
  * Replaces equalities (atoms of the form a = b) with (a ≤ b \/ a ≥ b).
  * 
  * @author Jan Leike
  */
 public class RewriteEquality extends TransformerPreprocessor {
-	
-	public static final String s_Description = 
-			"Replaces atoms of the form a = b with (a <= b /\\ a >= b)";
-	
+
+	public static final String DESCRIPTION = "Replaces atoms of the form a = b with (a <= b /\\ a >= b)";
+
 	@Override
 	public String getDescription() {
-		return s_Description;
+		return DESCRIPTION;
 	}
-	
+
 	@Override
-	public boolean checkSoundness(Script script, ModifiableTransFormula oldTF,
-			ModifiableTransFormula newTF) {
+	public boolean checkSoundness(final Script script, final ModifiableTransFormula oldTF,
+			final ModifiableTransFormula newTF) {
 		final Term old_term = oldTF.getFormula();
 		final Term new_term = newTF.getFormula();
-		return LBool.SAT != Util.checkSat(script,
-				script.term("distinct", old_term, new_term));
+		return LBool.SAT != Util.checkSat(script, script.term("distinct", old_term, new_term));
 	}
-	
+
 	@Override
-	protected TermTransformer getTransformer(Script script) {
+	protected TermTransformer getTransformer(final Script script) {
 		return new RewriteEqualityTransformer(script);
 	}
-	
-	private class RewriteEqualityTransformer extends TermTransformer {
-		
+
+	private static final class RewriteEqualityTransformer extends TermTransformer {
+
 		private final Script mScript;
-		
-		RewriteEqualityTransformer(Script script) {
+
+		RewriteEqualityTransformer(final Script script) {
 			assert script != null;
 			mScript = script;
 		}
-		
+
 		@Override
-		protected void convert(Term term) {
+		protected void convert(final Term term) {
 			if (term instanceof ApplicationTerm) {
 				final ApplicationTerm appt = (ApplicationTerm) term;
-				if (appt.getFunction().getName().equals("=") &&
-						!appt.getParameters()[0].getSort().getName().equals("Bool")) {
-					assert(appt.getParameters().length == 2) : "equality with more than two parameters not yet supported";
+				if (appt.getFunction().getName().equals("=")
+						&& !appt.getParameters()[0].getSort().getName().equals("Bool")) {
+					assert appt
+							.getParameters().length == 2 : "equality with more than two parameters not yet supported";
 					final Term param1 = mScript.term("<=", appt.getParameters());
 					final Term param2 = mScript.term(">=", appt.getParameters());
 					setResult(mScript.term("and", param1, param2));
 					return;
-				} else if (appt.getFunction().getName().equals("distinct") &&
-						!appt.getParameters()[0].getSort().getName().equals("Bool")) {
-					assert(appt.getParameters().length == 2) : "distinct with more than two parameters not yet supported";
+				} else if (appt.getFunction().getName().equals("distinct")
+						&& !appt.getParameters()[0].getSort().getName().equals("Bool")) {
+					assert appt
+							.getParameters().length == 2 : "distinct with more than two parameters not yet supported";
 					final Term param1 = mScript.term("<", appt.getParameters());
 					final Term param2 = mScript.term(">", appt.getParameters());
 					setResult(mScript.term("or", param1, param2));
