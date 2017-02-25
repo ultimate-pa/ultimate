@@ -34,24 +34,17 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
-import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check.Spec;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.WitnessInvariant;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.PositiveResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ProcedureContractResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovabilityReason;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnprovableResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -67,15 +60,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.preferences.InvariantSynthesisPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.CFGInvariantsGenerator;
@@ -83,7 +74,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 public class InvariantSynthesisStarter {
 
@@ -119,6 +110,17 @@ public class InvariantSynthesisStarter {
 				invSynthSettings, icfg.getCfgSmtToolkit());
 		final Map<IcfgLocation, IPredicate> invariants = cfgInvGenerator.synthesizeInvariants();
 		final PathInvariantsStatisticsGenerator statistics = cfgInvGenerator.getInvariantSynthesisStatistics();
+		if (invariants != null) {
+			for (final Entry<IcfgLocation, IPredicate> entry : invariants.entrySet()) {
+				final HoareAnnotation hoareAnnot = predicateFactory.getNewHoareAnnotation(entry.getKey(), icfg.getCfgSmtToolkit().getModifiableGlobalsTable());
+				hoareAnnot.annotate(entry.getKey());
+				hoareAnnot.addInvariant(predicateUnifier.getTruePredicate(), entry.getValue());				
+			}
+			writeHoareAnnotationToLogger(icfg);
+			mOverallResult = Result.SAFE;
+		} else {
+			mOverallResult = Result.UNKNOWN;
+		}
 		
 		final Map<String, Set<IcfgLocation>> proc2errNodes = icfg.getProcedureErrorNodes();
 		final Collection<IcfgLocation> errNodesOfAllProc = new ArrayList<>();
@@ -141,23 +143,25 @@ public class InvariantSynthesisStarter {
 
 		mLogger.debug("Overall result: " + mOverallResult);
 		mLogger.debug("Continue processing: " + mServices.getProgressMonitorService().continueProcessing());
-		if (mOverallResult == Result.SAFE
-				&& mServices.getProgressMonitorService().continueProcessing()) {
+		if (mOverallResult == Result.SAFE) {
 			final IBacktranslationService backTranslatorService = mServices.getBacktranslationService();
 			createInvariantResults(icfg, icfg.getCfgSmtToolkit(), backTranslatorService);
 			createProcedureContractResults(icfg, backTranslatorService);
 		}
-		final ICsvProviderProvider invariantsynthesisBenchmark = null;
-		reportBenchmark(invariantsynthesisBenchmark);
+		final StatisticsData stat = new StatisticsData();
+		stat.aggregateBenchmarkData(statistics);
+		final IResult benchmarkResult =	new BenchmarkResult<>(Activator.PLUGIN_ID, "InvariantSynthesisStatistics", stat);
+		reportResult(benchmarkResult);
 		switch (mOverallResult) {
 		case SAFE:
+			reportPositiveResults(errNodesOfAllProc);
+			break;
 		case UNSAFE:
-			break;
+			throw new AssertionError(); 
 		case TIMEOUT:
-			mLogger.warn("Timeout");
-			break;
+			throw new AssertionError();
 		case UNKNOWN:
-			mLogger.warn("Unable to decide correctness. Please check the following counterexample manually.");
+			mLogger.warn("Unable to infer correctness proof.");
 			break;
 		default:
 			throw new UnsupportedOperationException("Unknown overall result " + mOverallResult);
@@ -169,16 +173,28 @@ public class InvariantSynthesisStarter {
 
 
 	private InvariantSynthesisSettings constructSettings() {
+		final boolean useNonlinearConstraints = false;
 		final boolean fakeNonIncrementalScript = false;
-		final boolean useExternalSolver = false;
-		final String commandExternalSolver = "";
-		final long timeoutSmtInterpol = 12_000;
+		final boolean useExternalSolver = true;
+		final String commandExternalSolver;
+		if (useNonlinearConstraints) {
+			// solverCommand = "yices-smt2 --incremental";
+			// solverCommand = "/home/matthias/ultimate/barcelogic/barcelogic-NIRA -tlimit 5";
+			commandExternalSolver = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:12000";
+			// solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:1000";
+		} else {
+			// solverCommand = "yices-smt2 --incremental";
+			commandExternalSolver = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:12000";
+		}
+		
+		final long timeoutSmtInterpol = 12;
 		final boolean dumpSmtScriptToFile = false;
 		final String pathOfDumpedScript = null;
 		final String baseNameOfDumpedScript = null;
 		final Settings solverSettings = new Settings(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver, timeoutSmtInterpol, null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
-		final boolean useNonlinearConstraints = false;
-		final boolean useUnsatCores = true;
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+
+		final boolean useUnsatCores = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_UNSAT_CORES);
 		final boolean useAbstractInterpretationPredicates = false;
 		final boolean useWPForPathInvariants = false;
 		final InvariantSynthesisSettings invSynthSettings = new InvariantSynthesisSettings(solverSettings, useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWPForPathInvariants);
@@ -237,66 +253,7 @@ public class InvariantSynthesisStarter {
 		}
 	}
 
-	// private void computeHoareAnnotation(final Set<? extends IcfgLocation> locsForHoareAnnotation) {
-	// final HoareAnnotationStatisticsGenerator hoareAnnotationStatisticsGenerator = new
-	// HoareAnnotationStatisticsGenerator();
-	// for (final IcfgLocation locNode : locsForHoareAnnotation) {
-	// final HoareAnnotation hoare = getHoareAnnotation(locNode);
-	// if (hoare == null) {
-	// continue;
-	// }
-	// hoare.computeFormula(hoareAnnotationStatisticsGenerator);
-	// }
-	// hoareAnnotationStatisticsGenerator.toString();
-	// }
 
-	private void logNumberOfWitnessInvariants(final Collection<IcfgLocation> errNodesOfAllProc) {
-		int numberOfCheckedInvariants = 0;
-		for (final IcfgLocation err : errNodesOfAllProc) {
-			if (!(err instanceof BoogieIcfgLocation)) {
-				mLogger.info("Did not count any witness invariants because Icfg is not BoogieIcfg");
-				return;
-			}
-			final BoogieASTNode boogieASTNode = ((BoogieIcfgLocation) err).getBoogieASTNode();
-			final IAnnotations annot = boogieASTNode.getPayload().getAnnotations().get(Check.class.getName());
-			if (annot != null) {
-				final Check check = (Check) annot;
-				if (check.getSpec().contains(Spec.WITNESS_INVARIANT)) {
-					numberOfCheckedInvariants++;
-				}
-			}
-		}
-		if (numberOfCheckedInvariants > 0) {
-			mLogger.info("Automizer considered " + numberOfCheckedInvariants + " witness invariants");
-			mLogger.info("WitnessConsidered=" + numberOfCheckedInvariants);
-		}
-	}
-
-
-
-	private Result computeOverallResult(final Collection<IcfgLocation> errorLocs,
-			final BasicCegarLoop<?> basicCegarLoop, final Result result) {
-		switch (result) {
-		case SAFE:
-			reportPositiveResults(errorLocs);
-			return mOverallResult;
-		case UNSAFE:
-			reportCounterexampleResult(basicCegarLoop.getRcfgProgramExecution());
-			return result;
-		case TIMEOUT:
-			reportTimeoutResult(errorLocs, basicCegarLoop.getRunningTaskStackProvider());
-			return mOverallResult != Result.UNSAFE ? result : mOverallResult;
-		case UNKNOWN:
-			final IcfgProgramExecution pe = basicCegarLoop.getRcfgProgramExecution();
-			final List<UnprovabilityReason> unprovabilityReasons = new ArrayList<>();
-			unprovabilityReasons.add(basicCegarLoop.getReasonUnknown());
-			unprovabilityReasons.addAll(pe.getUnprovabilityReasons());
-			reportUnproveableResult(pe, unprovabilityReasons);
-			return mOverallResult != Result.UNSAFE ? result : mOverallResult;
-		default:
-			throw new IllegalArgumentException();
-		}
-	}
 
 	private void writeHoareAnnotationToLogger(final IIcfg<IcfgLocation> root) {
 		for (final Entry<String, Map<String, IcfgLocation>> proc2label2pp : root.getProgramPoints().entrySet()) {
@@ -338,43 +295,12 @@ public class InvariantSynthesisStarter {
 		}
 	}
 
-	private void reportCounterexampleResult(final IcfgProgramExecution pe) {
-		if (!pe.getOverapproximations().isEmpty()) {
-			reportUnproveableResult(pe, pe.getUnprovabilityReasons());
-			return;
-		}
-		reportResult(new CounterExampleResult<>(getErrorPP(pe), Activator.PLUGIN_NAME,
-				mServices.getBacktranslationService(), pe));
-	}
-
-	private void reportTimeoutResult(final Collection<IcfgLocation> errorLocs, final IRunningTaskStackProvider rtsp) {
-		for (final IcfgLocation errorIpp : errorLocs) {
-			String timeOutMessage = "Unable to prove that ";
-			timeOutMessage += ResultUtil.getCheckedSpecification(errorIpp).getPositiveMessage();
-			if (errorIpp instanceof BoogieIcfgLocation) {
-				final ILocation origin = ((BoogieIcfgLocation) errorIpp).getBoogieASTNode().getLocation();
-				timeOutMessage += " (line " + origin.getStartLine() + ").";
-			}
-			if (rtsp != null) {
-				timeOutMessage += " Cancelled " + rtsp.printRunningTaskMessage();
-			}
-			final TimeoutResultAtElement<IIcfgElement> timeOutRes = new TimeoutResultAtElement<>(errorIpp,
-					Activator.PLUGIN_NAME, mServices.getBacktranslationService(), timeOutMessage);
-			reportResult(timeOutRes);
-		}
-	}
 
 	private void reportUnproveableResult(final IcfgProgramExecution pe,
 			final List<UnprovabilityReason> unproabilityReasons) {
 		final IcfgLocation errorPP = getErrorPP(pe);
 		reportResult(new UnprovableResult<>(Activator.PLUGIN_NAME, errorPP, mServices.getBacktranslationService(), pe,
 				unproabilityReasons));
-	}
-
-	private <T> void reportBenchmark(final ICsvProviderProvider<T> benchmark) {
-		final String shortDescription = "Ultimate Automizer benchmark data";
-		final BenchmarkResult<T> res = new BenchmarkResult<>(Activator.PLUGIN_NAME, shortDescription, benchmark);
-		reportResult(res);
 	}
 
 	private static boolean isAuxilliaryProcedure(final String proc) {
@@ -396,11 +322,5 @@ public class InvariantSynthesisStarter {
 		final int lastPosition = rcfgProgramExecution.getLength() - 1;
 		final IIcfgTransition<?> last = rcfgProgramExecution.getTraceElement(lastPosition).getTraceElement();
 		return last.getTarget();
-	}
-
-	private boolean interpolationModeSwitchNeeded() {
-		final SolverMode solver = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
-		return solver == SolverMode.External_PrincessInterpolationMode;
 	}
 }
