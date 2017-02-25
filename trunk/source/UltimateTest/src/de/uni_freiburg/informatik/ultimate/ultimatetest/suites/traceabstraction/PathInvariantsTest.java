@@ -141,7 +141,7 @@ public class PathInvariantsTest extends
 	private static final String[] mCToolchains = {
 		"AutomizerCInline.xml",
 		"AutomizerCInlineWithBlockEncoding.xml",
-//		"InvariantSynthesisBplInline.xml",
+//		"InvariantSynthesisCInline.xml",
 	};
 	
 
