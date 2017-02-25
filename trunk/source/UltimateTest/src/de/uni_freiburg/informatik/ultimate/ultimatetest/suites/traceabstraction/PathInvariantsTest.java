@@ -133,13 +133,15 @@ public class PathInvariantsTest extends
 	}
 	
 	private static final String[] mBoogieToolchains = {
-			"AutomizerBplInline.xml",			
-			"AutomizerBplInlineWithBlockEncoding.xml",
-		};
+		"AutomizerBplInline.xml",			
+		"AutomizerBplInlineWithBlockEncoding.xml",
+//		"InvariantSynthesisBplInline.xml",
+	};
 		
 	private static final String[] mCToolchains = {
 		"AutomizerCInline.xml",
 		"AutomizerCInlineWithBlockEncoding.xml",
+//		"InvariantSynthesisBplInline.xml",
 	};
 	
 
