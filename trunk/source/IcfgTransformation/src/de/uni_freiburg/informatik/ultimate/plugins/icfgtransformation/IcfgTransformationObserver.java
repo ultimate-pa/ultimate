@@ -27,10 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
@@ -140,33 +136,32 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		// allow chaining of transformers in
 		// icfgtransformer
 		final ReplacementVarFactory fac = new ReplacementVarFactory(icfg.getCfgSmtToolkit(), false);
-		final List<ITransformulaTransformer> transformers;
+		final ITransformulaTransformer transformer;
 
 		switch (mDefaultTrasformationTestType) {
 		case LOOP_ACCELERATION: {
-			transformers = Collections.singletonList(new ExampleLoopAccelerationTransformulaTransformer(mLogger,
-					icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac));
+			transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
+					icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
 		}
 			break;
 		case MAP_ELIMINATION: {
 			final IEqualityAnalysisResultProvider<IcfgLocation> equalityProvider = new DefaultEqualityAnalysisProvider<>();
 			final MapEliminationSettings settings = new MapEliminationSettings(false, true, true, true,
 					mSimplificationTechnique, mXnfConversionTechnique);
-			transformers = new ArrayList<>(); 
-					transformers.add(new MapEliminationTransformer(icfg, mServices, mLogger,
+			transformer = new MapEliminationTransformer(icfg, mServices, mLogger,
 					icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac, settings,
-					equalityProvider));
+					equalityProvider);
 		}
 			break;
 		case REMOVE_DIV_MOD: {
-			transformers = Collections.singletonList(new LocalTransformer(new RewriteDivision(fac), icfg.getCfgSmtToolkit().getManagedScript(), fac));
+			transformer = new LocalTransformer(new RewriteDivision(fac), icfg.getCfgSmtToolkit().getManagedScript(), fac);
 		}
 			break;
 		default:
 			throw new AssertionError("unknown value " + mDefaultTrasformationTestType);
 		}
 		return new IcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass, "TransformedIcfg",
-				transformers);
+				transformer);
 	}
 
 	private static ILocationFactory<BoogieIcfgLocation, BoogieIcfgLocation> createBoogieLocationFactory() {
