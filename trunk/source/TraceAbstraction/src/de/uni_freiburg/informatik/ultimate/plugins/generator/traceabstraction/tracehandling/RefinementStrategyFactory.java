@@ -144,12 +144,12 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 					mPrefsConsolidation, iteration, benchmark);
 		case RUBBER_TAIPAN:
 			return new RubberTaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
-					predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample, abstraction, iteration,
-					benchmark);
+					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample,
+					abstraction, iteration, benchmark);
 		case TAIPAN:
 			return new TaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
-					predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample, abstraction, iteration,
-					benchmark);
+					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample,
+					abstraction, iteration, benchmark);
 		default:
 			throw new IllegalArgumentException(
 					"Unknown refinement strategy specified: " + mPrefs.getRefinementStrategy());

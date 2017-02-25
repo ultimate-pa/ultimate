@@ -59,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgElement;
@@ -67,9 +66,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -82,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.CFGInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.PathInvariantsStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
@@ -98,7 +98,6 @@ public class InvariantSynthesisStarter {
 	private final IElement mRootOfNewModel;
 	private Result mOverallResult;
 	private IElement mArtifact;
-	private IIcfgSymbolTable symbolTable;
 
 	public InvariantSynthesisStarter(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final IIcfg<IcfgLocation> icfg) {
@@ -109,14 +108,14 @@ public class InvariantSynthesisStarter {
 		final SimplificationTechnique simplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 		final XnfConversionTechnique xnfConversionTechnique = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 		final ManagedScript mgdScript = icfg.getCfgSmtToolkit().getManagedScript();
-		final BasicPredicateFactory predicateFactory = new BasicPredicateFactory(mServices, mgdScript, symbolTable,
-				simplificationTechnique, xnfConversionTechnique);
+		final PredicateFactory predicateFactory = new PredicateFactory(mServices, mgdScript,
+				icfg.getCfgSmtToolkit().getSymbolTable(), simplificationTechnique, xnfConversionTechnique);
 		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mServices, mgdScript, predicateFactory,
-				symbolTable, simplificationTechnique, xnfConversionTechnique);
+				icfg.getCfgSmtToolkit().getSymbolTable(), simplificationTechnique, xnfConversionTechnique);
 
-		final InvariantSynthesisSettings invSynthSettings = null;
+		final InvariantSynthesisSettings invSynthSettings = constructSettings();
 		final CFGInvariantsGenerator cfgInvGenerator = new CFGInvariantsGenerator(icfg, services, storage,
-				predicateUnifier.getTruePredicate(), predicateUnifier.getFalsePredicate(), predicateUnifier,
+				predicateUnifier.getTruePredicate(), predicateUnifier.getFalsePredicate(), predicateFactory, predicateUnifier,
 				invSynthSettings, icfg.getCfgSmtToolkit());
 		final Map<IcfgLocation, IPredicate> invariants = cfgInvGenerator.synthesizeInvariants();
 		final PathInvariantsStatisticsGenerator statistics = cfgInvGenerator.getInvariantSynthesisStatistics();
@@ -166,6 +165,24 @@ public class InvariantSynthesisStarter {
 
 		mRootOfNewModel = mArtifact;
 		
+	}
+
+
+	private InvariantSynthesisSettings constructSettings() {
+		final boolean fakeNonIncrementalScript = false;
+		final boolean useExternalSolver = false;
+		final String commandExternalSolver = "";
+		final long timeoutSmtInterpol = 12_000;
+		final boolean dumpSmtScriptToFile = false;
+		final String pathOfDumpedScript = null;
+		final String baseNameOfDumpedScript = null;
+		final Settings solverSettings = new Settings(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver, timeoutSmtInterpol, null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
+		final boolean useNonlinearConstraints = false;
+		final boolean useUnsatCores = true;
+		final boolean useAbstractInterpretationPredicates = false;
+		final boolean useWPForPathInvariants = false;
+		final InvariantSynthesisSettings invSynthSettings = new InvariantSynthesisSettings(solverSettings, useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWPForPathInvariants);
+		return invSynthSettings;
 	}
 
 

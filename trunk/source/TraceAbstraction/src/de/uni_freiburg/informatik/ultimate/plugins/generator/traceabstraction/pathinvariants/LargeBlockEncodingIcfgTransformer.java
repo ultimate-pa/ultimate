@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncoder;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences.MinimizeStates;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
@@ -79,6 +80,7 @@ public final class LargeBlockEncodingIcfgTransformer {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
+	private final PredicateFactory mPredicateFactory;
 	private final IPredicateUnifier mPredicateUnifier;
 	/**
 	 * Map that assigns to each large block encoded icfg location the corresponding location in the orginal icfg
@@ -86,9 +88,11 @@ public final class LargeBlockEncodingIcfgTransformer {
 	private Map<IcfgLocation, IcfgLocation> mLbeBacktranslation;
 	private IIcfg<IcfgLocation> mInputIcfg;
 
-	public LargeBlockEncodingIcfgTransformer(final IUltimateServiceProvider services, final IPredicateUnifier predicateUnifier) {
+	public LargeBlockEncodingIcfgTransformer(final IUltimateServiceProvider services,
+			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
 	}
 	
@@ -255,7 +259,7 @@ public final class LargeBlockEncodingIcfgTransformer {
 		@SuppressWarnings("unchecked")
 		final TraceCheckerSpWp tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts,
 				(NestedWord<? extends IIcfgTransition<?>>) run.getWord(), csToolkit, assertCodeBlocksIncrementally,
-				unsatCores, useLiveVariables, mServices, computeRcfgProgramExecution, predicateUnifier, interpolation,
+				unsatCores, useLiveVariables, mServices, computeRcfgProgramExecution, mPredicateFactory, predicateUnifier, interpolation,
 				mgdScriptTc, xnfConversionTechnique, simplificationTechnique, run.getStateSequence());
 		return tc.getInterpolants();
 	}

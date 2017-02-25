@@ -464,7 +464,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation: {
 			itc = new InterpolatingTraceCheckerCraig(precond, postcond, new TreeMap<Integer, IPredicate>(), word,
-					mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, pu, interpolation, true,
+					mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateFactory, pu, interpolation, true,
 					mXnfConversionTechnique, mSimplificationTechnique, null);
 			break;
 		}
@@ -473,7 +473,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect: {
 			itc = new TraceCheckerSpWp(precond, postcond, new TreeMap<Integer, IPredicate>(), word, mCsToolkit,
-					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false, pu,
+					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateFactory, pu,
 					interpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique,
 					null);
 			break;

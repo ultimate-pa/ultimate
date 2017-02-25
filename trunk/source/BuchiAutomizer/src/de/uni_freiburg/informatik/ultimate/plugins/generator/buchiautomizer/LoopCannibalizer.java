@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
@@ -62,6 +63,7 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 
 	private final NestedLassoRun<LETTER, IPredicate> mCounterexample;
 	private final BinaryStatePredicateManager mBspm;
+	private final PredicateFactory mPredicateFactory;
 	private final PredicateUnifier mPredicateUnifier;
 	private final CfgSmtToolkit mCsToolkit;
 	private final Set<IPredicate> mResultPredicates;
@@ -86,6 +88,7 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mCounterexample = counterexample;
 		mBspm = bspm;
+		mPredicateFactory = (PredicateFactory) predicateUnifier.getPredicateFactory();
 		mPredicateUnifier = predicateUnifier;
 		mCsToolkit = csToolkit;
 		mOriginalLoopInterpolants = loopInterpolants;
@@ -147,7 +150,7 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 		case Craig_TreeInterpolation:
 			traceChecker = new InterpolatingTraceCheckerCraig(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
 					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					mServices, false, mPredicateUnifier, interpolation, true, mXnfConversionTechnique,
+					mServices, false, mPredicateFactory, mPredicateUnifier, interpolation, true, mXnfConversionTechnique,
 					mSimplificationTechnique, null);
 			break;
 		case ForwardPredicates:
@@ -156,7 +159,7 @@ public class LoopCannibalizer<LETTER extends IIcfgTransition<?>> {
 		case FPandBPonlyIfFpWasNotPerfect:
 			traceChecker = new TraceCheckerSpWp(mBspm.getRankEqAndSi(), mBspm.getHondaPredicate(),
 					new TreeMap<Integer, IPredicate>(), shifted, mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY,
-					UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateUnifier, interpolation,
+					UnsatCores.CONJUNCT_LEVEL, true, mServices, false, mPredicateFactory, mPredicateUnifier, interpolation,
 					mCsToolkit.getManagedScript(), mXnfConversionTechnique, mSimplificationTechnique, null);
 			break;
 		default:

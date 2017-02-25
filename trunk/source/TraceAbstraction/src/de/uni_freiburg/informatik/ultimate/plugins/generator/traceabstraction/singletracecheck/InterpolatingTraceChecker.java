@@ -78,20 +78,21 @@ public abstract class InterpolatingTraceChecker extends TraceChecker implements 
 	 *            If set to false, check-sat is called after all CodeBlocks are asserted. If set to true we use Betims
 	 *            heuristic an incrementally assert CodeBlocks and do check-sat until all CodeBlocks are asserted or the
 	 *            result to a check-sat is UNSAT.
+	 * @param predicateFactory 
 	 */
 	public InterpolatingTraceChecker(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final IUltimateServiceProvider services, final boolean computeRcfgProgramExecution,
-			final IPredicateUnifier predicateUnifier, final ManagedScript tcSmtManager,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final List<? extends Object> controlLocationSequence) {
+			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
+			final ManagedScript tcSmtManager, final SimplificationTechnique simplificationTechnique,
+			final XnfConversionTechnique xnfConversionTechnique, final List<? extends Object> controlLocationSequence) {
 		super(precondition, postcondition, pendingContexts, trace, csToolkit,
 				new DefaultTransFormulas(trace, precondition, postcondition, pendingContexts,
 						csToolkit.getOldVarsAssignmentCache(), false),
 				assertCodeBlocksIncrementally, services, computeRcfgProgramExecution, false, tcSmtManager);
 		mPredicateUnifier = predicateUnifier;
-		mPredicateFactory = (PredicateFactory) predicateUnifier.getPredicateFactory();
+		mPredicateFactory = predicateFactory;
 		mSimplificationTechnique = simplificationTechnique;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mControlLocationSequence = controlLocationSequence;

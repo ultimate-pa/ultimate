@@ -279,8 +279,9 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 
 		TraceCheckerConstructor<LETTER> result;
 		if (mPrevTcConstructor == null) {
-			result = new TraceCheckerConstructor<>(mPrefs, managedScript, mServices, mPredicateUnifier, mCounterexample,
-					assertionOrder, interpolationTechnique, mIteration, mCegarLoopsBenchmark);
+			result = new TraceCheckerConstructor<>(mPrefs, managedScript, mServices, mPredicateFactory,
+					mPredicateUnifier, mCounterexample, assertionOrder, interpolationTechnique, mIteration,
+					mCegarLoopsBenchmark);
 		} else {
 			result = new TraceCheckerConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
 					interpolationTechnique, mCegarLoopsBenchmark);

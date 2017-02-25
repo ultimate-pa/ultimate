@@ -112,8 +112,8 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 		mPredicateUnifier = predicateUnifier;
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
 		mCegarLoopBenchmark = cegarLoopBenchmarks;
-		mFunConstructFromPrefs = new TraceCheckerConstructor<>(prefs, managedScript, services, predicateUnifier,
-				counterexample, mPrefs.getInterpolationTechnique(), iteration, cegarLoopBenchmarks);
+		mFunConstructFromPrefs = new TraceCheckerConstructor<>(prefs, managedScript, services, predicateFactory,
+				predicateUnifier, counterexample, mPrefs.getInterpolationTechnique(), iteration, cegarLoopBenchmarks);
 	}
 
 	@Override

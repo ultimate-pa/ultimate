@@ -80,9 +80,9 @@ public class InvariantSynthesisObserver implements IUnmanagedObserver {
 				throw new UnsupportedOperationException("InvariantSynthesis needs an RCFG");
 			}
 			mLogger.info("Analyzing ICFG " + rcfgRootNode.getIdentifier());
-//			final InvariantSynthesisStarter tas =
-//					new InvariantSynthesisStarter(mServices, mStorage, rcfgRootNode);
-//			mRootOfNewModel = tas.getRootOfNewModel();
+			final InvariantSynthesisStarter tas =
+					new InvariantSynthesisStarter(mServices, mStorage, rcfgRootNode);
+			mRootOfNewModel = tas.getRootOfNewModel();
 		}
 	}
 

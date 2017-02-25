@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.PathInvariantsStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
@@ -111,7 +112,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 */
 	public PathInvariantsGenerator(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
-			final IPredicate postcondition, final IPredicateUnifier predicateUnifier, final IIcfg<?> icfg,
+			final IPredicate postcondition, final PredicateFactory predicateFactory, 
+			final IPredicateUnifier predicateUnifier, final IIcfg<?> icfg,
 			final InvariantSynthesisSettings invSynthSettings, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
@@ -133,7 +135,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 
 		// Generate invariants
 		final CFGInvariantsGenerator cfgInvGenerator = new CFGInvariantsGenerator(pathProgram, services, storage,
-				precondition, postcondition, predicateUnifier, invSynthSettings, icfg.getCfgSmtToolkit());
+				precondition, postcondition, predicateFactory, predicateUnifier, invSynthSettings, icfg.getCfgSmtToolkit());
 		final Map<IcfgLocation, IPredicate> invariants = cfgInvGenerator.synthesizeInvariants();
 		// Get invariant synthesis statistics
 		mPathInvariantsStats = cfgInvGenerator.getInvariantSynthesisStatistics();

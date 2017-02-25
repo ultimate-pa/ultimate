@@ -588,7 +588,7 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 						/*
 						 * TODO: When Matthias introduced this parameter he set the argument to
 						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to another value.
-						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateUnifier,
+						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateFactory, mPredicateUnifier,
 						mPref.interpolation(), true, mXnfConversionTechnique, mSimplificationTechnique, null);
 
 		mInterpolantGenerator = traceChecker;

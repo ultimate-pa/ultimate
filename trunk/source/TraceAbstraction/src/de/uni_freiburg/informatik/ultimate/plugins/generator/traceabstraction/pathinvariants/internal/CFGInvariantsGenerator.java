@@ -35,8 +35,8 @@ import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -46,8 +46,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -76,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.NonInductiveAnnotationGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.NonInductiveAnnotationGenerator.Approximation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.LinearInequalityInvariantPatternProcessor.LinearInequalityPatternProcessorStatistics;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
@@ -128,15 +129,16 @@ public final class CFGInvariantsGenerator {
 	
 	
 	private final IToolchainStorage mStorage;
-	private IPredicateUnifier mPredicateUnifier;
-	private IPredicate mPrecondition;
-	private IPredicate mPostcondition;
-	private IIcfg<IcfgLocation> mPathProgram;
+	private final PredicateFactory mPredicateFactory;
+	private final IPredicateUnifier mPredicateUnifier;
+	private final IPredicate mPrecondition;
+	private final IPredicate mPostcondition;
+	private final IIcfg<IcfgLocation> mPathProgram;
 	
 	private final PathInvariantsStatisticsGenerator mPathInvariantsStatistics;
 	private final Map<Integer, PathInvariantsStatisticsGenerator> mRound2PathInvariantsStatistics;
-	private InvariantSynthesisSettings mInvariantSynthesisSettings;
-	private CfgSmtToolkit mCsToolKit;
+	private final InvariantSynthesisSettings mInvariantSynthesisSettings;
+	private final CfgSmtToolkit mCsToolKit;
 	/**
 	 * Report a {@link BenchmarkResult} for every round.
 	 */
@@ -157,7 +159,8 @@ public final class CFGInvariantsGenerator {
 	 * @param csToolkit
 	 */
 	public CFGInvariantsGenerator(final IIcfg<IcfgLocation> pathProgram, final IUltimateServiceProvider services, final IToolchainStorage storage, 
-			final IPredicate precondition, final IPredicate postcondition, 
+			final IPredicate precondition, final IPredicate postcondition,
+			final PredicateFactory predicateFactory,
 			final IPredicateUnifier predicateUnifier, 
 			final InvariantSynthesisSettings invariantSynthesisSettings,
 			final CfgSmtToolkit csToolkit) {
@@ -166,6 +169,7 @@ public final class CFGInvariantsGenerator {
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mCsToolKit = csToolkit;
 		
+		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
@@ -309,7 +313,7 @@ public final class CFGInvariantsGenerator {
 				invSynthSettings.getSolverSettings(), simplificationTechnique, xnfConversionTechnique,
 				strategy, loc2underApprox, loc2overApprox);
 
-		Map<IcfgLocation, IPredicate> invariants = generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPrecondition,
+		final Map<IcfgLocation, IPredicate> invariants = generateInvariantsForTransitions(locationsAsList, transitionsAsList, mPrecondition,
 				mPostcondition, startLocation, errorLocation, invPatternProcFactory, invSynthSettings.useUnsatCores(),
 				allProgramVars, pathprogramLocs2LiveVars, pathprogramLocs2Predicates,
 				invSynthSettings.useWeakestPrecondition() || invSynthSettings.useAbstractInterpretation(), ADD_WP_TO_EACH_CONJUNCT);
@@ -429,7 +433,7 @@ public final class CFGInvariantsGenerator {
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 		final Map<IcfgLocation, LiveVariableState<IcfgEdge>> loc2states = 
 				AbstractInterpreter.runFutureLiveVariableDomain(pathProgram, timer, mServices, true, mLogger).getLoc2SingleStates();
-		Map<IcfgLocation, Set<IProgramVar>> pathprogramLocs2LiveVars = new HashMap<>();
+		final Map<IcfgLocation, Set<IProgramVar>> pathprogramLocs2LiveVars = new HashMap<>();
 
 		for (final Entry<IcfgLocation, LiveVariableState<IcfgEdge>> entry : loc2states.entrySet()) {
 			pathprogramLocs2LiveVars.put(entry.getKey(), entry.getValue().getLiveVariablesAsProgramVars());
@@ -828,7 +832,7 @@ public final class CFGInvariantsGenerator {
 		LargeBlockEncodingIcfgTransformer lbeTransformer;
 		IIcfg<IcfgLocation> lbePathProgram;
 		if (APPLY_LARGE_BLOCK_ENCODING) {
-			lbeTransformer = new LargeBlockEncodingIcfgTransformer(mServices, mPredicateUnifier);
+			lbeTransformer = new LargeBlockEncodingIcfgTransformer(mServices, null, mPredicateUnifier);
 			lbePathProgram = lbeTransformer.transform(mPathProgram);
 		} else {
 			lbePathProgram = mPathProgram;
