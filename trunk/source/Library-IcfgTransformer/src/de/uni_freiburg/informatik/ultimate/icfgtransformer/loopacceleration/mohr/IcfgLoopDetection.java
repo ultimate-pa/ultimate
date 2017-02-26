@@ -15,7 +15,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 
 public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 
-	final private Set<IcfgLoop<INLOC>> mLoops;
+	private final Set<IcfgLoop<INLOC>> mLoops;
 
 	public IcfgLoopDetection(final IIcfg<INLOC> icfg) {
 		mLoops = loopExtraction(icfg);
@@ -103,7 +103,7 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 			}
 		}
 
-		final ArrayList<INLOC> heads = new ArrayList<INLOC>(loopbodies.keySet());
+		final ArrayList<INLOC> heads = new ArrayList<>(loopbodies.keySet());
 		for (final INLOC nestedhead : heads) {
 			for (final INLOC head : heads) {
 				if (nestedhead.equals(head) || !loopbodies.containsKey(head)) {
@@ -115,7 +115,7 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 				}
 			}
 		}
-		return new HashSet<IcfgLoop<INLOC>>(loopbodies.values());
+		return new HashSet<>(loopbodies.values());
 
 	}
 

@@ -82,12 +82,12 @@ public class ExampleLoopAccelerationTransformulaTransformer implements ITransfor
 	}
 
 	@Override
-	public UnmodifiableTransFormula transform(final UnmodifiableTransFormula tf) {
+	public TransforumlaTransformationResult transform(final UnmodifiableTransFormula tf) {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Performing identity transformation for " + tf);
 		}
-		return TransFormulaBuilder.constructCopy(mManagedScript, tf, Collections.emptySet(), Collections.emptySet(),
-				Collections.emptyMap());
+		return new TransforumlaTransformationResult(TransFormulaBuilder.constructCopy(mManagedScript, tf,
+				Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
 	}
 
 	@Override

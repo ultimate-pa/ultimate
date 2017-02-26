@@ -95,7 +95,7 @@ public final class LocalTransformer implements ITransformulaTransformer {
 	}
 
 	@Override
-	public UnmodifiableTransFormula transform(final UnmodifiableTransFormula tf) {
+	public TransforumlaTransformationResult transform(final UnmodifiableTransFormula tf) {
 		final ModifiableTransFormula mod =
 				ModifiableTransFormulaUtils.buildTransFormula(tf, mReplacementVarFactory, mManagedScript);
 		final Script script = mManagedScript.getScript();
@@ -107,8 +107,9 @@ public final class LocalTransformer implements ITransformulaTransformer {
 				assert transformer.checkSoundness(script, oldTf, resultMod) : "Transformation unsound for "
 						+ transformer.getDescription();
 			}
-			return TransFormulaBuilder.constructCopy(mManagedScript, resultMod, Collections.emptySet(),
-					Collections.emptySet(), Collections.emptyMap());
+			// local transformations are -- for now -- assumed to be always equivalent
+			return new TransforumlaTransformationResult(TransFormulaBuilder.constructCopy(mManagedScript, resultMod,
+					Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
 		} catch (final TermException e) {
 			throw new AssertionError(e);
 		}

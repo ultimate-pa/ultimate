@@ -79,8 +79,9 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	}
 
 	@Override
-	public UnmodifiableTransFormula transform(final UnmodifiableTransFormula tf) {
-		return splitArraysInTransFormula(tf);
+	public TransforumlaTransformationResult transform(final UnmodifiableTransFormula tf) {
+		// TODO: Determine when this is an overapproximation
+		return new TransforumlaTransformationResult(splitArraysInTransFormula(tf), true);
 	}
 
 	@Override

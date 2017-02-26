@@ -26,11 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+
 /**
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public interface IIcfgTransformer {
+public interface IIcfgTransformer<LOC extends IcfgLocation> {
+
+	IIcfg<LOC> getResult();
 
 }
