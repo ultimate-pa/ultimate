@@ -62,10 +62,6 @@ public class Overapprox extends ModernAnnotations {
 		this(Collections.singletonMap(reason, loc));
 	}
 
-	public static final String getIdentifier() {
-		return Overapprox.class.getName();
-	}
-
 	@Visualizable
 	private Set<String> getReasonForOverapproximation() {
 		return mReason2Loc.keySet();
@@ -81,10 +77,10 @@ public class Overapprox extends ModernAnnotations {
 	}
 
 	public IAnnotations annotate(final IElement elem) {
-		return elem.getPayload().getAnnotations().put(getIdentifier(), this);
+		return elem.getPayload().getAnnotations().put(Overapprox.class.getName(), this);
 	}
 
 	public static Overapprox getAnnotation(final IElement node) {
-		return ModelUtils.getAnnotation(node, getIdentifier(), a -> (Overapprox) a);
+		return ModelUtils.getAnnotation(node, Overapprox.class.getName(), a -> (Overapprox) a);
 	}
 }

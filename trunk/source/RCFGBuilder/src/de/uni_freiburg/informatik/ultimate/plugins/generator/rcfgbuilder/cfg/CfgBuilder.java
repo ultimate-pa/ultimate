@@ -68,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -301,8 +300,7 @@ public class CfgBuilder {
 		overapproximations.putAll(arguments2InParams.getOverapproximations());
 		overapproximations.putAll(outParams2CallerVars.getOverapproximations());
 		if (!overapproximations.isEmpty()) {
-			final Map<String, IAnnotations> annots = edge.getPayload().getAnnotations();
-			annots.put(Overapprox.getIdentifier(), new Overapprox(overapproximations));
+			new Overapprox(overapproximations).annotate(edge);
 		}
 
 		final Call call = mCbf.constructCall(callerNode, calleeEntryLoc, st);

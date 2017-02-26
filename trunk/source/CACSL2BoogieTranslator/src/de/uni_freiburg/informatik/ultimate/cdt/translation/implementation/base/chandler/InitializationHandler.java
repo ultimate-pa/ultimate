@@ -75,7 +75,6 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.S
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
 public class InitializationHandler {
 
@@ -271,7 +270,7 @@ public class InitializationHandler {
 			final String msg = "Unknown type - don't know how to initialize!";
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
-		assert (CHandler.isAuxVarMapcomplete(main.mNameHandler, decl, auxVars));
+		assert CHandler.isAuxVarMapcomplete(main.mNameHandler, decl, auxVars);
 
 		// lrVal is null in case we got a lhs to assign to, the initializing value otherwise
 		return new ExpressionResult(stmt, lrVal, decl, auxVars, overappr);
@@ -501,9 +500,8 @@ public class InitializationHandler {
 	}
 
 	public static void addOverApprToStatementAnnots(final List<Overapprox> overappr, final Statement stm) {
-		final Map<String, IAnnotations> annots = stm.getPayload().getAnnotations();
 		for (final Overapprox overapprItem : overappr) {
-			annots.put(Overapprox.getIdentifier(), overapprItem);
+			overapprItem.annotate(stm);
 		}
 	}
 
@@ -696,8 +694,8 @@ public class InitializationHandler {
 						val = (RValue) sInit.lrVal;
 					} else if (valueType instanceof CPrimitive || valueType instanceof CPointer
 							|| valueType instanceof CEnum) {
-						val = (RValue) (main.mCHandler.getInitHandler().initVar(loc, main, (VariableLHS) null,
-								valueType, null)).lrVal;
+						val = (RValue) main.mCHandler.getInitHandler().initVar(loc, main, (VariableLHS) null, valueType,
+								null).lrVal;
 					} else {
 						throw new UnsupportedSyntaxException(loc, "trying to init unknown type " + valueType);
 					}
@@ -812,7 +810,7 @@ public class InitializationHandler {
 		final String[] fieldIds = structType.getFieldIds();
 		final CType[] fieldTypes = structType.getFieldTypes();
 
-		final boolean isUnion = (structType instanceof CUnion);
+		final boolean isUnion = structType instanceof CUnion;
 		// in a union, only one field of the underlying struct may be initialized
 		// we do the first, if no fieldname is given, this variable stores whether
 		// we already initialized a field
@@ -930,7 +928,7 @@ public class InitializationHandler {
 			return new ExpressionResult(rerl.stmt, rerl.lrVal, rerl.decl, rerl.auxVars, rerl.overappr);
 		}
 
-		final boolean isUnion = (structType instanceof CUnion);
+		final boolean isUnion = structType instanceof CUnion;
 		// in a union, only one field of the underlying struct may be initialized
 		// we do the first, if no fieldname is given, this variable stores whether
 		// we already initialized a field
