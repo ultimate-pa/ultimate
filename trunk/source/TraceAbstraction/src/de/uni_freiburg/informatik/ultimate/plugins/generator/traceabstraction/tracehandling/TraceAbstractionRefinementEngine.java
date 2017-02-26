@@ -127,31 +127,21 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	private LBool executeStrategy(final IRefinementStrategy<LETTER> strategy) {
 		final List<InterpolantsPreconditionPostcondition> perfectIpps = new LinkedList<>();
 		final List<InterpolantsPreconditionPostcondition> imperfectIpps = new LinkedList<>();
-		while (true) {
-			/*
-			 * check feasibility using the strategy
-			 *
-			 * NOTE: Logically, this method should be called outside the loop. However, since the result is cached,
-			 * asking the same trace checker several times does not cost much. On the plus side, the strategy does not
-			 * have to take care of exception handling if it decides to exchange the backing trace checker.
-			 */
-			final LBool feasibility = checkFeasibility(strategy);
 
-			switch (feasibility) {
-			case SAT:
-				// feasible counterexample, nothing more to do here
-				return handleFeasibleCase(strategy);
-			case UNKNOWN:
-				return handleUnknownCase(strategy, perfectIpps, imperfectIpps);
-			case UNSAT:
-				final boolean doContinue = handleInfeasibleCase(strategy, perfectIpps, imperfectIpps);
-				if (doContinue) {
-					continue;
-				}
-				return constructAutomatonFromIpps(strategy, perfectIpps, imperfectIpps);
-			default:
-				throw new IllegalArgumentException("Unknown case: " + feasibility);
+		final LBool feasibility = checkFeasibility(strategy);
+
+		switch (feasibility) {
+		case SAT:
+			// feasible counterexample, nothing more to do here
+			return handleFeasibleCase(strategy);
+		case UNKNOWN:
+			return handleUnknownCase(strategy, perfectIpps, imperfectIpps);
+		case UNSAT:
+			while (handleInfeasibleCase(strategy, perfectIpps, imperfectIpps)) {
 			}
+			return constructAutomatonFromIpps(strategy, perfectIpps, imperfectIpps);
+		default:
+			throw new IllegalArgumentException("Unknown case: " + feasibility);
 		}
 	}
 
