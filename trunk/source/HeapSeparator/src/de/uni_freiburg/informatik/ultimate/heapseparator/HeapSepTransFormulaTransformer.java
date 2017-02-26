@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -372,5 +373,11 @@ public class HeapSepTransFormulaTransformer implements ITransformulaTransformer 
 	@Override
 	public IIcfgSymbolTable getNewIcfgSymbolTable() {
 		throw new UnsupportedOperationException("Matthias added this to the interface but did not fix it here");
+	}
+
+	@Override
+	public void preprocessIcfg(final IIcfg<?> icfg) {
+		// TODO Does this transformer need any knowledge about the icfg as a whole?
+
 	}
 }

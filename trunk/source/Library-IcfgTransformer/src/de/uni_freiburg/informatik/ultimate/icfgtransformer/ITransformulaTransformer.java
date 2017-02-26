@@ -44,10 +44,12 @@ public interface ITransformulaTransformer {
 	 * anything.
 	 * 
 	 * Note that a preprocessing should always be non-destructive!
+	 * 
+	 * @param icfg
+	 *            The {@link IIcfg} instance that contains all the transformulas this {@link ITransformulaTransformer}
+	 *            will see during his life cycle.
 	 */
-	default void preprocessIcfg(final IIcfg<?> icfg) {
-		return;
-	}
+	void preprocessIcfg(final IIcfg<?> icfg);
 
 	/**
 	 * @param tf
