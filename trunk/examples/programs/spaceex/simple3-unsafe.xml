@@ -10,7 +10,7 @@
   <component id="aut2">
     <param name="y" type="real" local="false" d1="1" d2="1" dynamics="any" />
     <location id="1" name="loc1" x="206.0" y="144.0">
-      <invariant>0 &lt;= y &lt;= 10</invariant>
+      <invariant> 0 &lt;= y &lt;= 10</invariant>
       <flow>y' == 1</flow>
     </location>
   </component>

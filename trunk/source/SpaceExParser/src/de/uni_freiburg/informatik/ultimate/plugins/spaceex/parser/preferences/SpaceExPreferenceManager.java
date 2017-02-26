@@ -30,9 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
-import java.util.Deque;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -46,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridTermBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.SpaceExMathHelper;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -62,10 +60,9 @@ public class SpaceExPreferenceManager {
 	private final ILogger mLogger;
 	private String mSystem;
 	private final String mModelFilename;
-	// replacement map for variables of the form Literal -> real variable.. e.g A0 -> x<=5
-	private final Map<String, String> mReplacement;
 	// map that holds preferencegroups
 	private final Map<Integer, SpaceExPreferenceGroup> mPreferenceGroups;
+	private final Map<Integer, Map<String, String>> mGroupTodirectAssingment;
 	// map of the form AUT -> VAR, necessary for Constants in config of the form AUT.VAR == 5
 	private final Map<String, Map<String, String>> mRequiresRename;
 	private final AtomicInteger mRenameID;
@@ -76,6 +73,7 @@ public class SpaceExPreferenceManager {
 	private Map<Integer, HybridAutomaton> mGroupIdToParallelComposition;
 	private boolean mHasPreferenceGroups;
 	private boolean mHasForbiddenGroup;
+	private final SpaceExMathHelper mMathHelper;
 	
 	public SpaceExPreferenceManager(final IUltimateServiceProvider services, final ILogger logger,
 			final File spaceExFile) throws Exception {
@@ -87,14 +85,14 @@ public class SpaceExPreferenceManager {
 		final boolean loadconfig = preferenceProvider
 				.getBoolean(SpaceExParserPreferenceInitializer.LABEL_LOAD_CONFIG_FILE_OF_SPACEEX_MODEL);
 		mModelFilename = spaceExFile.getAbsolutePath();
-		mReplacement = new HashMap<>();
 		mPreferenceGroups = new HashMap<>();
 		mGroupIdToParallelComposition = new HashMap<>();
 		mForbiddenGroups = new ArrayList<>();
 		mForbiddenToForbiddenlocs = new HashMap<>();
 		mRequiresRename = new HashMap<>();
 		mRenameID = new AtomicInteger(0);
-		
+		mMathHelper = new SpaceExMathHelper(logger);
+		mGroupTodirectAssingment = new HashMap<>();
 		// check if the configfile name is not empty
 		// if it is search for a config file in the directory.
 		if (!"".equals(configfile)) {
@@ -141,7 +139,7 @@ public class SpaceExPreferenceManager {
 	private void parseForbidden(final String forbidden) {
 		if (!forbidden.isEmpty()) {
 			final AtomicInteger id = new AtomicInteger(0);
-			final List<String> formerGroups = infixToGroups(forbidden);
+			final List<String> formerGroups = mMathHelper.infixToGroups(forbidden);
 			for (final String group : formerGroups) {
 				mForbiddenGroups.add(createForbiddenGroup(group, id.incrementAndGet()));
 			}
@@ -153,18 +151,10 @@ public class SpaceExPreferenceManager {
 		
 	}
 	
-	private List<String> infixToGroups(final String infix) {
-		final String infixWithLiterals = replaceAllWithLiterals(infix);
-		final List<String> infixToArray = HybridTermBuilder.expressionToArray(infixWithLiterals);
-		final List<String> postfix = HybridTermBuilder.postfix(infixToArray);
-		final List<String> groups = postfixToGroups(postfix);
-		return replaceLiterals(groups);
-	}
-	
 	private void parseInitially(final String initially) {
 		if (!initially.isEmpty()) {
 			final AtomicInteger id = new AtomicInteger(0);
-			final List<String> formerGroups = infixToGroups(initially);
+			final List<String> formerGroups = mMathHelper.infixToGroups(initially);
 			// Parse the found groups and create Preference Groups.
 			for (final String group : formerGroups) {
 				final SpaceExPreferenceGroup preferenceGroup = createPreferenceGroup(group, id.incrementAndGet());
@@ -262,7 +252,7 @@ public class SpaceExPreferenceManager {
 				for (final Pair<String, String> pair : renameList) {
 					varString = varString.replaceAll(pair.getFirst(), pair.getSecond());
 				}
-				mLogger.info(varString);
+				saveDirectAssignments(varString, id);
 				initialVariableInfix += varString + "&";
 			}
 		}
@@ -273,6 +263,20 @@ public class SpaceExPreferenceManager {
 		return new SpaceExPreferenceGroup(initialLocations, initialVariableInfix, groupid);
 	}
 	
+	// save assingments of the form x==... as groupID -> (var -> val)
+	private void saveDirectAssignments(final String varString, final int groupID) {
+		final String[] splitted = varString.split("==");
+		if (splitted.length == 2) {
+			if (mGroupTodirectAssingment.containsKey(groupID)) {
+				mGroupTodirectAssingment.get(groupID).put(splitted[0], splitted[1]);
+			} else {
+				final Map<String, String> varmap = new HashMap<>();
+				varmap.put(splitted[0], splitted[1]);
+				mGroupTodirectAssingment.put(groupID, varmap);
+			}
+		}
+	}
+	
 	/**
 	 * Function that analyses if a variable in the config has to be renamed variables that have to be renamed are of the
 	 * form AUT.VARNAME They are constants
@@ -281,7 +285,7 @@ public class SpaceExPreferenceManager {
 	 * @return
 	 */
 	private List<Pair<String, String>> analyseVariable(final String group) {
-		final List<String> arr = HybridTermBuilder.expressionToArray(group);
+		final List<String> arr = SpaceExMathHelper.expressionToArray(group);
 		final Pattern pattern = Pattern.compile("([a-z,A-Z]+)\\.([a-z,A-Z]+)");
 		Matcher renameMatcher;
 		final List<Pair<String, String>> renameList = new ArrayList<>();
@@ -317,239 +321,6 @@ public class SpaceExPreferenceManager {
 	
 	private String generateNewName(final String var) {
 		return var + "_Renamedconst" + mRenameID.getAndIncrement();
-	}
-	
-	// function to replace literals with their saved values
-	private List<String> replaceLiterals(final List<String> groups) {
-		final List<String> res = new ArrayList<>();
-		for (final String group : groups) {
-			String replacement = group.replaceAll("\\s+", "");
-			for (final Map.Entry<String, String> entry : mReplacement.entrySet()) {
-				final String rep = entry.getKey();
-				final String loc = entry.getValue();
-				replacement = replacement.replaceAll(rep, loc);
-			}
-			res.add(replacement);
-		}
-		return res;
-	}
-	
-	// helper function to replace all elements in a string of the form x==2 & loc(x)==loc1, with single literals.
-	// x==2 & loc(x)==loc1 & y<=4 ---> A0 & A1 & A2
-	private String replaceAllWithLiterals(final String initially) {
-		mReplacement.clear();
-		// regex stuff for initial locations
-		final String locRegex = "(.*)loc\\((.*)\\)==(.*)";
-		final Pattern locPattern = Pattern.compile(locRegex);
-		Matcher locMatcher;
-		// regex stuff for variables of the form v1<=var<=v2 or x=v1.. etc
-		final String varRegex = "(.*)(<=|<|>|>=)(.*)(<=|<|>|>=)(.*)|(.*)(<=|>=|<|>|==)(.*)";
-		final Pattern varPattern = Pattern.compile(varRegex);
-		Matcher varMatcher;
-		String literal = "A";
-		// replace all terms by a Literal
-		final String[] splitted = initially.replaceAll("\\s+", "").split("(\\&)|(\\|)|(?<!loc)(\\()|(?!\\)==)(\\))");
-		for (int i = 0; i < splitted.length; i++) {
-			final String el = splitted[i];
-			locMatcher = locPattern.matcher(el);
-			varMatcher = varPattern.matcher(el);
-			if (locMatcher.matches()) {
-				if (!mReplacement.containsValue(locMatcher.group(0))) {
-					mReplacement.put(literal + i, locMatcher.group(0));
-				}
-			} else if (varMatcher.matches()) {
-				if (!mReplacement.containsValue(varMatcher.group(0))) {
-					mReplacement.put(literal + i, varMatcher.group(0));
-				}
-			}
-			if (i % 5 == 0) {
-				final char[] charArr = literal.toCharArray();
-				charArr[0]++;
-				literal = Character.toString(charArr[0]);
-			}
-		}
-		String replacement = initially.replaceAll("\\s+", "");
-		for (final Map.Entry<String, String> entry : mReplacement.entrySet()) {
-			final String rep = entry.getKey();
-			final String loc = entry.getValue();
-			replacement = replacement.replaceAll(Pattern.quote(loc), rep);
-		}
-		return replacement;
-	}
-	
-	/**
-	 * Function to convert a given formula postfix back notation to groups, the DNF.
-	 * 
-	 * @param postfix
-	 * @return
-	 */
-	public List<String> postfixToGroups(final List<String> postfix) {
-		final Deque<String> stack = new LinkedList<>();
-		final List<String> openGroupstack = new ArrayList<>();
-		final List<String> finishedGroups = new ArrayList<>();
-		// If the postfix does not contain any "&", we can simply split on | and return.
-		if (!postfix.contains("&")) {
-			for (final String element : postfix) {
-				if (!HybridTermBuilder.isOperator(element)) {
-					finishedGroups.add(element);
-				}
-			}
-			return finishedGroups;
-		} else if (!postfix.contains("|")) {
-			final String infix = toInfix(postfix);
-			finishedGroups.add(infix);
-			return finishedGroups;
-		}
-		// Else we iterate over the postfix.
-		for (final String element : postfix) {
-			if (HybridTermBuilder.isOperator(element)) {
-				final String operand1 = (!stack.isEmpty()) ? stack.pop() : "";
-				final String operand2 = (!stack.isEmpty()) ? stack.pop() : "";
-				/*
-				 * Cases: - two single operands - & is operator and no groups exists yet --> initialize groups - & is
-				 * operator and groups exist -> update groups - | is operator and groups exists -> add to finished
-				 * groups - | is operator and no groups exists --> add to finished groups
-				 */
-				if (mReplacement.containsKey(operand1)
-						&& (mReplacement.containsKey(operand2) || !operand2.contains("&")) && !operand2.isEmpty()) {
-					// push Two single operands to stack
-					stack.push(operand2 + element + operand1);
-				} else if ("&".equals(element) && openGroupstack.isEmpty()) {
-					// "initialization" of the different groups
-					final List<String> eval = evaluateOperands(operand1, operand2);
-					openGroupstack.addAll(eval);
-				} else if ("&".equals(element) && !openGroupstack.isEmpty()) {
-					// after the first time, operand 2 will never contain a & again.
-					final List<String> removeList = new ArrayList<>();
-					final List<String> newGroups = new ArrayList<>();
-					// update groups
-					for (final String group : openGroupstack) {
-						if (operand1.contains("|")) {
-							final List<String> eval = evaluateOrAndAnd(operand1, group);
-							newGroups.addAll(eval);
-						} else {
-							final String newTerm = group + "&" + operand1;
-							newGroups.add(newTerm);
-						}
-						removeList.add(group);
-					}
-					// remove old stuff
-					for (final String group : removeList) {
-						openGroupstack.remove(group);
-					}
-					openGroupstack.addAll(newGroups);
-				} else if ("|".equals(element)) {
-					if (openGroupstack.isEmpty() && !operand2.contains("&") && !operand1.contains("&")) {
-						stack.push(operand2 + element + operand1);
-					} else {
-						if (!operand1.isEmpty()) {
-							finishedGroups.add(operand1);
-						}
-						if (!operand2.isEmpty()) {
-							finishedGroups.add(operand2);
-						}
-					}
-				}
-			} else {
-				stack.push(element);
-			}
-		}
-		if (!stack.isEmpty() && !stack.peek().contains("&")) {
-			final String[] groups = stack.pop().replaceAll("(\\()|(\\))", "").split("\\|");
-			for (final String group : groups) {
-				openGroupstack.add(group);
-			}
-		}
-		finishedGroups.addAll(openGroupstack);
-		return finishedGroups;
-		
-	}
-	
-	private String toInfix(final List<String> postfix) {
-		final Deque<String> stack = new LinkedList<>();
-		for (final String element : postfix) {
-			if (HybridTermBuilder.isOperator(element)) {
-				final String operand1 = stack.pop();
-				final String operand2 = stack.pop();
-				stack.push(operand2 + element + operand1);
-			} else {
-				stack.push(element);
-			}
-		}
-		return stack.pop();
-	}
-	
-	// function that evaluates operands and sets up the different groups
-	private List<String> evaluateOperands(final String operand1, final String operand2) {
-		final List<String> openGroupstack = new ArrayList<>();
-		if (operand1.contains("|") && operand2.contains("|")) {
-			final List<String> eval = evaluateOrAndOr(operand1, operand2);
-			openGroupstack.addAll(eval);
-		} else if (operand1.contains("|")) {
-			final List<String> eval = evaluateOrAndAnd(operand1, operand2);
-			openGroupstack.addAll(eval);
-			
-		} else if (operand2.contains("|")) {
-			final List<String> eval = evaluateOrAndAnd(operand2, operand1);
-			openGroupstack.addAll(eval);
-			
-		} else if (operand2.contains("&")) {
-			openGroupstack.add(operand2 + "&" + operand1);
-		}
-		return openGroupstack;
-	}
-	
-	private List<String> evaluateOrAndOr(final String operand1, final String operand2) {
-		final List<String> res = new ArrayList<>();
-		final String[] splitOP1 = operand1.replaceAll("(\\()|(\\))", "").split("(\\&)|(\\|)");
-		final String[] splitOP2 = operand2.replaceAll("(\\()|(\\))", "").split("(\\&)|(\\|)");
-		for (final String element : splitOP2) {
-			for (final String element2 : splitOP1) {
-				res.add(element2 + "&" + element);
-			}
-		}
-		return res;
-		
-	}
-	
-	private List<String> evaluateOrAndAnd(final String operand1, final String operand2) {
-		final List<String> res = new ArrayList<>();
-		final String[] splitOP1 = operand1.replaceAll("(\\()|(\\))", "").split("(\\&)|(\\|)");
-		for (final String el : splitOP1) {
-			res.add(operand2 + "&" + el);
-		}
-		return res;
-	}
-	
-	private void testPostFixToGroups() {
-		final List<String> testStrings = new ArrayList<>();
-		testStrings.add("A==1");
-		testStrings.add("A==1 | B==1");
-		testStrings.add("A==1 & B==1");
-		testStrings.add("A==1 & B==1 | C==1");
-		testStrings.add("A==1 & B==1 & C==1");
-		testStrings.add("A==1 & B==1 | C==1");
-		testStrings.add("A==1 & B==1 & (C==1 | D==1) & (E==1 & F==2)");
-		testStrings.add("A==1 & B==1 & (C==1 | D==1 | E==1)");
-		testStrings.add("A==1 & B==1 & (C==1 | D==1) & E==1");
-		testStrings.add("A==1 & B==1 & (C==1 | D==1) & E==1 | F==1");
-		testStrings.add("A==1 & B==1 & (C==1 | D==1) & E==1 | F==1");
-		testStrings.add("A==1 & B==1 & (C==1 | D==1) & E==1 | F==1 & G==1");
-		testStrings.add("A==1 & B==1 & (C==1 | D==1) & (E==1 | F==1) & G==1");
-		
-		for (final String testString : testStrings) {
-			mLogger.info("########### START ###########");
-			mLogger.info("Original: " + testString);
-			final String test = replaceAllWithLiterals(testString);
-			mLogger.info("replaced: " + test);
-			final List<String> testarr = HybridTermBuilder.expressionToArray(test);
-			final List<String> postfix = HybridTermBuilder.postfix(testarr);
-			mLogger.info("postfix: " + postfix);
-			final List<String> groups = postfixToGroups(postfix);
-			mLogger.info("groups: " + groups);
-			mLogger.info("########### END ###########");
-		}
-		
 	}
 	
 	public HybridSystem getRegardedSystem(final HybridModel model) {
@@ -627,8 +398,8 @@ public class SpaceExPreferenceManager {
 		return mForbiddenToForbiddenlocs;
 	}
 	
-	public void addToForbiddenlocs() {
-		
+	public Map<Integer, Map<String, String>> getGroupTodirectAssingment() {
+		return mGroupTodirectAssingment;
 	}
 	
 }
