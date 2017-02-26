@@ -39,6 +39,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
@@ -59,7 +60,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  * @author Dennis Wölfing
  *
  */
-public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
+public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
+		implements IIcfgTransformer<OUTLOC> {
 
 	private final ILogger mLogger;
 	private final IIcfg<OUTLOC> mResultIcfg;
@@ -204,6 +206,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		return completeBackbones;
 	}
 
+	@Override
 	public IIcfg<OUTLOC> getResult() {
 		return mResultIcfg;
 	}

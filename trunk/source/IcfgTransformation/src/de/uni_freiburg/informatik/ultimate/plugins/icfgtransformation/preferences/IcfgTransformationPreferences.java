@@ -50,11 +50,17 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 	 *
 	 */
 	public enum TransformationTestType {
-		LOOP_ACCELERATION,
-
 		MAP_ELIMINATION,
 
-		REMOVE_DIV_MOD;
+		REMOVE_DIV_MOD,
+
+		LOOP_ACCELERATION_EXAMPLE,
+
+		LOOP_ACCELERATION_BIESENBACH,
+
+		LOOP_ACCELERATION_MOHR,
+
+		LOOP_ACCELERATION_WOELFING,
 
 	}
 
@@ -67,9 +73,9 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<>(LABEL_TRANSFORMATION_TYPE, TransformationTestType.LOOP_ACCELERATION,
-						DESC_TRANSFORMATION_TYPE, PreferenceType.Combo, TransformationTestType.values()), };
+		return new UltimatePreferenceItem<?>[] { new UltimatePreferenceItem<>(LABEL_TRANSFORMATION_TYPE,
+				TransformationTestType.LOOP_ACCELERATION_EXAMPLE, DESC_TRANSFORMATION_TYPE, PreferenceType.Combo,
+				TransformationTestType.values()), };
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {

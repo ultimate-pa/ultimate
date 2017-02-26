@@ -45,6 +45,8 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformerSequen
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.LocalTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.MapEliminationTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ExampleLoopAccelerationTransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.LoopDetectionBB;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.woelfing.LoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.DNF;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteDivision;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -141,8 +143,14 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 				ups.getEnum(IcfgTransformationPreferences.LABEL_TRANSFORMATION_TYPE, TransformationTestType.class);
 
 		switch (transformation) {
-		case LOOP_ACCELERATION:
-			return applyLoopAcceleration(icfg, locFac, outlocClass, backtranslationTracker, fac);
+		case LOOP_ACCELERATION_EXAMPLE:
+			return applyLoopAccelerationEx(icfg, locFac, outlocClass, backtranslationTracker, fac);
+		case LOOP_ACCELERATION_BIESENBACH:
+			return applyLoopAccelerationBiesenbach(icfg, locFac, outlocClass, backtranslationTracker, fac);
+		case LOOP_ACCELERATION_MOHR:
+			throw new UnsupportedOperationException("Mohr is missing implemented interface");
+		case LOOP_ACCELERATION_WOELFING:
+			return applyLoopAccelerationWoelfing(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case MAP_ELIMINATION:
 			return applyMapElimination(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case REMOVE_DIV_MOD:
@@ -152,16 +160,31 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAcceleration(
+	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationWoelfing(
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
 			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
-		IIcfg<OUTLOC> result;
 		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
 				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
-		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(icfg, locFac,
-				backtranslationTracker, outlocClass, "TransformedIcfg", transformer);
-		result = icfgTransformer.getResult();
-		return result;
+		return new LoopAccelerationIcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass,
+				"IcfgWithLoopAccelerationWoelfing", transformer).getResult();
+	}
+
+	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationBiesenbach(
+			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
+			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
+		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
+				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
+		return new LoopDetectionBB<>(mLogger, icfg, outlocClass, locFac, "IcfgDuplicate", transformer,
+				backtranslationTracker).getResult();
+	}
+
+	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationEx(
+			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
+			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
+		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
+				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
+		return new IcfgTransformer<>(icfg, locFac, backtranslationTracker, outlocClass, "IcfgDuplicate", transformer)
+				.getResult();
 	}
 
 	private static <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyRemoveDivMod(
