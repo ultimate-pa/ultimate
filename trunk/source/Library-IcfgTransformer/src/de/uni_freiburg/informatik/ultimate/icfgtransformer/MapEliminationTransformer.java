@@ -41,7 +41,7 @@ public class MapEliminationTransformer implements ITransformulaTransformer {
 	private final IIcfgSymbolTable mSymbolTable;
 	private final MapEliminationSettings mSettings;
 
-	public MapEliminationTransformer(final IIcfg<?> icfg, final IUltimateServiceProvider services, final ILogger logger,
+	public MapEliminationTransformer(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript managedScript, final IIcfgSymbolTable symbolTable,
 			final ReplacementVarFactory replacementVarFactory, final MapEliminationSettings settings,
 			final IEqualityAnalysisResultProvider<IcfgLocation> equalityProvider) {
