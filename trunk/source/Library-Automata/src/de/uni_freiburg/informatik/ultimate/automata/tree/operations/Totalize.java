@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 
 /**
  * 
@@ -100,6 +101,8 @@ public class Totalize<LETTER, STATE> implements IOperation<LETTER, STATE, IState
 
 	public TreeAutomatonBU<LETTER, STATE> computeResult() {
 		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
+
+		res.extendAlphabet(mTreeAutomaton.getAlphabet());
 		for (final STATE st : mStates) {
 			res.addState(st);
 			if (mTreeAutomaton.isFinalState(st)) {
@@ -118,23 +121,27 @@ public class Totalize<LETTER, STATE> implements IOperation<LETTER, STATE, IState
 					res.addRule(new TreeAutomatonRule<>(rule.getLetter(), srcSt, mDummyState));
 				}
 			}
-
 		}
 		for (final LETTER sym : mTreeAutomaton.getAlphabet()) {
+			Object symbol = sym;
 			Method getAr = null;
+			try {
+				getAr = sym.getClass().getMethod("getHeadPredicate");
+				symbol = (HornClausePredicateSymbol) getAr.invoke(symbol);
+			} catch (final Exception e) {
+			}
 			int arity = -1;
 			try {
-				getAr = sym.getClass().getMethod("getArity");
+				getAr = symbol.getClass().getMethod("getArity");
 			} catch (final Exception e) {
 				continue;
 			}
 			try {
-				arity = (int) getAr.invoke(sym);
+				arity = (int) getAr.invoke(symbol);
 			} catch (final Exception e) {
 				continue;
 			}
 			if (arity >= 0) {
-				// System.err.println(sym);
 				for (final List<STATE> srcSt : combinations(arity)) {
 					final Iterable<STATE> st = mTreeAutomaton.getSuccessors(srcSt, sym);
 					if (st != null && !st.iterator().hasNext()) {
