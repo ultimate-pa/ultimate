@@ -27,10 +27,15 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
 import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TransitionPreprocessor;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
@@ -40,48 +45,90 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * {@link ITransformulaTransformer} that can transform each {@link TransFormula}
- * separately (without knowing the whole ICFG and that uses 
- * {@link TransitionPreprocessor}s for this transformation.
+ * {@link ITransformulaTransformer} that can transform each {@link TransFormula} separately (without knowing the whole
+ * {@link IIcfg} and that uses {@link TransitionPreprocessor}s for this transformation.
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public class LocalTransformer implements ITransformulaTransformer {
-	
-	private final TransitionPreprocessor mTransitionPreprocessor;
+public final class LocalTransformer implements ITransformulaTransformer {
+
+	private final List<TransitionPreprocessor> mTransitionPreprocessors;
 	private final ManagedScript mManagedScript;
 	private final ReplacementVarFactory mReplacementVarFactory;
-	
+
+	/**
+	 * Default constructor.
+	 * 
+	 * @param transitionPreprocessor
+	 *            A single transition preprocessor that should be used.
+	 * @param managedScript
+	 *            A {@link ManagedScript} instance used to convert {@link UnmodifiableTransFormula}s to
+	 *            {@link ModifiableTransFormula}s and back.
+	 * @param replacementVarFactory
+	 *            A {@link ReplacementVarFactory} instance.
+	 */
 	public LocalTransformer(final TransitionPreprocessor transitionPreprocessor, final ManagedScript managedScript,
 			final ReplacementVarFactory replacementVarFactory) {
-		super();
-		mTransitionPreprocessor = transitionPreprocessor;
-		mManagedScript = managedScript;
-		mReplacementVarFactory = replacementVarFactory;
+		this(Collections.singletonList(transitionPreprocessor), managedScript, replacementVarFactory);
+	}
+
+	/**
+	 * Default constructor using a sequence of {@link TransitionPreprocessor}s.
+	 * 
+	 * @param transitionPreprocessors
+	 *            A {@link List} of {@link TransitionPreprocessor}s that should be used in that order.
+	 * @param managedScript
+	 *            A {@link ManagedScript} instance used to convert {@link UnmodifiableTransFormula}s to
+	 *            {@link ModifiableTransFormula}s and back.
+	 * @param replacementVarFactory
+	 *            A {@link ReplacementVarFactory} instance.
+	 */
+	public LocalTransformer(final List<TransitionPreprocessor> transitionPreprocessors,
+			final ManagedScript managedScript, final ReplacementVarFactory replacementVarFactory) {
+		if (transitionPreprocessors == null || transitionPreprocessors.isEmpty()) {
+			throw new IllegalArgumentException();
+		}
+		mTransitionPreprocessors = Collections.unmodifiableList(transitionPreprocessors);
+		mManagedScript = Objects.requireNonNull(managedScript);
+		mReplacementVarFactory = Objects.requireNonNull(replacementVarFactory);
 	}
 
 	@Override
 	public UnmodifiableTransFormula transform(final UnmodifiableTransFormula tf) {
-		final ModifiableTransFormula mod = ModifiableTransFormulaUtils.buildTransFormula(tf, mReplacementVarFactory, mManagedScript);
+		final ModifiableTransFormula mod =
+				ModifiableTransFormulaUtils.buildTransFormula(tf, mReplacementVarFactory, mManagedScript);
+		final Script script = mManagedScript.getScript();
 		try {
-			final ModifiableTransFormula resultMod = mTransitionPreprocessor.process(mManagedScript.getScript(), mod);
-			final UnmodifiableTransFormula result = TransFormulaBuilder.constructCopy(mManagedScript, resultMod, 
-					Collections.emptySet(), Collections.emptySet(), Collections.emptyMap());
-			return result;
+			ModifiableTransFormula resultMod = mod;
+			for (final TransitionPreprocessor transformer : mTransitionPreprocessors) {
+				resultMod = transformer.process(script, resultMod);
+			}
+			return TransFormulaBuilder.constructCopy(mManagedScript, resultMod, Collections.emptySet(),
+					Collections.emptySet(), Collections.emptyMap());
 		} catch (final TermException e) {
 			throw new AssertionError(e);
 		}
-		
+
 	}
 
 	@Override
 	public String getName() {
-		return mTransitionPreprocessor.getDescription();
+		if (mTransitionPreprocessors.size() == 1) {
+			return mTransitionPreprocessors.iterator().next().getDescription();
+		}
+		return mTransitionPreprocessors.stream().map(TransitionPreprocessor::getDescription)
+				.collect(Collectors.joining(","));
 	}
 
 	@Override
 	public IIcfgSymbolTable getNewIcfgSymbolTable() {
 		return mReplacementVarFactory.constructIIcfgSymbolTable();
+	}
+
+	@Override
+	public void preprocessIcfg(final IIcfg<?> icfg) {
+		// A LocalTransformer needs no knowledge about the icfg.
 	}
 
 }
