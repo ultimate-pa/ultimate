@@ -87,7 +87,6 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 				Objects.requireNonNull(outLocationClass), transformer);
 	}
 
-	@SuppressWarnings("unchecked")
 	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> originalIcfg, final String newIcfgIdentifier,
 			final Class<OUTLOC> outLocationClass, final ITransformulaTransformer transformer) {
 		final BasicIcfg<OUTLOC> resultIcfg =

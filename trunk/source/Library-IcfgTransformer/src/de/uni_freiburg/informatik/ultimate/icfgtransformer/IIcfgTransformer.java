@@ -26,6 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public interface IIcfgTransformer {
 
 }
