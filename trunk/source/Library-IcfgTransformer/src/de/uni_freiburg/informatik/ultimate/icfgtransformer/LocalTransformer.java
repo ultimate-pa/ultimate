@@ -102,7 +102,10 @@ public final class LocalTransformer implements ITransformulaTransformer {
 		try {
 			ModifiableTransFormula resultMod = mod;
 			for (final TransitionPreprocessor transformer : mTransitionPreprocessors) {
-				resultMod = transformer.process(script, resultMod);
+				final ModifiableTransFormula oldTf = resultMod;
+				resultMod = transformer.process(script, oldTf);
+				assert transformer.checkSoundness(script, oldTf, resultMod) : "Transformation unsound for "
+						+ transformer.getDescription();
 			}
 			return TransFormulaBuilder.constructCopy(mManagedScript, resultMod, Collections.emptySet(),
 					Collections.emptySet(), Collections.emptyMap());
