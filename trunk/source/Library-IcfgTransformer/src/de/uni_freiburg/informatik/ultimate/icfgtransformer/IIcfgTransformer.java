@@ -30,12 +30,19 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
+ * An {@link IIcfgTransformer} produces a new {@link IIcfg}.
  * 
+ * @param <LOC>
+ *            The type of location of the produced {@link IIcfg}.
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
+@FunctionalInterface
 public interface IIcfgTransformer<LOC extends IcfgLocation> {
 
+	/**
+	 * @return the new {@link IIcfg}.
+	 */
 	IIcfg<LOC> getResult();
 
 }

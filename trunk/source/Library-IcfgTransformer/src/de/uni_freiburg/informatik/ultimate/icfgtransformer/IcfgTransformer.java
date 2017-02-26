@@ -29,17 +29,15 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashSet;
-import java.util.Objects;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
- * A basic IcfgTransformer that applies some {@link ITransformulaTransformer} to each transformula of an input
+ * A basic {@link IIcfgTransformer} that applies some {@link ITransformulaTransformer} to each transformula of an input
  * {@link IIcfg} and thus creates a new {@link IIcfg}.
  *
  * @param <INLOC>
@@ -53,28 +51,41 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
 		implements IIcfgTransformer<OUTLOC> {
 
-	private final ILogger mLogger;
 	private final IIcfg<OUTLOC> mResultIcfg;
 
-	public IcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
-			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
-			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
-			final ITransformulaTransformer transformer) {
-		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
-		mLogger = Objects.requireNonNull(logger);
+	/**
+	 * Default constructor.
+	 * 
+	 * @param originalIcfg
+	 *            an input {@link IIcfg}.
+	 * @param funLocFac
+	 *            A location factory.
+	 * @param backtranslationTracker
+	 *            A backtranslation tracker.
+	 * @param outLocationClass
+	 *            The class object of the type of locations of the output {@link IIcfg}.
+	 * @param newIcfgIdentifier
+	 *            The identifier of the new {@link IIcfg}
+	 * @param transformer
+	 *            The transformer that should be applied to each transformula of each transition of the input
+	 *            {@link IIcfg} to create a new {@link IIcfg}.
+	 */
+	public IcfgTransformer(final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
+			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass,
+			final String newIcfgIdentifier, final ITransformulaTransformer transformer) {
 		mResultIcfg = transform(originalIcfg, funLocFac, backtranslationTracker, outLocationClass, newIcfgIdentifier,
-				transformer, origIcfg);
+				transformer);
 	}
 
 	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass,
-			final String newIcfgIdentifier, final ITransformulaTransformer transformer, final IIcfg<INLOC> origIcfg) {
-		transformer.preprocessIcfg(origIcfg);
+			final String newIcfgIdentifier, final ITransformulaTransformer transformer) {
+		transformer.preprocessIcfg(originalIcfg);
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
 		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
-				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, origIcfg, resultIcfg);
-		processLocations(origIcfg.getInitialNodes(), lst);
+				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg);
+		processLocations(originalIcfg.getInitialNodes(), lst);
 		lst.finish();
 		return resultIcfg;
 	}
