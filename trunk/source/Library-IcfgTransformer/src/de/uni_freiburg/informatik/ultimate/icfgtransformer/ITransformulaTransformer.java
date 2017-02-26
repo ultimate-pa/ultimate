@@ -32,21 +32,26 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * A {@link ITransformulaTransformer} produces a single {@link TransFormula}, usually from another one.
+ * A {@link ITransformulaTransformer} produces {@link UnmodifiableTransFormula}s for a certain {@link IIcfg}.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public interface ITransformulaTransformer {
-	
+
 	/**
-	 * Do pre-processing that is required to transform {@link TransFormula}s.
-	 * By default the preprocessing does not do anything.
+	 * Do pre-processing that is required to transform {@link TransFormula}s. By default the preprocessing does not do
+	 * anything.
+	 * 
+	 * Note that a preprocessing should always be non-destructive!
 	 */
 	default void preprocessIcfg(final IIcfg<?> icfg) {
 		return;
 	}
+
 	/**
+	 * @param tf
+	 *            the transformula that should be transformed.
 	 * @return The result of the transformation through this transformer.
 	 */
 	UnmodifiableTransFormula transform(final UnmodifiableTransFormula tf);
@@ -55,11 +60,10 @@ public interface ITransformulaTransformer {
 	 * @return A human-friendly name that can be used during debugging, e.g., if many transformers run after another.
 	 */
 	String getName();
-	
+
 	/**
 	 * 
-	 * @return Symbol table of the result CFG. Can be obtained only after the
-	 * translation.
+	 * @return Symbol table of the result CFG. Can be obtained only after the translation.
 	 */
 	IIcfgSymbolTable getNewIcfgSymbolTable();
 }

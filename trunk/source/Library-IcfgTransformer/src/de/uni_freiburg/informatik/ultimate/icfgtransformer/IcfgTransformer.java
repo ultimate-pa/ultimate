@@ -52,8 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgR
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * A basic IcfgTransformer that applies the
- * {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
+ * A basic IcfgTransformer that applies the {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
  * transformulas of an {@link IIcfg} with a new instance.
  *
  * @param <INLOC>
@@ -64,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
+public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> implements IIcfgTransformer {
 
 	private final ILogger mLogger;
 	private final IIcfg<OUTLOC> mResultIcfg;
@@ -91,8 +90,8 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 	@SuppressWarnings("unchecked")
 	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> originalIcfg, final String newIcfgIdentifier,
 			final Class<OUTLOC> outLocationClass, final ITransformulaTransformer transformer) {
-		final BasicIcfg<OUTLOC> resultIcfg = new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(),
-				outLocationClass);
+		final BasicIcfg<OUTLOC> resultIcfg =
+				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
 
 		final Set<INLOC> init = originalIcfg.getInitialNodes();
 		final Deque<INLOC> open = new ArrayDeque<>(init);
@@ -128,9 +127,9 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 			}
 		}
 		final CfgSmtToolkit oldToolkit = originalIcfg.getCfgSmtToolkit();
-		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(oldToolkit.getModifiableGlobalsTable(),
-				oldToolkit.getManagedScript(), transformer.getNewIcfgSymbolTable(), oldToolkit.getAxioms(),
-				oldToolkit.getProcedures());
+		final CfgSmtToolkit csToolkit =
+				new CfgSmtToolkit(oldToolkit.getModifiableGlobalsTable(), oldToolkit.getManagedScript(),
+						transformer.getNewIcfgSymbolTable(), oldToolkit.getAxioms(), oldToolkit.getProcedures());
 		resultIcfg.setCfgSmtToolkit(csToolkit);
 		return resultIcfg;
 	}
@@ -142,8 +141,8 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 		assert newCorrespondingCall != null : "The Icfg has been traversed out of order "
 				+ "(found return before having found the corresponding call)";
 		final UnmodifiableTransFormula retAssign = transformer.transform(oldTransition.getAssignmentOfReturn());
-		final UnmodifiableTransFormula localVarAssign = transformer
-				.transform(oldTransition.getLocalVarsAssignmentOfCall());
+		final UnmodifiableTransFormula localVarAssign =
+				transformer.transform(oldTransition.getLocalVarsAssignmentOfCall());
 		return new IcfgReturnTransition(source, target, newCorrespondingCall, getPayloadIfAvailable(oldTransition),
 				retAssign, localVarAssign);
 	}
@@ -151,8 +150,8 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 	private IcfgCallTransition createNewCallTransition(final IcfgLocation source, final IcfgLocation target,
 			final IIcfgCallTransition<INLOC> oldTransition, final ITransformulaTransformer transformer) {
 		final UnmodifiableTransFormula unmodTf = transformer.transform(oldTransition.getLocalVarsAssignment());
-		final IcfgCallTransition rtr = new IcfgCallTransition(source, target, getPayloadIfAvailable(oldTransition),
-				unmodTf);
+		final IcfgCallTransition rtr =
+				new IcfgCallTransition(source, target, getPayloadIfAvailable(oldTransition), unmodTf);
 		// cache the created call for usage during return creation
 		mOldCalls2NewCalls.put(oldTransition, rtr);
 		return rtr;
@@ -207,8 +206,7 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 	}
 
 	/**
-	 * Interface that describes a factory which creates locations for an
-	 * {@link IIcfg} based on an old location.
+	 * Interface that describes a factory which creates locations for an {@link IIcfg} based on an old location.
 	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
@@ -219,6 +217,17 @@ public class IcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 	 */
 	@FunctionalInterface
 	public static interface ILocationFactory<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
+		/**
+		 * Create a new location based on an old location, a procedure, and a debug identifier.
+		 * 
+		 * @param oldLocation
+		 *            the old location
+		 * @param debugIdentifier
+		 *            The debug identifier of the new location.
+		 * @param procedure
+		 *            A string specifiying to which procedure the new location should belong.
+		 * @return The new location.
+		 */
 		OUTLOC createLocation(final INLOC oldLocation, final String debugIdentifier, final String procedure);
 	}
 
