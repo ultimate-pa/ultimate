@@ -52,8 +52,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgR
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * A basic IcfgTransformer that applies the {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
- * transformulas of an {@link IIcfg} with a new instance.
+ * A basic IcfgTransformer that applies some {@link ITransformulaTransformer} to each transformula of an input
+ * {@link IIcfg} and thus creates a new {@link IIcfg}.
  *
  * @param <INLOC>
  *            The type of the locations of the old IIcfg.

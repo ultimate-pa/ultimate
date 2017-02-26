@@ -10,4 +10,5 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
 Export-Package: de.uni_freiburg.informatik.ultimate.icfgtransformer,
+ de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers
