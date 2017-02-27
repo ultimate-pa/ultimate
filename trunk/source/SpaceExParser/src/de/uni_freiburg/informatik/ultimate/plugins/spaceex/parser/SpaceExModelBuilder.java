@@ -19,8 +19,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
@@ -29,8 +27,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridIcfgGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridVariableManager;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
-import de.uni_freiburg.informatik.ultimate.smtsolver.external.ScriptorWithGetInterpolants.ExternalInterpolator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -49,18 +47,24 @@ public class SpaceExModelBuilder {
 	private final IToolchainStorage mToolchainStorage;
 	private HybridVariableManager mVariableManager;
 	
-	public SpaceExModelBuilder(final HybridModel model, final ILogger logger,
+	public SpaceExModelBuilder(final Sspaceex spaceEx, final ILogger logger,
 			final SpaceExPreferenceManager preferenceManager, final IUltimateServiceProvider services,
-			final IToolchainStorage toolchainStorage) {
+			final IToolchainStorage toolchainStorage) throws Exception {
 		mLogger = logger;
 		mServices = services;
 		mToolchainStorage = toolchainStorage;
 		mVariableManager = null;
 		mPreferenceManager = preferenceManager;
-		mModel = createModel(model);
+		mModel = createModel(spaceEx);
 	}
 	
-	private BasicIcfg<IcfgLocation> createModel(final HybridModel model) {
+	private BasicIcfg<IcfgLocation> createModel(final Sspaceex spaceEx) throws Exception {
+		// Create the model
+		mLogger.info("Starting creation of hybrid model...");
+		final long startTime = System.nanoTime();
+		final HybridModel model = new HybridModel(spaceEx, mLogger, mPreferenceManager);
+		final long estimatedTime = System.nanoTime() - startTime;
+		mLogger.info("Creation of hybrid model done in " + estimatedTime / (float) 1000000 + " milliseconds");
 		// get the System specified in the config.
 		final HybridSystem system = mPreferenceManager.getRegardedSystem(model);
 		// calculate the parallel Compositions of the different preferencegroups.
@@ -79,7 +83,7 @@ public class SpaceExModelBuilder {
 			automaton = parallelCompositions.get(1);
 		} else {
 			if (!system.getAutomata().isEmpty()) {
-				automaton = model.mergeAutomataNWay(system, null);
+				automaton = model.mergeAutomata(system, null);
 			} else {
 				throw new IllegalStateException("system does not have any automata");
 			}
@@ -95,11 +99,10 @@ public class SpaceExModelBuilder {
 		IPredicate axioms = null;
 		final Set<String> procedures = new HashSet<>();
 		procedures.add("MAIN");
-		final Script script =
-				SolverBuilder.buildAndInitializeSolver(mServices, mToolchainStorage,
-						SolverMode.Internal_SMTInterpol, new Settings(true, false, "root", 2500,
-								ExternalInterpolator.SMTINTERPOL, false, "/tmp", "dump_script"),
-						false, false, "", "SMTINTERPOL");
+		final Script script = SolverBuilder.buildAndInitializeSolver(mServices, mToolchainStorage,
+				mPreferenceManager.getSolverMode(), mPreferenceManager.getmSolverSettings(),
+				mPreferenceManager.ismDumpUsatCoreTrackBenchmark(), mPreferenceManager.ismDumpMainTrackBenchmark(),
+				mPreferenceManager.getmLogicForExternalSolver(), "SpaceExTA");
 		final ManagedScript managedScript = new ManagedScript(mServices, script);
 		mVariableManager = new HybridVariableManager(managedScript);
 		final HybridIcfgSymbolTable symbolTable =

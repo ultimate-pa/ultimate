@@ -43,7 +43,7 @@ public class ParallelCompositionGeneratorTest {
 		Sspaceex spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
 		HybridModel system = new HybridModel(spaceEx, logger);
-		HybridAutomaton merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
+		HybridAutomaton merge = system.mergeAutomata(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
 		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
@@ -64,7 +64,7 @@ public class ParallelCompositionGeneratorTest {
 		spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
 		system = new HybridModel(spaceEx, logger);
-		merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
+		merge = system.mergeAutomata(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
 		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
@@ -87,7 +87,7 @@ public class ParallelCompositionGeneratorTest {
 		spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
 		system = new HybridModel(spaceEx, logger);
-		merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
+		merge = system.mergeAutomata(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
 		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
@@ -122,7 +122,7 @@ public class ParallelCompositionGeneratorTest {
 		spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
 		system = new HybridModel(spaceEx, logger);
-		merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
+		merge = system.mergeAutomata(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
 		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
@@ -155,7 +155,7 @@ public class ParallelCompositionGeneratorTest {
 		spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
 		system = new HybridModel(spaceEx, logger);
-		merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
+		merge = system.mergeAutomata(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
 		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
@@ -179,7 +179,7 @@ public class ParallelCompositionGeneratorTest {
 		spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
 		system = new HybridModel(spaceEx, logger);
-		merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
+		merge = system.mergeAutomata(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
 		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
@@ -204,7 +204,7 @@ public class ParallelCompositionGeneratorTest {
 		spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
 		system = new HybridModel(spaceEx, logger);
-		merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
+		merge = system.mergeAutomata(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
 		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
@@ -236,7 +236,7 @@ public class ParallelCompositionGeneratorTest {
 		spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
 		system = new HybridModel(spaceEx, logger);
-		merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
+		merge = system.mergeAutomata(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
 		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
@@ -266,7 +266,7 @@ public class ParallelCompositionGeneratorTest {
 		spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
 		system = new HybridModel(spaceEx, logger);
-		merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
+		merge = system.mergeAutomata(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
 		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());
@@ -300,7 +300,7 @@ public class ParallelCompositionGeneratorTest {
 		spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
 		system = new HybridModel(spaceEx, logger);
-		merge = system.mergeAutomataNWay(system.getSystems().get("sys1"), null);
+		merge = system.mergeAutomata(system.getSystems().get("sys1"), null);
 		System.out.println(merge);
 		assertEquals("MERGE0", merge.getName());
 		assertEquals("[]", merge.getGlobalConstants().toString());

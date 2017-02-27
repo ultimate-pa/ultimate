@@ -113,10 +113,10 @@ public class HybridSystem {
 		mLogger.debug("########## Rename variables according to Binds ###########");
 		mLogger.debug("Binds before replacements: " + mBinds);
 		mAutomata.forEach((id, aut) -> {
-			mLogger.debug("before replace: " + aut);
+			// mLogger.debug("before replace: " + aut);
 			final Map<String, String> newBinds = aut.renameAccordingToBinds(mBinds.get(id));
 			mBinds.put(id, newBinds);
-			mLogger.debug("after replace: " + aut);
+			// mLogger.debug("after replace: " + aut);
 			if (mPreferenceManager != null) {
 				aut.renameConstants();
 			}

@@ -41,6 +41,8 @@ import java.util.regex.Pattern;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
@@ -76,20 +78,21 @@ public class SpaceExPreferenceManager {
 	private boolean mHasPreferenceGroups;
 	private boolean mHasForbiddenGroup;
 	private final SpaceExMathHelper mMathHelper;
-	private final SolverMode mSolverMode;
-
+	private SolverMode mSolverMode;
+	private boolean mFakeNonIncrementalScript;
+	private boolean mDumpSmtScriptToFile;
+	private String mPathOfDumpedScript;
+	private String mCommandExternalSolver;
+	private boolean mDumpUsatCoreTrackBenchmark;
+	private boolean mDumpMainTrackBenchmark;
+	private String mLogicForExternalSolver;
+	private Settings mSolverSettings;
+	
 	public SpaceExPreferenceManager(final IUltimateServiceProvider services, final ILogger logger,
 			final File spaceExFile) throws Exception {
 		mServices = services;
 		mLogger = logger;
 		final IPreferenceProvider preferenceProvider = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		final IPreferenceProvider traceAbstractionPreferences = mServices.getPreferenceProvider(
-				de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator.PLUGIN_ID);
-		mSolverMode = traceAbstractionPreferences.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
-		String configfile =
-				preferenceProvider.getString(SpaceExParserPreferenceInitializer.LABEL_SPACEEX_CONFIG_FILE).toString();
-		final boolean loadconfig = preferenceProvider
-				.getBoolean(SpaceExParserPreferenceInitializer.LABEL_LOAD_CONFIG_FILE_OF_SPACEEX_MODEL);
 		mModelFilename = spaceExFile.getAbsolutePath();
 		mPreferenceGroups = new HashMap<>();
 		mGroupIdToParallelComposition = new HashMap<>();
@@ -99,6 +102,12 @@ public class SpaceExPreferenceManager {
 		mRenameID = new AtomicInteger(0);
 		mMathHelper = new SpaceExMathHelper(logger);
 		mGroupTodirectAssingment = new HashMap<>();
+		// get TA settings
+		getTraceAbstractionPreferences();
+		String configfile =
+				preferenceProvider.getString(SpaceExParserPreferenceInitializer.LABEL_SPACEEX_CONFIG_FILE).toString();
+		final boolean loadconfig = preferenceProvider
+				.getBoolean(SpaceExParserPreferenceInitializer.LABEL_LOAD_CONFIG_FILE_OF_SPACEEX_MODEL);
 		// check if the configfile name is not empty
 		// if it is search for a config file in the directory.
 		if (!"".equals(configfile)) {
@@ -116,7 +125,37 @@ public class SpaceExPreferenceManager {
 			}
 		}
 	}
-
+	
+	// function that get the settings of the TraceAbstraction in order to create the correct solver.
+	private void getTraceAbstractionPreferences() {
+		final String taPluginID =
+				de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator.PLUGIN_ID;
+		final IPreferenceProvider traceAbstractionPreferences = mServices.getPreferenceProvider(taPluginID);
+		mSolverMode = traceAbstractionPreferences.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
+		mFakeNonIncrementalScript = mServices.getPreferenceProvider(taPluginID)
+				.getBoolean(RcfgPreferenceInitializer.LABEL_FakeNonIncrementalScript);
+		
+		mDumpSmtScriptToFile =
+				mServices.getPreferenceProvider(taPluginID).getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
+		mPathOfDumpedScript =
+				mServices.getPreferenceProvider(taPluginID).getString(RcfgPreferenceInitializer.LABEL_Path);
+		
+		mCommandExternalSolver =
+				mServices.getPreferenceProvider(taPluginID).getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
+		
+		mDumpUsatCoreTrackBenchmark = mServices.getPreferenceProvider(taPluginID)
+				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpUnsatCoreTrackBenchmark);
+		
+		mDumpMainTrackBenchmark = mServices.getPreferenceProvider(taPluginID)
+				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpMainTrackBenchmark);
+		
+		mLogicForExternalSolver =
+				mServices.getPreferenceProvider(taPluginID).getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
+		mSolverSettings = SolverBuilder.constructSolverSettings(mModelFilename, mSolverMode, mFakeNonIncrementalScript,
+				mCommandExternalSolver, mDumpSmtScriptToFile, mPathOfDumpedScript);
+		
+	}
+	
 	private void parseConfigFile(final File configfile) throws Exception {
 		mLogger.info("Parsing configfile: " + configfile);
 		final long startTime = System.nanoTime();
@@ -141,7 +180,7 @@ public class SpaceExPreferenceManager {
 		final long estimatedTime = System.nanoTime() - startTime;
 		mLogger.info("Parsing configfile done in " + estimatedTime / (float) 1000000 + " milliseconds");
 	}
-
+	
 	private void parseForbidden(final String forbidden) {
 		if (!forbidden.isEmpty()) {
 			final AtomicInteger id = new AtomicInteger(0);
@@ -154,9 +193,9 @@ public class SpaceExPreferenceManager {
 			mLogger.info("-Config file has no forbidden property-");
 			mHasForbiddenGroup = false;
 		}
-
+		
 	}
-
+	
 	private void parseInitially(final String initially) {
 		if (!initially.isEmpty()) {
 			final AtomicInteger id = new AtomicInteger(0);
@@ -180,7 +219,7 @@ public class SpaceExPreferenceManager {
 			mHasPreferenceGroups = true;
 		}
 	}
-
+	
 	private SpaceExForbiddenGroup createForbiddenGroup(final String infix, final int id) {
 		String initialVariableInfix = "";
 		final Map<String, List<String>> initialLocations = new HashMap<>();
@@ -228,7 +267,7 @@ public class SpaceExPreferenceManager {
 		final int groupid = id;
 		return new SpaceExForbiddenGroup(initialLocations, initialVariableInfix, groupid);
 	}
-
+	
 	private SpaceExPreferenceGroup createPreferenceGroup(final String infix, final int id) {
 		String initialVariableInfix = "";
 		final Map<String, String> initialLocations = new HashMap<>();
@@ -268,7 +307,7 @@ public class SpaceExPreferenceManager {
 		final int groupid = id;
 		return new SpaceExPreferenceGroup(initialLocations, initialVariableInfix, groupid);
 	}
-
+	
 	// save assingments of the form x==... as groupID -> (var -> val)
 	private void saveDirectAssignments(final String varString, final int groupID) {
 		final String[] splitted = varString.split("==");
@@ -282,7 +321,7 @@ public class SpaceExPreferenceManager {
 			}
 		}
 	}
-
+	
 	/**
 	 * Function that analyses if a variable in the config has to be renamed variables that have to be renamed are of the
 	 * form AUT.VARNAME They are constants
@@ -324,11 +363,11 @@ public class SpaceExPreferenceManager {
 		}
 		return renameList;
 	}
-
+	
 	private String generateNewName(final String var) {
 		return var + "_Renamedconst" + mRenameID.getAndIncrement();
 	}
-
+	
 	public HybridSystem getRegardedSystem(final HybridModel model) {
 		final String configSystem = mSystem != null ? mSystem : "";
 		final Map<String, HybridSystem> systems = model.getSystems();
@@ -352,43 +391,43 @@ public class SpaceExPreferenceManager {
 			}
 		}
 	}
-
+	
 	public String getSystem() {
 		return mSystem;
 	}
-
+	
 	public String getFileName() {
 		return mModelFilename;
 	}
-
+	
 	public Map<String, Map<String, String>> getRequiresRename() {
 		return mRequiresRename;
 	}
-
+	
 	public Map<Integer, SpaceExPreferenceGroup> getPreferenceGroups() {
 		return mPreferenceGroups;
 	}
-
+	
 	public boolean hasPreferenceGroups() {
 		return mHasPreferenceGroups;
 	}
-
+	
 	public Map<Integer, HybridAutomaton> getGroupIdToParallelComposition() {
 		return mGroupIdToParallelComposition;
 	}
-
+	
 	public void setGroupIdToParallelComposition(final Map<Integer, HybridAutomaton> mGroupIdToParallelComposition) {
 		this.mGroupIdToParallelComposition = mGroupIdToParallelComposition;
 	}
-
+	
 	public List<SpaceExForbiddenGroup> getForbiddenGroups() {
 		return mForbiddenGroups;
 	}
-
+	
 	public boolean hasForbiddenGroup() {
 		return mHasForbiddenGroup;
 	}
-
+	
 	public boolean isLocationForbidden(final String autName, final String locName) {
 		if (mHasForbiddenGroup) {
 			for (final SpaceExForbiddenGroup group : mForbiddenGroups) {
@@ -399,13 +438,49 @@ public class SpaceExPreferenceManager {
 		}
 		return false;
 	}
-
+	
 	public Map<String, List<String>> getForbiddenToForbiddenlocs() {
 		return mForbiddenToForbiddenlocs;
 	}
-
+	
 	public Map<Integer, Map<String, String>> getGroupTodirectAssingment() {
 		return mGroupTodirectAssingment;
 	}
-
+	
+	public SolverMode getSolverMode() {
+		return mSolverMode;
+	}
+	
+	public boolean ismFakeNonIncrementalScript() {
+		return mFakeNonIncrementalScript;
+	}
+	
+	public boolean ismDumpSmtScriptToFile() {
+		return mDumpSmtScriptToFile;
+	}
+	
+	public String getmPathOfDumpedScript() {
+		return mPathOfDumpedScript;
+	}
+	
+	public String getmCommandExternalSolver() {
+		return mCommandExternalSolver;
+	}
+	
+	public boolean ismDumpUsatCoreTrackBenchmark() {
+		return mDumpUsatCoreTrackBenchmark;
+	}
+	
+	public boolean ismDumpMainTrackBenchmark() {
+		return mDumpMainTrackBenchmark;
+	}
+	
+	public String getmLogicForExternalSolver() {
+		return mLogicForExternalSolver;
+	}
+	
+	public Settings getmSolverSettings() {
+		return mSolverSettings;
+	}
+	
 }

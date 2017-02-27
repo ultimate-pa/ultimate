@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.core.model.translation.ITranslator;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridVariableManager;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ObjectFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
@@ -184,13 +183,7 @@ public class SpaceExParser implements ISource {
 		fis.close();
 		// Initialize the preference manager + parse the config file right away.
 		mPreferenceManager = new SpaceExPreferenceManager(mServices, mLogger, file);
-		// Create the model
-		mLogger.info("Starting creation of hybrid model...");
-		final long startTime = System.nanoTime();
-		final HybridModel model = new HybridModel(spaceEx, mLogger, mPreferenceManager);
-		final long estimatedTime = System.nanoTime() - startTime;
-		mLogger.info("Creation of hybrid model done in " + estimatedTime / (float) 1000000 + " milliseconds");
-		return new SpaceExModelBuilder(model, mLogger, mPreferenceManager, mServices, mToolchainStorage).getModel();
+		return new SpaceExModelBuilder(spaceEx, mLogger, mPreferenceManager, mServices, mToolchainStorage).getModel();
 		/*
 		 * final Marshaller marshaller = jaxContext.createMarshaller();
 		 * marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE); final StringWriter streamWriter = new

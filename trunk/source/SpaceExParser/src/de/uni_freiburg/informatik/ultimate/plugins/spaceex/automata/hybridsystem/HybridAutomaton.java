@@ -58,7 +58,7 @@ public class HybridAutomaton {
 	private final Map<String, Integer> mNametoId;
 	// group -> init
 	private final Map<Integer, Location> mGroupToInitialLocation;
-	private final Location mInitialLocation;
+	private final Location mDefaultInitialLocation;
 	private final List<Transition> mTransitions;
 	private final ILogger mLogger;
 	private SpaceExPreferenceManager mPreferenceManager;
@@ -96,12 +96,14 @@ public class HybridAutomaton {
 			addTransition(trans);
 		}
 		// init location default
-		mInitialLocation = mLocations.values().iterator().next();
+		mDefaultInitialLocation = mLocations.values().iterator().next();
 		// init locations for pref groups
-		final Map<Integer, SpaceExPreferenceGroup> prefGroups = mPreferenceManager.getPreferenceGroups();
-		prefGroups.forEach((id, group) -> {
-			mGroupToInitialLocation.put(id, getInitialLocationFromGroup(group.getInitialLocations()));
-		});
+		if (preferenceManager != null) {
+			final Map<Integer, SpaceExPreferenceGroup> prefGroups = mPreferenceManager.getPreferenceGroups();
+			prefGroups.forEach((id, group) -> {
+				mGroupToInitialLocation.put(id, getInitialLocationFromGroup(group.getInitialLocations()));
+			});
+		}
 	}
 	
 	protected HybridAutomaton(final String name, final Map<Integer, Location> locations, final Location initialLocation,
@@ -111,7 +113,7 @@ public class HybridAutomaton {
 		mName = name;
 		mLocations = (locations != null) ? locations : Collections.emptyMap();
 		mGroupToInitialLocation = Collections.emptyMap();
-		mInitialLocation = initialLocation;
+		mDefaultInitialLocation = initialLocation;
 		mTransitions = (transitions != null) ? transitions : Collections.emptyList();
 		mGlobalParameters = (globalParameters != null) ? globalParameters : Collections.emptySet();
 		mLocalParameters = (localParameters != null) ? localParameters : Collections.emptySet();
@@ -127,14 +129,14 @@ public class HybridAutomaton {
 	
 	private Location getInitialLocationFromGroup(final Map<String, String> initLocs) {
 		if (initLocs == null) {
-			return mInitialLocation;
+			return mDefaultInitialLocation;
 		}
 		final String initLocName = initLocs.get(mName);
 		if (mNametoId.containsKey(initLocName)) {
 			final int nameToId = mNametoId.get(initLocName);
 			return mLocations.get(nameToId);
 		} else {
-			return mInitialLocation;
+			return mDefaultInitialLocation;
 		}
 	}
 	
@@ -258,7 +260,7 @@ public class HybridAutomaton {
 			invariant = invariant.replaceAll("\\b" + loc + "\\b", glob);
 			location.setInvariant(invariant);
 			String flow = (location.getFlow() != null) ? location.getFlow() : "";
-			flow = flow.replaceAll(loc, glob);
+			flow = flow.replaceAll("\\b" + loc + "\\b", glob);
 			location.setFlow(flow);
 		});
 	}
@@ -333,19 +335,19 @@ public class HybridAutomaton {
 		if (mGroupToInitialLocation.size() == 1) {
 			return mGroupToInitialLocation.values().iterator().next();
 		} else {
-			return mInitialLocation;
+			return mDefaultInitialLocation;
 		}
 	}
 	
 	public Location getInitialLocationForGroup(final Integer groupID) {
 		if (groupID == null) {
-			return mInitialLocation;
+			return mDefaultInitialLocation;
 		}
 		if (mGroupToInitialLocation.containsKey(groupID)) {
 			return mGroupToInitialLocation.get(groupID);
 		} else {
 			mLogger.info("No initial location for group id: " + groupID + " returning default loc");
-			return mInitialLocation;
+			return mDefaultInitialLocation;
 		}
 	}
 	
