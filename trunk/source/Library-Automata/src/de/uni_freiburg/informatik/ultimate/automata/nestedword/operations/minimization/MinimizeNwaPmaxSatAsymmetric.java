@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateSimulation.SimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.AbstractMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGeneratorPair;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.TransitivityGeneralMaxSatSolver;
@@ -62,7 +63,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @see MinimizeNwaMaxSat2
  */
 public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER, STATE, Pair<STATE, STATE>> {
-	private static final boolean USE_PARTITION_PREPROCESSING_IN_ATS_CONSTRUCTOR = true;
+	private static final boolean USE_PARTITION_PREPROCESSING_IN_ATS_CONSTRUCTOR = false;
+	private static final boolean USE_PAIR_PREPROCESSING_IN_ATS_CONSTRUCTOR = true;
 
 	@SuppressWarnings("rawtypes")
 	private static final Pair[] EMPTY_LITERALS = new Pair[0];
@@ -196,12 +198,18 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	 * Creates the initial pairs for the automata script interpreter constructor.
 	 * <p>
 	 * The method allows for fast policy switching.
+	 * 
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
 	 */
 	private static <LETTER, STATE> Iterable<Pair<STATE, STATE>> createAtsInitialPairs(
-			final AutomataLibraryServices services, final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
+			final AutomataLibraryServices services, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
+			throws AutomataOperationCanceledException {
 		if (USE_PARTITION_PREPROCESSING_IN_ATS_CONSTRUCTOR) {
 			return createPairsWithInitialPartition(
 					new LookaheadPartitionConstructor<>(services, operand, true, true).getPartition().getRelation());
+		} else if (USE_PAIR_PREPROCESSING_IN_ATS_CONSTRUCTOR) {
+			return new NwaApproximateSimulation<>(services, operand, SimulationType.DIRECT).getResult();
 		}
 		return createPairs(operand.getStates());
 	}
