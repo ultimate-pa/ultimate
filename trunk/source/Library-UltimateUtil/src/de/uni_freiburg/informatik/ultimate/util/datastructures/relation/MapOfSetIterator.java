@@ -50,7 +50,9 @@ public class MapOfSetIterator<D, R> implements Iterator<Map.Entry<D, R>> {
 	@Override
 	public boolean hasNext() {
 		while (!mRhsIterator.hasNext()) {
-			nextLhs();
+			if (!nextLhs()) {
+				return false;
+			}
 		}
 		return mRhsIterator.hasNext();
 	}
@@ -99,11 +101,13 @@ public class MapOfSetIterator<D, R> implements Iterator<Map.Entry<D, R>> {
 		};
 	}
 
-	private void nextLhs() {
+	private boolean nextLhs() {
 		if (mOuterIterator.hasNext()) {
 			final Entry<D, Set<R>> entry = mOuterIterator.next();
 			mLhs = entry.getKey();
 			mRhsIterator = entry.getValue().iterator();
+			return true;
 		}
+		return false;
 	}
 }
