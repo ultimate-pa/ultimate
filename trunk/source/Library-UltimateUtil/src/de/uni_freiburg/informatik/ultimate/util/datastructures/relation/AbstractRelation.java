@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -404,6 +405,28 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 				@Override
 				public R setValue(final R value) {
 					throw new UnsupportedOperationException("setValue() is not allowed.");
+				}
+
+				@Override
+				public String toString() {
+					return lhs + "=" + rhs;
+				}
+
+				@Override
+				public final int hashCode() {
+					return lhs.hashCode() ^ Objects.hashCode(rhs);
+				}
+
+				@Override
+				public final boolean equals(final Object other) {
+					if (other == this) {
+						return true;
+					}
+					if (!(other instanceof Map.Entry<?, ?>)) {
+						return false;
+					}
+					final Map.Entry<?, ?> entry = (Map.Entry<?, ?>) other;
+					return Objects.equals(lhs, entry.getKey()) && Objects.equals(rhs, entry.getValue());
 				}
 			};
 		}
