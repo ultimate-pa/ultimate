@@ -29,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.mapelimination.
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
 public class MapEliminationTransformer implements ITransformulaTransformer {
-	private final IEqualityAnalysisResultProvider<IcfgLocation> mEqualityProvider;
+	private final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> mEqualityProvider;
 	private final Map<TransFormula, ModifiableTransFormula> mTransFormulas;
 	private final Map<TransFormula, IcfgLocation> mSourceLocations;
 	private final Map<TransFormula, IcfgLocation> mTargetLocations;
@@ -44,7 +44,7 @@ public class MapEliminationTransformer implements ITransformulaTransformer {
 	public MapEliminationTransformer(final IUltimateServiceProvider services, final ILogger logger,
 			final ManagedScript managedScript, final IIcfgSymbolTable symbolTable,
 			final ReplacementVarFactory replacementVarFactory, final MapEliminationSettings settings,
-			final IEqualityAnalysisResultProvider<IcfgLocation> equalityProvider) {
+			final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider) {
 		mServices = services;
 		mLogger = logger;
 		mSymbolTable = symbolTable;
@@ -73,6 +73,8 @@ public class MapEliminationTransformer implements ITransformulaTransformer {
 		}
 		mMapEliminator = new MapEliminator(mServices, mLogger, mManagedScript, mSymbolTable, mReplacementVarFactory,
 				mTransFormulas.values(), mSettings);
+		// TODO: This is only necessary, if the icfg contains maps
+		mEqualityProvider.preprocess(icfg);
 	}
 
 	@Override
