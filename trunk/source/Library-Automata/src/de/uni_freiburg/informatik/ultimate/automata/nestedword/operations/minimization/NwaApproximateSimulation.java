@@ -43,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IIncomingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
+import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
+import de.uni_freiburg.informatik.ultimate.automata.util.MapBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -131,6 +133,13 @@ public class NwaApproximateSimulation<LETTER, STATE> {
 			final long numberOfPairs = countNumberOfPairs();
 			mLogger.info("Approximate simulation contains " + numberOfPairs + " pairs (excluding reflexive pairs).");
 		}
+	}
+	
+	/**
+	 * @return The partition.
+	 */
+	public ISetOfPairs<STATE, Map<STATE, Set<STATE>>> getResult() {
+		return new MapBackedSetOfPairs<>(mMayBeSimulatedBy);
 	}
 
 	private void run(final SimulationType simulationType) throws AutomataOperationCanceledException {
