@@ -96,6 +96,9 @@ public class PathProgramDumper {
 			final NestedRun<? extends IAction, IPredicate> run, final String filename) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		if (!(icfg instanceof BoogieIcfgContainer)) {
+			throw new UnsupportedOperationException("PathProgramDumper currently needs BoogieIcfgContainer");
+		}
 
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run.getWord());
 		final PathProgram.PathProgramConstructionResult ppResult = PathProgram
