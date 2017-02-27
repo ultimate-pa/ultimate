@@ -282,7 +282,6 @@ public class NwaApproximateSimulation<LETTER, STATE> {
 	 *            function that provides predecessor states for a given state and letter (we know that predecessors
 	 *            exist for both states)
 	 */
-	@SuppressWarnings("squid:S1698")
 	private void separatePredecessors(final STATE lhs, final STATE rhs,
 			final Function<STATE, Iterable<? extends IIncomingTransitionlet<LETTER, STATE>>> predecessorProvider,
 			final Function<STATE, Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>>> successorProvider) {
@@ -295,8 +294,7 @@ public class NwaApproximateSimulation<LETTER, STATE> {
 			boolean hasSimulatingNeighbor = false;
 			for (final IOutgoingTransitionlet<LETTER, STATE> rhsPredSuccTrans : successorProvider.apply(rhsPred)) {
 				final STATE rhsNeighbor = rhsPredSuccTrans.getSucc();
-				// TODO why does the equality test not work???
-				if ((lhs == rhsNeighbor) || lhsPossiblySimulatedBy.contains(rhsNeighbor)) {
+				if ((lhs.equals(rhsNeighbor)) || lhsPossiblySimulatedBy.contains(rhsNeighbor)) {
 					hasSimulatingNeighbor = true;
 					break;
 				}
