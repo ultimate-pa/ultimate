@@ -180,7 +180,7 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 
 	@Override
 	public Iterator<Entry<D, R>> iterator() {
-		return new MapOfSetIterator<>(mMap);
+		return new MapToCollectionIterator<>(mMap);
 	}
 
 	@Override

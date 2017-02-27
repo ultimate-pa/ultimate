@@ -26,24 +26,26 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Objects;
-import java.util.Set;
 
 /**
- * Iterator for entries in the relation.
+ * Iterator for maps that map to a {@link Collection}.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <D>
  *            domain type
  * @param <R>
- *            range type
+ *            element type of the range collection
+ * @param <C>
+ *            type of collection that is mapped to
  */
-public class MapOfSetIterator<D, R> implements Iterator<Map.Entry<D, R>> {
-	private final Iterator<Entry<D, Set<R>>> mOuterIterator;
+public class MapToCollectionIterator<D, R, C extends Collection<R>> implements Iterator<Map.Entry<D, R>> {
+	private final Iterator<Entry<D, C>> mOuterIterator;
 	private D mLhs;
 	private Iterator<R> mRhsIterator;
 
@@ -51,7 +53,7 @@ public class MapOfSetIterator<D, R> implements Iterator<Map.Entry<D, R>> {
 	 * @param map
 	 *            map.
 	 */
-	public MapOfSetIterator(final Map<D, Set<R>> map) {
+	public MapToCollectionIterator(final Map<D, C> map) {
 		mOuterIterator = map.entrySet().iterator();
 		nextLhs();
 	}
@@ -73,7 +75,7 @@ public class MapOfSetIterator<D, R> implements Iterator<Map.Entry<D, R>> {
 
 	private boolean nextLhs() {
 		if (mOuterIterator.hasNext()) {
-			final Entry<D, Set<R>> entry = mOuterIterator.next();
+			final Entry<D, C> entry = mOuterIterator.next();
 			mLhs = entry.getKey();
 			mRhsIterator = entry.getValue().iterator();
 			return true;

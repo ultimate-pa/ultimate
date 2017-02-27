@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.MapOfSetIterator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.MapToCollectionIterator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -85,7 +85,7 @@ public class MapBackedSetOfPairs<E> implements ISetOfPairs<E, Map<E, Set<E>>> {
 		mHasReturnedIteratorOnce = true;
 		final Map<E, Set<E>> map = mMap;
 		return new Iterator<Pair<E, E>>() {
-			private final MapOfSetIterator<E, E> mIt = new MapOfSetIterator<>(map);
+			private final MapToCollectionIterator<E, E, Set<E>> mIt = new MapToCollectionIterator<>(map);
 
 			@Override
 			public boolean hasNext() {
