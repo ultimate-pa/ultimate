@@ -48,6 +48,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive.ParrotInteractiveIterationInfo;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive.ParrotRefinementStrategy;
 
 /**
  * Factory for obtaining an {@link IRefinementStrategy}.
@@ -66,6 +68,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	private final PredicateFactory mPredicateFactory;
 	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
 	private final IInteractive<Object> mInteractive;
+	private final ParrotInteractiveIterationInfo mParrotInteractiveIterationInfo;
 
 	/**
 	 * @param logger
@@ -99,6 +102,11 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 		mPredicateFactory = predicateFactory;
 		mAssertionOrderModulation = new AssertionOrderModulation<>();
 		mInteractive = IInteractive.getFromStorage(storage, Object.class);
+		if (mInteractive == null) {
+			mParrotInteractiveIterationInfo = null;
+		} else {
+			mParrotInteractiveIterationInfo = new ParrotInteractiveIterationInfo();
+		}
 	}
 
 	/**
@@ -124,8 +132,8 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 
 		switch (strategy) {
 		case FIXED_PREFERENCES:
-			final ManagedScript managedScript = setupManagedScriptFromPreferences(mServices, mInitialIcfg, mStorage,
-					iteration, mPrefs);
+			final ManagedScript managedScript =
+					setupManagedScriptFromPreferences(mServices, mInitialIcfg, mStorage, iteration, mPrefs);
 			return new FixedTraceAbstractionRefinementStrategy<>(mLogger, mPrefs, managedScript, mServices,
 					mPredicateFactory, predicateUnifier, counterexample, abstraction, mPrefsConsolidation, iteration,
 					benchmark);
@@ -159,8 +167,8 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 						"Interactive strategy chosen, but interface available. Please start ultimate in Interactive mode.");
 			}
 			return new ParrotRefinementStrategy<LETTER>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-					predicateUnifier, mAssertionOrderModulation, counterexample, abstraction, mPrefsConsolidation,
-					iteration, benchmark) {
+					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
+					mPrefsConsolidation, iteration, benchmark) {
 				@Override
 				protected IInteractive<Object> getInteractive() {
 					// instead of passing the interactive interface via
@@ -173,6 +181,11 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 				@Override
 				protected IRefinementStrategy<LETTER> createFallbackStrategy(RefinementStrategy strategy) {
 					return createStrategy(strategy, counterexample, abstraction, iteration, benchmark);
+				}
+
+				@Override
+				protected ParrotInteractiveIterationInfo getIterationInfo() {
+					return mParrotInteractiveIterationInfo;
 				};
 
 			};
