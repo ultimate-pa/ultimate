@@ -214,7 +214,7 @@ public enum StatisticsType {
 	 */
 	NUMBER_OF_CLAUSES,
 	/**
-	 * Number of pairs in an initial partition.
+	 * Number of pairs in a preprocessing.
 	 */
 	NUMBER_INITIAL_PAIRS,
 	/**
