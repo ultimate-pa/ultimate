@@ -146,7 +146,7 @@ public class HCStateFactory implements IMergeStateFactory<HCPredicate>, IInterse
 	}
 
 	public boolean isSatisfiable(final List<HCPredicate> src, final HornClause pf, final HCPredicate dest) {
-		mBackendSmtSolverScript.lock(this);
+		//mBackendSmtSolverScript.lock(this);
 		for (final HCPredicate pSrc : src) {
 			for (final IProgramVar v : pSrc.getVars()) {
 				if (!pf.getTransformula().getInVars().containsKey(v)) {
@@ -189,7 +189,7 @@ public class HCStateFactory implements IMergeStateFactory<HCPredicate>, IInterse
 		//System.err.print(A + " o " + S + " ==> " + B);// + " :: " + (result == LBool.SAT));
 		if (T.getFreeVars().length > 0) {
 			//System.err.println(":: non-sat");
-			mBackendSmtSolverScript.unlock(this);
+			//mBackendSmtSolverScript.unlock(this);
 			return false;
 		}
 		mBackendSmtSolverScript.assertTerm(this, T);
@@ -198,7 +198,7 @@ public class HCStateFactory implements IMergeStateFactory<HCPredicate>, IInterse
 		mBackendSmtSolverScript.pop(this, 1);
 		//System.err.println(result != LBool.SAT ? ":=: sat" : ":=: non-sat");
 		//return false;
-		mBackendSmtSolverScript.unlock(this);
+		//mBackendSmtSolverScript.unlock(this);
 		return result != LBool.SAT;
 		
 	}
