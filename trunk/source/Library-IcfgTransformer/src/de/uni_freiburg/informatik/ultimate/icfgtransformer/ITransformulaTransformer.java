@@ -32,34 +32,87 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * A {@link ITransformulaTransformer} produces a single {@link TransFormula}, usually from another one.
+ * A {@link ITransformulaTransformer} produces {@link UnmodifiableTransFormula}s for a certain {@link IIcfg}.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public interface ITransformulaTransformer {
-	
+
 	/**
-	 * Do pre-processing that is required to transform {@link TransFormula}s.
-	 * By default the preprocessing does not do anything.
+	 * Do pre-processing that is required to transform {@link TransFormula}s. By default the preprocessing does not do
+	 * anything.
+	 * 
+	 * Note that a preprocessing should always be non-destructive!
+	 * 
+	 * @param icfg
+	 *            The {@link IIcfg} instance that contains all the transformulas this {@link ITransformulaTransformer}
+	 *            will see during his life cycle.
 	 */
-	default void preprocessIcfg(final IIcfg<?> icfg) {
-		return;
-	}
+	void preprocessIcfg(final IIcfg<?> icfg);
+
 	/**
+	 * Transform an {@link UnmodifiableTransFormula} to another (possibly equivalent) {@link UnmodifiableTransFormula}.
+	 * 
+	 * @param tf
+	 *            the transformula that should be transformed.
 	 * @return The result of the transformation through this transformer.
 	 */
-	UnmodifiableTransFormula transform(final UnmodifiableTransFormula tf);
+	TransforumlaTransformationResult transform(final UnmodifiableTransFormula tf);
 
 	/**
 	 * @return A human-friendly name that can be used during debugging, e.g., if many transformers run after another.
 	 */
 	String getName();
-	
+
 	/**
 	 * 
-	 * @return Symbol table of the result CFG. Can be obtained only after the
-	 * translation.
+	 * @return Symbol table of the result CFG. Can be obtained only after the translation.
 	 */
 	IIcfgSymbolTable getNewIcfgSymbolTable();
+
+	/**
+	 * The result of an {@link ITransformulaTransformer#transform(UnmodifiableTransFormula)} operation.
+	 * 
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	public static class TransforumlaTransformationResult {
+		private final UnmodifiableTransFormula mTransformedTransformula;
+		private final boolean mIsOverapproximation;
+
+		/**
+		 * The transformed transformula is equivalent.
+		 * 
+		 * @param transformedTransformula
+		 *            the transformula.
+		 */
+		public TransforumlaTransformationResult(final UnmodifiableTransFormula transformedTransformula) {
+			mTransformedTransformula = transformedTransformula;
+			mIsOverapproximation = false;
+		}
+
+		/**
+		 * State that the transformed transformula is an overapproximation or equivalent.
+		 * 
+		 * @param transformedTransformula
+		 *            the transformula.
+		 * @param isOverappoximation
+		 *            true iff the transformula is an overapproximation of, false if it is equivalent to the original
+		 *            transformula.
+		 */
+		public TransforumlaTransformationResult(final UnmodifiableTransFormula transformedTransformula,
+				final boolean isOverappoximation) {
+			mTransformedTransformula = transformedTransformula;
+			mIsOverapproximation = isOverappoximation;
+		}
+
+		public UnmodifiableTransFormula getTransformula() {
+			return mTransformedTransformula;
+		}
+
+		public boolean isOverapproximation() {
+			return mIsOverapproximation;
+		}
+	}
 }

@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IcfgTransformer library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers;
@@ -37,49 +37,46 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
-
 /**
- * Convert a formula into disjunctive normal form, i.e., a formula of the
- * form
+ * Convert a formula into disjunctive normal form, i.e., a formula of the form
  * 
- * <pre>OR ( AND ( NOT? inequality ) )</pre>
+ * <pre>
+ * OR ( AND ( NOT? inequality ) )
+ * </pre>
  * 
  * This includes a negation normal form (negations only occur before atoms).
  * 
  * @author Jan Leike
  */
 public class DNF extends TransitionPreprocessor {
+	public static final String DESCRIPTION = "Transform into disjunctive normal form";
+
 	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mMgdScript;
 	private final XnfConversionTechnique mXnfConversionTechnique;
-	
-	public static final String s_Description = 
-			"Transform into disjunctive normal form";
-	
-	public DNF(final IUltimateServiceProvider services, 
-			final ManagedScript freshTermVariableConstructor, 
+
+	public DNF(final IUltimateServiceProvider services, final ManagedScript freshTermVariableConstructor,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
 		mMgdScript = freshTermVariableConstructor;
 		mXnfConversionTechnique = xnfConversionTechnique;
-		
+
 	}
-	
+
 	@Override
 	public String getDescription() {
-		return s_Description;
+		return DESCRIPTION;
 	}
-	
+
 	@Override
 	public boolean checkSoundness(final Script script, final ModifiableTransFormula oldTF,
 			final ModifiableTransFormula newTF) {
 		final Term old_term = oldTF.getFormula();
 		final Term new_term = newTF.getFormula();
-		return LBool.SAT != Util.checkSat(script,
-				script.term("distinct", old_term, new_term));
+		return LBool.SAT != Util.checkSat(script, script.term("distinct", old_term, new_term));
 	}
-	
+
 	@Override
 	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
 		final Term dnf = SmtUtils.toDnf(mServices, mMgdScript, tf.getFormula(), mXnfConversionTechnique);

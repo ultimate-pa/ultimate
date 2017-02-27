@@ -27,24 +27,25 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
-public class DummyCodeBlock extends CodeBlock {
+public class DummyCodeBlock extends IcfgEdge {
 
 	private static final long serialVersionUID = 1L;
 
-	public DummyCodeBlock(final ILogger logger) {
-		super(null, null, logger);
-	}
-
-	@Override
-	public String getPrettyPrintedStatements() {
-		return null;
+	public DummyCodeBlock() {
+		super(null, null, null);
 	}
 
 	@Override
 	public String toString() {
 		return "DUMMYCODEBLOCK";
 	}
+
+	@Override
+	public UnmodifiableTransFormula getTransformula() {
+		return null;
+	}
+
 }

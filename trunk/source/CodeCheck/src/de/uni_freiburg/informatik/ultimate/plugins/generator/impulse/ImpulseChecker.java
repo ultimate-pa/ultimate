@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.impulse;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -37,8 +38,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -51,10 +56,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheck
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GraphWriter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.RedirectionStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
@@ -64,9 +65,10 @@ public class ImpulseChecker extends CodeChecker {
 
 	private final RedirectionFinder mCloneFinder;
 	private int mNodeId;
+	private Set<AnnotatedProgramPoint> mVisited;
 
 	public ImpulseChecker(final IElement root, final CfgSmtToolkit cfgSmtToolkit,
-			final IIcfg<BoogieIcfgLocation> originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
+			final IIcfg<IcfgLocation> originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
 			final IHoareTripleChecker edgeChecker, final PredicateUnifier predicateUnifier, final ILogger logger,
 			final CodeCheckSettings globSettings) {
 		super(root, cfgSmtToolkit, originalRoot, graphRoot, graphWriter, edgeChecker, predicateUnifier, logger,
@@ -77,8 +79,8 @@ public class ImpulseChecker extends CodeChecker {
 
 	public void replaceEdge(final AppEdge edge, final AnnotatedProgramPoint newTarget) {
 		if (edge instanceof AppHyperEdge) {
-			edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(), (Return) edge.getStatement(),
-					newTarget);
+			edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(),
+					(IIcfgReturnTransition<?, ?>) edge.getStatement(), newTarget);
 		} else {
 			edge.getSource().connectOutgoing(edge.getStatement(), newTarget);
 		}
@@ -153,13 +155,13 @@ public class ImpulseChecker extends CodeChecker {
 								((AppHyperEdge) edge).getHier().getPredicate(), (IReturnAction) edge.getStatement(),
 								edge.getTarget().getPredicate()) != Validity.VALID) {
 					edge.getSource().connectOutgoingReturn(((AppHyperEdge) edge).getHier(),
-							(Return) edge.getStatement(), target);
+							(IIcfgReturnTransition<?, ?>) edge.getStatement(), target);
 				}
 			} else {
 
 				boolean result = !getGlobalSettings().isCheckSatisfiability();
 				if (!result) {
-					if (edge.getStatement() instanceof Call) {
+					if (edge.getStatement() instanceof IIcfgCallTransition<?>) {
 						result = mEdgeChecker.checkCall(edge.getSource().getPredicate(),
 								(ICallAction) edge.getStatement(), edge.getTarget().getPredicate()) != Validity.VALID;
 					} else {
@@ -187,7 +189,7 @@ public class ImpulseChecker extends CodeChecker {
 	}
 
 	@Override
-	public boolean codeCheck(final NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
+	public boolean codeCheck(final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
 			final IPredicate[] interpolants, final AnnotatedProgramPoint procedureRoot) {
 
 		final AnnotatedProgramPoint[] nodes = errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[0]);
@@ -271,7 +273,7 @@ public class ImpulseChecker extends CodeChecker {
 		return true;
 	}
 
-	public boolean isValidEdge(final AnnotatedProgramPoint sourceNode, final CodeBlock edgeLabel,
+	public boolean isValidEdge(final AnnotatedProgramPoint sourceNode, final IIcfgTransition<?> edgeLabel,
 			final AnnotatedProgramPoint destinationNode) {
 		if (edgeLabel instanceof DummyCodeBlock) {
 			return false;
@@ -291,7 +293,7 @@ public class ImpulseChecker extends CodeChecker {
 		}
 
 		boolean result = true;
-		if (edgeLabel instanceof Call) {
+		if (edgeLabel instanceof IIcfgCallTransition<?>) {
 			result = mEdgeChecker.checkCall(sourceNode.getPredicate(), (ICallAction) edgeLabel,
 					destinationNode.getPredicate()) == Validity.VALID;
 		} else {
@@ -312,7 +314,7 @@ public class ImpulseChecker extends CodeChecker {
 		return result;
 	}
 
-	public boolean isValidReturnEdge(final AnnotatedProgramPoint sourceNode, final CodeBlock edgeLabel,
+	public boolean isValidReturnEdge(final AnnotatedProgramPoint sourceNode, final IIcfgTransition<?> edgeLabel,
 			final AnnotatedProgramPoint destinationNode, final AnnotatedProgramPoint callNode) {
 		if (getGlobalSettings().isMemoizeReturnEdgeChecks()) {
 			if (mSatQuadruples.get(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel,
@@ -344,28 +346,28 @@ public class ImpulseChecker extends CodeChecker {
 	}
 
 	@Override
-	public boolean codeCheck(final NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
+	public boolean codeCheck(final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
 			final IPredicate[] interpolants, final AnnotatedProgramPoint procedureRoot,
-			final NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
-			final NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples) {
+			final NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> satTriples,
+			final NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> unsatTriples) {
 		mSatTriples = satTriples;
 		mUnsatTriples = unsatTriples;
 		return this.codeCheck(errorRun, interpolants, procedureRoot);
 	}
 
 	@Override
-	public boolean codeCheck(final NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
+	public boolean codeCheck(final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
 			final IPredicate[] interpolants, final AnnotatedProgramPoint procedureRoot,
-			final NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
-			final NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples,
-			final NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> satQuadruples,
-			final NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> unsatQuadruples) {
+			final NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> satTriples,
+			final NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> unsatTriples,
+			final NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> satQuadruples,
+			final NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> unsatQuadruples) {
 		mSatQuadruples = satQuadruples;
 		mUnsatQuadruples = unsatQuadruples;
 		return this.codeCheck(errorRun, interpolants, procedureRoot, satTriples, unsatTriples);
 	}
 
-	protected boolean connectOutgoingIfValid(final AnnotatedProgramPoint source, final CodeBlock statement,
+	protected boolean connectOutgoingIfValid(final AnnotatedProgramPoint source, final IIcfgTransition<?> statement,
 			final AnnotatedProgramPoint target) {
 		if (isValidEdge(source, statement, target)) {
 			source.connectOutgoing(statement, target);
@@ -375,7 +377,7 @@ public class ImpulseChecker extends CodeChecker {
 	}
 
 	protected boolean connectOutgoingReturnIfValid(final AnnotatedProgramPoint source, final AnnotatedProgramPoint hier,
-			final Return statement, final AnnotatedProgramPoint target) {
+			final IIcfgReturnTransition<?, ?> statement, final AnnotatedProgramPoint target) {
 		if (isValidReturnEdge(source, statement, target, hier)) {
 			source.connectOutgoingReturn(hier, statement, target);
 			return true;
@@ -383,14 +385,12 @@ public class ImpulseChecker extends CodeChecker {
 		return false;
 	}
 
-	HashSet<AnnotatedProgramPoint> visited;
-
 	protected void dfsDEBUG(final AnnotatedProgramPoint node, final boolean print) {
 
-		if (visited.contains(node)) {
+		if (mVisited.contains(node)) {
 			return;
 		}
-		visited.add(node);
+		mVisited.add(node);
 		if (print) {
 			System.err.println(String.format("%n%s%n", node));
 			System.err.print("[ ");
@@ -419,10 +419,7 @@ public class ImpulseChecker extends CodeChecker {
 		if (result) {
 			final boolean converse = mPredicateUnifier.getCoverageRelation().isCovered(node2.getPredicate(),
 					node1.getPredicate()) == Validity.VALID;
-			// DD : Changed from this:
-			// result &= !converse || converse && node1._nodeID > node2._nodeID;
-			// to
-			result &= !converse || node1._nodeID > node2._nodeID;
+			result &= !converse || node1.getNodeId() > node2.getNodeId();
 		}
 		return result;
 	}

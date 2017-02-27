@@ -119,6 +119,9 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE, IStat
 		// Minimal states intersection.
 		final TreeAutomatonBU<LETTER, Pair<STATE, STATE>> res = new TreeAutomatonBU<>();
 
+		res.extendAlphabet(mTreeA.getAlphabet());
+		res.extendAlphabet(mTreeB.getAlphabet());
+
 		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> symbolToRuleA = new HashMap<>();
 		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> symbolToRuleB = new HashMap<>();
 

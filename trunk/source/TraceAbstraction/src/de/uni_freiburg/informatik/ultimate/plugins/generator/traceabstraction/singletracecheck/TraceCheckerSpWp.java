@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException.Reason;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
@@ -121,13 +122,14 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<? extends IIcfgTransition<?>> trace,
 			final CfgSmtToolkit csToolkit, final AssertCodeBlockOrder assertCodeBlocksIncrementally,
 			final UnsatCores unsatCores, final boolean useLiveVariables, final IUltimateServiceProvider services,
-			final boolean computeRcfgProgramExecution, final IPredicateUnifier predicateUnifier,
-			final InterpolationTechnique interpolation, final ManagedScript mgdScriptTc,
-			final XnfConversionTechnique xnfConversionTechnique, final SimplificationTechnique simplificationTechnique,
+			final boolean computeRcfgProgramExecution, final PredicateFactory predicateFactory,
+			final IPredicateUnifier predicateUnifier, final InterpolationTechnique interpolation,
+			final ManagedScript mgdScriptTc, final XnfConversionTechnique xnfConversionTechnique,
+			final SimplificationTechnique simplificationTechnique,
 			final List<? extends Object> controlLocationSequence) {
 		// superclass does feasibility check
 		super(precondition, postcondition, pendingContexts, trace, csToolkit, assertCodeBlocksIncrementally, services,
-				computeRcfgProgramExecution, predicateUnifier, mgdScriptTc, simplificationTechnique,
+				computeRcfgProgramExecution, predicateFactory, predicateUnifier, mgdScriptTc, simplificationTechnique,
 				xnfConversionTechnique, controlLocationSequence);
 		mUnsatCores = unsatCores;
 		mLiveVariables = useLiveVariables;

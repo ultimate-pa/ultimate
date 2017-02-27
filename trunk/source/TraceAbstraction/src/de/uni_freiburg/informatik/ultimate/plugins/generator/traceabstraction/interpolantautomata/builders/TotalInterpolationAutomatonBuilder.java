@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareTripleChecks;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
@@ -88,6 +89,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 
 	private final List<IPredicate> mStateSequence;
 	private final NestedWordAutomaton<LETTER, IPredicate> mIA;
+	private final PredicateFactory mPredicateFactory;
 	private final IPredicateUnifier mPredicateUnifier;
 	private final INestedWordAutomaton<LETTER, IPredicate> mAbstraction;
 
@@ -124,6 +126,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		mCsToolkit = csToolkit;
 		// mInterpolants = traceChecker.getInterpolants();
 		mPredicateUnifier = interpolantGenerator.getPredicateUnifier();
+		mPredicateFactory = (PredicateFactory) mPredicateUnifier.getPredicateFactory();
 		mAbstraction = abstraction;
 		final InCaReAlphabet<LETTER> alphabet = new InCaReAlphabet<>(abstraction);
 		mIA = new StraightLineInterpolantAutomatonBuilder<>(mServices, alphabet, interpolantGenerator, predicateFactory)
@@ -318,7 +321,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		case Craig_NestedInterpolation:
 		case Craig_TreeInterpolation:
 			tc = new InterpolatingTraceCheckerCraig(precondition, postcondition, pendingContexts, run.getWord(),
-					mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, mPredicateUnifier,
+					mCsToolkit, AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, true, mPredicateFactory, mPredicateUnifier,
 					mInterpolation, true, mXnfConversionTechnique, mSimplificationTechnique, run.getStateSequence());
 			break;
 		case ForwardPredicates:
@@ -327,7 +330,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		case FPandBPonlyIfFpWasNotPerfect:
 			tc = new TraceCheckerSpWp(precondition, postcondition, pendingContexts, run.getWord(), mCsToolkit,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
-					mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique,
+					mPredicateFactory, mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique,
 					mSimplificationTechnique, run.getStateSequence());
 
 			break;

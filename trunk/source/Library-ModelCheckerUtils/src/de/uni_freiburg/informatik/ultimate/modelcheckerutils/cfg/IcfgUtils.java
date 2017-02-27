@@ -91,4 +91,24 @@ public class IcfgUtils {
 		}
 		return errorLocs;
 	}
+
+	public static <LOC extends IcfgLocation> boolean isErrorLocation(final IIcfg<LOC> icfg, final IcfgLocation loc) {
+		if (icfg == null) {
+			throw new IllegalArgumentException();
+		}
+		if (loc == null) {
+			return false;
+		}
+
+		final String proc = loc.getProcedure();
+		final Map<String, Set<LOC>> errorNodes = icfg.getProcedureErrorNodes();
+		if (errorNodes == null || errorNodes.isEmpty()) {
+			return false;
+		}
+		final Set<LOC> procErrorNodes = errorNodes.get(proc);
+		if (procErrorNodes == null || procErrorNodes.isEmpty()) {
+			return false;
+		}
+		return procErrorNodes.contains(loc);
+	}
 }

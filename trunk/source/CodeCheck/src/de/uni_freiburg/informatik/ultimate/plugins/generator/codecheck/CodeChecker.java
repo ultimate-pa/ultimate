@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -36,12 +37,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
@@ -51,22 +52,17 @@ public abstract class CodeChecker {
 
 	private CodeCheckSettings mGlobalSettings;
 
-	protected IIcfg<BoogieIcfgLocation> mOriginalRoot;
+	protected IIcfg<IcfgLocation> mOriginalRoot;
 	protected CfgSmtToolkit mCfgToolkit;
 	protected ImpRootNode mGraphRoot;
 
 	protected IHoareTripleChecker mEdgeChecker;
 	protected PredicateUnifier mPredicateUnifier;
 
-	/*
-	 * Maps for storing edge check results. Not that in case of ImpulseChecker these really are valid, not sat, triples.
-	 * TODO: either change name, make duplicates for ImpulseChecker, or modify ImpulseChecker such that those are really
-	 * sat triples.
-	 */
-	protected NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> mSatTriples;
-	protected NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> mUnsatTriples;
-	protected NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> mSatQuadruples;
-	protected NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> mUnsatQuadruples;
+	protected NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> mSatTriples;
+	protected NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> mUnsatTriples;
+	protected NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> mSatQuadruples;
+	protected NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> mUnsatQuadruples;
 
 	// stats
 	protected int mMemoizationHitsSat = 0;
@@ -79,10 +75,10 @@ public abstract class CodeChecker {
 	/**
 	 * Debugs all the nodes in a graph.
 	 */
-	private final HashSet<AnnotatedProgramPoint> mVisited = new HashSet<>();
+	private final Set<AnnotatedProgramPoint> mVisited = new HashSet<>();
 	protected final ILogger mLogger;
 
-	public CodeChecker(final IElement root, final CfgSmtToolkit csToolkit, final IIcfg<BoogieIcfgLocation> originalRoot,
+	public CodeChecker(final IElement root, final CfgSmtToolkit csToolkit, final IIcfg<IcfgLocation> originalRoot,
 			final ImpRootNode graphRoot, final GraphWriter graphWriter, final IHoareTripleChecker edgeChecker,
 			final PredicateUnifier predicateUnifier, final ILogger logger, final CodeCheckSettings globalSettings) {
 		mLogger = logger;
@@ -98,18 +94,20 @@ public abstract class CodeChecker {
 		setG(globalSettings);
 	}
 
-	public abstract boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants,
-			AnnotatedProgramPoint procedureRoot);
+	public abstract boolean codeCheck(NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
+			IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot);
 
-	public abstract boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants,
-			AnnotatedProgramPoint procedureRoot, NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
-			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples);
+	public abstract boolean codeCheck(NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
+			IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot,
+			NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> satTriples,
+			NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> unsatTriples);
 
-	public abstract boolean codeCheck(NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun, IPredicate[] interpolants,
-			AnnotatedProgramPoint procedureRoot, NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
-			NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples,
-			NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> satQuadruples,
-			NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> unsatQuadruples);
+	public abstract boolean codeCheck(NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
+			IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot,
+			NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> satTriples,
+			NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> unsatTriples,
+			NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> satQuadruples,
+			NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> unsatQuadruples);
 
 	/**
 	 * Given 2 predicates, return a predicate which is the conjunction of both.

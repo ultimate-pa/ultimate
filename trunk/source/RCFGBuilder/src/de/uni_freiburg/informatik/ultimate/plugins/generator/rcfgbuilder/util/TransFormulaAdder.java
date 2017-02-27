@@ -29,13 +29,11 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
@@ -106,8 +104,7 @@ public class TransFormulaAdder {
 			throw e;
 		}
 		if (!tlres.getOverapproximations().isEmpty()) {
-			final Map<String, IAnnotations> annots = cb.getPayload().getAnnotations();
-			annots.put(Overapprox.getIdentifier(), new Overapprox(tlres.getOverapproximations()));
+			new Overapprox(tlres.getOverapproximations()).annotate(cb);
 		}
 		cb.setTransitionFormula(tlres.getTransFormula());
 	}

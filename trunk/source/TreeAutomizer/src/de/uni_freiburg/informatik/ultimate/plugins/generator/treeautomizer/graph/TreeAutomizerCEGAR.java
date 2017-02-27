@@ -46,6 +46,8 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Intersect;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Minimize;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Totalize;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.TreeEmptinessCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -233,12 +235,12 @@ public class TreeAutomizerCEGAR {// implements
 		Term[] interpolants = mBackendSmtSolverScript.getInterpolants(this, ts, idx);
 		mBackendSmtSolverScript.unlock(this);
 
-		// Map<HCPredicate, HCPredicate> predsMap = new HashMap<>();
+		//Map<HCPredicate, HCPredicate> predsMap = new HashMap<>();
 
 		Map<HCPredicate, Term> interpolantsMap = new HashMap<>();
 		for (int i = 0; i < interpolants.length; ++i) {
 			HCPredicate p = postfixT.getPostFixStates().get(i);
-			// predsMap.put(p, new HCPredicate(interpolants[i], p));
+			//predsMap.put(p, new HCPredicate(interpolants[i], p));
 			interpolantsMap.put(p, interpolants[i]);
 		}
 
@@ -274,8 +276,9 @@ public class TreeAutomizerCEGAR {// implements
 		final Set<TreeAutomatonRule<HornClause, HCPredicate>> rules = new HashSet<>();
 		for (final TreeAutomatonRule<HornClause, HCPredicate> r : cExample.getRules()) {
 			for (final HCPredicate pf : cExample.getStates()) {
-				if (mStateFactory.isSatisfiable(r.getSource(), r.getLetter(), pf)) {
-//				if (mHoareTripleChecker.check(r.getSource(), r.getLetter(), pf) == Validity.VALID) { //TODO: use this line instead of the above one
+				//if (mStateFactory.isSatisfiable(r.getSource(), r.getLetter(), pf) &&
+					//	!pf.getFormula().toString().equals("false") && !pf.getFormula().toString().equals("true")) {
+				if (mHoareTripleChecker.check(r.getSource(), r.getLetter(), pf) == Validity.VALID) { //TODO: use this line instead of the above one
 					if (!printed) {
 						mLogger.debug("Generalizing counterExample:");
 						printed = true;
@@ -291,30 +294,28 @@ public class TreeAutomizerCEGAR {// implements
 	}
 
 	protected boolean refineAbstraction() throws AutomataOperationCanceledException, AutomataLibraryException {
-
-		mInterpolAutomaton = mCounterexample.getAutomaton();
-		ITreeAutomatonBU<HornClause, HCPredicate> cExample = (new Complement<HornClause, HCPredicate>(
-				mAutomataLibraryServices, mStateFactory, mInterpolAutomaton)).getResult();
+		ITreeAutomatonBU<HornClause, HCPredicate> counterExample = mInterpolAutomaton;
+		generalizeCounterExample((TreeAutomatonBU<HornClause, HCPredicate>) counterExample);
+		ITreeAutomatonBU<HornClause, HCPredicate> cCounterExample = (new Complement<HornClause, HCPredicate>(
+				mAutomataLibraryServices, mStateFactory, counterExample)).getResult();
 		mLogger.debug("Complemented counter example automaton:");
-		mLogger.debug(cExample);
-//		generalizeCounterExample((TreeAutomatonBU<HornClause, HCPredicate>) cExample);
+		mLogger.debug(cCounterExample);
 
 		mAbstraction = (TreeAutomatonBU<HornClause, HCPredicate>) (new Intersect<HornClause, HCPredicate>(
-				mAutomataLibraryServices, mStateFactory, mAbstraction, cExample)).getResult();
+				mAutomataLibraryServices, mStateFactory, mAbstraction, cCounterExample)).getResult();
 		mLogger.debug(String.format("Size before totalize %d states, %d rules.", mAbstraction.getStates().size(),
 				((Set<TreeAutomatonRule<HornClause, HCPredicate>>) mAbstraction.getRules()).size()));
 
-		/*
+
 		mAbstraction = (TreeAutomatonBU<HornClause, HCPredicate>) (new Totalize<HornClause, HCPredicate>(
-				mStateFactory, mAbstraction)).getResult();
+				mAutomataLibraryServices, mStateFactory, mAbstraction)).getResult();
 		mLogger.debug(String.format("Size after totalize %d states, %d rules.", mAbstraction.getStates().size(),
 				((Set<TreeAutomatonRule<HornClause, HCPredicate>>) mAbstraction.getRules()).size()));
 
 		mAbstraction = (TreeAutomatonBU<HornClause, HCPredicate>) (new Minimize<HornClause, HCPredicate>(
-				mStateFactory, mAbstraction)).getResult();
+				mAutomataLibraryServices, mStateFactory, mAbstraction)).getResult();
 		mLogger.debug(String.format("Size after minimize %d states, %d rules.", mAbstraction.getStates().size(),
 				((Set<TreeAutomatonRule<HornClause, HCPredicate>>) mAbstraction.getRules()).size()));
-				*/
 
 		mLogger.debug("Refine ends...");
 
@@ -327,7 +328,8 @@ public class TreeAutomizerCEGAR {// implements
 
 		mLogger.debug("Abstraction tree automaton before iteration #" + (mIteration + 1));
 		mLogger.debug(mAbstraction);
-		while (mIteration < 20) {
+		final int MAX_ITERATIONS = 20;
+		while (MAX_ITERATIONS == -1 || mIteration < MAX_ITERATIONS) {
 			mLogger.debug("Iteration #" + (mIteration + 1));
 			if (isAbstractionCorrect()) {
 				mLogger.info("The program is safe.");
@@ -361,6 +363,7 @@ public class TreeAutomizerCEGAR {// implements
 			mLogger.debug("Abstraction tree automaton before iteration #" + (mIteration + 1));
 			mLogger.debug(mAbstraction);
 		}
+		mLogger.info("The program is not decieded...");
 		return Result.UNKNOWN;
 	}
 

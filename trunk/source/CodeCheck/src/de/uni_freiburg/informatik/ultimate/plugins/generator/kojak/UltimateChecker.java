@@ -40,7 +40,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -52,10 +56,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GraphWriter;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
@@ -69,11 +69,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public class UltimateChecker extends CodeChecker {
 
-	private HashMap<AnnotatedProgramPoint, HashMap<CodeBlock, AnnotatedProgramPoint>> mPre2Stmt2Post;
-	private HashMap<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>>> mPre2Hier2Stmt2Post;
+	private HashMap<AnnotatedProgramPoint, HashMap<IIcfgTransition<?>, AnnotatedProgramPoint>> mPre2Stmt2Post;
+	private HashMap<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<IIcfgReturnTransition<?, ?>, AnnotatedProgramPoint>>> mPre2Hier2Stmt2Post;
 
 	public UltimateChecker(final IElement root, final CfgSmtToolkit cfgSmtToolkit,
-			final IIcfg<BoogieIcfgLocation> originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
+			final IIcfg<IcfgLocation> originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
 			final IHoareTripleChecker edgeChecker, final PredicateUnifier predicateUnifier, final ILogger logger,
 			final CodeCheckSettings globalSettings) {
 		super(root, cfgSmtToolkit, originalRoot, graphRoot, graphWriter, edgeChecker, predicateUnifier, logger,
@@ -84,7 +84,7 @@ public class UltimateChecker extends CodeChecker {
 	 * Given an error trace with the corresponding interpolants, then it modifies the graph accordingly.
 	 */
 	@Override
-	public boolean codeCheck(final NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
+	public boolean codeCheck(final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
 			final IPredicate[] interpolants, final AnnotatedProgramPoint procedureRoot) {
 
 		// Debug The Error Trace and the corresponding list of interpolants.
@@ -120,7 +120,7 @@ public class UltimateChecker extends CodeChecker {
 		final AppEdge[] oldInEdges = oldNode.getIncomingEdges().toArray(new AppEdge[] {});
 		for (final AppEdge oldInEdge : oldInEdges) {
 			final AnnotatedProgramPoint source = oldInEdge.getSource();
-			final CodeBlock statement = oldInEdge.getStatement();
+			final IIcfgTransition<?> statement = oldInEdge.getStatement();
 
 			// deal with self loops elsewhere
 			if (source.equals(oldNode)) {
@@ -129,8 +129,8 @@ public class UltimateChecker extends CodeChecker {
 
 			if (oldInEdge instanceof AppHyperEdge) {
 				final AnnotatedProgramPoint hier = ((AppHyperEdge) oldInEdge).getHier();
-				connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode1);
-				connectOutgoingReturnIfSat(source, hier, (Return) statement, newNode2);
+				connectOutgoingReturnIfSat(source, hier, (IIcfgReturnTransition<?, ?>) statement, newNode1);
+				connectOutgoingReturnIfSat(source, hier, (IIcfgReturnTransition<?, ?>) statement, newNode2);
 			} else {
 				connectOutgoingIfSat(source, statement, newNode1);
 				connectOutgoingIfSat(source, statement, newNode2);
@@ -144,7 +144,7 @@ public class UltimateChecker extends CodeChecker {
 		final AppEdge[] oldOutEdges = oldNode.getOutgoingEdges().toArray(new AppEdge[] {});
 		for (final AppEdge oldOutEdge : oldOutEdges) {
 			final AnnotatedProgramPoint target = oldOutEdge.getTarget();
-			final CodeBlock statement = oldOutEdge.getStatement();
+			final IIcfgTransition<?> statement = oldOutEdge.getStatement();
 
 			// deal with self loops elsewhere
 			if (target.equals(oldNode)) {
@@ -153,8 +153,8 @@ public class UltimateChecker extends CodeChecker {
 
 			if (oldOutEdge instanceof AppHyperEdge) {
 				final AnnotatedProgramPoint hier = ((AppHyperEdge) oldOutEdge).getHier();
-				connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, target);
-				connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, target);
+				connectOutgoingReturnIfSat(newNode1, hier, (IIcfgReturnTransition<?, ?>) statement, target);
+				connectOutgoingReturnIfSat(newNode2, hier, (IIcfgReturnTransition<?, ?>) statement, target);
 			} else {
 				connectOutgoingIfSat(newNode1, statement, target);
 				connectOutgoingIfSat(newNode2, statement, target);
@@ -166,7 +166,7 @@ public class UltimateChecker extends CodeChecker {
 		// deal with self loops
 		for (final AppEdge oldOutEdge : oldOutEdges) {
 			final AnnotatedProgramPoint target = oldOutEdge.getTarget();
-			final CodeBlock statement = oldOutEdge.getStatement();
+			final IIcfgTransition<?> statement = oldOutEdge.getStatement();
 
 			// already dealt with non self loops and disconnected those edges
 			if (target == null) {
@@ -175,10 +175,10 @@ public class UltimateChecker extends CodeChecker {
 
 			if (oldOutEdge instanceof AppHyperEdge) {
 				final AnnotatedProgramPoint hier = ((AppHyperEdge) oldOutEdge).getHier();
-				connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode1);
-				connectOutgoingReturnIfSat(newNode1, hier, (Return) statement, newNode2);
-				connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode1);
-				connectOutgoingReturnIfSat(newNode2, hier, (Return) statement, newNode2);
+				connectOutgoingReturnIfSat(newNode1, hier, (IIcfgReturnTransition<?, ?>) statement, newNode1);
+				connectOutgoingReturnIfSat(newNode1, hier, (IIcfgReturnTransition<?, ?>) statement, newNode2);
+				connectOutgoingReturnIfSat(newNode2, hier, (IIcfgReturnTransition<?, ?>) statement, newNode1);
+				connectOutgoingReturnIfSat(newNode2, hier, (IIcfgReturnTransition<?, ?>) statement, newNode2);
 			} else {
 				connectOutgoingIfSat(newNode1, statement, newNode1);
 				connectOutgoingIfSat(newNode1, statement, newNode2);
@@ -194,7 +194,7 @@ public class UltimateChecker extends CodeChecker {
 		for (final AppHyperEdge oldOutHypEdge : oldOutHypEdges) {
 			final AnnotatedProgramPoint source = oldOutHypEdge.getSource();
 			final AnnotatedProgramPoint target = oldOutHypEdge.getTarget();
-			final Return statement = (Return) oldOutHypEdge.getStatement();
+			final IIcfgReturnTransition<?, ?> statement = (IIcfgReturnTransition<?, ?>) oldOutHypEdge.getStatement();
 
 			connectOutgoingReturnIfSat(source, newNode1, statement, target);
 			connectOutgoingReturnIfSat(source, newNode2, statement, target);
@@ -204,42 +204,43 @@ public class UltimateChecker extends CodeChecker {
 	}
 
 	@Override
-	public boolean codeCheck(final NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
+	public boolean codeCheck(final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
 			final IPredicate[] interpolants, final AnnotatedProgramPoint procedureRoot,
-			final NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
-			final NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples) {
+			final NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> satTriples,
+			final NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> unsatTriples) {
 		mSatTriples = satTriples;
 		mUnsatTriples = unsatTriples;
 		return this.codeCheck(errorRun, interpolants, procedureRoot);
 	}
 
 	@Override
-	public boolean codeCheck(final NestedRun<CodeBlock, AnnotatedProgramPoint> errorRun,
+	public boolean codeCheck(final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
 			final IPredicate[] interpolants, final AnnotatedProgramPoint procedureRoot,
-			final NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> satTriples,
-			final NestedMap3<IPredicate, CodeBlock, IPredicate, IsContained> unsatTriples,
-			final NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> satQuadruples,
-			final NestedMap4<IPredicate, IPredicate, CodeBlock, IPredicate, IsContained> unsatQuadruples) {
+			final NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> satTriples,
+			final NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> unsatTriples,
+			final NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> satQuadruples,
+			final NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> unsatQuadruples) {
 		mSatQuadruples = satQuadruples;
 		mUnsatQuadruples = unsatQuadruples;
 		return this.codeCheck(errorRun, interpolants, procedureRoot, satTriples, unsatTriples);
 	}
 
 	private void makeConnections() {
-		for (final Entry<AnnotatedProgramPoint, HashMap<CodeBlock, AnnotatedProgramPoint>> pre2 : mPre2Stmt2Post
+		for (final Entry<AnnotatedProgramPoint, HashMap<IIcfgTransition<?>, AnnotatedProgramPoint>> pre2 : mPre2Stmt2Post
 				.entrySet()) {
-			for (final Entry<CodeBlock, AnnotatedProgramPoint> stm2 : pre2.getValue().entrySet()) {
+			for (final Entry<IIcfgTransition<?>, AnnotatedProgramPoint> stm2 : pre2.getValue().entrySet()) {
 				if (isSatEdge(pre2.getKey().getPredicate(), stm2.getKey(), stm2.getValue().getPredicate())) {
 					pre2.getKey().connectOutgoing(stm2.getKey(), stm2.getValue());
 				}
 			}
 		}
 
-		for (final Entry<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>>> pre2 : mPre2Hier2Stmt2Post
+		for (final Entry<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<IIcfgReturnTransition<?, ?>, AnnotatedProgramPoint>>> pre2 : mPre2Hier2Stmt2Post
 				.entrySet()) {
-			for (final Entry<AnnotatedProgramPoint, HashMap<Return, AnnotatedProgramPoint>> hier2 : pre2.getValue()
-					.entrySet()) {
-				for (final Entry<Return, AnnotatedProgramPoint> stm2 : hier2.getValue().entrySet()) {
+			for (final Entry<AnnotatedProgramPoint, HashMap<IIcfgReturnTransition<?, ?>, AnnotatedProgramPoint>> hier2 : pre2
+					.getValue().entrySet()) {
+				for (final Entry<IIcfgReturnTransition<?, ?>, AnnotatedProgramPoint> stm2 : hier2.getValue()
+						.entrySet()) {
 					if (isSatRetEdge(pre2.getKey().getPredicate(), hier2.getKey().getPredicate(), stm2.getKey(),
 							stm2.getValue().getPredicate())) {
 						pre2.getKey().connectOutgoingReturn(hier2.getKey(), stm2.getKey(), stm2.getValue());
@@ -249,7 +250,7 @@ public class UltimateChecker extends CodeChecker {
 		}
 	}
 
-	protected boolean connectOutgoingIfSat(final AnnotatedProgramPoint source, final CodeBlock statement,
+	protected boolean connectOutgoingIfSat(final AnnotatedProgramPoint source, final IIcfgTransition<?> statement,
 			final AnnotatedProgramPoint target) {
 		if (isSatEdge(source.getPredicate(), statement, target.getPredicate())) {
 			source.connectOutgoing(statement, target);
@@ -259,7 +260,7 @@ public class UltimateChecker extends CodeChecker {
 	}
 
 	protected boolean connectOutgoingReturnIfSat(final AnnotatedProgramPoint source, final AnnotatedProgramPoint hier,
-			final Return statement, final AnnotatedProgramPoint target) {
+			final IIcfgReturnTransition<?, ?> statement, final AnnotatedProgramPoint target) {
 		if (isSatRetEdge(source.getPredicate(), hier.getPredicate(), statement, target.getPredicate())) {
 			source.connectOutgoingReturn(hier, statement, target);
 			return true;
@@ -276,7 +277,7 @@ public class UltimateChecker extends CodeChecker {
 	 * @param postCondition
 	 * @return
 	 */
-	protected boolean isSatEdge(final IPredicate preCondition, final CodeBlock statement,
+	protected boolean isSatEdge(final IPredicate preCondition, final IIcfgTransition<?> statement,
 			final IPredicate postCondition) {
 		if (statement instanceof DummyCodeBlock) {
 			return false;
@@ -294,7 +295,7 @@ public class UltimateChecker extends CodeChecker {
 		}
 
 		final boolean result;
-		if (statement instanceof Call) {
+		if (statement instanceof IIcfgCallTransition<?>) {
 			// result is true if pre /\ stm /\ post is sat or unknown, false if unsat
 			result = mEdgeChecker.checkCall(preCondition, (ICallAction) statement,
 					negatePredicateNoPU(postCondition)) != Validity.VALID;
@@ -323,8 +324,8 @@ public class UltimateChecker extends CodeChecker {
 	 * @param hier
 	 * @return
 	 */
-	protected boolean isSatRetEdge(final IPredicate preCondition, final IPredicate hier, final Return statement,
-			final IPredicate postCondition) {
+	protected boolean isSatRetEdge(final IPredicate preCondition, final IPredicate hier,
+			final IIcfgReturnTransition<?, ?> statement, final IPredicate postCondition) {
 		if (getGlobalSettings().isMemoizeReturnEdgeChecks()) {
 			if (mSatQuadruples.get(preCondition, hier, statement, postCondition) == IsContained.IsContained) {
 				mMemoizationReturnHitsSat++;

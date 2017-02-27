@@ -32,17 +32,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.FormulaUnLet;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 
 public class GraphWriter {
 
@@ -50,19 +52,16 @@ public class GraphWriter {
 	private boolean mAnnotateNodes = true;
 	private boolean mShowUnreachableEdges = false;
 	private final boolean mShowNodeToCopy = true;
-
 	private boolean mHideUnreachableOnce = true;
-
-	private final StripAnnotationsTermTransformer mStripAnnotTermTransformer;
-
-	private final String mImagePath;
-
 	private boolean mDontWrite = true;
 
+	private final StripAnnotationsTermTransformer mStripAnnotTermTransformer;
+	private final String mImagePath;
 	private int mGraphCounter = 0;
 
 	/**
 	 * Initialize the Graphwriter with some options
+	 * 
 	 * @param annotateEdges
 	 *            annotate the edges?
 	 * @param annotateNodes
@@ -89,24 +88,21 @@ public class GraphWriter {
 
 		gv.addln(GraphViz.start_graph());
 
-		final HashSet<AnnotatedProgramPoint> allNodes = collectNodes(root);
-		final ArrayList<GraphEdge> allEdges = collectEdges(allNodes);
+		final Set<AnnotatedProgramPoint> allNodes = collectNodes(root);
+		final List<GraphEdge> allEdges = collectEdges(allNodes);
 
 		gv.addln(writeNodesToString(allNodes).toString());
 		gv.addln(writeEdgesToString(allEdges).toString());
 
 		gv.addln(GraphViz.end_graph());
 
-		// }
-
 		GraphViz.writeGraphToFile(GraphViz.getGraph(gv.getDotSource(), "png"),
 				new File(mImagePath + "/" + fileName + ".png"));
-		// index++;
 		mGraphCounter++;
 	}
 
 	public void writeGraphAsImage(final AnnotatedProgramPoint root, final String fileName,
-			final AnnotatedProgramPoint[] error_trace) {
+			final AnnotatedProgramPoint[] errorTrace) {
 
 		if (mDontWrite) {
 			return;
@@ -116,30 +112,27 @@ public class GraphWriter {
 
 		gv.addln(GraphViz.start_graph());
 
-		final HashSet<AnnotatedProgramPoint> allNodes = collectNodes(root);
-		final ArrayList<GraphEdge> allEdges = collectEdges(allNodes);
+		final Set<AnnotatedProgramPoint> allNodes = collectNodes(root);
+		final List<GraphEdge> allEdges = collectEdges(allNodes);
 
 		gv.addln(writeNodesToString(allNodes).toString());
 
-		final Set<AnnotatedProgramPoint> error_trace_al = new HashSet<>();
-		for (int i = 0; i < error_trace.length; i++) {
-			error_trace_al.add(error_trace[i]);
+		final Set<AnnotatedProgramPoint> errorTraceAl = new HashSet<>();
+		for (int i = 0; i < errorTrace.length; i++) {
+			errorTraceAl.add(errorTrace[i]);
 		}
-		gv.addln(writeEdgesToString(allEdges, error_trace_al).toString());
+		gv.addln(writeEdgesToString(allEdges, errorTraceAl).toString());
 
 		gv.addln(GraphViz.end_graph());
 
-		// }
-
 		GraphViz.writeGraphToFile(GraphViz.getGraph(gv.getDotSource(), "png"),
 				new File(mImagePath + "/" + fileName + ".png"));
-		// index++;
 		mGraphCounter++;
 	}
 
 	public void writeGraphAsImage(final AnnotatedProgramPoint root, final String fileName,
-			final HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint> nodeToCopy_current,
-			final HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint> nodeToCopy) {
+			final Map<AnnotatedProgramPoint, AnnotatedProgramPoint> nodeToCopyCurrent,
+			final Map<AnnotatedProgramPoint, AnnotatedProgramPoint> nodeToCopy) {
 		if (mDontWrite) {
 			return;
 		}
@@ -148,24 +141,21 @@ public class GraphWriter {
 
 		gv.addln(GraphViz.start_graph());
 
-		final HashSet<AnnotatedProgramPoint> allNodes = collectNodes(root);
-		final ArrayList<GraphEdge> allEdges = collectEdges(allNodes);
+		final Set<AnnotatedProgramPoint> allNodes = collectNodes(root);
+		final List<GraphEdge> allEdges = collectEdges(allNodes);
 
-		gv.addln(writeString(allNodes, allEdges, nodeToCopy_current, nodeToCopy));
+		gv.addln(writeString(allNodes, allEdges, nodeToCopyCurrent, nodeToCopy));
 
 		gv.addln(GraphViz.end_graph());
 
-		// }
-
 		GraphViz.writeGraphToFile(GraphViz.getGraph(gv.getDotSource(), "png"),
 				new File(mImagePath + "/" + fileName + ".png"));
-		// index++;
 		mGraphCounter++;
 	}
 
-	HashSet<AnnotatedProgramPoint> collectNodes(final AnnotatedProgramPoint root) {
-		final ArrayList<AnnotatedProgramPoint> openNodes = new ArrayList<>();
-		final HashSet<AnnotatedProgramPoint> allNodes = new HashSet<>();
+	private Set<AnnotatedProgramPoint> collectNodes(final AnnotatedProgramPoint root) {
+		final List<AnnotatedProgramPoint> openNodes = new ArrayList<>();
+		final Set<AnnotatedProgramPoint> allNodes = new HashSet<>();
 		boolean hasChanged = true;
 
 		openNodes.add(root);
@@ -173,9 +163,7 @@ public class GraphWriter {
 
 		while (hasChanged) {
 			hasChanged = false;
-
-			final ArrayList<AnnotatedProgramPoint> currentOpenNodes =
-					(ArrayList<AnnotatedProgramPoint>) openNodes.clone();
+			final List<AnnotatedProgramPoint> currentOpenNodes = new ArrayList<>(openNodes);
 
 			for (final AnnotatedProgramPoint node : currentOpenNodes) {
 				final ArrayList<AnnotatedProgramPoint> inOutNodes =
@@ -198,11 +186,8 @@ public class GraphWriter {
 		return allNodes;
 	}
 
-	ArrayList<GraphEdge> collectEdges(final HashSet<AnnotatedProgramPoint> allNodes) {
-		final ArrayList<GraphEdge> allEdges = new ArrayList<>();
-
-		// for(Iterator<AnnotatedProgramPoint> it = allNodes.iterator(); it.hasNext();){
-		// AnnotatedProgramPoint node = it.next();
+	private static List<GraphEdge> collectEdges(final Set<AnnotatedProgramPoint> allNodes) {
+		final List<GraphEdge> allEdges = new ArrayList<>();
 		for (final AnnotatedProgramPoint node : allNodes) {
 			for (final AppEdge outEdge : node.getOutgoingEdges()) {
 				allEdges.add(
@@ -213,7 +198,7 @@ public class GraphWriter {
 		return allEdges;
 	}
 
-	StringBuilder writeNodesToString(final HashSet<AnnotatedProgramPoint> allNodes) {
+	private StringBuilder writeNodesToString(final Set<AnnotatedProgramPoint> allNodes) {
 		final StringBuilder graph = new StringBuilder();
 
 		for (final Iterator<AnnotatedProgramPoint> it = allNodes.iterator(); it.hasNext();) {
@@ -227,7 +212,7 @@ public class GraphWriter {
 		return graph;
 	}
 
-	StringBuilder writeEdgesToString(final ArrayList<GraphEdge> allEdges) {
+	private StringBuilder writeEdgesToString(final List<GraphEdge> allEdges) {
 		final StringBuilder graph = new StringBuilder();
 
 		for (final Iterator<GraphEdge> it = allEdges.iterator(); it.hasNext();) {
@@ -237,9 +222,8 @@ public class GraphWriter {
 		return graph;
 	}
 
-	private Object writeEdgesToString(final ArrayList<GraphEdge> allEdges,
-			final Set<AnnotatedProgramPoint> error_trace) {
-		if (error_trace == null) {
+	private Object writeEdgesToString(final List<GraphEdge> allEdges, final Set<AnnotatedProgramPoint> errorTrace) {
+		if (errorTrace == null) {
 			return writeEdgesToString(allEdges);
 		}
 
@@ -249,8 +233,8 @@ public class GraphWriter {
 
 		for (final Iterator<GraphEdge> it = allEdges.iterator(); it.hasNext();) {
 			final GraphEdge current = it.next();
-			if (error_trace.contains(current.source) && error_trace.contains(current.target)
-					&& !current.source.equals(current.target)) {
+			if (errorTrace.contains(current.mSource) && errorTrace.contains(current.mTarget)
+					&& !current.mSource.equals(current.mTarget)) {
 				label = "[color=blue]";
 			}
 			graph.append(convertEdgeName(current) + label + "\n");
@@ -260,36 +244,34 @@ public class GraphWriter {
 		return graph;
 	}
 
-	StringBuilder writeEdgesToString(final ArrayList<GraphEdge> allEdges,
-			final HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint> nodeToCopy) {
+	private StringBuilder writeEdgesToString(final List<GraphEdge> allEdges,
+			final Map<AnnotatedProgramPoint, AnnotatedProgramPoint> nodeToCopy) {
 		final StringBuilder graph = new StringBuilder();
 
 		for (final Iterator<GraphEdge> it = allEdges.iterator(); it.hasNext();) {
 			final GraphEdge edge = it.next();
-			graph.append(convertEdgeName(edge) + (nodeToCopy.values().contains(edge.source) ? " [style=dashed] " : "")
+			graph.append(convertEdgeName(edge) + (nodeToCopy.values().contains(edge.mSource) ? " [style=dashed] " : "")
 					+ "\n");
 		}
 
 		return graph;
 	}
 
-	String writeString(final HashSet<AnnotatedProgramPoint> allNodes, final ArrayList<GraphEdge> allEdges,
-			final HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint> nodeToCopy_current,
-			final HashMap<AnnotatedProgramPoint, AnnotatedProgramPoint> nodeToCopy) {
+	private String writeString(final Set<AnnotatedProgramPoint> allNodes, final List<GraphEdge> allEdges,
+			final Map<AnnotatedProgramPoint, AnnotatedProgramPoint> nodeToCopyCurrent,
+			final Map<AnnotatedProgramPoint, AnnotatedProgramPoint> nodeToCopy) {
 		final StringBuilder graph = new StringBuilder();
 
 		graph.append(writeNodesToString(allNodes));
-		graph.append(this.writeEdgesToString(allEdges, nodeToCopy_current));
+		graph.append(this.writeEdgesToString(allEdges, nodeToCopyCurrent));
 
-		for (final Entry<AnnotatedProgramPoint, AnnotatedProgramPoint> en : nodeToCopy_current.entrySet()) {
-			graph.append(
-					// "subgraph \"cluster" + ctr++ + "\" " +
-					"{ rank=same; rankdir=LR; "
-							+ (mAnnotateNodes ? getLabeledNode(en.getKey(), "color=grey, style=filled")
-									: convertNodeNameQuot(en.getKey()) + " [color=grey, style=filled] ; ")
-							+ (mAnnotateNodes ? getLabeledNode(en.getValue(), "color=lightblue, style=filled")
-									: convertNodeNameQuot(en.getValue()) + " [color=lightblue, style=filled] ;")
-							+ "}");
+		for (final Entry<AnnotatedProgramPoint, AnnotatedProgramPoint> en : nodeToCopyCurrent.entrySet()) {
+			graph.append("{ rank=same; rankdir=LR; "
+					+ (mAnnotateNodes ? getLabeledNode(en.getKey(), "color=grey, style=filled")
+							: convertNodeNameQuot(en.getKey()) + " [color=grey, style=filled] ; ")
+					+ (mAnnotateNodes ? getLabeledNode(en.getValue(), "color=lightblue, style=filled")
+							: convertNodeNameQuot(en.getValue()) + " [color=lightblue, style=filled] ;")
+					+ "}");
 		}
 		if (mShowNodeToCopy) {
 			for (final Entry<AnnotatedProgramPoint, AnnotatedProgramPoint> en : nodeToCopy.entrySet()) {
@@ -318,50 +300,32 @@ public class GraphWriter {
 			assertionString = "noAssertion";
 		}
 
-		final String nodeLabel =
-				"\n" + quotName + "[label = \"" + name + "\\n" + assertionString + "\\n" + node.getOutgoingHyperEdges()
-				// getNodesThatThisIsReturnCallPredOf()
-						+ "\" , " + additionalOptions + "];" + "\n";
-
-		return nodeLabel;
+		return "\n" + quotName + "[label = \"" + name + "\\n" + assertionString + "\\n" + node.getOutgoingHyperEdges()
+				+ "\" , " + additionalOptions + "];" + "\n";
 	}
 
-	String convertNodeName(final AnnotatedProgramPoint node) {
-		// String name = node.toString();
-		// // name = "\"" + name;
-		// name = name.replace("[", "");
-		// name = name.replace("ERROR_LOCATION", "EL");
-		// name = name.replace("ERROR_Pseudo", "PEL");
-		// name = name.replace(", $Ultimate#", "");
-		// name = name.replace("$Ultimate#", "");
-		// name = name.replace("]", "");
-		// String sUID = node.getPayload().getID().toString();
-		// String sUID = (new Integer(node.hashCode())).toString();//.getPayload().getID().toString();
-		// name = name + "-" + sUID.substring(0, sUID.length()/8);
-		// name = name + "-" + sUID.substring(0, sUID.length()/2);
-		final String name = node.toString();
-		return name;
+	private static String convertNodeName(final AnnotatedProgramPoint node) {
+		return node.toString();
 	}
 
-	String convertNodeNameQuot(final AnnotatedProgramPoint node) {
-		final String quotName = "\"" + convertNodeName(node) + "\"";
-		return quotName;
+	private static String convertNodeNameQuot(final AnnotatedProgramPoint node) {
+		return "\"" + convertNodeName(node) + "\"";
 	}
 
-	String convertEdgeName(final GraphEdge edge) {
+	private String convertEdgeName(final GraphEdge edge) {
 		final StringBuilder edgeName = new StringBuilder();
-		edgeName.append(convertNodeNameQuot(edge.source) + " -> " + convertNodeNameQuot(edge.target));
+		edgeName.append(convertNodeNameQuot(edge.mSource) + " -> " + convertNodeNameQuot(edge.mTarget));
 
 		if (mAnnotateEdges) {
 			String edgeLabel;
-			if (edge.code == null) {
+			if (edge.mLabel == null) {
 				edgeLabel = "-";
-			} else if (edge.code instanceof Call) {
-				edgeLabel = "Call";
-			} else if (edge.code instanceof Return) {
-				edgeLabel = "Return\\n" + convertNodeName(edge.hier);
+			} else if (edge.mLabel instanceof IIcfgCallTransition<?>) {
+				edgeLabel = "IIcfgCallTransition<?>";
+			} else if (edge.mLabel instanceof IIcfgReturnTransition<?, ?>) {
+				edgeLabel = "IIcfgReturnTransition<?,?>\\n" + convertNodeName(edge.mHier);
 			} else {
-				edgeLabel = edge.code.getPrettyPrintedStatements();
+				edgeLabel = edge.mLabel.toString();
 			}
 
 			edgeName.append("[label=\"" + edgeLabel + "\"]");
@@ -369,18 +333,9 @@ public class GraphWriter {
 		return edgeName.toString();
 	}
 
-	String prettifyFormula(final Term f) {
-		final boolean prettify = true;
-		if (prettify) {
-			// String toReturn = f.toString().replaceAll("(_b[0-9]*)|(_[0-9]*)", ""); //obsolete since evren's change
-			// String toReturn = f.toString().split("location")[0].trim();
-
-			final Term f1 = mStripAnnotTermTransformer.transform(f);
-			final String toReturn = f1.toString();
-			// String toReturn = f.toString().replaceAll(":location(\\w|\\s|:|/|.|[|])*?\\)", "\\)");
-			return toReturn;
-		}
-		return f.toString();
+	private String prettifyFormula(final Term f) {
+		final Term f1 = mStripAnnotTermTransformer.transform(f);
+		return f1.toString();
 	}
 
 	public boolean getHideUnreachableOnce() {
@@ -395,24 +350,24 @@ public class GraphWriter {
 		return mGraphCounter;
 	}
 
-	class GraphEdge {
-		AnnotatedProgramPoint source;
-		AnnotatedProgramPoint target;
-		AnnotatedProgramPoint hier;
-		CodeBlock code;
+	private static final class GraphEdge {
+		private final AnnotatedProgramPoint mSource;
+		private final AnnotatedProgramPoint mTarget;
+		private final AnnotatedProgramPoint mHier;
+		private final IIcfgTransition<?> mLabel;
 
-		public GraphEdge(final AnnotatedProgramPoint source, final AnnotatedProgramPoint hier, final CodeBlock code,
-				final AnnotatedProgramPoint target) {
-			this.source = source;
-			this.hier = hier;
-			this.code = code;
-			this.target = target;
+		public GraphEdge(final AnnotatedProgramPoint source, final AnnotatedProgramPoint hier,
+				final IIcfgTransition<?> code, final AnnotatedProgramPoint target) {
+			mSource = source;
+			mHier = hier;
+			mLabel = code;
+			mTarget = target;
 		}
 
 		@Override
 		public String toString() {
-			return source.toString() + " --" + (hier == null ? "" : hier.toString()) + "-"
-					+ (code == null ? "null" : code.toString()) + "--> " + target.toString();
+			return mSource.toString() + " --" + (mHier == null ? "" : mHier.toString()) + "-"
+					+ (mLabel == null ? "null" : mLabel.toString()) + "--> " + mTarget.toString();
 		}
 	}
 }

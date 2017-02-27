@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IcfgTransformer library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers;
@@ -35,34 +35,32 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Mod
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.IteRemover;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
-
 /**
  * Transform term into an equivalent term without ite terms.
  * 
  * @author Matthias Heizmann, Jan Leike
  */
 public class RewriteIte extends TransitionPreprocessor {
-	public static final String s_Description = "Remove if-then-else terms.";
+	public static final String DESCRIPTION = "Remove if-then-else terms.";
 	private final ManagedScript mMgdScript;
-	
+
 	public RewriteIte(final ManagedScript mgdScript) {
 		mMgdScript = mgdScript;
 	}
 
 	@Override
 	public String getDescription() {
-		return s_Description;
+		return DESCRIPTION;
 	}
-	
+
 	@Override
 	public boolean checkSoundness(final Script script, final ModifiableTransFormula oldTF,
 			final ModifiableTransFormula newTF) {
 		final Term old_term = oldTF.getFormula();
 		final Term new_term = newTF.getFormula();
-		return LBool.SAT != Util.checkSat(script,
-				script.term("distinct", old_term, new_term));
+		return LBool.SAT != Util.checkSat(script, script.term("distinct", old_term, new_term));
 	}
-	
+
 	@Override
 	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
 		final IteRemover iteRemover = new IteRemover(mMgdScript);

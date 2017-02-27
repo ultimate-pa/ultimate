@@ -36,7 +36,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
@@ -55,7 +54,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram.PathProgramIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.CFGInvariantsGenerator;
@@ -63,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.IInvariantPatternProcessorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.PathInvariantsStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
@@ -86,7 +85,6 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final InterpolantComputationStatus mInterpolantComputationStatus;
-	
 
 	private final PathInvariantsStatisticsGenerator mPathInvariantsStats;
 
@@ -114,13 +112,13 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	 */
 	public PathInvariantsGenerator(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final NestedRun<? extends IAction, IPredicate> run, final IPredicate precondition,
-			final IPredicate postcondition, final IPredicateUnifier predicateUnifier, final IIcfg<?> icfg,
-			InvariantSynthesisSettings invSynthSettings,
-			final SimplificationTechnique simplificationTechnique,
+			final IPredicate postcondition, final PredicateFactory predicateFactory, 
+			final IPredicateUnifier predicateUnifier, final IIcfg<?> icfg,
+			final InvariantSynthesisSettings invSynthSettings, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
 		mRun = run;
-		
+
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
 		mPredicateUnifier = predicateUnifier;
@@ -130,28 +128,26 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		mLogger.info("Current run: " + run);
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run);
 
-		// DD: Note that getLabel() on a path program location gives you the original location.
 		final PathProgram.PathProgramConstructionResult ppResult =
 				PathProgram.constructPathProgram("PathInvariantsPathProgram", icfg, allowedTransitions);
 		final IIcfg<IcfgLocation> pathProgram = ppResult.getPathProgram();
-		final Map<IcfgLocation, PathProgramIcfgLocation> inputIcfgLocs2PathProgramLocs = ppResult.getLocationMapping();
-		
+		final Map<IcfgLocation, IcfgLocation> inputIcfgLocs2PathProgramLocs = ppResult.getLocationMapping();
+
 		// Generate invariants
-		final CFGInvariantsGenerator cfgInvGenerator = new CFGInvariantsGenerator(pathProgram, services, storage, precondition,
-				postcondition, predicateUnifier, invSynthSettings, icfg.getCfgSmtToolkit());
-		Map<IcfgLocation, IPredicate> invariants = cfgInvGenerator.synthesizeInvariants();
+		final CFGInvariantsGenerator cfgInvGenerator = new CFGInvariantsGenerator(pathProgram, services, storage,
+				precondition, postcondition, predicateFactory, predicateUnifier, invSynthSettings, icfg.getCfgSmtToolkit());
+		final Map<IcfgLocation, IPredicate> invariants = cfgInvGenerator.synthesizeInvariants();
 		// Get invariant synthesis statistics
 		mPathInvariantsStats = cfgInvGenerator.getInvariantSynthesisStatistics();
-		
-		
+
 		if (invariants != null) {
 			// Populate resulting array
 			mInterpolants = new IPredicate[mRun.getLength()];
 			for (int i = 0; i < mRun.getLength(); i++) {
 				final IcfgLocation originalLoc = ((ISLPredicate) mRun.getStateAtPosition(i)).getProgramPoint();
 				final IcfgLocation locFromPathProgram = inputIcfgLocs2PathProgramLocs.get(originalLoc);
-//						invariants.keySet().stream().filter(loc -> loc.toString().endsWith(originalLoc.toString()))
-//						.collect(Collectors.toList()).get(0);
+				// invariants.keySet().stream().filter(loc -> loc.toString().endsWith(originalLoc.toString()))
+				// .collect(Collectors.toList()).get(0);
 				mInterpolants[i] = invariants.get(locFromPathProgram);
 				mLogger.info("Interpolant no " + i + " " + mInterpolants[i].toString());
 			}
@@ -166,69 +162,69 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		}
 	}
 
-
-
-//	/**
-//	 * Compute weakest precondition for those locations which are predecessors of the error locations and successors of
-//	 * any loop locations. If there are no loop locations, then we compute it only for the last two locations. TODO: If
-//	 * assertion is inside of a loop, then compute WP only for the last transition (i.e. the transition that reaches the
-//	 * error location).
-//	 *
-//	 * @param pathProgram
-//	 * @return
-//	 */
-//	private Map<IcfgLocation, UnmodifiableTransFormula> computeWPForPathProgram(final IIcfg<IcfgLocation> pathProgram,
-//			final ManagedScript managedScript) {
-//		final Set<IcfgLocation> loopLocations = pathProgram.getLoopLocations();
-//		final Set<IcfgLocation> locsOfNonEmptyLoops = extractLocationsOfNonEmptyLoops(pathProgram);
-//		final IcfgLocation errorloc = null;
-////				extractErrorLocationFromPathProgram(pathProgram);
-//		final Map<IcfgLocation, IPredicate> locs2WP = new HashMap<>();
-//		locs2WP.put(errorloc, mPostcondition);
-//		List<IcfgEdge> edges2visit = errorloc.getIncomingEdges();
-//		int levelCounter = 0;
-//		while (true) {
-//			final List<IcfgEdge> newEdges = new ArrayList<>();
-//			for (final IcfgEdge e : edges2visit) {
-//				if (!(e instanceof IInternalAction)) {
-//					throw new UnsupportedOperationException("interprocedural traces are not supported (yet)");
-//				}
-//				// Compute wp only if the source node is not an initial node
-//				if (!e.getSource().getIncomingEdges().isEmpty()) {
-//					// Compute WP for the formula of the current transition and the predicate at the target location.
-//					final Term wpTerm = mPredicateTransformer.weakestPrecondition(locs2WP.get(e.getTarget()),
-//							((IInternalAction) e).getTransformula());
-//					final Term wpTermWithoutQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices,
-//							mLogger, managedScript, wpTerm, SimplificationTechnique.SIMPLIFY_DDA,
-//							XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-//					if (new PrenexNormalForm(managedScript)
-//							.transform(wpTermWithoutQuantifiers) instanceof QuantifiedFormula) {
-//						throw new UnsupportedOperationException("Quantifier elimination failed.");
-//					}
-//					final IPredicate wp = mPredicateUnifier.getOrConstructPredicate(wpTermWithoutQuantifiers);
-//					locs2WP.put(e.getSource(), wp);
-//					if (!locsOfNonEmptyLoops.contains(e.getSource()) || loopLocations.isEmpty() && levelCounter < 2) {
-//						newEdges.addAll(e.getSource().getIncomingEdges());
-//					}
-//				}
-//			}
-//			if (loopLocations.isEmpty()) {
-//				levelCounter++;
-//			}
-//
-//			if (newEdges.isEmpty() || levelCounter >= 2) {
-//				break;
-//			}
-//			edges2visit = newEdges;
-//
-//		}
-//		// remove the mapping (error-location -> false) from result
-//		locs2WP.remove(errorloc);
-//
-//		return convertMapToPredsToMapToUnmodTrans(locs2WP, managedScript);
-//	}
-
-
+	// /**
+	// * Compute weakest precondition for those locations which are predecessors of the error locations and successors
+	// of
+	// * any loop locations. If there are no loop locations, then we compute it only for the last two locations. TODO:
+	// If
+	// * assertion is inside of a loop, then compute WP only for the last transition (i.e. the transition that reaches
+	// the
+	// * error location).
+	// *
+	// * @param pathProgram
+	// * @return
+	// */
+	// private Map<IcfgLocation, UnmodifiableTransFormula> computeWPForPathProgram(final IIcfg<IcfgLocation>
+	// pathProgram,
+	// final ManagedScript managedScript) {
+	// final Set<IcfgLocation> loopLocations = pathProgram.getLoopLocations();
+	// final Set<IcfgLocation> locsOfNonEmptyLoops = extractLocationsOfNonEmptyLoops(pathProgram);
+	// final IcfgLocation errorloc = null;
+	//// extractErrorLocationFromPathProgram(pathProgram);
+	// final Map<IcfgLocation, IPredicate> locs2WP = new HashMap<>();
+	// locs2WP.put(errorloc, mPostcondition);
+	// List<IcfgEdge> edges2visit = errorloc.getIncomingEdges();
+	// int levelCounter = 0;
+	// while (true) {
+	// final List<IcfgEdge> newEdges = new ArrayList<>();
+	// for (final IcfgEdge e : edges2visit) {
+	// if (!(e instanceof IInternalAction)) {
+	// throw new UnsupportedOperationException("interprocedural traces are not supported (yet)");
+	// }
+	// // Compute wp only if the source node is not an initial node
+	// if (!e.getSource().getIncomingEdges().isEmpty()) {
+	// // Compute WP for the formula of the current transition and the predicate at the target location.
+	// final Term wpTerm = mPredicateTransformer.weakestPrecondition(locs2WP.get(e.getTarget()),
+	// ((IInternalAction) e).getTransformula());
+	// final Term wpTermWithoutQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices,
+	// mLogger, managedScript, wpTerm, SimplificationTechnique.SIMPLIFY_DDA,
+	// XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+	// if (new PrenexNormalForm(managedScript)
+	// .transform(wpTermWithoutQuantifiers) instanceof QuantifiedFormula) {
+	// throw new UnsupportedOperationException("Quantifier elimination failed.");
+	// }
+	// final IPredicate wp = mPredicateUnifier.getOrConstructPredicate(wpTermWithoutQuantifiers);
+	// locs2WP.put(e.getSource(), wp);
+	// if (!locsOfNonEmptyLoops.contains(e.getSource()) || loopLocations.isEmpty() && levelCounter < 2) {
+	// newEdges.addAll(e.getSource().getIncomingEdges());
+	// }
+	// }
+	// }
+	// if (loopLocations.isEmpty()) {
+	// levelCounter++;
+	// }
+	//
+	// if (newEdges.isEmpty() || levelCounter >= 2) {
+	// break;
+	// }
+	// edges2visit = newEdges;
+	//
+	// }
+	// // remove the mapping (error-location -> false) from result
+	// locs2WP.remove(errorloc);
+	//
+	// return convertMapToPredsToMapToUnmodTrans(locs2WP, managedScript);
+	// }
 
 	/**
 	 * Check for each loop location of the path program if it contains some inner statements.
@@ -272,7 +268,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	}
 
 	private static Set<? extends IcfgEdge>
-	extractTransitionsFromRun(final NestedRun<? extends IAction, IPredicate> run) {
+			extractTransitionsFromRun(final NestedRun<? extends IAction, IPredicate> run) {
 		final int len = run.getLength();
 		final LinkedHashSet<IcfgInternalTransition> transitions = new LinkedHashSet<>(len - 1);
 		IcfgLocation previousLocation = null;

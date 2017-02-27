@@ -1,17 +1,16 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg;
 
-import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.SpaceExMathHelper;
 
 /**
  * Class to build Terms from Hybrid automata expressions like Initial values, Invariants and Jumps
@@ -25,99 +24,29 @@ public class HybridTermBuilder {
 	private final Map<String, Term> mStringTerm;
 	private final Map<HybridProgramVar, TermVariable> mInVars;
 	private final Map<HybridProgramVar, TermVariable> mOutVars;
-	protected static final Map<String, Operator> mOperators = new HashMap<>();
-	static {
-		mOperators.put("+", Operator.ADD);
-		mOperators.put("-", Operator.SUBTRACT);
-		mOperators.put("*", Operator.MULTIPLY);
-		mOperators.put("/", Operator.DIVIDE);
-		mOperators.put("<=", Operator.LTEQ);
-		mOperators.put(">=", Operator.GTEQ);
-		mOperators.put("<", Operator.LT);
-		mOperators.put(">", Operator.GT);
-		mOperators.put("==", Operator.DOUBLEEQ);
-		mOperators.put("=", Operator.EQ);
-		mOperators.put("&&", Operator.DOUBLEAND);
-		mOperators.put("&", Operator.AND);
-		mOperators.put("and", Operator.ANDTEXT);
-		mOperators.put("|", Operator.OR);
-		mOperators.put("||", Operator.DOUBLEOR);
-		mOperators.put("or", Operator.ORTEXT);
-	}
+	ILogger mLogger;
 	
 	public enum BuildScenario {
 		INITIALLY, INVARIANT, UPDATE, GUARD;
 	}
 	
-	public enum Operator {
-		ADD(1), SUBTRACT(1), MULTIPLY(2), DIVIDE(2), LTEQ(5), GTEQ(5), LT(5), GT(5), EQ(5), DOUBLEEQ(5), AND(4),
-		DOUBLEAND(4), ANDTEXT(4), OR(3), DOUBLEOR(3), ORTEXT(3);
-		final int precedence;
-		
-		Operator(final int p) {
-			precedence = p;
-		}
-	}
-	
-	public HybridTermBuilder(final HybridVariableManager variableManger, final Script script) {
+	public HybridTermBuilder(final HybridVariableManager variableManger, final Script script, final ILogger logger) {
 		mVariableManager = variableManger;
 		mScript = script;
 		mStringTerm = new HashMap<>();
 		mInVars = new HashMap<>();
 		mOutVars = new HashMap<>();
+		mLogger = logger;
 	}
 	
 	public Term infixToTerm(final String infix, final BuildScenario scenario) {
-		List<String> infixArray = expressionToArray(infix);
+		List<String> infixArray = SpaceExMathHelper.expressionToArray(infix);
 		if (scenario == BuildScenario.UPDATE) {
-			infixArray = preprocessForUpdate(infixArray);
+			infixArray = SpaceExMathHelper.preprocessForUpdate(infixArray);
 		}
-		final List<String> postfix = postfix(infixArray);
-		final List<String> postfixSMTConform = preprocessForTermBuilding(postfix);
+		final List<String> postfix = SpaceExMathHelper.postfix(infixArray);
+		final List<String> postfixSMTConform = SpaceExMathHelper.preprocessForTermBuilding(postfix);
 		return postfixToTerm(postfixSMTConform, scenario);
-	}
-	
-	private List<String> preprocessForTermBuilding(final List<String> postfix) {
-		final List<String> newPostfix = new ArrayList<>();
-		for (String el : postfix) {
-			// & is "and" in SMT
-			// == is "=" in SMT
-			// | is "or" in SMT
-			if ("&".equals(el) || "&&".equals(el)) {
-				el = "and";
-			} else if ("==".equals(el) || ":=".equals(el)) {
-				el = "=";
-			} else if ("|".equals(el) || "||".equals(el)) {
-				el = "or";
-			}
-			newPostfix.add(el);
-		}
-		return newPostfix;
-	}
-	
-	// update of the form x := x+1 becomes x := (x+1)
-	// needed for postfix form.
-	private List<String> preprocessForUpdate(final List<String> infixArray) {
-		final List<String> res = new ArrayList<>();
-		boolean open = false;
-		for (final String el : infixArray) {
-			if ("==".equals(el)) {
-				res.add(el);
-				res.add("(");
-				open = true;
-			} else if ("&".equals(el)) {
-				res.add(")");
-				res.add(el);
-				open = false;
-			} else {
-				res.add(el);
-			}
-		}
-		if (open) {
-			res.add(")");
-			open = false;
-		}
-		return res;
 	}
 	
 	/**
@@ -138,12 +67,11 @@ public class HybridTermBuilder {
 		final Deque<String> stack = new LinkedList<>();
 		for (final String el : postfix) {
 			final String element = el;
-			if (isOperator(element)) {
+			if (SpaceExMathHelper.isOperator(element)) {
 				final String operand1 = stack.pop();
 				final String operand2 = stack.pop();
 				final String operator = element;
-				final Term tmpTerm = checkAndbuildInitialTerm(operand1, operand2, operator, scenario);
-				
+				final Term tmpTerm = checkAndbuildTerm(operand1, operand2, operator, scenario);
 				if (term == null) {
 					term = tmpTerm;
 					stack.push(term.toString());
@@ -161,7 +89,7 @@ public class HybridTermBuilder {
 	}
 	
 	// helper function to build terms from postfix notation
-	private Term checkAndbuildInitialTerm(final String operand1, final String operand2, final String operator,
+	private Term checkAndbuildTerm(final String operand1, final String operand2, final String operator,
 			final BuildScenario scenario) {
 		// check if the operand already got a term.
 		Term tmpTerm;
@@ -171,39 +99,56 @@ public class HybridTermBuilder {
 			tmpTerm = mScript.term(operator, t2, t1);
 		} else if (mStringTerm.containsKey(operand1) && !mStringTerm.containsKey(operand2)) {
 			final Term t1 = mStringTerm.get(operand1);
-			tmpTerm = buildInitialTerm(t1, operand2, operator, scenario);
+			tmpTerm = buildTerm(t1, operand2, operator, scenario);
 		} else if (!mStringTerm.containsKey(operand1) && mStringTerm.containsKey(operand2)) {
 			final Term t2 = mStringTerm.get(operand2);
-			tmpTerm = buildInitialTerm(operand1, t2, operator, scenario);
+			tmpTerm = buildTerm(operand1, t2, operator, scenario);
 		} else {
-			tmpTerm = buildInitialTerm(operand1, operand2, operator, scenario);
+			tmpTerm = buildTerm(operand1, operand2, operator, scenario);
 		}
 		return tmpTerm;
 	}
 	
 	// helper function to build terms from postfix notation
-	private Term buildInitialTerm(final String operand1, final Term term2, final String operator,
+	private Term buildTerm(final String operand1, final Term term2, final String operator,
 			final BuildScenario scenario) {
 		Term tmpTerm;
-		final TermVariable tv1 = checkAndGetTermVariable(operand1, scenario, true);
-		// build term
+		final TermVariable tv1 = checkAndGetTermVariable(operand1, scenario, SpaceExMathHelper.isEvaluation(operator));
+		/*
+		 * There are 2 cases what can happen, either a Var Inequality or not
+		 */
 		final TermVariable[] free = term2.getFreeVars();
-		if (tv1 == null) {
-			final Term t1 = mScript.term(operator, free[free.length - 1], mScript.decimal(operand1));
-			tmpTerm = mScript.term("and", term2, t1);
+		final boolean isVarInequality = free.length > 0 && isInequality(operator) ? true : false;
+		// build term
+		if (isVarInequality) {
+			if (tv1 == null) {
+				final Term t1 = mScript.term(operator, free[free.length - 1], mScript.decimal(operand1));
+				tmpTerm = mScript.term("and", term2, t1);
+			} else {
+				final Term t1 = mScript.term(operator, free[free.length - 1], tv1);
+				tmpTerm = mScript.term("and", term2, t1);
+			}
 		} else {
-			final Term t1 = mScript.term(operator, free[free.length - 1], tv1);
-			tmpTerm = mScript.term("and", term2, t1);
+			if (tv1 == null) {
+				tmpTerm = mScript.term(operator, term2, mScript.decimal(operand1));
+			} else {
+				tmpTerm = mScript.term(operator, term2, tv1);
+			}
 		}
 		return tmpTerm;
 	}
 	
+	private boolean isInequality(final String operator) {
+		return ">=".equals(operator) || ">".equals(operator) || "<=".equals(operator) || "<".equals(operator);
+	}
+	
 	// helper function to build terms from postfix notation
-	private Term buildInitialTerm(final String operand1, final String operand2, final String operator,
+	private Term buildTerm(final String operand1, final String operand2, final String operator,
 			final BuildScenario scenario) {
 		Term tmpTerm;
-		final TermVariable tv1 = checkAndGetTermVariable(operand1, scenario, true);
-		final TermVariable tv2 = checkAndGetTermVariable(operand2, scenario, false);
+		final TermVariable tv1 = checkAndGetTermVariable(operand1, scenario,
+				SpaceExMathHelper.isEvaluation(operator) || "=".equals(operator));
+		final TermVariable tv2 = checkAndGetTermVariable(operand2, scenario, SpaceExMathHelper.isEvaluation(operator));
 		// build term
 		if (tv1 == null && tv2 == null) {
 			tmpTerm = mScript.term(operator, mScript.decimal(operand2), mScript.decimal(operand1));
@@ -218,10 +163,10 @@ public class HybridTermBuilder {
 	}
 	
 	// helper function to build terms from postfix notation
-	private Term buildInitialTerm(final Term term1, final String operand2, final String operator,
+	private Term buildTerm(final Term term1, final String operand2, final String operator,
 			final BuildScenario scenario) {
 		Term tmpTerm;
-		final TermVariable tv2 = checkAndGetTermVariable(operand2, scenario, false);
+		final TermVariable tv2 = checkAndGetTermVariable(operand2, scenario, SpaceExMathHelper.isEvaluation(operator));
 		// build term
 		if (tv2 == null) {
 			tmpTerm = mScript.term(operator, mScript.decimal(operand2), term1);
@@ -273,7 +218,7 @@ public class HybridTermBuilder {
 	
 	// helper function to get TermVariable for Invariant or Update Terms
 	private TermVariable getUpdateTV(final String operand1, final boolean isAssignedValue) {
-		if (isAssignedValue) {
+		if (!isAssignedValue) {
 			if (mVariableManager.getVar2OutVarTermVariable().containsKey(operand1)) {
 				final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
 				final TermVariable outvar = mVariableManager.getVar2OutVarTermVariable().get(operand1);
@@ -294,77 +239,23 @@ public class HybridTermBuilder {
 		}
 	}
 	
-	/**
-	 * This function splits a given expression into an array. e.g "x == 5" will return [x,==,5].
-	 *
-	 * @param expression
-	 * @return
-	 */
-	public static List<String> expressionToArray(final String expression) {
-		final List<String> res = new ArrayList<>();
-		final Pattern p = Pattern.compile("([&]{1,2}|>=?|<=?|<(?!=)|>(?!=)|==|\\+|-(?!\\w+)|\\*|\\||\\(|\\)| +)");
-		final String s = expression.replaceAll("\\s", "");
-		final Matcher m = p.matcher(s);
-		int pos = 0;
-		while (m.find()) {
-			if (pos != m.start()) {
-				res.add(s.substring(pos, m.start()));
-			}
-			res.add(m.group());
-			pos = m.end();
-		}
-		if (pos != s.length()) {
-			res.add(s.substring(pos));
-		}
-		return res;
-	}
-	
-	private static boolean isHigherPrec(final String op, final String sub) {
-		return mOperators.containsKey(sub) && mOperators.get(sub).precedence >= mOperators.get(op).precedence;
-	}
-	
-	/**
-	 * Function to convert infix to postfix (Shunting yard algorithm)
-	 *
-	 * @param infixArray
-	 * @return
-	 */
-	public static List<String> postfix(final List<String> infixArray) {
-		final List<String> output = new ArrayList<>();
-		final Deque<String> stack = new LinkedList<>();
+	private void testTermBuilding() {
+		final Map<String, BuildScenario> tests = new HashMap<>();
+		tests.put("0 <= x <= y <= 5", BuildScenario.INVARIANT);
+		tests.put("x==y*4+x", BuildScenario.UPDATE);
+		tests.put("x==y", BuildScenario.UPDATE);
+		tests.put("x==5", BuildScenario.UPDATE);
+		tests.put("x==5 & y==5.01", BuildScenario.UPDATE);
+		tests.put("0 <= x <=5", BuildScenario.INITIALLY);
+		tests.put("0 <= x <=5", BuildScenario.INVARIANT);
+		tests.forEach((t, s) -> {
+			mLogger.info("###########START###########");
+			mLogger.info("INFIX: " + t);
+			final Term term = infixToTerm(t, s);
+			mLogger.info("TERM: " + term.toStringDirect());
+			mLogger.info("###########END###########");
+		});
 		
-		for (final String element : infixArray) {
-			// operator
-			if (mOperators.containsKey(element)) {
-				while (!stack.isEmpty() && isHigherPrec(element, stack.peek())) {
-					output.add(stack.pop());
-				}
-				stack.push(element);
-				// left bracket
-			} else if ("(".equals(element)) {
-				stack.push(element);
-				
-				// right bracket
-			} else if (")".equals(element)) {
-				while (!"(".equals(stack.peek())) {
-					output.add(stack.pop());
-				}
-				// digit
-				stack.pop();
-			} else {
-				output.add(element);
-			}
-		}
-		
-		while (!stack.isEmpty()) {
-			output.add(stack.pop());
-		}
-		
-		return output;
-	}
-	
-	public static boolean isOperator(final String sign) {
-		return mOperators.containsKey(sign);
 	}
 	
 	public Map<HybridProgramVar, TermVariable> getmInVars() {

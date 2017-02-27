@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
@@ -77,6 +78,7 @@ public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> i
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
+	private final PredicateFactory mPredicateFactory;
 	private final PredicateUnifier mPredicateUnifier;
 	private final CegarAbsIntRunner<LETTER> mAbsIntRunner;
 	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
@@ -125,13 +127,15 @@ public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> i
 	 */
 	public RubberTaipanRefinementStrategy(final ILogger logger, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final CfgSmtToolkit cfgSmtToolkit,
-			final PredicateUnifier predicateUnifier, final CegarAbsIntRunner<LETTER> absIntRunner,
+			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
+			final CegarAbsIntRunner<LETTER> absIntRunner,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
 			final int iteration, final CegarLoopStatisticsGenerator cegarLoopBenchmark) {
 		mServices = services;
 		mLogger = logger;
 		mPrefs = prefs;
+		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
 		mAbsIntRunner = absIntRunner;
 		mAssertionOrderModulation = assertionOrderModulation;
@@ -322,8 +326,9 @@ public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> i
 				+ " (IT: " + interpolationTechnique + ")");
 		TraceCheckerConstructor<LETTER> result;
 		if (mPrevTcConstructor == null) {
-			result = new TraceCheckerConstructor<>(mPrefs, managedScript, mServices, mPredicateUnifier, mCounterexample,
-					assertionOrder, interpolationTechnique, mIteration, mCegarLoopBenchmark);
+			result = new TraceCheckerConstructor<>(mPrefs, managedScript, mServices, mPredicateFactory,
+					mPredicateUnifier, mCounterexample, assertionOrder, interpolationTechnique, mIteration,
+					mCegarLoopBenchmark);
 		} else {
 			result = new TraceCheckerConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
 					interpolationTechnique, mCegarLoopBenchmark);

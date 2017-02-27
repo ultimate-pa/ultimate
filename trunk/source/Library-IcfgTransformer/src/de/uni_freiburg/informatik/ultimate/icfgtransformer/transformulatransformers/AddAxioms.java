@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
  * @author Jan Leike
  */
 public class AddAxioms extends TransitionPreprocessor {
-	public static final String s_Description = "Add axioms to the transition";
+	public static final String DESCRIPTION = "Add axioms to the transition";
 	
 	private final Term[] mAxioms;
 	
@@ -94,6 +94,6 @@ public class AddAxioms extends TransitionPreprocessor {
 	
 	@Override
 	public String getDescription() {
-		return s_Description;
+		return DESCRIPTION;
 	}
 }

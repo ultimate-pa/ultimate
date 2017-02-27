@@ -47,6 +47,7 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 		variables.addAll(automaton.getGlobalConstants());
 		variables.addAll(automaton.getLocalConstants());
 		variables.addAll(automaton.getLocalParameters());
+		variables.add(HybridIcfgGenerator.TIME_VAR);
 		final Set<ILocalProgramVar> progVars = new HashSet<>();
 		for (final String var : variables) {
 			boolean varisNumber = false;

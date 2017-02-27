@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 
 /**
  * A Backbone.
+ * 
  * @author Dennis Wölfing
  *
  */
@@ -43,7 +44,9 @@ public class Backbone {
 
 	/**
 	 * Constructs a Backbone with an initial transition.
-	 * @param transition The entry transition of the Backbone.
+	 * 
+	 * @param transition
+	 *            The entry transition of the Backbone.
 	 */
 	public Backbone(final IcfgEdge transition) {
 		mTransitions = new ArrayList<>();
@@ -52,7 +55,9 @@ public class Backbone {
 
 	/**
 	 * Constructs a copy of a Backbone.
-	 * @param other The original Backbone.
+	 * 
+	 * @param other
+	 *            The original Backbone.
 	 */
 	public Backbone(final Backbone other) {
 		mTransitions = new ArrayList<>(other.mTransitions);
@@ -60,7 +65,9 @@ public class Backbone {
 
 	/**
 	 * Appends a transition to the Backbone.
-	 * @param transition The transition to append.
+	 * 
+	 * @param transition
+	 *            The transition to append.
 	 */
 	public void addTransition(final IcfgEdge transition) {
 		mTransitions.add(transition);
@@ -68,6 +75,7 @@ public class Backbone {
 
 	/**
 	 * Checks whether the Backbone ends in a loop.
+	 * 
 	 * @return true if the Backbone end in a loop.
 	 */
 	public boolean endsInLoop() {
@@ -82,6 +90,7 @@ public class Backbone {
 
 	/**
 	 * Gets the last location of the Backbone.
+	 * 
 	 * @return An IcfgLocation.
 	 */
 	public IcfgLocation getLastLocation() {
@@ -90,6 +99,7 @@ public class Backbone {
 
 	/**
 	 * Gets the transition that enters the loop.
+	 * 
 	 * @return The transition that enters the loop or null if the Backbone does not end in a loop.
 	 */
 	public IcfgEdge getLoopEntryTransition() {

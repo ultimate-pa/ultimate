@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IcfgTransformer library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers;
@@ -39,22 +39,22 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
-
 /**
  * Use SimplifyDDA to simplify TransformulaLR
  * 
  * @author Matthias Heizmann.
  */
 public class SimplifyPreprocessor extends TransitionPreprocessor {
+	public static final String DESCRIPTION = "Simplify formula using SimplifyDDA";
+	private static final boolean USE_SMTINTERPOL_FOR_SIMPLIFICATION = !true;
+
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
-	private final boolean mUseSMTInterpolForSimplification = !true;
+
 	private final ManagedScript mMgdScript;
 	private final SimplificationTechnique mXnfConversionTechnique;
-	
-	public static final String s_Description = "Simplify formula using SimplifyDDA";
-	
-	public SimplifyPreprocessor(final IUltimateServiceProvider services, final IToolchainStorage storage, 
+
+	public SimplifyPreprocessor(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final ManagedScript mgdScript, final SimplificationTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
@@ -62,29 +62,28 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 		mMgdScript = mgdScript;
 		mXnfConversionTechnique = xnfConversionTechnique;
 	}
-	
+
 	@Override
 	public String getDescription() {
-		return s_Description;
+		return DESCRIPTION;
 	}
-	
+
 	@Override
 	public boolean checkSoundness(final Script script, final ModifiableTransFormula oldTF,
 			final ModifiableTransFormula newTF) {
 		return true;
 	}
-	
+
 	@Override
 	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
 		final Term simplified;
-		if (mUseSMTInterpolForSimplification) {
+		if (USE_SMTINTERPOL_FOR_SIMPLIFICATION) {
 			final Settings settings = new SolverBuilder.Settings(false, false, "", 10 * 1000, null, false, null, null);
 			final Script simplificationScript = SolverBuilder.buildScript(mServices, mStorage, settings);
 			simplificationScript.setLogic(Logics.QF_UFLIRA);
 			final TermTransferrer towards = new TermTransferrer(simplificationScript);
 			final Term foreign = towards.transform(tf.getFormula());
-			final Term foreignsimplified = SmtUtils.simplify(mMgdScript, foreign, 
-					mServices, mXnfConversionTechnique);
+			final Term foreignsimplified = SmtUtils.simplify(mMgdScript, foreign, mServices, mXnfConversionTechnique);
 			simplificationScript.exit();
 			final TermTransferrer back = new TermTransferrer(script);
 			simplified = back.transform(foreignsimplified);

@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IcfgTransformer library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers;
@@ -36,38 +36,42 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
-
 /**
- * Replaces booleans variables b by integer replacement variables rep_b whose
- * semantics is rep_b = (ite b 1 0) 
+ * Replaces booleans variables b by integer replacement variables rep_b whose semantics is rep_b = (ite b 1 0)
  * 
- * @author Jan Leike 
+ * @author Jan Leike
  * @author Matthias Heizmann
  */
 public class RewriteBooleans extends RewriteTermVariables {
-	public static final String s_Description = "Replace boolean variables by integer variables";
-	
-	private static final String s_TermVariableSuffix = "bool";
-	private static final String s_repVarSortName = "Int"; // FIXME: this should depend on the logic
-	
+	public static final String DESCRIPTION = "Replace boolean variables by integer variables";
+
+	private static final String TERM_VARIABLE_SUFFIX = "bool";
+
+	// FIXME: this should depend on the logic
+	private static final String REP_VAR_SORT_NAME = "Int";
+
 	@Override
 	protected String getTermVariableSuffix() {
-		return s_TermVariableSuffix;
+		return TERM_VARIABLE_SUFFIX;
 	}
+
 	@Override
 	protected String getRepVarSortName() {
-		return s_repVarSortName;
+		return REP_VAR_SORT_NAME;
 	}
-	
+
 	/**
 	 * Create a new RewriteBooleans preprocessor
-	 * @param rankVarCollector collecting the new in- and outVars
-	 * @param script the Script for creating new variables
+	 * 
+	 * @param rankVarCollector
+	 *            collecting the new in- and outVars
+	 * @param script
+	 *            the Script for creating new variables
 	 */
 	public RewriteBooleans(final ReplacementVarFactory varFactory, final ManagedScript script) {
 		super(varFactory, script);
 	}
-	
+
 	@Override
 	protected boolean hasToBeReplaced(final Term term) {
 		return isBool(term);
@@ -79,7 +83,7 @@ public class RewriteBooleans extends RewriteTermVariables {
 	private static final boolean isBool(final Term term) {
 		return term.getSort().getName().equals("Bool");
 	}
-	
+
 	@Override
 	protected Term constructReplacementTerm(final TermVariable tv) {
 		final Term one = mScript.getScript().numeral(BigInteger.ONE);
@@ -87,15 +91,13 @@ public class RewriteBooleans extends RewriteTermVariables {
 		return repTerm;
 	}
 
-	
 	@Override
 	public String getDescription() {
-		return s_Description;
+		return DESCRIPTION;
 	}
-	
+
 	/**
-	 * Given the Term booleanTerm whose Sort is "Bool" return the term
-	 * (ite booleanTerm one zero)
+	 * Given the Term booleanTerm whose Sort is "Bool" return the term (ite booleanTerm one zero)
 	 */
 	@Override
 	protected Term constructNewDefinitionForRankVar(final IProgramVar oldRankVar) {
@@ -105,6 +107,5 @@ public class RewriteBooleans extends RewriteTermVariables {
 		final Term zero = mScript.getScript().numeral(BigInteger.ZERO);
 		return mScript.getScript().term("ite", booleanTerm, one, zero);
 	}
-	
 
 }

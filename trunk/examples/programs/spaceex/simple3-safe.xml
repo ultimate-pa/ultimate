@@ -3,15 +3,15 @@
   <component id="aut1">
     <param name="x" type="real" local="false" d1="1" d2="1" dynamics="any" />
     <location id="1" name="loc1" x="210.0" y="110.0">
-      <invariant>x &lt;= 10</invariant>
-      <flow>x' == 10</flow>
+      <invariant>0 &lt;= x &lt;= 10</invariant>
+      <flow>x' == 1</flow>
     </location>
   </component>
   <component id="aut2">
     <param name="y" type="real" local="false" d1="1" d2="1" dynamics="any" />
     <location id="1" name="loc1" x="206.0" y="144.0">
-      <invariant>y &lt;= 10</invariant>
-      <flow>y' == 10</flow>
+      <invariant>0 &lt;= y &lt;= 10</invariant>
+      <flow>y' == 1</flow>
     </location>
   </component>
   <component id="sys1">
@@ -25,4 +25,3 @@
     </bind>
   </component>
 </sspaceex>
-

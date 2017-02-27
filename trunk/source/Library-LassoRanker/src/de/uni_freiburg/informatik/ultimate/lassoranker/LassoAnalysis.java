@@ -606,33 +606,33 @@ public class LassoAnalysis {
 
 		private static String computeAbbrev(final String ppId) {
 			switch (ppId) {
-			case DNF.s_Description:
+			case DNF.DESCRIPTION:
 				return "dnf";
-			case SimplifyPreprocessor.s_Description:
+			case SimplifyPreprocessor.DESCRIPTION:
 				return "smp";
 			case RewriteArrays2.DESCRIPTION:
 				return "arr";
-			case RewriteEquality.s_Description:
+			case RewriteEquality.DESCRIPTION:
 				return "eq";
-			case RewriteStrictInequalities.s_Description:
+			case RewriteStrictInequalities.DESCRIPTION:
 				return "sie";
 			case LassoPartitioneerPreprocessor.s_Description:
 				return "lsp";
-			case RemoveNegation.s_Description:
+			case RemoveNegation.DESCRIPTION:
 				return "neg";
-			case RewriteDivision.s_Description:
+			case RewriteDivision.DESCRIPTION:
 				return "div";
-			case RewriteBooleans.s_Description:
+			case RewriteBooleans.DESCRIPTION:
 				return "bol";
-			case MatchInOutVars.s_Description:
+			case MatchInOutVars.DESCRIPTION:
 				return "mio";
-			case RewriteTrueFalse.s_Description:
+			case RewriteTrueFalse.DESCRIPTION:
 				return "tf";
-			case RewriteIte.s_Description:
+			case RewriteIte.DESCRIPTION:
 				return "ite";
-			case AddAxioms.s_Description:
+			case AddAxioms.DESCRIPTION:
 				return "ax";
-			case CommuHashPreprocessor.s_Description:
+			case CommuHashPreprocessor.DESCRIPTION:
 				return "hnf";
 			default:
 				return "ukn";

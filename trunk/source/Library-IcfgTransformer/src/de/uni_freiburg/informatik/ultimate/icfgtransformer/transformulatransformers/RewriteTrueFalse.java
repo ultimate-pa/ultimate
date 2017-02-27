@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IcfgTransformer library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers;
@@ -34,58 +34,53 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 
-
 /**
  * Rewrite 'true' as '0 >= 0' and 'false' as '0 >= 1'.
  * 
  * @author Jan Leike
  */
 public class RewriteTrueFalse extends TransformerPreprocessor {
-	public static final String s_Description = 
-			"Replace 'true' with '0 >= 0' and 'false' with '0 >= 1'";
-	
+	public static final String DESCRIPTION = "Replace 'true' with '0 >= 0' and 'false' with '0 >= 1'";
+
 	@Override
 	public String getDescription() {
-		return s_Description;
+		return DESCRIPTION;
 	}
-	
+
 	@Override
-	public boolean checkSoundness(Script script, ModifiableTransFormula oldTF,
-			ModifiableTransFormula newTF) {
-		final Term old_term = oldTF.getFormula();
-		final Term new_term = newTF.getFormula();
-		return LBool.SAT != Util.checkSat(script,
-				script.term("distinct", old_term, new_term));
+	public boolean checkSoundness(final Script script, final ModifiableTransFormula oldTF,
+			final ModifiableTransFormula newTF) {
+		final Term oldTerm = oldTF.getFormula();
+		final Term newTerm = newTF.getFormula();
+		return LBool.SAT != Util.checkSat(script, script.term("distinct", oldTerm, newTerm));
 	}
-	
+
 	@Override
-	protected TermTransformer getTransformer(Script script) {
+	protected TermTransformer getTransformer(final Script script) {
 		return new RewriteTrueFalseTransformer(script);
 	}
-	
-	private class RewriteTrueFalseTransformer extends TermTransformer {
-		
+
+	private static final class RewriteTrueFalseTransformer extends TermTransformer {
+
 		private final Script mScript;
-		
-		RewriteTrueFalseTransformer(Script script) {
+
+		RewriteTrueFalseTransformer(final Script script) {
 			assert script != null;
 			mScript = script;
 		}
-		
+
 		@Override
-		protected void convert(Term term) {
+		protected void convert(final Term term) {
 			if (term instanceof ApplicationTerm) {
 				final ApplicationTerm appt = (ApplicationTerm) term;
 				if (appt.getFunction().getName().equals("true")) {
-					assert(appt.getParameters().length == 0);
-					setResult(mScript.term(">=", mScript.decimal("0"),
-							mScript.decimal("0")));
+					assert appt.getParameters().length == 0;
+					setResult(mScript.term(">=", mScript.decimal("0"), mScript.decimal("0")));
 					return;
 				}
 				if (appt.getFunction().getName().equals("false")) {
-					assert(appt.getParameters().length == 0);
-					setResult(mScript.term(">=", mScript.decimal("0"),
-							mScript.decimal("1")));
+					assert appt.getParameters().length == 0;
+					setResult(mScript.term(">=", mScript.decimal("0"), mScript.decimal("1")));
 					return;
 				}
 			}

@@ -24,14 +24,16 @@
  * licensors of the ULTIMATE IcfgTransformer grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.icfgtransformer;
+package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration;
 
 import java.util.Collections;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
@@ -80,17 +82,22 @@ public class ExampleLoopAccelerationTransformulaTransformer implements ITransfor
 	}
 
 	@Override
-	public UnmodifiableTransFormula transform(final UnmodifiableTransFormula tf) {
+	public TransforumlaTransformationResult transform(final UnmodifiableTransFormula tf) {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Performing identity transformation for " + tf);
 		}
-		return TransFormulaBuilder.constructCopy(mManagedScript, tf, Collections.emptySet(), Collections.emptySet(),
-				Collections.emptyMap());
+		return new TransforumlaTransformationResult(TransFormulaBuilder.constructCopy(mManagedScript, tf,
+				Collections.emptySet(), Collections.emptySet(), Collections.emptyMap()));
 	}
 
 	@Override
 	public IIcfgSymbolTable getNewIcfgSymbolTable() {
 		return mOldSymbolTable;
+	}
+
+	@Override
+	public void preprocessIcfg(final IIcfg<?> icfg) {
+		// this transformer does not need any knowledge about the icfg
 	}
 
 }

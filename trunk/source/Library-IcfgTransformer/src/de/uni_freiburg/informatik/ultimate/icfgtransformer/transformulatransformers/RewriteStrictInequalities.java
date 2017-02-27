@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IcfgTransformer library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers;
@@ -37,53 +37,49 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 
-
 /**
- * Replace strict inequalities that compare terms of sort int by equivalent
- * non-strict inequalities. E.g., the term <i>x > 0</i> is replaced by the term
- * <i>x >= 1</i>.
+ * Replace strict inequalities that compare terms of sort int by equivalent non-strict inequalities. E.g., the term <i>x
+ * > 0</i> is replaced by the term <i>x >= 1</i>.
  * 
  * @author Matthias Heizmann, Jan Leike
  */
 public class RewriteStrictInequalities extends TransformerPreprocessor {
-	
-	public static final String s_Description = "Replace strict inequalities by non-strict inequalities";
-	
+
+	public static final String DESCRIPTION = "Replace strict inequalities by non-strict inequalities";
+
 	@Override
 	public String getDescription() {
-		return s_Description;
+		return DESCRIPTION;
 	}
-	
+
 	@Override
-	public boolean checkSoundness(Script script, ModifiableTransFormula oldTF,
-			ModifiableTransFormula newTF) {
-		final Term old_term = oldTF.getFormula();
-		final Term new_term = newTF.getFormula();
-		return LBool.SAT != Util.checkSat(script,
-				script.term("distinct", old_term, new_term));
+	public boolean checkSoundness(final Script script, final ModifiableTransFormula oldTF,
+			final ModifiableTransFormula newTF) {
+		final Term oldTerm = oldTF.getFormula();
+		final Term newTerm = newTF.getFormula();
+		return LBool.SAT != Util.checkSat(script, script.term("distinct", oldTerm, newTerm));
 	}
-	
+
 	@Override
-	protected TermTransformer getTransformer(Script script) {
+	protected TermTransformer getTransformer(final Script script) {
 		return new RewriteStrictInequalitiesTransformer(script);
 	}
-	
+
 	/**
-	 * Replace strict inequalities that compare terms of sort Int by equivalent
-	 * non-strict inequalities.
+	 * Replace strict inequalities that compare terms of sort Int by equivalent non-strict inequalities.
 	 *
 	 */
-	private class RewriteStrictInequalitiesTransformer extends TermTransformer {
-		
+	private static final class RewriteStrictInequalitiesTransformer extends TermTransformer {
+
 		private final Script mScript;
-		
-		RewriteStrictInequalitiesTransformer(Script script) {
+
+		RewriteStrictInequalitiesTransformer(final Script script) {
 			assert script != null;
 			mScript = script;
 		}
-		
+
 		@Override
-		protected void convert(Term term) {
+		protected void convert(final Term term) {
 			if (term instanceof ApplicationTerm) {
 				final ApplicationTerm appTerm = (ApplicationTerm) term;
 				final String functionSymbolName = appTerm.getFunction().getName();
@@ -100,15 +96,12 @@ public class RewriteStrictInequalities extends TransformerPreprocessor {
 			}
 			super.convert(term);
 		}
-		
+
 		/**
-		 * Requires that appTerm has function symbol "<" or ">" and that
-		 * appTerm has two parameters.
-		 * If the parameters are of Sort int, we return the corresponding 
-		 * equivalent non-strict inequality.
-		 * Otherwise we return null.
+		 * Requires that appTerm has function symbol "<" or ">" and that appTerm has two parameters. If the parameters
+		 * are of Sort int, we return the corresponding equivalent non-strict inequality. Otherwise we return null.
 		 */
-		private Term computeCorrespondingInequality(ApplicationTerm appTerm) {
+		private Term computeCorrespondingInequality(final ApplicationTerm appTerm) {
 			final String functionSymbolName = appTerm.getFunction().getName();
 			if (appTerm.getParameters().length != 2) {
 				throw new AssertionError("expected binary terms");
@@ -119,12 +112,10 @@ public class RewriteStrictInequalities extends TransformerPreprocessor {
 			final Term one = mScript.numeral(BigInteger.ONE);
 			Term result;
 			if (functionSymbolName.equals("<")) {
-				result = mScript.term("<=",
-						mScript.term("+",	appTerm.getParameters()[0], one), 
+				result = mScript.term("<=", mScript.term("+", appTerm.getParameters()[0], one),
 						appTerm.getParameters()[1]);
 			} else if (functionSymbolName.equals(">")) {
-				result = mScript.term(">=", 
-						appTerm.getParameters()[0], 
+				result = mScript.term(">=", appTerm.getParameters()[0],
 						mScript.term("+", appTerm.getParameters()[1], one));
 			} else {
 				throw new AssertionError();

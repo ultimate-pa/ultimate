@@ -202,7 +202,7 @@ public class LinearInequality implements Serializable {
 				throw new UnknownFunctionException(appt);
 			}
 		} else {
-			throw new TermException(TermException.s_UnknownSubclassOfTerm, term);
+			throw new TermException(TermException.UNKNOWN_SUBCLASS_OF_TERM, term);
 		}
 		return li;
 	}

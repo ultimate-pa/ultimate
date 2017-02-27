@@ -19,37 +19,37 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CodeCheck plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 
 public class AppHyperEdge extends AppEdge {
-	
-	private static final long serialVersionUID = 1L;
-	
-	AnnotatedProgramPoint hier;
-	Return returnStm;
 
-	public AppHyperEdge(AnnotatedProgramPoint source, AnnotatedProgramPoint hier, Return returnStm,
-			AnnotatedProgramPoint target) {
+	private static final long serialVersionUID = 1L;
+
+	private AnnotatedProgramPoint mHierLoc;
+	private final IIcfgReturnTransition<?, ?> mReturnTransition;
+
+	public AppHyperEdge(final AnnotatedProgramPoint source, final AnnotatedProgramPoint hier,
+			final IIcfgReturnTransition<?, ?> returnStm, final AnnotatedProgramPoint target) {
 		super(source, returnStm, target);
-		this.hier = hier;
-		this.returnStm = returnStm;
+		mHierLoc = hier;
+		mReturnTransition = returnStm;
 	}
-	
+
 	public AnnotatedProgramPoint getHier() {
-		return hier;
+		return mHierLoc;
 	}
 
 	@Override
 	public void disconnect() {
-		hier.getOutgoingHyperEdges().remove(this);
-		hier = null;
+		mHierLoc.getOutgoingHyperEdges().remove(this);
+		mHierLoc = null;
 		super.disconnect();
 	}
 }

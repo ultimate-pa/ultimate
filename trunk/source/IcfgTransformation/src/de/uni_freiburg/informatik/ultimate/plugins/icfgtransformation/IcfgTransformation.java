@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.preferences.PreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.preferences.IcfgTransformationPreferences;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -116,7 +116,7 @@ public class IcfgTransformation implements IGenerator {
 
 	@Override
 	public IPreferenceInitializer getPreferences() {
-		return new PreferenceInitializer();
+		return new IcfgTransformationPreferences();
 	}
 
 	@Override

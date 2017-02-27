@@ -118,39 +118,41 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
 			final int iteration, final CegarLoopStatisticsGenerator benchmark) {
 		final PredicateUnifier predicateUnifier = new PredicateUnifier(mServices,
-				mPrefs.getCfgSmtToolkit().getManagedScript(), mPredicateFactory, mInitialIcfg.getSymboltable(),
-				mPrefsConsolidation.getSimplificationTechnique(), mPrefsConsolidation.getXnfConversionTechnique());
+				mPrefs.getCfgSmtToolkit().getManagedScript(), mPredicateFactory,
+				mInitialIcfg.getCfgSmtToolkit().getSymbolTable(), mPrefsConsolidation.getSimplificationTechnique(),
+				mPrefsConsolidation.getXnfConversionTechnique());
 
 		switch (strategy) {
 		case FIXED_PREFERENCES:
-			final ManagedScript managedScript =
-					setupManagedScriptFromPreferences(mServices, mInitialIcfg, mStorage, iteration, mPrefs);
+			final ManagedScript managedScript = setupManagedScriptFromPreferences(mServices, mInitialIcfg, mStorage,
+					iteration, mPrefs);
 			return new FixedTraceAbstractionRefinementStrategy<>(mLogger, mPrefs, managedScript, mServices,
-					predicateUnifier, counterexample, abstraction, mPrefsConsolidation, iteration, benchmark);
+					mPredicateFactory, predicateUnifier, counterexample, abstraction, mPrefsConsolidation, iteration,
+					benchmark);
 		case PENGUIN:
 			return new PenguinRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-					predicateUnifier, mAssertionOrderModulation, counterexample, abstraction, mPrefsConsolidation,
-					iteration, benchmark);
+					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
+					mPrefsConsolidation, iteration, benchmark);
 		case CAMEL:
 			return new CamelRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-					predicateUnifier, mAssertionOrderModulation, counterexample, abstraction, mPrefsConsolidation,
-					iteration, benchmark);
+					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
+					mPrefsConsolidation, iteration, benchmark);
 		case WALRUS:
 			return new WalrusRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-					predicateUnifier, mAssertionOrderModulation, counterexample, abstraction, mPrefsConsolidation,
-					iteration, benchmark);
+					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
+					mPrefsConsolidation, iteration, benchmark);
 		case WOLF:
 			return new WolfRefinementStrategy<>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-					predicateUnifier, mAssertionOrderModulation, counterexample, abstraction, mPrefsConsolidation,
-					iteration, benchmark);
+					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
+					mPrefsConsolidation, iteration, benchmark);
 		case RUBBER_TAIPAN:
 			return new RubberTaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
-					predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample, abstraction, iteration,
-					benchmark);
+					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample,
+					abstraction, iteration, benchmark);
 		case TAIPAN:
 			return new TaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
-					predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample, abstraction, iteration,
-					benchmark);
+					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample,
+					abstraction, iteration, benchmark);
 		case PARROT:
 			if (mInteractive == null) {
 				throw new IllegalArgumentException(

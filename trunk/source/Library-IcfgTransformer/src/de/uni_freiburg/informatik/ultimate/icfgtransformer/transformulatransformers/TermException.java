@@ -20,53 +20,51 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE IcfgTransformer library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 
-
 /**
- * This is an superclass of exceptions that occur when handling terms.
- * It carries an error message as well as a term instance.
+ * This is an superclass of exceptions that occur when handling terms. It carries an error message as well as a term
+ * instance.
  * 
- * @author Jan Leike 
+ * @author Jan Leike
  * @author Matthias Heizmann
  */
 public class TermException extends Exception {
 	private static final long serialVersionUID = 628015504018345983L;
-	
-	public static final String s_UnkownValueClass = "Unknown value class";
-	public static final String s_UnkownTermStructure = "Unknown term structure";
-	public static final String s_IsNotInDnf = "Term is not in DNF";
-	public static final String s_UnknownSortInEquality = "Unknown sort in equality";
-	public static final String s_ExpectedApplicationTerm = "Expected application term";
-	public static final String s_UnknownSubclassOfTerm = "Stumbled upon a Term of unknown subclass";
-	
-	protected final Term mterm;
-	
-	public TermException(String message, Term term) {
+
+	public static final String UNKNOWN_VALUE_CLASS = "Unknown value class";
+	public static final String UNKNOWN_TERM_STRUCTURE = "Unknown term structure";
+	public static final String IS_NOT_IN_DNF = "Term is not in DNF";
+	public static final String UNKNOWN_SORT_IN_EQUALITY = "Unknown sort in equality";
+	public static final String EXPECTED_APPLICATION_TERM = "Expected application term";
+	public static final String UNKNOWN_SUBCLASS_OF_TERM = "Stumbled upon a Term of unknown subclass";
+
+	protected final Term mTerm;
+
+	public TermException(final String message, final Term term) {
 		super(message);
-		mterm = term;
+		mTerm = term;
 	}
-	
+
 	/**
 	 * @return the associated term
 	 */
 	public Term getTerm() {
-		return mterm;
+		return mTerm;
 	}
-	
+
 	@Override
 	public String toString() {
-		if (mterm != null) {
-			return super.toString() + " @term: " + mterm;
-		} else {
-			return super.toString();
+		if (mTerm != null) {
+			return super.toString() + " @term: " + mTerm;
 		}
+		return super.toString();
 	}
 }

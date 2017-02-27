@@ -24,7 +24,7 @@ assert(minimizeNwaPmaxSatSize == 3);
 assert(minimizeNwaPmaxSatAsymmetricSize == 3);
 assert(minimizeDfaSimulationSize == 2);
 assert(reduceNwaDirectSimulationSize == 3);
-assert(reduceNwaDirectSimulationBSize == 2);
+assert(reduceNwaDirectSimulationBSize == 3);
 assert(reduceNwaDirectFullMultipebbleSimulationSize == 3);
 assert(buchiReduceSize == 1);
 assert(reduceNwaDelayedSimulationSize == 1);

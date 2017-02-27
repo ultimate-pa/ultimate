@@ -147,9 +147,9 @@ public class InequalityConverter {
 							nlaHandling, appt);
 					terms.add(converted);
 				} else if (param0sort.getName().equals("Bool")) {
-					throw new TermException(TermException.s_IsNotInDnf, term);
+					throw new TermException(TermException.IS_NOT_IN_DNF, term);
 				} else {
-					throw new TermException(TermException.s_UnknownSortInEquality, term);
+					throw new TermException(TermException.UNKNOWN_SORT_IN_EQUALITY, term);
 				}
 			} else if (fname.equals("<") || fname.equals(">")
 					|| fname.equals("<=") || fname.equals(">=")) {
@@ -160,9 +160,9 @@ public class InequalityConverter {
 				throw new UnknownFunctionException(appt);
 			}
 		} else if (term instanceof TermVariable) {
-			throw new TermException(TermException.s_IsNotInDnf, term);
+			throw new TermException(TermException.IS_NOT_IN_DNF, term);
 		} else {
-			throw new TermException(TermException.s_ExpectedApplicationTerm, term);
+			throw new TermException(TermException.EXPECTED_APPLICATION_TERM, term);
 		}
 		return terms;
 	}

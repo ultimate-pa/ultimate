@@ -114,10 +114,10 @@ public class ModelExtractionUtils {
 			} else if (o instanceof Rational) {
 				return (Rational) o;
 			} else {
-				throw new TermException(TermException.s_UnkownValueClass, t);
+				throw new TermException(TermException.UNKNOWN_VALUE_CLASS, t);
 			}
 		}
-		throw new TermException(TermException.s_UnkownTermStructure, t);
+		throw new TermException(TermException.UNKNOWN_TERM_STRUCTURE, t);
 	}
 
 	/**

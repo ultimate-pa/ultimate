@@ -174,6 +174,7 @@ public class LassoChecker<LETTER extends IIcfgTransition<?>> {
 
 	// private final BuchiModGlobalVarManager mBuchiModGlobalVarManager;
 
+	private final PredicateFactory mPredicateFactory;
 	private final PredicateUnifier mPredicateUnifier;
 
 	private InterpolatingTraceChecker mStemCheck;
@@ -264,6 +265,7 @@ public class LassoChecker<LETTER extends IIcfgTransition<?>> {
 		mBspm = bspm;
 		mCounterexample = counterexample;
 		mLassoCheckerIdentifier = lassoCheckerIdentifier;
+		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), predicateFactory,
 				mSymbolTable, simplificationTechnique, xnfConversionTechnique);
 		mTruePredicate = mPredicateUnifier.getTruePredicate();
@@ -446,10 +448,13 @@ public class LassoChecker<LETTER extends IIcfgTransition<?>> {
 				result = new InterpolatingTraceCheckerCraig(mTruePredicate, mFalsePredicate,
 						new TreeMap<Integer, IPredicate>(), run.getWord(), mCsToolkit,
 						/*
-						 * TODO: When Matthias introduced this parameter he set the argument to
-						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to a different value.
-						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateUnifier, mInterpolation,
-						true, mXnfConversionTechnique, mSimplificationTechnique, null);
+						 * TODO: When Matthias introduced this parameter he set
+						 * the argument to
+						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you
+						 * want to set this to a different value.
+						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, mServices, false, mPredicateFactory,
+						mPredicateUnifier, mInterpolation, true, mXnfConversionTechnique, mSimplificationTechnique,
+						null);
 				break;
 			case ForwardPredicates:
 			case BackwardPredicates:
@@ -458,11 +463,13 @@ public class LassoChecker<LETTER extends IIcfgTransition<?>> {
 				result = new TraceCheckerSpWp(mTruePredicate, mFalsePredicate, new TreeMap<Integer, IPredicate>(),
 						run.getWord(), mCsToolkit,
 						/*
-						 * TODO: When Matthias introduced this parameter he set the argument to
-						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you want to set this to a different value.
+						 * TODO: When Matthias introduced this parameter he set
+						 * the argument to
+						 * AssertCodeBlockOrder.NOT_INCREMENTALLY. Check if you
+						 * want to set this to a different value.
 						 */AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, false,
-						mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(), mXnfConversionTechnique,
-						mSimplificationTechnique, null);
+						mPredicateFactory, mPredicateUnifier, mInterpolation, mCsToolkit.getManagedScript(),
+						mXnfConversionTechnique, mSimplificationTechnique, null);
 				break;
 			default:
 				throw new UnsupportedOperationException("unsupported interpolation");

@@ -93,6 +93,13 @@ public class HCPredicate extends BasicPredicate implements IPredicate {
 		return mProgramVars;
 	}
 	
+	/*
+	@Override
+	public int hashCode() {
+		return HashUtils.hashHsieh(serialHCPredicate, mProgramPoint, mFormula);// mClosedFormula);
+	}
+	*/
+
 	@Override
 	public String toString() {
 		String result = "#"; // super.mSerialNumber + "#";

@@ -104,6 +104,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 	private final CfgSmtToolkit mCsToolkit;
 	private final ModifiableGlobalsTable mModifiedGlobals;
 	private final PredicateUnifier mPredicateUnifier;
+	private final PredicateFactory mPredicateFactory;
 	private final ILogger mLogger;
 	private final CachingHoareTripleChecker mHoareTripleChecker;
 	private final InterpolantComputationStatus mInterpolantComputationStatus;
@@ -114,7 +115,8 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 	public InterpolantConsolidation(final IPredicate precondition, final IPredicate postcondition,
 			final SortedMap<Integer, IPredicate> pendingContexts, final NestedWord<LETTER> trace,
 			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable,
-			final IUltimateServiceProvider services, final ILogger logger, final PredicateUnifier predicateUnifier,
+			final IUltimateServiceProvider services, final ILogger logger, final PredicateFactory predicateFactory, 
+			final PredicateUnifier predicateUnifier,
 			final InterpolatingTraceChecker tc, final TAPreferences taPrefs) throws AutomataOperationCanceledException {
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
@@ -124,6 +126,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 		mModifiedGlobals = modifiableGlobalsTable;
 		mServices = services;
 		mLogger = logger;
+		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
 		mInterpolatingTraceChecker = tc;
 		mConsolidatedInterpolants = new IPredicate[mTrace.length() - 1];
@@ -148,11 +151,11 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 		// 1. Build the path automaton for the given trace mTrace
 		final PathProgramAutomatonConstructor<LETTER> ppc = new PathProgramAutomatonConstructor<>();
 		final INestedWordAutomaton<LETTER, IPredicate> pathprogramautomaton = ppc.constructAutomatonFromGivenPath(
-				mTrace, mServices, mCsToolkit, mPredicateUnifier.getPredicateFactory(), mTaPrefs);
+				mTrace, mServices, mCsToolkit, mPredicateFactory, mTaPrefs);
 
 		// 2. Build the finite automaton (former interpolant path automaton) for the given Floyd-Hoare annotation
 		final NestedWordAutomaton<LETTER, IPredicate> interpolantAutomaton = constructInterpolantAutomaton(mTrace,
-				mCsToolkit, mPredicateUnifier.getPredicateFactory(), mTaPrefs, mServices, mInterpolatingTraceChecker);
+				mCsToolkit, mPredicateFactory, mTaPrefs, mServices, mInterpolatingTraceChecker);
 		// 3. Determinize the finite automaton from step 2.
 		final DeterministicInterpolantAutomaton<LETTER> interpolantAutomatonDeterminized =
 				new DeterministicInterpolantAutomaton<>(mServices, mCsToolkit, mHoareTripleChecker,
@@ -161,11 +164,11 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 				);
 
 		final PredicateFactoryForInterpolantConsolidation pfconsol = new PredicateFactoryForInterpolantConsolidation(
-				mCsToolkit, mPredicateUnifier.getPredicateFactory(), mTaPrefs.computeHoareAnnotation());
+				mCsToolkit, mPredicateFactory, mTaPrefs.computeHoareAnnotation());
 
 		final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata =
 				new PredicateFactoryForInterpolantAutomata(mCsToolkit.getManagedScript(),
-						mPredicateUnifier.getPredicateFactory(), mTaPrefs.computeHoareAnnotation());
+						mPredicateFactory, mTaPrefs.computeHoareAnnotation());
 
 		final PowersetDeterminizer<LETTER, IPredicate> psd2 =
 				new PowersetDeterminizer<>(interpolantAutomatonDeterminized, true, predicateFactoryInterpolantAutomata);

@@ -28,13 +28,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.t
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.Objects;
-import java.util.TreeMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -50,12 +46,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
@@ -111,6 +107,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	protected final CfgSmtToolkit mCsToolkit;
 	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
 	private final IAutomaton<LETTER, IPredicate> mAbstraction;
+	private final PredicateFactory mPredicateFactory;
 	private final PredicateUnifier mPredicateUnifier;
 
 	// TODO Christian 2016-11-11: Matthias wants to get rid of this
@@ -157,7 +154,8 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	@SuppressWarnings("squid:S1699")
 	public MultiTrackTraceAbstractionRefinementStrategy(final ILogger logger,
 			final TaCheckAndRefinementPreferences prefs, final IUltimateServiceProvider services,
-			final CfgSmtToolkit cfgSmtToolkit, final PredicateUnifier predicateUnifier,
+			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory, 
+			final PredicateUnifier predicateUnifier,
 			final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
@@ -169,6 +167,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		mAssertionOrderModulation = assertionOrderModulation;
 		mCounterexample = counterexample;
 		mAbstraction = abstraction;
+		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
 		mIteration = iteration;
 		mCegarLoopsBenchmark = cegarLoopBenchmarks;
@@ -241,8 +240,8 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		mHasShownInfeasibilityBefore = true;
 		if (mInterpolantGenerator == null) {
 			mInterpolantGenerator = RefinementStrategyUtils.constructInterpolantGenerator(mServices, mLogger, mPrefs,
-					mTaPrefsForInterpolantConsolidation, getTraceChecker(), mPredicateUnifier, mCounterexample,
-					mCegarLoopsBenchmark);
+					mTaPrefsForInterpolantConsolidation, getTraceChecker(), mPredicateFactory, mPredicateUnifier, 
+					mCounterexample, mCegarLoopsBenchmark);
 		}
 		return mInterpolantGenerator;
 	}
@@ -280,8 +279,9 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 
 		TraceCheckerConstructor<LETTER> result;
 		if (mPrevTcConstructor == null) {
-			result = new TraceCheckerConstructor<>(mPrefs, managedScript, mServices, mPredicateUnifier, mCounterexample,
-					assertionOrder, interpolationTechnique, mIteration, mCegarLoopsBenchmark);
+			result = new TraceCheckerConstructor<>(mPrefs, managedScript, mServices, mPredicateFactory,
+					mPredicateUnifier, mCounterexample, assertionOrder, interpolationTechnique, mIteration,
+					mCegarLoopsBenchmark);
 		} else {
 			result = new TraceCheckerConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
 					interpolationTechnique, mCegarLoopsBenchmark);

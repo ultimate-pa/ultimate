@@ -14,9 +14,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 public class IcfgLoopDetection<INLOC extends IcfgLocation> {
-	
-	final private Set<IcfgLoop<INLOC>> mLoops;
-	
+
+	private final Set<IcfgLoop<INLOC>> mLoops;
+
 	public IcfgLoopDetection(final IIcfg<INLOC> icfg) {
 		mLoops = loopExtraction(icfg);
 	}
@@ -26,13 +26,13 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 		final Set<INLOC> init = originalIcfg.getInitialNodes();
 		final Deque<INLOC> open = new ArrayDeque<>();
 		final Map<INLOC, Set<INLOC>> dom = new HashMap<>();
-		
+
 		// Determine dominating nodes
 		for (final INLOC entry : init) {
 			final Set<INLOC> newDom = new HashSet<>();
 			newDom.add(entry);
 			dom.put(entry, newDom);
-			for (final IcfgLocation successor: entry.getOutgoingNodes()) {
+			for (final IcfgLocation successor : entry.getOutgoingNodes()) {
 				if (!open.contains(successor)) {
 					open.add((INLOC) successor);
 				}
@@ -42,7 +42,7 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 		while (!open.isEmpty()) {
 			final INLOC node = open.removeFirst();
 			final Set<INLOC> newDom = new HashSet<>();
-			for (final IcfgLocation predecessor: node.getIncomingNodes()) {
+			for (final IcfgLocation predecessor : node.getIncomingNodes()) {
 				if (dom.containsKey(predecessor)) {
 					if (newDom.isEmpty()) {
 						newDom.addAll(dom.get(predecessor));
@@ -55,14 +55,14 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 				newDom.add(node);
 			}
 			if (!newDom.equals(dom.get(node))) {
-				for (final IcfgLocation successor: node.getOutgoingNodes()) {
+				for (final IcfgLocation successor : node.getOutgoingNodes()) {
 					if (!open.contains(successor)) {
 						open.add((INLOC) successor);
 					}
 				}
 				dom.put(node, newDom);
 			}
-			
+
 		}
 		// Find loopbodies
 		final Set<IcfgEdge> backedges = new HashSet<>();
@@ -72,7 +72,7 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 		while (!open.isEmpty()) {
 			final INLOC node = open.removeFirst();
 			visited.add(node);
-			for (final IcfgEdge edge: node.getOutgoingEdges()) {
+			for (final IcfgEdge edge : node.getOutgoingEdges()) {
 				if (dom.get(node).contains(edge.getTarget())) {
 					backedges.add(edge);
 				}
@@ -83,13 +83,13 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 		}
 		// Find loopbody
 		final Map<INLOC, IcfgLoop<INLOC>> loopbodies = new HashMap<>();
-		for (final IcfgEdge edge: backedges) {
+		for (final IcfgEdge edge : backedges) {
 			final INLOC head = (INLOC) edge.getTarget();
 			final Set<INLOC> body = new HashSet<>();
 			body.add(head);
 			final Deque<INLOC> stack = new ArrayDeque<>();
 			stack.add((INLOC) edge.getSource());
-			while(!stack.isEmpty()) {
+			while (!stack.isEmpty()) {
 				final INLOC node = stack.removeFirst();
 				if (!body.contains(node)) {
 					body.add(node);
@@ -102,8 +102,8 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 				loopbodies.put(head, new IcfgLoop<>(body, head));
 			}
 		}
-		
-		final ArrayList<INLOC> heads = new ArrayList<INLOC>(loopbodies.keySet());
+
+		final ArrayList<INLOC> heads = new ArrayList<>(loopbodies.keySet());
 		for (final INLOC nestedhead : heads) {
 			for (final INLOC head : heads) {
 				if (nestedhead.equals(head) || !loopbodies.containsKey(head)) {
@@ -115,10 +115,10 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 				}
 			}
 		}
-		return new HashSet<IcfgLoop<INLOC>>(loopbodies.values());
-		
+		return new HashSet<>(loopbodies.values());
+
 	}
-	
+
 	public Set<IcfgLoop<INLOC>> getResult() {
 		return mLoops;
 	}

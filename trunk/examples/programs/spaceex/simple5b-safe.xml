@@ -4,15 +4,15 @@
     <param name="x" type="real" local="false" d1="1" d2="1" dynamics="any" />
     <param name="jump1" type="label" local="false" />
     <location id="1" name="loc1" x="210.0" y="110.0">
-      <invariant>x &lt;= 4</invariant>
+      <invariant>x &lt;= 6</invariant>
       <flow>x'==1</flow>
     </location>
     <location id="2" name="loc2" x="414.0" y="111.0">
-      <invariant>x &lt;= 5</invariant>
+      <invariant>x &lt;= 8</invariant>
       <flow>x'==1</flow>
     </location>
     <location id="3" name="loc3" x="594.0" y="111.0">
-      <invariant>x &lt;= 6</invariant>
+      <invariant>x &lt;= 9</invariant>
       <flow>x'==1</flow>
     </location>
     <transition source="1" target="2">
@@ -62,4 +62,3 @@
     </bind>
   </component>
 </sspaceex>
-

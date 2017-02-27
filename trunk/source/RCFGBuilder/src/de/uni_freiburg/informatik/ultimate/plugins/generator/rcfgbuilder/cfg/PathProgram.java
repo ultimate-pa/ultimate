@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class PathProgram extends BasePayloadContainer implements IIcfg<IcfgLocation> {
+public final class PathProgram extends BasePayloadContainer implements IIcfg<IcfgLocation> {
 
 	private static final long serialVersionUID = 6691317791231881900L;
 
@@ -71,10 +71,11 @@ public class PathProgram extends BasePayloadContainer implements IIcfg<IcfgLocat
 	private final Set<IcfgLocation> mInitialNodes;
 	private final Set<IcfgLocation> mLoopLocations;
 
-	private CfgSmtToolkit mCfgSmtToolkit;
+	private final transient CfgSmtToolkit mCfgSmtToolkit;
 
-	private PathProgram(final String identifier) {
-		mIdentifier = identifier;
+	private PathProgram(final String identifier, final CfgSmtToolkit cfgSmtToolkit) {
+		mIdentifier = Objects.requireNonNull(identifier);
+		mCfgSmtToolkit = Objects.requireNonNull(cfgSmtToolkit);
 		mProgramPoints = new HashMap<>();
 		mProcEntries = new HashMap<>();
 		mProcExits = new HashMap<>();
@@ -97,7 +98,7 @@ public class PathProgram extends BasePayloadContainer implements IIcfg<IcfgLocat
 	 */
 	public static PathProgramConstructionResult constructPathProgram(final String identifier,
 			final IIcfg<?> originalIcfg, final Set<? extends IcfgEdge> allowedTransitions) {
-		final PathProgram pp = new PathProgram(identifier);
+		final PathProgram pp = new PathProgram(identifier, originalIcfg.getCfgSmtToolkit());
 		final PathProgram.PathProgramConstructor ppc = pp.new PathProgramConstructor(originalIcfg, allowedTransitions);
 		assert !pp.getInitialNodes()
 				.isEmpty() : "You cannot have a path program that does not start at an initial location";
@@ -162,10 +163,10 @@ public class PathProgram extends BasePayloadContainer implements IIcfg<IcfgLocat
 	 */
 	public static final class PathProgramConstructionResult {
 		private final PathProgram mPathProgram;
-		private final Map<IcfgLocation, PathProgramIcfgLocation> mOldLoc2NewLoc;
+		private final Map<IcfgLocation, IcfgLocation> mOldLoc2NewLoc;
 
 		private PathProgramConstructionResult(final PathProgram pathprogram,
-				final Map<IcfgLocation, PathProgramIcfgLocation> oldLoc2NewLoc) {
+				final Map<IcfgLocation, IcfgLocation> oldLoc2NewLoc) {
 			mPathProgram = pathprogram;
 			mOldLoc2NewLoc = oldLoc2NewLoc;
 		}
@@ -174,7 +175,7 @@ public class PathProgram extends BasePayloadContainer implements IIcfg<IcfgLocat
 			return mPathProgram;
 		}
 
-		public Map<IcfgLocation, PathProgramIcfgLocation> getLocationMapping() {
+		public Map<IcfgLocation, IcfgLocation> getLocationMapping() {
 			return mOldLoc2NewLoc;
 		}
 	}
@@ -182,7 +183,7 @@ public class PathProgram extends BasePayloadContainer implements IIcfg<IcfgLocat
 	private final class PathProgramConstructor {
 
 		private final IIcfg<?> mOriginalIcfg;
-		private final Map<IcfgLocation, PathProgramIcfgLocation> mOldLoc2NewLoc;
+		private final Map<IcfgLocation, IcfgLocation> mOldLoc2NewLoc;
 
 		private PathProgramConstructor(final IIcfg<?> originalIcfg, final Set<? extends IcfgEdge> allowedTransitions) {
 			mOriginalIcfg = originalIcfg;
@@ -199,8 +200,8 @@ public class PathProgram extends BasePayloadContainer implements IIcfg<IcfgLocat
 				final Map<IcfgEdge, PathProgramCallAction<?>> oldCall2NewCall) {
 			final IcfgLocation origSource = transition.getSource();
 			final IcfgLocation origTarget = transition.getTarget();
-			final PathProgramIcfgLocation ppSource = addPathProgramLocation(origSource);
-			final PathProgramIcfgLocation ppTarget = addPathProgramLocation(origTarget);
+			final IcfgLocation ppSource = addPathProgramLocation(origSource);
+			final IcfgLocation ppTarget = addPathProgramLocation(origTarget);
 			final IcfgEdge ppTransition = createPathProgramTransition(ppSource, ppTarget, transition, oldCall2NewCall);
 			if (transition instanceof IIcfgCallTransition<?>) {
 				oldCall2NewCall.put(transition, (PathProgramCallAction<?>) ppTransition);
@@ -225,19 +226,19 @@ public class PathProgram extends BasePayloadContainer implements IIcfg<IcfgLocat
 			}
 		}
 
-		private PathProgramIcfgLocation createPathProgramLocation(final IcfgLocation loc) {
+		private IcfgLocation createPathProgramLocation(final IcfgLocation loc) {
 			Objects.requireNonNull(loc, "ICFG location must not be null");
-			final PathProgramIcfgLocation ppLoc = mOldLoc2NewLoc.get(loc);
+			final IcfgLocation ppLoc = mOldLoc2NewLoc.get(loc);
 			if (ppLoc == null) {
-				final PathProgramIcfgLocation newPpLoc = new PathProgramIcfgLocation(loc);
+				final IcfgLocation newPpLoc = new PathProgramIcfgLocation(loc);
 				mOldLoc2NewLoc.put(loc, newPpLoc);
 				return newPpLoc;
 			}
 			return ppLoc;
 		}
 
-		private PathProgramIcfgLocation addPathProgramLocation(final IcfgLocation loc) {
-			final PathProgramIcfgLocation ppLoc = createPathProgramLocation(loc);
+		private IcfgLocation addPathProgramLocation(final IcfgLocation loc) {
+			final IcfgLocation ppLoc = createPathProgramLocation(loc);
 			final String procedure = loc.getProcedure();
 
 			final IcfgLocation procEntry = mOriginalIcfg.getProcedureEntryNodes().get(procedure);
@@ -285,7 +286,7 @@ public class PathProgram extends BasePayloadContainer implements IIcfg<IcfgLocat
 		}
 	}
 
-	public static final class PathProgramIcfgLocation extends IcfgLocation {
+	private static final class PathProgramIcfgLocation extends IcfgLocation {
 
 		private static final long serialVersionUID = 1L;
 		private final IcfgLocation mBacking;
