@@ -2,17 +2,14 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.INAryEvaluator;
 
 public class LogicalTermEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
-		implements INAryEvaluator<VALUE, STATE, VARDECL> {
+		implements INaryTermEvaluator<VALUE, STATE, VARDECL> {
 	
 	private final int mArity;
 	private final String mType;
@@ -38,48 +35,38 @@ public class LogicalTermEvaluator<VALUE, STATE extends IAbstractState<STATE, VAR
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator) {
-		if (mSubEvaluators.size() >= mArity) {
-			throw new UnsupportedOperationException("Too many sub evaluators for n-ary evaluator of size " + mArity);
-		}
-		
-		mSubEvaluators.add(evaluator);
-	}
-	
-	@Override
-	public Set<VARDECL> getVarIdentifiers() {
+	public void addSubEvaluator(final ITermEvaluator<VALUE, STATE, VARDECL> evaluator) {
 		// TODO Auto-generated method stub
-		return null;
+		
 	}
-	
+
 	@Override
 	public boolean hasFreeOperands() {
-		return mSubEvaluators.size() < mArity;
+		// TODO Auto-generated method stub
+		return false;
 	}
-	
+
 	@Override
 	public boolean containsBool() {
-		return mSubEvaluators.stream().anyMatch(e -> e.containsBool());
-	}
-	
-	@Override
-	public EvaluatorType getType() {
-		// TODO
-		return null;
-	}
-	
-	@Override
-	public void setOperator(final Object operator) {
 		// TODO Auto-generated method stub
-
+		return false;
 	}
-	
+
+	@Override
+	public void setOperator(final String operator) {
+		// TODO Auto-generated method stub
+		
+	}
+
 	@Override
 	public int getArity() {
 		// TODO Auto-generated method stub
 		return 0;
 	}
 
+	protected enum LogicalTypes {
+		AND, OR, XOR, NOT, GEQ
+	}
 }

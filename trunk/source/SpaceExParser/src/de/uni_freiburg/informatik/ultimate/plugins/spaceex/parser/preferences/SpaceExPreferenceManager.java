@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2016 Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE SpaceExParser plug-in.
- * 
+ *
  * The ULTIMATE SpaceExParser plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE SpaceExParser plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE SpaceExParser plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE SpaceExParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -41,6 +41,8 @@ import java.util.regex.Pattern;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
@@ -50,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class that shall parse the config file of a SpaceEx model and hold important settings and values.
- * 
+ *
  * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  *
  */
@@ -74,12 +76,16 @@ public class SpaceExPreferenceManager {
 	private boolean mHasPreferenceGroups;
 	private boolean mHasForbiddenGroup;
 	private final SpaceExMathHelper mMathHelper;
-	
+	private final SolverMode mSolverMode;
+
 	public SpaceExPreferenceManager(final IUltimateServiceProvider services, final ILogger logger,
 			final File spaceExFile) throws Exception {
 		mServices = services;
 		mLogger = logger;
 		final IPreferenceProvider preferenceProvider = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		final IPreferenceProvider traceAbstractionPreferences = mServices.getPreferenceProvider(
+				de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator.PLUGIN_ID);
+		mSolverMode = traceAbstractionPreferences.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
 		String configfile =
 				preferenceProvider.getString(SpaceExParserPreferenceInitializer.LABEL_SPACEEX_CONFIG_FILE).toString();
 		final boolean loadconfig = preferenceProvider
@@ -110,7 +116,7 @@ public class SpaceExPreferenceManager {
 			}
 		}
 	}
-	
+
 	private void parseConfigFile(final File configfile) throws Exception {
 		mLogger.info("Parsing configfile: " + configfile);
 		final long startTime = System.nanoTime();
@@ -135,7 +141,7 @@ public class SpaceExPreferenceManager {
 		final long estimatedTime = System.nanoTime() - startTime;
 		mLogger.info("Parsing configfile done in " + estimatedTime / (float) 1000000 + " milliseconds");
 	}
-	
+
 	private void parseForbidden(final String forbidden) {
 		if (!forbidden.isEmpty()) {
 			final AtomicInteger id = new AtomicInteger(0);
@@ -148,9 +154,9 @@ public class SpaceExPreferenceManager {
 			mLogger.info("-Config file has no forbidden property-");
 			mHasForbiddenGroup = false;
 		}
-		
+
 	}
-	
+
 	private void parseInitially(final String initially) {
 		if (!initially.isEmpty()) {
 			final AtomicInteger id = new AtomicInteger(0);
@@ -174,7 +180,7 @@ public class SpaceExPreferenceManager {
 			mHasPreferenceGroups = true;
 		}
 	}
-	
+
 	private SpaceExForbiddenGroup createForbiddenGroup(final String infix, final int id) {
 		String initialVariableInfix = "";
 		final Map<String, List<String>> initialLocations = new HashMap<>();
@@ -222,7 +228,7 @@ public class SpaceExPreferenceManager {
 		final int groupid = id;
 		return new SpaceExForbiddenGroup(initialLocations, initialVariableInfix, groupid);
 	}
-	
+
 	private SpaceExPreferenceGroup createPreferenceGroup(final String infix, final int id) {
 		String initialVariableInfix = "";
 		final Map<String, String> initialLocations = new HashMap<>();
@@ -262,7 +268,7 @@ public class SpaceExPreferenceManager {
 		final int groupid = id;
 		return new SpaceExPreferenceGroup(initialLocations, initialVariableInfix, groupid);
 	}
-	
+
 	// save assingments of the form x==... as groupID -> (var -> val)
 	private void saveDirectAssignments(final String varString, final int groupID) {
 		final String[] splitted = varString.split("==");
@@ -276,11 +282,11 @@ public class SpaceExPreferenceManager {
 			}
 		}
 	}
-	
+
 	/**
 	 * Function that analyses if a variable in the config has to be renamed variables that have to be renamed are of the
 	 * form AUT.VARNAME They are constants
-	 * 
+	 *
 	 * @param group
 	 * @return
 	 */
@@ -318,11 +324,11 @@ public class SpaceExPreferenceManager {
 		}
 		return renameList;
 	}
-	
+
 	private String generateNewName(final String var) {
 		return var + "_Renamedconst" + mRenameID.getAndIncrement();
 	}
-	
+
 	public HybridSystem getRegardedSystem(final HybridModel model) {
 		final String configSystem = mSystem != null ? mSystem : "";
 		final Map<String, HybridSystem> systems = model.getSystems();
@@ -346,43 +352,43 @@ public class SpaceExPreferenceManager {
 			}
 		}
 	}
-	
+
 	public String getSystem() {
 		return mSystem;
 	}
-	
+
 	public String getFileName() {
 		return mModelFilename;
 	}
-	
+
 	public Map<String, Map<String, String>> getRequiresRename() {
 		return mRequiresRename;
 	}
-	
+
 	public Map<Integer, SpaceExPreferenceGroup> getPreferenceGroups() {
 		return mPreferenceGroups;
 	}
-	
+
 	public boolean hasPreferenceGroups() {
 		return mHasPreferenceGroups;
 	}
-	
+
 	public Map<Integer, HybridAutomaton> getGroupIdToParallelComposition() {
 		return mGroupIdToParallelComposition;
 	}
-	
+
 	public void setGroupIdToParallelComposition(final Map<Integer, HybridAutomaton> mGroupIdToParallelComposition) {
 		this.mGroupIdToParallelComposition = mGroupIdToParallelComposition;
 	}
-	
+
 	public List<SpaceExForbiddenGroup> getForbiddenGroups() {
 		return mForbiddenGroups;
 	}
-	
+
 	public boolean hasForbiddenGroup() {
 		return mHasForbiddenGroup;
 	}
-	
+
 	public boolean isLocationForbidden(final String autName, final String locName) {
 		if (mHasForbiddenGroup) {
 			for (final SpaceExForbiddenGroup group : mForbiddenGroups) {
@@ -393,13 +399,13 @@ public class SpaceExPreferenceManager {
 		}
 		return false;
 	}
-	
+
 	public Map<String, List<String>> getForbiddenToForbiddenlocs() {
 		return mForbiddenToForbiddenlocs;
 	}
-	
+
 	public Map<Integer, Map<String, String>> getGroupTodirectAssingment() {
 		return mGroupTodirectAssingment;
 	}
-	
+
 }
