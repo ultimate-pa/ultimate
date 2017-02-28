@@ -173,29 +173,41 @@ public class PathProgramDumper {
 						new AssertStatement(constructNewLocation(), new BooleanLiteral(constructNewLocation(), false)));
 				assert node.getOutgoingEdges().isEmpty() : "error loc with outgoing transitions";
 			}
-
-			final String[] transitionStartLabels = new String[node.getOutgoingEdges().size()];
-			for (int i = 0; i < node.getOutgoingEdges().size(); i++) {
-				final String transitionStartLabel = constructLabelId(node, i);
-				transitionStartLabels[i] = transitionStartLabel;
-			}
-			if (!node.getOutgoingEdges().isEmpty()) {
-				result.add(new GotoStatement(constructNewLocation(), transitionStartLabels));
-			}
-			for (int i = 0; i < node.getOutgoingEdges().size(); i++) {
-				final IcfgEdge edge = node.getOutgoingEdges().get(i);
-				result.add(constructLabel(node, i));
-				final Pair<List<Statement>, Set<IProgramVar>> transResult = constructTransitionStatements(edge,
-						edge.getTarget());
-				result.addAll(transResult.getFirst());
-				vars.addAll(transResult.getSecond());
-				if (!added.contains(edge.getTarget())) {
-					worklist.add(edge.getTarget());
-					added.add(edge.getTarget());
+			if (node.getOutgoingEdges().isEmpty()) {
+				// do nothing, no successor
+			} else if (node.getOutgoingEdges().size() == 1) {
+				final IcfgEdge edge = node.getOutgoingEdges().get(0);
+				processTransition(worklist, added, result, vars, edge);
+			} else {
+				final String[] transitionStartLabels = new String[node.getOutgoingEdges().size()];
+				for (int i = 0; i < node.getOutgoingEdges().size(); i++) {
+					final String transitionStartLabel = constructLabelId(node, i);
+					transitionStartLabels[i] = transitionStartLabel;
+				}
+				if (!node.getOutgoingEdges().isEmpty()) {
+					result.add(new GotoStatement(constructNewLocation(), transitionStartLabels));
+				}
+				for (int i = 0; i < node.getOutgoingEdges().size(); i++) {
+					final IcfgEdge edge = node.getOutgoingEdges().get(i);
+					result.add(constructLabel(node, i));
+					processTransition(worklist, added, result, vars, edge);
 				}
 			}
 		}
 		return result;
+	}
+
+	private void processTransition(final ArrayDeque<IcfgLocation> worklist,
+			final Set<IcfgLocation> added, final List<Statement> result, final Set<IProgramVar> vars,
+			final IcfgEdge edge) {
+		final Pair<List<Statement>, Set<IProgramVar>> transResult = constructTransitionStatements(edge,
+				edge.getTarget());
+		result.addAll(transResult.getFirst());
+		vars.addAll(transResult.getSecond());
+		if (!added.contains(edge.getTarget())) {
+			worklist.add(edge.getTarget());
+			added.add(edge.getTarget());
+		}
 	}
 
 	private String constructLabelId(final IcfgLocation node) {
