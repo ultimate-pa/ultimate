@@ -63,8 +63,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @see MinimizeNwaMaxSat2
  */
 public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER, STATE, Pair<STATE, STATE>> {
-	private static final boolean USE_PARTITION_PREPROCESSING_IN_ATS_CONSTRUCTOR = true;
-	private static final boolean USE_PAIR_PREPROCESSING_IN_ATS_CONSTRUCTOR = false;
+	private static final boolean USE_PARTITION_PREPROCESSING_IN_ATS_CONSTRUCTOR = false;
+	private static final boolean USE_PAIR_PREPROCESSING_IN_ATS_CONSTRUCTOR = true;
 
 	@SuppressWarnings("rawtypes")
 	private static final Pair[] EMPTY_LITERALS = new Pair[0];
