@@ -59,7 +59,7 @@ public class Minimize<R, S> implements IOperation<R, S, IStateFactory<S>> {
 
 	private final TreeAutomatonBU<R, S> mTreeAutomaton;
 	private final IMergeStateFactory<S> mStateFactory;
-
+	
 	protected final ITreeAutomatonBU<R, S> mResult;
 
 	private final Map<Set<S>, S> mMinimizedStates;
@@ -119,7 +119,6 @@ public class Minimize<R, S> implements IOperation<R, S, IStateFactory<S>> {
 			if (src.get(idx) != s1) {
 				continue;
 			}
-			@SuppressWarnings("unchecked")
 			final ArrayList<S> s = (ArrayList<S>) src.clone();
 			s.set(idx, s2);
 			// If we replace an occurance of s1 by s2 in the rule, and it still yields an equivalent destination
@@ -262,7 +261,8 @@ public class Minimize<R, S> implements IOperation<R, S, IStateFactory<S>> {
 		} while (!worklist.equals(oldWorklist));
 
 		final Set<S> visited = new HashSet<>();
-		visited.addAll(worklist); // All reachable nodes from initial states.
+		// All reachable nodes from initial states.
+		visited.addAll(worklist);
 
 		worklist.clear();
 		oldWorklist.clear();
@@ -326,6 +326,12 @@ public class Minimize<R, S> implements IOperation<R, S, IStateFactory<S>> {
 		return false;
 	}
 
+	/***
+	 * DisjointSets data structure.
+	 * @author Mostafa M.A. <mostafa.amin93@gmail.com>
+	 *
+	 * @param <T> Elements of the sets
+	 */
 	protected static class DisjointSet<T> {
 		private final Map<T, T> mRepr;
 		private final Map<T, Set<T>> mSubsets;

@@ -35,20 +35,20 @@ import java.util.List;
  * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  *
- * @param <R>
- * @param <S>
+ * @param <LETTER>
+ * @param <STATE>
  */
-public class PostfixTree<R, S> {
+public class PostfixTree<LETTER, STATE> {
 
-	private final ArrayList<R> postFix;
-	private final ArrayList<S> postFixStates;
+	private final ArrayList<LETTER> postFix;
+	private final ArrayList<STATE> postFixStates;
 	private final ArrayList<Integer> depths;
 
 	private final ArrayList<Integer> startIdx;
 
 	private final HashMap<Integer, Integer> mBeg;
 
-	public List<R> getPostFix() {
+	public List<LETTER> getPostFix() {
 		return postFix;
 	}
 
@@ -56,7 +56,7 @@ public class PostfixTree<R, S> {
 		return startIdx;
 	}
 
-	public List<S> getPostFixStates() {
+	public List<STATE> getPostFixStates() {
 		return postFixStates;
 	}
 
@@ -64,7 +64,7 @@ public class PostfixTree<R, S> {
 	 * Construct a postfix Tree from a treeRun
 	 * @param run
 	 */
-	public PostfixTree(final TreeRun<R, S> run) {
+	public PostfixTree(final TreeRun<LETTER, STATE> run) {
 		postFix = new ArrayList<>();
 		postFixStates = new ArrayList<>();
 		startIdx = new ArrayList<>();
@@ -73,7 +73,7 @@ public class PostfixTree<R, S> {
 		constructTree(run, 0);
 	}
 
-	private void addSymbol(final R lt, final S st, final int depth) {
+	private void addSymbol(final LETTER lt, final STATE st, final int depth) {
 		if (!mBeg.containsKey(depth)) {
 			mBeg.put(depth, depths.size());
 		}
@@ -83,7 +83,7 @@ public class PostfixTree<R, S> {
 		depths.add(depth);
 	}
 
-	private void constructTree(final TreeRun<R, S> run, final int depth) {
+	private void constructTree(final TreeRun<LETTER, STATE> run, final int depth) {
 
 		constructSubtrees(run.getChildren().iterator(), depth);
 		if (run.getRootSymbol() != null) {
@@ -91,7 +91,7 @@ public class PostfixTree<R, S> {
 		}
 	}
 
-	private void constructSubtrees(final Iterator<TreeRun<R, S>> it, final int depth) {
+	private void constructSubtrees(final Iterator<TreeRun<LETTER, STATE>> it, final int depth) {
 		if (!it.hasNext()) {
 			return;
 		}

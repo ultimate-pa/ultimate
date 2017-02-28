@@ -46,22 +46,22 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
  * 
  * @author Mostafa M. Amin <mostafa.amin93@gmail.com>
  *
- * @param <R>
+ * @param <LETTER>
  *            letter class of tree automaton.
- * @param <S>
+ * @param <STATE>
  *            state class of tree automaton.
  */
-public class TreeEmptinessCheck<R, S> implements IOperation<R, S, IStateFactory<S>> {
+public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
-	private final ITreeAutomatonBU<R, S> mTreeAutomaton;
-	protected final TreeRun<R, S> mResult;
+	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
+	protected final TreeRun<LETTER, STATE> mResult;
 
 	/***
 	 * TreeEmptiness checker
 	 * @param services
 	 * @param tree
 	 */
-	public TreeEmptinessCheck(final AutomataLibraryServices services, final TreeAutomatonBU<R, S> tree) {
+	public TreeEmptinessCheck(final AutomataLibraryServices services, final TreeAutomatonBU<LETTER, STATE> tree) {
 		mTreeAutomaton = tree;
 		mResult = computeResult();
 	}
@@ -85,23 +85,23 @@ public class TreeEmptinessCheck<R, S> implements IOperation<R, S, IStateFactory<
 	 * compute the emptiness check.
 	 * @return
 	 */
-	private TreeRun<R, S> computeResult() {
-		final LinkedList<TreeAutomatonRule<R, S>> worklist = new LinkedList<>();
+	private TreeRun<LETTER, STATE> computeResult() {
+		final LinkedList<TreeAutomatonRule<LETTER, STATE>> worklist = new LinkedList<>();
 
-		final Map<S, Collection<TreeAutomatonRule<R, S>>> rulesBySource = new HashMap<>();
+		final Map<STATE, Collection<TreeAutomatonRule<LETTER, STATE>>> rulesBySource = new HashMap<>();
 
-		final Map<S, TreeRun<R, S>> soltree = new HashMap<>();
+		final Map<STATE, TreeRun<LETTER, STATE>> soltree = new HashMap<>();
 
-		for (final S init : mTreeAutomaton.getInitialStates()) {
-			soltree.put(init, new TreeRun<R, S>(init));
+		for (final STATE init : mTreeAutomaton.getInitialStates()) {
+			soltree.put(init, new TreeRun<LETTER, STATE>(init));
 		}
-		for (final TreeAutomatonRule<R, S> rule : mTreeAutomaton.getRules()) {
+		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {
 			boolean initialRules = true;
 
-			for (final S sourceState : rule.getSource()) {
+			for (final STATE sourceState : rule.getSource()) {
 				initialRules &= mTreeAutomaton.isInitialState(sourceState);
 
-				Collection<TreeAutomatonRule<R, S>> sourceRules;
+				Collection<TreeAutomatonRule<LETTER, STATE>> sourceRules;
 				if (rulesBySource.containsKey(sourceState)) {
 					sourceRules = rulesBySource.get(sourceState);
 				} else {
@@ -116,17 +116,17 @@ public class TreeEmptinessCheck<R, S> implements IOperation<R, S, IStateFactory<
 		}
 
 		while (!worklist.isEmpty()) {
-			final TreeAutomatonRule<R, S> rule = worklist.poll();
-			final S dest = rule.getDest();
+			final TreeAutomatonRule<LETTER, STATE> rule = worklist.poll();
+			final STATE dest = rule.getDest();
 
-			final List<TreeRun<R, S>> subTrees = new LinkedList<>();
+			final List<TreeRun<LETTER, STATE>> subTrees = new LinkedList<>();
 			if (soltree.containsKey(dest)) {
 				// Already computed.
 				continue;
 			}
 
 			boolean allMarked = true;
-			for (final S q : rule.getSource()) {
+			for (final STATE q : rule.getSource()) {
 				if (!soltree.containsKey(q)) {
 					allMarked = false;
 					break;
@@ -134,7 +134,7 @@ public class TreeEmptinessCheck<R, S> implements IOperation<R, S, IStateFactory<
 				subTrees.add(soltree.get(q));
 			}
 			if (allMarked) {
-				final TreeRun<R, S> newTree = new TreeRun<>(dest, rule.getLetter(), subTrees);
+				final TreeRun<LETTER, STATE> newTree = new TreeRun<>(dest, rule.getLetter(), subTrees);
 				soltree.put(dest, newTree);
 				if (mTreeAutomaton.isFinalState(dest)) {
 					return newTree;
@@ -150,12 +150,12 @@ public class TreeEmptinessCheck<R, S> implements IOperation<R, S, IStateFactory<
 	}
 
 	@Override
-	public TreeRun<R, S> getResult() {
+	public TreeRun<LETTER, STATE> getResult() {
 		return mResult;
 	}
 
 	@Override
-	public boolean checkResult(final IStateFactory<S> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return false;
 	}
 }

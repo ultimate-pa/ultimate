@@ -41,51 +41,51 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  * @author mostafa.amin93@gmail.com, grugelt@uni-freiburg.de
  * 
  * 
- * @param <R> symbol
- * @param <S> state
+ * @param <LETTER> symbol
+ * @param <STATE> state
  */
-public interface ITreeAutomatonBU<R, S> extends IAutomaton<R, S> {
+public interface ITreeAutomatonBU<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
 
 	/**
 	 * @return a set of all the states in the automaton.
 	 */
-	public Set<S> getStates();
+	Set<STATE> getStates();
 	
 	/**
 	 * @return a set of all initial states in the automaton.
 	 */
-	public Set<S> getInitialStates();
+	Set<STATE> getInitialStates();
 	
 	/**
 	 * @param state
 	 * @return true, if given state is final.
 	 */
-	public boolean isFinalState(final S state);
+	boolean isFinalState(final STATE state);
 
 	/**
 	 * @param state
 	 * @return true, if given state is initial.
 	 */
-	public boolean isInitialState(final S state);
+	boolean isInitialState(final STATE state);
 	
 	/**
 	 * @param states
 	 * @return a list of all successor states for given states.
 	 */
-	public Iterable<TreeAutomatonRule<R, S>> getSuccessors(final List<S> states);
+	Iterable<TreeAutomatonRule<LETTER, STATE>> getSuccessors(final List<STATE> states);
 	
 	/**
 	 * @param states
 	 * @param letter
 	 * @return a list of all successors for given states and given letter.
 	 */
-	public Iterable<S> getSuccessors(final List<S> states, final R letter);
+	Iterable<STATE> getSuccessors(final List<STATE> states, final LETTER letter);
 	
 	/**
 	 * @param state
 	 * @return a map that denotes all the lists of rules that goes to given state.
 	 */
-	public Map<R, Iterable<List<S>>> getPredecessors(final S state);
+	Map<LETTER, Iterable<List<STATE>>> getPredecessors(final STATE state);
 	
 	/**
 	 * @param state
@@ -93,17 +93,17 @@ public interface ITreeAutomatonBU<R, S> extends IAutomaton<R, S> {
 	 * @return Given a letter and a state, get all rules that goes to the given state
 	 * using the given letter.
 	 */
-	public Iterable<List<S>> getPredecessors(final S state, final R letter);
+	Iterable<List<STATE>> getPredecessors(final STATE state, final LETTER letter);
 	
 	/**
 	 * 
 	 * @return Get the rules of the automaton.
 	 */
-	public Iterable<TreeAutomatonRule<R, S>> getRules();
+	Iterable<TreeAutomatonRule<LETTER, STATE>> getRules();
 	
 	@Override
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException {
-		return new TreeAutomatonToUltimateModel<R, S>().transformToUltimateModel(this);
+		return new TreeAutomatonToUltimateModel<LETTER, STATE>().transformToUltimateModel(this);
 	}
 }

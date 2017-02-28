@@ -40,27 +40,27 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
  * 
  * @author mostafa (mostafa.amin93@gmail.com)
  *
- * @param <R>
+ * @param <LETTER>
  *            letter of the tree automaton.
- * @param <S>
+ * @param <STATE>
  *            state of the tree automaton.
  */
-public class Complement<R, S> implements IOperation<R, S, IStateFactory<S>> {
+public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
-	private final ITreeAutomatonBU<R, S> mTreeAutomaton;
+	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 
-	protected final ITreeAutomatonBU<R, S> mResult;
+	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
 	private final AutomataLibraryServices mServices;
 
 	/***
-	 * Constructor of the compkement operator
+	 * Constructor of the complement operator
 	 * @param services
 	 * @param factory
 	 * @param tree
 	 */
-	public <F extends IMergeStateFactory<S> & IEmptyStackStateFactory<S>> Complement(
-			final AutomataLibraryServices services, final F factory,
-			final ITreeAutomatonBU<R, S> tree) {
+	public <SF extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Complement(
+			final AutomataLibraryServices services, final SF factory,
+			final ITreeAutomatonBU<LETTER, STATE> tree) {
 		mServices = services;
 		mTreeAutomaton = tree;
 
@@ -82,22 +82,22 @@ public class Complement<R, S> implements IOperation<R, S, IStateFactory<S>> {
 		return "Exiting complementing";
 	}
 
-	private <F extends IMergeStateFactory<S> & IEmptyStackStateFactory<S>> ITreeAutomatonBU<R, S>
+	private <F extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ITreeAutomatonBU<LETTER, STATE>
 			computeResult(final F stateFactory) {
-		final Determinize<R, S> op = new Determinize<>(mServices, stateFactory, mTreeAutomaton);
-		final TreeAutomatonBU<R, S> res = (TreeAutomatonBU<R, S>) op.getResult();
+		final Determinize<LETTER, STATE> op = new Determinize<>(mServices, stateFactory, mTreeAutomaton);
+		final TreeAutomatonBU<LETTER, STATE> res = (TreeAutomatonBU<LETTER, STATE>) op.getResult();
 		res.complementFinals();
-		final Minimize<R, S> mini = new Minimize<>(mServices, stateFactory, res);
+		final Minimize<LETTER, STATE> mini = new Minimize<>(mServices, stateFactory, res);
 		return mini.getResult();
 	}
 
 	@Override
-	public ITreeAutomatonBU<R, S> getResult() {
+	public ITreeAutomatonBU<LETTER, STATE> getResult() {
 		return mResult;
 	}
 
 	@Override
-	public boolean checkResult(final IStateFactory<S> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		// TODO implement a meaningful check
 		return true;
 	}
