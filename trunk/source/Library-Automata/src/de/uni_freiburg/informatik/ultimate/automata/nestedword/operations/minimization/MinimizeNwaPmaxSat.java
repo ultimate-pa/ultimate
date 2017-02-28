@@ -84,7 +84,8 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand,
-				new LookaheadPartitionConstructor<>(services, operand, true, false).getPartition(), new Settings<>());
+				new LookaheadPartitionConstructor<>(services, operand, true, false).getPartition(),
+				new Settings<STATE>().setLibraryMode(false));
 	}
 
 	/**
