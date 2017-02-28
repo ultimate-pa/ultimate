@@ -103,23 +103,28 @@ message TAPreferences {
 
 message Tracks {
 	repeated Track track = 1;
-	enum Track {
-	// SMTInterpol with tree interpolation.
-		SMTINTERPOL_TREE_INTERPOLANTS = 0;
-		SMTINTERPOL_FP = 1;
-		// Z3 with forward and backward predicates.
-		Z3_FPBP = 2;
-		Z3_FP = 3;
-		// Z3 with Craig interpolation.
-		Z3_NESTED_INTERPOLANTS = 4;
-		// CVC4 with forward and backward predicates.
-		CVC4_FPBP = 5;
-		CVC4_FP = 6;
-		// MathSAT with forward and backward predicates.
-		MATHSAT_FPBP = 7;
-		MATHSAT_FP = 8;
-	}
+}
 
+message InteractiveIterationInfo {
+	Track fallback = 1;
+	int32 nextInteractiveIteration = 2;
+}
+
+enum Track {
+// SMTInterpol with tree interpolation.
+	SMTINTERPOL_TREE_INTERPOLANTS = 0;
+	SMTINTERPOL_FP = 1;
+	// Z3 with forward and backward predicates.
+	Z3_FPBP = 2;
+	Z3_FP = 3;
+	// Z3 with Craig interpolation.
+	Z3_NESTED_INTERPOLANTS = 4;
+	// CVC4 with forward and backward predicates.
+	CVC4_FPBP = 5;
+	CVC4_FP = 6;
+	// MathSAT with forward and backward predicates.
+	MATHSAT_FPBP = 7;
+	MATHSAT_FP = 8;
 }
 
 enum Result {

@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.Converter;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.ConverterRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos;
+import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Result;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.TAPreferences.Concurrency;
@@ -36,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.MultiTrackTraceAbstractionRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.MultiTrackTraceAbstractionRefinementStrategy.Track;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive.ParrotInteractiveIterationInfo;
 
 public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 
@@ -47,7 +49,8 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 	protected void init(ConverterRegistry<GeneratedMessageV3, Object> converterRegistry) {
 		converterRegistry.registerBA(TraceAbstractionProtos.IterationInfo.NestedRun.class, IRun.class,
 				TAConverter::fromNestedRun);
-		Class<INestedWordAutomaton<CodeBlock, IPredicate>> cls = (Class<INestedWordAutomaton<CodeBlock, IPredicate>>) (Class) INestedWordAutomaton.class;
+		Class<INestedWordAutomaton<CodeBlock, IPredicate>> cls =
+				(Class<INestedWordAutomaton<CodeBlock, IPredicate>>) (Class) INestedWordAutomaton.class;
 		converterRegistry.registerBA(TraceAbstractionProtos.NestedWordAutomaton.class, cls, TAConverter::fromAutomaton);
 		converterRegistry.registerBA(TraceAbstractionProtos.TAPreferences.class, TAPreferences.class,
 				TAConverter::fromTAPreferences);
@@ -61,12 +64,19 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 				MultiTrackTraceAbstractionRefinementStrategy.Track[].class, TAConverter::toTracks);
 		converterRegistry.registerBA(TraceAbstractionProtos.Tracks.class,
 				MultiTrackTraceAbstractionRefinementStrategy.Track[].class, TAConverter::fromTracks);
+		converterRegistry.registerAB(InteractiveIterationInfo.class, ParrotInteractiveIterationInfo.class,
+				TAConverter::toIterationInfo);
 	}
 
-	private static TraceAbstractionProtos.Tracks fromTracks(
-			MultiTrackTraceAbstractionRefinementStrategy.Track[] tracks) {
+	private static ParrotInteractiveIterationInfo toIterationInfo(InteractiveIterationInfo itInfo) {
+		return new ParrotInteractiveIterationInfo(convertTo(Track.class, itInfo.getFallback()),
+				itInfo.getNextInteractiveIteration());
+	}
+
+	private static TraceAbstractionProtos.Tracks
+			fromTracks(MultiTrackTraceAbstractionRefinementStrategy.Track[] tracks) {
 		final TraceAbstractionProtos.Tracks.Builder builder = TraceAbstractionProtos.Tracks.newBuilder();
-		Arrays.stream(tracks).map(convertToEnum(Tracks.Track.class)).forEach(builder::addTrack);
+		Arrays.stream(tracks).map(convertToEnum(TraceAbstractionProtos.Track.class)).forEach(builder::addTrack);
 		return builder.build();
 	}
 
@@ -76,15 +86,15 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 	}
 
 	public static TraceAbstractionProtos.IterationInfo.NestedRun fromNestedRun(IRun<CodeBlock, IPredicate, ?> run) {
-		TraceAbstractionProtos.IterationInfo.NestedRun.Builder builder = TraceAbstractionProtos.IterationInfo.NestedRun
-				.newBuilder();
+		TraceAbstractionProtos.IterationInfo.NestedRun.Builder builder =
+				TraceAbstractionProtos.IterationInfo.NestedRun.newBuilder();
 		run.getWord().asList().stream().map(TAConverter::fromCodeblock).forEach(builder::addNestedWord);
 		// builder.addAllNestedWord(values)
 		return builder.build();
 	}
 
-	public static TraceAbstractionProtos.NestedWordAutomaton fromAutomaton(
-			INestedWordAutomaton<CodeBlock, IPredicate> automaton) {
+	public static TraceAbstractionProtos.NestedWordAutomaton
+			fromAutomaton(INestedWordAutomaton<CodeBlock, IPredicate> automaton) {
 		final List<CodeBlock> callAlphabet = new ArrayList<>();
 		automaton.getCallAlphabet().forEach(callAlphabet::add);
 		final List<CodeBlock> internalAlphabet = new ArrayList<>();
@@ -95,8 +105,8 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 		automaton.getStates().forEach(states::add);
 		final Function<Consumer<Integer>, Consumer<IPredicate>> addStateRef = addRef(states);
 
-		final TraceAbstractionProtos.NestedWordAutomaton.Builder builder = TraceAbstractionProtos.NestedWordAutomaton
-				.newBuilder();
+		final TraceAbstractionProtos.NestedWordAutomaton.Builder builder =
+				TraceAbstractionProtos.NestedWordAutomaton.newBuilder();
 
 		builder.setCall(fromAlphabet(callAlphabet)).setInternal(fromAlphabet(internalAlphabet))
 				.setReturn(fromAlphabet(returnAlphabet));
@@ -134,11 +144,12 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 		return StreamSupport.stream(source.spliterator(), false);
 	}
 
-	private static Function<IOutgoingTransitionlet<CodeBlock, IPredicate>, TraceAbstractionProtos.NestedWordAutomaton.transition.Builder> getTransition(
-			final IPredicate origin, List<CodeBlock> alphabet, List<IPredicate> states) {
+	private static
+			Function<IOutgoingTransitionlet<CodeBlock, IPredicate>, TraceAbstractionProtos.NestedWordAutomaton.transition.Builder>
+			getTransition(final IPredicate origin, List<CodeBlock> alphabet, List<IPredicate> states) {
 		return transition -> {
-			final TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builder = TraceAbstractionProtos.NestedWordAutomaton.transition
-					.newBuilder();
+			final TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builder =
+					TraceAbstractionProtos.NestedWordAutomaton.transition.newBuilder();
 			addRef(states).apply(builder::setOriginState).accept(origin);
 			addRef(states).apply(builder::setSuccessorState).accept(transition.getSucc());
 			addRef(alphabet).apply(builder::setLetter).accept(transition.getLetter());
@@ -168,8 +179,8 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 	private static TraceAbstractionProtos.NestedWordAutomaton.transition fromTransition(
 			Map<IPredicate, Map<CodeBlock, Set<IPredicate>>> transitions, List<IPredicate> states,
 			List<CodeBlock> alphabet) {
-		final TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builder = TraceAbstractionProtos.NestedWordAutomaton.transition
-				.newBuilder();
+		final TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builder =
+				TraceAbstractionProtos.NestedWordAutomaton.transition.newBuilder();
 		for (Map.Entry<IPredicate, Map<CodeBlock, Set<IPredicate>>> transition : transitions.entrySet()) {
 			final int firstIndex = states.indexOf(transition.getKey());
 		}
@@ -191,8 +202,8 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 			enhancment = InterpolantAutomatonEnhancement.NO_ENHANCEMENT;
 			break;
 		default:
-			enhancment = convertTo(InterpolantAutomatonEnhancement.class,
-					preferences.interpolantAutomatonEnhancement());
+			enhancment =
+					convertTo(InterpolantAutomatonEnhancement.class, preferences.interpolantAutomatonEnhancement());
 		}
 
 		final Minimization minimization;
