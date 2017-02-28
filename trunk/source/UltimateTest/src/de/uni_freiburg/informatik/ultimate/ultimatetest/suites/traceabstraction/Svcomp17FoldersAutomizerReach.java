@@ -57,7 +57,21 @@ public class Svcomp17FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 //	private static final String STANDARD_DOT_I_PATTERN = ".*_false-unreach-call.*\\.i";
 
 	
+	
 	// @formatter:off
+	private static final DirectoryFileEndingsPair[] BENCHMARKS_32BIT = {
+		/***** Category 1. ReachSafety *****/
+		/*** Subcategory   ReachSafety-Loops ***/
+		new DirectoryFileEndingsPair("examples/svcomp/loops/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/loop-acceleration/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/loop-invgen/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/loop-lit/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/loop-new/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT) ,
+		new DirectoryFileEndingsPair("examples/svcomp/loop-industry-pattern/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT) ,
+	};
+	
+	
+	
 	private static final DirectoryFileEndingsPair[] BENCHMARKS_64BIT = {
 		/***** Category 6. SoftwareSystems *****/
 		/*** Subcategory  Systems_DeviceDriversLinux64_ReachSafety ***/
@@ -76,7 +90,6 @@ public class Svcomp17FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-3.14/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, FILES_PER_DIR_LIMIT) ,
 		new DirectoryFileEndingsPair("examples/svcomp/ldv-linux-4.0-rc1-mav/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET, FILES_PER_DIR_LIMIT) ,
 	};
-	// @formatter:on
 	
 	
 	
@@ -94,30 +107,39 @@ public class Svcomp17FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 	}
 
 	/**
-	 * List of path to setting files. 
-	 * Ultimate will run on each program with each setting that is defined here.
-	 * The path are defined relative to the folder "trunk/examples/settings/",
-	 * because we assume that all settings files are in this folder.
-	 * 
+	 * List of setting files, path defined relative to the folder 
+	 * "trunk/examples/settings/",
 	 */
-	private static final String[] SETTINGS_64BIT = {
-		// @formatter:off
-		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
-		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf",
-		// @formatter:on
+	private static final String[] SETTINGS_32BIT = {
+		"svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf",
+		"svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf",
 	};
+	
+	private static final String[] SETTINGS_64BIT = {
+//		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
+//		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf",
+	};
+	
+
+
 	
 	
 	private static final String[] TOOLCHAINS = {
-		// @formatter:off
 		"AutomizerC.xml",
-		// @formatter:on
 	};
+	// @formatter:on
 
 	
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
+		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_32BIT) {
+			for (final String toolchain : TOOLCHAINS) {
+				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
+						new String[]{dfep.getDirectory()}, dfep.getFileEndings(), SETTINGS_32BIT, 
+						toolchain, dfep.getOffset(), dfep.getLimit()));
+			}
+		}
 		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_64BIT) {
 			for (final String toolchain : TOOLCHAINS) {
 				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
