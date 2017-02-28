@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
@@ -154,9 +155,8 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	@SuppressWarnings("squid:S1699")
 	public MultiTrackTraceAbstractionRefinementStrategy(final ILogger logger,
 			final TaCheckAndRefinementPreferences prefs, final IUltimateServiceProvider services,
-			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory, 
-			final PredicateUnifier predicateUnifier,
-			final AssertionOrderModulation<LETTER> assertionOrderModulation,
+			final CfgSmtToolkit cfgSmtToolkit, final PredicateFactory predicateFactory,
+			final PredicateUnifier predicateUnifier, final AssertionOrderModulation<LETTER> assertionOrderModulation,
 			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
 			final TAPreferences taPrefsForInterpolantConsolidation, final int iteration,
 			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
@@ -240,7 +240,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		mHasShownInfeasibilityBefore = true;
 		if (mInterpolantGenerator == null) {
 			mInterpolantGenerator = RefinementStrategyUtils.constructInterpolantGenerator(mServices, mLogger, mPrefs,
-					mTaPrefsForInterpolantConsolidation, getTraceChecker(), mPredicateFactory, mPredicateUnifier, 
+					mTaPrefsForInterpolantConsolidation, getTraceChecker(), mPredicateFactory, mPredicateUnifier,
 					mCounterexample, mCegarLoopsBenchmark);
 		}
 		return mInterpolantGenerator;
@@ -389,7 +389,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	protected abstract String getCvc4Logic();
 
 	@Override
-	public PredicateUnifier getPredicateUnifier() {
+	public IPredicateUnifier getPredicateUnifier() {
 		return mPredicateUnifier;
 	}
 
