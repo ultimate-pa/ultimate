@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -60,7 +59,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.MultiTrackTraceAbstractionRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TaCheckAndRefinementPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.MultiTrackTraceAbstractionRefinementStrategy.Track;
 
 /**
  * interactive {@link IRefinementStrategy} that asks the user.
@@ -72,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		extends MultiTrackTraceAbstractionRefinementStrategy<LETTER> {
 
-	private IRefinementStrategy<LETTER> mThisOrFallback;
+	private IRefinementStrategy<LETTER> mFallback;
 
 	public ParrotRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
@@ -93,7 +91,7 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 
 	private Iterator<Track> useFallbackStrategy(final ParrotInteractiveIterationInfo itInfo) {
 		mLogger.info("using Fallback Strategy '" + itInfo.getFallbackTrack() + "'.");
-		mThisOrFallback = createFallbackStrategy(itInfo.getFallbackTrack());
+		mFallback = createFallbackStrategy(itInfo.getFallbackTrack());
 		return Collections.singletonList(Track.SMTINTERPOL_TREE_INTERPOLANTS).iterator();
 	}
 
@@ -114,7 +112,6 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 		if (itInfo.getNextInteractiveIteration() > mIteration)
 			return useFallbackStrategy(itInfo);
 
-		mThisOrFallback = this;
 		final Set<Track> left = new HashSet<>();
 		Arrays.stream(Track.values()).forEach(left::add);
 		return new Iterator<Track>() {
@@ -156,50 +153,60 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 
 	@Override
 	public boolean hasNextTraceChecker() {
-		return mThisOrFallback.hasNextTraceChecker();
+		return mFallback != null ? mFallback.hasNextTraceChecker() : super.hasNextTraceChecker();
 	}
 
 	@Override
 	public void nextTraceChecker() {
-		mThisOrFallback.nextTraceChecker();
+		if (mFallback != null) {
+			mFallback.nextTraceChecker();
+		} else {
+			super.nextTraceChecker();
+		}
 	}
 
 	@Override
 	public TraceChecker getTraceChecker() {
-		return mThisOrFallback.getTraceChecker();
+		return mFallback != null ? mFallback.getTraceChecker() : super.getTraceChecker();
 	}
 
 	@Override
 	public boolean hasNextInterpolantGenerator(List<InterpolantsPreconditionPostcondition> perfectIpps,
 			List<InterpolantsPreconditionPostcondition> imperfectIpps) {
-		return mThisOrFallback.hasNextInterpolantGenerator(perfectIpps, imperfectIpps);
+		return mFallback != null ? mFallback.hasNextInterpolantGenerator(perfectIpps, imperfectIpps)
+				: super.hasNextInterpolantGenerator(perfectIpps, imperfectIpps);
 	}
 
 	@Override
 	public void nextInterpolantGenerator() {
-		mThisOrFallback.nextInterpolantGenerator();
+		if (mFallback != null) {
+			mFallback.nextInterpolantGenerator();
+		} else {
+			super.nextInterpolantGenerator();
+		}
 	}
 
 	@Override
 	public IInterpolantGenerator getInterpolantGenerator() {
-		return mThisOrFallback.getInterpolantGenerator();
+		return mFallback != null ? mFallback.getInterpolantGenerator() : super.getInterpolantGenerator();
 	}
 
 	@Override
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
 			List<InterpolantsPreconditionPostcondition> perfectIpps,
 			List<InterpolantsPreconditionPostcondition> imperfectIpps) {
-		return mThisOrFallback.getInterpolantAutomatonBuilder(perfectIpps, imperfectIpps);
+		return mFallback != null ? mFallback.getInterpolantAutomatonBuilder(perfectIpps, imperfectIpps)
+				: super.getInterpolantAutomatonBuilder(perfectIpps, imperfectIpps);
 	}
 
 	@Override
 	public IPredicateUnifier getPredicateUnifier() {
-		return mThisOrFallback.getPredicateUnifier();
+		return mFallback != null ? mFallback.getPredicateUnifier() : super.getPredicateUnifier();
 	}
 
 	@Override
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
-		return mThisOrFallback.getExceptionBlacklist();
+		return mFallback != null ? mFallback.getExceptionBlacklist() : super.getExceptionBlacklist();
 	}
 
 	@Override
