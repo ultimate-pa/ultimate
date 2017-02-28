@@ -98,7 +98,7 @@ public class SpaceExModelBuilder {
 	private CfgSmtToolkit generateToolkit(final HybridAutomaton automaton) {
 		IPredicate axioms = null;
 		final Set<String> procedures = new HashSet<>();
-		procedures.add("MAIN");
+		procedures.add(HybridIcfgGenerator.PROC_NAME);
 		final Script script = SolverBuilder.buildAndInitializeSolver(mServices, mToolchainStorage,
 				mPreferenceManager.getSolverMode(), mPreferenceManager.getmSolverSettings(),
 				mPreferenceManager.ismDumpUsatCoreTrackBenchmark(), mPreferenceManager.ismDumpMainTrackBenchmark(),
@@ -106,7 +106,7 @@ public class SpaceExModelBuilder {
 		final ManagedScript managedScript = new ManagedScript(mServices, script);
 		mVariableManager = new HybridVariableManager(managedScript);
 		final HybridIcfgSymbolTable symbolTable =
-				new HybridIcfgSymbolTable(managedScript, automaton, "MAIN", mVariableManager);
+				new HybridIcfgSymbolTable(managedScript, automaton, HybridIcfgGenerator.PROC_NAME, mVariableManager);
 		final DefaultIcfgSymbolTable defaultTable = new DefaultIcfgSymbolTable(symbolTable, procedures);
 		defaultTable.finishConstruction();
 		final HashRelation<String, IProgramNonOldVar> proc2globals = new HashRelation<>();
