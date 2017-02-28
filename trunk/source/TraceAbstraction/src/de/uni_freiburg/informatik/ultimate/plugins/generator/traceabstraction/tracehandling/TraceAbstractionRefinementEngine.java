@@ -383,7 +383,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 					+ " imperfect sequences " + numberInterpolantsImperfect + " total " + allInterpolants.size());
 		}
 		mInterpolantAutomaton = strategy.getInterpolantAutomatonBuilder(perfectIpps, imperfectIpps).getResult();
-		if (perfectIpps.isEmpty()) {
+		if (!perfectIpps.isEmpty()) {
 			mSomePerfectSequenceFound = true;
 		}
 		return LBool.UNSAT;
