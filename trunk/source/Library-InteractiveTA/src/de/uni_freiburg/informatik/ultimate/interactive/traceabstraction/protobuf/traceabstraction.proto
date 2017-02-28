@@ -106,8 +106,24 @@ message Tracks {
 }
 
 message InteractiveIterationInfo {
-	Track fallback = 1;
+	Strategy fallback = 1;
 	int32 nextInteractiveIteration = 2;
+}
+
+enum Strategy {
+// Simple strategy that reads the information from the settings.
+	FIXED_PREFERENCES = 0;
+	// Taipan strategy.
+	TAIPAN = 1;
+	// Taipan without abstract interpretation
+	RUBBER_TAIPAN = 2;
+	// Multi track strategy that tries 1. Craig interpolation with SMTInterpol, and 2. Sp/Wp interpolation with Z3.
+	PENGUIN = 3;
+	// Multi track strategy that tries Sp/Wp interpolation and Craig interpolation.
+	WALRUS = 4;
+	CAMEL = 5;
+	WOLF = 6;
+	// Interactive PARROT strategy not listed here.
 }
 
 enum Track {

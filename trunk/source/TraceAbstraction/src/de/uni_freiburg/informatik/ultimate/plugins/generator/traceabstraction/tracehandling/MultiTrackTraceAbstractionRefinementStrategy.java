@@ -126,7 +126,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
-	private final int mIteration;
+	protected final int mIteration;
 	private final CegarLoopStatisticsGenerator mCegarLoopsBenchmark;
 
 	/**

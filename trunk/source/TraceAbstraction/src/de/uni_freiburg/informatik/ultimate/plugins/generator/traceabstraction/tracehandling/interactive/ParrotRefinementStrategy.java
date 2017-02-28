@@ -27,8 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive;
 
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
@@ -41,12 +44,18 @@ import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.AssertionOrderModulation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.MultiTrackTraceAbstractionRefinementStrategy;
@@ -62,6 +71,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
  */
 public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		extends MultiTrackTraceAbstractionRefinementStrategy<LETTER> {
+
+	private IRefinementStrategy<LETTER> mThisOrFallback;
+
 	public ParrotRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
@@ -79,8 +91,30 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 
 	protected abstract ParrotInteractiveIterationInfo getIterationInfo();
 
+	private Iterator<Track> useFallbackStrategy(final ParrotInteractiveIterationInfo itInfo) {
+		mLogger.info("using Fallback Strategy '" + itInfo.getFallbackTrack() + "'.");
+		mThisOrFallback = createFallbackStrategy(itInfo.getFallbackTrack());
+		return Collections.singletonList(Track.SMTINTERPOL_TREE_INTERPOLANTS).iterator();
+	}
+
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
+		final ParrotInteractiveIterationInfo itInfo = getIterationInfo();
+
+		if (itInfo.getNextInteractiveIteration() >= mIteration) {
+			try {
+				ParrotInteractiveIterationInfo other =
+						getInteractive().request(ParrotInteractiveIterationInfo.class).get();
+				itInfo.setFrom(other);
+			} catch (InterruptedException | ExecutionException e) {
+				mLogger.error("no client answer.");
+				return useFallbackStrategy(itInfo);
+			}
+		}
+		if (itInfo.getNextInteractiveIteration() > mIteration)
+			return useFallbackStrategy(itInfo);
+
+		mThisOrFallback = this;
 		final Set<Track> left = new HashSet<>();
 		Arrays.stream(Track.values()).forEach(left::add);
 		return new Iterator<Track>() {
@@ -118,6 +152,54 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 				return mNextTrack;
 			}
 		};
+	}
+
+	@Override
+	public boolean hasNextTraceChecker() {
+		return mThisOrFallback.hasNextTraceChecker();
+	}
+
+	@Override
+	public void nextTraceChecker() {
+		mThisOrFallback.nextTraceChecker();
+	}
+
+	@Override
+	public TraceChecker getTraceChecker() {
+		return mThisOrFallback.getTraceChecker();
+	}
+
+	@Override
+	public boolean hasNextInterpolantGenerator(List<InterpolantsPreconditionPostcondition> perfectIpps,
+			List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+		return mThisOrFallback.hasNextInterpolantGenerator(perfectIpps, imperfectIpps);
+	}
+
+	@Override
+	public void nextInterpolantGenerator() {
+		mThisOrFallback.nextInterpolantGenerator();
+	}
+
+	@Override
+	public IInterpolantGenerator getInterpolantGenerator() {
+		return mThisOrFallback.getInterpolantGenerator();
+	}
+
+	@Override
+	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
+			List<InterpolantsPreconditionPostcondition> perfectIpps,
+			List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+		return mThisOrFallback.getInterpolantAutomatonBuilder(perfectIpps, imperfectIpps);
+	}
+
+	@Override
+	public IPredicateUnifier getPredicateUnifier() {
+		return mThisOrFallback.getPredicateUnifier();
+	}
+
+	@Override
+	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
+		return mThisOrFallback.getExceptionBlacklist();
 	}
 
 	@Override

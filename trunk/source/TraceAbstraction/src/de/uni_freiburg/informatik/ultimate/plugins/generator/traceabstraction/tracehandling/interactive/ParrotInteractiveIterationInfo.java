@@ -1,28 +1,28 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.MultiTrackTraceAbstractionRefinementStrategy.Track;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 
 public class ParrotInteractiveIterationInfo {
-	private Track mFallbackTrack;
+	private RefinementStrategy mFallbackStrategy;
 	private int mNextInteractiveIteration;
 
-	public ParrotInteractiveIterationInfo(final Track fallbackTrack, final int nextInteractiveIteration) {
+	public ParrotInteractiveIterationInfo(final RefinementStrategy fallbackTrack, final int nextInteractiveIteration) {
 		setData(fallbackTrack, nextInteractiveIteration);
 	}
 
 	public ParrotInteractiveIterationInfo() {
 	}
 
-	public Track getFallbackTrack() {
-		return mFallbackTrack;
+	public RefinementStrategy getFallbackTrack() {
+		return mFallbackStrategy;
 	}
 
 	public int getNextInteractiveIteration() {
 		return mNextInteractiveIteration;
 	}
 
-	private void setData(final Track fallbackTrack, final int nextInteractiveIteration) {
-		mFallbackTrack = fallbackTrack;
+	private void setData(final RefinementStrategy fallbackTrack, final int nextInteractiveIteration) {
+		mFallbackStrategy = fallbackTrack;
 		mNextInteractiveIteration = nextInteractiveIteration;
 	}
 

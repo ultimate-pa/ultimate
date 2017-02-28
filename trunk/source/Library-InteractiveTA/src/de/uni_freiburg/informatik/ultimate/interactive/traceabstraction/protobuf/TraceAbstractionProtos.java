@@ -15,6 +15,197 @@ public final class TraceAbstractionProtos {
         (com.google.protobuf.ExtensionRegistryLite) registry);
   }
   /**
+   * Protobuf enum {@code de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy}
+   */
+  public enum Strategy
+      implements com.google.protobuf.ProtocolMessageEnum {
+    /**
+     * <pre>
+     * Simple strategy that reads the information from the settings.
+     * </pre>
+     *
+     * <code>FIXED_PREFERENCES = 0;</code>
+     */
+    FIXED_PREFERENCES(0),
+    /**
+     * <pre>
+     * Taipan strategy.
+     * </pre>
+     *
+     * <code>TAIPAN = 1;</code>
+     */
+    TAIPAN(1),
+    /**
+     * <pre>
+     * Taipan without abstract interpretation
+     * </pre>
+     *
+     * <code>RUBBER_TAIPAN = 2;</code>
+     */
+    RUBBER_TAIPAN(2),
+    /**
+     * <pre>
+     * Multi track strategy that tries 1. Craig interpolation with SMTInterpol, and 2. Sp/Wp interpolation with Z3.
+     * </pre>
+     *
+     * <code>PENGUIN = 3;</code>
+     */
+    PENGUIN(3),
+    /**
+     * <pre>
+     * Multi track strategy that tries Sp/Wp interpolation and Craig interpolation.
+     * </pre>
+     *
+     * <code>WALRUS = 4;</code>
+     */
+    WALRUS(4),
+    /**
+     * <code>CAMEL = 5;</code>
+     */
+    CAMEL(5),
+    /**
+     * <pre>
+     * Interactive PARROT strategy not listed here.
+     * </pre>
+     *
+     * <code>WOLF = 6;</code>
+     */
+    WOLF(6),
+    UNRECOGNIZED(-1),
+    ;
+
+    /**
+     * <pre>
+     * Simple strategy that reads the information from the settings.
+     * </pre>
+     *
+     * <code>FIXED_PREFERENCES = 0;</code>
+     */
+    public static final int FIXED_PREFERENCES_VALUE = 0;
+    /**
+     * <pre>
+     * Taipan strategy.
+     * </pre>
+     *
+     * <code>TAIPAN = 1;</code>
+     */
+    public static final int TAIPAN_VALUE = 1;
+    /**
+     * <pre>
+     * Taipan without abstract interpretation
+     * </pre>
+     *
+     * <code>RUBBER_TAIPAN = 2;</code>
+     */
+    public static final int RUBBER_TAIPAN_VALUE = 2;
+    /**
+     * <pre>
+     * Multi track strategy that tries 1. Craig interpolation with SMTInterpol, and 2. Sp/Wp interpolation with Z3.
+     * </pre>
+     *
+     * <code>PENGUIN = 3;</code>
+     */
+    public static final int PENGUIN_VALUE = 3;
+    /**
+     * <pre>
+     * Multi track strategy that tries Sp/Wp interpolation and Craig interpolation.
+     * </pre>
+     *
+     * <code>WALRUS = 4;</code>
+     */
+    public static final int WALRUS_VALUE = 4;
+    /**
+     * <code>CAMEL = 5;</code>
+     */
+    public static final int CAMEL_VALUE = 5;
+    /**
+     * <pre>
+     * Interactive PARROT strategy not listed here.
+     * </pre>
+     *
+     * <code>WOLF = 6;</code>
+     */
+    public static final int WOLF_VALUE = 6;
+
+
+    public final int getNumber() {
+      if (this == UNRECOGNIZED) {
+        throw new java.lang.IllegalArgumentException(
+            "Can't get the number of an unknown enum value.");
+      }
+      return value;
+    }
+
+    /**
+     * @deprecated Use {@link #forNumber(int)} instead.
+     */
+    @java.lang.Deprecated
+    public static Strategy valueOf(int value) {
+      return forNumber(value);
+    }
+
+    public static Strategy forNumber(int value) {
+      switch (value) {
+        case 0: return FIXED_PREFERENCES;
+        case 1: return TAIPAN;
+        case 2: return RUBBER_TAIPAN;
+        case 3: return PENGUIN;
+        case 4: return WALRUS;
+        case 5: return CAMEL;
+        case 6: return WOLF;
+        default: return null;
+      }
+    }
+
+    public static com.google.protobuf.Internal.EnumLiteMap<Strategy>
+        internalGetValueMap() {
+      return internalValueMap;
+    }
+    private static final com.google.protobuf.Internal.EnumLiteMap<
+        Strategy> internalValueMap =
+          new com.google.protobuf.Internal.EnumLiteMap<Strategy>() {
+            public Strategy findValueByNumber(int number) {
+              return Strategy.forNumber(number);
+            }
+          };
+
+    public final com.google.protobuf.Descriptors.EnumValueDescriptor
+        getValueDescriptor() {
+      return getDescriptor().getValues().get(ordinal());
+    }
+    public final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptorForType() {
+      return getDescriptor();
+    }
+    public static final com.google.protobuf.Descriptors.EnumDescriptor
+        getDescriptor() {
+      return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.getDescriptor().getEnumTypes().get(0);
+    }
+
+    private static final Strategy[] VALUES = values();
+
+    public static Strategy valueOf(
+        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
+      if (desc.getType() != getDescriptor()) {
+        throw new java.lang.IllegalArgumentException(
+          "EnumValueDescriptor is not for this type.");
+      }
+      if (desc.getIndex() == -1) {
+        return UNRECOGNIZED;
+      }
+      return VALUES[desc.getIndex()];
+    }
+
+    private final int value;
+
+    private Strategy(int value) {
+      this.value = value;
+    }
+
+    // @@protoc_insertion_point(enum_scope:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy)
+  }
+
+  /**
    * Protobuf enum {@code de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track}
    */
   public enum Track
@@ -189,7 +380,7 @@ public final class TraceAbstractionProtos {
     }
     public static final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptor() {
-      return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.getDescriptor().getEnumTypes().get(0);
+      return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.getDescriptor().getEnumTypes().get(1);
     }
 
     private static final Track[] VALUES = values();
@@ -305,7 +496,7 @@ public final class TraceAbstractionProtos {
     }
     public static final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptor() {
-      return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.getDescriptor().getEnumTypes().get(1);
+      return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.getDescriptor().getEnumTypes().get(2);
     }
 
     private static final Result[] VALUES = values();
@@ -3813,13 +4004,13 @@ public final class TraceAbstractionProtos {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track fallback = 1;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy fallback = 1;</code>
      */
     int getFallbackValue();
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track fallback = 1;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy fallback = 1;</code>
      */
-    de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track getFallback();
+    de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy getFallback();
 
     /**
      * <code>optional int32 nextInteractiveIteration = 2;</code>
@@ -3904,17 +4095,17 @@ public final class TraceAbstractionProtos {
     public static final int FALLBACK_FIELD_NUMBER = 1;
     private int fallback_;
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track fallback = 1;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy fallback = 1;</code>
      */
     public int getFallbackValue() {
       return fallback_;
     }
     /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track fallback = 1;</code>
+     * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy fallback = 1;</code>
      */
-    public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track getFallback() {
-      de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track result = de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track.valueOf(fallback_);
-      return result == null ? de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track.UNRECOGNIZED : result;
+    public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy getFallback() {
+      de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy result = de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy.valueOf(fallback_);
+      return result == null ? de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy.UNRECOGNIZED : result;
     }
 
     public static final int NEXTINTERACTIVEITERATION_FIELD_NUMBER = 2;
@@ -3938,7 +4129,7 @@ public final class TraceAbstractionProtos {
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
-      if (fallback_ != de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track.SMTINTERPOL_TREE_INTERPOLANTS.getNumber()) {
+      if (fallback_ != de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy.FIXED_PREFERENCES.getNumber()) {
         output.writeEnum(1, fallback_);
       }
       if (nextInteractiveIteration_ != 0) {
@@ -3951,7 +4142,7 @@ public final class TraceAbstractionProtos {
       if (size != -1) return size;
 
       size = 0;
-      if (fallback_ != de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track.SMTINTERPOL_TREE_INTERPOLANTS.getNumber()) {
+      if (fallback_ != de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy.FIXED_PREFERENCES.getNumber()) {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(1, fallback_);
       }
@@ -4213,13 +4404,13 @@ public final class TraceAbstractionProtos {
 
       private int fallback_ = 0;
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track fallback = 1;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy fallback = 1;</code>
        */
       public int getFallbackValue() {
         return fallback_;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track fallback = 1;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy fallback = 1;</code>
        */
       public Builder setFallbackValue(int value) {
         fallback_ = value;
@@ -4227,16 +4418,16 @@ public final class TraceAbstractionProtos {
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track fallback = 1;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy fallback = 1;</code>
        */
-      public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track getFallback() {
-        de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track result = de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track.valueOf(fallback_);
-        return result == null ? de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track.UNRECOGNIZED : result;
+      public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy getFallback() {
+        de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy result = de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy.valueOf(fallback_);
+        return result == null ? de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy.UNRECOGNIZED : result;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track fallback = 1;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy fallback = 1;</code>
        */
-      public Builder setFallback(de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track value) {
+      public Builder setFallback(de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy value) {
         if (value == null) {
           throw new NullPointerException();
         }
@@ -4246,7 +4437,7 @@ public final class TraceAbstractionProtos {
         return this;
       }
       /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track fallback = 1;</code>
+       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy fallback = 1;</code>
        */
       public Builder clearFallback() {
         
@@ -12417,59 +12608,62 @@ public final class TraceAbstractionProtos {
       "tions\022\007\n\003All\020\000\022\033\n\027LoopsAndPotentialCycle" +
       "s\020\001\"i\n\006Tracks\022_\n\005track\030\001 \003(\0162P.de.uni_fr" +
       "eiburg.informatik.ultimate.interactive.t",
-      "raceabstraction.protobuf.Track\"\240\001\n\030Inter" +
-      "activeIterationInfo\022b\n\010fallback\030\001 \001(\0162P." +
+      "raceabstraction.protobuf.Track\"\243\001\n\030Inter" +
+      "activeIterationInfo\022e\n\010fallback\030\001 \001(\0162S." +
       "de.uni_freiburg.informatik.ultimate.inte" +
-      "ractive.traceabstraction.protobuf.Track\022" +
-      " \n\030nextInteractiveIteration\030\002 \001(\005\"\032\n\010Que" +
-      "stion\022\016\n\006answer\030\001 \001(\010\"p\n\013CegarResult\022a\n\006" +
-      "result\030\001 \001(\0162Q.de.uni_freiburg.informati" +
-      "k.ultimate.interactive.traceabstraction." +
-      "protobuf.Result\"\252\007\n\023NestedWordAutomaton\022" +
-      "e\n\010internal\030\001 \001(\0132S.de.uni_freiburg.info",
-      "rmatik.ultimate.interactive.traceabstrac" +
-      "tion.protobuf.Alphabet\022a\n\004call\030\002 \001(\0132S.d" +
-      "e.uni_freiburg.informatik.ultimate.inter" +
-      "active.traceabstraction.protobuf.Alphabe" +
-      "t\022c\n\006return\030\003 \001(\0132S.de.uni_freiburg.info" +
-      "rmatik.ultimate.interactive.traceabstrac" +
-      "tion.protobuf.Alphabet\022d\n\006states\030\004 \003(\0132T" +
-      ".de.uni_freiburg.informatik.ultimate.int" +
-      "eractive.traceabstraction.protobuf.Predi" +
-      "cate\022\022\n\nemptyStack\030\005 \001(\005\022\017\n\007initial\030\006 \003(",
-      "\005\022\r\n\005final\030\007 \003(\005\022\200\001\n\rinternalEdges\030\010 \003(\013" +
-      "2i.de.uni_freiburg.informatik.ultimate.i" +
-      "nteractive.traceabstraction.protobuf.Nes" +
-      "tedWordAutomaton.transition\022|\n\tcallEdges" +
-      "\030\t \003(\0132i.de.uni_freiburg.informatik.ulti" +
-      "mate.interactive.traceabstraction.protob" +
-      "uf.NestedWordAutomaton.transition\022~\n\013ret" +
-      "urnEdges\030\n \003(\0132i.de.uni_freiburg.informa" +
-      "tik.ultimate.interactive.traceabstractio" +
-      "n.protobuf.NestedWordAutomaton.transitio",
-      "n\032I\n\ntransition\022\023\n\013originState\030\001 \001(\005\022\016\n\006" +
-      "letter\030\002 \001(\005\022\026\n\016successorState\030\003 \001(\005\"\370\002\n" +
-      "\rIterationInfo\022o\n\003run\030\001 \001(\0132b.de.uni_fre" +
-      "iburg.informatik.ultimate.interactive.tr" +
-      "aceabstraction.protobuf.IterationInfo.Ne" +
-      "stedRun\022\021\n\titeration\030\002 \001(\005\032\342\001\n\tNestedRun" +
-      "\022h\n\nnestedWord\030\001 \003(\0132T.de.uni_freiburg.i" +
+      "ractive.traceabstraction.protobuf.Strate" +
+      "gy\022 \n\030nextInteractiveIteration\030\002 \001(\005\"\032\n\010" +
+      "Question\022\016\n\006answer\030\001 \001(\010\"p\n\013CegarResult\022" +
+      "a\n\006result\030\001 \001(\0162Q.de.uni_freiburg.inform" +
+      "atik.ultimate.interactive.traceabstracti" +
+      "on.protobuf.Result\"\252\007\n\023NestedWordAutomat" +
+      "on\022e\n\010internal\030\001 \001(\0132S.de.uni_freiburg.i",
       "nformatik.ultimate.interactive.traceabst" +
-      "raction.protobuf.CodeBlock\022k\n\rstateSeque" +
-      "nce\030\002 \003(\0132T.de.uni_freiburg.informatik.u",
-      "ltimate.interactive.traceabstraction.pro" +
-      "tobuf.Predicate\"p\n\010Alphabet\022d\n\006letter\030\001 " +
-      "\003(\0132T.de.uni_freiburg.informatik.ultimat" +
+      "raction.protobuf.Alphabet\022a\n\004call\030\002 \001(\0132" +
+      "S.de.uni_freiburg.informatik.ultimate.in" +
+      "teractive.traceabstraction.protobuf.Alph" +
+      "abet\022c\n\006return\030\003 \001(\0132S.de.uni_freiburg.i" +
+      "nformatik.ultimate.interactive.traceabst" +
+      "raction.protobuf.Alphabet\022d\n\006states\030\004 \003(" +
+      "\0132T.de.uni_freiburg.informatik.ultimate." +
+      "interactive.traceabstraction.protobuf.Pr" +
+      "edicate\022\022\n\nemptyStack\030\005 \001(\005\022\017\n\007initial\030\006",
+      " \003(\005\022\r\n\005final\030\007 \003(\005\022\200\001\n\rinternalEdges\030\010 " +
+      "\003(\0132i.de.uni_freiburg.informatik.ultimat" +
       "e.interactive.traceabstraction.protobuf." +
-      "CodeBlock\"\031\n\tCodeBlock\022\014\n\004code\030\001 \001(\t\"\032\n\t" +
-      "Predicate\022\r\n\005label\030\001 \001(\t*\260\001\n\005Track\022!\n\035SM" +
-      "TINTERPOL_TREE_INTERPOLANTS\020\000\022\022\n\016SMTINTE" +
-      "RPOL_FP\020\001\022\013\n\007Z3_FPBP\020\002\022\t\n\005Z3_FP\020\003\022\032\n\026Z3_" +
-      "NESTED_INTERPOLANTS\020\004\022\r\n\tCVC4_FPBP\020\005\022\013\n\007" +
-      "CVC4_FP\020\006\022\020\n\014MATHSAT_FPBP\020\007\022\016\n\nMATHSAT_F",
-      "P\020\010*8\n\006Result\022\010\n\004SAFE\020\000\022\n\n\006UNSAFE\020\001\022\013\n\007T" +
-      "IMEOUT\020\002\022\013\n\007UNKNOWN\020\003B\030B\026TraceAbstractio" +
-      "nProtosb\006proto3"
+      "NestedWordAutomaton.transition\022|\n\tcallEd" +
+      "ges\030\t \003(\0132i.de.uni_freiburg.informatik.u" +
+      "ltimate.interactive.traceabstraction.pro" +
+      "tobuf.NestedWordAutomaton.transition\022~\n\013" +
+      "returnEdges\030\n \003(\0132i.de.uni_freiburg.info" +
+      "rmatik.ultimate.interactive.traceabstrac" +
+      "tion.protobuf.NestedWordAutomaton.transi",
+      "tion\032I\n\ntransition\022\023\n\013originState\030\001 \001(\005\022" +
+      "\016\n\006letter\030\002 \001(\005\022\026\n\016successorState\030\003 \001(\005\"" +
+      "\370\002\n\rIterationInfo\022o\n\003run\030\001 \001(\0132b.de.uni_" +
+      "freiburg.informatik.ultimate.interactive" +
+      ".traceabstraction.protobuf.IterationInfo" +
+      ".NestedRun\022\021\n\titeration\030\002 \001(\005\032\342\001\n\tNested" +
+      "Run\022h\n\nnestedWord\030\001 \003(\0132T.de.uni_freibur" +
+      "g.informatik.ultimate.interactive.tracea" +
+      "bstraction.protobuf.CodeBlock\022k\n\rstateSe" +
+      "quence\030\002 \003(\0132T.de.uni_freiburg.informati",
+      "k.ultimate.interactive.traceabstraction." +
+      "protobuf.Predicate\"p\n\010Alphabet\022d\n\006letter" +
+      "\030\001 \003(\0132T.de.uni_freiburg.informatik.ulti" +
+      "mate.interactive.traceabstraction.protob" +
+      "uf.CodeBlock\"\031\n\tCodeBlock\022\014\n\004code\030\001 \001(\t\"" +
+      "\032\n\tPredicate\022\r\n\005label\030\001 \001(\t*n\n\010Strategy\022" +
+      "\025\n\021FIXED_PREFERENCES\020\000\022\n\n\006TAIPAN\020\001\022\021\n\rRU" +
+      "BBER_TAIPAN\020\002\022\013\n\007PENGUIN\020\003\022\n\n\006WALRUS\020\004\022\t" +
+      "\n\005CAMEL\020\005\022\010\n\004WOLF\020\006*\260\001\n\005Track\022!\n\035SMTINTE" +
+      "RPOL_TREE_INTERPOLANTS\020\000\022\022\n\016SMTINTERPOL_",
+      "FP\020\001\022\013\n\007Z3_FPBP\020\002\022\t\n\005Z3_FP\020\003\022\032\n\026Z3_NESTE" +
+      "D_INTERPOLANTS\020\004\022\r\n\tCVC4_FPBP\020\005\022\013\n\007CVC4_" +
+      "FP\020\006\022\020\n\014MATHSAT_FPBP\020\007\022\016\n\nMATHSAT_FP\020\010*8" +
+      "\n\006Result\022\010\n\004SAFE\020\000\022\n\n\006UNSAFE\020\001\022\013\n\007TIMEOU" +
+      "T\020\002\022\013\n\007UNKNOWN\020\003B\030B\026TraceAbstractionProt" +
+      "osb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
