@@ -39,6 +39,20 @@ message ResultSummary {
 	ToolChainResult result = 2;
 }
 
+message ToolchainResults {
+	map < string, Results > results = 1;
+}
+
+message Results {
+	repeated Result results = 1;
+}
+
+message Result {
+	string plugin = 1;
+	string shortDescription = 2;
+	string longDescription = 3;
+}
+
 enum ToolChainResult {
 	GENERICRESULT = 0;
 	NORESULT = -1;

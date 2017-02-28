@@ -77,8 +77,7 @@ import de.uni_freiburg.informatik.ultimate.servercontroller.util.CommandLineArgs
 import de.uni_freiburg.informatik.ultimate.servercontroller.util.RcpUtils;
 
 /**
- * The {@link ServerController} class provides a user interface for Clients that
- * can connect via TCP.
+ * The {@link ServerController} class provides a user interface for Clients that can connect via TCP.
  *
  * @author Julian Jarecki
  */
@@ -122,14 +121,14 @@ public class ServerController implements IController<RunDefinition> {
 		mServer = new ProtoServer(mLogger, cla.getPort());
 
 		// final File workingDir = RcpUtils.getWorkingDirectory();
-		final Map<File, IToolchainData<RunDefinition>> availableToolchains = getAvailableToolchains(core,
-				cla.getToolchainDirPath());
+		final Map<File, IToolchainData<RunDefinition>> availableToolchains =
+				getAvailableToolchains(core, cla.getToolchainDirPath());
 		if (availableToolchains.isEmpty()) {
 			return -1;
 		}
 
-		final File[] availableSettingsFiles = cla.getSettingsFilePath()
-				.listFiles((file, name) -> name.endsWith(".epf"));
+		final File[] availableSettingsFiles =
+				cla.getSettingsFilePath().listFiles((file, name) -> name.endsWith(".epf"));
 		if (availableSettingsFiles.length == 0) {
 			mLogger.error("No Settings files found in " + cla.getSettingsFilePath().getAbsolutePath());
 			return -1;
@@ -275,9 +274,15 @@ public class ServerController implements IController<RunDefinition> {
 	@Override
 	public void displayToolchainResults(final IToolchainData<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
-		final ResultSummarizer summarizer = new ResultSummarizer(results);
+		//final ResultSummarizer summarizer = new ResultSummarizer(results);
+		ResultsWrapper wrapper = new ResultsWrapper();
+		wrapper.results = results;
 
-		mInternalInterface.send(summarizer);
+		mInternalInterface.send(wrapper);
+	}
+
+	public static class ResultsWrapper {
+		public Map<String, List<IResult>> results;
 	}
 
 	@Override
