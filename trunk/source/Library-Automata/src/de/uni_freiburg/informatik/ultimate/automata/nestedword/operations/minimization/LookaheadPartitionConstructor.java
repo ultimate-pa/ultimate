@@ -96,19 +96,6 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 	private final boolean mUseSimulationHack;
 
 	/**
-	 * Standard constructor.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param operand
-	 *            input automaton
-	 */
-	public LookaheadPartitionConstructor(final AutomataLibraryServices services,
-			final INestedWordAutomaton<LETTER, STATE> operand) {
-		this(services, operand, false, true);
-	}
-
-	/**
 	 * Constructor with more options.
 	 * 
 	 * @param services
