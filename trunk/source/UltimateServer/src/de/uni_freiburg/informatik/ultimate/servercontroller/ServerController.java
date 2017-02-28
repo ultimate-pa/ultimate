@@ -168,29 +168,28 @@ public class ServerController implements IController<RunDefinition> {
 		converter.initInterface(mProtoInterface, mServer.getTypeRegistry());
 		mInternalInterface = converter.getInterface();
 
-		// If we wanted files directly - but thats not supported by Ultimate
-		// Core :(
+		// If we wanted files directly - but thats not supported by Ultimate Core.
 		// mServer.getTypeRegistry().register(Controller.File.class);
 		// mServer.getTypeRegistry().register(Controller.File.Request.class);
-
-		// mInternalInterface.send(new IllegalStateException("Funny test
-		// exception! :D"));
 
 		final List<File> tcFiles = new ArrayList<>(availableToolchains.keySet());
 
 		mServer.getTypeRegistry().register(Controller.Choice.Request.class);
 		mServer.getTypeRegistry().register(Controller.Choice.class);
 
-		final File settingsFile = requestChoice(availableSettingsFiles, File::getName);
-		try {
-			core.resetPreferences();
-			core.loadPreferences(settingsFile.getAbsolutePath());
-		} catch (Exception e) {
-			throw new IllegalStateException("could not load settings", e);
-		}
-		// TODO: allow custom settings for plugins chosen from toolchain (see
-		// cli controller)
+		requestAndLoadSettings(core, availableSettingsFiles);
+		requestAndLoadToolchain(core, tcFiles);
 
+		final File[] inputFiles = requestInput(core, availableInputFiles);
+
+		execToolchain(core, inputFiles);
+
+		mLogger.info("Toolchain finished - waiting for Client to Quit.");
+		client.waitForQuit().get();
+	}
+
+	private void requestAndLoadToolchain(final ICore<RunDefinition> core, final List<File> tcFiles)
+			throws InterruptedException, ExecutionException {
 		final File tcFile = requestChoice(tcFiles, File::getName);
 		try {
 			mToolchain = core.createToolchainData(tcFile.getAbsolutePath());
@@ -200,17 +199,33 @@ public class ServerController implements IController<RunDefinition> {
 			throw new IllegalStateException(
 					"Toolchain file at path " + tcFile.getAbsolutePath() + " was malformed: " + e1.getMessage());
 		}
+	}
 
+	private void requestAndLoadSettings(final ICore<RunDefinition> core, final File[] availableSettingsFiles)
+			throws InterruptedException, ExecutionException {
+		// TODO: allow custom settings for plugins chosen from toolchain (see
+		// cli controller)
+		final File settingsFile = requestChoice(availableSettingsFiles, File::getName);
+		try {
+			core.resetPreferences();
+			core.loadPreferences(settingsFile.getAbsolutePath());
+		} catch (Exception e) {
+			throw new IllegalStateException("could not load settings", e);
+		}
+	}
+
+	private File[] requestInput(final ICore<RunDefinition> core, final File[] availableInputFiles)
+			throws InterruptedException, ExecutionException {
 		final File inputFile = requestChoice(availableInputFiles, File::getName);
 
-		final File[] inputFiles = new File[] { inputFile };
+		return new File[] { inputFile };
+	}
 
+	private void execToolchain(final ICore<RunDefinition> core, final File[] inputFiles)
+			throws InterruptedException, ExecutionException {
 		final BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, mLogger, inputFiles);
 		tcj.schedule();
 		tcj.join();
-
-		mLogger.info("Toolchain finished - waiting for Client to Quit.");
-		client.waitForQuit().get();
 	}
 
 	private <T> T requestChoice(T[] choices, Function<T, String> toString)
