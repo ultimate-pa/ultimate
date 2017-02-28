@@ -32,15 +32,15 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * Rule of a TreeAutomaton. F(q1, ..., qn) -> p
- * @author mostafa (mostafa.amin93@gmail.com)
+ * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * 
- * @param <LETTER> Letters of the automaton.
- * @param <STATE> States of the automaton.
+ * @param <R> Letters of the automaton.
+ * @param <S> States of the automaton.
  */
-public class TreeAutomatonRule<LETTER, STATE> {
-	private final LETTER mLetter;
-	private final List<STATE> mSrc;
-	private final STATE mDest;
+public class TreeAutomatonRule<R, S> {
+	private final R mLetter;
+	private final List<S> mSrc;
+	private final S mDest;
 	
 	/**
 	 * Construct a rule: letter(src) -> dest
@@ -48,19 +48,19 @@ public class TreeAutomatonRule<LETTER, STATE> {
 	 * @param src
 	 * @param dest
 	 */
-	public TreeAutomatonRule(LETTER letter, List<STATE> src, STATE dest) {
+	public TreeAutomatonRule(R letter, List<S> src, S dest) {
 		this.mLetter = letter;
 		this.mSrc = src;
 		this.mDest = dest;
 	}
 	
-	public List<STATE> getSource() {
+	public List<S> getSource() {
 		return mSrc;
 	}
-	public LETTER getLetter() {
+	public R getLetter() {
 		return mLetter;
 	}
-	public STATE getDest() {
+	public S getDest() {
 		return mDest;
 	}
 	public int getArity() {
@@ -75,7 +75,7 @@ public class TreeAutomatonRule<LETTER, STATE> {
 		if (!(x instanceof TreeAutomatonRule)) {
 			return false;
 		}
-		final TreeAutomatonRule<LETTER, STATE> t = (TreeAutomatonRule<LETTER, STATE>) x;
+		final TreeAutomatonRule<R, S> t = (TreeAutomatonRule<R, S>) x;
 		if (!mDest.equals(t.mDest) || !mLetter.equals(t.mLetter) || t.mSrc.size() != mSrc.size()) {
 			return false;
 		}

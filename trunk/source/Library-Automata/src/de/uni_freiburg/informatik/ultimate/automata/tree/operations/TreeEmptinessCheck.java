@@ -44,19 +44,24 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 /**
  * Check emptiness of a tree automaton. The output is TreeRun.
  * 
- * @author mostafa
+ * @author Mostafa M. Amin <mostafa.amin93@gmail.com>
  *
- * @param <LETTER>
+ * @param <R>
  *            letter class of tree automaton.
- * @param <STATE>
+ * @param <S>
  *            state class of tree automaton.
  */
-public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class TreeEmptinessCheck<R, S> implements IOperation<R, S, IStateFactory<S>> {
 
-	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
-	protected final TreeRun<LETTER, STATE> mResult;
+	private final ITreeAutomatonBU<R, S> mTreeAutomaton;
+	protected final TreeRun<R, S> mResult;
 
-	public TreeEmptinessCheck(final AutomataLibraryServices services, final TreeAutomatonBU<LETTER, STATE> tree) {
+	/***
+	 * TreeEmptiness checker
+	 * @param services
+	 * @param tree
+	 */
+	public TreeEmptinessCheck(final AutomataLibraryServices services, final TreeAutomatonBU<R, S> tree) {
 		mTreeAutomaton = tree;
 		mResult = computeResult();
 	}
@@ -76,23 +81,27 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 		return "Exit emptiness check";
 	}
 
-	private TreeRun<LETTER, STATE> computeResult() {
-		final LinkedList<TreeAutomatonRule<LETTER, STATE>> worklist = new LinkedList<>();
+	/***
+	 * compute the emptiness check.
+	 * @return
+	 */
+	private TreeRun<R, S> computeResult() {
+		final LinkedList<TreeAutomatonRule<R, S>> worklist = new LinkedList<>();
 
-		final Map<STATE, Collection<TreeAutomatonRule<LETTER, STATE>>> rulesBySource = new HashMap<>();
+		final Map<S, Collection<TreeAutomatonRule<R, S>>> rulesBySource = new HashMap<>();
 
-		final Map<STATE, TreeRun<LETTER, STATE>> soltree = new HashMap<>();
+		final Map<S, TreeRun<R, S>> soltree = new HashMap<>();
 
-		for (final STATE init : mTreeAutomaton.getInitialStates()) {
-			soltree.put(init, new TreeRun<LETTER, STATE>(init));
+		for (final S init : mTreeAutomaton.getInitialStates()) {
+			soltree.put(init, new TreeRun<R, S>(init));
 		}
-		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {
+		for (final TreeAutomatonRule<R, S> rule : mTreeAutomaton.getRules()) {
 			boolean initialRules = true;
 
-			for (final STATE sourceState : rule.getSource()) {
+			for (final S sourceState : rule.getSource()) {
 				initialRules &= mTreeAutomaton.isInitialState(sourceState);
 
-				Collection<TreeAutomatonRule<LETTER, STATE>> sourceRules;
+				Collection<TreeAutomatonRule<R, S>> sourceRules;
 				if (rulesBySource.containsKey(sourceState)) {
 					sourceRules = rulesBySource.get(sourceState);
 				} else {
@@ -107,17 +116,17 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 		}
 
 		while (!worklist.isEmpty()) {
-			final TreeAutomatonRule<LETTER, STATE> rule = worklist.poll();
-			final STATE dest = rule.getDest();
+			final TreeAutomatonRule<R, S> rule = worklist.poll();
+			final S dest = rule.getDest();
 
-			final List<TreeRun<LETTER, STATE>> subTrees = new LinkedList<>();
+			final List<TreeRun<R, S>> subTrees = new LinkedList<>();
 			if (soltree.containsKey(dest)) {
 				// Already computed.
 				continue;
 			}
 
 			boolean allMarked = true;
-			for (final STATE q : rule.getSource()) {
+			for (final S q : rule.getSource()) {
 				if (!soltree.containsKey(q)) {
 					allMarked = false;
 					break;
@@ -125,17 +134,14 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 				subTrees.add(soltree.get(q));
 			}
 			if (allMarked) {
-				final TreeRun<LETTER, STATE> newTree = new TreeRun<>(dest, rule.getLetter(), subTrees);
+				final TreeRun<R, S> newTree = new TreeRun<>(dest, rule.getLetter(), subTrees);
 				soltree.put(dest, newTree);
-
 				if (mTreeAutomaton.isFinalState(dest)) {
 					return newTree;
 				}
 				if (rulesBySource.containsKey(dest)) {
-					for (final TreeAutomatonRule<LETTER, STATE> considerNext : rulesBySource.get(dest)) {
-						worklist.add(considerNext);
-						// worklist.push(considerNext); // depth first
-					}
+					worklist.addAll(rulesBySource.get(dest));
+					// worklist.pushAll(considerNext); // depth first
 				}
 			}
 
@@ -144,12 +150,12 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 	}
 
 	@Override
-	public TreeRun<LETTER, STATE> getResult() {
+	public TreeRun<R, S> getResult() {
 		return mResult;
 	}
 
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<S> stateFactory) throws AutomataLibraryException {
 		return false;
 	}
 }

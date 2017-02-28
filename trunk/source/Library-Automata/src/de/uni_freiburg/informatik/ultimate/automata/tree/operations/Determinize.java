@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -49,24 +50,24 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
  * 
  * @author mostafa (mostafa.amin93@gmail.com)
  *
- * @param <LETTER>
+ * @param <R>
  *            letter of the tree automaton.
- * @param <STATE>
+ * @param <S>
  *            state of the tree automaton.
  */
-public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
+public class Determinize<R, S> implements IOperation<R, S, IStateFactory<S>> {
 
-	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
-	private final IMergeStateFactory<STATE> mStateFactoryMerge;
-	private final IEmptyStackStateFactory<STATE> mStateFactoryEmptyStack;
-	private final Map<Set<STATE>, STATE> mReducedStates;
+	private final ITreeAutomatonBU<R, S> mTreeAutomaton;
+	private final IMergeStateFactory<S> mStateFactoryMerge;
+	private final IEmptyStackStateFactory<S> mStateFactoryEmptyStack;
+	private final Map<Set<S>, S> mReducedStates;
 
-	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
+	protected final ITreeAutomatonBU<R, S> mResult;
 	private final AutomataLibraryServices mServices;
 
-	public <SF extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Determinize(
-			final AutomataLibraryServices services, final SF factory,
-			final ITreeAutomatonBU<LETTER, STATE> tree) {
+	public <F extends IMergeStateFactory<S> & IEmptyStackStateFactory<S>> Determinize(
+			final AutomataLibraryServices services, final F factory,
+			final ITreeAutomatonBU<R, S> tree) {
 		mServices = services;
 		mReducedStates = new HashMap<>();
 		mStateFactoryMerge = factory;
@@ -76,7 +77,7 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE, ISt
 		mResult = computeResult();
 	}
 
-	private STATE reduceState(final Set<STATE> key) {
+	private S reduceState(final Set<S> key) {
 		if (!mReducedStates.containsKey(key)) {
 			mReducedStates.put(key, mStateFactoryMerge.merge(key));
 		}
@@ -97,11 +98,51 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE, ISt
 	public String exitMessage() {
 		return "Exiting determinization";
 	}
+	
+	private TreeAutomatonBU<R, S> constructFromRules(final Map<R, Map<List<Set<S>>, Set<S>>> rules) {
+		final TreeAutomatonBU<R, S> res = new TreeAutomatonBU<>();
+		res.extendAlphabet(mTreeAutomaton.getAlphabet());
 
-	private ITreeAutomatonBU<LETTER, STATE> computeResult() {
-		final Map<STATE, Set<STATE>> stateToSState = new HashMap<>();
+		for (final R letter : rules.keySet()) {
+			final Map<List<Set<S>>, Set<S>> mp = rules.get(letter);
+			for (final List<Set<S>> sSrc : mp.keySet()) {
+				final List<S> src = new ArrayList<>();
+				for (final Set<S> sub : sSrc) {
+					src.add(reduceState(sub));
+				}
+				final Set<S> sDest = mp.get(sSrc);
+				final S dest = reduceState(sDest);
+				res.addRule(new TreeAutomatonRule<>(letter, src, dest));
 
-		final Map<LETTER, Map<List<Set<STATE>>, Set<STATE>>> rules = new HashMap<>();
+				for (final Set<S> sub : sSrc) {
+					final S state = reduceState(sub);
+					for (final S s : sub) {
+						if (mTreeAutomaton.isInitialState(s)) {
+							res.addInitialState(state);
+						}
+						if (mTreeAutomaton.isFinalState(s)) {
+							res.addFinalState(state);
+						}
+					}
+					
+				}
+				for (final S s : sDest) {
+					if (mTreeAutomaton.isFinalState(s)) {
+						res.addFinalState(dest);
+					}
+					if (mTreeAutomaton.isInitialState(s)) {
+						res.addInitialState(dest);
+					}
+				}
+			}
+		}
+		return res;
+	}
+	
+	private ITreeAutomatonBU<R, S> computeResult() {
+		final Map<S, Set<S>> stateToSState = new HashMap<>();
+
+		final Map<R, Map<List<Set<S>>, Set<S>>> rules = new HashMap<>();
 
 		/*
 		 * // Dummy rules final STATE dummyState = stateFactory.createEmptyStackState(); final Set<STATE> superSet = new
@@ -115,67 +156,68 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE, ISt
 		 * source.add(superSet); } if (!mp.containsKey(source)) { mp.put(source, new HashSet<STATE>()); }
 		 * mp.get(source).add(dummyState); } // Dummy Rules end.
 		 */
-		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {
+		for (final TreeAutomatonRule<R, S> rule : mTreeAutomaton.getRules()) {
 			if (!rules.containsKey(rule.getLetter())) {
 				rules.put(rule.getLetter(), new HashMap<>());
 			}
-			final Map<List<Set<STATE>>, Set<STATE>> mp = rules.get(rule.getLetter());
-			final List<Set<STATE>> source = new ArrayList<>();
-			for (final STATE sr : rule.getSource()) {
+			final Map<List<Set<S>>, Set<S>> mp = rules.get(rule.getLetter());
+			final List<Set<S>> source = new ArrayList<>();
+			for (final S sr : rule.getSource()) {
 				if (!stateToSState.containsKey(sr)) {
-					final Set<STATE> nw = new HashSet<>();
+					final Set<S> nw = new HashSet<>();
 					nw.add(sr);
 					stateToSState.put(sr, nw);
 				}
 				source.add(stateToSState.get(sr));
 			}
-			final STATE sr = rule.getDest();
+			final S sr = rule.getDest();
 			if (!stateToSState.containsKey(sr)) {
-				final Set<STATE> nw = new HashSet<>();
+				final Set<S> nw = new HashSet<>();
 				nw.add(sr);
 				stateToSState.put(sr, nw);
 			}
 			if (!mp.containsKey(source)) {
-				mp.put(source, new HashSet<STATE>());
+				mp.put(source, new HashSet<S>());
 			}
 			mp.get(source).add(sr);
 		}
 
-		final LinkedList<Set<STATE>> worklist = new LinkedList<>();
-		for (final LETTER letter : rules.keySet()) {
-			final Map<List<Set<STATE>>, Set<STATE>> mp = rules.get(letter);
-			for (final List<Set<STATE>> st : mp.keySet()) {
-				if (mp.get(st).size() > 1) {
-					worklist.add(mp.get(st));
+		final LinkedList<Set<S>> worklist = new LinkedList<>();
+		for (final Entry<R, Map<List<Set<S>>, Set<S>>> letterRule : rules.entrySet()) {
+			final Map<List<Set<S>>, Set<S>> mp = letterRule.getValue();
+			for (final Entry<List<Set<S>>, Set<S>> st : mp.entrySet()) {
+				if (st.getValue().size() > 1) {
+					worklist.add(st.getValue());
 				}
 			}
 		}
-		final Set<Set<STATE>> visited = new HashSet<>();
+		final Set<Set<S>> visited = new HashSet<>();
 		while (!worklist.isEmpty()) {
-			final Set<STATE> state = worklist.poll();
+			final Set<S> state = worklist.poll();
 			if (visited.contains(state)) {
 				continue;
 			}
 			visited.add(state);
-			final Map<LETTER, Map<List<Set<STATE>>, Set<Set<STATE>>>> newRules = new HashMap<>();
-			for (final LETTER letter : rules.keySet()) {
+			final Map<R, Map<List<Set<S>>, Set<Set<S>>>> newRules = new HashMap<>();
+			for (final Entry<R, Map<List<Set<S>>, Set<S>>> letterRule : rules.entrySet()) {
+				final R letter = letterRule.getKey();
 				if (!newRules.containsKey(letter)) {
 					newRules.put(letter, new HashMap<>());
 				}
-				final Map<List<Set<STATE>>, Set<STATE>> mp = rules.get(letter);
-				for (final List<Set<STATE>> key : mp.keySet()) {
-					final ArrayList<Set<STATE>> src = (ArrayList<Set<STATE>>) key;
-					final Set<STATE> dest = mp.get(key);
+				final Map<List<Set<S>>, Set<S>> mp = letterRule.getValue();
+				for (final Entry<List<Set<S>>, Set<S>> srcDest : mp.entrySet()) {
+					final ArrayList<Set<S>> src = (ArrayList<Set<S>>) srcDest.getKey();
+					final Set<S> dest = srcDest.getValue();
 					// letter(src) -> dest
 					int idx = 0;
-					for (final Set<STATE> srcQ : src) {
+					for (final Set<S> srcQ : src) {
 						if (state.containsAll(srcQ)) {
 							@SuppressWarnings("unchecked")
-							final ArrayList<Set<STATE>> toAdd = (ArrayList<Set<STATE>>) src.clone();
+							final ArrayList<Set<S>> toAdd = (ArrayList<Set<S>>) src.clone();
 							toAdd.set(idx, state);
 
 							if (!newRules.get(letter).containsKey(toAdd)) {
-								newRules.get(letter).put(toAdd, new HashSet<Set<STATE>>());
+								newRules.get(letter).put(toAdd, new HashSet<Set<S>>());
 							}
 							newRules.get(letter).get(toAdd).add(dest);
 						}
@@ -183,13 +225,13 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE, ISt
 					}
 				}
 			}
-			for (final LETTER letter : newRules.keySet()) {
-				final Map<List<Set<STATE>>, Set<Set<STATE>>> mp = newRules.get(letter);
-				for (final List<Set<STATE>> st : mp.keySet()) {
+			for (final R letter : newRules.keySet()) {
+				final Map<List<Set<S>>, Set<Set<S>>> mp = newRules.get(letter);
+				for (final List<Set<S>> st : mp.keySet()) {
 
-					final Set<Set<STATE>> dest = mp.get(st);
-					final Set<STATE> uni = new HashSet<>();
-					for (final Set<STATE> s : dest) {
+					final Set<Set<S>> dest = mp.get(st);
+					final Set<S> uni = new HashSet<>();
+					for (final Set<S> s : dest) {
 						uni.addAll(s);
 					}
 					rules.get(letter).put(st, uni);
@@ -199,54 +241,18 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE, ISt
 				}
 			}
 		}
-		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
 
-		res.extendAlphabet(mTreeAutomaton.getAlphabet());
-
-		for (final LETTER letter : rules.keySet()) {
-			final Map<List<Set<STATE>>, Set<STATE>> mp = rules.get(letter);
-			for (final List<Set<STATE>> sSrc : mp.keySet()) {
-				final List<STATE> src = new ArrayList<>();
-				for (final Set<STATE> sub : sSrc) {
-					src.add(reduceState(sub));
-				}
-				final Set<STATE> sDest = mp.get(sSrc);
-				final STATE dest = reduceState(sDest);
-				res.addRule(new TreeAutomatonRule<>(letter, src, dest));
-
-				for (final Set<STATE> sub : sSrc) {
-					final STATE state = reduceState(sub);
-					for (final STATE s : sub) {
-						if (mTreeAutomaton.isInitialState(s)) {
-							res.addInitialState(state);
-						}
-						if (mTreeAutomaton.isFinalState(s)) {
-							res.addFinalState(state);
-						}
-					}
-				}
-				for (final STATE s : sDest) {
-					if (mTreeAutomaton.isFinalState(s)) {
-						res.addFinalState(dest);
-					}
-					if (mTreeAutomaton.isInitialState(s)) {
-						res.addInitialState(dest);
-					}
-				}
-			}
-		}
-
-		final Totalize<LETTER, STATE> op = new Totalize<>(mServices, mStateFactoryEmptyStack, res);
+		final Totalize<R, S> op = new Totalize<>(mServices, mStateFactoryEmptyStack, constructFromRules(rules));
 		return op.getResult();
 	}
 
 	@Override
-	public ITreeAutomatonBU<LETTER, STATE> getResult() {
+	public ITreeAutomatonBU<R, S> getResult() {
 		return mResult;
 	}
 
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<S> stateFactory) throws AutomataLibraryException {
 		return false;
 	}
 }

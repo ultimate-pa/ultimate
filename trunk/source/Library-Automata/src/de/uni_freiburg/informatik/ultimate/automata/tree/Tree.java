@@ -32,17 +32,18 @@ import java.util.List;
 /**
  * Class to create a tree for the tree automaton.
  * @author mostafa.amin93@gmail.com, grugelt@uni-freiburg.de
+ * @param <R> symbol
  */
-public class Tree<LETTER> {
+public class Tree<R> {
 
-	private final List<Tree<LETTER>> children;
-	private final LETTER symbol;
+	private final List<Tree<R>> children;
+	private final R symbol;
 	
 	/**
 	 * Construct a tree with root symbol.
 	 * @param symbol
 	 */
-	public Tree(final LETTER symbol) {
+	public Tree(final R symbol) {
 		this(symbol, new ArrayList<>());
 	}
 	/**
@@ -50,9 +51,9 @@ public class Tree<LETTER> {
 	 * @param symbol
 	 * @param children
 	 */
-	public Tree(final LETTER symbol, final List<Tree<LETTER>> children) {
+	public Tree(final R symbol, final List<Tree<R>> children) {
 		this.children = new ArrayList<>();
-		for (final Tree<LETTER> child : children) {
+		for (final Tree<R> child : children) {
 			if (child != null && child.symbol != null) {
 				this.children.add(child);
 			}
@@ -60,11 +61,11 @@ public class Tree<LETTER> {
 		this.symbol = symbol;
 	}
 	
-	public LETTER getSymbol() {
+	public R getSymbol() {
 		return this.symbol;
 	}
 	
-	public List<Tree<LETTER>> getChildren() {
+	public List<Tree<R>> getChildren() {
 		return this.children;
 	}
 

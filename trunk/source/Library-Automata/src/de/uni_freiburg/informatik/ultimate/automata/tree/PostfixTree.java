@@ -35,33 +35,36 @@ import java.util.List;
  * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <R>
+ * @param <S>
  */
-public class PostfixTree<LETTER, STATE> {
-	
-	private final ArrayList<LETTER> postFix;
-	private final ArrayList<STATE> postFixStates;
+public class PostfixTree<R, S> {
+
+	private final ArrayList<R> postFix;
+	private final ArrayList<S> postFixStates;
 	private final ArrayList<Integer> depths;
-	
+
 	private final ArrayList<Integer> startIdx;
-	
+
 	private final HashMap<Integer, Integer> mBeg;
-	
-	
-	public List<LETTER> getPostFix() {
+
+	public List<R> getPostFix() {
 		return postFix;
 	}
 
 	public List<Integer> getStartIdx() {
 		return startIdx;
 	}
-	
-	public List<STATE> getPostFixStates() {
+
+	public List<S> getPostFixStates() {
 		return postFixStates;
 	}
 
-	public PostfixTree(final TreeRun<LETTER, STATE> run) {
+	/***
+	 * Construct a postfix Tree from a treeRun
+	 * @param run
+	 */
+	public PostfixTree(final TreeRun<R, S> run) {
 		postFix = new ArrayList<>();
 		postFixStates = new ArrayList<>();
 		startIdx = new ArrayList<>();
@@ -69,13 +72,8 @@ public class PostfixTree<LETTER, STATE> {
 		mBeg = new HashMap<>();
 		constructTree(run, 0);
 	}
-	
-	private void addSymbol(final LETTER lt, final STATE st, final int depth) {
-		/*
-		if (depths.size() > 0 && depths.get(depths.size() - 1) < depth) {
-			startIdx.add(depths.size());
-		}
-		*/
+
+	private void addSymbol(final R lt, final S st, final int depth) {
 		if (!mBeg.containsKey(depth)) {
 			mBeg.put(depth, depths.size());
 		}
@@ -84,25 +82,23 @@ public class PostfixTree<LETTER, STATE> {
 		postFixStates.add(st);
 		depths.add(depth);
 	}
-	
-	private void constructTree(final TreeRun<LETTER, STATE> run, final int depth) {
-		
+
+	private void constructTree(final TreeRun<R, S> run, final int depth) {
+
 		constructSubtrees(run.getChildren().iterator(), depth);
-		//if (run.getRootSymbol())
 		if (run.getRootSymbol() != null) {
 			addSymbol(run.getRootSymbol(), run.getRoot(), depth);
 		}
 	}
-	
-	private void constructSubtrees(final Iterator<TreeRun<LETTER, STATE>> it, final int depth) {
+
+	private void constructSubtrees(final Iterator<TreeRun<R, S>> it, final int depth) {
 		if (!it.hasNext()) {
-			return ;
+			return;
 		}
 		constructTree(it.next(), depth);
 		constructSubtrees(it, depth + 1);
 	}
-	
-	
+
 	public static void main(String[] args) {
 
 		TreeRun<Character, Integer> r9 = new TreeRun<Character, Integer>(9);
@@ -125,37 +121,36 @@ public class PostfixTree<LETTER, STATE> {
 		ArrayList<TreeRun<Character, Integer>> rr8 = new ArrayList<>();
 		rr8.add(r12);
 		TreeRun<Character, Integer> r8 = new TreeRun<Character, Integer>(8, 'v', rr8);
-		
+
 		ArrayList<TreeRun<Character, Integer>> rr6 = new ArrayList<>();
-		rr6.add(r7); rr6.add(r8);
+		rr6.add(r7);
+		rr6.add(r8);
 		TreeRun<Character, Integer> r6 = new TreeRun<Character, Integer>(6, 'a', rr6);
 
 		ArrayList<TreeRun<Character, Integer>> rr4 = new ArrayList<>();
 		rr4.add(r5);
 		TreeRun<Character, Integer> r4 = new TreeRun<Character, Integer>(4, 'b', rr4);
-		
 
 		ArrayList<TreeRun<Character, Integer>> rr2 = new ArrayList<>();
 		rr2.add(r3);
 		TreeRun<Character, Integer> r2 = new TreeRun<Character, Integer>(2, 'c', rr2);
-		
-		
 
 		ArrayList<TreeRun<Character, Integer>> rr1 = new ArrayList<>();
-		rr1.add(r2); rr1.add(r4); rr1.add(r6);
+		rr1.add(r2);
+		rr1.add(r4);
+		rr1.add(r6);
 		TreeRun<Character, Integer> r1 = new TreeRun<Character, Integer>(1, 'x', rr1);
-		
+
 		PostfixTree<Character, Integer> tt = new PostfixTree<>(r1);
 		System.out.println(r1.toString());
 		System.out.println(tt.postFix);
 		System.out.println(tt.depths);
 		System.out.println(tt.startIdx);
 		System.out.println(tt.postFixStates);
-		
+
 		HashMap<Integer, Integer> map = new HashMap<>();
 		for (int i = 1; i <= 12; ++i)
 			map.put(i, i * i + 1000);
-		
 
 		PostfixTree<Character, Integer> tt2 = new PostfixTree<>(r1.reconstruct(map));
 
@@ -164,6 +159,6 @@ public class PostfixTree<LETTER, STATE> {
 		System.out.println(tt2.depths);
 		System.out.println(tt2.startIdx);
 		System.out.println(tt2.postFixStates);
-			
+
 	}
 }

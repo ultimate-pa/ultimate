@@ -45,25 +45,37 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
  * 
  * @author mostafa (mostafa.amin93@gmail.com)
  *
- * @param <LETTER>
+ * @param <R>
  *            letter of the tree automaton.
- * @param <STATE>
+ * @param <S>
  *            state of the tree automaton.
  */
-public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
-	private final TreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
-	private final Tree<LETTER> mExample;
+public class Accepts<R, S> implements IOperation<R, S, IStateFactory<S>> {
+	private final TreeAutomatonBU<R, S> mTreeAutomaton;
+	private final Tree<R> mExample;
 	private final Boolean mResult;
 
-	public Accepts(final AutomataLibraryServices services, final ITreeAutomatonBU<LETTER, STATE> automaton,
-			final TreeRun<LETTER, STATE> run) {
+	/***
+	 * Operator to check if accepting a given tree run by a given tree automaton.
+	 * @param services
+	 * @param automaton
+	 * @param run
+	 */
+	public Accepts(final AutomataLibraryServices services, final ITreeAutomatonBU<R, S> automaton,
+			final TreeRun<R, S> run) {
 		this(services, automaton, run.getTree());
 	}
-
-	public Accepts(final AutomataLibraryServices services, final ITreeAutomatonBU<LETTER, STATE> automaton,
-			final Tree<LETTER> run) {
+	
+	/***
+	 * Operator to check if accepting a given tree by a given tree automaton.
+	 * @param services
+	 * @param automaton
+	 * @param run
+	 */
+	public Accepts(final AutomataLibraryServices services, final ITreeAutomatonBU<R, S> automaton,
+			final Tree<R> run) {
 		mExample = run;
-		mTreeAutomaton = (TreeAutomatonBU<LETTER, STATE>) automaton;
+		mTreeAutomaton = (TreeAutomatonBU<R, S>) automaton;
 		mResult = computeResult();
 	}
 
@@ -82,36 +94,37 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE, IStateF
 		return "Exit " + operationName();
 	}
 
-	private Set<STATE> checkTree(final Tree<LETTER> t) {
-		final Set<STATE> res = new HashSet<>();
+	private Set<S> checkTree(final Tree<R> t) {
+		final Set<S> res = new HashSet<>();
 
-		final ArrayList<Set<STATE>> next = new ArrayList<>();
-		for (final Tree<LETTER> ch : t.getChildren()) {
+		final ArrayList<Set<S>> next = new ArrayList<>();
+		for (final Tree<R> ch : t.getChildren()) {
 			next.add(checkTree(ch));
 		}
 
-		final Iterable<TreeAutomatonRule<LETTER, STATE>> st = mTreeAutomaton.getRulesByLetter(t.getSymbol());
+		final Iterable<TreeAutomatonRule<R, S>> st = mTreeAutomaton.getRulesByLetter(t.getSymbol());
 
-		if (st != null) {
-			for (final TreeAutomatonRule<LETTER, STATE> rule : st) {
-				if (rule.getSource().size() != next.size()) {
+		if (st == null) {
+			return res;
+		}
+		for (final TreeAutomatonRule<R, S> rule : st) {
+			if (rule.getSource().size() != next.size()) {
+				continue;
+			}
+			for (int i = 0; i < next.size(); ++i) {
+				final S sr = rule.getSource().get(i);
+				if (!next.get(i).contains(sr) && !mTreeAutomaton.isInitialState(sr)) {
 					continue;
 				}
-				for (int i = 0; i < next.size(); ++i) {
-					final STATE sr = rule.getSource().get(i);
-					if (!next.get(i).contains(sr) && !mTreeAutomaton.isInitialState(sr)) {
-						continue;
-					}
-				}
-				res.add(rule.getDest());
 			}
+			res.add(rule.getDest());
 		}
 		return res;
 	}
 
 	private Boolean computeResult() {
-		final Set<STATE> derivations = checkTree(mExample);
-		for (final STATE st : derivations) {
+		final Set<S> derivations = checkTree(mExample);
+		for (final S st : derivations) {
 			if (mTreeAutomaton.isFinalState(st)) {
 				return true;
 			}
@@ -125,7 +138,7 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE, IStateF
 	}
 
 	@Override
-	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<S> stateFactory) throws AutomataLibraryException {
 		// TODO implement a meaningful check
 		return true;
 	}
