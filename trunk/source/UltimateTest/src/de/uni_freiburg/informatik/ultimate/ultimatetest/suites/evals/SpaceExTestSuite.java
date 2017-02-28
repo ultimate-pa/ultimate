@@ -46,25 +46,27 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public class SpaceExTestSuite extends AbstractEvalTestSuite {
 	
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
-	
+
 	//@formatter:off
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] TOOLCHAINS = new Triple[] {
 	        //new Triple<>("SpaceExParser.xml", ".xml", "spaceex/spaceex_parser_testing.epf"),
 	        new Triple<>("SpaceExParserWithTA.xml", ".xml", "spaceex/spaceex_parser_testing2.epf"),
+//	        new Triple<>("SpaceExParserWithTA.xml", ".xml", "spaceex/spaceex_parser_testing2_DEBUG.epf"),
 	};
 	//@formatter:on
-	
+
 	//@formatter:off
 	private static final String[] INPUT = new String[] {
 			"examples/programs/spaceex/",
+//			"examples/programs/spaceex/tanks3Modified-safe.xml",
 //			"examples/programs/spaceex/toy_safe.xml",
 //			"examples/programs/spaceex/simple1-unsafe.xml",
 //			"examples/programs/spaceex/minimal.xml",
 //			"examples/programs/spaceex/regression/vartest.xml",
 	};
 	//@formatter:on
-	
+
 	@Override
 	protected ColumnDefinition[] getColumnDefinitions() {
 		// @formatter:off
@@ -77,17 +79,17 @@ public class SpaceExTestSuite extends AbstractEvalTestSuite {
 		                ConversionContext.Divide(1048576, 2, " MB"), Aggregate.Max, Aggregate.Average), };
 		// @formatter:on
 	}
-	
+
 	@Override
 	protected long getTimeout() {
 		return 10 * 1000;
 	}
-	
+
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
 		return new SafetyCheckTestResultDecider(urd, false);
 	}
-	
+
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (final Triple<String, String, String> triple : TOOLCHAINS) {
@@ -99,5 +101,5 @@ public class SpaceExTestSuite extends AbstractEvalTestSuite {
 		}
 		return super.createTestCases();
 	}
-	
+
 }

@@ -119,7 +119,7 @@ public class HybridIcfgGenerator {
 	
 	/**
 	 * Fucntion that converts a HybridAutomaton into an ICFG
-	 * 
+	 *
 	 * @param automaton
 	 * @return
 	 */
@@ -183,7 +183,7 @@ public class HybridIcfgGenerator {
 	
 	/**
 	 * Function that converts a given hybrid automaton into ICFG components.
-	 * 
+	 *
 	 * @param automaton
 	 * @param groupid
 	 */
@@ -210,7 +210,7 @@ public class HybridIcfgGenerator {
 	
 	/**
 	 * Function that Creates the Variable assignment ICFG component.
-	 * 
+	 *
 	 * @param variables
 	 * @param groupid
 	 */
@@ -238,8 +238,8 @@ public class HybridIcfgGenerator {
 		}
 		// then evaluate the infix string of the variable assigment specified in the config.
 		UnmodifiableTransFormula transformula;
-		String infix = group == null ? "" : group.getInitialVariableInfix();
-		infix += (!infix.isEmpty() ? "& " : "") + TIME_INV;
+		final String infix = group == null ? "" : group.getInitialVariableInfix();
+		// infix += (!infix.isEmpty() ? "& " : "") + TIME_INV;
 		// process infix to transformula
 		if (infix.isEmpty()) {
 			transformula = mTrivialTransformula;
@@ -291,7 +291,7 @@ public class HybridIcfgGenerator {
 	
 	/**
 	 * Function that converts locations to ICFG components.
-	 * 
+	 *
 	 * @param autLocations
 	 * @param groupid
 	 */
@@ -339,11 +339,11 @@ public class HybridIcfgGenerator {
 				}
 				final FirstOrderLinearODE ode = new FirstOrderLinearODE(flow, TIME_VAR);
 				flowTerms += ode.getmSolution();
+				flowTerms += flowTerms.isEmpty() ? "" : "&" + TIME_INV;
 			}
 			flowTerms += invariant.isEmpty() ? "" : "&" + invariant;
-			// flowTerms += flowTerms.isEmpty() ? "" : "&" + TIME_INV;
 			mLogger.debug("FLOW TERMS: " + flowTerms);
-			final UnmodifiableTransFormula tfFlow = buildTransformula(flowTerms, BuildScenario.UPDATE);
+			final UnmodifiableTransFormula tfFlow = buildTransformula(flowTerms, BuildScenario.FLOW);
 			final IcfgInternalTransition preFlowTopostFlow =
 					new IcfgInternalTransition(preFlow, postFlow, null, tfFlow);
 			preFlow.addOutgoing(preFlowTopostFlow);
@@ -445,7 +445,7 @@ public class HybridIcfgGenerator {
 	
 	/**
 	 * Function that creates the necessary transitions between ICFG components.
-	 * 
+	 *
 	 * @param transitions
 	 * @param initialLocation
 	 */
@@ -512,14 +512,13 @@ public class HybridIcfgGenerator {
 	
 	/**
 	 * Fucntion to build a transformula for a transition between Locations of automata.
-	 * 
+	 *
 	 * @param update
 	 * @param guard
 	 * @return
 	 */
 	private UnmodifiableTransFormula buildTransitionTransformula(final String update, final String guard) {
-		final HybridTermBuilder tb =
-				new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript().getScript(), mLogger);
+		final HybridTermBuilder tb = new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript(), mLogger);
 		UnmodifiableTransFormula transformula;
 		Term formula = null;
 		if (update.isEmpty() && guard.isEmpty()) {
@@ -548,7 +547,7 @@ public class HybridIcfgGenerator {
 	
 	/**
 	 * Function to Build a transformula according to a BuildScenario.
-	 * 
+	 *
 	 * @param infix
 	 * @param scenario
 	 * @param groupid
@@ -558,14 +557,18 @@ public class HybridIcfgGenerator {
 		if (infix.isEmpty()) {
 			return TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
 		}
-		final HybridTermBuilder tb =
-				new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript().getScript(), mLogger);
+		final HybridTermBuilder tb = new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript(), mLogger);
 		final Term term =
 				tb.infixToTerm(scenario != BuildScenario.INITIALLY ? replaceConstantValues(infix) : infix, scenario);
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), Collections.emptyMap(), true,
-				Collections.emptySet(), true, Collections.emptyList(), true);
+				Collections.emptySet(), true, Collections.emptyList(), false);
+		mLogger.debug("INVARS:  " + tb.getmInVars());
+		mLogger.debug("OUTVARS: " + tb.getmOutVars());
+		mLogger.debug("AUXVAR:  " + tb.getAuxVar());
+		mLogger.debug("TERM:    " + term.toStringDirect());
 		tb.getmInVars().forEach(tfb::addInVar);
 		tb.getmOutVars().forEach(tfb::addOutVar);
+		tfb.addAuxVar(tb.getAuxVar());
 		tfb.setFormula(term);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		// finish construction of the transformula.
@@ -594,7 +597,7 @@ public class HybridIcfgGenerator {
 	
 	/**
 	 * Function to build a transformula with an term "false"
-	 * 
+	 *
 	 * @return
 	 */
 	private UnmodifiableTransFormula buildFalseTransformula() {
