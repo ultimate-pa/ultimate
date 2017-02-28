@@ -24,8 +24,8 @@ import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage.Message;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientSorryException;
 
 /**
- * represents a Client or possibly Future-Client. (separate class?) a Client
- * that should implement the Ultimate Interactive protocol
+ * represents a Client or possibly Future-Client. (separate class?) a Client that should implement the Ultimate
+ * Interactive protocol
  * 
  * @author Julian Jarecki
  *
@@ -39,6 +39,7 @@ public abstract class Client<T> {
 	protected final MessageQueue<T> mQueue;
 
 	protected CompletableFuture<Client<T>> mHelloFuture = new CompletableFuture<>();
+	protected CompletableFuture<Void> mQuitFuture = new CompletableFuture<>();
 	protected int mCurrentRequestId = 0;
 
 	private ITypeRegistry<T> mTypeRegistry;
@@ -58,6 +59,10 @@ public abstract class Client<T> {
 
 	public CompletionStage<Client<T>> hasSaidHello() {
 		return mHelloFuture;
+	}
+
+	public Future<Void> waitForQuit() {
+		return mQuitFuture;
 	}
 
 	public IInteractive<T> createInteractiveInterface() {
@@ -120,6 +125,8 @@ public abstract class Client<T> {
 			}
 			break;
 		case QUIT:
+			mLogger.info("Client has sent quit message.");
+			mQuitFuture.complete(null);
 			break;
 		case HELLO:
 			mLogger.info("callign complete on completablefuture for hello: " + mHelloFuture.toString());

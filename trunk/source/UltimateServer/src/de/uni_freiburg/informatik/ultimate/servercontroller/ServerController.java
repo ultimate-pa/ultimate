@@ -208,6 +208,9 @@ public class ServerController implements IController<RunDefinition> {
 		final BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, mLogger, inputFiles);
 		tcj.schedule();
 		tcj.join();
+
+		mLogger.info("Toolchain finished - waiting for Client to Quit.");
+		client.waitForQuit().get();
 	}
 
 	private <T> T requestChoice(T[] choices, Function<T, String> toString)
@@ -274,7 +277,7 @@ public class ServerController implements IController<RunDefinition> {
 	@Override
 	public void displayToolchainResults(final IToolchainData<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
-		//final ResultSummarizer summarizer = new ResultSummarizer(results);
+		// final ResultSummarizer summarizer = new ResultSummarizer(results);
 		ResultsWrapper wrapper = new ResultsWrapper();
 		wrapper.results = results;
 
