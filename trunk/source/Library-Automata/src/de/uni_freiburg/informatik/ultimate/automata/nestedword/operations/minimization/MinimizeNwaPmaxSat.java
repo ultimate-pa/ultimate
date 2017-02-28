@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -44,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGeneratorDoubleton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.TransitivityGeneralMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
-import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -86,55 +84,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand,
-				new PartitionBackedSetOfPairs<>(Collections.singleton(operand.getStates())), new Settings<>(), false);
-	}
-
-	/**
-	 * Constructor with an initial partition.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param stateFactory
-	 *            state factory
-	 * @param operand
-	 *            input nested word automaton
-	 * @param initialPartition
-	 *            We only try to merge states that are in one of the blocks.
-	 * @param settings
-	 *            settings wrapper
-	 * @throws AutomataOperationCanceledException
-	 *             thrown by cancel request
-	 */
-	public MinimizeNwaPmaxSat(final AutomataLibraryServices services,
-			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final ISetOfPairs<STATE, Collection<Set<STATE>>> initialPartition, final Settings<STATE> settings)
-			throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, initialPartition, settings, false, true);
-	}
-
-	/**
-	 * Constructor with an initial partition and library mode switch.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param stateFactory
-	 *            state factory
-	 * @param operand
-	 *            input nested word automaton
-	 * @param initialPartition
-	 *            We only try to merge states that are in one of the blocks.
-	 * @param settings
-	 *            settings wrapper
-	 * @param libraryMode
-	 *            {@code true} iff solver is called by another operation
-	 * @throws AutomataOperationCanceledException
-	 *             thrown by cancel request
-	 */
-	public MinimizeNwaPmaxSat(final AutomataLibraryServices services,
-			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final ISetOfPairs<STATE, Collection<Set<STATE>>> initialPartition, final Settings<STATE> settings,
-			final boolean libraryMode) throws AutomataOperationCanceledException {
-		this(services, stateFactory, operand, initialPartition, settings, true, libraryMode);
+				new LookaheadPartitionConstructor<>(services, operand, true, false).getPartition(), new Settings<>());
 	}
 
 	/**
@@ -159,17 +109,13 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	 */
 	public MinimizeNwaPmaxSat(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final ISetOfPairs<STATE, Collection<Set<STATE>>> initialPartition, final Settings<STATE> settings,
-			final boolean applyInitialPartitionPreprocessing, final boolean libraryMode)
+			final ISetOfPairs<STATE, Collection<Set<STATE>>> initialPartition, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand, settings, new NestedMap2<>(), libraryMode);
+		super(services, stateFactory, operand, settings, new NestedMap2<>());
 
 		printStartMessage();
 
-		mInitialPartition = applyInitialPartitionPreprocessing
-				? new LookaheadPartitionConstructor<>(services, operand, initialPartition.getRelation(),
-						mSettings.getFinalStateConstraints(), false).getPartition().getRelation()
-				: initialPartition.getRelation();
+		mInitialPartition = initialPartition.getRelation();
 		mState2EquivalenceClass = new HashMap<>();
 		int largestBlockInitialPartition = 0;
 		int initialPartitionSize = 0;
@@ -216,16 +162,18 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			super.addStatistics(statistics);
 		}
 		if (mLargestBlockInitialPartition != 0) {
-			statistics.addKeyValuePair(mLibraryMode
+			statistics.addKeyValuePair(mSettings.getLibraryMode()
 					? StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK_PMAXSAT
 					: StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK, mLargestBlockInitialPartition);
 			statistics.addKeyValuePair(
-					mLibraryMode
+					mSettings.getLibraryMode()
 							? StatisticsType.SIZE_INITIAL_PARTITION_PMAXSAT
 							: StatisticsType.SIZE_INITIAL_PARTITION,
 					mInitialPartitionSize);
 			statistics.addKeyValuePair(
-					mLibraryMode ? StatisticsType.NUMBER_INITIAL_PAIRS_PMAXSAT : StatisticsType.NUMBER_INITIAL_PAIRS,
+					mSettings.getLibraryMode()
+							? StatisticsType.NUMBER_INITIAL_PAIRS_PMAXSAT
+							: StatisticsType.NUMBER_INITIAL_PAIRS,
 					mNumberOfInitialPairs);
 		}
 	}

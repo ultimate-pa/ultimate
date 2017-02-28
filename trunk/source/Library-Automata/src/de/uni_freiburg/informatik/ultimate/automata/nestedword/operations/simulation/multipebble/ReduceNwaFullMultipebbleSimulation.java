@@ -115,7 +115,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 					maxSatMinimizer = new MinimizeNwaPmaxSatAsymmetric<>(mServices, stateFactory, mOperand,
 							readoutExactSimulationRelation(partition, gsm, simRes.getFirst(), gameFactory)
 									.getRelation(),
-							settings, true);
+							settings);
 					break;
 				case SYM:
 					maxSatMinimizer = new MinimizeNwaPmaxSat<>(mServices, stateFactory, mOperand,

@@ -259,7 +259,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 						new MinimizeNwaPmaxSat<>(autServicesWithTimeout, predicateFactoryRefinement,
 								(IDoubleDeckerAutomaton<LETTER, IPredicate>) operand, partition,
 								new MinimizeNwaMaxSat2.Settings<IPredicate>()
-								.setAddMapOldState2NewState(computeOldState2NewStateMapping), true, false));
+								.setAddMapOldState2NewState(computeOldState2NewStateMapping).setLibraryMode(false)));
 			} catch (final AutomataOperationCanceledException aoce) {
 				// just catch and ignore the exception, probably only a local timeout
 				localResult = constructNoopMinimizationResult(true, operand);
