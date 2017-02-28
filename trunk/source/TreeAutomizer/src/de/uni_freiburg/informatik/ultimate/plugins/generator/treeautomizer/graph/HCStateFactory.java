@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
- * 
+ * HornClause state factory.
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -62,8 +62,6 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 public class HCStateFactory implements IMergeStateFactory<HCPredicate>, IIntersectionStateFactory<HCPredicate>,
 		IEmptyStackStateFactory<HCPredicate> {
 
-	// final protected boolean mComputeHoareAnnotation;
-	// final protected TAPreferences mPref;
 	private final HCPredicate mEmtpyStack;
 
 	private final ManagedScript mBackendSmtSolverScript;
@@ -73,6 +71,12 @@ public class HCStateFactory implements IMergeStateFactory<HCPredicate>, IInterse
 
 	private final HCPredicateFactory mPredicateFactory;
 
+	/***
+	 * HornClause State factory constructor.
+	 * @param backendSmtSolverScript
+	 * @param predicateFactory
+	 * @param symbolTable
+	 */
 	public HCStateFactory(final ManagedScript backendSmtSolverScript, final HCPredicateFactory predicateFactory,
 			final HCSymbolTable symbolTable) {
 		mBackendSmtSolverScript = backendSmtSolverScript;
@@ -85,11 +89,9 @@ public class HCStateFactory implements IMergeStateFactory<HCPredicate>, IInterse
 		mPredicateFactory = predicateFactory;
 	}
 
-
-
 	private HCPredicate reduceFormula(final HCPredicate[] preds, final boolean andOp) {
 		// TODO: Check hashing of TermVariable and HCVar.
-	
+
 		final Set<IProgramVar> progVars = new HashSet<>();
 		final Map<Term, HCVar> varsMap = new HashMap<>();
 
@@ -114,10 +116,9 @@ public class HCStateFactory implements IMergeStateFactory<HCPredicate>, IInterse
 		for (final HCPredicate p : preds) {
 			predHash = HashUtils.hashHsieh(mBackendSmtSolverScript.hashCode(), predHash, p, p.mProgramPoint);
 		}
-		final Term formula = mSimplifier.getSimplifiedTerm(
-				andOp ? Util.and(mBackendSmtSolverScript.getScript(), terms) :
-					Util.or(mBackendSmtSolverScript.getScript(), terms));
-		
+		final Term formula = mSimplifier.getSimplifiedTerm(andOp ? Util.and(mBackendSmtSolverScript.getScript(), terms)
+				: Util.or(mBackendSmtSolverScript.getScript(), terms));
+
 		final Set<String> prodVars = new HashSet<>();
 		for (final TermVariable var : formula.getFreeVars()) {
 			prodVars.add(var.toString());
@@ -131,22 +132,28 @@ public class HCStateFactory implements IMergeStateFactory<HCPredicate>, IInterse
 				}
 			}
 		}
-		
+
 		return mPredicateFactory.newPredicate(loc, predHash, formula, progVars, varsMap);
 	}
-	
+
 	@Override
 	public HCPredicate intersection(final HCPredicate p1, final HCPredicate p2) {
-		return reduceFormula(new HCPredicate[]{p1, p2}, true);
+		return reduceFormula(new HCPredicate[] { p1, p2 }, true);
 	}
 
 	@Override
 	public HCPredicate merge(final Collection<HCPredicate> states) {
-		return reduceFormula(states.toArray(new HCPredicate[]{}), false);
+		return reduceFormula(states.toArray(new HCPredicate[] {}), false);
 	}
 
+	/***
+	 * Check if a HornClause is satisfiable.
+	 * @param src
+	 * @param pf
+	 * @param dest
+	 * @return true iff satisfiable
+	 */
 	public boolean isSatisfiable(final List<HCPredicate> src, final HornClause pf, final HCPredicate dest) {
-		//mBackendSmtSolverScript.lock(this);
 		for (final HCPredicate pSrc : src) {
 			for (final IProgramVar v : pSrc.getVars()) {
 				if (!pf.getTransformula().getInVars().containsKey(v)) {
@@ -161,7 +168,6 @@ public class HCStateFactory implements IMergeStateFactory<HCPredicate>, IInterse
 		}
 		mBackendSmtSolverScript.push(this, 1);
 		final Term[] terms = new Term[src.size()];
-		//System.err.println("Check: " + src + " " + pf + " " + dest);
 		for (int i = 0; i < src.size(); ++i) {
 			final Map<Term, Term> substMap = new HashMap<>();
 			for (final IProgramVar v : src.get(i).getVars()) {
@@ -169,38 +175,28 @@ public class HCStateFactory implements IMergeStateFactory<HCPredicate>, IInterse
 			}
 			final Substitution subst = new Substitution(mBackendSmtSolverScript, substMap);
 			terms[i] = subst.transform(src.get(i).getFormula());
-			//System.err.println("src: " + src.get(i).getFormula() + " " + substMap);
 		}
 		final Map<Term, Term> substMap = new HashMap<>();
 		for (final IProgramVar v : dest.getVars()) {
 			substMap.put(v.getTermVariable(), pf.getTransformula().getOutVars().get(v));
 		}
-		//System.err.println(dest.getFormula() + " " + substMap);
-		//System.err.println(pf);
-		//System.err.println();
 		final Substitution subst = new Substitution(mBackendSmtSolverScript, substMap);
-		
-		final Term A = Util.and(mBackendSmtSolverScript.getScript(), terms);
-		final Term S = transferToCurrentScriptIfNecessary(pf.getTransformula().getFormula());
-		final Term B = subst.transform(dest.getFormula());
-		
-		final Term T = mSimplifier.getSimplifiedTerm(Util.and(mBackendSmtSolverScript.getScript(), new Term[]{A, S, Util.not(mBackendSmtSolverScript.getScript(), B)}));
-		//System.err.println(T);
-		//System.err.print(A + " o " + S + " ==> " + B);// + " :: " + (result == LBool.SAT));
-		if (T.getFreeVars().length > 0) {
-			//System.err.println(":: non-sat");
-			//mBackendSmtSolverScript.unlock(this);
+
+		final Term pre = Util.and(mBackendSmtSolverScript.getScript(), terms);
+		final Term formula = transferToCurrentScriptIfNecessary(pf.getTransformula().getFormula());
+		final Term post = subst.transform(dest.getFormula());
+
+		final Term implication = mSimplifier.getSimplifiedTerm(Util.and(mBackendSmtSolverScript.getScript(),
+				new Term[] { pre, formula, Util.not(mBackendSmtSolverScript.getScript(), post) }));
+
+		if (implication.getFreeVars().length > 0) {
 			return false;
 		}
-		mBackendSmtSolverScript.assertTerm(this, T);
+		mBackendSmtSolverScript.assertTerm(this, implication);
 		final LBool result = mBackendSmtSolverScript.checkSat(this);
-		
+
 		mBackendSmtSolverScript.pop(this, 1);
-		//System.err.println(result != LBool.SAT ? ":=: sat" : ":=: non-sat");
-		//return false;
-		//mBackendSmtSolverScript.unlock(this);
 		return result != LBool.SAT;
-		
 	}
 
 	private TermVariable transferToCurrentScriptIfNecessary(final TermVariable tv) {
@@ -222,7 +218,7 @@ public class HCStateFactory implements IMergeStateFactory<HCPredicate>, IInterse
 		}
 		return result;
 	}
-	
+
 	@Override
 	public HCPredicate createEmptyStackState() {
 		return mEmtpyStack;

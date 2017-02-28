@@ -54,6 +54,15 @@ public class TreeChecker {
 	private final ILogger mLogger;
 	private final HCPredicateFactory mPredicateFactory;
 	
+	/***
+	 * Checker of a tree run
+	 * @param tree
+	 * @param backendSmtSolverScript
+	 * @param preCondition
+	 * @param postCondition
+	 * @param logger
+	 * @param predicateFactory
+	 */
 	public TreeChecker(final ITreeRun<HornClause, HCPredicate> tree,
 			final ManagedScript backendSmtSolverScript, final HCPredicate preCondition,
 			final HCPredicate postCondition, ILogger logger, HCPredicateFactory predicateFactory) {
@@ -67,6 +76,11 @@ public class TreeChecker {
 		mLogger = logger;
 	}
 	
+	/***
+	 * Rebuild the SSA with the interpolants.
+	 * @param interpolantsMap the map of predicates to the corresponding interpolants.
+	 * @return
+	 */
 	public Map<HCPredicate, HCPredicate> rebuild(final Map<HCPredicate, Term> interpolantsMap) {
 		return mSSABuilder.rebuildSSApredicates(interpolantsMap);
 	}
@@ -85,7 +99,6 @@ public class TreeChecker {
 			if (!visited.contains(ssa.getCounter(t))) {
 				mLogger.debug("assert: " + ssa.getName(t) + " :: " + t.toString());
 				visited.add(ssa.getCounter(t));
-				//mBackendSmtSolverScript.term(annT, {});
 				final Term annT = mBackendSmtSolverScript.annotate(this, t, ann);
 				mBackendSmtSolverScript.assertTerm(this, annT);
 			}
@@ -94,5 +107,4 @@ public class TreeChecker {
 		mBackendSmtSolverScript.unlock(this);
 		return result;
 	}
-
 }

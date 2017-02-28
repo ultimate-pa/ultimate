@@ -53,7 +53,12 @@ public class HCHoareTripleChecker {
 	private IHoareTripleChecker mHoareTripleChecker;
 	private PredicateUnifier mPredicateUnifier;
 	
-	public HCHoareTripleChecker(final PredicateUnifier predicateUnifier, CfgSmtToolkit cfgSmtToolkit) {
+	/**
+	 * Constructor of HCHoareTripleChecker
+	 * @param predicateUnifier Unifer for the predicates.
+	 * @param cfgSmtToolkit 
+	 * */
+	public HCHoareTripleChecker(final PredicateUnifier predicateUnifier, final CfgSmtToolkit cfgSmtToolkit) {
 		mPredicateUnifier = predicateUnifier;
 		mHoareTripleChecker = new MonolithicHoareTripleChecker(cfgSmtToolkit);
 	}
@@ -71,7 +76,7 @@ public class HCHoareTripleChecker {
 	public Validity check(Collection<HCPredicate> pre, HornClause hornClause, HCPredicate succ) {
 		
 		Set<IPredicate> preAsIPredicates = pre.stream()
-				.map(pred -> ((IPredicate) pred))
+				.map(pred -> (IPredicate) pred)
 				.collect(Collectors.toSet());
 
 		IPredicate preConditionConjunction = mPredicateUnifier.getOrConstructPredicateForConjunction(preAsIPredicates);

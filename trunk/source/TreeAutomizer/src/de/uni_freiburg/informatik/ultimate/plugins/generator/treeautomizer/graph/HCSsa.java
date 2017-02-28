@@ -38,33 +38,53 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 
 /**
  * HCSsa HornClause-SSA
+ * 
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * 
  */
 public class HCSsa {
+
 	private final TreeRun<Term, HCPredicate> mNestedFormulas;
 	private final Term mPostCondition;
 	private final Term mPreCondition;
 	private final Map<Term, Integer> mCounters;
 	private final Map<Term, Term> mTermToAssertion;
-	
-	public HCSsa(final TreeRun<Term, HCPredicate> t, final Term pre, final Term post, final Map<Term, Integer> counters) {
-		mNestedFormulas = t;
+
+	/**
+	 * Constructor for HC-SSA
+	 * 
+	 * @param nestedFormulas
+	 *            A given treeRun
+	 * @param pre
+	 *            The precondition (the condition of the initial state)
+	 * @param post
+	 *            The postcondition (the condition of the final state)
+	 * @param counters
+	 *            A map of the counts of each Term.
+	 */
+	public HCSsa(final TreeRun<Term, HCPredicate> nestedFormulas, final Term pre, final Term post,
+			final Map<Term, Integer> counters) {
+		mNestedFormulas = nestedFormulas;
 		mPostCondition = post;
 		mPreCondition = pre;
 		mCounters = counters;
 		mTermToAssertion = new HashMap<>();
 	}
-	
+
+	/**
+	 * Constructor for HC-SSA that overrides the treeRun
+	 * @param ssa Old SSA
+	 * @param nestedFormulas The new tree run.
+	 */
 	public HCSsa(final HCSsa ssa, final TreeRun<Term, HCPredicate> nestedFormulas) {
-		 mNestedFormulas = nestedFormulas;
-		 mPostCondition = ssa.mPostCondition;
-		 mPreCondition = ssa.mPreCondition;
-		 mCounters = ssa.mCounters;
-		 mTermToAssertion = ssa.mTermToAssertion;
+		mNestedFormulas = nestedFormulas;
+		mPostCondition = ssa.mPostCondition;
+		mPreCondition = ssa.mPreCondition;
+		mCounters = ssa.mCounters;
+		mTermToAssertion = ssa.mTermToAssertion;
 	}
-	
+
 	protected int getCounter(final Term t) {
 		if (!mCounters.containsKey(t)) {
 			int r = mCounters.size() + 1;
@@ -72,30 +92,29 @@ public class HCSsa {
 		}
 		return mCounters.get(t);
 	}
-	
+
 	protected String getName(final Term t) {
 		return "HCsSATerm_" + getCounter(t);
 	}
-	
+
 	/**
 	 * @return return a flat version of the SSA.
-	 * */
+	 */
 	public List<Term> flatten() {
 		return flatten(mNestedFormulas);
 	}
-	
-	private List<Term> flatten(final TreeRun<Term, HCPredicate> tree) {
+
+	private static List<Term> flatten(final TreeRun<Term, HCPredicate> tree) {
 		ArrayList<Term> res = new ArrayList<>();
 		for (final TreeRun<Term, HCPredicate> child : tree.getChildren()) {
 			res.addAll(flatten(child));
 		}
 		if (tree.getRootSymbol() != null) {
-			//final Annotation ann = new Annotation(":named", getName(tree.getRootSymbol()));
 			res.add(tree.getRootSymbol());
 		}
 		return res;
 	}
-	
+
 	public TreeRun<Term, HCPredicate> getFormulasTree() {
 		return mNestedFormulas;
 	}
@@ -112,4 +131,3 @@ public class HCSsa {
 		return result;
 	}
 }
-

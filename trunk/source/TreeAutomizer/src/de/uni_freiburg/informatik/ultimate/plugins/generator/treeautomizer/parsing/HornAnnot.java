@@ -50,6 +50,12 @@ public class HornAnnot implements IAnnotations {
 	private final Map<String, Object> mMaechtigUnnoetigBenannteMap = new HashMap<>();
 	private final HCSymbolTable mSymbolTable;
 
+	/***
+	 * An annotation of horn clauses.
+	 * @param clauses
+	 * @param backendSolver
+	 * @param symbolTable
+	 */
 	public HornAnnot(final List<HornClause> clauses, 
 			final ManagedScript backendSolver,
 			final HCSymbolTable symbolTable) {

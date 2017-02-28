@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
 /**
+ * A factory for HornClause Predicates.
  * 
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
@@ -58,34 +59,42 @@ public class HCPredicateFactory extends PredicateFactory {
 	private HCPredicate mTruePredicate;
 	private HCPredicate mFalsePredicate;
 
+	/**
+	 * The constructor of HornClause Factory
+	 * @param services
+	 * @param mgdScript
+	 * @param symbolTable
+	 * @param simplificationTechnique
+	 * @param xnfConversionTechnique
+	 */
 	public HCPredicateFactory(IUltimateServiceProvider services, ManagedScript mgdScript, HCSymbolTable symbolTable,
 			SimplificationTechnique simplificationTechnique, XnfConversionTechnique xnfConversionTechnique) {
 		super(services, mgdScript, symbolTable, simplificationTechnique, xnfConversionTechnique);
 		mBackendSmtSolverScript = mgdScript;
-		
-		mBackendSmtSolverScript.lock(this); 
+
+		mBackendSmtSolverScript.lock(this);
 		mDontCarePredicate = newPredicate(symbolTable.getDontCareHornClausePredicateSymbol(),
-				mBackendSmtSolverScript.term(this, "true"),
-				new HashMap<>());
-		mFalsePredicate = newPredicate(symbolTable.getFalseHornClausePredicateSymbol(), 
-				mBackendSmtSolverScript.term(this, "false"), 
-				new HashMap<>());
-		mTruePredicate = newPredicate(symbolTable.getTrueHornClausePredicateSymbol(), 
-				mBackendSmtSolverScript.term(this, "true"), 
-				new HashMap<>());
-		mBackendSmtSolverScript.unlock(this); 
+				mBackendSmtSolverScript.term(this, "true"), new HashMap<>());
+		mFalsePredicate = newPredicate(symbolTable.getFalseHornClausePredicateSymbol(),
+				mBackendSmtSolverScript.term(this, "false"), new HashMap<>());
+		mTruePredicate = newPredicate(symbolTable.getTrueHornClausePredicateSymbol(),
+				mBackendSmtSolverScript.term(this, "true"), new HashMap<>());
+		mBackendSmtSolverScript.unlock(this);
 	}
-	
+
+	/**
+	 * Create a True predicate with symbol.
+	 * @param headPredicate The given symbol
+	 * @return The new true HCPredicate
+	 * */
 	public HCPredicate createTruePredicateWithLocation(HornClausePredicateSymbol headPredicate) {
 		mBackendSmtSolverScript.lock(this);
-		final HCPredicate result = newPredicate(headPredicate, 
-				mBackendSmtSolverScript.term(this, "true"), 
+		final HCPredicate result = newPredicate(headPredicate, mBackendSmtSolverScript.term(this, "true"),
 				new HashMap<>());
 		mBackendSmtSolverScript.unlock(this);
 		return result;
 	}
 
-	
 	public HCPredicate getTruePredicate() {
 		return mTruePredicate;
 	}
@@ -98,16 +107,30 @@ public class HCPredicateFactory extends PredicateFactory {
 		return mDontCarePredicate;
 	}
 
-
 	private HCPredicate newPredicate(HornClausePredicateSymbol loc, Term term, Map<Term, HCVar> varsMap) {
 		return new HCPredicate(loc, term, varsMap, computeClosedFormula(term));
 	}
 
-	public HCPredicate newPredicate(HornClausePredicateSymbol mProgramPoint, int hashCode, Term formula,
-			Set<IProgramVar> vars, Map<Term, HCVar> termToHcVar) {
+	/**
+	 * Create a new predicate from symbol and formula.
+	 * 
+	 * @param mProgramPoint
+	 *            symbol
+	 * @param hashCode
+	 *            hash code of the formula
+	 * @param formula
+	 *            The formula of the predicate
+	 * @param vars
+	 *            the set of variables of the formula
+	 * @param termToHcVar
+	 *            a map of the variables to HCVars.
+	 * @return HCPredicate the new predicate
+	 */
+	public HCPredicate newPredicate(final HornClausePredicateSymbol mProgramPoint, final int hashCode,
+			final Term formula, final Set<IProgramVar> vars, final Map<Term, HCVar> termToHcVar) {
 		return new HCPredicate(mProgramPoint, hashCode, formula, vars, termToHcVar, computeClosedFormula(formula));
-	}	
-	
+	}
+
 	private Term computeClosedFormula(final Term formula) {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (TermVariable fv : formula.getFreeVars()) {
@@ -116,6 +139,4 @@ public class HCPredicateFactory extends PredicateFactory {
 		}
 		return new Substitution(mBackendSmtSolverScript, substitutionMapping).transform(formula);
 	}
-
-	
 }
