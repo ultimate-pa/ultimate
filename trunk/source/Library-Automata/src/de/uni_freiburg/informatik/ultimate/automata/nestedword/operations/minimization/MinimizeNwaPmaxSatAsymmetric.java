@@ -150,7 +150,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 
 		printExitMessage();
 	}
-
+	
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
@@ -187,7 +187,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			throws AutomataOperationCanceledException {
 		if (USE_PARTITION_PREPROCESSING_IN_ATS_CONSTRUCTOR) {
 			return createPairsWithInitialPartition(
-					new LookaheadPartitionConstructor<>(services, operand, true, true).getPartition().getRelation());
+					new LookaheadPartitionConstructor<>(services, operand, true, false).getPartition().getRelation());
 		} else if (USE_PAIR_PREPROCESSING_IN_ATS_CONSTRUCTOR) {
 			return new NwaApproximateSimulation<>(services, operand, SimulationType.DIRECT).getResult();
 		}
