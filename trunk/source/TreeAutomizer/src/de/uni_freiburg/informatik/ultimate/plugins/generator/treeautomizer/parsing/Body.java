@@ -48,27 +48,44 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 public class Body {
 	private final Cobody mCobody;
 	private ApplicationTerm mHead;
-	
+
+	/***
+	 * Construct a Body of a horn statement.
+	 */
 	public Body() {
 		mCobody = new Cobody();
 	}
 
-	public void addPredicateToCobody(ApplicationTerm literal) {
+	/***
+	 * Add literal to the cobody.
+	 * @param literal
+	 */
+	public void addPredicateToCobody(final ApplicationTerm literal) {
 		mCobody.addPredicate(literal);
 	}
 
+	/***
+	 * Convert the body to a HornClause.
+	 * @param script
+	 * @param symbolTable
+	 * @return
+	 */
 	public HornClause convertToHornClause(final ManagedScript script, final HCSymbolTable symbolTable) {
 		final Map<HornClausePredicateSymbol, List<TermVariable>> tt = getBodyPredicateToVars(symbolTable);
 		assert tt.size() <= 1;
 		final HornClausePredicateSymbol bodySymbol = tt.keySet().iterator().hasNext() ? tt.keySet().iterator().next()
 				: symbolTable.getFalseHornClausePredicateSymbol();
-//				: new HornClausePredicateSymbol.HornClauseFalsePredicateSymbol();
 		return new HornClause(script, symbolTable, getTransitionFormula(script),
 				tt.containsKey(bodySymbol) ? tt.get(bodySymbol) : new ArrayList<>(), bodySymbol,
 				getCobodyPredicateToVars(symbolTable));
-
 	}
-	public boolean setHead(ApplicationTerm literal) {
+
+	/***
+	 * Set the head literal of the body.
+	 * @param literal
+	 * @return
+	 */
+	public boolean setHead(final ApplicationTerm literal) {
 		if (mHead == null) {
 			mHead = literal;
 			return true;
@@ -77,12 +94,19 @@ public class Body {
 		}
 	}
 
-	public void mergeCobody(Cobody cobody) {
+	/***
+	 * Merge the cobody of the body with the given cobody.
+	 * @param cobody
+	 */
+	public void mergeCobody(final Cobody cobody) {
 		this.mCobody.mergeCobody(cobody);
 	}
 
-	
-	public void addTransitionFormula(Term formula) {
+	/***
+	 * Add the transition formula to the cobody.
+	 * @param formula
+	 */
+	public void addTransitionFormula(final Term formula) {
 		mCobody.addTransitionFormula(formula);
 	}
 
@@ -90,16 +114,6 @@ public class Body {
 	public String toString() {
 		return '(' + mCobody.toString() + " ==> " + (mHead == null ? "false" : mHead.toString()) + ')';
 	}
-
-	// moved this to HCSymbolTable
-//	private HornClausePredicateSymbol getHornPredicateSymbol(FunctionSymbol func,
-//			Map<String, HornClausePredicateSymbol> predicateSymbols) {
-//		if (!predicateSymbols.containsKey(func.getName())) {
-//			predicateSymbols.put(func.getName(),
-//					new HornClausePredicateSymbol(symbolTable, func.getName(), func.getParameterSorts().length));
-//		}
-//		return predicateSymbols.get(func.getName());
-//	}
 
 	private Map<HornClausePredicateSymbol, List<TermVariable>> getBodyPredicateToVars(
 			final HCSymbolTable symbolTable) {
@@ -111,7 +125,6 @@ public class Body {
 				vars.add((TermVariable) par);
 			}
 
-//			res.put(getHornPredicateSymbol(head.getFunction(), predicateSymbols), vars);
 			res.put(symbolTable.getOrConstructHornClausePredicateSymbol(
 						mHead.getFunction().getName(), mHead.getFunction().getParameterSorts()), 
 					vars);
@@ -119,11 +132,21 @@ public class Body {
 		return res;
 	}
 
+	/***
+	 * Get the cobody 
+	 * @param symbolTable
+	 * @return
+	 */
 	public Map<HornClausePredicateSymbol, List<TermVariable>> getCobodyPredicateToVars(
 			HCSymbolTable symbolTable) {
 		return mCobody.getPredicateToVars(symbolTable);
 	}
 
+	/***
+	 * Get the transition formula.
+	 * @param script
+	 * @return
+	 */
 	public Term getTransitionFormula(ManagedScript script) {
 		return mCobody.getTransitionFormula(script);
 	}

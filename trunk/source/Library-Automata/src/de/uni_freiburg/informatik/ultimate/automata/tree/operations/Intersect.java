@@ -68,6 +68,7 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE, IStat
 	 * NOTE: because of a convention in TestFileInterpreter, if an argument for the operation is a StateFactory, it must
 	 * be the first argument same for Services, both: first services then StateFactory
 	 * 
+	 * @param services
 	 * @param factory
 	 * @param t1
 	 * @param t2

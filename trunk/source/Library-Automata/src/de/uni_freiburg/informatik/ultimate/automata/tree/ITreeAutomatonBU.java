@@ -39,55 +39,67 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 /**
  * Interface to create a tree automaton
  * @author mostafa.amin93@gmail.com, grugelt@uni-freiburg.de
+ * 
+ * 
+ * @param <LETTER> symbol
+ * @param <STATE> state
  */
 public interface ITreeAutomatonBU<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
 
 	/**
 	 * @return a set of all the states in the automaton.
 	 */
-	public Set<STATE> getStates();
+	Set<STATE> getStates();
 	
 	/**
 	 * @return a set of all initial states in the automaton.
 	 */
-	public Set<STATE> getInitialStates();
+	Set<STATE> getInitialStates();
 	
 	/**
+	 * @param state
 	 * @return true, if given state is final.
 	 */
-	public boolean isFinalState(STATE state);
+	boolean isFinalState(final STATE state);
 
 	/**
+	 * @param state
 	 * @return true, if given state is initial.
 	 */
-	public boolean isInitialState(STATE state);
+	boolean isInitialState(final STATE state);
 	
 	/**
+	 * @param states
 	 * @return a list of all successor states for given states.
 	 */
-	public Iterable<TreeAutomatonRule<LETTER, STATE>> getSuccessors(List<STATE> states);
+	Iterable<TreeAutomatonRule<LETTER, STATE>> getSuccessors(final List<STATE> states);
 	
 	/**
+	 * @param states
+	 * @param letter
 	 * @return a list of all successors for given states and given letter.
 	 */
-	public Iterable<STATE> getSuccessors(List<STATE> states, LETTER letter);
+	Iterable<STATE> getSuccessors(final List<STATE> states, final LETTER letter);
 	
 	/**
+	 * @param state
 	 * @return a map that denotes all the lists of rules that goes to given state.
 	 */
-	public Map<LETTER, Iterable<List<STATE>>> getPredecessors(STATE state);
+	Map<LETTER, Iterable<List<STATE>>> getPredecessors(final STATE state);
 	
 	/**
+	 * @param state
+	 * @param letter
 	 * @return Given a letter and a state, get all rules that goes to the given state
 	 * using the given letter.
 	 */
-	public Iterable<List<STATE>> getPredecessors(STATE state, LETTER letter);
+	Iterable<List<STATE>> getPredecessors(final STATE state, final LETTER letter);
 	
 	/**
 	 * 
 	 * @return Get the rules of the automaton.
 	 */
-	public Iterable<TreeAutomatonRule<LETTER, STATE>> getRules();
+	Iterable<TreeAutomatonRule<LETTER, STATE>> getRules();
 	
 	@Override
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)

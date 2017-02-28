@@ -40,6 +40,10 @@ public class HornClauseAST extends BasePayloadContainer {
 
 	private static final long serialVersionUID = -2511301336938947093L;
 
+	/***
+	 * Constructor of a HornClause payload.
+	 * @param payload
+	 */
 	public HornClauseAST(IPayload payload) {
 		super(payload);
 	}

@@ -37,17 +37,20 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+
 /**
  * A Bottom-up TreeAutomaton. The rules have the form f(q1,...,qn) ~> q
  * 
  * 
- * @param <LETTER> is the type of the alphabet.
- * @param <STATE> is the type of the states.
+ * @param <LETTER>
+ *            is the type of the alphabet.
+ * @param <STATE>
+ *            is the type of the states.
  * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  */
 public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, STATE> {
-	
+
 	private final Map<List<STATE>, Map<LETTER, Iterable<TreeAutomatonRule<LETTER, STATE>>>> mParentsMap;
 	private final Map<STATE, Map<LETTER, Iterable<TreeAutomatonRule<LETTER, STATE>>>> mChildrenMap;
 	private final Map<LETTER, Iterable<TreeAutomatonRule<LETTER, STATE>>> mLettersMap;
@@ -57,9 +60,9 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 	private final Set<STATE> mFinalStates;
 	private final Set<STATE> mInitalStates;
 	private final Set<STATE> mStates;
-	
+
 	/**
-	 * Create a TreeAutomaton.	
+	 * Create a TreeAutomaton.
 	 */
 	public TreeAutomatonBU() {
 		mChildrenMap = new HashMap<>();
@@ -72,19 +75,13 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 		mStates = new HashSet<>();
 		mInitalStates = new HashSet<>();
 	}
-	
+
 	/**
 	 * Add a rule to the automaton.
+	 * 
 	 * @param rule
 	 */
 	public void addRule(final TreeAutomatonRule<LETTER, STATE> rule) {
-		/*
-		for (TreeAutomatonRule<LETTER, STATE> x : mRules) {
-			System.err.println("\t" + x);
-		}
-		System.err.println(rule);
-		System.err.println();
-		*/
 		if (mRules.contains(rule)) {
 			// If rule already exists, do nothing
 			return;
@@ -93,7 +90,7 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 		final LETTER letter = rule.getLetter();
 		final STATE dest = rule.getDest();
 		final List<STATE> src = rule.getSource();
-		
+
 		// f(q1,...,qn) -> q
 		addLetter(letter);
 		addState(dest);
@@ -110,7 +107,7 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 		}
 		final HashSet<TreeAutomatonRule<LETTER, STATE>> children = (HashSet<TreeAutomatonRule<LETTER, STATE>>) childLetter.get(letter);
 		children.add(rule);
-		
+
 		// parents(q1, ..., qn)[f] = q
 		if (!mParentsMap.containsKey(src)) {
 			mParentsMap.put(src, new HashMap<LETTER, Iterable<TreeAutomatonRule<LETTER, STATE>>>());
@@ -121,55 +118,93 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 		}
 		final Set<TreeAutomatonRule<LETTER, STATE>> parents = (Set<TreeAutomatonRule<LETTER, STATE>>) parentLetter.get(letter);
 		parents.add(rule);
-		
+
 		// lettersMap[f] = [f(p) -> q]
 		if (!mLettersMap.containsKey(letter)) {
 			mLettersMap.put(letter, new HashSet<>());
 		}
-		final HashSet<TreeAutomatonRule<LETTER, STATE>> rulesByLetter = (HashSet<TreeAutomatonRule<LETTER, STATE>>) mLettersMap.get(letter);
+		final HashSet<TreeAutomatonRule<LETTER, STATE>> rulesByLetter = (HashSet<TreeAutomatonRule<LETTER, STATE>>) mLettersMap
+				.get(letter);
 		rulesByLetter.add(rule);
-		
-		// sourceRules[q] = {f(p1, ..., q, ... pn) -> p0}
+
+		// sourceRules[q] = < f(p1, ..., q, ... pn) -> p0 >
 		for (final STATE st : src) {
 			if (!mSourceMap.containsKey(st)) {
 				mSourceMap.put(st, new HashSet<>());
 			}
-			final HashSet<TreeAutomatonRule<LETTER, STATE>> rulesBySource = (HashSet<TreeAutomatonRule<LETTER, STATE>>) mSourceMap.get(st);
+			final HashSet<TreeAutomatonRule<LETTER, STATE>> rulesBySource = (HashSet<TreeAutomatonRule<LETTER, STATE>>) mSourceMap
+					.get(st);
 			rulesBySource.add(rule);
 		}
 	}
-	
+
+	/***
+	 * Extend the alphabet.
+	 * 
+	 * @param sigma
+	 */
 	public void extendAlphabet(final Collection<LETTER> sigma) {
 		mAlphabet.addAll(sigma);
 	}
-	
 
+	/***
+	 * Add a letter
+	 * 
+	 * @param letter
+	 */
 	public void addLetter(final LETTER letter) {
 		mAlphabet.add(letter);
 	}
 
+	/***
+	 * Add a state
+	 * 
+	 * @param state
+	 */
 	public void addState(final STATE state) {
 		mStates.add(state);
 	}
-	
+
+	/***
+	 * Add Final state
+	 * 
+	 * @param state
+	 */
 	public void addFinalState(final STATE state) {
 		mFinalStates.add(state);
 		addState(state);
 	}
-	
+
+	/***
+	 * Add initial state.
+	 * 
+	 * @param state
+	 */
 	public void addInitialState(final STATE state) {
 		mInitalStates.add(state);
 		addState(state);
 	}
-	
+
+	/***
+	 * Get rules that use a specific character.
+	 * 
+	 * @param letter
+	 * @return
+	 */
 	public Iterable<TreeAutomatonRule<LETTER, STATE>> getRulesByLetter(final LETTER letter) {
 		return mLettersMap.get(letter);
 	}
 
+	/***
+	 * Get rules by source.
+	 * 
+	 * @param src
+	 * @return
+	 */
 	public Iterable<TreeAutomatonRule<LETTER, STATE>> getRulesBySource(final STATE src) {
 		return mSourceMap.get(src);
 	}
-	
+
 	@Override
 	public Set<LETTER> getAlphabet() {
 		return mAlphabet;
@@ -199,7 +234,7 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 	public Set<STATE> getStates() {
 		return mStates;
 	}
-	
+
 	@Override
 	public boolean isFinalState(final STATE state) {
 		return mFinalStates.contains(state);
@@ -210,65 +245,6 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 		return mInitalStates.contains(state);
 	}
 
-	public Iterator<TreeAutomatonRule<LETTER, STATE>> getRulesIterator() {
-		
-		final Iterator<STATE> qStates = mStates.iterator();
-		return new Iterator<TreeAutomatonRule<LETTER, STATE>>() {
-
-			Iterator<LETTER> letters;
-			Iterator<List<STATE>> parents;
-
-			LETTER currentLetter;
-			STATE currentState;
-			List<STATE> currentParent;
-			private boolean initalized = false;
-			
-			private boolean moveNextState() {
-				if (!qStates.hasNext()) {currentState = null; return false;}
-				currentState = qStates.next();
-				letters = getPredecessors(currentState).keySet().iterator();
-				return true;
-			}
-			private boolean moveNextLetter() {
-				if (letters == null || !letters.hasNext()) {
-					if (!moveNextState()) { currentLetter = null; return false; }
-					return moveNextLetter();
-				}
-				currentLetter = letters.next();
-				parents = getPredecessors(currentState, currentLetter).iterator();
-				return true;
-			}
-			private boolean moveNextParent() { 
-				if (parents == null || !parents.hasNext()) {
-					if (!moveNextLetter()) { currentParent = null; return false;}
-					return moveNextParent();
-				}
-				currentParent = parents.next();
-				return true;
-			}
-			private void initalize() {
-				if (!initalized) {
-					initalized = true;
-					moveNextParent();
-				}
-			}
-			@Override
-			public boolean hasNext() {
-				initalize();
-				return currentParent != null;
-			}
-
-			@Override
-			public TreeAutomatonRule<LETTER, STATE> next() {
-				if (!hasNext()) {
-					throw new NoSuchElementException();
-				}
-				final TreeAutomatonRule<LETTER, STATE> rule = new TreeAutomatonRule<LETTER, STATE>(currentLetter, currentParent, currentState);
-				moveNextParent();
-				return rule;
-			}
-		};
-	}
 	@Override
 	public Iterable<TreeAutomatonRule<LETTER, STATE>> getRules() {
 		return mRules;
@@ -284,7 +260,7 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 		}
 		return successors;
 	}
-	
+
 	@Override
 	public Iterable<STATE> getSuccessors(final List<STATE> states, final LETTER letter) {
 		if (!mParentsMap.containsKey(states) || !mParentsMap.get(states).containsKey(letter)) {
@@ -324,7 +300,10 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 		}
 		return result;
 	}
-	
+
+	/***
+	 * Complement the set of final states.
+	 */
 	public void complementFinals() {
 		final Set<STATE> newFinals = new HashSet<>();
 		for (final STATE st : mStates) {
@@ -335,80 +314,88 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 		mFinalStates.clear();
 		mFinalStates.addAll(newFinals);
 	}
-	
-	public String stateString(STATE state) {
-		String res = state.toString();
+
+	private String stateString(STATE state) {
+		final StringBuilder res = new StringBuilder(state.toString());
 		if (mInitalStates.contains(state)) {
-			res += "_";
+			res.append("_");
 		}
 		if (isFinalState(state)) {
-			res += "*";
+			res.append("*");
 		}
-		return res;
+		return res.toString();
 	}
-	
+
+	/***
+	 * A debug string representation
+	 * @return
+	 */
 	public String DebugString() {
-		String statesString = "";
+		final StringBuilder statesString = new StringBuilder();
 		for (final STATE state : mStates) {
-			statesString += stateString(state) + " ";
+			statesString.append(stateString(state));
+			statesString.append(" ");
 		}
-		String rulesString = "";
+		final StringBuilder rulesString = new StringBuilder();
 		for (final TreeAutomatonRule<LETTER, STATE> rule : mRules) {
-			rulesString += String.format("%s%s ~~> %s\n", rule.getLetter(), rule.getSource(), stateString(rule.getDest()));
+			rulesString.append(
+					String.format("%s%s ~~> %s\n", rule.getLetter(), rule.getSource(), stateString(rule.getDest())));
 		}
 		return statesString + "\n" + rulesString;
 	}
-	
+
 	@Override
 	public String toString() {
-		
-		String alphabet = "";
+
+		final StringBuilder alphabet = new StringBuilder();
 		for (final LETTER letter : this.mAlphabet) {
-			if (!alphabet.isEmpty()) {
-				alphabet += " ";
+			if (alphabet.length() > 0) {
+				alphabet.append(" ");
 			}
-			alphabet += letter.toString();
+			alphabet.append(letter);
 		}
-		
-		String states = "";
+
+		final StringBuilder states = new StringBuilder();
 		for (final STATE state : this.mStates) {
-			if (!states.isEmpty()) {
-				states += " ";
+			if (states.length() > 0) {
+				states.append(" ");
 			}
-			states += state.toString();
+			states.append(state);
 		}
-		
-		String initialStates = "";
+
+		final StringBuilder initialStates = new StringBuilder();
 		for (final STATE state : this.mInitalStates) {
-			if (!initialStates.isEmpty()) {
-				initialStates += " ";
+			if (initialStates.length() > 0) {
+				initialStates.append(" ");
 			}
-			initialStates += state.toString();
+			initialStates.append(state);
 		}
-		
-		String finalStates = "";
+
+		final StringBuilder finalStates = new StringBuilder();
 		for (final STATE state : this.mFinalStates) {
-			if (!finalStates.isEmpty()) {
-				finalStates += " ";
+			if (finalStates.length() > 0) {
+				finalStates.append(" ");
 			}
-			finalStates += state.toString();
+			finalStates.append(state);
 		}
-		
-		String transitionTable = "";
+
+		final StringBuilder transitionTable = new StringBuilder();
 		for (final TreeAutomatonRule<LETTER, STATE> rule : getRules()) {
-			if (!transitionTable.isEmpty()) {
-				transitionTable += "\n";
+			if (transitionTable.length() > 0) {
+				transitionTable.append("\n");
 			}
-			String src = "";
+			final StringBuilder src = new StringBuilder();
 			for (final STATE st : rule.getSource()) {
-				if (!src.isEmpty()) {
-					src += " ";
+				if (src.length() > 0) {
+					src.append(" ");
 				}
-				src += st.toString();
+				src.append(st);
 			}
-			transitionTable += String.format("\t\t((%s) %s %s)", src, rule.getLetter(), rule.getDest());
+			transitionTable.append(String.format("\t\t((%s) %s %s)", src, rule.getLetter(), rule.getDest()));
 		}
-		return String.format("TreeAutomaton %s = {\n\talphabet = {%s},\n\tstates = {%s},\n\tinitialStates = {%s},\n\tfinalStates = {%s},\n\ttransitionTable = {\n%s\n\t}\n}", "ta" + hashCode() % 1000000 , alphabet, states, initialStates, finalStates, transitionTable);
-		
+		return String.format(
+				"TreeAutomaton %s = {\n\talphabet = {%s},\n\tstates = {%s},\n\tinitialStates = {%s},\n\tfinalStates = {%s},\n\ttransitionTable = {\n%s\n\t}\n}",
+				"ta" + hashCode() % 1000000, alphabet, states, initialStates, finalStates, transitionTable);
+
 	}
 }

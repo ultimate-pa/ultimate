@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -49,48 +48,75 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  *
  */
 public class Cobody {
-	Set<Term> transitions;
-	Set<ApplicationTerm> predicates;
-	Map<HCVar, TermVariable> inVars;
+	private final Set<Term> mTransitions;
+	private final Set<ApplicationTerm> mPredicates;
 
+	/***
+	 * Constructor of the cobody of a horn statement.
+	 */
 	public Cobody() {
-		predicates = new HashSet<>();
-		transitions = new HashSet<>();
-		inVars = new HashMap<>();
+		mPredicates = new HashSet<>();
+		mTransitions = new HashSet<>();
 	}
 
+	/***
+	 * Add a literal predicate to the cobody.
+	 * @param literal
+	 */
 	public void addPredicate(ApplicationTerm literal) {
-		predicates.add(literal);
+		mPredicates.add(literal);
 	}
 
+	/***
+	 * Add a transition formula to the cobody.
+	 * @param formula
+	 */
 	public void addTransitionFormula(Term formula) {
-		transitions.add(formula);
+		mTransitions.add(formula);
 	}
 
+	/***
+	 * Merge with a different cobody, the results is stored in @this.
+	 * @param cobody
+	 */
 	public void mergeCobody(Cobody cobody) {
-		for (final ApplicationTerm predicate : cobody.predicates) {
+		for (final ApplicationTerm predicate : cobody.mPredicates) {
 			addPredicate(predicate);
 		}
-		for (final Term transition : cobody.transitions) {
+		for (final Term transition : cobody.mTransitions) {
 			addTransitionFormula(transition);
 		}
 	}
-	
+
+	/***
+	 * Negate the cobody.
+	 * @return A body of the negation of the this.
+	 */
 	public Body negate() {
 		final Body res = new Body();
 		res.mergeCobody(this);
 		return res;
 	}
 
+	/***
+	 * Get the transition formula of the cobody.
+	 * @param script
+	 * @return
+	 */
 	public Term getTransitionFormula(ManagedScript script) {
-		return Util.and(script.getScript(), transitions.toArray(new Term[transitions.size()]));
+		return Util.and(script.getScript(), mTransitions.toArray(new Term[mTransitions.size()]));
 	}
 
+	/***
+	 * Get a map from literals to TermVariable.
+	 * @param symbolTable
+	 * @return
+	 */
 	public Map<HornClausePredicateSymbol, List<TermVariable>> getPredicateToVars(
 			final HCSymbolTable symbolTable) {
 
 		final HashMap<HornClausePredicateSymbol, List<TermVariable>> res = new HashMap<>();
-		for (final ApplicationTerm predicate : predicates) {
+		for (final ApplicationTerm predicate : mPredicates) {
 			final ArrayList<TermVariable> vars = new ArrayList<>();
 			for (final Term par : predicate.getParameters()) {
 				vars.add((TermVariable) par);
@@ -105,22 +131,24 @@ public class Cobody {
 
 	@Override
 	public String toString() {
-		String res = "";
+		StringBuilder result = new StringBuilder("");
+		
 		boolean first = true;
-		for (final ApplicationTerm t : predicates) {
+		for (final ApplicationTerm t : mPredicates) {
 			if (!first) {
-				res += " && ";
+				result.append(" && ");
+				
 			}
-			res += t.toString();
+			result.append(t.toString());
 			first = false;
 		}
-		for (final Term t : transitions) {
+		for (final Term t : mTransitions) {
 			if (!first) {
-				res += " && ";
+				result.append(" && ");
 			}
-			res += t.toStringDirect();
+			result.append(t.toStringDirect());
 			first = false;
 		}
-		return '(' + res + ')';
+		return '(' + result.toString() + ')';
 	}
 }

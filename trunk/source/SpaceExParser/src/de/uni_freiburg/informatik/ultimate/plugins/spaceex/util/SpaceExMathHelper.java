@@ -381,7 +381,6 @@ public class SpaceExMathHelper {
 	}
 	
 	public static boolean isEvaluation(final String operator) {
-		return !("and".equals(operator) || "or".equals(operator) || "<=".equals(operator) || ">=".equals(operator)
-				|| "<".equals(operator) || ">".equals(operator) || "=".equals(operator));
+		return ("+".equals(operator) || "-".equals(operator) || "*".equals(operator) || "/".equals(operator));
 	}
 }

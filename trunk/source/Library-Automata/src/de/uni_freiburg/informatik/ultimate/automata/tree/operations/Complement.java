@@ -52,6 +52,12 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE, ISta
 	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
 	private final AutomataLibraryServices mServices;
 
+	/***
+	 * Constructor of the complement operator
+	 * @param services
+	 * @param factory
+	 * @param tree
+	 */
 	public <SF extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Complement(
 			final AutomataLibraryServices services, final SF factory,
 			final ITreeAutomatonBU<LETTER, STATE> tree) {
@@ -76,12 +82,11 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE, ISta
 		return "Exiting complementing";
 	}
 
-	private <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ITreeAutomatonBU<LETTER, STATE>
-			computeResult(final FACTORY stateFactory) {
+	private <F extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> ITreeAutomatonBU<LETTER, STATE>
+			computeResult(final F stateFactory) {
 		final Determinize<LETTER, STATE> op = new Determinize<>(mServices, stateFactory, mTreeAutomaton);
 		final TreeAutomatonBU<LETTER, STATE> res = (TreeAutomatonBU<LETTER, STATE>) op.getResult();
 		res.complementFinals();
-		//return res;
 		final Minimize<LETTER, STATE> mini = new Minimize<>(mServices, stateFactory, res);
 		return mini.getResult();
 	}

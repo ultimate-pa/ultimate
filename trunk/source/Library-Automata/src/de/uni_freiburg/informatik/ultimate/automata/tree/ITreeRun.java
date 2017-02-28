@@ -30,16 +30,32 @@ package de.uni_freiburg.informatik.ultimate.automata.tree;
  * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  *
- * @param <LETTER>
- * @param <STATE>
+ * @param <LETTER> symbol
+ * @param <STATE> state
  */
 public interface ITreeRun<LETTER, STATE> {
-	
-	public ITreeAutomatonBU<LETTER, STATE> getAutomaton();
-	
-	public Tree<LETTER> getTree();
-	
-	public STATE getRoot();
-	
-	public LETTER getRootSymbol();
+
+	/***
+	 * Get an automaton representation of the tree run.
+	 * @return
+	 */
+	ITreeAutomatonBU<LETTER, STATE> getAutomaton();
+
+	/***
+	 * Get the tree representation of the tree run
+	 * @return
+	 */
+	Tree<LETTER> getTree();
+
+	/***
+	 * Get the root state
+	 * @return
+	 */
+	STATE getRoot();
+
+	/***
+	 * Get the root symbol
+	 * @return
+	 */
+	LETTER getRootSymbol();
 }

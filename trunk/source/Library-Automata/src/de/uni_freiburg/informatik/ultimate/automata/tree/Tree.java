@@ -32,6 +32,7 @@ import java.util.List;
 /**
  * Class to create a tree for the tree automaton.
  * @author mostafa.amin93@gmail.com, grugelt@uni-freiburg.de
+ * @param <LETTER> symbol
  */
 public class Tree<LETTER> {
 

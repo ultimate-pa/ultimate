@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * Rule of a TreeAutomaton. F(q1, ..., qn) -> p
- * @author mostafa (mostafa.amin93@gmail.com)
+ * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * 
  * @param <LETTER> Letters of the automaton.
  * @param <STATE> States of the automaton.

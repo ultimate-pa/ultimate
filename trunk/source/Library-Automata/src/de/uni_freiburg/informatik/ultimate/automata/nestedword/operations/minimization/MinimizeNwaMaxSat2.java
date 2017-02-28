@@ -90,7 +90,6 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	protected final Settings<STATE> mSettings;
 	protected final AbstractMaxSatSolver<T> mSolver;
 	protected ScopedTransitivityGenerator<T, STATE> mTransitivityGenerator;
-	protected final boolean mLibraryMode;
 
 	protected int mNumberClausesAcceptance;
 	protected int mNumberClausesTransitions;
@@ -123,11 +122,10 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	 */
 	protected MinimizeNwaMaxSat2(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
-			final Settings<STATE> settings, final NestedMap2<STATE, STATE, T> statePair2Var, final boolean libraryMode)
+			final Settings<STATE> settings, final NestedMap2<STATE, STATE, T> statePair2Var)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mTimer = System.currentTimeMillis();
-		mLibraryMode = libraryMode;
 		mOperand = operand;
 		mStatePair2Var = statePair2Var;
 		mSettings = settings;
@@ -783,6 +781,10 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		return statistics;
 	}
 
+	/**
+	 * @param statistics
+	 *            Statistics object.
+	 */
 	public void addStatistics(final AutomataOperationStatistics statistics) {
 		statistics.addKeyValuePair(StatisticsType.TIME_PREPROCESSING, mTimePreprocessing);
 		statistics.addKeyValuePair(StatisticsType.TIME_SOLVING, mTimeSolving);
@@ -850,6 +852,11 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		 * Some users already ensure this fact.
 		 */
 		private boolean mUseInternalCallConstraints = true;
+		/**
+		 * {@code true}: Use the solver in library mode (called by others).<br>
+		 * {@code false}: Use the solver as standalone operation.
+		 */
+		private boolean mLibraryMode = true;
 
 		public Settings() {
 			// default constructor
@@ -939,6 +946,15 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 
 		public Settings<STATE> setUseInternalCallConstraints(final boolean useInternalCallConstraints) {
 			mUseInternalCallConstraints = useInternalCallConstraints;
+			return this;
+		}
+
+		public boolean getLibraryMode() {
+			return mLibraryMode;
+		}
+
+		public Settings<STATE> setLibraryMode(final boolean mode) {
+			mLibraryMode = mode;
 			return this;
 		}
 

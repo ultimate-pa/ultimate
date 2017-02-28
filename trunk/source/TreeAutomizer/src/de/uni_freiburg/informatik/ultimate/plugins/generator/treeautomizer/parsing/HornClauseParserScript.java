@@ -321,7 +321,7 @@ public class HornClauseParserScript extends NoopScript {
 			}
 		}
 
-		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getFunction().getName().equals("not")) {
+		if (term instanceof ApplicationTerm && "not".equals(((ApplicationTerm) term).getFunction().getName())) {
 			final Term nested = ((ApplicationTerm) term).getParameters()[0];
 			if (nested instanceof QuantifiedFormula) {
 				final QuantifiedFormula thisTerm = (QuantifiedFormula) nested;
@@ -329,7 +329,6 @@ public class HornClauseParserScript extends NoopScript {
 					final Cobody cobody = parseCobody(thisTerm.getSubformula());
 					final Body body = cobody.negate();
 					mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable));
-					
 					//System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
 				}
 			}
@@ -383,10 +382,7 @@ public class HornClauseParserScript extends NoopScript {
 
 		final Term result = super.term(funcname, indices, returnSort, params);
 
-		// if (returnSort.getName().equals("Bool")) {
-		//
-		// }
-
+		// if (returnSort.getName().equals("Bool")) {}
 		if (funcname.equals("=>")) {
 			int i = 0;
 			i++;
@@ -404,8 +400,8 @@ public class HornClauseParserScript extends NoopScript {
 
 	@Override
 	public Theory getTheory() {
-		return super.getTheory(); // TODO: maybe return the theory of the
-									// backend solver
+		// TODO: maybe return the theory of the backend solver
+		return super.getTheory();
 	}
 
 	@Override
@@ -594,5 +590,4 @@ public class HornClauseParserScript extends NoopScript {
 		// return mBackendSmtSolver.variable(varname, sort);
 		return super.variable(varname, sort);
 	}
-
 }

@@ -142,7 +142,6 @@ public class HybridIcfgGenerator {
 		}
 		
 		final BasicIcfg<IcfgLocation> icfg = new BasicIcfg<>("icfg", mSmtToolkit, IcfgLocation.class);
-		
 		// root location of the ICFG, to this root location each sub-icfg will be connected.
 		icfg.addLocation(mRootLocation, true, false, true, false, false);
 		
@@ -342,6 +341,7 @@ public class HybridIcfgGenerator {
 				flowTerms += ode.getmSolution();
 			}
 			flowTerms += invariant.isEmpty() ? "" : "&" + invariant;
+			// flowTerms += flowTerms.isEmpty() ? "" : "&" + TIME_INV;
 			mLogger.debug("FLOW TERMS: " + flowTerms);
 			final UnmodifiableTransFormula tfFlow = buildTransformula(flowTerms, BuildScenario.UPDATE);
 			final IcfgInternalTransition preFlowTopostFlow =

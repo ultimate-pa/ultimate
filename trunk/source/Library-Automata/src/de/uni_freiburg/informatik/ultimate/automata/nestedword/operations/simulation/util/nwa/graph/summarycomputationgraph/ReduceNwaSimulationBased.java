@@ -286,7 +286,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		final boolean mergeFinalAndNonFinalStates = simulationInfoProvider.mayMergeFinalAndNonFinalStates();
 		final MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> maxSatMinimizer = new MinimizeNwaPmaxSatAsymmetric<>(
 				mServices, stateFactory, mOperand, simRelation.getRelation(),
-				new MinimizeNwaMaxSat2.Settings<STATE>().setFinalStateConstraints(!mergeFinalAndNonFinalStates), true);
+				new MinimizeNwaMaxSat2.Settings<STATE>().setFinalStateConstraints(!mergeFinalAndNonFinalStates));
 		return new Pair<>(maxSatMinimizer.getResult(), maxSatMinimizer);
 	}
 

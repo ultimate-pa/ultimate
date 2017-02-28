@@ -230,13 +230,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				mPredicateUnifier.getTruePredicate(), initialPredicates);
 		mGraphRoot = r2ar.convert(mOriginalRoot);
 
-		mGraphWriter.writeGraphAsImage(mGraphRoot,
-				String.format("graph_%s_originalAfterConversion", mGraphWriter.getGraphCounter()));
-
 		removeSummaryEdges();
-
-		mGraphWriter.writeGraphAsImage(mGraphRoot,
-				String.format("graph_%s_originalSummaryEdgesRemoved", mGraphWriter.getGraphCounter()));
 
 		if (mGlobalSettings.getChecker() == Checker.IMPULSE) {
 			mCodeChecker = new ImpulseChecker(root, mCsToolkit, mOriginalRoot, mGraphRoot, mGraphWriter, edgeChecker,
@@ -362,12 +356,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		final IIcfg<IcfgLocation> icfg = (IIcfg<IcfgLocation>) root;
 		initialize(icfg);
 
-		mGraphWriter.writeGraphAsImage(mGraphRoot, String.format("graph_%s_original", mGraphWriter.getGraphCounter()));
-
 		final ImpRootNode originalGraphCopy = copyGraph(mGraphRoot);
-
-		mGraphWriter.writeGraphAsImage(originalGraphCopy,
-				String.format("graph_%s_originalCopied", mGraphWriter.getGraphCounter()));
 
 		final ArrayList<AnnotatedProgramPoint> procRootsToCheck = new ArrayList<>();
 
@@ -379,11 +368,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				break;
 			}
 		}
-		if (procRootsToCheck.isEmpty()) { // -> no Ultimate.start present
+		if (procRootsToCheck.isEmpty()) { 
+			// -> no Ultimate.start present
 			procRootsToCheck.addAll(mGraphRoot.getOutgoingNodes());
 		}
 
-		Result overallResult = Result.UNKNOWN;
 		boolean allSafe = true;
 		boolean verificationInterrupted = false;
 		IcfgProgramExecution realErrorProgramExecution = null;
@@ -547,6 +536,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			mCodeChecker.debug();
 		}
 
+		Result overallResult = Result.UNKNOWN;
 		if (!verificationInterrupted) {
 			if (allSafe) {
 				overallResult = Result.CORRECT;

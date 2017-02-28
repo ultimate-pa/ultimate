@@ -113,7 +113,7 @@ public class HybridTermBuilder {
 	private Term buildTerm(final String operand1, final Term term2, final String operator,
 			final BuildScenario scenario) {
 		Term tmpTerm;
-		final TermVariable tv1 = checkAndGetTermVariable(operand1, scenario, SpaceExMathHelper.isEvaluation(operator));
+		final TermVariable tv1 = checkAndGetTermVariable(operand1, scenario, false);
 		/*
 		 * There are 2 cases what can happen, either a Var Inequality or not
 		 */
@@ -146,9 +146,8 @@ public class HybridTermBuilder {
 	private Term buildTerm(final String operand1, final String operand2, final String operator,
 			final BuildScenario scenario) {
 		Term tmpTerm;
-		final TermVariable tv1 = checkAndGetTermVariable(operand1, scenario,
-				SpaceExMathHelper.isEvaluation(operator) || "=".equals(operator));
-		final TermVariable tv2 = checkAndGetTermVariable(operand2, scenario, SpaceExMathHelper.isEvaluation(operator));
+		final TermVariable tv1 = checkAndGetTermVariable(operand1, scenario, false);
+		final TermVariable tv2 = checkAndGetTermVariable(operand2, scenario, !SpaceExMathHelper.isEvaluation(operator));
 		// build term
 		if (tv1 == null && tv2 == null) {
 			tmpTerm = mScript.term(operator, mScript.decimal(operand2), mScript.decimal(operand1));
@@ -166,7 +165,7 @@ public class HybridTermBuilder {
 	private Term buildTerm(final Term term1, final String operand2, final String operator,
 			final BuildScenario scenario) {
 		Term tmpTerm;
-		final TermVariable tv2 = checkAndGetTermVariable(operand2, scenario, SpaceExMathHelper.isEvaluation(operator));
+		final TermVariable tv2 = checkAndGetTermVariable(operand2, scenario, !SpaceExMathHelper.isEvaluation(operator));
 		// build term
 		if (tv2 == null) {
 			tmpTerm = mScript.term(operator, mScript.decimal(operand2), term1);
@@ -217,8 +216,8 @@ public class HybridTermBuilder {
 	}
 	
 	// helper function to get TermVariable for Invariant or Update Terms
-	private TermVariable getUpdateTV(final String operand1, final boolean isAssignedValue) {
-		if (!isAssignedValue) {
+	private TermVariable getUpdateTV(final String operand1, final boolean isLeftHandSide) {
+		if (isLeftHandSide) {
 			if (mVariableManager.getVar2OutVarTermVariable().containsKey(operand1)) {
 				final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
 				final TermVariable outvar = mVariableManager.getVar2OutVarTermVariable().get(operand1);

@@ -37,11 +37,11 @@ import java.util.Collection;
  */
 public interface IEqNodeIdentifier<ARRAYID> {
 	
-	public boolean isFunction();
+	boolean isFunction();
 
-	public ARRAYID getFunction();
+	ARRAYID getFunction();
 	
-	public Collection<ARRAYID> getAllFunctions();
+	Collection<ARRAYID> getAllFunctions();
 	
-	public boolean isLiteral();
+	boolean isLiteral();
 }

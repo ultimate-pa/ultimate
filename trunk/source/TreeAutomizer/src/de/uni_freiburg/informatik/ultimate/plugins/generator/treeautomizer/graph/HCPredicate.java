@@ -37,22 +37,20 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
- * 
+ * A predicate object for HornClauses.
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class HCPredicate extends BasicPredicate implements IPredicate {
+public class HCPredicate extends BasicPredicate {
 	private static final long serialVersionUID = 1750137515726690834L;
-	private static final int serialHCPredicate = 1000000007;
+	private static final int SERIAL_HCPREDICATE = 1000000007;
 	
 	@Visualizable
 	protected final HornClausePredicateSymbol mProgramPoint;
-
 	private final Map<Term, HCVar> mProgramVars;
 	
 	/**
@@ -69,7 +67,7 @@ public class HCPredicate extends BasicPredicate implements IPredicate {
 
 	protected HCPredicate(final HornClausePredicateSymbol programPoint, final Term term,
 			final Map<Term, HCVar> varsMap, final Term closedFormula) {
-		this(programPoint, HashUtils.hashHsieh(serialHCPredicate, programPoint, term),
+		this(programPoint, HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoint, term),
 			term, new HashSet<>(varsMap.values()), varsMap, closedFormula);
 	}
 	
@@ -98,21 +96,25 @@ public class HCPredicate extends BasicPredicate implements IPredicate {
 	public int hashCode() {
 		return HashUtils.hashHsieh(serialHCPredicate, mProgramPoint, mFormula);// mClosedFormula);
 	}
+	
+	@Override
+	public boolean equals(final HCPredicate p) {
+	}
 	*/
 
 	@Override
 	public String toString() {
-		String result = "#"; // super.mSerialNumber + "#";
+		String result = "#";
 		if (mProgramPoint != null) {
-			if (mProgramPoint.getName().equals("true")) {
+			if ("true".equals(mProgramPoint.getName())) {
 				result += "True";
-			} else if (mProgramPoint.getName().equals("false")) {
+			} else if ("false".equals(mProgramPoint.getName())) {
 				result += "False";
 			} else {
 				result += mProgramPoint.getName();
 			}
 		}
-		result += "@(" + mFormula.toString() + ")";//+ "::" + mProgramVars.toString() + ")";
+		result += "@(" + mFormula.toString() + ")";
 		return result;
 	}
 	
@@ -121,7 +123,6 @@ public class HCPredicate extends BasicPredicate implements IPredicate {
 		return false;
 	}
 	
-	//@Override
 	protected String[] getFieldNames() {
 		return s_AttribFields;
 	}

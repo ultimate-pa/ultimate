@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 /**
  * Check emptiness of a tree automaton. The output is TreeRun.
  * 
- * @author mostafa
+ * @author Mostafa M. Amin <mostafa.amin93@gmail.com>
  *
  * @param <LETTER>
  *            letter class of tree automaton.
@@ -56,6 +56,11 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 	protected final TreeRun<LETTER, STATE> mResult;
 
+	/***
+	 * TreeEmptiness checker
+	 * @param services
+	 * @param tree
+	 */
 	public TreeEmptinessCheck(final AutomataLibraryServices services, final TreeAutomatonBU<LETTER, STATE> tree) {
 		mTreeAutomaton = tree;
 		mResult = computeResult();
@@ -76,6 +81,10 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 		return "Exit emptiness check";
 	}
 
+	/***
+	 * compute the emptiness check.
+	 * @return
+	 */
 	private TreeRun<LETTER, STATE> computeResult() {
 		final LinkedList<TreeAutomatonRule<LETTER, STATE>> worklist = new LinkedList<>();
 
@@ -127,15 +136,12 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 			if (allMarked) {
 				final TreeRun<LETTER, STATE> newTree = new TreeRun<>(dest, rule.getLetter(), subTrees);
 				soltree.put(dest, newTree);
-
 				if (mTreeAutomaton.isFinalState(dest)) {
 					return newTree;
 				}
 				if (rulesBySource.containsKey(dest)) {
-					for (final TreeAutomatonRule<LETTER, STATE> considerNext : rulesBySource.get(dest)) {
-						worklist.add(considerNext);
-						// worklist.push(considerNext); // depth first
-					}
+					worklist.addAll(rulesBySource.get(dest));
+					// worklist.pushAll(considerNext); // depth first
 				}
 			}
 

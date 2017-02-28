@@ -55,11 +55,23 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE, IStateF
 	private final Tree<LETTER> mExample;
 	private final Boolean mResult;
 
+	/***
+	 * Operator to check if accepting a given tree run by a given tree automaton.
+	 * @param services
+	 * @param automaton
+	 * @param run
+	 */
 	public Accepts(final AutomataLibraryServices services, final ITreeAutomatonBU<LETTER, STATE> automaton,
 			final TreeRun<LETTER, STATE> run) {
 		this(services, automaton, run.getTree());
 	}
-
+	
+	/***
+	 * Operator to check if accepting a given tree by a given tree automaton.
+	 * @param services
+	 * @param automaton
+	 * @param run
+	 */
 	public Accepts(final AutomataLibraryServices services, final ITreeAutomatonBU<LETTER, STATE> automaton,
 			final Tree<LETTER> run) {
 		mExample = run;
@@ -92,19 +104,20 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE, IStateF
 
 		final Iterable<TreeAutomatonRule<LETTER, STATE>> st = mTreeAutomaton.getRulesByLetter(t.getSymbol());
 
-		if (st != null) {
-			for (final TreeAutomatonRule<LETTER, STATE> rule : st) {
-				if (rule.getSource().size() != next.size()) {
+		if (st == null) {
+			return res;
+		}
+		for (final TreeAutomatonRule<LETTER, STATE> rule : st) {
+			if (rule.getSource().size() != next.size()) {
+				continue;
+			}
+			for (int i = 0; i < next.size(); ++i) {
+				final STATE sr = rule.getSource().get(i);
+				if (!next.get(i).contains(sr) && !mTreeAutomaton.isInitialState(sr)) {
 					continue;
 				}
-				for (int i = 0; i < next.size(); ++i) {
-					final STATE sr = rule.getSource().get(i);
-					if (!next.get(i).contains(sr) && !mTreeAutomaton.isInitialState(sr)) {
-						continue;
-					}
-				}
-				res.add(rule.getDest());
 			}
+			res.add(rule.getDest());
 		}
 		return res;
 	}
