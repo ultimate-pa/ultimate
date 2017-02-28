@@ -99,7 +99,7 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
 		final ParrotInteractiveIterationInfo itInfo = getIterationInfo();
 
-		if (itInfo.getNextInteractiveIteration() >= mIteration) {
+		if (mIteration >= itInfo.getNextInteractiveIteration()) {
 			try {
 				ParrotInteractiveIterationInfo other =
 						getInteractive().request(ParrotInteractiveIterationInfo.class).get();
@@ -109,7 +109,7 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 				return useFallbackStrategy(itInfo);
 			}
 		}
-		if (itInfo.getNextInteractiveIteration() > mIteration)
+		if (mIteration < itInfo.getNextInteractiveIteration())
 			return useFallbackStrategy(itInfo);
 
 		final Set<Track> left = new HashSet<>();
