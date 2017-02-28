@@ -37,7 +37,10 @@ import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.ExpressionEvaluator;
 
 /**
  * Term walker for non-relational abstract domains.
@@ -45,20 +48,25 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class NonrelationalTermProcessor<STATE extends IAbstractState<STATE, VARDECL>, VARDECL> extends NonRecursive {
+public class NonrelationalTermProcessor<STATE extends NonrelationalState<STATE, VALUE, IProgramVarOrConst>, VALUE extends INonrelationalValue<VALUE>>
+		extends NonRecursive {
 	
 	private final ILogger mLogger;
-
-	protected NonrelationalTermProcessor(final ILogger logger) {
+	
+	private ExpressionEvaluator<VALUE, STATE, IProgramVarOrConst> mExpressionEvaluator;
+	
+	public NonrelationalTermProcessor(final ILogger logger) {
 		mLogger = logger;
 	}
 	
 	protected void process(final Term term) {
 		mLogger.debug("ANALYZING TERM: " + term);
+		
+		mExpressionEvaluator = new ExpressionEvaluator<>();
 		run(new NonrelationalTermWalker(term, mLogger));
 	}
 
-	private static final class NonrelationalTermWalker extends TermWalker {
+	private final class NonrelationalTermWalker extends TermWalker {
 		
 		private final ILogger mLogger;
 		
@@ -70,8 +78,8 @@ public class NonrelationalTermProcessor<STATE extends IAbstractState<STATE, VARD
 		@Override
 		public void walk(final NonRecursive walker, final ConstantTerm term) {
 			mLogger.debug("Constant Term: " + term);
-			mLogger.warn("Not implemented!");
-			// throw new UnsupportedOperationException();
+			// mExpressionEvaluator
+			// .addEvaluator(new ConstantTermEvaluator<VALUE, STATE, IProgramVarOrConst>(term.getValue()));
 		}
 
 		@Override
@@ -89,7 +97,6 @@ public class NonrelationalTermProcessor<STATE extends IAbstractState<STATE, VARD
 			if (fName.equals("and") || fName.equals("or") || fName.equals("xor") || fName.equals("not")
 					|| fName.equals(">=")) {
 				// Logic
-
 			} else if (fName.equals("true") || fName.equals("false")) {
 				// Boolean literals
 
@@ -101,7 +108,8 @@ public class NonrelationalTermProcessor<STATE extends IAbstractState<STATE, VARD
 			}
 			
 			for (final Term t : term.getParameters()) {
-				walker.enqueueWalker(new NonrelationalTermWalker(t, mLogger));
+				run(new NonrelationalTermWalker(t, mLogger));
+				// walker.enqueueWalker(new NonrelationalTermWalker(t, mLogger));
 			}
 		}
 

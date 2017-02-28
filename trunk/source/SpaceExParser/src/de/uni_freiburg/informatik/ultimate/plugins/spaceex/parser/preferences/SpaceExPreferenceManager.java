@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2016 Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE SpaceExParser plug-in.
- * 
+ *
  * The ULTIMATE SpaceExParser plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE SpaceExParser plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE SpaceExParser plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE SpaceExParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -41,6 +41,10 @@ import java.util.regex.Pattern;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
@@ -50,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class that shall parse the config file of a SpaceEx model and hold important settings and values.
- * 
+ *
  * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  *
  */
@@ -74,16 +78,21 @@ public class SpaceExPreferenceManager {
 	private boolean mHasPreferenceGroups;
 	private boolean mHasForbiddenGroup;
 	private final SpaceExMathHelper mMathHelper;
+	private SolverMode mSolverMode;
+	private boolean mFakeNonIncrementalScript;
+	private boolean mDumpSmtScriptToFile;
+	private String mPathOfDumpedScript;
+	private String mCommandExternalSolver;
+	private boolean mDumpUsatCoreTrackBenchmark;
+	private boolean mDumpMainTrackBenchmark;
+	private String mLogicForExternalSolver;
+	private Settings mSolverSettings;
 	
 	public SpaceExPreferenceManager(final IUltimateServiceProvider services, final ILogger logger,
 			final File spaceExFile) throws Exception {
 		mServices = services;
 		mLogger = logger;
 		final IPreferenceProvider preferenceProvider = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
-		String configfile =
-				preferenceProvider.getString(SpaceExParserPreferenceInitializer.LABEL_SPACEEX_CONFIG_FILE).toString();
-		final boolean loadconfig = preferenceProvider
-				.getBoolean(SpaceExParserPreferenceInitializer.LABEL_LOAD_CONFIG_FILE_OF_SPACEEX_MODEL);
 		mModelFilename = spaceExFile.getAbsolutePath();
 		mPreferenceGroups = new HashMap<>();
 		mGroupIdToParallelComposition = new HashMap<>();
@@ -93,6 +102,12 @@ public class SpaceExPreferenceManager {
 		mRenameID = new AtomicInteger(0);
 		mMathHelper = new SpaceExMathHelper(logger);
 		mGroupTodirectAssingment = new HashMap<>();
+		// get TA settings
+		getTraceAbstractionPreferences();
+		String configfile =
+				preferenceProvider.getString(SpaceExParserPreferenceInitializer.LABEL_SPACEEX_CONFIG_FILE).toString();
+		final boolean loadconfig = preferenceProvider
+				.getBoolean(SpaceExParserPreferenceInitializer.LABEL_LOAD_CONFIG_FILE_OF_SPACEEX_MODEL);
 		// check if the configfile name is not empty
 		// if it is search for a config file in the directory.
 		if (!"".equals(configfile)) {
@@ -109,6 +124,36 @@ public class SpaceExPreferenceManager {
 				mLogger.info("no configfile with the name " + configfile + " exists");
 			}
 		}
+	}
+	
+	// function that get the settings of the TraceAbstraction in order to create the correct solver.
+	private void getTraceAbstractionPreferences() {
+		final String taPluginID =
+				de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator.PLUGIN_ID;
+		final IPreferenceProvider traceAbstractionPreferences = mServices.getPreferenceProvider(taPluginID);
+		mSolverMode = traceAbstractionPreferences.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
+		mFakeNonIncrementalScript = mServices.getPreferenceProvider(taPluginID)
+				.getBoolean(RcfgPreferenceInitializer.LABEL_FakeNonIncrementalScript);
+		
+		mDumpSmtScriptToFile =
+				mServices.getPreferenceProvider(taPluginID).getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
+		mPathOfDumpedScript =
+				mServices.getPreferenceProvider(taPluginID).getString(RcfgPreferenceInitializer.LABEL_Path);
+		
+		mCommandExternalSolver =
+				mServices.getPreferenceProvider(taPluginID).getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
+		
+		mDumpUsatCoreTrackBenchmark = mServices.getPreferenceProvider(taPluginID)
+				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpUnsatCoreTrackBenchmark);
+		
+		mDumpMainTrackBenchmark = mServices.getPreferenceProvider(taPluginID)
+				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpMainTrackBenchmark);
+		
+		mLogicForExternalSolver =
+				mServices.getPreferenceProvider(taPluginID).getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
+		mSolverSettings = SolverBuilder.constructSolverSettings(mModelFilename, mSolverMode, mFakeNonIncrementalScript,
+				mCommandExternalSolver, mDumpSmtScriptToFile, mPathOfDumpedScript);
+		
 	}
 	
 	private void parseConfigFile(final File configfile) throws Exception {
@@ -280,7 +325,7 @@ public class SpaceExPreferenceManager {
 	/**
 	 * Function that analyses if a variable in the config has to be renamed variables that have to be renamed are of the
 	 * form AUT.VARNAME They are constants
-	 * 
+	 *
 	 * @param group
 	 * @return
 	 */
@@ -400,6 +445,42 @@ public class SpaceExPreferenceManager {
 	
 	public Map<Integer, Map<String, String>> getGroupTodirectAssingment() {
 		return mGroupTodirectAssingment;
+	}
+	
+	public SolverMode getSolverMode() {
+		return mSolverMode;
+	}
+	
+	public boolean ismFakeNonIncrementalScript() {
+		return mFakeNonIncrementalScript;
+	}
+	
+	public boolean ismDumpSmtScriptToFile() {
+		return mDumpSmtScriptToFile;
+	}
+	
+	public String getmPathOfDumpedScript() {
+		return mPathOfDumpedScript;
+	}
+	
+	public String getmCommandExternalSolver() {
+		return mCommandExternalSolver;
+	}
+	
+	public boolean ismDumpUsatCoreTrackBenchmark() {
+		return mDumpUsatCoreTrackBenchmark;
+	}
+	
+	public boolean ismDumpMainTrackBenchmark() {
+		return mDumpMainTrackBenchmark;
+	}
+	
+	public String getmLogicForExternalSolver() {
+		return mLogicForExternalSolver;
+	}
+	
+	public Settings getmSolverSettings() {
+		return mSolverSettings;
 	}
 	
 }

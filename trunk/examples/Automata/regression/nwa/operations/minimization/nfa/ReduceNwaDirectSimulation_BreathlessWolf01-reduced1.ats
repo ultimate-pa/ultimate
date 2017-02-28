@@ -21,7 +21,7 @@ int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(pre
 assert(minimizeSevpaSize == 3);
 assert(shrinkNwaSize == 3);
 assert(minimizeNwaPmaxSatSize == 3);
-assert(minimizeNwaPmaxSatAsymmetricSize == 3);
+assert(minimizeNwaPmaxSatAsymmetricSize == 2);
 assert(minimizeDfaSimulationSize == 2);
 assert(reduceNwaDirectSimulationSize == 3);
 assert(reduceNwaDirectSimulationBSize == 3);

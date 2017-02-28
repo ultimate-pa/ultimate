@@ -59,7 +59,7 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 	public Iterator<Pair<E, E>> iterator() {
 		final Iterator<Set<E>> iterator = mPartition.iterator();
 		if (iterator.hasNext()) {
-			return new IteratorFromPartition(iterator);
+			return new IteratorFromPartition<>(iterator);
 		}
 		return Collections.emptyIterator();
 	}

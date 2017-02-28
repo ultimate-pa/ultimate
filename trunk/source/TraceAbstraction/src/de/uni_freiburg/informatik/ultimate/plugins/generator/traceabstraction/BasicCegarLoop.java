@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -63,6 +64,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -114,6 +116,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected static final boolean TRACE_HISTOGRAMM_BAILOUT = false;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;
 	private static final boolean NON_EA_INDUCTIVITY_CHECK = false;
+	private static final boolean DUMP_DIFFICULT_PATH_PROGRAMS = false;
 
 	protected final PredicateFactoryRefinement mStateFactoryForRefinement;
 	protected final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
@@ -336,6 +339,14 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						mDoFaultLocalizationFlowSensitive, mSimplificationTechnique, mXnfConversionTechnique,
 						mIcfgContainer.getSymboltable());
 				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
+			}
+		} else {
+			if (DUMP_DIFFICULT_PATH_PROGRAMS
+					&& ((TraceAbstractionRefinementEngine) mTraceCheckAndRefinementEngine).somePerfectSequenceFound()) {
+				final String filename = mPref.dumpPath() + File.separator + mIcfgContainer.getIdentifier() + "_"
+						+ mIteration + ".bpl";
+				new PathProgramDumper(mIcfgContainer, mServices,
+						(NestedRun<? extends IAction, IPredicate>) mCounterexample, filename);
 			}
 		}
 

@@ -10,10 +10,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
  *
  * @author Frank Schüssele (schuessf@informatik.uni-freiburg.de)
  */
-public class DefaultEqualityAnalysisProvider<LOC> implements IEqualityAnalysisResultProvider<LOC> {
+public class DefaultEqualityAnalysisProvider<LOC, CFG> implements IEqualityAnalysisResultProvider<LOC, CFG> {
 
 	@Override
 	public EqualityAnalysisResult getAnalysisResult(final LOC location, final Set<Doubleton<Term>> doubletons) {
 		return new EqualityAnalysisResult(doubletons);
+	}
+
+	@Override
+	public void preprocess(final CFG cfg) {
+		// No preprocessing necessary, "unknown" is always returned
 	}
 }

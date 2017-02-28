@@ -43,10 +43,18 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * An IcfgTransformer that accelerates loops.
@@ -61,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  *
  */
 public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
-		implements IIcfgTransformer<OUTLOC> {
+implements IIcfgTransformer<OUTLOC> {
 
 	private final ILogger mLogger;
 	private final IIcfg<OUTLOC> mResultIcfg;
@@ -69,6 +77,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 
 	private final Set<IcfgEdge> mLoopEntryTransitions;
 	private final Map<INLOC, List<Backbone>> mBackbones;
+	private final ManagedScript mScript;
 
 	/**
 	 * Constructs a LoopAccelerationIcfgTransformer.
@@ -76,11 +85,18 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 	 * @param logger
 	 *            A {@link ILogger} instance that is used for debug logging.
 	 * @param originalIcfg
+	 *            an input {@link IIcfg}.
 	 * @param funLocFac
+	 *            A location factory.
 	 * @param backtranslationTracker
+	 *            A backtranslation tracker.
 	 * @param outLocationClass
+	 *            The class object of the type of locations of the output {@link IIcfg}.
 	 * @param newIcfgIdentifier
+	 *            The identifier of the new {@link IIcfg}
 	 * @param transformer
+	 *            The transformer that should be applied to each transformula of each transition of the input
+	 *            {@link IIcfg} to create a new {@link IIcfg}.
 	 */
 	public LoopAccelerationIcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
@@ -92,6 +108,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 
 		mLoopEntryTransitions = new HashSet<>();
 		mBackbones = new HashMap<>();
+		mScript = origIcfg.getCfgSmtToolkit().getManagedScript();
 
 		// perform transformation last
 		final BasicIcfg<OUTLOC> resultIcfg =
@@ -104,10 +121,9 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 
 	/**
 	 * Transforms the Icfg.
-	 * 
+	 *
 	 * @param lst
 	 */
-	@SuppressWarnings("unchecked")
 	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> origIcfg, final BasicIcfg<OUTLOC> resultIcfg,
 			final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
 
@@ -129,6 +145,10 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Found the following backbones:");
 			mLogger.debug(mBackbones);
+
+			for (final INLOC location : mBackbones.keySet()) {
+				mLogger.debug(location + ": " + getIteratedSymbolicMemoryForLoop(location));
+			}
 		}
 
 		// Create a new Icfg.
@@ -158,7 +178,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 
 	/**
 	 * Finds backbones.
-	 * 
+	 *
 	 * @param entryTransition
 	 *            The entry transition of the backbones.
 	 * @return A list of backbones.
@@ -204,6 +224,60 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		}
 
 		return completeBackbones;
+	}
+
+	/**
+	 * Calculates a TransFormula that holds after the given backbone was taken once.
+	 * @param backbone
+	 *            A Backbone.
+	 * @return
+	 *            A Transformula.
+	 */
+	private TransFormula getTransformulaForBackbone(final Backbone backbone) {
+		Term term = mScript.getScript().term("true");
+
+		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
+		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
+
+		for (final IcfgEdge edge : backbone.getTransitions()) {
+			final TransFormula tf = edge.getTransformula();
+
+			for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
+				if (!outVars.containsKey(entry.getKey())) {
+					assert !inVars.containsKey(entry.getKey());
+					inVars.put(entry.getKey(), entry.getValue());
+				} else if (outVars.get(entry.getKey()) != entry.getValue()) {
+					term = Util.and(mScript.getScript(), term,
+							mScript.getScript().term("=", entry.getValue(), outVars.get(entry.getKey())));
+				}
+			}
+
+			term = Util.and(mScript.getScript(), term, tf.getFormula());
+
+			for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
+				outVars.put(entry.getKey(), entry.getValue());
+			}
+		}
+
+		final TransFormulaBuilder builder = new TransFormulaBuilder(inVars, outVars, true, null, true, null, true);
+		builder.setFormula(term);
+		builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return builder.finishConstruction(mScript);
+	}
+
+	private IteratedSymbolicMemory getIteratedSymbolicMemoryForLoop(final INLOC loopEntry) {
+		final List<Backbone> backbones = mBackbones.get(loopEntry);
+		final List<SymbolicMemory> symbolicMemories = new ArrayList<>();
+
+		for (final Backbone backbone : backbones) {
+			final TransFormula tf = getTransformulaForBackbone(backbone);
+
+			final SymbolicMemory symbolicMemory = new SymbolicMemory(tf);
+
+			symbolicMemories.add(symbolicMemory);
+		}
+
+		return new IteratedSymbolicMemory(mScript, symbolicMemories);
 	}
 
 	@Override

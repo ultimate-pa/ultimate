@@ -19,25 +19,25 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
 
-public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<IcfgLocation> {
-	
+public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> {
+
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final Map<IcfgLocation, Set<VPState<IcfgEdge>>> mLoc2States;
-	
-	public AbsIntEqualityProvider(final IUltimateServiceProvider services, final IIcfg<?> icfg) {
+	private Map<IcfgLocation, Set<VPState<IcfgEdge>>> mLoc2States;
+
+	public AbsIntEqualityProvider(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mLoc2States = runPreAnalysis(icfg);
 	}
-	
-	private Map<IcfgLocation, Set<VPState<IcfgEdge>>> runPreAnalysis(final IIcfg<?> icfg) {
+
+	@Override
+	public void preprocess(final IIcfg<?> icfg) {
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService();
 		final IAbstractInterpretationResult<VPState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation> absIntResult =
 				AbstractInterpreter.runFutureEqualityDomain(icfg, timer, mServices, false, mLogger);
-		return absIntResult.getLoc2States();
+		mLoc2States = absIntResult.getLoc2States();
 	}
-	
+
 	@Override
 	public EqualityAnalysisResult getAnalysisResult(final IcfgLocation location,
 			final Set<Doubleton<Term>> doubletons) {
@@ -45,7 +45,7 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 		if (states == null) {
 			return new EqualityAnalysisResult(doubletons);
 		}
-		
+
 		final Set<Doubleton<Term>> equal = new HashSet<>();
 		final Set<Doubleton<Term>> distinct = new HashSet<>();
 		final Set<Doubleton<Term>> unknown = new HashSet<>();
@@ -62,5 +62,5 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 		}
 		return new EqualityAnalysisResult(equal, distinct, unknown);
 	}
-	
+
 }

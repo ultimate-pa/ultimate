@@ -196,13 +196,13 @@ public class HybridModel {
 		final Collection<SpaceExPreferenceGroup> groups = mPreferenceManager.getPreferenceGroups().values();
 		// for each group create the parallel composition starting in the groups initial locations.
 		for (final SpaceExPreferenceGroup group : groups) {
-			final HybridAutomaton merge = mergeAutomataNWay(configSystem, group);
+			final HybridAutomaton merge = mergeAutomata(configSystem, group);
 			groupIdtoMergedAutomaton.put(group.getId(), merge);
 		}
 		return groupIdtoMergedAutomaton;
 	}
 	
-	public HybridAutomaton mergeAutomataNWay(final HybridSystem configSystem, final SpaceExPreferenceGroup group) {
+	public HybridAutomaton mergeAutomata(final HybridSystem configSystem, final SpaceExPreferenceGroup group) {
 		final List<HybridAutomaton> automata = new ArrayList<>(configSystem.getAutomata().values());
 		// if there are subsystems, retrieve all of them recursivly
 		if (!configSystem.getSubSystems().isEmpty()) {
@@ -217,7 +217,7 @@ public class HybridModel {
 		
 		final Map<HybridAutomaton, Location> automataAndInitial = new HashMap<>();
 		for (final HybridAutomaton aut : automata) {
-			automataAndInitial.put(aut, aut.getInitialLocationForGroup(group.getId()));
+			automataAndInitial.put(aut, aut.getInitialLocationForGroup(group != null ? group.getId() : null));
 		}
 		return mParallelCompositionGenerator.computeParallelCompositionNWay(automataAndInitial);
 	}

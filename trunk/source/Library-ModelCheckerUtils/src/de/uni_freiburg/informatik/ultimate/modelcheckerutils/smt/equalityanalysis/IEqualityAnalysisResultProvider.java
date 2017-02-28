@@ -37,8 +37,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public interface IEqualityAnalysisResultProvider<LOC> {
+public interface IEqualityAnalysisResultProvider<LOC, CFG> {
 
 	EqualityAnalysisResult getAnalysisResult(LOC location, Set<Doubleton<Term>> doubletons);
+
+	void preprocess(CFG cfg);
 
 }

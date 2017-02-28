@@ -69,6 +69,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	private boolean mProvidesIcfgProgramExecution;
 	private IcfgProgramExecution mIcfgProgramExecution;
 	private CachingHoareTripleChecker mHoareTripleChecker;
+	private boolean mSomePerfectSequenceFound = false;
 
 	/**
 	 * @param logger
@@ -145,6 +146,9 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 				return handleUnknownCase(strategy, perfectIpps, imperfectIpps);
 			case UNSAT:
 				final boolean doContinue = handleInfeasibleCase(strategy, perfectIpps, imperfectIpps);
+				if (!perfectIpps.isEmpty()) {
+					mSomePerfectSequenceFound = true;
+				}
 				if (doContinue) {
 					continue;
 				}
@@ -379,8 +383,19 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 					+ " imperfect sequences " + numberInterpolantsImperfect + " total " + allInterpolants.size());
 		}
 		mInterpolantAutomaton = strategy.getInterpolantAutomatonBuilder(perfectIpps, imperfectIpps).getResult();
+		if (perfectIpps.isEmpty()) {
+			mSomePerfectSequenceFound = true;
+		}
 		return LBool.UNSAT;
 	}
+	
+	
+
+	public boolean somePerfectSequenceFound() {
+		return mSomePerfectSequenceFound;
+	}
+
+
 
 	/**
 	 * Categories for exception handling.

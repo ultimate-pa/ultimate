@@ -208,7 +208,8 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		transformers.add(new LocalTransformer(
 				new DNF(mServices, icfg.getCfgSmtToolkit().getManagedScript(), mXnfConversionTechnique),
 				icfg.getCfgSmtToolkit().getManagedScript(), fac));
-		final IEqualityAnalysisResultProvider<IcfgLocation> equalityProvider = new DefaultEqualityAnalysisProvider<>();
+		final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider =
+				new DefaultEqualityAnalysisProvider<>();
 		final MapEliminationSettings settings =
 				new MapEliminationSettings(false, true, true, true, mSimplificationTechnique, mXnfConversionTechnique);
 		transformers.add(new MapEliminationTransformer(mServices, mLogger, icfg.getCfgSmtToolkit().getManagedScript(),

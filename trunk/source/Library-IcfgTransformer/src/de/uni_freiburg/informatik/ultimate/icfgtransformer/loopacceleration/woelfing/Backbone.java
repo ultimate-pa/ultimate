@@ -114,6 +114,10 @@ public class Backbone {
 		return null;
 	}
 
+	public List<IcfgEdge> getTransitions() {
+		return mTransitions;
+	}
+
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
