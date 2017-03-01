@@ -470,7 +470,6 @@ public final class CFGInvariantsGenerator {
 				postcondition, startLocation, errorLocation);
 		mLogger.info("(Path)program has " + locationsAsList.size() + " locations");
 		// Set statistics data
-		mPathInvariantsStatistics.setNumOfPathProgramLocations(locationsAsList.size());
 		mPathInvariantsStatistics.setNumOfVars(allProgramVars.size());
 
 		final Map<IcfgLocation, IPT> locs2Patterns = new HashMap<IcfgLocation, IPT>(locationsAsList.size());
@@ -669,7 +668,9 @@ public final class CFGInvariantsGenerator {
 				sumOfVarsPerLoc, numOfNonLiveVariables, round);
 		final PathInvariantsStatisticsGenerator pathInvariantsStatisticsForThisRound = new PathInvariantsStatisticsGenerator();
 		pathInvariantsStatisticsForThisRound.initializeStatistics();
-		pathInvariantsStatisticsForThisRound.setNumOfPathProgramLocations(locationsAsList.size());
+		int numLocsBeforeLbe = (int) mPathInvariantsStatistics.getValue("ProgramLocs");
+		int numLocsAfterLbe = (int) mPathInvariantsStatistics.getValue("ProgramLocsLbe");
+		pathInvariantsStatisticsForThisRound.setNumOfPathProgramLocations(numLocsBeforeLbe, numLocsAfterLbe);
 		pathInvariantsStatisticsForThisRound.setNumOfVars(allProgramVars.size());
 		pathInvariantsStatisticsForThisRound.addStatisticsDataBeforeCheckSat(numOfTemplateInequalitiesForThisRound, maximalTemplateSizeOfThisRound, minimalTemplateSizeOfThisRound,
 				sumOfVarsPerLoc, numOfNonLiveVariables, round);
@@ -827,8 +828,16 @@ public final class CFGInvariantsGenerator {
 		return null;
 	}
 
-
+	private int getNumOfPPLocations(final IIcfg<IcfgLocation> pathProgram) {
+		int numLocs = 0;
+		for (String proc : pathProgram.getProgramPoints().keySet()) {
+			numLocs += pathProgram.getProgramPoints().get(proc).keySet().size();
+		}
+		return numLocs;
+	}
+	
 	public Map<IcfgLocation, IPredicate> synthesizeInvariants() {
+		int numLocsBeforeLbe = getNumOfPPLocations(mPathProgram);
 		LargeBlockEncodingIcfgTransformer lbeTransformer;
 		IIcfg<IcfgLocation> lbePathProgram;
 		if (APPLY_LARGE_BLOCK_ENCODING) {
@@ -837,6 +846,9 @@ public final class CFGInvariantsGenerator {
 		} else {
 			lbePathProgram = mPathProgram;
 		}
+		
+		int numLocsAfterLbe = getNumOfPPLocations(lbePathProgram);
+		mPathInvariantsStatistics.setNumOfPathProgramLocations(numLocsBeforeLbe, numLocsAfterLbe);
 		
 		Map<IcfgLocation, IPredicate> invariants = generateInvariantsForPathProgram(lbePathProgram, SimplificationTechnique.SIMPLIFY_DDA,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, mCsToolKit, 

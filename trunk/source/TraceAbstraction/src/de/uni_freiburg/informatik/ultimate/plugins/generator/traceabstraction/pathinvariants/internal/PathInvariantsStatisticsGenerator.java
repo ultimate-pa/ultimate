@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 
 public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvider {
 	private int mNumOfPathProgramLocations;
+	private int mNumOfPathProgramLocationsAfterLbe;
 	private int mMaxNumOfInequalitiesPerRound;
 	private int mNumOfPathProgramVars;
 
@@ -40,6 +41,7 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	
 	public void initializeStatistics() {
 		mNumOfPathProgramLocations = 0;
+		mNumOfPathProgramLocationsAfterLbe = 0;
 		mMaxNumOfInequalitiesPerRound = 0;
 		mNumOfPathProgramVars = 0;
 		mNumOfNonUnsatCoreLocs = 0; 
@@ -75,6 +77,7 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		switch (keyEnum) {
 		case ProgramSize: return mProgramSize;
 		case ProgramLocs: return mNumOfPathProgramLocations;
+		case ProgramLocsLbe: return mNumOfPathProgramLocationsAfterLbe;
 		case ProgramVars: return mNumOfPathProgramVars;
 		case SumOfTemplateInequalities : return mSumOfTemplateInequalities;
 		case SizeOfLargestTemplate: return mSizeOfLargestTemplate;
@@ -104,8 +107,10 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		return PathInvariantsStatisticsType.getInstance();
 	}
 
-	public void setNumOfPathProgramLocations(final int numOfLocations) {
-		mNumOfPathProgramLocations = numOfLocations;
+	public void setNumOfPathProgramLocations(final int numOfLocsBeforeLbe, final int numOfLocsAfterLbe) {
+		mNumOfPathProgramLocations = numOfLocsBeforeLbe;
+		mNumOfPathProgramLocationsAfterLbe = numOfLocsAfterLbe;
+		
 	}
 	
 	public void setNumOfVars(final int numOfVars) {
