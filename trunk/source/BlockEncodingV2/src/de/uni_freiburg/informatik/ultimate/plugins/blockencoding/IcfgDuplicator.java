@@ -129,12 +129,6 @@ public class IcfgDuplicator {
 		// third, add all previously ignored return edges
 		openReturns.stream().forEach(a -> createEdgeCopy(old2new, a.getFirst(), a.getSecond()));
 
-		if (mLogger.isDebugEnabled()) {
-			new IcfgLocationIterator<>(newIcfg).asStream().forEach(a -> {
-				mLogger.debug("Annotations of " + a);
-				ModelUtils.consumeAnnotations(a, x -> mLogger.debug(x.getValue().getClass()));
-			});
-		}
 		return newIcfg;
 	}
 
