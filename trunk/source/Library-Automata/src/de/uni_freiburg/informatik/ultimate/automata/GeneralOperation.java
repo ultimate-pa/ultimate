@@ -89,6 +89,18 @@ public abstract class GeneralOperation<LETTER, STATE, CRSF extends IStateFactory
 		}
 	}
 
+	protected final void printStartCheckMessage() {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Start testing correctness of " + operationName());
+		}
+	}
+
+	protected final void printExitCheckMessage() {
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Finished testing correctness of " + operationName());
+		}
+	}
+
 	@Override
 	public boolean checkResult(final CRSF stateFactory) throws AutomataLibraryException {
 		if (mLogger.isWarnEnabled()) {
