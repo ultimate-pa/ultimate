@@ -267,7 +267,7 @@ public class HybridIcfgGenerator {
 			mCreatedTransitions.get(start).add(end);
 		}
 		// new cfgComponent, has to be connected to the root node.
-		mCfgComponents.put(id, new HybridCfgComponent(id, start, end, locations, transitions));
+		mCfgComponents.put(id, new HybridCfgComponent(id, start, end, locations, transitions, ""));
 		/*
 		 * Transition from Root to varAssignment
 		 */
@@ -332,17 +332,19 @@ public class HybridIcfgGenerator {
 			 * Transition preFLow to postFlow
 			 */
 			String flowTerms = "";
-			final String[] splittedFlow = loc.getFlow().split("(&&)|(&)");
-			for (final String flow : splittedFlow) {
-				if (!flowTerms.isEmpty()) {
-					flowTerms += "&";
+			final String[] splittedFlow = !loc.getFlow().isEmpty() ? loc.getFlow().split("(&&)|(&)") : new String[0];
+			if (splittedFlow.length > 0) {
+				for (final String flow : splittedFlow) {
+					if (!flowTerms.isEmpty()) {
+						flowTerms += "&";
+					}
+					final FirstOrderLinearODE ode = new FirstOrderLinearODE(flow, TIME_VAR);
+					flowTerms += ode.getmSolution();
+					flowTerms += flowTerms.isEmpty() ? "" : "&" + TIME_INV;
 				}
-				final FirstOrderLinearODE ode = new FirstOrderLinearODE(flow, TIME_VAR);
-				flowTerms += ode.getmSolution();
-				flowTerms += flowTerms.isEmpty() ? "" : "&" + TIME_INV;
+				flowTerms += (invariant.isEmpty() || flowTerms.isEmpty()) ? "" : "&" + invariant;
+				mLogger.debug("FLOW TERMS: " + flowTerms);
 			}
-			flowTerms += invariant.isEmpty() ? "" : "&" + invariant;
-			mLogger.debug("FLOW TERMS: " + flowTerms);
 			final UnmodifiableTransFormula tfFlow = buildTransformula(flowTerms, BuildScenario.FLOW);
 			final IcfgInternalTransition preFlowTopostFlow =
 					new IcfgInternalTransition(preFlow, postFlow, null, tfFlow);
@@ -390,15 +392,15 @@ public class HybridIcfgGenerator {
 					start.addOutgoing(startError);
 					mErrorLocation.addIncoming(startError);
 					
-					final IcfgInternalTransition postflowError =
-							new IcfgInternalTransition(postFlow, mErrorLocation, null, forbiddenTransformula);
-					postFlow.addOutgoing(postflowError);
-					mErrorLocation.addIncoming(postflowError);
+					final IcfgInternalTransition endError =
+							new IcfgInternalTransition(end, mErrorLocation, null, forbiddenTransformula);
+					end.addOutgoing(endError);
+					mErrorLocation.addIncoming(endError);
 				}
 			}
 			// create new cfgComponent
 			mCfgComponents.put(autid.toString(),
-					new HybridCfgComponent(autid.toString(), start, end, locations, transitions));
+					new HybridCfgComponent(autid.toString(), start, end, locations, transitions, loc.getInvariant()));
 		}
 	}
 	
@@ -453,6 +455,7 @@ public class HybridIcfgGenerator {
 		// a transition in a hybrid automaton is simply an edge from one location to another.
 		// guard and update can be merged with &&
 		transitions.forEach(trans -> {
+			
 			// the source of the transition is the the end of the source CFG component
 			final IcfgLocation source = mCfgComponents.get(Integer.toString(trans.getSourceId())).getEnd();
 			// the target of the transition is the the start of the target CFG component
