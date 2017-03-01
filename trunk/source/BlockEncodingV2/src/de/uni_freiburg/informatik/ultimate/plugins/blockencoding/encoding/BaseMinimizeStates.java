@@ -145,8 +145,8 @@ public abstract class BaseMinimizeStates extends BaseBlockEncoder<IcfgLocation> 
 		}
 
 		// if one of the edges is a self loop, we cannot use it
-		return Objects.equals(predEdge.getTarget(), predEdge.getSource())
-				&& Objects.equals(succEdge.getTarget(), succEdge.getSource());
+		return !Objects.equals(predEdge.getTarget(), predEdge.getSource())
+				&& !Objects.equals(succEdge.getTarget(), succEdge.getSource());
 	}
 
 	protected boolean isAllNecessary(final IIcfg<?> icfg, final List<IcfgLocation> nodes) {
