@@ -66,6 +66,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	 * The serial version UID. Change only if serial representation changes.
 	 */
 	private static final long serialVersionUID = -221145005712480077L;
+	private static final boolean PREPEND_CLASSNAME_TO_IDENTIFIER = true;
 
 	private final BoogieDeclarations mBoogieDeclarations;
 	private final Map<String, BoogieIcfgLocation> mEntryNodes;
@@ -214,7 +215,11 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 
 	@Override
 	public String getIdentifier() {
-		return getClass().getSimpleName() + "_" + getFilename();
+		if (PREPEND_CLASSNAME_TO_IDENTIFIER) {
+			return getClass().getSimpleName() + "_" + getFilename();
+		} else {
+			return getFilename();
+		}
 	}
 
 	@Override
