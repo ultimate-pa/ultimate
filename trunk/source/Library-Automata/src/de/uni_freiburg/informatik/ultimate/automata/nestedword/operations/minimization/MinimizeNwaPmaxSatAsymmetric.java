@@ -63,8 +63,27 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @see MinimizeNwaMaxSat2
  */
 public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER, STATE, Pair<STATE, STATE>> {
-	private static final boolean USE_PARTITION_PREPROCESSING_IN_ATS_CONSTRUCTOR = false;
-	private static final boolean USE_PAIR_PREPROCESSING_IN_ATS_CONSTRUCTOR = true;
+	/**
+	 * Preprocessing mode.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	private enum PreprocessingMode {
+		/**
+		 * Initial partition.
+		 */
+		PARTITION,
+		/**
+		 * Initial pairs.
+		 */
+		PAIRS,
+		/**
+		 * No preprocessing.
+		 */
+		NONE
+	}
+
+	private static final PreprocessingMode PREPROCESSING_STANDALONE = PreprocessingMode.PAIRS;
 
 	@SuppressWarnings("rawtypes")
 	private static final Pair[] EMPTY_LITERALS = new Pair[0];
@@ -137,12 +156,12 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		mEmptyStackState = mOperand.getEmptyStackState();
 
 		// statistics
-		int NumberOfInitialPairs = 0;
+		int numberOfInitialPairs = 0;
 		for (final Iterator<Triple<STATE, STATE, Pair<STATE, STATE>>> iterator =
 				initialPairs.entrySet().iterator(); iterator.hasNext(); iterator.next()) {
-			NumberOfInitialPairs++;
+			numberOfInitialPairs++;
 		}
-		mNumberOfInitialPairs = NumberOfInitialPairs;
+		mNumberOfInitialPairs = numberOfInitialPairs;
 
 		printStartMessage();
 
@@ -185,13 +204,18 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	private static <LETTER, STATE> Iterable<Pair<STATE, STATE>> createAtsInitialPairs(
 			final AutomataLibraryServices services, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
-		if (USE_PARTITION_PREPROCESSING_IN_ATS_CONSTRUCTOR) {
-			return createPairsWithInitialPartition(
-					new LookaheadPartitionConstructor<>(services, operand, true, false).getPartition().getRelation());
-		} else if (USE_PAIR_PREPROCESSING_IN_ATS_CONSTRUCTOR) {
-			return new NwaApproximateSimulation<>(services, operand, SimulationType.DIRECT).getResult();
+		switch (PREPROCESSING_STANDALONE) {
+			case PARTITION:
+				return createPairsWithInitialPartition(
+						new LookaheadPartitionConstructor<>(services, operand, true, false).getPartition()
+								.getRelation());
+			case PAIRS:
+				return new NwaApproximateSimulation<>(services, operand, SimulationType.DIRECT).getResult();
+			case NONE:
+				return createPairs(operand.getStates());
+			default:
+				throw new IllegalArgumentException("Unknown mode: " + PREPROCESSING_STANDALONE);
 		}
-		return createPairs(operand.getStates());
 	}
 
 	private static <STATE> NestedMap2<STATE, STATE, Pair<STATE, STATE>>
