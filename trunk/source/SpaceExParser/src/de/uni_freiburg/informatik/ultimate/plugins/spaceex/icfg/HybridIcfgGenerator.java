@@ -388,8 +388,8 @@ public class HybridIcfgGenerator {
 					// the transformula depends on whether
 					final UnmodifiableTransFormula forbiddenTransformula = createForbiddenTransformula(finalInfix);
 					final IcfgInternalTransition startError =
-							new IcfgInternalTransition(start, mErrorLocation, null, forbiddenTransformula);
-					start.addOutgoing(startError);
+							new IcfgInternalTransition(preFlow, mErrorLocation, null, forbiddenTransformula);
+					preFlow.addOutgoing(startError);
 					mErrorLocation.addIncoming(startError);
 					
 					final IcfgInternalTransition endError =
