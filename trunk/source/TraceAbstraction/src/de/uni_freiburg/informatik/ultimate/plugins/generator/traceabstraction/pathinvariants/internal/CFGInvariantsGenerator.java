@@ -832,7 +832,7 @@ public final class CFGInvariantsGenerator {
 		LargeBlockEncodingIcfgTransformer lbeTransformer;
 		IIcfg<IcfgLocation> lbePathProgram;
 		if (APPLY_LARGE_BLOCK_ENCODING) {
-			lbeTransformer = new LargeBlockEncodingIcfgTransformer(mServices, null, mPredicateUnifier);
+			lbeTransformer = new LargeBlockEncodingIcfgTransformer(mServices, mPredicateFactory, mPredicateUnifier);
 			lbePathProgram = lbeTransformer.transform(mPathProgram);
 		} else {
 			lbePathProgram = mPathProgram;
