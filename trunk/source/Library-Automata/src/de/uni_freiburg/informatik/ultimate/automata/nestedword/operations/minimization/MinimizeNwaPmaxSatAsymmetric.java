@@ -148,7 +148,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	 * @throws AutomataOperationCanceledException
 	 *             thrown by cancel request
 	 */
-	private MinimizeNwaPmaxSatAsymmetric(final AutomataLibraryServices services,
+	public MinimizeNwaPmaxSatAsymmetric(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final NestedMap2<STATE, STATE, Pair<STATE, STATE>> initialPairs, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
