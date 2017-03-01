@@ -83,7 +83,7 @@ public class SpaceExTestSuite extends AbstractEvalTestSuite {
 	
 	@Override
 	protected long getTimeout() {
-		return 10 * 1000;
+		return 10 * 5000;
 	}
 	
 	@Override
