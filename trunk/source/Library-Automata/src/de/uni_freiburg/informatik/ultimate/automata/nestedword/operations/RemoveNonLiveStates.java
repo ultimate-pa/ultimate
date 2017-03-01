@@ -34,8 +34,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
+import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
@@ -128,6 +130,22 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends UnaryNwaOperation<
 	 */
 	public int getInputSize() {
 		return mReach.size();
+	}
+	
+	@Override
+	public AutomataOperationStatistics getAutomataOperationStatistics() {
+		final AutomataOperationStatistics result = new AutomataOperationStatistics();
+
+		final int inputSize = getOperand().size();
+		final int outputSize = mResult.size();
+
+		result.addKeyValuePair(StatisticsType.STATES_INPUT, inputSize);
+		result.addKeyValuePair(StatisticsType.STATES_OUTPUT, outputSize);
+		result.addDifferenceData(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
+				StatisticsType.STATES_REDUCTION_ABSOLUTE);
+		result.addPercentageDataInverted(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
+				StatisticsType.STATES_REDUCTION_RELATIVE);
+		return result;
 	}
 
 	@Override
