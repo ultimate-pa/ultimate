@@ -174,7 +174,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 		mTaPrefsForInterpolantConsolidation = taPrefsForInterpolantConsolidation;
 
 		mInterpolationTechniques = initializeInterpolationTechniquesList();
-		mNextTechnique = mInterpolationTechniques.next();
+		nextTraceChecker();
 	}
 
 	@Override
