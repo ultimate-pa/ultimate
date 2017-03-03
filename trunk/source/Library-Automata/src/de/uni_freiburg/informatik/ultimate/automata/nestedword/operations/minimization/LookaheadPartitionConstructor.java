@@ -76,7 +76,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            letter type
  * @param <STATE>
  *            state type
+ * @deprecated This class is obsolete, use {@link NwaApproximateBisimulation} instead.
+ *             In particular, the result of this class differs from the other class for nondeterministic automata and
+ *             may hence be unexpected.
  */
+@Deprecated
 public class LookaheadPartitionConstructor<LETTER, STATE> {
 	// fast enable/disable for deterministic lookahead (<0 to deactivate)
 	private static final int LOOKAHEAD = Integer.MAX_VALUE;
