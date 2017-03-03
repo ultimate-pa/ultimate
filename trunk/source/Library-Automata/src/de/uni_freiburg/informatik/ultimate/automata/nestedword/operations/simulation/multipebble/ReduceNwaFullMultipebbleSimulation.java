@@ -35,10 +35,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwaDd;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatAsymmetric;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateBisimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateXsimulation.SimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.automata.util.NestedMapBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionAndMapBackedSetOfPairs;
@@ -90,9 +91,10 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 
 		printStartMessage();
 
-		final PartitionBackedSetOfPairs<STATE> partition = new PartitionAndMapBackedSetOfPairs<>(
-				new LookaheadPartitionConstructor<>(mServices, mOperand, !allowToMergeFinalAndNonFinalStates, true)
-						.getPartition().getRelation());
+		final PartitionBackedSetOfPairs<STATE> partition =
+				new PartitionAndMapBackedSetOfPairs<>(new NwaApproximateBisimulation<>(services, operand,
+						allowToMergeFinalAndNonFinalStates ? SimulationType.ORDINARY : SimulationType.DIRECT)
+								.getResult().getRelation());
 		mLogger.info("Initial partition has " + partition.getOrConstructPartitionSizeInformation().toString());
 		final FullMultipebbleStateFactory<STATE, GS> gameFactory = constructGameFactory(partition);
 

@@ -143,6 +143,9 @@ public class TreeAutomizerCEGAR {
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED, mInitialPredicate,
 				mFinalPredicate);
 		mHoareTripleChecker = new HCHoareTripleChecker(mPredicateUnifier, mCfgSmtToolkit);
+		
+		mPredicateUnifier.getOrConstructPredicate(mInitialPredicate.getFormula());
+		mPredicateUnifier.getOrConstructPredicate(mFinalPredicate.getFormula());
 
 	}
 
@@ -172,6 +175,9 @@ public class TreeAutomizerCEGAR {
 
 		mAbstraction.addInitialState(mInitialPredicate);
 		mAbstraction.addFinalState(mFinalPredicate);
+		for (final HCPredicate state : mAbstraction.getStates()) {
+			mPredicateUnifier.getOrConstructPredicate(state.getFormula());
+		}
 
 		mLogger.debug("Initial abstraction tree Automaton:");
 		mLogger.debug(mAbstraction);
@@ -193,7 +199,7 @@ public class TreeAutomizerCEGAR {
 
 	public LBool getCounterexampleFeasibility() {
 		mChecker = new TreeChecker(mCounterexample, mBackendSmtSolverScript, mInitialPredicate, mFinalPredicate,
-				mLogger, mPredicateFactory);
+				mLogger, mPredicateUnifier);
 		mSSA = mChecker.getSSA();
 		return mChecker.checkTrace();
 	}

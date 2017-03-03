@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
@@ -52,7 +53,7 @@ public class TreeChecker {
 	private final HCPredicate mPreCondition;
 	private final HCSSABuilder mSSABuilder;
 	private final ILogger mLogger;
-	private final HCPredicateFactory mPredicateFactory;
+	private final PredicateUnifier mPredicateUnifier;
 	
 	/***
 	 * Checker of a tree run
@@ -65,13 +66,13 @@ public class TreeChecker {
 	 */
 	public TreeChecker(final ITreeRun<HornClause, HCPredicate> tree,
 			final ManagedScript backendSmtSolverScript, final HCPredicate preCondition,
-			final HCPredicate postCondition, ILogger logger, HCPredicateFactory predicateFactory) {
+			final HCPredicate postCondition, ILogger logger, final PredicateUnifier predicateUnifier) {
 		mTree = tree;
 		mBackendSmtSolverScript = backendSmtSolverScript;
 		mPostCondition = postCondition;
 		mPreCondition = preCondition;
-		mPredicateFactory = predicateFactory;
-		mSSABuilder = new HCSSABuilder(mTree, mPreCondition, mPostCondition, mBackendSmtSolverScript, mPredicateFactory);
+		mPredicateUnifier = predicateUnifier;
+		mSSABuilder = new HCSSABuilder(mTree, mPreCondition, mPostCondition, mBackendSmtSolverScript, mPredicateUnifier);
 		
 		mLogger = logger;
 	}

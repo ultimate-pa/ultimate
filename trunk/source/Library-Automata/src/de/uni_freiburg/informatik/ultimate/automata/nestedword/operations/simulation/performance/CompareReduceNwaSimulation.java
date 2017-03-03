@@ -37,11 +37,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.LookaheadPartitionConstructor.PartitionPairsWrapper;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateBisimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateXsimulation.SimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.nwa.DelayedNwaGameGraph;
@@ -169,17 +169,14 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 
 		final boolean separateAcceptingStates =
 				type == ESimulationType.DIRECT || type == ESimulationType.DIRECT_FULL_MULTIPEBBLE;
-		final PartitionPairsWrapper<STATE> partitionAndPairs =
-				new LookaheadPartitionConstructor<>(services, operand, separateAcceptingStates, true).getResult();
-		final Collection<Set<STATE>> possibleEquivalenceClasses = partitionAndPairs.getPartition();
 
 		try {
+			final Collection<Set<STATE>> possibleEquivalenceClasses = new NwaApproximateBisimulation<>(services,
+					operand, separateAcceptingStates ? SimulationType.DIRECT : SimulationType.ORDINARY).getResult()
+							.getRelation();
 			if (type.equals(ESimulationType.DIRECT)) {
-				final PartitionBackedSetOfPairs<STATE> possibleEquivalenceClassesForDirect =
-						new LookaheadPartitionConstructor<>(services, operand, true, true).getPartition();
-
 				final DirectNwaGameGraph<LETTER, STATE> graph = new DirectNwaGameGraph<>(services, stateFactory,
-						progressTimer, logger, operand, possibleEquivalenceClassesForDirect.getRelation());
+						progressTimer, logger, operand, possibleEquivalenceClasses);
 				graph.generateGameGraphFromAutomaton();
 				final DirectNwaSimulation<LETTER, STATE> sim =
 						new DirectNwaSimulation<>(progressTimer, logger, useSCCs, stateFactory, graph);

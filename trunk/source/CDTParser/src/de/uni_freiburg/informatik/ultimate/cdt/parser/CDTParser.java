@@ -5,32 +5,32 @@
  * Copyright (C) 2015 Oleksii Saukh (saukho@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 Stefan Wissert
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CDTParser plug-in.
- * 
+ *
  * The ULTIMATE CDTParser plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CDTParser plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CDTParser plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CDTParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE CDTParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE CDTParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
  * CDTParser Plugin, it starts the CDT-Parser on a given C-File(s).
- * The resources are taken out of the lib-Folder, these should be 
+ * The resources are taken out of the lib-Folder, these should be
  * updated manually.
  */
 package de.uni_freiburg.informatik.ultimate.cdt.parser;
@@ -98,7 +98,7 @@ public class CDTParser implements ISource {
 
 	@Override
 	public void init() {
-		mFileNames = new ArrayList<String>();
+		mFileNames = new ArrayList<>();
 	}
 
 	@Override
@@ -112,7 +112,7 @@ public class CDTParser implements ISource {
 	}
 
 	@Override
-	public boolean parseable(File[] files) {
+	public boolean parseable(final File[] files) {
 		for (final File f : files) {
 			if (!parseable(f)) {
 				return false;
@@ -122,7 +122,7 @@ public class CDTParser implements ISource {
 	}
 
 	@Override
-	public boolean parseable(File file) {
+	public boolean parseable(final File file) {
 		for (final String s : getFileTypes()) {
 			if (file.getName().endsWith(s)) {
 				return true;
@@ -132,12 +132,12 @@ public class CDTParser implements ISource {
 	}
 
 	@Override
-	public IElement parseAST(File[] files) throws Exception {
+	public IElement parseAST(final File[] files) throws Exception {
 		return null;
 	}
 
 	@Override
-	public IElement parseAST(File file) throws Exception {
+	public IElement parseAST(final File file) throws Exception {
 
 		final IParserLogService log = new DefaultLogService();
 
@@ -151,10 +151,9 @@ public class CDTParser implements ISource {
 			mLogger.debug("INCLUDE-PATHS:" + path);
 			includePaths = path.split(";");
 			/*
-			 * If there are some paths specified we have to use the this
-			 * deprecated code. In the used Version of EclipseCDT (see
-			 * CDTLibrary) there is no other way in doing this, maybe in further
-			 * versions this will be improved.
+			 * If there are some paths specified we have to use the this deprecated code. In the used Version of
+			 * EclipseCDT (see CDTLibrary) there is no other way in doing this, maybe in further versions this will be
+			 * improved.
 			 */
 			includeProvider = IncludeFileContentProvider.adapt(new StandaloneIndexerFallbackReaderFactory());
 		} else {
@@ -162,7 +161,7 @@ public class CDTParser implements ISource {
 			includeProvider = IncludeFileContentProvider.getEmptyFilesProvider();
 		}
 
-		final Map<String, String> definedSymbols = new HashMap<String, String>();
+		final Map<String, String> definedSymbols = new HashMap<>();
 		final IScannerInfo info = new ScannerInfo(definedSymbols, includePaths);
 
 		final GCCScannerExtensionConfiguration config = GCCScannerExtensionConfiguration.getInstance();
@@ -181,7 +180,7 @@ public class CDTParser implements ISource {
 		// The following methods was introduced in CDT8. Before there was the
 		// following method that took a boolean parameter
 		// parser.setSkipTrivialExpressionsInAggregateInitializers(false);
-		// Matthias changed this on 2014-10-01. 
+		// Matthias changed this on 2014-10-01.
 		// If there are no problems you may delete this comment.
 		parser.setMaximumTrivialExpressionsInAggregateInitializers(Integer.MAX_VALUE);
 
@@ -205,7 +204,7 @@ public class CDTParser implements ISource {
 	}
 
 	@Override
-	public void setPreludeFile(File prelude) {
+	public void setPreludeFile(final File prelude) {
 		// not required
 	}
 
@@ -215,13 +214,13 @@ public class CDTParser implements ISource {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage services) {
+	public void setToolchainStorage(final IToolchainStorage services) {
 		// TODO Auto-generated method stub
 
 	}
 
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
@@ -230,6 +229,6 @@ public class CDTParser implements ISource {
 	@Override
 	public void finish() {
 		// TODO Auto-generated method stub
-		
+
 	}
 }

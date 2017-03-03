@@ -113,13 +113,13 @@ public class OctMatrix {
 	 * Empty octagon that stores constraints over the empty set of variables. Use {@link #NEW} and
 	 * {@link #addVariables(int)} to create octagons of any size.
 	 */
-	public final static OctMatrix NEW = new OctMatrix(0);
+	public static final OctMatrix NEW = new OctMatrix(0);
 
 	/**
 	 * Used algorithm to compute the shortest path closure. All shortest path closure algorithms compute the same
 	 * result, but may vary in terms of speed. The runtime of some algorithms depends on the content of the matrix.
 	 */
-	private final static Consumer<OctMatrix> sDefaultShortestPathClosure =
+	private static final Consumer<OctMatrix> sDefaultShortestPathClosure =
 			OctMatrix::shortestPathClosurePrimitiveSparse;
 
 	// // Code to generate closure benchmark.
