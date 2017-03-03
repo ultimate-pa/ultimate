@@ -39,22 +39,20 @@ import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IIncomingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
-import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.automata.util.MapBackedSetOfPairs;
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * Given a nested word automaton, this class computes a binary relation over the states where pairs of states
  * {@code (p, q)} have been removed if clearly {@code q} does not simulate {@code p} according to some simulation
- * definition. The exception are reflexive pairs which are always omitted but should always be present.
+ * definition. The exception is that reflexive pairs are always omitted but should always be present.
  * <p>
- * The result is in general only an overapproximation (if one adds the reflexive pairs) of such a simulation in the
- * presence of nondeterminism. Hence this class is typically used for preprocessing purposes only.
+ * The result is in general only an overapproximation (if one adds the reflexive pairs) of such a simulation even for
+ * finite automata in the presence of nondeterminism. Hence this class is typically used for preprocessing purposes
+ * only.
  * <p>
  * This class supports ordinary and direct simulation. For ordinary simulation the state {@code q} must have all
  * outgoing symbols that {@code p} has. Furthermore, for any such symbol {@code a}, among all respective successor
@@ -71,8 +69,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * <li>for each common internal and call symbol there is a successor pair {@code (p', q')} in the output</li>
  * <li>(optionally) {@code p} is not accepting or {@code q} is accepting</li>
  * </ul>
- * WARNING: The result is only correct if the input automaton did not have
- * any dead-end states.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -81,32 +77,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @param <STATE>
  *            state type
  */
-public class NwaApproximateSimulation<LETTER, STATE> {
-	private final AutomataLibraryServices mServices;
-	private final ILogger mLogger;
-	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-
+public class NwaApproximateSimulation<LETTER, STATE>
+		extends NwaApproximateXsimulation<LETTER, STATE, Map<STATE, Set<STATE>>> {
 	// represents pairs of states; is successively made smaller; does not contain reflexive pairs
 	private final Map<STATE, Set<STATE>> mMayBeSimulatedBy;
 
 	// represents pairs of states that have been removed; used for separating the predecessors
 	private final HashRelation<STATE, STATE> mIsNotSimulatedBy;
-
-	/**
-	 * Type of simulation that should be approximated.
-	 * 
-	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
-	 */
-	public enum SimulationType {
-		/**
-		 * Ordinary simulation.
-		 */
-		ORDINARY,
-		/**
-		 * Direct simulation.
-		 */
-		DIRECT
-	}
 
 	/**
 	 * @param services
@@ -121,9 +98,7 @@ public class NwaApproximateSimulation<LETTER, STATE> {
 	public NwaApproximateSimulation(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand, final SimulationType simulationType)
 			throws AutomataOperationCanceledException {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		mOperand = operand;
+		super(services, operand);
 		mMayBeSimulatedBy = new HashMap<>();
 		mIsNotSimulatedBy = new HashRelation<>();
 
@@ -134,41 +109,20 @@ public class NwaApproximateSimulation<LETTER, STATE> {
 			mLogger.info("Approximate simulation contains " + numberOfPairs + " pairs (excluding reflexive pairs).");
 		}
 	}
-	
-	/**
-	 * @return The partition.
-	 */
-	public ISetOfPairs<STATE, Map<STATE, Set<STATE>>> getResult() {
+
+	@Override
+	public MapBackedSetOfPairs<STATE> getResult() {
 		return new MapBackedSetOfPairs<>(mMayBeSimulatedBy);
 	}
 
-	private void run(final SimulationType simulationType) throws AutomataOperationCanceledException {
-		initialize(simulationType);
-
-		separateByDifferentSymbols();
-
-		separateByDifferentSuccessors();
-	}
-
-	private void initialize(final SimulationType simulationType) throws AutomataOperationCanceledException {
-		switch (simulationType) {
-			case ORDINARY:
-				initializeAllNonreflexivePairs();
-				break;
-			case DIRECT:
-				initializeAllNonreflexivePairsRespectingAcceptance();
-				break;
-			default:
-				throw new IllegalArgumentException("Unknown simulation type: " + simulationType);
-		}
-		if (!mServices.getProgressAwareTimer().continueProcessing()) {
-			throw new AutomataOperationCanceledException(getClass());
-		}
-	}
-
-	private void initializeAllNonreflexivePairs() {
+	@Override
+	protected void initializeAllNonreflexivePairs() throws AutomataOperationCanceledException {
 		final ArrayList<STATE> states = new ArrayList<>(mOperand.getStates());
 		for (int i = 0; i < states.size(); ++i) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
+				throw new AutomataOperationCanceledException(getClass());
+			}
+
 			final Set<STATE> rhsStates = new HashSet<>();
 			for (int j = 0; j < states.size(); ++j) {
 				if (i != j) {
@@ -179,9 +133,14 @@ public class NwaApproximateSimulation<LETTER, STATE> {
 		}
 	}
 
-	private void initializeAllNonreflexivePairsRespectingAcceptance() {
+	@Override
+	protected void initializeAllNonreflexivePairsRespectingAcceptance() throws AutomataOperationCanceledException {
 		final ArrayList<STATE> states = new ArrayList<>(mOperand.getStates());
 		for (int i = 0; i < states.size(); ++i) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
+				throw new AutomataOperationCanceledException(getClass());
+			}
+
 			final STATE lhs = states.get(i);
 			final boolean lhsIsAccepting = mOperand.isFinal(lhs);
 			final Set<STATE> rhsStates = new HashSet<>();
@@ -200,9 +159,26 @@ public class NwaApproximateSimulation<LETTER, STATE> {
 		}
 	}
 
-	private void separateByDifferentSymbols() {
+	@Override
+	protected void separateByTransitionConstraints() throws AutomataOperationCanceledException {
+		separateByDifferentSymbols();
+
+		separateByDifferentSuccessors();
+	}
+
+	/**
+	 * This method is not necessary but (hopefully) improves performance.
+	 * 
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
+	private void separateByDifferentSymbols() throws AutomataOperationCanceledException {
 		final List<STATE> toBeRemoved = new ArrayList<>();
 		for (final Entry<STATE, Set<STATE>> entry : mMayBeSimulatedBy.entrySet()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
+				throw new AutomataOperationCanceledException(getClass());
+			}
+
 			final STATE lhs = entry.getKey();
 			final Set<LETTER> lhsInternals = mOperand.lettersInternal(lhs);
 			final Set<LETTER> lhsCalls = mOperand.lettersCall(lhs);
@@ -235,8 +211,12 @@ public class NwaApproximateSimulation<LETTER, STATE> {
 		}
 	}
 
-	private void separateByDifferentSuccessors() {
+	private void separateByDifferentSuccessors() throws AutomataOperationCanceledException {
 		while (!mIsNotSimulatedBy.isEmpty()) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
+				throw new AutomataOperationCanceledException(getClass());
+			}
+
 			final Entry<STATE, STATE> pair = mIsNotSimulatedBy.iterator().next();
 			final STATE lhs = pair.getKey();
 			final STATE rhs = pair.getValue();
@@ -254,18 +234,6 @@ public class NwaApproximateSimulation<LETTER, STATE> {
 		}
 	}
 
-	private List<LETTER> getCommonIncomingLetters(final STATE lhs, final STATE rhs,
-			final Function<STATE, Set<LETTER>> letterProvider) {
-		final Set<LETTER> lhsLetters = letterProvider.apply(lhs);
-		final List<LETTER> commonLetters = new ArrayList<>(lhsLetters.size());
-		for (final LETTER letter : letterProvider.apply(rhs)) {
-			if (lhsLetters.contains(letter)) {
-				commonLetters.add(letter);
-			}
-		}
-		return commonLetters;
-	}
-
 	/**
 	 * Given a pair {@code (p', q')} of nonsimulating states, we identify predecessor states {@code (p, q)} under some
 	 * letter {@code a} such that the pair {@code (p, q)} is also not in the simulation. For that we search for all
@@ -281,15 +249,22 @@ public class NwaApproximateSimulation<LETTER, STATE> {
 	 * @param predecessorProvider
 	 *            function that provides predecessor states for a given state and letter (we know that predecessors
 	 *            exist for both states)
+	 * @throws AutomataOperationCanceledException
+	 *             if operation is canceled
 	 */
 	private void separatePredecessors(final STATE lhs, final STATE rhs,
 			final Function<STATE, Iterable<? extends IIncomingTransitionlet<LETTER, STATE>>> predecessorProvider,
-			final Function<STATE, Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>>> successorProvider) {
+			final Function<STATE, Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>>> successorProvider)
+			throws AutomataOperationCanceledException {
 		Set<STATE> lhsPossiblySimulatedBy = mMayBeSimulatedBy.get(lhs);
 		if (lhsPossiblySimulatedBy == null) {
 			lhsPossiblySimulatedBy = Collections.emptySet();
 		}
 		for (final IIncomingTransitionlet<LETTER, STATE> rhsPredTrans : predecessorProvider.apply(rhs)) {
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
+				throw new AutomataOperationCanceledException(getClass());
+			}
+
 			final STATE rhsPred = rhsPredTrans.getPred();
 			boolean hasSimulatingNeighbor = false;
 			for (final IOutgoingTransitionlet<LETTER, STATE> rhsPredSuccTrans : successorProvider.apply(rhsPred)) {

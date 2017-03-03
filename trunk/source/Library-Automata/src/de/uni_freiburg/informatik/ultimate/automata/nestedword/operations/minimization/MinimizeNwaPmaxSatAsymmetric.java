@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateSimulation.SimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateXsimulation.SimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.AbstractMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGeneratorPair;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.TransitivityGeneralMaxSatSolver;
