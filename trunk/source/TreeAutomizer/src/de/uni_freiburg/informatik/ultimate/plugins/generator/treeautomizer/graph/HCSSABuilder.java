@@ -47,7 +47,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
 /**
@@ -64,7 +66,8 @@ public class HCSSABuilder {
 	private final HCPredicate mPreCondition;
 	private final ManagedScript mScript;
 	private final boolean mTransferToScriptNeeded;
-	private final HCPredicateFactory mPredicateFactory;
+	//private final HCPredicateFactory mPredicateFactory;
+	private final PredicateUnifier mPredicateUnifier;
 
 	private final HCSsa mResult;
 
@@ -89,10 +92,10 @@ public class HCSSABuilder {
 	 * @param preCondition The precondition (the initial state's condition)
 	 * @param postCondition The postcondition (the final state's condition)
 	 * @param script The backend script
-	 * @param predicateFactory HornClause Predicate Factory
+	 * @param predicateUnifier HornClause Predicate Factory
 	 * */
 	public HCSSABuilder(final ITreeRun<HornClause, HCPredicate> trace, final HCPredicate preCondition,
-			final HCPredicate postCondition, final ManagedScript script, final HCPredicateFactory predicateFactory) {
+			final HCPredicate postCondition, final ManagedScript script, final PredicateUnifier predicateUnifier) {
 		mTreeRun = trace;
 		mScript = script;
 		mTermTransferrer = new TermTransferrer(mScript.getScript());
@@ -101,7 +104,8 @@ public class HCSSABuilder {
 		mPostCondition = postCondition;
 		mCounters = new HashMap<>();
 		mSubsMap = new HashMap<>();
-		mPredicateFactory = predicateFactory;
+		//mPredicateFactory = predicateFactory;
+		mPredicateUnifier = predicateUnifier;
 
 		mCurrentLocalAndOldVarVersion = new HashMap<>();
 		mResult = buildSSA();
@@ -111,11 +115,11 @@ public class HCSSABuilder {
 	 * HornClause-SSA Builder
 	 * @param trace TreeRun of the given traces
 	 * @param script The backend script
-	 * @param predicateFactory HornClause Predicate Factory
+	 * @param predicateUnifier HornClause Predicate Factory
 	 * */
 	public HCSSABuilder(final ITreeRun<HornClause, HCPredicate> trace, final ManagedScript script,
-			final HCPredicateFactory predicateFactory) {
-		this(trace, null, null, script, predicateFactory);
+			final PredicateUnifier predicateUnifier) {
+		this(trace, null, null, script, predicateUnifier);
 	}
 
 	public HCSsa getSSA() {
@@ -382,7 +386,9 @@ public class HCSSABuilder {
 			final Term t = transferToCurrentScriptIfNecessary(term);
 			final Term formula = subst.transform(t);
 			
-			return mPredicateFactory.newPredicate(pl.mProgramPoint, pl.hashCode(), formula, vars, termToHcVar);
+			final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(formula);
+			
+			return ((HCPredicateFactory) mPredicateUnifier.getPredicateFactory()).newPredicate(pl.mProgramPoint, pl.hashCode(), unified.getFormula(), vars, termToHcVar);
 		}
 
 		public Map<Term, Term> getSubstitutionMapping() {
