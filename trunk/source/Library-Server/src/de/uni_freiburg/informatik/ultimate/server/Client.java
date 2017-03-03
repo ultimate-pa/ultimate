@@ -70,7 +70,7 @@ public abstract class Client<T> {
 	}
 
 	private void warnUnregistered(String typeName) {
-		mLogger.warn(String.format("received message with data of unregistered type %s", typeName));
+		mLogger.warn(String.format("received message with data of unregistered type \"%s\"", typeName));
 	}
 
 	protected void handle(IWrappedMessage<T> msg) {
@@ -79,14 +79,18 @@ public abstract class Client<T> {
 		final String typeName = msg.getUniqueDataTypeIdentifier();
 		final String qTypeName = msg.getUniqueQueryDataTypeIdentifier();
 		ITypeHandler<T> typeHandler = null;
-		final boolean dataTypeRegistered = mTypeRegistry.registered(typeName);
-		if (dataTypeRegistered) {
+		T data = msg.get();
+		final boolean noDataType = typeName.isEmpty() && data == null;
+		final boolean dataTypeUnregistered;
+		if (mTypeRegistry.registered(typeName)) {
+			dataTypeUnregistered = false;
 			typeHandler = mHandlerRegistry.get(typeName);
+		} else {
+			dataTypeUnregistered = !noDataType;
 		}
 		Message logmsg = msg.getMessage();
 		logmsg.log(mLogger);
 
-		T data = msg.get();
 		Action action = msg.getAction();
 		switch (action) {
 		case LOGGING:
@@ -95,7 +99,7 @@ public abstract class Client<T> {
 			break;
 		case SORRY:
 		case SEND:
-			if (!dataTypeRegistered) {
+			if (dataTypeUnregistered) {
 				warnUnregistered(typeName);
 				break;
 			}
@@ -117,7 +121,7 @@ public abstract class Client<T> {
 			typeHandler = mHandlerRegistry.get(qTypeName);
 			if (data == null) {
 				mQueue.answer(msg, typeHandler.supply());
-			} else if (!dataTypeRegistered) {
+			} else if (dataTypeUnregistered) {
 				warnUnregistered(typeName);
 				break;
 			} else {
@@ -133,6 +137,7 @@ public abstract class Client<T> {
 			mHelloFuture.complete(this);
 			break;
 		default:
+			mLogger.warn("Received Message with unknown Action: " + action);
 			break;
 		}
 	};
