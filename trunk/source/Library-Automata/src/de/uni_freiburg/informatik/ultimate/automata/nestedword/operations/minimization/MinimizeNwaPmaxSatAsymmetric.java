@@ -207,7 +207,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		switch (PREPROCESSING_STANDALONE) {
 			case PARTITION:
 				return createPairsWithInitialPartition(
-						new LookaheadPartitionConstructor<>(services, operand, true, false).getPartition()
+						new NwaApproximateBisimulation<>(services, operand, SimulationType.DIRECT).getResult()
 								.getRelation());
 			case PAIRS:
 				return new NwaApproximateSimulation<>(services, operand, SimulationType.DIRECT).getResult();
