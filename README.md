@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/ultimate-pa/ultimate.svg)](https://travis-ci.org/ultimate-pa/ultimate)
 [![LGPL License](http://img.shields.io/badge/license-LGPLv3-brightgreen.svg)](https://www.gnu.org/licenses/lgpl.html)
 [![Waffle.io](https://img.shields.io/waffle/label/ultimate-pa/ultimate/in%20progress.svg?maxAge=1800)](https://waffle.io/ultimate-pa/ultimate)
-[![Jenkins tests](https://img.shields.io/jenkins/t/https/monteverdi.informatik.uni-freiburg.de/ci/job/Ultimate%20Nightly.svg?maxAge=1800)]()
+[![Jenkins tests](https://img.shields.io/jenkins/t/https/monteverdi.informatik.uni-freiburg.de/ci/job/Ultimate%20Nightly.svg?maxAge=1800)](https://monteverdi.informatik.uni-freiburg.de/ci/job/Ultimate%20Nightly/lastBuild/testReport/)
 [![SonarQube Coverage](https://img.shields.io/sonar/https/monteverdi.informatik.uni-freiburg.de/sonar/de.uni_freiburg.informatik.ultimate:mavenparent/coverage.svg?maxAge=1800)](https://monteverdi.informatik.uni-freiburg.de/sonar/overview?id=6196)
 [![SonarQube Tech Debt](https://img.shields.io/sonar/https/monteverdi.informatik.uni-freiburg.de/sonar/de.uni_freiburg.informatik.ultimate:mavenparent/tech_debt.svg?maxAge=1800)](https://monteverdi.informatik.uni-freiburg.de/sonar/overview?id=Ultimate%3AMavenParentUltimate)
 [![Codacy Badge](https://api.codacy.com/project/badge/grade/b03e97ce2ee948eb974a211bbbfc6a2e)](https://www.codacy.com/app/ultimate-pa/ultimate)
