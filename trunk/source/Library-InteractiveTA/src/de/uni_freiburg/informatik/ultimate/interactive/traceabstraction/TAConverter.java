@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.interactive.conversion.ConverterRegis
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Result;
+import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.TAPreferences.Concurrency;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.TAPreferences.Format;
@@ -66,6 +67,13 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 				MultiTrackTraceAbstractionRefinementStrategy.Track[].class, TAConverter::fromTracks);
 		converterRegistry.registerAB(InteractiveIterationInfo.class, ParrotInteractiveIterationInfo.class,
 				TAConverter::toIterationInfo);
+		converterRegistry.registerBA(InteractiveIterationInfo.class, ParrotInteractiveIterationInfo.class,
+				TAConverter::fromIterationInfo);
+	}
+
+	private static InteractiveIterationInfo fromIterationInfo(ParrotInteractiveIterationInfo itInfo) {
+		return InteractiveIterationInfo.newBuilder().setNextInteractiveIteration(itInfo.getNextInteractiveIteration())
+				.setFallback(convertTo(Strategy.class, itInfo.getFallbackTrack())).build();
 	}
 
 	private static ParrotInteractiveIterationInfo toIterationInfo(InteractiveIterationInfo itInfo) {
