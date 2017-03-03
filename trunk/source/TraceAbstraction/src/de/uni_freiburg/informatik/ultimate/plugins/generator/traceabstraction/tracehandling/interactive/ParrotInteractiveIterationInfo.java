@@ -13,7 +13,7 @@ public class ParrotInteractiveIterationInfo {
 	public ParrotInteractiveIterationInfo() {
 	}
 
-	public RefinementStrategy getFallbackTrack() {
+	public RefinementStrategy getFallbackStrategy() {
 		return mFallbackStrategy;
 	}
 
@@ -27,6 +27,6 @@ public class ParrotInteractiveIterationInfo {
 	}
 
 	public void setFrom(ParrotInteractiveIterationInfo other) {
-		setData(other.getFallbackTrack(), other.getNextInteractiveIteration());
+		setData(other.getFallbackStrategy(), other.getNextInteractiveIteration());
 	}
 }

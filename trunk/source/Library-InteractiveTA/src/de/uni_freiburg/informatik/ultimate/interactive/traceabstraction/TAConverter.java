@@ -73,7 +73,7 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 
 	private static InteractiveIterationInfo fromIterationInfo(ParrotInteractiveIterationInfo itInfo) {
 		return InteractiveIterationInfo.newBuilder().setNextInteractiveIteration(itInfo.getNextInteractiveIteration())
-				.setFallback(convertTo(Strategy.class, itInfo.getFallbackTrack())).build();
+				.setFallback(convertTo(Strategy.class, itInfo.getFallbackStrategy())).build();
 	}
 
 	private static ParrotInteractiveIterationInfo toIterationInfo(InteractiveIterationInfo itInfo) {

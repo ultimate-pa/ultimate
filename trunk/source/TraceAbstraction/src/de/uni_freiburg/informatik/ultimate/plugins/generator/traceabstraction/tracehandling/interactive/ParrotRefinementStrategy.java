@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -40,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
+import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientSorryException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -71,6 +71,11 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 		extends MultiTrackTraceAbstractionRefinementStrategy<LETTER> {
 
 	private IRefinementStrategy<LETTER> mFallback;
+	private Track mNextTrack;
+	private boolean mAsked;
+	private boolean mInitialized;
+	private Set<Track> mLeft;
+	private Iterator<Track> mIterator;
 
 	public ParrotRefinementStrategy(final ILogger logger, final TaCheckAndRefinementPreferences<LETTER> prefs,
 			final IUltimateServiceProvider services, final CfgSmtToolkit cfgSmtToolkit,
@@ -81,6 +86,7 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 			final CegarLoopStatisticsGenerator cegarLoopBenchmarks) {
 		super(logger, prefs, services, cfgSmtToolkit, predicateFactory, predicateUnifier, assertionOrderModulation,
 				counterexample, abstraction, taPrefsForInterpolantConsolidation, iteration, cegarLoopBenchmarks);
+		mInitialized = true;
 	}
 
 	protected abstract IInteractive<Object> getInteractive();
@@ -89,53 +95,43 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 
 	protected abstract ParrotInteractiveIterationInfo getIterationInfo();
 
-	private Iterator<Track> useFallbackStrategy(final ParrotInteractiveIterationInfo itInfo) {
-		mLogger.info("using Fallback Strategy '" + itInfo.getFallbackTrack() + "'.");
-		mFallback = createFallbackStrategy(itInfo.getFallbackTrack());
-		return Collections.singletonList(Track.SMTINTERPOL_TREE_INTERPOLANTS).iterator();
+	private void useFallbackStrategy(final ParrotInteractiveIterationInfo itInfo) {
+		mLogger.info("using Fallback Strategy '" + itInfo.getFallbackStrategy() + "'.");
+		mFallback = createFallbackStrategy(itInfo.getFallbackStrategy());
+	}
+
+	private void ask() {
+		if (mAsked)
+			return;
+		mAsked = true;
+		if (mLeft.isEmpty()) {
+			mNextTrack = null;
+			return;
+		}
+		Future<Track[]> answer = getInteractive().request(Track[].class, mLeft.stream().toArray(Track[]::new));
+		Track[] results;
+		try {
+			results = answer.get();
+		} catch (InterruptedException e) {
+			throw new IllegalStateException(e);
+		} catch (ExecutionException e) {
+			if (e.getCause() instanceof ClientSorryException) {
+				mNextTrack = null;
+				mLogger.error("No client answer.");
+				return;
+			}
+			mLogger.error("No client answer. Aborting Parrot Strategy.", e);
+			return;
+		}
+		if (results != null && results.length > 0) {
+			mNextTrack = results[0];
+			mLeft.remove(mNextTrack);
+		}
 	}
 
 	@Override
 	protected Iterator<Track> initializeInterpolationTechniquesList() {
-		final ParrotInteractiveIterationInfo itInfo = getIterationInfo();
-
-		if (mIteration >= itInfo.getNextInteractiveIteration()) {
-			try {
-				ParrotInteractiveIterationInfo other =
-						getInteractive().request(ParrotInteractiveIterationInfo.class).get();
-				itInfo.setFrom(other);
-			} catch (InterruptedException | ExecutionException e) {
-				mLogger.error("no client answer.");
-				return useFallbackStrategy(itInfo);
-			}
-		}
-		if (mIteration < itInfo.getNextInteractiveIteration())
-			return useFallbackStrategy(itInfo);
-
-		final Set<Track> left = new HashSet<>();
-		Arrays.stream(Track.values()).forEach(left::add);
-		return new Iterator<Track>() {
-			private Track mNextTrack;
-			private boolean mAsked = false;
-
-			private void ask() {
-				if (mAsked)
-					return;
-				Future<Track[]> answer = getInteractive().request(Track[].class, left.stream().toArray(Track[]::new));
-				mAsked = true;
-				Track[] results;
-				try {
-					results = answer.get();
-				} catch (InterruptedException | ExecutionException e) {
-					mLogger.error("no client answer.");
-					throw new IllegalStateException(e);
-				}
-				if (results != null && results.length > 0) {
-					mNextTrack = results[0];
-					left.remove(mNextTrack);
-				}
-			}
-
+		mIterator = new Iterator<Track>() {
 			@Override
 			public boolean hasNext() {
 				ask();
@@ -149,16 +145,54 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 				return mNextTrack;
 			}
 		};
+
+		mInitialized = false;
+		mAsked = false;
+		mLeft = new HashSet<>();
+		Arrays.stream(Track.values()).forEach(mLeft::add);
+
+		final ParrotInteractiveIterationInfo itInfo = getIterationInfo();
+
+		if (mIteration >= itInfo.getNextInteractiveIteration()) {
+			try {
+				ParrotInteractiveIterationInfo other =
+						getInteractive().request(ParrotInteractiveIterationInfo.class).get();
+				itInfo.setFrom(other);
+			} catch (InterruptedException | ExecutionException e) {
+				mLogger.error("no client answer.");
+				useFallbackStrategy(itInfo);
+				return mIterator;
+			}
+		}
+		if (mIteration < itInfo.getNextInteractiveIteration()) {
+			useFallbackStrategy(itInfo);
+			return mIterator;
+		}
+
+		return mIterator;
 	}
 
 	@Override
 	public boolean hasNextTraceChecker() {
-		return mFallback != null ? mFallback.hasNextTraceChecker() : super.hasNextTraceChecker();
+		if (mFallback != null) {
+			if (mFallback.hasNextTraceChecker()) {
+				return true;
+			} else {
+				// Fallback has failed before user interaction.
+				// so we ask the user to continue manually.
+				mLogger.info("Fallback Strategy " + getIterationInfo().getFallbackStrategy()
+						+ " has failed prematurely in iteration " + mIteration + " - asking the user");
+				mFallback = null;
+			}
+		}
+		return super.hasNextTraceChecker();
 	}
 
 	@Override
 	public void nextTraceChecker() {
 		if (mFallback != null) {
+			if (!mInitialized)
+				return;
 			mFallback.nextTraceChecker();
 		} else {
 			super.nextTraceChecker();
