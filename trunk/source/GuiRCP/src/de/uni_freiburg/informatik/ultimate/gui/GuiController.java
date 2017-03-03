@@ -130,7 +130,6 @@ public class GuiController implements IController<RunDefinition> {
 
 	@Override
 	public synchronized ISource selectParser(final Collection<ISource> parsers) {
-
 		mDisplay.syncExec(() -> {
 			final Shell shell = new Shell(mDisplay);
 			mParser = new ParserChooseDialog(shell, parsers).open();
