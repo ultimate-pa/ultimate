@@ -50,14 +50,17 @@ public class SpaceExTestSuite extends AbstractEvalTestSuite {
 	//@formatter:off
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] TOOLCHAINS = new Triple[] {
-	        //new Triple<>("SpaceExParser.xml", ".xml", "spaceex/spaceex_parser_testing.epf"),
-	        new Triple<>("SpaceExParserWithTA.xml", ".xml", "spaceex/spaceex_parser_testing2.epf"),
+	       //new Triple<>("SpaceExParserWithTA.xml", ".xml", "spaceex/spaceex_parser_testing_ModelsAndUnsatCore_DEBUG.epf"),
+	        new Triple<>("SpaceExParserWithTA.xml", ".xml", "spaceex/spaceex_parser_testing_InternalSmtInterpol_DEBUG.epf"),
+	        new Triple<>("SpaceExParserWithTA.xml", ".xml", "spaceex/spaceex_parser_testing_ExternalZ3_DEBUG.epf"),
 	};
 	//@formatter:on
 	
 	//@formatter:off
 	private static final String[] INPUT = new String[] {
 			"examples/programs/spaceex/",
+//		"examples/programs/spaceex/test",
+//			"examples/programs/spaceex/tanks3Modified-safe.xml",
 //			"examples/programs/spaceex/toy_safe.xml",
 //			"examples/programs/spaceex/simple1-unsafe.xml",
 //			"examples/programs/spaceex/minimal.xml",
@@ -80,7 +83,7 @@ public class SpaceExTestSuite extends AbstractEvalTestSuite {
 	
 	@Override
 	protected long getTimeout() {
-		return 10 * 1000;
+		return 10 * 5000;
 	}
 	
 	@Override

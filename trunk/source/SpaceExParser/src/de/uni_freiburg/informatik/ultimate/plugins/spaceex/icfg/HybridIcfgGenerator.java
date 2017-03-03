@@ -119,7 +119,7 @@ public class HybridIcfgGenerator {
 	
 	/**
 	 * Fucntion that converts a HybridAutomaton into an ICFG
-	 * 
+	 *
 	 * @param automaton
 	 * @return
 	 */
@@ -183,7 +183,7 @@ public class HybridIcfgGenerator {
 	
 	/**
 	 * Function that converts a given hybrid automaton into ICFG components.
-	 * 
+	 *
 	 * @param automaton
 	 * @param groupid
 	 */
@@ -210,7 +210,7 @@ public class HybridIcfgGenerator {
 	
 	/**
 	 * Function that Creates the Variable assignment ICFG component.
-	 * 
+	 *
 	 * @param variables
 	 * @param groupid
 	 */
@@ -238,8 +238,8 @@ public class HybridIcfgGenerator {
 		}
 		// then evaluate the infix string of the variable assigment specified in the config.
 		UnmodifiableTransFormula transformula;
-		String infix = group == null ? "" : group.getInitialVariableInfix();
-		infix += (!infix.isEmpty() ? "& " : "") + TIME_INV;
+		final String infix = group == null ? "" : group.getInitialVariableInfix();
+		// infix += (!infix.isEmpty() ? "& " : "") + TIME_INV;
 		// process infix to transformula
 		if (infix.isEmpty()) {
 			transformula = mTrivialTransformula;
@@ -267,7 +267,7 @@ public class HybridIcfgGenerator {
 			mCreatedTransitions.get(start).add(end);
 		}
 		// new cfgComponent, has to be connected to the root node.
-		mCfgComponents.put(id, new HybridCfgComponent(id, start, end, locations, transitions));
+		mCfgComponents.put(id, new HybridCfgComponent(id, start, end, locations, transitions, ""));
 		/*
 		 * Transition from Root to varAssignment
 		 */
@@ -291,7 +291,7 @@ public class HybridIcfgGenerator {
 	
 	/**
 	 * Function that converts locations to ICFG components.
-	 * 
+	 *
 	 * @param autLocations
 	 * @param groupid
 	 */
@@ -332,18 +332,20 @@ public class HybridIcfgGenerator {
 			 * Transition preFLow to postFlow
 			 */
 			String flowTerms = "";
-			final String[] splittedFlow = loc.getFlow().split("(&&)|(&)");
-			for (final String flow : splittedFlow) {
-				if (!flowTerms.isEmpty()) {
-					flowTerms += "&";
+			final String[] splittedFlow = !loc.getFlow().isEmpty() ? loc.getFlow().split("(&&)|(&)") : new String[0];
+			if (splittedFlow.length > 0) {
+				for (final String flow : splittedFlow) {
+					if (!flowTerms.isEmpty()) {
+						flowTerms += "&";
+					}
+					final FirstOrderLinearODE ode = new FirstOrderLinearODE(flow, TIME_VAR);
+					flowTerms += ode.getmSolution();
+					flowTerms += flowTerms.isEmpty() ? "" : "&" + TIME_INV;
 				}
-				final FirstOrderLinearODE ode = new FirstOrderLinearODE(flow, TIME_VAR);
-				flowTerms += ode.getmSolution();
+				flowTerms += (invariant.isEmpty() || flowTerms.isEmpty()) ? "" : "&" + invariant;
+				mLogger.debug("FLOW TERMS: " + flowTerms);
 			}
-			flowTerms += invariant.isEmpty() ? "" : "&" + invariant;
-			// flowTerms += flowTerms.isEmpty() ? "" : "&" + TIME_INV;
-			mLogger.debug("FLOW TERMS: " + flowTerms);
-			final UnmodifiableTransFormula tfFlow = buildTransformula(flowTerms, BuildScenario.UPDATE);
+			final UnmodifiableTransFormula tfFlow = buildTransformula(flowTerms, BuildScenario.FLOW);
 			final IcfgInternalTransition preFlowTopostFlow =
 					new IcfgInternalTransition(preFlow, postFlow, null, tfFlow);
 			preFlow.addOutgoing(preFlowTopostFlow);
@@ -386,19 +388,19 @@ public class HybridIcfgGenerator {
 					// the transformula depends on whether
 					final UnmodifiableTransFormula forbiddenTransformula = createForbiddenTransformula(finalInfix);
 					final IcfgInternalTransition startError =
-							new IcfgInternalTransition(start, mErrorLocation, null, forbiddenTransformula);
-					start.addOutgoing(startError);
+							new IcfgInternalTransition(preFlow, mErrorLocation, null, forbiddenTransformula);
+					preFlow.addOutgoing(startError);
 					mErrorLocation.addIncoming(startError);
 					
-					final IcfgInternalTransition postflowError =
-							new IcfgInternalTransition(postFlow, mErrorLocation, null, forbiddenTransformula);
-					postFlow.addOutgoing(postflowError);
-					mErrorLocation.addIncoming(postflowError);
+					final IcfgInternalTransition endError =
+							new IcfgInternalTransition(end, mErrorLocation, null, forbiddenTransformula);
+					end.addOutgoing(endError);
+					mErrorLocation.addIncoming(endError);
 				}
 			}
 			// create new cfgComponent
 			mCfgComponents.put(autid.toString(),
-					new HybridCfgComponent(autid.toString(), start, end, locations, transitions));
+					new HybridCfgComponent(autid.toString(), start, end, locations, transitions, loc.getInvariant()));
 		}
 	}
 	
@@ -445,7 +447,7 @@ public class HybridIcfgGenerator {
 	
 	/**
 	 * Function that creates the necessary transitions between ICFG components.
-	 * 
+	 *
 	 * @param transitions
 	 * @param initialLocation
 	 */
@@ -453,6 +455,7 @@ public class HybridIcfgGenerator {
 		// a transition in a hybrid automaton is simply an edge from one location to another.
 		// guard and update can be merged with &&
 		transitions.forEach(trans -> {
+			
 			// the source of the transition is the the end of the source CFG component
 			final IcfgLocation source = mCfgComponents.get(Integer.toString(trans.getSourceId())).getEnd();
 			// the target of the transition is the the start of the target CFG component
@@ -512,14 +515,13 @@ public class HybridIcfgGenerator {
 	
 	/**
 	 * Fucntion to build a transformula for a transition between Locations of automata.
-	 * 
+	 *
 	 * @param update
 	 * @param guard
 	 * @return
 	 */
 	private UnmodifiableTransFormula buildTransitionTransformula(final String update, final String guard) {
-		final HybridTermBuilder tb =
-				new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript().getScript(), mLogger);
+		final HybridTermBuilder tb = new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript(), mLogger);
 		UnmodifiableTransFormula transformula;
 		Term formula = null;
 		if (update.isEmpty() && guard.isEmpty()) {
@@ -548,7 +550,7 @@ public class HybridIcfgGenerator {
 	
 	/**
 	 * Function to Build a transformula according to a BuildScenario.
-	 * 
+	 *
 	 * @param infix
 	 * @param scenario
 	 * @param groupid
@@ -558,14 +560,18 @@ public class HybridIcfgGenerator {
 		if (infix.isEmpty()) {
 			return TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
 		}
-		final HybridTermBuilder tb =
-				new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript().getScript(), mLogger);
+		final HybridTermBuilder tb = new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript(), mLogger);
 		final Term term =
 				tb.infixToTerm(scenario != BuildScenario.INITIALLY ? replaceConstantValues(infix) : infix, scenario);
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), Collections.emptyMap(), true,
-				Collections.emptySet(), true, Collections.emptyList(), true);
+				Collections.emptySet(), true, Collections.emptyList(), false);
+		mLogger.debug("INVARS:  " + tb.getmInVars());
+		mLogger.debug("OUTVARS: " + tb.getmOutVars());
+		mLogger.debug("AUXVAR:  " + tb.getAuxVar());
+		mLogger.debug("TERM:    " + term.toStringDirect());
 		tb.getmInVars().forEach(tfb::addInVar);
 		tb.getmOutVars().forEach(tfb::addOutVar);
+		tfb.addAuxVar(tb.getAuxVar());
 		tfb.setFormula(term);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		// finish construction of the transformula.
@@ -594,7 +600,7 @@ public class HybridIcfgGenerator {
 	
 	/**
 	 * Function to build a transformula with an term "false"
-	 * 
+	 *
 	 * @return
 	 */
 	private UnmodifiableTransFormula buildFalseTransformula() {

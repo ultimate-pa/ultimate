@@ -357,6 +357,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		ProgramSize(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of path program locations for each overall iteration
 		ProgramLocs(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		// the sum of path program locations for each overall iteration after Lbe has been applied
+		ProgramLocsLbe(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of path program variables for each overall iteration
 		ProgramVars(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of template inequalities per location per round per iteration

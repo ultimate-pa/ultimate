@@ -10,32 +10,38 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.SpaceExMathHelper;
 
 /**
  * Class to build Terms from Hybrid automata expressions like Initial values, Invariants and Jumps
- * 
+ *
  * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  *
  */
 public class HybridTermBuilder {
 	private final HybridVariableManager mVariableManager;
 	private final Script mScript;
+	private final ManagedScript mManagedScript;
 	private final Map<String, Term> mStringTerm;
 	private final Map<HybridProgramVar, TermVariable> mInVars;
 	private final Map<HybridProgramVar, TermVariable> mOutVars;
+	private TermVariable mAuxVar;
 	ILogger mLogger;
 	
 	public enum BuildScenario {
-		INITIALLY, INVARIANT, UPDATE, GUARD;
+		INITIALLY, INVARIANT, UPDATE, GUARD, FLOW;
 	}
 	
-	public HybridTermBuilder(final HybridVariableManager variableManger, final Script script, final ILogger logger) {
+	public HybridTermBuilder(final HybridVariableManager variableManger, final ManagedScript script,
+			final ILogger logger) {
 		mVariableManager = variableManger;
-		mScript = script;
+		mScript = script.getScript();
+		mManagedScript = script;
 		mStringTerm = new HashMap<>();
 		mInVars = new HashMap<>();
 		mOutVars = new HashMap<>();
+		mAuxVar = null;
 		mLogger = logger;
 	}
 	
@@ -184,6 +190,22 @@ public class HybridTermBuilder {
 			return getInitiallyTV(operand1);
 		} else if (scenario == BuildScenario.GUARD || scenario == BuildScenario.INVARIANT) {
 			return getInvariantTV(operand1);
+		} else if (scenario == BuildScenario.UPDATE) {
+			return getUpdateTV(operand1, isAssignedValue);
+		} else if (scenario == BuildScenario.FLOW) {
+			return getFlowTV(operand1, isAssignedValue);
+		} else {
+			throw new UnsupportedOperationException("Unknown scenario " + scenario.toString());
+		}
+	}
+	
+	private TermVariable getFlowTV(final String operand1, final boolean isAssignedValue) {
+		if (operand1.equals(HybridIcfgGenerator.TIME_VAR)) {
+			// Create new term variable and add to auxvars
+			if (mAuxVar == null) {
+				mAuxVar = mManagedScript.constructFreshTermVariable(operand1, mScript.sort("Real"));
+			}
+			return mAuxVar;
 		} else {
 			return getUpdateTV(operand1, isAssignedValue);
 		}
@@ -208,7 +230,7 @@ public class HybridTermBuilder {
 			final TermVariable invar = mVariableManager.getVar2InVarTermVariable().get(operand1);
 			final TermVariable outvar = mVariableManager.getVar2OutVarTermVariable().get(operand1);
 			mInVars.put(progvar, invar);
-			mOutVars.put(progvar, outvar);
+			mOutVars.put(progvar, invar);
 			return invar;
 		} else {
 			return null;
@@ -263,6 +285,10 @@ public class HybridTermBuilder {
 	
 	public Map<HybridProgramVar, TermVariable> getmOutVars() {
 		return mOutVars;
+	}
+
+	public TermVariable getAuxVar() {
+		return mAuxVar;
 	}
 	
 }

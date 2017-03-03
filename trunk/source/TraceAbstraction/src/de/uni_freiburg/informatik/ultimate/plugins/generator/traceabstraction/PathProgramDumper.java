@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Write path program to a Boogie file
@@ -173,29 +173,40 @@ public class PathProgramDumper {
 						new AssertStatement(constructNewLocation(), new BooleanLiteral(constructNewLocation(), false)));
 				assert node.getOutgoingEdges().isEmpty() : "error loc with outgoing transitions";
 			}
-
-			final String[] transitionStartLabels = new String[node.getOutgoingEdges().size()];
-			for (int i = 0; i < node.getOutgoingEdges().size(); i++) {
-				final String transitionStartLabel = constructLabelId(node, i);
-				transitionStartLabels[i] = transitionStartLabel;
-			}
-			if (!node.getOutgoingEdges().isEmpty()) {
-				result.add(new GotoStatement(constructNewLocation(), transitionStartLabels));
-			}
-			for (int i = 0; i < node.getOutgoingEdges().size(); i++) {
-				final IcfgEdge edge = node.getOutgoingEdges().get(i);
-				result.add(constructLabel(node, i));
-				final Pair<List<Statement>, Set<IProgramVar>> transResult = constructTransitionStatements(edge,
-						edge.getTarget());
-				result.addAll(transResult.getFirst());
-				vars.addAll(transResult.getSecond());
-				if (!added.contains(edge.getTarget())) {
-					worklist.add(edge.getTarget());
-					added.add(edge.getTarget());
+			if (node.getOutgoingEdges().isEmpty()) {
+				// do nothing, no successor
+			} else if (node.getOutgoingEdges().size() == 1) {
+				final IcfgEdge edge = node.getOutgoingEdges().get(0);
+				processTransition(worklist, added, result, vars, edge);
+			} else {
+				final String[] transitionStartLabels = new String[node.getOutgoingEdges().size()];
+				for (int i = 0; i < node.getOutgoingEdges().size(); i++) {
+					final String transitionStartLabel = constructLabelId(node, i);
+					transitionStartLabels[i] = transitionStartLabel;
+				}
+				if (!node.getOutgoingEdges().isEmpty()) {
+					result.add(new GotoStatement(constructNewLocation(), transitionStartLabels));
+				}
+				for (int i = 0; i < node.getOutgoingEdges().size(); i++) {
+					final IcfgEdge edge = node.getOutgoingEdges().get(i);
+					result.add(constructLabel(node, i));
+					processTransition(worklist, added, result, vars, edge);
 				}
 			}
 		}
 		return result;
+	}
+
+	private void processTransition(final ArrayDeque<IcfgLocation> worklist,
+			final Set<IcfgLocation> added, final List<Statement> result, final Set<IProgramVar> vars,
+			final IcfgEdge edge) {
+		final Triple<List<Statement>, Set<IProgramVar>, IcfgLocation> transResult = constructTransitionStatements(edge);
+		result.addAll(transResult.getFirst());
+		vars.addAll(transResult.getSecond());
+		if (!added.contains(transResult.getThird())) {
+			worklist.add(transResult.getThird());
+			added.add(transResult.getThird());
+		}
 	}
 
 	private String constructLabelId(final IcfgLocation node) {
@@ -214,19 +225,34 @@ public class PathProgramDumper {
 		return new Label(constructNewLocation(), constructLabelId(node, i));
 	}
 
-	private Pair<List<Statement>, Set<IProgramVar>> constructTransitionStatements(final IcfgEdge edge,
-			final IcfgLocation target) {
+	private Triple<List<Statement>, Set<IProgramVar>, IcfgLocation> constructTransitionStatements(IcfgEdge edge) {
 		final List<Statement> statements = new ArrayList<>();
 		final Set<IProgramVar> vars = new HashSet<>();
+		addStatementsAndVariables(edge, statements, vars);
+		while (isBridgingLocation(edge.getTarget())) {
+			edge = edge.getTarget().getOutgoingEdges().get(0);
+			addStatementsAndVariables(edge, statements, vars);
+		}
+		final String targetLabel = constructLabelId(edge.getTarget());
+		statements.add(new GotoStatement(constructNewLocation(), new String[] { targetLabel }));
+		return new Triple<>(statements, vars, edge.getTarget());
+	}
+
+	private void addStatementsAndVariables(final IcfgEdge edge, final List<Statement> statements,
+			final Set<IProgramVar> vars) {
 		final StatementSequence stseq = (StatementSequence) edge.getLabel();
 		vars.addAll(stseq.getTransformula().getInVars().keySet());
 		vars.addAll(stseq.getTransformula().getOutVars().keySet());
 		for (final Statement st : stseq.getStatements()) {
 			statements.add(st);
 		}
-		final String targetLabel = constructLabelId(target);
-		statements.add(new GotoStatement(constructNewLocation(), new String[] { targetLabel }));
-		return new Pair<>(statements, vars);
+	}
+	
+	/**
+	 * @return true iff location has exactly one outgoing edge and one incoming edge
+	 */
+	private boolean isBridgingLocation(final IcfgLocation loc) {
+		return loc.getIncomingEdges().size() == 1 && loc.getOutgoingEdges().size() == 1;
 	}
 
 	private ILocation constructNewLocation() {

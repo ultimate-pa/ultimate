@@ -354,20 +354,15 @@ public class HCSSABuilder {
 			return result;
 		}
 
+		/**
+		 * Reverts the SSA-renaming of the TermVariables that come from program variables in a
+		 * term that comes from a (get-interpolants).
+		 * 
+		 * @param pl
+		 * @param term
+		 * @return
+		 */
 		public HCPredicate backVersion(final HCPredicate pl, final Term term) {
-			// final Map<Term, Term> backSubstitutionMap = new HashMap<>();
-			// final Set<IProgramVar> vars = new HashSet<>();
-			// final Map<Term, HCVar> substit = new HashMap<>();
-			// for (final Term hcvar : mSubstitutionMapping.keySet()) {
-			// backSubstitutionMap.put(mSubstitutionMapping.get(hcvar), hcvar);
-			// if
-			// (mBackSubstitutionMapping.containsKey(mSubstitutionMapping.get(hcvar)))
-			// {
-			// vars.add(mBackSubstitutionMapping.get(mSubstitutionMapping.get(hcvar)));
-			// substit.put(hcvar,
-			// mBackSubstitutionMapping.get(mSubstitutionMapping.get(hcvar)));
-			// }
-			// }
 			final Set<IProgramVar> vars = new HashSet<>();
 			final Map<Term, Term> backSubstitutionMap = new HashMap<>();
 			final Map<Term, HCVar> termToHcVar = new HashMap<>();
@@ -386,7 +381,7 @@ public class HCSSABuilder {
 			final Substitution subst = new Substitution(mScript, backSubstitutionMap);
 			final Term t = transferToCurrentScriptIfNecessary(term);
 			final Term formula = subst.transform(t);
-
+			
 			return mPredicateFactory.newPredicate(pl.mProgramPoint, pl.hashCode(), formula, vars, termToHcVar);
 		}
 

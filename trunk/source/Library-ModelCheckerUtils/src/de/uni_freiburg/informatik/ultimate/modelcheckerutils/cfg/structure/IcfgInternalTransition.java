@@ -45,7 +45,7 @@ public class IcfgInternalTransition extends AbstractIcfgTransition implements II
 	public IcfgInternalTransition(final IcfgLocation source, final IcfgLocation target, final IPayload payload,
 			final UnmodifiableTransFormula transFormula) {
 		super(source, target, payload);
-		mTransFormula = Objects.requireNonNull(transFormula);
+		mTransFormula = Objects.requireNonNull(transFormula, "A transformula is missing");
 	}
 
 	@Override

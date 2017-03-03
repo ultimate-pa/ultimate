@@ -249,7 +249,10 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		mMaxRounds = strategy.getMaxRounds();
 		mUseNonlinearConstraints = useNonlinearConstraints;
 		mUseUnsatCores = useUnsatCores;
-		if (!mUseUnsatCores) {
+		if (mUseUnsatCores) {
+			USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
+			USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
+		} else {
 			// If we don't use unsat cores, then the additional constraints are not needed
 			USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT = false;
 			USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT = false;

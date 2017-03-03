@@ -30,7 +30,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.grap
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -38,7 +37,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
-import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -46,10 +44,8 @@ import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
@@ -66,8 +62,8 @@ public class HCStateFactory implements IMergeStateFactory<HCPredicate>, IInterse
 
 	private final ManagedScript mBackendSmtSolverScript;
 	private final SimplifyDDA mSimplifier;
-	private final TermTransferrer mTermTransferrer;
-	private final boolean mTransferToScriptNeeded;
+//	private final TermTransferrer mTermTransferrer;
+//	private final boolean mTransferToScriptNeeded;
 
 	private final HCPredicateFactory mPredicateFactory;
 
@@ -83,8 +79,8 @@ public class HCStateFactory implements IMergeStateFactory<HCPredicate>, IInterse
 
 		mEmtpyStack = predicateFactory.getDontCarePredicate();
 
-		mTermTransferrer = new TermTransferrer(mBackendSmtSolverScript.getScript());
-		mTransferToScriptNeeded = true;
+//		mTermTransferrer = new TermTransferrer(mBackendSmtSolverScript.getScript());
+//		mTransferToScriptNeeded = true;
 		mSimplifier = new SimplifyDDA(mBackendSmtSolverScript.getScript());
 		mPredicateFactory = predicateFactory;
 	}
@@ -152,7 +148,7 @@ public class HCStateFactory implements IMergeStateFactory<HCPredicate>, IInterse
 	 * @param pf
 	 * @param dest
 	 * @return true iff satisfiable
-	 */
+	 *
 	public boolean isSatisfiable(final List<HCPredicate> src, final HornClause pf, final HCPredicate dest) {
 		for (final HCPredicate pSrc : src) {
 			for (final IProgramVar v : pSrc.getVars()) {
@@ -218,6 +214,7 @@ public class HCStateFactory implements IMergeStateFactory<HCPredicate>, IInterse
 		}
 		return result;
 	}
+	*/
 
 	@Override
 	public HCPredicate createEmptyStackState() {

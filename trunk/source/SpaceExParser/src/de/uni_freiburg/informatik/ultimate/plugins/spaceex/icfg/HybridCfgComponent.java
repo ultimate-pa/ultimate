@@ -20,14 +20,17 @@ public class HybridCfgComponent {
 	private final IcfgLocation mEndLocation;
 	private final List<IcfgLocation> mLocations;
 	private final List<IcfgInternalTransition> mTransitions;
+	private final String mLocationInvariant;
 	
-	public HybridCfgComponent(String string, IcfgLocation start, IcfgLocation end, List<IcfgLocation> locations,
-			List<IcfgInternalTransition> transitions) {
+	public HybridCfgComponent(final String string, final IcfgLocation start, final IcfgLocation end,
+			final List<IcfgLocation> locations, final List<IcfgInternalTransition> transitions,
+			final String invariant) {
 		mId = string;
 		mStartLocation = start;
 		mEndLocation = end;
 		mLocations = locations;
 		mTransitions = transitions;
+		mLocationInvariant = invariant;
 	}
 	
 	public String getId() {
@@ -48,6 +51,10 @@ public class HybridCfgComponent {
 	
 	public List<IcfgInternalTransition> getTransitions() {
 		return mTransitions;
+	}
+	
+	public String getLocationInvariant() {
+		return mLocationInvariant;
 	}
 	
 	@Override
@@ -92,4 +99,5 @@ public class HybridCfgComponent {
 		}
 		return comp;
 	}
+	
 }

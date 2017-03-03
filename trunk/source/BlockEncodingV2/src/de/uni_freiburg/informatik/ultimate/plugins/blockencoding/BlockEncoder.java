@@ -33,18 +33,15 @@ import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.BuchiProgramAcceptingStateAnnotation;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -136,8 +133,8 @@ public final class BlockEncoder {
 		mBacktranslator = new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
 		final CfgSmtToolkit toolkit = originalIcfg.getCfgSmtToolkit();
 		mEdgeBuilder = new IcfgEdgeBuilder(toolkit, mServices, simplificationTechnique, xnfConversionTechnique);
-		final BasicIcfg<IcfgLocation> copiedIcfg = new IcfgDuplicator(mLogger, mServices, toolkit.getManagedScript(),
-				mBacktranslator).copy(originalIcfg);
+		final BasicIcfg<IcfgLocation> copiedIcfg =
+				new IcfgDuplicator(mLogger, mServices, toolkit.getManagedScript(), mBacktranslator).copy(originalIcfg);
 		processIcfg(copiedIcfg);
 	}
 
@@ -174,13 +171,6 @@ public final class BlockEncoder {
 			for (final Supplier<IEncoder<IcfgLocation>> provider : encoderProviders) {
 				final IEncoder<IcfgLocation> encoder = provider.get();
 				currentResult = applyEncoder(currentResult, encoder);
-				if (mLogger.isDebugEnabled()) {
-					mLogger.debug("Current error locations: " + IcfgUtils.getErrorLocations(currentResult.getIcfg()));
-					new IcfgLocationIterator<>(currentResult.getIcfg()).asStream().forEach(a -> {
-						mLogger.debug("Annotations of " + a);
-						ModelUtils.consumeAnnotations(a, x -> mLogger.debug(x.getValue().getClass()));
-					});
-				}
 			}
 
 			mIterationResult = currentResult.getIcfg();

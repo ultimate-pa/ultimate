@@ -342,7 +342,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			}
 		} else {
 			if (DUMP_DIFFICULT_PATH_PROGRAMS
-					&& ((TraceAbstractionRefinementEngine) mTraceCheckAndRefinementEngine).somePerfectSequenceFound()) {
+					&& !((TraceAbstractionRefinementEngine) mTraceCheckAndRefinementEngine).somePerfectSequenceFound()) {
 				final String filename = mPref.dumpPath() + File.separator + mIcfgContainer.getIdentifier() + "_"
 						+ mIteration + ".bpl";
 				new PathProgramDumper(mIcfgContainer, mServices,

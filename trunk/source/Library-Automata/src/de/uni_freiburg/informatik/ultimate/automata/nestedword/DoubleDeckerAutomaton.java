@@ -75,13 +75,7 @@ public class DoubleDeckerAutomaton<LETTER, STATE> extends NestedWordAutomaton<LE
 		return mUp2Down != null;
 	}
 
-	/**
-	 * {@inheritDoc}
-	 * 
-	 * @deprecated Use the {@link #isDoubleDecker(Object, Object)} check instead.
-	 */
 	@Override
-	@Deprecated
 	public Set<STATE> getDownStates(final STATE upState) {
 		if (up2DownIsSet()) {
 			return mUp2Down.get(upState).keySet();

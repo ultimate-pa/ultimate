@@ -50,19 +50,19 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
  * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  *
- * @param <R>
+ * @param <LETTER>
  *            letter of the tree automaton.
- * @param <S>
+ * @param <STATE>
  *            state of the tree automaton.
  */
-public class Minimize<R, S> implements IOperation<R, S, IStateFactory<S>> {
+public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
-	private final TreeAutomatonBU<R, S> mTreeAutomaton;
-	private final IMergeStateFactory<S> mStateFactory;
+	private final TreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
+	private final IMergeStateFactory<STATE> mStateFactory;
 	
-	protected final ITreeAutomatonBU<R, S> mResult;
+	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
 
-	private final Map<Set<S>, S> mMinimizedStates;
+	private final Map<Set<STATE>, STATE> mMinimizedStates;
 
 	/***
 	 * Constructor of Minimize operator
@@ -70,15 +70,15 @@ public class Minimize<R, S> implements IOperation<R, S, IStateFactory<S>> {
 	 * @param factory
 	 * @param tree
 	 */
-	public Minimize(final AutomataLibraryServices services, final IMergeStateFactory<S> factory,
-			final ITreeAutomatonBU<R, S> tree) {
-		mTreeAutomaton = (TreeAutomatonBU<R, S>) tree;
+	public Minimize(final AutomataLibraryServices services, final IMergeStateFactory<STATE> factory,
+			final ITreeAutomatonBU<LETTER, STATE> tree) {
+		mTreeAutomaton = (TreeAutomatonBU<LETTER, STATE>) tree;
 		mStateFactory = factory;
 		mMinimizedStates = new HashMap<>();
 		mResult = computeResult();
 	}
 
-	private S minimize(final Set<S> st) {
+	private STATE minimize(final Set<STATE> st) {
 		// minimize set of state to a new minimized state.
 		if (!mMinimizedStates.containsKey(st)) {
 			mMinimizedStates.put(st, mStateFactory.merge(st));
@@ -109,22 +109,22 @@ public class Minimize<R, S> implements IOperation<R, S, IStateFactory<S>> {
 	 * @param worklist
 	 * @return
 	 */
-	private boolean replacable(final S s1, final S s2, final TreeAutomatonRule<R, S> rule,
-			final DisjointSet<S> worklist) {
-		final ArrayList<S> src = new ArrayList<>();
-		for (final S st : rule.getSource()) {
+	private boolean replacable(final STATE s1, final STATE s2, final TreeAutomatonRule<LETTER, STATE> rule,
+			final DisjointSet<STATE> worklist) {
+		final ArrayList<STATE> src = new ArrayList<>();
+		for (final STATE st : rule.getSource()) {
 			src.add(st);
 		}
 		for (int idx = 0; idx < src.size(); ++idx) {
 			if (src.get(idx) != s1) {
 				continue;
 			}
-			final ArrayList<S> s = (ArrayList<S>) src.clone();
+			final ArrayList<STATE> s = (ArrayList<STATE>) src.clone();
 			s.set(idx, s2);
 			// If we replace an occurance of s1 by s2 in the rule, and it still yields an equivalent destination
 			// Then we can replace s2 by s1 in this rule
 			// TODO(amin): Check if just one occurance or all of them is needed.
-			for (final S dest : mTreeAutomaton.getSuccessors(s, rule.getLetter())) {
+			for (final STATE dest : mTreeAutomaton.getSuccessors(s, rule.getLetter())) {
 				if (worklist.equiv(dest, rule.getDest())) {
 					return true;
 				}
@@ -133,16 +133,16 @@ public class Minimize<R, S> implements IOperation<R, S, IStateFactory<S>> {
 		return false;
 	}
 
-	private boolean replacable(final S s1, final S s2, final DisjointSet<S> partitions) {
+	private boolean replacable(final STATE s1, final STATE s2, final DisjointSet<STATE> partitions) {
 		// If I can replace s1 by s2 in all rules of s1
-		for (final TreeAutomatonRule<R, S> rule : mTreeAutomaton.getRulesBySource(s1)) {
+		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRulesBySource(s1)) {
 			if (!replacable(s1, s2, rule, partitions)) {
 				return false;
 			}
 		}
 
 		// If I can replace s2 by s1 in all rules of s2
-		for (final TreeAutomatonRule<R, S> rule : mTreeAutomaton.getRulesBySource(s2)) {
+		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRulesBySource(s2)) {
 			if (!replacable(s2, s1, rule, partitions)) {
 				return false;
 			}
@@ -151,13 +151,13 @@ public class Minimize<R, S> implements IOperation<R, S, IStateFactory<S>> {
 		return true;
 	}
 
-	private ITreeAutomatonBU<R, S> computeResult() {
+	private ITreeAutomatonBU<LETTER, STATE> computeResult() {
 
-		DisjointSet<S> worklist = new DisjointSet<>(mTreeAutomaton.getStates());
-		S finalState = null;
-		S initState = null;
-		S nonFinalState = null;
-		for (final S state : mTreeAutomaton.getStates()) {
+		DisjointSet<STATE> worklist = new DisjointSet<>(mTreeAutomaton.getStates());
+		STATE finalState = null;
+		STATE initState = null;
+		STATE nonFinalState = null;
+		for (final STATE state : mTreeAutomaton.getStates()) {
 			if (mTreeAutomaton.isFinalState(state)) {
 				if (finalState == null) {
 					finalState = state;
@@ -180,23 +180,23 @@ public class Minimize<R, S> implements IOperation<R, S, IStateFactory<S>> {
 				}
 			}
 		}
-		DisjointSet<S> oldWorklist;
+		DisjointSet<STATE> oldWorklist;
 		do {
 			oldWorklist = worklist;
 
 			worklist = new DisjointSet<>(mTreeAutomaton.getStates());
-			for (final Iterator<Set<S>> partitionsIt = oldWorklist.getParitionsIterator(); partitionsIt
+			for (final Iterator<Set<STATE>> partitionsIt = oldWorklist.getParitionsIterator(); partitionsIt
 					.hasNext();) {
-				final Set<S> partition = partitionsIt.next();
-				final ArrayList<S> states = new ArrayList<>();
-				for (final Iterator<S> it = partition.iterator(); it.hasNext();) {
+				final Set<STATE> partition = partitionsIt.next();
+				final ArrayList<STATE> states = new ArrayList<>();
+				for (final Iterator<STATE> it = partition.iterator(); it.hasNext();) {
 					states.add(it.next());
 				}
 				for (int i = 0; i < states.size(); ++i) {
-					final S p1 = states.get(i);
+					final STATE p1 = states.get(i);
 					for (int j = 0; j < i; ++j) {
 						// for each pair of states
-						final S p2 = states.get(j);
+						final STATE p2 = states.get(j);
 						// if we can replace p1 and p2 together
 						if (!oldWorklist.equiv(p1, p2) && replacable(p1, p2, oldWorklist)) {
 							// then mark as equivalent
@@ -205,11 +205,11 @@ public class Minimize<R, S> implements IOperation<R, S, IStateFactory<S>> {
 					}
 				}
 			}
-		} while (!worklist.equalsTo(oldWorklist));
+		} while (!worklist.equals(oldWorklist));
 
 		// minimize all states
-		final TreeAutomatonBU<R, S> res = new TreeAutomatonBU<>();
-		for (final S st : mTreeAutomaton.getStates()) {
+		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
+		for (final STATE st : mTreeAutomaton.getStates()) {
 			res.addState(minimize(worklist.getPartition(st)));
 			if (mTreeAutomaton.isFinalState(st)) {
 				res.addFinalState(minimize(worklist.getPartition(st)));
@@ -219,10 +219,10 @@ public class Minimize<R, S> implements IOperation<R, S, IStateFactory<S>> {
 			}
 		}
 
-		for (final TreeAutomatonRule<R, S> rule : mTreeAutomaton.getRules()) {
-			final List<S> src = new ArrayList<>();
+		for (final TreeAutomatonRule<LETTER, STATE> rule : mTreeAutomaton.getRules()) {
+			final List<STATE> src = new ArrayList<>();
 			// minimize all set of states in all rules.
-			for (final S st : rule.getSource()) {
+			for (final STATE st : rule.getSource()) {
 				src.add(minimize(worklist.getPartition(st)));
 			}
 			res.addRule(
@@ -231,23 +231,23 @@ public class Minimize<R, S> implements IOperation<R, S, IStateFactory<S>> {
 		return removeUnreachables(res);
 	}
 
-	private ITreeAutomatonBU<R, S> removeUnreachables(final TreeAutomatonBU<R, S> treeAutomaton) {
-		final TreeAutomatonBU<R, S> res = new TreeAutomatonBU<>();
+	private ITreeAutomatonBU<LETTER, STATE> removeUnreachables(final TreeAutomatonBU<LETTER, STATE> treeAutomaton) {
+		final TreeAutomatonBU<LETTER, STATE> res = new TreeAutomatonBU<>();
 
-		final Set<S> worklist = new HashSet<>();
+		final Set<STATE> worklist = new HashSet<>();
 
-		for (final S st : treeAutomaton.getInitialStates()) {
+		for (final STATE st : treeAutomaton.getInitialStates()) {
 			worklist.add(st);
 		}
-		final Set<S> oldWorklist = new HashSet<>();
+		final Set<STATE> oldWorklist = new HashSet<>();
 
 		do {
 			oldWorklist.addAll(worklist);
 
-			for (final TreeAutomatonRule<R, S> rule : treeAutomaton.getRules()) {
+			for (final TreeAutomatonRule<LETTER, STATE> rule : treeAutomaton.getRules()) {
 				// If the sources of this rule are reachable, then is the destination.
 				boolean allFound = true;
-				for (final S sr : rule.getSource()) {
+				for (final STATE sr : rule.getSource()) {
 					if (!oldWorklist.contains(sr)) {
 						allFound = false;
 						break;
@@ -260,13 +260,13 @@ public class Minimize<R, S> implements IOperation<R, S, IStateFactory<S>> {
 			// no new reachable states
 		} while (!worklist.equals(oldWorklist));
 
-		final Set<S> visited = new HashSet<>();
+		final Set<STATE> visited = new HashSet<>();
 		// All reachable nodes from initial states.
 		visited.addAll(worklist);
 
 		worklist.clear();
 		oldWorklist.clear();
-		for (final S st : visited) {
+		for (final STATE st : visited) {
 			if (treeAutomaton.isFinalState(st)) {
 				// needed final states.
 				worklist.add(st);
@@ -276,13 +276,13 @@ public class Minimize<R, S> implements IOperation<R, S, IStateFactory<S>> {
 		do {
 			oldWorklist.addAll(worklist);
 
-			for (final S dest : oldWorklist) {
+			for (final STATE dest : oldWorklist) {
 				// for each needed state mark all it's predecessors as needed.
-				final Map<R, Iterable<List<S>>> prev = treeAutomaton.getPredecessors(dest);
-				for (final R symb : prev.keySet()) {
-					for (final List<S> src : prev.get(symb)) {
+				final Map<LETTER, Iterable<List<STATE>>> prev = treeAutomaton.getPredecessors(dest);
+				for (final LETTER symb : prev.keySet()) {
+					for (final List<STATE> src : prev.get(symb)) {
 						boolean allFound = true;
-						for (final S st : src) {
+						for (final STATE st : src) {
 							// If a final state has a never-reachable predecessor, then this is an invalid rule.
 							if (!visited.contains(st)) {
 								allFound = false;
@@ -300,7 +300,7 @@ public class Minimize<R, S> implements IOperation<R, S, IStateFactory<S>> {
 			}
 		} while (!worklist.equals(oldWorklist));
 
-		for (final S st : worklist) {
+		for (final STATE st : worklist) {
 			if (visited.contains(st)) {
 				res.addState(st);
 				if (treeAutomaton.isFinalState(st)) {
@@ -316,12 +316,12 @@ public class Minimize<R, S> implements IOperation<R, S, IStateFactory<S>> {
 	}
 
 	@Override
-	public ITreeAutomatonBU<R, S> getResult() {
+	public ITreeAutomatonBU<LETTER, STATE> getResult() {
 		return mResult;
 	}
 
 	@Override
-	public boolean checkResult(final IStateFactory<S> stateFactory) throws AutomataLibraryException {
+	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		// TODO Auto-generated method stub
 		return false;
 	}
@@ -432,12 +432,14 @@ public class Minimize<R, S> implements IOperation<R, S, IStateFactory<S>> {
 			find(x);
 		}
 
-		public boolean equalsTo(final DisjointSet<T> other) {
+		@Override
+		public boolean equals(final Object set) {
 			// TODO: Did you possibly want to override equals here? You did not, and I made that explicit by renaming
 			// this method to equalsTo
-			if (other == null) {
+			if (!(set instanceof DisjointSet)) {
 				return false;
 			}
+			final DisjointSet<T> other = (DisjointSet<T>) set;
 			if (!other.mRepr.keySet().equals(mRepr.keySet())) {
 				// Not same elements
 				return false;
