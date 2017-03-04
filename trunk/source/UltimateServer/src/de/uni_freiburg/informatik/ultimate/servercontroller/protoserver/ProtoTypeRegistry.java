@@ -9,7 +9,6 @@ import com.google.protobuf.GeneratedMessageV3;
 import de.uni_freiburg.informatik.ultimate.interactive.IRegisteredType;
 import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
 
-
 public class ProtoTypeRegistry implements ITypeRegistry<GeneratedMessageV3> {
 	final protected Map<String, RegisteredProtoType<?>> mByName = new HashMap<>();
 	final protected Map<Class<?>, RegisteredProtoType<?>> mByClass = new HashMap<>();
@@ -24,7 +23,7 @@ public class ProtoTypeRegistry implements ITypeRegistry<GeneratedMessageV3> {
 	}
 
 	@SuppressWarnings("unchecked")
-	public final <T extends GeneratedMessageV3>  IRegisteredType<T> get(final String typeName) {
+	public final <T extends GeneratedMessageV3> IRegisteredType<T> get(final String typeName) {
 		return (RegisteredProtoType<T>) mByName.get(typeName);
 	}
 
