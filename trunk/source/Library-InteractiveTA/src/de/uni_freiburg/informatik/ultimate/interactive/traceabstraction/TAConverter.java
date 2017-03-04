@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.Converter;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.ConverterRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos;
@@ -41,9 +42,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive.ParrotInteractiveIterationInfo;
 
 public class TAConverter extends Converter<GeneratedMessageV3, Object> {
-
-	public TAConverter(IToolchainStorage storage) {
-		super(Object.class, storage);
+	public TAConverter() {
+		super(Object.class);
 	}
 
 	@Override

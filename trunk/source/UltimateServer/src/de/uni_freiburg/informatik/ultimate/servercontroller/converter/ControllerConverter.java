@@ -2,14 +2,11 @@ package de.uni_freiburg.informatik.ultimate.servercontroller.converter;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 import com.google.protobuf.GeneratedMessageV3;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultSummarizer;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.Converter;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.ConverterRegistry;
 import de.uni_freiburg.informatik.ultimate.servercontroller.ServerController.ResultsWrapper;
@@ -22,11 +19,11 @@ import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.
 
 public class ControllerConverter extends Converter<GeneratedMessageV3, Object> {
 	public static ControllerConverter get() {
-		return new ControllerConverter(null);
+		return new ControllerConverter();
 	}
 
-	protected ControllerConverter(IToolchainStorage storage) {
-		super(Object.class, storage);
+	protected ControllerConverter() {
+		super(Object.class);
 	}
 
 	private static Controller.StackTraceElement convertStackTraceElement(StackTraceElement el) {

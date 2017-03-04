@@ -63,6 +63,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
+import de.uni_freiburg.informatik.ultimate.interactive.conversion.Converter;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientCrazyException;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.TAConverter;
 import de.uni_freiburg.informatik.ultimate.server.Client;
@@ -88,6 +89,8 @@ public class ServerController implements IController<RunDefinition> {
 
 	private IInteractive<Object> mInternalInterface;
 	private IInteractive<GeneratedMessageV3> mProtoInterface;
+
+	private Converter.Initializer<GeneratedMessageV3> mConverterInitializer;
 
 	@Override
 	public int init(final ICore<RunDefinition> core) {
@@ -163,9 +166,10 @@ public class ServerController implements IController<RunDefinition> {
 		final Client<GeneratedMessageV3> client = mServer.waitForConnection();
 		mProtoInterface = client.createInteractiveInterface();
 
+		mConverterInitializer = new Converter.Initializer<>(mProtoInterface, mServer.getTypeRegistry());
+
 		ControllerConverter converter = ControllerConverter.get();
-		converter.initInterface(mProtoInterface, mServer.getTypeRegistry());
-		mInternalInterface = converter.getInterface();
+		mInternalInterface = mConverterInitializer.getConvertedInteractiveInterface(converter);
 
 		// If we wanted files directly - but thats not supported by Ultimate Core.
 		// mServer.getTypeRegistry().register(Controller.File.class);
@@ -350,7 +354,11 @@ public class ServerController implements IController<RunDefinition> {
 	public void prerun(IToolchainData<RunDefinition> tcData) {
 		final IToolchainStorage storage = mToolchain.getStorage();
 
-		TAConverter taConverter = new TAConverter(storage);
-		taConverter.initInterface(mProtoInterface, mServer.getTypeRegistry());
+		// mProtoInterface.store(storage, GeneratedMessageV3.class); - not needed
+
+		// mConverterInitializer.store(GeneratedMessageV3.class, storage);
+
+		TAConverter taConverter = new TAConverter();
+		mConverterInitializer.getConvertedInteractiveInterface(taConverter).store(storage, Object.class);
 	}
 }

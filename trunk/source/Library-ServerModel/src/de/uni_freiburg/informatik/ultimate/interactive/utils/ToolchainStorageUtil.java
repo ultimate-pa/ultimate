@@ -3,7 +3,7 @@ package de.uni_freiburg.informatik.ultimate.interactive.utils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 
-public class ToolchainUtil {
+public class ToolchainStorageUtil {
 	private static final String STORAGE_IDENTIFIER_PREFIX = IInteractive.class.getName();
 
 	private static <M> String getStorageIdentifier(final Class<M> bound) {
