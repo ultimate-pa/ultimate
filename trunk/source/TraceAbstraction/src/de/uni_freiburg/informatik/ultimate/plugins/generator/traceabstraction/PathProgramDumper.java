@@ -32,14 +32,17 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
@@ -48,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
@@ -58,6 +62,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IActi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
@@ -146,9 +153,11 @@ public class PathProgramDumper {
 			final BoogieIcfgContainer boogieIcfg, final Set<IcfgLocation> errorLocs) {
 		final Procedure impl = boogieIcfg.getBoogieDeclarations().getProcImplementation().get(proc);
 		final Body body = impl.getBody();
-		final VariableDeclaration[] localVars = body.getLocalVars();
-		final List<Statement> newStatements = constructProcedureStatements(entryLoc, errorLocs);
+		
+		final Triple<List<Statement>, Set<IProgramVar>, Set<IProgramVar>> varsAndNewSt = constructProcedureStatements(entryLoc, errorLocs);
+		final List<Statement> newStatements = varsAndNewSt.getFirst();
 
+		final VariableDeclaration[] localVars = filter(body.getLocalVars(), extractIdentifiers(varsAndNewSt.getSecond()));
 		final Body newBody = new Body(constructNewLocation(), localVars,
 				newStatements.toArray(new Statement[newStatements.size()]));
 		final Procedure result = new Procedure(constructNewLocation(), impl.getAttributes(), impl.getIdentifier(),
@@ -156,20 +165,68 @@ public class PathProgramDumper {
 		return result;
 	}
 
-	private List<Statement> constructProcedureStatements(final IcfgLocation initialNode,
-			final Set<IcfgLocation> errorLocs) {
+	private Set<String> extractIdentifiers(final Set<IProgramVar> vars) {
+		final Set<String> result = new HashSet<>();
+		for (final IProgramVar var : vars) {
+			if (var instanceof IProgramOldVar) {
+				result.add(((IProgramOldVar) var).getIdentifierOfNonOldVar());
+			} else if (var instanceof IProgramNonOldVar) {
+				result.add(((IProgramNonOldVar) var).getIdentifier());
+			} else if (var instanceof ILocalProgramVar) {
+				result.add(((ILocalProgramVar) var).getIdentifier());
+			} else {
+				throw new IllegalArgumentException("unknown type of var " + var);
+			}
+		}
+		return result;
+	}
+
+	private VariableDeclaration[] filter(final VariableDeclaration[] localVars, final Set<String> vars) {
+		final List<VariableDeclaration> result = new ArrayList<>();
+		for (final VariableDeclaration varDecl : localVars) {
+			final VariableDeclaration newDecl = filter(varDecl, vars);
+			if (newDecl != null) {
+				result.add(newDecl);
+			}
+		}
+		return result.toArray(new VariableDeclaration[result.size()]);
+	}
+
+	private VariableDeclaration filter(final VariableDeclaration varDecl, final Set<String> vars) {
+		final List<VarList> resultVarLists = new ArrayList<>();
+		for (final VarList varList : varDecl.getVariables()) {
+			final String[] newIdentifiers = filter(varList.getIdentifiers(), vars);
+			if (newIdentifiers.length > 0) {
+				resultVarLists.add(new VarList(varList.getLocation(), newIdentifiers, varList.getType()));
+			}
+		}
+		if (resultVarLists.isEmpty()) {
+			return null;
+		} else {
+			return new VariableDeclaration(varDecl.getLocation(), new Attribute[0],
+					resultVarLists.toArray(new VarList[resultVarLists.size()]));
+		}
+	}
+
+	private String[] filter(final String[] identifiers, final Set<String> vars) {
+		final Predicate<? super String> pred = (x -> vars.contains(x));
+		return Arrays.stream(identifiers).filter(pred).toArray(size -> new String[size]);
+	}
+
+	private Triple<List<Statement>, Set<IProgramVar>, Set<IProgramVar>> constructProcedureStatements(
+			final IcfgLocation initialNode, final Set<IcfgLocation> errorLocs) {
 		final ArrayDeque<IcfgLocation> worklist = new ArrayDeque<>();
 		final Set<IcfgLocation> added = new HashSet<>();
 		worklist.add(initialNode);
 		added.add(initialNode);
-		final List<Statement> result = new ArrayList<>();
-		// currently unused, might be used after refactoring
-		final Set<IProgramVar> vars = new HashSet<>();
+		final List<Statement> newStatements = new ArrayList<>();
+		final Set<IProgramVar> localVars = new HashSet<>();
+		final Set<IProgramVar> globalVars = new HashSet<>();
 		while (!worklist.isEmpty()) {
 			final IcfgLocation node = worklist.remove();
-			result.add(constructLabel(node));
+			newStatements.add(constructLabel(node));
 			if (errorLocs.contains(node)) {
-				result.add(
+				newStatements.add(
 						new AssertStatement(constructNewLocation(), new BooleanLiteral(constructNewLocation(), false)));
 				assert node.getOutgoingEdges().isEmpty() : "error loc with outgoing transitions";
 			}
@@ -177,7 +234,7 @@ public class PathProgramDumper {
 				// do nothing, no successor
 			} else if (node.getOutgoingEdges().size() == 1) {
 				final IcfgEdge edge = node.getOutgoingEdges().get(0);
-				processTransition(worklist, added, result, vars, edge);
+				processTransition(worklist, added, newStatements, localVars, globalVars, edge);
 			} else {
 				final String[] transitionStartLabels = new String[node.getOutgoingEdges().size()];
 				for (int i = 0; i < node.getOutgoingEdges().size(); i++) {
@@ -185,24 +242,24 @@ public class PathProgramDumper {
 					transitionStartLabels[i] = transitionStartLabel;
 				}
 				if (!node.getOutgoingEdges().isEmpty()) {
-					result.add(new GotoStatement(constructNewLocation(), transitionStartLabels));
+					newStatements.add(new GotoStatement(constructNewLocation(), transitionStartLabels));
 				}
 				for (int i = 0; i < node.getOutgoingEdges().size(); i++) {
 					final IcfgEdge edge = node.getOutgoingEdges().get(i);
-					result.add(constructLabel(node, i));
-					processTransition(worklist, added, result, vars, edge);
+					newStatements.add(constructLabel(node, i));
+					processTransition(worklist, added, newStatements, localVars, globalVars, edge);
 				}
 			}
 		}
-		return result;
+		return new Triple<>(newStatements, localVars, globalVars);
 	}
 
-	private void processTransition(final ArrayDeque<IcfgLocation> worklist,
-			final Set<IcfgLocation> added, final List<Statement> result, final Set<IProgramVar> vars,
+	private void processTransition(final ArrayDeque<IcfgLocation> worklist, final Set<IcfgLocation> added,
+			final List<Statement> result, final Set<IProgramVar> localvars, final Set<IProgramVar> globalVars,
 			final IcfgEdge edge) {
 		final Triple<List<Statement>, Set<IProgramVar>, IcfgLocation> transResult = constructTransitionStatements(edge);
 		result.addAll(transResult.getFirst());
-		vars.addAll(transResult.getSecond());
+		localvars.addAll(transResult.getSecond());
 		if (!added.contains(transResult.getThird())) {
 			worklist.add(transResult.getThird());
 			added.add(transResult.getThird());
@@ -227,24 +284,43 @@ public class PathProgramDumper {
 
 	private Triple<List<Statement>, Set<IProgramVar>, IcfgLocation> constructTransitionStatements(IcfgEdge edge) {
 		final List<Statement> statements = new ArrayList<>();
-		final Set<IProgramVar> vars = new HashSet<>();
-		addStatementsAndVariables(edge, statements, vars);
+		final Set<IProgramVar> localVars = new HashSet<>();
+		final Set<IProgramVar> globalVars = new HashSet<>();
+		addStatementsAndVariables(edge, statements, localVars, globalVars);
 		while (isBridgingLocation(edge.getTarget())) {
 			edge = edge.getTarget().getOutgoingEdges().get(0);
-			addStatementsAndVariables(edge, statements, vars);
+			addStatementsAndVariables(edge, statements, localVars, globalVars);
 		}
 		final String targetLabel = constructLabelId(edge.getTarget());
 		statements.add(new GotoStatement(constructNewLocation(), new String[] { targetLabel }));
-		return new Triple<>(statements, vars, edge.getTarget());
+		return new Triple<>(statements, localVars, edge.getTarget());
 	}
 
 	private void addStatementsAndVariables(final IcfgEdge edge, final List<Statement> statements,
-			final Set<IProgramVar> vars) {
+			final Set<IProgramVar> localVars, final Set<IProgramVar> globalVars) {
 		final StatementSequence stseq = (StatementSequence) edge.getLabel();
-		vars.addAll(stseq.getTransformula().getInVars().keySet());
-		vars.addAll(stseq.getTransformula().getOutVars().keySet());
+		addVars(stseq.getTransformula().getInVars().keySet(), localVars, globalVars);
+		addVars(stseq.getTransformula().getOutVars().keySet(), localVars, globalVars);
 		for (final Statement st : stseq.getStatements()) {
 			statements.add(st);
+		}
+	}
+
+	/**
+	 * Given a set of {@link IProgramVar}, sort them into localVars and globalVars.
+	 */
+	private void addVars(final Set<IProgramVar> vars, final Set<IProgramVar> localVars,
+			final Set<IProgramVar> globalVars) {
+		for (final IProgramVar var : vars) {
+			if (var instanceof IProgramOldVar) {
+				globalVars.add(var);
+			} else if (var instanceof IProgramNonOldVar) {
+				globalVars.add(var);
+			} else if (var instanceof ILocalProgramVar) {
+				localVars.add(var);
+			} else {
+				throw new IllegalArgumentException("unknown type of var " + var);
+			}
 		}
 	}
 	
