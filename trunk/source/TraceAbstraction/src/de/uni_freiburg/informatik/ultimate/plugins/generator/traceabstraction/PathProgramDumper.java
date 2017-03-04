@@ -48,11 +48,14 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -71,6 +74,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Quad;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -84,8 +89,7 @@ public class PathProgramDumper {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
-	ConstructionCache.IValueConstruction<IcfgLocation, String> mLoc2LabelVC = 
-			new ConstructionCache.IValueConstruction<IcfgLocation, String>() {
+	ConstructionCache.IValueConstruction<IcfgLocation, String> mLoc2LabelVC = new ConstructionCache.IValueConstruction<IcfgLocation, String>() {
 
 		int mCounter = 0;
 
@@ -114,10 +118,12 @@ public class PathProgramDumper {
 
 		final BoogieIcfgContainer boogieIcfg = (BoogieIcfgContainer) icfg;
 		final List<Declaration> newDeclarations = new ArrayList<>();
+		final Set<IProgramVar> globalVars = new HashSet<>();
 		for (final Entry<String, IcfgLocation> entry : pathProgram.getProcedureEntryNodes().entrySet()) {
-			final Procedure newImpl = constructNewImplementation(entry.getKey(), entry.getValue(), boogieIcfg,
-					pathProgram.getProcedureErrorNodes().get(entry.getKey()));
-			newDeclarations.add(newImpl);
+			final Pair<Procedure, Set<IProgramVar>> newImplAndGlobalVars = constructNewImplementation(entry.getKey(),
+					entry.getValue(), boogieIcfg, pathProgram.getProcedureErrorNodes().get(entry.getKey()));
+			newDeclarations.add(newImplAndGlobalVars.getFirst());
+			globalVars.addAll(newImplAndGlobalVars.getSecond());
 
 			final Procedure spec = boogieIcfg.getBoogieDeclarations().getProcSpecification().get(entry.getKey());
 			final Procedure impl = boogieIcfg.getBoogieDeclarations().getProcImplementation().get(entry.getKey());
@@ -126,11 +132,13 @@ public class PathProgramDumper {
 			}
 
 		}
-		newDeclarations.addAll(boogieIcfg.getBoogieDeclarations().getAxioms());
-		newDeclarations.addAll(boogieIcfg.getBoogieDeclarations().getConstDeclarations());
-		newDeclarations.addAll(boogieIcfg.getBoogieDeclarations().getFunctionDeclarations());
-		newDeclarations.addAll(boogieIcfg.getBoogieDeclarations().getGlobalVarDeclarations());
-		newDeclarations.addAll(boogieIcfg.getBoogieDeclarations().getTypeDeclarations());
+
+		newDeclarations.addAll(0, Arrays.asList(
+				filter(boogieIcfg.getBoogieDeclarations().getGlobalVarDeclarations(), extractIdentifiers(globalVars))));
+		newDeclarations.addAll(0, boogieIcfg.getBoogieDeclarations().getFunctionDeclarations());
+		newDeclarations.addAll(0, boogieIcfg.getBoogieDeclarations().getAxioms());
+		newDeclarations.addAll(0, boogieIcfg.getBoogieDeclarations().getConstDeclarations());
+		newDeclarations.addAll(0, boogieIcfg.getBoogieDeclarations().getTypeDeclarations());
 		final Unit unit = new Unit(constructNewLocation(),
 				newDeclarations.toArray(new Declaration[newDeclarations.size()]));
 
@@ -149,20 +157,48 @@ public class PathProgramDumper {
 
 	}
 
-	private Procedure constructNewImplementation(final String proc, final IcfgLocation entryLoc,
+	private Pair<Procedure, Set<IProgramVar>> constructNewImplementation(final String proc, final IcfgLocation entryLoc,
 			final BoogieIcfgContainer boogieIcfg, final Set<IcfgLocation> errorLocs) {
 		final Procedure impl = boogieIcfg.getBoogieDeclarations().getProcImplementation().get(proc);
 		final Body body = impl.getBody();
-		
-		final Triple<List<Statement>, Set<IProgramVar>, Set<IProgramVar>> varsAndNewSt = constructProcedureStatements(entryLoc, errorLocs);
+
+		final Triple<List<Statement>, Set<IProgramVar>, Set<IProgramVar>> varsAndNewSt = constructProcedureStatements(
+				entryLoc, errorLocs);
 		final List<Statement> newStatements = varsAndNewSt.getFirst();
 
-		final VariableDeclaration[] localVars = filter(body.getLocalVars(), extractIdentifiers(varsAndNewSt.getSecond()));
+		final VariableDeclaration[] localVars = filter(Arrays.asList(body.getLocalVars()),
+				extractIdentifiers(varsAndNewSt.getSecond()));
 		final Body newBody = new Body(constructNewLocation(), localVars,
 				newStatements.toArray(new Statement[newStatements.size()]));
-		final Procedure result = new Procedure(constructNewLocation(), impl.getAttributes(), impl.getIdentifier(),
-				impl.getTypeParams(), impl.getInParams(), impl.getOutParams(), impl.getSpecification(), newBody);
-		return result;
+		final Procedure newProc = new Procedure(constructNewLocation(), impl.getAttributes(), impl.getIdentifier(),
+				impl.getTypeParams(), impl.getInParams(), impl.getOutParams(),
+				filterModifiesSpecifications(impl.getSpecification(), extractIdentifiers(varsAndNewSt.getThird())),
+				newBody);
+		return new Pair<>(newProc, varsAndNewSt.getThird());
+	}
+
+	private Specification[] filterModifiesSpecifications(final Specification[] specification,
+			final Set<String> globalVars) {
+		final List<Specification> result = new ArrayList<>();
+		for (final Specification spec : specification) {
+			if (spec instanceof ModifiesSpecification) {
+				result.add(filter((ModifiesSpecification) spec, globalVars));
+			} else {
+				result.add(spec);
+			}
+		}
+		return result.toArray(new Specification[result.size()]);
+	}
+
+	private ModifiesSpecification filter(final ModifiesSpecification modSpec, final Set<String> globalVars) {
+		final List<VariableLHS> filteredIdentifiers = new ArrayList<>();
+		for (final VariableLHS varLhs : modSpec.getIdentifiers()) {
+			if (globalVars.contains(varLhs.getIdentifier())) {
+				filteredIdentifiers.add(varLhs);
+			}
+		}
+		return new ModifiesSpecification(modSpec.getLocation(), modSpec.isFree(),
+				filteredIdentifiers.toArray(new VariableLHS[filteredIdentifiers.size()]));
 	}
 
 	private Set<String> extractIdentifiers(final Set<IProgramVar> vars) {
@@ -181,7 +217,7 @@ public class PathProgramDumper {
 		return result;
 	}
 
-	private VariableDeclaration[] filter(final VariableDeclaration[] localVars, final Set<String> vars) {
+	private VariableDeclaration[] filter(final List<VariableDeclaration> localVars, final Set<String> vars) {
 		final List<VariableDeclaration> result = new ArrayList<>();
 		for (final VariableDeclaration varDecl : localVars) {
 			final VariableDeclaration newDecl = filter(varDecl, vars);
@@ -257,12 +293,14 @@ public class PathProgramDumper {
 	private void processTransition(final ArrayDeque<IcfgLocation> worklist, final Set<IcfgLocation> added,
 			final List<Statement> result, final Set<IProgramVar> localvars, final Set<IProgramVar> globalVars,
 			final IcfgEdge edge) {
-		final Triple<List<Statement>, Set<IProgramVar>, IcfgLocation> transResult = constructTransitionStatements(edge);
+		final Quad<List<Statement>, Set<IProgramVar>, Set<IProgramVar>, IcfgLocation> transResult = constructTransitionStatements(
+				edge);
 		result.addAll(transResult.getFirst());
 		localvars.addAll(transResult.getSecond());
-		if (!added.contains(transResult.getThird())) {
-			worklist.add(transResult.getThird());
-			added.add(transResult.getThird());
+		globalVars.addAll(transResult.getThird());
+		if (!added.contains(transResult.getFourth())) {
+			worklist.add(transResult.getFourth());
+			added.add(transResult.getFourth());
 		}
 	}
 
@@ -282,7 +320,8 @@ public class PathProgramDumper {
 		return new Label(constructNewLocation(), constructLabelId(node, i));
 	}
 
-	private Triple<List<Statement>, Set<IProgramVar>, IcfgLocation> constructTransitionStatements(IcfgEdge edge) {
+	private Quad<List<Statement>, Set<IProgramVar>, Set<IProgramVar>, IcfgLocation> constructTransitionStatements(
+			IcfgEdge edge) {
 		final List<Statement> statements = new ArrayList<>();
 		final Set<IProgramVar> localVars = new HashSet<>();
 		final Set<IProgramVar> globalVars = new HashSet<>();
@@ -293,7 +332,7 @@ public class PathProgramDumper {
 		}
 		final String targetLabel = constructLabelId(edge.getTarget());
 		statements.add(new GotoStatement(constructNewLocation(), new String[] { targetLabel }));
-		return new Triple<>(statements, localVars, edge.getTarget());
+		return new Quad<>(statements, localVars, globalVars, edge.getTarget());
 	}
 
 	private void addStatementsAndVariables(final IcfgEdge edge, final List<Statement> statements,
@@ -307,14 +346,13 @@ public class PathProgramDumper {
 	}
 
 	/**
-	 * Given a set of {@link IProgramVar}, sort them into localVars and globalVars.
+	 * Given a set of {@link IProgramVar}, sort them into localVars and
+	 * globalVars.
 	 */
 	private void addVars(final Set<IProgramVar> vars, final Set<IProgramVar> localVars,
 			final Set<IProgramVar> globalVars) {
 		for (final IProgramVar var : vars) {
-			if (var instanceof IProgramOldVar) {
-				globalVars.add(var);
-			} else if (var instanceof IProgramNonOldVar) {
+			if ((var instanceof IProgramOldVar) || (var instanceof IProgramNonOldVar)) {
 				globalVars.add(var);
 			} else if (var instanceof ILocalProgramVar) {
 				localVars.add(var);
@@ -323,9 +361,10 @@ public class PathProgramDumper {
 			}
 		}
 	}
-	
+
 	/**
-	 * @return true iff location has exactly one outgoing edge and one incoming edge
+	 * @return true iff location has exactly one outgoing edge and one incoming
+	 *         edge
 	 */
 	private boolean isBridgingLocation(final IcfgLocation loc) {
 		return loc.getIncomingEdges().size() == 1 && loc.getOutgoingEdges().size() == 1;
