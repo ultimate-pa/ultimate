@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE JUnit Helper Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE JUnit Helper Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE JUnit Helper Library grant you additional permission
  * to convey the resulting work.
  */
 
@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory;
 
 import static org.junit.Assert.fail;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -36,9 +37,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.AfterClass;
+import org.junit.internal.runners.statements.RunAfters;
 import org.junit.runners.BlockJUnit4ClassRunner;
 import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
+import org.junit.runners.model.Statement;
 import org.junit.runners.model.TestClass;
 
 /**
@@ -56,22 +60,30 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 	private List<FrameworkMethod> mTests;
 	private final String mTestSuiteName;
 
-	public FactoryTestRunner(Class<?> claaas) throws InitializationError {
+	private Object mTestSuiteInstance;
+
+	public FactoryTestRunner(final Class<?> claaas) throws InitializationError {
 		super(claaas);
 		mTestSuiteName = claaas.getSimpleName();
 	}
 
 	protected Collection<? extends FrameworkMethod> generateFactoryTests() {
-		final List<FrameworkFactoryTest> tests = new ArrayList<FrameworkFactoryTest>();
+		final List<FrameworkFactoryTest> tests = new ArrayList<>();
 		final TestClass classUnderTest = getTestClass();
 
 		// create an instance of the current class
-		Object currentInstance = null;
-		try {
-			currentInstance = classUnderTest.getOnlyConstructor().newInstance();
-		} catch (final Throwable e1) {
-			e1.printStackTrace();
-			return tests;
+		final Object currentInstance;
+		if (mTestSuiteInstance == null) {
+			try {
+				currentInstance = classUnderTest.getOnlyConstructor().newInstance();
+
+			} catch (final Throwable e1) {
+				e1.printStackTrace();
+				return tests;
+			}
+			mTestSuiteInstance = currentInstance;
+		} else {
+			currentInstance = mTestSuiteInstance;
 		}
 
 		// Find all methods in the current class marked with @TestFactory.
@@ -126,7 +138,7 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 	@Override
 	protected List<FrameworkMethod> computeTestMethods() {
 		if (mTests == null) {
-			mTests = new ArrayList<FrameworkMethod>();
+			mTests = new ArrayList<>();
 		}
 		if (mTests.isEmpty()) {
 			// generateFactoryTests collects all tests from invoking methods
@@ -156,8 +168,27 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 	}
 
 	@Override
+	protected Object createTest() throws Exception {
+		return mTestSuiteInstance;
+	}
+
+	@Override
 	protected String getName() {
 		return mTestSuiteName;
+	}
+
+	@Override
+	protected void validatePublicVoidNoArgMethods(final Class<? extends Annotation> arg0, final boolean arg1,
+			final List<Throwable> arg2) {
+		return;
+	}
+
+	@SuppressWarnings("restriction")
+	@Override
+	protected Statement withAfterClasses(final Statement statement) {
+		// enabling non-static after class methods
+		final List<FrameworkMethod> afters = getTestClass().getAnnotatedMethods(AfterClass.class);
+		return afters.isEmpty() ? statement : new RunAfters(statement, afters, mTestSuiteInstance);
 	}
 
 	public class FailingTest {
