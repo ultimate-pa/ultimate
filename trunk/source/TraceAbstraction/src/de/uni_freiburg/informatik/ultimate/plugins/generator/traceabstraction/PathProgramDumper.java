@@ -170,10 +170,15 @@ public class PathProgramDumper {
 				extractIdentifiers(varsAndNewSt.getSecond()));
 		final Body newBody = new Body(constructNewLocation(), localVars,
 				newStatements.toArray(new Statement[newStatements.size()]));
+		Specification[] newSpecifications;
+		if (impl.getSpecification() == null) {
+			newSpecifications = null;
+		} else {
+			newSpecifications = filterModifiesSpecifications(impl.getSpecification(),
+					extractIdentifiers(varsAndNewSt.getThird()));
+		}
 		final Procedure newProc = new Procedure(constructNewLocation(), impl.getAttributes(), impl.getIdentifier(),
-				impl.getTypeParams(), impl.getInParams(), impl.getOutParams(),
-				filterModifiesSpecifications(impl.getSpecification(), extractIdentifiers(varsAndNewSt.getThird())),
-				newBody);
+				impl.getTypeParams(), impl.getInParams(), impl.getOutParams(), newSpecifications, newBody);
 		return new Pair<>(newProc, varsAndNewSt.getThird());
 	}
 
