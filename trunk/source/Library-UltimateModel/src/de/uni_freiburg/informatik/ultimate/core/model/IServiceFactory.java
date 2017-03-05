@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.core.model;
@@ -29,9 +29,14 @@ package de.uni_freiburg.informatik.ultimate.core.model;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ * @param <T>
+ */
 public interface IServiceFactory<T> extends IUltimatePlugin {
 
-	T createInstance(IUltimateServiceProvider services,
-			IToolchainStorage storage);
+	T createInstance(IUltimateServiceProvider services, IToolchainStorage storage);
 
 }
