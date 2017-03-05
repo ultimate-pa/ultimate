@@ -125,6 +125,7 @@ public class UltimateStarter implements IController<RunDefinition> {
 			final IToolchainData<RunDefinition> tc =
 					mCurrentCore.createToolchainData(mUltimateRunDefinition.getToolchain().getAbsolutePath());
 			mCurrentSerivces = tc.getServices();
+			assert mCurrentSerivces != null : "Did not receive IUltimateServiceProvider instance";
 			mLogger.info("Loaded toolchain from " + mUltimateRunDefinition.getToolchain().getAbsolutePath());
 			return tc;
 		} catch (FileNotFoundException | JAXBException | SAXException e) {
