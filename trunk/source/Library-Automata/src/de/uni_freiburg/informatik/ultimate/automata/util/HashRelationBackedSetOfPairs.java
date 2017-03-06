@@ -49,6 +49,11 @@ public class HashRelationBackedSetOfPairs<E> implements ISetOfPairs<E, HashRelat
 		mRelation = new HashRelation<>();
 	}
 
+	/**
+	 * Note: Two calls to this method result in different {@link Pair} objects.
+	 * <p>
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Iterator<Pair<E, E>> iterator() {
 		return new IteratorFromHashRelation<>(mRelation);

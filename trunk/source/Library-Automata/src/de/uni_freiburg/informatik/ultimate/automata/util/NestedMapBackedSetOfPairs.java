@@ -48,6 +48,11 @@ public class NestedMapBackedSetOfPairs<E> implements ISetOfPairs<E, NestedMap2<E
 		mRelation = new NestedMap2<>();
 	}
 
+	/**
+	 * Note: Two calls to this method result in the same {@link Pair} objects.
+	 * <p>
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Iterator<Pair<E, E>> iterator() {
 		return mRelation.keys2().iterator();

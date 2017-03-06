@@ -60,6 +60,11 @@ public class UnionFindBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 		mUnionFind = new UnionFind<>();
 	}
 
+	/**
+	 * Note: Two calls to this method result in different {@link Pair} objects.
+	 * <p>
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Iterator<Pair<E, E>> iterator() {
 		if (mPartition == null) {

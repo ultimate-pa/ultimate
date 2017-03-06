@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * Map implementation of a set of pairs.
  * <p>
  * The {@link #iterator()} method creates the {@link Pair} objects on-demand and does not store them. Accordingly, two
- * iterations would result in different {@link Pair} objects, which is why the method can be called only once.
+ * iterations would result in different {@link Pair} objects.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -47,7 +47,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public class MapBackedSetOfPairs<E> implements ISetOfPairs<E, Map<E, Set<E>>> {
 	private final Map<E, Set<E>> mMap;
-	private boolean mHasReturnedIteratorOnce;
 
 	/**
 	 * @param map
@@ -55,7 +54,6 @@ public class MapBackedSetOfPairs<E> implements ISetOfPairs<E, Map<E, Set<E>>> {
 	 */
 	public MapBackedSetOfPairs(final Map<E, Set<E>> map) {
 		mMap = map;
-		mHasReturnedIteratorOnce = false;
 	}
 
 	@Override
@@ -77,12 +75,13 @@ public class MapBackedSetOfPairs<E> implements ISetOfPairs<E, Map<E, Set<E>>> {
 		return mMap;
 	}
 
+	/**
+	 * Note: Two calls to this method result in different {@link Pair} objects.
+	 * <p>
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Iterator<Pair<E, E>> iterator() {
-		if (mHasReturnedIteratorOnce) {
-			throw new UnsupportedOperationException("The iterator can be used only once.");
-		}
-		mHasReturnedIteratorOnce = true;
 		final Map<E, Set<E>> map = mMap;
 		return new Iterator<Pair<E, E>>() {
 			private final MapToCollectionIterator<E, E, Set<E>> mIt = new MapToCollectionIterator<>(map);

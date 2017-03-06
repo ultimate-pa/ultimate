@@ -55,6 +55,11 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 		mPartition = partition;
 	}
 
+	/**
+	 * Note: Two calls to this method result in different {@link Pair} objects.
+	 * <p>
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Iterator<Pair<E, E>> iterator() {
 		final Iterator<Set<E>> iterator = mPartition.iterator();
