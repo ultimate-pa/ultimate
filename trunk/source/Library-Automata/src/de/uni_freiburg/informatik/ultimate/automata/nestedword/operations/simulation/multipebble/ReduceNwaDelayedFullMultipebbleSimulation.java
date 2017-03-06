@@ -62,8 +62,8 @@ public class ReduceNwaDelayedFullMultipebbleSimulation<LETTER, STATE>
 
 	@Override
 	protected FullMultipebbleStateFactory<STATE, DelayedFullMultipebbleGameState<STATE>>
-			constructGameFactory(final ISetOfPairs<STATE, ?> initialPartition) {
-		return new DelayedFullMultipebbleStateFactory<>(initialPartition);
+			constructGameFactory(final ISetOfPairs<STATE, ?> initialPairs) {
+		return new DelayedFullMultipebbleStateFactory<>(initialPairs);
 	}
 
 	@Override

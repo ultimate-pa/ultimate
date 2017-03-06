@@ -80,7 +80,7 @@ public class DirectFullMultipebbleStateFactory<STATE>
 					return null;
 				}
 				if ((!spoilerSuccIsFinal || nwa.isFinal(duplicatorSucc.getUp()))
-						&& isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
+						&& isInitialPair(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
 					duplicatorSuccStates.addPair(duplicatorSucc.getDown(), duplicatorSucc.getUp());
 				}
 			}
@@ -106,7 +106,7 @@ public class DirectFullMultipebbleStateFactory<STATE>
 					return null;
 				}
 				if ((!spoilerSuccIsFinal || nwa.isFinal(duplicatorSucc.getUp()))
-						&& isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
+						&& isInitialPair(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
 					duplicatorSuccStates.addPair(duplicatorSucc.getDown(), duplicatorSucc.getUp());
 				}
 			}
@@ -135,7 +135,7 @@ public class DirectFullMultipebbleStateFactory<STATE>
 						return null;
 					}
 					if ((!spoilerSuccIsFinal || nwa.isFinal(duplicatorSucc.getUp()))
-							&& isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
+							&& isInitialPair(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
 						duplicatorSuccStates.addPair(duplicatorSucc.getDown(), duplicatorSucc.getUp());
 					}
 				}

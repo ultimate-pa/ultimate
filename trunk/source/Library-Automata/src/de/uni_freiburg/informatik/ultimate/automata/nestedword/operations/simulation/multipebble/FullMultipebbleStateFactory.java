@@ -49,16 +49,16 @@ public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipeb
 
 	private int mMaxNumberOfDoubleDeckerPebbles = 0;
 
-	private final ISetOfPairs<STATE, ?> mInitialPartition;
+	private final ISetOfPairs<STATE, ?> mInitialPairs;
 
-	public FullMultipebbleStateFactory(final ISetOfPairs<STATE, ?> initialPartition) {
+	public FullMultipebbleStateFactory(final ISetOfPairs<STATE, ?> initialPairs) {
 		super();
-		mInitialPartition = initialPartition;
+		mInitialPairs = initialPairs;
 		mSpoilerWinningSink = constructSpoilerWinningSink();
 	}
 
-	protected boolean isInInitialPartition(final STATE spoilerState, final STATE duplicatorState) {
-		return mInitialPartition.containsPair(spoilerState, duplicatorState);
+	protected boolean isInitialPair(final STATE spoilerState, final STATE duplicatorState) {
+		return mInitialPairs.containsPair(spoilerState, duplicatorState);
 	}
 
 	protected abstract <LETTER> GS constructSpoilerWinningSink();

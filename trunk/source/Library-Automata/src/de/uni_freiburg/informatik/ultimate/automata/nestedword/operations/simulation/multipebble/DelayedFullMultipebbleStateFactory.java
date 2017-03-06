@@ -47,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public class DelayedFullMultipebbleStateFactory<STATE>
 		extends FullMultipebbleStateFactory<STATE, DelayedFullMultipebbleGameState<STATE>> {
 
-	public DelayedFullMultipebbleStateFactory(final ISetOfPairs<STATE, ?> initialPartition) {
-		super(initialPartition);
+	public DelayedFullMultipebbleStateFactory(final ISetOfPairs<STATE, ?> initialPairs) {
+		super(initialPairs);
 	}
 
 	@Override
@@ -83,12 +83,11 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 					// duplicator succs contains spoiler succ, hence spoiler cannot win
 					return null;
 				}
-				if (isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
+				if (isInitialPair(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
 					duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(),
 							succDuplicatorObligationBit);
 				} else {
-					// do nothing
-					// pairs that are not in the initial partition cannot help Duplicator
+					// do nothing (non-initial pairs cannot help Duplicator)
 				}
 			}
 		}
@@ -115,12 +114,11 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 					// duplicator succs contains spoiler succ, hence spoiler cannot win
 					return null;
 				}
-				if (isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
+				if (isInitialPair(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
 					duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(),
 							succDuplicatorObligationBit);
 				} else {
-					// do nothing
-					// pairs that are not in the initial partition cannot help Duplicator
+					// do nothing (non-initial pairs cannot help Duplicator)
 				}
 			}
 		}
@@ -156,12 +154,11 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 								duplicatorSucc.getUp()) == Boolean.FALSE) {
 							// do nothing, DoubleDecker without obligation already contained
 						} else {
-							if (isInInitialPartition(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
+							if (isInitialPair(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
 								duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(),
 										succDuplicatorObligationBit);
 							} else {
-								// do nothing
-								// pairs that are not in the initial partition cannot help Duplicator
+								// do nothing (non-initial pairs cannot help Duplicator)
 							}
 						}
 					}
