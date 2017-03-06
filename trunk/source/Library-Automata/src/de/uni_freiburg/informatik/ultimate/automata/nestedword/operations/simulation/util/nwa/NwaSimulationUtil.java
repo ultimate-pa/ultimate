@@ -26,7 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa;
 
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
 import java.util.Set;
@@ -392,5 +394,36 @@ public final class NwaSimulationUtil {
 				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.CALL) * 1_000_000));
 		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_RETURN_DENSITY_MILLION,
 				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.RETURN) * 1_000_000));
+	}
+
+	/**
+	 * Predicate representing a binary relation that is backed by a partition.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 * @param <STATE>
+	 *            state type
+	 */
+	public static class BinaryRelationPredicateFromPartition<STATE> implements BiPredicate<STATE, STATE> {
+		private final Map<STATE, Set<STATE>> mState2states;
+
+		/**
+		 * @param partition
+		 *            Partition.
+		 */
+		public BinaryRelationPredicateFromPartition(final Iterable<Set<STATE>> partition) {
+			mState2states = new HashMap<>();
+			for (final Set<STATE> block : partition) {
+				for (final STATE state : block) {
+					mState2states.put(state, block);
+				}
+			}
+		}
+
+		@SuppressWarnings("squid:S1698")
+		@Override
+		public boolean test(final STATE state1, final STATE state2) {
+			// equality intended here
+			return mState2states.get(state1) == mState2states.get(state2);
+		}
 	}
 }
