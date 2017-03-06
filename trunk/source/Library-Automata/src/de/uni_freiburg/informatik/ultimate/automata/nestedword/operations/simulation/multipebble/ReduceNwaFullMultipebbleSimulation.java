@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble;
 
+import java.util.Iterator;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
@@ -154,12 +156,10 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 
 		} catch (final AutomataOperationCanceledException aoce) {
 			if (initialPairs instanceof PartitionBackedSetOfPairs<?>) {
-				final PartitionBackedSetOfPairs<STATE> partition2 = (PartitionBackedSetOfPairs<STATE>) initialPairs;
-				final RunningTaskInfo rti =
-						new RunningTaskInfo(getClass(),
-								NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(
-										operationName(), mOperand,
-										partition2.getOrConstructPartitionSizeInformation()));
+				final PartitionBackedSetOfPairs<STATE> partition = (PartitionBackedSetOfPairs<STATE>) initialPairs;
+				final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
+						NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(operationName(),
+								mOperand, partition.getOrConstructPartitionSizeInformation()));
 				aoce.addRunningTaskInfo(rti);
 			} else {
 				addGenericRunningTaskInfo(aoce);
@@ -184,7 +184,11 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			statistics.addKeyValuePair(StatisticsType.SIZE_INITIAL_PARTITION,
 					initialPartition.getOrConstructPartitionSizeInformation().getNumberOfBlocks());
 		} else {
-
+			long numberOfPairs = 0;
+			for (final Iterator<Pair<STATE, STATE>> it = initialPairs.iterator(); it.hasNext(); it.next()) {
+				++numberOfPairs;
+			}
+			statistics.addKeyValuePair(StatisticsType.NUMBER_INITIAL_PAIRS, numberOfPairs);
 		}
 		statistics.addKeyValuePair(StatisticsType.SIZE_GAME_AUTOMATON, maxGameAutomatonSize);
 		statistics.addKeyValuePair(StatisticsType.STATES_INPUT, mOperand.size());
