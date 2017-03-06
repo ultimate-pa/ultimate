@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -107,5 +108,30 @@ public abstract class GeneralOperation<LETTER, STATE, CRSF extends IStateFactory
 			mLogger.warn("No result check for " + operationName() + " available yet.");
 		}
 		return true;
+	}
+
+	/**
+	 * @return generic running task description.
+	 */
+	protected String generateGenericRunningTaskDescription() {
+		return "applying " + operationName();
+	}
+
+	/**
+	 * @param aoce
+	 *            {@link AutomataOperationCanceledException}.
+	 */
+	protected final void addGenericRunningTaskInfo(final AutomataOperationCanceledException aoce) {
+		addRunningTaskInfo(aoce, generateGenericRunningTaskDescription());
+	}
+
+	/**
+	 * @param aoce
+	 *            {@link AutomataOperationCanceledException}.
+	 * @param description
+	 *            description
+	 */
+	protected final void addRunningTaskInfo(final AutomataOperationCanceledException aoce, final String description) {
+		aoce.addRunningTaskInfo(new RunningTaskInfo(getClass(), description));
 	}
 }
