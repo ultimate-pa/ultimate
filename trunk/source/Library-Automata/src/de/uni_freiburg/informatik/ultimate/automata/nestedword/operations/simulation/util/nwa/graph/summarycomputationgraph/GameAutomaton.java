@@ -94,7 +94,7 @@ public class GameAutomaton<LETTER, STATE>
 		for (final Set<STATE> eqClass : mPossibleEquivalentClasses) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final long initialNodes =
-						NestedWordAutomataUtils.computeNumberOfEquivalentPairs(mPossibleEquivalentClasses);
+						NestedWordAutomataUtils.computeNumberOfPairsInPartition(mPossibleEquivalentClasses);
 				final RunningTaskInfo rti =
 						new RunningTaskInfo(getClass(), "constructing " + initialNodes + "initial vertices");
 				throw new AutomataOperationCanceledException(rti);

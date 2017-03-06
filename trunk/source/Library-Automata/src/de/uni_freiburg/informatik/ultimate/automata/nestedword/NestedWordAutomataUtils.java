@@ -149,7 +149,7 @@ public final class NestedWordAutomataUtils {
 	 *            state type
 	 * @return the number of pairs of states from within the same blocks
 	 */
-	public static <STATE> long computeNumberOfEquivalentPairs(final Collection<Set<STATE>> partition) {
+	public static <STATE> long computeNumberOfPairsInPartition(final Collection<Set<STATE>> partition) {
 		int result = 0;
 		for (final Set<STATE> eqClass : partition) {
 			result += eqClass.size() * eqClass.size();
