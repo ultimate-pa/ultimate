@@ -26,38 +26,25 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.interval;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.termevaluator;
 
 import java.util.function.Supplier;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.NonrelationalPostOperator;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 
 /**
- * Post operator of the interval domain based on transition formulas.
+ * Interface to create {@link ITermEvaluator}s for different abstract domains.
  *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalPostOperator
-		extends NonrelationalPostOperator<IntervalDomainState<IProgramVarOrConst>, IcfgEdge, IntervalDomainValue> {
+public interface ITermEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, VARDECL>, VARDECL> {
 	
-	/**
-	 * Default constructor.
-	 *
-	 * @param logger
-	 *            The logger instance.
-	 * @param maxParallelStates
-	 *            The number of allowed parallel states.
-	 */
-	protected IntervalPostOperator(final ILogger logger, final int maxParallelStates,
-			final Supplier<IntervalDomainState<IProgramVarOrConst>> topStateSupplier,
-			final Supplier<IntervalDomainState<IProgramVarOrConst>> bottomStateSupplier) {
-		super(logger, new IntervalDomainTermProcessor(logger, maxParallelStates, bottomStateSupplier),
-				topStateSupplier);
-	}
+	INaryTermEvaluator<VALUE, STATE, VARDECL> createApplicationTerm(final int arity, final String operator,
+			Supplier<STATE> bottomStateSupplier);
+
+	ITermEvaluator<VALUE, STATE, VARDECL> createConstantValueEvaluator(final Object value);
+
+	ITermEvaluator<VALUE, STATE, VARDECL> createVariableTermEvaluator(final String variableName, final Sort sort);
 }

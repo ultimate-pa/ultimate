@@ -32,59 +32,68 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 
-public class ConstantTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, VARDECL>, VARDECL>
-		implements ITermEvaluator<VALUE, STATE, VARDECL> {
+/**
+ * Evaluator for variable terms.
+ *
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ *
+ */
+public class VariableTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, IProgramVarOrConst>>
+		implements ITermEvaluator<VALUE, STATE, IProgramVarOrConst> {
 	
-	private final VALUE mValue;
-	private final EvaluatorType mType;
-
-	public ConstantTermEvaluator(final VALUE value, final EvaluatorType type) {
-		mValue = value;
-		mType = type;
+	private final String mVariable;
+	private final Set<String> mVariableNames;
+	private final Sort mSort;
+	
+	private final boolean mContainsBoolean = false;
+	
+	protected VariableTermEvaluator(final String variableName, final Sort sort) {
+		mVariable = variableName;
+		mVariableNames = Collections.singleton(variableName);
+		mSort = sort;
 	}
 	
 	@Override
 	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
-		assert currentState != null;
-		return Collections.singletonList(new NonrelationalEvaluationResult<>(mValue, BooleanValue.TOP));
+		// TODO Auto-generated method stub
+		return null;
 	}
-
+	
 	@Override
-	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
-		assert computedValue != null;
-		assert currentState != null;
-		return Collections.singletonList(currentState);
+	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evaluationResult, final STATE state) {
+		// TODO Auto-generated method stub
+		return null;
 	}
-
+	
 	@Override
-	public void addSubEvaluator(final ITermEvaluator<VALUE, STATE, VARDECL> evaluator) {
-		throw new UnsupportedOperationException("Cannot add a sub evaluator to a constant term evaluator.");
+	public void addSubEvaluator(final ITermEvaluator<VALUE, STATE, IProgramVarOrConst> evaluator) {
+		throw new UnsupportedOperationException("Cannot add sub evaluator to variable term evaluators.");
 	}
-
-	@Override
-	public Set<String> getVarIdentifiers() {
-		return Collections.emptySet();
-	}
-
+	
 	@Override
 	public boolean hasFreeOperands() {
 		return false;
 	}
-
+	
 	@Override
 	public boolean containsBool() {
-		return false;
+		return mContainsBoolean;
 	}
 	
 	@Override
-	public String toString() {
-		return mValue.toString();
+	public Set<String> getVarIdentifiers() {
+		return mVariableNames;
 	}
+
+	@Override
+	public String toString() {
+		return mVariable;
+	}
+
 }

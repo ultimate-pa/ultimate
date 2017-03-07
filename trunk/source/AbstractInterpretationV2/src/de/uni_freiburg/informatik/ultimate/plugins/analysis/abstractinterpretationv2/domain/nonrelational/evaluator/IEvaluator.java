@@ -58,7 +58,7 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>,
 	 * @return A new evaluation result that contains the result of the evaluation.
 	 */
 	List<IEvaluationResult<VALUE>> evaluate(final STATE currentState);
-	
+
 	/**
 	 * Computes the inverse of {@link #evaluate(IAbstractState)} relative to some result of
 	 * {@link #evaluate(IAbstractState)}.
@@ -72,7 +72,7 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>,
 	 * @return The result of the inverse application of the evaluate function.
 	 */
 	List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evalResult, final STATE state);
-	
+
 	/**
 	 * Adds a sub-evaluator to the evaluator.
 	 *
@@ -80,17 +80,17 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>,
 	 *            The evaluator to add.
 	 */
 	void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator);
-	
+
 	/**
 	 * @return The set of all variable identifiers that occur in all sub evaluators.
 	 */
 	Set<VARDECL> getVarIdentifiers();
-	
+
 	/**
 	 * @return <code>true</code> if and only if there are still free sub evaluators. <code>false</code> otherwise.
 	 */
 	boolean hasFreeOperands();
-	
+
 	/**
 	 * States whether somewhere in the evaluator occurs a boolean value. This is needed to determine if the boolean
 	 * value should be used instead of the returned abstract value. Note: This is needed in the handling of logical
@@ -101,6 +101,9 @@ public interface IEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>,
 	 *         <code>false</code> otherwise.
 	 */
 	boolean containsBool();
-	
+
+	/**
+	 * @return The type of the evaluator, according to {@link EvaluatorType}s.
+	 */
 	EvaluatorType getType();
 }

@@ -29,76 +29,102 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.termevaluator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 
-public class LogicalTermEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
+public class ApplicationTermEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
 		implements INaryTermEvaluator<VALUE, STATE, VARDECL> {
 	
 	private final int mArity;
-	private final String mType;
-	private final ILogger mLogger;
-	
 	private final List<ITermEvaluator<VALUE, STATE, VARDECL>> mSubEvaluators;
+	private final String mOperator;
+	private final Supplier<STATE> mBottomStateSupplier;
 
-	protected LogicalTermEvaluator(final int arity, final String type, final ILogger logger) {
-		mArity = arity;
-		mType = type;
-		mLogger = logger;
-		mSubEvaluators = new ArrayList<>(arity);
-	}
+	private static final String TRUE = "true";
+	private static final String FALSE = "false";
 	
+	protected ApplicationTermEvaluator(final int arity, final String operator,
+			final Supplier<STATE> bottomStateSupplier) {
+		mArity = arity;
+		mSubEvaluators = new ArrayList<>();
+		mOperator = operator;
+		mBottomStateSupplier = bottomStateSupplier;
+	}
+
 	@Override
 	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
-	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evalResult, final STATE state) {
+	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evaluationResult, final STATE state) {
+		if (mOperator == TRUE) {
+			return Collections.singletonList(state);
+		} else if (mOperator == FALSE) {
+			return Collections.singletonList(mBottomStateSupplier.get());
+		}
+
 		// TODO Auto-generated method stub
 		return null;
 	}
 	
 	@Override
 	public void addSubEvaluator(final ITermEvaluator<VALUE, STATE, VARDECL> evaluator) {
-		if (mSubEvaluators.size() > mArity) {
-			throw new UnsupportedOperationException("Cannot add another subevaluator to this evaluator of arity "
-					+ mArity + ". Already at " + mSubEvaluators.size() + " subevaluators.");
+		if (mSubEvaluators.size() >= mArity) {
+			throw new UnsupportedOperationException(
+					"The arity of this evaluator (" + mArity + ") does not allow to add additional sub evaluators.");
 		}
-		
 		mSubEvaluators.add(evaluator);
 	}
 	
 	@Override
 	public boolean hasFreeOperands() {
-		// TODO Auto-generated method stub
-		return false;
+		return mSubEvaluators.size() < mArity;
 	}
 	
 	@Override
 	public boolean containsBool() {
-		// TODO Auto-generated method stub
-		return false;
+		if (mArity == 0) {
+			if (mOperator.equals(TRUE) || mOperator.equals(FALSE)) {
+				return true;
+			}
+			throw new UnsupportedOperationException(
+					"An arity of 0 should indicate containment of boolean values, however, the operator was "
+							+ "unsupported or not boolean: " + mOperator);
+		}
+		return mSubEvaluators.stream().anyMatch(eval -> eval.containsBool());
+
 	}
 	
 	@Override
-	public int getArity() {
+	public Set<String> getVarIdentifiers() {
 		// TODO Auto-generated method stub
-		return 0;
-	}
-	
-	protected enum LogicalTypes {
-		AND, OR, XOR, NOT, GEQ
+		return null;
 	}
 
 	@Override
-	public Set<String> getVarIdentifiers() {
-		// TODO
-		return null;
+	public int getArity() {
+		return mArity;
 	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder();
+
+		sb.append("(");
+		sb.append(mOperator);
+		sb.append(" ");
+		sb.append(mSubEvaluators.stream().map(sub -> sub.toString()).collect(Collectors.joining(" ")));
+		sb.append(")");
+
+		return sb.toString();
+	}
+
 }

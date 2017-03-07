@@ -30,18 +30,25 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.nio.channels.UnsupportedAddressTypeException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState.VariableType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -51,9 +58,14 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		implements IAbstractPostOperator<STATE, ACTION, IProgramVarOrConst> {
 	
 	private final ILogger mLogger;
+	private final NonrelationalTermProcessor<V, STATE> mTermProcessor;
+	private final Supplier<STATE> mTopStateSupplier;
 
-	protected NonrelationalPostOperator(final ILogger logger) {
+	protected NonrelationalPostOperator(final ILogger logger, final NonrelationalTermProcessor<V, STATE> termProcessor,
+			final Supplier<STATE> topStateSupplier) {
 		mLogger = logger;
+		mTermProcessor = termProcessor;
+		mTopStateSupplier = topStateSupplier;
 	}
 
 	@Override
@@ -80,19 +92,135 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		
 		final Term term = transformula.getFormula();
 
-		final NonrelationalTermProcessor termWalker = new NonrelationalTermProcessor(mLogger);
-		termWalker.process(term);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Transformula handling...");
+			mLogger.debug("InVars:  " + transformula.getInVars());
+			mLogger.debug("OutVars: " + transformula.getOutVars());
+			mLogger.debug("AuxVars: " + transformula.getAuxVars());
+			mLogger.debug("Transformula: " + transformula.getFormula());
+		}
+		
+		// TODO: Add new variables to prestate
+		final STATE newPreState = createNewPreState(oldstate, transformula);
+
+		// TODO: Add prestate
+		mTermProcessor.process(term, newPreState);
 
 		final List<STATE> currentStates = new ArrayList<>();
 		currentStates.add(oldstate);
 
-		if (true) {
-			throw new UnsupportedOperationException("Not implemented");
-		}
-
 		// TODO
 
 		return currentStates;
+	}
+
+	private STATE createNewPreState(final STATE oldState, final UnmodifiableTransFormula transformula) {
+		STATE newPreState = mTopStateSupplier.get();
+
+		final Map<String, IProgramVarOrConst> identifierMap = new HashMap<>();
+
+		for (final Entry<IProgramVar, TermVariable> entry : transformula.getInVars().entrySet()) {
+			final IProgramVarOrConst programVar = entry.getKey();
+			final TermVariable termVar = entry.getValue();
+			
+			// Create a dummy var for evaluation with the value of the old var.
+			final IProgramVarOrConst newVar = new IProgramVarOrConst() {
+				private static final long serialVersionUID = 1L;
+				
+				@Override
+				public String getGloballyUniqueId() {
+					return termVar.getName();
+				}
+				
+				@Override
+				public boolean isGlobal() {
+					return programVar.isGlobal();
+				}
+				
+				@Override
+				public Term getTerm() {
+					return programVar.getTerm();
+				}
+			};
+
+			assert !identifierMap.containsKey(newVar.getGloballyUniqueId());
+			identifierMap.put(newVar.getGloballyUniqueId(), newVar);
+			
+			// TODO: Collect all values at once!
+			newPreState = newPreState.addVariable(newVar);
+			
+			// Values
+			final VariableType type = oldState.getVariableType(programVar);
+			switch (type) {
+			case VARIABLE:
+				newPreState.setValue(newVar, oldState.getValue(programVar));
+				break;
+			case BOOLEAN:
+				newPreState.setBooleanValue(newVar, oldState.getBooleanValue(programVar));
+				break;
+			case ARRAY:
+				throw new UnsupportedOperationException("Arrays are not supported at this point.");
+			}
+		}
+		
+		// Add the outvars
+		for (final Entry<IProgramVar, TermVariable> entry : transformula.getOutVars().entrySet()) {
+			final IProgramVarOrConst programVar = entry.getKey();
+			final TermVariable termVar = entry.getValue();
+
+			// Create a dummy var for evaluation if not already in the state
+			if (!identifierMap.containsKey(termVar.getName())) {
+				final IProgramVarOrConst newVar = new IProgramVarOrConst() {
+					private static final long serialVersionUID = 1L;
+					
+					@Override
+					public String getGloballyUniqueId() {
+						return termVar.getName();
+					}
+
+					@Override
+					public boolean isGlobal() {
+						return programVar.isGlobal();
+					}
+
+					@Override
+					public Term getTerm() {
+						return programVar.getTerm();
+					}
+				};
+				identifierMap.put(newVar.getGloballyUniqueId(), newVar);
+				newPreState = newPreState.addVariable(newVar);
+			}
+		}
+
+		// Add the auxvars
+		for (final TermVariable var : transformula.getAuxVars()) {
+			assert !identifierMap.containsKey(var.getName());
+			
+			// Create a dummy var
+			final IProgramVarOrConst newVar = new IProgramVarOrConst() {
+				private static final long serialVersionUID = 1L;
+				
+				@Override
+				public String getGloballyUniqueId() {
+					return var.getName();
+				}
+				
+				@Override
+				public boolean isGlobal() {
+					return false;
+				}
+				
+				@Override
+				public Term getTerm() {
+					return null;
+				}
+			};
+			identifierMap.put(newVar.getGloballyUniqueId(), newVar);
+			newPreState = newPreState.addVariable(newVar);
+		}
+
+		return newPreState;
 	}
 
 	@Override

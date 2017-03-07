@@ -31,33 +31,34 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.NonrelationalPostOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.NonrelationalTermProcessor;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.termevaluator.ITermEvaluatorFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.termevaluator.TermEvaluatorFactory;
 
 /**
- * Post operator of the interval domain based on transition formulas.
+ * Term processor for the interval abstract domain.
  *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalPostOperator
-		extends NonrelationalPostOperator<IntervalDomainState<IProgramVarOrConst>, IcfgEdge, IntervalDomainValue> {
+public class IntervalDomainTermProcessor
+		extends NonrelationalTermProcessor<IntervalDomainValue, IntervalDomainState<IProgramVarOrConst>> {
 	
-	/**
-	 * Default constructor.
-	 *
-	 * @param logger
-	 *            The logger instance.
-	 * @param maxParallelStates
-	 *            The number of allowed parallel states.
-	 */
-	protected IntervalPostOperator(final ILogger logger, final int maxParallelStates,
-			final Supplier<IntervalDomainState<IProgramVarOrConst>> topStateSupplier,
+	public IntervalDomainTermProcessor(final ILogger logger, final int maxParallelStates,
 			final Supplier<IntervalDomainState<IProgramVarOrConst>> bottomStateSupplier) {
-		super(logger, new IntervalDomainTermProcessor(logger, maxParallelStates, bottomStateSupplier),
-				topStateSupplier);
+		super(logger, maxParallelStates, bottomStateSupplier);
+	}
+	
+	@Override
+	public ITermEvaluatorFactory<IntervalDomainValue, IntervalDomainState<IProgramVarOrConst>, IProgramVarOrConst>
+			createEvaluatorFactory(final int maxParallelStates) {
+		final TermEvaluatorFactory.Function<Object, IntervalDomainValue> valueEvaluatorCreator =
+				(value) -> new IntervalDomainValue(new IntervalValue(value.toString()),
+						new IntervalValue(value.toString()));
+		return new TermEvaluatorFactory<>(valueEvaluatorCreator);
 	}
 }
