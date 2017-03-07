@@ -31,6 +31,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class GenericServiceProvider implements IStorable {
 
 	private static final String KEY = "GenericServiceProvider";

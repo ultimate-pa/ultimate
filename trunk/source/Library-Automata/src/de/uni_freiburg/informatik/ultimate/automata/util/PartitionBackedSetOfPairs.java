@@ -55,6 +55,11 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 		mPartition = partition;
 	}
 
+	/**
+	 * Note: Two calls to this method result in different {@link Pair} objects.
+	 * <p>
+	 * {@inheritDoc}
+	 */
 	@Override
 	public Iterator<Pair<E, E>> iterator() {
 		final Iterator<Set<E>> iterator = mPartition.iterator();
@@ -181,7 +186,7 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 			final StringBuilder sb = new StringBuilder();
 			// @formatter:off
 			sb.append(getNumberOfPairs())
-				.append(" pairs,")
+				.append(" pairs, ")
 				.append(getNumberOfBlocks())
 				.append(" blocks, ")
 				.append("largest block has ")

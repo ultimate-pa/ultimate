@@ -188,7 +188,7 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 						urd.generateShortStringRepresentation(),
 						new AutomataScriptTestResultDecider(), starter,
 						// mDescription + "_" + inputFile.getAbsolutePath(),
-						urd, UltimateTestSuite.getSummaries(), null);
+						urd, getSummaries(), null);
 				testCases.add(utc);
 			}
 		}

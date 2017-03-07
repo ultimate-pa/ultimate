@@ -32,6 +32,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 import org.junit.AfterClass;
 import org.junit.runner.RunWith;
@@ -51,37 +54,25 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 @RunWith(FactoryTestRunner.class)
 public abstract class UltimateTestSuite {
 
-	private static List<ITestSummary> sSummaries;
-	private static List<IIncrementalLog> sLogFiles;
+	private List<ITestSummary> mSummaries;
+	private final List<IIncrementalLog> mLogFiles;
 	private final ILogger mLogger;
 
+	/**
+	 * Default constructor.
+	 */
 	public UltimateTestSuite() {
 		mLogger = new ConsoleLogger();
-		synchronized (this) {
-			if (sSummaries == null) {
-				final ITestSummary[] summaries = constructTestSummaries();
+		mSummaries = sanitizeList(this::constructTestSummaries);
+		mLogFiles = sanitizeList(this::constructIncrementalLog);
+	}
 
-				if (summaries != null) {
-					for (final ITestSummary sum : summaries) {
-						assert sum != null;
-					}
-					sSummaries = Arrays.asList(summaries);
-				} else {
-					sSummaries = null;
-				}
-			}
-			if (sLogFiles == null) {
-				final IIncrementalLog[] logs = constructIncrementalLog();
-				if (logs != null) {
-					for (final IIncrementalLog log : logs) {
-						assert log != null;
-					}
-					sLogFiles = Arrays.asList(logs);
-				} else {
-					sLogFiles = null;
-				}
-			}
+	private static <T> List<T> sanitizeList(final Supplier<T[]> funSup) {
+		final T[] summaries = funSup.get();
+		if (summaries == null) {
+			return Collections.emptyList();
 		}
+		return Arrays.asList(summaries).stream().filter(Objects::nonNull).collect(Collectors.toList());
 	}
 
 	@TestFactory
@@ -101,30 +92,30 @@ public abstract class UltimateTestSuite {
 	 * @return A collection containing ITestSummary instances. They will be accessed at the end of this test suite and
 	 *         their content written in a file.
 	 */
-	protected static List<ITestSummary> getSummaries() {
-		return Collections.unmodifiableList(sSummaries);
+	protected List<ITestSummary> getSummaries() {
+		return Collections.unmodifiableList(mSummaries);
 	}
 
-	protected static List<IIncrementalLog> getIncrementalLogs() {
-		return Collections.unmodifiableList(sLogFiles);
+	protected List<IIncrementalLog> getIncrementalLogs() {
+		return Collections.unmodifiableList(mLogFiles);
 	}
 
 	@AfterClass
-	public final static void writeSummaries() {
+	public final void writeSummaries() {
 		final ILogger log = new ConsoleLogger();
-		if (sSummaries == null || sSummaries.isEmpty()) {
+		if (mSummaries == null || mSummaries.isEmpty()) {
 			log.info("No test summaries available");
 			return;
 		}
 
-		for (final ITestSummary summary : sSummaries) {
+		for (final ITestSummary summary : mSummaries) {
 			try {
 				TestUtil.writeSummary(summary, log);
 			} catch (final Exception ex) {
 				ex.printStackTrace();
 			}
 		}
-		sSummaries = null;
+		mSummaries = null;
 	}
 
 	public ILogger getLogger() {

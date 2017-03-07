@@ -33,6 +33,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * <p>
  * The interface abstracts from the data structure that is used in the background, but also allows to return the data
  * structure for efficient use.
+ * <p>
+ * Note: Two calls to the {@link #iterator()} method may result in different {@link Pair} objects.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <E>

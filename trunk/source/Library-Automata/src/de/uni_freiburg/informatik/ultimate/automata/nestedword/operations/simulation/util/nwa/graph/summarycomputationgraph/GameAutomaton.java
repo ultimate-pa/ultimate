@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph;
 
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -48,10 +47,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Construct game automaton given the input automaton (not a game graph) and the initial partition.
@@ -68,7 +69,7 @@ public class GameAutomaton<LETTER, STATE>
 	private final boolean mInitiallyOmitSymmetricPairs = true;
 	private final boolean mAlwaysOmitSymmetricPairsWithFalseBit = false;
 
-	private final Collection<Set<STATE>> mPossibleEquivalentClasses;
+	private final ISetOfPairs<STATE, ?> mInitialPairs;
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 
 	private final ISimulationInfoProvider<LETTER, STATE> mSimulationInfoProvider;
@@ -77,11 +78,11 @@ public class GameAutomaton<LETTER, STATE>
 	private final GameLetterFactory mGameLetterFactory;
 
 	public GameAutomaton(final AutomataLibraryServices services, final IStateFactory<IGameState> stateFactory,
-			final Collection<Set<STATE>> possibleEquivalentClasses, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
+			final ISetOfPairs<STATE, ?> initialPairs, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
 			final SpoilerNwaVertex<LETTER, STATE> uniqueSpoilerWinningSink) throws AutomataOperationCanceledException {
 		super(services, stateFactory);
-		mPossibleEquivalentClasses = possibleEquivalentClasses;
+		mInitialPairs = initialPairs;
 		mOperand = operand;
 		mSimulationInfoProvider = simulationInfoProvider;
 		mGameLetterFactory = new GameLetterFactory();
@@ -91,22 +92,18 @@ public class GameAutomaton<LETTER, STATE>
 
 	@Override
 	protected void constructInitialStates() throws AutomataOperationCanceledException {
-		for (final Set<STATE> eqClass : mPossibleEquivalentClasses) {
+		for (final Pair<STATE, STATE> pair : mInitialPairs) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
-				final long initialNodes =
-						NestedWordAutomataUtils.computeNumberOfEquivalentPairs(mPossibleEquivalentClasses);
-				final RunningTaskInfo rti =
-						new RunningTaskInfo(getClass(), "constructing " + initialNodes + "initial vertices");
+				final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
+						"constructing initial vertices for automaton with " + mOperand.size() + " states");
 				throw new AutomataOperationCanceledException(rti);
 			}
-			for (final STATE q0 : eqClass) {
-				for (final STATE q1 : eqClass) {
-					if (mInitiallyOmitSymmetricPairs && q0.equals(q1)) {
-						// omit pair
-					} else {
-						constructInitialVertex(q0, q1);
-					}
-				}
+			final STATE q0 = pair.getFirst();
+			final STATE q1 = pair.getSecond();
+			if (mInitiallyOmitSymmetricPairs && q0.equals(q1)) {
+				// omit pair
+			} else {
+				constructInitialVertex(q0, q1);
 			}
 		}
 		mInitialStateHaveBeenConstructed = true;

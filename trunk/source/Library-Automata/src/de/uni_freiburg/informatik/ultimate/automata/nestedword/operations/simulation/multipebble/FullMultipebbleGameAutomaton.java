@@ -55,25 +55,23 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final FullMultipebbleStateFactory<STATE, GS> mStateFactory;
 	private final GS mEmptyStackState;
-	private final ISetOfPairs<STATE, ?> mPossibleEquivalenceClasses;
 	private final NestedMap2<STATE, STATE, GS> mGameStateMapping;
 	private final Set<GS> mInitialStates;
 
 	public FullMultipebbleGameAutomaton(final AutomataLibraryServices services,
 			final FullMultipebbleStateFactory<STATE, GS> gameFactory,
-			final ISetOfPairs<STATE, ?> possibleEquivalentClasses,
+			final ISetOfPairs<STATE, ?> initialPairs,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
 		mOperand = operand;
 		mStateFactory = gameFactory;
 		mEmptyStackState = gameFactory.createEmptyStackState();
-		mPossibleEquivalenceClasses = possibleEquivalentClasses;
 		mInitialStates = new HashSet<>();
 		mGameStateMapping = new NestedMap2<>();
-		constructInitialStates();
+		constructInitialStates(initialPairs);
 	}
 
-	private void constructInitialStates() {
-		for (final Pair<STATE, STATE> pair : mPossibleEquivalenceClasses) {
+	private void constructInitialStates(final ISetOfPairs<STATE, ?> initialPairs) {
+		for (final Pair<STATE, STATE> pair : initialPairs) {
 			final STATE q0 = pair.getFirst();
 			final STATE q1 = pair.getSecond();
 			if (!mStateFactory.isImmediatelyWinningForSpoiler(q0, q1, mOperand)) {

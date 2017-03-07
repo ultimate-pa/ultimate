@@ -73,6 +73,10 @@ public class FloatSupportInUltimate {
 			"fabs",
 			"fabsf",
 			"fabsl",
+			
+			// math.h macros (incomplete)
+			"fpclassify",
+			"isnormal"
 	};
 	
 	private final static String[] UNSUPPORTED_FLOAT_OPERATIONS_ARRAY = new String[] {

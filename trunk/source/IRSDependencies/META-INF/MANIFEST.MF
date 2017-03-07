@@ -5,7 +5,8 @@ Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdep
 Bundle-Version: 0.1.8
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
-Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector,
+Export-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies,
+ de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.loopdetector,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.visitors,
  de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.rcfg.walker
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,

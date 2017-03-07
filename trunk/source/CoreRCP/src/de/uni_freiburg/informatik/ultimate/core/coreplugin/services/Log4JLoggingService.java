@@ -100,8 +100,6 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 	private static final String STORE_KEY = "LoggingService";
 
-	private static int sId;
-
 	private final RcpPreferenceProvider mPreferenceStore;
 	private final IPreferenceChangeListener mRefreshingListener;
 	private final Set<Appender> mRootAppenders;
@@ -122,7 +120,6 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 		mRefreshingListener = new RefreshingPreferenceChangeListener();
 		mPreferenceStore.addPreferenceChangeListener(mRefreshingListener);
-		sId++;
 	}
 
 	@Override
@@ -369,7 +366,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 	@Override
 	public void destroy() {
-		assert sId == 1 : "There should be only one instance of Log4JLoggingService";
+		// do nothing
 	}
 
 	@Override
@@ -510,7 +507,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + ((mWriter == null) ? 0 : mWriter.hashCode());
+			result = prime * result + (mWriter == null ? 0 : mWriter.hashCode());
 			return result;
 		}
 

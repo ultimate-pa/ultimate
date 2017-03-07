@@ -310,7 +310,8 @@ final class PluginFactory implements IServiceFactoryFactory {
 					final Class<?> myClass = Class.forName(className);
 					final IServiceFactory<?> factory = createInstance(element);
 					mSettingsManager.registerPlugin(factory);
-					mAvailableServicesByClassName.put(myClass, factory);
+
+					registerClassAndAllInterfaces(myClass, factory);
 				} catch (final ClassNotFoundException e) {
 					mLogger.fatal("Cannot register type: " + e);
 				}
@@ -319,6 +320,20 @@ final class PluginFactory implements IServiceFactoryFactory {
 		} else {
 			registerTool(clazz);
 		}
+	}
+
+	private void registerClassAndAllInterfaces(final Class<?> myClass, final IServiceFactory<?> factory) {
+		// first, register the actual class
+		mAvailableServicesByClassName.put(myClass, factory);
+
+		for (final Class<?> clazzInterface : myClass.getInterfaces()) {
+			if (clazzInterface.equals(IServiceFactory.class)) {
+				// everyone implements this, skip it
+				continue;
+			}
+			registerClassAndAllInterfaces(clazzInterface, factory);
+		}
+
 	}
 
 	private void registerTool(final Class<?> clazz) {

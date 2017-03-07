@@ -7,4 +7,10 @@
             class="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.IrsDependencies">
       </impl>
    </extension>
+   <extension
+         point="de.uni_freiburg.informatik.ultimate.ep.service">
+      <impl
+            class="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies.BloargServiceFactory">
+      </impl>
+   </extension>
 </plugin>

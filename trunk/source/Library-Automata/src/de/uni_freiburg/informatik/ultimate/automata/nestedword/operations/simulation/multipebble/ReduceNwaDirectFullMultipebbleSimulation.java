@@ -56,8 +56,8 @@ public class ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE>
 
 	@Override
 	protected FullMultipebbleStateFactory<STATE, DirectFullMultipebbleGameState<STATE>>
-			constructGameFactory(final ISetOfPairs<STATE, ?> initialPartition) {
-		return new DirectFullMultipebbleStateFactory<>(initialPartition);
+			constructGameFactory(final ISetOfPairs<STATE, ?> initialPairs) {
+		return new DirectFullMultipebbleStateFactory<>(initialPairs);
 	}
 
 	@Override
