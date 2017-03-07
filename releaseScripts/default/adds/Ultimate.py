@@ -15,6 +15,7 @@ outputFileName = 'Ultimate.log'
 errorPathFileName = 'UltimateCounterExample.errorpath'
 ultimatedir = os.path.dirname(os.path.realpath(__file__))
 configdir = ultimatedir
+datadir = '@user.home/.ultimate'
 
 # special strings in ultimate output
 unsupportedSyntaxErrorString = 'ShortDescription: Unsupported Syntax'
@@ -39,10 +40,14 @@ overflowFalseString = 'overflow possible'
 def getBinary():
     # currently unused because of rcp launcher bug 
     # currentPlatform = platform.system()
-    #if currentPlatform == 'Windows':
-
+    # if currentPlatform == 'Windows':
     
-    ultimateBin = ['java', '-Xmx12G', '-Xms1G', '-jar' , os.path.join(ultimatedir,'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar'), '-data', '@user.home/.ultimate']
+    ultimateBin = ['java',
+                   '-Xmx12G',
+                   '-Xms1G',
+                   '-jar' , os.path.join(ultimatedir, 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar'), 
+                   '-data', datadir
+                   ]
     # check if ultimate bin is there 
     # if not os.path.isfile(ultimateBin):
     #    print("Ultimate binary not found, expected " + ultimateBin)
@@ -52,13 +57,12 @@ def getBinary():
 
 
 def searchConfigDir(searchstring):
-    
     for root, dirs, files in os.walk(configdir):
         for name in files:
             if fnmatch.fnmatch(name, searchstring):
                 return os.path.join(root, name)
         break
-    print ("No suitable file found in config dir {0} using search string {1}".format(configdir,searchstring))    
+    print ("No suitable file found in config dir {0} using search string {1}".format(configdir, searchstring))    
     return 
 
 
@@ -228,24 +232,39 @@ def getSettingsPath(bitprecise, settingsSearchString):
 
 def checkFile(f):
     if not os.path.isfile(f):
-        printErr('Input file ' + f + ' does not exist')
-        sys.exit(1)
-    return file
+        raise argparse.ArgumentTypeError("File %s does not exist" % f)
+    return f
+
+def checkDir(d):
+    if not os.path.isdir(d):
+        raise argparse.ArgumentTypeError("Directory %s does not exist" % d)
+    return d
 
 def parseArgs():
     # parse command line arguments
-    
+    global configdir
+    global datadir
     if ((len(sys.argv) == 2) and (sys.argv[1] == '--version')):
         print (version)
         sys.exit(0)
     
     parser = argparse.ArgumentParser(description='Ultimate wrapper script for SVCOMP')
-    parser.add_argument('--version', action='store_true', help='Print Ultimate\'s version and exit')
-    parser.add_argument('--full-output', action='store_true', help='Print Ultimate\'s full output to stderr after verification ends')
-    parser.add_argument('--validate', nargs=1, metavar='<file>', help='Activate witness validation mode (if supported) and specify a .graphml file as witness')
-    parser.add_argument('spec', nargs=1, help='An property (.prp) file from SVCOMP')
-    parser.add_argument('architecture', choices=['32bit', '64bit'], help='Choose which architecture (defined as per SV-COMP rules) should be assumed')
-    parser.add_argument('file', metavar='<file>', nargs=1, help='One C file')
+    parser.add_argument('--version', action='store_true',
+                        help='Print Ultimate\'s version and exit')
+    parser.add_argument('--full-output', action='store_true',
+                        help='Print Ultimate\'s full output to stderr after verification ends')
+    parser.add_argument('--validate', nargs=1, metavar='<file>', type=checkFile,
+                        help='Activate witness validation mode (if supported) and specify a .graphml file as witness')
+    parser.add_argument('--config', nargs=1, metavar='<dir>', type=checkDir,
+                        help='Specify the directory in which the static config files are located; default is the location of this script')
+    parser.add_argument('--data', nargs=1, metavar='<dir>', type=checkDir,
+                        help='Specify the directory in which the RCP config files are located; default is .ultimate/ in the users home')
+    parser.add_argument('--spec', metavar='<file>', nargs=1, type=checkFile, required=True,
+                        help='An property (.prp) file from SVCOMP')
+    parser.add_argument('--architecture', choices=['32bit', '64bit'], required=True,
+                        help='Choose which architecture (defined as per SV-COMP rules) should be assumed')
+    parser.add_argument('--file', metavar='<file>', nargs=1, type=checkFile, required=True,
+                        help='One C file')
     
     args = parser.parse_args()
   
@@ -253,22 +272,22 @@ def parseArgs():
         print(version)
         sys.exit(0)
     
-    if(not args.file):
-        printErr('You must specify at least one input file')
-        sys.exit(1)
-    
     witness = None
-    cFile = checkFile(args.file[0])
+    cFile = args.file[0]
+    propertyFileName = args.spec[0]
+    
     if args.validate:
         witness = args.validate[0]
     
+    if args.config:
+        configdir = args.config[0]
+
+    if args.data:
+        print ("setting data dir to {0}".format(args.data[0]))
+        datadir = args.data[0]
+    
     if(cFile == None and witness != None):
         printErr("You did not specify a C file with your witness")
-        sys.exit(1)
-    
-    propertyFileName = args.spec[0]
-    if not os.path.isfile(propertyFileName):
-        printErr("Property file not found at " + propertyFileName)
         sys.exit(1)
         
     if not args.validate and witness != None:
@@ -278,6 +297,7 @@ def parseArgs():
     if args.validate and witness == None:
         printErr("You did specify --validate but no witness")
         sys.exit(1)
+        
     if args.validate:
         return propertyFileName, args.architecture, [args.file[0], witness], args.full_output, args.validate
     else:
@@ -347,7 +367,6 @@ def determineMode(propertyFileName):
     return terminationMode, memDeref, memDerefMemtrack, overflowMode
 
 def main():
-    ultimateBin = getBinary()
     propertyFileName, architecture, inputFiles, verbose, validateWitness = parseArgs()
     terminationMode, memDeref, memDerefMemtrack, overflowMode = determineMode(propertyFileName)
             
@@ -362,6 +381,7 @@ def main():
 
     # execute ultimate
     print('Version ' + version)
+    ultimateBin = getBinary()
     ultimateCall = createUltimateCall(ultimateBin, ['-tc', toolchain, '-i', inputFiles, '-s', settingsArgument, manualCliArguments])
  
 
