@@ -2,14 +2,11 @@ package de.uni_freiburg.informatik.ultimate.interactive.traceabstraction;
 
 import com.google.protobuf.GeneratedMessageV3;
 
-import de.uni_freiburg.informatik.ultimate.core.model.IServiceFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.Converter;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.TAConverterFactory;
 
-public class ConverterFactory implements IServiceFactory<IInteractive<Object>> {
+public class ConverterFactory implements TAConverterFactory<GeneratedMessageV3> {
 
 	@Override
 	public String getPluginName() {
@@ -27,15 +24,13 @@ public class ConverterFactory implements IServiceFactory<IInteractive<Object>> {
 	}
 
 	@Override
-	public IInteractive<Object> createInstance(IUltimateServiceProvider services, IToolchainStorage storage) {
-		TAConverter converter = new TAConverter();
+	public Converter<GeneratedMessageV3, Object> createConverter() {
+		return new TAConverter();
+	}
 
-		System.out.println("test test test test test test test test test test test test test test test test !!!");
-
-		final Converter.Initializer<GeneratedMessageV3> initializer =
-				Converter.Initializer.fromStorage(GeneratedMessageV3.class, storage);
-
-		return initializer == null ? null : initializer.getConvertedInteractiveInterface(converter);
+	@Override
+	public Class<GeneratedMessageV3> sourceClass() {
+		return GeneratedMessageV3.class;
 	}
 
 }

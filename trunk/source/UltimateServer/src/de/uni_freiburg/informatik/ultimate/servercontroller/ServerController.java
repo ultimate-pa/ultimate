@@ -65,7 +65,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.Converter;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientCrazyException;
-import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.TAConverter;
 import de.uni_freiburg.informatik.ultimate.server.Client;
 import de.uni_freiburg.informatik.ultimate.server.IInteractiveServer;
 import de.uni_freiburg.informatik.ultimate.servercontroller.converter.ControllerConverter;
@@ -356,9 +355,6 @@ public class ServerController implements IController<RunDefinition> {
 
 		// mProtoInterface.store(storage, GeneratedMessageV3.class); - not needed
 
-		// mConverterInitializer.store(GeneratedMessageV3.class, storage);
-
-		TAConverter taConverter = new TAConverter();
-		mConverterInitializer.getConvertedInteractiveInterface(taConverter).store(storage, Object.class);
+		mConverterInitializer.store(GeneratedMessageV3.class, storage);
 	}
 }

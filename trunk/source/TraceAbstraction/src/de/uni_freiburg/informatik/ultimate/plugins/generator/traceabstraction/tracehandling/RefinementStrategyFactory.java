@@ -89,6 +89,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	 *            predicate factory
 	 */
 	public RefinementStrategyFactory(final ILogger logger, final IUltimateServiceProvider services,
+			final IInteractive<Object> interactive,
 			final IToolchainStorage storage, final TAPreferences taPrefsForInterpolantConsolidation,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final CegarAbsIntRunner<LETTER> absIntRunner,
 			final IIcfg<?> initialIcfg, final PredicateFactory predicateFactory) {
@@ -101,7 +102,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 		mInitialIcfg = initialIcfg;
 		mPredicateFactory = predicateFactory;
 		mAssertionOrderModulation = new AssertionOrderModulation<>();
-		mInteractive = IInteractive.getFromStorage(storage, Object.class);
+		mInteractive = interactive;
 		if (mInteractive == null) {
 			mParrotInteractiveIterationInfo = null;
 		} else {
