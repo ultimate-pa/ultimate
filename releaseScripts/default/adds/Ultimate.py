@@ -13,6 +13,8 @@ toolname = 'wrong toolname'
 writeUltimateOutputToFile = True
 outputFileName = 'Ultimate.log'
 errorPathFileName = 'UltimateCounterExample.errorpath'
+ultimatedir = os.path.dirname(os.path.realpath(__file__))
+configdir = ultimatedir
 
 # special strings in ultimate output
 unsupportedSyntaxErrorString = 'ShortDescription: Unsupported Syntax'
@@ -35,13 +37,12 @@ overflowFalseString = 'overflow possible'
 
 
 def getBinary():
-    currentPlatform = platform.system()
+    # currently unused because of rcp launcher bug 
+    # currentPlatform = platform.system()
+    #if currentPlatform == 'Windows':
+
     
-    if currentPlatform == 'Windows':
-        ultimateBin = ['java', '-Xmx12G', '-Xms1G', '-jar' , 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar', '-data', '@user.home/.ultimate']
-    else:
-        ultimateBin = ['java', '-Xmx12G', '-Xms1G', '-jar' , 'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar', '-data', '@user.home/.ultimate']
-    
+    ultimateBin = ['java', '-Xmx12G', '-Xms1G', '-jar' , os.path.join(ultimatedir,'plugins/org.eclipse.equinox.launcher_1.3.100.v20150511-1540.jar'), '-data', '@user.home/.ultimate']
     # check if ultimate bin is there 
     # if not os.path.isfile(ultimateBin):
     #    print("Ultimate binary not found, expected " + ultimateBin)
@@ -50,12 +51,14 @@ def getBinary():
     return ultimateBin
 
 
-def searchCurrentDir(searchstring):
-    for root, dirs, files in os.walk(os.getcwd()):
+def searchConfigDir(searchstring):
+    
+    for root, dirs, files in os.walk(configdir):
         for name in files:
             if fnmatch.fnmatch(name, searchstring):
                 return os.path.join(root, name)
-        break    
+        break
+    print ("No suitable file found in config dir {0} using search string {1}".format(configdir,searchstring))    
     return 
 
 
@@ -213,7 +216,9 @@ def getSettingsPath(bitprecise, settingsSearchString):
     else:
         print ('Using default analysis')
         settingsSearchString = settingsSearchString + '*_' + 'Default'
-    settingsArgument = searchCurrentDir('*' + settingsSearchString + '*.epf')
+
+    settingsArgument = searchConfigDir('*' + settingsSearchString + '*.epf')
+    
     if settingsArgument == '' or settingsArgument == None:
         print ('No suitable settings file found using ' + settingsSearchString)
         print ('ERROR: UNSUPPORTED PROPERTY') 
@@ -310,7 +315,8 @@ def getToolchainPath(termmode, memDeref, memDerefMemtrack, overflowMode, witness
     else:
         searchString = '*Reach.xml'
     
-    toolchain = searchCurrentDir(searchString);
+    toolchain = searchConfigDir(searchString);
+    
     if toolchain == '' or toolchain == None:
         print ('No suitable toolchain file found using ' + searchString)
         sys.exit(1)
