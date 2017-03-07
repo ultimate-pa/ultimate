@@ -16,6 +16,8 @@ errorPathFileName = 'UltimateCounterExample.errorpath'
 ultimatedir = os.path.dirname(os.path.realpath(__file__))
 configdir = ultimatedir
 datadir = '@user.home/.ultimate'
+witnessdir = ultimatedir
+witnessname = "witness.graphml"
 
 # special strings in ultimate output
 unsupportedSyntaxErrorString = 'ShortDescription: Unsupported Syntax'
@@ -197,6 +199,13 @@ def createCliSettings(checkTermination, validateWitness, prop, architecture, cFi
     else:
         # we are neither in termination nor in validation mode, so we should generate a witness and need 
         # to pass some things to the witness printer
+        ret.append('--witnessprinter.witness.directory')
+        ret.append(witnessdir)
+        ret.append('--witnessprinter.witness.filename')
+        ret.append(witnessname)
+        ret.append('--witnessprinter.write.witness.besides.input.file')
+        ret.append('false')
+        
         ret.append('--witnessprinter.graph.data.specification')
         ret.append(prop)
         ret.append('--witnessprinter.graph.data.producer')
@@ -204,6 +213,7 @@ def createCliSettings(checkTermination, validateWitness, prop, architecture, cFi
         ret.append('--witnessprinter.graph.data.architecture')
         ret.append(architecture)
         ret.append('--witnessprinter.graph.data.programhash')
+
         try:
             sha = subprocess.Popen(['sha1sum', cFile], stdout=subprocess.PIPE).communicate()[0]
             ret.append(sha.split()[0])
@@ -244,6 +254,8 @@ def parseArgs():
     # parse command line arguments
     global configdir
     global datadir
+    global witnessdir
+    global witnessname 
     if ((len(sys.argv) == 2) and (sys.argv[1] == '--version')):
         print (version)
         sys.exit(0)
@@ -251,20 +263,24 @@ def parseArgs():
     parser = argparse.ArgumentParser(description='Ultimate wrapper script for SVCOMP')
     parser.add_argument('--version', action='store_true',
                         help='Print Ultimate\'s version and exit')
-    parser.add_argument('--full-output', action='store_true',
-                        help='Print Ultimate\'s full output to stderr after verification ends')
-    parser.add_argument('--validate', nargs=1, metavar='<file>', type=checkFile,
-                        help='Activate witness validation mode (if supported) and specify a .graphml file as witness')
     parser.add_argument('--config', nargs=1, metavar='<dir>', type=checkDir,
                         help='Specify the directory in which the static config files are located; default is the location of this script')
     parser.add_argument('--data', nargs=1, metavar='<dir>', type=checkDir,
                         help='Specify the directory in which the RCP config files are located; default is .ultimate/ in the users home')
+    parser.add_argument('--full-output', action='store_true',
+                        help='Print Ultimate\'s full output to stderr after verification ends')
+    parser.add_argument('--validate', nargs=1, metavar='<file>', type=checkFile,
+                        help='Activate witness validation mode (if supported) and specify a .graphml file as witness')
     parser.add_argument('--spec', metavar='<file>', nargs=1, type=checkFile, required=True,
                         help='An property (.prp) file from SVCOMP')
     parser.add_argument('--architecture', choices=['32bit', '64bit'], required=True,
                         help='Choose which architecture (defined as per SV-COMP rules) should be assumed')
     parser.add_argument('--file', metavar='<file>', nargs=1, type=checkFile, required=True,
                         help='One C file')
+    parser.add_argument('--witness-dir', nargs=1, metavar='<dir>', type=checkDir,
+                        help='Specify the directory in which witness files should be saved; default is besides the script')
+    parser.add_argument('--witness-name', nargs=1,  
+                        help='Specify a filename for the generated witness; default is witness.graphml')
     
     args = parser.parse_args()
   
@@ -281,6 +297,12 @@ def parseArgs():
     
     if args.config:
         configdir = args.config[0]
+
+    if args.witness-dir:
+        witnessdir = args.witness-dir[0]
+        
+    if args.witness-name:
+        witnessname = args.witness-name[0]
 
     if args.data:
         print ("setting data dir to {0}".format(args.data[0]))
