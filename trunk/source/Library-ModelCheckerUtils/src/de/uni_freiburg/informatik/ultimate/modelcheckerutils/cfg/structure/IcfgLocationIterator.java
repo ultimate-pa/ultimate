@@ -89,6 +89,7 @@ public class IcfgLocationIterator<LOC extends IcfgLocation> implements Iterator<
 		mFinished = new HashSet<>();
 		mWorklist = new ArrayDeque<>();
 		mWorklist.addAll(icfg.getInitialNodes());
+		mFinished.addAll(mWorklist);
 	}
 
 	@Override
