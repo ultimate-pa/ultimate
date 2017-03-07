@@ -116,8 +116,8 @@ public class Svcomp17FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 	};
 	
 	private static final String[] SETTINGS_64BIT = {
-//		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
-//		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf",
+		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf",
+		"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Bitvector.epf",
 	};
 	
 
@@ -126,6 +126,8 @@ public class Svcomp17FoldersAutomizerReach extends AbstractTraceAbstractionTestS
 	
 	private static final String[] TOOLCHAINS = {
 		"AutomizerC.xml",
+//		"AutomizerCInline.xml",
+//		"AutomizerCInlineTransformed.xml",
 	};
 	// @formatter:on
 
