@@ -103,7 +103,7 @@ public interface ILinearInequalityInvariantPatternStrategy<IPT> {
 	 * It is used to individually change the pattern setting (i.e. adding conjuncts/disjuncts) for the given location.
 	 * @param location
 	 */
-	public void changePatternSettingForLocation(final IcfgLocation location);
+	public void changePatternSettingForLocation(final IcfgLocation location, final int round);
 	
 	
 	/**
@@ -111,7 +111,8 @@ public interface ILinearInequalityInvariantPatternStrategy<IPT> {
 	 * @param location
 	 * @param locationsInUnsatCore
 	 */
-	public void changePatternSettingForLocation(final IcfgLocation location, final Set<IcfgLocation> locationsInUnsatCore);
+	public void changePatternSettingForLocation(final IcfgLocation location, final int round, 
+			final Set<IcfgLocation> locationsInUnsatCore);
 
 	public void resetSettings();
 

@@ -1015,7 +1015,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 					final IcfgLocation freqLoc =
 							Collections.max(locs2Frequency.entrySet(), Map.Entry.comparingByValue()).getKey();
 					if ((freqLoc != mStartLocation) && (freqLoc != mErrorLocation)) {
-						mStrategy.changePatternSettingForLocation(freqLoc);
+						mStrategy.changePatternSettingForLocation(freqLoc, mCurrentRound);
 						if (mLogger.isDebugEnabled()) {
 							mLogger.debug("changed setting for most freq. loc: " + freqLoc);
 						}
@@ -1023,7 +1023,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 				} else {
 					for (final IcfgLocation loc : locsInUnsatCore) {
 						if ((loc != mStartLocation) && (loc != mErrorLocation)) {
-							mStrategy.changePatternSettingForLocation(loc, locsInUnsatCore);
+							mStrategy.changePatternSettingForLocation(loc, mCurrentRound, locsInUnsatCore);
 							if (mLogger.isDebugEnabled()) {
 								mLogger.debug("changed setting for loc: " + loc);
 							}
