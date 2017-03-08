@@ -135,7 +135,7 @@ public class RewriteDivision extends TransformerPreprocessor {
 		final boolean fail1 = CHECK_RESULT && isIncorrect(script, old_termwith_def, new_term);
 		final boolean fail2 =
 				CHECK_RESULT_WITH_QUAMTIFIERS && isIncorrectWithQuantifiers(script, old_termwith_def, new_term);
-		return !fail1 || fail2;
+		return !fail1 && !fail2;
 	}
 
 	/**
