@@ -13,12 +13,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 public class DynamicPatternSettingsStrategyWithGlobalTemplateLevel extends DynamicPatternSettingsStrategy {
 	private Pair<Integer, Integer> mCurrentGlobalTemplateLevel;
 
-	public DynamicPatternSettingsStrategyWithGlobalTemplateLevel(int baseDisjuncts, int baseConjuncts, int disjunctsPerRound,
-			int conjunctsPerRound, int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables,
+	public DynamicPatternSettingsStrategyWithGlobalTemplateLevel(final TemplateDimensionsStrategy dimensionsStrat, int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables,
 			boolean alwaysStrictAndNonStrictCopies, boolean useStrictInequalitiesAlternatingly) {
-		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables,
+		super(dimensionsStrat, maxRounds, allProgramVariables,
 				alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);
-		mCurrentGlobalTemplateLevel = new Pair<Integer, Integer>(super.baseDisjuncts, super.baseConjuncts);
+		mCurrentGlobalTemplateLevel = new Pair<Integer, Integer>(dimensionsStrat.getInitialDisjuncts(), dimensionsStrat.getInitialConjuncts());
 	}
 	
 	@Override

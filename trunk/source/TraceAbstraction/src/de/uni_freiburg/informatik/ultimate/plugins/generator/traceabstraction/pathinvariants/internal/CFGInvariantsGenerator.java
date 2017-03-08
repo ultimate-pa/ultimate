@@ -213,30 +213,31 @@ public final class CFGInvariantsGenerator {
 	private static ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>>
 	getStrategy(final boolean useVarsFromUnsatCore, final boolean useLiveVars,
 			final Set<IProgramVar> allProgramVariables,
-			final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables) {
+			final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables,
+			final TemplateDimensionsStrategy dimensionsStrategy) {
 		if (useVarsFromUnsatCore) {
 			if (USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES) {
 				if (USE_DYNAMIC_PATTERN_WITH_BOUNDS) {
-					return new DynamicPatternSettingsStrategyWithBounds(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables,
+					return new DynamicPatternSettingsStrategyWithBounds(dimensionsStrategy, MAX_ROUNDS, allProgramVariables,
 							locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
 							USE_STRICT_INEQUALITIES_ALTERNATINGLY);
 				}
 				if (USE_DYNAMIC_PATTERN_CHANGES_WITH_GLOBAL_TEMPLATE_LEVEL) {
-					return new DynamicPatternSettingsStrategyWithGlobalTemplateLevel(1, 1, 1, 1, MAX_ROUNDS,
+					return new DynamicPatternSettingsStrategyWithGlobalTemplateLevel(dimensionsStrategy, MAX_ROUNDS,
 							allProgramVariables, locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
 							USE_STRICT_INEQUALITIES_ALTERNATINGLY);
 				}
-				return new DynamicPatternSettingsStrategy(1, 2, 1, 1, MAX_ROUNDS, allProgramVariables,
+				return new DynamicPatternSettingsStrategy(dimensionsStrategy, MAX_ROUNDS, allProgramVariables,
 						locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
 						USE_STRICT_INEQUALITIES_ALTERNATINGLY);
 			}
-			return new VarsInUnsatCoreStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables, locations2LiveVariables,
+			return new VarsInUnsatCoreStrategy(dimensionsStrategy, MAX_ROUNDS, allProgramVariables, locations2LiveVariables,
 					ALWAYS_STRICT_AND_NON_STRICT_COPIES, USE_STRICT_INEQUALITIES_ALTERNATINGLY);
 		} else if (useLiveVars) {
-			return new LiveVariablesStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables, locations2LiveVariables,
+			return new LiveVariablesStrategy(dimensionsStrategy, MAX_ROUNDS, allProgramVariables, locations2LiveVariables,
 					ALWAYS_STRICT_AND_NON_STRICT_COPIES, USE_STRICT_INEQUALITIES_ALTERNATINGLY);
 		}
-		return new AllProgramVariablesStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables, allProgramVariables,
+		return new AllProgramVariablesStrategy(dimensionsStrategy, MAX_ROUNDS, allProgramVariables, allProgramVariables,
 				ALWAYS_STRICT_AND_NON_STRICT_COPIES, USE_STRICT_INEQUALITIES_ALTERNATINGLY);
 	}
 	
@@ -293,7 +294,8 @@ public final class CFGInvariantsGenerator {
 		}
 
 		final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy =
-				getStrategy(invSynthSettings.useUnsatCores(), USE_LIVE_VARIABLES, allProgramVars, pathprogramLocs2LiveVars);
+				getStrategy(invSynthSettings.useUnsatCores(), USE_LIVE_VARIABLES, allProgramVars, pathprogramLocs2LiveVars,
+						new TemplateDimensionsStrategy(1, 1, 1, 1));
 
 		if (USE_UNDER_APPROX_FOR_MAX_CONJUNCTS) {
 			for (final Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : loc2underApprox.entrySet()) {

@@ -47,11 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  */
 public abstract class LocationIndependentLinearInequalityInvariantPatternStrategy
 		implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> {
-
-	private final int baseDisjuncts;
-	private final int baseConjuncts;
-	private final int disjunctsPerRound;
-	private final int conjunctsPerRound;
+	
 	private final int maxRounds;
 	protected final Set<IProgramVar> mAllProgramVariables;
 	protected final Set<IProgramVar> mPatternVariables;
@@ -59,37 +55,21 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 	protected Map<IcfgLocation, Set<Term>> mLoc2PatternCoefficents;
 	private boolean mAlwaysStrictAndNonStrictCopies;
 	private boolean mUseStrictInequalitiesAlternatingly;
+	protected TemplateDimensionsStrategy mDimensionsStrategy;
 	
 	/**
 	 * Generates a simple linear inequality invariant pattern strategy.
 	 * 
-	 * @param baseDisjuncts
-	 *            number of conjunctions within the outer disjunction in the
-	 *            pattern, first iteration
-	 * @param baseConjuncts
-	 *            number of inequalities within each conjunction in the pattern,
-	 *            first iteration
-	 * @param disjunctsPerRound
-	 *            number of conjunctions within the outer disjunction added
-	 *            after each round
-	 * @param conjunctsPerRound
-	 *            number of inequalities within each conjunction added after
-	 *            each round
 	 * @param maxRounds
 	 *            maximal number of rounds to be announced by
 	 *            {@link #getMaxRounds()}.
 	 * @param patternVariables 
 	 * @param allProgramVariables 
 	 */
-	public LocationIndependentLinearInequalityInvariantPatternStrategy(
-			final int baseDisjuncts, final int baseConjuncts,
-			final int disjunctsPerRound, final int conjunctsPerRound,
+	public LocationIndependentLinearInequalityInvariantPatternStrategy(final TemplateDimensionsStrategy dimensionsStrat,
 			final int maxRounds, Set<IProgramVar> allProgramVariables, Set<IProgramVar> patternVariables,
 			boolean alwaysStrictAndNonStrictCopies, boolean useStrictInequalitiesAlternatingly) {
-		this.baseConjuncts = baseConjuncts;
-		this.baseDisjuncts = baseDisjuncts;
-		this.disjunctsPerRound = disjunctsPerRound;
-		this.conjunctsPerRound = conjunctsPerRound;
+		mDimensionsStrategy = dimensionsStrat;
 		this.maxRounds = maxRounds;
 		mAllProgramVariables = allProgramVariables;
 		mPatternVariables = patternVariables;
@@ -98,18 +78,6 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 		mAlwaysStrictAndNonStrictCopies = alwaysStrictAndNonStrictCopies;
 		mUseStrictInequalitiesAlternatingly = useStrictInequalitiesAlternatingly;
 	}
-
-//	/**
-//	 * {@inheritDoc}
-//	 */
-//	@Override
-//	public int[] getDimensions(final Location location, final int round) {
-//		return new int[] { baseDisjuncts + round * disjunctsPerRound,
-//				baseConjuncts + round * conjunctsPerRound };
-//		// 2015-10-27: Use the following instead to obtain two disjuncts
-//		// consisting of one strict-nonstrict conjunction pair each. 
-////		return new int[] { 2, 1};
-//	}
 
 	/**
 	 * {@inheritDoc}
@@ -123,15 +91,6 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 	public Collection<Collection<AbstractLinearInvariantPattern>> getInvariantPatternForLocation(IcfgLocation location, int round, Script solver, String prefix) {
 		Set<Term> patternCoefficients = new HashSet<>();
 		final int[] dimensions = getDimensions(location, round);
-//		// Hack (Remove asap)
-//		int[] dimensions = getDimensions(location, round);
-//		String locString = location.toString();
-//		int hcode = location.hashCode();
-//		if (location.hashCode() == 583607119) {
-//			dimensions = new int[] {1, 1};
-//		} else if (location.hashCode() == 495027291) {
-//			dimensions = new int[] {1, 2};
-//		}
 		// Build invariant pattern
 		final Collection<Collection<AbstractLinearInvariantPattern>> disjunction = new ArrayList<>(dimensions[0]);
 		for (int i = 0; i < dimensions[0]; i++) {
@@ -198,19 +157,7 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 	 */
 	@Override
 	public int[] getDimensions(IcfgLocation location, int round) {
-		if (round == 0) {
-			return new int[] {1, 1};
-		} else if (round == 1) {
-			return new int[] {1, 2};
-		} else if (round == 2) {
-			return new int[] {2, 2};
-		} else {
-			return new int[] { baseDisjuncts + round * disjunctsPerRound,
-					baseConjuncts + round * conjunctsPerRound };
-		}
-		// 2015-10-27: Use the following instead to obtain two disjuncts
-		// consisting of one strict-nonstrict conjunction pair each. 
-//		return new int[] { 2, 1};
+		return mDimensionsStrategy.getDimensions(location, round);
 	}
 	
 	public void resetSettings() {
