@@ -298,11 +298,11 @@ def parseArgs():
     if args.config:
         configdir = args.config[0]
 
-    if args.witness-dir:
-        witnessdir = args.witness-dir[0]
+    if args.witness_dir:
+        witnessdir = args.witness_dir[0]
         
-    if args.witness-name:
-        witnessname = args.witness-name[0]
+    if args.witness_name:
+        witnessname = args.witness_name[0]
 
     if args.data:
         print ("setting data dir to {0}".format(args.data[0]))
