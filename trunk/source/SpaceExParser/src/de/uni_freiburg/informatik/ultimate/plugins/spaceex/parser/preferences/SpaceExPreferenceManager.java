@@ -72,7 +72,6 @@ public class SpaceExPreferenceManager {
 	private final AtomicInteger mRenameID;
 	// the forbiddengroups hold the specified locations + variables of the "forbidden" property.
 	private final List<SpaceExForbiddenGroup> mForbiddenGroups;
-	private final Map<String, List<String>> mForbiddenToForbiddenlocs;
 	// Map that holds the parallel composition of each preference group.
 	private Map<Integer, HybridAutomaton> mGroupIdToParallelComposition;
 	private boolean mHasPreferenceGroups;
@@ -97,7 +96,6 @@ public class SpaceExPreferenceManager {
 		mPreferenceGroups = new HashMap<>();
 		mGroupIdToParallelComposition = new HashMap<>();
 		mForbiddenGroups = new ArrayList<>();
-		mForbiddenToForbiddenlocs = new HashMap<>();
 		mRequiresRename = new HashMap<>();
 		mRenameID = new AtomicInteger(0);
 		mMathHelper = new SpaceExMathHelper(logger);
@@ -437,10 +435,6 @@ public class SpaceExPreferenceManager {
 			}
 		}
 		return false;
-	}
-	
-	public Map<String, List<String>> getForbiddenToForbiddenlocs() {
-		return mForbiddenToForbiddenlocs;
 	}
 	
 	public Map<Integer, Map<String, String>> getGroupTodirectAssingment() {

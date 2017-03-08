@@ -39,6 +39,7 @@ public class Location {
 	private String mInvariant;
 	private String mFlow;
 	private boolean mIsForbidden;
+	private String mForbiddenConstraint;
 	
 	private final List<Transition> mOutgoingTransitions;
 	private final List<Transition> mIncomingTransitions;
@@ -63,6 +64,7 @@ public class Location {
 		
 		mXPos = ((mId * 180) + 320);
 		mYPos = ((mId * 140) + 60);
+		mForbiddenConstraint = "";
 	}
 	
 	public int getId() {
@@ -104,6 +106,18 @@ public class Location {
 	
 	public void setForbidden(final boolean isForbidden) {
 		mIsForbidden = isForbidden;
+	}
+	
+	public String getForbiddenConstraint() {
+		return mForbiddenConstraint;
+	}
+	
+	public void setForbiddenConstraint(final String mForbidden) {
+		if (mForbiddenConstraint.isEmpty()) {
+			mForbiddenConstraint = mForbidden;
+		} else {
+			mForbiddenConstraint += "|" + mForbidden;
+		}
 	}
 	
 	protected void addOutgoingTransition(final Transition t) {
