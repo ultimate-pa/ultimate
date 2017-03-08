@@ -45,6 +45,7 @@ class PropParser:
 
     prop_regex = re.compile('^\s*CHECK\s*\(\s*init\s*\((.*)\)\s*,\s*LTL\((.*)\)\s*\)\s*$', re.MULTILINE)
     funid_regex = re.compile('\s*(\S*)\s*\(.*\)')
+    forbidden_words = ['valid-free', 'valid-deref', 'valid-memtrack', 'end', 'overflow', 'call']
         
     def __init__(self, propfile):
         self.propfile = propfile 
@@ -55,7 +56,9 @@ class PropParser:
         self.mem_free = False
         self.overflow = False
         self.reach = False
+        self.ltl = False
         self.init = None
+        self.ltlformula = None
 
         for match in self.prop_regex.finditer(self.content):
             init, formula = match.groups()
@@ -80,6 +83,13 @@ class PropParser:
                 self.termination = True
             elif formula == 'G ! overflow': 
                 self.overflow = True
+            elif not check_string_contains(formula, self.forbidden_words):
+                # its ltl
+                if self.ltl:
+                    raise RuntimeError('We support only one (real) LTL property per .prp file (have seen {0} and {1}'
+                                   .format(self.ltlformula , formula))    
+                self.ltl = True
+                self.ltlformula = formula 
             else:
                 raise RuntimeError('The formula {0} is unknown'.format(formula))
     
@@ -322,6 +332,12 @@ def check_dir(d):
     if not os.path.isdir(d):
         raise argparse.ArgumentTypeError("Directory %s does not exist" % d)
     return d
+
+def check_string_contains(string, words):
+    for word in words: 
+        if word in string:
+            return True
+    return False
 
 def parse_args():
     # parse command line arguments
