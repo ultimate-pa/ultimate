@@ -6,6 +6,7 @@ import subprocess
 import os
 import fnmatch
 import argparse
+import re
 
 version = '47e1251f'
 toolname = 'wrong toolname'
@@ -41,27 +42,49 @@ overflow_false_string = 'overflow possible'
 class PropParser:
     # 117: Support init() function of .prp in SVCOMP wrapper script
     # 118: create .ltl file from .prp file as auxilary input in SVCOMP wrapper script
+
+    prop_regex = re.compile('^\s*CHECK\s*\(\s*init\s*\((.*)\)\s*,\s*LTL\((.*)\)\s*\)\s*$', re.MULTILINE)
+    funid_regex = re.compile('\s*(\S*)\s*\(.*\)')
         
     def __init__(self, propfile):
         self.propfile = propfile 
         self.content = open(propfile, 'r').read()
         self.termination = False
         self.mem_deref = False
-        self.mem_deref_memtrack = False
+        self.mem_memtrack = False
+        self.mem_free = False
         self.overflow = False
+        self.reach = False
+        self.init = None
 
-        for line in self.content:
-            if line.find('valid-deref') != -1:
+        for match in self.prop_regex.finditer(self.content):
+            init, formula = match.groups()
+            
+            fun_match = self.funid_regex.match(init)
+            if not fun_match:
+                raise RuntimeError('No init specified in this check')
+            if self.init and self.init != fun_match.group(1):
+                raise RuntimeError('We do not support multiple and different init functions (have seen {0} and {1}'
+                                   .format(self.init, fun_match.group(1)))
+            self.init = fun_match.group(1)
+            
+            if formula == 'G ! call(__VERIFIER_error())':
+                self.reach = True
+            elif formula == 'G valid-free': 
+                self.mem_free = True
+            elif formula == 'G valid-deref':
                 self.mem_deref = True
-            if line.find('valid-memtrack') != -1:
-                self.mem_deref_memtrack = True
-            if line.find('LTL(F end)') != -1:
+            elif formula == 'G valid-memtrack':
+                self.mem_memtrack = True
+            elif formula == 'F end': 
                 self.termination = True
-            if line.find('overflow') != -1:
+            elif formula == 'G ! overflow': 
                 self.overflow = True
+            else:
+                raise RuntimeError('The formula {0} is unknown'.format(formula))
     
     def get_init_method(self):
-        return ''
+        return self.init
     
     def get_content(self):
         return self.content
@@ -69,15 +92,20 @@ class PropParser:
     def is_termination(self):
         return self.termination
     
-    def is_mem_deref(self):
-        return self.mem_deref
+    def is_only_mem_deref(self):
+        return self.mem_deref and not self.mem_free and not self.mem_memtrack
+
+    def is_any_mem(self):
+        return self.mem_deref or self.mem_free or self.mem_memtrack
 
     def is_mem_deref_memtrack(self):
-        return self.mem_deref_memtrack        
+        return self.mem_deref and self.mem_memtrack    
 
     def is_overflow(self):
         return self.overflow
-
+    
+    def is_reach(self):
+        return self.reach
 
 def get_binary():
     # currently unused because of rcp launcher bug 
@@ -367,10 +395,10 @@ def parse_args():
 
 def create_settings_search_string(prop, architecture):
     settings_search_string = ''
-    if prop.is_mem_deref() and prop.is_mem_deref_memtrack():
+    if prop.is_mem_deref_memtrack():
         print ('Checking for memory safety (deref-memtrack)')
         settings_search_string = 'DerefFreeMemtrack'
-    elif prop.is_mem_deref():
+    elif prop.is_only_mem_deref():
         print ('Checking for memory safety (deref)')
         settings_search_string = 'Deref'
     elif prop.is_termination():
@@ -392,7 +420,7 @@ def get_toolchain_path(prop, witnessmode):
         search_string = '*Termination.xml'
     elif witnessmode:
         search_string = '*WitnessValidation.xml'
-    elif prop.is_mem_deref() and prop.is_mem_deref_memtrack():
+    elif prop.is_mem_deref_memtrack():
         search_string = '*MemDerefMemtrack.xml'
     else:
         search_string = '*Reach.xml'
@@ -447,7 +475,7 @@ def main():
         print('Writing human readable error path to file {}'.format(error_path_file_name))
         err_output_file = open(error_path_file_name, 'wb')
         err_output_file.write(error_path.encode('utf-8'))
-        if prop.is_mem_deref():
+        if prop.is_any_mem():
             result = 'FALSE({})'.format(mem_result)
         elif overflow_result: 
             result = 'FALSE(OVERFLOW)'
