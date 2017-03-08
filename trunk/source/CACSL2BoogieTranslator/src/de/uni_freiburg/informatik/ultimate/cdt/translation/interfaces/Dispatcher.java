@@ -282,7 +282,7 @@ public abstract class Dispatcher {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		String checkMethod = SFO.EMPTY;
 		try {
-			checkMethod = prefs.getString(CACSLPreferenceInitializer.LABEL_MAINPROC);
+			checkMethod = prefs.getString(CACSLPreferenceInitializer.MAINPROC_LABEL);
 		} catch (final Exception e) {
 			throw new IllegalArgumentException("Unable to determine specified checked method.");
 		}

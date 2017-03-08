@@ -255,11 +255,16 @@ def flatten(l):
             yield el   
 
 def create_cli_settings(prop, validate_witness, architecture, c_file):
+    ret = []
+    
+    # append detected init method 
+    ret.append('--cacsl2boogietranslator.entry.function')
+    ret.append(prop.get_init_method())
+    
     if prop.is_termination():
         # we can neither validate nor produce witnesses in termination mode, so no additional arguments are required
-        return []
+        return ret    
     
-    ret = []
     if validate_witness:
         # we need to disable hoare triple generation as workaround for an internal bug
         ret.append('--traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg')

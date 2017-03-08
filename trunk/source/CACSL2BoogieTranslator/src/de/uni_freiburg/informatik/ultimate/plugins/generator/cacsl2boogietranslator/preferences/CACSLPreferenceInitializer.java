@@ -42,8 +42,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  */
 public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 
+	private static final String MAINPROC_DESC =
+			"Specify the entry function of the program. " + "Use an empty string for library mode "
+					+ "(i.e., assume all globals are non-deterministic and verify each function in isolation).";
 	public static final String LABEL_MODE = "Translation Mode:";
-	public static final String LABEL_MAINPROC = "Checked method. Library mode if empty.";
+	public static final String MAINPROC_LABEL = "Entry function";
+	private static final String MAINPROC_DEFAULT = "main";
 	public static final String LABEL_CHECK_SVCOMP_ERRORFUNCTION =
 			"Check unreachability of error function in SV-COMP mode";
 	public static final String LABEL_CHECK_POINTER_VALIDITY = "Pointer base address is valid at dereference";
@@ -98,7 +102,13 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 
 	public enum MemoryModel {
 		HoenickeLindenmann_Original, // one data array for each boogie type
-		HoenickeLindenmann_1ByteResolution, HoenickeLindenmann_2ByteResolution, HoenickeLindenmann_4ByteResolution,
+
+		HoenickeLindenmann_1ByteResolution,
+
+		HoenickeLindenmann_2ByteResolution,
+
+		HoenickeLindenmann_4ByteResolution,
+
 		HoenickeLindenmann_8ByteResolution,
 	}
 
@@ -116,7 +126,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<>(LABEL_MODE, TranslationMode.SV_COMP14, PreferenceType.Radio,
 						TranslationMode.values()),
-				new UltimatePreferenceItem<>(LABEL_MAINPROC, "main", PreferenceType.String),
+				new UltimatePreferenceItem<>(MAINPROC_LABEL, MAINPROC_DEFAULT, MAINPROC_DESC, PreferenceType.String),
 				new UltimatePreferenceItem<>(LABEL_CHECK_SVCOMP_ERRORFUNCTION, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CHECK_POINTER_VALIDITY, PointerCheckMode.ASSERTandASSUME,
 						PreferenceType.Combo, PointerCheckMode.values()),
