@@ -36,33 +36,59 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 
-public class ApplicationTermEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
+public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
 		implements INaryTermEvaluator<VALUE, STATE, VARDECL> {
 	
 	private final int mArity;
 	private final List<ITermEvaluator<VALUE, STATE, VARDECL>> mSubEvaluators;
 	private final String mOperator;
+	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 	private final Supplier<STATE> mBottomStateSupplier;
-
+	private final VALUE mTopValue;
+	private final int mMaxParallelStates;
+	
 	private static final String TRUE = "true";
 	private static final String FALSE = "false";
-	
-	protected ApplicationTermEvaluator(final int arity, final String operator,
+
+	protected ApplicationTermEvaluator(final int arity, final String operator, final int maxParallelStates,
+			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory,
 			final Supplier<STATE> bottomStateSupplier) {
 		mArity = arity;
 		mSubEvaluators = new ArrayList<>();
 		mOperator = operator;
+		mNonrelationalValueFactory = nonrelationalValueFactory;
+		mMaxParallelStates = maxParallelStates;
 		mBottomStateSupplier = bottomStateSupplier;
+		mTopValue = mNonrelationalValueFactory.createTopValue();
 	}
-
+	
 	@Override
 	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
+		assert currentState != null;
+		
+		if (mOperator == TRUE) {
+			return onlyBooleanValue(BooleanValue.TRUE);
+		} else if (mOperator == FALSE) {
+			return onlyBooleanValue(BooleanValue.FALSE);
+		}
+		
+		// NonrelationalEvaluationResult<VALUE> returnResult = new NonrelationalEvaluationResult<>(value, booleanValue);
 		// TODO Auto-generated method stub
 		return null;
 	}
 	
+	private List<IEvaluationResult<VALUE>> onlyBooleanValue(final BooleanValue value) {
+		assert value != null;
+		assert value != BooleanValue.INVALID;
+		return Collections.singletonList(new NonrelationalEvaluationResult<>(mTopValue, value));
+	}
+
 	@Override
 	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evaluationResult, final STATE state) {
 		if (mOperator == TRUE) {
@@ -70,11 +96,11 @@ public class ApplicationTermEvaluator<VALUE, STATE extends IAbstractState<STATE,
 		} else if (mOperator == FALSE) {
 			return Collections.singletonList(mBottomStateSupplier.get());
 		}
-
+		
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 	@Override
 	public void addSubEvaluator(final ITermEvaluator<VALUE, STATE, VARDECL> evaluator) {
 		if (mSubEvaluators.size() >= mArity) {
@@ -83,12 +109,12 @@ public class ApplicationTermEvaluator<VALUE, STATE extends IAbstractState<STATE,
 		}
 		mSubEvaluators.add(evaluator);
 	}
-	
+
 	@Override
 	public boolean hasFreeOperands() {
 		return mSubEvaluators.size() < mArity;
 	}
-	
+
 	@Override
 	public boolean containsBool() {
 		if (mArity == 0) {
@@ -100,31 +126,31 @@ public class ApplicationTermEvaluator<VALUE, STATE extends IAbstractState<STATE,
 							+ "unsupported or not boolean: " + mOperator);
 		}
 		return mSubEvaluators.stream().anyMatch(eval -> eval.containsBool());
-
+		
 	}
-	
+
 	@Override
 	public Set<String> getVarIdentifiers() {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 	@Override
 	public int getArity() {
 		return mArity;
 	}
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-
+		
 		sb.append("(");
 		sb.append(mOperator);
 		sb.append(" ");
 		sb.append(mSubEvaluators.stream().map(sub -> sub.toString()).collect(Collectors.joining(" ")));
 		sb.append(")");
-
+		
 		return sb.toString();
 	}
-
+	
 }

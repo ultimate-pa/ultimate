@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.termevaluator.ITermEvaluator;
@@ -73,6 +74,8 @@ public abstract class NonrelationalTermProcessor<VALUE extends INonrelationalVal
 	
 	protected abstract ITermEvaluatorFactory<VALUE, STATE, IProgramVarOrConst>
 			createEvaluatorFactory(int maxParallelStates);
+	
+	protected abstract INonrelationalValueFactory<VALUE> getNonrelationalValueFactory();
 
 	protected List<STATE> process(final Term term, final STATE oldState) {
 		mLogger.debug("Term processor is analyzing term: " + term);
@@ -126,7 +129,8 @@ public abstract class NonrelationalTermProcessor<VALUE extends INonrelationalVal
 			final String fName = term.getFunction().getName();
 			
 			final ITermEvaluator<VALUE, STATE, IProgramVarOrConst> applicationTerm =
-					mEvaluatorFactory.createApplicationTerm(term.getParameters().length, fName, mBottomStateSupplier);
+					mEvaluatorFactory.createApplicationTerm(term.getParameters().length, fName,
+							getNonrelationalValueFactory(), mBottomStateSupplier);
 			mExpressionEvaluator.addEvaluator(applicationTerm);
 			
 			for (final Term t : term.getParameters()) {

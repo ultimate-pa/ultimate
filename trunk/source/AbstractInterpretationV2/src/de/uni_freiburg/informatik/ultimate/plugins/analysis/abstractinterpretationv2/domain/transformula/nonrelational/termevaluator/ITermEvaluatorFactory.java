@@ -32,6 +32,8 @@ import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
 
 /**
  * Interface to create {@link ITermEvaluator}s for different abstract domains.
@@ -39,12 +41,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public interface ITermEvaluatorFactory<VALUE, STATE extends IAbstractState<STATE, VARDECL>, VARDECL> {
+public interface ITermEvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE, VARDECL>, VARDECL> {
 	
 	INaryTermEvaluator<VALUE, STATE, VARDECL> createApplicationTerm(final int arity, final String operator,
-			Supplier<STATE> bottomStateSupplier);
-
+			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory,
+			final Supplier<STATE> bottomStateSupplier);
+	
 	ITermEvaluator<VALUE, STATE, VARDECL> createConstantValueEvaluator(final Object value);
-
+	
 	ITermEvaluator<VALUE, STATE, VARDECL> createVariableTermEvaluator(final String variableName, final Sort sort);
 }

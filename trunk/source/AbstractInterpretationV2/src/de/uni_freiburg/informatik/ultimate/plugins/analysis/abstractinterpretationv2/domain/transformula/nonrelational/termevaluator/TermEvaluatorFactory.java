@@ -36,23 +36,29 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 
 public class TermEvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, IProgramVarOrConst>>
 		implements ITermEvaluatorFactory<VALUE, STATE, IProgramVarOrConst> {
 	
 	private final Function<Object, VALUE> mConstantValueExpressionEvaluatorCreator;
+	private final int mMaxParallelStates;
 	
-	public TermEvaluatorFactory(final Function<Object, VALUE> constantValueEvaluatorCreator) {
+	public TermEvaluatorFactory(final int maxParallelStates,
+			final Function<Object, VALUE> constantValueEvaluatorCreator) {
+		mMaxParallelStates = maxParallelStates;
 		mConstantValueExpressionEvaluatorCreator = constantValueEvaluatorCreator;
 	}
 	
 	@Override
 	public INaryTermEvaluator<VALUE, STATE, IProgramVarOrConst> createApplicationTerm(final int arity,
-			final String operator, final Supplier<STATE> bottomStateSupplier) {
+			final String operator, final INonrelationalValueFactory<VALUE> nonrelationalValueFactory,
+			final Supplier<STATE> bottomStateSupplier) {
 		assert arity >= 0;
 		assert operator != null;
-		return new ApplicationTermEvaluator<>(arity, operator, bottomStateSupplier);
+		return new ApplicationTermEvaluator<>(arity, operator, mMaxParallelStates, nonrelationalValueFactory,
+				bottomStateSupplier);
 	}
 	
 	@Override

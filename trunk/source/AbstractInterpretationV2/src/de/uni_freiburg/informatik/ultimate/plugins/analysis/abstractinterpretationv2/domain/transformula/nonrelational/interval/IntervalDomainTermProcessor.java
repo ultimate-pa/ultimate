@@ -32,9 +32,11 @@ import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalValueFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.NonrelationalTermProcessor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.termevaluator.ITermEvaluatorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.termevaluator.TermEvaluatorFactory;
@@ -48,17 +50,27 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class IntervalDomainTermProcessor
 		extends NonrelationalTermProcessor<IntervalDomainValue, IntervalDomainState<IProgramVarOrConst>> {
 	
+	private INonrelationalValueFactory<IntervalDomainValue> mIntervalValueFactory;
+	
 	public IntervalDomainTermProcessor(final ILogger logger, final int maxParallelStates,
 			final Supplier<IntervalDomainState<IProgramVarOrConst>> bottomStateSupplier) {
 		super(logger, maxParallelStates, bottomStateSupplier);
 	}
-	
+
 	@Override
-	public ITermEvaluatorFactory<IntervalDomainValue, IntervalDomainState<IProgramVarOrConst>, IProgramVarOrConst>
+	protected INonrelationalValueFactory<IntervalDomainValue> getNonrelationalValueFactory() {
+		if (mIntervalValueFactory == null) {
+			mIntervalValueFactory = new IntervalValueFactory();
+		}
+		return mIntervalValueFactory;
+	}
+
+	@Override
+	protected ITermEvaluatorFactory<IntervalDomainValue, IntervalDomainState<IProgramVarOrConst>, IProgramVarOrConst>
 			createEvaluatorFactory(final int maxParallelStates) {
 		final TermEvaluatorFactory.Function<Object, IntervalDomainValue> valueEvaluatorCreator =
 				(value) -> new IntervalDomainValue(new IntervalValue(value.toString()),
 						new IntervalValue(value.toString()));
-		return new TermEvaluatorFactory<>(valueEvaluatorCreator);
+		return new TermEvaluatorFactory<>(maxParallelStates, valueEvaluatorCreator);
 	}
 }
