@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.Exam
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.LoopDetectionBB;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.woelfing.LoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.DNF;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.ModuloNeighborTransformation;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteDivision;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -155,6 +156,9 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			return applyMapElimination(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case REMOVE_DIV_MOD:
 			return applyRemoveDivMod(icfg, locFac, outlocClass, backtranslationTracker, fac);
+		case MODULO_NEIGHBOR:
+			return applyModuloNeighbor(icfg, locFac, outlocClass, backtranslationTracker, fac);
+			
 		default:
 			throw new UnsupportedOperationException("Unknown transformation type: " + transformation);
 		}
@@ -193,6 +197,18 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		IIcfg<OUTLOC> result;
 		final ITransformulaTransformer transformer =
 				new LocalTransformer(new RewriteDivision(fac), icfg.getCfgSmtToolkit().getManagedScript(), fac);
+		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(icfg, locFac,
+				backtranslationTracker, outlocClass, "TransformedIcfg", transformer);
+		result = icfgTransformer.getResult();
+		return result;
+	}
+	
+	private static <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyModuloNeighbor(
+			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
+			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
+		IIcfg<OUTLOC> result;
+		final ITransformulaTransformer transformer =
+				new LocalTransformer(new ModuloNeighborTransformation(true), icfg.getCfgSmtToolkit().getManagedScript(), fac);
 		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(icfg, locFac,
 				backtranslationTracker, outlocClass, "TransformedIcfg", transformer);
 		result = icfgTransformer.getResult();
