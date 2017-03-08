@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.core.lib.models.annotation;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 
 /**
  * When the RCFG is used as a Büchi program, use this Annotation to mark accepting Locations.
@@ -47,6 +48,14 @@ public class BuchiProgramAcceptingStateAnnotation extends ModernAnnotations {
 
 	public static BuchiProgramAcceptingStateAnnotation getAnnotation(final IElement node) {
 		return ModelUtils.getAnnotation(node, KEY, a -> (BuchiProgramAcceptingStateAnnotation) a);
+	}
+
+	@Override
+	public IAnnotations merge(final IAnnotations other) {
+		if (other instanceof BuchiProgramAcceptingStateAnnotation) {
+			return this;
+		}
+		return super.merge(other);
 	}
 
 }
