@@ -20,22 +20,18 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LTL2Aut plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE LTL2Aut plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE LTL2Aut plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.ltl2aut;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List; 
+import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.models.ObjectContainer;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.model.IGenerator;
@@ -48,9 +44,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
-import de.uni_freiburg.informatik.ultimate.model.acsl.ast.GlobalLTLInvariant;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * @author Vincent Langenfeld (langenfv@informatik.uni-freiburg.de)
+ */
 public class LTL2aut implements IGenerator, ISource {
 
 	protected List<String> mFileNames;
@@ -61,11 +60,11 @@ public class LTL2aut implements IGenerator, ISource {
 	private LTL2autObserver mObserver;
 	private IUltimateServiceProvider mServices;
 	private IToolchainStorage mStorage;
-	private String[] mFileTypes;
+	private final String[] mFileTypes;
 	private ILogger mLogger;
 
 	public LTL2aut() {
-		mFileNames = new ArrayList<String>();
+		mFileNames = new ArrayList<>();
 		mFileTypes = new String[] { "ltl" };
 	}
 
@@ -73,7 +72,7 @@ public class LTL2aut implements IGenerator, ISource {
 	public void init() {
 		mProcess = false;
 		mUseful = 0;
-		
+
 	}
 
 	@Override
@@ -88,7 +87,7 @@ public class LTL2aut implements IGenerator, ISource {
 
 	@Override
 	public ModelType getOutputDefinition() {
-		final List<String> filenames = new ArrayList<String>();
+		final List<String> filenames = new ArrayList<>();
 		filenames.add("Hardcoded");
 
 		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.AST, filenames);
@@ -113,7 +112,7 @@ public class LTL2aut implements IGenerator, ISource {
 	}
 
 	@Override
-	public void setInputDefinition(ModelType graphType) {
+	public void setInputDefinition(final ModelType graphType) {
 		switch (graphType.getCreator()) {
 		case "de.uni_freiburg.informatik.ultimate.boogie.parser":
 		case "de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator":
@@ -129,7 +128,7 @@ public class LTL2aut implements IGenerator, ISource {
 	@Override
 	public List<IObserver> getObservers() {
 		mObserver = new LTL2autObserver(mServices, mStorage);
-		final ArrayList<IObserver> observers = new ArrayList<IObserver>();
+		final ArrayList<IObserver> observers = new ArrayList<>();
 		if (mProcess && !mSkip) {
 			observers.add(mObserver);
 		}
@@ -147,18 +146,18 @@ public class LTL2aut implements IGenerator, ISource {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage storage) {
+	public void setToolchainStorage(final IToolchainStorage storage) {
 		mStorage = storage;
 	}
 
 	@SuppressWarnings("rawtypes")
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
-		final Collection<CounterExampleResult> cex = ResultUtil.filterResults(services.getResultService().getResults(),
-				CounterExampleResult.class);
+		final Collection<CounterExampleResult> cex =
+				ResultUtil.filterResults(services.getResultService().getResults(), CounterExampleResult.class);
 		mSkip = !cex.isEmpty();
-		mLogger = mServices.getLoggingService().getLogger( Activator.PLUGIN_NAME);
+		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_NAME);
 	}
 
 	@Override
@@ -173,7 +172,7 @@ public class LTL2aut implements IGenerator, ISource {
 	}
 
 	@Override
-	public boolean parseable(File[] files) {
+	public boolean parseable(final File[] files) {
 		for (final File f : files) {
 			if (!parseable(f)) {
 				return false;
@@ -183,7 +182,7 @@ public class LTL2aut implements IGenerator, ISource {
 	}
 
 	@Override
-	public boolean parseable(File file) {
+	public boolean parseable(final File file) {
 		for (final String s : getFileTypes()) {
 			if (file.getName().endsWith(s)) {
 				return true;
@@ -193,15 +192,14 @@ public class LTL2aut implements IGenerator, ISource {
 	}
 
 	@Override
-	public IElement parseAST(File[] files) throws Exception {
+	public IElement parseAST(final File[] files) throws Exception {
 		return null;
 	}
 
-
 	@Override
-	public IElement parseAST(File file) throws Exception {
+	public IElement parseAST(final File file) throws Exception {
 		mUseful++;
-		LTLFileParser ltlFileParser = new LTLFileParser(mLogger);
+		final LTLFileParser ltlFileParser = new LTLFileParser(mLogger);
 		return ltlFileParser.parse(file);
 	}
 
@@ -211,8 +209,8 @@ public class LTL2aut implements IGenerator, ISource {
 	}
 
 	@Override
-	public void setPreludeFile(File prelude) {
-		// TODO Auto-generated method stub
+	public void setPreludeFile(final File prelude) {
+		// not needed
 	}
 
 }
