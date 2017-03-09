@@ -125,7 +125,7 @@ public class ModuloNeighborTransformation extends TransformerPreprocessor {
 							final Term lgtZero = mScript.term("<", dividend, divisor);
 							leftInterval = mScript.term("and", geqleftBound, lgtZero);
 						}
-						final Term resultForLeftInterval = mScript.term("+", divisor, dividend);
+						final Term resultForLeftInterval = mScript.term("+", dividend, divisor);
 
 						Term rightInterval;
 						{
@@ -133,7 +133,7 @@ public class ModuloNeighborTransformation extends TransformerPreprocessor {
 							final Term lgtrightBound = mScript.term("<", dividend, mScript.term("+", divisor, divisor));
 							rightInterval = mScript.term("and", geqleftBound, lgtrightBound);
 						}
-						final Term resultForRightInterval = mScript.term("-", divisor, dividend);
+						final Term resultForRightInterval = mScript.term("-", dividend, divisor);
 						result = mScript.term("ite", inRange, dividend,
 								mScript.term("ite", leftInterval, resultForLeftInterval,
 										mScript.term("ite", rightInterval, resultForRightInterval, appTerm)));
