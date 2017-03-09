@@ -170,7 +170,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
 				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
 		return new LoopAccelerationIcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass,
-				"IcfgWithLoopAccelerationWoelfing", transformer).getResult();
+				"IcfgWithLoopAccelerationWoelfing", transformer, mServices).getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationBiesenbach(

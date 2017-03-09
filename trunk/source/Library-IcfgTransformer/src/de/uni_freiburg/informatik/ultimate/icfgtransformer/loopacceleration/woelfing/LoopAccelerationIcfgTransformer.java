@@ -38,6 +38,7 @@ import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
@@ -69,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  *
  */
 public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
-implements IIcfgTransformer<OUTLOC> {
+		implements IIcfgTransformer<OUTLOC> {
 
 	private final ILogger mLogger;
 	private final IIcfg<OUTLOC> mResultIcfg;
@@ -97,11 +98,12 @@ implements IIcfgTransformer<OUTLOC> {
 	 * @param transformer
 	 *            The transformer that should be applied to each transformula of each transition of the input
 	 *            {@link IIcfg} to create a new {@link IIcfg}.
+	 * @param services
 	 */
 	public LoopAccelerationIcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
 			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
-			final ITransformulaTransformer transformer) {
+			final ITransformulaTransformer transformer, final IUltimateServiceProvider services) {
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
 		mLogger = Objects.requireNonNull(logger);
 		mTransformer = Objects.requireNonNull(transformer);
@@ -109,6 +111,11 @@ implements IIcfgTransformer<OUTLOC> {
 		mLoopEntryTransitions = new HashSet<>();
 		mBackbones = new HashMap<>();
 		mScript = origIcfg.getCfgSmtToolkit().getManagedScript();
+
+		// sample for quantifier elimination
+		// final Term quantifiedTerm = null;
+		// final Term result = PartialQuantifierElimination.tryToEliminate(services, mLogger, mScript, quantifiedTerm,
+		// SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 		// perform transformation last
 		final BasicIcfg<OUTLOC> resultIcfg =
@@ -228,10 +235,10 @@ implements IIcfgTransformer<OUTLOC> {
 
 	/**
 	 * Calculates a TransFormula that holds after the given backbone was taken once.
+	 *
 	 * @param backbone
 	 *            A Backbone.
-	 * @return
-	 *            A Transformula.
+	 * @return A Transformula.
 	 */
 	private TransFormula getTransformulaForBackbone(final Backbone backbone) {
 		Term term = mScript.getScript().term("true");
