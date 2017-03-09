@@ -158,7 +158,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			return applyRemoveDivMod(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case MODULO_NEIGHBOR:
 			return applyModuloNeighbor(icfg, locFac, outlocClass, backtranslationTracker, fac);
-			
+
 		default:
 			throw new UnsupportedOperationException("Unknown transformation type: " + transformation);
 		}
@@ -179,7 +179,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
 				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
 		return new LoopDetectionBB<>(mLogger, icfg, outlocClass, locFac, "IcfgDuplicate", transformer,
-				backtranslationTracker).getResult();
+				backtranslationTracker, mServices).getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationEx(
@@ -202,13 +202,13 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		result = icfgTransformer.getResult();
 		return result;
 	}
-	
+
 	private static <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyModuloNeighbor(
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
 			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
 		IIcfg<OUTLOC> result;
-		final ITransformulaTransformer transformer =
-				new LocalTransformer(new ModuloNeighborTransformation(true), icfg.getCfgSmtToolkit().getManagedScript(), fac);
+		final ITransformulaTransformer transformer = new LocalTransformer(new ModuloNeighborTransformation(true),
+				icfg.getCfgSmtToolkit().getManagedScript(), fac);
 		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(icfg, locFac,
 				backtranslationTracker, outlocClass, "TransformedIcfg", transformer);
 		result = icfgTransformer.getResult();

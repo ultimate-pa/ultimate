@@ -32,6 +32,7 @@ import java.util.Deque;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
@@ -67,10 +68,12 @@ public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 	 * @param newIcfgIdentifier
 	 * @param transformer
 	 * @param backtranslationTracker
+	 * @param services
 	 */
 	public LoopDetectionBB(final ILogger logger, final IIcfg<INLOC> originalIcfg, final Class<OUTLOC> outLocationClass,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final String newIcfgIdentifier,
-			final ITransformulaTransformer transformer, final IBacktranslationTracker backtranslationTracker) {
+			final ITransformulaTransformer transformer, final IBacktranslationTracker backtranslationTracker,
+			final IUltimateServiceProvider services) {
 
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
 		mLogger = Objects.requireNonNull(logger);
@@ -104,6 +107,35 @@ public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 
 			mLoopIcfgs.addLast(resultLoop);
 		}
+
+		// DD: Some code snippets
+		// final CfgSmtToolkit cfgSmtToolkit = originalIcfg.getCfgSmtToolkit();
+		// final ManagedScript mgScript = cfgSmtToolkit.getManagedScript();
+		//
+		// mgScript.lock(this);
+		// final Term formula = null;
+		// // final LBool result = SmtUtils.checkSatTerm(mgScript.getScript(), formula);
+		// mgScript.push(this, 1);
+		// // ...
+		// final Rational one = Rational.valueOf(1, 1);
+		// final Term oneTerm = one.toTerm(mgScript.getScript().sort("Int"));
+		// mgScript.assertTerm(this, oneTerm);
+		// final Model model = mgScript.getScript().getModel();
+		//
+		// final SimplificationTechnique simpl = SimplificationTechnique.SIMPLIFY_DDA;
+		// final XnfConversionTechnique xnfConvTech = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
+		// final PredicateTransformer ptf = new PredicateTransformer(services, mgScript, simpl, xnfConvTech);
+		//
+		// final BasicPredicateFactory predFac =
+		// new BasicPredicateFactory(services, mgScript, cfgSmtToolkit.getSymbolTable(), simpl, xnfConvTech);
+		//
+		// final UnmodifiableTransFormula tf = null;
+		// final IPredicate pre = predFac.newPredicate(mgScript.getScript().term("true"));
+		// final Term postTerm = ptf.strongestPostcondition(pre, tf);
+		// final IPredicate post = predFac.newPredicate(postTerm);
+		//
+		// mgScript.pop(this, 1);
+		// mgScript.unlock(this);
 
 		mLogger.info("BB_End...");
 	}
