@@ -1,0 +1,1 @@
+CHECK( init(main()), LTL( GF"polling==1" ) )

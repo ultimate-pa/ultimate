@@ -1,0 +1,1 @@
+CHECK( init(main()), LTL( F"phi_io_compl == 1" || F"phi_nSUC_ret == 1" ) )
