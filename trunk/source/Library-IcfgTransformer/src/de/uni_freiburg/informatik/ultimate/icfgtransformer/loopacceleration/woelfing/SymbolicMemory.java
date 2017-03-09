@@ -71,7 +71,8 @@ public class SymbolicMemory {
 
 		if ("and".equals(appTerm.getFunction().getName())) {
 			for (final Term innerTerm : appTerm.getParameters()) {
-				if (innerTerm instanceof ApplicationTerm && "=".equals(((ApplicationTerm) innerTerm).getFunction().getName())) {
+				if (innerTerm instanceof ApplicationTerm
+						&& "=".equals(((ApplicationTerm) innerTerm).getFunction().getName())) {
 					final Term[] params = ((ApplicationTerm) innerTerm).getParameters();
 					if (params[0] instanceof TermVariable) {
 						mVariableTerms.put((TermVariable) params[0], params[1]);
