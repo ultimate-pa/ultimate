@@ -133,10 +133,8 @@ class Output(object):
                         baseLog = LogFileExtractor(fileResult[1])
                         baseSettings = baseLog.getSettings()
                         
-                        if fileResult[0] in settings:
-                            raise ValueError("Settings for file " + fileResult[0] + " already present.")
-                    
-                        settings[fileResult[0]] = baseSettings
+                        if not fileResult[0] in settings:
+                            settings[fileResult[0]] = baseSettings
                     
                         if comparisonOutput:
                             compareLog = LogFileExtractor(fileResult[2])
