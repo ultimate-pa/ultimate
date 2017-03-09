@@ -29,20 +29,16 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.bie
 
 import java.util.ArrayDeque;
 import java.util.Deque;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
@@ -56,11 +52,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Ben Biesenbach (Ben.Biesenbach@gmx.de)
  */
-public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
-		implements IIcfgTransformer<OUTLOC> {
+public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>{
 
 	private final ILogger mLogger;
-	private final BasicIcfg<OUTLOC> mResultIcfg;
+	private final Deque<IIcfg<OUTLOC>> loopIcfgs = new ArrayDeque<>();
 
 	/**
 	 * Extracts the loops from an {@link IIcfg}.
@@ -76,30 +71,37 @@ public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 	public LoopDetectionBB(final ILogger logger, final IIcfg<INLOC> originalIcfg, final Class<OUTLOC> outLocationClass,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final String newIcfgIdentifier,
 			final ITransformulaTransformer transformer, final IBacktranslationTracker backtranslationTracker) {
+		
+		System.out.println("BB_Start...");
+		
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
-		mLogger = Objects.requireNonNull(logger);
-		final BasicIcfg<OUTLOC> result =
-				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
+		mLogger = null; //Objects.requireNonNull(logger)
 		transformer.preprocessIcfg(origIcfg);
-		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
-				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, origIcfg, result);
-		// perform transformation last
-		getLoop(origIcfg, result, lst);
-		lst.finish();
-		mResultIcfg = result;
-	}
-
-	/*
-	 * ---------second attempt---------- (extracts the loops of a program)
-	 */
-
-	private void getLoop(final IIcfg<INLOC> origIcfg, final BasicIcfg<OUTLOC> resultIcfg,
-			final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
+		
 		for (final INLOC loopHead : origIcfg.getLoopLocations()) {
+			//get path for every loop
 			final Deque<INLOC> path = new ArrayDeque<>();
 			path.addLast(loopHead);
-			transformPathToIcfg(origIcfg, resultIcfg, getLoopPath(path), lst);
+			Deque<INLOC> loopPath = getLoopPath(path);
+			
+			//set loopHead as initialNode
+			final BasicIcfg<OUTLOC> initHelper = new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
+			final TransformedIcfgBuilder<INLOC, OUTLOC> lstHelper = new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, origIcfg, initHelper);
+			initHelper.addLocation((OUTLOC) loopPath.getFirst(), true, false, true, false, true);
+			initHelper.addLocation((OUTLOC) origIcfg.getProcedureExitNodes().values().iterator().next(), false, false, false, true, false);
+			lstHelper.finish();
+			
+			//get loop as Icfg
+			final BasicIcfg<OUTLOC> resultLoop = new BasicIcfg<>(newIcfgIdentifier, initHelper.getCfgSmtToolkit(), outLocationClass);
+			transformer.preprocessIcfg(initHelper);
+			final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer,(IIcfg<INLOC>) initHelper, resultLoop);
+			transformPathToIcfg((IIcfg<INLOC>) initHelper, resultLoop, loopPath, lst);
+			lst.finish();
+			
+			loopIcfgs.addLast(resultLoop);
 		}
+		
+		System.out.println("BB_End...");
 	}
 
 	@SuppressWarnings("unchecked")
@@ -123,45 +125,28 @@ public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 	@SuppressWarnings("unchecked")
 	private void transformPathToIcfg(final IIcfg<INLOC> origIcfg, final BasicIcfg<OUTLOC> resultIcfg,
 			final Deque<INLOC> path, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
-
-		final Set<INLOC> init = origIcfg.getInitialNodes();
-		final Deque<INLOC> open = new ArrayDeque<>(init);
-		final Set<INLOC> closed = new HashSet<>();
-
-		// Connect initial nodes with loopHead
-		final INLOC oldMainENTRY = open.removeFirst();
-		closed.add(oldMainENTRY);
-		final OUTLOC newMainENTRY = lst.createNewLocation(oldMainENTRY);
-		final OUTLOC newLoopHead = lst.createNewLocation(path.getFirst());
-		// TODO Which transition is needed? Or is there even a way without mainENTRY?
-		// DD: Assume that there is only one initial node. If there are more, throw an exception.
-		final IcfgEdge newTransitionLH = new IcfgInternalTransition(newMainENTRY, newLoopHead, null, null);
-		newMainENTRY.addOutgoing(newTransitionLH);
-		newLoopHead.addIncoming(newTransitionLH);
-		open.add(path.getFirst());
-		path.removeFirst();
+		
+		final Deque<INLOC> open = new ArrayDeque<>();
+		open.add(path.removeFirst());
 
 		// Add the loopBody to the Icfg
-		while (!open.isEmpty()) {
+		while (!open.isEmpty() && !path.isEmpty()) {
+			
 			final INLOC oldSource = open.removeFirst();
-			if (!closed.add(oldSource)) {
-				continue;
-			}
-
-			final OUTLOC newSource = lst.createNewLocation(oldSource);
-			for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
+			for (IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
 				final INLOC oldTarget;
+				
 				// Check if transition is part of the path
 				if (oldTransition.getTarget().equals(path.getFirst())) {
 					oldTarget = (INLOC) oldTransition.getTarget();
+					open.add(oldTarget);
 				} else {
-					// TODO Which transition is needed for the exit? If there are multiple exits, which are the right
-					// ones?
-					// DD: Each procedure has one distinct exit node. But this is not necessarily the end of the
-					// program. The Icfg itself has no "exit" node.
 					oldTarget = origIcfg.getProcedureExitNodes().values().iterator().next();
 				}
-				open.add(oldTarget);
+				
+				//create new Nodes and Edges
+				final OUTLOC newSource;
+				newSource = lst.createNewLocation(oldSource);
 				final OUTLOC newTarget = lst.createNewLocation(oldTarget);
 				lst.createNewTransition(newSource, newTarget, oldTransition);
 			}
@@ -171,24 +156,11 @@ public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 		}
 	}
 
-	@Override
 	public IIcfg<OUTLOC> getResult() {
-		return mResultIcfg;
+		return loopIcfgs.getFirst();
 	}
-
-	/*
-	 * ----------first attempt---------- (only checks if program has a loop)
-	 * 
-	 * public boolean isLooped(final IIcfg<INLOC> originalIcfg) { final Set<INLOC> init =
-	 * originalIcfg.getInitialNodes(); final Deque<INLOC> queue = new ArrayDeque<>(init); final Deque<INLOC> marked =
-	 * new ArrayDeque<>();
-	 * 
-	 * while (!queue.isEmpty()) { final INLOC node = queue.removeFirst(); if(recursivHelper(node, marked)){ return true;
-	 * } } return false; }
-	 * 
-	 * @SuppressWarnings("unchecked") private boolean recursivHelper(INLOC node, Deque<INLOC> marked){ if
-	 * (marked.contains(node)) { return true; } marked.add(node); for (final IcfgEdge transition :
-	 * node.getOutgoingEdges()) { if(recursivHelper((INLOC) transition.getTarget(), new ArrayDeque<>(marked))){ return
-	 * true; } } return false; }
-	 */
+	
+	public Deque<IIcfg<OUTLOC>> getAllResults() {
+		return loopIcfgs;
+	}
 }
