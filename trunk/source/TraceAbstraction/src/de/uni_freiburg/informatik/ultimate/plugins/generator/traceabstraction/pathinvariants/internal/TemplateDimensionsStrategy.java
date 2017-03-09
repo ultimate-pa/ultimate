@@ -33,6 +33,12 @@ public class TemplateDimensionsStrategy {
 			return new int[] {1, 2};
 		} else if (round == 3) {
 			return new int[] {2, 2};
+		} else if (round == 4) {
+			return new int[] {2, 3};
+		} else if (round == 5) {
+			return new int[] {3, 2};
+		} else if (round == 6) {
+			return new int[] {3, 3};
 		} else {
 			return new int[] { mInitialDisjuncts + round * mDisjunctsPerRound,
 					mInitialConjuncts + round * mConjunctsPerRound };
