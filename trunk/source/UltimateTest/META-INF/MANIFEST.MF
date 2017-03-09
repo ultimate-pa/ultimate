@@ -29,7 +29,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.buchiprogramproduct,
  de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter,
  de.uni_freiburg.informatik.ultimate.boogie.procedureinliner,
- de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis;bundle-version="0.1.8"
+ de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,
