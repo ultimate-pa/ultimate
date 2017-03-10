@@ -120,16 +120,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -137,9 +131,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf",
-			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 
@@ -175,9 +166,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -274,64 +262,40 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
 			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--block--virtio_blk.ko_false-unreach-call.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--block--virtio_blk.ko_false-unreach-call.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
-			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--block--xen-blkfront.ko_false-unreach-call.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--block--xen-blkfront.ko_false-unreach-call.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
 			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--input--touchscreen--usbtouchscreen.ko_false-unreach-call.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--input--touchscreen--usbtouchscreen.ko_false-unreach-call.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
-			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--misc--sgi-gru--gru.ko_false-unreach-call.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--misc--sgi-gru--gru.ko_false-unreach-call.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
 			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--net--can--janz-ican3.ko_false-unreach-call.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--net--can--janz-ican3.ko_false-unreach-call.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
-			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--net--ethernet--smsc--smc91c92_cs.ko_false-unreach-call.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--net--ethernet--smsc--smc91c92_cs.ko_false-unreach-call.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
 			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--scsi--megaraid.ko_false-unreach-call.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--scsi--megaraid.ko_false-unreach-call.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
-			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--usb--host--isp116x-hcd.ko_false-unreach-call.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--usb--host--isp116x-hcd.ko_false-unreach-call.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -351,9 +315,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -382,16 +343,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -413,16 +368,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf",
 			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 
@@ -442,9 +391,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -488,16 +434,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -519,9 +459,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf",
 			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 
 			// ****** utaipan: "false(valid-deref)", uautomizer: "TIMEOUT" ******
@@ -534,9 +471,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -553,24 +487,15 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/seq-pthread/cs_lazy_false-unreach-call.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/seq-pthread/cs_lazy_false-unreach-call.i"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/seq-pthread/cs_stateful_true-unreach-call.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/seq-pthread/cs_stateful_true-unreach-call.i"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/seq-pthread/cs_sync_true-unreach-call.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/seq-pthread/cs_sync_true-unreach-call.i"),
 			// End of multiple calls of utaipan
 
@@ -654,9 +579,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/float-benchs/Muller_Kahan_true-unreach-call.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/float-benchs/Muller_Kahan_true-unreach-call.c"),
 			// End of multiple calls of utaipan
 
 			// ****** utaipan: "false(valid-free)", uautomizer: "TIMEOUT" ******
@@ -668,9 +590,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/seq-mthreaded/rekcba_aso_false-unreach-call.4.M1.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/seq-mthreaded/rekcba_aso_false-unreach-call.4.M1.c"),
 			// End of multiple calls of utaipan
 
@@ -691,9 +610,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
 			// End of multiple calls of utaipan
 
 			// ****** utaipan: "TIMEOUT", uautomizer: "false(unreach-call)" ******
@@ -709,24 +625,15 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/seq-pthread/cs_lazy_false-unreach-call.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/seq-pthread/cs_lazy_false-unreach-call.i"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/seq-pthread/cs_stateful_true-unreach-call.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/seq-pthread/cs_stateful_true-unreach-call.i"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/seq-pthread/cs_sync_true-unreach-call.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/seq-pthread/cs_sync_true-unreach-call.i"),
 			// End of multiple calls of utaipan
 
@@ -806,9 +713,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/float-benchs/Muller_Kahan_true-unreach-call.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/float-benchs/Muller_Kahan_true-unreach-call.c"),
 			// End of multiple calls of utaipan
 
 			// ****** utaipan: "false(valid-free)", uautomizer: "TIMEOUT" ******
@@ -820,9 +724,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/seq-mthreaded/rekcba_aso_false-unreach-call.4.M1.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/seq-mthreaded/rekcba_aso_false-unreach-call.4.M1.c"),
 			// End of multiple calls of utaipan
 
@@ -843,9 +744,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
 			// End of multiple calls of utaipan
 
 			// ****** utaipan: "TIMEOUT", uautomizer: "true" ******
@@ -864,16 +762,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -882,22 +774,8 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/loops/s3_false-unreach-call.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/loops/s3_false-unreach-call.i"),
 			// End of multiple calls of utaipan
 
-			// ****** utaipan: "ERROR (1)", uautomizer: "false(termination)" ******
-			// *** No suitable toolchain file found using *Termination.xml
-			// *** File: termination-restricted-15/TwoFloatInterv_false-termination_true-no-overflow.c
-			// *** No suitable toolchain file found using *Termination.xml
-			// *** File: termination-restricted-15/UpAndDownIneq_false-termination_true-no-overflow.c
-			// *** No suitable toolchain file found using *Termination.xml
-			// *** File: termination-restricted-15/UpAndDown_false-termination_true-no-overflow.c
-			// *** No suitable toolchain file found using *Termination.xml
-			// *** File: termination-restricted-15/WhilePart_false-termination_true-no-overflow.c
-			// *** No suitable toolchain file found using *Termination.xml
-			// *** File: termination-restricted-15/WhileSingle_false-termination_true-no-overflow.c
 
 			// ****** utaipan: "false(valid-free)", uautomizer: "TIMEOUT" ******
 			new Triple<>("AutomizerC_WitnessPrinter.xml",
@@ -908,9 +786,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/loop-invgen/heapsort_true-unreach-call_true-termination.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/loop-invgen/heapsort_true-unreach-call_true-termination.i"),
 			// End of multiple calls of utaipan
 
@@ -931,9 +806,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf",
 			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 
 			// ****** utaipan: "false(valid-free)", uautomizer: "TIMEOUT" ******
@@ -949,16 +821,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf",
 			                "examples/svcomp/ldv-memsafety/memleaks_test22_1_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/ldv-memsafety/memleaks_test22_1_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf",
-			                "examples/svcomp/array-memsafety/lis-alloca_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/array-memsafety/lis-alloca_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 
@@ -972,9 +838,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -994,30 +857,13 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 
-			// ****** utaipan: "ERROR (1)", uautomizer: "false(termination)" ******
-			// *** No suitable toolchain file found using *Termination.xml
-			// *** File: termination-restricted-15/TwoFloatInterv_false-termination_true-no-overflow.c
-			// *** No suitable toolchain file found using *Termination.xml
-			// *** File: termination-restricted-15/UpAndDownIneq_false-termination_true-no-overflow.c
-			// *** No suitable toolchain file found using *Termination.xml
-			// *** File: termination-restricted-15/UpAndDown_false-termination_true-no-overflow.c
-			// *** No suitable toolchain file found using *Termination.xml
-			// *** File: termination-restricted-15/WhilePart_false-termination_true-no-overflow.c
-			// *** No suitable toolchain file found using *Termination.xml
-			// *** File: termination-restricted-15/WhileSingle_false-termination_true-no-overflow.c
 
 			// ****** utaipan: "false(valid-free)", uautomizer: "TIMEOUT" ******
 			new Triple<>("AutomizerC_WitnessPrinter.xml",
@@ -1029,16 +875,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf",
 			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 
@@ -1058,9 +898,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -1092,16 +929,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -1116,18 +947,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			             "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			             "examples/svcomp/forester-heap/sll-rb-cnstr_1_false-unreach-call_false-valid-deref.i"),
 
-			// ****** utaipan: "ERROR (1)", uautomizer: "false(termination)" ******
-			// *** No suitable toolchain file found using *Termination.xml
-			// *** File: termination-restricted-15/TwoFloatInterv_false-termination_true-no-overflow.c
-			// *** No suitable toolchain file found using *Termination.xml
-			// *** File: termination-restricted-15/UpAndDownIneq_false-termination_true-no-overflow.c
-			// *** No suitable toolchain file found using *Termination.xml
-			// *** File: termination-restricted-15/UpAndDown_false-termination_true-no-overflow.c
-			// *** No suitable toolchain file found using *Termination.xml
-			// *** File: termination-restricted-15/WhilePart_false-termination_true-no-overflow.c
-			// *** No suitable toolchain file found using *Termination.xml
-			// *** File: termination-restricted-15/WhileSingle_false-termination_true-no-overflow.c
-
 			// ****** utaipan: "false(valid-free)", uautomizer: "TIMEOUT" ******
 			new Triple<>("AutomizerC_WitnessPrinter.xml",
 			             "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf",
@@ -1138,32 +957,20 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf",
 			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 
@@ -1183,9 +990,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -1220,16 +1024,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -1293,9 +1091,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/loop-invgen/heapsort_true-unreach-call_true-termination.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/loop-invgen/heapsort_true-unreach-call_true-termination.i"),
 			// End of multiple calls of utaipan
 
 			// ****** utaipan: "false(valid-deref)", uautomizer: "TIMEOUT" ******
@@ -1314,9 +1109,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -2320,16 +2112,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -2366,32 +2152,20 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf",
 			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 
@@ -2432,16 +2206,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -2460,9 +2228,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf",
 			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 
 			// ****** utaipan: "false(valid-deref)", uautomizer: "TIMEOUT" ******
@@ -2475,9 +2240,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -2512,16 +2274,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -2581,9 +2337,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/loop-invgen/heapsort_true-unreach-call_true-termination.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/loop-invgen/heapsort_true-unreach-call_true-termination.i"),
 			// End of multiple calls of utaipan
 
 			// ****** utaipan: "false(valid-deref)", uautomizer: "TIMEOUT" ******
@@ -2602,9 +2355,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -2627,16 +2377,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -2644,9 +2388,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/loops/s3_false-unreach-call.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/loops/s3_false-unreach-call.i"),
 			// End of multiple calls of utaipan
 
@@ -2668,9 +2409,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/loop-invgen/heapsort_true-unreach-call_true-termination.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/loop-invgen/heapsort_true-unreach-call_true-termination.i"),
 			// End of multiple calls of utaipan
 
 			// ****** utaipan: "false(valid-deref)", uautomizer: "TIMEOUT" ******
@@ -2689,9 +2427,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -2726,16 +2461,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -2822,9 +2551,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/loop-invgen/heapsort_true-unreach-call_true-termination.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/loop-invgen/heapsort_true-unreach-call_true-termination.i"),
 			// End of multiple calls of utaipan
 
 			// ****** utaipan: "false(valid-deref)", uautomizer: "TIMEOUT" ******
@@ -2843,9 +2569,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -2966,64 +2689,40 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
 			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--block--virtio_blk.ko_false-unreach-call.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--block--virtio_blk.ko_false-unreach-call.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
-			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--block--xen-blkfront.ko_false-unreach-call.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--block--xen-blkfront.ko_false-unreach-call.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
 			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--input--touchscreen--usbtouchscreen.ko_false-unreach-call.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--input--touchscreen--usbtouchscreen.ko_false-unreach-call.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
-			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--misc--sgi-gru--gru.ko_false-unreach-call.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--misc--sgi-gru--gru.ko_false-unreach-call.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
 			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--net--can--janz-ican3.ko_false-unreach-call.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--net--can--janz-ican3.ko_false-unreach-call.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
-			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--net--ethernet--smsc--smc91c92_cs.ko_false-unreach-call.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--net--ethernet--smsc--smc91c92_cs.ko_false-unreach-call.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
 			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--scsi--megaraid.ko_false-unreach-call.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--scsi--megaraid.ko_false-unreach-call.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Default.epf",
-			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--usb--host--isp116x-hcd.ko_false-unreach-call.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-64bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/ldv-linux-4.0-rc1-mav/linux-4.0-rc1---drivers--usb--host--isp116x-hcd.ko_false-unreach-call.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -3044,16 +2743,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -3061,9 +2754,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf",
-			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 
@@ -3100,9 +2790,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
 			// End of multiple calls of utaipan
 
 			// ****** utaipan: "TIMEOUT", uautomizer: "true" ******
@@ -3121,16 +2808,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -3152,16 +2833,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf",
 			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/heap-manipulation/sll_to_dll_rev_true-unreach-call_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 
@@ -3181,9 +2856,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -3218,16 +2890,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -3307,9 +2973,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/float-benchs/Muller_Kahan_true-unreach-call.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/float-benchs/Muller_Kahan_true-unreach-call.c"),
 			// End of multiple calls of utaipan
 
 			// ****** utaipan: "false(valid-free)", uautomizer: "TIMEOUT" ******
@@ -3321,9 +2984,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/loop-invgen/heapsort_true-unreach-call_true-termination.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/loop-invgen/heapsort_true-unreach-call_true-termination.i"),
 			// End of multiple calls of utaipan
 
@@ -3344,16 +3004,10 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c"),
 			// End of multiple calls of utaipan
 
@@ -3361,9 +3015,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf",
-			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 
@@ -3446,9 +3097,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/product-lines/minepump_spec3_product54_true-unreach-call_false-termination.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/product-lines/minepump_spec3_product54_true-unreach-call_false-termination.cil.c"),
 			// End of multiple calls of utaipan
 			new Triple<>("AutomizerC_WitnessPrinter.xml",
 			             "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
@@ -3468,9 +3116,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/bitvector/soft_float_4_true-unreach-call_true-no-overflow.c.cil.c"),
 			// End of multiple calls of utaipan
 
 			// ****** utaipan: "TIMEOUT", uautomizer: "false(unreach-call)" ******
@@ -3486,24 +3131,15 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/seq-pthread/cs_lazy_false-unreach-call.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/seq-pthread/cs_lazy_false-unreach-call.i"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/seq-pthread/cs_stateful_true-unreach-call.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/seq-pthread/cs_stateful_true-unreach-call.i"),
 			// End of multiple calls of utaipan
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/seq-pthread/cs_sync_true-unreach-call.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/seq-pthread/cs_sync_true-unreach-call.i"),
 			// End of multiple calls of utaipan
 
@@ -3577,9 +3213,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
 			                "examples/svcomp/float-benchs/Muller_Kahan_true-unreach-call.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/float-benchs/Muller_Kahan_true-unreach-call.c"),
 			// End of multiple calls of utaipan
 
 			// ****** utaipan: "false(valid-free)", uautomizer: "TIMEOUT" ******
@@ -3591,9 +3224,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf",
-			                "examples/svcomp/seq-mthreaded/rekcba_aso_false-unreach-call.4.M1.c"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/seq-mthreaded/rekcba_aso_false-unreach-call.4.M1.c"),
 			// End of multiple calls of utaipan
 
@@ -3614,9 +3244,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf",
 			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Bitvector.epf",
-			                "examples/svcomp/ldv-memsafety/memleaks_test23_3_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 
 			// ****** utaipan: "false(valid-free)", uautomizer: "TIMEOUT" ******
@@ -3631,9 +3258,6 @@ public class Svcomp17TaipanDebugTestSuite extends AbstractEvalTestSuite {
 			// Multiple calls to utaipan with different settings were performed
 			   new Triple<>("AutomizerC_WitnessPrinter.xml",
 			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf",
-			                "examples/svcomp/ldv-memsafety/memleaks_test22_1_true-valid-memsafety.i"),
-			   new Triple<>("AutomizerC_WitnessPrinter.xml",
-			                "svcomp2017/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Bitvector.epf",
 			                "examples/svcomp/ldv-memsafety/memleaks_test22_1_true-valid-memsafety.i"),
 			// End of multiple calls of utaipan
 
