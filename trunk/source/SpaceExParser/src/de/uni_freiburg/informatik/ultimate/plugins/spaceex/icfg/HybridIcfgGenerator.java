@@ -546,6 +546,7 @@ public class HybridIcfgGenerator {
 	private String preprocessLocationStatement(final String invariant) {
 		String inv = invariant.replaceAll(":=", "==");
 		inv = inv.replaceAll("&&", "&");
+		inv = inv.replaceAll("'", "");
 		inv = replaceConstantValues(inv);
 		return inv;
 	}
