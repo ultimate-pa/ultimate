@@ -42,6 +42,8 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -347,15 +349,20 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			}
 			// we were strong enough!
 			final Word<LETTER> word = mCex.getWord();
-			final List<IPredicate> interpolants = generateInterpolants(word);
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("Interpolant sequence:");
-				mLogger.debug(interpolants);
+			try {
+				final List<IPredicate> interpolants = generateInterpolants(word);
+				if (mLogger.isDebugEnabled()) {
+					mLogger.debug("Interpolant sequence:");
+					mLogger.debug(interpolants);
+				}
+				assert word.length() - 1 == interpolants.size() : "Word has length " + word.length()
+						+ " but interpolant sequence has length " + interpolants.size();
+				return new AbsIntInterpolantGenerator(mPredicateUnifier, mCex.getWord(),
+						interpolants.toArray(new IPredicate[interpolants.size()]), getHoareTripleChecker());
+			} catch (final ToolchainCanceledException tce) {
+				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), "generating AI predicates"));
+				throw tce;
 			}
-			assert word.length() - 1 == interpolants.size() : "Word has length " + word.length()
-					+ " but interpolant sequence has length " + interpolants.size();
-			return new AbsIntInterpolantGenerator(mPredicateUnifier, mCex.getWord(),
-					interpolants.toArray(new IPredicate[interpolants.size()]), getHoareTripleChecker());
 		}
 
 		private List<IPredicate> generateInterpolants(final Word<LETTER> word) {
