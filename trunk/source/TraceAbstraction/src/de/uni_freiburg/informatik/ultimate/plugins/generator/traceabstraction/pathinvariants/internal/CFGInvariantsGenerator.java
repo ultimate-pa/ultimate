@@ -615,6 +615,8 @@ public final class CFGInvariantsGenerator {
 
 			if (TEMPLATE_STATISTICS_MODE) {
 				final StatisticsData stat = new StatisticsData();
+//				mRound2PathInvariantsStatistics.get(round).convertTimesToSeconds(); // Uncomment this line only if you run tests and want
+																					// want to have the times in seconds.
 				stat.aggregateBenchmarkData(mRound2PathInvariantsStatistics.get(round));
 				final IResult benchmarkResult =	new BenchmarkResult<>(Activator.PLUGIN_ID, "InvariantSynthesisStatistics", stat);
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);

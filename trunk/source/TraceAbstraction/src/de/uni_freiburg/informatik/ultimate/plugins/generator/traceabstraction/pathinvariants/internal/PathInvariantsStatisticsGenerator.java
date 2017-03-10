@@ -149,6 +149,7 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		mMotzkinCoefficientsApproxConstr += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.MotzkinCoefficientsApproxConstraints);
 		
 		mConstraintsSolvingTime += (Long)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ConstraintsSolvingTime);
+
 		mConstraintsConstructionTime += (Long)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ConstraintsConstructionTime);
 		mNumOfNonUnsatCoreLocs += numOfNonUnsatCoreLocs;
 		mNumOfNonUnsatCoreVars += numOfNonUnsatCoreVars;
@@ -158,6 +159,11 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 			mSatStatus = mSatStatus + ", " + satResult;
 		}
 
+	}
+	
+	public void convertTimesToSeconds() {
+		mConstraintsSolvingTime = mConstraintsSolvingTime / 1_000_000_000;
+		mConstraintsConstructionTime = mConstraintsConstructionTime  / 1_000_000_000;
 	}
 	
 	@Override
