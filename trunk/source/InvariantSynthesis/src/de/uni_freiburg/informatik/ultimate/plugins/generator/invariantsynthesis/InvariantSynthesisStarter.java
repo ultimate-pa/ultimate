@@ -201,6 +201,7 @@ public class InvariantSynthesisStarter {
 		final Settings solverSettings = new Settings(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver, timeoutSmtInterpol, null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
 
 		final boolean useUnsatCores = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_UNSAT_CORES);
+		final boolean useLBE = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_LARGE_BLOCK_ENCODING);
 		final boolean useAbstractInterpretationPredicates = false;
 		final boolean useWPForPathInvariants = false;
 		
@@ -212,7 +213,7 @@ public class InvariantSynthesisStarter {
 		final TemplateDimensionsStrategy templateDimensionsStrat = new TemplateDimensionsStrategy(initialDisjuncts, initialConjuncts, disjunctsStep, conjunctsStep);
 		
 		final InvariantSynthesisSettings invSynthSettings = new InvariantSynthesisSettings(solverSettings, templateDimensionsStrat, 
-				useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWPForPathInvariants);
+				useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWPForPathInvariants, useLBE);
 		return invSynthSettings;
 	}
 

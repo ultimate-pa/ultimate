@@ -117,7 +117,7 @@ public final class CFGInvariantsGenerator {
 	 * Transform the path program by applying large block encoding. Synthesize invariants only for the large block
 	 * encoded program and use less expensive techniques to obtain the remaining invariants.
 	 */
-	private static final boolean APPLY_LARGE_BLOCK_ENCODING = true;
+	private static boolean APPLY_LARGE_BLOCK_ENCODING = true;
 
 	private static final int MAX_ROUNDS = Integer.MAX_VALUE;
 	
@@ -175,6 +175,9 @@ public final class CFGInvariantsGenerator {
 		mPostcondition = postcondition;
 		mPathProgram = pathProgram;
 		mInvariantSynthesisSettings = invariantSynthesisSettings;
+		if (!mInvariantSynthesisSettings.useLargeBlockEncoding()) {
+			APPLY_LARGE_BLOCK_ENCODING = false;
+		}
 		mPathInvariantsStatistics = new PathInvariantsStatisticsGenerator();
 		// Initialize statistics
 		mPathInvariantsStatistics.initializeStatistics();
@@ -843,7 +846,7 @@ public final class CFGInvariantsGenerator {
 	
 	public Map<IcfgLocation, IPredicate> synthesizeInvariants() {
 		int numLocsBeforeLbe = getNumOfPPLocations(mPathProgram);
-		LargeBlockEncodingIcfgTransformer lbeTransformer;
+		LargeBlockEncodingIcfgTransformer lbeTransformer = null;
 		IIcfg<IcfgLocation> lbePathProgram;
 		if (APPLY_LARGE_BLOCK_ENCODING) {
 			lbeTransformer = new LargeBlockEncodingIcfgTransformer(mServices, mPredicateFactory, mPredicateUnifier);

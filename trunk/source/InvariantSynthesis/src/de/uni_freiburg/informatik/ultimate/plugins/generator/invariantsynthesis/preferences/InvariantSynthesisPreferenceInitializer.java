@@ -58,7 +58,7 @@ public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceI
 	/*
 	 * default values for the different preferences
 	 */
-	public static final boolean DEF_UNSAT_CORES = false;
+	public static final boolean DEF_UNSAT_CORES = true;
 	public static final boolean DEF_NONLINEAR_CONSTRAINTS = false;
 	public static final boolean DEF_LARGE_BLOCK_ENCODING = true;
 	

@@ -11,27 +11,30 @@ public class InvariantSynthesisSettings {
 	private final boolean mUseUnsatCores;
 	private final boolean mUseAbstractInterpretationPredicates;
 	private final boolean mUseWPForPathInvariants;
+	private final boolean mUseLBE; // use large-block encoding?
 	private final TemplateDimensionsStrategy mTemplateDimensionsStrat;
 	
 	public InvariantSynthesisSettings(Settings solverSettings, final TemplateDimensionsStrategy templateDimensionsStrat, 
 			final boolean useNonlinearConstraints, 	final boolean useUnsatCores, 
-			final boolean useAbstractInterpretationPredicates, final boolean useWPForPathInvariants) {
+			final boolean useAbstractInterpretationPredicates, final boolean useWPForPathInvariants, final boolean useLBE) {
 		mUseNonlinearConstraints = useNonlinearConstraints;
 		mSolverSettings = solverSettings;
 		mUseUnsatCores = useUnsatCores;
 		mUseAbstractInterpretationPredicates = useAbstractInterpretationPredicates;
 		mUseWPForPathInvariants = useWPForPathInvariants;
 		mTemplateDimensionsStrat = templateDimensionsStrat;
+		mUseLBE = useLBE;
 	}
 	
 	public InvariantSynthesisSettings(Settings solverSettings, final boolean useNonlinearConstraints,
-			final boolean useUnsatCores, final boolean useAbstractInterpretationPredicates, final boolean useWPForPathInvariants) {
+			final boolean useUnsatCores, final boolean useAbstractInterpretationPredicates, final boolean useWPForPathInvariants, final boolean useLBE) {
 		mUseNonlinearConstraints = useNonlinearConstraints;
 		mSolverSettings = solverSettings;
 		mUseUnsatCores = useUnsatCores;
 		mUseAbstractInterpretationPredicates = useAbstractInterpretationPredicates;
 		mUseWPForPathInvariants = useWPForPathInvariants;
 		mTemplateDimensionsStrat = null;
+		mUseLBE = useLBE;
 	}
 	
 	public final boolean useNonLinearConstraints() {
@@ -52,6 +55,10 @@ public class InvariantSynthesisSettings {
 	
 	public final Settings getSolverSettings() {
 		return mSolverSettings;
+	}
+	
+	public final boolean useLargeBlockEncoding() {
+		return mUseLBE;
 	}
 	
 	public final TemplateDimensionsStrategy getTemplateDimensionsStrategy() {
