@@ -168,12 +168,14 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	private int mMotzkinTransformationsForApproxConstraints;
 	private int mMotzkinCoefficientsForNormalConstraints;
 	private int mMotzkinCoefficientsForApproxConstraints;
-	private int mProgramSize;
+	private int mProgramSizeConjuncts;
+	private int mProgramSizeDisjuncts;
 	private long mConstraintsSolvingTime;
 	private long mConstraintsConstructionTime;
 
 	public enum LinearInequalityPatternProcessorStatistics {
-		ProgramSize,
+		ProgramSizeConjuncts,
+		ProgramSizeDisjuncts,
 		MotzkinTransformationsNormalConstraints,
 		MotzkinTransformationsApproxConstraints,
 		MotzkinCoefficientsNormalConstraints,
@@ -250,8 +252,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		mUseNonlinearConstraints = useNonlinearConstraints;
 		mUseUnsatCores = useUnsatCores;
 		if (mUseUnsatCores) {
-			USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
-			USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
+			USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT = !true;
+			USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT = !true;
 		} else {
 			// If we don't use unsat cores, then the additional constraints are not needed
 			USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT = false;
@@ -298,7 +300,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		mMotzkinTransformationsForApproxConstraints = 0;
 		mMotzkinCoefficientsForNormalConstraints = 0;
 		mMotzkinCoefficientsForApproxConstraints = 0;
-		mProgramSize = 0;
+		mProgramSizeConjuncts = 0;
+		mProgramSizeDisjuncts = 0;
 		mConstraintsSolvingTime = 0;
 		mConstraintsConstructionTime = 0;
 	}
@@ -667,7 +670,10 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			newList.addAll(list);
 			transitionDNF.add(newList);
 			// statistics section 
-			mProgramSize += list.size();
+			mProgramSizeConjuncts += list.size();
+		}
+		if (transitionDNF_.size() > 1) {
+			mProgramSizeDisjuncts += transitionDNF_.size();
 		}
 		if (mUseUnsatCores) {
 			final List<IcfgLocation> locs = new ArrayList<>();
@@ -804,6 +810,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 
 		for (final InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>> predicate : predicates) {
 			mSolver.assertTerm(buildPredicateTerm(predicate, programVarsRecentlyOccurred));
+
 		}
 	}
 
@@ -857,7 +864,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		// Generate and assert terms for intermediate transitions
 		for (final InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>> predicate : predicates) {
 			annotateAndAssertTermAndStoreMapping(buildPredicateTerm(predicate, programVarsRecentlyOccurred));
-
+//			final LBool smtResult = mSolver.checkSat();
+//			mLogger.info("Check-sat result: " + smtResult);
 		}
 	}
 
@@ -902,7 +910,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 
 	public Map<LinearInequalityPatternProcessorStatistics, Object> getStatistics() {
 		Map<LinearInequalityPatternProcessorStatistics, Object> stats = new HashMap<>();
-		stats.put(LinearInequalityPatternProcessorStatistics.ProgramSize, mProgramSize);
+		stats.put(LinearInequalityPatternProcessorStatistics.ProgramSizeConjuncts, mProgramSizeConjuncts);
+		stats.put(LinearInequalityPatternProcessorStatistics.ProgramSizeDisjuncts, mProgramSizeDisjuncts);		
 		stats.put(LinearInequalityPatternProcessorStatistics.TreesizeNormalConstraints, mDAGTreeSizeSumOfNormalConstraints);
 		stats.put(LinearInequalityPatternProcessorStatistics.TreesizeApproxConstraints, mDAGTreeSizeSumOfApproxConstraints);		
 		stats.put(LinearInequalityPatternProcessorStatistics.MotzkinTransformationsNormalConstraints, mMotzkinTransformationsForNormalConstraints);

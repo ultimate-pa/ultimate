@@ -354,7 +354,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	public enum PathInvariantsStatisticsDefinitions implements IStatisticsElement {
 		// the sum of path program size (measured as the number of inequalities of all transformulas) for each overall
 		// iteration
-		ProgramSize(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		ProgramSizeConjuncts(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		ProgramSizeDisjuncts(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of path program locations for each overall iteration
 		ProgramLocs(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of path program locations for each overall iteration after Lbe has been applied

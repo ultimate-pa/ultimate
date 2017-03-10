@@ -24,7 +24,7 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	private int mNumOfNonLiveVariables;
 	private int mNumOfNonUnsatCoreVars;
 	private int mNumOfNonUnsatCoreLocs;
-	private int mProgramSize;
+	private int mProgramSizeConjuncts;
 	private int mSizeOfLargestTemplate;
 	private int mSizeOfSmallestTemplate;
 	
@@ -38,6 +38,7 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	private int mSumOfTemplateInequalities;
 	private long mConstraintsConstructionTime;
 	private long mConstraintsSolvingTime;
+	private Integer mProgramSizeDisjuncts;
 	
 	public void initializeStatistics() {
 		mNumOfPathProgramLocations = 0;
@@ -49,7 +50,8 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		mSumOfVarsPerLoc = 0;
 		mNumOfNonLiveVariables = 0;
 		mNumOfNonUnsatCoreVars = 0;
-		mProgramSize = 0;
+		mProgramSizeConjuncts = 0;
+		mProgramSizeDisjuncts = 0;
 		mSizeOfLargestTemplate = 0;
 		mSizeOfSmallestTemplate = 0;
 		mSumOfTemplateInequalities = 0;
@@ -75,7 +77,8 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	public Object getValue(final String key) {
 		final PathInvariantsStatisticsDefinitions keyEnum = Enum.valueOf(PathInvariantsStatisticsDefinitions.class, key);
 		switch (keyEnum) {
-		case ProgramSize: return mProgramSize;
+		case ProgramSizeConjuncts: return mProgramSizeConjuncts;
+		case ProgramSizeDisjuncts: return mProgramSizeDisjuncts;
 		case ProgramLocs: return mNumOfPathProgramLocations;
 		case ProgramLocsLbe: return mNumOfPathProgramLocationsAfterLbe;
 		case ProgramVars: return mNumOfPathProgramVars;
@@ -137,7 +140,8 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	
 	public void addStatisticsDataAfterCheckSat(int numOfNonUnsatCoreLocs, int numOfNonUnsatCoreVars, String satResult,
 			Map<LinearInequalityPatternProcessorStatistics, Object> linearInequalityStats) {
-		mProgramSize = (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ProgramSize);
+		mProgramSizeConjuncts = (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ProgramSizeConjuncts);
+		mProgramSizeDisjuncts = (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ProgramSizeDisjuncts);
 		
 		mTreeSizeSumOfNormalConstraints += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.TreesizeNormalConstraints);
 		mTreeSizeSumOfApproxConstraints += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.TreesizeApproxConstraints);
