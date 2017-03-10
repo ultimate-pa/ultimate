@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Replace integer division and modulo by auxiliary variables and add linear constraints that define these auxiliary
@@ -108,7 +109,7 @@ public class RewriteDivision extends TransformerPreprocessor {
 	}
 
 	@Override
-	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
+	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf) throws TermException {
 		// Clear the data structures
 		mAuxVars.clear();
 		mAuxTerms.clear();
@@ -118,8 +119,8 @@ public class RewriteDivision extends TransformerPreprocessor {
 
 		// Add auxTerms to the transition
 		final Term formula = new_tf.getFormula();
-		final Term auxTerms = Util.and(script, mAuxTerms.toArray(new Term[mAuxTerms.size()]));
-		new_tf.setFormula(Util.and(script, formula, auxTerms));
+		final Term auxTerms = Util.and(script.getScript(), mAuxTerms.toArray(new Term[mAuxTerms.size()]));
+		new_tf.setFormula(Util.and(script.getScript(), formula, auxTerms));
 		new_tf.addAuxVars(mAuxVars.keySet());
 
 		return new_tf;
@@ -162,8 +163,8 @@ public class RewriteDivision extends TransformerPreprocessor {
 	}
 
 	@Override
-	protected TermTransformer getTransformer(final Script script) {
-		return new RewriteDivisionTransformer(script);
+	protected TermTransformer getTransformer(final ManagedScript script) {
+		return new RewriteDivisionTransformer(script.getScript());
 	}
 
 	/**

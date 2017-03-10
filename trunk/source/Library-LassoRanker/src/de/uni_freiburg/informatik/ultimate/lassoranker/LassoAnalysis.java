@@ -314,33 +314,33 @@ public class LassoAnalysis {
 					mModifiableGlobalsAtHonda, mArrayIndexSupportingInvariants,
 					mPreferences.getMapEliminationSettings(mSimplificationTechnique, mXnfConversionTechnique));
 		}
-		return new LassoPreprocessor[] { new StemAndLoopPreprocessor(mMgdScript.getScript(), new MatchInOutVars(mMgdScript)),
-				new StemAndLoopPreprocessor(mMgdScript.getScript(),
+		return new LassoPreprocessor[] { new StemAndLoopPreprocessor(mMgdScript, new MatchInOutVars()),
+				new StemAndLoopPreprocessor(mMgdScript,
 						new AddAxioms(lassoBuilder.getReplacementVarFactory(), mAxioms)),
-				new StemAndLoopPreprocessor(mMgdScript.getScript(), new CommuHashPreprocessor(mServices)),
+				new StemAndLoopPreprocessor(mMgdScript, new CommuHashPreprocessor(mServices)),
 				mPreferences.isEnablePartitioneer()
-						? new LassoPartitioneerPreprocessor(mMgdScript.getScript(), mServices, mMgdScript, mXnfConversionTechnique)
+						? new LassoPartitioneerPreprocessor(mMgdScript, mServices, mXnfConversionTechnique)
 						: null,
-				mapElimination, new StemAndLoopPreprocessor(mMgdScript.getScript(), new MatchInOutVars(mMgdScript)),
+				mapElimination, new StemAndLoopPreprocessor(mMgdScript, new MatchInOutVars()),
 				mPreferences.isEnablePartitioneer()
-						? new LassoPartitioneerPreprocessor(mMgdScript.getScript(), mServices, mMgdScript, mXnfConversionTechnique)
+						? new LassoPartitioneerPreprocessor(mMgdScript, mServices, mXnfConversionTechnique)
 						: null,
-				new StemAndLoopPreprocessor(mMgdScript.getScript(), new RewriteDivision(lassoBuilder.getReplacementVarFactory())),
-				new StemAndLoopPreprocessor(mMgdScript.getScript(),
+				new StemAndLoopPreprocessor(mMgdScript, new RewriteDivision(lassoBuilder.getReplacementVarFactory())),
+				new StemAndLoopPreprocessor(mMgdScript,
 						new RewriteBooleans(lassoBuilder.getReplacementVarFactory(), mMgdScript)),
-				new StemAndLoopPreprocessor(mMgdScript.getScript(), new RewriteIte(mMgdScript)),
-				new StemAndLoopPreprocessor(mMgdScript.getScript(),
+				new StemAndLoopPreprocessor(mMgdScript, new RewriteIte()),
+				new StemAndLoopPreprocessor(mMgdScript,
 						new RewriteUserDefinedTypes(lassoBuilder.getReplacementVarFactory(), mMgdScript)),
-				new StemAndLoopPreprocessor(mMgdScript.getScript(), new RewriteEquality()),
-				new StemAndLoopPreprocessor(mMgdScript.getScript(), new CommuHashPreprocessor(mServices)),
-				new StemAndLoopPreprocessor(mMgdScript.getScript(),
-						new SimplifyPreprocessor(mServices, mStorage, mMgdScript, mSimplificationTechnique)),
-				new StemAndLoopPreprocessor(mMgdScript.getScript(), new DNF(mServices, mMgdScript, mXnfConversionTechnique)),
-				new StemAndLoopPreprocessor(mMgdScript.getScript(),
-						new SimplifyPreprocessor(mServices, mStorage, mMgdScript, mSimplificationTechnique)),
-				new StemAndLoopPreprocessor(mMgdScript.getScript(), new RewriteTrueFalse()),
-				new StemAndLoopPreprocessor(mMgdScript.getScript(), new RemoveNegation()),
-				new StemAndLoopPreprocessor(mMgdScript.getScript(), new RewriteStrictInequalities()), };
+				new StemAndLoopPreprocessor(mMgdScript, new RewriteEquality()),
+				new StemAndLoopPreprocessor(mMgdScript, new CommuHashPreprocessor(mServices)),
+				new StemAndLoopPreprocessor(mMgdScript,
+						new SimplifyPreprocessor(mServices, mStorage, mSimplificationTechnique)),
+				new StemAndLoopPreprocessor(mMgdScript, new DNF(mServices, mXnfConversionTechnique)),
+				new StemAndLoopPreprocessor(mMgdScript,
+						new SimplifyPreprocessor(mServices, mStorage, mSimplificationTechnique)),
+				new StemAndLoopPreprocessor(mMgdScript, new RewriteTrueFalse()),
+				new StemAndLoopPreprocessor(mMgdScript, new RemoveNegation()),
+				new StemAndLoopPreprocessor(mMgdScript, new RewriteStrictInequalities()), };
 	}
 
 	/**

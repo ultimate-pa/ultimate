@@ -52,14 +52,12 @@ public class DNF extends TransitionPreprocessor {
 	public static final String DESCRIPTION = "Transform into disjunctive normal form";
 
 	private final IUltimateServiceProvider mServices;
-	private final ManagedScript mMgdScript;
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
-	public DNF(final IUltimateServiceProvider services, final ManagedScript freshTermVariableConstructor,
+	public DNF(final IUltimateServiceProvider services,
 			final XnfConversionTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
-		mMgdScript = freshTermVariableConstructor;
 		mXnfConversionTechnique = xnfConversionTechnique;
 
 	}
@@ -78,8 +76,8 @@ public class DNF extends TransitionPreprocessor {
 	}
 
 	@Override
-	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
-		final Term dnf = SmtUtils.toDnf(mServices, mMgdScript, tf.getFormula(), mXnfConversionTechnique);
+	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf) throws TermException {
+		final Term dnf = SmtUtils.toDnf(mServices, script, tf.getFormula(), mXnfConversionTechnique);
 		tf.setFormula(dnf);
 		return tf;
 	}

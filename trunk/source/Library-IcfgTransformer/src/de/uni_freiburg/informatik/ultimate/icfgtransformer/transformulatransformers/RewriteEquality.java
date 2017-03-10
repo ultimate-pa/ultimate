@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Replaces equalities (atoms of the form a = b) with (a ≤ b \/ a ≥ b).
@@ -58,8 +59,8 @@ public class RewriteEquality extends TransformerPreprocessor {
 	}
 
 	@Override
-	protected TermTransformer getTransformer(final Script script) {
-		return new RewriteEqualityTransformer(script);
+	protected TermTransformer getTransformer(final ManagedScript script) {
+		return new RewriteEqualityTransformer(script.getScript());
 	}
 
 	private static final class RewriteEqualityTransformer extends TermTransformer {

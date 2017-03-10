@@ -35,7 +35,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -82,18 +81,16 @@ public class LassoPartitioneer {
 	private List<Term> mLoopConjunctsWithoutSymbols;
 	private final UnionFind<NonTheorySymbol<?>> mEquivalentSymbols = new UnionFind<>();
 	private final Set<IProgramVar> mAllRankVars = new HashSet<IProgramVar>();
-	private final Script mScript;
 	private final List<LassoUnderConstruction> mNewLassos = new ArrayList<>();
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	
 	
 	public LassoPartitioneer(final IUltimateServiceProvider services, 
-			final ManagedScript freshVarConstructor, 
-			final Script script, final LassoUnderConstruction lasso, 
+			final ManagedScript mgdScript, 
+			final LassoUnderConstruction lasso, 
 			final XnfConversionTechnique xnfConversionTechnique) {
 		mServices = services;
-		mMgdScript = freshVarConstructor;
-		mScript = freshVarConstructor.getScript();
+		mMgdScript = mgdScript;
 		mLasso = lasso;
 		mXnfConversionTechnique = xnfConversionTechnique;
 		doPartition();
@@ -187,7 +184,7 @@ public class LassoPartitioneer {
 		if (terms.isEmpty()) {
 			return true;
 		} else {
-			final Term conjunction = SmtUtils.and(mScript, terms);
+			final Term conjunction = SmtUtils.and(mMgdScript.getScript(), terms);
 			return (conjunction.toString().equals("true"));
 		}
 	}
@@ -208,7 +205,7 @@ public class LassoPartitioneer {
 	private ModifiableTransFormula constructTransFormulaLR(
 			final Part part, final Set<Term> equivalentConjuncts, final Set<NonTheorySymbol<?>> equivalentVariablesWithoutConjunct) {
 		ModifiableTransFormula transformulaLR;
-		final Term formula = Util.and(mScript, equivalentConjuncts.toArray(new Term[equivalentConjuncts.size()]));
+		final Term formula = Util.and(mMgdScript.getScript(), equivalentConjuncts.toArray(new Term[equivalentConjuncts.size()]));
 		transformulaLR = new ModifiableTransFormula(formula);
 		for (final NonTheorySymbol<?> symbol : NonTheorySymbol.extractNonTheorySymbols(formula)) {
 			addInOuAuxVar(part, transformulaLR, symbol);
@@ -222,7 +219,7 @@ public class LassoPartitioneer {
 	private ModifiableTransFormula constructTransFormulaLR(
 			final Part part, final List<Term> conjunctsWithoutSymbols) {
 		ModifiableTransFormula transformulaLR;
-		final Term formula = Util.and(mScript, conjunctsWithoutSymbols.toArray(new Term[conjunctsWithoutSymbols.size()]));
+		final Term formula = Util.and(mMgdScript.getScript(), conjunctsWithoutSymbols.toArray(new Term[conjunctsWithoutSymbols.size()]));
 		transformulaLR = new ModifiableTransFormula(formula);
 		return transformulaLR;
 	}

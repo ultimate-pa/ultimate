@@ -33,8 +33,8 @@ import java.util.Collections;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TransitionPreprocessor;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
 /**
@@ -46,13 +46,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Mod
  */
 public class StemAndLoopPreprocessor extends LassoPreprocessor {
 	
-	private final Script mScript;
+	private final ManagedScript mMgdScript;
 	private final TransitionPreprocessor mTransitionPreprocessor;
 	
 	
-	public StemAndLoopPreprocessor(final Script script, final TransitionPreprocessor transitionPreProcessor) {
+	public StemAndLoopPreprocessor(final ManagedScript mgdScript, final TransitionPreprocessor transitionPreProcessor) {
 		super();
-		mScript = script;
+		mMgdScript = mgdScript;
 		mTransitionPreprocessor = transitionPreProcessor;
 	}
 	
@@ -73,12 +73,12 @@ public class StemAndLoopPreprocessor extends LassoPreprocessor {
 	@Override
 	public Collection<LassoUnderConstruction> process(
 			final LassoUnderConstruction lasso) throws TermException {
-		final ModifiableTransFormula newStem = mTransitionPreprocessor.process(mScript, lasso.getStem());
-		assert mTransitionPreprocessor.checkSoundness(mScript, lasso.getStem(), newStem) :
+		final ModifiableTransFormula newStem = mTransitionPreprocessor.process(mMgdScript, lasso.getStem());
+		assert mTransitionPreprocessor.checkSoundness(mMgdScript.getScript(), lasso.getStem(), newStem) :
 			"Soundness check failed for preprocessor " + this.getClass().getSimpleName();
-		final ModifiableTransFormula newLoop = mTransitionPreprocessor.process(mScript, lasso.getLoop());
+		final ModifiableTransFormula newLoop = mTransitionPreprocessor.process(mMgdScript, lasso.getLoop());
 		final LassoUnderConstruction newLasso = new LassoUnderConstruction(newStem, newLoop);
-		assert mTransitionPreprocessor.checkSoundness(mScript, lasso.getLoop(), newLoop) :
+		assert mTransitionPreprocessor.checkSoundness(mMgdScript.getScript(), lasso.getLoop(), newLoop) :
 			"Soundness check failed for preprocessor " + this.getClass().getSimpleName();
 		return Collections.singleton(newLasso);
 	}

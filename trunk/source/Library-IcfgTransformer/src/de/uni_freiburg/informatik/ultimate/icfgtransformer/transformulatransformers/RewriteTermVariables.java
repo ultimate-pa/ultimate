@@ -32,7 +32,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -217,12 +216,12 @@ public abstract class RewriteTermVariables extends TransitionPreprocessor {
 	}
 
 	@Override
-	public final ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf)
+	public final ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf)
 			throws TermException {
 		generateRepAndAuxVars(tf);
 		final ModifiableTransFormula newTf = new ModifiableTransFormula(tf);
 		final Term newFormula =
-				new SubstitutionWithLocalSimplification(mScript, mSubstitutionMapping).transform(tf.getFormula());
+				new SubstitutionWithLocalSimplification(script, mSubstitutionMapping).transform(tf.getFormula());
 		newTf.setFormula(newFormula);
 		return newTf;
 	}

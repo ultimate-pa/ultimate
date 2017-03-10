@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
@@ -42,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -76,7 +76,7 @@ public class AddAxioms extends TransitionPreprocessor {
 	}
 	
 	@Override
-	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
+	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf) throws TermException {
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		// Add constant variables as in- and outVars
 		for (final ApplicationTerm constVar : mConstants) {
@@ -85,9 +85,9 @@ public class AddAxioms extends TransitionPreprocessor {
 			tf.addOutVar(repVar, repVar.getTermVariable());
 			substitutionMapping.put(constVar, repVar.getTermVariable());
 		}
-		final Term axioms = new Substitution(script, substitutionMapping).transform(Util.and(script, mAxioms));
+		final Term axioms = new Substitution(script, substitutionMapping).transform(Util.and(script.getScript(), mAxioms));
 		Term formula = tf.getFormula();
-		formula = Util.and(script, formula, axioms);
+		formula = Util.and(script.getScript(), formula, axioms);
 		tf.setFormula(formula);
 		return tf;
 	}

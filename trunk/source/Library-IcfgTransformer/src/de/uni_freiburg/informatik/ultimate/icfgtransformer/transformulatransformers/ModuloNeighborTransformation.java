@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * 
@@ -67,7 +68,7 @@ public class ModuloNeighborTransformation extends TransformerPreprocessor {
 	}
 
 	@Override
-	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
+	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf) throws TermException {
 		return super.process(script, tf);
 	}
 
@@ -87,8 +88,8 @@ public class ModuloNeighborTransformation extends TransformerPreprocessor {
 	}
 
 	@Override
-	protected TermTransformer getTransformer(final Script script) {
-		return new ModuloNeighborTransformer(script);
+	protected TermTransformer getTransformer(final ManagedScript script) {
+		return new ModuloNeighborTransformer(script.getScript());
 	}
 
 	/**

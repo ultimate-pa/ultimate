@@ -26,9 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * A preprocessor performs some modifications to the input formulae for stem and loop.
@@ -43,10 +43,10 @@ public abstract class TransformerPreprocessor extends TransitionPreprocessor {
 	/**
 	 * Create a TermTransformer instance that will be applied to the stem and the loop transition formula.
 	 */
-	protected abstract TermTransformer getTransformer(Script script);
+	protected abstract TermTransformer getTransformer(ManagedScript script);
 
 	@Override
-	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
+	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf) throws TermException {
 		final TermTransformer transformer = getTransformer(script);
 		final ModifiableTransFormula newTf = new ModifiableTransFormula(tf);
 		newTf.setFormula(transformer.transform(tf.getFormula()));
