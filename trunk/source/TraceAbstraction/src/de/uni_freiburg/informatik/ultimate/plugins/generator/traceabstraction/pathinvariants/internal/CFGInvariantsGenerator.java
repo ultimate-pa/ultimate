@@ -292,10 +292,13 @@ public final class CFGInvariantsGenerator {
 //			pathprogramLocs2Predicates.putAll(extractAbstractInterpretationPredicates(mAbstractInterpretationResult,
 //					csToolkit.getManagedScript()));
 		}
-
+		TemplateDimensionsStrategy templateDimensionStrat = invSynthSettings.getTemplateDimensionsStrategy();
+		if (templateDimensionStrat == null) {
+			templateDimensionStrat = new TemplateDimensionsStrategy(1, 1, 1, 1);
+		}
 		final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy =
 				getStrategy(invSynthSettings.useUnsatCores(), USE_LIVE_VARIABLES, allProgramVars, pathprogramLocs2LiveVars,
-						new TemplateDimensionsStrategy(1, 1, 1, 1));
+						templateDimensionStrat);
 
 		if (USE_UNDER_APPROX_FOR_MAX_CONJUNCTS) {
 			for (final Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : loc2underApprox.entrySet()) {

@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ho
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.CFGInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.PathInvariantsStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.TemplateDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
@@ -110,6 +111,11 @@ public class InvariantSynthesisStarter {
 		final Map<IcfgLocation, IPredicate> invariants = cfgInvGenerator.synthesizeInvariants();
 		final PathInvariantsStatisticsGenerator statistics = cfgInvGenerator.getInvariantSynthesisStatistics();
 		if (invariants != null) {
+//			if (mLogger.isDebugEnabled()) {
+//				for (IcfgLocation loc : invariants.keySet()) {
+//					mLogger.debug(loc + ": " + invariants.get(loc));
+//				}
+//			}
 			for (final Entry<IcfgLocation, IPredicate> entry : invariants.entrySet()) {
 				final HoareAnnotation hoareAnnot = predicateFactory.getNewHoareAnnotation(entry.getKey(), icfg.getCfgSmtToolkit().getModifiableGlobalsTable());
 				hoareAnnot.annotate(entry.getKey());
@@ -171,31 +177,42 @@ public class InvariantSynthesisStarter {
 
 
 	private InvariantSynthesisSettings constructSettings() {
-		final boolean useNonlinearConstraints = false;
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		
+		final boolean useNonlinearConstraints = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_NONLINEAR_CONSTRAINTS);
 		final boolean fakeNonIncrementalScript = false;
-		final boolean useExternalSolver = true;
+		final boolean useExternalSolver = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_EXTERNAL_SMT_SOLVER);
+		final long timeoutSmtInterpol = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_SOLVER_TIMEOUT);
+		final String externalSolverTimeout = timeoutSmtInterpol + "000"; // z3 expects the timeout in msec
 		final String commandExternalSolver;
 		if (useNonlinearConstraints) {
 			// solverCommand = "yices-smt2 --incremental";
 			// solverCommand = "/home/matthias/ultimate/barcelogic/barcelogic-NIRA -tlimit 5";
-			commandExternalSolver = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:12000";
+			commandExternalSolver = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:" + externalSolverTimeout;
 			// solverCommand = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:1000";
 		} else {
 			// solverCommand = "yices-smt2 --incremental";
-			commandExternalSolver = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:12000";
+			commandExternalSolver = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:" + externalSolverTimeout;
 		}
 		
-		final long timeoutSmtInterpol = 12;
 		final boolean dumpSmtScriptToFile = false;
 		final String pathOfDumpedScript = null;
 		final String baseNameOfDumpedScript = null;
 		final Settings solverSettings = new Settings(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver, timeoutSmtInterpol, null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
-		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 
 		final boolean useUnsatCores = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_UNSAT_CORES);
 		final boolean useAbstractInterpretationPredicates = false;
 		final boolean useWPForPathInvariants = false;
-		final InvariantSynthesisSettings invSynthSettings = new InvariantSynthesisSettings(solverSettings, useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWPForPathInvariants);
+		
+		final int initialDisjuncts = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_INITIAL_DISJUNCTS);
+		final int disjunctsStep = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_STEP_DISJUNCTS);
+		final int initialConjuncts = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_INITIAL_CONJUNCTS);
+		final int conjunctsStep = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_STEP_CONJUNCTS);
+		
+		final TemplateDimensionsStrategy templateDimensionsStrat = new TemplateDimensionsStrategy(initialDisjuncts, initialConjuncts, disjunctsStep, conjunctsStep);
+		
+		final InvariantSynthesisSettings invSynthSettings = new InvariantSynthesisSettings(solverSettings, templateDimensionsStrat, 
+				useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWPForPathInvariants);
 		return invSynthSettings;
 	}
 
