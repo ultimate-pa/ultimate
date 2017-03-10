@@ -35,7 +35,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collector;
 
 import org.junit.AfterClass;
 import org.junit.internal.runners.statements.RunAfters;
@@ -127,7 +136,15 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 				}
 			}
 		}
-		return tests;
+
+		final FrameworkFactoryTestCollector collector = new FrameworkFactoryTestCollector();
+		final Collection<FrameworkFactoryTest> duplicateFreeCollection = tests.stream().collect(collector);
+
+		if (collector.getIgnoredDuplicates() > 0) {
+			System.err.println("Ignored " + collector.getIgnoredDuplicates() + " duplicate tests!");
+		}
+
+		return duplicateFreeCollection;
 	}
 
 	/**
@@ -189,6 +206,60 @@ public class FactoryTestRunner extends BlockJUnit4ClassRunner {
 		// enabling non-static after class methods
 		final List<FrameworkMethod> afters = getTestClass().getAnnotatedMethods(AfterClass.class);
 		return afters.isEmpty() ? statement : new RunAfters(statement, afters, mTestSuiteInstance);
+	}
+
+	public static final class FrameworkFactoryTestCollector implements
+			Collector<FrameworkFactoryTest, LinkedHashSet<FrameworkFactoryTest>, Collection<FrameworkFactoryTest>> {
+
+		private final Set<String> mNames;
+		private int mDuplicates;
+
+		public FrameworkFactoryTestCollector() {
+			mNames = new HashSet<>();
+		}
+
+		public int getIgnoredDuplicates() {
+			return mDuplicates;
+		}
+
+		@Override
+		public Supplier<LinkedHashSet<FrameworkFactoryTest>> supplier() {
+			return () -> new LinkedHashSet<>();
+		}
+
+		@Override
+		public BiConsumer<LinkedHashSet<FrameworkFactoryTest>, FrameworkFactoryTest> accumulator() {
+			return (a, b) -> {
+				if (!mNames.add(b.getName())) {
+					mDuplicates++;
+					return;
+				}
+				if (!a.add(b)) {
+					throw new AssertionError();
+				}
+			};
+		}
+
+		@Override
+		public BinaryOperator<LinkedHashSet<FrameworkFactoryTest>> combiner() {
+			return (a, b) -> {
+				final LinkedHashSet<FrameworkFactoryTest> rtr = new LinkedHashSet<>();
+				rtr.addAll(a);
+				rtr.addAll(b);
+				return rtr;
+			};
+		}
+
+		@Override
+		public Function<LinkedHashSet<FrameworkFactoryTest>, Collection<FrameworkFactoryTest>> finisher() {
+			return a -> a;
+		}
+
+		@Override
+		public Set<Collector.Characteristics> characteristics() {
+			return EnumSet.of(Characteristics.IDENTITY_FINISH);
+		}
+
 	}
 
 	public class FailingTest {
