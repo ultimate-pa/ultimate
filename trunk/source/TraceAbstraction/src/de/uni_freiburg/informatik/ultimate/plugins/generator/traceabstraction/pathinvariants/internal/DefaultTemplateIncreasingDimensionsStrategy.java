@@ -7,25 +7,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  * @author Betim Musa <musab@informatik.uni-freiburg.de>
  *
  */
-public class TemplateDimensionsStrategy {
-	
-	
-	private final int mInitialDisjuncts;
-	private final int mDisjunctsPerRound;
-	private final int mInitialConjuncts;
-	private final int mConjunctsPerRound;
-	
-	public TemplateDimensionsStrategy (final int initialDisjuncts, final int initialConjuncts,
-			final int disjunctsPerRound, final int conjunctsPerRound) {
-		mInitialDisjuncts = initialDisjuncts;
-		mDisjunctsPerRound = disjunctsPerRound;
-		mInitialConjuncts = initialConjuncts;
-		mConjunctsPerRound = conjunctsPerRound;
-		
-	}
-	
-	
+public class DefaultTemplateIncreasingDimensionsStrategy extends AbstractTemplateIncreasingDimensionsStrategy {
 
+	public DefaultTemplateIncreasingDimensionsStrategy(int initialDisjuncts, int initialConjuncts,
+			int disjunctsPerRound, int conjunctsPerRound) {
+		super(initialDisjuncts, initialConjuncts, disjunctsPerRound, conjunctsPerRound);
+	}
+
+	@Override
 	public int[] getDimensions(IcfgLocation location, int round) {
 		if (round == 1) {
 			return new int[] {mInitialDisjuncts, mInitialConjuncts};
@@ -43,14 +32,6 @@ public class TemplateDimensionsStrategy {
 			return new int[] { mInitialDisjuncts + round * mDisjunctsPerRound,
 					mInitialConjuncts + round * mConjunctsPerRound };
 		}
-	}
-	
-	public int getInitialDisjuncts() {
-		return mInitialDisjuncts;
-	}
-	
-	public int getInitialConjuncts () {
-		return mInitialConjuncts;
 	}
 
 }

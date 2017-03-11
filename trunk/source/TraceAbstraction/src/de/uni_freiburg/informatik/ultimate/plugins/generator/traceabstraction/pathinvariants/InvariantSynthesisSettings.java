@@ -1,7 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.TemplateDimensionsStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AbstractTemplateIncreasingDimensionsStrategy;
 
 public class InvariantSynthesisSettings {
 	
@@ -12,9 +12,9 @@ public class InvariantSynthesisSettings {
 	private final boolean mUseAbstractInterpretationPredicates;
 	private final boolean mUseWPForPathInvariants;
 	private final boolean mUseLBE; // use large-block encoding?
-	private final TemplateDimensionsStrategy mTemplateDimensionsStrat;
+	private final AbstractTemplateIncreasingDimensionsStrategy mTemplateDimensionsStrat;
 	
-	public InvariantSynthesisSettings(Settings solverSettings, final TemplateDimensionsStrategy templateDimensionsStrat, 
+	public InvariantSynthesisSettings(Settings solverSettings, final AbstractTemplateIncreasingDimensionsStrategy templateDimensionsStrat, 
 			final boolean useNonlinearConstraints, 	final boolean useUnsatCores, 
 			final boolean useAbstractInterpretationPredicates, final boolean useWPForPathInvariants, final boolean useLBE) {
 		mUseNonlinearConstraints = useNonlinearConstraints;
@@ -61,7 +61,7 @@ public class InvariantSynthesisSettings {
 		return mUseLBE;
 	}
 	
-	public final TemplateDimensionsStrategy getTemplateDimensionsStrategy() {
+	public final AbstractTemplateIncreasingDimensionsStrategy getTemplateDimensionsStrategy() {
 		return mTemplateDimensionsStrat;
 	}
 	

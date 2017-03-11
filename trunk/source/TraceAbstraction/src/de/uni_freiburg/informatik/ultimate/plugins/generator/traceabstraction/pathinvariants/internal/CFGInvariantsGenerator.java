@@ -217,7 +217,7 @@ public final class CFGInvariantsGenerator {
 	getStrategy(final boolean useVarsFromUnsatCore, final boolean useLiveVars,
 			final Set<IProgramVar> allProgramVariables,
 			final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables,
-			final TemplateDimensionsStrategy dimensionsStrategy) {
+			final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrategy) {
 		if (useVarsFromUnsatCore) {
 			if (USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES) {
 				if (USE_DYNAMIC_PATTERN_WITH_BOUNDS) {
@@ -295,9 +295,9 @@ public final class CFGInvariantsGenerator {
 //			pathprogramLocs2Predicates.putAll(extractAbstractInterpretationPredicates(mAbstractInterpretationResult,
 //					csToolkit.getManagedScript()));
 		}
-		TemplateDimensionsStrategy templateDimensionStrat = invSynthSettings.getTemplateDimensionsStrategy();
+		AbstractTemplateIncreasingDimensionsStrategy templateDimensionStrat = invSynthSettings.getTemplateDimensionsStrategy();
 		if (templateDimensionStrat == null) {
-			templateDimensionStrat = new TemplateDimensionsStrategy(1, 1, 1, 1);
+			templateDimensionStrat = new DefaultTemplateIncreasingDimensionsStrategy(1, 1, 1, 1);
 		}
 		final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy =
 				getStrategy(invSynthSettings.useUnsatCores(), USE_LIVE_VARIABLES, allProgramVars, pathprogramLocs2LiveVars,
