@@ -104,7 +104,8 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 				// If the current set of variables is a superset of the set of variables from the unsat core, then we remove the residual variables.
 				varsForThisPattern.retainAll(varsFromUnsatCore);
 			}
-			ps = new PatternSetting(super.mDimensionsStrategy.getInitialDisjuncts(), super.mDimensionsStrategy.getInitialConjuncts(), varsForThisPattern);
+			int[] dimension = super.mDimensionsStrategy.getDimensions(location, round);
+			ps = new PatternSetting(dimension[0], dimension[1], varsForThisPattern);
 			mLoc2PatternSetting.put(location, ps);
 		} else {
 			ps = mLoc2PatternSetting.get(location);
