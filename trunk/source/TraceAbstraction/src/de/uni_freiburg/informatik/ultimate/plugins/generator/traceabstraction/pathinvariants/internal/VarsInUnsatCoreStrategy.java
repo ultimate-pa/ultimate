@@ -24,7 +24,7 @@ public class VarsInUnsatCoreStrategy extends LiveVariablesStrategy {
 	
 	private Map<IcfgLocation, Set<IProgramVar>> mLocations2PatternVariables;
 	
-	public VarsInUnsatCoreStrategy(final TemplateDimensionsStrategy dimensionsStrat,
+	public VarsInUnsatCoreStrategy(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat,
 			int maxRounds, Set<IProgramVar> allProgramVariables,
 			Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables, boolean alwaysStrictAndNonStrictCopies,
 			boolean useStrictInequalitiesAlternatingly) {

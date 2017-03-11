@@ -18,7 +18,7 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 	protected Map<IcfgLocation, Set<IProgramVar>> mLocations2LiveVariables;
 	protected Map<IcfgLocation, PatternSetting> mLoc2PatternSetting;
 	
-	public DynamicPatternSettingsStrategy(final TemplateDimensionsStrategy dimensionsStrat, int maxRounds, Set<IProgramVar> allProgramVariables,
+	public DynamicPatternSettingsStrategy(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat, int maxRounds, Set<IProgramVar> allProgramVariables,
 			boolean alwaysStrictAndNonStrictCopies, boolean useStrictInequalitiesAlternatingly) {
 		super(dimensionsStrat, maxRounds, allProgramVariables, 
 				alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);
@@ -26,7 +26,7 @@ public class DynamicPatternSettingsStrategy extends LocationDependentLinearInequ
 		mLoc2PatternSetting = new HashMap<>();
 	}
 	
-	public DynamicPatternSettingsStrategy(final TemplateDimensionsStrategy dimensionsStrat, int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables,
+	public DynamicPatternSettingsStrategy(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat, int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables,
 			boolean alwaysStrictAndNonStrictCopies, boolean useStrictInequalitiesAlternatingly) {
 		super(dimensionsStrat, maxRounds, allProgramVariables, 
 				alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);

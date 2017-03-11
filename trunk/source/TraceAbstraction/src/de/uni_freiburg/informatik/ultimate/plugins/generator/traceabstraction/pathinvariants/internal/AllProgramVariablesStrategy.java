@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  */
 public class AllProgramVariablesStrategy extends LocationIndependentLinearInequalityInvariantPatternStrategy {
 	
-	public AllProgramVariablesStrategy(final TemplateDimensionsStrategy dimensionsStrat, int maxRounds, Set<IProgramVar> allProgramVariables, Set<IProgramVar> patternVariables,
+	public AllProgramVariablesStrategy(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat, int maxRounds, Set<IProgramVar> allProgramVariables, Set<IProgramVar> patternVariables,
 			boolean alwaysStrictAndNonStrictCopies, boolean useStrictInequalitiesAlternatingly) {
 		super(dimensionsStrat, maxRounds, allProgramVariables, patternVariables,
 				alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);

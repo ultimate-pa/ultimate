@@ -13,7 +13,7 @@ public class DynamicPatternSettingsStrategyWithBounds extends DynamicPatternSett
 	protected Map<IcfgLocation, Integer> mLoc2MaxNumOfConjuncts;
 	protected Map<IcfgLocation, Integer> mLoc2MaxNumOfDisjuncts;
 
-	public DynamicPatternSettingsStrategyWithBounds(final TemplateDimensionsStrategy dimensionsStrat, int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables,
+	public DynamicPatternSettingsStrategyWithBounds(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat, int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables,
 			boolean alwaysStrictAndNonStrictCopies, boolean useStrictInequalitiesAlternatingly) {
 		super(dimensionsStrat, maxRounds, allProgramVariables,
 				alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);

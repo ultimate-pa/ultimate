@@ -55,7 +55,7 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 	protected Map<IcfgLocation, Set<Term>> mLoc2PatternCoefficents;
 	private boolean mAlwaysStrictAndNonStrictCopies;
 	private boolean mUseStrictInequalitiesAlternatingly;
-	protected TemplateDimensionsStrategy mDimensionsStrategy;
+	protected AbstractTemplateIncreasingDimensionsStrategy mDimensionsStrategy;
 	
 	/**
 	 * Generates a simple linear inequality invariant pattern strategy.
@@ -66,7 +66,7 @@ public abstract class LocationIndependentLinearInequalityInvariantPatternStrateg
 	 * @param patternVariables 
 	 * @param allProgramVariables 
 	 */
-	public LocationIndependentLinearInequalityInvariantPatternStrategy(final TemplateDimensionsStrategy dimensionsStrat,
+	public LocationIndependentLinearInequalityInvariantPatternStrategy(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat,
 			final int maxRounds, Set<IProgramVar> allProgramVariables, Set<IProgramVar> patternVariables,
 			boolean alwaysStrictAndNonStrictCopies, boolean useStrictInequalitiesAlternatingly) {
 		mDimensionsStrategy = dimensionsStrat;

@@ -21,7 +21,7 @@ public class LiveVariablesStrategy extends LocationDependentLinearInequalityInva
 
 	protected Map<IcfgLocation, Set<IProgramVar>> mLocations2LiveVariables;
 
-	public LiveVariablesStrategy(final TemplateDimensionsStrategy dimensionsStrat, final int maxRounds, final Set<IProgramVar> allProgramVariables,
+	public LiveVariablesStrategy(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat, final int maxRounds, final Set<IProgramVar> allProgramVariables,
 			final Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables,
 			final boolean alwaysStrictAndNonStrictCopies,
 			final boolean useStrictInequalitiesAlternatingly) {

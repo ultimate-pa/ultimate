@@ -13,7 +13,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 public class DynamicPatternSettingsStrategyWithGlobalTemplateLevel extends DynamicPatternSettingsStrategy {
 	private Pair<Integer, Integer> mCurrentGlobalTemplateLevel;
 
-	public DynamicPatternSettingsStrategyWithGlobalTemplateLevel(final TemplateDimensionsStrategy dimensionsStrat, int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables,
+	public DynamicPatternSettingsStrategyWithGlobalTemplateLevel(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat, int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables,
 			boolean alwaysStrictAndNonStrictCopies, boolean useStrictInequalitiesAlternatingly) {
 		super(dimensionsStrat, maxRounds, allProgramVariables,
 				alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);

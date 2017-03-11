@@ -28,7 +28,7 @@ implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<Abstr
 	protected Map<IcfgLocation, Set<Term>> mLoc2PatternCoefficents;
 	protected boolean mAlwaysStrictAndNonStrictCopies;
 	protected boolean mUseStrictInequalitiesAlternatingly;
-	protected TemplateDimensionsStrategy mDimensionsStrategy;
+	protected AbstractTemplateIncreasingDimensionsStrategy mDimensionsStrategy;
 
 	/**
 	 * Generates a simple linear inequality invariant pattern strategy.
@@ -38,7 +38,7 @@ implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<Abstr
 	 *            {@link #getMaxRounds()}.
 	 * @param allProgramVariables 
 	 */
-	public LocationDependentLinearInequalityInvariantPatternStrategy(final TemplateDimensionsStrategy dimensionsStrat,
+	public LocationDependentLinearInequalityInvariantPatternStrategy(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat,
 			final int maxRounds, Set<IProgramVar> allProgramVariables, boolean alwaysStrictAndNonStrictCopies,
 			boolean useStrictInequalitiesAlternatingly) {
 		mDimensionsStrategy = dimensionsStrat;
