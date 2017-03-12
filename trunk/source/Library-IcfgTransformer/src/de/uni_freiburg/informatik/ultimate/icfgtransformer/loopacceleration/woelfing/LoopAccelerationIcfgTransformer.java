@@ -44,6 +44,9 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -52,9 +55,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -79,6 +83,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 	private final Set<IcfgEdge> mLoopEntryTransitions;
 	private final Map<INLOC, List<Backbone>> mBackbones;
 	private final ManagedScript mScript;
+	private final IUltimateServiceProvider mServices;
 
 	/**
 	 * Constructs a LoopAccelerationIcfgTransformer.
@@ -111,11 +116,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		mLoopEntryTransitions = new HashSet<>();
 		mBackbones = new HashMap<>();
 		mScript = origIcfg.getCfgSmtToolkit().getManagedScript();
-
-		// sample for quantifier elimination
-		// final Term quantifiedTerm = null;
-		// final Term result = PartialQuantifierElimination.tryToEliminate(services, mLogger, mScript, quantifiedTerm,
-		// SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		mServices = services;
 
 		// perform transformation last
 		final BasicIcfg<OUTLOC> resultIcfg =
@@ -155,6 +156,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 
 			for (final INLOC location : mBackbones.keySet()) {
 				mLogger.debug(location + ": " + getIteratedSymbolicMemoryForLoop(location));
+				mLogger.debug(getLoopCondition(location));
 			}
 		}
 
@@ -234,57 +236,96 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 	}
 
 	/**
-	 * Calculates a TransFormula that holds after the given backbone was taken once.
+	 * Calculates an iterated symbolic memory for a given loop entry.
 	 *
-	 * @param backbone
-	 *            A Backbone.
-	 * @return A Transformula.
+	 * @param loopEntry
+	 *            The loop entry location.
+	 * @return An IteratedSymbolicMemory.
 	 */
-	private TransFormula getTransformulaForBackbone(final Backbone backbone) {
-		Term term = mScript.getScript().term("true");
-
-		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
-		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
-
-		for (final IcfgEdge edge : backbone.getTransitions()) {
-			final TransFormula tf = edge.getTransformula();
-
-			for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-				if (!outVars.containsKey(entry.getKey())) {
-					assert !inVars.containsKey(entry.getKey());
-					inVars.put(entry.getKey(), entry.getValue());
-				} else if (outVars.get(entry.getKey()) != entry.getValue()) {
-					term = Util.and(mScript.getScript(), term,
-							mScript.getScript().term("=", entry.getValue(), outVars.get(entry.getKey())));
-				}
-			}
-
-			term = Util.and(mScript.getScript(), term, tf.getFormula());
-
-			for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-				outVars.put(entry.getKey(), entry.getValue());
-			}
-		}
-
-		final TransFormulaBuilder builder = new TransFormulaBuilder(inVars, outVars, true, null, true, null, true);
-		builder.setFormula(term);
-		builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		return builder.finishConstruction(mScript);
-	}
-
 	private IteratedSymbolicMemory getIteratedSymbolicMemoryForLoop(final INLOC loopEntry) {
 		final List<Backbone> backbones = mBackbones.get(loopEntry);
 		final List<SymbolicMemory> symbolicMemories = new ArrayList<>();
 
 		for (final Backbone backbone : backbones) {
-			final TransFormula tf = getTransformulaForBackbone(backbone);
-
-			final SymbolicMemory symbolicMemory = new SymbolicMemory(tf);
-
+			final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, backbone.getTransformula(mScript));
 			symbolicMemories.add(symbolicMemory);
 		}
-
 		return new IteratedSymbolicMemory(mScript, symbolicMemories);
+	}
+
+	/**
+	 * Calculates a loop condition that holds when each backbone can be taken as often as specified by its loopCounter.
+	 *
+	 * @param loopEntry
+	 *            The loop entry location.
+	 * @return The loop condition (containing loopCounters).
+	 */
+	private Term getLoopCondition(final INLOC loopEntry) {
+		final IteratedSymbolicMemory iteratedSymbolicMemory = getIteratedSymbolicMemoryForLoop(loopEntry);
+		final List<Backbone> backbones = mBackbones.get(loopEntry);
+		final int numLoops = backbones.size();
+		final List<TermVariable> loopCounters = iteratedSymbolicMemory.getLoopCounters();
+		assert loopCounters.size() == numLoops;
+
+		final List<TermVariable> loopIterators = new ArrayList<>(numLoops);
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
+		final Sort sort = mScript.getScript().sort("Int");
+
+		for (int i = 0; i < numLoops; i++) {
+			final TermVariable loopIterator = mScript.constructFreshTermVariable("loopIterator", sort);
+			loopIterators.add(loopIterator);
+			substitutionMapping.put(loopCounters.get(i), loopIterator);
+		}
+
+		final Term[] terms = new Term[numLoops];
+		final Term zeroTerm = Rational.ZERO.toTerm(sort);
+
+		for (int i = 0; i < numLoops; i++) {
+			final TransFormula tf = backbones.get(i).getTransformula(mScript);
+			Term term = tf.getFormula();
+			term = iteratedSymbolicMemory.getSymbolicMemory(i).replaceTermVars(term, null);
+			term = iteratedSymbolicMemory.replaceTermVars(term, tf.getInVars());
+			term = new Substitution(mScript, substitutionMapping).transform(term);
+
+			final List<TermVariable> quantifiers = new ArrayList<>();
+			for (int j = 0; j < numLoops; j++) {
+				if (i == j) {
+					continue;
+				}
+
+				quantifiers.add(loopIterators.get(j));
+
+				final Term iteratorCondition =
+						Util.and(mScript.getScript(), mScript.getScript().term("<=", zeroTerm, loopIterators.get(j)),
+								mScript.getScript().term("<=", loopIterators.get(j), loopCounters.get(j)));
+
+				term = Util.and(mScript.getScript(), iteratorCondition, term);
+			}
+
+			if (!quantifiers.isEmpty()) {
+				term = mScript.getScript().quantifier(Script.EXISTS, quantifiers.toArray(new TermVariable[0]), term);
+			}
+
+			final Term iteratorCondition =
+					Util.and(mScript.getScript(), mScript.getScript().term("<=", zeroTerm, loopIterators.get(i)),
+							mScript.getScript().term("<", loopIterators.get(i), loopCounters.get(i)));
+			term = Util.implies(mScript.getScript(), iteratorCondition, term);
+			term = mScript.getScript().quantifier(Script.FORALL, new TermVariable[] { loopIterators.get(i) }, term);
+
+			term = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, term,
+					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			terms[i] = term;
+		}
+
+		Term resultTerm = Util.and(mScript.getScript(), terms);
+
+		for (int i = 0; i < numLoops; i++) {
+			resultTerm = Util.and(mScript.getScript(), resultTerm,
+					mScript.getScript().term(">=", loopCounters.get(i), zeroTerm));
+		}
+
+		return PartialQuantifierElimination.tryToEliminate(mServices, mLogger, mScript, resultTerm,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 	}
 
 	@Override

@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * A symbolic memory.
@@ -42,11 +43,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  *
  */
 public class SymbolicMemory {
+	protected final ManagedScript mScript;
 	protected final Map<IProgramVar, TermVariable> mInVars;
 	protected final Map<IProgramVar, TermVariable> mOutVars;
 	protected final Map<TermVariable, Term> mVariableTerms;
 
-	protected SymbolicMemory() {
+	protected SymbolicMemory(final ManagedScript script) {
+		mScript = script;
 		mInVars = new HashMap<>();
 		mOutVars = new HashMap<>();
 		mVariableTerms = new HashMap<>();
@@ -55,10 +58,13 @@ public class SymbolicMemory {
 	/**
 	 * Constructs a SymbolicMemory from a given transformula.
 	 *
+	 * @param script
+	 *            A ManagedScript.
 	 * @param tf
 	 *            A transformula that is a conjunction of equalities.
 	 */
-	public SymbolicMemory(final TransFormula tf) {
+	public SymbolicMemory(final ManagedScript script, final TransFormula tf) {
+		mScript = script;
 		mInVars = tf.getInVars();
 		mOutVars = tf.getOutVars();
 		mVariableTerms = new HashMap<>();
@@ -74,12 +80,55 @@ public class SymbolicMemory {
 				if (innerTerm instanceof ApplicationTerm
 						&& "=".equals(((ApplicationTerm) innerTerm).getFunction().getName())) {
 					final Term[] params = ((ApplicationTerm) innerTerm).getParameters();
-					if (params[0] instanceof TermVariable) {
+					if (params[0] instanceof TermVariable && !mInVars.containsValue(params[0])
+							&& !mVariableTerms.containsKey(params[0])) {
 						mVariableTerms.put((TermVariable) params[0], params[1]);
 					}
 				}
 			}
 		}
+	}
+
+	/**
+	 * Replaces all occurrences of TermVariables in a given Term by terms from the symbolic memory.
+	 *
+	 * @param term
+	 *            The term to be transformed.
+	 * @param termInVars
+	 *            The inVars of the given term that should be replaced by outVars of the symbolic memory or null if
+	 *            inVars should not be replaced.
+	 * @return A transformed term.
+	 */
+	public Term replaceTermVars(final Term term, final Map<IProgramVar, TermVariable> termInVars) {
+		if (mVariableTerms.containsKey(term)) {
+			return replaceTermVars(mVariableTerms.get(term), termInVars);
+		}
+
+		if (termInVars != null && termInVars.values().contains(term)) {
+			for (final Map.Entry<IProgramVar, TermVariable> entry : termInVars.entrySet()) {
+				if (entry.getValue() == term && mOutVars.containsKey(entry.getKey())) {
+					return replaceTermVars(mOutVars.get(entry.getKey()), termInVars);
+				}
+			}
+		}
+
+		if (term instanceof ApplicationTerm) {
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
+			final Term[] params = appTerm.getParameters().clone();
+
+			for (int i = 0; i < params.length; i++) {
+				params[i] = replaceTermVars(params[i], termInVars);
+			}
+
+			if ("=".equals(appTerm.getFunction().getName()) && params.length == 2 && params[0].equals(params[1])) {
+				// Replace equations where both sides are equal by true to simplify the resulting term.
+				return mScript.getScript().term("true");
+			}
+
+			return mScript.getScript().term(appTerm.getFunction().getName(), params);
+		}
+
+		return term;
 	}
 
 	public Map<IProgramVar, TermVariable> getInVars() {

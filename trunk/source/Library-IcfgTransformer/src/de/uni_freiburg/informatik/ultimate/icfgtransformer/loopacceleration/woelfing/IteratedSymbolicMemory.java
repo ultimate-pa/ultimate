@@ -30,7 +30,9 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -46,7 +48,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  *
  */
 public class IteratedSymbolicMemory extends SymbolicMemory {
-	private final ManagedScript mScript;
+	private final List<TermVariable> mLoopCounters;
+	private final Map<TermVariable, TermVariable> mRenamedVars;
 	private final List<SymbolicMemory> mSymbolicMemories;
 
 	/**
@@ -58,23 +61,31 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 	 *            A list of symbolic memories of backbones.
 	 */
 	public IteratedSymbolicMemory(final ManagedScript script, final List<SymbolicMemory> symbolicMemories) {
-		mScript = script;
+		super(script);
+		mRenamedVars = new HashMap<>();
 		mSymbolicMemories = symbolicMemories;
 
 		final int numLoops = mSymbolicMemories.size();
-		final List<TermVariable> loopCounters = new ArrayList<>(numLoops);
+		mLoopCounters = new ArrayList<>(numLoops);
 		final Sort sort = mScript.getScript().sort("Int");
 		for (int i = 0; i < numLoops; i++) {
-			loopCounters.add(mScript.constructFreshTermVariable("loopCounter", sort));
+			mLoopCounters.add(mScript.constructFreshTermVariable("loopCounter", sort));
 		}
 
 		for (final SymbolicMemory symbolicMemory : mSymbolicMemories) {
 			for (final IProgramVar var : symbolicMemory.mInVars.keySet()) {
 				final TermVariable termVar = symbolicMemory.mInVars.get(var);
+
+				if (mRenamedVars.containsKey(termVar)) {
+					continue;
+				}
+
 				if (mInVars.containsKey(var)) {
-					assert mInVars.get(var) == termVar;
+					mRenamedVars.put(termVar, mInVars.get(var));
 				} else {
-					mInVars.put(var, termVar);
+					final TermVariable newTermVar = mScript.constructFreshCopy(termVar);
+					mRenamedVars.put(termVar, newTermVar);
+					mInVars.put(var, newTermVar);
 				}
 			}
 
@@ -92,7 +103,7 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 
 		while (!deque.isEmpty()) {
 			final TermVariable termVar = deque.pop();
-			if (loopCounters.contains(termVar) || mInVars.containsValue(termVar)) {
+			if (mLoopCounters.contains(termVar) || mInVars.containsValue(termVar)) {
 				continue;
 			}
 
@@ -103,13 +114,14 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 				}
 			}
 
-			final Term iteratedTerm = getIteratedTerm(loopCounters, terms, deque);
-			mVariableTerms.put(termVar, iteratedTerm);
+			final Term iteratedTerm = getIteratedTerm(terms, deque);
+			if (iteratedTerm != null) {
+				mVariableTerms.put(termVar, iteratedTerm);
+			}
 		}
 	}
 
-	private Term getIteratedTerm(final List<TermVariable> loopCounters, final Term[] terms,
-			final Deque<TermVariable> deque) {
+	private Term getIteratedTerm(final Term[] terms, final Deque<TermVariable> deque) {
 		Term result = null;
 		Term inVar = null;
 		for (int i = 0; i < terms.length; i++) {
@@ -119,6 +131,7 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 
 			final Term term = simplifyTerm(terms[i]);
 
+			// TODO: Parse terms that are not additions.
 			if (term instanceof ApplicationTerm && "+".equals(((ApplicationTerm) term).getFunction().getName())) {
 				final ApplicationTerm appTerm = (ApplicationTerm) term;
 				assert appTerm.getParameters().length == 2;
@@ -129,7 +142,7 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 					assert inVar == simplifyTerm(appTerm.getParameters()[0]);
 				}
 
-				final Term newTerm = mScript.getScript().term("*", loopCounters.get(i), appTerm.getParameters()[1]);
+				final Term newTerm = mScript.getScript().term("*", mLoopCounters.get(i), appTerm.getParameters()[1]);
 				result = mScript.getScript().term("+", result, newTerm);
 			}
 		}
@@ -146,12 +159,15 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 	 *
 	 * @param term
 	 *            The term to be simplified.
-	 * @return
-	 *            A simplified Term.
+	 * @return A simplified Term.
 	 */
 	private Term simplifyTerm(final Term term) {
 		if (!(term instanceof TermVariable)) {
 			return term;
+		}
+
+		if (mRenamedVars.containsKey(term)) {
+			return simplifyTerm(mRenamedVars.get(term));
 		}
 
 		Term simplifiedTerm = null;
@@ -173,5 +189,20 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 			return simplifiedTerm;
 		}
 		return term;
+	}
+
+	public List<TermVariable> getLoopCounters() {
+		return mLoopCounters;
+	}
+
+	/**
+	 * Gets one of the symbolic memories this IteratedSymbolicMemory was created from.
+	 *
+	 * @param index
+	 *            The index of the symbolic memory.
+	 * @return A SymbolicMemory.
+	 */
+	public SymbolicMemory getSymbolicMemory(final int index) {
+		return mSymbolicMemories.get(index);
 	}
 }
