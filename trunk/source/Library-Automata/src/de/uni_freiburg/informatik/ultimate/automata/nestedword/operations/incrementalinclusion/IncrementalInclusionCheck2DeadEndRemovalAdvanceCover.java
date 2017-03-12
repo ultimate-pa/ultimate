@@ -266,11 +266,8 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 										final ArrayList<STATE> newStateSequence =
 												(ArrayList<STATE>) preNode.word.getStateSequence().clone();
 										newStateSequence.add(tempNodeData.correspondingAState);
-										tempNodeData.word =
-												new NestedRun<>(
-														preNode.word.getWord()
-																.concatenate(new NestedWord<>(tran.getLetter(), -2)),
-														newStateSequence);
+										tempNodeData.word = new NestedRun<>(preNode.word.getWord()
+												.concatenate(new NestedWord<>(tran.getLetter(), -2)), newStateSequence);
 										if (tempNodeData.aState.accepting) {
 											tempNodeData.accepting = true;
 											for (final STATE state : tempNodeData.bStates) {

@@ -154,8 +154,8 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	}
 
 	@Override
-	protected void measureMethodPerformance(final String name, final SimulationOrMinimizationType type, final boolean useSCCs,
-			final AutomataLibraryServices services, final long timeout,
+	protected void measureMethodPerformance(final String name, final SimulationOrMinimizationType type,
+			final boolean useSCCs, final AutomataLibraryServices services, final long timeout,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operandRaw) {
 		final ILogger logger = getLogger();
 		final IProgressAwareTimer progressTimer = services.getProgressAwareTimer().getChildTimer(timeout);
@@ -167,8 +167,8 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 		}
 		final IDoubleDeckerAutomaton<LETTER, STATE> operand = (IDoubleDeckerAutomaton<LETTER, STATE>) operandRaw;
 
-		final boolean separateAcceptingStates =
-				type == SimulationOrMinimizationType.DIRECT || type == SimulationOrMinimizationType.DIRECT_FULL_MULTIPEBBLE;
+		final boolean separateAcceptingStates = type == SimulationOrMinimizationType.DIRECT
+				|| type == SimulationOrMinimizationType.DIRECT_FULL_MULTIPEBBLE;
 
 		try {
 			final Collection<Set<STATE>> possibleEquivalenceClasses = new NwaApproximateBisimulation<>(services,
@@ -243,10 +243,10 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 //				stateFactory, reachableOperand);
 
 		// Full multi-pebble simulation
-		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DIRECT_FULL_MULTIPEBBLE, false, getServices(),
-				timeOutMillis, stateFactory, reachableOperand);
-		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DELAYED_FULL_MULTIPEBBLE, false, getServices(),
-				timeOutMillis, stateFactory, reachableOperand);
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DIRECT_FULL_MULTIPEBBLE, false,
+				getServices(), timeOutMillis, stateFactory, reachableOperand);
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DELAYED_FULL_MULTIPEBBLE, false,
+				getServices(), timeOutMillis, stateFactory, reachableOperand);
 
 		// Other minimization methods
 //		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZESEVPA, false, mServices, timeOutMillis,

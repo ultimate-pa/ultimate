@@ -400,8 +400,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
 		if (mLargestBlockInitialPartition != 0) {
-			statistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK,
-					mLargestBlockInitialPartition);
+			statistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK, mLargestBlockInitialPartition);
 		}
 		return statistics;
 	}
@@ -3704,8 +3703,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 		@Override
 		public void add(final EquivalenceClass ec) {
-			assert (ec.mIncomingInt == IncomingStatus.IN_WORKLIST)
-					|| (ec.mIncomingCall == IncomingStatus.IN_WORKLIST);
+			assert (ec.mIncomingInt == IncomingStatus.IN_WORKLIST) || (ec.mIncomingCall == IncomingStatus.IN_WORKLIST);
 			if (DEBUG) {
 				mLogger.info("adding of IntCall WL: " + ec);
 			}

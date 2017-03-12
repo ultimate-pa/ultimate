@@ -170,7 +170,8 @@ public final class SimulationPerformance {
 	 *            If the simulation usesSCCs
 	 * @return The timed out simulation performance object
 	 */
-	public static SimulationPerformance createTimedOutPerformance(final SimulationOrMinimizationType type, final boolean useSccs) {
+	public static SimulationPerformance createTimedOutPerformance(final SimulationOrMinimizationType type,
+			final boolean useSccs) {
 		final SimulationPerformance performance = new SimulationPerformance(type, useSccs);
 		performance.timeOut();
 		return performance;

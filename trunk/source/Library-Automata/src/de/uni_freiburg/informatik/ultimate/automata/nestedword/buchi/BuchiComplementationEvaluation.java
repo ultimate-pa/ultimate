@@ -113,8 +113,7 @@ public final class BuchiComplementationEvaluation<LETTER, STATE>
 		return mOperand;
 	}
 
-	private <
-			SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE> & IDeterminizeStateFactory<STATE>>
+	private <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE> & IDeterminizeStateFactory<STATE>>
 			String evaluate(final SF stateFactory) throws AutomataOperationCanceledException {
 		final LinkedHashMap<String, Integer> results = new LinkedHashMap<>();
 		evaluateBs(stateFactory, results);

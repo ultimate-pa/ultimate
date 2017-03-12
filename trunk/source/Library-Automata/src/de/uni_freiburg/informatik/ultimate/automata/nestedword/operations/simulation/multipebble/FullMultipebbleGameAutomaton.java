@@ -59,8 +59,7 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 	private final Set<GS> mInitialStates;
 
 	public FullMultipebbleGameAutomaton(final AutomataLibraryServices services,
-			final FullMultipebbleStateFactory<STATE, GS> gameFactory,
-			final ISetOfPairs<STATE, ?> initialPairs,
+			final FullMultipebbleStateFactory<STATE, GS> gameFactory, final ISetOfPairs<STATE, ?> initialPairs,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
 		mOperand = operand;
 		mStateFactory = gameFactory;

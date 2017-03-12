@@ -178,8 +178,8 @@ public final class RabitUtil {
 	 *            A list of Rabit tool commands with each pair having the
 	 *            argument to pass and a name for the argument
 	 */
-	public static void processAutomaton(final File automaton, final List<Pair<String, SimulationOrMinimizationType>> commands)
-			throws IOException {
+	public static void processAutomaton(final File automaton,
+			final List<Pair<String, SimulationOrMinimizationType>> commands) throws IOException {
 		// Print header
 		String header = "<!--";
 		// Fix fields

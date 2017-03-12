@@ -694,8 +694,7 @@ public final class ComparisonTables {
 				// Variable fields
 
 				// Amount of Buechi states
-				final int buechiStates =
-						performanceOfSimulation.getCountingMeasureResult(CountingMeasure.BUCHI_STATES);
+				final int buechiStates = performanceOfSimulation.getCountingMeasureResult(CountingMeasure.BUCHI_STATES);
 				String buechiStatesAsString = Integer.toString(buechiStates);
 				if (buechiStates == SimulationPerformance.NO_COUNTING_RESULT) {
 					buechiStatesAsString = NO_VALUE;
@@ -703,8 +702,7 @@ public final class ComparisonTables {
 				row += separator + buechiStatesAsString;
 
 				// Work measure
-				final int simSteps =
-						performanceOfSimulation.getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS);
+				final int simSteps = performanceOfSimulation.getCountingMeasureResult(CountingMeasure.SIMULATION_STEPS);
 				final int graphStates =
 						performanceOfSimulation.getCountingMeasureResult(CountingMeasure.GAMEGRAPH_VERTICES);
 				String workMeasureAsString;
@@ -717,8 +715,8 @@ public final class ComparisonTables {
 				row += separator + workMeasureAsString;
 
 				// Overall time
-				final long value = performanceOfSimulation.getTimeMeasureResult(TimeMeasure.OVERALL,
-						MultipleDataOption.ADDITIVE);
+				final long value =
+						performanceOfSimulation.getTimeMeasureResult(TimeMeasure.OVERALL, MultipleDataOption.ADDITIVE);
 
 				String valueAsString;
 				if (value == SimulationPerformance.NO_TIME_RESULT) {
@@ -936,8 +934,7 @@ public final class ComparisonTables {
 				// Variable fields
 
 				// Amount of Buechi states
-				final int buechiStates =
-						performanceOfSimulation.getCountingMeasureResult(CountingMeasure.BUCHI_STATES);
+				final int buechiStates = performanceOfSimulation.getCountingMeasureResult(CountingMeasure.BUCHI_STATES);
 				String buechiStatesAsString;
 				if (buechiStates == SimulationPerformance.NO_COUNTING_RESULT) {
 					buechiStatesAsString = NO_VALUE;
@@ -947,8 +944,8 @@ public final class ComparisonTables {
 				row += separator + buechiStatesAsString;
 
 				// Overall time first
-				long value = performanceOfSimulation.getTimeMeasureResult(TimeMeasure.OVERALL,
-						MultipleDataOption.ADDITIVE);
+				long value =
+						performanceOfSimulation.getTimeMeasureResult(TimeMeasure.OVERALL, MultipleDataOption.ADDITIVE);
 
 				String valueAsString;
 				long overallTime = 0;
@@ -1018,8 +1015,8 @@ public final class ComparisonTables {
 			String name = "";
 			for (final SimulationPerformance performanceOfSimulation : performanceComparison) {
 				name = performanceOfSimulation.getName();
-				final long overallTime = performanceOfSimulation.getTimeMeasureResult(TimeMeasure.OVERALL,
-						MultipleDataOption.ADDITIVE);
+				final long overallTime =
+						performanceOfSimulation.getTimeMeasureResult(TimeMeasure.OVERALL, MultipleDataOption.ADDITIVE);
 				if (overallTime != SimulationPerformance.NO_TIME_RESULT && overallTime > SECONDS_TO_MILLIS) {
 					buechiLongerThanOneSecond = true;
 					break;
@@ -1226,7 +1223,8 @@ public final class ComparisonTables {
 						directoryKey = name;
 					}
 
-					final Pair<SimulationOrMinimizationType, Boolean> simulationKey = new Pair<>(type, performance.isUsingSccs());
+					final Pair<SimulationOrMinimizationType, Boolean> simulationKey =
+							new Pair<>(type, performance.isUsingSccs());
 					LinkedList<SimulationPerformance> performances =
 							directoryAndSimulationToPerformances.get(directoryKey, simulationKey);
 					if (performances == null) {
@@ -1277,7 +1275,8 @@ public final class ComparisonTables {
 				for (final SimulationPerformance performance : performancesToAdd) {
 					final SimulationOrMinimizationType type = performance.getSimType();
 
-					final Pair<SimulationOrMinimizationType, Boolean> simulationKey = new Pair<>(type, performance.isUsingSccs());
+					final Pair<SimulationOrMinimizationType, Boolean> simulationKey =
+							new Pair<>(type, performance.isUsingSccs());
 					LinkedList<SimulationPerformance> performances = simulationToPerformances.get(simulationKey);
 					if (performances == null) {
 						performances = new LinkedList<>();

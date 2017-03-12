@@ -286,12 +286,8 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 						final ArrayList<STATE> newStateSequence =
 								(ArrayList<STATE>) currentNodeSet.word.getStateSequence().clone();
 						newStateSequence.add(ATransition.getSucc());
-						tempBNodeData =
-								new NodeData<>(
-										new NestedRun<>(
-												currentNodeSet.word.getWord()
-														.concatenate(new NestedWord<>(ATransition.getLetter(), -2)),
-												newStateSequence));
+						tempBNodeData = new NodeData<>(new NestedRun<>(currentNodeSet.word.getWord()
+								.concatenate(new NestedWord<>(ATransition.getLetter(), -2)), newStateSequence));
 						tempBNodeData.hash = tempHash;
 						tempBNodeData.bStates = new HashMap<>();
 						for (final INestedWordAutomatonSimple<LETTER, STATE> automata : bStates.keySet()) {

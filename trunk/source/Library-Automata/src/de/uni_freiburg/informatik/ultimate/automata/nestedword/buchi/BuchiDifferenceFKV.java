@@ -109,8 +109,7 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 		}
 	}
 
-	private <
-			SF extends IBuchiComplementFkvStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
+	private <SF extends IBuchiComplementFkvStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
 			void constructResult(final SF stateFactory, final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
 					final int userDefinedMaxRank, final FkvOptimization optimization) throws AutomataLibraryException {
 		mSndComplemented = new BuchiComplementFKVNwa<>(mServices, mSndOperand, stateDeterminizer, stateFactory,

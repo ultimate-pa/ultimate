@@ -119,10 +119,11 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		final ISetOfPairs<STATE, ?> initialPairs;
 		final int sizeOfLargestEquivalenceClass;
 		if (DEFAULT_USE_BISIMULATION_PREPROCESSING) {
-			final PartitionBackedSetOfPairs<STATE> partitionBackedSetOfPairs = new NwaApproximateBisimulation<>(services, operand,
-					simulationInfoProvider.mayMergeFinalAndNonFinalStates()
-							? SimulationType.ORDINARY
-							: SimulationType.DIRECT).getResult();
+			final PartitionBackedSetOfPairs<STATE> partitionBackedSetOfPairs =
+					new NwaApproximateBisimulation<>(services, operand,
+							simulationInfoProvider.mayMergeFinalAndNonFinalStates()
+									? SimulationType.ORDINARY
+									: SimulationType.DIRECT).getResult();
 			final Collection<Set<STATE>> initialPartition = partitionBackedSetOfPairs.getRelation();
 			initialPairs = new PartitionAndMapBackedSetOfPairs<>(initialPartition);
 			sizeOfLargestEquivalenceClass =
@@ -361,8 +362,9 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		private final AGameGraph<LETTER, STATE> mGameGraph;
 
 		public ParsimoniousSimulation(final IProgressAwareTimer progressTimer, final ILogger logger,
-				final boolean useSccs, final IStateFactory<STATE> stateFactory, final SimulationOrMinimizationType simType,
-				final AGameGraph<LETTER, STATE> gameGraph) throws AutomataOperationCanceledException {
+				final boolean useSccs, final IStateFactory<STATE> stateFactory,
+				final SimulationOrMinimizationType simType, final AGameGraph<LETTER, STATE> gameGraph)
+				throws AutomataOperationCanceledException {
 			super(progressTimer, logger, useSccs, stateFactory, simType);
 			mGameGraph = gameGraph;
 		}

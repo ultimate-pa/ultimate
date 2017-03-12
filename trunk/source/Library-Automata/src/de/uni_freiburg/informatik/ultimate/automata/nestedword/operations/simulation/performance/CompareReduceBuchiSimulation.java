@@ -376,8 +376,9 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	 *            Operand the simulation processed
 	 * @return The out of memory performance object
 	 */
-	private SimulationPerformance createOutOfMemoryPerformance(final String name, final SimulationOrMinimizationType type,
-			final boolean useSCCs, final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+	private SimulationPerformance createOutOfMemoryPerformance(final String name,
+			final SimulationOrMinimizationType type, final boolean useSCCs,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
 		final SimulationPerformance performance = SimulationPerformance.createOutOfMemoryPerformance(type, useSCCs);
 		performance.setName(name);
 		performance.setCountingMeasure(CountingMeasure.BUCHI_STATES, operand.size());
@@ -560,9 +561,9 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	 *            The automaton the method processed
 	 */
 	@SuppressWarnings("unchecked")
-	protected void appendMethodPerformanceToLog(final Object method, final String name, final SimulationOrMinimizationType type,
-			final boolean usedSCCs, final boolean timedOut, final boolean outOfMemory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+	protected void appendMethodPerformanceToLog(final Object method, final String name,
+			final SimulationOrMinimizationType type, final boolean usedSCCs, final boolean timedOut,
+			final boolean outOfMemory, final INestedWordAutomatonSimple<LETTER, STATE> operand) {
 		createAndResetPerformanceHead();
 
 		if (method instanceof ASimulation) {
@@ -663,8 +664,8 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	 * @param operand
 	 *            The buechi automaton to reduce
 	 */
-	protected void measureMethodPerformance(final String name, final SimulationOrMinimizationType type, final boolean useSCCs,
-			final AutomataLibraryServices services, final long timeout,
+	protected void measureMethodPerformance(final String name, final SimulationOrMinimizationType type,
+			final boolean useSCCs, final AutomataLibraryServices services, final long timeout,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand) {
 		final IProgressAwareTimer progressTimer = services.getProgressAwareTimer().getChildTimer(timeout);
 		boolean timedOut = false;
@@ -749,37 +750,37 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 			final IMinimizationStateFactory<STATE> stateFactory,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> reachableOperand) {
 		// Direct simulation without SCC
-		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DIRECT, false, mServices, timeOutMillis, stateFactory,
-				reachableOperand);
-		// Direct simulation with SCC
-		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DIRECT, true, mServices, timeOutMillis, stateFactory,
-				reachableOperand);
-		// Delayed simulation without SCC
-		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DELAYED, false, mServices, timeOutMillis, stateFactory,
-				reachableOperand);
-		// Delayed simulation with SCC
-		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DELAYED, true, mServices, timeOutMillis, stateFactory,
-				reachableOperand);
-		// Fair simulation without SCC
-		measureMethodPerformance(automatonName, SimulationOrMinimizationType.FAIR, false, mServices, timeOutMillis, stateFactory,
-				reachableOperand);
-		// Fair simulation with SCC
-		measureMethodPerformance(automatonName, SimulationOrMinimizationType.FAIR, true, mServices, timeOutMillis, stateFactory,
-				reachableOperand);
-		// Fair direct simulation without SCC
-		measureMethodPerformance(automatonName, SimulationOrMinimizationType.FAIRDIRECT, false, mServices, timeOutMillis,
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DIRECT, false, mServices, timeOutMillis,
 				stateFactory, reachableOperand);
+		// Direct simulation with SCC
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DIRECT, true, mServices, timeOutMillis,
+				stateFactory, reachableOperand);
+		// Delayed simulation without SCC
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DELAYED, false, mServices, timeOutMillis,
+				stateFactory, reachableOperand);
+		// Delayed simulation with SCC
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DELAYED, true, mServices, timeOutMillis,
+				stateFactory, reachableOperand);
+		// Fair simulation without SCC
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.FAIR, false, mServices, timeOutMillis,
+				stateFactory, reachableOperand);
+		// Fair simulation with SCC
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.FAIR, true, mServices, timeOutMillis,
+				stateFactory, reachableOperand);
+		// Fair direct simulation without SCC
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.FAIRDIRECT, false, mServices,
+				timeOutMillis, stateFactory, reachableOperand);
 		// Fair direct simulation with SCC
 		measureMethodPerformance(automatonName, SimulationOrMinimizationType.FAIRDIRECT, true, mServices, timeOutMillis,
 				stateFactory, reachableOperand);
 
 		// Other minimization methods
-		measureMethodPerformance(automatonName, SimulationOrMinimizationType.EXT_MINIMIZESEVPA, true, mServices, timeOutMillis,
-				stateFactory, reachableOperand);
-		measureMethodPerformance(automatonName, SimulationOrMinimizationType.EXT_SHRINKNWA, true, mServices, timeOutMillis,
-				stateFactory, reachableOperand);
-		measureMethodPerformance(automatonName, SimulationOrMinimizationType.EXT_MINIMIZENWAMAXSAT, true, mServices, timeOutMillis,
-				stateFactory, reachableOperand);
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.EXT_MINIMIZESEVPA, true, mServices,
+				timeOutMillis, stateFactory, reachableOperand);
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.EXT_SHRINKNWA, true, mServices,
+				timeOutMillis, stateFactory, reachableOperand);
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.EXT_MINIMIZENWAMAXSAT, true, mServices,
+				timeOutMillis, stateFactory, reachableOperand);
 	}
 
 	/**
