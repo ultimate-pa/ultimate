@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateBisimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateXsimulation.SimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.SimulationOrMinimizationType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.nwa.DelayedNwaGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.nwa.DelayedNwaSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.DirectNwaGameGraph;
@@ -108,53 +108,53 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 		final AutomataLibraryServices services = getServices();
 		final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(services, input, true);
 
-		mCountingMeasures.put(ECountingMeasure.BUCHI_ALPHABET_SIZE_INTERNAL,
+		mCountingMeasures.put(CountingMeasure.BUCHI_ALPHABET_SIZE_INTERNAL,
 				inputAnalyzer.getNumberOfSymbols(SymbolType.INTERNAL));
-		mCountingMeasures.put(ECountingMeasure.BUCHI_ALPHABET_SIZE_CALL,
+		mCountingMeasures.put(CountingMeasure.BUCHI_ALPHABET_SIZE_CALL,
 				inputAnalyzer.getNumberOfSymbols(SymbolType.CALL));
-		mCountingMeasures.put(ECountingMeasure.BUCHI_ALPHABET_SIZE_RETURN,
+		mCountingMeasures.put(CountingMeasure.BUCHI_ALPHABET_SIZE_RETURN,
 				inputAnalyzer.getNumberOfSymbols(SymbolType.RETURN));
 
-		mCountingMeasures.put(ECountingMeasure.BUCHI_TRANSITIONS_INTERNAL,
+		mCountingMeasures.put(CountingMeasure.BUCHI_TRANSITIONS_INTERNAL,
 				inputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
-		mCountingMeasures.put(ECountingMeasure.BUCHI_TRANSITIONS_CALL,
+		mCountingMeasures.put(CountingMeasure.BUCHI_TRANSITIONS_CALL,
 				inputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
-		mCountingMeasures.put(ECountingMeasure.BUCHI_TRANSITIONS_RETURN,
+		mCountingMeasures.put(CountingMeasure.BUCHI_TRANSITIONS_RETURN,
 				inputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
 
-		mCountingMeasures.put(ECountingMeasure.BUCHI_TRANSITION_INTERNAL_DENSITY_MILLION,
+		mCountingMeasures.put(CountingMeasure.BUCHI_TRANSITION_INTERNAL_DENSITY_MILLION,
 				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.INTERNAL) * 1_000_000));
-		mCountingMeasures.put(ECountingMeasure.BUCHI_TRANSITION_CALL_DENSITY_MILLION,
+		mCountingMeasures.put(CountingMeasure.BUCHI_TRANSITION_CALL_DENSITY_MILLION,
 				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.CALL) * 1_000_000));
-		mCountingMeasures.put(ECountingMeasure.BUCHI_TRANSITION_RETURN_DENSITY_MILLION,
+		mCountingMeasures.put(CountingMeasure.BUCHI_TRANSITION_RETURN_DENSITY_MILLION,
 				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.RETURN) * 1_000_000));
 
 		final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, output, true);
 
-		mCountingMeasures.put(ECountingMeasure.RESULT_ALPHABET_SIZE_INTERNAL,
+		mCountingMeasures.put(CountingMeasure.RESULT_ALPHABET_SIZE_INTERNAL,
 				outputAnalyzer.getNumberOfSymbols(SymbolType.INTERNAL));
-		mCountingMeasures.put(ECountingMeasure.RESULT_ALPHABET_SIZE_CALL,
+		mCountingMeasures.put(CountingMeasure.RESULT_ALPHABET_SIZE_CALL,
 				outputAnalyzer.getNumberOfSymbols(SymbolType.CALL));
-		mCountingMeasures.put(ECountingMeasure.RESULT_ALPHABET_SIZE_RETURN,
+		mCountingMeasures.put(CountingMeasure.RESULT_ALPHABET_SIZE_RETURN,
 				outputAnalyzer.getNumberOfSymbols(SymbolType.RETURN));
 
-		mCountingMeasures.put(ECountingMeasure.RESULT_TRANSITIONS_INTERNAL,
+		mCountingMeasures.put(CountingMeasure.RESULT_TRANSITIONS_INTERNAL,
 				outputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
-		mCountingMeasures.put(ECountingMeasure.RESULT_TRANSITIONS_CALL,
+		mCountingMeasures.put(CountingMeasure.RESULT_TRANSITIONS_CALL,
 				outputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
-		mCountingMeasures.put(ECountingMeasure.RESULT_TRANSITIONS_RETURN,
+		mCountingMeasures.put(CountingMeasure.RESULT_TRANSITIONS_RETURN,
 				outputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
 
-		mCountingMeasures.put(ECountingMeasure.RESULT_TRANSITION_INTERNAL_DENSITY_MILLION,
+		mCountingMeasures.put(CountingMeasure.RESULT_TRANSITION_INTERNAL_DENSITY_MILLION,
 				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.INTERNAL) * 1_000_000));
-		mCountingMeasures.put(ECountingMeasure.RESULT_TRANSITION_CALL_DENSITY_MILLION,
+		mCountingMeasures.put(CountingMeasure.RESULT_TRANSITION_CALL_DENSITY_MILLION,
 				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.CALL) * 1_000_000));
-		mCountingMeasures.put(ECountingMeasure.RESULT_TRANSITION_RETURN_DENSITY_MILLION,
+		mCountingMeasures.put(CountingMeasure.RESULT_TRANSITION_RETURN_DENSITY_MILLION,
 				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.RETURN) * 1_000_000));
 	}
 
 	@Override
-	protected void measureMethodPerformance(final String name, final ESimulationType type, final boolean useSCCs,
+	protected void measureMethodPerformance(final String name, final SimulationOrMinimizationType type, final boolean useSCCs,
 			final AutomataLibraryServices services, final long timeout,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operandRaw) {
 		final ILogger logger = getLogger();
@@ -168,13 +168,13 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 		final IDoubleDeckerAutomaton<LETTER, STATE> operand = (IDoubleDeckerAutomaton<LETTER, STATE>) operandRaw;
 
 		final boolean separateAcceptingStates =
-				type == ESimulationType.DIRECT || type == ESimulationType.DIRECT_FULL_MULTIPEBBLE;
+				type == SimulationOrMinimizationType.DIRECT || type == SimulationOrMinimizationType.DIRECT_FULL_MULTIPEBBLE;
 
 		try {
 			final Collection<Set<STATE>> possibleEquivalenceClasses = new NwaApproximateBisimulation<>(services,
 					operand, separateAcceptingStates ? SimulationType.DIRECT : SimulationType.ORDINARY).getResult()
 							.getRelation();
-			if (type.equals(ESimulationType.DIRECT)) {
+			if (type.equals(SimulationOrMinimizationType.DIRECT)) {
 				final DirectNwaGameGraph<LETTER, STATE> graph = new DirectNwaGameGraph<>(services, stateFactory,
 						progressTimer, logger, operand, possibleEquivalenceClasses);
 				graph.generateGameGraphFromAutomaton();
@@ -182,7 +182,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 						new DirectNwaSimulation<>(progressTimer, logger, useSCCs, stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
-			} else if (type.equals(ESimulationType.DELAYED)) {
+			} else if (type.equals(SimulationOrMinimizationType.DELAYED)) {
 				final DelayedNwaGameGraph<LETTER, STATE> graph = new DelayedNwaGameGraph<>(services, stateFactory,
 						progressTimer, logger, operand, possibleEquivalenceClasses);
 				graph.generateGameGraphFromAutomaton();
@@ -190,7 +190,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 						new DelayedNwaSimulation<>(progressTimer, logger, useSCCs, stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
-			} else if (type.equals(ESimulationType.FAIR)) {
+			} else if (type.equals(SimulationOrMinimizationType.FAIR)) {
 				final FairNwaGameGraph<LETTER, STATE> graph = new FairNwaGameGraph<>(services, stateFactory,
 						progressTimer, logger, operand, possibleEquivalenceClasses);
 				graph.generateGameGraphFromAutomaton();
@@ -198,23 +198,23 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 						new FairNwaSimulation<>(progressTimer, logger, useSCCs, stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
-			} else if (type.equals(ESimulationType.DIRECT_FULL_MULTIPEBBLE)) {
+			} else if (type.equals(SimulationOrMinimizationType.DIRECT_FULL_MULTIPEBBLE)) {
 				final long startTime = System.currentTimeMillis();
 				method = new ReduceNwaDirectFullMultipebbleSimulation<>(services, stateFactory, operand);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
-			} else if (type.equals(ESimulationType.DELAYED_FULL_MULTIPEBBLE)) {
+			} else if (type.equals(SimulationOrMinimizationType.DELAYED_FULL_MULTIPEBBLE)) {
 				final long startTime = System.currentTimeMillis();
 				method = new ReduceNwaDelayedFullMultipebbleSimulation<>(services, stateFactory, operand);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
-			} else if (type.equals(ESimulationType.EXT_MINIMIZESEVPA)) {
+			} else if (type.equals(SimulationOrMinimizationType.EXT_MINIMIZESEVPA)) {
 				final long startTime = System.currentTimeMillis();
 				method = new MinimizeSevpa<>(getServices(), stateFactory, operand);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
-			} else if (type.equals(ESimulationType.EXT_SHRINKNWA)) {
+			} else if (type.equals(SimulationOrMinimizationType.EXT_SHRINKNWA)) {
 				final long startTime = System.currentTimeMillis();
 				method = new ShrinkNwa<>(getServices(), stateFactory, operand);
 				setExternalOverallTime(System.currentTimeMillis() - startTime);
-			} else if (type.equals(ESimulationType.EXT_MINIMIZENWAMAXSAT)) {
+			} else if (type.equals(SimulationOrMinimizationType.EXT_MINIMIZENWAMAXSAT)) {
 				final long startTime = System.currentTimeMillis();
 				method = new MinimizeNwaPmaxSat<>(services, stateFactory, operand,
 						new PartitionBackedSetOfPairs<>(possibleEquivalenceClasses),
@@ -243,9 +243,9 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 //				stateFactory, reachableOperand);
 
 		// Full multi-pebble simulation
-		measureMethodPerformance(automatonName, ESimulationType.DIRECT_FULL_MULTIPEBBLE, false, getServices(),
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DIRECT_FULL_MULTIPEBBLE, false, getServices(),
 				timeOutMillis, stateFactory, reachableOperand);
-		measureMethodPerformance(automatonName, ESimulationType.DELAYED_FULL_MULTIPEBBLE, false, getServices(),
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DELAYED_FULL_MULTIPEBBLE, false, getServices(),
 				timeOutMillis, stateFactory, reachableOperand);
 
 		// Other minimization methods

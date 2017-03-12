@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.ETransitionType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.TransitionType;
 
 /**
  * Represents a letter in a game automaton. Such a letter is a Duplicator
@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  */
 public interface IGameLetter<LETTER, STATE> {
 
-	ETransitionType getTransitionType();
+	TransitionType getTransitionType();
 
 	LETTER getLetter();
 

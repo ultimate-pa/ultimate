@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
- * Copyright (C) 2009-2016 University of Freiburg
+ * Copyright (C) 2009-2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -24,56 +24,39 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa;
 
 /**
- * Different types of simulation.
+ * Possible types of a transitions.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
-public enum ESimulationType {
+public enum TransitionType {
 	/**
-	 * Delayed simulation.
+	 * Type for call transitions.
 	 */
-	DELAYED,
+	CALL,
 	/**
-	 * Delayed full multi-pebble simulation.
+	 * Type for internal transitions.
 	 */
-	DELAYED_FULL_MULTIPEBBLE,
+	INTERNAL,
 	/**
-	 * Direct simulation.
+	 * Type for return transitions.
 	 */
-	DIRECT,
+	RETURN,
 	/**
-	 * Direct full multi-pebble simulation.
+	 * Type for auxiliary transitions that represent the a sink that is winning
+	 * for a given player.
 	 */
-	DIRECT_FULL_MULTIPEBBLE,
+	SINK,
 	/**
-	 * External minimization method, MinimizeNwaPmaxSat.
+	 * Type for auxiliary transitions that represent the entry of a summarize
+	 * edge.
 	 */
-	EXT_MINIMIZENWAMAXSAT,
+	SUMMARIZE_ENTRY,
 	/**
-	 * External minimization method, MinimizeSevpa.
+	 * Type for auxiliary transitions that represent the exit of a summarize
+	 * edge.
 	 */
-	EXT_MINIMIZESEVPA,
-	/**
-	 * External minimization method, heavy-1 of the Rabit tool.
-	 */
-	EXT_RABIT_HEAVY_1,
-	/**
-	 * External minimization method, light-1 of the Rabit tool.
-	 */
-	EXT_RABIT_LIGHT_1,
-	/**
-	 * External minimization method, ShrinkNwa.
-	 */
-	EXT_SHRINKNWA,
-	/**
-	 * Fair simulation.
-	 */
-	FAIR,
-	/**
-	 * Fair simulation that uses direct simulation as an optimization.
-	 */
-	FAIRDIRECT
+	SUMMARIZE_EXIT
 }

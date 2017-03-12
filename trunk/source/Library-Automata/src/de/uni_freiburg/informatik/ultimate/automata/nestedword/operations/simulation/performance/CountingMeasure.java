@@ -31,7 +31,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
-public enum ECountingMeasure {
+public enum CountingMeasure {
 	/**
 	 * One if the game automaton of a nwa game graph already was deterministic
 	 * before using the determinizer, zero or not set else.

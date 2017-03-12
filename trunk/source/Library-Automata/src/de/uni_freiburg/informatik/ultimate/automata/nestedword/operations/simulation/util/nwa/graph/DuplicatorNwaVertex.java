@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.ETransitionType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.TransitionType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameLetter;
 
 /**
@@ -66,7 +66,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * The type of the transition, i.e. if it stands for an internal, call or
 	 * return transition.
 	 */
-	private final ETransitionType mTransitionType;
+	private final TransitionType mTransitionType;
 
 	/**
 	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
@@ -90,7 +90,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 *            call or return transition
 	 */
 	public DuplicatorNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1, final LETTER a,
-			final ETransitionType transitionType) {
+			final TransitionType transitionType) {
 		this(priority, b, q0, q1, a, transitionType, null, null);
 	}
 
@@ -100,7 +100,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
 	 * q1 and must try to also use an a-transition. The bit encodes extra
 	 * information if needed.
-	 * If the used transition is of type {@link ETransitionType#SINK} one can
+	 * If the used transition is of type {@link TransitionType#SINK} one can
 	 * set <tt>sink</tt> to distinguish between similar sinks.
 	 * 
 	 * @param priority
@@ -121,7 +121,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 *            vertex for such.
 	 */
 	public DuplicatorNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1, final LETTER a,
-			final ETransitionType transitionType, final IWinningSink<LETTER, STATE> sink) {
+			final TransitionType transitionType, final IWinningSink<LETTER, STATE> sink) {
 		this(priority, b, q0, q1, a, transitionType, null, sink);
 	}
 
@@ -131,8 +131,8 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
 	 * q1 and must try to also use an a-transition. The bit encodes extra
 	 * information if needed.
-	 * If the used transition is of type {@link ETransitionType#SUMMARIZE_ENTRY}
-	 * or {@link ETransitionType#SUMMARIZE_EXIT} one can set
+	 * If the used transition is of type {@link TransitionType#SUMMARIZE_ENTRY}
+	 * or {@link TransitionType#SUMMARIZE_EXIT} one can set
 	 * <tt>summarizeEdge</tt> to distinguish between similar summarize edges.
 	 * 
 	 * @param priority
@@ -153,7 +153,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 *            as a shadow vertex.
 	 */
 	public DuplicatorNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1, final LETTER a,
-			final ETransitionType transitionType, final SummarizeEdge<LETTER, STATE> summarizeEdge) {
+			final TransitionType transitionType, final SummarizeEdge<LETTER, STATE> summarizeEdge) {
 		this(priority, b, q0, q1, a, transitionType, summarizeEdge, null);
 	}
 
@@ -163,10 +163,10 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
 	 * q1 and must try to also use an a-transition. The bit encodes extra
 	 * information if needed.
-	 * If the used transition is of type {@link ETransitionType#SUMMARIZE_ENTRY}
-	 * or {@link ETransitionType#SUMMARIZE_EXIT} one can set
+	 * If the used transition is of type {@link TransitionType#SUMMARIZE_ENTRY}
+	 * or {@link TransitionType#SUMMARIZE_EXIT} one can set
 	 * <tt>summarizeEdge</tt> to distinguish between similar summarize edges. If
-	 * the used transition is of type {@link ETransitionType#SINK} one can set
+	 * the used transition is of type {@link TransitionType#SINK} one can set
 	 * <tt>sink</tt> to distinguish between similar sinks.
 	 * 
 	 * @param priority
@@ -190,7 +190,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 *            vertex for such.
 	 */
 	private DuplicatorNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1, final LETTER a,
-			final ETransitionType transitionType, final SummarizeEdge<LETTER, STATE> summarizeEdge,
+			final TransitionType transitionType, final SummarizeEdge<LETTER, STATE> summarizeEdge,
 			final IWinningSink<LETTER, STATE> sink) {
 		super(priority, b, q0, q1, a);
 		mTransitionType = transitionType;
@@ -242,11 +242,11 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	public String getName() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(isB() + "," + getQ0() + "," + getQ1() + ",");
-		if (mTransitionType.equals(ETransitionType.SUMMARIZE_ENTRY)) {
+		if (mTransitionType.equals(TransitionType.SUMMARIZE_ENTRY)) {
 			sb.append("SEntry/").append(mSummarizeEdge.hashCode());
-		} else if (mTransitionType.equals(ETransitionType.SUMMARIZE_EXIT)) {
+		} else if (mTransitionType.equals(TransitionType.SUMMARIZE_EXIT)) {
 			sb.append("SExit/").append(mSummarizeEdge.hashCode());
-		} else if (mTransitionType.equals(ETransitionType.SINK)) {
+		} else if (mTransitionType.equals(TransitionType.SINK)) {
 			sb.append("Sink/").append(mSink.hashCode());
 		} else {
 			sb.append(getLetter());
@@ -258,7 +258,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	/**
 	 * Gets the sink this vertex belongs to or <tt>null</tt> if not set. This
 	 * field should only be used if the type of the used transition is
-	 * {@link ETransitionType#SINK}.
+	 * {@link TransitionType#SINK}.
 	 * 
 	 * @return The summarize edge this vertex belongs to or <tt>null</tt> if not
 	 *         set.
@@ -270,8 +270,8 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	/**
 	 * Gets the summarize edge this vertex belongs to or <tt>null</tt> if not
 	 * set. This field should only be used if the type of the used transition is
-	 * {@link ETransitionType#SUMMARIZE_ENTRY} or
-	 * {@link ETransitionType#SUMMARIZE_EXIT}.
+	 * {@link TransitionType#SUMMARIZE_ENTRY} or
+	 * {@link TransitionType#SUMMARIZE_EXIT}.
 	 * 
 	 * @return The summarize edge this vertex belongs to or <tt>null</tt> if not
 	 *         set.
@@ -286,7 +286,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * @return The type of the transition represented by this vertex.
 	 */
 	@Override
-	public ETransitionType getTransitionType() {
+	public TransitionType getTransitionType() {
 		return mTransitionType;
 	}
 
@@ -315,11 +315,11 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 		final StringBuilder sb = new StringBuilder();
 		sb.append("<").append(isB()).append(",(").append(getQ0()).append(",");
 		sb.append(getQ1()).append(",");
-		if (mTransitionType.equals(ETransitionType.SUMMARIZE_ENTRY)) {
+		if (mTransitionType.equals(TransitionType.SUMMARIZE_ENTRY)) {
 			sb.append("SEntry/").append(mSummarizeEdge.hashCode());
-		} else if (mTransitionType.equals(ETransitionType.SUMMARIZE_EXIT)) {
+		} else if (mTransitionType.equals(TransitionType.SUMMARIZE_EXIT)) {
 			sb.append("SExit/").append(mSummarizeEdge.hashCode());
-		} else if (mTransitionType.equals(ETransitionType.SINK)) {
+		} else if (mTransitionType.equals(TransitionType.SINK)) {
 			sb.append("Sink/").append(mSink.hashCode());
 		} else {
 			sb.append(getLetter());

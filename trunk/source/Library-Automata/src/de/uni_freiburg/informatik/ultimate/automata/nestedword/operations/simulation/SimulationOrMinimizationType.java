@@ -27,22 +27,53 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation;
 
 /**
- * Types of possible game graph changes, mainly used by
- * {@link GameGraphChanges}.
+ * Different types of simulation.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
-public enum EGameGraphChangeType {
+public enum SimulationOrMinimizationType {
 	/**
-	 * Represents a change that added something to the game graph.
+	 * Delayed simulation.
 	 */
-	ADDITION,
+	DELAYED,
 	/**
-	 * Represents a change that did not alter the game graph.
+	 * Delayed full multi-pebble simulation.
 	 */
-	NO_CHANGE,
+	DELAYED_FULL_MULTIPEBBLE,
 	/**
-	 * Represents a change that removed something from the game graph.
+	 * Direct simulation.
 	 */
-	REMOVAL
+	DIRECT,
+	/**
+	 * Direct full multi-pebble simulation.
+	 */
+	DIRECT_FULL_MULTIPEBBLE,
+	/**
+	 * External minimization method, MinimizeNwaPmaxSat.
+	 */
+	EXT_MINIMIZENWAMAXSAT,
+	/**
+	 * External minimization method, MinimizeSevpa.
+	 */
+	EXT_MINIMIZESEVPA,
+	/**
+	 * External minimization method, heavy-1 of the Rabit tool.
+	 */
+	EXT_RABIT_HEAVY_1,
+	/**
+	 * External minimization method, light-1 of the Rabit tool.
+	 */
+	EXT_RABIT_LIGHT_1,
+	/**
+	 * External minimization method, ShrinkNwa.
+	 */
+	EXT_SHRINKNWA,
+	/**
+	 * Fair simulation.
+	 */
+	FAIR,
+	/**
+	 * Fair simulation that uses direct simulation as an optimization.
+	 */
+	FAIRDIRECT
 }

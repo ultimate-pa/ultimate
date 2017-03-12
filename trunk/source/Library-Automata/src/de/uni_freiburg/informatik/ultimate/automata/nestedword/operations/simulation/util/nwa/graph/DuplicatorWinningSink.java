@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.ETransitionType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.TransitionType;
 
 /**
  * Represents a sink that is winning for Duplicator. If such a sink exists with
@@ -74,7 +74,7 @@ public final class DuplicatorWinningSink<LETTER, STATE> implements IWinningSink<
 	public DuplicatorWinningSink(final AGameGraph<LETTER, STATE> graph) {
 		mGraph = graph;
 		mDuplicatorSink = new DuplicatorNwaVertex<LETTER, STATE>(NwaGameGraphGeneration.DUPLICATOR_PRIORITY, false,
-				null, null, null, ETransitionType.SINK, this);
+				null, null, null, TransitionType.SINK, this);
 		mSpoilerSink = new SpoilerNwaVertex<LETTER, STATE>(DUPLICATOR_WINNING_PRIORITY, false, null, null, this);
 	}
 

@@ -34,7 +34,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.SimulationOrMinimizationType;
 
 /**
  * Class that is used by {@link ASimulation} to measure its performance. Has
@@ -56,7 +56,7 @@ public final class SimulationPerformance {
 	/**
 	 * Holds all counting measures that are monitored.
 	 */
-	private final LinkedHashMap<ECountingMeasure, Integer> mCountingMeasures;
+	private final LinkedHashMap<CountingMeasure, Integer> mCountingMeasures;
 
 	/**
 	 * If the simulation uses SCC optimization or not.
@@ -74,7 +74,7 @@ public final class SimulationPerformance {
 	/**
 	 * The type of the simulation that is monitored.
 	 */
-	private final ESimulationType mSimType;
+	private final SimulationOrMinimizationType mSimType;
 	/**
 	 * If the performance object represents a simulation that has timed out.
 	 */
@@ -82,12 +82,12 @@ public final class SimulationPerformance {
 	/**
 	 * Holds all time measures that are monitored.
 	 */
-	private final LinkedHashMap<ETimeMeasure, List<Long>> mTimeMeasures;
+	private final LinkedHashMap<TimeMeasure, List<Long>> mTimeMeasures;
 
 	/**
 	 * Holds all starting timestamps for monitored time measures.
 	 */
-	private final LinkedHashMap<ETimeMeasure, Long> mTimeMeasureStartTimes;
+	private final LinkedHashMap<TimeMeasure, Long> mTimeMeasureStartTimes;
 
 	/**
 	 * Creates a simulation performance object that monitors the performance of
@@ -98,7 +98,7 @@ public final class SimulationPerformance {
 	 * @param isUsingSccs
 	 *            If the simulation uses a SCC optimization
 	 */
-	public SimulationPerformance(final ESimulationType simType, final boolean isUsingSccs) {
+	public SimulationPerformance(final SimulationOrMinimizationType simType, final boolean isUsingSccs) {
 		mSimType = simType;
 		mTimeMeasures = new LinkedHashMap<>();
 		mTimeMeasureStartTimes = new LinkedHashMap<>();
@@ -116,12 +116,12 @@ public final class SimulationPerformance {
 	 *            Time measure to convert
 	 * @return The equivalent statistics type object
 	 */
-	public static StatisticsType convertCountingMeasureToStatistic(final ECountingMeasure countingMeasure) {
-		if (countingMeasure.equals(ECountingMeasure.BUCHI_STATES)) {
+	public static StatisticsType convertCountingMeasureToStatistic(final CountingMeasure countingMeasure) {
+		if (countingMeasure.equals(CountingMeasure.BUCHI_STATES)) {
 			return StatisticsType.STATES_INPUT;
-		} else if (countingMeasure.equals(ECountingMeasure.RESULT_STATES)) {
+		} else if (countingMeasure.equals(CountingMeasure.RESULT_STATES)) {
 			return StatisticsType.STATES_OUTPUT;
-		} else if (countingMeasure.equals(ECountingMeasure.REMOVED_STATES)) {
+		} else if (countingMeasure.equals(CountingMeasure.REMOVED_STATES)) {
 			return StatisticsType.STATES_REDUCTION_ABSOLUTE;
 		}
 
@@ -136,8 +136,8 @@ public final class SimulationPerformance {
 	 *            Time measure to convert
 	 * @return The equivalent statistics type object
 	 */
-	public static StatisticsType convertTimeMeasureToStatistic(final ETimeMeasure timeMeasure) {
-		if (timeMeasure.equals(ETimeMeasure.OVERALL)) {
+	public static StatisticsType convertTimeMeasureToStatistic(final TimeMeasure timeMeasure) {
+		if (timeMeasure.equals(TimeMeasure.OVERALL)) {
 			return StatisticsType.RUNTIME_TOTAL;
 		}
 
@@ -154,7 +154,7 @@ public final class SimulationPerformance {
 	 *            If the simulation usesSCCs
 	 * @return The out of memory simulation performance object
 	 */
-	public static SimulationPerformance createOutOfMemoryPerformance(final ESimulationType type,
+	public static SimulationPerformance createOutOfMemoryPerformance(final SimulationOrMinimizationType type,
 			final boolean useSccs) {
 		final SimulationPerformance performance = new SimulationPerformance(type, useSccs);
 		performance.outOfMemory();
@@ -170,7 +170,7 @@ public final class SimulationPerformance {
 	 *            If the simulation usesSCCs
 	 * @return The timed out simulation performance object
 	 */
-	public static SimulationPerformance createTimedOutPerformance(final ESimulationType type, final boolean useSccs) {
+	public static SimulationPerformance createTimedOutPerformance(final SimulationOrMinimizationType type, final boolean useSccs) {
 		final SimulationPerformance performance = new SimulationPerformance(type, useSccs);
 		performance.timeOut();
 		return performance;
@@ -184,15 +184,15 @@ public final class SimulationPerformance {
 	 *            Simulation object to add measures from
 	 */
 	public void addAllMeasures(final SimulationPerformance other) {
-		final LinkedHashMap<ECountingMeasure, Integer> countingMeasuresToAdd = other.getCountingMeasures();
-		final LinkedHashMap<ETimeMeasure, List<Long>> timeMeasuresToAdd = other.getTimeMeasures();
+		final LinkedHashMap<CountingMeasure, Integer> countingMeasuresToAdd = other.getCountingMeasures();
+		final LinkedHashMap<TimeMeasure, List<Long>> timeMeasuresToAdd = other.getTimeMeasures();
 
-		for (final Entry<ETimeMeasure, List<Long>> timeMeasure : timeMeasuresToAdd.entrySet()) {
+		for (final Entry<TimeMeasure, List<Long>> timeMeasure : timeMeasuresToAdd.entrySet()) {
 			for (final Long duration : timeMeasure.getValue()) {
 				addTimeMeasureValue(timeMeasure.getKey(), duration);
 			}
 		}
-		for (final Entry<ECountingMeasure, Integer> countingMeasure : countingMeasuresToAdd.entrySet()) {
+		for (final Entry<CountingMeasure, Integer> countingMeasure : countingMeasuresToAdd.entrySet()) {
 			final int current = getCountingMeasureResult(countingMeasure.getKey());
 			int valueToSet = current;
 			if (current != NO_COUNTING_RESULT) {
@@ -214,7 +214,7 @@ public final class SimulationPerformance {
 	 * @param duration
 	 *            Duration to add
 	 */
-	public void addTimeMeasureValue(final ETimeMeasure type, final long duration) {
+	public void addTimeMeasureValue(final TimeMeasure type, final long duration) {
 		if (!mTimeMeasures.containsKey(type)) {
 			mTimeMeasures.put(type, new LinkedList<>());
 		}
@@ -250,15 +250,15 @@ public final class SimulationPerformance {
 		stats.addKeyValuePair(StatisticsType.IS_USING_SCCS, isUsingSccs());
 
 		// Time measures
-		for (final ETimeMeasure measure : getTimeMeasures().keySet()) {
-			final long value = getTimeMeasureResult(measure, EMultipleDataOption.ADDITIVE);
+		for (final TimeMeasure measure : getTimeMeasures().keySet()) {
+			final long value = getTimeMeasureResult(measure, MultipleDataOption.ADDITIVE);
 			if (value != NO_TIME_RESULT) {
 				stats.addKeyValuePair(convertTimeMeasureToStatistic(measure), value);
 			}
 		}
 
 		// Counting measures
-		for (final ECountingMeasure measure : getCountingMeasures().keySet()) {
+		for (final CountingMeasure measure : getCountingMeasures().keySet()) {
 			final int value = getCountingMeasureResult(measure);
 			if (value != NO_COUNTING_RESULT) {
 				stats.addKeyValuePair(convertCountingMeasureToStatistic(measure), value);
@@ -275,7 +275,7 @@ public final class SimulationPerformance {
 	 * @return The result for a given counting measure if known or
 	 *         {@link #NO_COUNTING_RESULT}.
 	 */
-	public int getCountingMeasureResult(final ECountingMeasure type) {
+	public int getCountingMeasureResult(final CountingMeasure type) {
 		if (!mCountingMeasures.containsKey(type)) {
 			return NO_COUNTING_RESULT;
 		}
@@ -287,7 +287,7 @@ public final class SimulationPerformance {
 	 * 
 	 * @return The counting measures.
 	 */
-	public LinkedHashMap<ECountingMeasure, Integer> getCountingMeasures() {
+	public LinkedHashMap<CountingMeasure, Integer> getCountingMeasures() {
 		return mCountingMeasures;
 	}
 
@@ -305,14 +305,14 @@ public final class SimulationPerformance {
 	 * 
 	 * @return The type of the simulation monitored.
 	 */
-	public ESimulationType getSimType() {
+	public SimulationOrMinimizationType getSimType() {
 		return mSimType;
 	}
 
 	/**
 	 * Gets the result for a given time measure if known or
 	 * {@link #NO_TIME_RESULT}. If there are multiple stored values for this
-	 * measure they can be handled using a given {@link EMultipleDataOption}.
+	 * measure they can be handled using a given {@link MultipleDataOption}.
 	 * 
 	 * @param type
 	 *            Type of the time measure to get
@@ -320,7 +320,7 @@ public final class SimulationPerformance {
 	 *            Option how multiple data values should be handled.
 	 * @return The time measure result to get
 	 */
-	public long getTimeMeasureResult(final ETimeMeasure type, final EMultipleDataOption option) {
+	public long getTimeMeasureResult(final TimeMeasure type, final MultipleDataOption option) {
 		final List<Long> measureList = mTimeMeasures.get(type);
 		if (measureList == null || measureList.isEmpty()) {
 			return NO_TIME_RESULT;
@@ -331,19 +331,19 @@ public final class SimulationPerformance {
 			if (timeMeasure == NO_TIME_RESULT) {
 				continue;
 			}
-			if (option.equals(EMultipleDataOption.ADDITIVE) || option.equals(EMultipleDataOption.AVERAGE)) {
+			if (option.equals(MultipleDataOption.ADDITIVE) || option.equals(MultipleDataOption.AVERAGE)) {
 				timeResult += timeMeasure;
-			} else if (option.equals(EMultipleDataOption.MAXIMUM)) {
+			} else if (option.equals(MultipleDataOption.MAXIMUM)) {
 				if (timeMeasure > timeResult) {
 					timeResult = timeMeasure;
 				}
-			} else if (option.equals(EMultipleDataOption.MINIMIUM)) {
+			} else if (option.equals(MultipleDataOption.MINIMIUM)) {
 				if (timeMeasure < timeResult) {
 					timeResult = timeMeasure;
 				}
 			}
 		}
-		if (option.equals(EMultipleDataOption.AVERAGE)) {
+		if (option.equals(MultipleDataOption.AVERAGE)) {
 			timeResult = Math.round((timeResult + 0.0) / measureList.size());
 		}
 
@@ -360,7 +360,7 @@ public final class SimulationPerformance {
 	 *            Type of the time measures to get
 	 * @return All results of a given time measure.
 	 */
-	public List<Long> getTimeMeasureResults(final ETimeMeasure type) {
+	public List<Long> getTimeMeasureResults(final TimeMeasure type) {
 		return mTimeMeasures.get(type);
 	}
 
@@ -369,7 +369,7 @@ public final class SimulationPerformance {
 	 * 
 	 * @return The time measures.
 	 */
-	public LinkedHashMap<ETimeMeasure, List<Long>> getTimeMeasures() {
+	public LinkedHashMap<TimeMeasure, List<Long>> getTimeMeasures() {
 		return mTimeMeasures;
 	}
 
@@ -391,7 +391,7 @@ public final class SimulationPerformance {
 	 * @param type
 	 *            Type of the counting measure to increase
 	 */
-	public void increaseCountingMeasure(final ECountingMeasure type) {
+	public void increaseCountingMeasure(final CountingMeasure type) {
 		if (!mCountingMeasures.containsKey(type)) {
 			mCountingMeasures.put(type, 1);
 		} else {
@@ -436,7 +436,7 @@ public final class SimulationPerformance {
 	 * @param counter
 	 *            Value to set which must not be zero
 	 */
-	public void setCountingMeasure(final ECountingMeasure type, final int counter) {
+	public void setCountingMeasure(final CountingMeasure type, final int counter) {
 		if (counter != 0) {
 			mCountingMeasures.put(type, counter);
 		}
@@ -458,7 +458,7 @@ public final class SimulationPerformance {
 	 * @param type
 	 *            Type of the time measure to start
 	 */
-	public void startTimeMeasure(final ETimeMeasure type) {
+	public void startTimeMeasure(final TimeMeasure type) {
 		final long startTime = System.currentTimeMillis();
 		mTimeMeasureStartTimes.put(type, startTime);
 	}
@@ -471,7 +471,7 @@ public final class SimulationPerformance {
 	 *            Type of the time measure to stop
 	 * @return The duration of the measure.
 	 */
-	public long stopTimeMeasure(final ETimeMeasure type) {
+	public long stopTimeMeasure(final TimeMeasure type) {
 		final long endTime = System.currentTimeMillis();
 		long startTime = mTimeMeasureStartTimes.get(type);
 		if (!mTimeMeasureStartTimes.containsKey(type)) {
@@ -498,7 +498,7 @@ public final class SimulationPerformance {
 	 * @param duration
 	 *            Duration to save
 	 */
-	private void saveTimeMeasureResult(final ETimeMeasure type, final long duration) {
+	private void saveTimeMeasureResult(final TimeMeasure type, final long duration) {
 		List<Long> measureList = mTimeMeasures.get(type);
 		if (measureList == null) {
 			measureList = new LinkedList<>();

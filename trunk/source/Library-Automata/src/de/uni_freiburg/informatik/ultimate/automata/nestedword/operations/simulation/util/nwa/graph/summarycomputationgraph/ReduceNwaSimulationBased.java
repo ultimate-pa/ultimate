@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.QuotientNwaConstructor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.SimulationOrMinimizationType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.NwaSimulationUtil;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
@@ -330,7 +330,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		return mOperand;
 	}
 
-	protected abstract ESimulationType getSimulationType();
+	protected abstract SimulationOrMinimizationType getSimulationType();
 
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
@@ -361,7 +361,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		private final AGameGraph<LETTER, STATE> mGameGraph;
 
 		public ParsimoniousSimulation(final IProgressAwareTimer progressTimer, final ILogger logger,
-				final boolean useSccs, final IStateFactory<STATE> stateFactory, final ESimulationType simType,
+				final boolean useSccs, final IStateFactory<STATE> stateFactory, final SimulationOrMinimizationType simType,
 				final AGameGraph<LETTER, STATE> gameGraph) throws AutomataOperationCanceledException {
 			super(progressTimer, logger, useSccs, stateFactory, simType);
 			mGameGraph = gameGraph;

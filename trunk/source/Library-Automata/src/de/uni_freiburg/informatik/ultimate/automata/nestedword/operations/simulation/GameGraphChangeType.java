@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2015-2016 Daniel Tischner
- * Copyright (C) 2009-2015 University of Freiburg
+ * Copyright (C) 2009-2016 University of Freiburg
  * 
  * This file is part of the ULTIMATE Automata Library.
  * 
@@ -24,39 +24,25 @@
  * licensors of the ULTIMATE Automata Library grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa;
+package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation;
 
 /**
- * Possible types of a transitions.
+ * Types of possible game graph changes, mainly used by
+ * {@link GameGraphChanges}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
-public enum ETransitionType {
+public enum GameGraphChangeType {
 	/**
-	 * Type for call transitions.
+	 * Represents a change that added something to the game graph.
 	 */
-	CALL,
+	ADDITION,
 	/**
-	 * Type for internal transitions.
+	 * Represents a change that did not alter the game graph.
 	 */
-	INTERNAL,
+	NO_CHANGE,
 	/**
-	 * Type for return transitions.
+	 * Represents a change that removed something from the game graph.
 	 */
-	RETURN,
-	/**
-	 * Type for auxiliary transitions that represent the a sink that is winning
-	 * for a given player.
-	 */
-	SINK,
-	/**
-	 * Type for auxiliary transitions that represent the entry of a summarize
-	 * edge.
-	 */
-	SUMMARIZE_ENTRY,
-	/**
-	 * Type for auxiliary transitions that represent the exit of a summarize
-	 * edge.
-	 */
-	SUMMARIZE_EXIT
+	REMOVAL
 }

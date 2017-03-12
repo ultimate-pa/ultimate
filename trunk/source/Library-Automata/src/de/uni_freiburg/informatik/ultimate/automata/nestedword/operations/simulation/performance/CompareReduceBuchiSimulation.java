@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeSevpa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.SimulationOrMinimizationType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.DelayedGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.DelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.DirectGameGraph;
@@ -155,7 +155,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	/**
 	 * Holds counting measures of the comparison.
 	 */
-	protected final LinkedHashMap<ECountingMeasure, Integer> mCountingMeasures;
+	protected final LinkedHashMap<CountingMeasure, Integer> mCountingMeasures;
 	/**
 	 * Overall time an external operation took. Needed since it does not track this measure by itself.
 	 */
@@ -175,7 +175,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	/**
 	 * Holds time measures of the comparison.
 	 */
-	private final LinkedHashMap<ETimeMeasure, Float> mTimeMeasures;
+	private final LinkedHashMap<TimeMeasure, Float> mTimeMeasures;
 
 	/**
 	 * Compares the different types of simulation methods for buechi reduction. Resulting automaton is the input
@@ -314,7 +314,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	 * @param outOfMemory
 	 *            If the method has thrown an out of memory error
 	 */
-	private void appendCurrentPerformanceEntryToLog(final String name, final ESimulationType type,
+	private void appendCurrentPerformanceEntryToLog(final String name, final SimulationOrMinimizationType type,
 			final boolean usedSCCs, final boolean timedOut, final boolean outOfMemory) {
 		// Fix fields
 		String message = name + LOG_SEPARATOR + type + LOG_SEPARATOR + usedSCCs + LOG_SEPARATOR + timedOut
@@ -339,10 +339,10 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 		message += "NAME" + LOG_SEPARATOR + "TYPE" + LOG_SEPARATOR + "USED_SCCS" + LOG_SEPARATOR + "TIMED_OUT"
 				+ LOG_SEPARATOR + "OOM" + LOG_SEPARATOR;
 		// Variable fields
-		for (final ETimeMeasure measure : mTimeMeasures.keySet()) {
+		for (final TimeMeasure measure : mTimeMeasures.keySet()) {
 			message += measure + LOG_SEPARATOR;
 		}
-		for (final ECountingMeasure measure : mCountingMeasures.keySet()) {
+		for (final CountingMeasure measure : mCountingMeasures.keySet()) {
 			message += measure + LOG_SEPARATOR;
 		}
 
@@ -355,10 +355,10 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	 * Creates or resets the head of the performance format.
 	 */
 	private void createAndResetPerformanceHead() {
-		for (final ETimeMeasure measure : ETimeMeasure.values()) {
+		for (final TimeMeasure measure : TimeMeasure.values()) {
 			mTimeMeasures.put(measure, (float) SimulationPerformance.NO_TIME_RESULT);
 		}
-		for (final ECountingMeasure measure : ECountingMeasure.values()) {
+		for (final CountingMeasure measure : CountingMeasure.values()) {
 			mCountingMeasures.put(measure, SimulationPerformance.NO_COUNTING_RESULT);
 		}
 	}
@@ -376,11 +376,11 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	 *            Operand the simulation processed
 	 * @return The out of memory performance object
 	 */
-	private SimulationPerformance createOutOfMemoryPerformance(final String name, final ESimulationType type,
+	private SimulationPerformance createOutOfMemoryPerformance(final String name, final SimulationOrMinimizationType type,
 			final boolean useSCCs, final INestedWordAutomatonSimple<LETTER, STATE> operand) {
 		final SimulationPerformance performance = SimulationPerformance.createOutOfMemoryPerformance(type, useSCCs);
 		performance.setName(name);
-		performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, operand.size());
+		performance.setCountingMeasure(CountingMeasure.BUCHI_STATES, operand.size());
 		return performance;
 	}
 
@@ -397,11 +397,11 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	 *            Operand the simulation processed
 	 * @return The timed out performance object
 	 */
-	private SimulationPerformance createTimedOutPerformance(final String name, final ESimulationType type,
+	private SimulationPerformance createTimedOutPerformance(final String name, final SimulationOrMinimizationType type,
 			final boolean useSCCs, final INestedWordAutomatonSimple<LETTER, STATE> operand) {
 		final SimulationPerformance performance = SimulationPerformance.createTimedOutPerformance(type, useSCCs);
 		performance.setName(name);
-		performance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, operand.size());
+		performance.setCountingMeasure(CountingMeasure.BUCHI_STATES, operand.size());
 		return performance;
 	}
 
@@ -481,15 +481,15 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	 *            Performance to save
 	 */
 	private void saveStateOfPerformance(final SimulationPerformance performance) {
-		for (final ETimeMeasure measure : mTimeMeasures.keySet()) {
-			final long durationInMillis = performance.getTimeMeasureResult(measure, EMultipleDataOption.ADDITIVE);
+		for (final TimeMeasure measure : mTimeMeasures.keySet()) {
+			final long durationInMillis = performance.getTimeMeasureResult(measure, MultipleDataOption.ADDITIVE);
 			if (durationInMillis == SimulationPerformance.NO_TIME_RESULT) {
 				mTimeMeasures.put(measure, (float) SimulationPerformance.NO_TIME_RESULT);
 			} else {
 				mTimeMeasures.put(measure, ComparisonTables.millisToSeconds(durationInMillis));
 			}
 		}
-		for (final ECountingMeasure measure : mCountingMeasures.keySet()) {
+		for (final CountingMeasure measure : mCountingMeasures.keySet()) {
 			final int counter = performance.getCountingMeasureResult(measure);
 			mCountingMeasures.put(measure, counter);
 		}
@@ -511,13 +511,13 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 		final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(services, input, true);
 		final int inputStates = inputAnalyzer.getNumberOfStates();
 		final int inputTransitions = inputAnalyzer.getNumberOfTransitions(SymbolType.TOTAL);
-		mCountingMeasures.put(ECountingMeasure.BUCHI_STATES, inputStates);
-		mCountingMeasures.put(ECountingMeasure.BUCHI_NONDETERMINISTIC_STATES,
+		mCountingMeasures.put(CountingMeasure.BUCHI_STATES, inputStates);
+		mCountingMeasures.put(CountingMeasure.BUCHI_NONDETERMINISTIC_STATES,
 				inputAnalyzer.getNumberOfNondeterministicStates());
 
-		mCountingMeasures.put(ECountingMeasure.BUCHI_ALPHABET_SIZE, inputAnalyzer.getNumberOfSymbols(SymbolType.TOTAL));
-		mCountingMeasures.put(ECountingMeasure.BUCHI_TRANSITIONS, inputTransitions);
-		mCountingMeasures.put(ECountingMeasure.BUCHI_TRANSITION_DENSITY_MILLION,
+		mCountingMeasures.put(CountingMeasure.BUCHI_ALPHABET_SIZE, inputAnalyzer.getNumberOfSymbols(SymbolType.TOTAL));
+		mCountingMeasures.put(CountingMeasure.BUCHI_TRANSITIONS, inputTransitions);
+		mCountingMeasures.put(CountingMeasure.BUCHI_TRANSITION_DENSITY_MILLION,
 				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.TOTAL) * 1_000_000));
 
 		// Output automaton
@@ -525,19 +525,19 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 			final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, output, true);
 			final int outputStates = outputAnalyzer.getNumberOfStates();
 			final int outputTransitions = outputAnalyzer.getNumberOfTransitions(SymbolType.TOTAL);
-			mCountingMeasures.put(ECountingMeasure.RESULT_STATES, outputStates);
-			mCountingMeasures.put(ECountingMeasure.RESULT_NONDETERMINISTIC_STATES,
+			mCountingMeasures.put(CountingMeasure.RESULT_STATES, outputStates);
+			mCountingMeasures.put(CountingMeasure.RESULT_NONDETERMINISTIC_STATES,
 					outputAnalyzer.getNumberOfNondeterministicStates());
 
-			mCountingMeasures.put(ECountingMeasure.RESULT_ALPHABET_SIZE,
+			mCountingMeasures.put(CountingMeasure.RESULT_ALPHABET_SIZE,
 					outputAnalyzer.getNumberOfSymbols(SymbolType.TOTAL));
-			mCountingMeasures.put(ECountingMeasure.RESULT_TRANSITIONS, outputTransitions);
-			mCountingMeasures.put(ECountingMeasure.RESULT_TRANSITION_DENSITY_MILLION,
+			mCountingMeasures.put(CountingMeasure.RESULT_TRANSITIONS, outputTransitions);
+			mCountingMeasures.put(CountingMeasure.RESULT_TRANSITION_DENSITY_MILLION,
 					(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.TOTAL) * 1_000_000));
 
 			// General metrics
-			mCountingMeasures.put(ECountingMeasure.REMOVED_STATES, inputStates - outputStates);
-			mCountingMeasures.put(ECountingMeasure.REMOVED_TRANSITIONS, inputTransitions - outputTransitions);
+			mCountingMeasures.put(CountingMeasure.REMOVED_STATES, inputStates - outputStates);
+			mCountingMeasures.put(CountingMeasure.REMOVED_TRANSITIONS, inputTransitions - outputTransitions);
 		}
 	}
 
@@ -560,7 +560,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	 *            The automaton the method processed
 	 */
 	@SuppressWarnings("unchecked")
-	protected void appendMethodPerformanceToLog(final Object method, final String name, final ESimulationType type,
+	protected void appendMethodPerformanceToLog(final Object method, final String name, final SimulationOrMinimizationType type,
 			final boolean usedSCCs, final boolean timedOut, final boolean outOfMemory,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
 		createAndResetPerformanceHead();
@@ -585,7 +585,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 			addGeneralAutomataPerformanceForExternalMethod((INestedWordAutomaton<LETTER, STATE>) operand,
 					(INestedWordAutomaton<LETTER, STATE>) methodResult);
 			// Overall time
-			mTimeMeasures.put(ETimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
+			mTimeMeasures.put(TimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
 		} else if (method instanceof MinimizeSevpa) {
 			final MinimizeSevpa<LETTER, STATE> minimizeSevpa = (MinimizeSevpa<LETTER, STATE>) method;
 			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = minimizeSevpa.getResult();
@@ -593,7 +593,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 			addGeneralAutomataPerformanceForExternalMethod((INestedWordAutomaton<LETTER, STATE>) operand,
 					(INestedWordAutomaton<LETTER, STATE>) methodResult);
 			// Overall time
-			mTimeMeasures.put(ETimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
+			mTimeMeasures.put(TimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
 		} else if (method instanceof ShrinkNwa) {
 			final ShrinkNwa<LETTER, STATE> shrinkNwa = (ShrinkNwa<LETTER, STATE>) method;
 			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = shrinkNwa.getResult();
@@ -601,7 +601,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 			addGeneralAutomataPerformanceForExternalMethod((INestedWordAutomaton<LETTER, STATE>) operand,
 					(INestedWordAutomaton<LETTER, STATE>) methodResult);
 			// Overall time
-			mTimeMeasures.put(ETimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
+			mTimeMeasures.put(TimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
 		} else if (method instanceof MinimizeNwaPmaxSat) {
 			final MinimizeNwaPmaxSat<LETTER, STATE> minimizeNwaPmaxSat = (MinimizeNwaPmaxSat<LETTER, STATE>) method;
 			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = minimizeNwaPmaxSat.getResult();
@@ -609,7 +609,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 			addGeneralAutomataPerformanceForExternalMethod((INestedWordAutomaton<LETTER, STATE>) operand,
 					(INestedWordAutomaton<LETTER, STATE>) methodResult);
 			// Overall time
-			mTimeMeasures.put(ETimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
+			mTimeMeasures.put(TimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
 		}
 
 		if (timedOut && method == null) {
@@ -663,7 +663,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	 * @param operand
 	 *            The buechi automaton to reduce
 	 */
-	protected void measureMethodPerformance(final String name, final ESimulationType type, final boolean useSCCs,
+	protected void measureMethodPerformance(final String name, final SimulationOrMinimizationType type, final boolean useSCCs,
 			final AutomataLibraryServices services, final long timeout,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand) {
 		final IProgressAwareTimer progressTimer = services.getProgressAwareTimer().getChildTimer(timeout);
@@ -672,7 +672,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 		Object method = null;
 
 		try {
-			if (type.equals(ESimulationType.DIRECT)) {
+			if (type.equals(SimulationOrMinimizationType.DIRECT)) {
 				final DirectGameGraph<LETTER, STATE> graph =
 						new DirectGameGraph<>(services, stateFactory, progressTimer, mLogger, operand);
 				graph.generateGameGraphFromAutomaton();
@@ -680,7 +680,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 						new DirectSimulation<>(progressTimer, mLogger, useSCCs, stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
-			} else if (type.equals(ESimulationType.DELAYED)) {
+			} else if (type.equals(SimulationOrMinimizationType.DELAYED)) {
 				final DelayedGameGraph<LETTER, STATE> graph =
 						new DelayedGameGraph<>(services, stateFactory, progressTimer, mLogger, operand);
 				graph.generateGameGraphFromAutomaton();
@@ -688,7 +688,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 						new DelayedSimulation<>(progressTimer, mLogger, useSCCs, stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
-			} else if (type.equals(ESimulationType.FAIR)) {
+			} else if (type.equals(SimulationOrMinimizationType.FAIR)) {
 				final FairGameGraph<LETTER, STATE> graph =
 						new FairGameGraph<>(services, stateFactory, progressTimer, mLogger, operand);
 				graph.generateGameGraphFromAutomaton();
@@ -696,7 +696,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 						new FairSimulation<>(progressTimer, mLogger, useSCCs, stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
-			} else if (type.equals(ESimulationType.FAIRDIRECT)) {
+			} else if (type.equals(SimulationOrMinimizationType.FAIRDIRECT)) {
 				final FairDirectGameGraph<LETTER, STATE> graph =
 						new FairDirectGameGraph<>(services, stateFactory, progressTimer, mLogger, operand);
 				graph.generateGameGraphFromAutomaton();
@@ -704,15 +704,15 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 						new FairDirectSimulation<>(progressTimer, mLogger, useSCCs, stateFactory, graph);
 				sim.doSimulation();
 				method = sim;
-			} else if (type.equals(ESimulationType.EXT_MINIMIZESEVPA)) {
+			} else if (type.equals(SimulationOrMinimizationType.EXT_MINIMIZESEVPA)) {
 				final long startTime = System.currentTimeMillis();
 				method = new MinimizeSevpa<>(mServices, stateFactory, operand);
 				mExternalOverallTime = System.currentTimeMillis() - startTime;
-			} else if (type.equals(ESimulationType.EXT_SHRINKNWA)) {
+			} else if (type.equals(SimulationOrMinimizationType.EXT_SHRINKNWA)) {
 				final long startTime = System.currentTimeMillis();
 				method = new ShrinkNwa<>(mServices, stateFactory, operand);
 				mExternalOverallTime = System.currentTimeMillis() - startTime;
-			} else if (type.equals(ESimulationType.EXT_MINIMIZENWAMAXSAT)) {
+			} else if (type.equals(SimulationOrMinimizationType.EXT_MINIMIZENWAMAXSAT)) {
 				IDoubleDeckerAutomaton<LETTER, STATE> operandAsNwa = null;
 				if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
 					operandAsNwa = (IDoubleDeckerAutomaton<LETTER, STATE>) operand;
@@ -749,36 +749,36 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 			final IMinimizationStateFactory<STATE> stateFactory,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> reachableOperand) {
 		// Direct simulation without SCC
-		measureMethodPerformance(automatonName, ESimulationType.DIRECT, false, mServices, timeOutMillis, stateFactory,
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DIRECT, false, mServices, timeOutMillis, stateFactory,
 				reachableOperand);
 		// Direct simulation with SCC
-		measureMethodPerformance(automatonName, ESimulationType.DIRECT, true, mServices, timeOutMillis, stateFactory,
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DIRECT, true, mServices, timeOutMillis, stateFactory,
 				reachableOperand);
 		// Delayed simulation without SCC
-		measureMethodPerformance(automatonName, ESimulationType.DELAYED, false, mServices, timeOutMillis, stateFactory,
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DELAYED, false, mServices, timeOutMillis, stateFactory,
 				reachableOperand);
 		// Delayed simulation with SCC
-		measureMethodPerformance(automatonName, ESimulationType.DELAYED, true, mServices, timeOutMillis, stateFactory,
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.DELAYED, true, mServices, timeOutMillis, stateFactory,
 				reachableOperand);
 		// Fair simulation without SCC
-		measureMethodPerformance(automatonName, ESimulationType.FAIR, false, mServices, timeOutMillis, stateFactory,
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.FAIR, false, mServices, timeOutMillis, stateFactory,
 				reachableOperand);
 		// Fair simulation with SCC
-		measureMethodPerformance(automatonName, ESimulationType.FAIR, true, mServices, timeOutMillis, stateFactory,
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.FAIR, true, mServices, timeOutMillis, stateFactory,
 				reachableOperand);
 		// Fair direct simulation without SCC
-		measureMethodPerformance(automatonName, ESimulationType.FAIRDIRECT, false, mServices, timeOutMillis,
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.FAIRDIRECT, false, mServices, timeOutMillis,
 				stateFactory, reachableOperand);
 		// Fair direct simulation with SCC
-		measureMethodPerformance(automatonName, ESimulationType.FAIRDIRECT, true, mServices, timeOutMillis,
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.FAIRDIRECT, true, mServices, timeOutMillis,
 				stateFactory, reachableOperand);
 
 		// Other minimization methods
-		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZESEVPA, true, mServices, timeOutMillis,
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.EXT_MINIMIZESEVPA, true, mServices, timeOutMillis,
 				stateFactory, reachableOperand);
-		measureMethodPerformance(automatonName, ESimulationType.EXT_SHRINKNWA, true, mServices, timeOutMillis,
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.EXT_SHRINKNWA, true, mServices, timeOutMillis,
 				stateFactory, reachableOperand);
-		measureMethodPerformance(automatonName, ESimulationType.EXT_MINIMIZENWAMAXSAT, true, mServices, timeOutMillis,
+		measureMethodPerformance(automatonName, SimulationOrMinimizationType.EXT_MINIMIZENWAMAXSAT, true, mServices, timeOutMillis,
 				stateFactory, reachableOperand);
 	}
 
@@ -815,7 +815,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 		// false, true)));
 		tables.add(new Pair<>("averagedSimulationPerDirectoryTable",
 				ComparisonTables.createAveragedSimulationPerDirectoryTable(performanceEntries, LOG_SEPARATOR,
-						ESimulationType.EXT_RABIT_LIGHT_1, false, false, true)));
+						SimulationOrMinimizationType.EXT_RABIT_LIGHT_1, false, false, true)));
 		// tables.add(new Pair<>("averagedSimulationTimePartitioning",
 		// ComparisonTables.createAveragedSimulationTimePartitioningTable(performanceEntries, LOG_SEPARATOR)));
 		// tables.add(new Pair<>("averagedSimulationAlgoWork",
@@ -863,16 +863,16 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 		try {
 			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries = new LinkedList<>();
 			LinkedList<SimulationPerformance> currentPerformanceEntry = null;
-			final ArrayList<ETimeMeasure> currentTimeMeasures = new ArrayList<>();
-			final ArrayList<ECountingMeasure> currentCountingMeasures = new ArrayList<>();
+			final ArrayList<TimeMeasure> currentTimeMeasures = new ArrayList<>();
+			final ArrayList<CountingMeasure> currentCountingMeasures = new ArrayList<>();
 
 			// Setup isValidEnum - Map
-			final HashMap<String, ETimeMeasure> nameToTimeMeasure = new HashMap<>();
-			for (final ETimeMeasure measure : ETimeMeasure.values()) {
+			final HashMap<String, TimeMeasure> nameToTimeMeasure = new HashMap<>();
+			for (final TimeMeasure measure : TimeMeasure.values()) {
 				nameToTimeMeasure.put(measure.name(), measure);
 			}
-			final HashMap<String, ECountingMeasure> nameToCountingMeasure = new HashMap<>();
-			for (final ECountingMeasure measure : ECountingMeasure.values()) {
+			final HashMap<String, CountingMeasure> nameToCountingMeasure = new HashMap<>();
+			for (final CountingMeasure measure : CountingMeasure.values()) {
 				nameToCountingMeasure.put(measure.name(), measure);
 			}
 
@@ -924,7 +924,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 						// Line is a data set of the current performance entry
 						// Fix fields
 						final String name = lineElements[0];
-						final ESimulationType type = ESimulationType.valueOf(lineElements[1]);
+						final SimulationOrMinimizationType type = SimulationOrMinimizationType.valueOf(lineElements[1]);
 						final boolean usedSCCs = Boolean.parseBoolean(lineElements[2]);
 						final boolean timedOut = Boolean.parseBoolean(lineElements[3]);
 						final boolean outOfMemory = Boolean.parseBoolean(lineElements[4]);
@@ -942,7 +942,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 							final int indexTimeMeasure = i - FIX_FIELD_AMOUNT;
 							final int indexCountingMeasure = i - FIX_FIELD_AMOUNT - currentTimeMeasures.size();
 							if (indexTimeMeasure >= 0 && indexTimeMeasure < currentTimeMeasures.size()) {
-								final ETimeMeasure measure = currentTimeMeasures.get(indexTimeMeasure);
+								final TimeMeasure measure = currentTimeMeasures.get(indexTimeMeasure);
 								final float value = Float.parseFloat(lineElements[i]);
 								if (value == SimulationPerformance.NO_TIME_RESULT) {
 									performance.addTimeMeasureValue(measure, SimulationPerformance.NO_TIME_RESULT);
@@ -951,7 +951,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 								}
 							} else if (indexCountingMeasure >= 0
 									&& indexCountingMeasure < currentCountingMeasures.size()) {
-								final ECountingMeasure measure = currentCountingMeasures.get(indexCountingMeasure);
+								final CountingMeasure measure = currentCountingMeasures.get(indexCountingMeasure);
 								final int value = Integer.parseInt(lineElements[i]);
 								if (value == SimulationPerformance.NO_COUNTING_RESULT) {
 									performance.setCountingMeasure(measure, SimulationPerformance.NO_COUNTING_RESULT);

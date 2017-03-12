@@ -807,50 +807,50 @@ public abstract class AGameGraph<LETTER, STATE> {
 		}
 
 		// Undo edge changes
-		final NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedEdges =
+		final NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, GameGraphChangeType> changedEdges =
 				changes.getChangedEdges();
-		for (final Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedEdge : changedEdges
+		for (final Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, GameGraphChangeType> changedEdge : changedEdges
 				.entrySet()) {
 			final Vertex<LETTER, STATE> src = changedEdge.getFirst();
 			final Vertex<LETTER, STATE> dest = changedEdge.getSecond();
-			final EGameGraphChangeType type = changedEdge.getThird();
+			final GameGraphChangeType type = changedEdge.getThird();
 			// If added before, remove and vice versa
-			if (type.equals(EGameGraphChangeType.ADDITION)) {
+			if (type.equals(GameGraphChangeType.ADDITION)) {
 				removeEdge(src, dest);
-			} else if (type.equals(EGameGraphChangeType.REMOVAL)) {
+			} else if (type.equals(GameGraphChangeType.REMOVAL)) {
 				addEdge(src, dest);
 			}
 		}
 
 		// Undo push-over edge changes
-		final NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedPushOverEdges =
+		final NestedMap2<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, GameGraphChangeType> changedPushOverEdges =
 				changes.getChangedPushOverEdges();
-		for (final Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> changedPushOverEdge : changedPushOverEdges
+		for (final Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, GameGraphChangeType> changedPushOverEdge : changedPushOverEdges
 				.entrySet()) {
 			final Vertex<LETTER, STATE> src = changedPushOverEdge.getFirst();
 			final Vertex<LETTER, STATE> dest = changedPushOverEdge.getSecond();
-			final EGameGraphChangeType type = changedPushOverEdge.getThird();
+			final GameGraphChangeType type = changedPushOverEdge.getThird();
 			// If added before, remove and vice versa
-			if (type.equals(EGameGraphChangeType.ADDITION)) {
+			if (type.equals(GameGraphChangeType.ADDITION)) {
 				removePushOverEdge(src, dest);
-			} else if (type.equals(EGameGraphChangeType.REMOVAL)) {
+			} else if (type.equals(GameGraphChangeType.REMOVAL)) {
 				addPushOverEdge(src, dest);
 			}
 		}
 
 		// Undo vertex changes
-		final HashMap<Vertex<LETTER, STATE>, EGameGraphChangeType> changedVertices = changes.getChangedVertices();
-		for (final Entry<Vertex<LETTER, STATE>, EGameGraphChangeType> changedVertex : changedVertices.entrySet()) {
+		final HashMap<Vertex<LETTER, STATE>, GameGraphChangeType> changedVertices = changes.getChangedVertices();
+		for (final Entry<Vertex<LETTER, STATE>, GameGraphChangeType> changedVertex : changedVertices.entrySet()) {
 			final Vertex<LETTER, STATE> vertex = changedVertex.getKey();
-			final EGameGraphChangeType type = changedVertex.getValue();
+			final GameGraphChangeType type = changedVertex.getValue();
 			// If added before, remove and vice versa
-			if (type.equals(EGameGraphChangeType.ADDITION)) {
+			if (type.equals(GameGraphChangeType.ADDITION)) {
 				if (vertex.isDuplicatorVertex()) {
 					removeDuplicatorVertex((DuplicatorVertex<LETTER, STATE>) vertex);
 				} else if (vertex.isSpoilerVertex()) {
 					removeSpoilerVertex((SpoilerVertex<LETTER, STATE>) vertex);
 				}
-			} else if (type.equals(EGameGraphChangeType.REMOVAL)) {
+			} else if (type.equals(GameGraphChangeType.REMOVAL)) {
 				if (vertex.isDuplicatorVertex()) {
 					addDuplicatorVertex((DuplicatorVertex<LETTER, STATE>) vertex);
 				} else if (vertex.isSpoilerVertex()) {

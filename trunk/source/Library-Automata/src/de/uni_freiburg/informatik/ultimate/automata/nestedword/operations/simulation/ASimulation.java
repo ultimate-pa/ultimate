@@ -47,9 +47,9 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.ECountingMeasure;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.EMultipleDataOption;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.ETimeMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.CountingMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.MultipleDataOption;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
@@ -160,7 +160,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public ASimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSccs,
-			final IStateFactory<STATE> stateFactory, final ESimulationType simType)
+			final IStateFactory<STATE> stateFactory, final SimulationOrMinimizationType simType)
 			throws AutomataOperationCanceledException {
 		mProgressTimer = progressTimer;
 		mLogger = logger;
@@ -182,11 +182,11 @@ public abstract class ASimulation<LETTER, STATE> {
 	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public void doSimulation() throws AutomataOperationCanceledException {
-		mPerformance.startTimeMeasure(ETimeMeasure.OVERALL);
-		mPerformance.startTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
+		mPerformance.startTimeMeasure(TimeMeasure.OVERALL);
+		mPerformance.startTimeMeasure(TimeMeasure.SIMULATION_ONLY);
 
 		if (mUseSccs) { // calculate reduction with SCC
-			mPerformance.startTimeMeasure(ETimeMeasure.BUILD_SCC);
+			mPerformance.startTimeMeasure(TimeMeasure.BUILD_SCC);
 			final DefaultStronglyConnectedComponentFactory<Vertex<LETTER, STATE>> sccFactory =
 					new DefaultStronglyConnectedComponentFactory<>();
 			final GameGraphSuccessorProvider<LETTER, STATE> succProvider =
@@ -196,7 +196,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 			final Iterator<StronglyConnectedComponent<Vertex<LETTER, STATE>>> iter =
 					new LinkedList<>(mSccComp.getSCCs()).iterator();
-			mPerformance.stopTimeMeasure(ETimeMeasure.BUILD_SCC);
+			mPerformance.stopTimeMeasure(TimeMeasure.BUILD_SCC);
 			int amountOfSccs = 0;
 			while (iter.hasNext()) {
 				final StronglyConnectedComponent<Vertex<LETTER, STATE>> scc = iter.next();
@@ -204,24 +204,24 @@ public abstract class ASimulation<LETTER, STATE> {
 				efficientLiftingAlgorithm(calculateInfinityOfSCC(scc), scc.getNodes());
 				amountOfSccs++;
 			}
-			mPerformance.setCountingMeasure(ECountingMeasure.SCCS, amountOfSccs);
+			mPerformance.setCountingMeasure(CountingMeasure.SCCS, amountOfSccs);
 		} else { // calculate reduction w/o SCCs
 			efficientLiftingAlgorithm(getGameGraph().getGlobalInfinity(), null);
-			mPerformance.addTimeMeasureValue(ETimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
-			mPerformance.setCountingMeasure(ECountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
+			mPerformance.addTimeMeasureValue(TimeMeasure.BUILD_SCC, SimulationPerformance.NO_TIME_RESULT);
+			mPerformance.setCountingMeasure(CountingMeasure.SCCS, SimulationPerformance.NO_COUNTING_RESULT);
 		}
 		simulationHook();
-		mPerformance.stopTimeMeasure(ETimeMeasure.SIMULATION_ONLY);
+		mPerformance.stopTimeMeasure(TimeMeasure.SIMULATION_ONLY);
 		mResult = getGameGraph().generateAutomatonFromGraph();
 
-		long duration = mPerformance.stopTimeMeasure(ETimeMeasure.OVERALL);
+		long duration = mPerformance.stopTimeMeasure(TimeMeasure.OVERALL);
 		// Add time building of the graph took to the overall time since this
 		// happens outside of simulation
 		final long durationGraph =
-				mPerformance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE);
+				mPerformance.getTimeMeasureResult(TimeMeasure.BUILD_GRAPH, MultipleDataOption.ADDITIVE);
 		if (durationGraph != SimulationPerformance.NO_TIME_RESULT) {
 			duration += durationGraph;
-			mPerformance.addTimeMeasureValue(ETimeMeasure.OVERALL, durationGraph);
+			mPerformance.addTimeMeasureValue(TimeMeasure.OVERALL, durationGraph);
 		}
 
 		retrieveGeneralAutomataPerformance();
@@ -576,7 +576,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 		// Work through the working list until its empty
 		while (!mWorkingList.isEmpty()) {
-			mPerformance.increaseCountingMeasure(ECountingMeasure.SIMULATION_STEPS);
+			mPerformance.increaseCountingMeasure(CountingMeasure.SIMULATION_STEPS);
 
 			// Poll the current working vertex
 			final Vertex<LETTER, STATE> v = pollVertexFromWorkingList();
@@ -810,14 +810,14 @@ public abstract class ASimulation<LETTER, STATE> {
 		final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(services, input, true);
 		final int inputStates = inputAnalyzer.getNumberOfStates();
 		final int inputTransitions = inputAnalyzer.getNumberOfTransitions(SymbolType.TOTAL);
-		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_STATES, inputStates);
-		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_NONDETERMINISTIC_STATES,
+		mPerformance.setCountingMeasure(CountingMeasure.BUCHI_STATES, inputStates);
+		mPerformance.setCountingMeasure(CountingMeasure.BUCHI_NONDETERMINISTIC_STATES,
 				inputAnalyzer.getNumberOfNondeterministicStates());
 
-		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE,
+		mPerformance.setCountingMeasure(CountingMeasure.BUCHI_ALPHABET_SIZE,
 				inputAnalyzer.getNumberOfSymbols(SymbolType.TOTAL));
-		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS, inputTransitions);
-		mPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_DENSITY_MILLION,
+		mPerformance.setCountingMeasure(CountingMeasure.BUCHI_TRANSITIONS, inputTransitions);
+		mPerformance.setCountingMeasure(CountingMeasure.BUCHI_TRANSITION_DENSITY_MILLION,
 				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.TOTAL) * 1_000_000));
 
 		// Output automaton
@@ -825,23 +825,23 @@ public abstract class ASimulation<LETTER, STATE> {
 			final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, mResult, true);
 			final int outputStates = outputAnalyzer.getNumberOfStates();
 			final int outputTransitions = outputAnalyzer.getNumberOfTransitions(SymbolType.TOTAL);
-			mPerformance.setCountingMeasure(ECountingMeasure.RESULT_STATES, outputStates);
-			mPerformance.setCountingMeasure(ECountingMeasure.RESULT_NONDETERMINISTIC_STATES,
+			mPerformance.setCountingMeasure(CountingMeasure.RESULT_STATES, outputStates);
+			mPerformance.setCountingMeasure(CountingMeasure.RESULT_NONDETERMINISTIC_STATES,
 					outputAnalyzer.getNumberOfNondeterministicStates());
 
-			mPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE,
+			mPerformance.setCountingMeasure(CountingMeasure.RESULT_ALPHABET_SIZE,
 					outputAnalyzer.getNumberOfSymbols(SymbolType.TOTAL));
-			mPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS, outputTransitions);
-			mPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_DENSITY_MILLION,
+			mPerformance.setCountingMeasure(CountingMeasure.RESULT_TRANSITIONS, outputTransitions);
+			mPerformance.setCountingMeasure(CountingMeasure.RESULT_TRANSITION_DENSITY_MILLION,
 					(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.TOTAL) * 1_000_000));
 
 			// General metrics
-			mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_VERTICES, graph.getSize());
-			mPerformance.setCountingMeasure(ECountingMeasure.GAMEGRAPH_EDGES, graph.getAmountOfEdges());
+			mPerformance.setCountingMeasure(CountingMeasure.GAMEGRAPH_VERTICES, graph.getSize());
+			mPerformance.setCountingMeasure(CountingMeasure.GAMEGRAPH_EDGES, graph.getAmountOfEdges());
 
-			mPerformance.setCountingMeasure(ECountingMeasure.GLOBAL_INFINITY, graph.getGlobalInfinity());
-			mPerformance.setCountingMeasure(ECountingMeasure.REMOVED_STATES, inputStates - outputStates);
-			mPerformance.setCountingMeasure(ECountingMeasure.REMOVED_TRANSITIONS, inputTransitions - outputTransitions);
+			mPerformance.setCountingMeasure(CountingMeasure.GLOBAL_INFINITY, graph.getGlobalInfinity());
+			mPerformance.setCountingMeasure(CountingMeasure.REMOVED_STATES, inputStates - outputStates);
+			mPerformance.setCountingMeasure(CountingMeasure.REMOVED_TRANSITIONS, inputTransitions - outputTransitions);
 		}
 	}
 

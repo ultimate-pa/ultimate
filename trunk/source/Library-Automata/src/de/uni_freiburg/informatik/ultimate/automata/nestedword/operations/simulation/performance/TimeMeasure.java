@@ -27,29 +27,48 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance;
 
 /**
- * Different options that are available for handling multiple data values.
+ * Types of time measures.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
-public enum EMultipleDataOption {
+public enum TimeMeasure {
 	/**
-	 * The data gets added.
+	 * The time building the game graph took.
 	 */
-	ADDITIVE,
+	BUILD_GRAPH,
 	/**
-	 * The average among the data values is build.
+	 * The time building the result automaton took.
 	 */
-	AVERAGE,
+	BUILD_RESULT,
 	/**
-	 * The maximum of all values is returned.
+	 * The time building the SCC took.
 	 */
-	MAXIMUM,
+	BUILD_SCC,
 	/**
-	 * The minimium of all values is returned.
+	 * The time needed for computing which vertex down states are safe.
 	 */
-	MINIMIUM,
+	COMPUTE_SAFE_VERTEX_DOWN_STATES,
 	/**
-	 * All data values are returned without changing them.
+	 * The time computing priorities for summarize edges took in nwa game graph
+	 * generation.
 	 */
-	SINGLE
+	COMPUTE_SUMMARIZE_EDGE_PRIORITIES,
+	/**
+	 * The time generating summarize edges took in nwa game graph generation.
+	 */
+	GENERATE_SUMMARIZE_EDGES,
+	/**
+	 * The overall time an operation took.
+	 */
+	OVERALL,
+	/**
+	 * The time the simulation only took, this is the overall time minus the
+	 * time to build the graph and the result.
+	 */
+	SIMULATION_ONLY,
+	/**
+	 * The time solving the Max-Sat problem at nwa game graph resulting
+	 * automaton generation took.
+	 */
+	SOLVE_MAX_SAT
 }

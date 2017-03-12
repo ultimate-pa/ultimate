@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.EGameGraphChangeType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.GameGraphChangeType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.GameGraphChanges;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex;
@@ -57,7 +57,7 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 	 * Stores information about changed buechi transitions.<br/>
 	 * Stored as (source, letter, destination, type of change).
 	 */
-	private final NestedMap3<STATE, LETTER, STATE, EGameGraphChangeType> mChangedBuechiTransitions;
+	private final NestedMap3<STATE, LETTER, STATE, GameGraphChangeType> mChangedBuechiTransitions;
 
 	/**
 	 * Creates a new fair game graph changes object with no changes at default.
@@ -79,7 +79,7 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 	 *            Destination of the added buechi transition
 	 */
 	public void addedBuechiTransition(final STATE src, final LETTER a, final STATE dest) {
-		changedBuechiTransition(src, a, dest, EGameGraphChangeType.ADDITION);
+		changedBuechiTransition(src, a, dest, GameGraphChangeType.ADDITION);
 	}
 
 	/**
@@ -88,7 +88,7 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 	 * 
 	 * @return The information about changed buechi transitions
 	 */
-	public NestedMap3<STATE, LETTER, STATE, EGameGraphChangeType> getChangedBuechiTransitions() {
+	public NestedMap3<STATE, LETTER, STATE, GameGraphChangeType> getChangedBuechiTransitions() {
 		return mChangedBuechiTransitions;
 	}
 
@@ -110,23 +110,23 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 		if (changes instanceof FairGameGraphChanges) {
 			final FairGameGraphChanges<LETTER, STATE> fairChanges = (FairGameGraphChanges<LETTER, STATE>) changes;
 			// Merge changed buechi transitions
-			final NestedMap3<STATE, LETTER, STATE, EGameGraphChangeType> changedTransitions =
+			final NestedMap3<STATE, LETTER, STATE, GameGraphChangeType> changedTransitions =
 					fairChanges.getChangedBuechiTransitions();
 			for (final STATE changedKey : changedTransitions.keySet()) {
-				for (final Triple<LETTER, STATE, EGameGraphChangeType> changedTrans : changedTransitions.get(changedKey)
+				for (final Triple<LETTER, STATE, GameGraphChangeType> changedTrans : changedTransitions.get(changedKey)
 						.entrySet()) {
 					final STATE src = changedKey;
 					final LETTER a = changedTrans.getFirst();
 					final STATE dest = changedTrans.getSecond();
-					final EGameGraphChangeType changeType = mChangedBuechiTransitions.get(src, a, dest);
+					final GameGraphChangeType changeType = mChangedBuechiTransitions.get(src, a, dest);
 
-					if (changeType == null || changeType.equals(EGameGraphChangeType.NO_CHANGE)) {
+					if (changeType == null || changeType.equals(GameGraphChangeType.NO_CHANGE)) {
 						// Only add transition change if unknown until now
 						mChangedBuechiTransitions.put(src, a, dest, changedTrans.getThird());
-					} else if ((changeType == EGameGraphChangeType.ADDITION
-							&& changedTrans.getThird() == EGameGraphChangeType.REMOVAL)
-							|| (changeType == EGameGraphChangeType.REMOVAL
-									&& changedTrans.getThird() == EGameGraphChangeType.ADDITION)) {
+					} else if ((changeType == GameGraphChangeType.ADDITION
+							&& changedTrans.getThird() == GameGraphChangeType.REMOVAL)
+							|| (changeType == GameGraphChangeType.REMOVAL
+									&& changedTrans.getThird() == GameGraphChangeType.ADDITION)) {
 						// Nullify change if it was added and then
 						// removed or vice versa
 						mChangedBuechiTransitions.get(src).remove(a, dest);
@@ -148,7 +148,7 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 	 *            Destination of the removed buechi transition
 	 */
 	public void removedBuechiTransition(final STATE src, final LETTER a, final STATE dest) {
-		changedBuechiTransition(src, a, dest, EGameGraphChangeType.REMOVAL);
+		changedBuechiTransition(src, a, dest, GameGraphChangeType.REMOVAL);
 	}
 
 	/*
@@ -166,7 +166,7 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 
 		// Vertices
 		result.append(lineSeparator + "\tchangedVertices = {");
-		for (final Entry<Vertex<LETTER, STATE>, EGameGraphChangeType> vertex : getChangedVertices().entrySet()) {
+		for (final Entry<Vertex<LETTER, STATE>, GameGraphChangeType> vertex : getChangedVertices().entrySet()) {
 			result.append(lineSeparator + "\t\t<(" + vertex.getKey().getQ0() + ", " + vertex.getKey().getQ1() + "), p:"
 					+ vertex.getKey().getPriority() + ">\t" + vertex.getValue());
 		}
@@ -174,7 +174,7 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 
 		// Edges
 		result.append(lineSeparator + "\tchangedEdges = {");
-		for (final Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, EGameGraphChangeType> vertex : getChangedEdges()
+		for (final Triple<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>, GameGraphChangeType> vertex : getChangedEdges()
 				.entrySet()) {
 			result.append(lineSeparator + "\t\t(" + vertex.getFirst().getQ0() + ", " + vertex.getFirst().getQ1());
 			if (vertex.getFirst() instanceof DuplicatorVertex) {
@@ -195,7 +195,7 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 		// Changed buechi transitions
 		result.append(lineSeparator + "\tchangedBuechiTrans = {");
 		for (final STATE vertex : getChangedBuechiTransitions().keySet()) {
-			for (final Triple<LETTER, STATE, EGameGraphChangeType> entry : getChangedBuechiTransitions().get(vertex)
+			for (final Triple<LETTER, STATE, GameGraphChangeType> entry : getChangedBuechiTransitions().get(vertex)
 					.entrySet()) {
 				result.append(lineSeparator + "\t\t" + vertex + " -" + entry.getFirst() + "-> " + entry.getSecond()
 						+ "\t" + entry.getThird());
@@ -242,12 +242,12 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 	 *            Type of the change
 	 */
 	private void changedBuechiTransition(final STATE src, final LETTER a, final STATE dest,
-			final EGameGraphChangeType type) {
-		final EGameGraphChangeType previousType = mChangedBuechiTransitions.get(src, a, dest);
+			final GameGraphChangeType type) {
+		final GameGraphChangeType previousType = mChangedBuechiTransitions.get(src, a, dest);
 		// Nullify change if previously added and then removed or vice versa
-		if (previousType != null && ((previousType.equals(EGameGraphChangeType.ADDITION)
-				&& type.equals(EGameGraphChangeType.REMOVAL))
-				|| (previousType.equals(EGameGraphChangeType.REMOVAL) && type.equals(EGameGraphChangeType.ADDITION)))) {
+		if (previousType != null && ((previousType.equals(GameGraphChangeType.ADDITION)
+				&& type.equals(GameGraphChangeType.REMOVAL))
+				|| (previousType.equals(GameGraphChangeType.REMOVAL) && type.equals(GameGraphChangeType.ADDITION)))) {
 			mChangedBuechiTransitions.get(src).remove(a, dest);
 		} else {
 			mChangedBuechiTransitions.put(src, a, dest, type);

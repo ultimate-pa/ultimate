@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.ETimeMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
@@ -130,7 +130,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	public INestedWordAutomaton<LETTER, STATE> generateAutomatonFromGraph() throws AutomataOperationCanceledException {
 		final SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
-			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);
+			performance.startTimeMeasure(TimeMeasure.BUILD_RESULT);
 		}
 
 		// Determine which states to merge
@@ -201,8 +201,8 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 		// Log performance
 		if (performance != null) {
-			performance.stopTimeMeasure(ETimeMeasure.BUILD_RESULT);
-			performance.addTimeMeasureValue(ETimeMeasure.BUILD_GRAPH, mGraphBuildTime);
+			performance.stopTimeMeasure(TimeMeasure.BUILD_RESULT);
+			performance.addTimeMeasureValue(TimeMeasure.BUILD_GRAPH, mGraphBuildTime);
 		}
 
 		if (getProgressTimer() != null && !getProgressTimer().continueProcessing()) {
