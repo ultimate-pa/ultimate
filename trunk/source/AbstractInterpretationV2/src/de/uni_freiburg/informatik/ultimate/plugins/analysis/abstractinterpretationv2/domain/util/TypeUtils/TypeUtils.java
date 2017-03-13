@@ -102,27 +102,41 @@ public final class TypeUtils {
 		assert arrayFunction == null;
 		assert variable != null;
 
-		if (variable instanceof IBoogieVar) {
-			return applyVariableFunctionPerType(varFunction, boolFunction, arrayFunction, (IBoogieVar) variable);
-		}
-		throw new UnsupportedOperationException(
-				"The variable type " + variable.getClass().getSimpleName() + " is not implemented.");
+		return applyVariableFunctionPerType(varFunction, boolFunction, arrayFunction, variable);
 	}
 
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private static <R> R applyVariableFunctionPerType(final Function varFunction, final Function boolFunction,
-			final Function arrayFunction, final IBoogieVar variable) {
-		
-		if (isBoolean(variable)) {
-			return (R) boolFunction.apply(variable);
-		} else if (isNumeric(variable)) {
-			return (R) varFunction.apply(variable);
-		} else if (isArray(variable)) {
-			// TODO: Insert arrayFunction as soon as array support is implemented.
-			return (R) varFunction.apply(variable);
+	private static <R, VARDECL> R applyVariableFunctionPerType(final Function varFunction, final Function boolFunction,
+			final Function arrayFunction, final VARDECL variable) {
+		if (variable instanceof IBoogieVar) {
+			final IBoogieVar boogieVar = (IBoogieVar) variable;
+			if (isBoolean(boogieVar)) {
+				return (R) boolFunction.apply(variable);
+			} else if (isNumeric(boogieVar)) {
+				return (R) varFunction.apply(variable);
+			} else if (isArray(boogieVar)) {
+				// TODO: Insert arrayFunction as soon as array support is implemented.
+				return (R) varFunction.apply(variable);
+			} else {
+				throw new UnsupportedOperationException("Not implemented: " + boogieVar.getSort());
+			}
+		} else if (variable instanceof IProgramVarOrConst) {
+			final IProgramVarOrConst programVar = (IProgramVarOrConst) variable;
+			final Sort sort = programVar.getTerm().getSort();
+			if (isBoolean(sort)) {
+				return (R) boolFunction.apply(variable);
+			} else if (isNumeric(sort)) {
+				return (R) varFunction.apply(variable);
+			} else if (isArray(sort)) {
+				// TODO: Insert arrayFunction as soon as array support is implemented.
+				return (R) varFunction.apply(variable);
+			} else {
+				throw new UnsupportedOperationException("Not implemented: " + sort);
+			}
 		} else {
-			throw new UnsupportedOperationException("Not implemented: " + variable.getSort());
+			throw new UnsupportedOperationException("Unknown variable type: " + variable.getClass().getSimpleName());
 		}
+
 	}
 	
 	public static <R> R applyTypeFunction(final Function<Sort, R> intFunction, final Function<Sort, R> realFunction,

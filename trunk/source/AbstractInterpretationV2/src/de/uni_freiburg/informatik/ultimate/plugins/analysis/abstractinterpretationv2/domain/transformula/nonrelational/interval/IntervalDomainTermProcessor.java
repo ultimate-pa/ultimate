@@ -71,6 +71,6 @@ public class IntervalDomainTermProcessor
 		final TermEvaluatorFactory.Function<Object, IntervalDomainValue> valueEvaluatorCreator =
 				(value) -> new IntervalDomainValue(new IntervalValue(value.toString()),
 						new IntervalValue(value.toString()));
-		return new TermEvaluatorFactory<>(maxParallelStates, valueEvaluatorCreator);
+		return new TermEvaluatorFactory<>(maxParallelStates, valueEvaluatorCreator, mIntervalValueFactory);
 	}
 }

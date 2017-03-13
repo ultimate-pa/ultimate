@@ -34,21 +34,24 @@ import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 
-public class TermEvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, IProgramVarOrConst>>
+public class TermEvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE, IProgramVarOrConst>>
 		implements ITermEvaluatorFactory<VALUE, STATE, IProgramVarOrConst> {
 	
 	private final Function<Object, VALUE> mConstantValueExpressionEvaluatorCreator;
 	private final int mMaxParallelStates;
+	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 	
 	public TermEvaluatorFactory(final int maxParallelStates,
-			final Function<Object, VALUE> constantValueEvaluatorCreator) {
+			final Function<Object, VALUE> constantValueEvaluatorCreator,
+			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mMaxParallelStates = maxParallelStates;
 		mConstantValueExpressionEvaluatorCreator = constantValueEvaluatorCreator;
+		mNonrelationalValueFactory = nonrelationalValueFactory;
 	}
 	
 	@Override
@@ -88,6 +91,6 @@ public class TermEvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STAT
 	@Override
 	public ITermEvaluator<VALUE, STATE, IProgramVarOrConst> createVariableTermEvaluator(final String variable,
 			final Sort sort) {
-		return new VariableTermEvaluator<>(variable, sort);
+		return new VariableTermEvaluator<>(variable, sort, mNonrelationalValueFactory);
 	}
 }
