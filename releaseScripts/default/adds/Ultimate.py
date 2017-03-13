@@ -14,8 +14,8 @@ write_ultimate_output_to_file = True
 output_file_name = 'Ultimate.log'
 error_path_file_name = 'UltimateCounterExample.errorpath'
 ultimatedir = os.path.dirname(os.path.realpath(__file__))
-configdir = ultimatedir
-datadir = '@user.home/.ultimate'
+configdir = os.path.join(ultimatedir, 'config')
+datadir = os.path.join(ultimatedir, 'data')
 witnessdir = ultimatedir
 witnessname = "witness.graphml"
 
@@ -34,6 +34,8 @@ mem_free_false_string = 'free of unallocated memory possible'
 mem_memtrack_false_string = 'not all allocated memory was freed'
 termination_false_string = 'Found a nonterminating execution for the following lasso shaped sequence of statements'
 termination_true_string = 'TerminationAnalysisResult: Termination proven'
+ltl_false_string = 'execution that violates the LTL property'
+ltl_true_string = 'Buchi Automizer proved that the LTL property'
 error_path_begin_string = 'We found a FailurePath:'
 termination_path_end = 'End of lasso representation.'
 overflow_false_string = 'overflow possible'
@@ -116,6 +118,12 @@ class PropParser:
     
     def is_reach(self):
         return self.reach
+    
+    def is_ltl(self):
+        return self.ltl
+    
+    def get_ltl_formula(self):
+        return self.ltlformula
 
 def get_binary():
     # currently unused because of rcp launcher bug 
@@ -174,9 +182,8 @@ def run_ultimate(ultimate_call, prop):
         sys.exit(1)
     
     
-    safety_result = 'UNKNOWN'
-    mem_result = 'NONE'
-    overflow = False
+    result = 'UNKNOWN'
+    result_msg = 'NONE'
     reading_error_path = False
     overapprox = False
     
@@ -201,50 +208,60 @@ def run_ultimate(ultimate_call, prop):
         # sys.stdout.write('Ultimate: ' + line)
         sys.stdout.flush()
         if line.find(unsupported_syntax_errorstring) != -1:
-            safety_result = 'ERROR: UNSUPPORTED SYNTAX'
+            result = 'ERROR: UNSUPPORTED SYNTAX'
         elif line.find(incorrect_syntax_errorstring) != -1:
-            safety_result = 'ERROR: INCORRECT SYNTAX'
+            result = 'ERROR: INCORRECT SYNTAX'
         elif line.find(type_errorstring) != -1:
-            safety_result = 'ERROR: TYPE ERROR'
+            result = 'ERROR: TYPE ERROR'
         elif line.find(witness_errorstring) != -1:
-            safety_result = 'ERROR: INVALID WITNESS FILE'
+            result = 'ERROR: INVALID WITNESS FILE'
         elif line.find(exception_errorstring) != -1:
-            safety_result = 'ERROR: ' + line[line.find(exception_errorstring):]
+            result = 'ERROR: ' + line[line.find(exception_errorstring):]
             # hack to avoid errors with floats 
             overapprox = True           
         if not overapprox and contains_overapproximation_result(line):
-            safety_result = 'UNKNOWN: Overapproximated counterexample'
+            result = 'UNKNOWN: Overapproximated counterexample'
             overapprox = True
         if prop.is_termination():
+            result_msg = 'TERM'
             if line.find(termination_true_string) != -1:
-                safety_result = 'TRUE'
+                result = 'TRUE'
             if line.find(termination_false_string) != -1:
-                safety_result = 'FALSE(TERM)'
+                result = 'FALSE'
                 reading_error_path = True
             if line.find(termination_path_end) != -1:
                 reading_error_path = False
+        elif prop.is_ltl():
+            result_msg = 'valid-ltl'
+            if line.find(ltl_false_string) != -1:
+                result = 'FALSE'
+                reading_error_path = True
+            if line.find(ltl_true_string) != -1:
+                result = 'TRUE'
+            if line.find(termination_path_end) != -1:
+                reading_error_path = False                
         else:
             if line.find(safety_string) != -1 or line.find(all_spec_string) != -1:
-                safety_result = 'TRUE'
+                result = 'TRUE'
             if line.find(unsafety_string) != -1:
-                safety_result = 'FALSE'
+                result = 'FALSE'
             if line.find(mem_deref_false_string) != -1:
-                mem_result = 'valid-deref'
+                result_msg = 'valid-deref'
             if line.find(mem_deref_false_string_2) != -1:
-                mem_result = 'valid-deref'
+                result_msg = 'valid-deref'
             if line.find(mem_free_false_string) != -1:
-                mem_result = 'valid-free'
+                result_msg = 'valid-free'
             if line.find(mem_memtrack_false_string) != -1:
-                mem_result = 'valid-memtrack'
+                result_msg = 'valid-memtrack'
             if line.find(overflow_false_string) != -1:
-                overflow = True
-                safety_result = 'FALSE'
+                result = 'FALSE'
+                result_msg = 'OVERFLOW'
             if line.find(error_path_begin_string) != -1:
                 reading_error_path = True
             if reading_error_path and line.strip() == '':
                 reading_error_path = False
 
-    return safety_result, mem_result, overflow, overapprox, ultimate_output, error_path
+    return result, result_msg, overapprox, ultimate_output, error_path
 
 
 def create_ultimate_call(call, arguments):
@@ -264,6 +281,12 @@ def flatten(l):
         else:
             yield el   
 
+def write_ltl(ltlformula):
+    ltl_file_path = os.path.join(datadir, 'ltlformula.ltl')
+    with open(ltl_file_path,'wb') as ltl_file:
+        ltl_file.write(ltlformula.encode('utf-8'))
+    return ltl_file_path
+
 def create_cli_settings(prop, validate_witness, architecture, c_file):
     ret = []
     
@@ -271,10 +294,11 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
     ret.append('--cacsl2boogietranslator.entry.function')
     ret.append(prop.get_init_method())
     
-    if prop.is_termination():
-        # we can neither validate nor produce witnesses in termination mode, so no additional arguments are required
+    if prop.is_termination() or prop.is_ltl():
+        # we can neither validate nor produce witnesses in termination or ltl mode, so no additional arguments are required
         return ret    
     
+    # this is neither ltl nor termination mode 
     if validate_witness:
         # we need to disable hoare triple generation as workaround for an internal bug
         ret.append('--traceabstraction.compute.hoare.annotation.of.negated.interpolant.automaton,.abstraction.and.cfg')
@@ -353,9 +377,9 @@ def parse_args():
     parser.add_argument('--version', action='store_true',
                         help='Print Ultimate\'s version and exit')
     parser.add_argument('--config', nargs=1, metavar='<dir>', type=check_dir,
-                        help='Specify the directory in which the static config files are located; default is the location of this script')
+                        help='Specify the directory in which the static config files are located; default is config/ relative to the location of this script')
     parser.add_argument('--data', nargs=1, metavar='<dir>', type=check_dir,
-                        help='Specify the directory in which the RCP config files are located; default is .ultimate/ in the users home')
+                        help='Specify the directory in which the RCP config files are located; default is data/ relative to the location of this script')
     parser.add_argument('--full-output', action='store_true',
                         help='Print Ultimate\'s full output to stderr after verification ends')
     parser.add_argument('--validate', nargs=1, metavar='<file>', type=check_file,
@@ -412,7 +436,7 @@ def parse_args():
     if args.validate:
         return property_file, args.architecture, [args.file[0], witness], args.full_output, args.validate
     else:
-        return property_file, args.architecture, args.file[0], args.full_output, args.validate
+        return property_file, args.architecture, [args.file[0]], args.full_output, args.validate
 
 def create_settings_search_string(prop, architecture):
     settings_search_string = ''
@@ -428,6 +452,9 @@ def create_settings_search_string(prop, architecture):
     elif prop.is_overflow():
         print ('Checking for overflows')
         settings_search_string = 'Overflow'
+    elif prop.is_ltl():
+        print ('Checking for LTL property {0}'.format(prop.get_ltl_formula()))
+        settings_search_string = 'LTL'
     else:
         print ('Checking for ERROR reachability')
         settings_search_string = 'Reach'
@@ -443,6 +470,8 @@ def get_toolchain_path(prop, witnessmode):
         search_string = '*WitnessValidation.xml'
     elif prop.is_mem_deref_memtrack():
         search_string = '*MemDerefMemtrack.xml'
+    elif prop.is_ltl():
+        search_string = '*LTL.xml'        
     else:
         search_string = '*Reach.xml'
     
@@ -454,6 +483,12 @@ def get_toolchain_path(prop, witnessmode):
         
     return toolchain 
 
+def add_ltl_file_if_necessary(prop, input_files):
+    if not prop.is_ltl():
+        return input_files
+    
+    ltl_file = write_ltl(prop.get_ltl_formula())
+    return input_files + [ltl_file]
 
 def print_err(*objs):
     print(*objs, file=sys.stderr)
@@ -462,28 +497,30 @@ def main():
     property_file, architecture, input_files, verbose, validate_witness = parse_args()
     prop = PropParser(property_file)
 
-    toolchain = get_toolchain_path(prop, validate_witness)
+    toolchain_file = get_toolchain_path(prop, validate_witness)
     settings_search_string = create_settings_search_string(prop, architecture)
-    settings_argument = get_settings_path(False, settings_search_string)
+    settings_file = get_settings_path(False, settings_search_string)
     
     # create manual settings that override settings files for witness passthrough (collecting various things) and for witness validation
-    manual_cli_arguments = create_cli_settings(prop, validate_witness, architecture, input_files)
-
+    cli_arguments = create_cli_settings(prop, validate_witness, architecture, input_files)
+    if not validate_witness:
+        input_files = add_ltl_file_if_necessary(prop, input_files)
+    
     # execute ultimate
     print('Version ' + version)
     ultimate_bin = get_binary()
-    ultimate_call = create_ultimate_call(ultimate_bin, ['-tc', toolchain, '-i', input_files, '-s', settings_argument, manual_cli_arguments])
+    ultimate_call = create_ultimate_call(ultimate_bin, ['-tc', toolchain_file, '-i', input_files, '-s', settings_file, cli_arguments])
  
 
     # actually run Ultimate 
-    safety_result, mem_result, overflow_result, overapprox, ultimate_output, error_path = run_ultimate(ultimate_call, prop)
+    result, result_msg, overapprox, ultimate_output, error_path = run_ultimate(ultimate_call, prop)
     
     if overapprox :
         # we did fail because we had to overapproximate. Lets rerun with bit-precision 
         print('Retrying with bit-precise analysis')
-        settings_argument = get_settings_path(True, settings_search_string)
-        ultimate_call = create_ultimate_call(ultimate_bin, ['-tc', toolchain, '-i', input_files, '-s', settings_argument, manual_cli_arguments])
-        safety_result, mem_result, overflow_result, overapprox, ultimate_bitprecise_output, error_path = run_ultimate(ultimate_call, prop)
+        settings_file = get_settings_path(True, settings_search_string)
+        ultimate_call = create_ultimate_call(ultimate_bin, ['-tc', toolchain_file, '-i', input_files, '-s', settings_file, cli_arguments])
+        result, result_msg, overapprox, ultimate_bitprecise_output, error_path = run_ultimate(ultimate_call, prop)
         ultimate_output = ultimate_output + '\n### Bit-precise run ###\n' + ultimate_bitprecise_output
     
     # summarize results
@@ -492,18 +529,12 @@ def main():
         output_file = open(output_file_name, 'wb')
         output_file.write(ultimate_output.encode('utf-8'))
 
-    if safety_result.startswith('FALSE'):
+    if result.startswith('FALSE'):
         print('Writing human readable error path to file {}'.format(error_path_file_name))
         err_output_file = open(error_path_file_name, 'wb')
         err_output_file.write(error_path.encode('utf-8'))
-        if prop.is_any_mem():
-            result = 'FALSE({})'.format(mem_result)
-        elif overflow_result: 
-            result = 'FALSE(OVERFLOW)'
-        else: 
-            result = safety_result
-    else:
-        result = safety_result
+        if not prop.is_reach():
+            result = 'FALSE({})'.format(result_msg)
         
     print('Result:') 
     print(result)

@@ -113,10 +113,10 @@ exitOnFailPop mvn org.eclipse.tycho:tycho-versions-plugin:set-version -DnewVersi
 exitOnFailPop mvn clean install -Pmaterialize
 popd > /dev/null
 
-# createZip <toolname> <targetarch> <reachtc> <termtc> <witnessvaltc> <memsafetytc>
-./createZip.sh Taipan linux AutomizerC_WitnessPrinter.xml NONE AutomizerC.xml AutomizerC_WitnessPrinter.xml
-./createZip.sh Automizer linux AutomizerC_WitnessPrinter.xml BuchiAutomizerCInline.xml AutomizerC.xml AutomizerC_WitnessPrinter.xml
-./createZip.sh Kojak linux KojakC_WitnessPrinter.xml NONE NONE KojakC_WitnessPrinter.xml
+# createZip <toolname> <targetarch> <reachtc> <termtc> <witnessvaltc> <memsafetytc> <ltl>
+./createZip.sh Taipan linux AutomizerC_WitnessPrinter.xml NONE AutomizerC.xml AutomizerC_WitnessPrinter.xml NONE
+./createZip.sh Automizer linux AutomizerC_WitnessPrinter.xml BuchiAutomizerCInline.xml AutomizerC.xml AutomizerC_WitnessPrinter.xml LTLAutomizerC.xml
+./createZip.sh Kojak linux KojakC_WitnessPrinter.xml NONE NONE KojakC_WitnessPrinter.xml NONE
 
 # TODO: Run pre-deployment tests 
 
