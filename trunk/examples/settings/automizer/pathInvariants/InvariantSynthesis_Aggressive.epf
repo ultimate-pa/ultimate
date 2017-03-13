@@ -1,0 +1,7 @@
+#Fri Mar 10 14:27:35 CET 2017
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Use\ unsat\ cores=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Large-Block-Encoding=true
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Increasing\ strategy=Aggressive
+@de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis=0.1.8
+file_export_version=3.0
