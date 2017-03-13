@@ -322,7 +322,7 @@ def create_cli_settings(prop, validate_witness, architecture, c_file):
         ret.append('--witnessprinter.graph.data.programhash')
 
         try:
-            sha = subprocess.Popen(['sha1sum', c_file], stdout=subprocess.PIPE).communicate()[0]
+            sha = subprocess.Popen(['sha1sum', c_file[0]], stdout=subprocess.PIPE).communicate()[0]
             ret.append(sha.split()[0])
         except:
             print('Error trying to start sha1sum')
