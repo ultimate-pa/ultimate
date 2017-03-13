@@ -170,7 +170,13 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	private int mMotzkinCoefficientsForApproxConstraints;
 	private int mProgramSizeConjuncts;
 	private int mProgramSizeDisjuncts;
+	/**
+	 * Measured in ms
+	 */
 	private long mConstraintsSolvingTime;
+	/**
+	 * Measured in ms
+	 */
 	private long mConstraintsConstructionTime;
 
 	public enum LinearInequalityPatternProcessorStatistics {
@@ -252,8 +258,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		mUseNonlinearConstraints = useNonlinearConstraints;
 		mUseUnsatCores = useUnsatCores;
 		if (mUseUnsatCores) {
-			USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT = !true;
-			USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT = !true;
+			USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
+			USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT = true;
 		} else {
 			// If we don't use unsat cores, then the additional constraints are not needed
 			USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT = false;
@@ -937,11 +943,13 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		} else {
 			generateAndAnnotateAndAssertTerms(predicates);
 		}
-		mConstraintsConstructionTime = System.nanoTime() - startTimeConstraintsConstruction;
+		// Convert ns to ms
+		mConstraintsConstructionTime = (System.nanoTime() - startTimeConstraintsConstruction) / 1_000_000L;
 		mLogger.info("Terms generated, checking SAT.");
 		long startTimeConstraintsSolving = System.nanoTime();
 		final LBool smtResult = mSolver.checkSat();
-		mConstraintsSolvingTime = System.nanoTime() - startTimeConstraintsSolving;
+		// Convert ns to ms
+		mConstraintsSolvingTime = (System.nanoTime() - startTimeConstraintsSolving) / 1_000_000L;
 		mLogger.info("Check-sat result: " + smtResult);
 
 		if (smtResult == LBool.UNSAT && mUseUnsatCores) {

@@ -177,6 +177,8 @@ public final class CFGInvariantsGenerator {
 		mInvariantSynthesisSettings = invariantSynthesisSettings;
 		if (!mInvariantSynthesisSettings.useLargeBlockEncoding()) {
 			APPLY_LARGE_BLOCK_ENCODING = false;
+		} else {
+			APPLY_LARGE_BLOCK_ENCODING = true;
 		}
 		mPathInvariantsStatistics = new PathInvariantsStatisticsGenerator();
 		// Initialize statistics

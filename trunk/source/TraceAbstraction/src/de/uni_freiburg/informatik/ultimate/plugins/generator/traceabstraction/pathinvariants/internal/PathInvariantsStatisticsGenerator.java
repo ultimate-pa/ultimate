@@ -36,8 +36,8 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 	
 	private String mSatStatus;
 	private int mSumOfTemplateInequalities;
-	private double mConstraintsConstructionTime;
-	private double mConstraintsSolvingTime;
+	private long mConstraintsConstructionTime;
+	private long mConstraintsSolvingTime;
 	private Integer mProgramSizeDisjuncts;
 	
 	public void initializeStatistics() {
@@ -63,8 +63,8 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		mMotzkinCoefficientsApproxConstr = 0;
 		
 		mSatStatus = "";
-		mConstraintsConstructionTime = 0.0;
-		mConstraintsSolvingTime = 0.0;
+		mConstraintsConstructionTime = 0;
+		mConstraintsSolvingTime = 0;
 	}
 
 
@@ -152,9 +152,9 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 		mMotzkinCoefficientsNormalConstr += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.MotzkinCoefficientsNormalConstraints);
 		mMotzkinCoefficientsApproxConstr += (Integer)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.MotzkinCoefficientsApproxConstraints);
 		
-		mConstraintsSolvingTime += new Double((Long)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ConstraintsSolvingTime));
+		mConstraintsSolvingTime += (Long)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ConstraintsSolvingTime);
 
-		mConstraintsConstructionTime += new Double((Long)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ConstraintsConstructionTime));
+		mConstraintsConstructionTime += (Long)linearInequalityStats.get(LinearInequalityPatternProcessorStatistics.ConstraintsConstructionTime);
 		mNumOfNonUnsatCoreLocs += numOfNonUnsatCoreLocs;
 		mNumOfNonUnsatCoreVars += numOfNonUnsatCoreVars;
 		if (mSatStatus == "") {
@@ -163,16 +163,6 @@ public class PathInvariantsStatisticsGenerator implements IStatisticsDataProvide
 			mSatStatus = mSatStatus + ", " + satResult;
 		}
 
-	}
-	
-	public void convertTimesToSeconds() {
-		mConstraintsSolvingTime = mConstraintsSolvingTime / 1_000_000_000d;
-		mConstraintsConstructionTime = mConstraintsConstructionTime  / 1_000_000_000d;
-	}
-	
-	public void convertTimesToMilliSeconds() {
-		mConstraintsSolvingTime = mConstraintsSolvingTime / 1_000_000d;
-		mConstraintsConstructionTime = mConstraintsConstructionTime  / 1_000_000d;
 	}
 	
 	@Override

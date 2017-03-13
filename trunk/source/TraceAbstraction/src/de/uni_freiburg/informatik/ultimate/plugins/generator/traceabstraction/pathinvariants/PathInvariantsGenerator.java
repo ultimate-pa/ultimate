@@ -398,9 +398,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		MotzkinCoefficientsApproxConstr(Integer.class, AStatisticsType.sIntegerAddition,
 				AStatisticsType.sKeyBeforeData),
 		// the sum of the time needed per round to solve the constraints
-		ConstraintsSolvingTime(Double.class, x -> y -> (Double) x + (Double) y, AStatisticsType.sKeyBeforeData),
+		ConstraintsSolvingTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of the time needed per round to construct the constraints
-		ConstraintsConstructionTime(Double.class, x -> y -> (Double) x + (Double) y, AStatisticsType.sKeyBeforeData),
+		ConstraintsConstructionTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sKeyBeforeData),
 		// Sat status
 		SatStatus(String.class, s1 -> s2 -> new String((String) s1 + "; " + (String) s2),
 				AStatisticsType.sKeyBeforeData);
