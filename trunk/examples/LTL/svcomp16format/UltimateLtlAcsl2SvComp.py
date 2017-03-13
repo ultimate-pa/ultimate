@@ -50,10 +50,10 @@ def splitFile(file, fileName, targetDir):
     if (not resultInfoFound and (INCLUDE_RESULT_ULTIMATE_ANNOTATION or MAKE_SVCOMP_FILE_FORMAT)):
         print("No result annotation found in file: %s"%(fileName))
         return
-    fileNameWithNoExt = os.path.splitext(fileName)[0]
-    cFilePath = os.path.join(targetDir, fileNameWithNoExt + getResultSuffix(resultSafe) + ".c")
+    sourceFileName,sourceFileExtension  = os.path.splitext(fileName)
+    cFilePath = os.path.join(targetDir, sourceFileName + getResultSuffix(resultSafe) + sourceFileExtension)
     newCFile = open(cFilePath,"w+")
-    ltlFilePath = os.path.join(targetDir, fileNameWithNoExt + getResultSuffix(resultSafe) + getPropFileExt())
+    ltlFilePath = os.path.join(targetDir, sourceFileName + getResultSuffix(resultSafe) + getPropFileExt(sourceFileExtension))
     newLTLFile = open(ltlFilePath,"w+")
     newCFile.write(cFileContent)
     newLTLFile.write(propertyFileContent)
@@ -96,9 +96,9 @@ def getResultSuffix(resultSafe):
         else:
             return "_false-valid-ltl"
 
-def getPropFileExt():
+def getPropFileExt(sourceFileExtension):
     if MAKE_SVCOMP_FILE_FORMAT:
-        return ".prp"
+        return sourceFileExtension + ".prp"
     else:
         return ".ltl"
         
