@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransform
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteDivision;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteEquality;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteIte;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteStrictInequalities;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteTrueFalse;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteUserDefinedTypes;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.SimplifyPreprocessor;
@@ -190,7 +191,7 @@ public class CachedTransFormulaLinearizer {
 				new SimplifyPreprocessor(mServices, mStorage, mSimplificationTechnique),
 				new RewriteTrueFalse(), 
 				new RemoveNegation(),
-//				new RewriteStrictInequalities(), 
+				new RewriteStrictInequalities(), 
 				};
 	}
 
