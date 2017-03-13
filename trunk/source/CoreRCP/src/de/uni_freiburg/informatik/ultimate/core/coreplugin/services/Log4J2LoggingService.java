@@ -453,6 +453,7 @@ public final class Log4J2LoggingService implements IStorable, ILoggingService {
 
 	@Override
 	public void destroy() {
+		mPreferenceStore.removePreferenceChangeListener(mRefreshingListener);
 		assert sId == 1 : "There should be only one instance of Log4J2LoggingService";
 	}
 

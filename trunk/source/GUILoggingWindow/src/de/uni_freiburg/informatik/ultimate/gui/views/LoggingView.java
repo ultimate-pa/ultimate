@@ -30,7 +30,10 @@ package de.uni_freiburg.informatik.ultimate.gui.views;
 import java.io.IOException;
 import java.io.Writer;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
+import org.eclipse.core.runtime.preferences.IEclipsePreferences.PreferenceChangeEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.StyledText;
 import org.eclipse.swt.graphics.Color;
@@ -67,10 +70,10 @@ public class LoggingView extends ViewPart {
 	private static final int RGB_RED = 255;
 	private static final int FONT_SIZE = 10;
 	public static final String ID = "de.uni_freiburg.informatik.ultimate.gui.views.LoggingView";
-	private static final String[] RELEVANT_EVENTS =
+	private static final Set<String> RELEVANT_EVENTS = new HashSet<>(Arrays.asList(
 			new String[] { CorePreferenceInitializer.LABEL_LOG4J_PATTERN, CorePreferenceInitializer.LABEL_COLOR_DEBUG,
 					CorePreferenceInitializer.LABEL_COLOR_INFO, CorePreferenceInitializer.LABEL_COLOR_WARNING,
-					CorePreferenceInitializer.LABEL_COLOR_ERROR, CorePreferenceInitializer.LABEL_COLOR_FATAL };
+					CorePreferenceInitializer.LABEL_COLOR_ERROR, CorePreferenceInitializer.LABEL_COLOR_FATAL }));
 
 	private ILoggingService mLoggingService;
 	private Writer mLastWriter;
@@ -104,15 +107,16 @@ public class LoggingView extends ViewPart {
 		// Listen to preference changes affecting the GUI log output: Pattern
 		// and colors
 		final RcpPreferenceProvider preferenceStore = new RcpPreferenceProvider(Activator.PLUGIN_ID);
-		preferenceStore.addPreferenceChangeListener(event -> {
-			// do things if it concerns the loggers
-			final String ek = event.getKey();
-			if (Arrays.stream(RELEVANT_EVENTS).anyMatch(ek::equals)) {
-				refreshPreferenceProperties();
-			}
-		});
-
+		preferenceStore.addPreferenceChangeListener(this::preferenceChangeListener);
 		refreshPreferenceProperties();
+	}
+
+	private void preferenceChangeListener(final PreferenceChangeEvent event) {
+		// do things if it concerns the loggers
+		final String ek = event.getKey();
+		if (RELEVANT_EVENTS.contains(ek)) {
+			refreshPreferenceProperties();
+		}
 	}
 
 	/**
@@ -170,6 +174,8 @@ public class LoggingView extends ViewPart {
 				// ignore this IO exception
 			}
 		}
+		final RcpPreferenceProvider preferenceStore = new RcpPreferenceProvider(Activator.PLUGIN_ID);
+		preferenceStore.removePreferenceChangeListener(this::preferenceChangeListener);
 		super.dispose();
 	}
 
