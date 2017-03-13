@@ -28,15 +28,22 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.termevaluator;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalAbstractState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Evaluator for variable terms.
@@ -44,25 +51,68 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class VariableTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, IProgramVarOrConst>>
+public class VariableTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE, IProgramVarOrConst>>
 		implements ITermEvaluator<VALUE, STATE, IProgramVarOrConst> {
 	
 	private final String mVariable;
 	private final Set<String> mVariableNames;
 	private final Sort mSort;
+	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
 	
-	private final boolean mContainsBoolean = false;
+	private boolean mContainsBoolean = false;
 	
-	protected VariableTermEvaluator(final String variableName, final Sort sort) {
+	protected VariableTermEvaluator(final String variableName, final Sort sort,
+			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mVariable = variableName;
 		mVariableNames = Collections.singleton(variableName);
 		mSort = sort;
+		mNonrelationalValueFactory = nonrelationalValueFactory;
 	}
 	
 	@Override
 	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
-		// TODO Auto-generated method stub
-		return null;
+		assert currentState != null;
+		
+		final List<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
+		
+		VALUE val;
+		BooleanValue returnBool = BooleanValue.TOP;
+		
+		IProgramVarOrConst variable = null;
+		for (final IProgramVarOrConst stateVar : currentState.getVariables()) {
+			if (stateVar.getGloballyUniqueId().equals(mVariable)) {
+				variable = stateVar;
+				break;
+			}
+		}
+		if (variable == null) {
+			throw new UnsupportedOperationException("Variable " + mVariable + " was not found in current state.");
+		}
+		
+		// TODO: Add array support.
+		final Function<IProgramVarOrConst, Triple<VALUE, BooleanValue, Boolean>> varFunction =
+				var -> new Triple<>(currentState.getValue(var), BooleanValue.TOP, false);
+		final Function<IProgramVarOrConst, Triple<VALUE, BooleanValue, Boolean>> boolFunction =
+				var -> new Triple<>(mNonrelationalValueFactory.createTopValue(), currentState.getBooleanValue(var),
+						true);
+		
+		final Triple<VALUE, BooleanValue, Boolean> valueTriple =
+				TypeUtils.applyVariableFunction(varFunction, boolFunction, null, variable);
+		
+		val = valueTriple.getFirst();
+		if (valueTriple.getThird()) {
+			returnBool = valueTriple.getSecond();
+			mContainsBoolean = true;
+		}
+		
+		if (val.isBottom() || returnBool.isBottom()) {
+			returnList.add(new NonrelationalEvaluationResult<>(mNonrelationalValueFactory.createBottomValue(),
+					BooleanValue.BOTTOM));
+		} else {
+			returnList.add(new NonrelationalEvaluationResult<>(val, returnBool));
+		}
+		
+		return returnList;
 	}
 	
 	@Override
@@ -90,10 +140,10 @@ public class VariableTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STA
 	public Set<String> getVarIdentifiers() {
 		return mVariableNames;
 	}
-
+	
 	@Override
 	public String toString() {
 		return mVariable;
 	}
-
+	
 }
