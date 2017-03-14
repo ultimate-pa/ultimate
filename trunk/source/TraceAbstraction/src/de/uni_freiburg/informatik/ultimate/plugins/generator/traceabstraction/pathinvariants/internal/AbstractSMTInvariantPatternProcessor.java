@@ -32,6 +32,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -153,10 +155,14 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 	 *            DNFs to conjunct together
 	 * @return DNF representing the conjunction of the DNFs provided, returns NULL if no DNFs were given.
 	 */
-	protected static <E> Collection<Collection<E>> expandConjunction(final Collection<Collection<E>>... dnfs) {
+	protected static <E> Collection<Collection<E>> expandConjunction(final IUltimateServiceProvider services, final Collection<Collection<E>>... dnfs) {
 		boolean firstElement = true;
 		Collection<Collection<E>> expandedDnf = null;
 		for (final Collection<Collection<E>> currentDnf : dnfs) {
+			if (!services.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(AbstractSMTInvariantPatternProcessor.class,
+						"transforming conjunction of length " + dnfs.length + " to DNF");
+			}
 			if (firstElement) {
 				expandedDnf = currentDnf;
 				firstElement = false;
@@ -179,7 +185,7 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 	 * @return a dnf (Collection of disjuncts consisting of conjuncts of linear inequalities), equivalent to the given
 	 *         cnf
 	 */
-	protected static <E> Collection<Collection<E>> expandCnfToDnf(final Collection<Collection<E>> cnf) {
+	protected static <E> Collection<Collection<E>> expandCnfToDnf(final IUltimateServiceProvider services, final Collection<Collection<E>> cnf) {
 		if (cnf.isEmpty()) {
 			final Collection<E> empty = Collections.emptyList();
 			return Collections.singleton(empty);
@@ -187,6 +193,10 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 		boolean firstElement = true;
 		Collection<Collection<E>> expandedDnf = null;
 		for (final Collection<E> conjunct : cnf) {
+			if (!services.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(AbstractSMTInvariantPatternProcessor.class,
+						"transforming CNF with " + cnf.size() + "conjuncts to DNF");
+			}
 			if (firstElement) {
 				expandedDnf = new ArrayList<>();
 				for (final E e : conjunct) {
@@ -196,7 +206,7 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 				}
 				firstElement = false;
 			} else {
-				expandedDnf = expandCnfToDnfSingle(expandedDnf, conjunct);
+				expandedDnf = expandCnfToDnfSingle(services, expandedDnf, conjunct);
 			}
 		}
 		assert expandedDnf != null;
@@ -214,11 +224,17 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 	 *            : the type of Literals in the cnf/dnf
 	 * @return a new dnf equivalent to conjunct /\ dnf
 	 */
-	private static <E> Collection<Collection<E>> expandCnfToDnfSingle(final Collection<Collection<E>> dnf,
+	private static <E> Collection<Collection<E>> expandCnfToDnfSingle(
+			final IUltimateServiceProvider services,
+			final Collection<Collection<E>> dnf,
 			final Collection<E> conjunct) {
 		final Collection<Collection<E>> result = new ArrayList<>();
 		for (final Collection<E> disjunct : dnf) {
 			for (final E item : conjunct) {
+				if (!services.getProgressMonitorService().continueProcessing()) {
+					throw new ToolchainCanceledException(AbstractSMTInvariantPatternProcessor.class,
+							"transforming CNF to DNF");
+				}
 				final Collection<E> resultItem = new ArrayList<>();
 				resultItem.addAll(disjunct);
 				resultItem.add(item);
