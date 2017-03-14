@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.CommuhashNormalForm;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 
 /**
@@ -66,9 +67,9 @@ public class CommuHashPreprocessor extends TransitionPreprocessor {
 	}
 	
 	@Override
-	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
+	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf) throws TermException {
 		final Term normalized1 = (new ConstantTermNormalizer2()).transform(tf.getFormula());
-		final Term normalized2 = (new CommuhashNormalForm(mServices, script)).transform(normalized1);
+		final Term normalized2 = (new CommuhashNormalForm(mServices, script.getScript())).transform(normalized1);
 		tf.setFormula(normalized2);
 		return tf;
 	}

@@ -1,5 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.nonrelational.interval;
 
+import java.util.function.Supplier;
+
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -15,10 +17,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalLiteralWideningOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalMergeOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalSimpleWideningOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 
 public class IntervalDomain
 		implements IAbstractDomain<IntervalDomainState<IProgramVarOrConst>, IcfgEdge, IProgramVarOrConst> {
-
+	
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private IAbstractStateBinaryOperator<IntervalDomainState<IProgramVarOrConst>> mWideningOperator;
@@ -84,7 +87,11 @@ public class IntervalDomain
 	public IAbstractPostOperator<IntervalDomainState<IProgramVarOrConst>, IcfgEdge, IProgramVarOrConst>
 			getPostOperator() {
 		if (mPostOperator == null) {
-			mPostOperator = new IntervalPostOperator(mLogger);
+			final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+			final int maxParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
+			final Supplier<IntervalDomainState<IProgramVarOrConst>> topStateSupplier = () -> createFreshState();
+			final Supplier<IntervalDomainState<IProgramVarOrConst>> bottomStateSupplier = () -> createBottomState();
+			mPostOperator = new IntervalPostOperator(mLogger, maxParallelStates, topStateSupplier, bottomStateSupplier);
 		}
 		return mPostOperator;
 	}

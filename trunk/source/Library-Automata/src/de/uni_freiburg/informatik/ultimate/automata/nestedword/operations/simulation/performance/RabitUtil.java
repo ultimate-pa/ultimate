@@ -9,7 +9,7 @@ import java.io.PrintWriter;
 import java.util.LinkedList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.SimulationOrMinimizationType;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -146,9 +146,9 @@ public final class RabitUtil {
 
 		// The list of commands to execute with Rabit and
 		// representing names of them
-		final List<Pair<String, ESimulationType>> commands = new LinkedList<>();
-		commands.add(new Pair<>("1 -light", ESimulationType.EXT_RABIT_LIGHT_1));
-		commands.add(new Pair<>("1 -heavy", ESimulationType.EXT_RABIT_HEAVY_1));
+		final List<Pair<String, SimulationOrMinimizationType>> commands = new LinkedList<>();
+		commands.add(new Pair<>("1 -light", SimulationOrMinimizationType.EXT_RABIT_LIGHT_1));
+		commands.add(new Pair<>("1 -heavy", SimulationOrMinimizationType.EXT_RABIT_HEAVY_1));
 
 		// Collect all automata
 		final List<File> automataToProcess = collectAutomata();
@@ -178,8 +178,8 @@ public final class RabitUtil {
 	 *            A list of Rabit tool commands with each pair having the
 	 *            argument to pass and a name for the argument
 	 */
-	public static void processAutomaton(final File automaton, final List<Pair<String, ESimulationType>> commands)
-			throws IOException {
+	public static void processAutomaton(final File automaton,
+			final List<Pair<String, SimulationOrMinimizationType>> commands) throws IOException {
 		// Print header
 		String header = "<!--";
 		// Fix fields
@@ -189,22 +189,22 @@ public final class RabitUtil {
 		header += SEPARATOR + "TIMED_OUT";
 		header += SEPARATOR + "OOM";
 		// Variable fields
-		header += SEPARATOR + ETimeMeasure.OVERALL;
-		header += SEPARATOR + ECountingMeasure.BUCHI_ALPHABET_SIZE;
-		header += SEPARATOR + ECountingMeasure.BUCHI_STATES;
-		header += SEPARATOR + ECountingMeasure.BUCHI_TRANSITIONS;
-		header += SEPARATOR + ECountingMeasure.BUCHI_TRANSITIONS_INTERNAL;
-		header += SEPARATOR + ECountingMeasure.RESULT_ALPHABET_SIZE;
-		header += SEPARATOR + ECountingMeasure.RESULT_STATES;
-		header += SEPARATOR + ECountingMeasure.RESULT_TRANSITIONS;
-		header += SEPARATOR + ECountingMeasure.RESULT_TRANSITIONS_INTERNAL;
-		header += SEPARATOR + ECountingMeasure.REMOVED_STATES;
+		header += SEPARATOR + TimeMeasure.OVERALL;
+		header += SEPARATOR + CountingMeasure.BUCHI_ALPHABET_SIZE;
+		header += SEPARATOR + CountingMeasure.BUCHI_STATES;
+		header += SEPARATOR + CountingMeasure.BUCHI_TRANSITIONS;
+		header += SEPARATOR + CountingMeasure.BUCHI_TRANSITIONS_INTERNAL;
+		header += SEPARATOR + CountingMeasure.RESULT_ALPHABET_SIZE;
+		header += SEPARATOR + CountingMeasure.RESULT_STATES;
+		header += SEPARATOR + CountingMeasure.RESULT_TRANSITIONS;
+		header += SEPARATOR + CountingMeasure.RESULT_TRANSITIONS_INTERNAL;
+		header += SEPARATOR + CountingMeasure.REMOVED_STATES;
 		header += SEPARATOR + "-->";
 		appendLineToOutput(header);
 
-		for (final Pair<String, ESimulationType> command : commands) {
+		for (final Pair<String, SimulationOrMinimizationType> command : commands) {
 			final String commandArguments = command.getFirst();
-			final ESimulationType commandName = command.getSecond();
+			final SimulationOrMinimizationType commandName = command.getSecond();
 
 			// Execute the command
 			final List<String> output = executeRabit(automaton, commandArguments);

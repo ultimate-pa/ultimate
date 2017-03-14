@@ -239,7 +239,7 @@ public class NwaApproximateBisimulation<LETTER, STATE>
 			if (marked.contains(state)) {
 				marked.remove(state);
 				markedStatesInBlock.add(state);
-			} else if (state != witness){
+			} else if (state != witness) {
 				unmarkedStatesInBlock.add(state);
 			}
 		}

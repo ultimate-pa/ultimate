@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.ETransitionType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.TransitionType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorSubSummaryChoiceVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorWinningSink;
@@ -70,7 +70,7 @@ public class GameAutomatonToGameGraphTransformer<LETTER, STATE> {
 		mServices = services;
 		mGameAutomaton = gameAutomaton;
 		mSpoilerWinningSink = spoilerWinningSink;
-		mDuplicatorWinningSink = new DuplicatorNwaVertex<>(0, false, null, null, null, ETransitionType.SINK,
+		mDuplicatorWinningSink = new DuplicatorNwaVertex<>(0, false, null, null, null, TransitionType.SINK,
 				new DuplicatorWinningSink<>(null));
 		mGameGraph = new AGameGraph<LETTER, STATE>(mServices, null, null, null, operand) {
 

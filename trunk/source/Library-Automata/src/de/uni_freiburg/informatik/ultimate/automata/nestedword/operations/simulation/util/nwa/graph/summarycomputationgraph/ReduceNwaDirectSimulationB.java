@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.SimulationOrMinimizationType;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -51,8 +51,8 @@ public class ReduceNwaDirectSimulationB<LETTER, STATE> extends ReduceNwaSimulati
 	}
 
 	@Override
-	protected ESimulationType getSimulationType() {
-		return ESimulationType.DIRECT;
+	protected SimulationOrMinimizationType getSimulationType() {
+		return SimulationOrMinimizationType.DIRECT;
 	}
 
 	@Override

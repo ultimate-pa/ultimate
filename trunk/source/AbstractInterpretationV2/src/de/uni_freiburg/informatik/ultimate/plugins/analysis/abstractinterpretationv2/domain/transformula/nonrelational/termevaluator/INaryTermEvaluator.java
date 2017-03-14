@@ -4,7 +4,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 
 public interface INaryTermEvaluator<VALUE, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
 		extends ITermEvaluator<VALUE, STATE, VARDECL> {
-	void setOperator(String operator);
 	
+	/**
+	 * @return The arity of the n-ary evaluator.
+	 */
 	int getArity();
 }

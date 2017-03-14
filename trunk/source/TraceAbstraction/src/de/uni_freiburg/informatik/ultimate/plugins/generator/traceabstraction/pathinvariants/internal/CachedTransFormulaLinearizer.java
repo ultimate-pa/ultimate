@@ -158,7 +158,7 @@ public class CachedTransFormulaLinearizer {
 
 		for (final TransitionPreprocessor tpp : getPreprocessors()) {
 			try {
-				tflr = tpp.process(mCsToolkit.getManagedScript().getScript(), tflr);
+				tflr = tpp.process(mCsToolkit.getManagedScript(), tflr);
 			} catch (final TermException e) {
 				throw new RuntimeException(e);
 			}
@@ -179,19 +179,19 @@ public class CachedTransFormulaLinearizer {
 	 */
 	private TransitionPreprocessor[] getPreprocessors() {
 		return new TransitionPreprocessor[] {
-				new MatchInOutVars(mCsToolkit.getManagedScript()),
+				new MatchInOutVars(),
 				new AddAxioms(mReplacementVarFactory, mAxioms),
 				new RewriteDivision(mReplacementVarFactory),
 				new RewriteBooleans(mReplacementVarFactory, mCsToolkit.getManagedScript()), 
-				new RewriteIte(mCsToolkit.getManagedScript()),
+				new RewriteIte(),
 				new RewriteUserDefinedTypes(mReplacementVarFactory, mCsToolkit.getManagedScript()),
 				new RewriteEquality(), 
-				new SimplifyPreprocessor(mServices, mStorage, mCsToolkit.getManagedScript(), mSimplificationTechnique),
-				new DNF(mServices, mCsToolkit.getManagedScript(), mXnfConversionTechnique), 
-				new SimplifyPreprocessor(mServices, mStorage, mCsToolkit.getManagedScript(), mSimplificationTechnique),
+				new SimplifyPreprocessor(mServices, mStorage, mSimplificationTechnique),
+				new DNF(mServices, mXnfConversionTechnique), 
+				new SimplifyPreprocessor(mServices, mStorage, mSimplificationTechnique),
 				new RewriteTrueFalse(), 
 				new RemoveNegation(),
-//				new RewriteStrictInequalities(), 
+				new RewriteStrictInequalities(), 
 				};
 	}
 

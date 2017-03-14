@@ -354,7 +354,8 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 	public enum PathInvariantsStatisticsDefinitions implements IStatisticsElement {
 		// the sum of path program size (measured as the number of inequalities of all transformulas) for each overall
 		// iteration
-		ProgramSize(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		ProgramSizeConjuncts(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
+		ProgramSizeDisjuncts(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of path program locations for each overall iteration
 		ProgramLocs(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of path program locations for each overall iteration after Lbe has been applied
@@ -397,9 +398,9 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 		MotzkinCoefficientsApproxConstr(Integer.class, AStatisticsType.sIntegerAddition,
 				AStatisticsType.sKeyBeforeData),
 		// the sum of the time needed per round to solve the constraints
-		ConstraintsSolvingTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+		ConstraintsSolvingTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sKeyBeforeData),
 		// the sum of the time needed per round to construct the constraints
-		ConstraintsConstructionTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+		ConstraintsConstructionTime(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sKeyBeforeData),
 		// Sat status
 		SatStatus(String.class, s1 -> s2 -> new String((String) s1 + "; " + (String) s2),
 				AStatisticsType.sKeyBeforeData);

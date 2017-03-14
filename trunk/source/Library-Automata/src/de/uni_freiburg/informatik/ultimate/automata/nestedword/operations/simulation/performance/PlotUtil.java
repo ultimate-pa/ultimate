@@ -79,23 +79,23 @@ public final class PlotUtil {
 				final String header = headers[i];
 				if (header.equals("DIRECTORY")) {
 					directoryIndex = i;
-				} else if (header.equals(ECountingMeasure.BUCHI_TRANSITIONS_INTERNAL.toString())) {
+				} else if (header.equals(CountingMeasure.BUCHI_TRANSITIONS_INTERNAL.toString())) {
 					internalAfterPreProcIndex = i;
-				} else if (header.equals(ECountingMeasure.BUCHI_TRANSITIONS_CALL.toString())) {
+				} else if (header.equals(CountingMeasure.BUCHI_TRANSITIONS_CALL.toString())) {
 					callAfterPreProcIndex = i;
-				} else if (header.equals(ECountingMeasure.BUCHI_TRANSITIONS_RETURN.toString())) {
+				} else if (header.equals(CountingMeasure.BUCHI_TRANSITIONS_RETURN.toString())) {
 					returnAfterPreProcIndex = i;
-				} else if (header.equals(ECountingMeasure.RESULT_TRANSITIONS_INTERNAL.toString())) {
+				} else if (header.equals(CountingMeasure.RESULT_TRANSITIONS_INTERNAL.toString())) {
 					internalOutputIndex = i;
-				} else if (header.equals(ECountingMeasure.RESULT_TRANSITIONS_CALL.toString())) {
+				} else if (header.equals(CountingMeasure.RESULT_TRANSITIONS_CALL.toString())) {
 					callOutputIndex = i;
-				} else if (header.equals(ECountingMeasure.RESULT_TRANSITIONS_RETURN.toString())) {
+				} else if (header.equals(CountingMeasure.RESULT_TRANSITIONS_RETURN.toString())) {
 					returnOutputIndex = i;
-				} else if (header.equals(ECountingMeasure.BUCHI_STATES.toString())) {
+				} else if (header.equals(CountingMeasure.BUCHI_STATES.toString())) {
 					sizeAfterPreProcIndex = i;
-				} else if (header.equals(ECountingMeasure.REMOVED_STATES.toString())) {
+				} else if (header.equals(CountingMeasure.REMOVED_STATES.toString())) {
 					removedIndex = i;
-				} else if (header.equals(ETimeMeasure.OVERALL.toString())) {
+				} else if (header.equals(TimeMeasure.OVERALL.toString())) {
 					overallTimeIndex = i;
 				}
 			}

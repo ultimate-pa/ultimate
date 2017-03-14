@@ -64,7 +64,7 @@ public class SpaceExMathHelper {
 			for (final Map.Entry<String, String> entry : mReplacement.entrySet()) {
 				final String rep = entry.getKey();
 				final String loc = entry.getValue();
-				replacement = replacement.replaceAll(rep, loc);
+				replacement = replacement.replaceAll("\\b" + rep + "\\b", loc);
 			}
 			res.add(replacement);
 		}
@@ -83,7 +83,7 @@ public class SpaceExMathHelper {
 		final String varRegex = "(.*)(<=|<|>|>=)(.*)(<=|<|>|>=)(.*)|(.*)(<=|>=|<|>|==)(.*)";
 		final Pattern varPattern = Pattern.compile(varRegex);
 		Matcher varMatcher;
-		String literal = "A";
+		final String literal = "A";
 		// replace all terms by a Literal
 		final String[] splitted = initially.replaceAll("\\s+", "").split("(\\&)|(\\|)|(?<!loc)(\\()|(?!\\)==)(\\))");
 		for (int i = 0; i < splitted.length; i++) {
@@ -99,11 +99,10 @@ public class SpaceExMathHelper {
 					mReplacement.put(literal + i, varMatcher.group(0));
 				}
 			}
-			if (i % 5 == 0) {
-				final char[] charArr = literal.toCharArray();
-				charArr[0]++;
-				literal = Character.toString(charArr[0]);
-			}
+			/*
+			 * if (i % 5 == 0) { final char[] charArr = literal.toCharArray(); charArr[0]++; literal =
+			 * Character.toString(charArr[0]); }
+			 */
 		}
 		String replacement = initially.replaceAll("\\s+", "");
 		for (final Map.Entry<String, String> entry : mReplacement.entrySet()) {
@@ -115,6 +114,7 @@ public class SpaceExMathHelper {
 	}
 	
 	public List<String> infixToGroups(final String infix) {
+		mLogger.info("INFIX" + infix);
 		final String infixWithLiterals = replaceAllWithLiterals(infix);
 		final List<String> infixToArray = SpaceExMathHelper.expressionToArray(infixWithLiterals);
 		final List<String> postfix = SpaceExMathHelper.postfix(infixToArray);

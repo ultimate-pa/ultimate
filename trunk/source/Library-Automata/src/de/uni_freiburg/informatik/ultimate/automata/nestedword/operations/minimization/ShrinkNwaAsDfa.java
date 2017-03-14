@@ -176,21 +176,21 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 			final EquivalenceClass a = mWorkList.next();
 
 			// internal split
-			if (a.mIncomingInt == EIncomingStatus.IN_WL) {
-				a.mIncomingInt = EIncomingStatus.UNKNOWN;
-				splitPredecessors(a, internalIterator, ETransitionType.INTERNAL);
+			if (a.mIncomingInt == IncomingStatus.IN_WL) {
+				a.mIncomingInt = IncomingStatus.UNKNOWN;
+				splitPredecessors(a, internalIterator, TransitionType.INTERNAL);
 			}
 
 			// call split
-			if (a.mIncomingCall == EIncomingStatus.IN_WL) {
-				a.mIncomingCall = EIncomingStatus.UNKNOWN;
-				splitPredecessors(a, callIterator, ETransitionType.CALL);
+			if (a.mIncomingCall == IncomingStatus.IN_WL) {
+				a.mIncomingCall = IncomingStatus.UNKNOWN;
+				splitPredecessors(a, callIterator, TransitionType.CALL);
 			}
 
 			// return split
-			if (a.mIncomingRet == EIncomingStatus.IN_WL) {
-				a.mIncomingRet = EIncomingStatus.UNKNOWN;
-				splitPredecessors(a, returnIterator, ETransitionType.RETURN);
+			if (a.mIncomingRet == IncomingStatus.IN_WL) {
+				a.mIncomingRet = IncomingStatus.UNKNOWN;
+				splitPredecessors(a, returnIterator, TransitionType.RETURN);
 			}
 		}
 
@@ -254,13 +254,13 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	 *            true iff split is internal
 	 */
 	private void splitPredecessors(final EquivalenceClass block, final ITransitionIterator<LETTER, STATE> iterator,
-			final ETransitionType type) {
-		assert (type == ETransitionType.INTERNAL && (iterator instanceof ShrinkNwaAsDfa.InternalTransitionIterator)
-				&& (block.mIncomingInt != EIncomingStatus.IN_WL))
-				|| (type == ETransitionType.CALL && (iterator instanceof ShrinkNwaAsDfa.CallTransitionIterator)
-						&& (block.mIncomingCall != EIncomingStatus.IN_WL))
-				|| (type == ETransitionType.RETURN && (iterator instanceof ShrinkNwaAsDfa.ReturnTransitionIterator)
-						&& (block.mIncomingRet != EIncomingStatus.IN_WL));
+			final TransitionType type) {
+		assert (type == TransitionType.INTERNAL && (iterator instanceof ShrinkNwaAsDfa.InternalTransitionIterator)
+				&& (block.mIncomingInt != IncomingStatus.IN_WL))
+				|| (type == TransitionType.CALL && (iterator instanceof ShrinkNwaAsDfa.CallTransitionIterator)
+						&& (block.mIncomingCall != IncomingStatus.IN_WL))
+				|| (type == TransitionType.RETURN && (iterator instanceof ShrinkNwaAsDfa.ReturnTransitionIterator)
+						&& (block.mIncomingRet != IncomingStatus.IN_WL));
 
 		// create a hash map from letter to respective predecessor states
 		final HashMap<Pair<LETTER, STATE>, HashSet<STATE>> letter2states = new HashMap<>();
@@ -281,13 +281,13 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		if (letter2states.isEmpty()) {
 			switch (type) {
 				case INTERNAL:
-					block.mIncomingInt = EIncomingStatus.NONE;
+					block.mIncomingInt = IncomingStatus.NONE;
 					break;
 				case CALL:
-					block.mIncomingCall = EIncomingStatus.NONE;
+					block.mIncomingCall = IncomingStatus.NONE;
 					break;
 				case RETURN:
-					block.mIncomingRet = EIncomingStatus.NONE;
+					block.mIncomingRet = IncomingStatus.NONE;
 					break;
 				default:
 					throw new IllegalArgumentException();
@@ -370,7 +370,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	/**
 	 * Type of a transition/symbol.
 	 */
-	private enum ETransitionType {
+	private enum TransitionType {
 		INTERNAL,
 		CALL,
 		RETURN
@@ -385,7 +385,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	 * there are no incoming transitions. The status is updated as a byproduct
 	 * after the search for transitions.
 	 */
-	private enum EIncomingStatus {
+	private enum IncomingStatus {
 		/** Unknown whether there are incoming transitions. */
 		UNKNOWN,
 
@@ -735,9 +735,9 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		// intersection set that finally becomes a new equivalence class
 		private Set<STATE> mIntersection;
 		// status regarding incoming transitions
-		private EIncomingStatus mIncomingInt;
-		private EIncomingStatus mIncomingCall;
-		private EIncomingStatus mIncomingRet;
+		private IncomingStatus mIncomingInt;
+		private IncomingStatus mIncomingCall;
+		private IncomingStatus mIncomingRet;
 		// initial state information
 		private boolean mIsInitial;
 
@@ -765,9 +765,9 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		 */
 		public EquivalenceClass(final Set<STATE> states) {
 			this(states, false);
-			mIncomingInt = EIncomingStatus.IN_WL;
-			mIncomingCall = EIncomingStatus.IN_WL;
-			mIncomingRet = EIncomingStatus.IN_WL;
+			mIncomingInt = IncomingStatus.IN_WL;
+			mIncomingCall = IncomingStatus.IN_WL;
+			mIncomingRet = IncomingStatus.IN_WL;
 			mWorkList.add(this);
 		}
 
@@ -785,11 +785,11 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 			switch (parent.mIncomingInt) {
 				case UNKNOWN:
 				case IN_WL:
-					mIncomingInt = EIncomingStatus.IN_WL;
+					mIncomingInt = IncomingStatus.IN_WL;
 					add = true;
 					break;
 				case NONE:
-					mIncomingInt = EIncomingStatus.NONE;
+					mIncomingInt = IncomingStatus.NONE;
 					break;
 				default:
 					throw new IllegalArgumentException();
@@ -797,11 +797,11 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 			switch (parent.mIncomingCall) {
 				case UNKNOWN:
 				case IN_WL:
-					mIncomingCall = EIncomingStatus.IN_WL;
+					mIncomingCall = IncomingStatus.IN_WL;
 					add = true;
 					break;
 				case NONE:
-					mIncomingCall = EIncomingStatus.NONE;
+					mIncomingCall = IncomingStatus.NONE;
 					break;
 				default:
 					throw new IllegalArgumentException();
@@ -809,11 +809,11 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 			switch (parent.mIncomingRet) {
 				case UNKNOWN:
 				case IN_WL:
-					mIncomingRet = EIncomingStatus.IN_WL;
+					mIncomingRet = IncomingStatus.IN_WL;
 					add = true;
 					break;
 				case NONE:
-					mIncomingRet = EIncomingStatus.NONE;
+					mIncomingRet = IncomingStatus.NONE;
 					break;
 				default:
 					throw new IllegalArgumentException();
@@ -1020,8 +1020,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 
 		@Override
 		public void add(final EquivalenceClass block) {
-			assert (block.mIncomingInt == EIncomingStatus.IN_WL) || (block.mIncomingCall == EIncomingStatus.IN_WL)
-					|| (block.mIncomingRet == EIncomingStatus.IN_WL);
+			assert (block.mIncomingInt == IncomingStatus.IN_WL) || (block.mIncomingCall == IncomingStatus.IN_WL)
+					|| (block.mIncomingRet == IncomingStatus.IN_WL);
 			super.add(block);
 		}
 	}

@@ -13,32 +13,31 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 public class DynamicPatternSettingsStrategyWithGlobalTemplateLevel extends DynamicPatternSettingsStrategy {
 	private Pair<Integer, Integer> mCurrentGlobalTemplateLevel;
 
-	public DynamicPatternSettingsStrategyWithGlobalTemplateLevel(int baseDisjuncts, int baseConjuncts, int disjunctsPerRound,
-			int conjunctsPerRound, int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables,
+	public DynamicPatternSettingsStrategyWithGlobalTemplateLevel(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat, int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables,
 			boolean alwaysStrictAndNonStrictCopies, boolean useStrictInequalitiesAlternatingly) {
-		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables,
+		super(dimensionsStrat, maxRounds, allProgramVariables,
 				alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);
-		mCurrentGlobalTemplateLevel = new Pair<Integer, Integer>(super.baseDisjuncts, super.baseConjuncts);
+		mCurrentGlobalTemplateLevel = new Pair<Integer, Integer>(dimensionsStrat.getInitialDisjuncts(), dimensionsStrat.getInitialConjuncts());
 	}
 	
 	@Override
-	public void changePatternSettingForLocation(IcfgLocation location) {
+	public void changePatternSettingForLocation(IcfgLocation location, final int round) {
 		if (mLoc2PatternSetting.containsKey(location)) {
 			PatternSetting ps = mLoc2PatternSetting.get(location);
 			// Change the template setting for the current location only if it is not at the global template level
 			if (!mCurrentGlobalTemplateLevel.equals(new Pair<Integer, Integer>(ps.getNumOfDisjuncts(), ps.getNumOfConjuncts()))) {
-				ps.changeSetting();
+				ps.changeSetting(location, round);
 			}
 		} 		
 	}
 
 	@Override
-	public void changePatternSettingForLocation(IcfgLocation location, Set<IcfgLocation> locationsInUnsatCore) {
+	public void changePatternSettingForLocation(IcfgLocation location, final int round , Set<IcfgLocation> locationsInUnsatCore) {
 		// TODO: The method allLocationsAtGlobalTemplateLevel should be called only once per round.
 		if (allLocationsAtGlobalTemplateLevel(locationsInUnsatCore)) {
 			changeGlobalTemplateLevel();
 		}
-		changePatternSettingForLocation(location);
+		changePatternSettingForLocation(location, round);
 	}
 	
 	private void changeGlobalTemplateLevel() {

@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Replace strict inequalities that compare terms of sort int by equivalent non-strict inequalities. E.g., the term <i>x
@@ -61,8 +62,8 @@ public class RewriteStrictInequalities extends TransformerPreprocessor {
 	}
 
 	@Override
-	protected TermTransformer getTransformer(final Script script) {
-		return new RewriteStrictInequalitiesTransformer(script);
+	protected TermTransformer getTransformer(final ManagedScript script) {
+		return new RewriteStrictInequalitiesTransformer(script.getScript());
 	}
 
 	/**

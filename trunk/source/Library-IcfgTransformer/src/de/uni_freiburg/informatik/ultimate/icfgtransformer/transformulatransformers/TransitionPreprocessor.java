@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransfor
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * A preprocessor takes a {@link ModifiableTransFormula} and returns a {@link ModifiableTransFormula}.
@@ -46,7 +47,7 @@ public abstract class TransitionPreprocessor {
 	/**
 	 * Process a single transition (stem or loop) independently of the other
 	 * 
-	 * @param script
+	 * @param mgdScript
 	 *            the script
 	 * @param tf
 	 *            the transition formula
@@ -54,7 +55,7 @@ public abstract class TransitionPreprocessor {
 	 * @throws TermException
 	 *             if processing fails
 	 */
-	public abstract ModifiableTransFormula process(Script script, ModifiableTransFormula tf) throws TermException;
+	public abstract ModifiableTransFormula process(ManagedScript mgdScript, ModifiableTransFormula tf) throws TermException;
 
 	/**
 	 * Check if the processing was sound.

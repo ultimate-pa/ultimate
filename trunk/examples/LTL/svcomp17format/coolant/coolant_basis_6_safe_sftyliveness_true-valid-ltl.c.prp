@@ -1,0 +1,1 @@
+CHECK( init(main()), LTL( G( ("limit > -273" || "limit < 10") ==> ("tempIn < 0" ==> F "warnLED == 1") ) ) )

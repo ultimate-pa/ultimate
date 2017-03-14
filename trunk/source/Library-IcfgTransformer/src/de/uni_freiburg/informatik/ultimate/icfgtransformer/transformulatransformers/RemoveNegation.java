@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Remove negation before atoms.
@@ -62,8 +63,8 @@ public class RemoveNegation extends TransformerPreprocessor {
 	}
 
 	@Override
-	protected TermTransformer getTransformer(final Script script) {
-		return new RemoveNegationTransformer(script);
+	protected TermTransformer getTransformer(final ManagedScript script) {
+		return new RemoveNegationTransformer(script.getScript());
 	}
 
 	private static final class RemoveNegationTransformer extends TermTransformer {

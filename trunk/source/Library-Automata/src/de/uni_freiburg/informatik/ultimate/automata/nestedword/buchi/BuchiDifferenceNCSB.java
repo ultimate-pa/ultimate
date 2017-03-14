@@ -75,8 +75,7 @@ public final class BuchiDifferenceNCSB<LETTER, STATE> extends AbstractBuchiDiffe
 		}
 	}
 
-	private <
-			SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
+	private <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
 			void constructResult(final SF stateFactory) throws AutomataLibraryException {
 		mSndComplemented = new BuchiComplementNCSBNwa<>(mServices, stateFactory, mSndOperand);
 		constructDifferenceFromComplement(stateFactory);

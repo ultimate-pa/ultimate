@@ -13,10 +13,9 @@ public class DynamicPatternSettingsStrategyWithBounds extends DynamicPatternSett
 	protected Map<IcfgLocation, Integer> mLoc2MaxNumOfConjuncts;
 	protected Map<IcfgLocation, Integer> mLoc2MaxNumOfDisjuncts;
 
-	public DynamicPatternSettingsStrategyWithBounds(int baseDisjuncts, int baseConjuncts, int disjunctsPerRound,
-			int conjunctsPerRound, int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables,
+	public DynamicPatternSettingsStrategyWithBounds(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat, int maxRounds, Set<IProgramVar> allProgramVariables, Map<IcfgLocation, Set<IProgramVar>> loc2LiveVariables,
 			boolean alwaysStrictAndNonStrictCopies, boolean useStrictInequalitiesAlternatingly) {
-		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables,
+		super(dimensionsStrat, maxRounds, allProgramVariables,
 				alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);
 		mLoc2MaxNumOfConjuncts = new HashMap<>();
 		mLoc2MaxNumOfDisjuncts = new HashMap<>();
@@ -41,8 +40,8 @@ public class DynamicPatternSettingsStrategyWithBounds extends DynamicPatternSett
 		if (!mLoc2PatternSetting.containsKey(location)) {
 			// Create new setting for this location
 			Set<IProgramVar> varsForThisPattern = getPatternVariablesInitially(location);
-			int numOfConjuncts = super.baseConjuncts;
-			int numOfDisjuncts = super.baseDisjuncts;
+			int numOfConjuncts = super.mDimensionsStrategy.getInitialConjuncts();
+			int numOfDisjuncts = super.mDimensionsStrategy.getInitialDisjuncts();
 			if (mLoc2MaxNumOfConjuncts.containsKey(location)) {
 				numOfConjuncts = mLoc2MaxNumOfConjuncts.get(location);
 			}

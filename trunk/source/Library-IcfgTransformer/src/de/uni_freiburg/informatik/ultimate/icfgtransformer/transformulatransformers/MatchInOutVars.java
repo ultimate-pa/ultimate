@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransfor
 
 import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -46,14 +45,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 public class MatchInOutVars extends TransitionPreprocessor {
 	public static final String DESCRIPTION = "Add a corresponding inVars and outVars";
 
-	/**
-	 * Factory for construction of auxVars.
-	 */
-	private final ManagedScript mVariableManager;
-
-	public MatchInOutVars(final ManagedScript variableManager) {
+	public MatchInOutVars() {
 		super();
-		mVariableManager = variableManager;
 	}
 
 	@Override
@@ -62,28 +55,28 @@ public class MatchInOutVars extends TransitionPreprocessor {
 	}
 
 	@Override
-	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
-		addMissingInVars(tf);
-		addMissingOutVars(tf);
+	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf) throws TermException {
+		addMissingInVars(script, tf);
+		addMissingOutVars(script, tf);
 		// assert eachInVarHasOutVar(tf) : "some inVars do not have outVars";
 		return tf;
 	}
 
-	private void addMissingInVars(final ModifiableTransFormula tf) {
+	private void addMissingInVars(final ManagedScript script, final ModifiableTransFormula tf) {
 		for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 			if (!tf.getInVars().containsKey(entry.getKey())) {
 				final String id = SmtUtils.removeSmtQuoteCharacters(entry.getKey().getGloballyUniqueId());
-				final TermVariable inVar = mVariableManager.constructFreshTermVariable(id, entry.getValue().getSort());
+				final TermVariable inVar = script.constructFreshTermVariable(id, entry.getValue().getSort());
 				tf.addInVar(entry.getKey(), inVar);
 			}
 		}
 	}
 
-	private void addMissingOutVars(final ModifiableTransFormula tf) {
+	private void addMissingOutVars(final ManagedScript script, final ModifiableTransFormula tf) {
 		for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
 			if (!tf.getOutVars().containsKey(entry.getKey())) {
 				final String id = SmtUtils.removeSmtQuoteCharacters(entry.getKey().getGloballyUniqueId());
-				final TermVariable inVar = mVariableManager.constructFreshTermVariable(id, entry.getValue().getSort());
+				final TermVariable inVar = script.constructFreshTermVariable(id, entry.getValue().getSort());
 				tf.addOutVar(entry.getKey(), inVar);
 			}
 		}

@@ -60,12 +60,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public abstract class NonrelationalState<STATE extends NonrelationalState<STATE, V, VARDECL>, V extends INonrelationalValue<V>, VARDECL>
 		implements INonrelationalAbstractState<STATE, VARDECL> {
-
+	
 	private static final String MSG_NULL = "NULL";
 	private static final String MSG_BOT = "BOT";
 	private static final String MSG_TOP = "TOP";
 
-	protected enum VariableType {
+	public enum VariableType {
 		VARIABLE, BOOLEAN, ARRAY
 	}
 
@@ -353,7 +353,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *            The variable name to obtain the type for.
 	 * @return The {@link VariableType} of the variable.
 	 */
-	protected VariableType getVariableType(final VARDECL var) {
+	public VariableType getVariableType(final VARDECL var) {
 		if (!containsVariable(var)) {
 			throw new UnsupportedOperationException("The variable " + var + " does not exist in the current state.");
 		}

@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyz
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.ECountingMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.SimulationOrMinimizationType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.CountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
@@ -91,7 +91,7 @@ public final class NwaSimulationUtil {
 	 * @return {@code false} only if the simulation results are not correct (however, {@code true} has no meaning)
 	 */
 	public static <LETTER, STATE> boolean areNwaSimulationResultsCorrect(final AGameGraph<LETTER, STATE> gameGraph,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final ESimulationType simulationType,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final SimulationOrMinimizationType simulationType,
 			final BiPredicate<STATE, STATE> isInitialPairPredicate, final ILogger logger) {
 		if (logger.isInfoEnabled()) {
 			logger.info("Starting checking correctness of simulation results.");
@@ -116,7 +116,7 @@ public final class NwaSimulationUtil {
 			}
 
 			final boolean considerVertex;
-			if (simulationType == ESimulationType.DELAYED) {
+			if (simulationType == SimulationOrMinimizationType.DELAYED) {
 				// For delayed simulation we need to choose between the vertex with bit set to true or false
 				if (spoilerVertex.isB()) {
 					considerVertex = nwa.isFinal(state1) && !nwa.isFinal(state2);
@@ -281,7 +281,7 @@ public final class NwaSimulationUtil {
 				// Ignore call predecessors
 				if (pred instanceof DuplicatorNwaVertex<?, ?>) {
 					final DuplicatorNwaVertex<LETTER, STATE> predAsNwa = (DuplicatorNwaVertex<LETTER, STATE>) pred;
-					if (predAsNwa.getTransitionType() == ETransitionType.CALL) {
+					if (predAsNwa.getTransitionType() == TransitionType.CALL) {
 						continue;
 					}
 				}
@@ -351,48 +351,48 @@ public final class NwaSimulationUtil {
 			final INestedWordAutomaton<LETTER, STATE> result, final AutomataLibraryServices services) {
 		final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(services, input, true);
 
-		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE_INTERNAL,
+		simulationPerformance.setCountingMeasure(CountingMeasure.BUCHI_ALPHABET_SIZE_INTERNAL,
 				inputAnalyzer.getNumberOfSymbols(SymbolType.INTERNAL));
-		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE_CALL,
+		simulationPerformance.setCountingMeasure(CountingMeasure.BUCHI_ALPHABET_SIZE_CALL,
 				inputAnalyzer.getNumberOfSymbols(SymbolType.CALL));
-		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_ALPHABET_SIZE_RETURN,
+		simulationPerformance.setCountingMeasure(CountingMeasure.BUCHI_ALPHABET_SIZE_RETURN,
 				inputAnalyzer.getNumberOfSymbols(SymbolType.RETURN));
 
-		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS_INTERNAL,
+		simulationPerformance.setCountingMeasure(CountingMeasure.BUCHI_TRANSITIONS_INTERNAL,
 				inputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
-		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS_CALL,
+		simulationPerformance.setCountingMeasure(CountingMeasure.BUCHI_TRANSITIONS_CALL,
 				inputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
-		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITIONS_RETURN,
+		simulationPerformance.setCountingMeasure(CountingMeasure.BUCHI_TRANSITIONS_RETURN,
 				inputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
 
-		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_INTERNAL_DENSITY_MILLION,
+		simulationPerformance.setCountingMeasure(CountingMeasure.BUCHI_TRANSITION_INTERNAL_DENSITY_MILLION,
 				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.INTERNAL) * 1_000_000));
-		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_CALL_DENSITY_MILLION,
+		simulationPerformance.setCountingMeasure(CountingMeasure.BUCHI_TRANSITION_CALL_DENSITY_MILLION,
 				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.CALL) * 1_000_000));
-		simulationPerformance.setCountingMeasure(ECountingMeasure.BUCHI_TRANSITION_RETURN_DENSITY_MILLION,
+		simulationPerformance.setCountingMeasure(CountingMeasure.BUCHI_TRANSITION_RETURN_DENSITY_MILLION,
 				(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.RETURN) * 1_000_000));
 
 		final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(services, result, true);
 
-		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE_INTERNAL,
+		simulationPerformance.setCountingMeasure(CountingMeasure.RESULT_ALPHABET_SIZE_INTERNAL,
 				outputAnalyzer.getNumberOfSymbols(SymbolType.INTERNAL));
-		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE_CALL,
+		simulationPerformance.setCountingMeasure(CountingMeasure.RESULT_ALPHABET_SIZE_CALL,
 				outputAnalyzer.getNumberOfSymbols(SymbolType.CALL));
-		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_ALPHABET_SIZE_RETURN,
+		simulationPerformance.setCountingMeasure(CountingMeasure.RESULT_ALPHABET_SIZE_RETURN,
 				outputAnalyzer.getNumberOfSymbols(SymbolType.RETURN));
 
-		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS_INTERNAL,
+		simulationPerformance.setCountingMeasure(CountingMeasure.RESULT_TRANSITIONS_INTERNAL,
 				outputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
-		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS_CALL,
+		simulationPerformance.setCountingMeasure(CountingMeasure.RESULT_TRANSITIONS_CALL,
 				outputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
-		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITIONS_RETURN,
+		simulationPerformance.setCountingMeasure(CountingMeasure.RESULT_TRANSITIONS_RETURN,
 				outputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
 
-		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_INTERNAL_DENSITY_MILLION,
+		simulationPerformance.setCountingMeasure(CountingMeasure.RESULT_TRANSITION_INTERNAL_DENSITY_MILLION,
 				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.INTERNAL) * 1_000_000));
-		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_CALL_DENSITY_MILLION,
+		simulationPerformance.setCountingMeasure(CountingMeasure.RESULT_TRANSITION_CALL_DENSITY_MILLION,
 				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.CALL) * 1_000_000));
-		simulationPerformance.setCountingMeasure(ECountingMeasure.RESULT_TRANSITION_RETURN_DENSITY_MILLION,
+		simulationPerformance.setCountingMeasure(CountingMeasure.RESULT_TRANSITION_RETURN_DENSITY_MILLION,
 				(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.RETURN) * 1_000_000));
 	}
 

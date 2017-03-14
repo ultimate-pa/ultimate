@@ -117,7 +117,7 @@ public final class CFGInvariantsGenerator {
 	 * Transform the path program by applying large block encoding. Synthesize invariants only for the large block
 	 * encoded program and use less expensive techniques to obtain the remaining invariants.
 	 */
-	private static final boolean APPLY_LARGE_BLOCK_ENCODING = true;
+	private static boolean APPLY_LARGE_BLOCK_ENCODING = true;
 
 	private static final int MAX_ROUNDS = Integer.MAX_VALUE;
 	
@@ -175,6 +175,11 @@ public final class CFGInvariantsGenerator {
 		mPostcondition = postcondition;
 		mPathProgram = pathProgram;
 		mInvariantSynthesisSettings = invariantSynthesisSettings;
+		if (!mInvariantSynthesisSettings.useLargeBlockEncoding()) {
+			APPLY_LARGE_BLOCK_ENCODING = false;
+		} else {
+			APPLY_LARGE_BLOCK_ENCODING = true;
+		}
 		mPathInvariantsStatistics = new PathInvariantsStatisticsGenerator();
 		// Initialize statistics
 		mPathInvariantsStatistics.initializeStatistics();
@@ -213,30 +218,31 @@ public final class CFGInvariantsGenerator {
 	private static ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>>
 	getStrategy(final boolean useVarsFromUnsatCore, final boolean useLiveVars,
 			final Set<IProgramVar> allProgramVariables,
-			final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables) {
+			final Map<IcfgLocation, Set<IProgramVar>> locations2LiveVariables,
+			final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrategy) {
 		if (useVarsFromUnsatCore) {
 			if (USE_UNSAT_CORES_FOR_DYNAMIC_PATTERN_CHANGES) {
 				if (USE_DYNAMIC_PATTERN_WITH_BOUNDS) {
-					return new DynamicPatternSettingsStrategyWithBounds(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables,
+					return new DynamicPatternSettingsStrategyWithBounds(dimensionsStrategy, MAX_ROUNDS, allProgramVariables,
 							locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
 							USE_STRICT_INEQUALITIES_ALTERNATINGLY);
 				}
 				if (USE_DYNAMIC_PATTERN_CHANGES_WITH_GLOBAL_TEMPLATE_LEVEL) {
-					return new DynamicPatternSettingsStrategyWithGlobalTemplateLevel(1, 1, 1, 1, MAX_ROUNDS,
+					return new DynamicPatternSettingsStrategyWithGlobalTemplateLevel(dimensionsStrategy, MAX_ROUNDS,
 							allProgramVariables, locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
 							USE_STRICT_INEQUALITIES_ALTERNATINGLY);
 				}
-				return new DynamicPatternSettingsStrategy(1, 2, 1, 1, MAX_ROUNDS, allProgramVariables,
+				return new DynamicPatternSettingsStrategy(dimensionsStrategy, MAX_ROUNDS, allProgramVariables,
 						locations2LiveVariables, ALWAYS_STRICT_AND_NON_STRICT_COPIES,
 						USE_STRICT_INEQUALITIES_ALTERNATINGLY);
 			}
-			return new VarsInUnsatCoreStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables, locations2LiveVariables,
+			return new VarsInUnsatCoreStrategy(dimensionsStrategy, MAX_ROUNDS, allProgramVariables, locations2LiveVariables,
 					ALWAYS_STRICT_AND_NON_STRICT_COPIES, USE_STRICT_INEQUALITIES_ALTERNATINGLY);
 		} else if (useLiveVars) {
-			return new LiveVariablesStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables, locations2LiveVariables,
+			return new LiveVariablesStrategy(dimensionsStrategy, MAX_ROUNDS, allProgramVariables, locations2LiveVariables,
 					ALWAYS_STRICT_AND_NON_STRICT_COPIES, USE_STRICT_INEQUALITIES_ALTERNATINGLY);
 		}
-		return new AllProgramVariablesStrategy(1, 1, 1, 1, MAX_ROUNDS, allProgramVariables, allProgramVariables,
+		return new AllProgramVariablesStrategy(dimensionsStrategy, MAX_ROUNDS, allProgramVariables, allProgramVariables,
 				ALWAYS_STRICT_AND_NON_STRICT_COPIES, USE_STRICT_INEQUALITIES_ALTERNATINGLY);
 	}
 	
@@ -291,9 +297,13 @@ public final class CFGInvariantsGenerator {
 //			pathprogramLocs2Predicates.putAll(extractAbstractInterpretationPredicates(mAbstractInterpretationResult,
 //					csToolkit.getManagedScript()));
 		}
-
+		AbstractTemplateIncreasingDimensionsStrategy templateDimensionStrat = invSynthSettings.getTemplateDimensionsStrategy();
+		if (templateDimensionStrat == null) {
+			templateDimensionStrat = new DefaultTemplateIncreasingDimensionsStrategy(1, 1, 1, 1);
+		}
 		final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy =
-				getStrategy(invSynthSettings.useUnsatCores(), USE_LIVE_VARIABLES, allProgramVars, pathprogramLocs2LiveVars);
+				getStrategy(invSynthSettings.useUnsatCores(), USE_LIVE_VARIABLES, allProgramVars, pathprogramLocs2LiveVars,
+						templateDimensionStrat);
 
 		if (USE_UNDER_APPROX_FOR_MAX_CONJUNCTS) {
 			for (final Map.Entry<IcfgLocation, UnmodifiableTransFormula> entry : loc2underApprox.entrySet()) {
@@ -607,6 +617,8 @@ public final class CFGInvariantsGenerator {
 
 			if (TEMPLATE_STATISTICS_MODE) {
 				final StatisticsData stat = new StatisticsData();
+//				mRound2PathInvariantsStatistics.get(round).convertTimesToMilliSeconds(); // Uncomment this line only if you run tests and want
+																					// want to have the times in seconds.
 				stat.aggregateBenchmarkData(mRound2PathInvariantsStatistics.get(round));
 				final IResult benchmarkResult =	new BenchmarkResult<>(Activator.PLUGIN_ID, "InvariantSynthesisStatistics", stat);
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);
@@ -838,7 +850,7 @@ public final class CFGInvariantsGenerator {
 	
 	public Map<IcfgLocation, IPredicate> synthesizeInvariants() {
 		int numLocsBeforeLbe = getNumOfPPLocations(mPathProgram);
-		LargeBlockEncodingIcfgTransformer lbeTransformer;
+		LargeBlockEncodingIcfgTransformer lbeTransformer = null;
 		IIcfg<IcfgLocation> lbePathProgram;
 		if (APPLY_LARGE_BLOCK_ENCODING) {
 			lbeTransformer = new LargeBlockEncodingIcfgTransformer(mServices, mPredicateFactory, mPredicateUnifier);

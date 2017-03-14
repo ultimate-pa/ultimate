@@ -21,6 +21,7 @@ if [ $# -le 2 ]; then
 	echo "4. (optional) the termination toolchain or NONE"
 	echo "5. (optional) the witness validation toolchain or NONE"
 	echo "6. (optional) the memsafety deref and memtrack toolchain or NONE"
+	echo "7. (optional) the ltl toolchain or NONE"
 	exit 1
 fi
 
@@ -57,6 +58,8 @@ fi
 VERSION=`git rev-parse HEAD | cut -c1-8`
 echo "Version is "$VERSION
 TARGETDIR=U${TOOLNAME}-${ARCH}
+CONFIGDIR="$TARGETDIR"/config
+DATADIR="$TARGETDIR"/data
 ZIPFILE=Ultimate${TOOLNAME}-${ARCH}.zip
 
 if [ ! -z "$3" -a ! "NONE" = "$3" ]; then
@@ -87,6 +90,13 @@ else
 	MEMDEREFMEMTRACKTOOLCHAIN=
 fi
 
+if [ ! -z "$7" -a ! "NONE" = "$7" ]; then
+	LTLTOOLCHAIN=../../trunk/examples/toolchains/${7}
+else 
+	echo "No LTL toolchain specified, ommitting..."
+	LTLTOOLCHAIN=
+fi
+
 SETTINGS=../../trunk/examples/settings/svcomp2017/${LCTOOLNAME}/*${TOOLNAME}*
 
 if [ -d "$TARGETDIR" ]; then
@@ -100,22 +110,29 @@ fi
 
 echo "Copying files"
 mkdir "$TARGETDIR"
+mkdir "$CONFIGDIR"
+mkdir "$DATADIR"
+
 test cp -a ../../trunk/source/BA_SiteRepository/target/${ARCHPATH}/* "$TARGETDIR"/
 if [ ! -z "$TOOLCHAIN" ]; then 
-	test cp "$TOOLCHAIN" "$TARGETDIR"/"$TOOLNAME"Reach.xml
+	test cp "$TOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"Reach.xml
 fi
 if [ ! -z "$TERMTOOLCHAIN" ]; then  
-	test cp "$TERMTOOLCHAIN" "$TARGETDIR"/"$TOOLNAME"Termination.xml
+	test cp "$TERMTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"Termination.xml
 fi
 if [ ! -z "$VALTOOLCHAIN" ]; then 
-	test cp "$VALTOOLCHAIN" "$TARGETDIR"/"$TOOLNAME"WitnessValidation.xml
+	test cp "$VALTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"WitnessValidation.xml
 fi
 if [ ! -z "$MEMDEREFMEMTRACKTOOLCHAIN" ]; then 
-	test cp "$MEMDEREFMEMTRACKTOOLCHAIN" "$TARGETDIR"/"$TOOLNAME"MemDerefMemtrack.xml
+	test cp "$MEMDEREFMEMTRACKTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"MemDerefMemtrack.xml
+fi
+if [ ! -z "$LTLTOOLCHAIN" ]; then 
+	test cp "$LTLTOOLCHAIN" "$CONFIGDIR"/"$TOOLNAME"LTL.xml
 fi
 
+
 test cp adds/LICENSE* "$TARGETDIR"/
-test cp ${SETTINGS} "$TARGETDIR"/.
+test cp ${SETTINGS} "$CONFIGDIR"/.
 test cp adds/Ultimate.py "$TARGETDIR"/
 test cp adds/Ultimate.ini "$TARGETDIR"/
 test cp adds/README "$TARGETDIR"/

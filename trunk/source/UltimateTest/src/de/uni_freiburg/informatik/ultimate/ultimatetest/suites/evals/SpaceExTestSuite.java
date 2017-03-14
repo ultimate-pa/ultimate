@@ -51,15 +51,22 @@ public class SpaceExTestSuite extends AbstractEvalTestSuite {
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String, String>[] TOOLCHAINS = new Triple[] {
 	       //new Triple<>("SpaceExParserWithTA.xml", ".xml", "spaceex/spaceex_parser_testing_ModelsAndUnsatCore_DEBUG.epf"),
-	        new Triple<>("SpaceExParserWithTA.xml", ".xml", "spaceex/spaceex_parser_testing_InternalSmtInterpol_DEBUG.epf"),
-	        new Triple<>("SpaceExParserWithTA.xml", ".xml", "spaceex/spaceex_parser_testing_ExternalZ3_DEBUG.epf"),
+	       // new Triple<>("SpaceExParserWithTA.xml", ".xml", "spaceex/spaceex_parser_testing_InternalSmtInterpol_DEBUG.epf"),
+	       // new Triple<>("SpaceExParserWithTA.xml", ".xml", "spaceex/spaceex_parser_testing_ExternalZ3_DEBUG.epf"),
+	        new Triple<>("SpaceExParserWithTA.xml", ".xml", "spaceex/spaceex_parser_testing_ExternalZ3.epf"),
 	};
 	//@formatter:on
 	
 	//@formatter:off
 	private static final String[] INPUT = new String[] {
-			"examples/programs/spaceex/",
-//		"examples/programs/spaceex/test",
+//		"examples/programs/spaceex/",
+			"examples/programs/spaceex/tanks/safe",
+			"examples/programs/spaceex/tanks/unsafe",
+			"examples/programs/spaceex/simple",
+//		"examples/programs/spaceex/regression",
+			"examples/programs/spaceex/misc",
+			"examples/programs/spaceex/linear",
+//			"examples/programs/spaceex/tanks/unsafe",
 //			"examples/programs/spaceex/tanks3Modified-safe.xml",
 //			"examples/programs/spaceex/toy_safe.xml",
 //			"examples/programs/spaceex/simple1-unsafe.xml",
@@ -83,7 +90,7 @@ public class SpaceExTestSuite extends AbstractEvalTestSuite {
 	
 	@Override
 	protected long getTimeout() {
-		return 10 * 5000;
+		return 10 * 300000;
 	}
 	
 	@Override

@@ -39,7 +39,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.SimulationOrMinimizationType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -101,7 +101,7 @@ public class DirectSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE> 
 	public DirectSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final IStateFactory<STATE> stateFactory, final AGameGraph<LETTER, STATE> game)
 			throws AutomataOperationCanceledException {
-		super(progressTimer, logger, useSCCs, stateFactory, ESimulationType.DIRECT);
+		super(progressTimer, logger, useSCCs, stateFactory, SimulationOrMinimizationType.DIRECT);
 
 		game.setSimulationPerformance(getSimulationPerformance());
 		mGame = game;

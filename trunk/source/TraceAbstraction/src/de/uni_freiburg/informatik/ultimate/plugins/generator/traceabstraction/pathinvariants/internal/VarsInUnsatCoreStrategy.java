@@ -24,11 +24,11 @@ public class VarsInUnsatCoreStrategy extends LiveVariablesStrategy {
 	
 	private Map<IcfgLocation, Set<IProgramVar>> mLocations2PatternVariables;
 	
-	public VarsInUnsatCoreStrategy(int baseDisjuncts, int baseConjuncts, int disjunctsPerRound, int conjunctsPerRound,
+	public VarsInUnsatCoreStrategy(final AbstractTemplateIncreasingDimensionsStrategy dimensionsStrat,
 			int maxRounds, Set<IProgramVar> allProgramVariables,
 			Map<IcfgLocation, Set<IProgramVar>> locs2LiveVariables, boolean alwaysStrictAndNonStrictCopies,
 			boolean useStrictInequalitiesAlternatingly) {
-		super(baseDisjuncts, baseConjuncts, disjunctsPerRound, conjunctsPerRound, maxRounds, allProgramVariables,
+		super(dimensionsStrat, maxRounds, allProgramVariables,
 				locs2LiveVariables, alwaysStrictAndNonStrictCopies, useStrictInequalitiesAlternatingly);
 		mLocations2PatternVariables = new HashMap<>();
 	}

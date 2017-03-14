@@ -51,15 +51,13 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 	private final IUltimateServiceProvider mServices;
 	private final IToolchainStorage mStorage;
 
-	private final ManagedScript mMgdScript;
 	private final SimplificationTechnique mXnfConversionTechnique;
 
 	public SimplifyPreprocessor(final IUltimateServiceProvider services, final IToolchainStorage storage,
-			final ManagedScript mgdScript, final SimplificationTechnique xnfConversionTechnique) {
+			final SimplificationTechnique xnfConversionTechnique) {
 		super();
 		mServices = services;
 		mStorage = storage;
-		mMgdScript = mgdScript;
 		mXnfConversionTechnique = xnfConversionTechnique;
 	}
 
@@ -75,7 +73,7 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 	}
 
 	@Override
-	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
+	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf) throws TermException {
 		final Term simplified;
 		if (USE_SMTINTERPOL_FOR_SIMPLIFICATION) {
 			final Settings settings = new SolverBuilder.Settings(false, false, "", 10 * 1000, null, false, null, null);
@@ -83,12 +81,12 @@ public class SimplifyPreprocessor extends TransitionPreprocessor {
 			simplificationScript.setLogic(Logics.QF_UFLIRA);
 			final TermTransferrer towards = new TermTransferrer(simplificationScript);
 			final Term foreign = towards.transform(tf.getFormula());
-			final Term foreignsimplified = SmtUtils.simplify(mMgdScript, foreign, mServices, mXnfConversionTechnique);
+			final Term foreignsimplified = SmtUtils.simplify(script, foreign, mServices, mXnfConversionTechnique);
 			simplificationScript.exit();
-			final TermTransferrer back = new TermTransferrer(script);
+			final TermTransferrer back = new TermTransferrer(script.getScript());
 			simplified = back.transform(foreignsimplified);
 		} else {
-			simplified = SmtUtils.simplify(mMgdScript, tf.getFormula(), mServices, mXnfConversionTechnique);
+			simplified = SmtUtils.simplify(script, tf.getFormula(), mServices, mXnfConversionTechnique);
 		}
 		tf.setFormula(simplified);
 		return tf;

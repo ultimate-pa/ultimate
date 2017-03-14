@@ -33,7 +33,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoPartitioneer;
 import de.uni_freiburg.informatik.ultimate.lassoranker.variables.LassoUnderConstruction;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -47,26 +46,23 @@ public class LassoPartitioneerPreprocessor extends LassoPreprocessor {
 	public static final String s_Description = "LassoPartitioneer";
 	
 	private final IUltimateServiceProvider mServices;
-	private final ManagedScript mFreshVarConstructor;
 	
-	private final Script mScript;
+	private final ManagedScript mMgdScript;
 
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
-	public LassoPartitioneerPreprocessor(final Script script, 
+	public LassoPartitioneerPreprocessor(final ManagedScript script, 
 			final IUltimateServiceProvider services, 
-			final ManagedScript freshVarConstructor,
 			final XnfConversionTechnique xnfConversionTechniqe) {
 		mServices = services;
-		mScript = script;
-		mFreshVarConstructor = freshVarConstructor;
+		mMgdScript = script;
 		mXnfConversionTechnique = xnfConversionTechniqe;
 	}
 
 	@Override
 	public Collection<LassoUnderConstruction> process(
 			final LassoUnderConstruction lasso) throws TermException {
-		final LassoPartitioneer lp = new LassoPartitioneer(mServices, mFreshVarConstructor, mScript, lasso, mXnfConversionTechnique);
+		final LassoPartitioneer lp = new LassoPartitioneer(mServices, mMgdScript, lasso, mXnfConversionTechnique);
 		return lp.getNewLassos();
 	}
 

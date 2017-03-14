@@ -10,7 +10,7 @@ extern void __VERIFIER_ltl_step() __attribute__ ((__noreturn__));
 
 int a = 5;
 int b = 3;
-int tempa = 33, tempb = 13; 
+int tempa = 1, tempb = 13; 
 	
 	
 void foo(int x, int y){
@@ -24,7 +24,7 @@ int main()
 {
 	while(1){
 		a = 20;
-		foo(33, 1);
+		foo(tempa, tempb);
 	}
 }
 

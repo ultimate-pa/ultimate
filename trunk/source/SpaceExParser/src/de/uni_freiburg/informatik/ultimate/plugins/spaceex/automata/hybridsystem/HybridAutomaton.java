@@ -151,10 +151,20 @@ public class HybridAutomaton {
 		newLoc.setFlow(location.getFlow());
 		if (mPreferenceManager != null && mPreferenceManager.isLocationForbidden(mName, newLoc.getName())) {
 			newLoc.setForbidden(true);
-			if (!mPreferenceManager.getForbiddenToForbiddenlocs().containsKey(newLoc.getName())) {
-				final List<String> loclist = new ArrayList<>();
-				mPreferenceManager.getForbiddenToForbiddenlocs().put(newLoc.getName(), loclist);
-			}
+			mPreferenceManager.getForbiddenGroups().forEach(forb -> {
+				if (forb.getLocations().containsKey(mName)
+						&& forb.getLocations().get(mName).contains(newLoc.getName())) {
+					newLoc.setForbiddenConstraint(forb.getVariableInfix());
+				} else if (!forb.hasLocations() && forb.hasVariables()) {
+					newLoc.setForbiddenConstraint(forb.getVariableInfix());
+				}
+			});
+		} else if (mPreferenceManager != null) {
+			mPreferenceManager.getForbiddenGroups().forEach(forb -> {
+				if (forb.hasVariables() && !forb.hasLocations()) {
+					newLoc.setForbiddenConstraint(forb.getVariableInfix());
+				}
+			});
 		}
 		mLocations.put(newLoc.getId(), newLoc);
 		mNametoId.put(newLoc.getName(), newLoc.getId());

@@ -116,14 +116,12 @@ public class PathInvariantsTest extends
 //		"automizer/pathInvariants/pathInvariants_LinearConstraints_AND_UnsatCores.epf",
 //		"automizer/pathInvariants/pathInvariants_NonLinearConstraints_NO_UnsatCores.epf",
 //		"automizer/pathInvariants/pathInvariants_NonLinearConstraints_AND_UnsatCores.epf",
-//		"automizer/pathInvariants/InvariantSynthesis_Classical.epf",
-//		"automizer/pathInvariants/InvariantSynthesis_UnsatCores.epf",
-		"automizer/pathInvariants/InvariantSynthesis_UnsatCores_LiveVars.epf",
-//		"automizer/pathInvariants/InvariantSynthesis_UnsatCores_LiveVars_WP.epf",
-			
+//		"automizer/pathInvariants/InvariantSynthesis_Conservative.epf",
+//		"automizer/pathInvariants/InvariantSynthesis_Medium.epf",
+//		"automizer/pathInvariants/InvariantSynthesis_DisjunctsWithBound.epf",
+//		"automizer/pathInvariants/InvariantSynthesis_Aggressive.epf",
 	};
 	
-
 	/**
 	 * {@inheritDoc}
 	 */
@@ -133,7 +131,7 @@ public class PathInvariantsTest extends
 	}
 	
 	private static final String[] mBoogieToolchains = {
-		"AutomizerBplInline.xml",			
+		"AutomizerBplInline.xml",
 		"AutomizerBplInlineWithBlockEncoding.xml",
 //		"InvariantSynthesisBplInline.xml",
 	};
@@ -153,12 +151,13 @@ public class PathInvariantsTest extends
 				addTestCase(toolchain, setting, mUltimateRepository, new String[] {".c", ".i"});
 			}
 		}
+
 		for (final String toolchain : mBoogieToolchains) {
 			for (final String setting : mSettings) {
 				addTestCase(toolchain, setting, mUltimateRepository, new String[] {".bpl"});
 			}
 		}
+
 		return super.createTestCases();
 	}
-	
 }

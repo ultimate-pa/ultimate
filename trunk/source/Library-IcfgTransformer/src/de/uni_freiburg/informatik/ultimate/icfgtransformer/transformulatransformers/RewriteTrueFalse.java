@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Rewrite 'true' as '0 >= 0' and 'false' as '0 >= 1'.
@@ -56,8 +57,8 @@ public class RewriteTrueFalse extends TransformerPreprocessor {
 	}
 
 	@Override
-	protected TermTransformer getTransformer(final Script script) {
-		return new RewriteTrueFalseTransformer(script);
+	protected TermTransformer getTransformer(final ManagedScript script) {
+		return new RewriteTrueFalseTransformer(script.getScript());
 	}
 
 	private static final class RewriteTrueFalseTransformer extends TermTransformer {

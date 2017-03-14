@@ -1,7 +1,0 @@
-#Wed Feb 22 0:44:56 CET 2017
-\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Interpolants\ along\ a\ Counterexample=PathInvariants
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ unsat\ cores\ in\ PathInvariants=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Use\ weakest\ precondition\ in\ PathInvariants=true
-@de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=0.0.1
-file_export_version=3.0

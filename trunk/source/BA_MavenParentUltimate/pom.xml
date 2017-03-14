@@ -318,6 +318,7 @@
 		<module>../HeapSeparator</module>
 		<module>../TreeAutomizer</module>
 		<module>../UltimateDeltaDebugger</module>
+		<module>../InvariantSynthesis</module>
 	</modules>
 
 	<profiles>

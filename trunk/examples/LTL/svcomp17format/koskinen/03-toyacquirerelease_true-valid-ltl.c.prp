@@ -1,0 +1,1 @@
+CHECK( init(main()), LTL( G("a != 0" ==> F "r!= 0") ) )

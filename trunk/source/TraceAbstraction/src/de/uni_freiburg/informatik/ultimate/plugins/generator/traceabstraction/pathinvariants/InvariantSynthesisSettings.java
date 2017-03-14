@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AbstractTemplateIncreasingDimensionsStrategy;
 
 public class InvariantSynthesisSettings {
 	
@@ -10,14 +11,30 @@ public class InvariantSynthesisSettings {
 	private final boolean mUseUnsatCores;
 	private final boolean mUseAbstractInterpretationPredicates;
 	private final boolean mUseWPForPathInvariants;
+	private final boolean mUseLBE; // use large-block encoding?
+	private final AbstractTemplateIncreasingDimensionsStrategy mTemplateDimensionsStrat;
 	
-	public InvariantSynthesisSettings(Settings solverSettings, final boolean useNonlinearConstraints, 
-			final boolean useUnsatCores, final boolean useAbstractInterpretationPredicates, final boolean useWPForPathInvariants) {
+	public InvariantSynthesisSettings(Settings solverSettings, final AbstractTemplateIncreasingDimensionsStrategy templateDimensionsStrat, 
+			final boolean useNonlinearConstraints, 	final boolean useUnsatCores, 
+			final boolean useAbstractInterpretationPredicates, final boolean useWPForPathInvariants, final boolean useLBE) {
 		mUseNonlinearConstraints = useNonlinearConstraints;
 		mSolverSettings = solverSettings;
 		mUseUnsatCores = useUnsatCores;
 		mUseAbstractInterpretationPredicates = useAbstractInterpretationPredicates;
 		mUseWPForPathInvariants = useWPForPathInvariants;
+		mTemplateDimensionsStrat = templateDimensionsStrat;
+		mUseLBE = useLBE;
+	}
+	
+	public InvariantSynthesisSettings(Settings solverSettings, final boolean useNonlinearConstraints,
+			final boolean useUnsatCores, final boolean useAbstractInterpretationPredicates, final boolean useWPForPathInvariants, final boolean useLBE) {
+		mUseNonlinearConstraints = useNonlinearConstraints;
+		mSolverSettings = solverSettings;
+		mUseUnsatCores = useUnsatCores;
+		mUseAbstractInterpretationPredicates = useAbstractInterpretationPredicates;
+		mUseWPForPathInvariants = useWPForPathInvariants;
+		mTemplateDimensionsStrat = null;
+		mUseLBE = useLBE;
 	}
 	
 	public final boolean useNonLinearConstraints() {
@@ -38,6 +55,14 @@ public class InvariantSynthesisSettings {
 	
 	public final Settings getSolverSettings() {
 		return mSolverSettings;
+	}
+	
+	public final boolean useLargeBlockEncoding() {
+		return mUseLBE;
+	}
+	
+	public final AbstractTemplateIncreasingDimensionsStrategy getTemplateDimensionsStrategy() {
+		return mTemplateDimensionsStrat;
 	}
 	
 }

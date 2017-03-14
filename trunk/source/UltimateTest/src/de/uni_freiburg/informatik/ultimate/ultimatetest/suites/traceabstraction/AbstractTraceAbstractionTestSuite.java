@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
+import de.uni_freiburg.informatik.ultimate.ultimatetest.logs.IncrementalLogCsv;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.logs.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.logs.IncrementalLogWithVMParameters;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractModelCheckerTestSuite;
@@ -154,6 +155,8 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
 		return new IIncrementalLog[] { new IncrementalLogWithBenchmarkResults(this.getClass()),
-				new IncrementalLogWithVMParameters(this.getClass(), getTimeout()), };
+				new IncrementalLogWithVMParameters(this.getClass(), getTimeout()),
+//				new IncrementalLogCsv(this.getClass(), StatisticsData.class),
+				};
 	}
 }

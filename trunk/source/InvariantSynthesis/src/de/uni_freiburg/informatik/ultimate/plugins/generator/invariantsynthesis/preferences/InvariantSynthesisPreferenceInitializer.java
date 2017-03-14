@@ -36,17 +36,52 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis.
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceInitializer {
+	
+	public enum IncreasingStrategy {
+		Conservative,
+		Medium,
+		IncrOnlyConjunctsAfterMaxDisjuncts,
+		Aggressive
+	}
+	
 	/*
 	 * labels for the different preferencess
 	 */
 	public static final String LABEL_UNSAT_CORES = "Use unsat cores";
-
+	
+	public static final String LABEL_INITIAL_DISJUNCTS = "Initial disjuncts";
+	public static final String LABEL_INITIAL_CONJUNCTS = "Initial conjuncts";
+	public static final String LABEL_STEP_DISJUNCTS = "Step to increase disjuncts";
+	public static final String LABEL_STEP_CONJUNCTS = "Step to increase conjuncts";
+	
+	public static final String LABEL_NONLINEAR_CONSTRAINTS =
+			"Nonlinear constraints";
+	
+	public static final String LABEL_EXTERNAL_SMT_SOLVER = "Use external solver (z3)";
+	public static final String LABEL_SOLVER_TIMEOUT = "Solver timeout (sec)";
+	
+	public static final String LABEL_LARGE_BLOCK_ENCODING = "Large-Block-Encoding";
+	
+	public static final String LABEL_INCR_STRATEGY = "Increasing strategy";
 
 	/*
 	 * default values for the different preferences
 	 */
-	public static final boolean DEF_DUMPAUTOMATA = false;
-
+	public static final boolean DEF_UNSAT_CORES = true;
+	public static final boolean DEF_NONLINEAR_CONSTRAINTS = false;
+	public static final boolean DEF_LARGE_BLOCK_ENCODING = true;
+	
+	public static final int DEF_INITIAL_DISJUNCTS = 1;
+	public static final int DEF_INITIAL_CONJUNCTS = 1;
+	public static final int DEF_STEP_DISJUNCTS = 1;
+	public static final int DEF_STEP_CONJUNCTS = 1;
+	
+	public static final boolean DEF_EXTERNAL_SMT_SOLVER = true;
+	public static final int DEF_SOLVER_TIMEOUT = 15; // in seconds
+	
+	public static final IncreasingStrategy DEF_INCR_STRATEGY = IncreasingStrategy.Conservative;
+	
+	
 	/**
 	 * Constructor.
 	 */
@@ -57,7 +92,16 @@ public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceI
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
 		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<>(LABEL_UNSAT_CORES, DEF_DUMPAUTOMATA, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_UNSAT_CORES, DEF_UNSAT_CORES, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_NONLINEAR_CONSTRAINTS, DEF_NONLINEAR_CONSTRAINTS, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_LARGE_BLOCK_ENCODING, DEF_LARGE_BLOCK_ENCODING, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_INITIAL_DISJUNCTS, DEF_INITIAL_DISJUNCTS, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_STEP_DISJUNCTS, DEF_STEP_DISJUNCTS, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_INITIAL_CONJUNCTS, DEF_INITIAL_CONJUNCTS, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_STEP_CONJUNCTS, DEF_STEP_CONJUNCTS, PreferenceType.Integer),
+				new UltimatePreferenceItem<>(LABEL_INCR_STRATEGY, DEF_INCR_STRATEGY, PreferenceType.Combo, IncreasingStrategy.values()),
+				new UltimatePreferenceItem<>(LABEL_EXTERNAL_SMT_SOLVER, DEF_EXTERNAL_SMT_SOLVER, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SOLVER_TIMEOUT, DEF_SOLVER_TIMEOUT, PreferenceType.Integer),
 		};
 	};
 }

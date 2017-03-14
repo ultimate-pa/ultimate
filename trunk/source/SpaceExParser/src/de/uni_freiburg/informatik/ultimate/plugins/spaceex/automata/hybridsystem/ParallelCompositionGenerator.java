@@ -354,6 +354,7 @@ public class ParallelCompositionGenerator {
 		String name = "loc_";
 		String invariant = "";
 		String flow = "";
+		String forbiddenConstraint = "";
 		boolean forbidden = false;
 		final List<String> forbiddenLocNames = new ArrayList<>();
 		mergeList.sort(Comparator.comparing(Location::getInvariant));
@@ -362,25 +363,22 @@ public class ParallelCompositionGenerator {
 			name += loc.getName() + "_";
 			invariant = intersectStrings(invariant, loc.getInvariant());
 			flow = intersectStrings(flow, loc.getFlow());
+			if (forbiddenConstraint.isEmpty() && !loc.getForbiddenConstraint().isEmpty()) {
+				forbiddenConstraint += loc.getForbiddenConstraint();
+			} else if (!loc.getForbiddenConstraint().isEmpty()) {
+				forbiddenConstraint += "|" + loc.getForbiddenConstraint();
+			}
+			
 			if (loc.isForbidden()) {
 				forbidden = true;
-				forbiddenLocNames.add(loc.getName());
 			}
 		}
 		// create locations
 		final Location merged = new Location(incrementAndGet, name);
 		merged.setInvariant(invariant);
 		merged.setFlow(flow);
-		if (forbidden) {
-			merged.setForbidden(true);
-			for (final String locname : forbiddenLocNames) {
-				if (mPreferencemanager.getForbiddenToForbiddenlocs().containsKey(locname)) {
-					mPreferencemanager.getForbiddenToForbiddenlocs().get(locname).add(name);
-					final List<String> oldloclist = mPreferencemanager.getForbiddenToForbiddenlocs().get(locname);
-					mPreferencemanager.getForbiddenToForbiddenlocs().put(name, oldloclist);
-				}
-			}
-		}
+		merged.setForbiddenConstraint(forbiddenConstraint);
+		merged.setForbidden(forbidden);
 		return merged;
 	}
 	

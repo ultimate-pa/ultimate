@@ -38,15 +38,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluator;
 
 public class ConstantTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, VARDECL>, VARDECL>
-		implements IEvaluator<VALUE, STATE, VARDECL> {
+		implements ITermEvaluator<VALUE, STATE, VARDECL> {
 	
 	private final VALUE mValue;
+	private final EvaluatorType mType;
 
-	public ConstantTermEvaluator(final VALUE value) {
+	public ConstantTermEvaluator(final VALUE value, final EvaluatorType type) {
 		mValue = value;
+		mType = type;
 	}
 	
 	@Override
@@ -63,12 +64,12 @@ public class ConstantTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STA
 	}
 
 	@Override
-	public void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator) {
+	public void addSubEvaluator(final ITermEvaluator<VALUE, STATE, VARDECL> evaluator) {
 		throw new UnsupportedOperationException("Cannot add a sub evaluator to a constant term evaluator.");
 	}
 
 	@Override
-	public Set<VARDECL> getVarIdentifiers() {
+	public Set<String> getVarIdentifiers() {
 		return Collections.emptySet();
 	}
 
@@ -86,10 +87,4 @@ public class ConstantTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STA
 	public String toString() {
 		return mValue.toString();
 	}
-
-	@Override
-	public EvaluatorType getType() {
-		throw new UnsupportedOperationException("Not implemented");
-	}
-	
 }

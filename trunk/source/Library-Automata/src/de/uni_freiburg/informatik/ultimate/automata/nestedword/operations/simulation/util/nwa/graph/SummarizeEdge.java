@@ -35,7 +35,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.ETransitionType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.TransitionType;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -130,7 +130,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 		mSpoilerChoice = spoilerChoice;
 		mDuplicatorChoices = duplicatorChoices;
 		mDuplicatorAux = new DuplicatorNwaVertex<LETTER, STATE>(NwaGameGraphGeneration.DUPLICATOR_PRIORITY, false,
-				spoilerChoice, null, null, ETransitionType.SUMMARIZE_ENTRY, this);
+				spoilerChoice, null, null, TransitionType.SUMMARIZE_ENTRY, this);
 
 		mChoiceToDestination = new HashMap<>();
 		mChoiceToSpoilerAux = new HashMap<>();
@@ -335,7 +335,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 			// Duplicator auxiliary that is the end
 			final DuplicatorNwaVertex<LETTER, STATE> duplicatorAux =
 					new DuplicatorNwaVertex<LETTER, STATE>(NwaGameGraphGeneration.DUPLICATOR_PRIORITY, choiceBit, null,
-							choice, null, ETransitionType.SUMMARIZE_EXIT, this);
+							choice, null, TransitionType.SUMMARIZE_EXIT, this);
 			mChoiceToDuplicatorAux.put(choiceEntry, duplicatorAux);
 
 			// Destination
@@ -355,7 +355,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 				final DuplicatorNwaVertex<LETTER, STATE> predAsDuplicatorNwa =
 						(DuplicatorNwaVertex<LETTER, STATE>) pred;
 				// We are only interested in return-predecessor
-				if (!predAsDuplicatorNwa.getTransitionType().equals(ETransitionType.RETURN)) {
+				if (!predAsDuplicatorNwa.getTransitionType().equals(TransitionType.RETURN)) {
 					continue;
 				}
 				// We do not consider return-predecessor that have no

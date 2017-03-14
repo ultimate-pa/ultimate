@@ -400,8 +400,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
 		if (mLargestBlockInitialPartition != 0) {
-			statistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK,
-					mLargestBlockInitialPartition);
+			statistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK, mLargestBlockInitialPartition);
 		}
 		return statistics;
 	}
@@ -459,8 +458,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 					final EquivalenceClass a = mWorkListIntCall.next();
 
 					// internal split
-					if (a.mIncomingInt == EIncomingStatus.IN_WORKLIST) {
-						a.mIncomingInt = EIncomingStatus.UNKNOWN;
+					if (a.mIncomingInt == IncomingStatus.IN_WORKLIST) {
+						a.mIncomingInt = IncomingStatus.UNKNOWN;
 						if (DEBUG) {
 							mLogger.info("\n-- internal search");
 						}
@@ -468,8 +467,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 					}
 
 					// call split
-					if (a.mIncomingCall == EIncomingStatus.IN_WORKLIST) {
-						a.mIncomingCall = EIncomingStatus.UNKNOWN;
+					if (a.mIncomingCall == IncomingStatus.IN_WORKLIST) {
+						a.mIncomingCall = IncomingStatus.UNKNOWN;
 						if (DEBUG) {
 							mLogger.info("\n-- call search");
 						}
@@ -650,7 +649,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 		// remember that this equivalence class has no incoming transitions
 		if (letter2hierEc2lin.isEmpty()) {
-			a.mIncomingRet = EIncomingStatus.NONE;
+			a.mIncomingRet = IncomingStatus.NONE;
 			if (STATISTICS) {
 				++mNoIncomingTransitions;
 			}
@@ -703,7 +702,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 		// remember that this equivalence class has no incoming transitions
 		if (letter2hier2lin.isEmpty()) {
-			ec.mIncomingRet = EIncomingStatus.NONE;
+			ec.mIncomingRet = IncomingStatus.NONE;
 			if (STATISTICS) {
 				++mNoIncomingTransitions;
 			}
@@ -749,7 +748,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 		// remember that this equivalence class has no incoming transitions
 		if (letter2states.isEmpty()) {
-			ec.mIncomingRet = EIncomingStatus.NONE;
+			ec.mIncomingRet = IncomingStatus.NONE;
 			if (STATISTICS) {
 				++mNoIncomingTransitions;
 			}
@@ -995,7 +994,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 		if (mSplitAllCallPreds) {
 			for (final EquivalenceClass ec : mPartition.mEquivalenceClasses) {
-				ec.mIncomingCall = EIncomingStatus.NONE;
+				ec.mIncomingCall = IncomingStatus.NONE;
 			}
 		}
 
@@ -1024,9 +1023,9 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	private void splitInternalOrCallPredecessors(final EquivalenceClass ec,
 			final ITransitionIterator<LETTER, STATE> iterator, final boolean isInternal) {
 		assert (isInternal && (iterator instanceof ShrinkNwa.InternalTransitionIterator)
-				&& (ec.mIncomingInt != EIncomingStatus.IN_WORKLIST))
+				&& (ec.mIncomingInt != IncomingStatus.IN_WORKLIST))
 				|| ((!isInternal) && ((iterator instanceof ShrinkNwa.CallTransitionIterator)
-						&& (ec.mIncomingCall != EIncomingStatus.IN_WORKLIST)));
+						&& (ec.mIncomingCall != IncomingStatus.IN_WORKLIST)));
 
 		// create a hash map from letter to respective predecessor states
 		final HashMap<LETTER, HashSet<STATE>> letter2states = new HashMap<>();
@@ -1046,9 +1045,9 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		// remember that this equivalence class has no incoming transitions
 		if (letter2states.isEmpty()) {
 			if (isInternal) {
-				ec.mIncomingInt = EIncomingStatus.NONE;
+				ec.mIncomingInt = IncomingStatus.NONE;
 			} else {
-				ec.mIncomingCall = EIncomingStatus.NONE;
+				ec.mIncomingCall = IncomingStatus.NONE;
 			}
 			if (STATISTICS) {
 				++mNoIncomingTransitions;
@@ -1139,7 +1138,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 			// no return transitions found, remember that
 			if (!incomingReturns) {
-				succEc.mIncomingRet = EIncomingStatus.NONE;
+				succEc.mIncomingRet = IncomingStatus.NONE;
 				if (STATISTICS) {
 					++mNoIncomingTransitions;
 				}
@@ -1630,7 +1629,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 				splitReturnFindTransitionsAlt(succEc);
 
 		if (linEc2trans.isEmpty()) {
-			succEc.mIncomingRet = EIncomingStatus.NONE;
+			succEc.mIncomingRet = IncomingStatus.NONE;
 			return;
 		}
 
@@ -1812,7 +1811,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		EquivalenceClass succEc;
 		while (true) {
 			succEc = mWorkListRetHier.next();
-			if (succEc.mIncomingRet == EIncomingStatus.NONE) {
+			if (succEc.mIncomingRet == IncomingStatus.NONE) {
 				if (!mWorkListRetHier.hasNext()) {
 					return;
 				}
@@ -1829,7 +1828,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 				splitReturnFindOutgoingTransitions(succEc);
 
 		if (hierEc2linEcs.isEmpty()) {
-			succEc.mIncomingRet = EIncomingStatus.NONE;
+			succEc.mIncomingRet = IncomingStatus.NONE;
 			return;
 		}
 
@@ -2487,7 +2486,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	 * for which it is known that there are no incoming transitions. The status is updated as a byproduct after the
 	 * search for transitions.
 	 */
-	private enum EIncomingStatus {
+	private enum IncomingStatus {
 		/** Unknown whether there are incoming transitions. */
 		UNKNOWN,
 
@@ -3050,15 +3049,15 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		// intersection set that finally becomes a new equivalence class
 		private Set<STATE> mIntersection;
 		// status regarding incoming transitions
-		private EIncomingStatus mIncomingInt;
-		private EIncomingStatus mIncomingCall;
-		private EIncomingStatus mIncomingRet;
+		private IncomingStatus mIncomingInt;
+		private IncomingStatus mIncomingCall;
+		private IncomingStatus mIncomingRet;
 		// mapping: state to states that are separated
 		private HashMap<STATE, HashSet<STATE>> mState2SeparatedSet;
 		// matrix with return transition information
 		private Matrix mMatrix;
 		// status regarding outgoing return transitions
-		private EIncomingStatus mOutgoingRet;
+		private IncomingStatus mOutgoingRet;
 		// does the equivalence class contain an initial state?
 		private boolean mIsInitial;
 
@@ -3095,13 +3094,13 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		 */
 		public EquivalenceClass(final Set<STATE> states) {
 			this(states, false);
-			mIncomingInt = EIncomingStatus.IN_WORKLIST;
-			mIncomingCall = EIncomingStatus.IN_WORKLIST;
+			mIncomingInt = IncomingStatus.IN_WORKLIST;
+			mIncomingCall = IncomingStatus.IN_WORKLIST;
 			mWorkListIntCall.add(this);
-			mIncomingRet = EIncomingStatus.IN_WORKLIST;
+			mIncomingRet = IncomingStatus.IN_WORKLIST;
 			mWorkListRet.add(this);
 			if (mFirstReturnSplitAlternative) {
-				mOutgoingRet = EIncomingStatus.IN_WORKLIST;
+				mOutgoingRet = IncomingStatus.IN_WORKLIST;
 				mWorkListRetHier.add(this);
 			}
 			mMatrix = null;
@@ -3121,11 +3120,11 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 			switch (parent.mIncomingInt) {
 				case UNKNOWN:
 				case IN_WORKLIST:
-					mIncomingInt = EIncomingStatus.IN_WORKLIST;
+					mIncomingInt = IncomingStatus.IN_WORKLIST;
 					mWorkListIntCall.add(this);
 					break;
 				case NONE:
-					mIncomingInt = EIncomingStatus.NONE;
+					mIncomingInt = IncomingStatus.NONE;
 					break;
 				default:
 					throw new IllegalArgumentException();
@@ -3134,13 +3133,13 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 			switch (parent.mIncomingCall) {
 				case UNKNOWN:
 				case IN_WORKLIST:
-					mIncomingCall = EIncomingStatus.IN_WORKLIST;
-					if (mIncomingInt != EIncomingStatus.IN_WORKLIST) {
+					mIncomingCall = IncomingStatus.IN_WORKLIST;
+					if (mIncomingInt != IncomingStatus.IN_WORKLIST) {
 						mWorkListIntCall.add(this);
 					}
 					break;
 				case NONE:
-					mIncomingCall = EIncomingStatus.NONE;
+					mIncomingCall = IncomingStatus.NONE;
 					break;
 				default:
 					throw new IllegalArgumentException();
@@ -3149,11 +3148,11 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 			switch (parent.mIncomingRet) {
 				case UNKNOWN:
 				case IN_WORKLIST:
-					mIncomingRet = EIncomingStatus.IN_WORKLIST;
+					mIncomingRet = IncomingStatus.IN_WORKLIST;
 					mWorkListRet.add(this);
 					break;
 				case NONE:
-					mIncomingRet = EIncomingStatus.NONE;
+					mIncomingRet = IncomingStatus.NONE;
 					break;
 				default:
 					throw new IllegalArgumentException();
@@ -3163,11 +3162,11 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 				switch (parent.mOutgoingRet) {
 					case UNKNOWN:
 					case IN_WORKLIST:
-						mOutgoingRet = EIncomingStatus.IN_WORKLIST;
+						mOutgoingRet = IncomingStatus.IN_WORKLIST;
 						mWorkListRetHier.add(this);
 						break;
 					case NONE:
-						mOutgoingRet = EIncomingStatus.NONE;
+						mOutgoingRet = IncomingStatus.NONE;
 						break;
 					default:
 						throw new IllegalArgumentException();
@@ -3176,19 +3175,19 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 			if (mNondeterministicTransitions) {
 				// also add other equivalence class to work list for nondeterministic transitions
-				if (parent.mIncomingInt == EIncomingStatus.UNKNOWN) {
-					parent.mIncomingInt = EIncomingStatus.IN_WORKLIST;
+				if (parent.mIncomingInt == IncomingStatus.UNKNOWN) {
+					parent.mIncomingInt = IncomingStatus.IN_WORKLIST;
 					mWorkListIntCall.add(parent);
 				}
-				if (parent.mIncomingCall == EIncomingStatus.UNKNOWN) {
-					parent.mIncomingCall = EIncomingStatus.IN_WORKLIST;
-					if (parent.mIncomingInt != EIncomingStatus.IN_WORKLIST) {
+				if (parent.mIncomingCall == IncomingStatus.UNKNOWN) {
+					parent.mIncomingCall = IncomingStatus.IN_WORKLIST;
+					if (parent.mIncomingInt != IncomingStatus.IN_WORKLIST) {
 						mWorkListIntCall.add(parent);
 					}
 				}
 
-				if (parent.mIncomingRet == EIncomingStatus.UNKNOWN) {
-					parent.mIncomingRet = EIncomingStatus.IN_WORKLIST;
+				if (parent.mIncomingRet == IncomingStatus.UNKNOWN) {
+					parent.mIncomingRet = IncomingStatus.IN_WORKLIST;
 					mWorkListRet.add(parent);
 				}
 			}
@@ -3704,8 +3703,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 		@Override
 		public void add(final EquivalenceClass ec) {
-			assert (ec.mIncomingInt == EIncomingStatus.IN_WORKLIST)
-					|| (ec.mIncomingCall == EIncomingStatus.IN_WORKLIST);
+			assert (ec.mIncomingInt == IncomingStatus.IN_WORKLIST) || (ec.mIncomingCall == IncomingStatus.IN_WORKLIST);
 			if (DEBUG) {
 				mLogger.info("adding of IntCall WL: " + ec);
 			}
@@ -3720,7 +3718,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		@Override
 		public EquivalenceClass next() {
 			final EquivalenceClass ec = mQueue.poll();
-			ec.mIncomingRet = EIncomingStatus.UNKNOWN;
+			ec.mIncomingRet = IncomingStatus.UNKNOWN;
 			if (DEBUG) {
 				mLogger.info("\npopping from return WL: " + ec);
 			}
@@ -3729,7 +3727,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 		@Override
 		public void add(final EquivalenceClass ec) {
-			assert ec.mIncomingRet == EIncomingStatus.IN_WORKLIST;
+			assert ec.mIncomingRet == IncomingStatus.IN_WORKLIST;
 			if (DEBUG) {
 				mLogger.info("adding of return WL: " + ec);
 			}
@@ -3742,8 +3740,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		 */
 		public void fillWithAll() {
 			for (final EquivalenceClass ec : mPartition.mEquivalenceClasses) {
-				if (ec.mIncomingRet != EIncomingStatus.NONE) {
-					ec.mIncomingRet = EIncomingStatus.IN_WORKLIST;
+				if (ec.mIncomingRet != IncomingStatus.NONE) {
+					ec.mIncomingRet = IncomingStatus.IN_WORKLIST;
 					mQueue.add(ec);
 				}
 			}
@@ -3757,7 +3755,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		@Override
 		public EquivalenceClass next() {
 			final EquivalenceClass ec = mQueue.poll();
-			ec.mOutgoingRet = EIncomingStatus.UNKNOWN;
+			ec.mOutgoingRet = IncomingStatus.UNKNOWN;
 			if (DEBUG) {
 				mLogger.info("\npopping from return hier WL: " + ec);
 			}
@@ -3766,7 +3764,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 
 		@Override
 		public void add(final EquivalenceClass ec) {
-			assert ec.mOutgoingRet == EIncomingStatus.IN_WORKLIST;
+			assert ec.mOutgoingRet == IncomingStatus.IN_WORKLIST;
 			if (DEBUG) {
 				mLogger.info("adding of return hier WL: " + ec);
 			}

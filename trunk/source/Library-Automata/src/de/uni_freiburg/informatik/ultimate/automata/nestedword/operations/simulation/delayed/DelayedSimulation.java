@@ -39,7 +39,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.SimulationOrMinimizationType;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -103,7 +103,7 @@ public class DelayedSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE>
 	public DelayedSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final IStateFactory<STATE> stateFactory, final DelayedGameGraph<LETTER, STATE> game)
 			throws AutomataOperationCanceledException {
-		super(progressTimer, logger, useSCCs, stateFactory, ESimulationType.DELAYED);
+		super(progressTimer, logger, useSCCs, stateFactory, SimulationOrMinimizationType.DELAYED);
 
 		mGame = game;
 		mGame.setSimulationPerformance(getSimulationPerformance());

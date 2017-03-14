@@ -34,14 +34,14 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ESimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.SimulationOrMinimizationType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.FairGameGraph;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.EMultipleDataOption;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.ETimeMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.MultipleDataOption;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.ETransitionType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.TransitionType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.INwaGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.NwaGameGraphGeneration;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SummarizeEdge;
@@ -115,7 +115,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 			mNwa = new RemoveUnreachable<>(services, preparedNwa).getResult();
 		}
 		mGeneration = new NwaGameGraphGeneration<>(services, getProgressTimer(), getLogger(), mNwa, this,
-				ESimulationType.FAIR, possibleEquivalenceClasses, true);
+				SimulationOrMinimizationType.FAIR, possibleEquivalenceClasses, true);
 	}
 
 	/*
@@ -128,14 +128,14 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	public INestedWordAutomaton<LETTER, STATE> generateAutomatonFromGraph() throws AutomataOperationCanceledException {
 		final SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
-			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);
+			performance.startTimeMeasure(TimeMeasure.BUILD_RESULT);
 		}
 
 		final INestedWordAutomaton<LETTER, STATE> result = mGeneration.generateAutomatonFromGraph(false);
 
 		// Log performance
 		if (performance != null) {
-			performance.stopTimeMeasure(ETimeMeasure.BUILD_RESULT);
+			performance.stopTimeMeasure(TimeMeasure.BUILD_RESULT);
 			performance.addAllMeasures(mGeneration.getSimulationPerformance());
 		}
 
@@ -154,12 +154,12 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 
 		// Set values for compatibility with non nwa graph
 		final SimulationPerformance performance = mGeneration.getSimulationPerformance();
-		setGraphBuildTime(performance.getTimeMeasureResult(ETimeMeasure.BUILD_GRAPH, EMultipleDataOption.ADDITIVE));
+		setGraphBuildTime(performance.getTimeMeasureResult(TimeMeasure.BUILD_GRAPH, MultipleDataOption.ADDITIVE));
 	}
 
 	/**
 	 * Unsupported operation. Use
-	 * {@link #getDuplicatorVertex(Object, Object, Object, boolean, ETransitionType, SummarizeEdge, Sink)}
+	 * {@link #getDuplicatorVertex(Object, Object, Object, boolean, TransitionType, SummarizeEdge, Sink)}
 	 * instead.
 	 */
 	@Override

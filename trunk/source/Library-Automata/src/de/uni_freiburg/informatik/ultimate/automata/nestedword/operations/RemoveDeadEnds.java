@@ -142,8 +142,8 @@ public final class RemoveDeadEnds<LETTER, STATE> extends StateRemoval<LETTER, ST
 				assert correct;
 			}
 			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : mResult.internalSuccessors(state)) {
-				correct = correct &&
-						reachableStatesCopy.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
+				correct = correct && reachableStatesCopy.containsInternalTransition(state, outTrans.getLetter(),
+						outTrans.getSucc());
 				assert correct;
 			}
 			for (final OutgoingCallTransition<LETTER, STATE> outTrans : mResult.callSuccessors(state)) {

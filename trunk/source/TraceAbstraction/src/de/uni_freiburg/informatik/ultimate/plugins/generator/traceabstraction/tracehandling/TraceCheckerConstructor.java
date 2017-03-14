@@ -283,7 +283,7 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 		final Settings solverSettings = new Settings(fakeNonIncrementalSolver, true, solverCommand, -1, null,
 				dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
 		final InvariantSynthesisSettings invariantSynthesisSettings = new InvariantSynthesisSettings(solverSettings,
-				useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWeakestPrecondition);
+				useNonlinearConstraints, useUnsatCores, useAbstractInterpretationPredicates, useWeakestPrecondition, true);
 		
 
 		return new InterpolatingTraceCheckerPathInvariantsWithFallback(truePredicate, falsePredicate,

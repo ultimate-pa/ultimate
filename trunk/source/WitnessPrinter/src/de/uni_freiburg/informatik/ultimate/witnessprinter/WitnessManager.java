@@ -32,6 +32,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -93,21 +94,19 @@ public class WitnessManager {
 			final String originalFile = triple.getSecond();
 			final String svcompWitness = triple.getThird();
 
-			final boolean writeInWorkingDir = ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_WRITE_WORKINGDIR);
-			final boolean writeBesideInputFile = ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_WRITE);
+			final String witnessDir = ups.getString(PreferenceInitializer.LABEL_WITNESS_DIRECTORY);
+			final String witnessFilename = ups.getString(PreferenceInitializer.LABEL_WITNESS_NAME);
+			final boolean writeBesideInputFile = ups.getBoolean(PreferenceInitializer.LABEL_WITNESS_WRITE_BESIDE_FILE);
 			final List<String> filenamesToDelete = new ArrayList<>();
 
-			if (!writeBesideInputFile && !writeInWorkingDir) {
-				continue;
-			}
 			String filename = null;
-			if (writeInWorkingDir && svcompWitness != null) {
-				filename = writeWitness(svcompWitness, null, suffix);
-				filenamesToDelete.add(filename);
-			}
-
-			if (writeBesideInputFile && svcompWitness != null) {
-				filename = writeWitness(svcompWitness, originalFile, suffix);
+			if (svcompWitness != null) {
+				if (writeBesideInputFile) {
+					filename = createWitnessFilenameWriteBeside(originalFile, suffix);
+				} else {
+					filename = createWitnessFilename(witnessDir, witnessFilename, suffix);
+				}
+				writeWitness(svcompWitness, filename);
 				filenamesToDelete.add(filename);
 			}
 
@@ -143,31 +142,43 @@ public class WitnessManager {
 		}
 	}
 
-	private String writeWitness(final String svcompWitness, final String origInputFile, final String additionalSuffix) {
+	private void writeWitness(final String svcompWitness, final String filename) {
+		try {
+			final File file = CoreUtil.writeFile(filename, svcompWitness);
+			mLogger.info("Wrote witness to " + file.getCanonicalFile().getAbsolutePath());
+		} catch (final IOException e) {
+			mLogger.fatal("Something went wrong during writing of a witness", e);
+		}
+	}
+
+	private String createWitnessFilenameWriteBeside(final String origInputFile, final String additionalPrefix) {
 		final String suffix = "witness";
 		final String fileending = ".graphml";
 		final String separator = "-";
-
 		final StringBuilder filename = new StringBuilder();
-		if (origInputFile != null) {
-			filename.append(origInputFile).append(separator).append(suffix);
-		} else {
-			filename.append(suffix);
+		final File f = new File(origInputFile);
+
+		return createWitnessFilename(f.getParent(),
+				filename.append(f.getName()).append(separator).append(suffix).append(fileending).toString(),
+				additionalPrefix);
+	}
+
+	private String createWitnessFilename(final String witnessDir, final String witnessFilename,
+			final String additionalPrefix) {
+		final File witnessFile = new File(witnessFilename);
+		final File witnessFileDir = new File(witnessDir);
+
+		if (additionalPrefix == null) {
+			return Paths.get(witnessFileDir.getAbsolutePath(), witnessFile.getName()).toString();
 		}
 
-		if (additionalSuffix != null) {
-			filename.append(separator).append(additionalSuffix);
-		}
-		filename.append(fileending);
+		final String separator = "-";
+		final StringBuilder finalName = new StringBuilder();
 
-		try {
-			final File file = CoreUtil.writeFile(filename.toString(), svcompWitness);
-			mLogger.info("Wrote witness to " + file.getAbsolutePath());
-		} catch (final IOException e) {
-			mLogger.fatal("Something went wrong during writing of a witness", e);
-			return null;
-		}
-		return filename.toString();
+		return Paths
+				.get(witnessFileDir.getAbsolutePath(),
+						finalName.append(additionalPrefix).append(separator).append(witnessFile.getName()).toString())
+				.toString();
 	}
 
 	private void reportWitnessResult(final String svcompWitness, final IResult cex,

@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonOnDemandStateAndLetter;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.ETransitionType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.TransitionType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorNwaVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.DuplicatorWinningSink;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.SpoilerNwaVertex;
@@ -140,7 +140,7 @@ public class GameAutomaton<LETTER, STATE>
 		} else {
 			final SpoilerNwaVertex<LETTER, STATE> vertex = unwrapSpoilerNwaVertex(state);
 			final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTrans = constructSuccessors(vertex,
-					new InternalLetterAndSuccessorProvider(), ETransitionType.INTERNAL, false);
+					new InternalLetterAndSuccessorProvider(), TransitionType.INTERNAL, false);
 			addInternalTransitionsToAutomaton(state, succTrans);
 		}
 	}
@@ -152,7 +152,7 @@ public class GameAutomaton<LETTER, STATE>
 		} else {
 			final SpoilerNwaVertex<LETTER, STATE> vertex = unwrapSpoilerNwaVertex(state);
 			final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTrans =
-					constructSuccessors(vertex, new CallLetterAndSuccessorProvider(), ETransitionType.CALL, false);
+					constructSuccessors(vertex, new CallLetterAndSuccessorProvider(), TransitionType.CALL, false);
 			addCallTransitionsToAutomaton(state, succTrans);
 		}
 
@@ -165,7 +165,7 @@ public class GameAutomaton<LETTER, STATE>
 		} else {
 			final SpoilerNwaVertex<LETTER, STATE> vertex = unwrapSpoilerNwaVertex(lin);
 			final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTrans = constructSuccessors(vertex,
-					new ReturnLetterAndSuccessorProvider(unwrapSpoilerNwaVertex(hier)), ETransitionType.RETURN, true);
+					new ReturnLetterAndSuccessorProvider(unwrapSpoilerNwaVertex(hier)), TransitionType.RETURN, true);
 			addReturnTransitionsToAutomaton(lin, hier, succTrans);
 		}
 	}
@@ -179,7 +179,7 @@ public class GameAutomaton<LETTER, STATE>
 	private HashRelation<IGameLetter<LETTER, STATE>, IGameState> constructSuccessors(
 			final SpoilerNwaVertex<LETTER, STATE> vertex,
 			final LetterAndSuccessorProvider<LETTER, STATE, ? extends IOutgoingTransitionlet<LETTER, STATE>> lasp,
-			final ETransitionType transitionType, final boolean spoilerStateNeededInSucc) {
+			final TransitionType transitionType, final boolean spoilerStateNeededInSucc) {
 		final STATE spoilerState = vertex.getQ0();
 		final STATE duplicatorState = vertex.getQ1();
 		final HashRelation<IGameLetter<LETTER, STATE>, IGameState> succTrans = new HashRelation<>();
@@ -219,7 +219,7 @@ public class GameAutomaton<LETTER, STATE>
 	}
 
 	private HashRelation<IGameLetter<LETTER, STATE>, IGameState> computeSuccessorTransitions(
-			final SpoilerNwaVertex<LETTER, STATE> vertex, final LETTER letter, final ETransitionType transitionType,
+			final SpoilerNwaVertex<LETTER, STATE> vertex, final LETTER letter, final TransitionType transitionType,
 			final Set<STATE> spoilerSuccs, final Set<STATE> duplicatorSuccs, final boolean spoilerStateNeededInSucc) {
 		final HashRelation<IGameLetter<LETTER, STATE>, IGameState> result = new HashRelation<>();
 		for (final STATE spoilerSucc : spoilerSuccs) {
@@ -279,7 +279,7 @@ public class GameAutomaton<LETTER, STATE>
 	}
 
 	private IGameLetter<LETTER, STATE> getOrConstructSuccessorGameLetter(
-			final SpoilerNwaVertex<LETTER, STATE> predVertex, final LETTER letter, final ETransitionType transitionType,
+			final SpoilerNwaVertex<LETTER, STATE> predVertex, final LETTER letter, final TransitionType transitionType,
 			final STATE spoilerSucc) {
 		final boolean isSpoilerAccepting = mOperand.isFinal(spoilerSucc);
 		final boolean delayedbit =
@@ -367,7 +367,7 @@ public class GameAutomaton<LETTER, STATE>
 				new NestedMap3<>();
 
 		private IGameLetter<LETTER, STATE> getGameLetter(final STATE spoilerState, final STATE duplicatorState,
-				final LETTER letter, final boolean delayedbit, final ETransitionType transitionType) {
+				final LETTER letter, final boolean delayedbit, final TransitionType transitionType) {
 			switch (transitionType) {
 				case CALL:
 					if (delayedbit) {
@@ -396,7 +396,7 @@ public class GameAutomaton<LETTER, STATE>
 
 		public IGameLetter<LETTER, STATE> getOrConstructGameLetter(final STATE spoilerState,
 				final STATE duplicatorState, final LETTER letter, final boolean delayedbit,
-				final ETransitionType transitionType) {
+				final TransitionType transitionType) {
 			assert spoilerState != null;
 			assert duplicatorState != null;
 			assert letter != null;
@@ -409,7 +409,7 @@ public class GameAutomaton<LETTER, STATE>
 		}
 
 		private IGameLetter<LETTER, STATE> constructGameLetter(final STATE spoilerState, final STATE duplicatorState,
-				final LETTER letter, final boolean delayedbit, final ETransitionType transitionType) {
+				final LETTER letter, final boolean delayedbit, final TransitionType transitionType) {
 			final IGameLetter<LETTER, STATE> result =
 					new DuplicatorNwaVertex<>(2, delayedbit, spoilerState, duplicatorState, letter, transitionType);
 			switch (transitionType) {

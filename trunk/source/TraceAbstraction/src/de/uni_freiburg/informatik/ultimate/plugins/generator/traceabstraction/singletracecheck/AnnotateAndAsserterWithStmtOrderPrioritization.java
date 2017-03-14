@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.RelationWithTreeSet;
 
@@ -354,7 +353,7 @@ public class AnnotateAndAsserterWithStmtOrderPrioritization extends AnnotateAndA
 		final Set<Integer> result = new HashSet<>();
 
 		for (int i = 0; i < trace.length(); i++) {
-			final Term t = ((CodeBlock) trace.getSymbolAt(i)).getTransformula().getFormula();
+			final Term t = ((IAction) trace.getSymbolAt(i)).getTransformula().getFormula();
 			if (!termHasConstantGreaterThan(t, constantSize)) {
 				result.add(i);
 			}

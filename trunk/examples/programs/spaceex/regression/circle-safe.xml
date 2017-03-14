@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sspaceex xmlns="http://www-verimag.imag.fr/xml-namespaces/sspaceex" version="0.2" math="SpaceEx">
+  <component id="circle">
+    <param name="x" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <param name="y" type="real" local="false" d1="1" d2="1" dynamics="any" />
+    <param name="hop" type="label" local="false" />
+    <location id="1" name="p" x="200.5" y="152.5" width="113.0" height="81.0">
+      <invariant>y&gt;=0</invariant>
+      <flow>x'==-y &amp; y'==x</flow>
+    </location>
+    <location id="2" name="n" x="201.5" y="311.0" width="115.0" height="72.0">
+      <invariant>y&lt;=0</invariant>
+      <flow>x'==-y &amp; y'==x</flow>
+    </location>
+    <transition source="1" target="2">
+      <label>hop</label>
+	  <guard>y&lt;=0</guard>
+    </transition>
+    <transition source="2" target="1">
+      <label>hop</label>
+	  <guard>y&gt;=0</guard>
+    </transition>
+  </component>
+</sspaceex>
+

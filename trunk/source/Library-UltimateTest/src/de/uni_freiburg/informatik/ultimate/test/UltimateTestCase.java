@@ -44,12 +44,12 @@ import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class UltimateTestCase implements Comparable<UltimateTestCase> {
+public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 
 	private final String mName;
 	private final UltimateRunDefinition mUltimateRunDefinition;
-	private final UltimateStarter mStarter;
-	private final ITestResultDecider mDecider;
+	private UltimateStarter mStarter;
+	private ITestResultDecider mDecider;
 	private final List<ITestSummary> mSummaries;
 	private final List<IIncrementalLog> mLogs;
 	private final ConsoleLogger mTestLogger;
@@ -80,7 +80,7 @@ public class UltimateTestCase implements Comparable<UltimateTestCase> {
 		// start debug code: use this only in controlled situations!
 		// try {
 		// Thread.sleep(500);
-		// } catch (InterruptedException e1) {
+		// } catch (final InterruptedException e1) {
 		// }
 		// HeapDumper.dumpHeap("F:\\tmp\\ultimate benchmarks\\heapdump", false);
 		// end debug ode
@@ -130,15 +130,21 @@ public class UltimateTestCase implements Comparable<UltimateTestCase> {
 				success = mDecider.getJUnitSuccess(result);
 			}
 
-			updateSummaries(result);
-			updateLogsPostCompletion(result);
+			final String resultMessage = mDecider.getResultMessage();
+			final String resultCategory = mDecider.getResultCategory();
+
+			updateSummaries(result, resultCategory, resultMessage);
+			updateLogsPostCompletion(result, resultCategory, resultMessage);
 			mStarter.complete();
+
+			mDecider = null;
+			mStarter = null;
 
 			if (!success) {
 				String message = null;
 
 				if (!livecycleFailure) {
-					message = mDecider.getResultMessage();
+					message = resultMessage;
 				}
 
 				if (message == null) {
@@ -164,17 +170,18 @@ public class UltimateTestCase implements Comparable<UltimateTestCase> {
 
 	}
 
-	private void updateLogsPostCompletion(final TestResult result) {
+	private void updateLogsPostCompletion(final TestResult result, final String resultCategory,
+			final String resultMessage) {
 		if (mLogs == null) {
 			return;
 		}
 		for (final IIncrementalLog log : mLogs) {
-			log.addEntryPostCompletion(mUltimateRunDefinition, result, mDecider.getResultCategory(),
-					mDecider.getResultMessage(), mStarter.getServices(), mTestLogger);
+			log.addEntryPostCompletion(mUltimateRunDefinition, result, resultCategory, resultMessage,
+					mStarter.getServices(), mTestLogger);
 		}
 	}
 
-	private void updateSummaries(final TestResult result) {
+	private void updateSummaries(final TestResult result, final String resultCategory, final String resultMessage) {
 		if (mSummaries == null) {
 			return;
 		}
@@ -186,8 +193,7 @@ public class UltimateTestCase implements Comparable<UltimateTestCase> {
 		}
 
 		for (final ITestSummary summary : mSummaries) {
-			summary.addResult(mUltimateRunDefinition, result, mDecider.getResultCategory(), mDecider.getResultMessage(),
-					mName, rservice);
+			summary.addResult(mUltimateRunDefinition, result, resultCategory, resultMessage, mName, rservice);
 		}
 	}
 

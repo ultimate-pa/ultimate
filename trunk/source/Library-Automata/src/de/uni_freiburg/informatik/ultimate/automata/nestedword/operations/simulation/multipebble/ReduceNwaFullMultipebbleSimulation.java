@@ -99,11 +99,9 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 		switch (mMetriePreprocessing) {
 			case SYM:
 				final PartitionAndMapBackedSetOfPairs<STATE> partition =
-						new PartitionAndMapBackedSetOfPairs<>(
-								new NwaApproximateBisimulation<>(services, operand,
-										allowToMergeFinalAndNonFinalStates
-												? SimulationType.ORDINARY
-												: SimulationType.DIRECT).getResult().getRelation());
+						new PartitionAndMapBackedSetOfPairs<>(new NwaApproximateBisimulation<>(services, operand,
+								allowToMergeFinalAndNonFinalStates ? SimulationType.ORDINARY : SimulationType.DIRECT)
+										.getResult().getRelation());
 				mLogger.info("Initial partition has " + partition.getOrConstructPartitionSizeInformation().toString());
 				initialPairs = partition;
 				break;

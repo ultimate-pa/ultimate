@@ -44,93 +44,99 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 public final class TypeUtils {
 	private static final String SORT_BOOL = "Bool";
 	private static final String SORT_REAL = "Real";
-	
+
 	private static final Integer ITYPE_INT = PrimitiveType.INT;
 	private static final Integer ITYPE_REAL = PrimitiveType.REAL;
 	private static final Integer ITYPE_BOOL = PrimitiveType.BOOL;
-	
+
 	private TypeUtils() {
 		// do not instantiate utility class
 	}
-	
+
 	// TODO: Implement better handling of types. Make it more generic!
-	
+
 	public static <VARDECL> void consumeVariable(final Consumer<VARDECL> varConsumer,
 			final Consumer<VARDECL> boolConsumer, final Consumer<VARDECL> arrayConsumer, final VARDECL variable) {
 		assert arrayConsumer == null;
 		assert variable != null;
 		
-		if (variable instanceof IBoogieVar) {
-			consumeVariablePerType(varConsumer, boolConsumer, arrayConsumer, (IBoogieVar) variable);
-		} else {
-			throw new UnsupportedOperationException(
-					"Variable type " + variable.getClass().getSimpleName() + " not implemented.");
-		}
-		
+		consumeVariablePerType(varConsumer, boolConsumer, arrayConsumer, variable);
 	}
-	
-	public static void consumeVariable(final Consumer<IProgramVarOrConst> varConsumer,
-			final Consumer<IProgramVarOrConst> boolConsumer, final Consumer<IProgramVarOrConst> arrayConsumer,
-			final IProgramVarOrConst variable) {
-		assert arrayConsumer == null;
-		assert variable != null;
-		
-		final Sort sort = variable.getTerm().getSort();
-		
-		if (sort.isNumericSort()) {
-			varConsumer.accept(variable);
-		} else if (sort.getName().equals("Bool")) {
-			boolConsumer.accept(variable);
-		} else if (sort.isArraySort()) {
-			// TODO: Insert arrayConsumer as soon as array support is implemented.
-			varConsumer.accept(variable);
-			// arrayConsumer.equals(variable);
-		} else {
-			throw new UnsupportedOperationException("Type not supported.");
-		}
-	}
-	
+
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private static void consumeVariablePerType(final Consumer varConsumer, final Consumer boolConsumer,
-			final Consumer arrayConsumer, final IBoogieVar variable) {
-		if (isBoolean(variable)) {
-			boolConsumer.accept(variable);
-		} else if (isNumeric(variable)) {
-			varConsumer.accept(variable);
-		} else if (isArray(variable)) {
-			// TODO: Insert arrayConsumer as soon as array support is implemented.
-			varConsumer.accept(variable);
+	private static <VARDECL> void consumeVariablePerType(final Consumer varConsumer, final Consumer boolConsumer,
+			final Consumer arrayConsumer, final VARDECL variable) {
+		if (variable instanceof IBoogieVar) {
+			final IBoogieVar boogieVar = (IBoogieVar) variable;
+			if (isBoolean(boogieVar)) {
+				boolConsumer.accept(variable);
+			} else if (isNumeric(boogieVar)) {
+				varConsumer.accept(variable);
+			} else if (isArray(boogieVar)) {
+				// TODO: Insert arrayConsumer as soon as array support is implemented.
+				varConsumer.accept(variable);
+			} else {
+				throw new UnsupportedOperationException("Not implemented: " + boogieVar.getSort());
+			}
+		} else if (variable instanceof IProgramVarOrConst) {
+			final IProgramVarOrConst programVar = (IProgramVarOrConst) variable;
+			final Sort sort = programVar.getTerm().getSort();
+			if (isBoolean(sort)) {
+				boolConsumer.accept(variable);
+			} else if (isNumeric(sort)) {
+				varConsumer.accept(variable);
+			} else if (isArray(sort)) {
+				// TODO: Insert arrayConsumer as soon as array support is implemented.
+				varConsumer.accept(variable);
+			} else {
+				throw new UnsupportedOperationException("Not implemented: " + sort);
+			}
 		} else {
-			throw new UnsupportedOperationException("Not implemented: " + variable.getSort());
+			throw new UnsupportedOperationException("Unknown variable type: " + variable.getClass().getSimpleName());
 		}
+
 	}
-	
+
 	public static <R, VARDECL> R applyVariableFunction(final Function<VARDECL, R> varFunction,
 			final Function<VARDECL, R> boolFunction, final Function<VARDECL, R> arrayFunction, final VARDECL variable) {
 		assert arrayFunction == null;
 		assert variable != null;
-		
-		if (variable instanceof IBoogieVar) {
-			return applyVariableFunctionPerType(varFunction, boolFunction, arrayFunction, (IBoogieVar) variable);
-		}
-		throw new UnsupportedOperationException(
-				"The variable type " + variable.getClass().getSimpleName() + " is not implemented.");
+
+		return applyVariableFunctionPerType(varFunction, boolFunction, arrayFunction, variable);
 	}
-	
+
 	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private static <R> R applyVariableFunctionPerType(final Function varFunction, final Function boolFunction,
-			final Function arrayFunction, final IBoogieVar variable) {
-		
-		if (isBoolean(variable)) {
-			return (R) boolFunction.apply(variable);
-		} else if (isNumeric(variable)) {
-			return (R) varFunction.apply(variable);
-		} else if (isArray(variable)) {
-			// TODO: Insert arrayFunction as soon as array support is implemented.
-			return (R) varFunction.apply(variable);
+	private static <R, VARDECL> R applyVariableFunctionPerType(final Function varFunction, final Function boolFunction,
+			final Function arrayFunction, final VARDECL variable) {
+		if (variable instanceof IBoogieVar) {
+			final IBoogieVar boogieVar = (IBoogieVar) variable;
+			if (isBoolean(boogieVar)) {
+				return (R) boolFunction.apply(variable);
+			} else if (isNumeric(boogieVar)) {
+				return (R) varFunction.apply(variable);
+			} else if (isArray(boogieVar)) {
+				// TODO: Insert arrayFunction as soon as array support is implemented.
+				return (R) varFunction.apply(variable);
+			} else {
+				throw new UnsupportedOperationException("Not implemented: " + boogieVar.getSort());
+			}
+		} else if (variable instanceof IProgramVarOrConst) {
+			final IProgramVarOrConst programVar = (IProgramVarOrConst) variable;
+			final Sort sort = programVar.getTerm().getSort();
+			if (isBoolean(sort)) {
+				return (R) boolFunction.apply(variable);
+			} else if (isNumeric(sort)) {
+				return (R) varFunction.apply(variable);
+			} else if (isArray(sort)) {
+				// TODO: Insert arrayFunction as soon as array support is implemented.
+				return (R) varFunction.apply(variable);
+			} else {
+				throw new UnsupportedOperationException("Not implemented: " + sort);
+			}
 		} else {
-			throw new UnsupportedOperationException("Not implemented: " + variable.getSort());
+			throw new UnsupportedOperationException("Unknown variable type: " + variable.getClass().getSimpleName());
 		}
+
 	}
 	
 	public static <R> R applyTypeFunction(final Function<Sort, R> intFunction, final Function<Sort, R> realFunction,
@@ -150,12 +156,12 @@ public final class TypeUtils {
 		}
 		throw new UnsupportedOperationException("Not implemented: " + sort);
 	}
-	
+
 	public static <R> R applyTypeFunction(final Function<IBoogieType, R> intFunction,
 			final Function<IBoogieType, R> realFunction, final Function<IBoogieType, R> boolFunction,
 			final Function<IBoogieType, R> arrayFunction, final IBoogieType type) {
 		assert type != null;
-		
+
 		if (type instanceof PrimitiveType) {
 			final PrimitiveType prim = (PrimitiveType) type;
 			if (prim == BoogieType.TYPE_BOOL) {
@@ -171,7 +177,7 @@ public final class TypeUtils {
 			throw new IllegalArgumentException("Type error: " + prim.getClass().getSimpleName());
 		} else if (type instanceof ConstructedType) {
 			final ConstructedType ctype = (ConstructedType) type;
-			
+
 			if (ctype.getUnderlyingType() instanceof ConstructedType) {
 				throw new UnsupportedOperationException("Nested constructed type found. No idea how to solve this.");
 			}
@@ -180,59 +186,59 @@ public final class TypeUtils {
 			assert arrayFunction != null;
 			return arrayFunction.apply(type);
 		}
-		
+
 		throw new UnsupportedOperationException("Type not implemented: " + type.getClass());
 	}
-	
+
 	public static boolean isArray(final Sort sort) {
 		return sort.getRealSort().isArraySort();
 	}
-	
+
 	private static boolean isNumeric(final Sort sort) {
 		return sort.getRealSort().isNumericSort();
 	}
-	
+
 	private static boolean isNumericNonInt(final Sort sort) {
 		return SORT_REAL.equals(sort.getRealSort().getName());
 	}
-	
+
 	private static boolean isBoolean(final Sort sort) {
 		return SORT_BOOL.equals(sort.getRealSort().getName());
 	}
-	
+
 	public static boolean isBoolean(final IBoogieType type) {
 		return ITYPE_BOOL.equals(primitiveType(type));
 	}
-	
+
 	public static boolean isNumeric(final IBoogieType type) {
 		final Integer t = primitiveType(type);
 		return ITYPE_INT.equals(t) || ITYPE_REAL.equals(t);
 	}
-	
+
 	public static boolean isNumeric(final IBoogieVar var) {
 		return isNumeric(var.getSort());
 	}
-	
+
 	public static boolean isBoolean(final IBoogieVar var) {
 		return isBoolean(var.getSort());
 	}
-	
+
 	private static boolean isArray(final IBoogieVar variable) {
 		return isArray(variable.getSort());
 	}
-	
+
 	public static boolean isNumericNonInt(final IBoogieType type) {
 		return ITYPE_REAL.equals(primitiveType(type));
 	}
-	
+
 	public static boolean isNumericNonInt(final IBoogieVar var) {
 		return isNumericNonInt(var.getSort());
 	}
-	
+
 	public static boolean isNumericInt(final IBoogieType type) {
 		return ITYPE_INT.equals(primitiveType(type));
 	}
-	
+
 	private static Integer primitiveType(final IBoogieType type) {
 		if (type instanceof PrimitiveType) {
 			return ((PrimitiveType) type).getTypeCode();
@@ -245,7 +251,7 @@ public final class TypeUtils {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Checks if two Boogie types are of the same type category. There are three type categories:
 	 * <ul>
@@ -263,15 +269,15 @@ public final class TypeUtils {
 	public static boolean categoryEquals(final IBoogieType a, final IBoogieType b) {
 		return (isBoolean(a) == isBoolean(b)) && (isNumeric(a) == isNumeric(b));
 	}
-	
+
 	public static boolean isIntTerm(final Term t) {
 		return "Int".equals(t.getSort().getRealSort().getName());
 	}
-	
+
 	public static boolean isRealTerm(final Term t) {
 		return "Real".equals(t.getSort().getRealSort().getName());
 	}
-	
+
 	public static Sort getInnermostArrayValueSort(final Sort sort) {
 		Sort currentSort = sort;
 		while (currentSort.isArraySort()) {
@@ -279,14 +285,14 @@ public final class TypeUtils {
 		}
 		return currentSort;
 	}
-	
+
 	public static Sort getValueSort(final Sort sort) {
 		if (!sort.isArraySort()) {
 			throw new IllegalArgumentException("sort is no array sort: " + sort);
 		}
 		return sort.getArguments()[1];
 	}
-	
+
 	public static Sort getIndexSort(final Sort sort) {
 		if (!sort.isArraySort()) {
 			throw new IllegalArgumentException("sort is no array sort: " + sort);

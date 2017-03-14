@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.EGameGraphChangeType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.GameGraphChangeType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.GameGraphChanges;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.ETimeMeasure;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
@@ -95,7 +95,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * The transitions are stored <b>inversely</b> by <i>(destination, letter,
 	 * source)</i> instead of <i>(source, letter, destination)</i>.
 	 */
-	private final NestedMap3<STATE, LETTER, STATE, EGameGraphChangeType> mChangedBuechiTransitionsInverse;
+	private final NestedMap3<STATE, LETTER, STATE, GameGraphChangeType> mChangedBuechiTransitionsInverse;
 	/**
 	 * Maintains equivalence classes for every state. The game graph has methods
 	 * that allow to union the classes of states. The data structure is used for
@@ -177,7 +177,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	public INestedWordAutomaton<LETTER, STATE> generateAutomatonFromGraph() throws AutomataOperationCanceledException {
 		final SimulationPerformance performance = getSimulationPerformance();
 		if (performance != null) {
-			performance.startTimeMeasure(ETimeMeasure.BUILD_RESULT);
+			performance.startTimeMeasure(TimeMeasure.BUILD_RESULT);
 		}
 
 		final boolean areThereMergeableStates = mAreThereMergeableStates;
@@ -274,8 +274,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 		// Log performance
 		if (performance != null) {
-			performance.stopTimeMeasure(ETimeMeasure.BUILD_RESULT);
-			performance.addTimeMeasureValue(ETimeMeasure.BUILD_GRAPH, mGraphBuildTime);
+			performance.stopTimeMeasure(TimeMeasure.BUILD_RESULT);
+			performance.addTimeMeasureValue(TimeMeasure.BUILD_GRAPH, mGraphBuildTime);
 		}
 
 		// Remove unreachable states which can occur due to transition removal
@@ -415,17 +415,17 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		if (changes instanceof FairGameGraphChanges) {
 			final FairGameGraphChanges<LETTER, STATE> fairChanges = (FairGameGraphChanges<LETTER, STATE>) changes;
 			// Undo buechi transition changes
-			final NestedMap3<STATE, LETTER, STATE, EGameGraphChangeType> changedTransitions =
+			final NestedMap3<STATE, LETTER, STATE, GameGraphChangeType> changedTransitions =
 					fairChanges.getChangedBuechiTransitions();
 			for (final STATE changedKey : changedTransitions.keySet()) {
-				for (final Triple<LETTER, STATE, EGameGraphChangeType> changedTrans : changedTransitions.get(changedKey)
+				for (final Triple<LETTER, STATE, GameGraphChangeType> changedTrans : changedTransitions.get(changedKey)
 						.entrySet()) {
 					final STATE src = changedKey;
 					final LETTER a = changedTrans.getFirst();
 					final STATE dest = changedTrans.getSecond();
 					// Only undo if there actually is changed transition stored
-					if (changedTrans.getThird().equals(EGameGraphChangeType.ADDITION)
-							|| changedTrans.getThird().equals(EGameGraphChangeType.REMOVAL)) {
+					if (changedTrans.getThird().equals(GameGraphChangeType.ADDITION)
+							|| changedTrans.getThird().equals(GameGraphChangeType.REMOVAL)) {
 						mChangedBuechiTransitionsInverse.get(dest).remove(a, src);
 					}
 				}
@@ -522,15 +522,15 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			throw new IllegalArgumentException("Arguments must exist in the"
 					+ " automaton, not be null and the given transitions must not already exist.");
 		}
-		final EGameGraphChangeType wasChangedBefore = mChangedBuechiTransitionsInverse.get(dest, a, src);
-		if (wasChangedBefore != null && wasChangedBefore.equals(EGameGraphChangeType.ADDITION)) {
+		final GameGraphChangeType wasChangedBefore = mChangedBuechiTransitionsInverse.get(dest, a, src);
+		if (wasChangedBefore != null && wasChangedBefore.equals(GameGraphChangeType.ADDITION)) {
 			// Transition was already added previously.
 			return null;
 		}
 
 		// Check if letter is a new incoming letter for destination
 		boolean isLetterNew = true;
-		final Map<STATE, EGameGraphChangeType> changedPreds = mChangedBuechiTransitionsInverse.get(dest, a);
+		final Map<STATE, GameGraphChangeType> changedPreds = mChangedBuechiTransitionsInverse.get(dest, a);
 		// First iterate over original transitions
 		final Iterator<IncomingInternalTransition<LETTER, STATE>> iter =
 				mBuechi.internalPredecessors(dest, a).iterator();
@@ -538,8 +538,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			final STATE pred = iter.next().getPred();
 			// Ignore transition if it was removed before
 			if (changedPreds != null) {
-				final EGameGraphChangeType change = changedPreds.get(pred);
-				if (change != null && change.equals(EGameGraphChangeType.REMOVAL)) {
+				final GameGraphChangeType change = changedPreds.get(pred);
+				if (change != null && change.equals(GameGraphChangeType.REMOVAL)) {
 					continue;
 				}
 			}
@@ -549,8 +549,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		}
 		// Second iterate over possible added transitions
 		if (isLetterNew && changedPreds != null) {
-			for (final Entry<STATE, EGameGraphChangeType> changeEntry : changedPreds.entrySet()) {
-				if (changeEntry.getValue() != null && changeEntry.getValue().equals(EGameGraphChangeType.ADDITION)) {
+			for (final Entry<STATE, GameGraphChangeType> changeEntry : changedPreds.entrySet()) {
+				if (changeEntry.getValue() != null && changeEntry.getValue().equals(GameGraphChangeType.ADDITION)) {
 					// Found a valid added transition with given letter
 					isLetterNew = false;
 					break;
@@ -625,7 +625,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		}
 
 		// Update set of changes
-		mChangedBuechiTransitionsInverse.put(dest, a, src, EGameGraphChangeType.ADDITION);
+		mChangedBuechiTransitionsInverse.put(dest, a, src, GameGraphChangeType.ADDITION);
 		changes.addedBuechiTransition(src, a, dest);
 
 		return changes;
@@ -824,8 +824,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 			throw new IllegalArgumentException(
 					"Arguments must exist in the" + " automaton, not be null and the given transitions must exist.");
 		}
-		final EGameGraphChangeType wasChangedBefore = mChangedBuechiTransitionsInverse.get(dest, a, src);
-		if (wasChangedBefore != null && wasChangedBefore.equals(EGameGraphChangeType.REMOVAL)) {
+		final GameGraphChangeType wasChangedBefore = mChangedBuechiTransitionsInverse.get(dest, a, src);
+		if (wasChangedBefore != null && wasChangedBefore.equals(GameGraphChangeType.REMOVAL)) {
 			// Transition was already removed previously
 			return null;
 		}
@@ -846,7 +846,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		}
 
 		// Update set of changes
-		mChangedBuechiTransitionsInverse.put(dest, a, src, EGameGraphChangeType.REMOVAL);
+		mChangedBuechiTransitionsInverse.put(dest, a, src, GameGraphChangeType.REMOVAL);
 		changes.removedBuechiTransition(src, a, dest);
 
 		return changes;

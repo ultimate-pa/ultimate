@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.StoreObjec
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.DropmodelType;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.ModelIdOnlyType;
@@ -57,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.IToolchain.ReturnCode;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.model.IToolchainProgressMonitor;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
+import de.uni_freiburg.informatik.ultimate.core.model.results.ITimeoutResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressMonitorService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainCancel;
@@ -183,8 +186,12 @@ final class ToolchainWalker implements IToolchainCancel {
 		}
 
 		if (!service.continueProcessing()) {
-			data.getToolchain().getServices().getResultService().reportResult(Activator.PLUGIN_ID,
-					new TimeoutResult(Activator.PLUGIN_ID, "Timeout occured before executing " + pluginId));
+			final Collection<ITimeoutResult> toResults = ResultUtil.filterResults(
+					data.getToolchain().getServices().getResultService().getResults(), ITimeoutResult.class);
+			if (toResults.isEmpty()) {
+				data.getToolchain().getServices().getResultService().reportResult(Activator.PLUGIN_ID,
+						new TimeoutResult(Activator.PLUGIN_ID, "Timeout occured before executing " + pluginId));
+			}
 			mLogger.info("Toolchain execution was canceled (Timeout) before executing " + pluginId);
 			return true;
 		}

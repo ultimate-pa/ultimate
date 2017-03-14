@@ -33,7 +33,6 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TransitionPreprocessor;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
@@ -98,13 +97,12 @@ public final class LocalTransformer implements ITransformulaTransformer {
 	public TransforumlaTransformationResult transform(final UnmodifiableTransFormula tf) {
 		final ModifiableTransFormula mod =
 				ModifiableTransFormulaUtils.buildTransFormula(tf, mReplacementVarFactory, mManagedScript);
-		final Script script = mManagedScript.getScript();
 		try {
 			ModifiableTransFormula resultMod = mod;
 			for (final TransitionPreprocessor transformer : mTransitionPreprocessors) {
 				final ModifiableTransFormula oldTf = resultMod;
-				resultMod = transformer.process(script, oldTf);
-				assert transformer.checkSoundness(script, oldTf, resultMod) : "Transformation unsound for "
+				resultMod = transformer.process(mManagedScript, oldTf);
+				assert transformer.checkSoundness(mManagedScript.getScript(), oldTf, resultMod) : "Transformation unsound for "
 						+ transformer.getDescription();
 			}
 			// local transformations are -- for now -- assumed to be always equivalent

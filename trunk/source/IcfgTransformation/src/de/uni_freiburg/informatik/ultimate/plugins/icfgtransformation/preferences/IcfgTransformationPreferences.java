@@ -53,6 +53,8 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 		MAP_ELIMINATION,
 
 		REMOVE_DIV_MOD,
+		
+		MODULO_NEIGHBOR,
 
 		LOOP_ACCELERATION_EXAMPLE,
 

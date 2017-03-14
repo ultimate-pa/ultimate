@@ -366,7 +366,7 @@ public final class Log4JLoggingService implements IStorable, ILoggingService {
 
 	@Override
 	public void destroy() {
-		// do nothing
+		mPreferenceStore.removePreferenceChangeListener(mRefreshingListener);
 	}
 
 	@Override

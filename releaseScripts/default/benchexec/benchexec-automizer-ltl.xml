@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<!DOCTYPE benchmark PUBLIC "+//IDN sosy-lab.org//DTD BenchExec benchmark 1.0//EN" "http://www.sosy-lab.org/benchexec/benchmark-1.0.dtd">
+<benchmark tool="ultimateautomizer"
+           timelimit="60"
+           hardtimelimit="75"
+           memlimit="8GB"
+           cpuCores="4">
+
+  <rundefinition name="Test">
+  </rundefinition>
+
+  <tasks name="LTL-1">
+    <include>../../../trunk/examples/LTL/svcomp17format/coolant_basis_1_neg_false-valid-ltl.c</include>
+    <propertyfile>../../../trunk/examples/LTL/svcomp17format/coolant_basis_1_neg_false-valid-ltl.prp</propertyfile>
+	<option name="32bit"></option>
+  </tasks>
+  
+  <tasks name="LTL-2">
+    <include>../../../trunk/examples/LTL/svcomp17format/coolant/coolant_basis_1_safe_sfty_true-valid-ltl.c</include>
+    <propertyfile>../../../trunk/examples/LTL/svcomp17format/coolant/coolant_basis_1_safe_sfty_true-valid-ltl.prp</propertyfile>
+	<option name="32bit"></option>
+  </tasks>
+
+</benchmark>

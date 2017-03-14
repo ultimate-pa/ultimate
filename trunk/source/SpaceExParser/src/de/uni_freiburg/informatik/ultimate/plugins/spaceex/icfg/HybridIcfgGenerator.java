@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.Location;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.Transition;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridTermBuilder.BuildScenario;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExForbiddenGroup;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceGroup;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.FirstOrderLinearODE;
@@ -84,8 +82,6 @@ public class HybridIcfgGenerator {
 	private final IcfgLocation mRootLocation;
 	// The connection list holds ICFGLocations which have to be connected to the initial location of a group
 	private final List<IcfgLocation> mConnectionList;
-	// Created transitions holds a List of ICFGLocations connected to the Map Key
-	private final Map<IcfgLocation, List<IcfgLocation>> mCreatedTransitions;
 	private final Scenario mScenario;
 	private final Set<String> mConstants;
 	private int mCurrentGroupID;
@@ -103,7 +99,6 @@ public class HybridIcfgGenerator {
 		mVariableManager = variableManager;
 		mCfgComponents = new HashMap<>();
 		mConnectionList = new ArrayList<>();
-		mCreatedTransitions = new HashMap<>();
 		mScenario = preferenceManager.hasPreferenceGroups() ? Scenario.PREF_GROUPS : Scenario.NO_GROUPS;
 		mConstants = new HashSet<>();
 		mTrivialTransformula = TransFormulaBuilder.getTrivialTransFormula(smtToolkit.getManagedScript());
@@ -199,7 +194,7 @@ public class HybridIcfgGenerator {
 		mConstants.addAll(automaton.getGlobalConstants());
 		mConstants.addAll(automaton.getLocalConstants());
 		// add Time variable
-		variables.add(TIME_VAR);
+		// variables.add(TIME_VAR);
 		// ICFG locations + edges for variables
 		variablesToIcfg(variables);
 		// for locations
@@ -253,19 +248,11 @@ public class HybridIcfgGenerator {
 		final String id = "varAssignment_" + (group == null ? "" : group.getId());
 		final IcfgLocation start = new IcfgLocation(id + "_start", PROC_NAME);
 		final IcfgLocation end = new IcfgLocation(id + "_end", PROC_NAME);
-		// if the transition has not been created, do it
-		if (!mCreatedTransitions.containsKey(start)) {
-			final IcfgInternalTransition startEnd = createIcfgTransition(start, end, transformula);
-			transitions.add(startEnd);
-			// create a list for the start node which contains the target.
-			final List<IcfgLocation> list = new ArrayList<>();
-			list.add(end);
-			mCreatedTransitions.put(start, list);
-		} else if (mCreatedTransitions.containsKey(start) && !mCreatedTransitions.get(start).contains(end)) {
-			final IcfgInternalTransition startEnd = createIcfgTransition(start, end, transformula);
-			transitions.add(startEnd);
-			mCreatedTransitions.get(start).add(end);
-		}
+		final IcfgInternalTransition startEnd = createIcfgTransition(start, end, transformula);
+		transitions.add(startEnd);
+		// create a list for the start node which contains the target.
+		final List<IcfgLocation> list = new ArrayList<>();
+		list.add(end);
 		// new cfgComponent, has to be connected to the root node.
 		mCfgComponents.put(id, new HybridCfgComponent(id, start, end, locations, transitions, ""));
 		/*
@@ -331,6 +318,7 @@ public class HybridIcfgGenerator {
 			/*
 			 * Transition preFLow to postFlow
 			 */
+			// TODO: CHECK IF ODE linear s.t. only linear flow works.
 			String flowTerms = "";
 			final String[] splittedFlow = !loc.getFlow().isEmpty() ? loc.getFlow().split("(&&)|(&)") : new String[0];
 			if (splittedFlow.length > 0) {
@@ -364,78 +352,26 @@ public class HybridIcfgGenerator {
 			/*
 			 * Forbidden check
 			 */
-			// TODO: could be optimized, but not necessary asap because the size of processed lists is pretty small
-			// usually.
-			if (mSpaceExPreferenceManager.hasForbiddenGroup()) {
-				String finalInfix = "";
-				final List<SpaceExForbiddenGroup> forbiddengroup = mSpaceExPreferenceManager.getForbiddenGroups();
-				if (loc.isForbidden()) {
-					finalInfix = updateFinalInfix(forbiddengroup, loc.getName());
-				} else {
-					// if the location is not forbidden, get the groups with no locations, and set the infix according
-					// to them.
-					for (final SpaceExForbiddenGroup group : forbiddengroup) {
-						if (!group.hasLocations()) {
-							if (!finalInfix.isEmpty()) {
-								finalInfix += "|";
-							}
-							finalInfix += group.getVariableInfix();
-						}
-					}
-				}
-				if (!finalInfix.isEmpty() || loc.isForbidden()) {
-					// if the current location is forbidden, it shall get a transition from start --> error.
-					// the transformula depends on whether
-					final UnmodifiableTransFormula forbiddenTransformula = createForbiddenTransformula(finalInfix);
-					final IcfgInternalTransition startError =
-							new IcfgInternalTransition(preFlow, mErrorLocation, null, forbiddenTransformula);
-					preFlow.addOutgoing(startError);
-					mErrorLocation.addIncoming(startError);
-					
-					final IcfgInternalTransition endError =
-							new IcfgInternalTransition(end, mErrorLocation, null, forbiddenTransformula);
-					end.addOutgoing(endError);
-					mErrorLocation.addIncoming(endError);
-				}
+			if (mSpaceExPreferenceManager.hasForbiddenGroup() && !loc.getForbiddenConstraint().isEmpty()
+					|| loc.isForbidden()) {
+				// if the current location is forbidden, it shall get a transition from start --> error.
+				// the transformula depends on whether
+				final UnmodifiableTransFormula forbiddenTransformula =
+						createForbiddenTransformula(loc.getForbiddenConstraint());
+				final IcfgInternalTransition startError =
+						new IcfgInternalTransition(preFlow, mErrorLocation, null, forbiddenTransformula);
+				preFlow.addOutgoing(startError);
+				mErrorLocation.addIncoming(startError);
+				
+				final IcfgInternalTransition endError =
+						new IcfgInternalTransition(end, mErrorLocation, null, forbiddenTransformula);
+				end.addOutgoing(endError);
+				mErrorLocation.addIncoming(endError);
 			}
 			// create new cfgComponent
 			mCfgComponents.put(autid.toString(),
 					new HybridCfgComponent(autid.toString(), start, end, locations, transitions, loc.getInvariant()));
 		}
-	}
-	
-	private String updateFinalInfix(final List<SpaceExForbiddenGroup> forbiddengroup, final String locName) {
-		String finalInfix = "";
-		// For each forbidden group, check if the location belongs to it, if so, add the infix.
-		for (final SpaceExForbiddenGroup group : forbiddengroup) {
-			// list of the forbidden LocationNames BEFORE any merging.
-			if (group.hasLocations() && group.hasVariables()) {
-				final Collection<List<String>> forbLoc = group.getLocations().values();
-				// infix
-				final String forbInfix = group.getVariableInfix();
-				// forbidden -> forbiddenLocs map
-				final Map<String, List<String>> forbToLocs = mSpaceExPreferenceManager.getForbiddenToForbiddenlocs();
-				// for each forbidden loc of the group, go through the list of each automaton
-				for (final List<String> list : forbLoc) {
-					// for each listelement check if the HA location is part of the forbidden->forbiddenlocs
-					// map, if yes add the infix to the final infix.
-					for (final String f : list) {
-						if (forbToLocs.get(f).contains(locName)) {
-							if (!finalInfix.isEmpty()) {
-								finalInfix += "|";
-							}
-							finalInfix += forbInfix;
-						}
-					}
-				}
-			} else if (group.hasVariables()) {
-				if (!finalInfix.isEmpty()) {
-					finalInfix += "|";
-				}
-				finalInfix += group.getVariableInfix();
-			}
-		}
-		return finalInfix;
 	}
 	
 	private UnmodifiableTransFormula createForbiddenTransformula(final String forbiddenInfix) {
@@ -477,16 +413,10 @@ public class HybridIcfgGenerator {
 			final IcfgLocation target = mCfgComponents.get(Integer.toString(initialLocation.getId())).getStart();
 			final UnmodifiableTransFormula transformula =
 					TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
-			if (!mCreatedTransitions.containsKey(source)) {
-				createIcfgTransition(source, target, transformula);
-				// create a list for the start node which contains the target.
-				final List<IcfgLocation> list = new ArrayList<>();
-				list.add(target);
-				mCreatedTransitions.put(source, list);
-			} else if (mCreatedTransitions.containsKey(source) && !mCreatedTransitions.get(source).contains(target)) {
-				createIcfgTransition(source, target, transformula);
-				mCreatedTransitions.get(source).add(target);
-			}
+			createIcfgTransition(source, target, transformula);
+			// create a list for the start node which contains the target.
+			final List<IcfgLocation> list = new ArrayList<>();
+			list.add(target);
 			removeList.add(loc);
 		});
 		// remove from connectionlist
@@ -616,6 +546,7 @@ public class HybridIcfgGenerator {
 	private String preprocessLocationStatement(final String invariant) {
 		String inv = invariant.replaceAll(":=", "==");
 		inv = inv.replaceAll("&&", "&");
+		inv = inv.replaceAll("'", "");
 		inv = replaceConstantValues(inv);
 		return inv;
 	}

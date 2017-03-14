@@ -42,10 +42,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public class RewriteIte extends TransitionPreprocessor {
 	public static final String DESCRIPTION = "Remove if-then-else terms.";
-	private final ManagedScript mMgdScript;
 
-	public RewriteIte(final ManagedScript mgdScript) {
-		mMgdScript = mgdScript;
+	public RewriteIte() {
 	}
 
 	@Override
@@ -62,8 +60,8 @@ public class RewriteIte extends TransitionPreprocessor {
 	}
 
 	@Override
-	public ModifiableTransFormula process(final Script script, final ModifiableTransFormula tf) throws TermException {
-		final IteRemover iteRemover = new IteRemover(mMgdScript);
+	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf) throws TermException {
+		final IteRemover iteRemover = new IteRemover(script);
 		tf.setFormula(iteRemover.transform(tf.getFormula()));
 		return tf;
 	}
