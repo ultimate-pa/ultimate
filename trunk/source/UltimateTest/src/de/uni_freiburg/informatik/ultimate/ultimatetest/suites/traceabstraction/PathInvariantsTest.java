@@ -101,6 +101,7 @@ public class PathInvariantsTest extends
 //		"examples/programs/InvariantSynthesis",
 //		"examples/programs/scalable",
 //		"examples/programs/toy",
+//		"examples/programs/20170304-DifficultPathPrograms",
 	};
 	
 	
