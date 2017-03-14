@@ -33,7 +33,9 @@ import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.BuchiReduce;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.nwa.ReduceNwaDelayedSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.MinimizeDfaSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.ReduceNwaDelayedFullMultipebbleSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.ReduceNwaDirectFullMultipebbleSimulation;
@@ -70,6 +72,8 @@ public class CompareSimulations<LETTER, STATE>
 			throws AutomataOperationCanceledException {
 		super(services);
 
+		final MinimizeDfaSimulation<LETTER, STATE> minimizeDfaSimulation =
+				new MinimizeDfaSimulation<>(services, stateFactory, operand);
 		final ReduceNwaDirectSimulation<LETTER, STATE> reduceNwaDirectSimulation =
 				new ReduceNwaDirectSimulation<>(services, stateFactory, operand);
 		final ReduceNwaDirectSimulationB<LETTER, STATE> reduceNwaDirectSimulationB =
@@ -77,6 +81,7 @@ public class CompareSimulations<LETTER, STATE>
 		final ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE> reduceNwaDirectFullMultipebbleSimulation =
 				new ReduceNwaDirectFullMultipebbleSimulation<>(services, stateFactory, operand);
 
+		final BuchiReduce<LETTER, STATE> buchiReduce = new BuchiReduce<>(services, stateFactory, operand);
 		final ReduceNwaDelayedSimulation<LETTER, STATE> reduceNwaDelayedSimulation =
 				new ReduceNwaDelayedSimulation<>(services, stateFactory, operand);
 		final ReduceNwaDelayedSimulationB<LETTER, STATE> reduceNwaDelayedSimulationB =
@@ -84,22 +89,27 @@ public class CompareSimulations<LETTER, STATE>
 		final ReduceNwaDelayedFullMultipebbleSimulation<LETTER, STATE> reduceNwaDelayedFullMultipebbleSimulation =
 				new ReduceNwaDelayedFullMultipebbleSimulation<>(services, stateFactory, operand);
 
+		final int directFin = minimizeDfaSimulation.getResult().size();
 		final int direct1 = reduceNwaDirectSimulation.getResult().size();
 		final int directB = reduceNwaDirectSimulationB.getResult().size();
 		final int directF = reduceNwaDirectFullMultipebbleSimulation.getResult().size();
 
+		final int delayedFin = buchiReduce.getResult().size();
 		final int delayed1 = reduceNwaDelayedSimulation.getResult().size();
 		final int delayedB = reduceNwaDelayedSimulationB.getResult().size();
 		final int delayedF = reduceNwaDelayedFullMultipebbleSimulation.getResult().size();
 
-		mResult = direct1 == directB && directB == directF && delayed1 == delayedB && delayedB == delayedF;
+		// we ignore direct1 and delayed1
+		mResult = directFin == directB && directB == directF && delayedFin == delayedB && delayedB == delayedF;
 
-		mLogger.info(direct1);
-		mLogger.info(directB);
-		mLogger.info(directF);
-		mLogger.info(delayed1);
-		mLogger.info(delayedB);
-		mLogger.info(delayedF);
+		mLogger.info(directFin + " MinimizeDfaSimulation");
+		mLogger.info(direct1 + " (ReduceNwaDirectSimulation)");
+		mLogger.info(directB + " ReduceNwaDirectSimulationB");
+		mLogger.info(directF + " ReduceNwaDirectFullMultipebbleSimulation");
+		mLogger.info(delayedFin + " BuchiReduce");
+		mLogger.info(delayed1 + " (ReduceNwaDelayedSimulation)");
+		mLogger.info(delayedB + " ReduceNwaDelayedSimulationB");
+		mLogger.info(delayedF + " ReduceNwaDelayedFullMultipebbleSimulation");
 		mLogger.info(mResult);
 	}
 
