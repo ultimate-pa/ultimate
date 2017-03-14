@@ -57,10 +57,11 @@ public class ControllerConverter extends Converter<GeneratedMessageV3, Object> {
 		});
 
 		converterRegistry.registerBA(Controller.Exception.class, Throwable.class, e -> {
-			final Controller.Exception.Builder builder =
-					Controller.Exception.newBuilder().setClass_(e.getClass().getName()).setMessage(e.getMessage());
+			final Controller.Exception.Builder builder = Controller.Exception.newBuilder().setClass_(e.getClass().getName());
 			Arrays.stream(e.getStackTrace()).map(ControllerConverter::convertStackTraceElement)
 					.forEach(builder::addStackTrace);
+			if (e.getMessage() != null)
+				builder.setMessage(e.getMessage());
 			return builder.build();
 		});
 	}
