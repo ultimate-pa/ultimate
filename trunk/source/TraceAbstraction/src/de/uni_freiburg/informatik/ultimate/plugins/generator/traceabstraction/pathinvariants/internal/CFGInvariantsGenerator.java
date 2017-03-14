@@ -118,8 +118,11 @@ public final class CFGInvariantsGenerator {
 	 * encoded program and use less expensive techniques to obtain the remaining invariants.
 	 */
 	private static boolean APPLY_LARGE_BLOCK_ENCODING = true;
-
-	private static final int MAX_ROUNDS = Integer.MAX_VALUE;
+	/**
+	 * In practice we never have seen more than 5 rounds with an successful result, therefore we limit the maximal
+	 * number of rounds to 10.
+	 */
+	private static final int MAX_ROUNDS = 10;
 	
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
@@ -327,7 +330,6 @@ public final class CFGInvariantsGenerator {
 				mPostcondition, startLocation, errorLocation, invPatternProcFactory, invSynthSettings.useUnsatCores(),
 				allProgramVars, pathprogramLocs2LiveVars, pathprogramLocs2Predicates,
 				invSynthSettings.useWeakestPrecondition() || invSynthSettings.useAbstractInterpretation(), ADD_WP_TO_EACH_CONJUNCT);
-		mLogger.info("Generated invariant map.");
 
 		return invariants;
 	}
@@ -637,10 +639,15 @@ public final class CFGInvariantsGenerator {
 				}
 				return result;
 			} else if (constraintsResult == LBool.UNKNOWN) {
-				mLogger.info("Got \"UNKNOWN\" in round " + round + ", give up the invariant search.");
+				mLogger.info("Got \"UNKNOWN\" in round " + round + ", giving up the invariant search.");
 				break;
 			}
+			if (round == processor.getMaxRounds() - 1) {
+				mLogger.info("Maximal number of rounds (round = " + processor.getMaxRounds() + ") reached, giving up the invariant search.");
+			}
 		}
+
+
 		return null;
 	}
 	
