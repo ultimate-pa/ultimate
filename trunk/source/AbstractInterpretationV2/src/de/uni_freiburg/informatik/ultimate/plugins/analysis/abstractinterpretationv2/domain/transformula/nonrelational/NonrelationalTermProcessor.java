@@ -59,107 +59,107 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public abstract class NonrelationalTermProcessor<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE, IProgramVarOrConst>>
 		extends NonRecursive {
 	
-	private final ILogger mLogger;
+	protected final ILogger mLogger;
 	private final ITermEvaluatorFactory<VALUE, STATE, IProgramVarOrConst> mEvaluatorFactory;
 	private final Supplier<STATE> mBottomStateSupplier;
-	
+
 	private TermExpressionEvaluator<VALUE, STATE, IProgramVarOrConst> mExpressionEvaluator;
-	
+
 	public NonrelationalTermProcessor(final ILogger logger, final int maxParallelStates,
 			final Supplier<STATE> bottomStateSupplier) {
 		mLogger = logger;
 		mEvaluatorFactory = createEvaluatorFactory(maxParallelStates);
 		mBottomStateSupplier = bottomStateSupplier;
 	}
-	
+
 	protected abstract ITermEvaluatorFactory<VALUE, STATE, IProgramVarOrConst>
 			createEvaluatorFactory(int maxParallelStates);
-	
-	protected abstract INonrelationalValueFactory<VALUE> getNonrelationalValueFactory();
 
+	protected abstract INonrelationalValueFactory<VALUE> getNonrelationalValueFactory();
+	
 	protected List<STATE> process(final Term term, final STATE oldState) {
 		mLogger.debug("Term processor is analyzing term: " + term);
-		
+
 		mExpressionEvaluator = new TermExpressionEvaluator<>();
 		run(new NonrelationalTermWalker(term, mLogger));
-
+		
 		if (!mExpressionEvaluator.isFinished()) {
 			throw new IllegalStateException("Invalid state: the expression evaluator is not finished.");
 		}
 		final List<IEvaluationResult<VALUE>> result = mExpressionEvaluator.getRootEvaluator().evaluate(oldState);
 		assert result != null;
-
+		
 		final List<STATE> returnStates = new ArrayList<>();
 		for (final IEvaluationResult<VALUE> res : result) {
 			returnStates.addAll(mExpressionEvaluator.getRootEvaluator().inverseEvaluate(res, oldState));
 		}
-		
+
 		return returnStates;
 	}
-	
+
 	private final class NonrelationalTermWalker extends TermWalker {
 		
 		private final ILogger mLogger;
-		
+
 		public NonrelationalTermWalker(final Term term, final ILogger logger) {
 			super(term);
 			mLogger = logger;
 		}
-		
+
 		@Override
 		public void walk(final NonRecursive walker, final ConstantTerm term) {
 			mLogger.debug("Constant Term: " + term);
 			mLogger.debug("Type of value: " + term.getValue().getClass().getSimpleName());
 			final ITermEvaluator<VALUE, STATE, IProgramVarOrConst> constantEvaluator =
 					mEvaluatorFactory.createConstantValueEvaluator(term.getValue());
-
+			
 			mExpressionEvaluator.addEvaluator(constantEvaluator);
 		}
-		
+
 		@Override
 		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
 			mLogger.debug("Annotated Term: " + term);
 			mLogger.warn("Not implemented!");
 		}
-		
+
 		@Override
 		public void walk(final NonRecursive walker, final ApplicationTerm term) {
 			mLogger.debug("Application Term: " + term);
-			
+
 			final String fName = term.getFunction().getName();
-			
+
 			final ITermEvaluator<VALUE, STATE, IProgramVarOrConst> applicationTerm =
 					mEvaluatorFactory.createApplicationTerm(term.getParameters().length, fName,
 							getNonrelationalValueFactory(), mBottomStateSupplier);
 			mExpressionEvaluator.addEvaluator(applicationTerm);
-			
+
 			for (final Term t : term.getParameters()) {
 				run(new NonrelationalTermWalker(t, mLogger));
 				// walker.enqueueWalker(new NonrelationalTermWalker(t, mLogger));
 			}
 		}
-		
+
 		@Override
 		public void walk(final NonRecursive walker, final LetTerm term) {
 			mLogger.debug("Let Term: " + term);
 			mLogger.warn("Not implemented!");
 		}
-		
+
 		@Override
 		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
 			mLogger.debug("Quantified Formula: " + term);
 			mLogger.warn("Not implemented!");
 		}
-		
+
 		@Override
 		public void walk(final NonRecursive walker, final TermVariable term) {
 			mLogger.debug("Term Variable: " + term);
-
+			
 			final ITermEvaluator<VALUE, STATE, IProgramVarOrConst> variableTermEvaluator =
 					mEvaluatorFactory.createVariableTermEvaluator(term.getName(), term.getSort());
-
+			
 			mExpressionEvaluator.addEvaluator(variableTermEvaluator);
 		}
 	}
-	
+
 }

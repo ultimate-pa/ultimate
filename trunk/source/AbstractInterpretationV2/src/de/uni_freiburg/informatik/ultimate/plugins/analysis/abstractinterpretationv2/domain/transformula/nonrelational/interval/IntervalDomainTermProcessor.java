@@ -51,12 +51,12 @@ public class IntervalDomainTermProcessor
 		extends NonrelationalTermProcessor<IntervalDomainValue, IntervalDomainState<IProgramVarOrConst>> {
 	
 	private INonrelationalValueFactory<IntervalDomainValue> mIntervalValueFactory;
-	
+
 	public IntervalDomainTermProcessor(final ILogger logger, final int maxParallelStates,
 			final Supplier<IntervalDomainState<IProgramVarOrConst>> bottomStateSupplier) {
 		super(logger, maxParallelStates, bottomStateSupplier);
 	}
-
+	
 	@Override
 	protected INonrelationalValueFactory<IntervalDomainValue> getNonrelationalValueFactory() {
 		if (mIntervalValueFactory == null) {
@@ -64,13 +64,13 @@ public class IntervalDomainTermProcessor
 		}
 		return mIntervalValueFactory;
 	}
-
+	
 	@Override
 	protected ITermEvaluatorFactory<IntervalDomainValue, IntervalDomainState<IProgramVarOrConst>, IProgramVarOrConst>
 			createEvaluatorFactory(final int maxParallelStates) {
 		final TermEvaluatorFactory.Function<Object, IntervalDomainValue> valueEvaluatorCreator =
 				(value) -> new IntervalDomainValue(new IntervalValue(value.toString()),
 						new IntervalValue(value.toString()));
-		return new TermEvaluatorFactory<>(maxParallelStates, valueEvaluatorCreator, mIntervalValueFactory);
+		return new TermEvaluatorFactory<>(mLogger, maxParallelStates, valueEvaluatorCreator, mIntervalValueFactory);
 	}
 }
