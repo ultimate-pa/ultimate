@@ -283,7 +283,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 					letter)) {
 				succs2.add(trans.getSucc());
 			}
-			generateTransitionConstraintGeneralInternalCallHelperSymmetric(predPair, succs1, succs2);
+			generateTransitionConstraintGeneralInternalCallHelper(predPair, succs1, succs2);
 		}
 	}
 
@@ -311,26 +311,14 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(predState2, letter)) {
 				succs2.add(trans.getSucc());
 			}
-			generateTransitionConstraintGeneralInternalCallHelperSymmetric(predPair, succs1, succs2);
+			generateTransitionConstraintGeneralInternalCallHelper(predPair, succs1, succs2);
 		}
 	}
 
-	private void generateTransitionConstraintGeneralInternalCallHelperSymmetric(final T predPair,
-			final Set<STATE> succs1, final Set<STATE> succs2) {
-		final Collection<STATE> succsToRemove = new ArrayList<>();
+	protected abstract void generateTransitionConstraintGeneralInternalCallHelper(final T predPair,
+			final Set<STATE> succs1, final Set<STATE> succs2);
 
-		generateTransitionConstraintGeneralInternalCallHelperOneSide(predPair, succs1, succs2, succsToRemove);
-		/*
-		 * Optimization: If a state from the second set is known to be similar to another on from the first set, we
-		 * should not try to add a clause for the other direction (as it will be found out again that they are
-		 * similar).
-		 */
-		succs2.removeAll(succsToRemove);
-
-		generateTransitionConstraintGeneralInternalCallHelperOneSide(predPair, succs2, succs1, null);
-	}
-
-	private void generateTransitionConstraintGeneralInternalCallHelperOneSide(final T predPair,
+	protected final void generateTransitionConstraintGeneralInternalCallHelperOneSide(final T predPair,
 			final Iterable<STATE> succs1, final Iterable<STATE> succs2, final Collection<STATE> succsToRemove) {
 		boolean ignoreConstraint = false;
 		for (final STATE succState1 : succs1) {

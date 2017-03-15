@@ -311,6 +311,12 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		}
 	}
 
+	@Override
+	protected void generateTransitionConstraintGeneralInternalCallHelper(final Pair<STATE, STATE> predPair,
+			final Set<STATE> succs1, final Set<STATE> succs2) {
+		generateTransitionConstraintGeneralInternalCallHelperOneSide(predPair, succs1, succs2, null);
+	}
+
 	private void generateTransitivityConstraints(final Pair<STATE, STATE> pair12) {
 		final Map<STATE, Pair<STATE, STATE>> state2to3s = mStatePair2Var.get(pair12.getSecond());
 		if (state2to3s == null) {
