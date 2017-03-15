@@ -15,9 +15,9 @@
 	<option name="32bit"></option>
   </tasks>
   
-  <tasks name="LTL-2">
-    <include>../../../trunk/examples/LTL/svcomp17format/coolant/coolant_basis_1_safe_sfty_true-valid-ltl.c</include>
-    <propertyfile>../../../trunk/examples/LTL/svcomp17format/coolant/coolant_basis_1_safe_sfty_true-valid-ltl.prp</propertyfile>
+  <tasks name="LTL-3">
+    <include>../../../trunk/examples/LTL/svcomp17format/coolant/*.c</include>
+    <propertyfile>../../../trunk/examples/LTL/svcomp17format/coolant/${inputfile_name}.prp</propertyfile>
 	<option name="32bit"></option>
   </tasks>
 
