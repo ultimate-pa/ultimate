@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -44,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IInco
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.util.MapBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Given a nested word automaton, this class computes a binary relation over the states where pairs of states
@@ -112,7 +114,7 @@ public class NwaApproximateSimulation<LETTER, STATE>
 
 	@Override
 	public MapBackedSetOfPairs<STATE> getResult() {
-		return new MapBackedSetOfPairs<>(mMayBeSimulatedBy);
+		return new ReflexiveMapBackedSetOfPairs(mMayBeSimulatedBy);
 	}
 
 	@Override
@@ -303,5 +305,52 @@ public class NwaApproximateSimulation<LETTER, STATE>
 			result += rhs.size();
 		}
 		return result;
+	}
+
+	/**
+	 * Result type that emulates reflexive pairs without storing them.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	private class ReflexiveMapBackedSetOfPairs extends MapBackedSetOfPairs<STATE> {
+		public ReflexiveMapBackedSetOfPairs(final Map<STATE, Set<STATE>> map) {
+			super(map);
+		}
+
+		@Override
+		public boolean containsPair(final STATE lhs, final STATE rhs) {
+			return lhs.equals(rhs) || super.containsPair(lhs, rhs);
+		}
+
+		@Override
+		public Iterator<Pair<STATE, STATE>> iterator() {
+			final Iterator<Pair<STATE, STATE>> oldIterator = super.iterator();
+			final Iterator<STATE> reflexiveIterator = mOperand.getStates().iterator();
+			return new Iterator<Pair<STATE, STATE>>() {
+				private final boolean reflexiveMode = true;
+
+				@Override
+				public boolean hasNext() {
+					if (reflexiveMode) {
+						return reflexiveIterator.hasNext();
+					}
+					return oldIterator.hasNext();
+				}
+
+				@Override
+				public Pair<STATE, STATE> next() {
+					if (reflexiveMode) {
+						final STATE state = reflexiveIterator.next();
+						return new Pair<>(state, state);
+					}
+					return oldIterator.next();
+				}
+			};
+		}
+
+		@Override
+		public Map<STATE, Set<STATE>> getRelation() {
+			throw new UnsupportedOperationException("The map is not reflexive, hence we do not provide it.");
+		}
 	}
 }
