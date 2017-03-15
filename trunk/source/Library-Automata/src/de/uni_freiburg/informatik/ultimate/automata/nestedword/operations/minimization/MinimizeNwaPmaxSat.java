@@ -327,6 +327,25 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 		generateTransitionConstraintGeneralInternalCallHelperOneSide(predPair, succs2, succs1, null);
 	}
 
+	@Override
+	protected void generateTransitionConstraintGeneralReturnHelper(final Doubleton<STATE> linPredPair,
+			final Doubleton<STATE> hierPredPair, final Set<STATE> succs1, final Set<STATE> succs2) {
+		// symmetric handling (in both directions)
+		
+		final Collection<STATE> succsToRemove = new ArrayList<>();
+
+		generateTransitionConstraintGeneralReturnHelperOneSide(linPredPair, hierPredPair, succs1, succs2,
+				succsToRemove);
+		/*
+		 * Optimization: If a state from the second set is known to be similar to another one from the first set, we
+		 * should not try to add a clause for the other direction (as it will be found out again that they are
+		 * similar).
+		 */
+		succs2.removeAll(succsToRemove);
+
+		generateTransitionConstraintGeneralReturnHelperOneSide(linPredPair, hierPredPair, succs2, succs1, null);
+	}
+
 	private void generateTransitivityConstraints(final STATE[] states) throws AutomataOperationCanceledException {
 		for (int i = 0; i < states.length; i++) {
 			for (int j = 0; j < i; j++) {

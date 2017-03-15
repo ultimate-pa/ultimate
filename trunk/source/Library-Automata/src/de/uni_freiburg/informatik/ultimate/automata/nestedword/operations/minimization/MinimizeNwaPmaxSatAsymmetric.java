@@ -348,6 +348,12 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	}
 
 	@Override
+	protected void generateTransitionConstraintGeneralReturnHelper(final Pair<STATE, STATE> linPredPair,
+			final Pair<STATE, STATE> hierPredPair, final Set<STATE> succs1, final Set<STATE> succs2) {
+		generateTransitionConstraintGeneralReturnHelperOneSide(linPredPair, hierPredPair, succs1, succs2, null);
+	}
+
+	@Override
 	protected UnionFind<STATE> constructResultEquivalenceClasses() throws AssertionError {
 		final Map<STATE, Set<STATE>> positivePairs = new HashMap<>();
 		final UnionFind<STATE> resultingEquivalenceClasses = new UnionFind<>();
