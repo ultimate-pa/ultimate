@@ -327,12 +327,15 @@ public class NwaApproximateSimulation<LETTER, STATE>
 			final Iterator<Pair<STATE, STATE>> oldIterator = super.iterator();
 			final Iterator<STATE> reflexiveIterator = mOperand.getStates().iterator();
 			return new Iterator<Pair<STATE, STATE>>() {
-				private final boolean reflexiveMode = true;
+				private boolean reflexiveMode = true;
 
 				@Override
 				public boolean hasNext() {
 					if (reflexiveMode) {
-						return reflexiveIterator.hasNext();
+						if (reflexiveIterator.hasNext()) {
+							return true;
+						}
+						reflexiveMode = false;
 					}
 					return oldIterator.hasNext();
 				}
@@ -340,9 +343,11 @@ public class NwaApproximateSimulation<LETTER, STATE>
 				@Override
 				public Pair<STATE, STATE> next() {
 					if (reflexiveMode) {
+						assert reflexiveIterator.hasNext();
 						final STATE state = reflexiveIterator.next();
 						return new Pair<>(state, state);
 					}
+					assert oldIterator.hasNext();
 					return oldIterator.next();
 				}
 			};
