@@ -625,15 +625,24 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		// internal symbols
 		Set<LETTER> letters1 = mOperand.lettersInternal(predState1);
 		Set<LETTER> letters2 = mOperand.lettersInternal(predState2);
-		if (!letters1.equals(letters2)) {
+		if (!testOutgoingSymbols(letters1, letters2)) {
 			return false;
 		}
 
 		// call symbols
 		letters1 = mOperand.lettersCall(predState1);
 		letters2 = mOperand.lettersCall(predState2);
-		return letters1.equals(letters2);
+		return testOutgoingSymbols(letters1, letters2);
 	}
+
+	/**
+	 * @param letters1
+	 *            Outgoing letters of first state.
+	 * @param letters2
+	 *            outgoing letters of second state
+	 * @return {@code true} iff test for valid outgoing symbols succeeds, i.e., no objection was found
+	 */
+	protected abstract boolean testOutgoingSymbols(Set<LETTER> letters1, Set<LETTER> letters2);
 
 	/**
 	 * @return {@code true} iff two states have the same outgoing return symbols with respect to hierarchical

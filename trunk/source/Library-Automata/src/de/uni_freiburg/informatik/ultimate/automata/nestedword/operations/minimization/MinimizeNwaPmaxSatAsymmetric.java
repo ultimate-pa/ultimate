@@ -325,6 +325,11 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	}
 
 	@Override
+	protected boolean testOutgoingSymbols(final Set<LETTER> letters1, final Set<LETTER> letters2) {
+		return letters2.containsAll(letters1);
+	}
+
+	@Override
 	protected void generateTransitionConstraintGeneralInternalCallHelper(final Pair<STATE, STATE> predPair,
 			final Set<STATE> succs1, final Set<STATE> succs2) {
 		generateTransitionConstraintGeneralInternalCallHelperOneSide(predPair, succs1, succs2, null);

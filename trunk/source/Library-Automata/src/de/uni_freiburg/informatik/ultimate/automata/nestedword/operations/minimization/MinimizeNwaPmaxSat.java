@@ -310,6 +310,11 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	}
 
 	@Override
+	protected boolean testOutgoingSymbols(final Set<LETTER> letters1, final Set<LETTER> letters2) {
+		return letters1.equals(letters2);
+	}
+
+	@Override
 	protected void generateTransitionConstraintGeneralInternalCallHelper(final Doubleton<STATE> predPair,
 			final Set<STATE> succs1, final Set<STATE> succs2) {
 		// symmetric handling (in both directions)
@@ -331,7 +336,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	protected void generateTransitionConstraintGeneralReturnHelper(final Doubleton<STATE> linPredPair,
 			final Doubleton<STATE> hierPredPair, final Set<STATE> succs1, final Set<STATE> succs2) {
 		// symmetric handling (in both directions)
-		
+
 		final Collection<STATE> succsToRemove = new ArrayList<>();
 
 		generateTransitionConstraintGeneralReturnHelperOneSide(linPredPair, hierPredPair, succs1, succs2,
