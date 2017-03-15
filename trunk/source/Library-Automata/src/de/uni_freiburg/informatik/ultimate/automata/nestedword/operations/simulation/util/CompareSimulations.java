@@ -33,6 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatAsymmetric;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.BuchiReduce;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.nwa.ReduceNwaDelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.MinimizeDfaSimulation;
@@ -45,7 +46,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 /**
  * Compares different simulation methods.
  * <p>
- * Careful: The methods should use the same preprocessing to be comparable.
+ * Careful: The methods should use the same preprocessing to be comparable. They should also only be compared for finite
+ * automata.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -80,6 +82,8 @@ public class CompareSimulations<LETTER, STATE>
 				new ReduceNwaDirectSimulationB<>(services, stateFactory, operand);
 		final ReduceNwaDirectFullMultipebbleSimulation<LETTER, STATE> reduceNwaDirectFullMultipebbleSimulation =
 				new ReduceNwaDirectFullMultipebbleSimulation<>(services, stateFactory, operand);
+		final MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> minimizeNwaPmaxSatAsymmetric =
+				new MinimizeNwaPmaxSatAsymmetric<>(services, stateFactory, operand);
 
 		final BuchiReduce<LETTER, STATE> buchiReduce = new BuchiReduce<>(services, stateFactory, operand);
 		final ReduceNwaDelayedSimulation<LETTER, STATE> reduceNwaDelayedSimulation =
@@ -93,6 +97,7 @@ public class CompareSimulations<LETTER, STATE>
 		final int direct1 = reduceNwaDirectSimulation.getResult().size();
 		final int directB = reduceNwaDirectSimulationB.getResult().size();
 		final int directF = reduceNwaDirectFullMultipebbleSimulation.getResult().size();
+		final int directPmaxSat = minimizeNwaPmaxSatAsymmetric.getResult().size();
 
 		final int delayedFin = buchiReduce.getResult().size();
 		final int delayed1 = reduceNwaDelayedSimulation.getResult().size();
@@ -100,12 +105,25 @@ public class CompareSimulations<LETTER, STATE>
 		final int delayedF = reduceNwaDelayedFullMultipebbleSimulation.getResult().size();
 
 		// we ignore direct1 and delayed1
-		mResult = directFin == directB && directB == directF && delayedFin == delayedB && delayedB == delayedF;
+		// @formatter:off
+		mResult =
+				directFin == directB
+				&&
+				directB == directF
+				&&
+				directB == directPmaxSat
+				&&
+				delayedFin == delayedB
+				&&
+				delayedB == delayedF
+				;
+		// @formatter:on
 
 		mLogger.info(directFin + " MinimizeDfaSimulation");
 		mLogger.info(direct1 + " (ReduceNwaDirectSimulation)");
 		mLogger.info(directB + " ReduceNwaDirectSimulationB");
 		mLogger.info(directF + " ReduceNwaDirectFullMultipebbleSimulation");
+		mLogger.info(directPmaxSat + " MinimizeNwaPmaxSatAsymmetric");
 		mLogger.info(delayedFin + " BuchiReduce");
 		mLogger.info(delayed1 + " (ReduceNwaDelayedSimulation)");
 		mLogger.info(delayedB + " ReduceNwaDelayedSimulationB");
