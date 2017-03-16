@@ -306,6 +306,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			// add transition constraints
 			generateTransitionConstraintsHelper(state1, state2, getVariable(state1, state2, false));
 		}
+		// add constraints for reflexive pairs; those are not considered above
 		generateTransitionConstraintsHelperReturnSameLinPred(state1, downStates1);
 	}
 
@@ -330,6 +331,12 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 		succs2.removeAll(succsToRemove);
 
 		generateTransitionConstraintGeneralInternalCallHelperOneSide(predPair, succs2, succs1, null);
+	}
+
+	@Override
+	protected void generateTransitionConstraintGeneralReturnHelper(final Doubleton<STATE> linPredPair,
+			final Doubleton<STATE> hierPredPair, final Set<STATE> succs1, final Set<STATE> succs2) {
+		generateTransitionConstraintGeneralReturnHelperSymmetric(linPredPair, hierPredPair, succs1, succs2);
 	}
 
 	private void generateTransitivityConstraints(final STATE[] states) throws AutomataOperationCanceledException {

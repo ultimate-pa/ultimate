@@ -319,6 +319,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			checkTimeout(ADDING_TRANSITIVITY_CONSTRAINTS);
 		}
 
+		// add constraints for reflexive pairs; those are not considered above
 		for (final STATE state : mOperand.getStates()) {
 			generateTransitionConstraintsHelperReturnSameLinPred(state, getDownStatesArray(state));
 		}
@@ -333,6 +334,12 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	protected void generateTransitionConstraintGeneralInternalCallHelper(final Pair<STATE, STATE> predPair,
 			final Set<STATE> succs1, final Set<STATE> succs2) {
 		generateTransitionConstraintGeneralInternalCallHelperOneSide(predPair, succs1, succs2, null);
+	}
+
+	@Override
+	protected void generateTransitionConstraintGeneralReturnHelper(final Pair<STATE, STATE> linPredPair,
+			final Pair<STATE, STATE> hierPredPair, final Set<STATE> succs1, final Set<STATE> succs2) {
+		generateTransitionConstraintGeneralReturnHelperOneSide(linPredPair, hierPredPair, succs1, succs2, null);
 	}
 
 	private void generateTransitivityConstraints(final Pair<STATE, STATE> pair12) {
