@@ -28,12 +28,14 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -43,27 +45,30 @@ import java.util.stream.StreamSupport;
  *
  */
 public class IcfgEdgeIterator implements Iterator<IcfgEdge> {
-	
+
 	private final Deque<IcfgEdge> mWorklist;
 	private final Set<IcfgEdge> mFinished;
-	
+
+	public <T extends IcfgEdge> IcfgEdgeIterator(final T edge) {
+		this(Collections.singleton(edge));
+	}
+
 	public <T extends IcfgEdge> IcfgEdgeIterator(final Collection<T> edges) {
 		mFinished = new HashSet<>();
 		mWorklist = new ArrayDeque<>();
 		mWorklist.addAll(edges);
+		mFinished.addAll(mWorklist);
 	}
-	
+
 	public IcfgEdgeIterator(final IIcfg<?> icfg) {
-		mFinished = new HashSet<>();
-		mWorklist = new ArrayDeque<>();
-		icfg.getInitialNodes().stream().flatMap(a -> a.getOutgoingEdges().stream()).forEachOrdered(mWorklist::add);
+		this(icfg.getInitialNodes().stream().flatMap(a -> a.getOutgoingEdges().stream()).collect(Collectors.toSet()));
 	}
-	
+
 	@Override
 	public boolean hasNext() {
 		return !mWorklist.isEmpty();
 	}
-	
+
 	@Override
 	public IcfgEdge next() {
 		final IcfgEdge current = mWorklist.removeFirst();
@@ -75,7 +80,7 @@ public class IcfgEdgeIterator implements Iterator<IcfgEdge> {
 		target.getOutgoingEdges().stream().filter(mFinished::add).forEachOrdered(mWorklist::add);
 		return current;
 	}
-	
+
 	public Stream<IcfgEdge> asStream() {
 		return StreamSupport.stream(Spliterators.spliteratorUnknownSize(this, Spliterator.ORDERED), false);
 	}
