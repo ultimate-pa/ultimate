@@ -43,94 +43,87 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.SmallBlockEncoder;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences;
 
 /**
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class BlockEncoding implements IGenerator {
-	
+
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
 	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
 			XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
-	
+
 	private ILogger mLogger;
 	private BlockEncodingObserver mObserver;
 	private IUltimateServiceProvider mServices;
 	private BlockEncodingBacktranslator mBacktranslator;
 	private ModelType mOldGraphType;
-	
+
 	@Override
 	public ModelType getOutputDefinition() {
 		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.CFG, mOldGraphType.getFileNames());
 	}
-	
+
 	@Override
 	public boolean isGuiRequired() {
 		return false;
 	}
-	
+
 	@Override
 	public ModelQuery getModelQuery() {
 		return ModelQuery.LAST;
 	}
-	
+
 	@Override
 	public void setInputDefinition(final ModelType graphType) {
 		mOldGraphType = graphType;
 	}
-	
+
 	@Override
 	public List<IObserver> getObservers() {
 		final List<IObserver> observers = new ArrayList<>();
-		if (mServices.getPreferenceProvider(Activator.PLUGIN_ID).getBoolean(BlockEncodingPreferences.PRE_SBE)) {
-			final boolean rewriteAssumes = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-					.getBoolean(BlockEncodingPreferences.PRE_SBE_REWRITENOTEQUALS);
-			observers.add(new SmallBlockEncoder(mLogger, mBacktranslator, rewriteAssumes, mServices,
-					SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE));
-		}
 		mObserver = new BlockEncodingObserver(mLogger, mServices, mBacktranslator, SIMPLIFICATION_TECHNIQUE,
 				XNF_CONVERSION_TECHNIQUE);
 		observers.add(mObserver);
 		return observers;
 	}
-	
+
 	@Override
 	public void init() {
 		// not needed
 	}
-	
+
 	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
-	
+
 	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
-	
+
 	@Override
 	public IElement getModel() {
 		return mObserver.getModel();
 	}
-	
+
 	@Override
 	public List<String> getDesiredToolIds() {
 		return Collections.emptyList();
 	}
-	
+
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new BlockEncodingPreferences();
 	}
-	
+
 	@Override
 	public void setToolchainStorage(final IToolchainStorage storage) {
 		// not needed
 	}
-	
+
 	@Override
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
@@ -138,10 +131,10 @@ public class BlockEncoding implements IGenerator {
 		mBacktranslator = new BlockEncodingBacktranslator(IcfgEdge.class, Term.class, mLogger);
 		mServices.getBacktranslationService().addTranslator(mBacktranslator);
 	}
-	
+
 	@Override
 	public void finish() {
 		// not needed
 	}
-	
+
 }
