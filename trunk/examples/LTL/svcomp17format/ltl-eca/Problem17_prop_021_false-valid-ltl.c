@@ -19,6 +19,7 @@ extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
 	 int a21 = 124;
 	 int a26 = 222;
 	 int a14 = -79;
+int calculate_output2(int input);
 	 int a28 = 111;
 
 	int calculate_output(int input) {

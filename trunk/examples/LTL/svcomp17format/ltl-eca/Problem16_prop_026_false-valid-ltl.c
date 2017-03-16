@@ -19,7 +19,12 @@ extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
 	 int a18 = -87;
 	 int a16 = 11;
 	 int a12 = 5;
+int calculate_output2(int input);
 
+	 	
+
+	 
+	 
 	int calculate_output(int input) {
 if(((((a16==8) && (a15==3)) &&  a18 <=  -156 ) && (a12==6))){
 		error_3: __VERIFIER_assume(0);
@@ -1489,8 +1494,7 @@ if(((((a16==8) && (a15==3)) &&  a18 <=  -156 ) && (a12==6))){
 	    } 
 	    return calculate_output2(input); 
 	}
-
-	int calculate_output2(int input) {
+int calculate_output2(int input) {
 
 
 	    if(((a16==11) && (((a15==3) && ((input == 4) && (  ((-79 < a18) && (134 >= a18))  || ( a18 <=  -156  ||   ((-156 < a18) && (-79 >= a18)) )))) && (a12==6)))){
@@ -1762,7 +1766,6 @@ if(((((a16==8) && (a15==3)) &&  a18 <=  -156 ) && (a12==6))){
 	    } 
 	    return -2;
 	}
-
 int input, output;
 	
 int main()
