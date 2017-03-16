@@ -40,7 +40,7 @@ public interface INormalFormable<E> {
 
 	E changeForall(E oldForAll, E operand);
 
-	E makeAnd(E next, E notor);
+	E makeAnd(E first, E second);
 
 	Collection<? extends E> normalizeNesting(E formula, E subformula);
 

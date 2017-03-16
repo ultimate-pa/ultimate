@@ -55,7 +55,8 @@ public abstract class TransitionPreprocessor {
 	 * @throws TermException
 	 *             if processing fails
 	 */
-	public abstract ModifiableTransFormula process(ManagedScript mgdScript, ModifiableTransFormula tf) throws TermException;
+	public abstract ModifiableTransFormula process(ManagedScript mgdScript, ModifiableTransFormula tf)
+			throws TermException;
 
 	/**
 	 * Check if the processing was sound.

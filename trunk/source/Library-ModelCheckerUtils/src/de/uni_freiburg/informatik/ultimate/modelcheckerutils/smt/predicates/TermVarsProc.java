@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
@@ -48,9 +48,9 @@ public class TermVarsProc {
 	private final Set<IProgramVar> mVars;
 	private final String[] mProcedures;
 	private final Term mClosedTerm;
-	
-	public TermVarsProc(final Term term, final Set<IProgramVar> vars,
-			final String[] procedures, final Term closedTerm) {
+
+	public TermVarsProc(final Term term, final Set<IProgramVar> vars, final String[] procedures,
+			final Term closedTerm) {
 		mTerm = term;
 		mVars = vars;
 		mProcedures = procedures;
@@ -72,18 +72,15 @@ public class TermVarsProc {
 	public Set<IProgramVar> getVars() {
 		return mVars;
 	}
-	
-	
-	
+
 	/**
-	 * Given a term in which every free variable is the TermVariable of a 
-	 * BoogieVar. Compute the BoogieVars of the free variables and the 
-	 * procedures of these BoogieVariables.
+	 * Given a term in which every free variable is the TermVariable of a BoogieVar. Compute the BoogieVars of the free
+	 * variables and the procedures of these BoogieVariables.
 	 */
-	public static TermVarsProc computeTermVarsProc(final Term term, final Script script, 
+	public static TermVarsProc computeTermVarsProc(final Term term, final Script script,
 			final IIcfgSymbolTable symbolTable) {
-		final HashSet<IProgramVar> vars = new HashSet<IProgramVar>();
-		final Set<String> procs = new HashSet<String>();
+		final HashSet<IProgramVar> vars = new HashSet<>();
+		final Set<String> procs = new HashSet<>();
 		for (final TermVariable tv : term.getFreeVars()) {
 			final IProgramVar bv = symbolTable.getProgramVar(tv);
 			if (bv == null) {
@@ -97,24 +94,22 @@ public class TermVarsProc {
 		final Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, script);
 		return new TermVarsProc(term, vars, procs.toArray(new String[procs.size()]), closedTerm);
 	}
-	
+
 	/**
-	 * Given a term in which every free variable is the TermVariable of a 
-	 * BoogieVar. Compute the BoogieVars of the free variables and the 
-	 * procedures of these BoogieVariables.
-	 * If replaceNonModifiableOldVars is true, modifiableGlobals must be non-null
-	 * and we check we replace the oldVars of all non-modifiable Globals by
-	 * their corresponding non-oldVars.
+	 * Given a term in which every free variable is the TermVariable of a BoogieVar. Compute the BoogieVars of the free
+	 * variables and the procedures of these BoogieVariables. If replaceNonModifiableOldVars is true, modifiableGlobals
+	 * must be non-null and we check we replace the oldVars of all non-modifiable Globals by their corresponding
+	 * non-oldVars.
 	 * 
-	 * 2015-05-27 Matthias: At the moment, I don't know if we need this method.
-	 * Don't use it unless you know what you do.
+	 * 2015-05-27 Matthias: At the moment, I don't know if we need this method. Don't use it unless you know what you
+	 * do.
 	 */
 	@Deprecated
-	private static TermVarsProc computeTermVarsProc(Term term, final Boogie2SMT boogie2smt, 
+	private static TermVarsProc computeTermVarsProc(Term term, final Boogie2SMT boogie2smt,
 			final boolean replaceNonModifiableOldVars, final Set<IProgramVar> modifiableGlobals) {
-		final HashSet<IProgramVar> vars = new HashSet<IProgramVar>();
+		final HashSet<IProgramVar> vars = new HashSet<>();
 		final List<IProgramOldVar> oldVarsThatHaveToBeReplaced = new ArrayList<>();
-		final Set<String> procs = new HashSet<String>();
+		final Set<String> procs = new HashSet<>();
 		for (final TermVariable tv : term.getFreeVars()) {
 			IProgramVar bv = boogie2smt.getBoogie2SmtSymbolTable().getProgramVar(tv);
 			if (bv == null) {
@@ -142,11 +137,10 @@ public class TermVarsProc {
 				final IProgramNonOldVar nonOld = oldVar.getNonOldVar();
 				substitutionMapping.put(oldVar.getTermVariable(), nonOld.getTermVariable());
 			}
-			term = (new Substitution(boogie2smt.getScript(), substitutionMapping)).transform(term);
+			term = new Substitution(boogie2smt.getScript(), substitutionMapping).transform(term);
 		}
 		final Term closedTerm = PredicateUtils.computeClosedFormula(term, vars, boogie2smt.getScript());
 		return new TermVarsProc(term, vars, procs.toArray(new String[procs.size()]), closedTerm);
 	}
-
 
 }
