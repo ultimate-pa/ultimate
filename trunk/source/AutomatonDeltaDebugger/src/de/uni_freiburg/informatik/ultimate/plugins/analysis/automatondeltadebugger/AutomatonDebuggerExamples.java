@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaOverapproximation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatAsymmetric;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.ShrinkNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.arrays.MinimizeNwaMaxSAT;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.BuchiReduce;
@@ -79,15 +80,23 @@ public class AutomatonDebuggerExamples {
 	 */
 	public enum EOperationType {
 		/**
+		 * Used for default settings to inform user that the method was not selected.
+		 */
+		EXCEPTION_DUMMY,
+		/**
 		 * {@link MinimizeNwaMaxSAT}.
 		 */
 		MINIMIZE_NWA_MAXSAT,
 		/**
-		 * {@link MinimizeNwaMaxSAT2}.
+		 * {@link MinimizeNwaPmaxSat}.
 		 */
-		MINIMIZE_NWA_MAXSAT2,
+		MINIMIZE_NWA_PMAXSAT,
 		/**
-		 * {@link ReduceNwaDirectSimulation}.
+		 * {@link MinimizeNwaPmaxSat}.
+		 */
+		MINIMIZE_NWA_PMAXSAT_ASYMMETRIC,
+		/**
+		 * {@link MinimizeNwaPmaxSatAsymmetric}.
 		 */
 		REDUCE_NWA_DIRECT_SIMULATION,
 		/**
@@ -158,12 +167,19 @@ public class AutomatonDebuggerExamples {
 			throws Throwable {
 		final IOperation<String, String, ? super StringFactory> operation;
 		switch (type) {
+			case EXCEPTION_DUMMY:
+				throw new IllegalArgumentException("Select a valid operation for delta debugging.");
+			
 			case MINIMIZE_NWA_MAXSAT:
 				operation = minimizeNwaMaxSat(automaton, factory);
 				break;
 			
-			case MINIMIZE_NWA_MAXSAT2:
-				operation = minimizeNwaMaxSat2(automaton, factory);
+			case MINIMIZE_NWA_PMAXSAT:
+				operation = minimizeNwaPmaxSat(automaton, factory);
+				break;
+			
+			case MINIMIZE_NWA_PMAXSAT_ASYMMETRIC:
+				operation = minimizeNwaPmaxSatAsymmetric(automaton, factory);
 				break;
 			
 			case REDUCE_NWA_DIRECT_SIMULATION:
@@ -249,7 +265,7 @@ public class AutomatonDebuggerExamples {
 	 * @throws Throwable
 	 *             when error occurs
 	 */
-	public IOperation<String, String, ? super StringFactory> minimizeNwaMaxSat2(
+	public IOperation<String, String, ? super StringFactory> minimizeNwaPmaxSat(
 			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
 		final IDoubleDeckerAutomaton<String, String> preprocessed =
 				new RemoveDeadEnds<>(mServices, automaton).getResult();
@@ -456,5 +472,21 @@ public class AutomatonDebuggerExamples {
 		final IDoubleDeckerAutomaton<String, String> preprocessed =
 				new RemoveUnreachable<>(mServices, automaton).getResult();
 		return new CompareSimulations<>(mServices, factory, preprocessed);
+	}
+	
+	/**
+	 * @param automaton
+	 *            The automaton.
+	 * @param factory
+	 *            state factory
+	 * @return new {@link MinimizeNwaPmaxSatAsymmetric} instance
+	 * @throws Throwable
+	 *             when error occurs
+	 */
+	public IOperation<String, String, ? super StringFactory> minimizeNwaPmaxSatAsymmetric(
+			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
+		final IDoubleDeckerAutomaton<String, String> preprocessed =
+				new RemoveDeadEnds<>(mServices, automaton).getResult();
+		return new MinimizeNwaPmaxSatAsymmetric<>(mServices, factory, preprocessed);
 	}
 }

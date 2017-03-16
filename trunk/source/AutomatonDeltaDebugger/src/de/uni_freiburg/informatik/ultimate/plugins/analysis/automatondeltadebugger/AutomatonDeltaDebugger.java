@@ -93,7 +93,7 @@ public class AutomatonDeltaDebugger implements IAnalysis {
 		 * NOTE: Insert your own settings here.
 		 */
 		mOperationMode = EAutomatonDeltaDebuggerTestMode.GENERAL;
-		mOperationType = EOperationType.MINIMIZE_NWA_MAXSAT2;
+		mOperationType = EOperationType.EXCEPTION_DUMMY;
 		mDebugPolicy = DebugPolicy.BINARY;
 	}
 	
