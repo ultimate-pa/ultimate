@@ -35,12 +35,22 @@ LARGE_INTEGER   timeOut1;
 UCHAR           deviceStatus;
 PCHAR           devId;
 BOOLEAN         requestRescan;
+
+   
+// Initialization routine
+int __INITIALIZED = 0;
+void env_init() {
    WarmPollPeriod = __VERIFIER_nondet_int();
    status = __VERIFIER_nondet_int();
    polling = __VERIFIER_nondet_int();
    PowerStateIsAC = __VERIFIER_nondet_int();
    Count = __VERIFIER_nondet_int();
+	__INITIALIZED = 1;
+}
+   
+   
 int main() {
+	env_init();
    if( NT_SUCCESS( status ) ) {
        ExAcquireFastMutex();
        SetFlags();

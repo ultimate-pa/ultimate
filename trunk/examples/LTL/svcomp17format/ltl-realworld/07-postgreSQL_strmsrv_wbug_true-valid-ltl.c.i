@@ -352,15 +352,20 @@ int ListenSocket_OF_listen_index;
 int ret;
 char *sock_path;
 int addrs;
-one = 1;
-listen_index = 0;
-added = 0;
-MAXADDR = __VERIFIER_nondet_int();
-addrs = __VERIFIER_nondet_int();
-MaxBackends = __VERIFIER_nondet_int();
-ret = __VERIFIER_nondet_int();
-void main()
+int __INITIALIZED = 0;
+void env_init() {
+ one = 1;
+ listen_index = 0;
+ added = 0;
+ MAXADDR = __VERIFIER_nondet_int();
+ addrs = __VERIFIER_nondet_int();
+ MaxBackends = __VERIFIER_nondet_int();
+ ret = __VERIFIER_nondet_int();
+ __INITIALIZED = 1;
+}
+int main()
 {
+ env_init();
  __VERIFIER_assume(addrs>=0);
  __VERIFIER_assume(MaxBackends>0);
  if (family == 3)
@@ -370,7 +375,7 @@ void main()
  else
  {
   {};
-  service = 1;
+  service = (char*) 1;
  }
  ret = __VERIFIER_nondet_int();
  if (ret || !addrs)

@@ -359,9 +359,7 @@ int ResourceIrp;
 int StackSize;
 int BusResetIrp;
 int prevCancel;
-int keA; int keR; int ioA; int ioR;
-  keA = 0;
-  keR = 0;
+int keA= 0; int keR= 0; int ioA; int ioR;
 void KeAcquireSpinLock(int * lp, int * ip) { keA = 1; keA = 0;
    (*lp) = 1;
    (*ip) = irql;
@@ -378,21 +376,21 @@ void IoReleaseCancelSpinLock(int ip) { ioR = 1; ioR = 0;
    csl = 0;
    irql = ip;
 }
-int t1394_IsochCleanup(int a) { }
-int ExAllocatePool(int a, int b) { }
-int t1394Diag_PnpStopDevice(int a,int b) { }
-int t1394_SubmitIrpSynch(int a, int b) { }
-int IoFreeIrp(int a) { }
-int IoSetDeviceInterfaceState() { }
-int RtlZeroMemory(int a, int b) { }
-int KeCancelTimer() { }
-int IoAllocateIrp(int a, int b) { }
-int IoFreeMdl() { }
-int IoSetCancelRoutine(int a) { }
-int ExFreePool0() { }
-int ExFreePool1(int a) { }
-int ExFreePool2(int a, int b) { }
-int IoCompleteRequest(int a) { }
+int t1394_IsochCleanup(int a) {return __VERIFIER_nondet_int(); }
+int ExAllocatePool(int a, int b) { return __VERIFIER_nondet_int();}
+int t1394Diag_PnpStopDevice(int a,int b) {return __VERIFIER_nondet_int(); }
+int t1394_SubmitIrpSynch(int a, int b) {return __VERIFIER_nondet_int(); }
+int IoFreeIrp(int a) {return __VERIFIER_nondet_int(); }
+int IoSetDeviceInterfaceState() { return __VERIFIER_nondet_int();}
+int RtlZeroMemory(int a, int b) { return __VERIFIER_nondet_int();}
+int KeCancelTimer() { return __VERIFIER_nondet_int();}
+int IoAllocateIrp(int a, int b) {return __VERIFIER_nondet_int(); }
+int IoFreeMdl() { return __VERIFIER_nondet_int();}
+int IoSetCancelRoutine(void* a) {return __VERIFIER_nondet_int(); }
+int ExFreePool0() {return __VERIFIER_nondet_int(); }
+int ExFreePool1(int a) { return __VERIFIER_nondet_int();}
+int ExFreePool2(int a, int b) {return __VERIFIER_nondet_int(); }
+int IoCompleteRequest(int a) {return __VERIFIER_nondet_int(); }
 int main() {
    if (__VERIFIER_nondet_int()) {
        ntStatus = t1394Diag_PnpStopDevice(DeviceObject, Irp);
@@ -458,7 +456,7 @@ int main() {
                ResourceIrp = __VERIFIER_nondet_int();
                StackSize = __VERIFIER_nondet_int();
                ResourceIrp = IoAllocateIrp(StackSize, 0);
-               if (ResourceIrp == ((void *)0)) {
+               if (ResourceIrp == 0) {
                }
                else {
                    pIrb = ExAllocatePool(1, sizeof(int));
@@ -482,10 +480,10 @@ int main() {
    keA = 1; keA = 0; KeAcquireSpinLock(&lock6, &Irql);
    k5 = __VERIFIER_nondet_int();
    while (k5>0) {
-       prevCancel = ((void *)0);
+       prevCancel = 0;
        BusResetIrp = __VERIFIER_nondet_int();
        k5--;
-       prevCancel = IoSetCancelRoutine(((void *)0));
+       prevCancel = (int)IoSetCancelRoutine(((void *)0));
        IoCompleteRequest(2);
        ExFreePool1(BusResetIrp);
    }

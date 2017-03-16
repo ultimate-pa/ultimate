@@ -114,10 +114,9 @@ PDRIVER_CANCEL  prevCancel;
 
 
 
-int keA; int keR; int ioA; int ioR;
+int keA= 0; int keR= 0; int ioA; int ioR;
 
-  keA = 0;
-  keR = 0;
+
 
 void KeAcquireSpinLock(int * lp, int * ip) { keA = 1; keA = 0;
    (*lp) = 1;
@@ -139,21 +138,21 @@ void IoReleaseCancelSpinLock(int ip) { ioR = 1; ioR = 0;
    irql = ip;
 }
 
-int t1394_IsochCleanup(int a) { }
-int ExAllocatePool(int a, int b) { }
-int t1394Diag_PnpStopDevice(int a,int b) { }
-int t1394_SubmitIrpSynch(int a, int b) { }
-int IoFreeIrp(int a) { }
-int IoSetDeviceInterfaceState() { }
-int RtlZeroMemory(int a, int b) { }
-int KeCancelTimer() { }
-int IoAllocateIrp(int a, int b) { }
-int IoFreeMdl() { }
-int IoSetCancelRoutine(int a) { }
-int ExFreePool0() { }
-int ExFreePool1(int a) { }
-int ExFreePool2(int a, int b) { }
-int IoCompleteRequest(int a) { }
+int t1394_IsochCleanup(int a) {return __VERIFIER_nondet_int(); }
+int ExAllocatePool(int a, int b) { return __VERIFIER_nondet_int();}
+int t1394Diag_PnpStopDevice(int a,int b) {return __VERIFIER_nondet_int(); }
+int t1394_SubmitIrpSynch(int a, int b) {return __VERIFIER_nondet_int(); }
+int IoFreeIrp(int a) {return __VERIFIER_nondet_int(); }
+int IoSetDeviceInterfaceState() { return __VERIFIER_nondet_int();}
+int RtlZeroMemory(int a, int b) { return __VERIFIER_nondet_int();}
+int KeCancelTimer() { return __VERIFIER_nondet_int();}
+int IoAllocateIrp(int a, int b) {return __VERIFIER_nondet_int(); }
+int IoFreeMdl() { return __VERIFIER_nondet_int();}
+int IoSetCancelRoutine(void* a) {return __VERIFIER_nondet_int(); }
+int ExFreePool0() {return __VERIFIER_nondet_int(); }
+int ExFreePool1(int a) { return __VERIFIER_nondet_int();}
+int ExFreePool2(int a, int b) {return __VERIFIER_nondet_int(); }
+int IoCompleteRequest(int a) {return __VERIFIER_nondet_int(); }
 
 int main() {
    if (__VERIFIER_nondet_int()) {
@@ -268,7 +267,7 @@ int main() {
                StackSize = __VERIFIER_nondet_int();
                ResourceIrp = IoAllocateIrp(StackSize, FALSE);
 
-               if (ResourceIrp == NULL) {
+               if (ResourceIrp == 0) {
 
                }
                else {
@@ -306,7 +305,7 @@ int main() {
    k5 = __VERIFIER_nondet_int();
    while (k5>0) {
 
-       prevCancel = NULL;
+       prevCancel = 0;
 
        // get the irp off of the list
        BusResetIrp = __VERIFIER_nondet_int();
@@ -314,7 +313,7 @@ int main() {
 
 
        // make this irp non-cancelable...
-       prevCancel = IoSetCancelRoutine(NULL);
+       prevCancel = (int)IoSetCancelRoutine(NULL);
 
 
        // and complete it...

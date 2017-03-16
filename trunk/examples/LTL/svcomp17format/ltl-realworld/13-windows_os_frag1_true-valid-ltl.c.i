@@ -348,10 +348,13 @@ int SecondHalf;
 int CancelIrql;
 int LockHeld;
 int CurrentTimeouts;
-  A = R = 0;
+int __INITIALIZED = 0;
+void env_init() {
   status = 1;
   CurrentTimeouts = __VERIFIER_nondet_int();
   k = __VERIFIER_nondet_int();
+ __INITIALIZED = 1;
+}
 void KeAcquireSpinLock(int * lp, int * ip) {
   (*lp) = 1;
   (*ip) = irql;
@@ -368,10 +371,11 @@ void IoReleaseCancelSpinLock(int ip) {
   csl = 0;
   irql = ip;
 }
-int IoGetCurrentIrpStackLocation(int a) {}
+int IoGetCurrentIrpStackLocation(int a) { return __VERIFIER_nondet_int(); }
 void RemoveReferenceAndCompleteRequest(int a, int b) {}
-void main()
+int main()
 {
+ env_init();
   a = 1; a = 0;
   while ((__VERIFIER_nondet_int() && k>0) && (__VERIFIER_nondet_int() || __VERIFIER_nondet_int())) {
     ListElement = __VERIFIER_nondet_int();
@@ -389,7 +393,7 @@ void main()
     r = 1;r = 0;
     {
       status=1;
-      Irp=((void *)0);
+      Irp=0;
       LockHeld = 1;
       a = 1; a= 0;
       if (__VERIFIER_nondet_int() && __VERIFIER_nondet_int()) {
@@ -433,7 +437,7 @@ void main()
         k--;
       }
   }
-       Irp = ((void *)0);
+       Irp = 0;
      }
  }
       if (LockHeld == 1)

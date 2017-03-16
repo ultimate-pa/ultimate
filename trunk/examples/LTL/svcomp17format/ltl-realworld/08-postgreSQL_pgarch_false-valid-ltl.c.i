@@ -31,7 +31,7 @@ int PostmasterIsAlive(int a)
 {
  return __VERIFIER_nondet_int();
 }
-void main() {
+int main() {
  init();
  wakend = 1;
  do

@@ -38,11 +38,15 @@ KIRQL             CancelIrql;
 BOOLEAN           LockHeld;
 SERIAL_TIMEOUTS   CurrentTimeouts;
 
-
-  A = R = 0; 
-  status = STATUS_UNSUCCESSFUL; 
+// Initialization routine
+int __INITIALIZED = 0;
+void env_init() {
+  status = STATUS_UNSUCCESSFUL;
   CurrentTimeouts = __VERIFIER_nondet_int();
   k = __VERIFIER_nondet_int();
+	__INITIALIZED = 1;
+}  
+  
 
 void KeAcquireSpinLock(int * lp, int * ip) {
   (*lp) = 1;
@@ -65,12 +69,13 @@ void IoReleaseCancelSpinLock(int ip) {
   irql = ip;
 }
 
-int IoGetCurrentIrpStackLocation(int a) {}
+int IoGetCurrentIrpStackLocation(int a) { return __VERIFIER_nondet_int(); }
 
 void RemoveReferenceAndCompleteRequest(int a, int b) {}
 
-void main()
+int main()
 {
+	env_init();
 
   a = 1; a = 0; // KeAcquireSpinLock( &lock, &OldIrql);
 
@@ -101,7 +106,7 @@ void main()
     //CALL TO TryToSatisfyRead( deviceExtension);
     {
       status=STATUS_UNSUCCESSFUL;
-      Irp=NULL;
+      Irp=0;
       LockHeld = TRUE;
 
       a = 1; a= 0; //KeAcquireSpinLock(&lock,&OldIrql);
@@ -165,7 +170,7 @@ void main()
 		    }
 		}
 
-	      Irp = NULL;
+	      Irp = 0;
 	    }
 
 	}

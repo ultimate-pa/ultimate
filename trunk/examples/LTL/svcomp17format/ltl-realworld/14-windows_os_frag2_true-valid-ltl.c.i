@@ -7,11 +7,16 @@ int polling;
 int PowerStateIsAC;
 void ExAcquireFastMutex() {}
 void ExReleaseFastMutex() {}
-WarmPollPeriod = __VERIFIER_nondet_int();
-status = __VERIFIER_nondet_int();
-polling = __VERIFIER_nondet_int();
-PowerStateIsAC = __VERIFIER_nondet_int();
+int __INITIALIZED = 0;
+void env_init() {
+ WarmPollPeriod = __VERIFIER_nondet_int();
+ status = __VERIFIER_nondet_int();
+ polling = __VERIFIER_nondet_int();
+ PowerStateIsAC = __VERIFIER_nondet_int();
+ __INITIALIZED = 1;
+}
 int main() {
+ env_init();
    if( status>0 ) {
        ExAcquireFastMutex();
        __VERIFIER_nondet_int();

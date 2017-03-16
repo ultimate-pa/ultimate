@@ -51,16 +51,22 @@ int ret;
 char *sock_path;
 int addrs;
 
-one = 1;
-listen_index = 0;
-added = 0;
-MAXADDR = __VERIFIER_nondet_int();
-addrs = __VERIFIER_nondet_int();
-MaxBackends = __VERIFIER_nondet_int();
-ret = __VERIFIER_nondet_int();
+// Initialization routine
+int __INITIALIZED = 0;
+void env_init() {
+	one = 1;
+	listen_index = 0;
+	added = 0;
+	MAXADDR = __VERIFIER_nondet_int();
+	addrs = __VERIFIER_nondet_int();
+	MaxBackends = __VERIFIER_nondet_int();
+	ret = __VERIFIER_nondet_int();
+	__INITIALIZED = 1;
+}
 
-void main()
+int main()
 {
+	env_init();
 	__VERIFIER_assume(addrs>=0);
 	__VERIFIER_assume(MaxBackends>0);
 
@@ -71,7 +77,7 @@ void main()
 	else
 	{
 		snprintf(1, sizeof(1), "%d", portNumber);
-		service = 1;
+		service = (char*) 1;
 	}
 
 	ret = getaddrinfo_all(hostName, service, &hint, &addrs);

@@ -1,1 +1,1 @@
-CHECK( init(main()), LTL( "istemp==0" ==> G("A!=1") ) )
+CHECK( init(main()), LTL( "__INITIALIZED == 0" U( "istemp==0" ==> G("A!=1") )) )

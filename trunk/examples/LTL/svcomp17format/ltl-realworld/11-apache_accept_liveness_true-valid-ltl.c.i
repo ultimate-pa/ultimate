@@ -1,13 +1,13 @@
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
-extern void __VERIFIER___VERIFIER_assume() __attribute__ ((__noreturn__));
+extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
 int do_ACCEPT;
-int accept_mutex_off() { }
-int unixd_setup_child() { }
-int APR_STATUS_IS_EINTR(int a) { }
-int accept_mutex_on() { }
-int SAFE_ACCEPT(int a) { }
-int clean_child_exit(int a) { }
+int accept_mutex_off() { return __VERIFIER_nondet_int(); }
+int unixd_setup_child() { return __VERIFIER_nondet_int();}
+int APR_STATUS_IS_EINTR(int a) { return __VERIFIER_nondet_int();}
+int accept_mutex_on() {return __VERIFIER_nondet_int();}
+int SAFE_ACCEPT(int a) {return __VERIFIER_nondet_int();}
+int clean_child_exit(int a) { return __VERIFIER_nondet_int();}
 int ap_accept_lock_mech;
 int ap_listeners;
 int ap_lock_fname;
@@ -58,46 +58,50 @@ static int my_child_num;
 int ap_my_generation=0;
 int tpf_child = 0;
 char *tpf_server_name;
-  child_num_arg = __VERIFIER_nondet_int();
-  do_ACCEPT = 0;
-  die_now = 0;
-  last_poll_idx = 0;
-  ap_threads_per_child = 0;
-  ap_daemons_to_start=0;
-  ap_daemons_min_free=0;
-  ap_daemons_max_free=0;
-  ap_daemons_limit=0;
-  server_limit = 256;
-  first_server_limit = 0;
-  ap_listeners = __VERIFIER_nondet_int();
 int getpid() { return __VERIFIER_nondet_int(); }
-void ap_fatal_signal_child_setup(int ap_server_conf) {}
-void apr_allocator_create(int *allocator) {}
-void apr_allocator_max_free_set(int allocator, int ap_max_mem_free) {}
-void apr_pool_create_ex(int *pchild, int pconf, int NL, int allocator) {}
-void apr_allocator_owner_set(int allocator, int pchild) {}
-void apr_pool_create(int *ptrans, int pchild) {}
-void apr_pool_tag(int ptrans, char *asdf) {}
-void ap_reopen_scoreboard(int pchild, int NL, int z) {}
-int apr_proc_mutex_child_init(int *accept_mutex, int ap_lock_fname, int pchild) { return __VERIFIER_nondet_int(); }
-void ap_log_error(int APm, int APe, int status, int ap_server_conf, int a, int b, int c) {}
-void ap_log_error5(int APm, int APe, int status, int ap_server_conf, int a) {}
-void ap_run_child_init(int pchild, int ap_server_conf) {}
-void ap_create_sb_handle(int *sbh, int pchild, int my_child_num, int z) {}
-void ap_update_child_status(int sbh, int SER, int NL) {}
-void apr_pollset_create(int *pollset, int num_listensocks, int pchild, int z) {}
-void apr_pollset_add(int pollset, int *pfd) {}
-void *apr_bucket_alloc_create(int pchild) {}
-void apr_pool_clear(int ptrans) {}
-int apr_pollset_poll(int pollset, int a, int *numdesc, int *pdesc) {}
-int ap_run_create_connection(int ptrans, int ap_server_conf, int csd, int my_child_num, int sbh, int bucket_alloc) {}
-void ap_process_connection(int current_conn, int csd) {}
+void ap_fatal_signal_child_setup(void *ap_server_conf) {}
+void apr_allocator_create(void **allocator) {}
+void apr_allocator_max_free_set(void *allocator, int ap_max_mem_free) {}
+void apr_pool_create_ex(void **pchild, void *pconf, int NL, void *allocator) {}
+void apr_allocator_owner_set(void *allocator, void *pchild) {}
+void apr_pool_create(void **ptrans, void *pchild) {}
+void apr_pool_tag(void *ptrans, char *asdf) {}
+void ap_reopen_scoreboard(void *pchild, int NL, int z) {}
+int apr_proc_mutex_child_init(void **accept_mutex, int ap_lock_fname, void *pchild) { return __VERIFIER_nondet_int(); }
+void ap_log_error(int APm, int APe, int status, void *ap_server_conf, char *a, int b, int c) {}
+void ap_log_error5(int APm, int APe, int status, void *ap_server_conf, char *a) {}
+void ap_run_child_init(void *pchild, void *ap_server_conf) {}
+void ap_create_sb_handle(void **sbh, void *pchild, int my_child_num, int z) {}
+void ap_update_child_status(void *sbh, int SER, int NL) {}
+void apr_pollset_create(void **pollset, int num_listensocks, void *pchild, int z) {}
+void apr_pollset_add(void *pollset, int *pfd) {}
+void *apr_bucket_alloc_create(void *pchild) { return (void *) __VERIFIER_nondet_int(); }
+void apr_pool_clear(void *ptrans) {}
+int apr_pollset_poll(void *pollset, int a, int *numdesc, const void **pdesc) { return __VERIFIER_nondet_int(); }
+int ap_run_create_connection(void *ptrans, void *ap_server_conf, void *csd, int my_child_num, void *sbh, void *bucket_alloc) { return __VERIFIER_nondet_int(); }
+void ap_process_connection(int current_conn, void *csd) {}
 void ap_lingering_close(int current_conn) {}
-int ap_mpm_pod_check(int a) { return __VERIFIER_nondet_int(); }
-void main()
+int ap_mpm_pod_check(void *a) { return __VERIFIER_nondet_int(); }
+int __INITIALIZED = 0;
+void env_init() {
+    ap_listeners = __VERIFIER_nondet_int();
+    child_num_arg = __VERIFIER_nondet_int();
+    do_ACCEPT = 0;
+    die_now = 0;
+    last_poll_idx = 0;
+    ap_threads_per_child = 0;
+    ap_daemons_to_start=0;
+    ap_daemons_min_free=0;
+    ap_daemons_max_free=0;
+    ap_daemons_limit=0;
+    server_limit = 256;
+    first_server_limit = 0;
+    __INITIALIZED = 1;
+}
+int main()
 {
   __VERIFIER_assume(child_num_arg > 0);
-__VERIFIER_assume(ap_listeners > 0);
+  __VERIFIER_assume(ap_listeners > 0);
     mpm_state = 9;
     my_child_num = child_num_arg;
     ap_my_pid = getpid();

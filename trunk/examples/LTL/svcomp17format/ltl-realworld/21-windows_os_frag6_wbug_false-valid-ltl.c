@@ -4,12 +4,10 @@ extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
 
 int WItemsNum;
 
-WItemsNum = __VERIFIER_nondet_int();
-
 void callback1() {}
 void callback2() {}
 
-void main() {
+int main() {
     WItemsNum = __VERIFIER_nondet_int();
     while(1) {
         while(WItemsNum<=5 && __VERIFIER_nondet_int()) {

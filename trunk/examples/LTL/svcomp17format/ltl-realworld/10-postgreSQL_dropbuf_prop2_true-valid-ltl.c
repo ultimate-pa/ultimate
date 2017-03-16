@@ -35,8 +35,9 @@ int addrs;
 int rnode;
 int istemp;
 int firstDelBlock;
-int A; int RELEASE;
-char *bufHdr;
+int A = 0; 
+int RELEASE = 0;
+int *bufHdr;
 int bufHdr_tag_blockNum;
 int bufHdr_tag_blockNum;
 int bufHdr_tag_rnode;
@@ -53,21 +54,24 @@ int i;
 int NBuffers;
 int bufHdr_refcount;
 
-void StrategyInvalidateBuffer(int bufHdr) {}
-void WaitIO(int a) {}
+void StrategyInvalidateBuffer(int *bufHdr) {}
+void WaitIO(int *a) {}
 int RelFileNodeEquals(int a, int b) 
 { 
 	return __VERIFIER_nondet_int(); 
 }
 
+// Initialization routine
+int __INITIALIZED = 0;
+void env_init() {
+	istemp = __VERIFIER_nondet_int();
+	NLocBuffer = __VERIFIER_nondet_int();
+	NBuffers = __VERIFIER_nondet_int();
+	__INITIALIZED = 1;
+}
 
-istemp = __VERIFIER_nondet_int();
-A = 0;
-RELEASE = 0;
-NLocBuffer = __VERIFIER_nondet_int();
-NBuffers = __VERIFIER_nondet_int();
-
-void main() {
+int main() {
+	env_init();
 	//DD: If NBuffers is not larger than 1, the property is trivially not satisfied. So I added the following line:
 	//__VERIFIER_assume(NBuffers>1);
 	//end	
@@ -96,7 +100,7 @@ void main() {
 
 	for (i = 1; i <= NBuffers; i++)
 	{
-		bufHdr = __VERIFIER_nondet_int(); // &BufferDescriptors[i - 1];
+		bufHdr = (int *) __VERIFIER_nondet_int(); // &BufferDescriptors[i - 1];
 recheck:
 		if (RelFileNodeEquals(bufHdr_tag_rnode, rnode) && bufHdr_tag_blockNum >= firstDelBlock)
 		{

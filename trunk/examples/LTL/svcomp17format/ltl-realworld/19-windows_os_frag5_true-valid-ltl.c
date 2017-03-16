@@ -233,14 +233,14 @@ NTSTATUS main()
 					keA = 1; keA = 0; 
 					lock = 1; OldIrql = irql;
                }
-               CancelIrp=NULL;
+               CancelIrp=0;
                if (__VERIFIER_nondet_int())
                {
 					CancelIrp=__VERIFIER_nondet_int();
                }
                keR = 1; keR = 0; 
 			   lock = 0; irql = OldIrql;
-               if (CancelIrp != NULL) 
+               if (CancelIrp != 0) 
 			   {
 					RemoveReferenceAndCompleteRequest(CancelIrp, STATUS_CANCELLED);
                }
@@ -474,7 +474,7 @@ NTSTATUS main()
 	}
 	if (status != STATUS_PENDING) 
 	{
-		if (Irp != NULL)
+		if (Irp != 0)
 		{
 			RemoveReferenceAndCompleteRequest(Irp, status);
 		}

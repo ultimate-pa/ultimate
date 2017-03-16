@@ -478,14 +478,14 @@ int main()
      keA = 1; keA = 0;
      lock = 1; OldIrql = irql;
                }
-               CancelIrp=((void *)0);
+               CancelIrp=0;
                if (__VERIFIER_nondet_int())
                {
      CancelIrp=__VERIFIER_nondet_int();
                }
                keR = 1; keR = 0;
       lock = 0; irql = OldIrql;
-               if (CancelIrp != ((void *)0))
+               if (CancelIrp != 0)
       {
      RemoveReferenceAndCompleteRequest(CancelIrp, 11);
                }
@@ -717,7 +717,7 @@ int main()
  }
  if (status != 7)
  {
-  if (Irp != ((void *)0))
+  if (Irp != 0)
   {
    RemoveReferenceAndCompleteRequest(Irp, status);
   }

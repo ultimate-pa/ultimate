@@ -4,13 +4,19 @@ extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
 
 int WItemsNum;
 
-WItemsNum = __VERIFIER_nondet_int();
-
 void callback1() {}
 void callback2() {}
 
+// Initialization routine
+int __INITIALIZED = 0;
+void env_init() {
+	WItemsNum = __VERIFIER_nondet_int();
+	__INITIALIZED = 1;
+}
 
-void main() {
+
+int main() {
+	env_init();
     WItemsNum = __VERIFIER_nondet_int();
     while(1) {
         while(WItemsNum<=5 || __VERIFIER_nondet_int()) {

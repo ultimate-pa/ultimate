@@ -5,7 +5,7 @@ int Stored;
 void init() { Stored = 0; }
 void callback() {}
 void IoQueueWorkItem() {}
-void main() {
+int main() {
     while(__VERIFIER_nondet_int()) {
            if (__VERIFIER_nondet_int()) {
                callback ();

@@ -118,8 +118,8 @@ PDRIVER_CANCEL  prevCancel;
 
 
 
-int keA; int keR; int ioA; int ioR;
-int phi_nSUC_ret; int phi_io_compl;
+int keA = 0; int keR = 0; int ioA = 0; int ioR = 0;
+int phi_nSUC_ret = 0; int phi_io_compl = 0;
 
 unsigned int pc;
 // AG(A => AF(R)
@@ -131,10 +131,6 @@ unsigned int pc;
 			 CAF(CAP(phi_io_compl == 1)),
 			 CAF(CAP(phi_nSUC_ret  == 1))); }*/
 
-
-  keA = keR = ioA = ioR = 0;
-  phi_nSUC_ret = 0; 
-  phi_io_compl = 0;
 
 
 void KeAcquireSpinLock(int * lp, int * ip) { keA = 1; keA = 0;
@@ -157,21 +153,21 @@ void IoReleaseCancelSpinLock(int ip) { ioR = 1; ioR = 0;
    irql = ip;
 }
 
-int t1394_IsochCleanup(int a) { }
-int ExAllocatePool(int a, int b) { }
-int t1394Diag_PnpStopDevice(int a,int b) { }
-int t1394_SubmitIrpSynch(int a, int b) { }
-int IoFreeIrp(int a) { }
-int IoSetDeviceInterfaceState() { }
-int RtlZeroMemory(int a, int b) { }
-int KeCancelTimer() { }
-int IoAllocateIrp(int a, int b) { }
-int IoFreeMdl() { }
-int IoSetCancelRoutine(int a) { }
-int ExFreePool0() { }
-int ExFreePool1(int a) { }
-int ExFreePool2(int a, int b) { }
-int IoCompleteRequest(int a) { phi_io_compl = 1; }
+int t1394_IsochCleanup(int a) { return __VERIFIER_nondet_int();}
+int ExAllocatePool(int a, int b) { return __VERIFIER_nondet_int();}
+int t1394Diag_PnpStopDevice(int a,int b) { return __VERIFIER_nondet_int();}
+int t1394_SubmitIrpSynch(int a, int b) { return __VERIFIER_nondet_int();}
+int IoFreeIrp(int a) { return __VERIFIER_nondet_int();}
+int IoSetDeviceInterfaceState() { return __VERIFIER_nondet_int();}
+int RtlZeroMemory(int a, int b) { return __VERIFIER_nondet_int();}
+int KeCancelTimer() { return __VERIFIER_nondet_int();}
+int IoAllocateIrp(int a, int b) { return __VERIFIER_nondet_int();}
+int IoFreeMdl() { return __VERIFIER_nondet_int();}
+int IoSetCancelRoutine(int a) { return __VERIFIER_nondet_int();}
+int ExFreePool0() { return __VERIFIER_nondet_int();}
+int ExFreePool1(int a) { return __VERIFIER_nondet_int();}
+int ExFreePool2(int a, int b) { return __VERIFIER_nondet_int();}
+int IoCompleteRequest(int a) { phi_io_compl = 1; return __VERIFIER_nondet_int();}
 
 int main() {
    if (__VERIFIER_nondet_int()) {
@@ -286,7 +282,7 @@ int main() {
                StackSize = __VERIFIER_nondet_int();
                ResourceIrp = IoAllocateIrp(StackSize, FALSE);
 
-               if (ResourceIrp == NULL) {
+               if (ResourceIrp == 0) {
 
                }
                else {
@@ -323,7 +319,7 @@ int main() {
    k5 = __VERIFIER_nondet_int();
    while (k5>0) {
 
-       prevCancel = NULL;
+       prevCancel = 0;
 
        // get the irp off of the list
        BusResetIrp = __VERIFIER_nondet_int();
@@ -331,7 +327,7 @@ int main() {
 
 
        // make this irp non-cancelable...
-       prevCancel = IoSetCancelRoutine(NULL);
+       prevCancel = IoSetCancelRoutine(0);
 
 
        // and complete it...

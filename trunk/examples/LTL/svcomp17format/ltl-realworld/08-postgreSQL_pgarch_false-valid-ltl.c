@@ -49,7 +49,7 @@ int PostmasterIsAlive(int a)
 	return __VERIFIER_nondet_int(); 
 }
 
-void main() {
+int main() {
 	init();
 	/*
 	 * We run the copy loop immediately upon entry, in case there are
