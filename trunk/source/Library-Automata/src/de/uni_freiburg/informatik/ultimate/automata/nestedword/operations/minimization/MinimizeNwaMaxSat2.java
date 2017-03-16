@@ -423,13 +423,31 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 						hierPredState2, letter)) {
 					succs2.add(trans.getSucc());
 				}
-				generateTransitionConstraintGeneralReturnHelper(linPredPair, hierPredPair, succs1, succs2);
+				generateTransitionConstraintGeneralReturnHelperSymmetric(linPredPair, hierPredPair, succs1, succs2);
 			}
 		}
 	}
 
-	protected abstract void generateTransitionConstraintGeneralReturnHelper(final T linPredPair, final T hierPredPair,
-			final Set<STATE> succs1, final Set<STATE> succs2);
+	/**
+	 * NOTE: This method is also used in {@link MinimizeNwaPmaxSatAsymmetric} because it is necessary for correctness.
+	 */
+	private void generateTransitionConstraintGeneralReturnHelperSymmetric(final T linPredPair, final T hierPredPair,
+			final Set<STATE> succs1, final Set<STATE> succs2) {
+		// symmetric handling (in both directions)
+
+		final Collection<STATE> succsToRemove = new ArrayList<>();
+
+		generateTransitionConstraintGeneralReturnHelperOneSide(linPredPair, hierPredPair, succs1, succs2,
+				succsToRemove);
+		/*
+		 * Optimization: If a state from the second set is known to be similar to another one from the first set, we
+		 * should not try to add a clause for the other direction (as it will be found out again that they are
+		 * similar).
+		 */
+		succs2.removeAll(succsToRemove);
+
+		generateTransitionConstraintGeneralReturnHelperOneSide(linPredPair, hierPredPair, succs2, succs1, null);
+	}
 
 	protected final void generateTransitionConstraintGeneralReturnHelperOneSide(final T linPredPair,
 			final T hierPredPair, final Set<STATE> succs1, final Set<STATE> succs2,
