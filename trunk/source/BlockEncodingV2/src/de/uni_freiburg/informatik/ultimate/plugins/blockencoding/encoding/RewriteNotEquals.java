@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
@@ -95,7 +97,8 @@ public final class RewriteNotEquals extends BaseBlockEncoder<IcfgLocation> {
 				continue;
 			}
 			final IcfgEdge newEdge = mEdgeBuilder.constructInternalTransition(edge, edge.getSource(), edge.getTarget(),
-					rewrittenMtf.getFormula());
+					TransFormulaBuilder.constructCopy(mgScript, rewrittenMtf, Collections.emptySet(),
+							Collections.emptySet(), Collections.emptyMap()));
 			rememberEdgeMapping(newEdge, edge);
 		}
 
