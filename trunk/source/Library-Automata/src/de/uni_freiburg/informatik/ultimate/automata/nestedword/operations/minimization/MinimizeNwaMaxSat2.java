@@ -348,11 +348,8 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		// NOTE: slower iteration outside
 		for (final STATE down2 : mOperand.getDownStates(state2)) {
 			for (final STATE down1 : downStates1) {
-				if (mSettings.getUseTransitionHornClauses()) {
-					generateTransitionConstraintReturnHorn(state1, state2, predPair, down1, down2);
-				} else {
-					generateTransitionConstraintReturnGeneral(state1, state2, predPair, down1, down2);
-				}
+				generateTransitionConstraintReturn(state1, state2, predPair, down1, down2,
+						mSettings.getUseTransitionHornClauses());
 			}
 		}
 	}
@@ -360,28 +357,39 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	protected final void generateTransitionConstraintsHelperReturn2(final STATE state, final STATE[] downStates) {
 		for (int k = 0; k < downStates.length; k++) {
 			for (int l = 0; l < k; l++) {
-				if (mSettings.getUseTransitionHornClauses()) {
-					generateTransitionConstraintReturnHorn(state, state, null, downStates[k], downStates[l]);
-				} else {
-					generateTransitionConstraintReturnGeneral(state, state, null, downStates[k], downStates[l]);
-				}
+				generateTransitionConstraintReturn(state, state, null, downStates[k], downStates[l],
+						mSettings.getUseTransitionHornClauses());
 			}
 		}
 	}
 
-	private void generateTransitionConstraintReturnHorn(final STATE linPredState1, final STATE linPredState2,
-			final T linPredPair, final STATE hierPredState1, final STATE hierPredState2) {
+	private void generateTransitionConstraintReturn(final STATE linPredState1, final STATE linPredState2,
+			final T linPredPair, final STATE hierPredState1, final STATE hierPredState2, final boolean horn) {
 		if (knownToBeDifferent(hierPredState1, hierPredState2, null)) {
 			// all corresponding clauses are trivially true
 			return;
 		}
 
 		final T hierPredPair = getVariableIfNotSimilar(hierPredState1, hierPredState2);
-		if (!haveSameOutgoingReturnSymbols(linPredState1, hierPredState1, linPredState2, hierPredState2)) {
+		final Set<LETTER> sameOutgoingReturnSymbols =
+				getSameOutgoingReturnSymbols(linPredState1, hierPredState1, linPredState2, hierPredState2);
+		if (sameOutgoingReturnSymbols == null) {
 			addThreeLiteralHornClause(linPredPair, hierPredPair, null);
 			return;
 		}
+		
 		// both DoubleDeckers have same outgoing return symbols
+		if (horn) {
+			generateTransitionConstraintReturnHelperHorn(linPredState1, linPredState2, linPredPair, hierPredState1,
+					hierPredState2, hierPredPair);
+		} else {
+			generateTransitionConstraintReturnHelperGeneral(linPredState1, linPredState2, linPredPair, hierPredState1,
+					hierPredState2, hierPredPair, sameOutgoingReturnSymbols);
+		}
+	}
+
+	private void generateTransitionConstraintReturnHelperHorn(final STATE linPredState1, final STATE linPredState2,
+			final T linPredPair, final STATE hierPredState1, final STATE hierPredState2, final T hierPredPair) {
 		for (final OutgoingReturnTransition<LETTER, STATE> trans1 : mOperand.returnSuccessorsGivenHier(linPredState1,
 				hierPredState1)) {
 			for (final OutgoingReturnTransition<LETTER, STATE> trans2 : mOperand.returnSuccessors(linPredState2,
@@ -396,35 +404,21 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		}
 	}
 
-	private void generateTransitionConstraintReturnGeneral(final STATE linPredState1, final STATE linPredState2,
-			final T linPredPair, final STATE hierPredState1, final STATE hierPredState2) {
-		if (knownToBeDifferent(hierPredState1, hierPredState2, null)) {
-			// all corresponding clauses are trivially true
-			return;
-		}
-
-		final T hierPredPair = getVariableIfNotSimilar(hierPredState1, hierPredState2);
-		final Set<LETTER> sameOutgoingReturnSymbols =
-				getSameOutgoingReturnSymbols(linPredState1, hierPredState1, linPredState2, hierPredState2);
-		if (sameOutgoingReturnSymbols == null) {
-			addThreeLiteralHornClause(linPredPair, hierPredPair, null);
-		} else {
-			// both DoubleDeckers have same outgoing return symbols
-
-			// NOTE: We exploit the knowledge that the states have the same outgoing symbols
-			for (final LETTER letter : sameOutgoingReturnSymbols) {
-				final Set<STATE> succs1 = new LinkedHashSet<>();
-				final Set<STATE> succs2 = new LinkedHashSet<>();
-				for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(linPredState1,
-						hierPredState1, letter)) {
-					succs1.add(trans.getSucc());
-				}
-				for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(linPredState2,
-						hierPredState2, letter)) {
-					succs2.add(trans.getSucc());
-				}
-				generateTransitionConstraintGeneralReturnHelperSymmetric(linPredPair, hierPredPair, succs1, succs2);
+	private void generateTransitionConstraintReturnHelperGeneral(final STATE linPredState1, final STATE linPredState2,
+			final T linPredPair, final STATE hierPredState1, final STATE hierPredState2, final T hierPredPair,
+			final Set<LETTER> sameOutgoingReturnSymbols) {
+		for (final LETTER letter : sameOutgoingReturnSymbols) {
+			final Set<STATE> succs1 = new LinkedHashSet<>();
+			final Set<STATE> succs2 = new LinkedHashSet<>();
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(linPredState1,
+					hierPredState1, letter)) {
+				succs1.add(trans.getSucc());
 			}
+			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(linPredState2,
+					hierPredState2, letter)) {
+				succs2.add(trans.getSucc());
+			}
+			generateTransitionConstraintGeneralReturnHelperSymmetric(linPredPair, hierPredPair, succs1, succs2);
 		}
 	}
 
