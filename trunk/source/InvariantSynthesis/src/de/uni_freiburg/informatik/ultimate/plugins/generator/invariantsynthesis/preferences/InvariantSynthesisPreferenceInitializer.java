@@ -41,7 +41,8 @@ public class InvariantSynthesisPreferenceInitializer extends UltimatePreferenceI
 		Conservative,
 		Medium,
 		IncrOnlyConjunctsAfterMaxDisjuncts,
-		Aggressive
+		Aggressive,
+		ExponentialConjuncts
 	}
 	
 	/*

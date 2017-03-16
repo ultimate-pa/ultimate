@@ -26,160 +26,107 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding;
 
-import java.util.ArrayDeque;
-import java.util.Collection;
-import java.util.Deque;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.BoogieExpressionTransformer;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.normalforms.NormalFormTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
- * Observer that performs small block encoding of a single statement RCFG.
+ * {@link SmallBlockEncoder} tries to transform every internal transition to a DNF and if the resulting DNF has more
+ * than one disjunct, removes the transition and adds for each disjunct a new transition.
  *
- * The small block encoding works like this:
- * <ul>
- * <li>For each edge e := (loc,assume expr,loc') in RCFG
- * <li>Convert expr to DNF with disjuncts d1..dn
- * <li>If n>1 then for each disjunct di insert new edge (loc,assume di,loc')
- * <li>If n>1 then remove e
- * </ul>
- *
- * @author dietsch@informatik.uni-freiburg.de
- * @deprecated SmallBlockEncoder has to be rewritten for transforumlas.
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-@Deprecated
-public class SmallBlockEncoder extends BaseObserver {
+public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
 
-	private final ILogger mLogger;
-	private final BlockEncodingBacktranslator mBacktranslator;
-	private final boolean mRewriteAssumes;
-	private final IUltimateServiceProvider mServices;
-	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
+	private final IcfgEdgeBuilder mEdgeBuilder;
 
-	public SmallBlockEncoder(final ILogger logger, final BlockEncodingBacktranslator backtranslator,
-			final boolean rewriteAssumes, final IUltimateServiceProvider services,
-			final SimplificationTechnique simplTech, final XnfConversionTechnique xnfConfTech) {
-		mLogger = logger;
-		mBacktranslator = backtranslator;
-		mRewriteAssumes = rewriteAssumes;
-		mServices = services;
-		mSimplificationTechnique = simplTech;
-		mXnfConversionTechnique = xnfConfTech;
+	/**
+	 * Default constructor.
+	 * 
+	 * @param edgeBuilder
+	 * @param services
+	 * @param backtranslator
+	 * @param logger
+	 */
+	public SmallBlockEncoder(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
+			final BlockEncodingBacktranslator backtranslator, final ILogger logger) {
+		super(logger, services, backtranslator);
+		mEdgeBuilder = edgeBuilder;
+
 	}
 
 	@Override
-	public boolean process(final IElement elem) throws Throwable {
-		if (!(elem instanceof IIcfg<?>)) {
-			return true;
-		}
+	public boolean isGraphStructureChanged() {
+		return mRemovedEdges > 0;
+	}
 
-		final IIcfg<?> icfg = (IIcfg<?>) elem;
-		final Deque<IcfgEdge> edges = new ArrayDeque<>();
-		final Set<IcfgEdge> closed = new HashSet<>();
-		final NormalFormTransformer<Expression> ct = new NormalFormTransformer<>(new BoogieExpressionTransformer());
-		// final IcfgEdgeBuilder edgeBuilder = new IcfgEdgeBuilder(icfg.getCfgSmtToolkit(), mServices,
-		// mSimplificationTechnique, mXnfConversionTechnique);
+	@Override
+	protected BasicIcfg<IcfgLocation> createResult(final BasicIcfg<IcfgLocation> icfg) {
+		final CfgSmtToolkit toolkit = icfg.getCfgSmtToolkit();
 
-		int countDisjunctiveAssumes = 0;
-		int countNewEdges = 0;
+		final IcfgLocationIterator<IcfgLocation> iter = new IcfgLocationIterator<>(icfg);
+		final Dnf dnfTransformer = new Dnf(toolkit.getManagedScript(), mServices);
 
-		edges.addAll(IcfgUtils.extractStartEdges(icfg));
+		final Set<IcfgEdge> toRemove = new HashSet<>();
 
-		while (!edges.isEmpty()) {
-			final IcfgEdge current = edges.removeFirst();
-			if (closed.contains(current)) {
-				continue;
-			}
-			closed.add(current);
-			edges.addAll(current.getTarget().getOutgoingEdges());
-			if (mLogger.isDebugEnabled()) {
-				printDebugLogCurrentEdge(current);
-			}
+		while (iter.hasNext()) {
+			final IcfgLocation current = iter.next();
+			final List<IcfgEdge> outEdges = new ArrayList<>(current.getOutgoingEdges());
 
-			if (current instanceof StatementSequence) {
-				final StatementSequence ss = (StatementSequence) current;
-				if (ss.getStatements().size() != 1) {
-					throw new AssertionError("StatementSequence has " + ss.getStatements().size()
-							+ " statements, but SingleStatement should enforce that there is only 1.");
+			for (final IcfgEdge edge : outEdges) {
+				if (!(edge instanceof IIcfgInternalTransition<?>) || edge instanceof Summary) {
+					// only internal transitions can be converted in DNF
+					// summaries are not supported
+					continue;
 				}
-				final Statement stmt = ss.getStatements().get(0);
-				if (stmt instanceof AssumeStatement) {
-					final AssumeStatement assume = (AssumeStatement) stmt;
-					Expression expr = assume.getFormula();
-					if (mRewriteAssumes) {
-						expr = ct.rewriteNotEquals(expr);
-					}
 
-					if (mLogger.isDebugEnabled()) {
-						printDebugLogAssume(assume, expr);
-					}
-					final Collection<Expression> disjuncts = ct.toDnfDisjuncts(expr);
-					if (mLogger.isDebugEnabled()) {
-						printDebugLogDisjuncts(disjuncts);
-					}
-					if (disjuncts.size() > 1) {
-						countDisjunctiveAssumes++;
-						for (final Expression disjunct : disjuncts) {
-							final StatementSequence newss = null;
-							// final StatementSequence newss = edgeBuilder.constructStatementSequence(
-							// (BoogieIcfgLocation) current.getSource(), (BoogieIcfgLocation) current.getTarget(),
-							// new AssumeStatement(assume.getLocation(), disjunct));
-							closed.add(newss);
-							countNewEdges++;
-							mBacktranslator.mapEdges(newss, current);
-						}
-						current.disconnectSource();
-						current.disconnectTarget();
-					}
+				final UnmodifiableTransFormula tf = IcfgUtils.getTransformula(edge);
+				final Term dnf = dnfTransformer.transform(tf.getFormula());
+				final Term[] disjuncts = SmtUtils.getDisjuncts(dnf);
+				if (disjuncts.length == 1) {
+					// was already in dnf
+					continue;
 				}
+				if (!toRemove.add(edge)) {
+					mLogger.warn("Unncessecary transformation");
+					continue;
+				}
+				addNewEdges(edge, disjuncts);
 			}
 		}
-		mLogger.info("Small block encoding converted " + countDisjunctiveAssumes + " assume edges to " + countNewEdges
-				+ " new edges with only one disjunct");
-		return false;
+
+		toRemove.stream().forEach(a -> {
+			a.disconnectSource();
+			a.disconnectTarget();
+		});
+		mRemovedEdges = toRemove.size();
+
+		return icfg;
 	}
 
-	private void printDebugLogCurrentEdge(final IcfgEdge current) {
-		mLogger.debug("Processing edge " + current.hashCode() + ":");
-		mLogger.debug("    " + current);
-	}
-
-	private void printDebugLogAssume(final AssumeStatement assume, final Expression expr) {
-		mLogger.debug("    has assume " + BoogiePrettyPrinter.print(assume.getFormula()));
-		if (mRewriteAssumes) {
-			mLogger.debug("    after rewrite " + BoogiePrettyPrinter.print(expr));
-		}
-	}
-
-	private void printDebugLogDisjuncts(final Collection<Expression> disjuncts) {
-		if (disjuncts.size() > 1) {
-			final StringBuilder sb = new StringBuilder();
-			sb.append("{");
-			for (final Expression dis : disjuncts) {
-				sb.append(BoogiePrettyPrinter.print(dis)).append(", ");
-			}
-			sb.delete(sb.length() - 2, sb.length()).append("}");
-			mLogger.debug("    converted to disjuncts " + sb.toString());
-		} else {
-			mLogger.debug("    only one disjunct " + BoogiePrettyPrinter.print(disjuncts.iterator().next()));
+	private void addNewEdges(final IcfgEdge oldEdge, final Term[] disjuncts) {
+		final IcfgLocation source = oldEdge.getSource();
+		final IcfgLocation target = oldEdge.getTarget();
+		for (final Term disjunct : disjuncts) {
+			final IcfgEdge newEdge = mEdgeBuilder.constructInternalTransition(oldEdge, source, target, disjunct);
+			rememberEdgeMapping(newEdge, oldEdge);
 		}
 	}
 }

@@ -58,9 +58,10 @@ public class VariableTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STA
 	private final Set<String> mVariableNames;
 	private final Sort mSort;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
-	
+	private IProgramVarOrConst mVar;
+
 	private boolean mContainsBoolean = false;
-	
+
 	protected VariableTermEvaluator(final String variableName, final Sort sort,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mVariable = variableName;
@@ -68,82 +69,90 @@ public class VariableTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STA
 		mSort = sort;
 		mNonrelationalValueFactory = nonrelationalValueFactory;
 	}
-	
+
 	@Override
 	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
-		
+
 		final List<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
-		
+
 		VALUE val;
 		BooleanValue returnBool = BooleanValue.TOP;
-		
-		IProgramVarOrConst variable = null;
+
 		for (final IProgramVarOrConst stateVar : currentState.getVariables()) {
 			if (stateVar.getGloballyUniqueId().equals(mVariable)) {
-				variable = stateVar;
+				mVar = stateVar;
 				break;
 			}
 		}
-		if (variable == null) {
+		if (mVar == null) {
 			throw new UnsupportedOperationException("Variable " + mVariable + " was not found in current state.");
 		}
-		
+
 		// TODO: Add array support.
 		final Function<IProgramVarOrConst, Triple<VALUE, BooleanValue, Boolean>> varFunction =
 				var -> new Triple<>(currentState.getValue(var), BooleanValue.TOP, false);
 		final Function<IProgramVarOrConst, Triple<VALUE, BooleanValue, Boolean>> boolFunction =
 				var -> new Triple<>(mNonrelationalValueFactory.createTopValue(), currentState.getBooleanValue(var),
 						true);
-		
+
 		final Triple<VALUE, BooleanValue, Boolean> valueTriple =
-				TypeUtils.applyVariableFunction(varFunction, boolFunction, null, variable);
-		
+				TypeUtils.applyVariableFunction(varFunction, boolFunction, null, mVar);
+
 		val = valueTriple.getFirst();
 		if (valueTriple.getThird()) {
 			returnBool = valueTriple.getSecond();
 			mContainsBoolean = true;
 		}
-		
+
 		if (val.isBottom() || returnBool.isBottom()) {
 			returnList.add(new NonrelationalEvaluationResult<>(mNonrelationalValueFactory.createBottomValue(),
 					BooleanValue.BOTTOM));
 		} else {
 			returnList.add(new NonrelationalEvaluationResult<>(val, returnBool));
 		}
-		
+
 		return returnList;
 	}
-	
+
 	@Override
-	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evaluationResult, final STATE state) {
-		// TODO Auto-generated method stub
-		return null;
+	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE state) {
+		assert computedValue != null;
+		assert state != null;
+
+		final List<STATE> returnList = new ArrayList<>();
+
+		if (mContainsBoolean) {
+			returnList.add(state.setBooleanValue(mVar, computedValue.getBooleanValue()));
+		} else {
+			returnList.add(state.setValue(mVar, computedValue.getValue()));
+		}
+		return returnList;
 	}
-	
+
 	@Override
 	public void addSubEvaluator(final ITermEvaluator<VALUE, STATE, IProgramVarOrConst> evaluator) {
 		throw new UnsupportedOperationException("Cannot add sub evaluator to variable term evaluators.");
 	}
-	
+
 	@Override
 	public boolean hasFreeOperands() {
 		return false;
 	}
-	
+
 	@Override
 	public boolean containsBool() {
 		return mContainsBoolean;
 	}
-	
+
 	@Override
 	public Set<String> getVarIdentifiers() {
 		return mVariableNames;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mVariable;
 	}
-	
+
 }

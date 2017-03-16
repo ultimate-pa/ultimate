@@ -1,1 +1,0 @@
-CHECK( init(main()), LTL( G("set != 0" ==> F "unset!= 0") ) )

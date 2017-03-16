@@ -28,11 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
@@ -40,7 +37,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotat
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -66,47 +62,21 @@ public class HoareAnnotation extends SPredicate {
 	private static final long serialVersionUID = 72852101509650437L;
 
 	private final Script mScript;
-	private final PredicateFactory mPredicateFactory;
 	@Visualizable
-	private final Map<Term, Term> mPrecondition2Invariant = new HashMap<>();
-	@Visualizable
-	private boolean mIsUnknown = false;
+	private final boolean mIsUnknown = false;
 
-	private final boolean mFormulaHasBeenComputed = false;
 	private final List<Term> mInvariants = new ArrayList<>();
 
 	public HoareAnnotation(final IcfgLocation programPoint, final int serialNumber,
 			final PredicateFactory predicateFactory, final Script script) {
 		super(programPoint, serialNumber, new String[] { programPoint.getProcedure() }, script.term("true"),
 				new HashSet<IProgramVar>(), null);
-		mPredicateFactory = predicateFactory;
 		mScript = script;
 	}
 
 	public void addInvariant(final IPredicate pred) {
 		mVars.addAll(pred.getVars());
 		mInvariants.add(pred.getFormula());
-	}
-
-	public void addInvariant(final IPredicate procPrecond, final IPredicate locInvar) {
-		if (mFormulaHasBeenComputed) {
-			throw new UnsupportedOperationException(
-					"Once Formula has been" + " computed it is not allowed to add new Formulas");
-		}
-		if (mPredicateFactory.isDontCare(procPrecond) || mPredicateFactory.isDontCare(locInvar)) {
-			mIsUnknown = true;
-			return;
-		}
-		mVars.addAll(procPrecond.getVars());
-		mVars.addAll(locInvar.getVars());
-		final Term procPrecondFormula = procPrecond.getFormula();
-		final Term locInvarFormula = locInvar.getFormula();
-		final Term invarForPrecond = mPrecondition2Invariant.get(procPrecondFormula);
-		if (invarForPrecond == null) {
-			mPrecondition2Invariant.put(procPrecondFormula, locInvarFormula);
-		} else {
-			mPrecondition2Invariant.put(procPrecondFormula, Util.and(mScript, invarForPrecond, locInvarFormula));
-		}
 	}
 
 	@Override
@@ -119,25 +89,9 @@ public class HoareAnnotation extends SPredicate {
 		return PredicateUtils.computeClosedFormula(getFormula(), mVars, mScript);
 	}
 
-	/**
-	 * @return the mFormulaMapping
-	 */
-	public Map<Term, Term> getPrecondition2Invariant() {
-		return mPrecondition2Invariant;
-	}
-
 	@Override
 	public boolean isUnknown() {
 		return mIsUnknown;
-	}
-
-	@Visualizable
-	public Map<String, String> getPrecondition2InvariantMappingAsStrings() {
-		final HashMap<String, String> result = new HashMap<>();
-		for (final Entry<Term, Term> entry : mPrecondition2Invariant.entrySet()) {
-			result.put(entry.getKey().toStringDirect(), entry.getValue().toStringDirect());
-		}
-		return result;
 	}
 
 	public void annotate(final IElement node) {

@@ -152,7 +152,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final NestedMap2<STATE, STATE, Pair<STATE, STATE>> initialPairs, final Settings<STATE> settings)
 			throws AutomataOperationCanceledException {
-		super(services, stateFactory, operand, settings.setSolverModeGeneral(), initialPairs);
+		super(services, stateFactory, operand, settings.setSolverModeGeneral(), removeReflexivePairs(initialPairs));
 		mEmptyStackState = mOperand.getEmptyStackState();
 
 		// statistics
@@ -222,9 +222,22 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			createNestedMapWithInitialPairs(final Iterable<Pair<STATE, STATE>> initialPairs) {
 		final NestedMap2<STATE, STATE, Pair<STATE, STATE>> result = new NestedMap2<>();
 		for (final Pair<STATE, STATE> pair : initialPairs) {
-			result.put(pair.getFirst(), pair.getSecond(), pair);
+			if (!pair.getFirst().equals(pair.getSecond())) {
+				// only include non-reflexive pairs
+				result.put(pair.getFirst(), pair.getSecond(), pair);
+			}
 		}
 		return result;
+	}
+
+	private static <STATE> NestedMap2<STATE, STATE, Pair<STATE, STATE>>
+			removeReflexivePairs(final NestedMap2<STATE, STATE, Pair<STATE, STATE>> initialPairs) {
+		for (final Triple<STATE, STATE, Pair<STATE, STATE>> entry : initialPairs.entrySet()) {
+			if (entry.getFirst().equals(entry.getSecond())) {
+				initialPairs.remove(entry.getFirst(), entry.getSecond());
+			}
+		}
+		return initialPairs;
 	}
 
 	private static <STATE> Iterable<Pair<STATE, STATE>>
@@ -306,9 +319,27 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			checkTimeout(ADDING_TRANSITIVITY_CONSTRAINTS);
 		}
 
+		// add constraints for reflexive pairs; those are not considered above
 		for (final STATE state : mOperand.getStates()) {
-			generateTransitionConstraintsHelperReturn2(state, getDownStatesArray(state));
+			generateTransitionConstraintsHelperReturnSameLinPred(state, getDownStatesArray(state));
 		}
+	}
+
+	@Override
+	protected boolean testOutgoingSymbols(final Set<LETTER> letters1, final Set<LETTER> letters2) {
+		return letters2.containsAll(letters1);
+	}
+
+	@Override
+	protected void generateTransitionConstraintGeneralInternalCallHelper(final Pair<STATE, STATE> predPair,
+			final Set<STATE> succs1, final Set<STATE> succs2) {
+		generateTransitionConstraintGeneralInternalCallHelperOneSide(predPair, succs1, succs2, null);
+	}
+
+	@Override
+	protected void generateTransitionConstraintGeneralReturnHelper(final Pair<STATE, STATE> linPredPair,
+			final Pair<STATE, STATE> hierPredPair, final Set<STATE> succs1, final Set<STATE> succs2) {
+		generateTransitionConstraintGeneralReturnHelperOneSide(linPredPair, hierPredPair, succs1, succs2, null);
 	}
 
 	private void generateTransitivityConstraints(final Pair<STATE, STATE> pair12) {

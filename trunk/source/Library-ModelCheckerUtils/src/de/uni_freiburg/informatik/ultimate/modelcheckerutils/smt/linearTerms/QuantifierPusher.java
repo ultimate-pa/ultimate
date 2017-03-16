@@ -52,7 +52,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
 
 /**
  * Transform a Term into form where quantifier are pushed as much inwards
- * as possible and quantifiers are eliminated via DER if possible
+ * as possible and quantifiers are eliminated via local quantifier elimination 
+ * techniques if possible
  * 
  * @author Matthias Heizmann
  * 
@@ -60,7 +61,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
 public class QuantifierPusher extends TermTransformer {
 	
 	public enum PqeTechniques {
+		/**
+		 * Apply only the DER partial quantifier elimination technique 
+		 */
 		ONLY_DER,
+		/**
+		 * Apply all our partial quantifier elimination techniques that can
+		 * be applied locally to subterms without knowing the input term
+		 * on which the quantifier elimination was called on.
+		 */
 		ALL_LOCAL,
 	}
 	

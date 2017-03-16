@@ -1,1 +1,0 @@
-CHECK( init(main()), LTL( "c > (servers / 2)" ==> F"resp > (servers / 2)" ) )

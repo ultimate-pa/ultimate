@@ -69,14 +69,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Ic
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.HoareAnnotation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AbstractTemplateIncreasingDimensionsStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AggressiveTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.CFGInvariantsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ConservativeTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DefaultTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.DisjunctsWithBoundTemplateIncreasingDimensionsStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.ExponentialConjunctsTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.MediumTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.PathInvariantsStatisticsGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AbstractTemplateIncreasingDimensionsStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.internal.AggressiveTemplateIncreasingDimensionsStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.HoareAnnotationChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
@@ -125,7 +126,7 @@ public class InvariantSynthesisStarter {
 			for (final Entry<IcfgLocation, IPredicate> entry : invariants.entrySet()) {
 				final HoareAnnotation hoareAnnot = predicateFactory.getNewHoareAnnotation(entry.getKey(), icfg.getCfgSmtToolkit().getModifiableGlobalsTable());
 				hoareAnnot.annotate(entry.getKey());
-				hoareAnnot.addInvariant(predicateUnifier.getTruePredicate(), entry.getValue());				
+				hoareAnnot.addInvariant(entry.getValue());				
 			}
 			writeHoareAnnotationToLogger(icfg);
 			mOverallResult = Result.SAFE;
@@ -217,7 +218,7 @@ public class InvariantSynthesisStarter {
 		final int conjunctsStep = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_STEP_CONJUNCTS);
 		
 		AbstractTemplateIncreasingDimensionsStrategy templateIncrDimensionsStrat = null;
-		IncreasingStrategy incrStrat = prefs.getEnum(InvariantSynthesisPreferenceInitializer.LABEL_INCR_STRATEGY, 
+		final IncreasingStrategy incrStrat = prefs.getEnum(InvariantSynthesisPreferenceInitializer.LABEL_INCR_STRATEGY, 
 				InvariantSynthesisPreferenceInitializer.DEF_INCR_STRATEGY, IncreasingStrategy.class);
 		if (incrStrat == IncreasingStrategy.Conservative) {
 			templateIncrDimensionsStrat = new ConservativeTemplateIncreasingDimensionsStrategy(initialDisjuncts, initialConjuncts, disjunctsStep, conjunctsStep);
@@ -227,6 +228,8 @@ public class InvariantSynthesisStarter {
 			templateIncrDimensionsStrat = new DisjunctsWithBoundTemplateIncreasingDimensionsStrategy(initialDisjuncts, initialConjuncts, disjunctsStep, conjunctsStep);
 		} else if (incrStrat == IncreasingStrategy.Aggressive) {
 			templateIncrDimensionsStrat = new AggressiveTemplateIncreasingDimensionsStrategy(initialDisjuncts, initialConjuncts, disjunctsStep, conjunctsStep);
+		} else if (incrStrat == IncreasingStrategy.ExponentialConjuncts) {
+			templateIncrDimensionsStrat = new ExponentialConjunctsTemplateIncreasingDimensionsStrategy(initialDisjuncts, initialConjuncts, disjunctsStep, conjunctsStep);
 		} else {
 			templateIncrDimensionsStrat = new DefaultTemplateIncreasingDimensionsStrategy(initialDisjuncts, initialConjuncts, disjunctsStep, conjunctsStep);
 		}

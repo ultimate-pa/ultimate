@@ -35,17 +35,21 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -162,7 +166,37 @@ public class IcfgEdgeBuilder {
 	}
 
 	private static boolean onlyInternal(final List<IcfgEdge> transitions) {
-		return transitions.stream().noneMatch(a -> a instanceof IIcfgCallTransition<?>
-				|| a instanceof IIcfgReturnTransition<?, ?> || a instanceof Summary);
+		return transitions.stream().allMatch(IcfgEdgeBuilder::onlyInternal);
+	}
+
+	private static boolean onlyInternal(final IcfgEdge transition) {
+		return transition instanceof IIcfgInternalTransition<?> && !(transition instanceof Summary);
+	}
+
+	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
+			final IcfgLocation target, final Term term) {
+		assert onlyInternal(oldTransition) : "You cannot have calls or returns in normal sequential compositions";
+		final UnmodifiableTransFormula oldTf = IcfgUtils.getTransformula(oldTransition);
+		final TransFormulaBuilder tfb =
+				new TransFormulaBuilder(oldTf.getInVars(), oldTf.getOutVars(), oldTf.getNonTheoryConsts().isEmpty(),
+						oldTf.getNonTheoryConsts(), true, null, oldTf.getAuxVars().isEmpty());
+		if (!oldTf.getAuxVars().isEmpty()) {
+			oldTf.getAuxVars().forEach(tfb::addAuxVar);
+		}
+		tfb.setFormula(term);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+
+		final UnmodifiableTransFormula tf = tfb.finishConstruction(mManagedScript);
+		return constructInternalTransition(oldTransition, source, target, tf);
+	}
+
+	public IcfgEdge constructInternalTransition(final IcfgEdge oldTransition, final IcfgLocation source,
+			final IcfgLocation target, final UnmodifiableTransFormula tf) {
+		assert onlyInternal(oldTransition) : "You cannot have calls or returns in normal sequential compositions";
+		final IcfgInternalTransition rtr = new IcfgInternalTransition(source, target, null, tf);
+		source.addOutgoing(rtr);
+		target.addIncoming(rtr);
+		ModelUtils.copyAnnotations(oldTransition, rtr);
+		return rtr;
 	}
 }

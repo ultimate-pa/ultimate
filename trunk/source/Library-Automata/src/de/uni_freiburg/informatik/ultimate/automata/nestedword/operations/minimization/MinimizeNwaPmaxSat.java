@@ -306,7 +306,37 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			// add transition constraints
 			generateTransitionConstraintsHelper(state1, state2, getVariable(state1, state2, false));
 		}
-		generateTransitionConstraintsHelperReturn2(state1, downStates1);
+		// add constraints for reflexive pairs; those are not considered above
+		generateTransitionConstraintsHelperReturnSameLinPred(state1, downStates1);
+	}
+
+	@Override
+	protected boolean testOutgoingSymbols(final Set<LETTER> letters1, final Set<LETTER> letters2) {
+		return letters1.equals(letters2);
+	}
+
+	@Override
+	protected void generateTransitionConstraintGeneralInternalCallHelper(final Doubleton<STATE> predPair,
+			final Set<STATE> succs1, final Set<STATE> succs2) {
+		// symmetric handling (in both directions)
+
+		final Collection<STATE> succsToRemove = new ArrayList<>();
+
+		generateTransitionConstraintGeneralInternalCallHelperOneSide(predPair, succs1, succs2, succsToRemove);
+		/*
+		 * Optimization: If a state from the second set is known to be similar to another on from the first set, we
+		 * should not try to add a clause for the other direction (as it will be found out again that they are
+		 * similar).
+		 */
+		succs2.removeAll(succsToRemove);
+
+		generateTransitionConstraintGeneralInternalCallHelperOneSide(predPair, succs2, succs1, null);
+	}
+
+	@Override
+	protected void generateTransitionConstraintGeneralReturnHelper(final Doubleton<STATE> linPredPair,
+			final Doubleton<STATE> hierPredPair, final Set<STATE> succs1, final Set<STATE> succs2) {
+		generateTransitionConstraintGeneralReturnHelperSymmetric(linPredPair, hierPredPair, succs1, succs2);
 	}
 
 	private void generateTransitivityConstraints(final STATE[] states) throws AutomataOperationCanceledException {

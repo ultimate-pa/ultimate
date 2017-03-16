@@ -39,8 +39,8 @@ public class BlockEncodingPreferences extends UltimatePreferenceInitializer {
 		NONE, SINGLE, SINGLE_NODE_MULTI_EDGE, MULTI
 	}
 
-	public static final String PRE_SBE = "Use SBE for initial RCFG";
-	public static final String PRE_SBE_REWRITENOTEQUALS = "Rewrite not-equals during SBE";
+	public static final String PRE_SBE = "Use SBE";
+	public static final String PRE_REWRITENOTEQUALS = "Rewrite not-equals";
 
 	public static final String FXP_MAXIMIZE_FINAL_STATES = "Maximize final states";
 
@@ -49,26 +49,19 @@ public class BlockEncodingPreferences extends UltimatePreferenceInitializer {
 			"Minimize states even if more edges are added than removed.";
 	public static final String FXP_REMOVE_INFEASIBLE_EDGES = "Remove infeasible edges";
 	public static final String FXP_REMOVE_SINK_STATES = "Remove sink states";
-	public static final String FXP_SIMPLIFY_ASSUMES = "Simplify assume statements";
-	public static final String FXP_SIMPLIFY_ASSUMES_SBE = "Use SBE during assume simplification";
-	public static final String FXP_SIMPLIFY_ASSUMES_REWRITENOTEQUALS =
-			"Rewrite not equals when simplifying assume statements with SBE";
 	public static final String FXP_UNTIL_FIXPOINT = "Apply optimizations until nothing changes";
 	public static final String FXP_MAX_ITERATIONS =
 			"Iterate optimizations for n times (<=0 means until nothing changes)";
 	public static final String FXP_INTERPROCEDURAL_COMPOSITION = "Create interprocedural compositions";
 
 	public static final String POST_USE_PARALLEL_COMPOSITION = "Create parallel compositions if possible";
-	public static final String POST_SIMPLIFY_CODEBLOCKS = "Simplify codeblocks";
+	public static final String POST_SIMPLIFY_TRANSITIONS = "Simplify transitions";
 
 	private static final String PRE_SBE_DESC = null;
 	private static final String PRE_SBE_REWRITENOTEQUALS_DESC = null;
 
 	private static final String FXP_MAX_ITERATIONS_DESC = null;
 	private static final String FXP_UNTIL_FIXPOINT_DESC = null;
-	private static final String FXP_SIMPLIFY_ASSUMES_REWRITENOTEQUALS_DESC = null;
-	private static final String FXP_SIMPLIFY_ASSUMES_SBE_DESC = null;
-	private static final String FXP_SIMPLIFY_ASSUMES_DESC = null;
 	private static final String FXP_REMOVE_SINK_STATES_DESC = null;
 	private static final String FXP_REMOVE_INFEASIBLE_EDGES_DESC = null;
 	private static final String FXP_INTERPROCEDURAL_COMPOSITION_DESC = null;
@@ -77,7 +70,7 @@ public class BlockEncodingPreferences extends UltimatePreferenceInitializer {
 	private static final String FXP_MAXIMIZE_FINAL_STATES_DESC = null;
 
 	private static final String POST_USE_PARALLEL_COMPOSITION_DESC = null;
-	private static final String POST_SIMPLIFY_CODEBLOCKS_DESC = null;
+	private static final String POST_SIMPLIFY_TRANSITIONS_DESC = null;
 
 	public BlockEncodingPreferences() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -88,7 +81,7 @@ public class BlockEncodingPreferences extends UltimatePreferenceInitializer {
 		return new UltimatePreferenceItem<?>[] {
 				new UltimatePreferenceItem<>("Pre-processing", "", PreferenceType.Label),
 				new UltimatePreferenceItem<>(PRE_SBE, Boolean.FALSE, PRE_SBE_DESC, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(PRE_SBE_REWRITENOTEQUALS, Boolean.FALSE, PRE_SBE_REWRITENOTEQUALS_DESC,
+				new UltimatePreferenceItem<>(PRE_REWRITENOTEQUALS, Boolean.FALSE, PRE_SBE_REWRITENOTEQUALS_DESC,
 						PreferenceType.Boolean),
 
 				new UltimatePreferenceItem<>("Iterative encodings", "", PreferenceType.Label),
@@ -104,12 +97,6 @@ public class BlockEncodingPreferences extends UltimatePreferenceInitializer {
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(FXP_INTERPROCEDURAL_COMPOSITION, Boolean.TRUE,
 						FXP_INTERPROCEDURAL_COMPOSITION_DESC, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(FXP_SIMPLIFY_ASSUMES, Boolean.FALSE, FXP_SIMPLIFY_ASSUMES_DESC,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(FXP_SIMPLIFY_ASSUMES_SBE, Boolean.FALSE, FXP_SIMPLIFY_ASSUMES_SBE_DESC,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(FXP_SIMPLIFY_ASSUMES_REWRITENOTEQUALS, Boolean.FALSE,
-						FXP_SIMPLIFY_ASSUMES_REWRITENOTEQUALS_DESC, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(FXP_UNTIL_FIXPOINT, Boolean.TRUE, FXP_UNTIL_FIXPOINT_DESC,
 						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(FXP_MAX_ITERATIONS, 0, FXP_MAX_ITERATIONS_DESC, PreferenceType.Integer),
@@ -117,7 +104,7 @@ public class BlockEncodingPreferences extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>("Post processing", "", PreferenceType.Label),
 				new UltimatePreferenceItem<>(POST_USE_PARALLEL_COMPOSITION, Boolean.TRUE,
 						POST_USE_PARALLEL_COMPOSITION_DESC, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(POST_SIMPLIFY_CODEBLOCKS, Boolean.FALSE, POST_SIMPLIFY_CODEBLOCKS_DESC,
+				new UltimatePreferenceItem<>(POST_SIMPLIFY_TRANSITIONS, Boolean.FALSE, POST_SIMPLIFY_TRANSITIONS_DESC,
 						PreferenceType.Boolean),
 
 		};

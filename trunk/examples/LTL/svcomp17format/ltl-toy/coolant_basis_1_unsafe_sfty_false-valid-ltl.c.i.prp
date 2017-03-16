@@ -1,0 +1,1 @@
+CHECK( init(main()), LTL( !G(!"chainBroken == 1" || G"chainBroken == 1") ) )

@@ -32,11 +32,13 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.function.Supplier;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorLogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 
 public class TermEvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE, IProgramVarOrConst>>
@@ -45,13 +47,15 @@ public class TermEvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STAT
 	private final Function<Object, VALUE> mConstantValueExpressionEvaluatorCreator;
 	private final int mMaxParallelStates;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
+	private final EvaluatorLogger mEvaluatorLogger;
 	
-	public TermEvaluatorFactory(final int maxParallelStates,
+	public TermEvaluatorFactory(final ILogger logger, final int maxParallelStates,
 			final Function<Object, VALUE> constantValueEvaluatorCreator,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mMaxParallelStates = maxParallelStates;
 		mConstantValueExpressionEvaluatorCreator = constantValueEvaluatorCreator;
 		mNonrelationalValueFactory = nonrelationalValueFactory;
+		mEvaluatorLogger = new EvaluatorLogger(logger);
 	}
 	
 	@Override
@@ -60,8 +64,8 @@ public class TermEvaluatorFactory<VALUE extends INonrelationalValue<VALUE>, STAT
 			final Supplier<STATE> bottomStateSupplier) {
 		assert arity >= 0;
 		assert operator != null;
-		return new ApplicationTermEvaluator<>(arity, operator, mMaxParallelStates, nonrelationalValueFactory,
-				bottomStateSupplier);
+		return new ApplicationTermEvaluator<>(mEvaluatorLogger, arity, operator, mMaxParallelStates,
+				nonrelationalValueFactory, bottomStateSupplier);
 	}
 	
 	@Override

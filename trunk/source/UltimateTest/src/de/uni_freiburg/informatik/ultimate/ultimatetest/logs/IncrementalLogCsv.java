@@ -83,6 +83,11 @@ public class IncrementalLogCsv extends DefaultIncrementalLogfile {
 		}
 	}
 
+	@Override
+	public String getFilenameExtension() {
+		return "-incremental.csv";
+	}
+
 	private StringBuilder addResult(final UltimateRunDefinition ultimateRunDefinition,
 			final TestResult threeValuedResult, final String category, final String message,
 			final Map<String, List<IResult>> results) {

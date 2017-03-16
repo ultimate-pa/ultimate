@@ -101,6 +101,7 @@ public class PathInvariantsTest extends
 //		"examples/programs/InvariantSynthesis",
 //		"examples/programs/scalable",
 //		"examples/programs/toy",
+//		"examples/programs/20170304-DifficultPathPrograms",
 	};
 	
 	
@@ -120,6 +121,7 @@ public class PathInvariantsTest extends
 //		"automizer/pathInvariants/InvariantSynthesis_Medium.epf",
 //		"automizer/pathInvariants/InvariantSynthesis_DisjunctsWithBound.epf",
 //		"automizer/pathInvariants/InvariantSynthesis_Aggressive.epf",
+//		"automizer/pathInvariants/InvariantSynthesis_ExponentialConjuncts.epf",			
 	};
 	
 	/**

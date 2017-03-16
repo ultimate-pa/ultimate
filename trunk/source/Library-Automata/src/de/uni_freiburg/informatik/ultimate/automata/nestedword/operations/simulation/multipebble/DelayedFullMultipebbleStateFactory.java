@@ -83,7 +83,7 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 					// duplicator succs contains spoiler succ, hence spoiler cannot win
 					return null;
 				}
-				if (isInitialPair(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
+				if (isSimulationCandidate(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
 					duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(),
 							succDuplicatorObligationBit);
 				} else {
@@ -114,7 +114,7 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 					// duplicator succs contains spoiler succ, hence spoiler cannot win
 					return null;
 				}
-				if (isInitialPair(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
+				if (isSimulationCandidate(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
 					duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(),
 							succDuplicatorObligationBit);
 				} else {
@@ -154,7 +154,7 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 								duplicatorSucc.getUp()) == Boolean.FALSE) {
 							// do nothing, DoubleDecker without obligation already contained
 						} else {
-							if (isInitialPair(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
+							if (isSimulationCandidate(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
 								duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(),
 										succDuplicatorObligationBit);
 							} else {

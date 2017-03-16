@@ -74,8 +74,8 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final AutomataOperationStatistics mStatistics;
-	private final Metrie mMetriePreprocessing = Metrie.SYM;
-	private final Metrie mMetriePostprocessing = Metrie.SYM;
+	private final Metrie mMetriePreprocessing = Metrie.ASYM;
+	private final Metrie mMetriePostprocessing = Metrie.ASYM;
 
 	/**
 	 * @param services

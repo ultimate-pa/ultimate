@@ -79,28 +79,36 @@ public class RemoveNegation extends TransformerPreprocessor {
 
 		@Override
 		protected void convert(final Term term) {
-			if (term instanceof ApplicationTerm) {
-				final ApplicationTerm appt = (ApplicationTerm) term;
-				if (appt.getFunction().getName().equals("not")) {
-					assert appt.getParameters().length == 1;
-					final Term param = appt.getParameters()[0];
-					assert param instanceof ApplicationTerm;
-					final ApplicationTerm appt2 = (ApplicationTerm) param;
-					if (appt2.getFunction().getName().equals("<=")) {
-						setResult(mScript.term(">", appt2.getParameters()));
-					} else if (appt2.getFunction().getName().equals("<")) {
-						setResult(mScript.term(">=", appt2.getParameters()));
-					} else if (appt2.getFunction().getName().equals(">=")) {
-						setResult(mScript.term("<", appt2.getParameters()));
-					} else if (appt2.getFunction().getName().equals(">")) {
-						setResult(mScript.term("<=", appt2.getParameters()));
-					} else {
-						assert false;
-					}
-					return;
-				}
+			if (!(term instanceof ApplicationTerm)) {
+				super.convert(term);
+				return;
 			}
-			super.convert(term);
+			final ApplicationTerm appt = (ApplicationTerm) term;
+			if (!"not".equals(appt.getFunction().getName())) {
+				super.convert(term);
+				return;
+			}
+			assert appt.getParameters().length == 1;
+
+			final Term param = appt.getParameters()[0];
+			if (!(param instanceof ApplicationTerm)) {
+				super.convert(term);
+				return;
+			}
+			final ApplicationTerm appt2 = (ApplicationTerm) param;
+			final String funName = appt2.getFunction().getName();
+			if ("<=".equals(funName)) {
+				setResult(mScript.term(">", appt2.getParameters()));
+			} else if ("<".equals(funName)) {
+				setResult(mScript.term(">=", appt2.getParameters()));
+			} else if (">=".equals(funName)) {
+				setResult(mScript.term("<", appt2.getParameters()));
+			} else if (">".equals(funName)) {
+				setResult(mScript.term("<=", appt2.getParameters()));
+			} else {
+				setResult(term);
+			}
+
 		}
 	}
 }

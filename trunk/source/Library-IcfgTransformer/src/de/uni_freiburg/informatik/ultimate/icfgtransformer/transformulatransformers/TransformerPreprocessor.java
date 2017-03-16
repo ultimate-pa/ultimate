@@ -46,7 +46,8 @@ public abstract class TransformerPreprocessor extends TransitionPreprocessor {
 	protected abstract TermTransformer getTransformer(ManagedScript script);
 
 	@Override
-	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf) throws TermException {
+	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf)
+			throws TermException {
 		final TermTransformer transformer = getTransformer(script);
 		final ModifiableTransFormula newTf = new ModifiableTransFormula(tf);
 		newTf.setFormula(transformer.transform(tf.getFormula()));

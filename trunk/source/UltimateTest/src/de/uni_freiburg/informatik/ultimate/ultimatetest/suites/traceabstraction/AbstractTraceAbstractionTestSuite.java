@@ -144,7 +144,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 		return new ITestSummary[] { new TraceAbstractionTestSummary(this.getClass()),
 				new CsvConcatenator(this.getClass(), TraceAbstractionBenchmarks.class),
 				new CsvConcatenator(this.getClass(), CodeCheckBenchmarks.class),
-				new CsvConcatenator(this.getClass(), StatisticsData.class),
+//				new CsvConcatenator(this.getClass(), StatisticsData.class),
 				new LatexOverviewSummary(getClass(), benchmarks, columnDef),
 				// new LatexDetailedSummary(getClass(), benchmarks, columnDef),
 				 new CsvSummary(getClass(), benchmarks, columnDef),
@@ -156,7 +156,7 @@ public abstract class AbstractTraceAbstractionTestSuite extends AbstractModelChe
 	protected IIncrementalLog[] constructIncrementalLog() {
 		return new IIncrementalLog[] { new IncrementalLogWithBenchmarkResults(this.getClass()),
 				new IncrementalLogWithVMParameters(this.getClass(), getTimeout()),
-//				new IncrementalLogCsv(this.getClass(), StatisticsData.class),
+				new IncrementalLogCsv(this.getClass(), StatisticsData.class),
 				};
 	}
 }

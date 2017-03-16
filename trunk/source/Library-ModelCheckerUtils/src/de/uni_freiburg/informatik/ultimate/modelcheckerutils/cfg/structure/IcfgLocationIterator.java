@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure;
 
 import java.util.ArrayDeque;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -60,9 +61,7 @@ public class IcfgLocationIterator<LOC extends IcfgLocation> implements Iterator<
 	 *            The given location.
 	 */
 	public IcfgLocationIterator(final LOC location) {
-		mFinished = new HashSet<>();
-		mWorklist = new ArrayDeque<>();
-		mWorklist.add(location);
+		this(Collections.singleton(location));
 	}
 
 	/**
@@ -76,6 +75,7 @@ public class IcfgLocationIterator<LOC extends IcfgLocation> implements Iterator<
 		mFinished = new HashSet<>();
 		mWorklist = new ArrayDeque<>();
 		mWorklist.addAll(locations);
+		mFinished.addAll(mWorklist);
 	}
 
 	/**
@@ -86,10 +86,7 @@ public class IcfgLocationIterator<LOC extends IcfgLocation> implements Iterator<
 	 *            The given {@link IIcfg}.
 	 */
 	public IcfgLocationIterator(final IIcfg<LOC> icfg) {
-		mFinished = new HashSet<>();
-		mWorklist = new ArrayDeque<>();
-		mWorklist.addAll(icfg.getInitialNodes());
-		mFinished.addAll(mWorklist);
+		this(icfg.getInitialNodes());
 	}
 
 	@Override

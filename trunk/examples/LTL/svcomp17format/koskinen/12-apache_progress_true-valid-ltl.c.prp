@@ -1,1 +1,0 @@
-CHECK( init(main()), LTL( G((F"lr>0" || F"status!=7") || "do_ACCEPT!=1") ) )

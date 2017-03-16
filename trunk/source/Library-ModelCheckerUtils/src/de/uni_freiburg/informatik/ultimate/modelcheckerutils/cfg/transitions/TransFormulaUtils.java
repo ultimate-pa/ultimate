@@ -101,7 +101,7 @@ public class TransFormulaUtils {
 
 	/**
 	 * @param services
-	 * @return the relational composition (concatenation) of transformula1 und transformula2
+	 * @return the relational composition (concatenation) of transformula1 and transformula2
 	 */
 	public static UnmodifiableTransFormula sequentialComposition(final ILogger logger,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean simplify,
