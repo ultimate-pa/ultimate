@@ -306,7 +306,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			// add transition constraints
 			generateTransitionConstraintsHelper(state1, state2, getVariable(state1, state2, false));
 		}
-		generateTransitionConstraintsHelperReturn2(state1, downStates1);
+		generateTransitionConstraintsHelperReturnSameLinPred(state1, downStates1);
 	}
 
 	@Override

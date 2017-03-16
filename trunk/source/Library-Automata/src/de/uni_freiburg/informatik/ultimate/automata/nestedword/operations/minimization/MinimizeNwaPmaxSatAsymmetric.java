@@ -320,7 +320,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		}
 
 		for (final STATE state : mOperand.getStates()) {
-			generateTransitionConstraintsHelperReturn2(state, getDownStatesArray(state));
+			generateTransitionConstraintsHelperReturnSameLinPred(state, getDownStatesArray(state));
 		}
 	}
 

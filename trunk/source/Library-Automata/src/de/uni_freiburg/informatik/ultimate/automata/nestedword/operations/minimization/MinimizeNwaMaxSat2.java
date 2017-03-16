@@ -254,7 +254,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			generateTransitionConstraintInternalGeneral(state1, state2, predPair);
 			generateTransitionConstraintCallGeneral(state1, state2, predPair);
 		}
-		generateTransitionConstraintsHelperReturn1(state1, downStates1, state2, predPair);
+		generateTransitionConstraintsHelperReturnMixedLinPred(state1, downStates1, state2, predPair);
 	}
 
 	private void generateTransitionConstraintInternalHorn(final STATE predState1, final STATE predState2,
@@ -343,7 +343,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		}
 	}
 
-	private void generateTransitionConstraintsHelperReturn1(final STATE state1, final STATE[] downStates1,
+	private void generateTransitionConstraintsHelperReturnMixedLinPred(final STATE state1, final STATE[] downStates1,
 			final STATE state2, final T predPair) {
 		// NOTE: slower iteration outside
 		for (final STATE down2 : mOperand.getDownStates(state2)) {
@@ -354,7 +354,8 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		}
 	}
 
-	protected final void generateTransitionConstraintsHelperReturn2(final STATE state, final STATE[] downStates) {
+	protected final void generateTransitionConstraintsHelperReturnSameLinPred(final STATE state,
+			final STATE[] downStates) {
 		for (int k = 0; k < downStates.length; k++) {
 			for (int l = 0; l < k; l++) {
 				generateTransitionConstraintReturn(state, state, null, downStates[k], downStates[l],
@@ -377,7 +378,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			addThreeLiteralHornClause(linPredPair, hierPredPair, null);
 			return;
 		}
-		
+
 		// both DoubleDeckers have same outgoing return symbols
 		if (horn) {
 			generateTransitionConstraintReturnHelperHorn(linPredState1, linPredState2, linPredPair, hierPredState1,
