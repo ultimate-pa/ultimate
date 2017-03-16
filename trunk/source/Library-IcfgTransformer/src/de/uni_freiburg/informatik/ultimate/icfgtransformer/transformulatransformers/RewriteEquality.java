@@ -37,13 +37,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Mod
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Replaces equalities (atoms of the form a = b) with (a ≤ b \/ a ≥ b).
+ * Replaces equalities (atoms of the form a = b) with (a ≤ b /\ a ≥ b) and inequalities (a != b) with (a > b \/ a < b).
  * 
  * @author Jan Leike
  */
 public class RewriteEquality extends TransformerPreprocessor {
 
-	public static final String DESCRIPTION = "Replaces atoms of the form a = b with (a <= b /\\ a >= b)";
+	public static final String DESCRIPTION =
+			"Replaces a = b with (a <= b /\\ a >= b) and a != b with (a > b \\/ a < b)";
 
 	@Override
 	public String getDescription() {
@@ -53,9 +54,9 @@ public class RewriteEquality extends TransformerPreprocessor {
 	@Override
 	public boolean checkSoundness(final Script script, final ModifiableTransFormula oldTF,
 			final ModifiableTransFormula newTF) {
-		final Term old_term = oldTF.getFormula();
-		final Term new_term = newTF.getFormula();
-		return LBool.SAT != Util.checkSat(script, script.term("distinct", old_term, new_term));
+		final Term oldTerm = oldTF.getFormula();
+		final Term newTerm = newTF.getFormula();
+		return LBool.SAT != Util.checkSat(script, script.term("distinct", oldTerm, newTerm));
 	}
 
 	@Override
@@ -76,16 +77,16 @@ public class RewriteEquality extends TransformerPreprocessor {
 		protected void convert(final Term term) {
 			if (term instanceof ApplicationTerm) {
 				final ApplicationTerm appt = (ApplicationTerm) term;
-				if (appt.getFunction().getName().equals("=")
-						&& !appt.getParameters()[0].getSort().getName().equals("Bool")) {
+				if ("=".equals(appt.getFunction().getName())
+						&& !"Bool".equals(appt.getParameters()[0].getSort().getName())) {
 					assert appt
 							.getParameters().length == 2 : "equality with more than two parameters not yet supported";
 					final Term param1 = mScript.term("<=", appt.getParameters());
 					final Term param2 = mScript.term(">=", appt.getParameters());
 					setResult(mScript.term("and", param1, param2));
 					return;
-				} else if (appt.getFunction().getName().equals("distinct")
-						&& !appt.getParameters()[0].getSort().getName().equals("Bool")) {
+				} else if ("distinct".equals(appt.getFunction().getName())
+						&& !"Bool".equals(appt.getParameters()[0].getSort().getName())) {
 					assert appt
 							.getParameters().length == 2 : "distinct with more than two parameters not yet supported";
 					final Term param1 = mScript.term("<", appt.getParameters());
