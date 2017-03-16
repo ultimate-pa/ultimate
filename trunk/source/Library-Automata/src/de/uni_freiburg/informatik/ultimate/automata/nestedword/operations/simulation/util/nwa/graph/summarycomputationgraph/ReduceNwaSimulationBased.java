@@ -81,8 +81,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
-	private static final boolean DEFAULT_USE_BISIMULATION = true;
-	private static final boolean DEFAULT_USE_BISIMULATION_PREPROCESSING = true;
+	private static final boolean DEFAULT_USE_BISIMULATION = false;
+	private static final boolean DEFAULT_USE_BISIMULATION_PREPROCESSING = false;
 
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final AutomataOperationStatistics mStatistics;
