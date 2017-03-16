@@ -47,6 +47,7 @@ class PropParser:
 
     prop_regex = re.compile('^\s*CHECK\s*\(\s*init\s*\((.*)\)\s*,\s*LTL\((.*)\)\s*\)\s*$', re.MULTILINE)
     funid_regex = re.compile('\s*(\S*)\s*\(.*\)')
+    word_regex = re.compile('\b[^\W\d_]+\b')
     forbidden_words = ['valid-free', 'valid-deref', 'valid-memtrack', 'end', 'overflow', 'call']
         
     def __init__(self, propfile):
@@ -85,7 +86,7 @@ class PropParser:
                 self.termination = True
             elif formula == 'G ! overflow': 
                 self.overflow = True
-            elif not check_string_contains(formula, self.forbidden_words):
+            elif not check_string_contains(self.word_regex.findall(formula), self.forbidden_words):
                 # its ltl
                 if self.ltl:
                     raise RuntimeError('We support only one (real) LTL property per .prp file (have seen {0} and {1}'
@@ -124,6 +125,13 @@ class PropParser:
     
     def get_ltl_formula(self):
         return self.ltlformula
+
+def check_string_contains(strings, words):
+    for string in strings:
+        for word in words:
+            if word == string:
+                return True
+    return False
 
 def get_binary():
     # currently unused because of rcp launcher bug 
@@ -356,12 +364,6 @@ def check_dir(d):
     if not os.path.isdir(d):
         raise argparse.ArgumentTypeError("Directory %s does not exist" % d)
     return d
-
-def check_string_contains(string, words):
-    for word in words: 
-        if word in string:
-            return True
-    return False
 
 def parse_args():
     # parse command line arguments
