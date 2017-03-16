@@ -121,7 +121,7 @@ public class PathInvariantsTest extends
 //		"automizer/pathInvariants/InvariantSynthesis_Medium.epf",
 //		"automizer/pathInvariants/InvariantSynthesis_DisjunctsWithBound.epf",
 //		"automizer/pathInvariants/InvariantSynthesis_Aggressive.epf",
-//		"automizer/pathInvariants/InvariantSynthesis_ExponentialConjuncts.epf",			
+//		"automizer/pathInvariants/InvariantSynthesis_ConjunctsPriorized.epf",
 	};
 	
 	/**
