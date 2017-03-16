@@ -20,7 +20,7 @@ int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDela
 assert(minimizeSevpaSize == 12);
 assert(shrinkNwaSize == 10);
 assert(minimizeNwaPmaxSatSize == 10);
-assert(minimizeNwaPmaxSatAsymmetricSize == 10);
+assert(minimizeNwaPmaxSatAsymmetricSize == 11);
 assert(reduceNwaDirectSimulationSize == 10);
 assert(reduceNwaDirectSimulationBSize == 10);
 assert(reduceNwaDirectFullMultipebbleSimulationSize == 10);
