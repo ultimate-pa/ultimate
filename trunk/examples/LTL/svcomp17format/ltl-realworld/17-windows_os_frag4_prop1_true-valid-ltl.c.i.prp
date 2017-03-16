@@ -1,1 +1,1 @@
-CHECK( init(main()), LTL( G("keA != 0" ==> F"keR != 0") ) )
+CHECK( init(main()), LTL( G(!"keA != 0" || F"keR != 0") ) )

@@ -1,1 +1,1 @@
-CHECK( init(main()), LTL( (G "die_now == 0") ==> (GF"do_ACCEPT != 0") ) )
+CHECK( init(main()), LTL( !(G "die_now == 0")  || (GF"do_ACCEPT != 0") ) )

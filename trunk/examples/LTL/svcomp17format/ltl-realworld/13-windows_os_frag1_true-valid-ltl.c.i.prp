@@ -1,1 +1,1 @@
-CHECK( init(main()), LTL( "__INITIALIZED == 0" U ( G("a!= 0" ==> F"r != 0") )) )
+CHECK( init(main()), LTL( "__INITIALIZED == 0" U ( G(!"a!= 0" || F"r != 0") )) )
