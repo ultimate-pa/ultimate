@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.AssumeMerger;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.IEncoder;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.IcfgEdgeBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.InterproceduralSequenzer;
@@ -56,7 +55,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.Minimi
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.ParallelComposer;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.RemoveInfeasibleEdges;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.RemoveSinkStates;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.RewriteNotEquals;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.Simplifier;
+import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding.SmallBlockEncoder;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences.MinimizeStates;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
@@ -161,6 +162,20 @@ public final class BlockEncoder {
 		final boolean optimizeUntilFixpoint = ups.getBoolean(BlockEncodingPreferences.FXP_UNTIL_FIXPOINT);
 		int i = 1;
 
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("==== BE Preprocessing ====");
+		}
+
+		if (ups.getBoolean(BlockEncodingPreferences.PRE_REWRITENOTEQUALS)) {
+			mIterationResult =
+					new RewriteNotEquals(mEdgeBuilder, mServices, mBacktranslator, mLogger).getResult(mIterationResult);
+		}
+
+		if (ups.getBoolean(BlockEncodingPreferences.PRE_SBE)) {
+			mIterationResult = new SmallBlockEncoder(mEdgeBuilder, mServices, mBacktranslator, mLogger)
+					.getResult(mIterationResult);
+		}
+
 		while (true) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("==== BE Pass #" + i + "====");
@@ -190,7 +205,7 @@ public final class BlockEncoder {
 		}
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("==== BE Post Processing ====");
+			mLogger.debug("==== BE Postprocessing ====");
 		}
 
 		if (ups.getBoolean(BlockEncodingPreferences.POST_USE_PARALLEL_COMPOSITION)) {
@@ -198,7 +213,7 @@ public final class BlockEncoder {
 					new ParallelComposer(mEdgeBuilder, mServices, mBacktranslator, mLogger).getResult(mIterationResult);
 		}
 
-		if (ups.getBoolean(BlockEncodingPreferences.POST_SIMPLIFY_CODEBLOCKS)) {
+		if (ups.getBoolean(BlockEncodingPreferences.POST_SIMPLIFY_TRANSITIONS)) {
 			mIterationResult =
 					new Simplifier(mEdgeBuilder, mServices, mBacktranslator, mLogger).getResult(mIterationResult);
 		}
@@ -241,10 +256,6 @@ public final class BlockEncoder {
 			default:
 				throw new IllegalArgumentException(minimizeStates + " is an unknown enum value!");
 			}
-		}
-
-		if (ups.getBoolean(BlockEncodingPreferences.FXP_SIMPLIFY_ASSUMES)) {
-			rtr.add(() -> new AssumeMerger(mEdgeBuilder, mServices, mBacktranslator, mLogger));
 		}
 
 		if (ups.getBoolean(BlockEncodingPreferences.FXP_REMOVE_SINK_STATES)) {

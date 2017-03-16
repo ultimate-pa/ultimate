@@ -61,13 +61,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public class ReplacementVarFactory {
-	
+
 	private final ManagedScript mMgdScript;
 	private final CfgSmtToolkit mCsToolkit;
 	private final Map<Term, IReplacementVarOrConst> mRepVarMapping = new HashMap<>();
 	private final Map<String, TermVariable> mAuxVarMapping = new HashMap<>();
 	private final boolean mUseIntraproceduralReplacementVar;
-	
+
 	/**
 	 * @param useIntraproceduralReplacementVars
 	 *            construct always only {@link IntraproceduralReplacementVar} instead of {@link LocalReplacementVar},
@@ -79,7 +79,7 @@ public class ReplacementVarFactory {
 		mCsToolkit = csToolkit;
 		mUseIntraproceduralReplacementVar = useIntraproceduralReplacementVars;
 	}
-	
+
 	/**
 	 * Get the ReplacementVar that is used as a replacement for the Term definition. Construct this ReplacementVar if it
 	 * does not exist yet.
@@ -95,7 +95,7 @@ public class ReplacementVarFactory {
 		}
 		final String nameCandidate = "rep" + SmtUtils.removeSmtQuoteCharacters(definition.toString());
 		final TermVariable tv = mMgdScript.constructFreshTermVariable(nameCandidate, definition.getSort());
-		
+
 		final IReplacementVarOrConst newRepVar;
 		if (mUseIntraproceduralReplacementVar) {
 			newRepVar = new IntraproceduralReplacementVar(tv.getName(), definition, tv);
@@ -130,9 +130,9 @@ public class ReplacementVarFactory {
 		}
 		mRepVarMapping.put(definition, newRepVar);
 		return newRepVar;
-		
+
 	}
-	
+
 	private void constructAndAddCorrespondingNonOldVarForOldVarDefinition(final Term definition, final TermVariable tv,
 			final ReplacementOldVar oldVar) {
 		final Term nonOldVarDefinition =
@@ -142,7 +142,7 @@ public class ReplacementVarFactory {
 		final ReplacementNonOldVar nonoldVar = constructReplacementNonOldVar(nonOldVarDefinition, nonoldVarTv, oldVar);
 		mRepVarMapping.put(nonOldVarDefinition, nonoldVar);
 	}
-	
+
 	private ReplacementOldVar constructAndAddCorrespondingOldVarForNonoldDefinition(final Term definition,
 			final TermVariable tv) {
 		final Term oldVarDefinition =
@@ -153,7 +153,7 @@ public class ReplacementVarFactory {
 		mRepVarMapping.put(oldVarDefinition, oldVar);
 		return oldVar;
 	}
-	
+
 	private ReplacementConst constructReplacementConst(final Term definition, final TermVariable tv) {
 		mMgdScript.lock(this);
 		mMgdScript.declareFun(this, tv.getName(), new Sort[0], tv.getSort());
@@ -161,7 +161,7 @@ public class ReplacementVarFactory {
 		mMgdScript.unlock(this);
 		return new ReplacementConst(tv.getName(), smtConstant, definition);
 	}
-	
+
 	private LocalReplacementVar constructLocalReplacementVar(final Term definition, final TermVariable tv,
 			final String proc) {
 		mMgdScript.lock(this);
@@ -172,7 +172,7 @@ public class ReplacementVarFactory {
 		mMgdScript.unlock(this);
 		return new LocalReplacementVar(tv.getName(), proc, tv, defaultConstant, primedContant, definition);
 	}
-	
+
 	private ReplacementOldVar constructReplacementOldVar(final Term definition, final TermVariable tv) {
 		mMgdScript.lock(this);
 		final ApplicationTerm defaultConstant =
@@ -182,7 +182,7 @@ public class ReplacementVarFactory {
 		mMgdScript.unlock(this);
 		return new ReplacementOldVar(tv.getName(), tv, defaultConstant, primedContant, definition);
 	}
-	
+
 	private ReplacementNonOldVar constructReplacementNonOldVar(final Term definition, final TermVariable tv,
 			final ReplacementOldVar oldVar) {
 		mMgdScript.lock(this);
@@ -193,7 +193,7 @@ public class ReplacementVarFactory {
 		mMgdScript.unlock(this);
 		return new ReplacementNonOldVar(tv.getName(), tv, defaultConstant, primedContant, oldVar, definition);
 	}
-	
+
 	/**
 	 * Construct and return a unique TermVariable with the given name.
 	 */
@@ -209,7 +209,7 @@ public class ReplacementVarFactory {
 		}
 		return auxVar;
 	}
-	
+
 	private Pair<Set<Class<? extends IProgramVarOrConst>>, Set<String>> analyzeDefinition(final Term definition) {
 		final Set<Class<? extends IProgramVarOrConst>> constOrVarKinds = new HashSet<>();
 		final Set<String> procs = new HashSet<>();
@@ -233,7 +233,7 @@ public class ReplacementVarFactory {
 		}
 		return result;
 	}
-	
+
 	public IIcfgSymbolTable constructIIcfgSymbolTable() {
 		final DefaultIcfgSymbolTable result =
 				new DefaultIcfgSymbolTable(mCsToolkit.getSymbolTable(), mCsToolkit.getProcedures());
@@ -244,7 +244,7 @@ public class ReplacementVarFactory {
 		}
 		return result;
 	}
-	
+
 	public ModifiableGlobalsTable constructModifiableGlobalsTable() {
 		final HashRelation<String, IProgramNonOldVar> proc2Globals = new HashRelation<>();
 		// construct copy
@@ -265,9 +265,13 @@ public class ReplacementVarFactory {
 					proc2Globals.addPair(proc, nonOld);
 				}
 			}
-			
+
 		}
 		return new ModifiableGlobalsTable(proc2Globals);
 	}
-	
+
+	public boolean isUnused() {
+		return mRepVarMapping.isEmpty() && mAuxVarMapping.isEmpty();
+	}
+
 }

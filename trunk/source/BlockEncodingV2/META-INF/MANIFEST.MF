@@ -11,7 +11,8 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
+ de.uni_freiburg.informatik.ultimate.lib.icfgtransformer
 Export-Package: de.uni_freiburg.informatik.ultimate.plugins.blockencoding, 
  de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences
 Bundle-ActivationPolicy: lazy

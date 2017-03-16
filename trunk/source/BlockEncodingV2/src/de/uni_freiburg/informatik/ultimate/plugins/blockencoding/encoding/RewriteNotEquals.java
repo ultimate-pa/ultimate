@@ -33,100 +33,97 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RemoveNegation;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteEquality;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteIte;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TermException;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.TransitionPreprocessor;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncodingBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
- * {@link SmallBlockEncoder} tries to transform every internal transition to a DNF and if the resulting DNF has more
- * than one disjunct, removes the transition and adds for each disjunct a new transition.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class SmallBlockEncoder extends BaseBlockEncoder<IcfgLocation> {
+public final class RewriteNotEquals extends BaseBlockEncoder<IcfgLocation> {
 
 	private final IcfgEdgeBuilder mEdgeBuilder;
 
-	/**
-	 * Default constructor.
-	 * 
-	 * @param edgeBuilder
-	 * @param services
-	 * @param backtranslator
-	 * @param logger
-	 */
-	public SmallBlockEncoder(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
+	public RewriteNotEquals(final IcfgEdgeBuilder edgeBuilder, final IUltimateServiceProvider services,
 			final BlockEncodingBacktranslator backtranslator, final ILogger logger) {
 		super(logger, services, backtranslator);
 		mEdgeBuilder = edgeBuilder;
-
-	}
-
-	@Override
-	public boolean isGraphStructureChanged() {
-		return mRemovedEdges > 0;
 	}
 
 	@Override
 	protected BasicIcfg<IcfgLocation> createResult(final BasicIcfg<IcfgLocation> icfg) {
-		final CfgSmtToolkit toolkit = icfg.getCfgSmtToolkit();
-
-		final IcfgLocationIterator<IcfgLocation> iter = new IcfgLocationIterator<>(icfg);
-		final Dnf dnfTransformer = new Dnf(toolkit.getManagedScript(), mServices);
-
+		final IcfgEdgeIterator iter = new IcfgEdgeIterator(icfg);
 		final Set<IcfgEdge> toRemove = new HashSet<>();
+		final CfgSmtToolkit toolkit = icfg.getCfgSmtToolkit();
+		final ManagedScript mgScript = toolkit.getManagedScript();
+		final ReplacementVarFactory repVarFac = new ReplacementVarFactory(toolkit, false);
+		final List<TransitionPreprocessor> transformer = new ArrayList<>();
+		transformer.add(new RewriteIte());
+		transformer.add(new RemoveNegation());
+		transformer.add(new RewriteEquality());
 
 		while (iter.hasNext()) {
-			final IcfgLocation current = iter.next();
-			final List<IcfgEdge> outEdges = new ArrayList<>(current.getOutgoingEdges());
-
-			for (final IcfgEdge edge : outEdges) {
-				if (!(edge instanceof IIcfgInternalTransition<?>) || edge instanceof Summary) {
-					// only internal transitions can be converted in DNF
-					// summaries are not supported
-					continue;
-				}
-
-				final UnmodifiableTransFormula tf = IcfgUtils.getTransformula(edge);
-				final Term dnf = dnfTransformer.transform(tf.getFormula());
-				final Term[] disjuncts = SmtUtils.getDisjuncts(dnf);
-				if (disjuncts.length == 1) {
-					// was already in dnf
-					continue;
-				}
-				if (!toRemove.add(edge)) {
-					mLogger.warn("Unncessecary transformation");
-					continue;
-				}
-				addNewEdges(edge, disjuncts);
+			final IcfgEdge edge = iter.next();
+			if (!(edge instanceof IIcfgInternalTransition<?>) || edge instanceof Summary) {
+				continue;
 			}
+
+			final ModifiableTransFormula mtf =
+					ModifiableTransFormulaUtils.buildTransFormula(IcfgUtils.getTransformula(edge), repVarFac, mgScript);
+			final ModifiableTransFormula rewrittenMtf = rewrite(transformer, mtf, mgScript);
+			if (mtf.getFormula().equals(rewrittenMtf.getFormula())) {
+				// nothing to do
+				continue;
+			}
+			if (!toRemove.add(edge)) {
+				continue;
+			}
+			final IcfgEdge newEdge = mEdgeBuilder.constructInternalTransition(edge, edge.getSource(), edge.getTarget(),
+					rewrittenMtf.getFormula());
+			rememberEdgeMapping(newEdge, edge);
 		}
+
+		assert repVarFac.isUnused() : "The transformations here should not require replacement vars";
 
 		toRemove.stream().forEach(a -> {
 			a.disconnectSource();
 			a.disconnectTarget();
 		});
 		mRemovedEdges = toRemove.size();
-
 		return icfg;
 	}
 
-	private void addNewEdges(final IcfgEdge oldEdge, final Term[] disjuncts) {
-		final IcfgLocation source = oldEdge.getSource();
-		final IcfgLocation target = oldEdge.getTarget();
-		for (final Term disjunct : disjuncts) {
-			final IcfgEdge newEdge = mEdgeBuilder.constructInternalTransition(oldEdge, source, target, disjunct);
-			rememberEdgeMapping(newEdge, oldEdge);
+	private static ModifiableTransFormula rewrite(final List<TransitionPreprocessor> transformers,
+			final ModifiableTransFormula mtf, final ManagedScript mgdScript) {
+		ModifiableTransFormula rtr = mtf;
+		for (final TransitionPreprocessor transformer : transformers) {
+			try {
+				rtr = transformer.process(mgdScript, rtr);
+			} catch (final TermException e) {
+				throw new RuntimeException(e);
+			}
 		}
+		return rtr;
+	}
+
+	@Override
+	public boolean isGraphStructureChanged() {
+		return mRemovedEdges > 0;
 	}
 }
