@@ -13,7 +13,8 @@ int dcIdi; // [5];
 int Pdoi; //[5];
 int PdoType; int status;
 
-set = 0;unset = 0;
+int set = 0;
+int unset = 0;
 
 // The Program
 int PPMakeDeviceName(int a, int b, int c, int d) { return __VERIFIER_nondet_int(); }
@@ -24,7 +25,7 @@ void PPUnblockInits() {}
 void RtlInitUnicodeString(int a) {}
 
 
-void main() {
+int main() {
   set = 1; set = 0;
   PPBlockInits(); 
   while (i < Pdolen) { 

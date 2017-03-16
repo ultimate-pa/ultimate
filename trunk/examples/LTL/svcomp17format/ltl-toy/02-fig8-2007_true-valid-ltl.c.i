@@ -7,14 +7,15 @@ int lptNamei;
 int dcIdi;
 int Pdoi;
 int PdoType; int status;
-set = 0;unset = 0;
+int set = 0;
+int unset = 0;
 int PPMakeDeviceName(int a, int b, int c, int d) { return __VERIFIER_nondet_int(); }
 int IoCreateDevice(int a) { return __VERIFIER_nondet_int(); }
 void ExFreePool(int a) {}
 void PPBlockInits() {}
 void PPUnblockInits() {}
 void RtlInitUnicodeString(int a) {}
-void main() {
+int main() {
   set = 1; set = 0;
   PPBlockInits();
   while (i < Pdolen) {

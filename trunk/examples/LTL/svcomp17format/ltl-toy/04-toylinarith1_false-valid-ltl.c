@@ -7,24 +7,28 @@ int servers ;
 int resp;
 int curr_serv;
 
-
-c = __VERIFIER_nondet_int(); 
-servers = 4;
-resp = 0;
-curr_serv = servers;
-
+// Initialization routine
+int __INITIALIZED = 0;
+void env_init() {
+	c = __VERIFIER_nondet_int(); 
+	servers = 4;
+	resp = 0;
+	curr_serv = servers;
+	__INITIALIZED = 1;
+}
 
 int main() {
-__VERIFIER_assume(c>0);
-  while(curr_serv > 0) {
-    if(__VERIFIER_nondet_int()) {
-      c--; curr_serv--;
-      resp++;
-    } else {
-      __VERIFIER_assume(c < curr_serv);
-      curr_serv--;
-    }
-  }
-  while(1) { int ddd; ddd=ddd; }
+	env_init();
+	__VERIFIER_assume(c>0);
+	while(curr_serv > 0) {
+		if(__VERIFIER_nondet_int()) {
+			c--; curr_serv--;
+			resp++;
+		} else {
+			__VERIFIER_assume(c < curr_serv);
+			curr_serv--;
+		}
+	}
+	while(1) { int ddd; ddd=ddd; }
 }
 

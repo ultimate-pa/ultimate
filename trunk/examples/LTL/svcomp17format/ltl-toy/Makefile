@@ -1,8 +1,9 @@
 LEVEL := ../
 
-CC.Arch := 32
+CC.Arch := 64
 
 CLANG_WARNINGS := \
 	-Wno-error=sometimes-uninitialized \
+	-Wno-error=implicit-int \
 
 include $(LEVEL)/Makefile.config

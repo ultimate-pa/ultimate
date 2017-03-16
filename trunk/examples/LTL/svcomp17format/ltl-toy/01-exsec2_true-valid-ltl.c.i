@@ -1,6 +1,6 @@
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
 int x;
-void main()
+int main()
 {
  x = 1;
  while (__VERIFIER_nondet_int()) {}
