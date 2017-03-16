@@ -2,12 +2,12 @@ extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
 int do_ACCEPT;
-int accept_mutex_off() { }
-int unixd_setup_child() { }
-int APR_STATUS_IS_EINTR(int a) { }
-int accept_mutex_on() { }
-int SAFE_ACCEPT(int a) { }
-int clean_child_exit(int a) { }
+int accept_mutex_off() { return __VERIFIER_nondet_int(); }
+int unixd_setup_child() { return __VERIFIER_nondet_int(); }
+int APR_STATUS_IS_EINTR(int a) { return __VERIFIER_nondet_int(); }
+int accept_mutex_on() { return __VERIFIER_nondet_int(); }
+int SAFE_ACCEPT(int a) { return __VERIFIER_nondet_int(); }
+int clean_child_exit(int a) { return __VERIFIER_nondet_int(); }
 int ap_accept_lock_mech;
 int ap_listeners;
 int ap_lock_fname;
