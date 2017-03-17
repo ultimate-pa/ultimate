@@ -31,9 +31,6 @@ PLIST_ENTRY         ListElement;
 PIRP                Irp;
 PIO_STACK_LOCATION  IrpSp;
 KIRQL               CancelIrql;
-ULONG             BytesToMove;
-ULONG             FirstHalf;
-ULONG             SecondHalf;
 KIRQL             CancelIrql;
 BOOLEAN           LockHeld;
 SERIAL_TIMEOUTS   CurrentTimeouts;
@@ -119,16 +116,7 @@ int main()
 
 	IrpSp=IoGetCurrentIrpStackLocation(Irp);
 
-	BytesToMove=__VERIFIER_nondet_int();
-
-	if (__VERIFIER_nondet_int()) {
-	  FirstHalf=__VERIFIER_nondet_int();
-
-	  SecondHalf=BytesToMove-FirstHalf;
-
-
-	} else {
-	}
+	
       }
       else
 	{
