@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.test.decider;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -72,7 +72,7 @@ public class NoErrorTestResultDecider extends TestResultDecider {
 
 		final IResultService resultService = services.getResultService();
 		final ILogger log = services.getLoggingService().getLogger(NoErrorTestResultDecider.class);
-		LinkedList<String> customMessages = new LinkedList<>();
+		LinkedHashSet<String> customMessages = new LinkedHashSet<>();
 
 		boolean fail = false;
 		final Set<Entry<String, List<IResult>>> resultSet = resultService.getResults().entrySet();
@@ -80,7 +80,7 @@ public class NoErrorTestResultDecider extends TestResultDecider {
 			for (final IResult result : x.getValue()) {
 				if (checkFailure(result)) {
 					setCategoryAndMessage(result);
-					customMessages = new LinkedList<>();
+					customMessages = new LinkedHashSet<>();
 					customMessages.add(result.getShortDescription());
 					fail = true;
 					break;
@@ -93,10 +93,10 @@ public class NoErrorTestResultDecider extends TestResultDecider {
 		}
 
 		if (!fail) {
-			setResultCategory("Success");
-			setResultMessage(customMessages.stream().collect(Collectors.joining(", ")));
+			final String msg = customMessages.stream().collect(Collectors.joining(", "));
+			setResultCategory(msg);
+			setResultMessage(msg);
 		}
-		customMessages.addFirst("Expecting results to not contain ExceptionOrErrorResult");
 		TestUtil.logResults(log, mInputFileNames, fail, customMessages, resultService);
 		return fail ? TestResult.FAIL : TestResult.SUCCESS;
 	}
