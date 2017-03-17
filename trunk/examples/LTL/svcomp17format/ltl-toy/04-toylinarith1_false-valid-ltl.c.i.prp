@@ -1,1 +1,1 @@
-CHECK( init(main()), LTL( "__INITIALIZED == 0" U ("c <= 5" || F"resp > 5" )) )
+CHECK( init(main()), LTL( "__INITIALIZED == 0" U ("__INITIALIZED == 1" && ("c <= 5" || F"resp > 5" )) )
