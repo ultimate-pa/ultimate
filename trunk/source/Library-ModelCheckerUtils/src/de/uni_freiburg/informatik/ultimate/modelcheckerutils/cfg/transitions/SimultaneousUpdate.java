@@ -29,14 +29,16 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.EqualityInformation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -48,9 +50,11 @@ public class SimultaneousUpdate {
 	Map<IProgramVar, Term> mUpdatedVars = new HashMap<>();
 	Set<IProgramVar> mHavocedVars = new HashSet<>();
 
-	public SimultaneousUpdate(final TransFormula tf) {
-		final Map<TermVariable, IProgramVar> inVarsReverseMapping = constructReverseMapping(tf.getInVars());
-		final Map<TermVariable, IProgramVar> outVarsReverseMapping = constructReverseMapping(tf.getOutVars());
+	public SimultaneousUpdate(final TransFormula tf, final ManagedScript mgdScript) {
+		final Map<TermVariable, IProgramVar> inVarsReverseMapping = TransFormulaUtils
+				.constructReverseMapping(tf.getInVars());
+		final Map<TermVariable, IProgramVar> outVarsReverseMapping = TransFormulaUtils
+				.constructReverseMapping(tf.getOutVars());
 		final Term[] conjuncts = SmtUtils.getConjuncts(tf.getFormula());
 		final HashRelation<IProgramVar, Term> pv2conjuncts = new HashRelation<>();
 		for (final Term conjunct : conjuncts) {
@@ -65,6 +69,10 @@ public class SimultaneousUpdate {
 		allProgVars.addAll(tf.getInVars().keySet());
 		allProgVars.addAll(tf.getOutVars().keySet());
 		for (final IProgramVar pv : allProgVars) {
+			if (tf.getInVars().get(pv) == tf.getOutVars().get(pv)) {
+				// var unchanged
+				continue;
+			}
 			if (tf.isHavocedOut(pv)) {
 				mHavocedVars.add(pv);
 			} else {
@@ -73,18 +81,80 @@ public class SimultaneousUpdate {
 					if (tf.getInVars().get(pv) != tf.getOutVars().get(pv)) {
 						throw new AssertionError("in and out have to be similar");
 					}
-				} else if (pvContainingConjuncts.size() == 1) {
-					// extract
 				} else {
-					throw new IllegalArgumentException("cannot bring into simultaneous update form " + pv
-							+ "'s outvar occurs in several conjuncts.");
+					// extract
+					final Term pvContainingConjunct = pvContainingConjuncts.iterator().next();
+					final Term forbiddenTerm = null;
+					final TermVariable outVar = tf.getOutVars().get(pv);
+					final Term renamed = extractUpdateRhs(outVar, conjuncts, forbiddenTerm, inVarsReverseMapping,
+							outVarsReverseMapping, mgdScript);
+					if (renamed == null) {
+						throw new IllegalArgumentException("cannot bring into simultaneous update form " + pv
+								+ "'s outvar occurs in several conjuncts.");
+					}
+					mUpdatedVars.put(pv, renamed);
 				}
+
+				// else {
+				// throw new IllegalArgumentException("cannot bring into
+				// simultaneous update form " + pv
+				// + "'s outvar occurs in several conjuncts.");
+				// }
 			}
 		}
 
+		mgdScript.toString();
 	}
 
-	public static <V, K> Map<V, K> constructReverseMapping(final Map<K, V> map) {
-		return map.entrySet().stream().collect(Collectors.toMap(Entry::getValue, c -> c.getKey()));
+	private Term extractUpdateRhs(final TermVariable outVar, final Term[] conjuncts, final Term forbiddenTerm,
+			final Map<TermVariable, IProgramVar> inVarsReverseMapping,
+			final Map<TermVariable, IProgramVar> outVarsReverseMapping, final ManagedScript mgdScript) {
+		final EqualityInformation ei = EqualityInformation.getEqinfo(mgdScript.getScript(), outVar, conjuncts,
+				forbiddenTerm, QuantifiedFormula.EXISTS);
+		if (ei == null) {
+			return null;
+		}
+		final Term rhs = ei.getTerm();
+		final Map<Term, Term> substitutionMapping = computeSubstitutionMapping(rhs, conjuncts, outVar,
+				inVarsReverseMapping, outVarsReverseMapping, mgdScript);
+		final Term renamed = new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(rhs);
+		return renamed;
 	}
+
+	private Map<Term, Term> computeSubstitutionMapping(final Term rhs, final Term[] conjuncts,
+			final TermVariable forbiddenTerm, final Map<TermVariable, IProgramVar> inVarsReverseMapping,
+			final Map<TermVariable, IProgramVar> outVarsReverseMapping, final ManagedScript mgdScript) {
+		final Map<Term, Term> result = new HashMap<>();
+		for (final TermVariable tv : rhs.getFreeVars()) {
+			IProgramVar pv = inVarsReverseMapping.get(tv);
+			if (pv != null) {
+				result.put(tv, pv.getTermVariable());
+			} else {
+				pv = outVarsReverseMapping.get(tv);
+				if (pv != null) {
+					final Term renamed = extractUpdateRhs(tv, conjuncts, forbiddenTerm, inVarsReverseMapping,
+							outVarsReverseMapping, mgdScript);
+					if (renamed == null) {
+						throw new IllegalArgumentException(
+								"cannot bring into simultaneous update form, two outvars in equality ");
+
+					}
+					result.put(tv, renamed);
+				} else {
+					throw new IllegalArgumentException(
+							"cannot bring into simultaneous update form, neither invar nor outvar " + tv);
+				}
+			}
+		}
+		return result;
+	}
+
+	public Map<IProgramVar, Term> getUpdatedVars() {
+		return mUpdatedVars;
+	}
+
+	public Set<IProgramVar> getHavocedVars() {
+		return mHavocedVars;
+	}
+
 }
