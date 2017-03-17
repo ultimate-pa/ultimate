@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -66,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher.PqeTechniques;
@@ -837,8 +839,8 @@ public class TransFormulaUtils {
 		return procedures.size() <= 1;
 	}
 
-	private static UnmodifiableTransFormula computeGuard(final UnmodifiableTransFormula tf,
-			final ManagedScript script) {
+	public static UnmodifiableTransFormula computeGuard(final UnmodifiableTransFormula tf,
+			final ManagedScript mgdScript) {
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
 		for (final IProgramVar bv : tf.getAssignedVars()) {
 			final TermVariable outVar = tf.getOutVars().get(bv);
@@ -856,8 +858,8 @@ public class TransFormulaUtils {
 						tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(), true, null, false);
 		tfb.setFormula(tf.getFormula());
 		tfb.setInfeasibility(tf.isInfeasible());
-		tfb.addAuxVarsButRenameToFreshCopies(auxVars, script);
-		return tfb.finishConstruction(script);
+		tfb.addAuxVarsButRenameToFreshCopies(auxVars, mgdScript);
+		return tfb.finishConstruction(mgdScript);
 	}
 
 	private static UnmodifiableTransFormula negate(final UnmodifiableTransFormula tf, final ManagedScript maScript,
@@ -908,6 +910,25 @@ public class TransFormulaUtils {
 				tfb.addProgramConst(progConst);
 			}
 		}
+	}
+	
+	
+	public static <V, K> Map<V, K> constructReverseMapping(final Map<K, V> map) {
+		return map.entrySet().stream().collect(Collectors.toMap(Entry::getValue, c -> c.getKey()));
+	}
+	
+	public static Term renameInvarsToDefaultVars(final TransFormula tf, final ManagedScript mgdScript) {
+		final Map<TermVariable, IProgramVar> inVarsReverseMapping = constructReverseMapping(tf.getInVars());
+		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		for (final TermVariable tv : tf.getFormula().getFreeVars()) {
+			final IProgramVar pv = inVarsReverseMapping.get(tv);
+			if (pv == null) {
+				throw new IllegalArgumentException("TransFormula contains non-Invar");
+			} else {
+				substitutionMapping.put(tv, pv.getTermVariable());	
+			}
+		}
+		return (new Substitution(mgdScript, substitutionMapping)).transform(tf.getFormula());
 	}
 
 }
