@@ -336,7 +336,11 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		/**
 		 * Depth-first search.
 		 */
-		DFS
+		DFS,
+		/**
+		 * Interactive search (lets the user select).
+		 */
+		Interactive,		
 	}
 
 	/**

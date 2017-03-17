@@ -31,15 +31,20 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
@@ -50,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accept
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty.SearchStrategy;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyInteractive;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
@@ -206,7 +212,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				mPredicateFactoryInterpolantAutomata, mIcfgContainer, mAbsIntRunner, taPrefs, mInterpolation,
 				mInterpolantAutomatonConstructionProcedure, mCegarLoopBenchmark);
 
-		mSearchStrategy = getSearchStrategy(prefs);
+		mSearchStrategy = getSearchStrategy(mPref);
 		mStoredRawInterpolantAutomata = checkStoreCounterExamples(mPref) ? new ArrayList<>() : null;
 
 		final TaCheckAndRefinementPreferences<LETTER> taCheckAndRefinementPrefs = new TaCheckAndRefinementPreferences<>(
@@ -248,12 +254,52 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 	}
 
+	protected DoubleDecker<IPredicate> interactiveCounterexampleSearchStrategy(
+			Deque<DoubleDecker<IPredicate>> callQueue, Deque<DoubleDecker<IPredicate>> queue) {
+		PredicateQueuePair data = new PredicateQueuePair(callQueue, queue);
+		Future<PredicateQueueResult> userChoice = mInteractive.request(PredicateQueueResult.class, data);
+		try {
+			return userChoice.get().mResult;
+		} catch (InterruptedException | ExecutionException e) {
+			//e.printStackTrace();
+		}
+		return IsEmptyInteractive.bfsDequeue(callQueue, queue);
+	}
+
+	public static class PredicateQueuePair {
+		public final Deque<DoubleDecker<IPredicate>> mCallQueue;
+		public final Deque<DoubleDecker<IPredicate>> mQueue;
+
+		public PredicateQueuePair(Deque<DoubleDecker<IPredicate>> mCallQueue, Deque<DoubleDecker<IPredicate>> mQueue) {
+			this.mCallQueue = mCallQueue;
+			this.mQueue = mQueue;
+		}
+	}
+
+	public static class PredicateQueueResult {
+		public final DoubleDecker<IPredicate> mResult;
+
+		public PredicateQueueResult(DoubleDecker<IPredicate> mResult) {
+			this.mResult = mResult;
+		}
+	}
+
 	@Override
 	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
 		final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction =
 				(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction;
-		mCounterexample =
-				new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy).getNestedRun();
+
+		if (mPref.getCounterexampleSearchStrategy() == CounterexampleSearchStrategy.Interactive) {
+			if (mInteractive == null) {
+				throw new IllegalArgumentException(
+						"Interactive couterexample strategy chosen, but interface available. Please start ultimate in Interactive mode.");
+			}
+			mCounterexample = new IsEmptyInteractive<LETTER, IPredicate>(new AutomataLibraryServices(mServices),
+					abstraction, this::interactiveCounterexampleSearchStrategy).getNestedRun();
+		} else {
+			mCounterexample =
+					new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy).getNestedRun();
+		}
 
 		if (mCounterexample == null) {
 			return true;
@@ -681,9 +727,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		return pref.getMinimization() == Minimization.NWA_OVERAPPROXIMATION;
 	}
 
-	private static SearchStrategy getSearchStrategy(final IPreferenceProvider mPrefs) {
-		switch (mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY,
-				CounterexampleSearchStrategy.class)) {
+	private static SearchStrategy getSearchStrategy(final TAPreferences mPrefs) {
+		switch (mPrefs.getCounterexampleSearchStrategy()) {
+		case Interactive:
 		case BFS:
 			return SearchStrategy.BFS;
 		case DFS:
