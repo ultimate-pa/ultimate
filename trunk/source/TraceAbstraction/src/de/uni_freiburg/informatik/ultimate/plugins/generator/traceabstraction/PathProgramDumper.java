@@ -42,12 +42,18 @@ import java.util.function.Predicate;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
@@ -61,14 +67,20 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLoc
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
@@ -102,11 +114,15 @@ public class PathProgramDumper {
 
 	};
 	private final ConstructionCache<IcfgLocation, String> mLoc2LabelId = new ConstructionCache<>(mLoc2LabelVC);
+	private final IIcfg<?> mIcfg;
+	private boolean USE_BOOGIE_INPUT;
+	private final Term2Expression mTerm2Expression = null;
 
 	public PathProgramDumper(final IIcfg<?> icfg, final IUltimateServiceProvider services,
 			final NestedRun<? extends IAction, IPredicate> run, final String filename) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mIcfg = icfg;
 		if (!(icfg instanceof BoogieIcfgContainer)) {
 			throw new UnsupportedOperationException("PathProgramDumper currently needs BoogieIcfgContainer");
 		}
@@ -342,12 +358,55 @@ public class PathProgramDumper {
 
 	private void addStatementsAndVariables(final IcfgEdge edge, final List<Statement> statements,
 			final Set<IProgramVar> localVars, final Set<IProgramVar> globalVars) {
-		final StatementSequence stseq = (StatementSequence) edge.getLabel();
-		addVars(stseq.getTransformula().getInVars().keySet(), localVars, globalVars);
-		addVars(stseq.getTransformula().getOutVars().keySet(), localVars, globalVars);
-		for (final Statement st : stseq.getStatements()) {
-			statements.add(st);
+		final IAction action = edge.getLabel();
+		addVars(action.getTransformula().getInVars().keySet(), localVars, globalVars);
+		addVars(action.getTransformula().getOutVars().keySet(), localVars, globalVars);
+		if (USE_BOOGIE_INPUT) {
+			final StatementSequence stseq = (StatementSequence) action;
+			for (final Statement st : stseq.getStatements()) {
+				statements.add(st);
+			}
+		} else {
+			final ManagedScript mgdScript = mIcfg.getCfgSmtToolkit().getManagedScript();
+			final UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(action.getTransformula(),
+					mgdScript);
+			final Term guardTerm = TransFormulaUtils.renameInvarsToDefaultVars(guardTf, mgdScript);
+			final Expression guardExpression = mTerm2Expression.translate(guardTerm);
+			final AssumeStatement assume = new AssumeStatement(constructNewDummyLocation(), guardExpression);
+
+			final SimultaneousUpdate su = new SimultaneousUpdate(action.getTransformula(), mgdScript);
+			final AssignmentStatement assignment;
+			{
+				final LeftHandSide[] lhs = new LeftHandSide[su.getUpdatedVars().size()];
+				final Expression[] rhs = new Expression[su.getUpdatedVars().size()];
+				int offset = 0;
+				for (final Entry<IProgramVar, Term> entry : su.getUpdatedVars().entrySet()) {
+					lhs[offset] = new VariableLHS(constructNewDummyLocation(),
+							((IdentifierExpression) mTerm2Expression.translate(entry.getKey().getTermVariable()))
+							.getIdentifier());
+					rhs[offset] = mTerm2Expression.translate(entry.getValue());
+					offset++;
+				}
+				assignment = new AssignmentStatement(constructNewDummyLocation(), lhs, rhs);
+			}
+			
+			final HavocStatement havoc;
+			{
+				final VariableLHS[] identifiers = new VariableLHS[su.getHavocedVars().size()];
+				final int offset = 0;
+				for (final IProgramVar pv : su.getHavocedVars()) {
+					identifiers[offset] = new VariableLHS(constructNewDummyLocation(),
+							((IdentifierExpression) mTerm2Expression.translate(pv.getTermVariable()))
+							.getIdentifier());
+				}
+				havoc = new HavocStatement(constructNewDummyLocation(), identifiers);
+			}
+			statements.add(assume);
+			statements.add(assignment);
+			statements.add(havoc);
+
 		}
+
 	}
 
 	/**
@@ -386,6 +445,10 @@ public class PathProgramDumper {
 			result.add(sc);
 		}
 		return result;
+	}
+	
+	private DefaultLocation constructNewDummyLocation() {
+		return new DefaultLocation("", -1, -1, -1, -1);
 	}
 
 }
