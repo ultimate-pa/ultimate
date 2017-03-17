@@ -2,7 +2,7 @@
 <feature
       id="BA_FeatureDependenciesCommandlineE4"
       label="BA_FeatureDependenciesCommandlineE4"
-      version="0.1.8">
+      version="0.1.9">
 
    <description url="http://www.example.com/description">
       [Enter Feature Description here.]
