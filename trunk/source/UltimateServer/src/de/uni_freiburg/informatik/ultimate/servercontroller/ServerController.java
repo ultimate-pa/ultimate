@@ -311,6 +311,7 @@ public class ServerController implements IController<RunDefinition> {
 		// mLogger.fatal("RESULT: An exception occured during the execution of
 		// Ultimate: " + description, ex);
 		mLogger.fatal("RESULT: An exception occured during the execution of Ultimate: " + description);
+		ex.printStackTrace();
 		mInternalInterface.send(ex);
 	}
 
