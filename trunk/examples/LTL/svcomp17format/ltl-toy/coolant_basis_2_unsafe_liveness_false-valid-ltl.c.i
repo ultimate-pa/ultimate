@@ -353,6 +353,7 @@ void coolantControl()
   otime = time;
   time = otime;
   tempIn = __VERIFIER_nondet_int();
+  __VERIFIER_assume(tempIn > - 273 && tempIn < 90);
   temp = vinToCels(tempIn);
   if(temp > limit)
   {
