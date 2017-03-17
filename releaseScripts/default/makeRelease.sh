@@ -39,14 +39,14 @@ DEPLOY_DIR=/export/server/httpd/ultimate/downloads/svcomp2017
 TESTFILE=caniwrite
 FILE="$DEPLOY_DIR"/"$TESTFILE"
 
-exitOnFail git fetch
+exitOnFail git fetch --all --tags
 exitOnFail git stash 
 exitOnFailPop git rebase
 exitOnFailPop git push 
 
 CURRENTUSER=$(whoami)
 HASH=`git rev-parse --short HEAD`
-LAST_RELEASE=`git describe --abbrev=0 --tags`
+LAST_RELEASE=`git describe --tags $(git rev-list --tags --max-count=1)`
 NEW_VERSION=`echo ${LAST_RELEASE:1} | awk -F. -v OFS=. 'NF==1{print ++$NF}; NF>1{if(length($NF+1)>length($NF))$(NF-1)++; $NF=sprintf("%0*d", length($NF), ($NF+1)%(10^length($NF))); print}'`
 TO_GITHUB=false
 TO_SOTEC=false
