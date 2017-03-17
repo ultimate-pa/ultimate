@@ -463,7 +463,7 @@ public class ElimStore3 {
 				mSelectTerm[i] = arrayReads[i].getSelectTerm();
 				mIndices[i] = arrayReads[i].getIndex();
 				final EqualityInformation eqInfo = EqualityInformation.getEqinfo(mScript, arrayReads[i].getSelectTerm(),
-						conjuncts, array, mQuantifier, mLogger);
+						conjuncts, array, mQuantifier);
 				if (eqInfo == null) {
 					final Term select = arrayReads[i].getSelectTerm();
 					final TermVariable auxVar =

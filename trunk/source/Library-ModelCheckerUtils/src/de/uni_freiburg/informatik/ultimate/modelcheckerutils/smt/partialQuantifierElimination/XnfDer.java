@@ -118,7 +118,7 @@ public class XnfDer extends XjunctPartialQuantifierElimination {
 	 */
 	public Term[] derSimple(final Script script, final int quantifier, final Term[] inputAtoms, final TermVariable tv, final ILogger logger) {
 		final Term[] resultAtoms;
-		final EqualityInformation eqInfo = EqualityInformation.getEqinfo(script, tv, inputAtoms, null, quantifier, logger);
+		final EqualityInformation eqInfo = EqualityInformation.getEqinfo(script, tv, inputAtoms, null, quantifier);
 		if (eqInfo == null) {
 			logger.debug(new DebugMessage("not eliminated quantifier via DER for {0}", tv));
 			resultAtoms = null;
