@@ -862,7 +862,7 @@ public class TransFormulaUtils {
 		return tfb.finishConstruction(mgdScript);
 	}
 
-	private static UnmodifiableTransFormula negate(final UnmodifiableTransFormula tf, final ManagedScript maScript,
+	public static UnmodifiableTransFormula negate(final UnmodifiableTransFormula tf, final ManagedScript maScript,
 			final IUltimateServiceProvider services, final ILogger logger,
 			final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) {
