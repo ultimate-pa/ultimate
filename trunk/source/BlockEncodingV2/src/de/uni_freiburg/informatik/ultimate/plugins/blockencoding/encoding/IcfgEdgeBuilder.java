@@ -28,14 +28,19 @@ package de.uni_freiburg.informatik.ultimate.plugins.blockencoding.encoding;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
@@ -51,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -177,13 +183,25 @@ public class IcfgEdgeBuilder {
 			final IcfgLocation target, final Term term) {
 		assert onlyInternal(oldTransition) : "You cannot have calls or returns in normal sequential compositions";
 		final UnmodifiableTransFormula oldTf = IcfgUtils.getTransformula(oldTransition);
-		final TransFormulaBuilder tfb =
-				new TransFormulaBuilder(oldTf.getInVars(), oldTf.getOutVars(), oldTf.getNonTheoryConsts().isEmpty(),
-						oldTf.getNonTheoryConsts(), true, null, oldTf.getAuxVars().isEmpty());
-		if (!oldTf.getAuxVars().isEmpty()) {
-			oldTf.getAuxVars().forEach(tfb::addAuxVar);
-		}
+
+		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(term.getFreeVars()));
+		final Set<TermVariable> oldFreeVars = new HashSet<>(Arrays.asList(oldTf.getFormula().getFreeVars()));
+
+		final Map<IProgramVar, TermVariable> newInVars = filterValues(oldTf.getInVars(), freeVars::contains);
+		final Map<IProgramVar, TermVariable> newOutVars = filterValues(oldTf.getOutVars(), freeVars::contains);
+		final Set<TermVariable> newAuxVars = new HashSet<>(oldTf.getAuxVars());
+		newAuxVars.retainAll(freeVars);
+
+		newInVars.putAll(filterValues(oldTf.getInVars(), a -> !oldFreeVars.contains(a)));
+		newOutVars.putAll(filterValues(oldTf.getOutVars(), a -> !oldFreeVars.contains(a)));
+
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(newInVars, newOutVars,
+				oldTf.getNonTheoryConsts().isEmpty(), oldTf.getNonTheoryConsts(), true, null, newAuxVars.isEmpty());
 		tfb.setFormula(term);
+		if (!newAuxVars.isEmpty()) {
+			tfb.addAuxVarsButRenameToFreshCopies(newAuxVars, mManagedScript);
+		}
+
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 
 		final UnmodifiableTransFormula tf = tfb.finishConstruction(mManagedScript);
@@ -198,5 +216,13 @@ public class IcfgEdgeBuilder {
 		target.addIncoming(rtr);
 		ModelUtils.copyAnnotations(oldTransition, rtr);
 		return rtr;
+	}
+
+	private static <K, V> Map<K, V> filterValues(final Map<K, V> map, final Predicate<V> funValueTest) {
+		if (map == null) {
+			return Collections.emptyMap();
+		}
+		return map.entrySet().stream().filter(a -> funValueTest.test(a.getValue()))
+				.collect(Collectors.toMap(Entry<K, V>::getKey, Entry<K, V>::getValue));
 	}
 }
