@@ -33,6 +33,7 @@ import java.io.PrintWriter;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -41,11 +42,13 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -55,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Label;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -63,12 +67,19 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogieOutput;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.DefaultLocation;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieDeclarations;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Term2Expression;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TypeSortTranslator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -80,6 +91,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILoca
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
@@ -97,6 +109,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *
  */
 public class PathProgramDumper {
+	
+	private final boolean USE_BOOGIE_INPUT = false;
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -115,16 +129,28 @@ public class PathProgramDumper {
 	};
 	private final ConstructionCache<IcfgLocation, String> mLoc2LabelId = new ConstructionCache<>(mLoc2LabelVC);
 	private final IIcfg<?> mIcfg;
-	private boolean USE_BOOGIE_INPUT;
-	private final Term2Expression mTerm2Expression = null;
+	private final Term2Expression mTerm2Expression;
 
 	public PathProgramDumper(final IIcfg<?> icfg, final IUltimateServiceProvider services,
 			final NestedRun<? extends IAction, IPredicate> run, final String filename) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mIcfg = icfg;
-		if (!(icfg instanceof BoogieIcfgContainer)) {
-			throw new UnsupportedOperationException("PathProgramDumper currently needs BoogieIcfgContainer");
+		if (USE_BOOGIE_INPUT) {
+			if (!(icfg instanceof BoogieIcfgContainer)) {
+				throw new UnsupportedOperationException("PathProgramDumper currently needs BoogieIcfgContainer");
+			}
+			mTerm2Expression = null;
+		} else {
+			final TypeSortTranslator tsTranslation = constructFakeTypeSortTranslator(
+					icfg.getCfgSmtToolkit().getManagedScript());
+			final Unit unit = new Unit(constructNewLocation(), new Declaration[0]);
+			final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(unit, mLogger);
+			final Boogie2SmtSymbolTable boogie2SmtSymbolTable = new FakeBoogie2SmtSymbolTable(
+					icfg.getCfgSmtToolkit().getManagedScript(), tsTranslation, icfg.getCfgSmtToolkit().getSymbolTable(),
+					boogieDeclarations);
+			mTerm2Expression = new Term2Expression(tsTranslation, boogie2SmtSymbolTable,
+					icfg.getCfgSmtToolkit().getManagedScript());
 		}
 
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run.getWord());
@@ -136,25 +162,41 @@ public class PathProgramDumper {
 		final List<Declaration> newDeclarations = new ArrayList<>();
 		final Set<IProgramVar> globalVars = new HashSet<>();
 		for (final Entry<String, IcfgLocation> entry : pathProgram.getProcedureEntryNodes().entrySet()) {
-			final Pair<Procedure, Set<IProgramVar>> newImplAndGlobalVars = constructNewImplementation(entry.getKey(),
-					entry.getValue(), boogieIcfg, pathProgram.getProcedureErrorNodes().get(entry.getKey()));
+			final Pair<Procedure, Set<IProgramVar>> newImplAndGlobalVars;
+			if (USE_BOOGIE_INPUT) {
+				newImplAndGlobalVars = constructNewImplementation(entry.getKey(), entry.getValue(), boogieIcfg,
+						pathProgram.getProcedureErrorNodes().get(entry.getKey()));
+			} else {
+				newImplAndGlobalVars = constructNewImplementation(entry.getKey(), entry.getValue(),
+						pathProgram.getProcedureErrorNodes().get(entry.getKey()));
+
+			}
+
 			newDeclarations.add(newImplAndGlobalVars.getFirst());
 			globalVars.addAll(newImplAndGlobalVars.getSecond());
 
-			final Procedure spec = boogieIcfg.getBoogieDeclarations().getProcSpecification().get(entry.getKey());
-			final Procedure impl = boogieIcfg.getBoogieDeclarations().getProcImplementation().get(entry.getKey());
-			if (spec != impl) {
-				newDeclarations.add(spec);
+			if (USE_BOOGIE_INPUT) {
+				final Procedure spec = boogieIcfg.getBoogieDeclarations().getProcSpecification().get(entry.getKey());
+				final Procedure impl = boogieIcfg.getBoogieDeclarations().getProcImplementation().get(entry.getKey());
+				if (spec != impl) {
+					newDeclarations.add(spec);
+				}
 			}
 
 		}
 
-		newDeclarations.addAll(0, Arrays.asList(
-				filter(boogieIcfg.getBoogieDeclarations().getGlobalVarDeclarations(), extractIdentifiers(globalVars))));
-		newDeclarations.addAll(0, boogieIcfg.getBoogieDeclarations().getFunctionDeclarations());
-		newDeclarations.addAll(0, boogieIcfg.getBoogieDeclarations().getAxioms());
-		newDeclarations.addAll(0, boogieIcfg.getBoogieDeclarations().getConstDeclarations());
-		newDeclarations.addAll(0, boogieIcfg.getBoogieDeclarations().getTypeDeclarations());
+		if (USE_BOOGIE_INPUT) {
+			newDeclarations.addAll(0,
+					Arrays.asList(filter(boogieIcfg.getBoogieDeclarations().getGlobalVarDeclarations(),
+							extractIdentifiers(globalVars))));
+			newDeclarations.addAll(0, boogieIcfg.getBoogieDeclarations().getFunctionDeclarations());
+			newDeclarations.addAll(0, boogieIcfg.getBoogieDeclarations().getAxioms());
+			newDeclarations.addAll(0, boogieIcfg.getBoogieDeclarations().getConstDeclarations());
+			newDeclarations.addAll(0, boogieIcfg.getBoogieDeclarations().getTypeDeclarations());
+		} else {
+			newDeclarations.addAll(0, Arrays.asList(constructDeclarations(globalVars)));
+		}
+
 		final Unit unit = new Unit(constructNewLocation(),
 				newDeclarations.toArray(new Declaration[newDeclarations.size()]));
 
@@ -171,6 +213,15 @@ public class PathProgramDumper {
 			throw new AssertionError(e);
 		}
 
+	}
+
+	private TypeSortTranslator constructFakeTypeSortTranslator(final ManagedScript managedScript) {
+		final TypeSortTranslator result = new TypeSortTranslator(Collections.emptySet(), managedScript.getScript(),
+				mServices);
+		final IBoogieType type = BoogieType.TYPE_INT;
+		final BoogieASTNode astNode = new BoogieASTNode(constructNewLocation());
+		result.getSort(type, astNode);
+		return result;
 	}
 
 	private Pair<Procedure, Set<IProgramVar>> constructNewImplementation(final String proc, final IcfgLocation entryLoc,
@@ -196,6 +247,84 @@ public class PathProgramDumper {
 		final Procedure newProc = new Procedure(constructNewLocation(), impl.getAttributes(), impl.getIdentifier(),
 				impl.getTypeParams(), impl.getInParams(), impl.getOutParams(), newSpecifications, newBody);
 		return new Pair<>(newProc, varsAndNewSt.getThird());
+	}
+
+	/**
+	 * Do construction without boogie program as input.
+	 */
+	private Pair<Procedure, Set<IProgramVar>> constructNewImplementation(final String proc, final IcfgLocation entryLoc,
+			final Set<IcfgLocation> errorLocs) {
+
+		final Triple<List<Statement>, Set<IProgramVar>, Set<IProgramVar>> varsAndNewSt = constructProcedureStatements(
+				entryLoc, errorLocs);
+		final List<Statement> newStatements = varsAndNewSt.getFirst();
+
+		final Set<IProgramVar> localVars = varsAndNewSt.getSecond();
+		final VariableDeclaration[] localVarDeclarations = constructDeclarations(localVars);
+		final Body newBody = new Body(constructNewLocation(), localVarDeclarations,
+				newStatements.toArray(new Statement[newStatements.size()]));
+		final Attribute[] attributes = new Attribute[0];
+		final String identifier = entryLoc.getProcedure();
+		final String[] typeParams = new String[0];
+		final VarList[] inParams = new VarList[0];
+		final VarList[] outParams = new VarList[0];
+		ModifiesSpecification modifiesSpecification;
+		{
+			final VariableLHS[] identifiers = new VariableLHS[varsAndNewSt.getThird().size()];
+			int offset = 0;
+			for (final IProgramVar pv : varsAndNewSt.getThird()) {
+				identifiers[offset] = new VariableLHS(constructNewLocation(), translateIdentifier(pv));
+				offset++;
+			}
+			modifiesSpecification = new ModifiesSpecification(constructNewLocation(), false, identifiers);
+		}
+		final Specification[] specification = new Specification[] { modifiesSpecification };
+		final Procedure newProc = new Procedure(constructNewLocation(), attributes, identifier, typeParams, inParams,
+				outParams, specification, newBody);
+		return new Pair<>(newProc, varsAndNewSt.getThird());
+	}
+
+	private VariableDeclaration[] constructDeclarations(final Set<IProgramVar> localVars) {
+		final VariableDeclaration[] result = new VariableDeclaration[localVars.size()];
+		int offset = 0;
+		for (final IProgramVar pv : localVars) {
+			// assert (pv instanceof ILocalProgramVar) : "not a local var";
+			final IdentifierExpression id = translateVar(pv);
+			final Attribute[] attributes = new Attribute[0];
+			final String[] identifiers = new String[] { id.getIdentifier() };
+			// FIXME: do not only support int.
+			String typeName;
+			if (pv.getTermVariable().getSort().getName().equals("Int")) {
+				typeName = "int";
+			} else if (pv.getTermVariable().getSort().getName().equals("Bool")) {
+				typeName = "bool";
+			} else {
+				throw new UnsupportedOperationException(
+						"Translation does not support sort " + pv.getTermVariable().getSort().getName());
+			}
+			final ASTType type = new PrimitiveType(constructNewLocation(), typeName);
+			final VarList varList = new VarList(constructNewLocation(), identifiers, type);
+			final VarList[] variables = new VarList[] { varList };
+			result[offset] = new VariableDeclaration(constructNewLocation(), attributes, variables);
+			offset++;
+		}
+		return result;
+	}
+
+	private String translateIdentifier(final IProgramVar pv) {
+		final String result = ((IdentifierExpression) mTerm2Expression.translate(pv.getTermVariable())).getIdentifier();
+		if (result == null) {
+			throw new AssertionError("unable to translate " + pv);
+		}
+		return result;
+	}
+
+	private IdentifierExpression translateVar(final IProgramVar pv) {
+		final IdentifierExpression result = ((IdentifierExpression) mTerm2Expression.translate(pv.getTermVariable()));
+		if (result == null) {
+			throw new AssertionError("unable to translateI " + pv);
+		}
+		return result;
 	}
 
 	private Specification[] filterModifiesSpecifications(final Specification[] specification,
@@ -368,11 +497,11 @@ public class PathProgramDumper {
 			}
 		} else {
 			final ManagedScript mgdScript = mIcfg.getCfgSmtToolkit().getManagedScript();
-			final UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(action.getTransformula(),
-					mgdScript);
+			final UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(action.getTransformula(), mgdScript,
+					mServices, mLogger);
 			final Term guardTerm = TransFormulaUtils.renameInvarsToDefaultVars(guardTf, mgdScript);
 			final Expression guardExpression = mTerm2Expression.translate(guardTerm);
-			final AssumeStatement assume = new AssumeStatement(constructNewDummyLocation(), guardExpression);
+			final AssumeStatement assume = new AssumeStatement(constructNewLocation(), guardExpression);
 
 			final SimultaneousUpdate su = new SimultaneousUpdate(action.getTransformula(), mgdScript);
 			final AssignmentStatement assignment;
@@ -381,29 +510,34 @@ public class PathProgramDumper {
 				final Expression[] rhs = new Expression[su.getUpdatedVars().size()];
 				int offset = 0;
 				for (final Entry<IProgramVar, Term> entry : su.getUpdatedVars().entrySet()) {
-					lhs[offset] = new VariableLHS(constructNewDummyLocation(),
+					lhs[offset] = new VariableLHS(constructNewLocation(),
 							((IdentifierExpression) mTerm2Expression.translate(entry.getKey().getTermVariable()))
-							.getIdentifier());
+									.getIdentifier());
 					rhs[offset] = mTerm2Expression.translate(entry.getValue());
 					offset++;
 				}
-				assignment = new AssignmentStatement(constructNewDummyLocation(), lhs, rhs);
+				assignment = new AssignmentStatement(constructNewLocation(), lhs, rhs);
 			}
-			
+
 			final HavocStatement havoc;
 			{
 				final VariableLHS[] identifiers = new VariableLHS[su.getHavocedVars().size()];
-				final int offset = 0;
+				int offset = 0;
 				for (final IProgramVar pv : su.getHavocedVars()) {
-					identifiers[offset] = new VariableLHS(constructNewDummyLocation(),
-							((IdentifierExpression) mTerm2Expression.translate(pv.getTermVariable()))
-							.getIdentifier());
+					identifiers[offset] = new VariableLHS(constructNewLocation(), translateIdentifier(pv));
+					offset++;
 				}
-				havoc = new HavocStatement(constructNewDummyLocation(), identifiers);
+				havoc = new HavocStatement(constructNewLocation(), identifiers);
 			}
-			statements.add(assume);
-			statements.add(assignment);
-			statements.add(havoc);
+			if (!SmtUtils.isTrue(guardTerm)) {
+				statements.add(assume);
+			}
+			if (!su.getUpdatedVars().isEmpty()) {
+				statements.add(assignment);
+			}
+			if (!su.getHavocedVars().isEmpty()) {
+				statements.add(havoc);
+			}
 
 		}
 
@@ -441,14 +575,32 @@ public class PathProgramDumper {
 	private Set<? extends IcfgEdge> extractTransitionsFromRun(final NestedWord<? extends IAction> word) {
 		final Set<IcfgEdge> result = new HashSet<>();
 		for (final IAction letter : word) {
-			final StatementSequence sc = (StatementSequence) letter;
-			result.add(sc);
+			final IcfgEdge edge = (IcfgEdge) letter;
+			result.add(edge);
 		}
 		return result;
 	}
-	
-	private DefaultLocation constructNewDummyLocation() {
-		return new DefaultLocation("", -1, -1, -1, -1);
+
+	private class FakeBoogie2SmtSymbolTable extends Boogie2SmtSymbolTable {
+
+		private final IIcfgSymbolTable mIIcfgSymbolTable;
+
+		public FakeBoogie2SmtSymbolTable(final ManagedScript script, final TypeSortTranslator typeSortTranslator,
+				final IIcfgSymbolTable symbolTable, final BoogieDeclarations boogieDeclarations) {
+			super(boogieDeclarations, script, typeSortTranslator);
+			mIIcfgSymbolTable = symbolTable;
+		}
+
+		@Override
+		public IProgramVar getProgramVar(final TermVariable tv) {
+			return mIIcfgSymbolTable.getProgramVar(tv);
+		}
+
+		@Override
+		public BoogieASTNode getAstNode(final IProgramVar bv) {
+			return new BoogieASTNode(constructNewLocation());
+		}
+
 	}
 
 }
