@@ -77,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Basi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Static auxiliary methods for {@link TransFormula}s
@@ -840,7 +841,7 @@ public class TransFormulaUtils {
 	}
 
 	public static UnmodifiableTransFormula computeGuard(final UnmodifiableTransFormula tf,
-			final ManagedScript mgdScript) {
+			final ManagedScript mgdScript, final IUltimateServiceProvider services, final ILogger logger) {
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
 		for (final IProgramVar bv : tf.getAssignedVars()) {
 			final TermVariable outVar = tf.getOutVars().get(bv);
@@ -853,12 +854,15 @@ public class TransFormulaUtils {
 		}
 		// yes! outVars of result are indeed the inVars of input
 
+		final Pair<Term, Set<TermVariable>> termAndAuxVars = tryToEliminateAuxVars(services, logger, mgdScript,
+				tf.getFormula(), auxVars);
+		
 		final TransFormulaBuilder tfb =
 				new TransFormulaBuilder(tf.getInVars(), tf.getInVars(), tf.getNonTheoryConsts().isEmpty(),
 						tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(), true, null, false);
-		tfb.setFormula(tf.getFormula());
+		tfb.setFormula(termAndAuxVars.getFirst());
 		tfb.setInfeasibility(tf.isInfeasible());
-		tfb.addAuxVarsButRenameToFreshCopies(auxVars, mgdScript);
+		tfb.addAuxVarsButRenameToFreshCopies(termAndAuxVars.getSecond(), mgdScript);
 		return tfb.finishConstruction(mgdScript);
 	}
 
@@ -869,15 +873,12 @@ public class TransFormulaUtils {
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new AssertionError("I think this does not make sense with branch enconders");
 		}
-		Term formula = tf.getFormula();
-		formula = PartialQuantifierElimination.quantifier(services, logger, maScript, simplificationTechnique,
-				xnfConversionTechnique, QuantifiedFormula.EXISTS, tf.getAuxVars(), formula, new Term[0]);
-		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(formula.getFreeVars()));
-		freeVars.retainAll(tf.getAuxVars());
-		if (!freeVars.isEmpty()) {
+		final Pair<Term, Set<TermVariable>> termAndAuxVars = tryToEliminateAuxVars(services, logger, maScript,
+				tf.getFormula(), tf.getAuxVars());
+		if (!termAndAuxVars.getSecond().isEmpty()) {
 			throw new UnsupportedOperationException("cannot negate if there are auxVars");
 		}
-		formula = SmtUtils.not(maScript.getScript(), formula);
+		final Term formula = SmtUtils.not(maScript.getScript(), termAndAuxVars.getFirst());
 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(),
 				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(),
@@ -887,11 +888,26 @@ public class TransFormulaUtils {
 		return tfb.finishConstruction(maScript);
 	}
 
+	/**
+	 * Given the return of a {@link Transformula} try to eliminate auxvars.
+	 * @return new term and set of remaining auxvars. 
+	 */
+	private static Pair<Term, Set<TermVariable>> tryToEliminateAuxVars(final IUltimateServiceProvider services,
+			final ILogger logger, final ManagedScript maScript, Term formula, final Set<TermVariable> oldAuxVars) {
+		final Pair<Term, Set<TermVariable>> result;
+		formula = PartialQuantifierElimination.quantifier(services, logger, maScript, SimplificationTechnique.SIMPLIFY_DDA,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, QuantifiedFormula.EXISTS, oldAuxVars, formula, new Term[0]);
+		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(formula.getFreeVars()));
+		freeVars.retainAll(oldAuxVars);
+		result = new Pair<Term, Set<TermVariable>>(formula, freeVars);
+		return result;
+	}
+
 	public static UnmodifiableTransFormula computeMarkhorTransFormula(final UnmodifiableTransFormula tf,
 			final ManagedScript maScript, final IUltimateServiceProvider services, final ILogger logger,
 			final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) {
-		final UnmodifiableTransFormula guard = computeGuard(tf, maScript);
+		final UnmodifiableTransFormula guard = computeGuard(tf, maScript, services, logger);
 		final UnmodifiableTransFormula negGuard =
 				negate(guard, maScript, services, logger, xnfConversionTechnique, simplificationTechnique);
 		final UnmodifiableTransFormula markhor = parallelComposition(logger, services, tf.hashCode(), maScript, null,
