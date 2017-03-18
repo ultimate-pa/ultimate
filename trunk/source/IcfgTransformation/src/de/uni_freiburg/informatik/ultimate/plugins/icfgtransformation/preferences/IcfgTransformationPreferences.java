@@ -63,6 +63,8 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 		LOOP_ACCELERATION_MOHR,
 
 		LOOP_ACCELERATION_WOELFING,
+		
+		LOOP_ACCELERATION_FASTUPR
 
 	}
 
