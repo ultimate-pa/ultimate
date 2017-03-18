@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -726,10 +727,14 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			final IcfgLocation loc = predicate.getTargetLocation();
 			// Add constraint IT_i ==> WP_i 
 			if (loc != mErrorLocation && mLoc2OverApproximation.containsKey(loc)) {
-				final Collection<Collection<AbstractLinearInvariantPattern>> wpTemplate = convertTransFormulaToPatternsForLinearInequalities(mLoc2OverApproximation.get(loc));
-				final Set<IProgramVar> varsForPattern = extractVarsFromPattern(wpTemplate);
+				// First, negate predicate WP
+				UnmodifiableTransFormula negatedWp = TransFormulaUtils.negate(mLoc2OverApproximation.get(loc), super.mCsToolkit.getManagedScript(), mServices, mLogger, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+						SimplificationTechnique.SIMPLIFY_DDA);
+				// Then convert the tranformula to linear inequalities
+				final Collection<Collection<AbstractLinearInvariantPattern>> negatedWpTemplate = convertTransFormulaToPatternsForLinearInequalities(negatedWp);
+				final Set<IProgramVar> varsForPattern = extractVarsFromPattern(negatedWpTemplate);
 				completePatternVariablesMapping(primedMapping, varsForPattern, programVarsRecentlyOccurred);
-				final Collection<Collection<LinearInequality>> wpTemplateNegatedDNF = mapAndNegatePattern(mServices, wpTemplate, primedMapping);
+				final Collection<Collection<LinearInequality>> wpTemplateNegatedDNF = mapPattern(negatedWpTemplate, primedMapping);
 				if (mUseUnsatCores) {
 					final List<IcfgLocation> locForWp = new ArrayList<>();
 					locForWp.add(loc);
