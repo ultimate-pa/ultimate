@@ -158,12 +158,12 @@ public class PathProgramDumper {
 				.constructPathProgram("PathInvariantsPathProgram", icfg, allowedTransitions);
 		final IIcfg<IcfgLocation> pathProgram = ppResult.getPathProgram();
 
-		final BoogieIcfgContainer boogieIcfg = (BoogieIcfgContainer) icfg;
 		final List<Declaration> newDeclarations = new ArrayList<>();
 		final Set<IProgramVar> globalVars = new HashSet<>();
 		for (final Entry<String, IcfgLocation> entry : pathProgram.getProcedureEntryNodes().entrySet()) {
 			final Pair<Procedure, Set<IProgramVar>> newImplAndGlobalVars;
 			if (USE_BOOGIE_INPUT) {
+				final BoogieIcfgContainer boogieIcfg = (BoogieIcfgContainer) icfg;
 				newImplAndGlobalVars = constructNewImplementation(entry.getKey(), entry.getValue(), boogieIcfg,
 						pathProgram.getProcedureErrorNodes().get(entry.getKey()));
 			} else {
@@ -176,6 +176,7 @@ public class PathProgramDumper {
 			globalVars.addAll(newImplAndGlobalVars.getSecond());
 
 			if (USE_BOOGIE_INPUT) {
+				final BoogieIcfgContainer boogieIcfg = (BoogieIcfgContainer) icfg;
 				final Procedure spec = boogieIcfg.getBoogieDeclarations().getProcSpecification().get(entry.getKey());
 				final Procedure impl = boogieIcfg.getBoogieDeclarations().getProcImplementation().get(entry.getKey());
 				if (spec != impl) {
@@ -186,6 +187,7 @@ public class PathProgramDumper {
 		}
 
 		if (USE_BOOGIE_INPUT) {
+			final BoogieIcfgContainer boogieIcfg = (BoogieIcfgContainer) icfg;
 			newDeclarations.addAll(0,
 					Arrays.asList(filter(boogieIcfg.getBoogieDeclarations().getGlobalVarDeclarations(),
 							extractIdentifiers(globalVars))));
