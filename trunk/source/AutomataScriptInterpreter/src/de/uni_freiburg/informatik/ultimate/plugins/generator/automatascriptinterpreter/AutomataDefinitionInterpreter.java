@@ -73,11 +73,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser.A
  * Responsible for interpretation of automata definitions.
  * 
  * @author musab@informatik.uni-freiburg.de
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class AutomataDefinitionInterpreter {
 	private static final String UNDEFINED_PLACE = "undefined place: ";
 	private static final String LINE_SEPARATOR = System.getProperty("line.separator");
 	private static final String EXCEPTION_THROWN = "Exception thrown";
+	
+	/**
+	 * Enable/disable unification of objects in the automata.
+	 * <p>
+	 * The parser creates fresh objects every time it reads a string, even if two strings are identical. With
+	 * unification activated we make sure that there is only one object per string in the automaton (e.g., all
+	 * transitions to some state {@code q} point to the same object).
+	 * <p>
+	 * TODO Christian 2017-03-19 Currently only nested word automata are unified.
+	 */
+	private static final boolean UNIFY_OBJECTS = false;
 	
 	/**
 	 * A map from automaton name to automaton object, which contains for each automaton, that was defined in the
@@ -276,37 +288,78 @@ public class AutomataDefinitionInterpreter {
 			}
 		}
 		
+		// data structures for unification
+		final Map<String, String> mUnifyLettersInternal;
+		final Map<String, String> mUnifyLettersCall;
+		final Map<String, String> mUnifyLettersReturn;
+		final Map<String, String> mUnifyStates;
+		if (UNIFY_OBJECTS) {
+			mUnifyLettersInternal = new HashMap<>();
+			mUnifyLettersCall = new HashMap<>();
+			mUnifyLettersReturn = new HashMap<>();
+			mUnifyStates = new HashMap<>();
+		} else {
+			mUnifyLettersInternal = null;
+			mUnifyLettersCall = null;
+			mUnifyLettersReturn = null;
+			mUnifyStates = null;
+		}
+		
 		// create automaton
-		final Set<String> internalAlphabet = new HashSet<>(nwa.getInternalAlphabet());
-		final Set<String> callAlphabet = new HashSet<>(nwa.getCallAlphabet());
-		final Set<String> returnAlphabet = new HashSet<>(nwa.getReturnAlphabet());
+		final Set<String> internalAlphabet = Collections.unmodifiableSet(new HashSet<>(nwa.getInternalAlphabet()));
+		final Set<String> callAlphabet = Collections.unmodifiableSet(new HashSet<>(nwa.getCallAlphabet()));
+		final Set<String> returnAlphabet = Collections.unmodifiableSet(new HashSet<>(nwa.getReturnAlphabet()));
+		if (UNIFY_OBJECTS) {
+			for (final String letter : nwa.getInternalAlphabet()) {
+				mUnifyLettersInternal.put(letter, letter);
+			}
+			for (final String letter : nwa.getCallAlphabet()) {
+				mUnifyLettersCall.put(letter, letter);
+			}
+			for (final String letter : nwa.getReturnAlphabet()) {
+				mUnifyLettersReturn.put(letter, letter);
+			}
+		}
 		
 		final NestedWordAutomaton<String, String> nw = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices),
-				Collections.unmodifiableSet(internalAlphabet), Collections.unmodifiableSet(callAlphabet),
-				Collections.unmodifiableSet(returnAlphabet), new StringFactory());
+				internalAlphabet, callAlphabet, returnAlphabet, new StringFactory());
 		
 		// add the states
 		for (final String state : allStates) {
 			nw.addState(initStates.contains(state), finalStates.contains(state), state);
+			if (UNIFY_OBJECTS) {
+				mUnifyStates.put(state, state);
+			}
 		}
 		
 		// add the transitions
 		for (final Entry<Pair<String, String>, Set<String>> entry : nwa.getInternalTransitions().entrySet()) {
-			for (final String succ : entry.getValue()) {
-				nw.addInternalTransition(entry.getKey().left, entry.getKey().right, succ);
+			final String pred = unifyIfNeeded(entry.getKey().left, mUnifyStates);
+			for (final String succRaw : entry.getValue()) {
+				final String succ = unifyIfNeeded(succRaw, mUnifyStates);
+				final String letter = unifyIfNeeded(entry.getKey().right, mUnifyLettersInternal);
+				nw.addInternalTransition(pred, letter, succ);
 			}
 		}
 		
 		for (final Entry<Pair<String, String>, Set<String>> entry : nwa.getCallTransitions().entrySet()) {
-			for (final String succ : entry.getValue()) {
-				nw.addCallTransition(entry.getKey().left, entry.getKey().right, succ);
+			final String pred = unifyIfNeeded(entry.getKey().left, mUnifyStates);
+			for (final String succRaw : entry.getValue()) {
+				final String succ = unifyIfNeeded(succRaw, mUnifyStates);
+				final String letter = unifyIfNeeded(entry.getKey().right, mUnifyLettersCall);
+				nw.addCallTransition(pred, letter, succ);
 			}
 		}
 		
-		for (final String linPred : nwa.getReturnTransitions().keySet()) {
-			for (final String hierPred : nwa.getReturnTransitions().get(linPred).keySet()) {
-				for (final String letter : nwa.getReturnTransitions().get(linPred).get(hierPred).keySet()) {
-					for (final String succ : nwa.getReturnTransitions().get(linPred).get(hierPred).get(letter)) {
+		for (final String linPredRaw : nwa.getReturnTransitions().keySet()) {
+			final String linPred = unifyIfNeeded(linPredRaw, mUnifyStates);
+			for (final String hierPredRaw : nwa.getReturnTransitions().get(linPred).keySet()) {
+				final String hierPred = unifyIfNeeded(hierPredRaw, mUnifyStates);
+				for (final Entry<String, Set<String>> entry : nwa.getReturnTransitions().get(linPred).get(hierPred)
+						.entrySet()) {
+					final String letter = unifyIfNeeded(entry.getKey(), mUnifyLettersReturn);
+					for (final String succRaw : entry.getValue()) {
+						final String succ = unifyIfNeeded(succRaw, mUnifyStates);
 						nw.addReturnTransition(linPred, hierPred, letter, succ);
 					}
 				}
@@ -315,7 +368,7 @@ public class AutomataDefinitionInterpreter {
 		
 		mAutomata.put(nwa.getName(), nw);
 	}
-	
+
 	/**
 	 * @param pna
 	 *            AST node.
@@ -355,6 +408,13 @@ public class AutomataDefinitionInterpreter {
 		mAutomata.put(pna.getName(), net);
 	}
 	
+	private static String unifyIfNeeded(final String object, final Map<String, String> unifier) {
+		if (!UNIFY_OBJECTS) {
+			return object;
+		}
+		return unifier.get(object);
+	}
+
 	private static LinkedList<BooleanExpression> parseBooleanExpressions(
 			final AlternatingAutomaton<String, String> alternatingAutomaton, final String expression) {
 		final LinkedList<BooleanExpression> booleanExpressions = new LinkedList<>();
