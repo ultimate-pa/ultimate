@@ -141,10 +141,10 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 	protected abstract void modifyReachableStatesCopyForCheckResult(ReachableStatesCopy<LETTER, STATE> rsc)
 			throws AutomataOperationCanceledException;
 
-	protected final boolean checkAllStatesAreInReachableStatesCopy(final INestedWordAutomaton<LETTER, STATE> result,
-			final INestedWordAutomaton<LETTER, STATE> reachableStatesCopy) {
+	protected final boolean
+			checkAllStatesAreInReachableStatesCopy(final INestedWordAutomaton<LETTER, STATE> reachableStatesCopy) {
 		// check that all result states are also present in the ReachableStatesCopy
-		final boolean correct = result.getStates().containsAll(reachableStatesCopy.getStates());
+		final boolean correct = getResult().getStates().containsAll(reachableStatesCopy.getStates());
 		assert correct : operationName() + " incorrect: too many states";
 		return correct;
 	}
