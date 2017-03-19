@@ -7,6 +7,7 @@
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.blockencoding" />
+	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"/>
 	<plugin id="de.uni_freiburg.informatik.ultimate.plugins.output.jungvisualization"/>
 
 	</toolchain>
