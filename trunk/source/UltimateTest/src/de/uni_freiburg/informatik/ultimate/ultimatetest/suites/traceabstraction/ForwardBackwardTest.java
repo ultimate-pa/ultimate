@@ -46,6 +46,7 @@ public class ForwardBackwardTest extends AbstractTraceAbstractionTestSuite {
 	
 	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
 	
+	// @formatter:off
 	private static final DirectoryFileEndingsPair[] mSVCOMP_Examples = {
 //		/*** Category 1. Arrays ***/
 //		new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
@@ -115,6 +116,7 @@ public class ForwardBackwardTest extends AbstractTraceAbstractionTestSuite {
 //		"examples/programs/quantifier",
 //		"examples/programs/recursive/regression",
 //		"examples/programs/toy",
+//		"examples/programs/20170304-DifficultPathPrograms",
 	};
 	
 	
@@ -129,6 +131,7 @@ public class ForwardBackwardTest extends AbstractTraceAbstractionTestSuite {
 //		"automizer/ForwardPredicates.epf",
 //		"automizer/BackwardPredicates.epf",
 		"automizer/ForwardPredicatesAndBackwardPredicates.epf",
+//		"automizer/AutomizerReach-DumpPathPrograms.epf",
 	};
 	
 	/**
@@ -142,11 +145,13 @@ public class ForwardBackwardTest extends AbstractTraceAbstractionTestSuite {
 	private static final String[] mBoogieToolchains = {
 		"AutomizerBpl.xml",
 //		"AutomizerBplInline.xml",
+//		"AutomizerBplInlineTransformedBlockencoded.xml", 
 	};
 	
 	private static final String[] mCToolchains = {
 		"AutomizerC.xml",
 //		"AutomizerCInline.xml",
+//		"AutomizerCInlineTransformedBlockencoded.xml",
 	};
 
 	@Override
@@ -171,6 +176,6 @@ public class ForwardBackwardTest extends AbstractTraceAbstractionTestSuite {
 		}
 		return super.createTestCases();
 	}
-
+	// @formatter:on
 	
 }

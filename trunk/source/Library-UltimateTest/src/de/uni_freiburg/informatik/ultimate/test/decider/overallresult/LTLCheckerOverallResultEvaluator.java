@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHol
 import de.uni_freiburg.informatik.ultimate.core.lib.results.LTLFiniteCounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.LTLInfiniteCounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult.TERMINATION;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult.Termination;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 
 public class LTLCheckerOverallResultEvaluator extends SafetyCheckerOverallResultEvaluator {
@@ -51,7 +51,7 @@ public class LTLCheckerOverallResultEvaluator extends SafetyCheckerOverallResult
 			return SafetyCheckerOverallResult.UNSAFE;
 		} else if (result instanceof TerminationAnalysisResult) {
 			final TerminationAnalysisResult tar = (TerminationAnalysisResult) result;
-			if (tar.getTermination() == TERMINATION.UNKNOWN) {
+			if (tar.getTermination() == Termination.UNKNOWN) {
 				return SafetyCheckerOverallResult.UNKNOWN;
 			}
 		}

@@ -623,10 +623,10 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 			final boolean useNwaInsteadDfaMethod = false;
 			if (useNwaInsteadDfaMethod) {
 				buechi = new GetRandomNwa(new AutomataLibraryServices(services), k, n, 0.2, 0, 0,
-						(totalityInPerc + 0.0f) / 100).getResult();
+						(totalityInPerc + 0.0f) / 100, 0L).getResult();
 			} else {
-				buechi = new GetRandomDfa(new AutomataLibraryServices(services), n, k, f, totalityInPerc, true, false,
-						false, false).getResult();
+				buechi = new GetRandomDfa(new AutomataLibraryServices(services), n, k, f, totalityInPerc, 0L, true,
+						false, false, false).getResult();
 			}
 
 			if (logNoErrorDebug) {

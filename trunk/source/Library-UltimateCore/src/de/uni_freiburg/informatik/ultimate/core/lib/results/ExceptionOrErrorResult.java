@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptionWrapper;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IFailedAnalysisResult;
 
 /**
  * IResult that is reported if toolchain has thrown a Throwable (Error or Exception). The Throwable stored in the result
@@ -35,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainExceptio
  *
  * @author Matthias Heizmann
  */
-public class ExceptionOrErrorResult extends AbstractResult {
+public class ExceptionOrErrorResult extends AbstractResult implements IFailedAnalysisResult {
 	private final Throwable mThrowable;
 
 	public ExceptionOrErrorResult(final String plugin, final Throwable throwable) {

@@ -37,10 +37,10 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.GetRandomNwaTv;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwa;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwaTv;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainStorage;
 
 /**
@@ -287,7 +287,7 @@ public final class RandomNwaBenchmarkCreator {
 						(int) mHierarchicalPredecessorDensity, (int) mAcceptance).getResult();
 			} else {
 				nwa = new GetRandomNwa(mServices, mAlphabetSize, mSize, internalTotalityDouble, callTotalityDouble,
-						returnTotalityDouble, acceptanceDouble).getResult();
+						returnTotalityDouble, acceptanceDouble, 0L).getResult();
 			}
 
 			if (i == 1) {

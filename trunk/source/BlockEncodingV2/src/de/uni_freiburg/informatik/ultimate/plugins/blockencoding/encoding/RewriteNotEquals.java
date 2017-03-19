@@ -102,7 +102,11 @@ public final class RewriteNotEquals extends BaseBlockEncoder<IcfgLocation> {
 			rememberEdgeMapping(newEdge, edge);
 		}
 
-		assert repVarFac.isUnused() : "The transformations here should not require replacement vars";
+		if (!repVarFac.isUnused()) {
+			final CfgSmtToolkit newToolkit = new CfgSmtToolkit(repVarFac.constructModifiableGlobalsTable(), mgScript,
+					repVarFac.constructIIcfgSymbolTable(), toolkit.getAxioms(), toolkit.getProcedures());
+			icfg.setCfgSmtToolkit(newToolkit);
+		}
 
 		toRemove.stream().forEach(a -> {
 			a.disconnectSource();

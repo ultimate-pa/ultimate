@@ -342,9 +342,6 @@ int ListElement;
 int Irp;
 int IrpSp;
 int CancelIrql;
-int BytesToMove;
-int FirstHalf;
-int SecondHalf;
 int CancelIrql;
 int LockHeld;
 int CurrentTimeouts;
@@ -399,12 +396,6 @@ int main()
       if (__VERIFIER_nondet_int() && __VERIFIER_nondet_int()) {
  Irp=__VERIFIER_nondet_int();
  IrpSp=IoGetCurrentIrpStackLocation(Irp);
- BytesToMove=__VERIFIER_nondet_int();
- if (__VERIFIER_nondet_int()) {
-   FirstHalf=__VERIFIER_nondet_int();
-   SecondHalf=BytesToMove-FirstHalf;
- } else {
- }
       }
       else
  {

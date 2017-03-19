@@ -268,6 +268,8 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		final boolean separateFinalAndNonfinalStates = mSettings.getFinalStateConstraints();
 
 		for (final Triple<STATE, STATE, Pair<STATE, STATE>> triple : mStatePair2Var.entrySet()) {
+			checkTimeout(GENERATING_VARIABLES);
+			
 			final Pair<STATE, STATE> pair = triple.getThird();
 			final STATE state1 = triple.getFirst();
 			final STATE state2 = triple.getSecond();
@@ -306,6 +308,8 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	protected void generateTransitionAndTransitivityConstraints(final boolean addTransitivityConstraints)
 			throws AutomataOperationCanceledException {
 		for (final Triple<STATE, STATE, Pair<STATE, STATE>> triple : mStatePair2Var.entrySet()) {
+			checkTimeout(ADDING_TRANSITION_CONSTRAINTS);
+			
 			final Pair<STATE, STATE> pair = triple.getThird();
 
 			// add transition constraints
@@ -315,12 +319,12 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			if (addTransitivityConstraints) {
 				generateTransitivityConstraints(pair);
 			}
-
-			checkTimeout(ADDING_TRANSITIVITY_CONSTRAINTS);
 		}
 
 		// add constraints for reflexive pairs; those are not considered above
 		for (final STATE state : mOperand.getStates()) {
+			checkTimeout(ADDING_TRANSITION_CONSTRAINTS);
+			
 			generateTransitionConstraintsHelperReturnSameLinPred(state, getDownStatesArray(state));
 		}
 	}

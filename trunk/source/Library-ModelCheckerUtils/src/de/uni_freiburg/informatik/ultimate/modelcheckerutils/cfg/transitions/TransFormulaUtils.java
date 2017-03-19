@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -66,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher.PqeTechniques;
@@ -75,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Basi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Static auxiliary methods for {@link TransFormula}s
@@ -837,8 +840,8 @@ public class TransFormulaUtils {
 		return procedures.size() <= 1;
 	}
 
-	private static UnmodifiableTransFormula computeGuard(final UnmodifiableTransFormula tf,
-			final ManagedScript script) {
+	public static UnmodifiableTransFormula computeGuard(final UnmodifiableTransFormula tf,
+			final ManagedScript mgdScript, final IUltimateServiceProvider services, final ILogger logger) {
 		final Set<TermVariable> auxVars = new HashSet<>(tf.getAuxVars());
 		for (final IProgramVar bv : tf.getAssignedVars()) {
 			final TermVariable outVar = tf.getOutVars().get(bv);
@@ -851,31 +854,31 @@ public class TransFormulaUtils {
 		}
 		// yes! outVars of result are indeed the inVars of input
 
+		final Pair<Term, Set<TermVariable>> termAndAuxVars = tryToEliminateAuxVars(services, logger, mgdScript,
+				tf.getFormula(), auxVars);
+		
 		final TransFormulaBuilder tfb =
 				new TransFormulaBuilder(tf.getInVars(), tf.getInVars(), tf.getNonTheoryConsts().isEmpty(),
 						tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(), true, null, false);
-		tfb.setFormula(tf.getFormula());
+		tfb.setFormula(termAndAuxVars.getFirst());
 		tfb.setInfeasibility(tf.isInfeasible());
-		tfb.addAuxVarsButRenameToFreshCopies(auxVars, script);
-		return tfb.finishConstruction(script);
+		tfb.addAuxVarsButRenameToFreshCopies(termAndAuxVars.getSecond(), mgdScript);
+		return tfb.finishConstruction(mgdScript);
 	}
 
-	private static UnmodifiableTransFormula negate(final UnmodifiableTransFormula tf, final ManagedScript maScript,
+	public static UnmodifiableTransFormula negate(final UnmodifiableTransFormula tf, final ManagedScript maScript,
 			final IUltimateServiceProvider services, final ILogger logger,
 			final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) {
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new AssertionError("I think this does not make sense with branch enconders");
 		}
-		Term formula = tf.getFormula();
-		formula = PartialQuantifierElimination.quantifier(services, logger, maScript, simplificationTechnique,
-				xnfConversionTechnique, QuantifiedFormula.EXISTS, tf.getAuxVars(), formula, new Term[0]);
-		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(formula.getFreeVars()));
-		freeVars.retainAll(tf.getAuxVars());
-		if (!freeVars.isEmpty()) {
+		final Pair<Term, Set<TermVariable>> termAndAuxVars = tryToEliminateAuxVars(services, logger, maScript,
+				tf.getFormula(), tf.getAuxVars());
+		if (!termAndAuxVars.getSecond().isEmpty()) {
 			throw new UnsupportedOperationException("cannot negate if there are auxVars");
 		}
-		formula = SmtUtils.not(maScript.getScript(), formula);
+		final Term formula = SmtUtils.not(maScript.getScript(), termAndAuxVars.getFirst());
 
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(tf.getInVars(), tf.getOutVars(),
 				tf.getNonTheoryConsts().isEmpty(), tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(),
@@ -885,11 +888,26 @@ public class TransFormulaUtils {
 		return tfb.finishConstruction(maScript);
 	}
 
+	/**
+	 * Given the return of a {@link Transformula} try to eliminate auxvars.
+	 * @return new term and set of remaining auxvars. 
+	 */
+	private static Pair<Term, Set<TermVariable>> tryToEliminateAuxVars(final IUltimateServiceProvider services,
+			final ILogger logger, final ManagedScript maScript, Term formula, final Set<TermVariable> oldAuxVars) {
+		final Pair<Term, Set<TermVariable>> result;
+		formula = PartialQuantifierElimination.quantifier(services, logger, maScript, SimplificationTechnique.SIMPLIFY_DDA,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, QuantifiedFormula.EXISTS, oldAuxVars, formula, new Term[0]);
+		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(formula.getFreeVars()));
+		freeVars.retainAll(oldAuxVars);
+		result = new Pair<Term, Set<TermVariable>>(formula, freeVars);
+		return result;
+	}
+
 	public static UnmodifiableTransFormula computeMarkhorTransFormula(final UnmodifiableTransFormula tf,
 			final ManagedScript maScript, final IUltimateServiceProvider services, final ILogger logger,
 			final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique) {
-		final UnmodifiableTransFormula guard = computeGuard(tf, maScript);
+		final UnmodifiableTransFormula guard = computeGuard(tf, maScript, services, logger);
 		final UnmodifiableTransFormula negGuard =
 				negate(guard, maScript, services, logger, xnfConversionTechnique, simplificationTechnique);
 		final UnmodifiableTransFormula markhor = parallelComposition(logger, services, tf.hashCode(), maScript, null,
@@ -908,6 +926,25 @@ public class TransFormulaUtils {
 				tfb.addProgramConst(progConst);
 			}
 		}
+	}
+	
+	
+	public static <V, K> Map<V, K> constructReverseMapping(final Map<K, V> map) {
+		return map.entrySet().stream().collect(Collectors.toMap(Entry::getValue, c -> c.getKey()));
+	}
+	
+	public static Term renameInvarsToDefaultVars(final TransFormula tf, final ManagedScript mgdScript) {
+		final Map<TermVariable, IProgramVar> inVarsReverseMapping = constructReverseMapping(tf.getInVars());
+		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		for (final TermVariable tv : tf.getFormula().getFreeVars()) {
+			final IProgramVar pv = inVarsReverseMapping.get(tv);
+			if (pv == null) {
+				throw new IllegalArgumentException("TransFormula contains non-Invar");
+			} else {
+				substitutionMapping.put(tv, pv.getTermVariable());	
+			}
+		}
+		return (new Substitution(mgdScript, substitutionMapping)).transform(tf.getFormula());
 	}
 
 }

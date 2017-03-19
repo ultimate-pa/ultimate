@@ -42,3 +42,21 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Use\ only\ trivial\ implications\ for\ array\ writes=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer/Add\ implications\ only\ for\ indices\ occuring\ in\ the\ current\ formula=true
 
+
+
+#Sun Mar 19 00:13:42 CET 2017
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation/TransformationType=MODULO_NEIGHBOR
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation=
+@de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation=0.1.9
+
+
+
+
+#Sun Mar 19 00:13:42 CET 2017
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding=
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Create\ parallel\ compositions\ if\ possible=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Minimize\ states\ using\ LBE\ with\ the\ strategy=MULTI
+file_export_version=3.0
+@de.uni_freiburg.informatik.ultimate.plugins.blockencoding=0.1.9
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Use\ SBE=true

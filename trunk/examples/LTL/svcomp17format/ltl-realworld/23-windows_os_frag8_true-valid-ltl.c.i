@@ -1,13 +1,14 @@
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+extern unsigned int __VERIFIER_nondet_unsigned() __attribute__ ((__noreturn__));
 void ExAcquireFastMutex() {}
 void ExReleaseFastMutex() {}
 int WarmPollPeriod;
 int status;
 int polling;
 int PowerStateIsAC;
-int Count;
+unsigned int Count;
 int timeOut1;
 int deviceStatus;
 int devId;
@@ -18,7 +19,7 @@ void env_init() {
    status = __VERIFIER_nondet_int();
    polling = __VERIFIER_nondet_int();
    PowerStateIsAC = __VERIFIER_nondet_int();
-   Count = __VERIFIER_nondet_int();
+   Count = __VERIFIER_nondet_unsigned();
  __INITIALIZED = 1;
 }
 int main() {
@@ -44,7 +45,7 @@ int main() {
                    int deviceStatus;
                    int devId;
                    int requestRescan;
-                   Count = __VERIFIER_nondet_int();
+                   Count = __VERIFIER_nondet_unsigned();
                    do {
                        if( PowerStateIsAC ) {
                        } else {

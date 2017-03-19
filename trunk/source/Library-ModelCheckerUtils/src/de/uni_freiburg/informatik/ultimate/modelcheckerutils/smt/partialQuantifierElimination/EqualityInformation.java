@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -72,11 +71,9 @@ public class EqualityInformation {
 	 * == t, such that t does not contain the subterm forbiddenTerm. If this is
 	 * the case return corresponding equality information, otherwise return
 	 * null. If forbiddenTerm is null all subterms in t are allowed.
-	 * 
-	 * @param logger
 	 */
 	public static EqualityInformation getEqinfo(Script script, Term givenTerm, Term[] context, Term forbiddenTerm,
-			int quantifier, ILogger logger) {
+			int quantifier) {
 		final BinaryEqualityRelation[] binaryRelations = new BinaryEqualityRelation[context.length];
 
 		// stage 1: check if there is an "=" or "distinct" term where the

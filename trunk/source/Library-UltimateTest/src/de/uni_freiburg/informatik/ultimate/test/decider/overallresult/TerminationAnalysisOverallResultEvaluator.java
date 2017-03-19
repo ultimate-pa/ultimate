@@ -33,7 +33,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult.TERMINATION;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult.Termination;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.UnsupportedSyntaxResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -94,11 +94,11 @@ public class TerminationAnalysisOverallResultEvaluator implements IOverallResult
 	
 	
 	private TerminationAnalysisOverallResult detectResultCategory(IResult result) {
-		if (result instanceof TerminationAnalysisResult && ((TerminationAnalysisResult) result).getTermination() == TERMINATION.TERMINATING) {
+		if (result instanceof TerminationAnalysisResult && ((TerminationAnalysisResult) result).getTermination() == Termination.TERMINATING) {
 			return TerminationAnalysisOverallResult.TERMINATING;
-		} else if (result instanceof TerminationAnalysisResult && ((TerminationAnalysisResult) result).getTermination() == TERMINATION.NONTERMINATING) {
+		} else if (result instanceof TerminationAnalysisResult && ((TerminationAnalysisResult) result).getTermination() == Termination.NONTERMINATING) {
 			return TerminationAnalysisOverallResult.NONTERMINATING;
-		} else if (result instanceof TerminationAnalysisResult && ((TerminationAnalysisResult) result).getTermination() == TERMINATION.UNKNOWN) {
+		} else if (result instanceof TerminationAnalysisResult && ((TerminationAnalysisResult) result).getTermination() == Termination.UNKNOWN) {
 			return TerminationAnalysisOverallResult.UNKNOWN;
 		} else if (result instanceof TypeErrorResult) {
 			return TerminationAnalysisOverallResult.SYNTAX_ERROR;

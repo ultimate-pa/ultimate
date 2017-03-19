@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.results.LTLInfiniteCounterEx
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NonterminatingLassoResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult.TERMINATION;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult.Termination;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TimeoutResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -198,7 +198,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		if (result == Result.TERMINATING) {
 			final String longDescr = "Buchi Automizer proved that your program is terminating";
 			final IResult reportRes =
-					new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.TERMINATING, longDescr);
+					new TerminationAnalysisResult(Activator.PLUGIN_ID, Termination.TERMINATING, longDescr);
 			reportResult(reportRes);
 		} else if (result == Result.UNKNOWN) {
 			final NestedLassoRun<?, IPredicate> counterexample = bcl.getCounterexample();
@@ -211,7 +211,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			longDescr.append("Loop: ");
 			longDescr.append(counterexample.getLoop().getWord());
 			final IResult reportRes =
-					new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.UNKNOWN, longDescr.toString());
+					new TerminationAnalysisResult(Activator.PLUGIN_ID, Termination.UNKNOWN, longDescr.toString());
 			reportResult(reportRes);
 		} else if (result == Result.TIMEOUT) {
 			final IcfgLocation position = mIcfg.getProcedureEntryNodes().values().iterator().next();
@@ -223,7 +223,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		} else if (result == Result.NONTERMINATING) {
 			final String longDescr = "Buchi Automizer proved that your program is nonterminating for some inputs";
 			final IResult reportRes =
-					new TerminationAnalysisResult(Activator.PLUGIN_ID, TERMINATION.NONTERMINATING, longDescr);
+					new TerminationAnalysisResult(Activator.PLUGIN_ID, Termination.NONTERMINATING, longDescr);
 			reportResult(reportRes);
 
 			final NestedLassoRun<? extends IIcfgTransition<?>, IPredicate> counterexample = bcl.getCounterexample();

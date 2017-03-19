@@ -28,9 +28,10 @@
 package de.uni_freiburg.informatik.ultimate.core.lib.results;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IFailedAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IBacktranslationService;
 
-public class NoResult<P extends IElement> extends AbstractResultAtElement<P> {
+public class NoResult<P extends IElement> extends AbstractResultAtElement<P> implements IFailedAnalysisResult {
 	private String mShortDescription;
 	private String mLongDescription;
 

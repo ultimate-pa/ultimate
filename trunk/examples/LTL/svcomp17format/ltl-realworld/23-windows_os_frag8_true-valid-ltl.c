@@ -1,6 +1,8 @@
 extern void __VERIFIER_error() __attribute__ ((__noreturn__));
 extern void __VERIFIER_assume() __attribute__ ((__noreturn__));
 extern int __VERIFIER_nondet_int() __attribute__ ((__noreturn__));
+extern unsigned int __VERIFIER_nondet_unsigned() __attribute__ ((__noreturn__));
+
 #define NT_SUCCESS(s) s>0
 #define STATUS_SUCCESS 1
 #define STATUS_UNSUCCESSFUL 0
@@ -25,12 +27,12 @@ void ExReleaseFastMutex() {}
 #define HtRegGetDword __VERIFIER_nondet_int
 #define HtTryAllocatePort __VERIFIER_nondet_int
 #define SetFlags __VERIFIER_nondet_int
-#define CountLookup __VERIFIER_nondet_int
+#define CountLookup __VERIFIER_nondet_unsigned
 int WarmPollPeriod;
 int status;
 int polling;
 int PowerStateIsAC;
-int Count;
+unsigned int Count;
 LARGE_INTEGER   timeOut1;
 UCHAR           deviceStatus;
 PCHAR           devId;
@@ -44,7 +46,7 @@ void env_init() {
    status = __VERIFIER_nondet_int();
    polling = __VERIFIER_nondet_int();
    PowerStateIsAC = __VERIFIER_nondet_int();
-   Count = __VERIFIER_nondet_int();
+   Count = __VERIFIER_nondet_unsigned();
 	__INITIALIZED = 1;
 }
    

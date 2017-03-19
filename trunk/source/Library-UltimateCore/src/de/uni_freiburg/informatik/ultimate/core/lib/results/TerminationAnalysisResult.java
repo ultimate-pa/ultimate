@@ -40,10 +40,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithSeverit
 public class TerminationAnalysisResult extends AbstractResult implements
 		IResultWithSeverity {
 	
-	private final TERMINATION mTermination;
+	private final Termination mTermination;
 	private final String mLongDescription;
 	
-	public TerminationAnalysisResult(String plugin, TERMINATION termination,
+	public TerminationAnalysisResult(String plugin, Termination termination,
 			String longDescription) {
 		super(plugin);
 		mTermination = termination;
@@ -51,11 +51,11 @@ public class TerminationAnalysisResult extends AbstractResult implements
 	}
 	
 
-	public TERMINATION getTermination() {
+	public Termination getTermination() {
 		return mTermination;
 	}
 
-	public enum TERMINATION {
+	public enum Termination {
 		TERMINATING,
 		NONTERMINATING,
 		UNKNOWN

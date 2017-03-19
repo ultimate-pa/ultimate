@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
 
@@ -156,11 +157,11 @@ public final class Term2Expression implements Serializable {
 		}
 		final IBoogieType type = mTypeSortTranslator.getType(symb.getReturnSort());
 		if (symb.getParameterSorts().length == 0) {
-			if (term == mScript.term("true")) {
+			if (SmtUtils.isTrue(term)) {
 				final IBoogieType booleanType = mTypeSortTranslator.getType(mScript.sort("Bool"));
 				return new BooleanLiteral(null, booleanType, true);
 			}
-			if (term == mScript.term("false")) {
+			if (SmtUtils.isFalse(term)) {
 				final IBoogieType booleanType = mTypeSortTranslator.getType(mScript.sort("Bool"));
 				return new BooleanLiteral(null, booleanType, false);
 			}

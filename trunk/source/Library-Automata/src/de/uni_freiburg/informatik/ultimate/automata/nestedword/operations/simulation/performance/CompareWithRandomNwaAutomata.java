@@ -92,7 +92,7 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE>
 
 			nwa = new GetRandomNwa(services, k, n, (totalityInternalInPerc + 0.0) / HUNDRED,
 					(totalityCallInPerc + 0.0) / HUNDRED, (totalityReturnInPerc + 0.0) / HUNDRED,
-					(acceptanceInPerc + 0.0) / HUNDRED).getResult();
+					(acceptanceInPerc + 0.0) / HUNDRED, 0L).getResult();
 			try {
 				new CompareReduceNwaSimulation<>(services, snf, nwa);
 			} catch (final AutomataOperationCanceledException e) {
