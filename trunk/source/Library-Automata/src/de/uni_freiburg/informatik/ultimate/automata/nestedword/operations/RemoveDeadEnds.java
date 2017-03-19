@@ -107,7 +107,7 @@ public final class RemoveDeadEnds<LETTER, STATE> extends StateRemoval<LETTER, ST
 	}
 
 	@Override
-	protected void checkResultModifyReachableStatesCopy(final ReachableStatesCopy<LETTER, STATE> rsc)
+	protected void modifyReachableStatesCopyForCheckResult(final ReachableStatesCopy<LETTER, STATE> rsc)
 			throws AutomataOperationCanceledException {
 		rsc.removeDeadEnds();
 	}

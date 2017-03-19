@@ -108,7 +108,7 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends StateRemoval<LETTE
 	}
 
 	@Override
-	protected void checkResultModifyReachableStatesCopy(final ReachableStatesCopy<LETTER, STATE> rsc)
+	protected void modifyReachableStatesCopyForCheckResult(final ReachableStatesCopy<LETTER, STATE> rsc)
 			throws AutomataOperationCanceledException {
 		rsc.removeNonLiveStates();
 	}

@@ -84,7 +84,7 @@ public final class RemoveUnreachable<LETTER, STATE> extends StateRemoval<LETTER,
 	}
 
 	@Override
-	protected void checkResultModifyReachableStatesCopy(final ReachableStatesCopy<LETTER, STATE> rsc) {
+	protected void modifyReachableStatesCopyForCheckResult(final ReachableStatesCopy<LETTER, STATE> rsc) {
 		// do nothing
 	}
 

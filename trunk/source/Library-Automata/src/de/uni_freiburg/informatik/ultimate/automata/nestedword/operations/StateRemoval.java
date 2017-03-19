@@ -108,7 +108,7 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 		// create a ReachableStatesCopy
 		final ReachableStatesCopy<LETTER, STATE> rsc =
 				new ReachableStatesCopy<>(mServices, mOperand, false, false, false, false);
-		checkResultModifyReachableStatesCopy(rsc);
+		modifyReachableStatesCopyForCheckResult(rsc);
 
 		// check that all ReachableStatesCopy states are also present in the result
 		final IDoubleDeckerAutomaton<LETTER, STATE> result = getResult();
@@ -137,7 +137,7 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	protected abstract void checkResultModifyReachableStatesCopy(ReachableStatesCopy<LETTER, STATE> rsc)
+	protected abstract void modifyReachableStatesCopyForCheckResult(ReachableStatesCopy<LETTER, STATE> rsc)
 			throws AutomataOperationCanceledException;
 
 	protected abstract boolean checkResultFurther(IDoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy)
