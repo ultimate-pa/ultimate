@@ -325,22 +325,11 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 		if (mPref.interactive()) {
 			if (traceHistogram.getVisualizationArray()[0] > traceHistogram.getVisualizationArray().length) {
-				/*CompletableFuture<Question> fut = Server.get().request(TraceAbstractionProtos.Question.class, null);
-				
-				final String message = "bailout by trace histogram " + traceHistogram.toString();
-				final String taskDescription = "trying to verify (iteration " + mIteration + ")";
-				throw new ToolchainCanceledException(message, getClass(), taskDescription);
-				*/
-			}
-		}
-		if (mPref.interactive()) {
-			if (traceHistogram.getVisualizationArray()[0] > traceHistogram.getVisualizationArray().length) {
-				/*CompletableFuture<Question> fut = Server.get().request(TraceAbstractionProtos.Question.class, null);
-				
-				final String message = "bailout by trace histogram " + traceHistogram.toString();
-				final String taskDescription = "trying to verify (iteration " + mIteration + ")";
-				throw new ToolchainCanceledException(message, getClass(), taskDescription);
-				*/
+				/*
+				 * final String message = "bailout by trace histogram " + traceHistogram.toString(); final String
+				 * taskDescription = "trying to verify (iteration " + mIteration + ")"; throw new
+				 * ToolchainCanceledException(message, getClass(), taskDescription);
+				 */
 			}
 		}
 		return false;
