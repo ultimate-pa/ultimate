@@ -354,7 +354,9 @@ public final class CFGInvariantsGenerator {
 
 	private static IcfgLocation extractErrorLocationFromPathProgram(final IIcfg<IcfgLocation> pathProgram) {
 		final Set<IcfgLocation> errorLocs = IcfgUtils.getErrorLocations(pathProgram);
-		assert errorLocs.size() == 1 : "CFGInvariantsGenerator currently supports CFGs with only one error location";
+		if (errorLocs.size() != 1) {
+			throw new UnsupportedOperationException("CFGInvariantsGenerator currently supports CFGs with only one error location");
+		}
 		return errorLocs.iterator().next();
 	}
 
@@ -687,8 +689,8 @@ public final class CFGInvariantsGenerator {
 				sumOfVarsPerLoc, numOfNonLiveVariables, round);
 		final PathInvariantsStatisticsGenerator pathInvariantsStatisticsForThisRound = new PathInvariantsStatisticsGenerator();
 		pathInvariantsStatisticsForThisRound.initializeStatistics();
-		int numLocsBeforeLbe = (int) mPathInvariantsStatistics.getValue("ProgramLocs");
-		int numLocsAfterLbe = (int) mPathInvariantsStatistics.getValue("ProgramLocsLbe");
+		final int numLocsBeforeLbe = (int) mPathInvariantsStatistics.getValue("ProgramLocs");
+		final int numLocsAfterLbe = (int) mPathInvariantsStatistics.getValue("ProgramLocsLbe");
 		pathInvariantsStatisticsForThisRound.setNumOfPathProgramLocations(numLocsBeforeLbe, numLocsAfterLbe);
 		pathInvariantsStatisticsForThisRound.setNumOfVars(allProgramVars.size());
 		pathInvariantsStatisticsForThisRound.addStatisticsDataBeforeCheckSat(numOfTemplateInequalitiesForThisRound, maximalTemplateSizeOfThisRound, minimalTemplateSizeOfThisRound,
@@ -849,14 +851,14 @@ public final class CFGInvariantsGenerator {
 
 	private int getNumOfPPLocations(final IIcfg<IcfgLocation> pathProgram) {
 		int numLocs = 0;
-		for (String proc : pathProgram.getProgramPoints().keySet()) {
+		for (final String proc : pathProgram.getProgramPoints().keySet()) {
 			numLocs += pathProgram.getProgramPoints().get(proc).keySet().size();
 		}
 		return numLocs;
 	}
 	
 	public Map<IcfgLocation, IPredicate> synthesizeInvariants() {
-		int numLocsBeforeLbe = getNumOfPPLocations(mPathProgram);
+		final int numLocsBeforeLbe = getNumOfPPLocations(mPathProgram);
 		LargeBlockEncodingIcfgTransformer lbeTransformer = null;
 		IIcfg<IcfgLocation> lbePathProgram;
 		if (APPLY_LARGE_BLOCK_ENCODING) {
@@ -866,7 +868,7 @@ public final class CFGInvariantsGenerator {
 			lbePathProgram = mPathProgram;
 		}
 		
-		int numLocsAfterLbe = getNumOfPPLocations(lbePathProgram);
+		final int numLocsAfterLbe = getNumOfPPLocations(lbePathProgram);
 		mPathInvariantsStatistics.setNumOfPathProgramLocations(numLocsBeforeLbe, numLocsAfterLbe);
 		
 		Map<IcfgLocation, IPredicate> invariants = generateInvariantsForPathProgram(lbePathProgram, SimplificationTechnique.SIMPLIFY_DDA,
