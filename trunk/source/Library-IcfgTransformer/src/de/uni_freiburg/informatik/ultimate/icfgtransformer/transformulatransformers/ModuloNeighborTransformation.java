@@ -28,29 +28,36 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * 
  * @author Matthias Heizmann
  */
-public class ModuloNeighborTransformation extends TransformerPreprocessor {
+public class ModuloNeighborTransformation extends TransitionPreprocessor {
 	public static final String DESCRIPTION = "Replace modulo operation by disjunction if divisor is a literal";
 
 	/**
 	 * Use assert statement to check if result is equivalent to the conjunction
 	 * of input term and definition of auxiliary variables.
 	 */
-	private static final boolean CHECK_RESULT = true;
+	private static final boolean CHECK_RESULT = !true;
 
 	private final boolean mUseNeibors;
 
@@ -68,8 +75,10 @@ public class ModuloNeighborTransformation extends TransformerPreprocessor {
 	}
 
 	@Override
-	public ModifiableTransFormula process(final ManagedScript script, final ModifiableTransFormula tf) throws TermException {
-		return super.process(script, tf);
+	public ModifiableTransFormula process(final ManagedScript mgdScript, final ModifiableTransFormula tf) throws TermException {
+		final Term newFormula = constructTerm(mgdScript, tf.getFormula());
+		tf.setFormula(newFormula);
+		return tf;
 	}
 
 	@Override
@@ -87,71 +96,104 @@ public class ModuloNeighborTransformation extends TransformerPreprocessor {
 		return LBool.SAT == Util.checkSat(script, script.term("distinct", input, result));
 	}
 
-	@Override
-	protected TermTransformer getTransformer(final ManagedScript script) {
-		return new ModuloNeighborTransformer(script.getScript());
+
+	private Term constructInRangeBounds(final Script script, final Term dividend, final Term divisor) {
+		final Term geqZero = script.term("<=", script.numeral(BigInteger.ZERO), dividend);
+		final Term ltDivisor = script.term("<", dividend, divisor);
+		return script.term("and", geqZero, ltDivisor);
+	}
+	
+	private Term constructInRangeResult(final Term dividend) {
+		return dividend;
+	}
+	
+	private Term constructLeftIntervalBounds(final Script script, final Term dividend, final Term divisor) {
+		final Term geqLeftBound = script.term("<=", script.term("-", divisor), dividend);
+		final Term ltZero = script.term("<", dividend, script.numeral(BigInteger.ZERO));
+		return script.term("and", geqLeftBound, ltZero);
+	}
+	
+	private Term constructLeftIntervalResult(final Script script, final Term dividend, final Term divisor) {
+		return script.term("+", dividend, divisor);
 	}
 
-	/**
-	 * Replace integer division and modulo by auxiliary variables and add
-	 * definitions of these auxiliary variables.
-	 */
-	private class ModuloNeighborTransformer extends TermTransformer {
-		private final Script mScript;
+	
+	private Term constructRightIntervalBounds(final Script script, final Term dividend, final Term divisor) {
+		final Term geqLeftBound = script.term("<=", divisor, dividend);
+		final Term lgtRightBound = script.term("<", dividend, script.term("+", divisor, divisor));
+		return script.term("and", geqLeftBound, lgtRightBound);
+	}
+	
+	private Term constructRightIntervalResult(final Script script, final Term dividend, final Term divisor) {
+		return script.term("-", dividend, divisor);
+	}
 
-		ModuloNeighborTransformer(final Script script) {
-			assert script != null;
-			mScript = script;
-		}
-
-		@Override
-		public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
-			final String func = appTerm.getFunction().getName();
-			if (func.equals("mod")) {
-				assert appTerm.getParameters().length == 2;
-				final Term dividend = newArgs[0];
-				final Term divisor = newArgs[1];
-				if (divisor instanceof ConstantTerm) {
-					final Term result;
-					final Term inRange;
-					{
-						final Term geqZero = mScript.term("<=", mScript.numeral(BigInteger.ZERO), dividend);
-						final Term lgtDivisor = mScript.term("<", dividend, divisor);
-						inRange = mScript.term("and", geqZero, lgtDivisor);
-					}
-					if (mUseNeibors) {
-						Term leftInterval;
-						{
-							final Term geqleftBound = mScript.term("<=", mScript.term("-", divisor), dividend);
-							final Term lgtZero = mScript.term("<", dividend, divisor);
-							leftInterval = mScript.term("and", geqleftBound, lgtZero);
-						}
-						final Term resultForLeftInterval = mScript.term("+", dividend, divisor);
-
-						Term rightInterval;
-						{
-							final Term geqleftBound = mScript.term("<=", divisor, dividend);
-							final Term lgtrightBound = mScript.term("<", dividend, mScript.term("+", divisor, divisor));
-							rightInterval = mScript.term("and", geqleftBound, lgtrightBound);
-						}
-						final Term resultForRightInterval = mScript.term("-", dividend, divisor);
-						result = mScript.term("ite", inRange, dividend,
-								mScript.term("ite", leftInterval, resultForLeftInterval,
-										mScript.term("ite", rightInterval, resultForRightInterval, appTerm)));
-					} else {
-						result = mScript.term("ite", inRange, dividend, appTerm);
-					}
-					setResult(result);
-					return;
-
-				} else {
-					super.convertApplicationTerm(appTerm, newArgs);
-					return;
-				}
-			} else {
-				super.convertApplicationTerm(appTerm, newArgs);
-				return;
+	private Term constructNoNeighborIntervalBounds(final Script script, final Term dividend, final Term divisor) {
+		final Term lgtleftBoundofLeftInterval = script.term("<", dividend, script.term("-", divisor));
+		final Term gtRightBoundofRightInterval = script.term("<=", script.term("+", divisor, divisor), dividend);
+		return script.term("and", lgtleftBoundofLeftInterval, gtRightBoundofRightInterval);
+	}
+	
+	
+	
+	private Term constructTerm(final ManagedScript mgdScript, Term term) {
+		while (true) {
+			final Set<ApplicationTerm> modTerms = new ApplicationTermFinder(Collections.singleton("mod"), false).findMatchingSubterms(term);
+			if (modTerms.isEmpty()) {
+				break;
 			}
+			ApplicationTerm some = null;
+			Term dividend = null;
+			Term divisor = null;
+			for (final ApplicationTerm modTerm : modTerms) {
+				assert modTerm.getParameters().length == 2;
+				dividend = modTerm.getParameters()[0];
+				divisor = modTerm.getParameters()[1];
+				if (divisor instanceof ConstantTerm) {
+					some = modTerm;
+					break;
+				} else {
+					dividend = null;
+					divisor = null;
+				}
+			}
+			if (some == null) {
+				// no mod term with constant divisor left
+				break;
+			} else {
+				final Script script = mgdScript.getScript();
+				final List<Term> cases = new ArrayList<>();
+				{
+					final Map<Term, Term> substitutionMapping = Collections.singletonMap(some, constructInRangeResult(dividend));
+					final Term case1 = Util.and(script, constructInRangeBounds(script, dividend, divisor),
+							new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(term));
+					cases.add(case1);
+				}
+				{
+					final Map<Term, Term> substitutionMapping = Collections.singletonMap(some, constructLeftIntervalResult(script, dividend, divisor));
+					final Term case2 = Util.and(script, constructLeftIntervalBounds(script, dividend, divisor),
+							new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(term));
+					cases.add(case2);
+				}
+				{
+					final Map<Term, Term> substitutionMapping = Collections.singletonMap(some, constructRightIntervalResult(script, dividend, divisor));
+					final Term case3 = Util.and(script, constructRightIntervalBounds(script, dividend, divisor),
+							new SubstitutionWithLocalSimplification(mgdScript, substitutionMapping).transform(term));
+					cases.add(case3);
+				}
+				{
+					final Term case4 = constructNoNeighborIntervalBounds(script, dividend, divisor);
+//							Util.and(script, constructNoNeighborIntervalBounds(script, dividend, divisor),
+//							some);
+					cases.add(case4);
+				}
+				term = SmtUtils.or(script, cases);
+			}
+			
 		}
+		return term;
+	
 	}
+
+
 }
