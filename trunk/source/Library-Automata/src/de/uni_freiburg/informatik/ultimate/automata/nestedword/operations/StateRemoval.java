@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ReachableStatesCopy;
@@ -140,9 +141,17 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 	protected abstract void modifyReachableStatesCopyForCheckResult(ReachableStatesCopy<LETTER, STATE> rsc)
 			throws AutomataOperationCanceledException;
 
-	protected abstract boolean checkResultFurther(IDoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy)
-			throws AutomataLibraryException;
+	protected final boolean checkAllStatesAreInReachableStatesCopy(final INestedWordAutomaton<LETTER, STATE> result,
+			final INestedWordAutomaton<LETTER, STATE> reachableStatesCopy) {
+		// check that all result states are also present in the ReachableStatesCopy
+		final boolean correct = result.getStates().containsAll(reachableStatesCopy.getStates());
+		assert correct : operationName() + " incorrect: too many states";
+		return correct;
+	}
 
 	// TODO Christian 2017-03-01 outsource common code from subclasses
 	protected abstract boolean checkEachState(DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy);
+
+	protected abstract boolean checkResultFurther(IDoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy)
+			throws AutomataLibraryException;
 }

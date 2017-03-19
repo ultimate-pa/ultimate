@@ -115,10 +115,7 @@ public final class RemoveDeadEnds<LETTER, STATE> extends StateRemoval<LETTER, ST
 	@Override
 	protected boolean checkResultFurther(final IDoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy)
 			throws AutomataOperationCanceledException {
-		// check that all result states are also present in the ReachableStatesCopy
-		final boolean correct = mResult.getStates().containsAll(reachableStatesCopy.getStates());
-		assert correct : operationName() + " incorrect: too many states";
-		return correct;
+		return checkAllStatesAreInReachableStatesCopy(mResult, reachableStatesCopy);
 	}
 
 	@Override
