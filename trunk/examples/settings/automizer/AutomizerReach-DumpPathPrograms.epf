@@ -64,6 +64,7 @@ file_export_version=3.0
 #Sun Mar 19 00:13:42 CET 2017
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Create\ parallel\ compositions\ if\ possible=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Minimize\ states\ using\ LBE\ with\ the\ strategy=NONE
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.blockencoding=0.1.9
 /instance/de.uni_freiburg.informatik.ultimate.plugins.blockencoding/Use\ SBE=true
