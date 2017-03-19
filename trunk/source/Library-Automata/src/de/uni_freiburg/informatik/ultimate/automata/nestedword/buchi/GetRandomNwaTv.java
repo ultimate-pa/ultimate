@@ -28,7 +28,6 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 
@@ -45,12 +44,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * We use a generalization of the <i>Tabakov-Vardi</i> random model.<br>
  * See either of
  * <ul>
- * <li><i>2005 Tabakov, Vardi - Experimental evaluation of classical automata
- * constructions</i></li>
+ * <li><i>2005 Tabakov, Vardi - Experimental evaluation of classical automata constructions</i></li>
  * <li><i>2007 Tabakov, Vardi - Model checking Buchi specifications</i></li>
  * </ul>
- * for details. The generalization is that we do not require the initial state
- * to be accepting and that we allow an arbitrary number of letters.
+ * for details. The generalization is that we do not require the initial state to be accepting and that we allow an
+ * arbitrary number of letters.
  * <p>
  * Implementation details: See
  * {@link #addTransitionsGivenLetter(NestedWordAutomaton, Random, String[], boolean[][], String, int, int)
@@ -73,6 +71,7 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 	private static final String STATE_PREFIX = "q";
 	private static final double ZERO = 0.0;
 	private static final int ZERO_INT = 0;
+	private static final long DEFAULT_SEED = 0;
 
 	private final double mAcceptanceDensity;
 	private final double mCallTransitionDensity;
@@ -84,32 +83,6 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 	private final int mNumberOfStates;
 	private final NestedWordAutomaton<String, String> mResult;
 	private final double mReturnTransitionDensity;
-
-	/**
-	 * The seed used for random automaton generation, if present.
-	 */
-	private final Optional<Long> mSeed;
-
-	/**
-	 * Constructor of a finite automaton.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param numberOfStates
-	 *            number of states {@code (>= 0)}
-	 * @param numberOfInternalLetters
-	 *            number of letters {@code (>= 0)}
-	 * @param transitionDensity
-	 *            (internal) transition density {@code (>= 0)}
-	 * @param acceptanceDensity
-	 *            acceptance density {@code (0 <= x <= 1)}
-	 */
-	@SuppressWarnings("squid:S1244")
-	public GetRandomNwaTv(final AutomataLibraryServices services, final int numberOfStates,
-			final int numberOfInternalLetters, final double transitionDensity, final double acceptanceDensity) {
-		this(services, numberOfStates, numberOfInternalLetters, ZERO_INT, ZERO_INT, transitionDensity, ZERO, ZERO, ZERO,
-				acceptanceDensity);
-	}
 
 	/**
 	 * Constructor of a finite automaton for the {@code TestFileInterpreter}.
@@ -128,41 +101,64 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 	public GetRandomNwaTv(final AutomataLibraryServices services, final int numberOfStates,
 			final int numberOfInternalLetters, final int transitionDensityPercent, final int acceptanceDensityPercent) {
 		this(services, numberOfStates, numberOfInternalLetters, transitionDensityPercent / HUNDRED,
-				acceptanceDensityPercent / HUNDRED);
+				acceptanceDensityPercent / HUNDRED, DEFAULT_SEED);
 	}
 
 	/**
-	 * Constructor of a nested word automaton.
+	 * Constructor of a finite automaton.
 	 * 
 	 * @param services
 	 *            Ultimate services
 	 * @param numberOfStates
 	 *            number of states {@code (>= 0)}
 	 * @param numberOfInternalLetters
-	 *            number of internal letters {@code (>= 0)}
-	 * @param numberOfCallLetters
-	 *            number of return letters {@code (>= 0)}
-	 * @param numberOfReturnLetters
-	 *            number of return letters {@code (>= 0)}
-	 * @param internalTransitionDensity
-	 *            internal transition density {@code (>= 0)}
-	 * @param callTransitionDensity
-	 *            call transition density {@code (>= 0)}
-	 * @param returnTransitionDensity
-	 *            return transition density {@code (>= 0)}
-	 * @param hierarchicalPredecessorDensity
-	 *            hierarchical predecessor density for return transitions
+	 *            number of letters {@code (>= 0)}
+	 * @param transitionDensity
+	 *            (internal) transition density {@code (>= 0)}
 	 * @param acceptanceDensity
 	 *            acceptance density {@code (0 <= x <= 1)}
 	 */
+	@SuppressWarnings("squid:S1244")
+	public GetRandomNwaTv(final AutomataLibraryServices services, final int numberOfStates,
+			final int numberOfInternalLetters, final double transitionDensity, final double acceptanceDensity,
+			final long seed) {
+		this(services, numberOfStates, numberOfInternalLetters, ZERO_INT, ZERO_INT, transitionDensity, ZERO, ZERO, ZERO,
+				acceptanceDensity, seed);
+	}
+
+	/**
+	 * Constructor of a nested word automaton for the {@code TestFileInterpreter}.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param numberOfStates
+	 *            number of states
+	 * @param numberOfInternalLetters
+	 *            number of internal letters
+	 * @param numberOfCallLetters
+	 *            number of call letters
+	 * @param numberOfReturnLetters
+	 *            number of return letters
+	 * @param internalTransitionDensityPercent
+	 *            internal transition density (in percent)
+	 * @param callTransitionDensityPercent
+	 *            call transition density (in percent)
+	 * @param returnTransitionDensityPercent
+	 *            return transition density (in percent)
+	 * @param hierarchicalPredecessorDensityPercent
+	 *            hierarchical predecessor density for return transitions (per mille)
+	 * @param acceptanceDensityPercent
+	 *            acceptance density (in percent)
+	 */
 	public GetRandomNwaTv(final AutomataLibraryServices services, final int numberOfStates,
 			final int numberOfInternalLetters, final int numberOfCallLetters, final int numberOfReturnLetters,
-			final double internalTransitionDensity, final double callTransitionDensity,
-			final double returnTransitionDensity, final double hierarchicalPredecessorDensity,
-			final double acceptanceDensity) {
+			final int internalTransitionDensityPercent, final int callTransitionDensityPercent,
+			final int returnTransitionDensityPercent, final int hierarchicalPredecessorDensityPercent,
+			final int acceptanceDensityPercent) {
 		this(services, numberOfStates, numberOfInternalLetters, numberOfCallLetters, numberOfReturnLetters,
-				internalTransitionDensity, callTransitionDensity, returnTransitionDensity,
-				hierarchicalPredecessorDensity, acceptanceDensity, Optional.empty());
+				internalTransitionDensityPercent / HUNDRED, callTransitionDensityPercent / HUNDRED,
+				returnTransitionDensityPercent / HUNDRED, hierarchicalPredecessorDensityPercent / HUNDRED,
+				acceptanceDensityPercent / HUNDRED, DEFAULT_SEED);
 	}
 
 	/**
@@ -195,7 +191,7 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 			final int numberOfInternalLetters, final int numberOfCallLetters, final int numberOfReturnLetters,
 			final double internalTransitionDensity, final double callTransitionDensity,
 			final double returnTransitionDensity, final double hierarchicalPredecessorDensity,
-			final double acceptanceDensity, final Optional<Long> seed) {
+			final double acceptanceDensity, final long seed) {
 		super(services);
 		mNumberOfStates = numberOfStates;
 		mNumberOfInternalLetters = numberOfInternalLetters;
@@ -206,62 +202,15 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 		mReturnTransitionDensity = returnTransitionDensity;
 		mHierarchicalPredecessorDensity = hierarchicalPredecessorDensity;
 		mAcceptanceDensity = acceptanceDensity;
-		mSeed = seed;
 
 		checkInputValidity();
 
 		mResult = generateAutomaton(seed);
 	}
 
-	/**
-	 * Constructor of a nested word automaton for the
-	 * {@code TestFileInterpreter}.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param numberOfStates
-	 *            number of states
-	 * @param numberOfInternalLetters
-	 *            number of internal letters
-	 * @param numberOfCallLetters
-	 *            number of call letters
-	 * @param numberOfReturnLetters
-	 *            number of return letters
-	 * @param internalTransitionDensityPercent
-	 *            internal transition density (in percent)
-	 * @param callTransitionDensityPercent
-	 *            call transition density (in percent)
-	 * @param returnTransitionDensityPercent
-	 *            return transition density (in percent)
-	 * @param hierarchicalPredecessorDensityPercent
-	 *            hierarchical predecessor density for return transitions (per
-	 *            mille)
-	 * @param acceptanceDensityPercent
-	 *            acceptance density (in percent)
-	 */
-	public GetRandomNwaTv(final AutomataLibraryServices services, final int numberOfStates,
-			final int numberOfInternalLetters, final int numberOfCallLetters, final int numberOfReturnLetters,
-			final int internalTransitionDensityPercent, final int callTransitionDensityPercent,
-			final int returnTransitionDensityPercent, final int hierarchicalPredecessorDensityPercent,
-			final int acceptanceDensityPercent) {
-		this(services, numberOfStates, numberOfInternalLetters, numberOfCallLetters, numberOfReturnLetters,
-				internalTransitionDensityPercent / HUNDRED, callTransitionDensityPercent / HUNDRED,
-				returnTransitionDensityPercent / HUNDRED, hierarchicalPredecessorDensityPercent / HUNDRED,
-				acceptanceDensityPercent / HUNDRED);
-	}
-
 	@Override
 	public INestedWordAutomaton<String, String> getResult() {
 		return mResult;
-	}
-
-	/**
-	 * Gets the seed used for random automaton generation, if present.
-	 * 
-	 * @return If present, the seed used for random automaton generation
-	 */
-	public Optional<Long> getSeed() {
-		return mSeed;
 	}
 
 	@SuppressWarnings("squid:S1244")
@@ -280,8 +229,8 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 	/**
 	 * Adds states.
 	 * <p>
-	 * We just make the first k states accepting and one of the states initial.
-	 * The actual randomization comes with the transitions.
+	 * We just make the first k states accepting and one of the states initial. The actual randomization comes with the
+	 * transitions.
 	 */
 	private void addStates(final NestedWordAutomaton<String, String> result, final String[] int2state,
 			final Random rand) {
@@ -299,9 +248,8 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 	/**
 	 * Adds transitions.
 	 * <p>
-	 * For each letter add the specified number of transitions. Transitions are
-	 * distributed arbitrarily (i.e., there can be states with no respective
-	 * transitions and others with several transitions).
+	 * For each letter add the specified number of transitions. Transitions are distributed arbitrarily (i.e., there can
+	 * be states with no respective transitions and others with several transitions).
 	 */
 	private void addTransitions(final Set<String> alphabet, final NestedWordAutomaton<String, String> result,
 			final Random rand, final String[] int2state, final int mode) {
@@ -358,12 +306,10 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 
 	/**
 	 * Implementation detail:<br>
-	 * Adding transitions happens in a loop with random number generation. It is
-	 * possible that this loop never terminates for bad choices. However, the
-	 * probability for this to happen is zero. If this is ever a problem in
-	 * practice, one can think of a different implementation where the numbers
-	 * are drawn from the available ones; this is less efficient in most cases
-	 * but needs no loop.
+	 * Adding transitions happens in a loop with random number generation. It is possible that this loop never
+	 * terminates for bad choices. However, the probability for this to happen is zero. If this is ever a problem in
+	 * practice, one can think of a different implementation where the numbers are drawn from the available ones; this
+	 * is less efficient in most cases but needs no loop.
 	 */
 	private void addTransitionsGivenLetter(final NestedWordAutomaton<String, String> result, final Random rand,
 			final String[] int2state, final boolean[][] added, final String letter, final int numberOfTransitions,
@@ -387,8 +333,7 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 	/**
 	 * Dispatches the different transition types.
 	 * <p>
-	 * For return transitions we additionally choose random hierarchical
-	 * predecessors.
+	 * For return transitions we additionally choose random hierarchical predecessors.
 	 */
 	private void addTransitionToAutomaton(final NestedWordAutomaton<String, String> result, final String[] int2state,
 			final String letter, final int mode, final int pred, final int succ, final Random rand) {
@@ -441,7 +386,7 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 		}
 	}
 
-	private NestedWordAutomaton<String, String> generateAutomaton(final Optional<Long> seed) {
+	private NestedWordAutomaton<String, String> generateAutomaton(final long seed) {
 		// alphabets (filled later)
 		final Set<String> internalAlphabet = new HashSet<>(mNumberOfInternalLetters);
 		final Set<String> callAlphabet = new HashSet<>(mNumberOfInternalLetters);
@@ -457,11 +402,7 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 		}
 
 		// random generator
-		final Random rand = new Random();
-		// Use a seed if present
-		if (seed.isPresent()) {
-			rand.setSeed(seed.get());
-		}
+		final Random rand = new Random(seed);
 
 		// data structure
 		final String[] int2state = new String[mNumberOfStates];

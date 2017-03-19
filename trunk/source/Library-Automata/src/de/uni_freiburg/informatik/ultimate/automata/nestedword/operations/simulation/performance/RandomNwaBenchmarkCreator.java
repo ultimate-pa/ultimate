@@ -287,7 +287,7 @@ public final class RandomNwaBenchmarkCreator {
 						(int) mHierarchicalPredecessorDensity, (int) mAcceptance).getResult();
 			} else {
 				nwa = new GetRandomNwa(mServices, mAlphabetSize, mSize, internalTotalityDouble, callTotalityDouble,
-						returnTotalityDouble, acceptanceDouble).getResult();
+						returnTotalityDouble, acceptanceDouble, 0L).getResult();
 			}
 
 			if (i == 1) {

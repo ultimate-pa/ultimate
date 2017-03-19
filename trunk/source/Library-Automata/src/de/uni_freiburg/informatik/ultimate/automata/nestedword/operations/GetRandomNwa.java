@@ -50,6 +50,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * @author Fabian Reiter
  */
 public final class GetRandomNwa extends GeneralOperation<String, String, IStateFactory<String>> {
+	private static final long DEFAULT_SEED = 0;
+
 	private final Random mRandom;
 	private final INestedWordAutomaton<String, String> mResult;
 
@@ -85,7 +87,7 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 			final int internalTransitionDensity, final int callTransitionProbability,
 			final int returnTransitionProbability, final int acceptanceDensity) {
 		this(services, alphabetSize, size, internalTransitionDensity / 1_000D, callTransitionProbability / 1_000D,
-				returnTransitionProbability / 1_000D, acceptanceDensity / 1_000D);
+				returnTransitionProbability / 1_000D, acceptanceDensity / 1_000D, DEFAULT_SEED);
 	}
 
 	/**
@@ -105,13 +107,15 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 	 *            return transition density
 	 * @param acceptanceDensity
 	 *            acceptance density
+	 * @param seed
+	 *            seed
 	 * @see {@link #generateAutomaton(int, int, double, double, double, double)}.
 	 */
 	public GetRandomNwa(final AutomataLibraryServices services, final int alphabetSize, final int size,
 			final double internalTransitionDensity, final double callTransitionProbability,
-			final double returnTransitionProbability, final double acceptanceDensity) {
+			final double returnTransitionProbability, final double acceptanceDensity, final long seed) {
 		super(services);
-		mRandom = new Random();
+		mRandom = new Random(seed);
 		mAlphabetSize = alphabetSize;
 		mSize = size;
 		mInternalTransitionDensity = internalTransitionDensity;

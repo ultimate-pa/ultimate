@@ -95,9 +95,9 @@ public final class CompareWithRandomAutomata<LETTER, STATE>
 
 			final boolean useNwaInsteadDfaMethod = false;
 			if (useNwaInsteadDfaMethod) {
-				buechi = new GetRandomNwa(services, k, n, 0.2, 0, 0, (totalityInPerc + 0.0) / 100).getResult();
+				buechi = new GetRandomNwa(services, k, n, 0.2, 0, 0, (totalityInPerc + 0.0) / 100, 0L).getResult();
 			} else {
-				buechi = new GetRandomDfa(services, n, k, f, totalityInPerc, true, false, false, false).getResult();
+				buechi = new GetRandomDfa(services, n, k, f, totalityInPerc, 0L, true, false, false, false).getResult();
 			}
 
 			try {

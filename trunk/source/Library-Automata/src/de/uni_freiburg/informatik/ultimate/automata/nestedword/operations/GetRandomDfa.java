@@ -93,7 +93,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * where index is the index to a transition in the transition list.
 	 */
 	public static final String PREFIX_TRANSITION = "a";
-
+	private static final long DEFAULT_SEED = 0;
 	/**
 	 * Table that contains the amount of all permutations of different DFA
 	 * classes. Dimensions are [size][size * alphabetSize].
@@ -103,7 +103,6 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * @see #preCalcPermutationsTable(int)
 	 */
 	private static BigInteger[][] sPermutationsTable;
-
 	/**
 	 * Size of the alphabet.
 	 */
@@ -157,7 +156,6 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 * Resulting automaton of generator.
 	 */
 	private final INestedWordAutomaton<String, String> mResult;
-
 	/**
 	 * Size of the automaton also amount of nodes.
 	 */
@@ -201,7 +199,8 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 */
 	public GetRandomDfa(final AutomataLibraryServices services, final int size, final int alphabetSize,
 			final int numOfAccStates) {
-		this(services, size, alphabetSize, numOfAccStates, PERC_TOTALITY_BOUND_UPPER, true, false, true, true);
+		this(services, size, alphabetSize, numOfAccStates, PERC_TOTALITY_BOUND_UPPER, DEFAULT_SEED, true, false, true,
+				true);
 	}
 
 	/**
@@ -240,6 +239,8 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 *            If 0.5 about half of the transitions will miss.
 	 *            If 0.0 all transitions that can be deleted,
 	 *            by ensuring all states get reached, are missing.
+	 * @param seed
+	 *            seed
 	 * @param ensureIsConnected
 	 *            If true it is ensured that the DFA
 	 *            is connected meaning all states are reached.
@@ -247,8 +248,8 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 *            it may happen that the automata is not connected.
 	 */
 	public GetRandomDfa(final AutomataLibraryServices services, final int size, final int alphabetSize,
-			final int numOfAccStates, final int percOfTotality, final boolean ensureIsConnected) {
-		this(services, size, alphabetSize, numOfAccStates, percOfTotality, ensureIsConnected, false, true, true);
+			final int numOfAccStates, final int percOfTotality, final long seed, final boolean ensureIsConnected) {
+		this(services, size, alphabetSize, numOfAccStates, percOfTotality, seed, ensureIsConnected, false, true, true);
 	}
 
 	/**
@@ -285,6 +286,8 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 *            If 0.5 about half of the transitions will miss.
 	 *            If 0.0 all transitions that can be deleted,
 	 *            by ensuring all states get reached, are missing.
+	 * @param seed
+	 *            seed
 	 * @param ensureIsConnected
 	 *            If true it is ensured that the DFA
 	 *            is connected meaning all states are reached.
@@ -301,10 +304,10 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 *            generation is very fast.
 	 */
 	public GetRandomDfa(final AutomataLibraryServices services, final int size, final int alphabetSize,
-			final int numOfAccStates, final int percOfTotality, final boolean ensureIsConnected,
+			final int numOfAccStates, final int percOfTotality, final long seed, final boolean ensureIsConnected,
 			final boolean ensureStatesReachFinal, final boolean ensureIsUniform) {
-		this(services, size, alphabetSize, numOfAccStates, percOfTotality, ensureIsConnected, ensureStatesReachFinal,
-				ensureIsUniform, true);
+		this(services, size, alphabetSize, numOfAccStates, percOfTotality, seed, ensureIsConnected,
+				ensureStatesReachFinal, ensureIsUniform, true);
 	}
 
 	/**
@@ -335,6 +338,8 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 *            If 0.5 about half of the transitions will miss.
 	 *            If 0.0 all transitions that can be deleted,
 	 *            by ensuring all states get reached, are missing.
+	 * @param seed
+	 *            seed
 	 * @param ensureIsConnected
 	 *            If true it is ensured that the DFA
 	 *            is connected meaning all states are reached.
@@ -356,7 +361,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	 *            and similar 'alphabetSize' behind one another.
 	 */
 	public GetRandomDfa(final AutomataLibraryServices services, final int size, final int alphabetSize,
-			final int numOfAccStates, final int percOfTotality, final boolean ensureIsConnected,
+			final int numOfAccStates, final int percOfTotality, final long seed, final boolean ensureIsConnected,
 			final boolean ensureStatesReachFinal, final boolean ensureIsUniform, final boolean enableCaching) {
 		super(services);
 		mSize = size;
@@ -369,7 +374,7 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 		mEnableCaching = enableCaching;
 		mFlags = new HashSet<>(mSize - 1);
 
-		mRandom = new Random();
+		mRandom = new Random(seed);
 		final int[] dfa = generatePackedRandomDfa();
 		final Set<Integer> transToDelete = calcTransitionsToDelete(dfa);
 		final Set<Integer> accStates = calcAccStates(dfa, transToDelete);

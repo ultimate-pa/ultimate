@@ -82,8 +82,9 @@ public final class ResultChecker {
 
 	public static <LETTER, STATE> NestedLassoWord<LETTER>
 			getRandomNestedLassoWord(final INestedWordAutomatonSimple<LETTER, STATE> automaton, final int size) {
-		final NestedWord<LETTER> stem = (new GetRandomNestedWord<>(null, automaton, size)).getResult();
-		final NestedWord<LETTER> loop = (new GetRandomNestedWord<>(null, automaton, size)).getResult();
+		final long seed = 0;
+		final NestedWord<LETTER> stem = (new GetRandomNestedWord<>(null, automaton, size, seed)).getResult();
+		final NestedWord<LETTER> loop = (new GetRandomNestedWord<>(null, automaton, size, seed)).getResult();
 		return new NestedLassoWord<>(stem, loop);
 	}
 }
