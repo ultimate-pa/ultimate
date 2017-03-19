@@ -121,7 +121,7 @@ public final class RemoveDeadEnds<LETTER, STATE> extends StateRemoval<LETTER, ST
 	@Override
 	protected boolean checkEachState(final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy) {
 		boolean correct = true;
-		for (final STATE state : reachableStatesCopy.getStates()) {
+		for (final STATE state : mResult.getStates()) {
 			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : reachableStatesCopy
 					.internalSuccessors(state)) {
 				correct = correct && mReach.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());

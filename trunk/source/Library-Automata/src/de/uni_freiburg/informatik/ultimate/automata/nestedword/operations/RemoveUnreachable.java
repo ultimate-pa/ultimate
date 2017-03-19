@@ -97,7 +97,7 @@ public final class RemoveUnreachable<LETTER, STATE> extends StateRemoval<LETTER,
 	@Override
 	protected boolean checkEachState(final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy) {
 		boolean correct = true;
-		for (final STATE state : reachableStatesCopy.getStates()) {
+		for (final STATE state : mResult.getStates()) {
 			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : reachableStatesCopy
 					.internalSuccessors(state)) {
 				correct =
