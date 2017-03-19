@@ -4,11 +4,11 @@
   	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.0.1</version>
+		<version>0.1.9</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
   
   <groupId>com.google.protobuf</groupId>
   <artifactId>com.google.protobuf</artifactId>
-  <version>1.0.0</version>
+  <version>3.0.0</version>
 </project>
