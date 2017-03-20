@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            element type
  */
 public class UnionFindBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<Set<E>>> {
-
 	private final UnionFind<E> mUnionFind;
 	/**
 	 * Partition that is returned as result. Constructed on-demand.
@@ -118,4 +117,8 @@ public class UnionFindBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 		return mPartitionSizeInformation;
 	}
 
+	@Override
+	public String toString() {
+		return mUnionFind.toString();
+	}
 }

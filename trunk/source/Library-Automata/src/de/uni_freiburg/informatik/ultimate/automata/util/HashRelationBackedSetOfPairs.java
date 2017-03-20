@@ -99,4 +99,9 @@ public class HashRelationBackedSetOfPairs<E> implements ISetOfPairs<E, HashRelat
 			return new Pair<>(next.getKey(), next.getValue());
 		}
 	}
+
+	@Override
+	public String toString() {
+		return mRelation.toString();
+	}
 }

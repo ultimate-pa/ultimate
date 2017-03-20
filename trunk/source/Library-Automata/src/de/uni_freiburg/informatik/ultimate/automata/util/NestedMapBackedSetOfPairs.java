@@ -72,4 +72,9 @@ public class NestedMapBackedSetOfPairs<E> implements ISetOfPairs<E, NestedMap2<E
 	public NestedMap2<E, E, Pair<E, E>> getRelation() {
 		return mRelation;
 	}
+
+	@Override
+	public String toString() {
+		return mRelation.toString();
+	}
 }
