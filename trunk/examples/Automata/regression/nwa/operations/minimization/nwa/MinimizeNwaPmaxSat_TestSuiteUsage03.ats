@@ -11,17 +11,17 @@ int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetr
 int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
 int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
 int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
-int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
-int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
-int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
 
 assert(minimizeSevpaSize == 12);
 assert(shrinkNwaSize == 8);
 assert(minimizeNwaPmaxSatSize == 8);
 assert(minimizeNwaPmaxSatAsymmetricSize == 12);
 assert(reduceNwaDirectSimulationSize == 8);
-assert(reduceNwaDirectSimulationBSize == 8);
+assert(reduceNwaDirectSimulationBSize == 10);
 assert(reduceNwaDirectFullMultipebbleSimulationSize == 8);
-assert(reduceNwaDelayedSimulationSize == 8);
-assert(reduceNwaDelayedSimulationBSize == 8);
-assert(reduceNwaDelayedFullMultipebbleSimulationSize == 8);
+// assert(reduceNwaDelayedSimulationSize == 8);
+// assert(reduceNwaDelayedSimulationBSize == 8);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 8);

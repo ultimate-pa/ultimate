@@ -12,9 +12,9 @@ int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetr
 int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
 int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
 int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
-int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
-int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
-int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
 
 assert(minimizeSevpaSize == 2);
 assert(shrinkNwaSize == 2);
@@ -23,9 +23,9 @@ assert(minimizeNwaPmaxSatAsymmetricSize == 2);
 assert(reduceNwaDirectSimulationSize == 2);
 assert(reduceNwaDirectSimulationBSize == 2);
 assert(reduceNwaDirectFullMultipebbleSimulationSize == 2);
-assert(reduceNwaDelayedSimulationSize == 2);
-assert(reduceNwaDelayedSimulationBSize == 2);
-assert(reduceNwaDelayedFullMultipebbleSimulationSize == 2);
+// assert(reduceNwaDelayedSimulationSize == 2);
+// assert(reduceNwaDelayedSimulationBSize == 2);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 2);
 
 // Small circle example with two direct simulations in both directions
 NestedWordAutomaton nwa = (

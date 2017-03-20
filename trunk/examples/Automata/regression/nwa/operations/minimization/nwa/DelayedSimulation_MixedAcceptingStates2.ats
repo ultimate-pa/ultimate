@@ -14,9 +14,9 @@ int minimizeNwaPmaxSatAsymmetricSize = numberOfStates(minimizeNwaPmaxSatAsymmetr
 int reduceNwaDirectSimulationSize = numberOfStates(reduceNwaDirectSimulation(preprocessed));
 int reduceNwaDirectSimulationBSize = numberOfStates(reduceNwaDirectSimulationB(preprocessed));
 int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirectFullMultipebbleSimulation(preprocessed));
-int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed)); // TODO the result is wrong
-int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed)); // TODO the result is wrong
-int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed)); // TODO the result is wrong
+// int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed)); // TODO the result is wrong
+// int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed)); // TODO the result is wrong
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed)); // TODO the result is wrong
 
 assert(minimizeSevpaSize == 6);
 assert(shrinkNwaSize == 6);
@@ -25,8 +25,8 @@ assert(minimizeNwaPmaxSatAsymmetricSize == 6);
 assert(reduceNwaDirectSimulationSize == 6);
 assert(reduceNwaDirectSimulationBSize == 6);
 assert(reduceNwaDirectFullMultipebbleSimulationSize == 6);
-// assert(reduceNwaDelayedSimulationSize == 4); // TODO correct after fixing the method
-// assert(reduceNwaDelayedSimulationBSize == 4); // TODO correct after fixing the method
+// // assert(reduceNwaDelayedSimulationSize == 4); // TODO correct after fixing the method
+// // assert(reduceNwaDelayedSimulationBSize == 4); // TODO correct after fixing the method
 // assert(reduceNwaDelayedFullMultipebbleSimulationSize == 4); // TODO correct after fixing the method
 
 NestedWordAutomaton nwa = (

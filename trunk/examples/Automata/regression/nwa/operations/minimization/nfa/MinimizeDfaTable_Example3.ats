@@ -17,7 +17,7 @@ int reduceNwaDirectFullMultipebbleSimulationSize = numberOfStates(reduceNwaDirec
 int buchiReduceSize = numberOfStates(buchiReduce(preprocessed));
 int reduceNwaDelayedSimulationSize = numberOfStates(reduceNwaDelayedSimulation(preprocessed));
 int reduceNwaDelayedSimulationBSize = numberOfStates(reduceNwaDelayedSimulationB(preprocessed));
-int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
+// int reduceNwaDelayedFullMultipebbleSimulationSize = numberOfStates(reduceNwaDelayedFullMultipebbleSimulation(preprocessed));
 int reduceBuchiFairDirectSimulationSize = numberOfStates(reduceBuchiFairDirectSimulation(preprocessed));
 int reduceBuchiFairSimulationSize = numberOfStates(reduceBuchiFairSimulation(preprocessed));
 
@@ -32,7 +32,7 @@ assert(reduceNwaDirectFullMultipebbleSimulationSize == 4);
 assert(buchiReduceSize == 4);
 assert(reduceNwaDelayedSimulationSize == 4);
 assert(reduceNwaDelayedSimulationBSize == 4);
-assert(reduceNwaDelayedFullMultipebbleSimulationSize == 4);
+// assert(reduceNwaDelayedFullMultipebbleSimulationSize == 4);
 assert(reduceBuchiFairDirectSimulationSize == 4);
 assert(reduceBuchiFairSimulationSize == 4);
 
