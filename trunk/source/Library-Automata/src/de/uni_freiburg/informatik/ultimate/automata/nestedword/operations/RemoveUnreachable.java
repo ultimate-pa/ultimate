@@ -35,9 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 
 /**
  * Creates a nested word automaton where unreachable states have been removed.
@@ -84,58 +81,30 @@ public final class RemoveUnreachable<LETTER, STATE> extends StateRemoval<LETTER,
 	}
 
 	@Override
+	protected NestedWordAutomatonReachableStates<LETTER, STATE> getReach() {
+		return mResult;
+	}
+
+	@Override
 	protected void modifyReachableStatesCopyForCheckResult(final ReachableStatesCopy<LETTER, STATE> rsc) {
 		// do nothing
+	}
+
+	@Override
+	protected boolean checkDownStates(final STATE state, final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy,
+			final NestedWordAutomatonReachableStates<LETTER, STATE> reach) {
+		final Set<STATE> rCSdownStates = reachableStatesCopy.getDownStates(state);
+		final Set<STATE> rCAdownStates = reach.getDownStates(state);
+		boolean correct = rCSdownStates.containsAll(rCAdownStates);
+		assert correct;
+		correct = correct && rCAdownStates.containsAll(rCSdownStates);
+		assert correct;
+		return correct;
 	}
 
 	@Override
 	protected boolean checkResultFurther(final IDoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy)
 			throws AutomataOperationCanceledException {
 		return checkAllStatesAreInReachableStatesCopy(reachableStatesCopy);
-	}
-
-	@Override
-	protected boolean checkEachState(final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy) {
-		boolean correct = true;
-		final NestedWordAutomatonReachableStates<LETTER, STATE> reach = mResult;
-		final IDoubleDeckerAutomaton<LETTER, STATE> result = mResult;
-		for (final STATE state : result.getStates()) {
-			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : reachableStatesCopy
-					.internalSuccessors(state)) {
-				correct = correct && reach.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
-				assert correct;
-			}
-			for (final OutgoingCallTransition<LETTER, STATE> outTrans : reachableStatesCopy.callSuccessors(state)) {
-				correct = correct && reach.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
-				assert correct;
-			}
-			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : reachableStatesCopy.returnSuccessors(state)) {
-				correct = correct && reach.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(),
-						outTrans.getSucc());
-				assert correct;
-			}
-			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : result.internalSuccessors(state)) {
-				correct = correct && reachableStatesCopy.containsInternalTransition(state, outTrans.getLetter(),
-						outTrans.getSucc());
-				assert correct;
-			}
-			for (final OutgoingCallTransition<LETTER, STATE> outTrans : result.callSuccessors(state)) {
-				correct = correct
-						&& reachableStatesCopy.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
-				assert correct;
-			}
-			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : result.returnSuccessors(state)) {
-				correct = correct && reachableStatesCopy.containsReturnTransition(state, outTrans.getHierPred(),
-						outTrans.getLetter(), outTrans.getSucc());
-				assert correct;
-			}
-			final Set<STATE> rCSdownStates = reachableStatesCopy.getDownStates(state);
-			final Set<STATE> rCAdownStates = reach.getDownStates(state);
-			correct = correct && rCSdownStates.containsAll(rCAdownStates);
-			assert correct;
-			correct = correct && rCAdownStates.containsAll(rCSdownStates);
-			assert correct;
-		}
-		return correct;
 	}
 }

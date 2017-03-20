@@ -37,9 +37,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.TransitionConsistencyCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ReachableStatesCopy;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 
 /**
@@ -98,6 +95,11 @@ public final class RemoveDeadEnds<LETTER, STATE> extends StateRemoval<LETTER, ST
 		return mResult;
 	}
 
+	@Override
+	protected NestedWordAutomatonReachableStates<LETTER, STATE> getReach() {
+		return mReach;
+	}
+
 	/**
 	 * @return Size of the input automaton. If input was an automaton for on-demand construction, this is the size after
 	 *         the on-demand construction.
@@ -113,54 +115,21 @@ public final class RemoveDeadEnds<LETTER, STATE> extends StateRemoval<LETTER, ST
 	}
 
 	@Override
-	protected boolean checkResultFurther(final IDoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy)
-			throws AutomataOperationCanceledException {
-		return checkAllStatesAreInReachableStatesCopy(reachableStatesCopy);
+	protected boolean checkDownStates(final STATE state, final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy,
+			final NestedWordAutomatonReachableStates<LETTER, STATE> reach) {
+		final Set<STATE> rCSdownStates = reachableStatesCopy.getDownStates(state);
+		final Set<STATE> rCAdownStates = reach.getWithOutDeadEnds().getDownStates(state);
+		final boolean correct = rCSdownStates.containsAll(rCAdownStates);
+		assert correct;
+		// After enhanced non-live/dead end removal the following does not hold.
+		// correct = correct && ResultChecker.isSubset(rCSdownStates, rCAdownStates);
+		// assert correct;
+		return correct;
 	}
 
 	@Override
-	protected boolean checkEachState(final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy) {
-		boolean correct = true;
-		final NestedWordAutomatonReachableStates<LETTER, STATE> reach = mReach;
-		final IDoubleDeckerAutomaton<LETTER, STATE> result = mResult;
-		for (final STATE state : result.getStates()) {
-			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : reachableStatesCopy
-					.internalSuccessors(state)) {
-				correct = correct && reach.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
-				assert correct;
-			}
-			for (final OutgoingCallTransition<LETTER, STATE> outTrans : reachableStatesCopy.callSuccessors(state)) {
-				correct = correct && reach.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
-				assert correct;
-			}
-			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : reachableStatesCopy.returnSuccessors(state)) {
-				correct = correct && reach.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(),
-						outTrans.getSucc());
-				assert correct;
-			}
-			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : result.internalSuccessors(state)) {
-				correct = correct && reachableStatesCopy.containsInternalTransition(state, outTrans.getLetter(),
-						outTrans.getSucc());
-				assert correct;
-			}
-			for (final OutgoingCallTransition<LETTER, STATE> outTrans : result.callSuccessors(state)) {
-				correct = correct
-						&& reachableStatesCopy.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
-				assert correct;
-			}
-			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : result.returnSuccessors(state)) {
-				correct = correct && reachableStatesCopy.containsReturnTransition(state, outTrans.getHierPred(),
-						outTrans.getLetter(), outTrans.getSucc());
-				assert correct;
-			}
-			final Set<STATE> rCSdownStates = reachableStatesCopy.getDownStates(state);
-			final Set<STATE> rCAdownStates = reach.getWithOutDeadEnds().getDownStates(state);
-			correct = correct && rCSdownStates.containsAll(rCAdownStates);
-			assert correct;
-			// After enhanced non-live/dead end removal the following does not hold.
-			// correct = correct && ResultChecker.isSubset(rCSdownStates, rCAdownStates);
-			assert correct;
-		}
-		return correct;
+	protected boolean checkResultFurther(final IDoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy)
+			throws AutomataOperationCanceledException {
+		return checkAllStatesAreInReachableStatesCopy(reachableStatesCopy);
 	}
 }
