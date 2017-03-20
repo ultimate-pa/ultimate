@@ -33,10 +33,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
@@ -135,8 +135,8 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends StateRemoval<LETTE
 		assert correct;
 		final int numberLassoWords = 10;
 		for (int i = 0; i < numberLassoWords; i++) {
-			lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
-			lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mOperand.size()));
+			lassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mResult, mResult.size(), i));
+			lassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mResult, mOperand.size(), i));
 		}
 
 		for (final NestedLassoWord<LETTER> nlw : lassoWords) {

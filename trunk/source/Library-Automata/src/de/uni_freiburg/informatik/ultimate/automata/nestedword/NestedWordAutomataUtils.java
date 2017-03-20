@@ -37,6 +37,8 @@ import java.util.stream.StreamSupport;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.InitialPartitionProcessor;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -304,5 +306,23 @@ public final class NestedWordAutomataUtils {
 		result = result && fstOperand.getCallAlphabet().equals(sndOperand.getCallAlphabet());
 		result = result && fstOperand.getReturnAlphabet().equals(sndOperand.getReturnAlphabet());
 		return result;
+	}
+
+	/**
+	 * Generates a {@link NestedLassoWord} with a given stem and loop length and a random seed.
+	 * 
+	 * @param nwa
+	 *            nested word automaton
+	 * @param size
+	 *            size of the word
+	 * @param seed
+	 *            seed
+	 * @return random {@link NestedLassoWord}
+	 */
+	public static <LETTER, STATE> NestedLassoWord<LETTER> getRandomNestedLassoWord(
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final int size, final long seed) {
+		final NestedWord<LETTER> stem = (new GetRandomNestedWord<>(null, nwa, size, seed)).getResult();
+		final NestedWord<LETTER> loop = (new GetRandomNestedWord<>(null, nwa, size, seed)).getResult();
+		return new NestedLassoWord<>(stem, loop);
 	}
 }
