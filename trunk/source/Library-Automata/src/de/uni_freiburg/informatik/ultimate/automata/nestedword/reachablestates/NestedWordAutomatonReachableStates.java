@@ -118,12 +118,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	public enum ReachProp {
-		REACHABLE,
-		NODEADEND_AD,
-		NODEADEND_SD,
-		FINANC,
-		LIVE_AD,
-		LIVE_SD
+		REACHABLE, NODEADEND_AD, NODEADEND_SD, FINANC, LIVE_AD, LIVE_SD
 	}
 
 	/**
@@ -132,10 +127,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	enum InCaRe {
-		INTERNAL,
-		CALL,
-		RETURN,
-		SUMMARY
+		INTERNAL, CALL, RETURN, SUMMARY
 	}
 
 	/**
@@ -211,7 +203,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(stateContainerInformation());
 		}
-		assert (new DownStateConsistencyCheck<>(mServices, this)).getResult() : "down states inconsistent";
+		assert new DownStateConsistencyCheck<>(mServices, this).getResult() : "down states inconsistent";
 	}
 
 	private AutomataLibraryServices getServices() {
@@ -236,7 +228,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 
 	private void assertBuchiAcceptance(final NestedLassoRun<LETTER, STATE> nlr) throws AssertionError {
 		try {
-			assert (new BuchiAccepts<>(mServices, NestedWordAutomatonReachableStates.this, nlr.getNestedLassoWord()))
+			assert new BuchiAccepts<>(mServices, NestedWordAutomatonReachableStates.this, nlr.getNestedLassoWord())
 					.getResult();
 		} catch (final AutomataLibraryException e) {
 			throw new AssertionError(e);
@@ -716,7 +708,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 
 	@Override
 	public String toString() {
-		return (new AutomatonDefinitionPrinter<String, String>(mServices, "nwa", Format.ATS, this))
+		return new AutomatonDefinitionPrinter<String, String>(mServices, "nwa", Format.ATS, this)
 				.getDefinitionAsString();
 	}
 
@@ -1011,10 +1003,10 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 			if (EXT_RUN_CONSTRUCTION_TESTING) {
 				for (final STATE fin : getFinalStates()) {
 					mLogger.debug(new DebugMessage("Test if can find an accepting run for final state {0}", fin));
-					final NestedRun<LETTER, STATE> run = (new RunConstructor<>(getServices(),
-							NestedWordAutomatonReachableStates.this, mStates.get(fin))).constructRun();
+					final NestedRun<LETTER, STATE> run = new RunConstructor<>(getServices(),
+							NestedWordAutomatonReachableStates.this, mStates.get(fin)).constructRun();
 					try {
-						assert (new Accepts<>(getServices(), NestedWordAutomatonReachableStates.this, run.getWord()))
+						assert new Accepts<>(getServices(), NestedWordAutomatonReachableStates.this, run.getWord())
 								.getResult();
 					} catch (final AutomataLibraryException e) {
 						throw new AssertionError(e);
