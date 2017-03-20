@@ -221,7 +221,7 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 	}
 
 	/**
-	 * Generates a {@link NestedLassoWord} with a given stem length and loop length.
+	 * Generates a {@link NestedLassoWord} with a given stem and loop length and call/return probability.
 	 * 
 	 * @param lengthStemAndLoop
 	 *            total word length
