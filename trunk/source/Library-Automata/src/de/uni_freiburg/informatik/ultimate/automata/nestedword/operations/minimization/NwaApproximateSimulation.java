@@ -114,7 +114,7 @@ public class NwaApproximateSimulation<LETTER, STATE>
 
 	@Override
 	public MapBackedSetOfPairs<STATE> getResult() {
-		return new ReflexiveMapBackedSetOfPairs(mMayBeSimulatedBy);
+		return new ReflexiveMapBackedSetOfPairs<>(mMayBeSimulatedBy, mOperand.getStates());
 	}
 
 	@Override
@@ -312,9 +312,12 @@ public class NwaApproximateSimulation<LETTER, STATE>
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
-	private class ReflexiveMapBackedSetOfPairs extends MapBackedSetOfPairs<STATE> {
-		public ReflexiveMapBackedSetOfPairs(final Map<STATE, Set<STATE>> map) {
+	private static class ReflexiveMapBackedSetOfPairs<STATE> extends MapBackedSetOfPairs<STATE> {
+		private final Set<STATE> mStates;
+
+		public ReflexiveMapBackedSetOfPairs(final Map<STATE, Set<STATE>> map, final Set<STATE> states) {
 			super(map);
+			mStates = states;
 		}
 
 		@Override
@@ -325,7 +328,7 @@ public class NwaApproximateSimulation<LETTER, STATE>
 		@Override
 		public Iterator<Pair<STATE, STATE>> iterator() {
 			final Iterator<Pair<STATE, STATE>> oldIterator = super.iterator();
-			final Iterator<STATE> reflexiveIterator = mOperand.getStates().iterator();
+			final Iterator<STATE> reflexiveIterator = mStates.iterator();
 			return new Iterator<Pair<STATE, STATE>>() {
 				private boolean reflexiveMode = true;
 
