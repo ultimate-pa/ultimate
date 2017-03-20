@@ -223,6 +223,10 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 		for (final Pair<STATE, STATE> pair : initialPairs) {
 			final STATE q0 = pair.getFirst();
 			final STATE q1 = pair.getSecond();
+			if (!initialPairs.containsPair(q1, q0)) {
+				// can happen if asymmetric preprocessing was used
+				continue;
+			}
 			if (isInSimulationRelation(q0, q1, gameFactory, gameStateMapping, removed)
 					&& isInSimulationRelation(q1, q0, gameFactory, gameStateMapping, removed)) {
 				result.addPair(q0, q1);
