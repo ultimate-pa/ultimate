@@ -130,9 +130,7 @@ public final class RemoveDeadEnds<LETTER, STATE> extends StateRemoval<LETTER, ST
 				assert correct;
 			}
 			for (final OutgoingCallTransition<LETTER, STATE> outTrans : reachableStatesCopy.callSuccessors(state)) {
-				// TODO: fix or remove
 				correct = correct && reach.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
-				// ignore call transitions
 				assert correct;
 			}
 			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : reachableStatesCopy.returnSuccessors(state)) {
