@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public abstract class NonrelationalState<STATE extends NonrelationalState<STATE, V, VARDECL>, V extends INonrelationalValue<V>, VARDECL>
 		implements INonrelationalAbstractState<STATE, VARDECL> {
-	
+
 	private static final String MSG_NULL = "NULL";
 	private static final String MSG_BOT = "BOT";
 	private static final String MSG_TOP = "TOP";
@@ -615,7 +615,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			sbAll.append("TOP: ").append(sbTop.delete(sbTop.length() - 2, sbTop.length())).append(" ");
 		}
 		if (sbBot.length() > 0) {
-			sbAll.append("BOT: ").append(sbTop.delete(sbTop.length() - 2, sbTop.length())).append(" ");
+			sbAll.append("BOT: ").append(sbBot.delete(sbBot.length() - 2, sbBot.length())).append(" ");
 		}
 
 		return sbAll.toString();
