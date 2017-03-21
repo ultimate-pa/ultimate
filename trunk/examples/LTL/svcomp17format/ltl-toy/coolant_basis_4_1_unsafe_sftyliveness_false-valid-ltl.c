@@ -59,7 +59,7 @@ int main()
 	
 	while(1)
 	{
-		int limit = __VERIFIER_nondet_int();
+		limit = __VERIFIER_nondet_int();
 		if(limit < 10 && limit > -273)
 		{
 			error = 0;
