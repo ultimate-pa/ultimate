@@ -7,6 +7,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  com.google.protobuf,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
  de.uni_freiburg.informatik.ultimate.interactive,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.lib.automata,
@@ -15,3 +16,4 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Export-Package: de.uni_freiburg.informatik.ultimate.interactive.traceabstraction
 Bundle-ClassPath: .
+Import-Package: de.uni_freiburg.informatik.ultimate.logic

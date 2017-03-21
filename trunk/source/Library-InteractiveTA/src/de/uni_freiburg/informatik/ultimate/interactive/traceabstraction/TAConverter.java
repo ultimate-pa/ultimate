@@ -1,7 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.interactive.traceabstraction;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Deque;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -13,12 +15,14 @@ import java.util.stream.StreamSupport;
 import com.google.protobuf.GeneratedMessageV3;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.Converter;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.ConverterRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo;
+import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.PredicateDoubleDecker;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Result;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.TAPreferences.Artifact;
@@ -33,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PredicateQueuePair;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PredicateQueueResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.MultiTrackTraceAbstractionRefinementStrategy;
@@ -67,6 +73,41 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 				TAConverter::toIterationInfo);
 		converterRegistry.registerBA(InteractiveIterationInfo.class, ParrotInteractiveIterationInfo.class,
 				TAConverter::fromIterationInfo);
+
+		converterRegistry.registerBA(PredicateDoubleDecker.QueuePair.class, PredicateQueuePair.class,
+				TAConverter::fromQueuePair);
+		converterRegistry.registerRConv(PredicateDoubleDecker.QueueResponse.class, PredicateQueuePair.class,
+				PredicateQueueResult.class, TAConverter::toDoubleDecker);
+
+	}
+
+	private static PredicateDoubleDecker.QueuePair fromQueuePair(PredicateQueuePair qPair) {
+		PredicateDoubleDecker.QueuePair.Builder builder = PredicateDoubleDecker.QueuePair.newBuilder();
+		qPair.mCallQueue.stream().map(TAConverter::fromDoubleDecker).forEach(builder::addCallQueue);
+		qPair.mQueue.stream().map(TAConverter::fromDoubleDecker).forEach(builder::addQueue);
+		return builder.build();
+	}
+
+	private static PredicateDoubleDecker fromDoubleDecker(DoubleDecker<IPredicate> pdd) {
+		final TraceAbstractionProtos.Predicate up = fromPredicate(pdd.getUp());
+		final TraceAbstractionProtos.Predicate down = fromPredicate(pdd.getUp());
+		return PredicateDoubleDecker.newBuilder().setUp(up).setDown(down).build();
+	}
+
+	private static PredicateQueueResult toDoubleDecker(PredicateDoubleDecker.QueueResponse response,
+			PredicateQueuePair data) {
+		final Deque<DoubleDecker<IPredicate>> queue;
+		switch (response.getQueueType()) {
+		case CALL:
+			queue = data.mCallQueue;
+			break;
+		default:
+			queue = data.mQueue;
+		}
+		final DoubleDecker<IPredicate>[] arr = new DoubleDecker[queue.size()];
+		DoubleDecker<IPredicate> result = queue.toArray(arr)[response.getIndex()];
+		assert queue.remove(result);
+		return new PredicateQueueResult(result);
 	}
 
 	private static InteractiveIterationInfo fromIterationInfo(ParrotInteractiveIterationInfo itInfo) {
@@ -198,7 +239,11 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 	}
 
 	public static TraceAbstractionProtos.Predicate fromPredicate(IPredicate predicate) {
-		return TraceAbstractionProtos.Predicate.newBuilder().setLabel(predicate.toString()).build();
+		final TraceAbstractionProtos.Predicate.Builder builder = TraceAbstractionProtos.Predicate.newBuilder();
+		builder.setFormulaString(predicate.getFormula().toString())
+				.setFormulaHashCode(predicate.getFormula().hashCode());
+		Arrays.stream(predicate.getProcedures()).forEach(builder::addProcedures);
+		return builder.build();
 	}
 
 	public static TraceAbstractionProtos.TAPreferences fromTAPreferences(TAPreferences preferences) {

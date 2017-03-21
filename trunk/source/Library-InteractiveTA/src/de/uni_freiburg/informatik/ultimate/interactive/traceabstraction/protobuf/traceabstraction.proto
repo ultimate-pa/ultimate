@@ -110,6 +110,34 @@ message InteractiveIterationInfo {
 	int32 nextInteractiveIteration = 2;
 }
 
+message PredicateDoubleDecker {
+	Predicate up = 1;
+	Predicate down = 2;
+	int32 hash = 3;
+	message QueuePair {
+		repeated PredicateDoubleDecker callQueue = 1;
+		repeated PredicateDoubleDecker queue = 2;
+	}
+
+	message QueueResponse {
+		QueueType queueType = 1;
+		int32 index = 2;
+	}
+
+	enum QueueType {
+		NORMAL = 0;
+		CALL = 1;
+	}
+
+}
+
+message Predicate {
+	repeated string procedures = 1;
+	// pretty printed formula
+	string formulaString = 2;
+	int32 formulaHashCode = 3;
+}
+
 enum Strategy {
 // Simple strategy that reads the information from the settings.
 	FIXED_PREFERENCES = 0;
@@ -196,13 +224,7 @@ message CodeBlock {
 	string code = 1;
 	// the transformulas and lots of other stuff
 	// in CodeBlock is not used for now.
-}
-
-message Predicate {
-	string label = 1;
-	// pretty printed formula
 } /*
-
 klar:
 TAPreferences (Insbesondere die Interaktiv-Einstellungen)
 
