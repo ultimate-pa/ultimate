@@ -173,7 +173,8 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 
 	private void feedSolver() throws AutomataOperationCanceledException {
 		generateVariablesAndAcceptingConstraints();
-		generateTransitionAndTransitivityConstraints(mTransitivityGenerator == null);
+		final boolean addTransitivityConstraints = mTransitivityGenerator == null && !hasNoReturnTransitions(mOperand);
+		generateTransitionAndTransitivityConstraints(addTransitivityConstraints);
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Number of clauses for: -> acceptance: " + mNumberClausesAcceptance + ", -> transitions: "
 					+ mNumberClausesTransitions + ", -> nondeterministic transitions: "

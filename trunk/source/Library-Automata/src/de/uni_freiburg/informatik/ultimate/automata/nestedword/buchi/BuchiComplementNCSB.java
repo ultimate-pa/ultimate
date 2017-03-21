@@ -33,8 +33,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
@@ -120,28 +120,10 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
 		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, mResult.size()));
 		*/
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 1));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
-		lassoWords.add(ResultChecker.getRandomNestedLassoWord(mResult, 2));
+		for (int i = 0; i < 11; ++i) {
+			lassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mResult, 1, i));
+			lassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mResult, 2, i));
+		}
 		lassoWords.addAll((new LassoExtractor<>(mServices, mOperand)).getResult());
 		lassoWords.addAll((new LassoExtractor<>(mServices, mResult)).getResult());
 

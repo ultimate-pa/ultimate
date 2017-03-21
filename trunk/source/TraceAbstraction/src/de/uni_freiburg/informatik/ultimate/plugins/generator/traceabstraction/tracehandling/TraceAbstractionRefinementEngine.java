@@ -263,6 +263,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 			if (throwException) {
 				throw new AssertionError(e);
 			}
+			mLogger.fatal("Ignoring exception!", e);
 			return;
 		}
 		final InterpolantComputationStatus status = interpolantGenerator.getInterpolantComputationStatus();
@@ -388,14 +389,10 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 		}
 		return LBool.UNSAT;
 	}
-	
-	
 
 	public boolean somePerfectSequenceFound() {
 		return mSomePerfectSequenceFound;
 	}
-
-
 
 	/**
 	 * Categories for exception handling.

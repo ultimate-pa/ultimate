@@ -27,10 +27,9 @@
 package de.uni_freiburg.informatik.ultimate.automata;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 @Deprecated
@@ -56,7 +55,7 @@ public final class ResultChecker {
 		final int numberOfSamples = 10;
 		boolean correct = true;
 		for (int i = 0; i < numberOfSamples; i++) {
-			final NestedLassoWord<LETTER> lasso = getRandomNestedLassoWord(operand, maxLength);
+			final NestedLassoWord<LETTER> lasso = NestedWordAutomataUtils.getRandomNestedLassoWord(operand, maxLength, i);
 			final boolean operandAccepts = (new BuchiAccepts<>(services, operand, lasso)).getResult();
 			final boolean resultAccepts = (new BuchiAccepts<>(services, result, lasso)).getResult();
 			if (operandAccepts ^ resultAccepts) {
@@ -78,13 +77,5 @@ public final class ResultChecker {
 		logger.info("Finished testing correctness of complementBuchi");
 		sResultCheckStackHeight--;
 		return correct;
-	}
-
-	public static <LETTER, STATE> NestedLassoWord<LETTER>
-			getRandomNestedLassoWord(final INestedWordAutomatonSimple<LETTER, STATE> automaton, final int size) {
-		final long seed = 0;
-		final NestedWord<LETTER> stem = (new GetRandomNestedWord<>(null, automaton, size, seed)).getResult();
-		final NestedWord<LETTER> loop = (new GetRandomNestedWord<>(null, automaton, size, seed)).getResult();
-		return new NestedLassoWord<>(stem, loop);
 	}
 }

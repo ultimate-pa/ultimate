@@ -98,4 +98,9 @@ public class MapBackedSetOfPairs<E> implements ISetOfPairs<E, Map<E, Set<E>>> {
 			}
 		};
 	}
+
+	@Override
+	public String toString() {
+		return mMap.toString();
+	}
 }

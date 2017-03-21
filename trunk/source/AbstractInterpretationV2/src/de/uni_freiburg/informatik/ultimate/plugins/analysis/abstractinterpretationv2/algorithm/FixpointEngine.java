@@ -105,6 +105,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		calculateFixpoint(start);
 		mResult.saveRootStorage(mStateStorage);
 		mResult.saveSummaryStorage(mSummaryMap);
+		mLogger.debug("Fixpoint computation completed");
 		return mResult;
 	}
 

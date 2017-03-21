@@ -39,6 +39,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ReachableStatesCopy;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -77,6 +81,8 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 
 	@Override
 	public abstract IDoubleDeckerAutomaton<LETTER, STATE> getResult();
+
+	protected abstract NestedWordAutomatonReachableStates<LETTER, STATE> getReach();
 
 	@Override
 	public String exitMessage() {
@@ -117,7 +123,7 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 		correct = reachableStatesCopy.getStates().containsAll(result.getStates());
 		assert correct : operationName() + " incorrect: too few states";
 
-		correct = correct && checkEachState((DoubleDeckerAutomaton<LETTER, STATE>) reachableStatesCopy);
+		correct = correct && checkEachState((DoubleDeckerAutomaton<LETTER, STATE>) reachableStatesCopy, result);
 		assert correct : operationName() + " incorrect: checkEachState failed";
 
 		correct = correct && checkResultFurther(reachableStatesCopy);
@@ -149,8 +155,47 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 		return correct;
 	}
 
-	// TODO Christian 2017-03-01 outsource common code from subclasses
-	protected abstract boolean checkEachState(DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy);
+	private boolean checkEachState(final DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy,
+			final IDoubleDeckerAutomaton<LETTER, STATE> result) {
+		boolean correct = true;
+		final NestedWordAutomatonReachableStates<LETTER, STATE> reach = getReach();
+		for (final STATE state : result.getStates()) {
+			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : reachableStatesCopy
+					.internalSuccessors(state)) {
+				correct = correct && reach.containsInternalTransition(state, outTrans.getLetter(), outTrans.getSucc());
+				assert correct;
+			}
+			for (final OutgoingCallTransition<LETTER, STATE> outTrans : reachableStatesCopy.callSuccessors(state)) {
+				correct = correct && reach.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
+				assert correct;
+			}
+			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : reachableStatesCopy.returnSuccessors(state)) {
+				correct = correct && reach.containsReturnTransition(state, outTrans.getHierPred(), outTrans.getLetter(),
+						outTrans.getSucc());
+				assert correct;
+			}
+			for (final OutgoingInternalTransition<LETTER, STATE> outTrans : result.internalSuccessors(state)) {
+				correct = correct && reachableStatesCopy.containsInternalTransition(state, outTrans.getLetter(),
+						outTrans.getSucc());
+				assert correct;
+			}
+			for (final OutgoingCallTransition<LETTER, STATE> outTrans : result.callSuccessors(state)) {
+				correct = correct
+						&& reachableStatesCopy.containsCallTransition(state, outTrans.getLetter(), outTrans.getSucc());
+				assert correct;
+			}
+			for (final OutgoingReturnTransition<LETTER, STATE> outTrans : result.returnSuccessors(state)) {
+				correct = correct && reachableStatesCopy.containsReturnTransition(state, outTrans.getHierPred(),
+						outTrans.getLetter(), outTrans.getSucc());
+				assert correct;
+			}
+			correct = checkDownStates(state, reachableStatesCopy, reach);
+		}
+		return correct;
+	}
+
+	protected abstract boolean checkDownStates(STATE state, DoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy,
+			NestedWordAutomatonReachableStates<LETTER, STATE> reach);
 
 	protected abstract boolean checkResultFurther(IDoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy)
 			throws AutomataLibraryException;

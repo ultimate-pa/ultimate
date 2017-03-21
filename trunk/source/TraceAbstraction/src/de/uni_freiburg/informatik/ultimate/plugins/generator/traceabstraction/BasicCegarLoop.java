@@ -43,6 +43,7 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
@@ -338,8 +339,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	@Override
 	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
 
-		final IRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(mPref.getRefinementStrategy(), mCounterexample,
-				mAbstraction, getIteration(), getCegarLoopBenchmark());
+		final IRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(
+				mPref.getRefinementStrategy(), mCounterexample, mAbstraction, getIteration(), getCegarLoopBenchmark());
 		try {
 			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy);
 		} catch (final ToolchainCanceledException tce) {
@@ -376,10 +377,10 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
 			}
 		} else {
-			if (DUMP_DIFFICULT_PATH_PROGRAMS
-					&& !((TraceAbstractionRefinementEngine) mTraceCheckAndRefinementEngine).somePerfectSequenceFound()) {
-				final String filename = mPref.dumpPath() + File.separator + mIcfgContainer.getIdentifier() + "_"
-						+ mIteration + ".bpl";
+			if (DUMP_DIFFICULT_PATH_PROGRAMS && !((TraceAbstractionRefinementEngine) mTraceCheckAndRefinementEngine)
+					.somePerfectSequenceFound()) {
+				final String filename =
+						mPref.dumpPath() + File.separator + mIcfgContainer.getIdentifier() + "_" + mIteration + ".bpl";
 				new PathProgramDumper(mIcfgContainer, mServices,
 						(NestedRun<? extends IAction, IPredicate>) mCounterexample, filename);
 			}
@@ -480,6 +481,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 			if (!new Accepts<>(new AutomataLibraryServices(mServices), interpolantAutomaton,
 					(NestedWord<LETTER>) mCounterexample.getWord(), true, false).getResult()) {
+				debugLogBrokenInterpolantAutomaton(inputInterpolantAutomaton, interpolantAutomaton, mCounterexample);
 				throw new AssertionError("enhanced interpolant automaton in iteration " + mIteration
 						+ " broken: counterexample of length " + mCounterexample.getLength() + " not accepted");
 			}
@@ -538,6 +540,23 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction,
 				(NestedWord<LETTER>) mCounterexample.getWord()).getResult();
 		return !stillAccepted;
+	}
+
+	private void debugLogBrokenInterpolantAutomaton(
+			final INestedWordAutomatonSimple<LETTER, IPredicate> interpolantAutomaton,
+			final INestedWordAutomatonSimple<LETTER, IPredicate> enhancedInterpolantAutomaton,
+			final IRun<LETTER, IPredicate, ?> counterexample) {
+		mLogger.fatal("--");
+		mLogger.fatal("enhanced interpolant automaton broken: counterexample not accepted");
+		mLogger.fatal("word:");
+		for (final LETTER letter : counterexample.getWord()) {
+			mLogger.fatal(letter);
+		}
+		mLogger.fatal("original automaton:");
+		mLogger.fatal(interpolantAutomaton);
+		mLogger.fatal("enhanced automaton:");
+		mLogger.fatal(enhancedInterpolantAutomaton);
+		mLogger.fatal("--");
 	}
 
 	private INestedWordAutomatonSimple<LETTER, IPredicate> constructInterpolantAutomatonForOnDemandEnhancement(

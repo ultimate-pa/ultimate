@@ -32,7 +32,6 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
@@ -338,7 +337,7 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	private void addRandomLassoWords(final List<NestedLassoWord<LETTER>> nestedLassoWords, final int lengthOfWords,
 			final int numberOfWords) {
 		for (int i = 0; i < numberOfWords; ++i) {
-			nestedLassoWords.add(ResultChecker.getRandomNestedLassoWord(mFstOperand, lengthOfWords));
+			nestedLassoWords.add(NestedWordAutomataUtils.getRandomNestedLassoWord(mFstOperand, lengthOfWords, i));
 		}
 	}
 

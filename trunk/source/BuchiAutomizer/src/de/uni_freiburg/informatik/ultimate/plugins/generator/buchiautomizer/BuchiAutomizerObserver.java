@@ -74,7 +74,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiCegarLoop.Result;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.preferences.BuchiAutomizerPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -144,7 +143,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 	/**
 	 * Report a nontermination argument back to Ultimate's toolchain
 	 */
-	private void reportNonTerminationResult(final BoogieIcfgLocation honda, final NonTerminationArgument nta) {
+	private void reportNonTerminationResult(final IcfgLocation honda, final NonTerminationArgument nta) {
 		final NonTerminationArgumentResult<IIcfgElement, Term> result;
 		if (nta instanceof GeometricNonTerminationArgument) {
 			final GeometricNonTerminationArgument gnta = (GeometricNonTerminationArgument) nta;
@@ -228,7 +227,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 
 			final NestedLassoRun<? extends IIcfgTransition<?>, IPredicate> counterexample = bcl.getCounterexample();
 			final IPredicate hondaPredicate = counterexample.getLoop().getStateAtPosition(0);
-			final BoogieIcfgLocation honda = (BoogieIcfgLocation) ((ISLPredicate) hondaPredicate).getProgramPoint();
+			final IcfgLocation honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
 			final NonTerminationArgument nta = bcl.getNonTerminationArgument();
 			reportNonTerminationResult(honda, nta);
 			reportResult(new BenchmarkResult<>(Activator.PLUGIN_NAME, "NonterminationBenchmark",

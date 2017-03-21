@@ -195,6 +195,10 @@ public class PartitionBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 			// @formatter:on
 			return sb.toString();
 		}
+	}
 
+	@Override
+	public String toString() {
+		return mPartition.toString();
 	}
 }
