@@ -10,6 +10,8 @@ public class ConverterRegistry<IA, IB> implements IConverterRegistry<IA, IB> {
 	private final Map<Class<? extends IB>, IConverter<? extends IB, ? extends IA>> mapBA = new HashMap<>();
 	private final Map<Class<? extends IB>, IConverter<? extends IA, ? extends IB>> mapAB2 = new HashMap<>();
 	private final Map<Class<? extends IA>, IConverter<? extends IB, ? extends IA>> mapBA2 = new HashMap<>();
+	private final Map<Class<? extends IB>, Map<Class<? extends IB>, IResponseConverter<? extends IA, ? extends IB, ? extends IB>>> mapRC =
+			new HashMap<>();
 
 	public ConverterRegistry() {
 	}
@@ -17,6 +19,8 @@ public class ConverterRegistry<IA, IB> implements IConverterRegistry<IA, IB> {
 	public void registerATypes(ITypeRegistry<IA> typeRegistry) {
 		mapAB.keySet().forEach(typeRegistry::register);
 		mapBA2.keySet().forEach(typeRegistry::register);
+		mapRC.values()
+				.forEach(m -> m.values().stream().map(IResponseConverter::getTypeA).forEach(typeRegistry::register));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -43,6 +47,17 @@ public class ConverterRegistry<IA, IB> implements IConverterRegistry<IA, IB> {
 		return (IConverter<? extends IB, A>) mapBA2.get(typeA);
 	}
 
+	@SuppressWarnings("unchecked")
+	@Override
+	public <B extends IB, D extends IB> IResponseConverter<? extends IA, D, B> getRConv(Class<B> typeB,
+			Class<D> typeD) {
+		Map<Class<? extends IB>, IResponseConverter<? extends IA, ? extends IB, ? extends IB>> mapRC2 =
+				mapRC.get(typeB);
+		if (mapRC2 == null)
+			return null;
+		return (IResponseConverter<? extends IA, D, B>) mapRC2.get(typeD);
+	}
+
 	@Override
 	public <A extends IA, B extends IB> void registerAB(IConverter<A, B> converter) {
 		mapAB.put(converter.getTypeA(), converter);
@@ -53,5 +68,20 @@ public class ConverterRegistry<IA, IB> implements IConverterRegistry<IA, IB> {
 	public <A extends IA, B extends IB> void registerBA(IConverter<B, A> converter) {
 		mapBA.put(converter.getTypeA(), converter);
 		mapBA2.put(converter.getTypeB(), converter);
+	}
+
+	@Override
+	public <A extends IA, D extends IB, B extends IB> void
+			registerRConv(IResponseConverter<A, D, B> responseConverter) {
+		final Class<B> typeB = responseConverter.getTypeB();
+		final Map<Class<? extends IB>, IResponseConverter<? extends IA, ? extends IB, ? extends IB>> mapRC2;
+		if (mapRC.containsKey(typeB)) {
+			mapRC2 = mapRC.get(typeB);
+		} else {
+			mapRC2 = new HashMap<>();
+			mapRC.put(typeB, mapRC2);
+		}
+
+		mapRC2.put(responseConverter.getTypeData(), responseConverter);
 	}
 }

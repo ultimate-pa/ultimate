@@ -2,12 +2,14 @@ package de.uni_freiburg.informatik.ultimate.interactive.conversion;
 
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.IConverterRegistry.IConverter;
+import de.uni_freiburg.informatik.ultimate.interactive.conversion.IConverterRegistry.IResponseConverter;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.UnregisteredTypeException;
 import de.uni_freiburg.informatik.ultimate.interactive.utils.InheritanceUtil;
 
@@ -87,16 +89,36 @@ public class ApplyConversionToInteractive<M, O> implements IInteractive<M> {
 
 	@Override
 	public <T extends M> CompletableFuture<T> request(Class<T> type, M data) {
-		IConverter<? extends O, T> converter = mConverter.getAB2(type);
 		@SuppressWarnings("unchecked")
 		Class<? extends M> dType = (Class<? extends M>) data.getClass();
 		IConverter<? extends M, ? extends O> dConverter = mConverter.getBA(dType);
-		return wrapRequest(converter, dConverter, data);
+		return wrapPreRequest(dConverter, data, type);
 	}
 
-	@SuppressWarnings("unchecked")
-	private <O1 extends O, T extends M, D extends M, OD extends O> CompletableFuture<T> wrapRequest(
-			IConverter<O1, T> converter, IConverter<D, OD> dConverter, M data) {
-		return mOriginal.request(converter.getTypeA(), dConverter.apply((D) data)).thenApply(converter);
+	private <T extends M, D extends M, OD extends O> CompletableFuture<T> wrapPreRequest(IConverter<D, OD> dConverter,
+			M data, Class<T> type) {
+		final Class<D> dType = dConverter.getTypeA();
+		@SuppressWarnings("unchecked")
+		D dData = (D) data;
+		OD oData = dConverter.apply(dData);
+
+		IResponseConverter<? extends O, D, T> rConverter = mConverter.getRConv(type, dType);
+		if (rConverter != null) {
+			return wrapRRequest(rConverter, dData, oData);
+		}
+
+		IConverter<? extends O, T> converter = mConverter.getAB2(type);
+		return wrapRequest(converter, oData);
+	}
+
+	private <O1 extends O, T extends M, D extends M, OD extends O> CompletableFuture<T>
+			wrapRRequest(IResponseConverter<O1, D, T> rConverter, D data, OD oData) {
+		final CompletionStage<D> data2 = CompletableFuture.completedFuture(data);
+		return mOriginal.request(rConverter.getTypeA(), oData).thenCombine(data2, rConverter);
+	}
+
+	private <O1 extends O, T extends M, OD extends O> CompletableFuture<T> wrapRequest(IConverter<O1, T> converter,
+			OD oData) {
+		return mOriginal.request(converter.getTypeA(), oData).thenApply(converter);
 	}
 }
