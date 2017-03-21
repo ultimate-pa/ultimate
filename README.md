@@ -1,5 +1,5 @@
 # Ultimate
-[![Build Status Jenkins](https://monteverdi.informatik.uni-freiburg.de/ci/buildStatus/icon?job=Ultimate (GitHub))](http://monteverdi.informatik.uni-freiburg.de/ci/job/Ultimate (GitHub))
+[![Build Status Jenkins](https://monteverdi.informatik.uni-freiburg.de/ci/buildStatus/icon?job=Ultimate%20(GitHub))](https://monteverdi.informatik.uni-freiburg.de/ci/job/Ultimate%20(GitHub)/)
 [![Build Status](https://travis-ci.org/ultimate-pa/ultimate.svg)](https://travis-ci.org/ultimate-pa/ultimate)
 [![LGPL License](http://img.shields.io/badge/license-LGPLv3-brightgreen.svg)](https://www.gnu.org/licenses/lgpl.html)
 [![Waffle.io](https://img.shields.io/waffle/label/ultimate-pa/ultimate/in%20progress.svg?maxAge=1800)](https://waffle.io/ultimate-pa/ultimate)
