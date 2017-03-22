@@ -27,6 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -66,6 +70,7 @@ public class RewriteEquality extends TransformerPreprocessor {
 
 	private static final class RewriteEqualityTransformer extends TermTransformer {
 
+		private static final Set<String> SUPPORTED_SORTS = new HashSet<>(Arrays.asList(new String[] { "Int", "Real" }));
 		private final Script mScript;
 
 		RewriteEqualityTransformer(final Script script) {
@@ -75,27 +80,37 @@ public class RewriteEquality extends TransformerPreprocessor {
 
 		@Override
 		protected void convert(final Term term) {
-			if (term instanceof ApplicationTerm) {
-				final ApplicationTerm appt = (ApplicationTerm) term;
-				if ("=".equals(appt.getFunction().getName())
-						&& !"Bool".equals(appt.getParameters()[0].getSort().getName())) {
-					assert appt
-							.getParameters().length == 2 : "equality with more than two parameters not yet supported";
-					final Term param1 = mScript.term("<=", appt.getParameters());
-					final Term param2 = mScript.term(">=", appt.getParameters());
-					setResult(mScript.term("and", param1, param2));
-					return;
-				} else if ("distinct".equals(appt.getFunction().getName())
-						&& !"Bool".equals(appt.getParameters()[0].getSort().getName())) {
-					assert appt
-							.getParameters().length == 2 : "distinct with more than two parameters not yet supported";
-					final Term param1 = mScript.term("<", appt.getParameters());
-					final Term param2 = mScript.term(">", appt.getParameters());
-					setResult(mScript.term("or", param1, param2));
-					return;
-				}
+			if (!(term instanceof ApplicationTerm)) {
+				super.convert(term);
+				return;
 			}
-			super.convert(term);
+			final ApplicationTerm appt = (ApplicationTerm) term;
+			final String funName = appt.getFunction().getName();
+			if (!"=".equals(funName) && !"distinct".equals(funName)) {
+				super.convert(term);
+				return;
+			}
+			final String paramSortName = appt.getParameters()[0].getSort().getName();
+
+			if (!SUPPORTED_SORTS.contains(paramSortName)) {
+				setResult(term);
+				return;
+			}
+
+			if ("=".equals(funName)) {
+				assert appt.getParameters().length == 2 : "equality with more than two parameters not yet supported";
+				final Term param1 = mScript.term("<=", appt.getParameters());
+				final Term param2 = mScript.term(">=", appt.getParameters());
+				setResult(mScript.term("and", param1, param2));
+				return;
+			} else if ("distinct".equals(funName)) {
+				assert appt.getParameters().length == 2 : "distinct with more than two parameters not yet supported";
+				final Term param1 = mScript.term("<", appt.getParameters());
+				final Term param2 = mScript.term(">", appt.getParameters());
+				setResult(mScript.term("or", param1, param2));
+				return;
+			}
+
 		}
 	}
 }
