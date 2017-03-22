@@ -72,7 +72,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 		SYM,
 		ASYM
 	}
-	
+
 	private static final boolean OMIT_MAX_SAT_FOR_FINITE_AUTOMATA = true;
 
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
@@ -87,6 +87,8 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 	 *            state factory
 	 * @param operand
 	 *            operand
+	 * @param allowToMergeFinalAndNonFinalStates
+	 *            {@code true} iff merging accepting and non-accepting states is allowed
 	 * @throws AutomataOperationCanceledException
 	 *             if suboperations fail
 	 */
@@ -134,21 +136,21 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 
 			// TODO make this an option?
 			final boolean addMapOldState2NewState = false;
-			
+
 			INestedWordAutomaton<LETTER, STATE> result;
 			if (OMIT_MAX_SAT_FOR_FINITE_AUTOMATA && NestedWordAutomataUtils.isFiniteAutomaton(operand)) {
-				final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor = new QuotientNwaConstructor<LETTER, STATE>(
+				final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor = new QuotientNwaConstructor<>(
 						mServices, stateFactory, mOperand,
 						readoutSymmetricCoreOfSimulationRelation(initialPairs, gsm, simRes.getFirst(), gameFactory)
 								.getUnionFind(),
 						addMapOldState2NewState);
 				if (addMapOldState2NewState) {
 					super.setOld2NewStateMap(quotientNwaConstructor.getOldState2newState());
-				} 
+				}
 				result = quotientNwaConstructor.getResult();
 				super.directResultConstruction(result);
 				mStatistics = addStatistics(initialPairs, gameFactory, maxGameAutomatonSize, timePreprocessing,
-						timeSimulation);
+						timeSimulation, null);
 			} else {
 				final MinimizeNwaMaxSat2.Settings<STATE> settings = new MinimizeNwaMaxSat2.Settings<STATE>()
 						.setFinalStateConstraints(!allowToMergeFinalAndNonFinalStates)
@@ -164,7 +166,8 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 						break;
 					case SYM:
 						maxSatMinimizer = new MinimizeNwaPmaxSat<>(mServices, stateFactory, mOperand,
-								readoutSymmetricCoreOfSimulationRelation(initialPairs, gsm, simRes.getFirst(), gameFactory),
+								readoutSymmetricCoreOfSimulationRelation(initialPairs, gsm, simRes.getFirst(),
+										gameFactory),
 								settings);
 						break;
 					default:
@@ -172,15 +175,13 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 				}
 				if (addMapOldState2NewState) {
 					super.setOld2NewStateMap(maxSatMinimizer.getOldState2newState());
-				} 
-				
+				}
+
 				result = maxSatMinimizer.getResult();
 				super.directResultConstruction(result);
 				mStatistics = addStatistics(initialPairs, gameFactory, maxGameAutomatonSize, timePreprocessing,
-						timeSimulation);
-				maxSatMinimizer.addStatistics(mStatistics);
+						timeSimulation, maxSatMinimizer);
 			}
-
 
 		} catch (final AutomataOperationCanceledException aoce) {
 			if (initialPairs instanceof PartitionBackedSetOfPairs<?>) {
@@ -199,7 +200,8 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 
 	private AutomataOperationStatistics addStatistics(final ISetOfPairs<STATE, ?> initialPairs,
 			final FullMultipebbleStateFactory<STATE, GS> gameFactory, final int maxGameAutomatonSize,
-			final long timePreprocessing, final long timeSimulation) {
+			final long timePreprocessing, final long timeSimulation,
+			final MinimizeNwaMaxSat2<LETTER, STATE, ?> maxSatMinimizer) {
 		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
 		statistics.addKeyValuePair(StatisticsType.MAX_NUMBER_OF_DOUBLEDECKER_PEBBLES,
 				gameFactory.getMaxNumberOfDoubleDeckerPebbles());
@@ -221,6 +223,9 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			statistics.addKeyValuePair(StatisticsType.NUMBER_INITIAL_PAIRS, numberOfPairs);
 		}
 		statistics.addKeyValuePair(StatisticsType.SIZE_GAME_AUTOMATON, maxGameAutomatonSize);
+		if (maxSatMinimizer != null) {
+			maxSatMinimizer.addStatistics(statistics);
+		}
 		return statistics;
 	}
 
