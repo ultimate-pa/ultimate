@@ -30,6 +30,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -112,25 +113,43 @@ public class ReplacementVarFactory {
 				final String proc = analysisResult.getSecond().iterator().next();
 				newRepVar = constructLocalReplacementVar(definition, tv, proc);
 			} else if (analysisResult.getFirst().contains(IProgramNonOldVar.class)) {
-				final ReplacementOldVar oldVar = constructAndAddCorrespondingOldVarForNonOldDefinition(definition, tv);
-				newRepVar = constructReplacementNonOldVar(definition, tv, oldVar);
+				newRepVar = constructReplacementVarWithOldVar(definition, tv);
 			} else if (analysisResult.getFirst().contains(IProgramOldVar.class)) {
 				final ReplacementOldVar oldVar = constructReplacementOldVar(definition, tv);
 				constructAndAddCorrespondingNonOldVarForOldVarDefinition(definition, tv, oldVar);
 				newRepVar = oldVar;
 			} else {
 				if (useGlobalVarInsteadOfConstant) {
-					final ReplacementOldVar oldVar =
-							constructAndAddCorrespondingOldVarForNonOldDefinition(definition, tv);
-					newRepVar = constructReplacementNonOldVar(definition, tv, oldVar);
+					newRepVar = constructReplacementVarWithOldVar(definition, tv);
 				} else {
 					newRepVar = constructReplacementConst(definition, tv);
 				}
 			}
 		}
+		assert checkOldVar(newRepVar) : newRepVar + " breaks oldVar-nonOldVar relation";
 		mRepVarMapping.put(definition, newRepVar);
 		return newRepVar;
 
+	}
+
+	private IReplacementVarOrConst constructReplacementVarWithOldVar(final Term definition, final TermVariable tv) {
+		final IReplacementVarOrConst newRepVar;
+		final ReplacementOldVar oldVar =
+				constructAndAddCorrespondingOldVarForNonOldDefinition(definition, tv);
+		newRepVar = constructReplacementNonOldVar(definition, tv, oldVar);
+		return newRepVar;
+	}
+
+	private boolean checkOldVar(final IReplacementVarOrConst newRepVar) {
+		if (newRepVar instanceof IProgramOldVar) {
+			final IProgramOldVar oldVar = (IProgramOldVar) newRepVar;
+			return Objects.equals(oldVar, oldVar.getNonOldVar().getOldVar());
+		}
+		if (newRepVar instanceof IProgramNonOldVar) {
+			final IProgramNonOldVar var = (IProgramNonOldVar) newRepVar;
+			return Objects.equals(var, var.getOldVar().getNonOldVar());
+		}
+		return true;
 	}
 
 	private void constructAndAddCorrespondingNonOldVarForOldVarDefinition(final Term definition, final TermVariable tv,
@@ -191,7 +210,10 @@ public class ReplacementVarFactory {
 		final ApplicationTerm primedContant =
 				ProgramVarUtils.constructPrimedConstant(mMgdScript, this, tv.getSort(), tv.getName());
 		mMgdScript.unlock(this);
-		return new ReplacementNonOldVar(tv.getName(), tv, defaultConstant, primedContant, oldVar, definition);
+		final ReplacementNonOldVar repNonOldVar =
+				new ReplacementNonOldVar(tv.getName(), tv, defaultConstant, primedContant, oldVar, definition);
+		oldVar.setNonOldVar(repNonOldVar);
+		return repNonOldVar;
 	}
 
 	/**
