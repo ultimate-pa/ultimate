@@ -112,7 +112,7 @@ public class ReplacementVarFactory {
 				final String proc = analysisResult.getSecond().iterator().next();
 				newRepVar = constructLocalReplacementVar(definition, tv, proc);
 			} else if (analysisResult.getFirst().contains(IProgramNonOldVar.class)) {
-				final ReplacementOldVar oldVar = constructAndAddCorrespondingOldVarForNonoldDefinition(definition, tv);
+				final ReplacementOldVar oldVar = constructAndAddCorrespondingOldVarForNonOldDefinition(definition, tv);
 				newRepVar = constructReplacementNonOldVar(definition, tv, oldVar);
 			} else if (analysisResult.getFirst().contains(IProgramOldVar.class)) {
 				final ReplacementOldVar oldVar = constructReplacementOldVar(definition, tv);
@@ -121,7 +121,7 @@ public class ReplacementVarFactory {
 			} else {
 				if (useGlobalVarInsteadOfConstant) {
 					final ReplacementOldVar oldVar =
-							constructAndAddCorrespondingOldVarForNonoldDefinition(definition, tv);
+							constructAndAddCorrespondingOldVarForNonOldDefinition(definition, tv);
 					newRepVar = constructReplacementNonOldVar(definition, tv, oldVar);
 				} else {
 					newRepVar = constructReplacementConst(definition, tv);
@@ -143,7 +143,7 @@ public class ReplacementVarFactory {
 		mRepVarMapping.put(nonOldVarDefinition, nonoldVar);
 	}
 
-	private ReplacementOldVar constructAndAddCorrespondingOldVarForNonoldDefinition(final Term definition,
+	private ReplacementOldVar constructAndAddCorrespondingOldVarForNonOldDefinition(final Term definition,
 			final TermVariable tv) {
 		final Term oldVarDefinition =
 				ProgramVarUtils.renameNonOldGlobalsToOldGlobals(definition, mCsToolkit.getSymbolTable(), mMgdScript);
@@ -213,7 +213,7 @@ public class ReplacementVarFactory {
 	private Pair<Set<Class<? extends IProgramVarOrConst>>, Set<String>> analyzeDefinition(final Term definition) {
 		final Set<Class<? extends IProgramVarOrConst>> constOrVarKinds = new HashSet<>();
 		final Set<String> procs = new HashSet<>();
-		final Pair<Set<Class<? extends IProgramVarOrConst>>, Set<String>> result = new Pair<>(constOrVarKinds, procs);
+
 		for (final TermVariable tv : definition.getFreeVars()) {
 			final IProgramVar pv = mCsToolkit.getSymbolTable().getProgramVar(tv);
 			if (pv instanceof ILocalProgramVar) {
@@ -231,7 +231,7 @@ public class ReplacementVarFactory {
 		if (!constants.isEmpty()) {
 			constOrVarKinds.add(IProgramConst.class);
 		}
-		return result;
+		return new Pair<>(constOrVarKinds, procs);
 	}
 
 	public IIcfgSymbolTable constructIIcfgSymbolTable() {
@@ -242,6 +242,7 @@ public class ReplacementVarFactory {
 				result.add(entry.getValue());
 			}
 		}
+		result.finishConstruction();
 		return result;
 	}
 
