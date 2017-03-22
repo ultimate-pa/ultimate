@@ -83,6 +83,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMinimizeNwaDd<LETTER, STATE> {
 	private static final boolean DEFAULT_USE_BISIMULATION = false;
 	private static final boolean DEFAULT_USE_BISIMULATION_PREPROCESSING = false;
+	private static final boolean OMIT_MAX_SAT_FOR_FINITE_AUTOMATA = false;
 
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final AutomataOperationStatistics mStatistics;
@@ -106,7 +107,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		super(services, stateFactory);
 		mOperand = operand;
 		final MinimizationBackend backend;
-		if (NestedWordAutomataUtils.isFiniteAutomaton(mOperand)) {
+		if (OMIT_MAX_SAT_FOR_FINITE_AUTOMATA && NestedWordAutomataUtils.isFiniteAutomaton(mOperand)) {
 			backend = MinimizationBackend.FINITE_AUTOMATON;
 		} else if (DEFAULT_USE_BISIMULATION) {
 			backend = MinimizationBackend.BISIMULATION;
