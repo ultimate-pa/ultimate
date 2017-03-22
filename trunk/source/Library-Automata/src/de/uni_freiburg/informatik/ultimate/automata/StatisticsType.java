@@ -384,6 +384,10 @@ public enum StatisticsType {
 	 */
 	SUMMARIZE_EDGES,
 	/**
+	 * Run time for asserting clauses.
+	 */
+	TIME_ASSERTING,
+	/**
 	 * Run time for preprocessing.
 	 */
 	TIME_PREPROCESSING,
@@ -391,10 +395,6 @@ public enum StatisticsType {
 	 * Run time for simulation.
 	 */
 	TIME_SIMULATION,
-	/**
-	 * Run time for asserting clauses.
-	 */
-	TIME_ASSERTING,
 	/**
 	 * Run time for solving.
 	 */
