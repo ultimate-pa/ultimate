@@ -81,6 +81,8 @@ public final class RewriteNotEquals extends BaseBlockEncoder<IcfgLocation> {
 		transformer.add(new NNF(mServices));
 		transformer.add(new RemoveNegation());
 		transformer.add(new RewriteEquality());
+		transformer.add(new NNF(mServices));
+		transformer.add(new RemoveNegation());
 
 		while (iter.hasNext()) {
 			final IcfgEdge edge = iter.next();
