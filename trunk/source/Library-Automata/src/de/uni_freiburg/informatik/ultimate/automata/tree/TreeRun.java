@@ -69,16 +69,18 @@ public class TreeRun<R, S> implements ITreeRun<R, S> {
 
 	/***
 	 * Rebuild the tree run with new states.
+	 * <ST> Type of the terminal state.
 	 * @param stMap map of the old states to the new states.
 	 * @return
 	 */
-	public TreeRun<R, S> reconstruct(final Map<S, S> stMap) {
-		List<TreeRun<R, S>> child = new ArrayList<>();
+	
+	public <ST> TreeRun<R, ST> reconstruct(final Map<S, ST> stMap) {
+		List<TreeRun<R, ST>> child = new ArrayList<>();
 		for (final TreeRun<R, S> c : children) {
 			child.add(c.reconstruct(stMap));
 		}
 		
-		return new TreeRun<>(stMap.containsKey(state) ? stMap.get(state) : state, letter, child);
+		return new TreeRun<>(stMap.containsKey(state) ? stMap.get(state) : null, letter, child);
 	}
 	
 	public Collection<TreeRun<R, S>> getChildren() {

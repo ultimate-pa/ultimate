@@ -140,14 +140,14 @@ public class HCSSABuilder {
 	 * @param interpolantsMap map of predicates to the corresponding interpolant.
 	 * @return A map of the new predicates.
 	 * */
-	public Map<HCPredicate, HCPredicate> rebuildSSApredicates(final Map<HCPredicate, Term> interpolantsMap) {
-		final Map<HCPredicate, HCPredicate> res = new HashMap<>();
+	public Map<HCPredicate, IPredicate> rebuildSSApredicates(final Map<HCPredicate, Term> interpolantsMap) {
+		final Map<HCPredicate, IPredicate> res = new HashMap<>();
 		mCurrentTree = 0;
 		rebuild((TreeRun<HornClause, HCPredicate>) mTreeRun, res, interpolantsMap);
 		return res;
 	}
 
-	private void rebuild(final TreeRun<HornClause, HCPredicate> tree, final Map<HCPredicate, HCPredicate> res,
+	private void rebuild(final TreeRun<HornClause, HCPredicate> tree, final Map<HCPredicate, IPredicate> res,
 			final Map<HCPredicate, Term> interpolantsMap) {
 		for (final TreeRun<HornClause, HCPredicate> child : tree.getChildren()) {
 			mCurrentTree = getIndex(tree);
@@ -366,7 +366,7 @@ public class HCSSABuilder {
 		 * @param term
 		 * @return
 		 */
-		public HCPredicate backVersion(final HCPredicate pl, final Term term) {
+		public IPredicate backVersion(final IPredicate pl, final Term term) {
 			final Set<IProgramVar> vars = new HashSet<>();
 			final Map<Term, Term> backSubstitutionMap = new HashMap<>();
 			final Map<Term, HCVar> termToHcVar = new HashMap<>();
@@ -387,8 +387,8 @@ public class HCSSABuilder {
 			final Term formula = subst.transform(t);
 			
 			final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(formula);
-			
-			return ((HCPredicateFactory) mPredicateUnifier.getPredicateFactory()).newPredicate(pl.mProgramPoint, pl.hashCode(), unified.getFormula(), vars, termToHcVar);
+			return unified;
+			//return ((HCPredicateFactory) mPredicateUnifier.getPredicateFactory()).newPredicate(pl.mProgramPoint, pl.hashCode(), unified.getFormula(), vars, termToHcVar);
 		}
 
 		public Map<Term, Term> getSubstitutionMapping() {
