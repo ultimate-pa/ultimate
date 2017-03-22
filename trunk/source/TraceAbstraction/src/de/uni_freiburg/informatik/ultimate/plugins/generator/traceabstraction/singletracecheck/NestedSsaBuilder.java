@@ -476,7 +476,7 @@ public class NestedSsaBuilder {
 					// non-oldvar at beginning of procedure
 					// we use current var version of non-oldvar
 					if (oldVar.getNonOldVar() == null) {
-						throw new NullPointerException("missing non-old var for oldVar " + oldVar);
+						throw new IllegalStateException("missing non-old var for oldVar " + oldVar);
 					}
 					result = getOrSetCurrentGlobalVarVersion(oldVar.getNonOldVar());
 				}
