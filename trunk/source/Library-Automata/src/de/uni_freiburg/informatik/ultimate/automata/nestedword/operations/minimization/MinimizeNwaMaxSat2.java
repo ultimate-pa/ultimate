@@ -91,16 +91,16 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	protected final AbstractMaxSatSolver<T> mSolver;
 	protected ScopedTransitivityGenerator<T, STATE> mTransitivityGenerator;
 
-	protected int mNumberClausesAcceptance;
-	protected int mNumberClausesTransitions;
-	protected int mNumberClausesTransitionsNondeterministic;
-	protected int mNumberClausesTransitivity;
+	private int mNumberClausesAcceptance;
+	private int mNumberClausesTransitions;
+	private int mNumberClausesTransitionsNondeterministic;
+	private int mNumberClausesTransitivity;
 
-	protected long mTimer;
-	protected long mTimePreprocessing;
-	protected long mTimeSolving;
+	private long mTimer;
+	private long mTimeAsserting;
+	private long mTimeSolving;
 
-	protected long mNumberOfResultPairs;
+	private long mNumberOfResultPairs;
 
 	/**
 	 * @param services
@@ -160,9 +160,9 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	protected final void run() throws AutomataOperationCanceledException {
 		feedSolver();
 
-		mTimePreprocessing = mTimer;
+		mTimeAsserting = mTimer;
 		mTimer = System.currentTimeMillis();
-		mTimePreprocessing = mTimer - mTimePreprocessing;
+		mTimeAsserting = mTimer - mTimeAsserting;
 
 		constructResult(mSettings.isAddMapOldState2newState());
 
@@ -772,8 +772,8 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 				.append(" clauses");
 		// @formatter:on
 
-		if (mTimePreprocessing != 0L) {
-			builder.append(". Preprocessing time ").append(mTimePreprocessing);
+		if (mTimeAsserting != 0L) {
+			builder.append(". Asserting time ").append(mTimeAsserting);
 		}
 		if (mTimeSolving != 0L) {
 			builder.append(". Solving time ").append(mTimeSolving);
@@ -794,7 +794,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	 *            Statistics object.
 	 */
 	public void addStatistics(final AutomataOperationStatistics statistics) {
-		statistics.addKeyValuePair(StatisticsType.TIME_PREPROCESSING, mTimePreprocessing);
+		statistics.addKeyValuePair(StatisticsType.TIME_ASSERTING, mTimeAsserting);
 		statistics.addKeyValuePair(StatisticsType.TIME_SOLVING, mTimeSolving);
 		statistics.addKeyValuePair(StatisticsType.NUMBER_OF_VARIABLES, mSolver.getNumberOfVariables());
 		statistics.addKeyValuePair(StatisticsType.NUMBER_OF_CLAUSES, mSolver.getNumberOfClauses());

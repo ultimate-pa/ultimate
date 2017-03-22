@@ -27,8 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.CountingMeasure;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaSimulationBased;
 
 /**
@@ -389,6 +387,14 @@ public enum StatisticsType {
 	 * Run time for preprocessing.
 	 */
 	TIME_PREPROCESSING,
+	/**
+	 * Run time for simulation.
+	 */
+	TIME_SIMULATION,
+	/**
+	 * Run time for asserting clauses.
+	 */
+	TIME_ASSERTING,
 	/**
 	 * Run time for solving.
 	 */

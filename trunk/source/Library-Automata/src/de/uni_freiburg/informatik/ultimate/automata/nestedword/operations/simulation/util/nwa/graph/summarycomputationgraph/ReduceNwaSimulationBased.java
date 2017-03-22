@@ -118,6 +118,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 
 		final ISetOfPairs<STATE, ?> initialPairs;
 		final int sizeOfLargestEquivalenceClass;
+		long timer = System.currentTimeMillis();
 		if (DEFAULT_USE_BISIMULATION_PREPROCESSING) {
 			final PartitionBackedSetOfPairs<STATE> partitionBackedSetOfPairs =
 					new NwaApproximateBisimulation<>(services, operand,
@@ -138,7 +139,10 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 							: SimulationType.DIRECT).getResult();
 			sizeOfLargestEquivalenceClass = -1;
 		}
+		final long timePreprocessing = System.currentTimeMillis() - timer;
 
+		timer = System.currentTimeMillis();
+		long timeSimulation;
 		try {
 			final GameFactory gameFactory = new GameFactory();
 			final SpoilerNwaVertex<LETTER, STATE> uniqueSpoilerWinningSink = constructUniqueSpoilerWinningSink();
@@ -152,8 +156,10 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 			final SummaryComputation<LETTER, STATE> sc = new SummaryComputation<>(mServices, ga, mOperand);
 			final AGameGraph<LETTER, STATE> graph = new GameAutomatonToGameGraphTransformer<>(mServices, ga,
 					uniqueSpoilerWinningSink, mOperand, sc.getGameSummaries()).getResult();
-			final ParsimoniousSimulation sim = new ParsimoniousSimulation(mServices.getProgressAwareTimer(), mLogger, false, null, null, graph);
+			final ParsimoniousSimulation sim =
+					new ParsimoniousSimulation(mServices.getProgressAwareTimer(), mLogger, false, null, null, graph);
 			sim.doSimulation();
+			timeSimulation = System.currentTimeMillis() - timer;
 
 			assert NwaSimulationUtil.areNwaSimulationResultsCorrect(graph, mOperand, getSimulationType(),
 					initialPairs::containsPair, mLogger) : "The computed simulation results are incorrect.";
@@ -180,7 +186,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 					mServices);
 
 			mStatistics = writeStatistics(initialPairs, sizeOfLargestEquivalenceClass, gameAutomatonSize, graph, sim,
-					resultPair);
+					resultPair, timePreprocessing, timeSimulation);
 
 		} catch (final AutomataOperationCanceledException aoce) {
 			if (initialPairs instanceof PartitionBackedSetOfPairs<?>) {
@@ -201,17 +207,20 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 	private AutomataOperationStatistics writeStatistics(final ISetOfPairs<STATE, ?> initialPairs,
 			final int sizeOfLargestEquivalenceClass, final int gameAutomatonSize, final AGameGraph<LETTER, STATE> graph,
 			final ParsimoniousSimulation sim,
-			final Pair<IDoubleDeckerAutomaton<LETTER, STATE>, MinimizeNwaMaxSat2<LETTER, STATE, ?>> resultPair) {
+			final Pair<IDoubleDeckerAutomaton<LETTER, STATE>, MinimizeNwaMaxSat2<LETTER, STATE, ?>> resultPair,
+			final long timePreprocessing, final long timeSimulation) {
 		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
 		sim.getSimulationPerformance().exportToExistingAutomataOperationStatistics(statistics);
+		statistics.addKeyValuePair(StatisticsType.TIME_PREPROCESSING, timePreprocessing);
+		statistics.addKeyValuePair(StatisticsType.TIME_SIMULATION, timeSimulation);
 		if (initialPairs instanceof PartitionBackedSetOfPairs<?>) {
 			final Collection<Set<STATE>> possibleEquivalentClasses =
 					((PartitionBackedSetOfPairs<STATE>) initialPairs).getRelation();
-			statistics.addKeyValuePair(StatisticsType.SIZE_INITIAL_PARTITION, possibleEquivalentClasses.size());
-			statistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK, sizeOfLargestEquivalenceClass);
 			statistics.addKeyValuePair(StatisticsType.NUMBER_INITIAL_PAIRS,
 					new PartitionAndMapBackedSetOfPairs<>(possibleEquivalentClasses)
 							.getOrConstructPartitionSizeInformation().getNumberOfPairs());
+			statistics.addKeyValuePair(StatisticsType.SIZE_INITIAL_PARTITION, possibleEquivalentClasses.size());
+			statistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK, sizeOfLargestEquivalenceClass);
 
 		} else {
 			long numberOfPairs = 0;

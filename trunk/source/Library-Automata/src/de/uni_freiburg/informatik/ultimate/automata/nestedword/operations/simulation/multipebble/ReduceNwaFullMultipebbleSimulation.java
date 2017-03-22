@@ -95,13 +95,16 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 
 		printStartMessage();
 
+		long timer = System.currentTimeMillis();
 		final ISetOfPairs<STATE, ?> initialPairs;
 		switch (mMetriePreprocessing) {
 			case SYM:
 				final PartitionAndMapBackedSetOfPairs<STATE> partition =
-						new PartitionAndMapBackedSetOfPairs<>(new NwaApproximateBisimulation<>(services, operand,
-								allowToMergeFinalAndNonFinalStates ? SimulationType.ORDINARY : SimulationType.DIRECT)
-										.getResult().getRelation());
+						new PartitionAndMapBackedSetOfPairs<>(
+								new NwaApproximateBisimulation<>(services, operand,
+										allowToMergeFinalAndNonFinalStates
+												? SimulationType.ORDINARY
+												: SimulationType.DIRECT).getResult().getRelation());
 				mLogger.info("Initial partition has " + partition.getOrConstructPartitionSizeInformation().toString());
 				initialPairs = partition;
 				break;
@@ -113,8 +116,11 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			default:
 				throw new AssertionError("illegal value " + mMetriePreprocessing);
 		}
-		final FullMultipebbleStateFactory<STATE, GS> gameFactory = constructGameFactory(initialPairs);
+		final long timePreprocessing = System.currentTimeMillis() - timer;
 
+		timer = System.currentTimeMillis();
+		final FullMultipebbleStateFactory<STATE, GS> gameFactory = constructGameFactory(initialPairs);
+		final long timeSimulation;
 		try {
 			final FullMultipebbleGameAutomaton<LETTER, STATE, GS> gameAutomaton =
 					new FullMultipebbleGameAutomaton<>(mServices, gameFactory, initialPairs, operand);
@@ -127,6 +133,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			final MinimizeNwaMaxSat2.Settings<STATE> settings = new MinimizeNwaMaxSat2.Settings<STATE>()
 					.setFinalStateConstraints(!allowToMergeFinalAndNonFinalStates)
 					.setAddMapOldState2NewState(addMapOldState2NewState);
+			timeSimulation = System.currentTimeMillis() - timer;
 
 			final MinimizeNwaMaxSat2<LETTER, STATE, ?> maxSatMinimizer;
 			switch (mMetriePostprocessing) {
@@ -150,7 +157,8 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 				super.setOld2NewStateMap(maxSatMinimizer.getOldState2newState());
 			}
 
-			mStatistics = addStatistics(initialPairs, gameFactory, maxGameAutomatonSize, maxSatMinimizer);
+			mStatistics = addStatistics(initialPairs, gameFactory, maxGameAutomatonSize, maxSatMinimizer,
+					timePreprocessing, timeSimulation);
 
 		} catch (final AutomataOperationCanceledException aoce) {
 			if (initialPairs instanceof PartitionBackedSetOfPairs<?>) {
@@ -169,18 +177,21 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 
 	private AutomataOperationStatistics addStatistics(final ISetOfPairs<STATE, ?> initialPairs,
 			final FullMultipebbleStateFactory<STATE, GS> gameFactory, final int maxGameAutomatonSize,
-			final MinimizeNwaMaxSat2<LETTER, STATE, ?> maxSatMinimizer) {
+			final MinimizeNwaMaxSat2<LETTER, STATE, ?> maxSatMinimizer, final long timePreprocessing,
+			final long timeSimulation) {
 		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
 		statistics.addKeyValuePair(StatisticsType.MAX_NUMBER_OF_DOUBLEDECKER_PEBBLES,
 				gameFactory.getMaxNumberOfDoubleDeckerPebbles());
+		statistics.addKeyValuePair(StatisticsType.TIME_PREPROCESSING, timePreprocessing);
+		statistics.addKeyValuePair(StatisticsType.TIME_SIMULATION, timeSimulation);
 		if (initialPairs instanceof PartitionBackedSetOfPairs<?>) {
 			final PartitionBackedSetOfPairs<?> initialPartition = (PartitionBackedSetOfPairs<?>) initialPairs;
-			statistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK,
-					initialPartition.getOrConstructPartitionSizeInformation().getSizeOfLargestBlock());
 			statistics.addKeyValuePair(StatisticsType.NUMBER_INITIAL_PAIRS,
 					initialPartition.getOrConstructPartitionSizeInformation().getNumberOfPairs());
 			statistics.addKeyValuePair(StatisticsType.SIZE_INITIAL_PARTITION,
 					initialPartition.getOrConstructPartitionSizeInformation().getNumberOfBlocks());
+			statistics.addKeyValuePair(StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK,
+					initialPartition.getOrConstructPartitionSizeInformation().getSizeOfLargestBlock());
 		} else {
 			long numberOfPairs = 0;
 			for (final Iterator<Pair<STATE, STATE>> it = initialPairs.iterator(); it.hasNext(); it.next()) {
@@ -189,8 +200,6 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			statistics.addKeyValuePair(StatisticsType.NUMBER_INITIAL_PAIRS, numberOfPairs);
 		}
 		statistics.addKeyValuePair(StatisticsType.SIZE_GAME_AUTOMATON, maxGameAutomatonSize);
-		statistics.addKeyValuePair(StatisticsType.STATES_INPUT, mOperand.size());
-		statistics.addKeyValuePair(StatisticsType.STATES_OUTPUT, getResult().size());
 
 		maxSatMinimizer.addStatistics(statistics);
 
