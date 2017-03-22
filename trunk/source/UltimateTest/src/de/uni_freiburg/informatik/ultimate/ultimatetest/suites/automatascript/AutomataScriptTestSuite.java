@@ -44,10 +44,10 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.AutomataScriptTestSummary;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.LatexOverviewSummary;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 public class AutomataScriptTestSuite extends UltimateTestSuite {
