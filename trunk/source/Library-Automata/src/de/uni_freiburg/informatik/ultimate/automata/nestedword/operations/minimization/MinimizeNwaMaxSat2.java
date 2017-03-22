@@ -796,8 +796,8 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	public void addStatistics(final AutomataOperationStatistics statistics) {
 		statistics.addKeyValuePair(StatisticsType.TIME_ASSERTING, mTimeAsserting);
 		statistics.addKeyValuePair(StatisticsType.TIME_SOLVING, mTimeSolving);
-		statistics.addKeyValuePair(StatisticsType.NUMBER_OF_VARIABLES, mSolver.getNumberOfVariables());
-		statistics.addKeyValuePair(StatisticsType.NUMBER_OF_CLAUSES, mSolver.getNumberOfClauses());
+		statistics.addKeyValuePair(StatisticsType.NUMBER_VARIABLES, mSolver.getNumberOfVariables());
+		statistics.addKeyValuePair(StatisticsType.NUMBER_CLAUSES, mSolver.getNumberOfClauses());
 		statistics.addKeyValuePair(StatisticsType.NUMBER_RESULT_PAIRS, mNumberOfResultPairs);
 	}
 
