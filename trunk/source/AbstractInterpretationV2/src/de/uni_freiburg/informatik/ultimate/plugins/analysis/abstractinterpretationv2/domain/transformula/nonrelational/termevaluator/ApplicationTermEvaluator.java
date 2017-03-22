@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorLogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 
@@ -57,11 +58,14 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 	private final int mMaxParallelStates;
 	private final Set<String> mVarIdentifiers;
 	private final EvaluatorLogger mLogger;
-	
+	private STATE mLastEvaluatedState;
+	private List<List<IEvaluationResult<VALUE>>> mLastEvaluatedResult;
+
 	private static final String TRUE = "true";
 	private static final String FALSE = "false";
 	private static final String COMPEQ = "=";
-
+	private static final String LOGICNEG = "not";
+	
 	protected ApplicationTermEvaluator(final EvaluatorLogger logger, final int arity, final String operator,
 			final int maxParallelStates, final INonrelationalValueFactory<VALUE> nonrelationalValueFactory,
 			final Supplier<STATE> bottomStateSupplier) {
@@ -75,47 +79,73 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		mTopValue = mNonrelationalValueFactory.createTopValue();
 		mVarIdentifiers = new HashSet<>();
 	}
-	
+
 	@Override
 	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
-		
+
 		if (mOperator == TRUE) {
 			return onlyBooleanValue(BooleanValue.TRUE);
 		} else if (mOperator == FALSE) {
 			return onlyBooleanValue(BooleanValue.FALSE);
 		}
-		
+
+		final List<List<IEvaluationResult<VALUE>>> permuts = evaluateAndPermutate(currentState);
+
 		mSubEvaluators.forEach(sub -> mVarIdentifiers.addAll(sub.getVarIdentifiers()));
 		
-		final List<List<IEvaluationResult<VALUE>>> permuts = evaluateAndPermutate(currentState);
+		final List<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
 
 		// Operator must be applied to all lists in permuts.
 		for (final List<IEvaluationResult<VALUE>> permutList : permuts) {
 			
-			if (mOperator == COMPEQ) {
-				return evaluateEquality(permutList);
-			}
+			final List<IEvaluationResult<VALUE>> result = evaluate(permutList);
+			mLogger.logEvaluation(mOperator, result, permutList);
+			returnList.addAll(result);
 		}
 		
-		// NonrelationalEvaluationResult<VALUE> returnResult = new NonrelationalEvaluationResult<>(value, booleanValue);
-		// TODO Auto-generated method stub
-		return null;
+		assert !returnList.isEmpty();
+		return mergeResult(returnList);
+	}
+	
+	private List<IEvaluationResult<VALUE>> mergeResult(final List<IEvaluationResult<VALUE>> returnList) {
+		if (mOperator == LOGICNEG) {
+			return NonrelationalUtils.mergeIfNecessary(returnList, 2);
+		}
+		return NonrelationalUtils.mergeIfNecessary(returnList, mMaxParallelStates);
+	}
+	
+	private List<IEvaluationResult<VALUE>> evaluate(final List<IEvaluationResult<VALUE>> permutList) {
+		if (mOperator == COMPEQ) {
+			return evaluateEquality(permutList);
+		} else if (mOperator == LOGICNEG) {
+			return evaluateLogicNegation(permutList);
+		}
+		
+		throw new UnsupportedOperationException("Unsupported operator: " + mOperator);
 	}
 
 	private List<List<IEvaluationResult<VALUE>>> evaluateAndPermutate(final STATE currentState) {
 		assert currentState != null;
+
+		// Do some caching here to save some computation time.
+		if (mLastEvaluatedState != null && mLastEvaluatedState == currentState) {
+			return mLastEvaluatedResult;
+		}
+		
+		mLastEvaluatedState = currentState;
 		
 		final List<List<IEvaluationResult<VALUE>>> subResults = new ArrayList<>();
 		mSubEvaluators.forEach(sub -> subResults.add(sub.evaluate(currentState)));
 		final List<List<IEvaluationResult<VALUE>>> permutations =
 				generatePermutations(subResults, 0, new ArrayList<>());
-		
+
 		assert permutations.stream().allMatch(list -> list.size() == mSubEvaluators.size());
-		
+
+		mLastEvaluatedResult = permutations;
 		return permutations;
 	}
-	
+
 	/**
 	 * Constructs all permutations of elements within the input list's lists.
 	 *
@@ -156,21 +186,22 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 			return returnList;
 		}
 	}
-	
+
 	private List<IEvaluationResult<VALUE>> onlyBooleanValue(final BooleanValue value) {
 		assert value != null;
 		assert value != BooleanValue.INVALID;
 		return Collections.singletonList(new NonrelationalEvaluationResult<>(mTopValue, value));
 	}
-
+	
 	private List<IEvaluationResult<VALUE>> evaluateEquality(final List<IEvaluationResult<VALUE>> arguments) {
 		assert arguments != null;
-		
+		assert !arguments.isEmpty();
+
 		if (arguments.size() < 2) {
 			throw new UnsupportedOperationException("The evaluation result list (" + arguments
 					+ ") does not contain the necessary number of arguments to check for equality.");
 		}
-		
+
 		BooleanValue returnBool = BooleanValue.INVALID;
 		if (mSubEvaluators.stream().anyMatch(sub -> sub.containsBool())) {
 			arguments.get(0).getBooleanValue();
@@ -179,10 +210,10 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 			returnBool = arguments.stream().map(elem -> elem.getBooleanValue()).reduce(BooleanValue.TOP,
 					(a, b) -> (a.intersect(b))) != BooleanValue.BOTTOM ? BooleanValue.TRUE : BooleanValue.BOTTOM;
 		}
-
+		
 		final VALUE returnValue = arguments.stream().map(elem -> elem.getValue())
 				.reduce(mNonrelationalValueFactory.createTopValue(), (a, b) -> a.intersect(b));
-
+		
 		if (returnBool.isBottom() || returnValue.isBottom()) {
 			returnBool = BooleanValue.FALSE;
 		} else if (!mSubEvaluators.stream().anyMatch(sub -> sub.containsBool())) {
@@ -195,7 +226,26 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		}
 		return Collections.singletonList(new NonrelationalEvaluationResult<>(returnValue, returnBool));
 	}
-	
+
+	private List<IEvaluationResult<VALUE>> evaluateLogicNegation(final List<IEvaluationResult<VALUE>> arguments) {
+		assert arguments != null;
+		assert !arguments.isEmpty();
+		
+		if (arguments.size() > 1) {
+			throw new UnsupportedOperationException(
+					"Term for logical negation has more than one argument (" + arguments.size() + ").");
+		}
+		
+		final IEvaluationResult<VALUE> arg = arguments.get(0);
+		final BooleanValue returnBool = arg.getBooleanValue().neg();
+		final VALUE returnValue = mNonrelationalValueFactory.createTopValue();
+		
+		final NonrelationalEvaluationResult<VALUE> result =
+				new NonrelationalEvaluationResult<>(returnValue, returnBool);
+		
+		return Collections.singletonList(result);
+	}
+
 	@Override
 	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> evaluationResult, final STATE oldState) {
 		if (mOperator == TRUE) {
@@ -203,17 +253,17 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		} else if (mOperator == FALSE) {
 			return Collections.singletonList(mBottomStateSupplier.get());
 		}
-		
-		final List<STATE> returnList = new ArrayList<>();
-		
-		final VALUE evalResultValue = evaluationResult.getValue();
-		final BooleanValue evalResultBool = evaluationResult.getBooleanValue();
-		
-		final List<List<IEvaluationResult<VALUE>>> permuts = evaluateAndPermutate(oldState);
 
+		final List<STATE> returnList = new ArrayList<>();
+
+		final VALUE evalResultValue = evaluationResult.getValue();
+		BooleanValue evalResultBool = evaluationResult.getBooleanValue();
+
+		final List<List<IEvaluationResult<VALUE>>> permuts = evaluateAndPermutate(oldState);
+		
 		for (final List<IEvaluationResult<VALUE>> resultList : permuts) {
 			final List<STATE> returnStates = new ArrayList<>();
-			
+
 			if (mOperator == COMPEQ) {
 				final BooleanValue intersectBool = resultList.stream().map(elem -> elem.getBooleanValue())
 						.reduce(BooleanValue.TOP, (a, b) -> a.intersect(b));
@@ -222,12 +272,12 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 					returnStates.add(oldState);
 					break;
 				}
-				
+
 				// Copy the result list
 				final List<IEvaluationResult<VALUE>> tmpList = new ArrayList<>();
 				resultList.stream().forEach(elem -> tmpList.add(elem));
 				final List<List<STATE>> lastResult = new ArrayList<>();
-
+				
 				for (int i = 1; i < tmpList.size(); i++) {
 					final IEvaluationResult<VALUE> left = tmpList.get(i - 1);
 					final IEvaluationResult<VALUE> right = tmpList.get(i);
@@ -235,21 +285,21 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 					final BooleanValue leftBoolean = left.getBooleanValue();
 					final VALUE rightValue = right.getValue();
 					final BooleanValue rightBoolean = right.getBooleanValue();
-					
+
 					final VALUE inverseLeft = inverseEvaluate(evalResultValue, leftValue, rightValue, true);
 					final VALUE inverseRight = inverseEvaluate(evalResultValue, rightValue, leftValue, false);
-					
+
 					final NonrelationalEvaluationResult<VALUE> leftEvalResult =
 							new NonrelationalEvaluationResult<>(inverseLeft, rightBoolean);
 					final NonrelationalEvaluationResult<VALUE> rightEvalResult =
 							new NonrelationalEvaluationResult<>(inverseRight, leftBoolean);
-					
+
 					final List<STATE> leftEq = mSubEvaluators.get(i - 1).inverseEvaluate(leftEvalResult, oldState);
 					final List<STATE> rightEq = mSubEvaluators.get(i).inverseEvaluate(rightEvalResult, oldState);
-
+					
 					lastResult.add(crossIntersect(leftEq, rightEq));
 				}
-				
+
 				final List<List<STATE>> permutedStates = generatePermutations(lastResult, 0, new ArrayList<>());
 				final Optional<List<STATE>> intersectResult =
 						permutedStates.stream().reduce((a, b) -> crossIntersect(a, b));
@@ -257,19 +307,21 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 					throw new UnsupportedOperationException("Could not intersect resulting states.");
 				}
 				returnStates.addAll(intersectResult.get());
+			} else if (mOperator == LOGICNEG) {
+				evalResultBool = evaluationResult.getBooleanValue().neg();
 			}
-
+			
 			if (returnStates.isEmpty()) {
 				returnStates.add(oldState);
 			}
 			mLogger.logEvaluation(mOperator, returnStates, evaluationResult, oldState);
 			returnList.addAll(returnStates);
 		}
-
+		
 		assert !returnList.isEmpty();
 		return returnList;
 	}
-
+	
 	private List<STATE> crossIntersect(final List<STATE> left, final List<STATE> right) {
 		final List<STATE> returnList = new ArrayList<>(left.size() * right.size());
 		for (final STATE le : left) {
@@ -279,20 +331,20 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		}
 		return returnList;
 	}
-	
+
 	private VALUE inverseEvaluate(final VALUE referenceValue, final VALUE oldValue, final VALUE otherValue,
 			final boolean isLeft) {
 		
 		VALUE newValue = null;
-
+		
 		if (mOperator.equals(COMPEQ)) {
 			newValue = otherValue.inverseEquality(oldValue, referenceValue);
 		}
-
+		
 		assert newValue != null;
 		return newValue;
 	}
-
+	
 	@Override
 	public void addSubEvaluator(final ITermEvaluator<VALUE, STATE, VARDECL> evaluator) {
 		if (mSubEvaluators.size() >= mArity) {
@@ -301,12 +353,12 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		}
 		mSubEvaluators.add(evaluator);
 	}
-
+	
 	@Override
 	public boolean hasFreeOperands() {
 		return mSubEvaluators.size() < mArity;
 	}
-
+	
 	@Override
 	public boolean containsBool() {
 		if (mArity == 0) {
@@ -318,30 +370,30 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 							+ "unsupported or not boolean: " + mOperator);
 		}
 		return mSubEvaluators.stream().anyMatch(eval -> eval.containsBool());
-		
-	}
 
+	}
+	
 	@Override
 	public Set<String> getVarIdentifiers() {
 		return mVarIdentifiers;
 	}
-	
+
 	@Override
 	public int getArity() {
 		return mArity;
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		
+
 		sb.append("(");
 		sb.append(mOperator);
 		sb.append(" ");
 		sb.append(mSubEvaluators.stream().map(sub -> sub.toString()).collect(Collectors.joining(" ")));
 		sb.append(")");
-		
+
 		return sb.toString();
 	}
-	
+
 }

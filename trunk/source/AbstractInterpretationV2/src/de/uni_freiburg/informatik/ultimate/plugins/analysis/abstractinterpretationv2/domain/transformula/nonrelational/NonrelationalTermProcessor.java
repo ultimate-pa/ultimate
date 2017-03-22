@@ -96,7 +96,7 @@ public abstract class NonrelationalTermProcessor<VALUE extends INonrelationalVal
 
 		return returnStates;
 	}
-
+	
 	private final class NonrelationalTermWalker extends TermWalker {
 		
 		private final ILogger mLogger;
@@ -119,7 +119,7 @@ public abstract class NonrelationalTermProcessor<VALUE extends INonrelationalVal
 		@Override
 		public void walk(final NonRecursive walker, final AnnotatedTerm term) {
 			mLogger.debug("Annotated Term: " + term);
-			mLogger.warn("Not implemented!");
+			throw new UnsupportedOperationException("Not implemented!");
 		}
 
 		@Override
@@ -135,20 +135,19 @@ public abstract class NonrelationalTermProcessor<VALUE extends INonrelationalVal
 
 			for (final Term t : term.getParameters()) {
 				run(new NonrelationalTermWalker(t, mLogger));
-				// walker.enqueueWalker(new NonrelationalTermWalker(t, mLogger));
 			}
 		}
 
 		@Override
 		public void walk(final NonRecursive walker, final LetTerm term) {
 			mLogger.debug("Let Term: " + term);
-			mLogger.warn("Not implemented!");
+			throw new UnsupportedOperationException("Not implemented!");
 		}
 
 		@Override
 		public void walk(final NonRecursive walker, final QuantifiedFormula term) {
 			mLogger.debug("Quantified Formula: " + term);
-			mLogger.warn("Not implemented!");
+			throw new UnsupportedOperationException("Not implemented!");
 		}
 
 		@Override
