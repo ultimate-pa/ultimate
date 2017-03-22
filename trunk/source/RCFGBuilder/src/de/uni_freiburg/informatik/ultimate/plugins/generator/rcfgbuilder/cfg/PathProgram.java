@@ -247,10 +247,6 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			final IcfgLocation ppLoc = createPathProgramLocation(loc);
 			final String procedure = loc.getProcedure();
 
-			if (mOriginalIcfg.getProcedureEntryNodes().size() > 1) {
-				throw new UnsupportedOperationException("currently we support only program that have one procedure");
-			}
-
 			final IcfgLocation procEntry = mOriginalIcfg.getProcedureEntryNodes().get(procedure);
 			if (loc.equals(procEntry)) {
 				getProcedureEntryNodes().put(procedure, ppLoc);
@@ -262,10 +258,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			}
 
 			final Set<? extends IcfgLocation> procError = mOriginalIcfg.getProcedureErrorNodes().get(procedure);
-			if (procError.isEmpty()) {
-				throw new AssertionError("No error location! Maybe the procedure inlining failed.");
-			}
-			if (procError.contains(loc)) {
+			if (procError != null && procError.contains(loc)) {
 				final Set<IcfgLocation> ppProcErrors = getProcedureErrorNodes().get(procedure);
 				final Set<IcfgLocation> newPpProcErrors;
 				if (ppProcErrors == null) {
