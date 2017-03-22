@@ -152,7 +152,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 			final SummaryComputation<LETTER, STATE> sc = new SummaryComputation<>(mServices, ga, mOperand);
 			final AGameGraph<LETTER, STATE> graph = new GameAutomatonToGameGraphTransformer<>(mServices, ga,
 					uniqueSpoilerWinningSink, mOperand, sc.getGameSummaries()).getResult();
-			final ParsimoniousSimulation sim = new ParsimoniousSimulation(null, mLogger, false, null, null, graph);
+			final ParsimoniousSimulation sim = new ParsimoniousSimulation(mServices.getProgressAwareTimer(), mLogger, false, null, null, graph);
 			sim.doSimulation();
 
 			assert NwaSimulationUtil.areNwaSimulationResultsCorrect(graph, mOperand, getSimulationType(),
