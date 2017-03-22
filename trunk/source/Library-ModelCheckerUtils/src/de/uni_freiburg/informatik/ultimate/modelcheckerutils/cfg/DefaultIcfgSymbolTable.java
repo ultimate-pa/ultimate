@@ -29,7 +29,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -79,6 +83,7 @@ public class DefaultIcfgSymbolTable implements IIcfgSymbolTable {
 				add(local);
 			}
 		}
+		assert checkGlobals();
 	}
 
 	@Override
@@ -114,6 +119,7 @@ public class DefaultIcfgSymbolTable implements IIcfgSymbolTable {
 		if (mConstructionFinished) {
 			throw new IllegalStateException("Construction finished, unable to add new variables or constants.");
 		}
+
 		if (varOrConst instanceof IProgramConst) {
 			final IProgramConst pc = (IProgramConst) varOrConst;
 			mConstants.add(pc);
@@ -121,17 +127,23 @@ public class DefaultIcfgSymbolTable implements IIcfgSymbolTable {
 		} else if (varOrConst instanceof IProgramVar) {
 			final IProgramVar var = (IProgramVar) varOrConst;
 			mTermVariable2ProgramVar.put(var.getTermVariable(), var);
-			if (var instanceof ILocalProgramVar) {
+			if (var instanceof IProgramOldVar || var.isOldvar()) {
+				throw new IllegalArgumentException("cannot add oldvar, add nonoldvar instead: " + var);
+			} else if (var instanceof ILocalProgramVar) {
 				mLocals.addPair(var.getProcedure(), (ILocalProgramVar) var);
 			} else if (var instanceof IProgramNonOldVar) {
-				mGlobals.add((IProgramNonOldVar) var);
-				final IProgramOldVar oldVar = ((IProgramNonOldVar) var).getOldVar();
+				final IProgramNonOldVar nonOldVar = (IProgramNonOldVar) var;
+				mGlobals.add(nonOldVar);
+				final IProgramOldVar oldVar = nonOldVar.getOldVar();
 				mTermVariable2ProgramVar.put(oldVar.getTermVariable(), oldVar);
-			} else if (var instanceof IProgramOldVar) {
-				throw new IllegalArgumentException("cannot add oldvar, add nonoldvar instead");
+				assert Objects.equals(oldVar.getNonOldVar(),
+						var) : "getNonOldVar() and getOldVar() should match, but do not! Oldvar: " + oldVar + " Var: "
+								+ var;
 			} else {
 				throw new AssertionError("unknown kind of variable");
 			}
+		} else {
+			throw new AssertionError("unknown kind of variable");
 		}
 	}
 
@@ -140,6 +152,24 @@ public class DefaultIcfgSymbolTable implements IIcfgSymbolTable {
 	 */
 	public void finishConstruction() {
 		mConstructionFinished = true;
+		assert checkGlobals();
+	}
+
+	private boolean checkGlobals() {
+		if (mTermVariable2ProgramVar.entrySet().stream().anyMatch(a -> a.getValue() == null)) {
+			throw new AssertionError("Null entry in TermVar2ProgramVar");
+		}
+
+		final Set<IProgramVar> programVars = mTermVariable2ProgramVar.entrySet().stream()
+				.map(Entry<TermVariable, IProgramVar>::getValue).collect(Collectors.toSet());
+		final Set<IProgramVar> oldVars = programVars.stream().filter(IProgramVar::isOldvar).collect(Collectors.toSet());
+		final Optional<IProgramOldVar> any = oldVars.stream().map(a -> (IProgramOldVar) a)
+				.filter(a -> !programVars.contains(a.getNonOldVar())).findAny();
+		if (any.isPresent()) {
+			throw new AssertionError("old var with no corresponding var: " + any.get());
+		}
+
+		return true;
 	}
 
 }
