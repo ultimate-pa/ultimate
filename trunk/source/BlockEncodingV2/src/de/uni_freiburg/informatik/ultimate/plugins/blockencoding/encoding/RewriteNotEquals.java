@@ -34,6 +34,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.NNF;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RemoveNegation;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteEquality;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers.RewriteIte;
@@ -77,6 +78,7 @@ public final class RewriteNotEquals extends BaseBlockEncoder<IcfgLocation> {
 		final ReplacementVarFactory repVarFac = new ReplacementVarFactory(toolkit, false);
 		final List<TransitionPreprocessor> transformer = new ArrayList<>();
 		transformer.add(new RewriteIte());
+		transformer.add(new NNF(mServices));
 		transformer.add(new RemoveNegation());
 		transformer.add(new RewriteEquality());
 
@@ -92,6 +94,11 @@ public final class RewriteNotEquals extends BaseBlockEncoder<IcfgLocation> {
 			if (mtf.getFormula().equals(rewrittenMtf.getFormula())) {
 				// nothing to do
 				continue;
+			}
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Rewrote ");
+				mLogger.debug(mtf.getFormula());
+				mLogger.debug(rewrittenMtf.getFormula());
 			}
 			if (!toRemove.add(edge)) {
 				continue;
