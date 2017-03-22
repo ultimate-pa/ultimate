@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
@@ -95,7 +96,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -413,7 +416,7 @@ public class PathProgramDumper {
 		while (!worklist.isEmpty()) {
 			final IcfgLocation node = worklist.remove();
 			newStatements.add(constructLabel(node));
-			if (errorLocs.contains(node)) {
+			if (errorLocs != null && errorLocs.contains(node)) {
 				newStatements.add(
 						new AssertStatement(constructNewLocation(), new BooleanLiteral(constructNewLocation(), false)));
 				assert node.getOutgoingEdges().isEmpty() : "error loc with outgoing transitions";
@@ -493,9 +496,18 @@ public class PathProgramDumper {
 		addVars(action.getTransformula().getInVars().keySet(), localVars, globalVars);
 		addVars(action.getTransformula().getOutVars().keySet(), localVars, globalVars);
 		if (USE_BOOGIE_INPUT) {
-			final StatementSequence stseq = (StatementSequence) action;
-			for (final Statement st : stseq.getStatements()) {
-				statements.add(st);
+			if (action instanceof Call) {
+				final Call call = (Call) action;
+				statements.add(call.getCallStatement());
+			} else if (action instanceof Return) {
+				statements.add(new ReturnStatement(constructNewLocation()));
+			} else if (action instanceof StatementSequence) {
+				final StatementSequence stseq = (StatementSequence) action;
+				for (final Statement st : stseq.getStatements()) {
+					statements.add(st);
+				}
+			} else {
+				throw new UnsupportedOperationException("unsupported edge " + action.getClass().getSimpleName());
 			}
 		} else {
 			final ManagedScript mgdScript = mIcfg.getCfgSmtToolkit().getManagedScript();
