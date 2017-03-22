@@ -330,7 +330,7 @@ public class CsvUtils {
 					pBindex++;
 				} else {
 					throw new IllegalArgumentException(
-							"unable to merge, both " + "providers have similar columns but in different order");
+							"unable to merge, both providers have similar columns but in different order");
 				}
 			}
 		}
