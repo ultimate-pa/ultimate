@@ -867,6 +867,11 @@ public final class CFGInvariantsGenerator {
 		} else {
 			lbePathProgram = mPathProgram;
 		}
+//		BranchUnfoldIcfgTransformer buTransformer = null;
+//		if (true) {
+//			buTransformer = new BranchUnfoldIcfgTransformer(mServices, mPredicateFactory, mPredicateUnifier);
+//			lbePathProgram = buTransformer.transform(lbePathProgram);
+//		}
 		
 		final int numLocsAfterLbe = getNumOfPPLocations(lbePathProgram);
 		mPathInvariantsStatistics.setNumOfPathProgramLocations(numLocsBeforeLbe, numLocsAfterLbe);
@@ -876,6 +881,7 @@ public final class CFGInvariantsGenerator {
 				mInvariantSynthesisSettings);
 		
 		if (invariants != null) {
+//			invariants = buTransformer.transform(invariants);
 			if (APPLY_LARGE_BLOCK_ENCODING) {
 				invariants = lbeTransformer.transform(invariants);
 			}

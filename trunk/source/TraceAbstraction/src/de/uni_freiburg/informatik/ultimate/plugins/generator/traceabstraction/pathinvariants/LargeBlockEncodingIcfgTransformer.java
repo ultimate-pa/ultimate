@@ -103,6 +103,9 @@ public final class LargeBlockEncodingIcfgTransformer {
 		final IPreferenceProvider ups = beServices.getPreferenceProvider(BlockEncodingPreferences.PLUGIN_ID);
 		ups.put(BlockEncodingPreferences.FXP_INTERPROCEDURAL_COMPOSITION, false);
 		ups.put(BlockEncodingPreferences.FXP_MINIMIZE_STATES, MinimizeStates.MULTI);
+//		ups.put(BlockEncodingPreferences.PRE_SBE, true);
+//		ups.put(BlockEncodingPreferences.POST_USE_PARALLEL_COMPOSITION, false);
+		
 		// TODO: If you remove infeasible edges, you may end up with an empty program. Either disable this or deal
 		// with it.
 		ups.put(BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES, false);
