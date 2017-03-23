@@ -37,7 +37,15 @@ import java.util.Set;
  * @author Matthias Heizmann
  */
 public class HashRelation<D, R> extends AbstractRelation<D, R, Map<D, Set<R>>> {
+	
+	public HashRelation() {
+		super();
+	}
 
+	public HashRelation(final AbstractRelation<D, R, ?> rel) {
+		super(rel);
+	}
+	
 	@Override
 	protected Map<D, Set<R>> newMap() {
 		return new HashMap<>();
@@ -48,14 +56,4 @@ public class HashRelation<D, R> extends AbstractRelation<D, R, Map<D, Set<R>>> {
 		return new HashSet<>();
 	}
 
-	public HashRelation<D, R> copy() {
-		final HashRelation<D, R> result = new HashRelation<>();
-
-		for (final D dElement : getDomain()) {
-			for (final R rElement : getImage(dElement)) {
-				result.addPair(dElement, rElement);
-			}
-		}
-		return result;
-	}
 }

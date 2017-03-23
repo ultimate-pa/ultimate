@@ -165,7 +165,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		mAllNodeIds = builder.mAllNodeIds;
 		mNonAuxVarNodeIds = builder.mNonAuxVarNodeIds.copy();
 		mAuxVarNodeIds = new HashMap<>(builder.mAuxVarNodeIds);
-		mArrayIdToFunctionNodes = builder.mArrayIdToFunctionNodes.copy();
+		mArrayIdToFunctionNodes = new HashRelation(builder.mArrayIdToFunctionNodes);
 
 		// nodes need to be deepcopied..
 		mNodeIdToEqGraphNode = new HashMap<>();
