@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -56,9 +57,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IActi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
@@ -357,12 +360,62 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				}
 				assert word.length() - 1 == interpolants.size() : "Word has length " + word.length()
 						+ " but interpolant sequence has length " + interpolants.size();
+				assert isInductive(mCex.getWord().asList(), interpolants) : "Sequence of interpolants not inductive!";
 				return new AbsIntInterpolantGenerator(mPredicateUnifier, mCex.getWord(),
 						interpolants.toArray(new IPredicate[interpolants.size()]), getHoareTripleChecker());
 			} catch (final ToolchainCanceledException tce) {
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), "generating AI predicates"));
 				throw tce;
 			}
+		}
+
+		private boolean isInductive(final List<LETTER> trace,
+				final List<AbsIntPredicate<STATE, IBoogieVar>> interpolants) {
+			mLogger.debug("Checking inductivity of AbsInt predicates");
+			if (trace.isEmpty()) {
+				return true;
+			}
+			assert trace.size() == interpolants.size() + 1 : "trace size does not match interpolants size";
+
+			final List<AbsIntPredicate<STATE, IBoogieVar>> completeInterpolants = new ArrayList<>();
+			completeInterpolants.add(new AbsIntPredicate<>(mPredicateUnifier.getTruePredicate(),
+					mResult.getUsedDomain().createTopState()));
+			completeInterpolants.addAll(interpolants);
+			completeInterpolants.add(new AbsIntPredicate<>(mPredicateUnifier.getFalsePredicate(),
+					mResult.getUsedDomain().createBottomState()));
+
+			final CachingHoareTripleChecker htc = getHoareTripleChecker();
+			final Iterator<LETTER> traceIter = trace.iterator();
+			final Iterator<AbsIntPredicate<STATE, IBoogieVar>> interpolantsIter = interpolants.iterator();
+
+			AbsIntPredicate<STATE, IBoogieVar> pre = null;
+			AbsIntPredicate<STATE, IBoogieVar> post = interpolantsIter.next();
+			final Deque<AbsIntPredicate<STATE, IBoogieVar>> preHierStates = new ArrayDeque<>();
+			while (interpolantsIter.hasNext()) {
+				pre = post;
+				post = interpolantsIter.next();
+				final LETTER trans = traceIter.next();
+				assert trans != null;
+
+				final Validity result;
+				if (trans instanceof IInternalAction) {
+					result = htc.checkInternal(pre, (IInternalAction) trans, post);
+				} else if (trans instanceof ICallAction) {
+					preHierStates.addFirst(pre);
+					result = htc.checkCall(pre, (ICallAction) trans, post);
+				} else if (trans instanceof IReturnAction) {
+					final IPredicate preHier = preHierStates.removeFirst();
+					result = htc.checkReturn(pre, preHier, (IReturnAction) trans, post);
+				} else {
+					throw new UnsupportedOperationException("Unknown transition type " + trans.getClass());
+				}
+
+				if (result != Validity.VALID) {
+					// the absint htc must solve all queries from those interpolants
+					return false;
+				}
+			}
+			return true;
 		}
 
 		private List<AbsIntPredicate<STATE, IBoogieVar>> generateInterpolants(final Word<LETTER> word) {
