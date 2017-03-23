@@ -403,11 +403,13 @@ public final class IsEmptyInteractive<LETTER, STATE> extends UnaryNwaOperation<L
 		}
 
 		while (!isQueueEmpty()) {
+			/*
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				final String taskDescription = "searching accepting run (input had " + mOperand.size() + " states)";
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(), taskDescription);
 				throw new AutomataOperationCanceledException(rti);
 			}
+			*/
 			final DoubleDecker<STATE> pair = dequeue();
 			final STATE state = pair.getUp();
 			final STATE stateK = pair.getDown();
