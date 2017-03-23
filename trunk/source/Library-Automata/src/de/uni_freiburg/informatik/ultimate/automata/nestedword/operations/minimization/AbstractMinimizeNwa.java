@@ -146,7 +146,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 		/* TODO Christian 2016-10-12: make this optional, this has performance impact */
 		if (true) {
 			// Input automaton
-			final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(mServices, getOperandCast(), true);
+			final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(mServices, getOperand(), true);
 			final int inputTransitions = inputAnalyzer.getNumberOfTransitions(SymbolType.TOTAL);
 			result.addKeyValuePair(StatisticsType.BUCHI_NONDETERMINISTIC_STATES,
 					inputAnalyzer.getNumberOfNondeterministicStates());
@@ -198,10 +198,6 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 		}
 
 		return result;
-	}
-
-	private INestedWordAutomaton<LETTER, STATE> getOperandCast() {
-		return getOperand();
 	}
 
 	@Override
@@ -274,7 +270,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 */
 	protected void constructResultFromPartition(final IPartition<STATE> partition, final boolean addMapping) {
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-				new QuotientNwaConstructor<>(mServices, mStateFactory, getOperandCast(), partition, addMapping);
+				new QuotientNwaConstructor<>(mServices, mStateFactory, getOperand(), partition, addMapping);
 		constructResultFromQuotientConstructor(quotientNwaConstructor);
 	}
 
@@ -288,7 +284,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 */
 	protected void constructResultFromUnionFind(final UnionFind<STATE> unionFind, final boolean addMapping) {
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-				new QuotientNwaConstructor<>(mServices, mStateFactory, getOperandCast(), unionFind, addMapping);
+				new QuotientNwaConstructor<>(mServices, mStateFactory, getOperand(), unionFind, addMapping);
 		constructResultFromQuotientConstructor(quotientNwaConstructor);
 	}
 
@@ -434,7 +430,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 		final STATE oldEmptyStackState = getOperand().getEmptyStackState();
 		final STATE newEmptyStackState = mStateFactory.createEmptyStackState();
 
-		for (final STATE oldState : getOperandCast().getStates()) {
+		for (final STATE oldState : getOperand().getStates()) {
 			final STATE newState = mOldState2NewState.get(oldState);
 
 			// get down state map
