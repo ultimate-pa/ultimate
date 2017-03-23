@@ -256,6 +256,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			mAbstraction = new RemoveDeadEnds<>(new AutomataLibraryServices(mServices), wpa).getResult();
 			new LineCoverageCalculator<>(mServices, mAbstraction, origCoverage).reportCoverage("Witness product");
 		}
+		if (mInteractive != null) {
+			mInteractive.send(mAbstraction);
+		}
 	}
 
 	protected DoubleDecker<IPredicate> interactiveCounterexampleSearchStrategy(
