@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -52,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipebbleGameState<STATE>>
 		extends NestedWordAutomatonForLetterBasedOnDemandConstruction<LETTER, GS> {
 
+	private final AutomataLibraryServices mServices;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 	private final FullMultipebbleStateFactory<STATE, GS> mStateFactory;
 	private final GS mEmptyStackState;
@@ -61,6 +63,7 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 	public FullMultipebbleGameAutomaton(final AutomataLibraryServices services,
 			final FullMultipebbleStateFactory<STATE, GS> gameFactory, final ISetOfPairs<STATE, ?> initialPairs,
 			final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
+		mServices = services;
 		mOperand = operand;
 		mStateFactory = gameFactory;
 		mEmptyStackState = gameFactory.createEmptyStackState();
@@ -77,6 +80,11 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 				final GS gs = mStateFactory.constructInitialState(q0, q1, mOperand);
 				mGameStateMapping.put(q0, q1, gs);
 				mInitialStates.add(gs);
+			}
+			if (!mServices.getProgressAwareTimer().continueProcessing()) {
+				throw new ToolchainCanceledException(this.getClass(),
+						"constructing initial states of game automaton (already constructed: " + mInitialStates.size()
+								+ " states");
 			}
 		}
 	}
