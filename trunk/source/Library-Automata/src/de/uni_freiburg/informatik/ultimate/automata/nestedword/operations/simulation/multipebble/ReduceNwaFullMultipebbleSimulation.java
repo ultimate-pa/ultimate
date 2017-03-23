@@ -109,13 +109,13 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 								new NwaApproximateBisimulation<>(services, operand,
 										allowToMergeFinalAndNonFinalStates
 												? SimulationType.ORDINARY
-												: SimulationType.DIRECT).getResult().getRelation());
+												: SimulationType.DIRECT, false).getResult().getRelation());
 				mLogger.info("Initial partition has " + partition.getOrConstructPartitionSizeInformation().toString());
 				initialPairs = partition;
 				break;
 			case ASYM:
 				initialPairs = new NwaApproximateSimulation<>(services, operand,
-						allowToMergeFinalAndNonFinalStates ? SimulationType.ORDINARY : SimulationType.DIRECT)
+						allowToMergeFinalAndNonFinalStates ? SimulationType.ORDINARY : SimulationType.DIRECT, false)
 								.getResult();
 				break;
 			default:
