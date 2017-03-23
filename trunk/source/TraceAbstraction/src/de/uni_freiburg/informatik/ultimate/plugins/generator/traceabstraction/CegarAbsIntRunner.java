@@ -386,7 +386,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 			final CachingHoareTripleChecker htc = getHoareTripleChecker();
 			final Iterator<LETTER> traceIter = trace.iterator();
-			final Iterator<AbsIntPredicate<STATE, IBoogieVar>> interpolantsIter = interpolants.iterator();
+			final Iterator<AbsIntPredicate<STATE, IBoogieVar>> interpolantsIter = completeInterpolants.iterator();
 
 			AbsIntPredicate<STATE, IBoogieVar> pre = null;
 			AbsIntPredicate<STATE, IBoogieVar> post = interpolantsIter.next();
