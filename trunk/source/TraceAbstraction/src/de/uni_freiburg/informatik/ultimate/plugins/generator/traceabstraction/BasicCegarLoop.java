@@ -487,9 +487,19 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 			if (!new Accepts<>(new AutomataLibraryServices(mServices), interpolantAutomaton,
 					(NestedWord<LETTER>) mCounterexample.getWord(), true, false).getResult()) {
-				debugLogBrokenInterpolantAutomaton(inputInterpolantAutomaton, interpolantAutomaton, mCounterexample);
+
+				final boolean isOriginalBroken =
+						!new Accepts<>(new AutomataLibraryServices(mServices), inputInterpolantAutomaton,
+								(NestedWord<LETTER>) mCounterexample.getWord(), true, false).getResult();
+				try {
+					debugLogBrokenInterpolantAutomaton(inputInterpolantAutomaton, interpolantAutomaton,
+							mCounterexample);
+				} catch (final Error e) {
+					// suppress any exception, throw assertion error instead
+				}
 				throw new AssertionError("enhanced interpolant automaton in iteration " + mIteration
-						+ " broken: counterexample of length " + mCounterexample.getLength() + " not accepted");
+						+ " broken: counterexample of length " + mCounterexample.getLength() + " not accepted"
+						+ (isOriginalBroken ? " (original was already broken)" : " (original is ok)"));
 			}
 			assert new InductivityCheck<>(mServices,
 					new RemoveUnreachable<>(new AutomataLibraryServices(mServices), interpolantAutomaton).getResult(),

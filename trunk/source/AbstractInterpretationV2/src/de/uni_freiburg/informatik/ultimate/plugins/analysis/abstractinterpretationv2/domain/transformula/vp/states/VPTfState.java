@@ -65,7 +65,7 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 		mBuilder = builder;
 		mAllNodeIds = allNodeIds;
 		mNodeIdToEqGraphNode = Collections.unmodifiableMap(nodeIdToEqGraphNode);
-		mArrayIdToFunctionNodes = arrayIdToFunctionNodes.copy(); // TODO is copy needed here?
+		mArrayIdToFunctionNodes = new HashRelation<>(arrayIdToFunctionNodes); // TODO is copy needed here?
 
 		assert isTopConsistent();
 	}

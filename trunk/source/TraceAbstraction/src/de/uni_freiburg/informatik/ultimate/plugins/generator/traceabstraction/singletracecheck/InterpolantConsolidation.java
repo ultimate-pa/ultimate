@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker_Map;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleCheckerMap;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
@@ -135,7 +135,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 
 		final IHoareTripleChecker ehtc = TraceAbstractionUtils.constructEfficientHoareTripleChecker(services,
 				TraceAbstractionPreferenceInitializer.HoareTripleChecks.INCREMENTAL, mCsToolkit, mPredicateUnifier);
-		mHoareTripleChecker = new CachingHoareTripleChecker_Map(services, ehtc, mPredicateUnifier);
+		mHoareTripleChecker = new CachingHoareTripleCheckerMap(services, ehtc, mPredicateUnifier);
 
 		if (mInterpolatingTraceChecker.isCorrect() == LBool.UNSAT) {
 			computeInterpolants(new AllIntegers());

@@ -62,6 +62,11 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 	public AbstractRelation() {
 		mMap = newMap();
 	}
+	
+	public AbstractRelation(final AbstractRelation<D, R, ?> rel) {
+		this();
+		this.addAll(rel);
+	}
 
 	protected abstract MAP newMap();
 
