@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IIncomingTransitionlet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.ITransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
 /**
@@ -95,7 +96,26 @@ public class NwaApproximateBisimulation<LETTER, STATE>
 	public NwaApproximateBisimulation(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand, final SimulationType simulationType)
 			throws AutomataOperationCanceledException {
-		this(services, operand, simulationType, createSingleBlockPartition(operand.getStates()));
+		this(services, operand, simulationType, true);
+	}
+
+	/**
+	 * @param services
+	 *            Ultimate services.
+	 * @param operand
+	 *            operand
+	 * @param simulationType
+	 *            type of simulation
+	 * @param separateByTransitionConstraints
+	 *            {@code true} iff successor rule should be applied
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
+	public NwaApproximateBisimulation(final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER, STATE> operand, final SimulationType simulationType,
+			final boolean separateByTransitionConstraints) throws AutomataOperationCanceledException {
+		this(services, operand, simulationType, createSingleBlockPartition(operand.getStates()),
+				separateByTransitionConstraints);
 	}
 
 	/**
@@ -109,12 +129,15 @@ public class NwaApproximateBisimulation<LETTER, STATE>
 	 *            type of simulation
 	 * @param initialPartition
 	 *            initial partition
+	 * @param separateByTransitionConstraints
+	 *            {@code true} iff successor rule should be applied
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
 	public NwaApproximateBisimulation(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand, final SimulationType simulationType,
-			final Collection<Set<STATE>> initialPartition) throws AutomataOperationCanceledException {
+			final Collection<Set<STATE>> initialPartition, final boolean separateByTransitionConstraints)
+			throws AutomataOperationCanceledException {
 		super(services, operand);
 		if (initialPartition instanceof Set<?>) {
 			mPartition = (Set<Set<STATE>>) initialPartition;
@@ -122,7 +145,7 @@ public class NwaApproximateBisimulation<LETTER, STATE>
 			mPartition = new HashSet<>(initialPartition);
 		}
 
-		run(simulationType);
+		run(simulationType, separateByTransitionConstraints);
 
 		if (mLogger.isInfoEnabled()) {
 			final long numberOfPairs = countNumberOfNonreflexivePairs();
@@ -168,16 +191,66 @@ public class NwaApproximateBisimulation<LETTER, STATE>
 	}
 
 	@Override
+	protected void separateByDifferentSymbols() throws AutomataOperationCanceledException {
+		final Queue<Set<STATE>> queue = new LinkedList<>();
+		for (final Set<STATE> block : mPartition) {
+			queue.add(block);
+		}
+		final boolean hasCalls = !mOperand.getCallAlphabet().isEmpty();
+
+		while (!queue.isEmpty()) {
+			final Set<STATE> block = queue.poll();
+
+			if (block.size() == 1) {
+				continue;
+			}
+
+			final boolean splitOccurred = splitBySymbols(block, queue, mOperand::lettersInternal);
+			if (hasCalls && !splitOccurred) {
+				splitBySymbols(block, queue, mOperand::lettersCall);
+			}
+		}
+	}
+
+	private boolean splitBySymbols(final Set<STATE> block, final Queue<Set<STATE>> queue,
+			final Function<STATE, Set<LETTER>> state2letters) {
+		// find characteristic sets of letters
+		final Map<Set<LETTER>, Set<STATE>> letters2states = new HashMap<>();
+		for (final STATE state : block) {
+			final Set<LETTER> letters = state2letters.apply(state);
+			Set<STATE> states = letters2states.get(letters);
+			if (states == null) {
+				states = new HashSet<>();
+				letters2states.put(letters, states);
+			}
+			states.add(state);
+		}
+		
+		if (letters2states.size() == 1) {
+			// only one set, nothing happens
+			return false;
+		}
+		
+		// split into new blocks
+		mPartition.remove(block);
+		for (final Set<STATE> newBlock : letters2states.values()) {
+			mPartition.add(newBlock);
+			queue.add(newBlock);
+		}
+		return true;
+	}
+
+	@Override
 	protected void separateByTransitionConstraints() throws AutomataOperationCanceledException {
 		final Queue<Set<STATE>> queue = new LinkedList<>();
 		final Map<STATE, Set<STATE>> state2block = new HashMap<>();
-		for (final Iterator<Set<STATE>> iter = mPartition.iterator(); iter.hasNext();) {
-			final Set<STATE> block = iter.next();
+		for (final Set<STATE> block : mPartition) {
 			queue.add(block);
 			for (final STATE state : block) {
 				state2block.put(state, block);
 			}
 		}
+
 		while (!queue.isEmpty()) {
 			final Set<STATE> block = queue.poll();
 
@@ -190,9 +263,9 @@ public class NwaApproximateBisimulation<LETTER, STATE>
 
 	private void splitByPredecessors(final Set<STATE> block, final Map<STATE, Set<STATE>> state2block,
 			final Queue<Set<STATE>> queue,
-			final Function<STATE, Iterable<? extends IIncomingTransitionlet<LETTER, STATE>>> predecessorsState,
+			final Function<STATE, Iterable<? extends ITransitionlet<LETTER, STATE>>> predecessorsState,
 			final BiFunction<STATE, LETTER, Iterable<? extends IIncomingTransitionlet<LETTER, STATE>>> predecessors) {
-		final Set<LETTER> incomingLetters = getAllIncomingLetters(block, predecessorsState);
+		final Set<LETTER> incomingLetters = getAllTransitionLetters(block, predecessorsState);
 		final Set<STATE> marked = new HashSet<>();
 		for (final LETTER letter : incomingLetters) {
 			// mark all predecessors
@@ -207,11 +280,11 @@ public class NwaApproximateBisimulation<LETTER, STATE>
 		}
 	}
 
-	private Set<LETTER> getAllIncomingLetters(final Set<STATE> block,
-			final Function<STATE, Iterable<? extends IIncomingTransitionlet<LETTER, STATE>>> predecessorProvider) {
+	private Set<LETTER> getAllTransitionLetters(final Set<STATE> block,
+			final Function<STATE, Iterable<? extends ITransitionlet<LETTER, STATE>>> predecessorProvider) {
 		final Set<LETTER> letters = new HashSet<>();
 		for (final STATE state : block) {
-			for (final IIncomingTransitionlet<LETTER, STATE> trans : predecessorProvider.apply(state)) {
+			for (final ITransitionlet<LETTER, STATE> trans : predecessorProvider.apply(state)) {
 				letters.add(trans.getLetter());
 			}
 		}
