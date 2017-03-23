@@ -165,14 +165,14 @@ public class PathProgramDumper {
 		final Set<IProgramVar> globalVars = new HashSet<>();
 		for (final Entry<String, IcfgLocation> entry : pathProgram.getProcedureEntryNodes().entrySet()) {
 			final Pair<Procedure, Set<IProgramVar>> newImplAndGlobalVars;
+			final IcfgLocation exitLoc = pathProgram.getProcedureExitNodes().get(entry.getKey());
 			if (USE_BOOGIE_INPUT) {
 				final BoogieIcfgContainer boogieIcfg = (BoogieIcfgContainer) icfg;
-				newImplAndGlobalVars = constructNewImplementation(entry.getKey(), entry.getValue(), boogieIcfg,
+				newImplAndGlobalVars = constructNewImplementation(entry.getKey(), entry.getValue(), exitLoc, boogieIcfg,
 						pathProgram.getProcedureErrorNodes().get(entry.getKey()));
 			} else {
-				newImplAndGlobalVars = constructNewImplementation(entry.getKey(), entry.getValue(),
+				newImplAndGlobalVars = constructNewImplementation(entry.getKey(), entry.getValue(), exitLoc,
 						pathProgram.getProcedureErrorNodes().get(entry.getKey()));
-
 			}
 
 			newDeclarations.add(newImplAndGlobalVars.getFirst());
@@ -186,7 +186,6 @@ public class PathProgramDumper {
 					newDeclarations.add(spec);
 				}
 			}
-
 		}
 
 		if (USE_BOOGIE_INPUT) {
@@ -230,12 +229,12 @@ public class PathProgramDumper {
 	}
 
 	private Pair<Procedure, Set<IProgramVar>> constructNewImplementation(final String proc, final IcfgLocation entryLoc,
-			final BoogieIcfgContainer boogieIcfg, final Set<IcfgLocation> errorLocs) {
+			final IcfgLocation exitLoc, final BoogieIcfgContainer boogieIcfg, final Set<IcfgLocation> errorLocs) {
 		final Procedure impl = boogieIcfg.getBoogieDeclarations().getProcImplementation().get(proc);
 		final Body body = impl.getBody();
 
 		final Triple<List<Statement>, Set<IProgramVar>, Set<IProgramVar>> varsAndNewSt = constructProcedureStatements(
-				entryLoc, errorLocs);
+				proc, entryLoc, exitLoc, errorLocs);
 		final List<Statement> newStatements = varsAndNewSt.getFirst();
 
 		final VariableDeclaration[] localVars = filter(Arrays.asList(body.getLocalVars()),
@@ -258,10 +257,10 @@ public class PathProgramDumper {
 	 * Do construction without boogie program as input.
 	 */
 	private Pair<Procedure, Set<IProgramVar>> constructNewImplementation(final String proc, final IcfgLocation entryLoc,
-			final Set<IcfgLocation> errorLocs) {
+			final IcfgLocation exitLoc, final Set<IcfgLocation> errorLocs) {
 
 		final Triple<List<Statement>, Set<IProgramVar>, Set<IProgramVar>> varsAndNewSt = constructProcedureStatements(
-				entryLoc, errorLocs);
+				proc, entryLoc, exitLoc, errorLocs);
 		final List<Statement> newStatements = varsAndNewSt.getFirst();
 
 		final Set<IProgramVar> localVars = varsAndNewSt.getSecond();
@@ -405,7 +404,7 @@ public class PathProgramDumper {
 	}
 
 	private Triple<List<Statement>, Set<IProgramVar>, Set<IProgramVar>> constructProcedureStatements(
-			final IcfgLocation initialNode, final Set<IcfgLocation> errorLocs) {
+			final String proc, final IcfgLocation initialNode, final IcfgLocation exitNode, final Set<IcfgLocation> errorLocs) {
 		final ArrayDeque<IcfgLocation> worklist = new ArrayDeque<>();
 		final Set<IcfgLocation> added = new HashSet<>();
 		worklist.add(initialNode);
@@ -415,30 +414,36 @@ public class PathProgramDumper {
 		final Set<IProgramVar> globalVars = new HashSet<>();
 		while (!worklist.isEmpty()) {
 			final IcfgLocation node = worklist.remove();
+			if (!node.getProcedure().equals(proc)) {
+				throw new AssertionError("added location from different procedure");
+			}
 			newStatements.add(constructLabel(node));
 			if (errorLocs != null && errorLocs.contains(node)) {
 				newStatements.add(
 						new AssertStatement(constructNewLocation(), new BooleanLiteral(constructNewLocation(), false)));
 				assert node.getOutgoingEdges().isEmpty() : "error loc with outgoing transitions";
 			}
-			if (node.getOutgoingEdges().isEmpty()) {
-				// do nothing, no successor
-			} else if (node.getOutgoingEdges().size() == 1) {
-				final IcfgEdge edge = node.getOutgoingEdges().get(0);
-				processTransition(worklist, added, newStatements, localVars, globalVars, edge);
-			} else {
-				final String[] transitionStartLabels = new String[node.getOutgoingEdges().size()];
-				for (int i = 0; i < node.getOutgoingEdges().size(); i++) {
-					final String transitionStartLabel = constructLabelId(node, i);
-					transitionStartLabels[i] = transitionStartLabel;
-				}
-				if (!node.getOutgoingEdges().isEmpty()) {
-					newStatements.add(new GotoStatement(constructNewLocation(), transitionStartLabels));
-				}
-				for (int i = 0; i < node.getOutgoingEdges().size(); i++) {
-					final IcfgEdge edge = node.getOutgoingEdges().get(i);
-					newStatements.add(constructLabel(node, i));
+			if (node.getProcedure().equals(proc)) {
+				// continue only if we are still in the same procedure
+				if (node.getOutgoingEdges().isEmpty()) {
+					// do nothing, no successor
+				} else if (node.getOutgoingEdges().size() == 1) {
+					final IcfgEdge edge = node.getOutgoingEdges().get(0);
 					processTransition(worklist, added, newStatements, localVars, globalVars, edge);
+				} else {
+					final String[] transitionStartLabels = new String[node.getOutgoingEdges().size()];
+					for (int i = 0; i < node.getOutgoingEdges().size(); i++) {
+						final String transitionStartLabel = constructLabelId(node, i);
+						transitionStartLabels[i] = transitionStartLabel;
+					}
+					if (!node.getOutgoingEdges().isEmpty()) {
+						newStatements.add(new GotoStatement(constructNewLocation(), transitionStartLabels));
+					}
+					for (int i = 0; i < node.getOutgoingEdges().size(); i++) {
+						final IcfgEdge edge = node.getOutgoingEdges().get(i);
+						newStatements.add(constructLabel(node, i));
+						processTransition(worklist, added, newStatements, localVars, globalVars, edge);
+					}
 				}
 			}
 		}
@@ -450,10 +455,11 @@ public class PathProgramDumper {
 			final IcfgEdge edge) {
 		final Quad<List<Statement>, Set<IProgramVar>, Set<IProgramVar>, IcfgLocation> transResult = constructTransitionStatements(
 				edge);
+		final String proc = edge.getPrecedingProcedure();
 		result.addAll(transResult.getFirst());
 		localvars.addAll(transResult.getSecond());
 		globalVars.addAll(transResult.getThird());
-		if (!added.contains(transResult.getFourth())) {
+		if (transResult.getFourth().getProcedure().equals(proc) && !added.contains(transResult.getFourth())) {
 			worklist.add(transResult.getFourth());
 			added.add(transResult.getFourth());
 		}
@@ -477,16 +483,21 @@ public class PathProgramDumper {
 
 	private Quad<List<Statement>, Set<IProgramVar>, Set<IProgramVar>, IcfgLocation> constructTransitionStatements(
 			IcfgEdge edge) {
+		final String proc = edge.getPrecedingProcedure();
 		final List<Statement> statements = new ArrayList<>();
 		final Set<IProgramVar> localVars = new HashSet<>();
 		final Set<IProgramVar> globalVars = new HashSet<>();
 		addStatementsAndVariables(edge, statements, localVars, globalVars);
-		while (isBridgingLocation(edge.getTarget())) {
+		while (edge.getSucceedingProcedure().equals(proc) && isBridgingLocation(edge.getTarget())) {
 			edge = edge.getTarget().getOutgoingEdges().get(0);
 			addStatementsAndVariables(edge, statements, localVars, globalVars);
 		}
-		final String targetLabel = constructLabelId(edge.getTarget());
-		statements.add(new GotoStatement(constructNewLocation(), new String[] { targetLabel }));
+		if (edge.getSucceedingProcedure().equals(proc)) {
+			final String targetLabel = constructLabelId(edge.getTarget());
+			statements.add(new GotoStatement(constructNewLocation(), new String[] { targetLabel }));
+		} else {
+			// edge changed procedure, we do not add goto.
+		}
 		return new Quad<>(statements, localVars, globalVars, edge.getTarget());
 	}
 
