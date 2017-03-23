@@ -37,14 +37,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 
 /**
  * {@link CachingHoareTripleChecker} that iterates over covered predicates and covering predicates in order to do an
- * extended cache check. If in doubt which caching checker you should use, use {@link CachingHoareTripleChecker_Map}.
+ * extended cache check. If in doubt which caching checker you should use, use {@link CachingHoareTripleCheckerMap}.
  *
  * @author Matthias Heizmann
  *
  */
-public class CachingHoareTripleChecker_Iterative extends CachingHoareTripleChecker implements IHoareTripleChecker {
+public class CachingHoareTripleCheckerIterative extends CachingHoareTripleChecker implements IHoareTripleChecker {
 
-	public CachingHoareTripleChecker_Iterative(final IUltimateServiceProvider services,
+	public CachingHoareTripleCheckerIterative(final IUltimateServiceProvider services,
 			final IHoareTripleChecker protectedHoareTripleChecker, final PredicateUnifier predicateUnifer) {
 		super(services, protectedHoareTripleChecker, predicateUnifer);
 	}

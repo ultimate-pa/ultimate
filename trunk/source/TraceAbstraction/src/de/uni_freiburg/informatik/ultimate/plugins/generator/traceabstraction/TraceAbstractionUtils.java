@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Mono
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker_Map;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleCheckerMap;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
@@ -131,7 +131,7 @@ public class TraceAbstractionUtils {
 			final CfgSmtToolkit csToolkit, final IPredicateUnifier predicateUnifier) throws AssertionError {
 		final IHoareTripleChecker ehtc =
 				constructEfficientHoareTripleChecker(services, hoareTripleChecks, csToolkit, predicateUnifier);
-		return new CachingHoareTripleChecker_Map(services, ehtc, predicateUnifier);
+		return new CachingHoareTripleCheckerMap(services, ehtc, predicateUnifier);
 	}
 
 	/**

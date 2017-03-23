@@ -74,7 +74,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.AbsIntHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker_Map;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleCheckerMap;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AbstractInterpretationMode;
@@ -329,7 +329,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			if (mHtc == null) {
 				final IHoareTripleChecker htc = new AbsIntHoareTripleChecker<>(mLogger, mServices,
 						mResult.getUsedDomain(), mResult.getUsedVariableProvider(), mPredicateUnifier, mCsToolkit);
-				mHtc = new CachingHoareTripleChecker_Map(mServices, htc, mPredicateUnifier);
+				mHtc = new CachingHoareTripleCheckerMap(mServices, htc, mPredicateUnifier);
 			}
 			return mHtc;
 		}
