@@ -223,6 +223,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		readPreferences();
+		assert isStatisticsEnumAlphabeticallySorted() :
+				"The entries of enum StatisticsType must be sorted alphabetically for benchmark purposes.";
 		mVariables = new HashMap<>();
 		mFlow = Flow.NORMAL;
 		mAutomataInterpreter = new AutomataDefinitionInterpreter(this, mLogger, mServices);
@@ -239,7 +241,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			}
 		}
 	}
-	
+
 	private void readPreferences() {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		mPrintAutomataToFile = prefs.getBoolean(PreferenceInitializer.NAME_WRITE_TO_FILE);
@@ -1340,6 +1342,16 @@ public class TestFileInterpreter implements IMessagePrinter {
 			worklist.addAll(Arrays.asList(file.listFiles()));
 		}
 		return rtr;
+	}
+	
+	private static boolean isStatisticsEnumAlphabeticallySorted() {
+		final StatisticsType[] values = StatisticsType.values();
+		for (int i = 1; i < values.length; ++i) {
+			if (values[i - 1].toString().compareTo(values[i].toString()) > 0) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	private static class SimpleTimer {

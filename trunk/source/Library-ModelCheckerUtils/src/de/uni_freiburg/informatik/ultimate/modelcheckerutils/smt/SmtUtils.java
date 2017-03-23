@@ -67,6 +67,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Not
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Cnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
@@ -100,16 +102,16 @@ public final class SmtUtils {
 		final Term simplified;
 		switch (simplificationTechnique) {
 		case SIMPLIFY_BDD_PROP:
-			simplified = (new SimplifyBdd(services, script)).transform(formula);
+			simplified = new SimplifyBdd(services, script).transform(formula);
 			break;
 		case SIMPLIFY_BDD_FIRST_ORDER:
-			simplified = (new SimplifyBdd(services, script)).transformWithImplications(formula);
+			simplified = new SimplifyBdd(services, script).transformWithImplications(formula);
 			break;
 		case SIMPLIFY_DDA:
-			simplified = (new SimplifyDDAWithTimeout(script.getScript(), services)).getSimplifiedTerm(formula);
+			simplified = new SimplifyDDAWithTimeout(script.getScript(), services).getSimplifiedTerm(formula);
 			break;
 		case SIMPLIFY_QUICK:
-			simplified = (new SimplifyQuick(script.getScript(), services)).getSimplifiedTerm(formula);
+			simplified = new SimplifyQuick(script.getScript(), services).getSimplifiedTerm(formula);
 			break;
 		default:
 			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + simplificationTechnique);
@@ -120,24 +122,24 @@ public final class SmtUtils {
 		}
 		return simplified;
 	}
-	
-	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula, final IUltimateServiceProvider services,
-			final SimplificationTechnique simplificationTechnique) {
+
+	public static ExtendedSimplificationResult simplifyWithStatistics(final ManagedScript script, final Term formula,
+			final IUltimateServiceProvider services, final SimplificationTechnique simplificationTechnique) {
 		final long startTime = System.nanoTime();
 		final long sizeBefore = new DAGSize().treesize(formula);
 		final Term simplified = simplify(script, formula, services, simplificationTechnique);
 		final long sizeAfter = new DAGSize().treesize(simplified);
 		final long endTime = System.nanoTime();
-		final ExtendedSimplificationResult result = new ExtendedSimplificationResult(
-				simplified, endTime - startTime, sizeBefore - sizeAfter);
+		final ExtendedSimplificationResult result =
+				new ExtendedSimplificationResult(simplified, endTime - startTime, sizeBefore - sizeAfter);
 		return result;
 	}
-	
-	
+
 	public static class ExtendedSimplificationResult {
 		private final Term mSimplifiedTerm;
 		private final long mSimplificationTimeNano;
 		private final long mReductionOfTreeSize;
+
 		public ExtendedSimplificationResult(final Term simplifiedTerm, final long simplificationTimeNano,
 				final long reductionOfTreeSize) {
 			super();
@@ -145,16 +147,19 @@ public final class SmtUtils {
 			mSimplificationTimeNano = simplificationTimeNano;
 			mReductionOfTreeSize = reductionOfTreeSize;
 		}
+
 		public Term getSimplifiedTerm() {
 			return mSimplifiedTerm;
 		}
+
 		public long getSimplificationTimeNano() {
 			return mSimplificationTimeNano;
 		}
+
 		public long getReductionOfTreeSize() {
 			return mReductionOfTreeSize;
 		}
-		
+
 	}
 
 	public static LBool checkSatTerm(final Script script, final Term formula) {
@@ -424,7 +429,7 @@ public final class SmtUtils {
 	public static Term sum(final Script script, final String funcname, final Term... summands) {
 		assert "+".equals(funcname) || "bvadd".equals(funcname);
 		final Term sum = script.term(funcname, summands);
-		final AffineTerm affine = (AffineTerm) (new AffineTermTransformer(script)).transform(sum);
+		final AffineTerm affine = (AffineTerm) new AffineTermTransformer(script).transform(sum);
 		if (affine.isErrorTerm()) {
 			return sum;
 		}
@@ -916,8 +921,8 @@ public final class SmtUtils {
 	 * literals the returned Term is a literal which is equivalent to the result of the operation
 	 */
 	public static Term div(final Script script, final Term dividend, final Term divisor) {
-		if ((dividend instanceof ConstantTerm) && dividend.getSort().isNumericSort()
-				&& (divisor instanceof ConstantTerm) && divisor.getSort().isNumericSort()) {
+		if (dividend instanceof ConstantTerm && dividend.getSort().isNumericSort() && divisor instanceof ConstantTerm
+				&& divisor.getSort().isNumericSort()) {
 			final Rational dividentAsRational = convertConstantTermToRational((ConstantTerm) dividend);
 			final Rational divisorAsRational = convertConstantTermToRational((ConstantTerm) divisor);
 			final Rational quotientAsRational = dividentAsRational.div(divisorAsRational);
@@ -939,8 +944,8 @@ public final class SmtUtils {
 	 * coefficient becomes zero).
 	 */
 	public static Term mod(final Script script, final Term divident, final Term divisor) {
-		final AffineTerm affineDivident = (AffineTerm) (new AffineTermTransformer(script)).transform(divident);
-		final AffineTerm affineDivisor = (AffineTerm) (new AffineTermTransformer(script)).transform(divisor);
+		final AffineTerm affineDivident = (AffineTerm) new AffineTermTransformer(script).transform(divident);
+		final AffineTerm affineDivisor = (AffineTerm) new AffineTermTransformer(script).transform(divisor);
 		if (affineDivident.isErrorTerm() || affineDivisor.isErrorTerm()) {
 			return script.term("mod", divident, divisor);
 		}
@@ -971,24 +976,27 @@ public final class SmtUtils {
 	}
 
 	/**
-	 * Check if a divident of an modulo operation with constant divisor is 
-	 * itself a modulo operation. If this is the case we might be able to 
-	 * apply some simplifications.
-	 * @param divident Divident of an outer modulo operation
-	 * @param bigIntDivisor Divisor of an outer modulo operation
-	 * @return Simplified version of the outer modulo operation or null
-	 * (null in case where we could not apply simplifications.)
+	 * Check if a divident of an modulo operation with constant divisor is itself a modulo operation. If this is the
+	 * case we might be able to apply some simplifications.
+	 * 
+	 * @param divident
+	 *            Divident of an outer modulo operation
+	 * @param bigIntDivisor
+	 *            Divisor of an outer modulo operation
+	 * @return Simplified version of the outer modulo operation or null (null in case where we could not apply
+	 *         simplifications.)
 	 */
 	private static Term simplifyNestedModulo(final Script script, final Term divident, final BigInteger bigIntDivisor) {
 		if (divident instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) divident;
 			if (appTerm.getFunction().getApplicationString().equals("mod")) {
 				final Term innerDivident = appTerm.getParameters()[1];
-				final AffineTerm affineInnerDivisor = (AffineTerm) (new AffineTermTransformer(script)).transform(innerDivident);
+				final AffineTerm affineInnerDivisor =
+						(AffineTerm) new AffineTermTransformer(script).transform(innerDivident);
 				if (!affineInnerDivisor.isErrorTerm() && affineInnerDivisor.isConstant()) {
 					final BigInteger bigIntInnerDivisor = toInt(affineInnerDivisor.getConstant());
-					if (bigIntInnerDivisor.mod(bigIntDivisor).equals(BigInteger.ZERO) ||
-							bigIntDivisor.mod(bigIntInnerDivisor).equals(BigInteger.ZERO)) {
+					if (bigIntInnerDivisor.mod(bigIntDivisor).equals(BigInteger.ZERO)
+							|| bigIntDivisor.mod(bigIntInnerDivisor).equals(BigInteger.ZERO)) {
 						final BigInteger min = bigIntInnerDivisor.min(bigIntDivisor);
 						final Term innerDivisor = appTerm.getParameters()[0];
 						final Term result = mod(script, innerDivisor, script.numeral(min));
@@ -1047,7 +1055,7 @@ public final class SmtUtils {
 			final Map<Term, Term> ucMapping = new HashMap<>();
 			final Term[] conjuncts = getConjuncts(term);
 			for (int i = 0; i < conjuncts.length; i++) {
-				final Term conjunct = (new Substitution(script, substitutionMapping)).transform(conjuncts[i]);
+				final Term conjunct = new Substitution(script, substitutionMapping).transform(conjuncts[i]);
 				final String name = "conjunct" + i;
 				final Annotation annot = new Annotation(":named", name);
 				final Term annotTerm = script.annotate(conjunct, annot);
@@ -1198,7 +1206,7 @@ public final class SmtUtils {
 			final TermVariable freshVariable = mgdScript.constructFreshTermVariable(freshVarPrefix, var.getSort());
 			substitutionMapping.put(var, freshVariable);
 		}
-		final Term newBody = (new Substitution(mgdScript, substitutionMapping)).transform(qFormula.getSubformula());
+		final Term newBody = new Substitution(mgdScript, substitutionMapping).transform(qFormula.getSubformula());
 
 		final TermVariable[] vars = new TermVariable[qFormula.getVariables().length];
 		for (int i = 0; i < vars.length; i++) {
@@ -1234,15 +1242,22 @@ public final class SmtUtils {
 		final Term result;
 		switch (xnfConversionTechnique) {
 		case BDD_BASED:
-			result = (new SimplifyBdd(services, mgdScript)).transformToDNF(term);
+			result = new SimplifyBdd(services, mgdScript).transformToDNF(term);
 			break;
 		case BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION:
-			result = (new Dnf(mgdScript, services)).transform(term);
+			result = new Dnf(mgdScript, services).transform(term);
 			break;
 		default:
 			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + xnfConversionTechnique);
 		}
 		return result;
+	}
+
+	/**
+	 * @return logically equivalent term in negation normal form (NNF)
+	 */
+	public static Term toNnf(final IUltimateServiceProvider services, final ManagedScript mgdScript, final Term term) {
+		return new Nnf(mgdScript, services, QuantifierHandling.PULL).transform(term);
 	}
 
 	/**
@@ -1253,10 +1268,10 @@ public final class SmtUtils {
 		final Term result;
 		switch (xnfConversionTechnique) {
 		case BDD_BASED:
-			result = (new SimplifyBdd(services, mgdScript)).transformToCNF(term);
+			result = new SimplifyBdd(services, mgdScript).transformToCNF(term);
 			break;
 		case BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION:
-			result = (new Cnf(mgdScript, services)).transform(term);
+			result = new Cnf(mgdScript, services).transform(term);
 			break;
 		default:
 			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + xnfConversionTechnique);
@@ -1270,14 +1285,14 @@ public final class SmtUtils {
 	 * sort we can get values for array cells (resp. the corresponding select term).
 	 */
 	public static boolean isSortForWhichWeCanGetValues(final Sort sort) {
-		return sort.isNumericSort() || "Bool".equals(sort.getRealSort().getName())
-				|| isBitvectorSort(sort) || isFloatingPointSort(sort);
+		return sort.isNumericSort() || "Bool".equals(sort.getRealSort().getName()) || isBitvectorSort(sort)
+				|| isFloatingPointSort(sort);
 	}
-	
+
 	public static boolean isBitvectorSort(final Sort sort) {
 		return "BitVec".equals(sort.getRealSort().getName());
 	}
-	
+
 	public static boolean isFloatingPointSort(final Sort sort) {
 		return "FloatingPoint".equals(sort.getRealSort().getName());
 	}
@@ -1311,23 +1326,21 @@ public final class SmtUtils {
 	}
 
 	private static Term makeAffineIfPossible(final Script script, final Term term) {
-		final AffineTerm affineTerm = (AffineTerm) (new AffineTermTransformer(script)).transform(term);
+		final AffineTerm affineTerm = (AffineTerm) new AffineTermTransformer(script).transform(term);
 		if (affineTerm.isErrorTerm()) {
 			return term;
 		}
 		return affineTerm.toTerm(script);
 	}
-	
+
 	public static Term constructPositiveNormalForm(final Script script, final Term term) {
 		final Term result = new AffineSubtermNormalizer(script).transform(term);
 		assert Util.checkSat(script, script.term("distinct", term, result)) != LBool.SAT;
 		return result;
 	}
-	
+
 	/**
-	 * @return the dual quantifier:
-	 *  - existential if input is universal, and
-	 *  - universal if input is existential 
+	 * @return the dual quantifier: - existential if input is universal, and - universal if input is existential
 	 */
 	public static int getOtherQuantifier(final int quantifier) {
 		if (quantifier == QuantifiedFormula.EXISTS) {
@@ -1338,10 +1351,9 @@ public final class SmtUtils {
 			throw new AssertionError("unknown quantifier");
 		}
 	}
-	
+
 	/**
-	 * @return "or" if input is existential quantifier and
-	 *         "and" if input is universal quantifier
+	 * @return "or" if input is existential quantifier and "and" if input is universal quantifier
 	 */
 	public static String getCorrespondingFiniteConnective(final int quantifier) {
 		if (quantifier == QuantifiedFormula.EXISTS) {

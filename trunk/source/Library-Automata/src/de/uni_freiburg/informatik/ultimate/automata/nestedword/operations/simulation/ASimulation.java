@@ -39,6 +39,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Set;
 
@@ -49,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyz
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.CountingMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.MultipleDataOption;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.SimulationPerformance;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex;
@@ -162,6 +163,7 @@ public abstract class ASimulation<LETTER, STATE> {
 	public ASimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSccs,
 			final IStateFactory<STATE> stateFactory, final SimulationOrMinimizationType simType)
 			throws AutomataOperationCanceledException {
+		Objects.requireNonNull(progressTimer);
 		mProgressTimer = progressTimer;
 		mLogger = logger;
 		mUseSccs = useSccs;
@@ -648,7 +650,7 @@ public abstract class ASimulation<LETTER, STATE> {
 
 			// If operation was canceled, for example from the
 			// Ultimate framework
-			if (mProgressTimer != null && !mProgressTimer.continueProcessing()) {
+			if (!mProgressTimer.continueProcessing()) {
 				mLogger.debug("Stopped in efficientLiftingAlgorithm");
 				throw new AutomataOperationCanceledException(this.getClass());
 			}

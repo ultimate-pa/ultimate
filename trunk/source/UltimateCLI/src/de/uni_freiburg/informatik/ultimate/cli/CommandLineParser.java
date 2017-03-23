@@ -47,19 +47,19 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public final class CommandLineParser {
-	
+
 	private static final int DESC_PADDING = 6;
 	private static final String USAGE = "Ultimate [OPTIONS] -tc <FILE> -i <FILE> [<FILE> ...]";
 	private static final String HEADER = null;
 	private static final String FOOTER = null;
-	
+
 	private final ILogger mLogger;
 	private final Options mOptionsForParser;
 	private final Options mOptionsForHelp;
 	private final OptionBuilder mOptionBuilder;
 	private final DefaultParser mParser;
 	private final ICore<RunDefinition> mCore;
-	
+
 	private CommandLineParser(final ICore<RunDefinition> core, final Predicate<String> pluginNameFilter,
 			final boolean requireToolchain, final boolean requireInputFiles) {
 		if (pluginNameFilter == null) {
@@ -75,36 +75,28 @@ public final class CommandLineParser {
 		mOptionsForParser = mOptionBuilder.getParserOptions(pluginNameFilter);
 		mOptionsForHelp = mOptionBuilder.getHelpOptions(pluginNameFilter);
 	}
-	
-	public static CommandLineParser createCliOnlyParser(final ICore<RunDefinition> core) {
-		return new CommandLineParser(core, a -> false, false, false);
+
+	public static CommandLineParser createParser(final ICore<RunDefinition> core,
+			final Predicate<String> pluginNameFilter, final boolean requireToolchain) {
+		return new CommandLineParser(core, pluginNameFilter, requireToolchain, false);
 	}
-	
-	public static CommandLineParser createCompleteNoReqsParser(final ICore<RunDefinition> core) {
-		return new CommandLineParser(core, a -> true, false, false);
-	}
-	
-	public static CommandLineParser createCompleteParser(final ICore<RunDefinition> core,
-			final Predicate<String> pluginNameFilter) {
-		return new CommandLineParser(core, pluginNameFilter, true, false);
-	}
-	
+
 	public void printHelp() {
 		printHelp(mLogger, mOptionBuilder.filterExperimentalOptions(mOptionsForHelp), USAGE, HEADER, FOOTER);
 	}
-	
+
 	public void printHelpWithExperimentals() {
 		printHelp(mLogger, mOptionsForHelp, USAGE, HEADER, FOOTER);
 	}
-	
+
 	public ParsedParameter parse(final String[] args) throws ParseException {
 		final CommandLine cli = mParser.parse(mOptionsForParser, args);
 		validateParsedOptionsWithValidators(cli);
 		validateParsedOptionsByConversion(cli);
 		return new ParsedParameter(mCore, cli, mOptionBuilder);
 	}
-	
-	private void printHelp(final ILogger logger, final Options options, final String usage, final String header,
+
+	private static void printHelp(final ILogger logger, final Options options, final String usage, final String header,
 			final String footer) {
 		final HelpFormatter formatter = new HelpFormatter();
 		final PrintWriter logPrintWriter = new PrintWriter(new LoggerOutputStream(logger::info));
@@ -118,7 +110,7 @@ public final class CommandLineParser {
 		logPrintWriter.flush();
 		logPrintWriter.close();
 	}
-	
+
 	private void validateParsedOptionsByConversion(final CommandLine cli) throws ParseException {
 		for (final Option option : cli.getOptions()) {
 			String optName = option.getOpt();
@@ -132,7 +124,7 @@ public final class CommandLineParser {
 			}
 		}
 	}
-	
+
 	private void validateParsedOptionsWithValidators(final CommandLine cli) throws ParseException {
 		for (final Option option : cli.getOptions()) {
 			final String cliName = option.getLongOpt();

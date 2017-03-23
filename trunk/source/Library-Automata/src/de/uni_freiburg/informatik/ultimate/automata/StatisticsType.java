@@ -27,8 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.CountingMeasure;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph.ReduceNwaSimulationBased;
 
 /**
@@ -44,13 +42,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
  */
 public enum StatisticsType {
 	/**
-	 * Number of internal symbols.
-	 */
-	ALPHABET_SIZE_INTERNAL,
-	/**
 	 * Number of call symbols.
 	 */
 	ALPHABET_SIZE_CALL,
+	/**
+	 * Number of internal symbols.
+	 */
+	ALPHABET_SIZE_INTERNAL,
 	/**
 	 * Number of return symbols.
 	 */
@@ -91,6 +89,26 @@ public enum StatisticsType {
 	 */
 	BUCHI_NONDETERMINISTIC_STATES,
 	/**
+	 * Amount of transitions the automaton has before simulation (used in
+	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 */
+	BUCHI_TRANSITIONS,
+	/**
+	 * Amount of call transitions the automaton has before simulation (used in
+	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 */
+	BUCHI_TRANSITIONS_CALL,
+	/**
+	 * Amount of internal transitions the automaton has before simulation (used
+	 * in simulation, for compatibility with {@link ECountingMeasure}).
+	 */
+	BUCHI_TRANSITIONS_INTERNAL,
+	/**
+	 * Amount of return transitions the automaton has before simulation (used in
+	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 */
+	BUCHI_TRANSITIONS_RETURN,
+	/**
 	 * The call transition density the automaton has before simulation
 	 * multiplied with 1_000_000, then rounded (used in simulation, for
 	 * compatibility with {@link ECountingMeasure}).
@@ -114,26 +132,6 @@ public enum StatisticsType {
 	 * compatibility with {@link ECountingMeasure}).
 	 */
 	BUCHI_TRANSITION_RETURN_DENSITY_MILLION,
-	/**
-	 * Amount of transitions the automaton has before simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
-	 */
-	BUCHI_TRANSITIONS,
-	/**
-	 * Amount of call transitions the automaton has before simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
-	 */
-	BUCHI_TRANSITIONS_CALL,
-	/**
-	 * Amount of internal transitions the automaton has before simulation (used
-	 * in simulation, for compatibility with {@link ECountingMeasure}).
-	 */
-	BUCHI_TRANSITIONS_INTERNAL,
-	/**
-	 * Amount of return transitions the automaton has before simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
-	 */
-	BUCHI_TRANSITIONS_RETURN,
 	/**
 	 * The time building the game graph took (used in simulation, for
 	 * compatibility with {@link ETimeMeasure}).
@@ -212,7 +210,7 @@ public enum StatisticsType {
 	/**
 	 * Number of clauses.
 	 */
-	NUMBER_OF_CLAUSES,
+	NUMBER_CLAUSES,
 	/**
 	 * Number of pairs in a preprocessing.
 	 */
@@ -228,7 +226,7 @@ public enum StatisticsType {
 	/**
 	 * Number of variables.
 	 */
-	NUMBER_OF_VARIABLES,
+	NUMBER_VARIABLES,
 	/**
 	 * Operation name.
 	 */
@@ -264,6 +262,26 @@ public enum StatisticsType {
 	 */
 	RESULT_NONDETERMINISTIC_STATES,
 	/**
+	 * Amount of transitions the automaton has after simulation (used in
+	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 */
+	RESULT_TRANSITIONS,
+	/**
+	 * Amount of call transitions the automaton has after simulation (used in
+	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 */
+	RESULT_TRANSITIONS_CALL,
+	/**
+	 * Amount of internal transitions the automaton has after simulation (used
+	 * in simulation, for compatibility with {@link ECountingMeasure}).
+	 */
+	RESULT_TRANSITIONS_INTERNAL,
+	/**
+	 * Amount of return transitions the automaton has after simulation (used in
+	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 */
+	RESULT_TRANSITIONS_RETURN,
+	/**
 	 * The call transition density the automaton has after simulation multiplied
 	 * with 1_000_000, then rounded (used in simulation, for compatibility with
 	 * {@link ECountingMeasure}).
@@ -287,26 +305,6 @@ public enum StatisticsType {
 	 * compatibility with {@link ECountingMeasure}).
 	 */
 	RESULT_TRANSITION_RETURN_DENSITY_MILLION,
-	/**
-	 * Amount of transitions the automaton has after simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
-	 */
-	RESULT_TRANSITIONS,
-	/**
-	 * Amount of call transitions the automaton has after simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
-	 */
-	RESULT_TRANSITIONS_CALL,
-	/**
-	 * Amount of internal transitions the automaton has after simulation (used
-	 * in simulation, for compatibility with {@link ECountingMeasure}).
-	 */
-	RESULT_TRANSITIONS_INTERNAL,
-	/**
-	 * Amount of return transitions the automaton has after simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
-	 */
-	RESULT_TRANSITIONS_RETURN,
 	/**
 	 * Total runtime.
 	 */
@@ -386,21 +384,21 @@ public enum StatisticsType {
 	 */
 	SUMMARIZE_EDGES,
 	/**
+	 * Run time for asserting clauses.
+	 */
+	TIME_ASSERTING,
+	/**
 	 * Run time for preprocessing.
 	 */
 	TIME_PREPROCESSING,
 	/**
+	 * Run time for simulation.
+	 */
+	TIME_SIMULATION,
+	/**
 	 * Run time for solving.
 	 */
 	TIME_SOLVING,
-	/**
-	 * Number of internal transitions.
-	 */
-	TRANSITIONS_INTERNAL_INPUT,
-	/**
-	 * Number of internal transitions.
-	 */
-	TRANSITIONS_INTERNAL_OUTPUT,
 	/**
 	 * Number of call transitions.
 	 */
@@ -410,13 +408,13 @@ public enum StatisticsType {
 	 */
 	TRANSITIONS_CALL_OUTPUT,
 	/**
-	 * Number of return transitions.
+	 * Number of internal transitions.
 	 */
-	TRANSITIONS_RETURN_INPUT,
+	TRANSITIONS_INTERNAL_INPUT,
 	/**
-	 * Number of return transitions.
+	 * Number of internal transitions.
 	 */
-	TRANSITIONS_RETURN_OUTPUT,
+	TRANSITIONS_INTERNAL_OUTPUT,
 	/**
 	 * Absolute difference in the number of transitions between input and output.
 	 */
@@ -425,4 +423,12 @@ public enum StatisticsType {
 	 * Relative difference in the number of transitions between input and output.
 	 */
 	TRANSITIONS_REDUCTION_RELATIVE,
+	/**
+	 * Number of return transitions.
+	 */
+	TRANSITIONS_RETURN_INPUT,
+	/**
+	 * Number of return transitions.
+	 */
+	TRANSITIONS_RETURN_OUTPUT,
 }

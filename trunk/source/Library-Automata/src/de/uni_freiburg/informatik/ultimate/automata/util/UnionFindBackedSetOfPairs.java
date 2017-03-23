@@ -121,4 +121,11 @@ public class UnionFindBackedSetOfPairs<E> implements ISetOfPairs<E, Collection<S
 	public String toString() {
 		return mUnionFind.toString();
 	}
+
+	@Deprecated
+	public UnionFind<E> getUnionFind() {
+		return mUnionFind;
+	}
+	
+	
 }

@@ -307,7 +307,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 		private IInterpolantGenerator mInterpolantGenerator;
 		private CachingHoareTripleChecker mHtc;
-		private final IPredicate mFalsePredicate;
+		private final AbsIntPredicate<STATE, IBoogieVar> mFalsePredicate;
 
 		public AbsIntCurrentIteration(final IRun<LETTER, IPredicate, ?> cex,
 				final IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> result) {
@@ -350,7 +350,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			// we were strong enough!
 			final Word<LETTER> word = mCex.getWord();
 			try {
-				final List<IPredicate> interpolants = generateInterpolants(word);
+				final List<AbsIntPredicate<STATE, IBoogieVar>> interpolants = generateInterpolants(word);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Interpolant sequence:");
 					mLogger.debug(interpolants);
@@ -365,10 +365,10 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			}
 		}
 
-		private List<IPredicate> generateInterpolants(final Word<LETTER> word) {
+		private List<AbsIntPredicate<STATE, IBoogieVar>> generateInterpolants(final Word<LETTER> word) {
 			mLogger.info("Generating AI predicates...");
 
-			final List<IPredicate> rtr = new ArrayList<>();
+			final List<AbsIntPredicate<STATE, IBoogieVar>> rtr = new ArrayList<>();
 			final Deque<LETTER> callstack = new ArrayDeque<>();
 			final Script script = mCsToolkit.getManagedScript().getScript();
 			final int wordlength = word.length();
@@ -381,7 +381,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					callstack.removeFirst();
 				}
 				final Set<STATE> postStates = mResult.getPostStates(callstack, symbol, previousStates);
-				final IPredicate next = getPredicateFromStates(postStates, script);
+				final AbsIntPredicate<STATE, IBoogieVar> next = getPredicateFromStates(postStates, script);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(symbol + " " + next);
 				}
@@ -391,7 +391,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			return rtr;
 		}
 
-		private IPredicate getPredicateFromStates(final Set<STATE> postStates, final Script script) {
+		private AbsIntPredicate<STATE, IBoogieVar> getPredicateFromStates(final Set<STATE> postStates,
+				final Script script) {
 			if (postStates.isEmpty()) {
 				return mFalsePredicate;
 			}

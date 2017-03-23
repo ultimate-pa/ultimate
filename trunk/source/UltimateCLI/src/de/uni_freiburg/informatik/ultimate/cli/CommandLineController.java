@@ -101,8 +101,9 @@ public class CommandLineController implements IController<RunDefinition> {
 
 		// first, parse to see if toolchain is specified.
 		// the preparser has to accept all options, but may not require any
-		final CommandLineParser onlyCliHelpParser = CommandLineParser.createCliOnlyParser(core);
-		final CommandLineParser toolchainStageParser = CommandLineParser.createCompleteNoReqsParser(core);
+		final CommandLineParser onlyCliHelpParser =
+				CommandLineParser.createParser(core, getCoreAndControllerPluginFilter(), false);
+		final CommandLineParser toolchainStageParser = CommandLineParser.createParser(core, a -> true, false);
 		ParsedParameter toolchainStageParams;
 		try {
 			toolchainStageParams = toolchainStageParser.parse(args);
@@ -133,7 +134,7 @@ public class CommandLineController implements IController<RunDefinition> {
 
 		final Predicate<String> pluginNameFilter;
 		try {
-			pluginNameFilter = getPluginFilter(core, toolchainStageParams.getToolchainFile());
+			pluginNameFilter = getToolchainBasedPluginFilter(core, toolchainStageParams.getToolchainFile());
 		} catch (final ParseException pex) {
 			mLogger.error("Could not find the provided toolchain file: " + pex.getMessage());
 			return -1;
@@ -144,7 +145,7 @@ public class CommandLineController implements IController<RunDefinition> {
 		}
 
 		// second, perform real parsing
-		final CommandLineParser fullParser = CommandLineParser.createCompleteParser(core, pluginNameFilter);
+		final CommandLineParser fullParser = CommandLineParser.createParser(core, pluginNameFilter, true);
 		final ParsedParameter fullParams;
 
 		try {
@@ -333,7 +334,15 @@ public class CommandLineController implements IController<RunDefinition> {
 		return null;
 	}
 
-	private Predicate<String> getPluginFilter(final ICore<RunDefinition> core, final File toolchainFileOrDir) {
+	private Predicate<String> getCoreAndControllerPluginFilter() {
+		final Set<String> allowedIds = new HashSet<>();
+		allowedIds.add(de.uni_freiburg.informatik.ultimate.core.coreplugin.Activator.PLUGIN_ID);
+		allowedIds.add(getPluginID());
+		return getLowerCaseFilter(allowedIds);
+	}
+
+	private Predicate<String> getToolchainBasedPluginFilter(final ICore<RunDefinition> core,
+			final File toolchainFileOrDir) {
 		final ToolchainLocator locator = new ToolchainLocator(toolchainFileOrDir, core, mLogger);
 
 		final Set<String> allowedIds = new HashSet<>();
@@ -348,7 +357,11 @@ public class CommandLineController implements IController<RunDefinition> {
 				.forEach(allowedIds::add);
 
 		// convert to lower case and build matching predicate
-		final Set<String> lowerCaseIds = allowedIds.stream().map(a -> a.toLowerCase()).collect(Collectors.toSet());
+		return getLowerCaseFilter(allowedIds);
+	}
+
+	private static Predicate<String> getLowerCaseFilter(final Set<String> allowedIds) {
+		final Set<String> lowerCaseIds = allowedIds.stream().map(String::toLowerCase).collect(Collectors.toSet());
 		return a -> lowerCaseIds.contains(a.toLowerCase());
 	}
 

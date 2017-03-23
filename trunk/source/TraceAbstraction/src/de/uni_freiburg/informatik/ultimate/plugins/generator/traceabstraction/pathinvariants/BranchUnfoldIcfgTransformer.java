@@ -29,50 +29,31 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.p
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.SortedMap;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
-import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.BlockEncoder;
-import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.blockencoding.preferences.BlockEncodingPreferences.MinimizeStates;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
+import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
+import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Transform an {@link Icfg} by TODO
- * (Back)transform a proof for the large block encoded {@link Icfg} to a
- * proof for the original {@link Icfg} by TODO
+ * Transform an {@link Icfg} by TODO (Back)transform a proof for the large block
+ * encoded {@link Icfg} to a proof for the original {@link Icfg} by TODO
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -83,39 +64,95 @@ public final class BranchUnfoldIcfgTransformer {
 	private final PredicateFactory mPredicateFactory;
 	private final IPredicateUnifier mPredicateUnifier;
 	/**
-	 * Map that assigns to each large block encoded icfg location the corresponding location in the orginal icfg
+	 * Map that assigns to each large block encoded icfg location the
+	 * corresponding location in the orginal icfg
 	 */
-	private Map<IcfgLocation, IcfgLocation> mLbeBacktranslation;
 	private IIcfg<IcfgLocation> mInputIcfg;
-	
-	private final HashRelation<IcfgLocation, IcfgLocation> mOldLoc2NewLoc = new HashRelation<>();
 
-	public BranchUnfoldIcfgTransformer(final IUltimateServiceProvider services,
-			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier) {
+	private final HashRelation<IcfgLocation, IcfgLocation> mOldLoc2NewLoc = new HashRelation<>();
+	private BasicIcfg<IcfgLocation> mResultIcfg;
+	private ArrayDeque<Pair<IcfgLocation, Integer>> mWorklist;
+	// private HashSet<Pair<IcfgLocation, Integer>> mVisited;
+
+	public BranchUnfoldIcfgTransformer(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
+			final IPredicateUnifier predicateUnifier) {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mPredicateFactory = predicateFactory;
 		mPredicateUnifier = predicateUnifier;
 	}
-	
+
 	public IIcfg<IcfgLocation> transform(final IIcfg<IcfgLocation> inputIcfg) {
 		mInputIcfg = inputIcfg;
-		final IUltimateServiceProvider beServices =
-				mServices.registerPreferenceLayer(getClass(), BlockEncodingPreferences.PLUGIN_ID);
-		final IPreferenceProvider ups = beServices.getPreferenceProvider(BlockEncodingPreferences.PLUGIN_ID);
-		ups.put(BlockEncodingPreferences.FXP_INTERPROCEDURAL_COMPOSITION, false);
-		ups.put(BlockEncodingPreferences.FXP_MINIMIZE_STATES, MinimizeStates.MULTI);
-		// TODO: If you remove infeasible edges, you may end up with an empty program. Either disable this or deal
-		// with it.
-		ups.put(BlockEncodingPreferences.FXP_REMOVE_INFEASIBLE_EDGES, false);
-		final BlockEncoder blockEncoder = new BlockEncoder(mLogger, beServices, inputIcfg,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		final IIcfg<IcfgLocation> outputIcfg = blockEncoder.getResult();
-		assert !outputIcfg.getInitialNodes().isEmpty() : "LBE ICFG is emtpy";
-		mLbeBacktranslation = blockEncoder.getBacktranslator().getLocationMapping();
-		return outputIcfg;
+
+		final IValueConstruction<IcfgEdge, Integer> edgeNumberVc = new IValueConstruction<IcfgEdge, Integer>() {
+			int mCounter = 0;
+
+			@Override
+			public Integer constructValue(final IcfgEdge key) {
+				return mCounter++;
+			}
+		};
+
+		final ConstructionCache<IcfgEdge, Integer> edgeNumberConstructor = new ConstructionCache<>(edgeNumberVc);
+
+		final IValueConstruction<Pair<IcfgLocation, Integer>, IcfgLocation> resultLocationVc = new IValueConstruction<Pair<IcfgLocation, Integer>, IcfgLocation>() {
+
+			@Override
+			public IcfgLocation constructValue(final Pair<IcfgLocation, Integer> pair) {
+				final IcfgLocation inputLoc = pair.getFirst();
+				final boolean initial = mInputIcfg.getInitialNodes().contains(inputLoc);
+				final String debugIdentifier = inputLoc.getDebugIdentifier() + this.getClass().getSimpleName()
+						+ pair.getSecond();
+				final IcfgLocation resultLoc = new IcfgLocation(debugIdentifier, inputLoc.getProcedure());
+				final boolean isInitial = initial;
+				final boolean isError = mInputIcfg.getProcedureErrorNodes().get(inputLoc.getProcedure())
+						.contains(inputLoc);
+				final boolean isProcEntry = initial;
+				final boolean isProcExit = false;
+				final boolean isLoopLocation = mInputIcfg.getLoopLocations().contains(inputLoc);
+				mResultIcfg.addLocation(resultLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation);
+				mOldLoc2NewLoc.addPair(inputLoc, resultLoc);
+				// if (!mVisited.contains(pair)) {
+				// mVisited.add(pair);
+				mWorklist.add(pair);
+				// }
+				return resultLoc;
+			}
+		};
+
+		final ConstructionCache<Pair<IcfgLocation, Integer>, IcfgLocation> resultLocationConstructor = new ConstructionCache<>(
+				resultLocationVc);
+
+		final String identifier = inputIcfg.getIdentifier() + this.getClass();
+		mResultIcfg = new BasicIcfg<>(identifier, inputIcfg.getCfgSmtToolkit(), IcfgLocation.class);
+
+		mWorklist = new ArrayDeque<>();
+		// mVisited = new HashSet<>();
+		for (final IcfgLocation loc : mInputIcfg.getInitialNodes()) {
+			final Pair<IcfgLocation, Integer> initialPair = new Pair<IcfgLocation, Integer>(loc, 0);
+			resultLocationConstructor.getOrConstruct(initialPair);
+		}
+		while (!mWorklist.isEmpty()) {
+			final Pair<IcfgLocation, Integer> some = mWorklist.removeFirst();
+			final IcfgLocation sourceLoc = resultLocationConstructor.getOrConstruct(some);
+			for (final IcfgEdge edge : some.getFirst().getOutgoingEdges()) {
+				final Integer edgeNumber = edgeNumberConstructor.getOrConstruct(edge);
+				final Pair<IcfgLocation, Integer> targetPair = new Pair<IcfgLocation, Integer>(edge.getTarget(),
+						edgeNumber);
+				final IcfgLocation targetLoc = resultLocationConstructor.getOrConstruct(targetPair);
+
+				final IcfgInternalTransition newEdge = new IcfgInternalTransition(sourceLoc, targetLoc, new Payload(),
+						edge.getTransformula());
+				sourceLoc.addOutgoing(newEdge);
+				newEdge.setSource(sourceLoc);
+				newEdge.setTarget(targetLoc);
+				targetLoc.addIncoming(newEdge);
+			}
+		}
+		return mResultIcfg;
 	}
-	
+
 	public Map<IcfgLocation, IPredicate> transform(final Map<IcfgLocation, IPredicate> hoareAnnotation) {
 		final Map<IcfgLocation, IPredicate> result = new HashMap<>();
 		for (final IcfgLocation oldLoc : mOldLoc2NewLoc.getDomain()) {
@@ -125,9 +162,8 @@ public final class BranchUnfoldIcfgTransformer {
 			}
 			final Term newPred = mPredicateFactory.or(false, preds);
 			result.put(oldLoc, mPredicateFactory.newPredicate(newPred));
-			
+
 		}
-		mLbeBacktranslation = null;
 		mInputIcfg = null;
 		return result;
 	}

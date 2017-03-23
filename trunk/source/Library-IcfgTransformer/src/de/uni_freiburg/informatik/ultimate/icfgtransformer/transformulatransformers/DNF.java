@@ -70,9 +70,9 @@ public class DNF extends TransitionPreprocessor {
 	@Override
 	public boolean checkSoundness(final Script script, final ModifiableTransFormula oldTF,
 			final ModifiableTransFormula newTF) {
-		final Term old_term = oldTF.getFormula();
-		final Term new_term = newTF.getFormula();
-		return LBool.SAT != Util.checkSat(script, script.term("distinct", old_term, new_term));
+		final Term oldTerm = oldTF.getFormula();
+		final Term newTerm = newTF.getFormula();
+		return LBool.SAT != Util.checkSat(script, script.term("distinct", oldTerm, newTerm));
 	}
 
 	@Override

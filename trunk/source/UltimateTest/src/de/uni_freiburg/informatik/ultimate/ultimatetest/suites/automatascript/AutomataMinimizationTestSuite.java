@@ -107,6 +107,8 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 			StatisticsType.STATES_REDUCTION_RELATIVE.toString(),
 			StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK.toString(),
 			StatisticsType.TIME_PREPROCESSING.toString(),
+			StatisticsType.TIME_SIMULATION.toString(),
+			StatisticsType.TIME_ASSERTING.toString(),
 			StatisticsType.TIME_SOLVING.toString(),
 			StatisticsType.BUCHI_NONDETERMINISTIC_STATES.toString(),
 			StatisticsType.BUCHI_TRANSITION_DENSITY_MILLION.toString(),
