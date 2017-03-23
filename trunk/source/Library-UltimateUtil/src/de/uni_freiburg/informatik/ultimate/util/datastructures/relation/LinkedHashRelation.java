@@ -26,34 +26,34 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
 /**
- * Implementation of the AbstractRelation that uses HashMap and HashSet.
+ * Implementation of the AbstractRelation that uses LinkedHashMap and LinkedHashSet.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
-public class HashRelation<D, R> extends AbstractRelation<D, R, Map<D, Set<R>>> {
+public class LinkedHashRelation<D, R> extends AbstractRelation<D, R, Map<D, Set<R>>> {
 	
-	public HashRelation() {
+	public LinkedHashRelation() {
 		super();
 	}
 
-	public HashRelation(final AbstractRelation<D, R, ?> rel) {
+	public LinkedHashRelation(final AbstractRelation<D, R, ?> rel) {
 		super(rel);
 	}
 	
 	@Override
 	protected Map<D, Set<R>> newMap() {
-		return new HashMap<>();
+		return new LinkedHashMap<>();
 	}
 
 	@Override
 	protected Set<R> newSet() {
-		return new HashSet<>();
+		return new LinkedHashSet<>();
 	}
 
 }
