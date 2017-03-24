@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -96,12 +97,18 @@ public class HCPredicate extends BasicPredicate {
 	public int hashCode() {
 		return HashUtils.hashHsieh(serialHCPredicate, mProgramPoint, mFormula);// mClosedFormula);
 	}
-	
-	@Override
-	public boolean equals(final HCPredicate p) {
-	}
 	*/
-
+	@Override
+	public boolean equals(final Object p) {
+		if (p instanceof HCPredicate) {
+			return super.equals(p);
+		}
+		if (p instanceof HCPredicate) {
+			return super.equals(p);
+		}
+		return false;
+	}
+	
 	@Override
 	public String toString() {
 		String result = "#";

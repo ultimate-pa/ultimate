@@ -35,6 +35,6 @@ public class MinimizeNwaPmaxSatDimacs<LETTER, STATE> extends MinimizeNwaPmaxSat<
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand,
 				new PartitionBackedSetOfPairs<>(Collections.singleton(operand.getStates())),
-				new Settings<STATE>().setFinalStateConstraints(true).setSolverModeExternal());
+				new Settings<STATE>().setSolverModeExternal());
 	}
 }

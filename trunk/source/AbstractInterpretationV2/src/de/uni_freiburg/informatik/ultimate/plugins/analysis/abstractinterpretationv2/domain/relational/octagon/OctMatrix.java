@@ -109,6 +109,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
  */
 public class OctMatrix {
 
+	public static final BiFunction<OctValue, OctValue, Boolean> sRelationEqual = (x, y) -> x.compareTo(y) == 0;
+	public static final BiFunction<OctValue, OctValue, Boolean> sRelationLessThanOrEqual =
+			(x, y) -> x.compareTo(y) <= 0;
+
 	/**
 	 * Empty octagon that stores constraints over the empty set of variables. Use {@link #NEW} and
 	 * {@link #addVariables(int)} to create octagons of any size.
@@ -473,8 +477,8 @@ public class OctMatrix {
 	 * @param other
 	 *            Right hand side of the relation
 	 * @param relation
-	 *            Relation to be checked for each pair of entries
-	 * @return All pairs of entries were in the relation
+	 *            Elementwise relation to be checked
+	 * @return All pairs of corresponding entries were in the relation
 	 */
 	public boolean elementwiseRelation(final OctMatrix other, final BiFunction<OctValue, OctValue, Boolean> relation) {
 		checkCompatibility(other);
@@ -486,9 +490,64 @@ public class OctMatrix {
 		return true;
 	}
 
+	public boolean elementwiseRelation(final OctMatrix other, final BiFunction<OctValue, OctValue, Boolean> relation,
+			final int[] mapThisVarIndexToPermVarIndex) {
+		if (mapThisVarIndexToPermVarIndex == null) {
+			return elementwiseRelation(other, relation);
+		}
+		checkCompatibility(other);
+		for (int bRow = 0; bRow < variables(); ++bRow) {
+			// compare only block lower triangular part (upper part is coherent)
+			for (int bCol = 0; bCol <= bRow; ++bCol) {
+				final int permBRow = mapThisVarIndexToPermVarIndex[bRow];
+				final int permBCol = mapThisVarIndexToPermVarIndex[bCol];
+				if (!blockwiseRelation(bRow, bCol, other, permBRow, permBCol, relation)) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
+	/**
+	 * Checks whether a 2×2 block of this matrix is in an elementwise relation to another 2×2 block of
+	 * (possibly another) matrix. Block row/column with index <i>i</i> contains the rows/columns <i>2i</i> and
+	 * <i>2i+1</i>.
+	 *
+	 * @param bRow
+	 *            Block row index in this matrix
+	 * @param bCol
+	 *            Block column index in this matrix
+	 * @param other
+	 *            Other matrix
+	 * @param otherBRow
+	 *            Block row index in other matrix
+	 * @param otherBCol
+	 *            Block column index in the other matrix
+	 * @param relation
+	 *            Elementwise Relation to be checked
+	 * @return All pairs of corresponding entries from the specified blocks were in the relation
+	 */
+	public boolean blockwiseRelation(int bRow, int bCol, final OctMatrix other, int otherBRow, int otherBCol,
+			final BiFunction<OctValue, OctValue, Boolean> relation) {
+		bRow *= 2;
+		bCol *= 2;
+		otherBRow *= 2;
+		otherBCol *= 2;
+		for (int j = 0; j < 2; ++j) {
+			for (int i = 0; i < 2; ++i) {
+				if (!relation.apply(get(bRow + i, bCol + j), other.get(otherBRow + i, otherBCol + j))) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+	
+
 	/**
 	 * Checks whether this and another matrix are compatible for a element-wise operation or relation. An exception is
-	 * thrown for incompatible matrices.
+	 * thrown for incompatible matrices. Matrixes are compatible if they have the same size.
 	 *
 	 * @param other
 	 *            Other octagon
@@ -554,12 +613,12 @@ public class OctMatrix {
 		if (this == other) {
 			return true;
 		}
-		return elementwiseRelation(other, (x, y) -> x.compareTo(y) == 0);
+		return elementwiseRelation(other, sRelationEqual);
 	}
 
 	/**
 	 * Checks whether this and another octagon matrix of the same size are equal, considering that the order of
-	 * variables was permutated in the other matrix.
+	 * variables was permuted in the other matrix.
 	 * <p>
 	 * The permutation must be known. If this octagon matrix uses the variable order <code>{v0, v1, v2}</code> and the
 	 * other octagon matrix uses the variable order <code>{v1, v2, v0}</code>, then the permutation is
@@ -573,52 +632,11 @@ public class OctMatrix {
 	 *            Other matrix (possibly a permutation of this matrix)
 	 * @param mapThisVarIndexToPermVarIndex
 	 *            Map from variable indices (array index) of this octagon matrix to the corresponding variable indices
-	 *            (array entries) of the permuted octagon matrix
+	 *            (array entries) of the permuted octagon matrix. {@code null} for non-permuted matrices.
 	 * @return The matrices are equal
 	 */
-	public boolean isEqualToPermutation(final OctMatrix permutation, final int[] mapThisVarIndexToPermVarIndex) {
-		for (int bRow = 0; bRow < variables(); ++bRow) {
-			// compare only block lower triangular part (upper part is coherent)
-			for (int bCol = 0; bCol <= bRow; ++bCol) {
-				final int permBRow = mapThisVarIndexToPermVarIndex[bRow];
-				final int permBCol = mapThisVarIndexToPermVarIndex[bCol];
-				if (!isBlockEqualTo(bRow, bCol, permutation, permBRow, permBCol)) {
-					return false;
-				}
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * Checks whether a 2×2 block of this matrix equals another 2×2 block of another matrix. Block row/column with index
-	 * <i>i</i> contains the rows/columns <i>2i</i> and <i>2i+1</i>.
-	 *
-	 * @param bRow
-	 *            Block row index in this matrix
-	 * @param bCol
-	 *            Block column index in this matrix
-	 * @param other
-	 *            Other matrix
-	 * @param otherBRow
-	 *            Block row index in other matrix
-	 * @param otherBCol
-	 *            Block column index in the other matrix
-	 * @return The blocks are equal
-	 */
-	public boolean isBlockEqualTo(int bRow, int bCol, final OctMatrix other, int otherBRow, int otherBCol) {
-		bRow *= 2;
-		bCol *= 2;
-		otherBRow *= 2;
-		otherBCol *= 2;
-		for (int j = 0; j < 2; ++j) {
-			for (int i = 0; i < 2; ++i) {
-				if (get(bRow + i, bCol + j).compareTo((other.get(otherBRow + i, otherBCol + j))) != 0) {
-					return false;
-				}
-			}
-		}
-		return true;
+	public boolean isEqualTo(final OctMatrix permutation, final int[] mapThisVarIndexToPermVarIndex) {
+		return elementwiseRelation(permutation, sRelationEqual, mapThisVarIndexToPermVarIndex);
 	}
 
 	/**
@@ -632,7 +650,7 @@ public class OctMatrix {
 	 * @return This matrix is element-wise less than or equal to the other matrix
 	 */
 	public boolean isLessEqualThan(final OctMatrix other) {
-		return elementwiseRelation(other, (x, y) -> x.compareTo(y) <= 0);
+		return elementwiseRelation(other, sRelationLessThanOrEqual);
 	}
 
 	/**

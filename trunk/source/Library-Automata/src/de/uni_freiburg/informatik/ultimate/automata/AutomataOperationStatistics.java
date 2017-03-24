@@ -80,11 +80,11 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	 *            Key with which the specified value is to be associated.
 	 * @param value
 	 *            value to be associated with the specified key
-	 * @return the previous value associated with key, or null if there was no
-	 *         mapping for key.
 	 */
-	public Object addKeyValuePair(final StatisticsType key, final Object value) {
-		return mKeyValueMap.put(key, value);
+	public void addKeyValuePair(final StatisticsType key, final Object value) {
+		assert !mKeyValueMap.containsKey(key) : "The statistics for key " + key
+				+ " would be overwritten, which is not allowed.";
+		mKeyValueMap.put(key, value);
 	}
 
 	/**

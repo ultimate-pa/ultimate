@@ -28,10 +28,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
@@ -52,15 +55,18 @@ public class HCHoareTripleChecker {
 	
 	private IHoareTripleChecker mHoareTripleChecker;
 	private PredicateUnifier mPredicateUnifier;
+	private HCPredicateFactory mPredicateFactory;
 	
 	/**
 	 * Constructor of HCHoareTripleChecker
 	 * @param predicateUnifier Unifer for the predicates.
 	 * @param cfgSmtToolkit 
 	 * */
-	public HCHoareTripleChecker(final PredicateUnifier predicateUnifier, final CfgSmtToolkit cfgSmtToolkit) {
+	public HCHoareTripleChecker(final PredicateUnifier predicateUnifier, final CfgSmtToolkit cfgSmtToolkit,
+			final HCPredicateFactory predicateFactory) {
 		mPredicateUnifier = predicateUnifier;
 		mHoareTripleChecker = new MonolithicHoareTripleChecker(cfgSmtToolkit);
+		mPredicateFactory = predicateFactory;
 	}
 	
 
@@ -73,16 +79,15 @@ public class HCHoareTripleChecker {
 	 * @param succ
 	 * @return a Validity value for the Hoare triple
 	 */
-	public Validity check(Collection<HCPredicate> pre, HornClause hornClause, HCPredicate succ) {
-		
+	public Validity check(Collection<IPredicate> pre, HornClause hornClause, IPredicate succ) {
+		/*
 		Set<IPredicate> preAsIPredicates = pre.stream()
-				.map(pred -> (IPredicate) pred)
+				.map(pred -> mPredicateFactory.convertToIPredicate(pred)) //(IPredicate) pred)
 				.collect(Collectors.toSet());
-
 		IPredicate preConditionConjunction = mPredicateUnifier.getOrConstructPredicateForConjunction(preAsIPredicates);
-		
+		 */
+		IPredicate preConditionConjunction = mPredicateUnifier.getOrConstructPredicateForConjunction(pre);
+
 		return mHoareTripleChecker.checkInternal(preConditionConjunction, hornClause, succ);
 	}
-	
-	
 }

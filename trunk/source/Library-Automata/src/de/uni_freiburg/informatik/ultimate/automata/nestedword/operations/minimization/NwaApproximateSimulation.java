@@ -100,11 +100,29 @@ public class NwaApproximateSimulation<LETTER, STATE>
 	public NwaApproximateSimulation(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand, final SimulationType simulationType)
 			throws AutomataOperationCanceledException {
+		this(services, operand, simulationType, true);
+	}
+
+	/**
+	 * @param services
+	 *            Ultimate services.
+	 * @param operand
+	 *            operand
+	 * @param simulationType
+	 *            type of simulation
+	 * @param separateByTransitionConstraints
+	 *            {@code true} iff successor rule should be applied
+	 * @throws AutomataOperationCanceledException
+	 *             if operation was canceled
+	 */
+	public NwaApproximateSimulation(final AutomataLibraryServices services,
+			final INestedWordAutomaton<LETTER, STATE> operand, final SimulationType simulationType,
+			final boolean separateByTransitionConstraints) throws AutomataOperationCanceledException {
 		super(services, operand);
 		mMayBeSimulatedBy = new HashMap<>();
 		mIsNotSimulatedBy = new HashRelation<>();
 
-		run(simulationType);
+		run(simulationType, separateByTransitionConstraints);
 
 		if (mLogger.isInfoEnabled()) {
 			final long numberOfPairs = countNumberOfPairs();
@@ -162,19 +180,7 @@ public class NwaApproximateSimulation<LETTER, STATE>
 	}
 
 	@Override
-	protected void separateByTransitionConstraints() throws AutomataOperationCanceledException {
-		separateByDifferentSymbols();
-
-		separateByDifferentSuccessors();
-	}
-
-	/**
-	 * This method is not necessary but (hopefully) improves performance.
-	 * 
-	 * @throws AutomataOperationCanceledException
-	 *             if operation was canceled
-	 */
-	private void separateByDifferentSymbols() throws AutomataOperationCanceledException {
+	protected void separateByDifferentSymbols() throws AutomataOperationCanceledException {
 		final List<STATE> toBeRemoved = new ArrayList<>();
 		for (final Entry<STATE, Set<STATE>> entry : mMayBeSimulatedBy.entrySet()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
@@ -213,7 +219,8 @@ public class NwaApproximateSimulation<LETTER, STATE>
 		}
 	}
 
-	private void separateByDifferentSuccessors() throws AutomataOperationCanceledException {
+	@Override
+	protected void separateByTransitionConstraints() throws AutomataOperationCanceledException {
 		while (!mIsNotSimulatedBy.isEmpty()) {
 			if (!mServices.getProgressAwareTimer().continueProcessing()) {
 				throw new AutomataOperationCanceledException(getClass());

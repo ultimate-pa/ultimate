@@ -131,77 +131,79 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 */
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
-		final AutomataOperationStatistics result = new AutomataOperationStatistics();
+		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();
 
 		final int inputSize = getOperand().size();
-		final int outputSize = mResult.size();
+		statistics.addKeyValuePair(StatisticsType.STATES_INPUT, inputSize);
 
-		result.addKeyValuePair(StatisticsType.STATES_INPUT, inputSize);
-		result.addKeyValuePair(StatisticsType.STATES_OUTPUT, outputSize);
-		result.addDifferenceData(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
-				StatisticsType.STATES_REDUCTION_ABSOLUTE);
-		result.addPercentageDataInverted(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
-				StatisticsType.STATES_REDUCTION_RELATIVE);
+		if (mResult != null) {
+			final int outputSize = mResult.size();
+			statistics.addKeyValuePair(StatisticsType.STATES_OUTPUT, outputSize);
+			statistics.addDifferenceData(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
+					StatisticsType.STATES_REDUCTION_ABSOLUTE);
+			statistics.addPercentageDataInverted(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
+					StatisticsType.STATES_REDUCTION_RELATIVE);
 
-		/* TODO Christian 2016-10-12: make this optional, this has performance impact */
-		if (true) {
-			// Input automaton
-			final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(mServices, getOperandCast(), true);
-			final int inputTransitions = inputAnalyzer.getNumberOfTransitions(SymbolType.TOTAL);
-			result.addKeyValuePair(StatisticsType.BUCHI_NONDETERMINISTIC_STATES,
-					inputAnalyzer.getNumberOfNondeterministicStates());
-			result.addKeyValuePair(StatisticsType.BUCHI_ALPHABET_SIZE,
-					inputAnalyzer.getNumberOfSymbols(SymbolType.TOTAL));
-			result.addKeyValuePair(StatisticsType.BUCHI_TRANSITIONS, inputTransitions);
-			result.addKeyValuePair(StatisticsType.BUCHI_TRANSITION_DENSITY_MILLION,
-					(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.TOTAL) * 1_000_000));
-			result.addKeyValuePair(StatisticsType.ALPHABET_SIZE_INTERNAL,
-					inputAnalyzer.getNumberOfSymbols(SymbolType.INTERNAL));
-			result.addKeyValuePair(StatisticsType.ALPHABET_SIZE_CALL,
-					inputAnalyzer.getNumberOfSymbols(SymbolType.CALL));
-			result.addKeyValuePair(StatisticsType.ALPHABET_SIZE_RETURN,
-					inputAnalyzer.getNumberOfSymbols(SymbolType.RETURN));
-			result.addKeyValuePair(StatisticsType.TRANSITIONS_INTERNAL_INPUT,
-					inputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
-			result.addKeyValuePair(StatisticsType.TRANSITIONS_CALL_INPUT,
-					inputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
-			result.addKeyValuePair(StatisticsType.TRANSITIONS_RETURN_INPUT,
-					inputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
-			result.addKeyValuePair(StatisticsType.BUCHI_NONDETERMINISTIC_STATES,
-					inputAnalyzer.getNumberOfNondeterministicStates());
-
-			// Output automaton
-			final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(mServices, mResult, true);
-			final int outputTransitions = outputAnalyzer.getNumberOfTransitions(SymbolType.TOTAL);
-			result.addKeyValuePair(StatisticsType.RESULT_NONDETERMINISTIC_STATES,
-					outputAnalyzer.getNumberOfNondeterministicStates());
-			result.addKeyValuePair(StatisticsType.RESULT_ALPHABET_SIZE,
-					outputAnalyzer.getNumberOfSymbols(SymbolType.TOTAL));
-			result.addKeyValuePair(StatisticsType.RESULT_TRANSITIONS, outputTransitions);
-			result.addKeyValuePair(StatisticsType.RESULT_TRANSITION_DENSITY_MILLION,
-					(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.TOTAL) * 1_000_000));
-			result.addKeyValuePair(StatisticsType.REMOVED_TRANSITIONS, inputTransitions - outputTransitions);
-			result.addKeyValuePair(StatisticsType.TRANSITIONS_INTERNAL_OUTPUT,
-					outputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
-			result.addKeyValuePair(StatisticsType.TRANSITIONS_CALL_OUTPUT,
-					outputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
-			result.addKeyValuePair(StatisticsType.TRANSITIONS_RETURN_OUTPUT,
-					outputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
-			result.addKeyValuePair(StatisticsType.RESULT_NONDETERMINISTIC_STATES,
-					outputAnalyzer.getNumberOfNondeterministicStates());
-
-			// comparisons (can only be computed after relevant data was added)
-			result.addDifferenceData(StatisticsType.BUCHI_TRANSITIONS, StatisticsType.RESULT_TRANSITIONS,
-					StatisticsType.TRANSITIONS_REDUCTION_ABSOLUTE);
-			result.addPercentageDataInverted(StatisticsType.BUCHI_TRANSITIONS, StatisticsType.RESULT_TRANSITIONS,
-					StatisticsType.TRANSITIONS_REDUCTION_RELATIVE);
 		}
 
-		return result;
-	}
+		/* TODO Christian 2016-10-12: make this optional, this has performance impact */
+		final boolean computeDetailedStatistics = true;
+		if (computeDetailedStatistics) {
+			// Input automaton
+			final Analyze<LETTER, STATE> inputAnalyzer = new Analyze<>(mServices, getOperand(), true);
+			final int inputTransitions = inputAnalyzer.getNumberOfTransitions(SymbolType.TOTAL);
+			statistics.addKeyValuePair(StatisticsType.BUCHI_NONDETERMINISTIC_STATES,
+					inputAnalyzer.getNumberOfNondeterministicStates());
+			statistics.addKeyValuePair(StatisticsType.BUCHI_ALPHABET_SIZE,
+					inputAnalyzer.getNumberOfSymbols(SymbolType.TOTAL));
+			statistics.addKeyValuePair(StatisticsType.BUCHI_TRANSITIONS, inputTransitions);
+			statistics.addKeyValuePair(StatisticsType.BUCHI_TRANSITION_DENSITY_MILLION,
+					(int) Math.round(inputAnalyzer.getTransitionDensity(SymbolType.TOTAL) * 1_000_000));
+			statistics.addKeyValuePair(StatisticsType.ALPHABET_SIZE_INTERNAL,
+					inputAnalyzer.getNumberOfSymbols(SymbolType.INTERNAL));
+			statistics.addKeyValuePair(StatisticsType.ALPHABET_SIZE_CALL,
+					inputAnalyzer.getNumberOfSymbols(SymbolType.CALL));
+			statistics.addKeyValuePair(StatisticsType.ALPHABET_SIZE_RETURN,
+					inputAnalyzer.getNumberOfSymbols(SymbolType.RETURN));
+			statistics.addKeyValuePair(StatisticsType.TRANSITIONS_INTERNAL_INPUT,
+					inputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
+			statistics.addKeyValuePair(StatisticsType.TRANSITIONS_CALL_INPUT,
+					inputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
+			statistics.addKeyValuePair(StatisticsType.TRANSITIONS_RETURN_INPUT,
+					inputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
+			statistics.addKeyValuePair(StatisticsType.BUCHI_NONDETERMINISTIC_STATES,
+					inputAnalyzer.getNumberOfNondeterministicStates());
 
-	private INestedWordAutomaton<LETTER, STATE> getOperandCast() {
-		return getOperand();
+			if (mResult != null) {
+				// Output automaton
+				final Analyze<LETTER, STATE> outputAnalyzer = new Analyze<>(mServices, mResult, true);
+				final int outputTransitions = outputAnalyzer.getNumberOfTransitions(SymbolType.TOTAL);
+				statistics.addKeyValuePair(StatisticsType.RESULT_NONDETERMINISTIC_STATES,
+						outputAnalyzer.getNumberOfNondeterministicStates());
+				statistics.addKeyValuePair(StatisticsType.RESULT_ALPHABET_SIZE,
+						outputAnalyzer.getNumberOfSymbols(SymbolType.TOTAL));
+				statistics.addKeyValuePair(StatisticsType.RESULT_TRANSITIONS, outputTransitions);
+				statistics.addKeyValuePair(StatisticsType.RESULT_TRANSITION_DENSITY_MILLION,
+						(int) Math.round(outputAnalyzer.getTransitionDensity(SymbolType.TOTAL) * 1_000_000));
+				statistics.addKeyValuePair(StatisticsType.REMOVED_TRANSITIONS, inputTransitions - outputTransitions);
+				statistics.addKeyValuePair(StatisticsType.TRANSITIONS_INTERNAL_OUTPUT,
+						outputAnalyzer.getNumberOfTransitions(SymbolType.INTERNAL));
+				statistics.addKeyValuePair(StatisticsType.TRANSITIONS_CALL_OUTPUT,
+						outputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
+				statistics.addKeyValuePair(StatisticsType.TRANSITIONS_RETURN_OUTPUT,
+						outputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
+				statistics.addKeyValuePair(StatisticsType.RESULT_NONDETERMINISTIC_STATES,
+						outputAnalyzer.getNumberOfNondeterministicStates());
+
+				// comparisons (can only be computed after relevant data was added)
+				statistics.addDifferenceData(StatisticsType.BUCHI_TRANSITIONS, StatisticsType.RESULT_TRANSITIONS,
+						StatisticsType.TRANSITIONS_REDUCTION_ABSOLUTE);
+				statistics.addPercentageDataInverted(StatisticsType.BUCHI_TRANSITIONS, StatisticsType.RESULT_TRANSITIONS,
+						StatisticsType.TRANSITIONS_REDUCTION_RELATIVE);
+			}
+		}
+
+		return statistics;
 	}
 
 	@Override
@@ -225,14 +227,12 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	}
 
 	/**
-	 * Returns a Map from states of the input automaton to states of the output
-	 * automaton. The output results from merging states. The image of a state
-	 * <i>oldState</i> is the block of merged states containing <i>oldState</i>.
+	 * Returns a Map from states of the input automaton to states of the output automaton. The output results from
+	 * merging states. The image of a state <i>oldState</i> is the block of merged states containing <i>oldState</i>.
 	 * This method can only be used when the minimization has finished.
 	 * <p>
-	 * NOTE: The map must be robust against queries for states which did not
-	 * exist in the input automaton. The expected value is 'null', but
-	 * not, e.g., a NullPointerException.
+	 * NOTE: The map must be robust against queries for states which did not exist in the input automaton. The expected
+	 * value is 'null', but not, e.g., a NullPointerException.
 	 * 
 	 * @return map from input automaton states to output automaton states
 	 */
@@ -274,7 +274,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 */
 	protected void constructResultFromPartition(final IPartition<STATE> partition, final boolean addMapping) {
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-				new QuotientNwaConstructor<>(mServices, mStateFactory, getOperandCast(), partition, addMapping);
+				new QuotientNwaConstructor<>(mServices, mStateFactory, getOperand(), partition, addMapping);
 		constructResultFromQuotientConstructor(quotientNwaConstructor);
 	}
 
@@ -288,7 +288,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 */
 	protected void constructResultFromUnionFind(final UnionFind<STATE> unionFind, final boolean addMapping) {
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-				new QuotientNwaConstructor<>(mServices, mStateFactory, getOperandCast(), unionFind, addMapping);
+				new QuotientNwaConstructor<>(mServices, mStateFactory, getOperand(), unionFind, addMapping);
 		constructResultFromQuotientConstructor(quotientNwaConstructor);
 	}
 
@@ -434,7 +434,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 		final STATE oldEmptyStackState = getOperand().getEmptyStackState();
 		final STATE newEmptyStackState = mStateFactory.createEmptyStackState();
 
-		for (final STATE oldState : getOperandCast().getStates()) {
+		for (final STATE oldState : getOperand().getStates()) {
 			final STATE newState = mOldState2NewState.get(oldState);
 
 			// get down state map
@@ -484,8 +484,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * This method checks whether the input automaton is a DFA.
 	 * <p>
-	 * That means the automaton must be deterministic and must not contain
-	 * any call and return transitions.
+	 * That means the automaton must be deterministic and must not contain any call and return transitions.
 	 * 
 	 * @return true iff input automaton is a DFA
 	 * @throws AutomataOperationCanceledException
@@ -507,14 +506,13 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	}
 
 	/**
-	 * This method checks whether the automaton is a finite automaton.
-	 * That means it must not contain any call and return letter.
+	 * This method checks whether the automaton is a finite automaton. That means it must not contain any call and
+	 * return letter.
 	 * <p>
-	 * NOTE: Return transitions would not do any harm when no call
-	 * transitions exist, but they are considered bad nevertheless.
+	 * NOTE: Return transitions would not do any harm when no call transitions exist, but they are considered bad
+	 * nevertheless.
 	 * <p>
-	 * NOTE: The method checks something stronger, namely that the respective
-	 * alphabets are empty.
+	 * NOTE: The method checks something stronger, namely that the respective alphabets are empty.
 	 * 
 	 * @return true iff automaton contains no call and return letters
 	 */
@@ -585,8 +583,8 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	}
 
 	/**
-	 * This method computes the capacity size for hash sets and hash maps given
-	 * the expected number of elements to avoid resizing.
+	 * This method computes the capacity size for hash sets and hash maps given the expected number of elements to avoid
+	 * resizing.
 	 * 
 	 * @param size
 	 *            expected number of elements before resizing

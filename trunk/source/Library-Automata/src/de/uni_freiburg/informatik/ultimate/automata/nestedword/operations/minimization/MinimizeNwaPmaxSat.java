@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -194,7 +195,8 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 			return;
 		}
 
-		final boolean separateFinalAndNonfinalStates = mSettings.getFinalStateConstraints();
+		final BiPredicate<STATE, STATE> finalNonfinalConstraintPredicate =
+				mSettings.getFinalNonfinalConstraintPredicate();
 
 		for (int i = 0; i < states.length; i++) {
 			final STATE stateI = states[i];
@@ -211,80 +213,19 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 				mStatePair2Var.put(stateJ, stateI, doubleton);
 				mSolver.addVariable(doubleton);
 
-				if (separateFinalAndNonfinalStates) {
-					// separate final and nonfinal states ("direct bisimulation")
-					if (mOperand.isFinal(stateI) ^ mOperand.isFinal(stateJ)) {
-						setStatesDifferent(doubleton);
-					}
-				} else {
-					// Buchi constraints are added later when all variables have been added
+				if (mOperand.isFinal(stateI) ^ mOperand.isFinal(stateJ)
+						&& finalNonfinalConstraintPredicate.test(stateI, stateJ)) {
+					setStatesDifferent(doubleton);
 				}
 			}
 		}
-	}
-
-	private void generateBuchiConstraints(final STATE[] states) {
-		for (int i = 0; i < states.length; i++) {
-			final STATE stateI = states[i];
-			for (int j = 0; j < i; j++) {
-				final STATE stateJ = states[j];
-
-				if (mOperand.isFinal(stateI) ^ mOperand.isFinal(stateJ)) {
-					final boolean statesAreDifferent = generateBuchiConstraintsOneDirection(stateI, stateJ);
-					if (!statesAreDifferent) {
-						// create constraints for the other direction only if not trivially satisfied
-						generateBuchiConstraintsOneDirection(stateJ, stateI);
-					}
-				}
-			}
-		}
-	}
-
-	/**
-	 * Creates constraints <tt>\bigwedge_{p_h} \geg X_{p,q} \lor \bigvee_{q_h} X_{p_h, q_h}</tt>.
-	 * 
-	 * @return {@code true} iff states are different
-	 */
-	private boolean generateBuchiConstraintsOneDirection(final STATE state1, final STATE state2) {
-		final Doubleton<STATE> linDoubleton = mStatePair2Var.get(state1, state2);
-		outer: for (final STATE downState1 : getDownStatesArray(state1)) {
-			final STATE[] downStates2 = getDownStatesArray(state2);
-			final ArrayList<Doubleton<STATE>> hierDoubletons = new ArrayList<>(downStates2.length);
-			for (final STATE downState2 : downStates2) {
-				final Doubleton<STATE> down12 = getVariable(downState1, downState2, false);
-				if (knownToBeDifferent(downState1, downState2, down12)) {
-					// literal can be omitted
-					continue;
-				} else if (knownToBeSimilar(downState1, downState2, down12)) {
-					// clause is trivially true
-					continue outer;
-				} else {
-					hierDoubletons.add(down12);
-				}
-			}
-
-			if (hierDoubletons.isEmpty()) {
-				// result is a unit clause with only the linear doubleton
-				setStatesDifferent(linDoubleton);
-				return true;
-			}
-
-			addInverseHornClause(linDoubleton, hierDoubletons);
-		}
-		return false;
 	}
 
 	@Override
 	protected void generateTransitionAndTransitivityConstraints(final boolean addTransitivityConstraints)
 			throws AutomataOperationCanceledException {
-		final boolean generateBuchiConstraints = !mSettings.getFinalStateConstraints();
-
 		for (final Set<STATE> equivalenceClass : mInitialPartition) {
 			final STATE[] states = constructStateArray(equivalenceClass);
-
-			if (generateBuchiConstraints) {
-				generateBuchiConstraints(states);
-			}
 
 			for (int i = 0; i < states.length; i++) {
 				generateTransitionConstraints(states, i);

@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
@@ -82,7 +83,7 @@ public class TreeChecker {
 	 * @param interpolantsMap the map of predicates to the corresponding interpolants.
 	 * @return
 	 */
-	public Map<HCPredicate, HCPredicate> rebuild(final Map<HCPredicate, Term> interpolantsMap) {
+	public Map<HCPredicate, IPredicate> rebuild(final Map<HCPredicate, Term> interpolantsMap) {
 		return mSSABuilder.rebuildSSApredicates(interpolantsMap);
 	}
 	

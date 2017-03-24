@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -51,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -840,9 +842,11 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		 */
 		private SolverMode mSolverMode = SolverMode.TRANSITIVITY;
 		/**
-		 * Add constraints that final and non-final states cannot be merged.
+		 * Predicate that controls merging of final and non-final states.
+		 * <p>
+		 * Returns {@code true} for pairs of states that should not be merged.
 		 */
-		private boolean mUseFinalStateConstraints = true;
+		private BiPredicate<STATE, STATE> mFinalNonfinalConstraintPredicate = new TrueBiPredicate<>();
 		/**
 		 * Use Horn clauses for transitions. This flag can also be set for nondeterministic automata. However, the
 		 * results might not be satisfactory: all successors have to be similar in this case.
@@ -886,9 +890,6 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 				if (!mUseTransitionHornClauses) {
 					throw new IllegalArgumentException("For using the Horn solver you must use Horn clauses.");
 				}
-				if (!mUseFinalStateConstraints && !hasNoReturnTransitions(operand)) {
-					throw new IllegalArgumentException("For Buchi NWA a Horn solver is in general not sufficient.");
-				}
 			}
 		}
 
@@ -901,12 +902,12 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 			return this;
 		}
 
-		public boolean getFinalStateConstraints() {
-			return mUseFinalStateConstraints;
+		public BiPredicate<STATE, STATE> getFinalNonfinalConstraintPredicate() {
+			return mFinalNonfinalConstraintPredicate;
 		}
 
-		public Settings<STATE> setFinalStateConstraints(final boolean value) {
-			mUseFinalStateConstraints = value;
+		public Settings<STATE> setFinalNonfinalConstraintPredicate(final BiPredicate<STATE, STATE> value) {
+			mFinalNonfinalConstraintPredicate = value;
 			return this;
 		}
 
@@ -968,6 +969,40 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 
 		public boolean isUsePathCompression() {
 			return mUsePathCompression;
+		}
+	}
+
+	/**
+	 * Given a pair of states, returns {@code true}.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	public static class TrueBiPredicate<STATE> implements BiPredicate<STATE, STATE> {
+		@Override
+		public boolean test(final STATE p, final STATE q) {
+			return true;
+		}
+	}
+
+	/**
+	 * Given a pair of states, returns {@code true} iff the pair is in the backing relation.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	public static class RelationBackedBiPredicate<STATE> implements BiPredicate<STATE, STATE> {
+		private final ISetOfPairs<STATE, ?> mRelation;
+
+		/**
+		 * @param relation
+		 *            Relation of bad pairs of states that should not be merged.
+		 */
+		public RelationBackedBiPredicate(final ISetOfPairs<STATE, ?> relation) {
+			mRelation = relation;
+		}
+
+		@Override
+		public boolean test(final STATE p, final STATE q) {
+			return mRelation.containsPair(p, q);
 		}
 	}
 }

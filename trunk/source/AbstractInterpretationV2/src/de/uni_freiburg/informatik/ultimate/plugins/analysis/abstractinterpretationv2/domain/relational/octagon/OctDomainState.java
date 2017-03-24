@@ -484,7 +484,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		}
 
 		if (!cachedSelectiveClosure().elementwiseRelation(other.mNumericAbstraction,
-				(thisVal, otherVal) -> thisVal.compareTo(otherVal) <= 0)) {
+				OctMatrix.sRelationLessThanOrEqual, matrixPermutationMap(other))) {
 			// no need to use other.closure
 			return SubsetResult.NONE;
 		}
@@ -511,20 +511,32 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		return mId == other.mId;
 	}
 
-	/** For internal use in {@link #isEqualTo(OctDomainState)}. */
-	private boolean numericAbstractionIsEqualTo(final OctDomainState other) {
+	/**
+	 * Compute the permutation between two states with the same numeric variables.
+	 * 
+	 * @param other State with same numeric variables, possibly in another order.
+	 * @return {@code array[index of numeric variable from this state] = index of numeric variable from other state}
+	 *         if permuted, {@code null} otherwise.
+	 */
+	private int[] matrixPermutationMap(final OctDomainState other) {
 		assert mMapNumericVarToIndex.keySet().equals(other.mMapNumericVarToIndex.keySet());
-		boolean permutated = false;
+		boolean permuted = false;
 		final int[] mapThisVarIndexToOtherVarIndex = new int[mNumericAbstraction.variables()];
 		for (final Entry<IBoogieVar, Integer> entry : mMapNumericVarToIndex.entrySet()) {
 			final IBoogieVar var = entry.getKey();
 			final int thisVarIndex = entry.getValue();
 			final int otherVarIndex = other.mMapNumericVarToIndex.get(var);
 			if (thisVarIndex != otherVarIndex) {
-				permutated = true;
+				permuted = true;
 			}
 			mapThisVarIndexToOtherVarIndex[thisVarIndex] = otherVarIndex;
 		}
+		return permuted ? mapThisVarIndexToOtherVarIndex : null;
+	}
+	
+	/** For internal use in {@link #isEqualTo(OctDomainState)}. */
+	private boolean numericAbstractionIsEqualTo(final OctDomainState other) {
+		assert mMapNumericVarToIndex.keySet().equals(other.mMapNumericVarToIndex.keySet());
 		final OctMatrix thisClosure = cachedSelectiveClosure();
 		final OctMatrix otherClosure = other.cachedSelectiveClosure();
 		final boolean thisIsBottom = thisClosure.hasNegativeSelfLoop();
@@ -533,11 +545,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 			return false;
 		} else if (thisIsBottom) {
 			return true;
-		} else if (permutated) {
-			return thisClosure.isEqualToPermutation(otherClosure, mapThisVarIndexToOtherVarIndex);
-		} else {
-			return thisClosure.isEqualTo(otherClosure);
 		}
+		return thisClosure.isEqualTo(otherClosure, matrixPermutationMap(other));
 	}
 
 	/**

@@ -102,10 +102,20 @@ public abstract class NwaApproximateXsimulation<LETTER, STATE, T> {
 	 */
 	public abstract ISetOfPairs<STATE, T> getResult();
 
-	protected final void run(final SimulationType simulationType) throws AutomataOperationCanceledException {
+	protected final void run(final SimulationType simulationType, final boolean separateByTransitionConstraints)
+			throws AutomataOperationCanceledException {
 		initialize(simulationType);
 
-		separateByTransitionConstraints();
+		/*
+		 * TODO Christian 2017-03-23 This method is optional if the flag 'separateByTransitionConstraints' is false.
+		 *      We should evaluate whether in this case it has positive or negative performance impact.
+		 *      If it has negative impact, we should only call it if the flag is true.
+		 */
+		separateByDifferentSymbols();
+		
+		if (separateByTransitionConstraints) {
+			separateByTransitionConstraints();
+		}
 	}
 
 	protected final void initialize(final SimulationType simulationType) throws AutomataOperationCanceledException {
@@ -125,6 +135,8 @@ public abstract class NwaApproximateXsimulation<LETTER, STATE, T> {
 
 	protected abstract void initializeAllNonreflexivePairsRespectingAcceptance()
 			throws AutomataOperationCanceledException;
+
+	protected abstract void separateByDifferentSymbols() throws AutomataOperationCanceledException;
 
 	protected abstract void separateByTransitionConstraints() throws AutomataOperationCanceledException;
 

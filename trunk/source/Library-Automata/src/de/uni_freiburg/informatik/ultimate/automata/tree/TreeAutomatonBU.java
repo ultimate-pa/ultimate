@@ -30,10 +30,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -344,6 +342,30 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 		return statesString + "\n" + rulesString;
 	}
 
+
+	public <ST> TreeAutomatonBU<LETTER, ST> reconstruct(final Map<STATE, ST> mp) {
+		final TreeAutomatonBU<LETTER, ST> res = new TreeAutomatonBU<>();
+		res.extendAlphabet(mAlphabet);
+		for (final STATE s : mStates) {
+			res.addState(mp.get(s));
+			if (isFinalState(s)) {
+				res.addFinalState(mp.get(s));
+			}
+			if (isInitialState(s)) {
+				res.addInitialState(mp.get(s));
+			}
+		}
+		for (final TreeAutomatonRule<LETTER, STATE> rule : mRules) {
+			final List<ST> src = new ArrayList<>();
+			for (final STATE s : rule.getSource()) {
+				src.add(mp.get(s));
+			}
+			final ST dest = mp.get(rule.getDest());
+			res.addRule(new TreeAutomatonRule<LETTER, ST>(rule.getLetter(), src, dest));
+		}
+		return res;
+	}
+	
 	@Override
 	public String toString() {
 

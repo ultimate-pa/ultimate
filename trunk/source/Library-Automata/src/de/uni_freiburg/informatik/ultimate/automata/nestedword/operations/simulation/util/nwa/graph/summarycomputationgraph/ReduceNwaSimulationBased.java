@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -41,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwaDd;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaMaxSat2.Settings;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSat;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.MinimizeNwaPmaxSatAsymmetric;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateBisimulation;
@@ -186,7 +188,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 			NwaSimulationUtil.retrieveGeneralNwaAutomataPerformance(sim.getSimulationPerformance(), mOperand, result,
 					mServices);
 
-			mStatistics = writeStatistics(initialPairs, sizeOfLargestEquivalenceClass, gameAutomatonSize, graph, sim,
+			mStatistics = addStatistics(initialPairs, sizeOfLargestEquivalenceClass, gameAutomatonSize, graph, sim,
 					resultPair, timePreprocessing, timeSimulation);
 
 		} catch (final AutomataOperationCanceledException aoce) {
@@ -205,7 +207,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		printExitMessage();
 	}
 
-	private AutomataOperationStatistics writeStatistics(final ISetOfPairs<STATE, ?> initialPairs,
+	private AutomataOperationStatistics addStatistics(final ISetOfPairs<STATE, ?> initialPairs,
 			final int sizeOfLargestEquivalenceClass, final int gameAutomatonSize, final AGameGraph<LETTER, STATE> graph,
 			final ParsimoniousSimulation sim,
 			final Pair<IDoubleDeckerAutomaton<LETTER, STATE>, MinimizeNwaMaxSat2<LETTER, STATE, ?>> resultPair,
@@ -315,10 +317,10 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 			throws AutomataOperationCanceledException {
 		final UnionFind<STATE> equivalenceRelation =
 				simulationToEquivalenceRelation(operand, simulationInfoProvider, graph);
-		final boolean mergeFinalAndNonFinalStates = simulationInfoProvider.mayMergeFinalAndNonFinalStates();
+
+		final Settings<STATE> settings = getPmaxSatSettings(simulationInfoProvider);
 		final MinimizeNwaPmaxSat<LETTER, STATE> maxSatMinimizer = new MinimizeNwaPmaxSat<>(mServices, stateFactory,
-				mOperand, new PartitionBackedSetOfPairs<>(equivalenceRelation.getAllEquivalenceClasses()),
-				new MinimizeNwaMaxSat2.Settings<STATE>().setFinalStateConstraints(!mergeFinalAndNonFinalStates));
+				mOperand, new PartitionBackedSetOfPairs<>(equivalenceRelation.getAllEquivalenceClasses()), settings);
 		return new Pair<>(maxSatMinimizer.getResult(), maxSatMinimizer);
 	}
 
@@ -329,11 +331,20 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		final NestedMapBackedSetOfPairs<STATE> simRelation = new NestedMapBackedSetOfPairs<>();
 		readoutSimulationRelation(graph, simulationInfoProvider, operand, simRelation);
 
-		final boolean mergeFinalAndNonFinalStates = simulationInfoProvider.mayMergeFinalAndNonFinalStates();
+		final Settings<STATE> settings = getPmaxSatSettings(simulationInfoProvider);
 		final MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> maxSatMinimizer = new MinimizeNwaPmaxSatAsymmetric<>(
-				mServices, stateFactory, mOperand, simRelation.getRelation(),
-				new MinimizeNwaMaxSat2.Settings<STATE>().setFinalStateConstraints(!mergeFinalAndNonFinalStates));
+				mServices, stateFactory, mOperand, simRelation.getRelation(), settings);
 		return new Pair<>(maxSatMinimizer.getResult(), maxSatMinimizer);
+	}
+
+	private Settings<STATE> getPmaxSatSettings(final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider) {
+		final boolean mergeFinalAndNonFinalStates = simulationInfoProvider.mayMergeFinalAndNonFinalStates();
+		final BiPredicate<STATE, STATE> finalNonfinalConstraint = mergeFinalAndNonFinalStates
+				? new MinimizeNwaMaxSat2.RelationBackedBiPredicate<>(new HashRelationBackedSetOfPairs<>())
+				: new MinimizeNwaMaxSat2.TrueBiPredicate<>();
+		final Settings<STATE> settings =
+				new MinimizeNwaMaxSat2.Settings<STATE>().setFinalNonfinalConstraintPredicate(finalNonfinalConstraint);
+		return settings;
 	}
 
 	@Override

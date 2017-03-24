@@ -35,14 +35,18 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.tree.visualization.TreeAutomatonToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 
 /**
  * Interface to create a tree automaton
+ * 
  * @author mostafa.amin93@gmail.com, grugelt@uni-freiburg.de
  * 
  * 
- * @param <LETTER> symbol
- * @param <STATE> state
+ * @param <LETTER>
+ *            symbol
+ * @param <STATE>
+ *            state
  */
 public interface ITreeAutomatonBU<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
 
@@ -50,12 +54,12 @@ public interface ITreeAutomatonBU<LETTER, STATE> extends IAutomaton<LETTER, STAT
 	 * @return a set of all the states in the automaton.
 	 */
 	Set<STATE> getStates();
-	
+
 	/**
 	 * @return a set of all initial states in the automaton.
 	 */
 	Set<STATE> getInitialStates();
-	
+
 	/**
 	 * @param state
 	 * @return true, if given state is final.
@@ -67,40 +71,48 @@ public interface ITreeAutomatonBU<LETTER, STATE> extends IAutomaton<LETTER, STAT
 	 * @return true, if given state is initial.
 	 */
 	boolean isInitialState(final STATE state);
-	
+
 	/**
 	 * @param states
 	 * @return a list of all successor states for given states.
 	 */
 	Iterable<TreeAutomatonRule<LETTER, STATE>> getSuccessors(final List<STATE> states);
-	
+
 	/**
 	 * @param states
 	 * @param letter
 	 * @return a list of all successors for given states and given letter.
 	 */
 	Iterable<STATE> getSuccessors(final List<STATE> states, final LETTER letter);
-	
+
 	/**
 	 * @param state
-	 * @return a map that denotes all the lists of rules that goes to given state.
+	 * @return a map that denotes all the lists of rules that goes to given
+	 *         state.
 	 */
 	Map<LETTER, Iterable<List<STATE>>> getPredecessors(final STATE state);
-	
+
 	/**
 	 * @param state
 	 * @param letter
-	 * @return Given a letter and a state, get all rules that goes to the given state
-	 * using the given letter.
+	 * @return Given a letter and a state, get all rules that goes to the given
+	 *         state using the given letter.
 	 */
 	Iterable<List<STATE>> getPredecessors(final STATE state, final LETTER letter);
-	
+
 	/**
 	 * 
 	 * @return Get the rules of the automaton.
 	 */
 	Iterable<TreeAutomatonRule<LETTER, STATE>> getRules();
-	
+
+	/***
+	 * Add a new rule to the automaton.
+	 * 
+	 * @param rule
+	 */
+	void addRule(final TreeAutomatonRule<LETTER, STATE> rule);
+
 	@Override
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException {
