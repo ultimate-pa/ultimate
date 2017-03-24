@@ -33,11 +33,14 @@ import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.TAPreferences.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.TAPreferences.Minimization;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PredicateQueuePair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PredicateQueueResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.MultiTrackTraceAbstractionRefinementStrategy;
@@ -237,8 +240,20 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 		return TraceAbstractionProtos.CodeBlock.newBuilder().setCode(codeblock.getPrettyPrintedStatements()).build();
 	}
 
+	public static TraceAbstractionProtos.IcfgLocation fromLocation(IcfgLocation location) {
+		return TraceAbstractionProtos.IcfgLocation.newBuilder().setDebugIdentifier(location.getDebugIdentifier())
+				.setProcedure(location.getProcedure()).build();
+	}
+
 	public static TraceAbstractionProtos.Predicate fromPredicate(IPredicate predicate) {
 		final TraceAbstractionProtos.Predicate.Builder builder = TraceAbstractionProtos.Predicate.newBuilder();
+		if (predicate instanceof ISLPredicate) {
+			ISLPredicate islPred = (ISLPredicate) predicate;
+			builder.addLocation(fromLocation(islPred.getProgramPoint()));
+		} else if (predicate instanceof IMLPredicate) {
+			IMLPredicate imlPred = (IMLPredicate) predicate;
+			Arrays.stream(imlPred.getProgramPoints()).map(TAConverter::fromLocation).forEach(builder::addLocation);
+		}
 		builder.setFormulaString(predicate.getFormula().toString())
 				.setFormulaHashCode(predicate.getFormula().hashCode());
 		Arrays.stream(predicate.getProcedures()).forEach(builder::addProcedures);

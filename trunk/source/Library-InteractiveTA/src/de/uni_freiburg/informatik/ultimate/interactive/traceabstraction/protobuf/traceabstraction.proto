@@ -132,10 +132,16 @@ message PredicateDoubleDecker {
 }
 
 message Predicate {
-	repeated string procedures = 1;
+	repeated IcfgLocation location = 1;
+	repeated string procedures = 2;
 	// pretty printed formula
-	string formulaString = 2;
-	int32 formulaHashCode = 3;
+	string formulaString = 3;
+	int32 formulaHashCode = 4;
+}
+
+message IcfgLocation {
+	string procedure = 2;
+	string debugIdentifier = 1;
 }
 
 enum Strategy {
@@ -225,20 +231,16 @@ message CodeBlock {
 	// the transformulas and lots of other stuff
 	// in CodeBlock is not used for now.
 } /*
-klar:
-TAPreferences (Insbesondere die Interaktiv-Einstellungen)
+TAPreferences
 
 initial abstraction, interpolant automata:
+
 INestedWordAutomaton
 NestedWordAutomaton<CodeBlock, IPredicate>
 
 Counterexample anzeigen:
 IRun<CodeBlock, IPredicate>
 
-forbiddenStates (StartStates und Goalstates auch möglich falls sinnvoll?)
+forbiddenStates, startStates, goalstates
 Set<IPredicate>
-
-
-other CEGAR Loop iteration info:
-int mIteration
 */

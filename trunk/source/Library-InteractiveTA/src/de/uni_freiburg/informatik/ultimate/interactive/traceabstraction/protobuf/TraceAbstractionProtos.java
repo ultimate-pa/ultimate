@@ -7063,20 +7063,44 @@ public final class TraceAbstractionProtos {
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>repeated string procedures = 1;</code>
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+     */
+    java.util.List<de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation> 
+        getLocationList();
+    /**
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+     */
+    de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation getLocation(int index);
+    /**
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+     */
+    int getLocationCount();
+    /**
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+     */
+    java.util.List<? extends de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocationOrBuilder> 
+        getLocationOrBuilderList();
+    /**
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+     */
+    de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocationOrBuilder getLocationOrBuilder(
+        int index);
+
+    /**
+     * <code>repeated string procedures = 2;</code>
      */
     java.util.List<java.lang.String>
         getProceduresList();
     /**
-     * <code>repeated string procedures = 1;</code>
+     * <code>repeated string procedures = 2;</code>
      */
     int getProceduresCount();
     /**
-     * <code>repeated string procedures = 1;</code>
+     * <code>repeated string procedures = 2;</code>
      */
     java.lang.String getProcedures(int index);
     /**
-     * <code>repeated string procedures = 1;</code>
+     * <code>repeated string procedures = 2;</code>
      */
     com.google.protobuf.ByteString
         getProceduresBytes(int index);
@@ -7086,7 +7110,7 @@ public final class TraceAbstractionProtos {
      * pretty printed formula
      * </pre>
      *
-     * <code>optional string formulaString = 2;</code>
+     * <code>optional string formulaString = 3;</code>
      */
     java.lang.String getFormulaString();
     /**
@@ -7094,13 +7118,13 @@ public final class TraceAbstractionProtos {
      * pretty printed formula
      * </pre>
      *
-     * <code>optional string formulaString = 2;</code>
+     * <code>optional string formulaString = 3;</code>
      */
     com.google.protobuf.ByteString
         getFormulaStringBytes();
 
     /**
-     * <code>optional int32 formulaHashCode = 3;</code>
+     * <code>optional int32 formulaHashCode = 4;</code>
      */
     int getFormulaHashCode();
   }
@@ -7116,6 +7140,7 @@ public final class TraceAbstractionProtos {
       super(builder);
     }
     private Predicate() {
+      location_ = java.util.Collections.emptyList();
       procedures_ = com.google.protobuf.LazyStringArrayList.EMPTY;
       formulaString_ = "";
       formulaHashCode_ = 0;
@@ -7147,21 +7172,30 @@ public final class TraceAbstractionProtos {
               break;
             }
             case 10: {
-              java.lang.String s = input.readStringRequireUtf8();
               if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                procedures_ = new com.google.protobuf.LazyStringArrayList();
+                location_ = new java.util.ArrayList<de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation>();
                 mutable_bitField0_ |= 0x00000001;
+              }
+              location_.add(
+                  input.readMessage(de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.parser(), extensionRegistry));
+              break;
+            }
+            case 18: {
+              java.lang.String s = input.readStringRequireUtf8();
+              if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+                procedures_ = new com.google.protobuf.LazyStringArrayList();
+                mutable_bitField0_ |= 0x00000002;
               }
               procedures_.add(s);
               break;
             }
-            case 18: {
+            case 26: {
               java.lang.String s = input.readStringRequireUtf8();
 
               formulaString_ = s;
               break;
             }
-            case 24: {
+            case 32: {
 
               formulaHashCode_ = input.readInt32();
               break;
@@ -7175,6 +7209,9 @@ public final class TraceAbstractionProtos {
             e).setUnfinishedMessage(this);
       } finally {
         if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+          location_ = java.util.Collections.unmodifiableList(location_);
+        }
+        if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
           procedures_ = procedures_.getUnmodifiableView();
         }
         makeExtensionsImmutable();
@@ -7193,43 +7230,78 @@ public final class TraceAbstractionProtos {
     }
 
     private int bitField0_;
-    public static final int PROCEDURES_FIELD_NUMBER = 1;
+    public static final int LOCATION_FIELD_NUMBER = 1;
+    private java.util.List<de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation> location_;
+    /**
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+     */
+    public java.util.List<de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation> getLocationList() {
+      return location_;
+    }
+    /**
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+     */
+    public java.util.List<? extends de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocationOrBuilder> 
+        getLocationOrBuilderList() {
+      return location_;
+    }
+    /**
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+     */
+    public int getLocationCount() {
+      return location_.size();
+    }
+    /**
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+     */
+    public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation getLocation(int index) {
+      return location_.get(index);
+    }
+    /**
+     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+     */
+    public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocationOrBuilder getLocationOrBuilder(
+        int index) {
+      return location_.get(index);
+    }
+
+    public static final int PROCEDURES_FIELD_NUMBER = 2;
     private com.google.protobuf.LazyStringList procedures_;
     /**
-     * <code>repeated string procedures = 1;</code>
+     * <code>repeated string procedures = 2;</code>
      */
     public com.google.protobuf.ProtocolStringList
         getProceduresList() {
       return procedures_;
     }
     /**
-     * <code>repeated string procedures = 1;</code>
+     * <code>repeated string procedures = 2;</code>
      */
     public int getProceduresCount() {
       return procedures_.size();
     }
     /**
-     * <code>repeated string procedures = 1;</code>
+     * <code>repeated string procedures = 2;</code>
      */
     public java.lang.String getProcedures(int index) {
       return procedures_.get(index);
     }
     /**
-     * <code>repeated string procedures = 1;</code>
+     * <code>repeated string procedures = 2;</code>
      */
     public com.google.protobuf.ByteString
         getProceduresBytes(int index) {
       return procedures_.getByteString(index);
     }
 
-    public static final int FORMULASTRING_FIELD_NUMBER = 2;
+    public static final int FORMULASTRING_FIELD_NUMBER = 3;
     private volatile java.lang.Object formulaString_;
     /**
      * <pre>
      * pretty printed formula
      * </pre>
      *
-     * <code>optional string formulaString = 2;</code>
+     * <code>optional string formulaString = 3;</code>
      */
     public java.lang.String getFormulaString() {
       java.lang.Object ref = formulaString_;
@@ -7248,7 +7320,7 @@ public final class TraceAbstractionProtos {
      * pretty printed formula
      * </pre>
      *
-     * <code>optional string formulaString = 2;</code>
+     * <code>optional string formulaString = 3;</code>
      */
     public com.google.protobuf.ByteString
         getFormulaStringBytes() {
@@ -7264,10 +7336,10 @@ public final class TraceAbstractionProtos {
       }
     }
 
-    public static final int FORMULAHASHCODE_FIELD_NUMBER = 3;
+    public static final int FORMULAHASHCODE_FIELD_NUMBER = 4;
     private int formulaHashCode_;
     /**
-     * <code>optional int32 formulaHashCode = 3;</code>
+     * <code>optional int32 formulaHashCode = 4;</code>
      */
     public int getFormulaHashCode() {
       return formulaHashCode_;
@@ -7285,14 +7357,17 @@ public final class TraceAbstractionProtos {
 
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
+      for (int i = 0; i < location_.size(); i++) {
+        output.writeMessage(1, location_.get(i));
+      }
       for (int i = 0; i < procedures_.size(); i++) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, procedures_.getRaw(i));
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, procedures_.getRaw(i));
       }
       if (!getFormulaStringBytes().isEmpty()) {
-        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, formulaString_);
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, formulaString_);
       }
       if (formulaHashCode_ != 0) {
-        output.writeInt32(3, formulaHashCode_);
+        output.writeInt32(4, formulaHashCode_);
       }
     }
 
@@ -7301,6 +7376,10 @@ public final class TraceAbstractionProtos {
       if (size != -1) return size;
 
       size = 0;
+      for (int i = 0; i < location_.size(); i++) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(1, location_.get(i));
+      }
       {
         int dataSize = 0;
         for (int i = 0; i < procedures_.size(); i++) {
@@ -7310,11 +7389,11 @@ public final class TraceAbstractionProtos {
         size += 1 * getProceduresList().size();
       }
       if (!getFormulaStringBytes().isEmpty()) {
-        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, formulaString_);
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, formulaString_);
       }
       if (formulaHashCode_ != 0) {
         size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(3, formulaHashCode_);
+          .computeInt32Size(4, formulaHashCode_);
       }
       memoizedSize = size;
       return size;
@@ -7332,6 +7411,8 @@ public final class TraceAbstractionProtos {
       de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Predicate other = (de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Predicate) obj;
 
       boolean result = true;
+      result = result && getLocationList()
+          .equals(other.getLocationList());
       result = result && getProceduresList()
           .equals(other.getProceduresList());
       result = result && getFormulaString()
@@ -7348,6 +7429,10 @@ public final class TraceAbstractionProtos {
       }
       int hash = 41;
       hash = (19 * hash) + getDescriptorForType().hashCode();
+      if (getLocationCount() > 0) {
+        hash = (37 * hash) + LOCATION_FIELD_NUMBER;
+        hash = (53 * hash) + getLocationList().hashCode();
+      }
       if (getProceduresCount() > 0) {
         hash = (37 * hash) + PROCEDURES_FIELD_NUMBER;
         hash = (53 * hash) + getProceduresList().hashCode();
@@ -7470,12 +7555,19 @@ public final class TraceAbstractionProtos {
       private void maybeForceBuilderInitialization() {
         if (com.google.protobuf.GeneratedMessageV3
                 .alwaysUseFieldBuilders) {
+          getLocationFieldBuilder();
         }
       }
       public Builder clear() {
         super.clear();
+        if (locationBuilder_ == null) {
+          location_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000001);
+        } else {
+          locationBuilder_.clear();
+        }
         procedures_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-        bitField0_ = (bitField0_ & ~0x00000001);
+        bitField0_ = (bitField0_ & ~0x00000002);
         formulaString_ = "";
 
         formulaHashCode_ = 0;
@@ -7504,9 +7596,18 @@ public final class TraceAbstractionProtos {
         de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Predicate result = new de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Predicate(this);
         int from_bitField0_ = bitField0_;
         int to_bitField0_ = 0;
-        if (((bitField0_ & 0x00000001) == 0x00000001)) {
+        if (locationBuilder_ == null) {
+          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            location_ = java.util.Collections.unmodifiableList(location_);
+            bitField0_ = (bitField0_ & ~0x00000001);
+          }
+          result.location_ = location_;
+        } else {
+          result.location_ = locationBuilder_.build();
+        }
+        if (((bitField0_ & 0x00000002) == 0x00000002)) {
           procedures_ = procedures_.getUnmodifiableView();
-          bitField0_ = (bitField0_ & ~0x00000001);
+          bitField0_ = (bitField0_ & ~0x00000002);
         }
         result.procedures_ = procedures_;
         result.formulaString_ = formulaString_;
@@ -7553,10 +7654,36 @@ public final class TraceAbstractionProtos {
 
       public Builder mergeFrom(de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Predicate other) {
         if (other == de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Predicate.getDefaultInstance()) return this;
+        if (locationBuilder_ == null) {
+          if (!other.location_.isEmpty()) {
+            if (location_.isEmpty()) {
+              location_ = other.location_;
+              bitField0_ = (bitField0_ & ~0x00000001);
+            } else {
+              ensureLocationIsMutable();
+              location_.addAll(other.location_);
+            }
+            onChanged();
+          }
+        } else {
+          if (!other.location_.isEmpty()) {
+            if (locationBuilder_.isEmpty()) {
+              locationBuilder_.dispose();
+              locationBuilder_ = null;
+              location_ = other.location_;
+              bitField0_ = (bitField0_ & ~0x00000001);
+              locationBuilder_ = 
+                com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                   getLocationFieldBuilder() : null;
+            } else {
+              locationBuilder_.addAllMessages(other.location_);
+            }
+          }
+        }
         if (!other.procedures_.isEmpty()) {
           if (procedures_.isEmpty()) {
             procedures_ = other.procedures_;
-            bitField0_ = (bitField0_ & ~0x00000001);
+            bitField0_ = (bitField0_ & ~0x00000002);
           } else {
             ensureProceduresIsMutable();
             procedures_.addAll(other.procedures_);
@@ -7597,41 +7724,281 @@ public final class TraceAbstractionProtos {
       }
       private int bitField0_;
 
-      private com.google.protobuf.LazyStringList procedures_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-      private void ensureProceduresIsMutable() {
+      private java.util.List<de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation> location_ =
+        java.util.Collections.emptyList();
+      private void ensureLocationIsMutable() {
         if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-          procedures_ = new com.google.protobuf.LazyStringArrayList(procedures_);
+          location_ = new java.util.ArrayList<de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation>(location_);
           bitField0_ |= 0x00000001;
          }
       }
+
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.Builder, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocationOrBuilder> locationBuilder_;
+
       /**
-       * <code>repeated string procedures = 1;</code>
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+       */
+      public java.util.List<de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation> getLocationList() {
+        if (locationBuilder_ == null) {
+          return java.util.Collections.unmodifiableList(location_);
+        } else {
+          return locationBuilder_.getMessageList();
+        }
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+       */
+      public int getLocationCount() {
+        if (locationBuilder_ == null) {
+          return location_.size();
+        } else {
+          return locationBuilder_.getCount();
+        }
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation getLocation(int index) {
+        if (locationBuilder_ == null) {
+          return location_.get(index);
+        } else {
+          return locationBuilder_.getMessage(index);
+        }
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+       */
+      public Builder setLocation(
+          int index, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation value) {
+        if (locationBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureLocationIsMutable();
+          location_.set(index, value);
+          onChanged();
+        } else {
+          locationBuilder_.setMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+       */
+      public Builder setLocation(
+          int index, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.Builder builderForValue) {
+        if (locationBuilder_ == null) {
+          ensureLocationIsMutable();
+          location_.set(index, builderForValue.build());
+          onChanged();
+        } else {
+          locationBuilder_.setMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+       */
+      public Builder addLocation(de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation value) {
+        if (locationBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureLocationIsMutable();
+          location_.add(value);
+          onChanged();
+        } else {
+          locationBuilder_.addMessage(value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+       */
+      public Builder addLocation(
+          int index, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation value) {
+        if (locationBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          ensureLocationIsMutable();
+          location_.add(index, value);
+          onChanged();
+        } else {
+          locationBuilder_.addMessage(index, value);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+       */
+      public Builder addLocation(
+          de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.Builder builderForValue) {
+        if (locationBuilder_ == null) {
+          ensureLocationIsMutable();
+          location_.add(builderForValue.build());
+          onChanged();
+        } else {
+          locationBuilder_.addMessage(builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+       */
+      public Builder addLocation(
+          int index, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.Builder builderForValue) {
+        if (locationBuilder_ == null) {
+          ensureLocationIsMutable();
+          location_.add(index, builderForValue.build());
+          onChanged();
+        } else {
+          locationBuilder_.addMessage(index, builderForValue.build());
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+       */
+      public Builder addAllLocation(
+          java.lang.Iterable<? extends de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation> values) {
+        if (locationBuilder_ == null) {
+          ensureLocationIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, location_);
+          onChanged();
+        } else {
+          locationBuilder_.addAllMessages(values);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+       */
+      public Builder clearLocation() {
+        if (locationBuilder_ == null) {
+          location_ = java.util.Collections.emptyList();
+          bitField0_ = (bitField0_ & ~0x00000001);
+          onChanged();
+        } else {
+          locationBuilder_.clear();
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+       */
+      public Builder removeLocation(int index) {
+        if (locationBuilder_ == null) {
+          ensureLocationIsMutable();
+          location_.remove(index);
+          onChanged();
+        } else {
+          locationBuilder_.remove(index);
+        }
+        return this;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.Builder getLocationBuilder(
+          int index) {
+        return getLocationFieldBuilder().getBuilder(index);
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocationOrBuilder getLocationOrBuilder(
+          int index) {
+        if (locationBuilder_ == null) {
+          return location_.get(index);  } else {
+          return locationBuilder_.getMessageOrBuilder(index);
+        }
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+       */
+      public java.util.List<? extends de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocationOrBuilder> 
+           getLocationOrBuilderList() {
+        if (locationBuilder_ != null) {
+          return locationBuilder_.getMessageOrBuilderList();
+        } else {
+          return java.util.Collections.unmodifiableList(location_);
+        }
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.Builder addLocationBuilder() {
+        return getLocationFieldBuilder().addBuilder(
+            de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.Builder addLocationBuilder(
+          int index) {
+        return getLocationFieldBuilder().addBuilder(
+            index, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.getDefaultInstance());
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation location = 1;</code>
+       */
+      public java.util.List<de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.Builder> 
+           getLocationBuilderList() {
+        return getLocationFieldBuilder().getBuilderList();
+      }
+      private com.google.protobuf.RepeatedFieldBuilderV3<
+          de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.Builder, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocationOrBuilder> 
+          getLocationFieldBuilder() {
+        if (locationBuilder_ == null) {
+          locationBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+              de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.Builder, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocationOrBuilder>(
+                  location_,
+                  ((bitField0_ & 0x00000001) == 0x00000001),
+                  getParentForChildren(),
+                  isClean());
+          location_ = null;
+        }
+        return locationBuilder_;
+      }
+
+      private com.google.protobuf.LazyStringList procedures_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      private void ensureProceduresIsMutable() {
+        if (!((bitField0_ & 0x00000002) == 0x00000002)) {
+          procedures_ = new com.google.protobuf.LazyStringArrayList(procedures_);
+          bitField0_ |= 0x00000002;
+         }
+      }
+      /**
+       * <code>repeated string procedures = 2;</code>
        */
       public com.google.protobuf.ProtocolStringList
           getProceduresList() {
         return procedures_.getUnmodifiableView();
       }
       /**
-       * <code>repeated string procedures = 1;</code>
+       * <code>repeated string procedures = 2;</code>
        */
       public int getProceduresCount() {
         return procedures_.size();
       }
       /**
-       * <code>repeated string procedures = 1;</code>
+       * <code>repeated string procedures = 2;</code>
        */
       public java.lang.String getProcedures(int index) {
         return procedures_.get(index);
       }
       /**
-       * <code>repeated string procedures = 1;</code>
+       * <code>repeated string procedures = 2;</code>
        */
       public com.google.protobuf.ByteString
           getProceduresBytes(int index) {
         return procedures_.getByteString(index);
       }
       /**
-       * <code>repeated string procedures = 1;</code>
+       * <code>repeated string procedures = 2;</code>
        */
       public Builder setProcedures(
           int index, java.lang.String value) {
@@ -7644,7 +8011,7 @@ public final class TraceAbstractionProtos {
         return this;
       }
       /**
-       * <code>repeated string procedures = 1;</code>
+       * <code>repeated string procedures = 2;</code>
        */
       public Builder addProcedures(
           java.lang.String value) {
@@ -7657,7 +8024,7 @@ public final class TraceAbstractionProtos {
         return this;
       }
       /**
-       * <code>repeated string procedures = 1;</code>
+       * <code>repeated string procedures = 2;</code>
        */
       public Builder addAllProcedures(
           java.lang.Iterable<java.lang.String> values) {
@@ -7668,16 +8035,16 @@ public final class TraceAbstractionProtos {
         return this;
       }
       /**
-       * <code>repeated string procedures = 1;</code>
+       * <code>repeated string procedures = 2;</code>
        */
       public Builder clearProcedures() {
         procedures_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-        bitField0_ = (bitField0_ & ~0x00000001);
+        bitField0_ = (bitField0_ & ~0x00000002);
         onChanged();
         return this;
       }
       /**
-       * <code>repeated string procedures = 1;</code>
+       * <code>repeated string procedures = 2;</code>
        */
       public Builder addProceduresBytes(
           com.google.protobuf.ByteString value) {
@@ -7697,7 +8064,7 @@ public final class TraceAbstractionProtos {
        * pretty printed formula
        * </pre>
        *
-       * <code>optional string formulaString = 2;</code>
+       * <code>optional string formulaString = 3;</code>
        */
       public java.lang.String getFormulaString() {
         java.lang.Object ref = formulaString_;
@@ -7716,7 +8083,7 @@ public final class TraceAbstractionProtos {
        * pretty printed formula
        * </pre>
        *
-       * <code>optional string formulaString = 2;</code>
+       * <code>optional string formulaString = 3;</code>
        */
       public com.google.protobuf.ByteString
           getFormulaStringBytes() {
@@ -7736,7 +8103,7 @@ public final class TraceAbstractionProtos {
        * pretty printed formula
        * </pre>
        *
-       * <code>optional string formulaString = 2;</code>
+       * <code>optional string formulaString = 3;</code>
        */
       public Builder setFormulaString(
           java.lang.String value) {
@@ -7753,7 +8120,7 @@ public final class TraceAbstractionProtos {
        * pretty printed formula
        * </pre>
        *
-       * <code>optional string formulaString = 2;</code>
+       * <code>optional string formulaString = 3;</code>
        */
       public Builder clearFormulaString() {
         
@@ -7766,7 +8133,7 @@ public final class TraceAbstractionProtos {
        * pretty printed formula
        * </pre>
        *
-       * <code>optional string formulaString = 2;</code>
+       * <code>optional string formulaString = 3;</code>
        */
       public Builder setFormulaStringBytes(
           com.google.protobuf.ByteString value) {
@@ -7782,13 +8149,13 @@ public final class TraceAbstractionProtos {
 
       private int formulaHashCode_ ;
       /**
-       * <code>optional int32 formulaHashCode = 3;</code>
+       * <code>optional int32 formulaHashCode = 4;</code>
        */
       public int getFormulaHashCode() {
         return formulaHashCode_;
       }
       /**
-       * <code>optional int32 formulaHashCode = 3;</code>
+       * <code>optional int32 formulaHashCode = 4;</code>
        */
       public Builder setFormulaHashCode(int value) {
         
@@ -7797,7 +8164,7 @@ public final class TraceAbstractionProtos {
         return this;
       }
       /**
-       * <code>optional int32 formulaHashCode = 3;</code>
+       * <code>optional int32 formulaHashCode = 4;</code>
        */
       public Builder clearFormulaHashCode() {
         
@@ -7849,6 +8216,646 @@ public final class TraceAbstractionProtos {
     }
 
     public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Predicate getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
+  public interface IcfgLocationOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>optional string procedure = 2;</code>
+     */
+    java.lang.String getProcedure();
+    /**
+     * <code>optional string procedure = 2;</code>
+     */
+    com.google.protobuf.ByteString
+        getProcedureBytes();
+
+    /**
+     * <code>optional string debugIdentifier = 1;</code>
+     */
+    java.lang.String getDebugIdentifier();
+    /**
+     * <code>optional string debugIdentifier = 1;</code>
+     */
+    com.google.protobuf.ByteString
+        getDebugIdentifierBytes();
+  }
+  /**
+   * Protobuf type {@code de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation}
+   */
+  public  static final class IcfgLocation extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation)
+      IcfgLocationOrBuilder {
+    // Use IcfgLocation.newBuilder() to construct.
+    private IcfgLocation(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private IcfgLocation() {
+      procedure_ = "";
+      debugIdentifier_ = "";
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
+    }
+    private IcfgLocation(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      int mutable_bitField0_ = 0;
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!input.skipField(tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              debugIdentifier_ = s;
+              break;
+            }
+            case 18: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              procedure_ = s;
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IcfgLocation_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IcfgLocation_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.class, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.Builder.class);
+    }
+
+    public static final int PROCEDURE_FIELD_NUMBER = 2;
+    private volatile java.lang.Object procedure_;
+    /**
+     * <code>optional string procedure = 2;</code>
+     */
+    public java.lang.String getProcedure() {
+      java.lang.Object ref = procedure_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        procedure_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>optional string procedure = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getProcedureBytes() {
+      java.lang.Object ref = procedure_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        procedure_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int DEBUGIDENTIFIER_FIELD_NUMBER = 1;
+    private volatile java.lang.Object debugIdentifier_;
+    /**
+     * <code>optional string debugIdentifier = 1;</code>
+     */
+    public java.lang.String getDebugIdentifier() {
+      java.lang.Object ref = debugIdentifier_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        debugIdentifier_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>optional string debugIdentifier = 1;</code>
+     */
+    public com.google.protobuf.ByteString
+        getDebugIdentifierBytes() {
+      java.lang.Object ref = debugIdentifier_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        debugIdentifier_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!getDebugIdentifierBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, debugIdentifier_);
+      }
+      if (!getProcedureBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, procedure_);
+      }
+    }
+
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!getDebugIdentifierBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, debugIdentifier_);
+      }
+      if (!getProcedureBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, procedure_);
+      }
+      memoizedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation)) {
+        return super.equals(obj);
+      }
+      de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation other = (de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation) obj;
+
+      boolean result = true;
+      result = result && getProcedure()
+          .equals(other.getProcedure());
+      result = result && getDebugIdentifier()
+          .equals(other.getDebugIdentifier());
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (37 * hash) + PROCEDURE_FIELD_NUMBER;
+      hash = (53 * hash) + getProcedure().hashCode();
+      hash = (37 * hash) + DEBUGIDENTIFIER_FIELD_NUMBER;
+      hash = (53 * hash) + getDebugIdentifier().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation)
+        de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocationOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IcfgLocation_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IcfgLocation_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.class, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.Builder.class);
+      }
+
+      // Construct using de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      public Builder clear() {
+        super.clear();
+        procedure_ = "";
+
+        debugIdentifier_ = "";
+
+        return this;
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IcfgLocation_descriptor;
+      }
+
+      public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation getDefaultInstanceForType() {
+        return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.getDefaultInstance();
+      }
+
+      public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation build() {
+        de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation buildPartial() {
+        de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation result = new de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation(this);
+        result.procedure_ = procedure_;
+        result.debugIdentifier_ = debugIdentifier_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation) {
+          return mergeFrom((de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation other) {
+        if (other == de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation.getDefaultInstance()) return this;
+        if (!other.getProcedure().isEmpty()) {
+          procedure_ = other.procedure_;
+          onChanged();
+        }
+        if (!other.getDebugIdentifier().isEmpty()) {
+          debugIdentifier_ = other.debugIdentifier_;
+          onChanged();
+        }
+        onChanged();
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private java.lang.Object procedure_ = "";
+      /**
+       * <code>optional string procedure = 2;</code>
+       */
+      public java.lang.String getProcedure() {
+        java.lang.Object ref = procedure_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          procedure_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string procedure = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getProcedureBytes() {
+        java.lang.Object ref = procedure_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          procedure_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string procedure = 2;</code>
+       */
+      public Builder setProcedure(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        procedure_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string procedure = 2;</code>
+       */
+      public Builder clearProcedure() {
+        
+        procedure_ = getDefaultInstance().getProcedure();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string procedure = 2;</code>
+       */
+      public Builder setProcedureBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        procedure_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object debugIdentifier_ = "";
+      /**
+       * <code>optional string debugIdentifier = 1;</code>
+       */
+      public java.lang.String getDebugIdentifier() {
+        java.lang.Object ref = debugIdentifier_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          debugIdentifier_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string debugIdentifier = 1;</code>
+       */
+      public com.google.protobuf.ByteString
+          getDebugIdentifierBytes() {
+        java.lang.Object ref = debugIdentifier_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          debugIdentifier_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string debugIdentifier = 1;</code>
+       */
+      public Builder setDebugIdentifier(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        debugIdentifier_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string debugIdentifier = 1;</code>
+       */
+      public Builder clearDebugIdentifier() {
+        
+        debugIdentifier_ = getDefaultInstance().getDebugIdentifier();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string debugIdentifier = 1;</code>
+       */
+      public Builder setDebugIdentifierBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        debugIdentifier_ = value;
+        onChanged();
+        return this;
+      }
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return this;
+      }
+
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return this;
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation)
+    }
+
+    // @@protoc_insertion_point(class_scope:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.IcfgLocation)
+    private static final de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation();
+    }
+
+    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<IcfgLocation>
+        PARSER = new com.google.protobuf.AbstractParser<IcfgLocation>() {
+      public IcfgLocation parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+          return new IcfgLocation(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<IcfgLocation> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<IcfgLocation> getParserForType() {
+      return PARSER;
+    }
+
+    public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.IcfgLocation getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -15300,6 +16307,11 @@ public final class TraceAbstractionProtos {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Predicate_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IcfgLocation_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IcfgLocation_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Question_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -15439,59 +16451,63 @@ public final class TraceAbstractionProtos {
       ".uni_freiburg.informatik.ultimate.intera" +
       "ctive.traceabstraction.protobuf.Predicat",
       "eDoubleDecker.QueueType\022\r\n\005index\030\002 \001(\005\"!" +
-      "\n\tQueueType\022\n\n\006NORMAL\020\000\022\010\n\004CALL\020\001\"O\n\tPre" +
-      "dicate\022\022\n\nprocedures\030\001 \003(\t\022\025\n\rformulaStr" +
-      "ing\030\002 \001(\t\022\027\n\017formulaHashCode\030\003 \001(\005\"\032\n\010Qu" +
-      "estion\022\016\n\006answer\030\001 \001(\010\"p\n\013CegarResult\022a\n" +
-      "\006result\030\001 \001(\0162Q.de.uni_freiburg.informat" +
-      "ik.ultimate.interactive.traceabstraction" +
-      ".protobuf.Result\"\252\007\n\023NestedWordAutomaton" +
-      "\022e\n\010internal\030\001 \001(\0132S.de.uni_freiburg.inf" +
-      "ormatik.ultimate.interactive.traceabstra",
-      "ction.protobuf.Alphabet\022a\n\004call\030\002 \001(\0132S." +
-      "de.uni_freiburg.informatik.ultimate.inte" +
-      "ractive.traceabstraction.protobuf.Alphab" +
-      "et\022c\n\006return\030\003 \001(\0132S.de.uni_freiburg.inf" +
-      "ormatik.ultimate.interactive.traceabstra" +
-      "ction.protobuf.Alphabet\022d\n\006states\030\004 \003(\0132" +
-      "T.de.uni_freiburg.informatik.ultimate.in" +
-      "teractive.traceabstraction.protobuf.Pred" +
-      "icate\022\022\n\nemptyStack\030\005 \001(\005\022\017\n\007initial\030\006 \003" +
-      "(\005\022\r\n\005final\030\007 \003(\005\022\200\001\n\rinternalEdges\030\010 \003(",
-      "\0132i.de.uni_freiburg.informatik.ultimate." +
-      "interactive.traceabstraction.protobuf.Ne" +
-      "stedWordAutomaton.transition\022|\n\tcallEdge" +
-      "s\030\t \003(\0132i.de.uni_freiburg.informatik.ult" +
-      "imate.interactive.traceabstraction.proto" +
-      "buf.NestedWordAutomaton.transition\022~\n\013re" +
-      "turnEdges\030\n \003(\0132i.de.uni_freiburg.inform" +
-      "atik.ultimate.interactive.traceabstracti" +
-      "on.protobuf.NestedWordAutomaton.transiti" +
-      "on\032I\n\ntransition\022\023\n\013originState\030\001 \001(\005\022\016\n",
-      "\006letter\030\002 \001(\005\022\026\n\016successorState\030\003 \001(\005\"\370\002" +
-      "\n\rIterationInfo\022o\n\003run\030\001 \001(\0132b.de.uni_fr" +
-      "eiburg.informatik.ultimate.interactive.t" +
-      "raceabstraction.protobuf.IterationInfo.N" +
-      "estedRun\022\021\n\titeration\030\002 \001(\005\032\342\001\n\tNestedRu" +
-      "n\022h\n\nnestedWord\030\001 \003(\0132T.de.uni_freiburg." +
+      "\n\tQueueType\022\n\n\006NORMAL\020\000\022\010\n\004CALL\020\001\"\272\001\n\tPr" +
+      "edicate\022i\n\010location\030\001 \003(\0132W.de.uni_freib" +
+      "urg.informatik.ultimate.interactive.trac" +
+      "eabstraction.protobuf.IcfgLocation\022\022\n\npr" +
+      "ocedures\030\002 \003(\t\022\025\n\rformulaString\030\003 \001(\t\022\027\n" +
+      "\017formulaHashCode\030\004 \001(\005\":\n\014IcfgLocation\022\021" +
+      "\n\tprocedure\030\002 \001(\t\022\027\n\017debugIdentifier\030\001 \001" +
+      "(\t\"\032\n\010Question\022\016\n\006answer\030\001 \001(\010\"p\n\013CegarR" +
+      "esult\022a\n\006result\030\001 \001(\0162Q.de.uni_freiburg.",
       "informatik.ultimate.interactive.traceabs" +
-      "traction.protobuf.CodeBlock\022k\n\rstateSequ" +
-      "ence\030\002 \003(\0132T.de.uni_freiburg.informatik." +
-      "ultimate.interactive.traceabstraction.pr",
-      "otobuf.Predicate\"p\n\010Alphabet\022d\n\006letter\030\001" +
-      " \003(\0132T.de.uni_freiburg.informatik.ultima" +
-      "te.interactive.traceabstraction.protobuf" +
-      ".CodeBlock\"\031\n\tCodeBlock\022\014\n\004code\030\001 \001(\t*n\n" +
-      "\010Strategy\022\025\n\021FIXED_PREFERENCES\020\000\022\n\n\006TAIP" +
-      "AN\020\001\022\021\n\rRUBBER_TAIPAN\020\002\022\013\n\007PENGUIN\020\003\022\n\n\006" +
-      "WALRUS\020\004\022\t\n\005CAMEL\020\005\022\010\n\004WOLF\020\006*\260\001\n\005Track\022" +
-      "!\n\035SMTINTERPOL_TREE_INTERPOLANTS\020\000\022\022\n\016SM" +
-      "TINTERPOL_FP\020\001\022\013\n\007Z3_FPBP\020\002\022\t\n\005Z3_FP\020\003\022\032" +
-      "\n\026Z3_NESTED_INTERPOLANTS\020\004\022\r\n\tCVC4_FPBP\020",
-      "\005\022\013\n\007CVC4_FP\020\006\022\020\n\014MATHSAT_FPBP\020\007\022\016\n\nMATH" +
-      "SAT_FP\020\010*8\n\006Result\022\010\n\004SAFE\020\000\022\n\n\006UNSAFE\020\001" +
-      "\022\013\n\007TIMEOUT\020\002\022\013\n\007UNKNOWN\020\003B\030B\026TraceAbstr" +
-      "actionProtosb\006proto3"
+      "traction.protobuf.Result\"\252\007\n\023NestedWordA" +
+      "utomaton\022e\n\010internal\030\001 \001(\0132S.de.uni_frei" +
+      "burg.informatik.ultimate.interactive.tra" +
+      "ceabstraction.protobuf.Alphabet\022a\n\004call\030" +
+      "\002 \001(\0132S.de.uni_freiburg.informatik.ultim" +
+      "ate.interactive.traceabstraction.protobu" +
+      "f.Alphabet\022c\n\006return\030\003 \001(\0132S.de.uni_frei" +
+      "burg.informatik.ultimate.interactive.tra" +
+      "ceabstraction.protobuf.Alphabet\022d\n\006state",
+      "s\030\004 \003(\0132T.de.uni_freiburg.informatik.ult" +
+      "imate.interactive.traceabstraction.proto" +
+      "buf.Predicate\022\022\n\nemptyStack\030\005 \001(\005\022\017\n\007ini" +
+      "tial\030\006 \003(\005\022\r\n\005final\030\007 \003(\005\022\200\001\n\rinternalEd" +
+      "ges\030\010 \003(\0132i.de.uni_freiburg.informatik.u" +
+      "ltimate.interactive.traceabstraction.pro" +
+      "tobuf.NestedWordAutomaton.transition\022|\n\t" +
+      "callEdges\030\t \003(\0132i.de.uni_freiburg.inform" +
+      "atik.ultimate.interactive.traceabstracti" +
+      "on.protobuf.NestedWordAutomaton.transiti",
+      "on\022~\n\013returnEdges\030\n \003(\0132i.de.uni_freibur" +
+      "g.informatik.ultimate.interactive.tracea" +
+      "bstraction.protobuf.NestedWordAutomaton." +
+      "transition\032I\n\ntransition\022\023\n\013originState\030" +
+      "\001 \001(\005\022\016\n\006letter\030\002 \001(\005\022\026\n\016successorState\030" +
+      "\003 \001(\005\"\370\002\n\rIterationInfo\022o\n\003run\030\001 \001(\0132b.d" +
+      "e.uni_freiburg.informatik.ultimate.inter" +
+      "active.traceabstraction.protobuf.Iterati" +
+      "onInfo.NestedRun\022\021\n\titeration\030\002 \001(\005\032\342\001\n\t" +
+      "NestedRun\022h\n\nnestedWord\030\001 \003(\0132T.de.uni_f",
+      "reiburg.informatik.ultimate.interactive." +
+      "traceabstraction.protobuf.CodeBlock\022k\n\rs" +
+      "tateSequence\030\002 \003(\0132T.de.uni_freiburg.inf" +
+      "ormatik.ultimate.interactive.traceabstra" +
+      "ction.protobuf.Predicate\"p\n\010Alphabet\022d\n\006" +
+      "letter\030\001 \003(\0132T.de.uni_freiburg.informati" +
+      "k.ultimate.interactive.traceabstraction." +
+      "protobuf.CodeBlock\"\031\n\tCodeBlock\022\014\n\004code\030" +
+      "\001 \001(\t*n\n\010Strategy\022\025\n\021FIXED_PREFERENCES\020\000" +
+      "\022\n\n\006TAIPAN\020\001\022\021\n\rRUBBER_TAIPAN\020\002\022\013\n\007PENGU",
+      "IN\020\003\022\n\n\006WALRUS\020\004\022\t\n\005CAMEL\020\005\022\010\n\004WOLF\020\006*\260\001" +
+      "\n\005Track\022!\n\035SMTINTERPOL_TREE_INTERPOLANTS" +
+      "\020\000\022\022\n\016SMTINTERPOL_FP\020\001\022\013\n\007Z3_FPBP\020\002\022\t\n\005Z" +
+      "3_FP\020\003\022\032\n\026Z3_NESTED_INTERPOLANTS\020\004\022\r\n\tCV" +
+      "C4_FPBP\020\005\022\013\n\007CVC4_FP\020\006\022\020\n\014MATHSAT_FPBP\020\007" +
+      "\022\016\n\nMATHSAT_FP\020\010*8\n\006Result\022\010\n\004SAFE\020\000\022\n\n\006" +
+      "UNSAFE\020\001\022\013\n\007TIMEOUT\020\002\022\013\n\007UNKNOWN\020\003B\030B\026Tr" +
+      "aceAbstractionProtosb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -15546,21 +16562,27 @@ public final class TraceAbstractionProtos {
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Predicate_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Predicate_descriptor,
-        new java.lang.String[] { "Procedures", "FormulaString", "FormulaHashCode", });
-    internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Question_descriptor =
+        new java.lang.String[] { "Location", "Procedures", "FormulaString", "FormulaHashCode", });
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IcfgLocation_descriptor =
       getDescriptor().getMessageTypes().get(5);
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IcfgLocation_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IcfgLocation_descriptor,
+        new java.lang.String[] { "Procedure", "DebugIdentifier", });
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Question_descriptor =
+      getDescriptor().getMessageTypes().get(6);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Question_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Question_descriptor,
         new java.lang.String[] { "Answer", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_CegarResult_descriptor =
-      getDescriptor().getMessageTypes().get(6);
+      getDescriptor().getMessageTypes().get(7);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_CegarResult_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_CegarResult_descriptor,
         new java.lang.String[] { "Result", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_NestedWordAutomaton_descriptor =
-      getDescriptor().getMessageTypes().get(7);
+      getDescriptor().getMessageTypes().get(8);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_NestedWordAutomaton_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_NestedWordAutomaton_descriptor,
@@ -15572,7 +16594,7 @@ public final class TraceAbstractionProtos {
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_NestedWordAutomaton_transition_descriptor,
         new java.lang.String[] { "OriginState", "Letter", "SuccessorState", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IterationInfo_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(9);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IterationInfo_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IterationInfo_descriptor,
@@ -15584,13 +16606,13 @@ public final class TraceAbstractionProtos {
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IterationInfo_NestedRun_descriptor,
         new java.lang.String[] { "NestedWord", "StateSequence", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Alphabet_descriptor =
-      getDescriptor().getMessageTypes().get(9);
+      getDescriptor().getMessageTypes().get(10);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Alphabet_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Alphabet_descriptor,
         new java.lang.String[] { "Letter", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_CodeBlock_descriptor =
-      getDescriptor().getMessageTypes().get(10);
+      getDescriptor().getMessageTypes().get(11);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_CodeBlock_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_CodeBlock_descriptor,
