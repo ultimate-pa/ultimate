@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble;
 
 import java.util.Iterator;
+import java.util.function.BiPredicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -44,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateXsimulation.SimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.QuotientNwaConstructor;
+import de.uni_freiburg.informatik.ultimate.automata.util.HashRelationBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.automata.util.NestedMapBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionAndMapBackedSetOfPairs;
@@ -109,7 +111,8 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 								new NwaApproximateBisimulation<>(services, operand,
 										allowToMergeFinalAndNonFinalStates
 												? SimulationType.ORDINARY
-												: SimulationType.DIRECT, false).getResult().getRelation());
+												: SimulationType.DIRECT,
+										false).getResult().getRelation());
 				mLogger.info("Initial partition has " + partition.getOrConstructPartitionSizeInformation().toString());
 				initialPairs = partition;
 				break;
@@ -152,8 +155,11 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 				mStatistics = addStatistics(initialPairs, gameFactory, maxGameAutomatonSize, timePreprocessing,
 						timeSimulation, null);
 			} else {
+				final BiPredicate<STATE, STATE> finalNonfinalConstraint = allowToMergeFinalAndNonFinalStates
+						? new MinimizeNwaMaxSat2.RelationBackedBiPredicate<>(new HashRelationBackedSetOfPairs<>())
+						: new MinimizeNwaMaxSat2.TrueBiPredicate<>();
 				final MinimizeNwaMaxSat2.Settings<STATE> settings = new MinimizeNwaMaxSat2.Settings<STATE>()
-						.setFinalStateConstraints(!allowToMergeFinalAndNonFinalStates)
+						.setFinalNonfinalConstraintPredicate(finalNonfinalConstraint)
 						.setAddMapOldState2NewState(addMapOldState2NewState);
 
 				final MinimizeNwaMaxSat2<LETTER, STATE, ?> maxSatMinimizer;

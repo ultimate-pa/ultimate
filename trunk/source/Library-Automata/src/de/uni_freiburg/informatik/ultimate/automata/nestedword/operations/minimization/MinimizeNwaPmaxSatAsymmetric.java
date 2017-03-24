@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BiPredicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -265,11 +266,12 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 
 	@Override
 	protected void generateVariablesAndAcceptingConstraints() throws AutomataOperationCanceledException {
-		final boolean separateFinalAndNonfinalStates = mSettings.getFinalStateConstraints();
+		final BiPredicate<STATE, STATE> finalNonfinalConstraintPredicate =
+				mSettings.getFinalNonfinalConstraintPredicate();
 
 		for (final Triple<STATE, STATE, Pair<STATE, STATE>> triple : mStatePair2Var.entrySet()) {
 			checkTimeout(GENERATING_VARIABLES);
-			
+
 			final Pair<STATE, STATE> pair = triple.getThird();
 			final STATE state1 = triple.getFirst();
 			final STATE state2 = triple.getSecond();
@@ -279,23 +281,11 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 
 			mSolver.addVariable(pair);
 
-			if (separateFinalAndNonfinalStates) {
-				// separate final first and nonfinal second state ("direct simulation")
-				if (mOperand.isFinal(state1) && !mOperand.isFinal(state2)) {
-					setStatesDifferent(pair);
-				}
-			} else {
-				// Buchi minimization
-				if (mOperand.isFinal(state1) ^ mOperand.isFinal(state2)) {
-					generateBuchiConstraints(state1, state2, pair);
-				}
+			if (mOperand.isFinal(state1) && !mOperand.isFinal(state2)
+					&& finalNonfinalConstraintPredicate.test(state1, state2)) {
+				setStatesDifferent(pair);
 			}
 		}
-	}
-
-	private void generateBuchiConstraints(final STATE state1, final STATE state2, final Pair<STATE, STATE> pair) {
-		// TODO Auto-generated method stub
-		throw new UnsupportedOperationException("Not implemented yet.");
 	}
 
 	private void addStateToTransitivityGeneratorIfNotPresent(final STATE state) {
@@ -309,7 +299,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			throws AutomataOperationCanceledException {
 		for (final Triple<STATE, STATE, Pair<STATE, STATE>> triple : mStatePair2Var.entrySet()) {
 			checkTimeout(ADDING_TRANSITION_CONSTRAINTS);
-			
+
 			final Pair<STATE, STATE> pair = triple.getThird();
 
 			// add transition constraints
@@ -324,7 +314,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		// add constraints for reflexive pairs; those are not considered above
 		for (final STATE state : mOperand.getStates()) {
 			checkTimeout(ADDING_TRANSITION_CONSTRAINTS);
-			
+
 			generateTransitionConstraintsHelperReturnSameLinPred(state, getDownStatesArray(state));
 		}
 	}
