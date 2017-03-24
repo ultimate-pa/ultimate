@@ -336,9 +336,12 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	@Override
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		mInterpolAutomaton = mTraceCheckAndRefinementEngine.getInfeasibilityProof();
+		assert new RemoveUnreachable<>(new AutomataLibraryServices(mServices), mInterpolAutomaton)
+				.getResult() != null : "remove this assertion as soon as the RemoveUnreachable problem is resolved";
 		if (NON_EA_INDUCTIVITY_CHECK) {
 			final boolean inductive = new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
 					new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
+
 			if (!inductive) {
 				throw new AssertionError("not inductive");
 			}
