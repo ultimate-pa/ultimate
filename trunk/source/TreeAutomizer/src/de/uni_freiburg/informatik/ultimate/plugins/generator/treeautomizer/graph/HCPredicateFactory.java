@@ -27,7 +27,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -77,11 +78,11 @@ public class HCPredicateFactory extends PredicateFactory {
 
 		mBackendSmtSolverScript.lock(this);
 		mDontCarePredicate = newPredicate(symbolTable.getDontCareHornClausePredicateSymbol(),
-				mBackendSmtSolverScript.term(this, "true"), new HashMap<>());
+				mBackendSmtSolverScript.term(this, "true"), Collections.emptyList());
 		mFalsePredicate = newPredicate(symbolTable.getFalseHornClausePredicateSymbol(),
-				mBackendSmtSolverScript.term(this, "false"), new HashMap<>());
+				mBackendSmtSolverScript.term(this, "false"), Collections.emptyList());
 		mTruePredicate = newPredicate(symbolTable.getTrueHornClausePredicateSymbol(),
-				mBackendSmtSolverScript.term(this, "true"), new HashMap<>());
+				mBackendSmtSolverScript.term(this, "true"), Collections.emptyList());
 		mBackendSmtSolverScript.unlock(this);
 	}
 
@@ -93,7 +94,7 @@ public class HCPredicateFactory extends PredicateFactory {
 	public HCPredicate createTruePredicateWithLocation(HornClausePredicateSymbol headPredicate) {
 		mBackendSmtSolverScript.lock(this);
 		final HCPredicate result = newPredicate(headPredicate, mBackendSmtSolverScript.term(this, "true"),
-				new HashMap<>());
+				Collections.emptyList());
 		mBackendSmtSolverScript.unlock(this);
 		return result;
 	}
@@ -114,29 +115,39 @@ public class HCPredicateFactory extends PredicateFactory {
 		return newPredicate(mSymbolTable.getDontCareHornClausePredicateSymbol(), p.getFormula(), new HashMap<>());
 	}
 
-	private HCPredicate newPredicate(HornClausePredicateSymbol loc, Term term, Map<Term, HCVar> varsMap) {
-		return new HCPredicate(loc, term, varsMap, computeClosedFormula(term));
+	private HCPredicate newPredicate(HornClausePredicateSymbol loc, Term term, List<TermVariable> vars) {
+		return new HCPredicate(loc, term, computeHcOutVarsFromTermVariables(vars), computeClosedFormula(term), vars);
 	}
 
+//	/**
+//	 * Create a new predicate from symbol and formula.
+//	 * 
+//	 * @param mProgramPoint
+//	 *            symbol
+//	 * @param hashCode
+//	 *            hash code of the formula
+//	 * @param formula
+//	 *            The formula of the predicate
+//	 * @param vars
+//	 *            the set of variables of the formula
+//	 * @param termToHcVar
+//	 *            a map of the variables to HCVars.
+//	 * @return HCPredicate the new predicate
+//	 */
+//	public HCPredicate newPredicate(final HornClausePredicateSymbol mProgramPoint, final int hashCode,
+//			final Term formula, final Set<IProgramVar> vars, final Map<Term, HCVar> termToHcVar) {
+//		return new HCPredicate(mProgramPoint, hashCode, formula, vars, termToHcVar, computeClosedFormula(formula));
+//	}
+	
 
 	/**
-	 * Create a new predicate from symbol and formula.
 	 * 
-	 * @param mProgramPoint
-	 *            symbol
-	 * @param hashCode
-	 *            hash code of the formula
-	 * @param formula
-	 *            The formula of the predicate
 	 * @param vars
-	 *            the set of variables of the formula
-	 * @param termToHcVar
-	 *            a map of the variables to HCVars.
-	 * @return HCPredicate the new predicate
+	 * @return
 	 */
-	public HCPredicate newPredicate(final HornClausePredicateSymbol mProgramPoint, final int hashCode,
-			final Term formula, final Set<IProgramVar> vars, final Map<Term, HCVar> termToHcVar) {
-		return new HCPredicate(mProgramPoint, hashCode, formula, vars, termToHcVar, computeClosedFormula(formula));
+	private Set<IProgramVar> computeHcOutVarsFromTermVariables(List<TermVariable> vars) {
+		// TODO
+		return null;
 	}
 
 	private Term computeClosedFormula(final Term formula) {

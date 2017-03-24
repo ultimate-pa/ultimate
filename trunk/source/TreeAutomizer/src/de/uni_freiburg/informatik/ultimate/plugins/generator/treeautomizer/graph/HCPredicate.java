@@ -27,14 +27,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
-import java.util.HashSet;
-import java.util.Map;
+import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
@@ -50,47 +48,61 @@ public class HCPredicate extends BasicPredicate {
 	private static final long serialVersionUID = 1750137515726690834L;
 	private static final int SERIAL_HCPREDICATE = 1000000007;
 	
-	@Visualizable
+//	@Visualizable
 	protected final HornClausePredicateSymbol mProgramPoint;
-	private final Map<Term, HCVar> mProgramVars;
+//	private final Map<Term, HCVar> mProgramVars;
+	private final List<TermVariable> mVariables;
+
 	
-	/**
-	 * The published attributes. Update this and getFieldValue() if you add new attributes.
-	 */
-	private static final String[] s_AttribFields = { "ProgramPoint", "Formula", "Vars" };
+//	/**
+//	 * The published attributes. Update this and getFieldValue() if you add new attributes.
+//	 */
+//	private static final String[] s_AttribFields = { "ProgramPoint", "Formula", "Vars" };
 
 	protected HCPredicate(final HornClausePredicateSymbol programPoint, final int serialNumber, final Term term,
-			final Set<IProgramVar> vars, final Map<Term, HCVar> varsMap, final Term closedFormula) {
-		super(serialNumber, new String[]{}, term, vars, closedFormula);
+//			final Set<IProgramVar> vars, final Map<Term, HCVar> varsMap, final Term closedFormula) {
+			final Set<IProgramVar> vars, final Term closedFormula,
+			final List<TermVariable> variables) {
+		super(serialNumber, new String[0], term, vars, closedFormula);
 		mProgramPoint = programPoint;
-		mProgramVars = varsMap;
+//		mProgramVars = varsMap;
+		mVariables = variables;
 	}
-
+	
 	protected HCPredicate(final HornClausePredicateSymbol programPoint, final Term term,
-			final Map<Term, HCVar> varsMap, final Term closedFormula) {
-		this(programPoint, HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoint, term),
-			term, new HashSet<>(varsMap.values()), varsMap, closedFormula);
+			final Set<IProgramVar> vars, final Term closedFormula,
+			final List<TermVariable> variables) {
+		this(programPoint, 
+				HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoint, term, variables),
+				term, vars, closedFormula,  variables);
 	}
 	
 
-	@Override
-	public Term getFormula() {
-		return mFormula;
-	}
+//	protected HCPredicate(final HornClausePredicateSymbol programPoint, final Term term,
+//			final Map<Term, HCOutVar> varsMap, final Term closedFormula) {
+//		this(programPoint, HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoint, term),
+//			term, new HashSet<>(varsMap.values()), varsMap, closedFormula);
+//	}
 	
-	@Override
-	public Term getClosedFormula() {
-		return mClosedFormula;
-	}
-	
-	@Override
-	public Set<IProgramVar> getVars() {
-		return mVars;
-	}
 
-	public Map<Term, HCVar> getVarsMap() {
-		return mProgramVars;
-	}
+//	@Override
+//	public Term getFormula() {
+//		return mFormula;
+//	}
+//	
+//	@Override
+//	public Term getClosedFormula() {
+//		return mClosedFormula;
+//	}
+//	
+//	@Override
+//	public Set<IProgramVar> getVars() {
+//		return mVars;
+//	}
+//
+//	public Map<Term, HCVar> getVarsMap() {
+//		return mProgramVars;
+//	}
 	
 	/*
 	@Override
@@ -125,12 +137,12 @@ public class HCPredicate extends BasicPredicate {
 		return result;
 	}
 	
-	@Override
-	public boolean isUnknown() {
-		return false;
-	}
+//	@Override
+//	public boolean isUnknown() {
+//		return false;
+//	}
 	
-	protected String[] getFieldNames() {
-		return s_AttribFields;
-	}
+//	protected String[] getFieldNames() {
+//		return s_AttribFields;
+//	}
 }

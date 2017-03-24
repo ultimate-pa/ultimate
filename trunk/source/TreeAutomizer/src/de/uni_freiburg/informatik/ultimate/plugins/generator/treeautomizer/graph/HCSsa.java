@@ -93,12 +93,24 @@ public class HCSsa {
 		return mCounters.get(t);
 	}
 
-	protected String getName(final Term t) {
+	/**
+	 * Returns a name for the given term. The term must be one of those that are in the List returned by flatten().
+	 * The name will be used by Tree checker for making annotated terms out of the flattened terms, and for posing
+	 * the get-interpolants query.
+	 * 
+	 * @param t
+	 * @return
+	 */
+	public String getName(final Term t) {
 		return "HCsSATerm_" + getCounter(t);
 	}
 
 	/**
-	 * @return return a flat version of the SSA.
+	 * Computes a flat version of the SSA.
+	 * This flat version is used by the TreeChecker to construct named formulas from it and assert each one in the 
+	 *  solver.
+	 * 
+	 * @return 
 	 */
 	public List<Term> flatten() {
 		return flatten(mNestedFormulas);

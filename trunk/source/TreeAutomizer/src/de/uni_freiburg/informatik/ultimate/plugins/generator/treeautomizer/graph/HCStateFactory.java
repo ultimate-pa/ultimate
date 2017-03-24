@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -55,8 +56,8 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class HCStateFactory implements IMergeStateFactory<HCPredicate>, IIntersectionStateFactory<HCPredicate>,
-		IEmptyStackStateFactory<HCPredicate> {
+public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersectionStateFactory<IPredicate>,
+		IEmptyStackStateFactory<IPredicate> {
 
 	private final HCPredicate mEmtpyStack;
 

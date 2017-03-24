@@ -3,8 +3,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -33,41 +31,72 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public class HornClause implements IInternalAction {
 
-	/**
-	 * Stores for each predicate symbol in the body and, every argument position of the represented atom, which
-	 * TermVariable in the transition formula represents that argument in the represented atom.
-	 */
-	Map<HornClausePredicateSymbol, List<TermVariable>> mBodyPredToTermVariables;
+//	/**
+//	 * Stores for each predicate symbol in the body and, every argument position of the represented atom, which
+//	 * TermVariable in the transition formula represents that argument in the represented atom.
+//	 */
+//	private final Map<HornClausePredicateSymbol, List<TermVariable>> mBodyPredToTermVariables;
+	
+	private final List<HornClausePredicateSymbol> mBodyPreds;
+
+	private final List<List<TermVariable>> mBodyPredToTermVariables;
 
 	/**
 	 * Stores for the predicate symbol in the head at every argument position of the represented atom, which
 	 * TermVariable in the transition formula represents that argument in the represented atom.
 	 */
-	List<TermVariable> mHeadPredTermVariables;
-	HornClausePredicateSymbol mHeadPredicate;
+	private final List<TermVariable> mHeadPredTermVariables;
+	private final HornClausePredicateSymbol mHeadPredicate;
 
-	UnmodifiableTransFormula mTransitionFormula;
+	private final UnmodifiableTransFormula mTransitionFormula;
 	
-	public HornClause(final ManagedScript script, final IIcfgSymbolTable symbolTable, 
-			final Term transitionFormula, final List<TermVariable> bodyVars, 
-			final HornClausePredicateSymbol body, final Map<HornClausePredicateSymbol, List<TermVariable>> cobodyPredToTermVariables) {
+//	private final HCTransFormula mHcTransFormula;
+	
+	/**
+	 * Standard constructor for a Horn clause as used by TreeAutomizer.
+	 * 
+	 * @param script The script that will be used in TreeAutomizer (not the HornClauseParserScript)
+	 * @param symbolTable
+	 * @param transitionFormula
+	 * @param headVars
+	 * @param head
+	 * @param bodyPredToTermVariables
+	 */
+	public HornClause(final ManagedScript script, 
+			final IIcfgSymbolTable symbolTable, 
+			final Term transitionFormula, 
+			final HornClausePredicateSymbol head, 
+			final List<TermVariable> headVars, 
+			final List<HornClausePredicateSymbol> bodyPreds,
+			final List<List<TermVariable>> bodyPredToTermVariables) {
+//			final Map<HornClausePredicateSymbol, List<TermVariable>> bodyPredToTermVariables) {
 
 		TermTransferrer ttf = new TermTransferrer(script.getScript());
 		
-		mHeadPredTermVariables = bodyVars.stream().map(var -> (TermVariable) ttf.transform(var)).collect(Collectors.toList());
-		mHeadPredicate = body;
-		mBodyPredToTermVariables = cobodyPredToTermVariables.entrySet().stream().collect(
-				Collectors.toMap(
-						en -> en.getKey(), 
-						en -> en.getValue().stream()
-							.map(tv -> (TermVariable) ttf.transform(tv))
-							.collect(Collectors.toList())));
+		/*
+		 * send all the TermVariables through the TermTransferrer
+		 */
+		mHeadPredTermVariables = headVars.stream()
+				.map(var -> (TermVariable) ttf.transform(var))
+				.collect(Collectors.toList());
+		mBodyPredToTermVariables = bodyPredToTermVariables.stream()
+				.map(list -> list.stream()
+						.map(var -> (TermVariable) ttf.transform(var))
+						.collect(Collectors.toList()))
+				.collect(Collectors.toList());
+
+		
+		mHeadPredicate = head;
+		mBodyPreds = bodyPreds;
 		
 		final Term convertedFormula = ttf.transform(transitionFormula);
+		
+//		assert false : "TODO";// TODO
+//		mHcTransFormula = null;
 
 		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
 		for (int i = 0; i < mHeadPredTermVariables.size(); ++i) {
-			outVars.put(body.getHCVars().get(i), mHeadPredTermVariables.get(i));
+			outVars.put(head.getHCVars().get(i), mHeadPredTermVariables.get(i));
 		}
 	
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
@@ -89,34 +118,38 @@ public class HornClause implements IInternalAction {
 	@Override
 	public UnmodifiableTransFormula getTransformula() {
 		return mTransitionFormula;
+//		assert false : "TODO : what?";
+//		return null;
 	}
 	
 	public HornClausePredicateSymbol getHeadPredicate() {
 		return mHeadPredicate;
 	}
 	
-	public Set<HornClausePredicateSymbol> getTailPredicates() {
-		return mBodyPredToTermVariables.keySet();
+	public List<HornClausePredicateSymbol> getBodyPredicates() {
+//		return mBodyPredToTermVariables.keySet();
+		return mBodyPreds;
 	}
 	
 	@Override
 	public String toString() {
-		String cobody = "";
+//		String cobody = "";
+//
+//		for (final HornClausePredicateSymbol symbol : mBodyPredToTermVariables.keySet()) {
+//			cobody += " " + symbol.getName() + mBodyPredToTermVariables.get(symbol);
+//		}
+//		if (cobody.length() > 0) {
+//			cobody = "and" + cobody;
+//		} else {
+//			cobody = "true";
+//		}
+//
+//		final String body = mHeadPredicate.getName() + mHeadPredTermVariables;
 
-		for (final HornClausePredicateSymbol symbol : mBodyPredToTermVariables.keySet()) {
-			cobody += " " + symbol.getName() + mBodyPredToTermVariables.get(symbol);
-		}
-		if (cobody.length() > 0) {
-			cobody = "and" + cobody;
-		} else {
-			cobody = "true";
-		}
-
-		final String body = mHeadPredicate.getName() + mHeadPredTermVariables;
-
-		return mTransitionFormula.getFormula().toString();
+//		return mTransitionFormula.getFormula().toString();
 		//return String.format("(%s) ^^ (%s) ~~> (%s) || in : %s || out : %s ", cobody, mTransitionFormula, body,
 		//return String.format("(%s) ^^ (%s) ~~> (%s)", cobody, mTransitionFormula.getFormula(), body);
+		return "HornClause TODO: better description"; //TODO
 	}
 
 	/**
@@ -125,7 +158,6 @@ public class HornClause implements IInternalAction {
 	@Override
 	public String getPrecedingProcedure() {
 		return HornUtilConstants.HORNCLAUSEMETHODNAME;
-//		return null;
 	}
 
 	/**
@@ -134,8 +166,11 @@ public class HornClause implements IInternalAction {
 	@Override
 	public String getSucceedingProcedure() {
 		return HornUtilConstants.HORNCLAUSEMETHODNAME;
-//		return null;
 	}
+
+//	public HCTransFormula getHcTransformula() {
+//		return mHcTransFormula;
+//	}
 
 
 }

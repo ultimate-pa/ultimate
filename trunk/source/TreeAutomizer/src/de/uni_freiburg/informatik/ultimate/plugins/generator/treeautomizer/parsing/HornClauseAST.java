@@ -32,6 +32,9 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 
 /**
+ * Used for passing a payload that contains HornAnnot annotations.
+ * Does not add any behaviour compared to the abstract super class BasePayloadContainer.
+ * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *

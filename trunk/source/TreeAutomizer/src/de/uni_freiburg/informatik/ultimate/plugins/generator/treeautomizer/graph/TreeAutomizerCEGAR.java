@@ -161,7 +161,7 @@ public class TreeAutomizerCEGAR {
 		mAbstraction = new TreeAutomatonBU<>();
 		for (final HornClause clause : hornClauses) {
 			final List<HCPredicate> tail = new ArrayList<>();
-			for (HornClausePredicateSymbol sym : clause.getTailPredicates()) {
+			for (HornClausePredicateSymbol sym : clause.getBodyPredicates()) {
 				tail.add(mPredicateFactory.createTruePredicateWithLocation(sym));
 			}
 			if (tail.isEmpty()) {
