@@ -27,10 +27,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -41,6 +42,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
+ * Body of a Horn clause according to our grammar for Horn clauses in SMTLib2.
+ * Once the Horn clause is fixed (we make no more derivations in the grammar), we also call this the head.
+ * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -50,7 +54,7 @@ public class Body {
 	private ApplicationTerm mHead;
 
 	/***
-	 * Construct a Body of a horn statement.
+	 * Construct a Body of a Horn statement.
 	 */
 	public Body() {
 		mCobody = new Cobody();
@@ -71,13 +75,48 @@ public class Body {
 	 * @return
 	 */
 	public HornClause convertToHornClause(final ManagedScript script, final HCSymbolTable symbolTable) {
-		final Map<HornClausePredicateSymbol, List<TermVariable>> tt = getBodyPredicateToVars(symbolTable);
-		assert tt.size() <= 1;
-		final HornClausePredicateSymbol bodySymbol = tt.keySet().iterator().hasNext() ? tt.keySet().iterator().next()
-				: symbolTable.getFalseHornClausePredicateSymbol();
-		return new HornClause(script, symbolTable, getTransitionFormula(script),
-				tt.containsKey(bodySymbol) ? tt.get(bodySymbol) : new ArrayList<>(), bodySymbol,
-				getCobodyPredicateToVars(symbolTable));
+//		assert tt.size() <= 1;
+//		final Map<HornClausePredicateSymbol, List<TermVariable>> tt = getBodyPredicateToVars(symbolTable);
+//		final HornClausePredicateSymbol bodySymbol = tt.keySet().iterator().hasNext() ? tt.keySet().iterator().next()
+//				: symbolTable.getFalseHornClausePredicateSymbol();
+		
+		/*
+		 * Collect the predicate symbol and the arguments of the body predicate from the Term mHead
+		 *  right now we assume that 
+		 *   - all parameters of the head predicate are variables
+		 *   - all parameters of the head predicate are pairwise different (i.e. there are no repeated variables)
+		 *   TODO: lift this assumption by introducing equalities
+		 */
+		final HornClausePredicateSymbol bodySymbol; 
+		final List<TermVariable> bodyVars;
+		if (mHead != null) {
+			bodySymbol = symbolTable.getOrConstructHornClausePredicateSymbol(
+				mHead.getFunction().getName(), mHead.getFunction().getParameterSorts());
+			final List<TermVariable> parameterTermVariables = Arrays.asList(mHead.getParameters()).stream()
+					.map(t -> (TermVariable) t)
+					.collect(Collectors.toList());
+			assert parameterTermVariables.size() == new HashSet<>(parameterTermVariables).size() : "TODO: eliminate "
+					+ "duplicate arguments";
+			bodyVars = parameterTermVariables;
+		} else {
+			// if there is no explicit head symbol, then it is implicitly false (the neutral element wrt. disjunction)
+			bodySymbol = symbolTable.getFalseHornClausePredicateSymbol();
+			bodyVars = Collections.emptyList();
+		}
+
+
+
+
+		List<HornClausePredicateSymbol> cobodySymbols = mCobody.getPredicates(symbolTable);
+		List<List<TermVariable>> cobobodyVars = mCobody.getPredicateToVars(symbolTable);
+		
+		
+		return new HornClause(script, symbolTable, 
+				getTransitionFormula(script),
+				bodySymbol,
+				bodyVars,
+				cobodySymbols,
+				cobobodyVars);
 	}
 
 	/***
@@ -115,32 +154,34 @@ public class Body {
 		return '(' + mCobody.toString() + " ==> " + (mHead == null ? "false" : mHead.toString()) + ')';
 	}
 
-	private Map<HornClausePredicateSymbol, List<TermVariable>> getBodyPredicateToVars(
-			final HCSymbolTable symbolTable) {
+//	private Map<HornClausePredicateSymbol, List<TermVariable>> getBodyPredicateToVars(
+//			final HCSymbolTable symbolTable) {
+//
+//		final HashMap<HornClausePredicateSymbol, List<TermVariable>> res = new HashMap<>();
+//		if (mHead != null) {
+//			final ArrayList<TermVariable> vars = new ArrayList<>();
+//			for (final Term par : mHead.getParameters()) {
+//				vars.add((TermVariable) par);
+//			}
+//
+//			res.put(symbolTable.getOrConstructHornClausePredicateSymbol(
+//						mHead.getFunction().getName(), mHead.getFunction().getParameterSorts()), 
+//					vars);
+//		}
+//		return res;
+//	}
+	
+	
 
-		final HashMap<HornClausePredicateSymbol, List<TermVariable>> res = new HashMap<>();
-		if (mHead != null) {
-			final ArrayList<TermVariable> vars = new ArrayList<>();
-			for (final Term par : mHead.getParameters()) {
-				vars.add((TermVariable) par);
-			}
-
-			res.put(symbolTable.getOrConstructHornClausePredicateSymbol(
-						mHead.getFunction().getName(), mHead.getFunction().getParameterSorts()), 
-					vars);
-		}
-		return res;
-	}
-
-	/***
-	 * Get the cobody 
-	 * @param symbolTable
-	 * @return
-	 */
-	public Map<HornClausePredicateSymbol, List<TermVariable>> getCobodyPredicateToVars(
-			HCSymbolTable symbolTable) {
-		return mCobody.getPredicateToVars(symbolTable);
-	}
+//	/***
+//	 * Get the cobody 
+//	 * @param symbolTable
+//	 * @return
+//	 */
+//	public Map<HornClausePredicateSymbol, List<TermVariable>> getCobodyPredicateToVars(
+//			HCSymbolTable symbolTable) {
+//		return mCobody.getPredicateToVars(symbolTable);
+//	}
 
 	/***
 	 * Get the transition formula.

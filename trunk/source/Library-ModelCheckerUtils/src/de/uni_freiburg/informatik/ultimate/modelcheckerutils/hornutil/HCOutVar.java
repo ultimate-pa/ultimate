@@ -79,7 +79,8 @@ public class HCOutVar implements IProgramVar {
 	@Override
 	public String toString() {
 //		return mPredicateSymbol.getName() + "{" + mIdx + "}" + ":" + mTermVariable.toString();
-		return "HCVar (TODO)";
+//		return "HCVar (TODO)";
+		return getGloballyUniqueId();
 	}
 
 	@Override
