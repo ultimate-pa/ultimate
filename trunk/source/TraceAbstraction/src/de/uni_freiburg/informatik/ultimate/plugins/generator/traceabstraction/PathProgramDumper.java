@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Body;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.GotoStatement;
@@ -83,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.TypeSortTran
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
@@ -100,6 +102,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cal
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Quad;
@@ -112,8 +115,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *
  */
 public class PathProgramDumper {
-	
-	private final boolean USE_BOOGIE_INPUT = false;
+
+	private final boolean USE_BOOGIE_INPUT = true;
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -131,14 +134,17 @@ public class PathProgramDumper {
 
 	};
 	private final ConstructionCache<IcfgLocation, String> mLoc2LabelId = new ConstructionCache<>(mLoc2LabelVC);
-	private final IIcfg<?> mIcfg;
+	private final PathProgram mPathProgram;
+	private final IIcfg<?> mOriginalIcfg;
 	private final Term2Expression mTerm2Expression;
+	
+	private enum Program { PATH_PROGRAM, ORIGINAL_PROGRAM };
 
 	public PathProgramDumper(final IIcfg<?> icfg, final IUltimateServiceProvider services,
 			final NestedRun<? extends IAction, IPredicate> run, final String filename) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mIcfg = icfg;
+		mOriginalIcfg = icfg;
 		if (USE_BOOGIE_INPUT) {
 			if (!(icfg instanceof BoogieIcfgContainer)) {
 				throw new UnsupportedOperationException("PathProgramDumper currently needs BoogieIcfgContainer");
@@ -159,20 +165,20 @@ public class PathProgramDumper {
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run.getWord());
 		final PathProgram.PathProgramConstructionResult ppResult = PathProgram
 				.constructPathProgram("PathInvariantsPathProgram", icfg, allowedTransitions);
-		final IIcfg<IcfgLocation> pathProgram = ppResult.getPathProgram();
+		mPathProgram = ppResult.getPathProgram();
 
 		final List<Declaration> newDeclarations = new ArrayList<>();
 		final Set<IProgramVar> globalVars = new HashSet<>();
-		for (final Entry<String, IcfgLocation> entry : pathProgram.getProcedureEntryNodes().entrySet()) {
+		for (final Entry<String, IcfgLocation> entry : mPathProgram.getProcedureEntryNodes().entrySet()) {
 			final Pair<Procedure, Set<IProgramVar>> newImplAndGlobalVars;
-			final IcfgLocation exitLoc = pathProgram.getProcedureExitNodes().get(entry.getKey());
+			final IcfgLocation exitLoc = mPathProgram.getProcedureExitNodes().get(entry.getKey());
 			if (USE_BOOGIE_INPUT) {
 				final BoogieIcfgContainer boogieIcfg = (BoogieIcfgContainer) icfg;
 				newImplAndGlobalVars = constructNewImplementation(entry.getKey(), entry.getValue(), exitLoc, boogieIcfg,
-						pathProgram.getProcedureErrorNodes().get(entry.getKey()));
+						mPathProgram.getProcedureErrorNodes().get(entry.getKey()));
 			} else {
 				newImplAndGlobalVars = constructNewImplementation(entry.getKey(), entry.getValue(), exitLoc,
-						pathProgram.getProcedureErrorNodes().get(entry.getKey()));
+						mPathProgram.getProcedureErrorNodes().get(entry.getKey()));
 			}
 
 			newDeclarations.add(newImplAndGlobalVars.getFirst());
@@ -403,8 +409,8 @@ public class PathProgramDumper {
 		return Arrays.stream(identifiers).filter(pred).toArray(size -> new String[size]);
 	}
 
-	private Triple<List<Statement>, Set<IProgramVar>, Set<IProgramVar>> constructProcedureStatements(
-			final String proc, final IcfgLocation initialNode, final IcfgLocation exitNode, final Set<IcfgLocation> errorLocs) {
+	private Triple<List<Statement>, Set<IProgramVar>, Set<IProgramVar>> constructProcedureStatements(final String proc,
+			final IcfgLocation initialNode, final IcfgLocation exitNode, final Set<IcfgLocation> errorLocs) {
 		final ArrayDeque<IcfgLocation> worklist = new ArrayDeque<>();
 		final Set<IcfgLocation> added = new HashSet<>();
 		worklist.add(initialNode);
@@ -423,24 +429,37 @@ public class PathProgramDumper {
 						new AssertStatement(constructNewLocation(), new BooleanLiteral(constructNewLocation(), false)));
 				assert node.getOutgoingEdges().isEmpty() : "error loc with outgoing transitions";
 			}
+			final List<IcfgEdge> nonSummaryOutgoingEdges = new ArrayList<>();
+			for (final IcfgEdge edge : node.getOutgoingEdges()) {
+				if (!(edge instanceof Summary)) {
+					nonSummaryOutgoingEdges.add(edge);
+				}
+			}
 			if (node.getProcedure().equals(proc)) {
 				// continue only if we are still in the same procedure
-				if (node.getOutgoingEdges().isEmpty()) {
+				if (nonSummaryOutgoingEdges.isEmpty()) {
 					// do nothing, no successor
-				} else if (node.getOutgoingEdges().size() == 1) {
-					final IcfgEdge edge = node.getOutgoingEdges().get(0);
+				} else if (nonSummaryOutgoingEdges.size() == 1) {
+					final IcfgEdge edge = nonSummaryOutgoingEdges.get(0);
 					processTransition(worklist, added, newStatements, localVars, globalVars, edge);
 				} else {
-					final String[] transitionStartLabels = new String[node.getOutgoingEdges().size()];
-					for (int i = 0; i < node.getOutgoingEdges().size(); i++) {
+					final String[] transitionStartLabels = new String[nonSummaryOutgoingEdges.size()];
+					for (int i = 0; i < nonSummaryOutgoingEdges.size(); i++) {
 						final String transitionStartLabel = constructLabelId(node, i);
 						transitionStartLabels[i] = transitionStartLabel;
 					}
-					if (!node.getOutgoingEdges().isEmpty()) {
+					if (!nonSummaryOutgoingEdges.isEmpty()) {
 						newStatements.add(new GotoStatement(constructNewLocation(), transitionStartLabels));
 					}
-					for (int i = 0; i < node.getOutgoingEdges().size(); i++) {
-						final IcfgEdge edge = node.getOutgoingEdges().get(i);
+					for (int i = 0; i < nonSummaryOutgoingEdges.size(); i++) {
+						final IcfgEdge edge = nonSummaryOutgoingEdges.get(i);
+						if (edge instanceof Summary) {
+							// we skip summaries, we obtain the corresponding
+							// information via call and return
+							// (need it via call and return because we want
+							// to see the program variables
+							continue;
+						}
 						newStatements.add(constructLabel(node, i));
 						processTransition(worklist, added, newStatements, localVars, globalVars, edge);
 					}
@@ -459,7 +478,8 @@ public class PathProgramDumper {
 		result.addAll(transResult.getFirst());
 		localvars.addAll(transResult.getSecond());
 		globalVars.addAll(transResult.getThird());
-		if (transResult.getFourth().getProcedure().equals(proc) && !added.contains(transResult.getFourth())) {
+		if (transResult.getFourth() != null && transResult.getFourth().getProcedure().equals(proc)
+				&& !added.contains(transResult.getFourth()) && !isProcedureExit(transResult.getFourth())) {
 			worklist.add(transResult.getFourth());
 			added.add(transResult.getFourth());
 		}
@@ -487,41 +507,67 @@ public class PathProgramDumper {
 		final List<Statement> statements = new ArrayList<>();
 		final Set<IProgramVar> localVars = new HashSet<>();
 		final Set<IProgramVar> globalVars = new HashSet<>();
-		addStatementsAndVariables(edge, statements, localVars, globalVars);
-		while (edge.getSucceedingProcedure().equals(proc) && isBridgingLocation(edge.getTarget())) {
-			edge = edge.getTarget().getOutgoingEdges().get(0);
-			addStatementsAndVariables(edge, statements, localVars, globalVars);
+		IcfgLocation targetLoc;
+		targetLoc = addStatementsAndVariables(edge, statements, localVars, globalVars);
+		while (targetLoc != null && targetLoc.getProcedure().equals(proc) && isBridgingLocation(targetLoc)
+				&& !isProcedureExit(targetLoc)) {
+			edge = targetLoc.getOutgoingEdges().get(0);
+			targetLoc = addStatementsAndVariables(edge, statements, localVars, globalVars);
 		}
-		if (edge.getSucceedingProcedure().equals(proc)) {
-			final String targetLabel = constructLabelId(edge.getTarget());
-			statements.add(new GotoStatement(constructNewLocation(), new String[] { targetLabel }));
+		if (targetLoc == null || isProcedureExit(targetLoc)) {
+			statements.add(new ReturnStatement(constructNewLocation()));
 		} else {
-			// edge changed procedure, we do not add goto.
+			final String targetLabel = constructLabelId(targetLoc);
+			statements.add(new GotoStatement(constructNewLocation(), new String[] { targetLabel }));
 		}
-		return new Quad<>(statements, localVars, globalVars, edge.getTarget());
+		return new Quad<>(statements, localVars, globalVars, targetLoc);
 	}
 
-	private void addStatementsAndVariables(final IcfgEdge edge, final List<Statement> statements,
+	private boolean isProcedureExit(final IcfgLocation targetLoc) {
+		final IcfgLocation exit = mPathProgram.getProcedureExitNodes().get(targetLoc.getProcedure());
+		return targetLoc.equals(exit);
+	}
+
+	private IcfgLocation addStatementsAndVariables(final IcfgEdge edge, final List<Statement> statements,
 			final Set<IProgramVar> localVars, final Set<IProgramVar> globalVars) {
-		final IAction action = edge.getLabel();
-		addVars(action.getTransformula().getInVars().keySet(), localVars, globalVars);
-		addVars(action.getTransformula().getOutVars().keySet(), localVars, globalVars);
+		final IAction action = edge;
 		if (USE_BOOGIE_INPUT) {
-			if (action instanceof Call) {
-				final Call call = (Call) action;
-				statements.add(call.getCallStatement());
-			} else if (action instanceof Return) {
-				statements.add(new ReturnStatement(constructNewLocation()));
-			} else if (action instanceof StatementSequence) {
-				final StatementSequence stseq = (StatementSequence) action;
+			if (edge.getLabel() instanceof Call) {
+				addVars(action.getTransformula().getInVars().keySet(), localVars, globalVars);
+				final IIcfgReturnTransition correspondingReturn = getCorrespondingReturn(action, Program.PATH_PROGRAM);
+				final CallStatement callStatement = ((Call) edge.getLabel()).getCallStatement();
+				statements.add(callStatement);
+				if (correspondingReturn == null) {
+					// corresponding return not in path program,
+					// we take outVars of corresponding return in original 
+					// program 
+					final IIcfgReturnTransition correspondingReturnInOriginalProgram =
+							getCorrespondingReturn(edge.getLabel(), Program.ORIGINAL_PROGRAM);
+					addVars(correspondingReturnInOriginalProgram.getTransformula().getOutVars().keySet(), localVars, globalVars);
+					return null;
+				} else {
+					addVars(correspondingReturn.getTransformula().getOutVars().keySet(), localVars, globalVars);
+					return correspondingReturn.getTarget();
+				}
+			} else if (edge.getLabel() instanceof Return) {
+				throw new AssertionError("we should have stopped at procedure exit");
+				// addVars(action.getTransformula().getInVars().keySet(),
+				// localVars, globalVars);
+				// statements.add(new ReturnStatement(constructNewLocation()));
+				// return ((Return) action).getTarget();
+			} else if (edge.getLabel() instanceof StatementSequence) {
+				addVars(action.getTransformula().getInVars().keySet(), localVars, globalVars);
+				addVars(action.getTransformula().getOutVars().keySet(), localVars, globalVars);
+				final StatementSequence stseq = (StatementSequence) edge.getLabel();
 				for (final Statement st : stseq.getStatements()) {
 					statements.add(st);
 				}
+				return edge.getTarget();
 			} else {
 				throw new UnsupportedOperationException("unsupported edge " + action.getClass().getSimpleName());
 			}
 		} else {
-			final ManagedScript mgdScript = mIcfg.getCfgSmtToolkit().getManagedScript();
+			final ManagedScript mgdScript = mPathProgram.getCfgSmtToolkit().getManagedScript();
 			final UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(action.getTransformula(), mgdScript,
 					mServices, mLogger);
 			final Term guardTerm = TransFormulaUtils.renameInvarsToDefaultVars(guardTf, mgdScript);
@@ -563,9 +609,43 @@ public class PathProgramDumper {
 			if (!su.getHavocedVars().isEmpty()) {
 				statements.add(havoc);
 			}
-
+			return edge.getTarget();
 		}
 
+	}
+
+	private IIcfgReturnTransition getCorrespondingReturn(final IAction action, final Program program) {
+		IIcfgReturnTransition correspondingReturn = null;
+		final IcfgLocation exitLoc;
+		switch (program) {
+		case ORIGINAL_PROGRAM:
+			exitLoc = mOriginalIcfg.getProcedureExitNodes().get(action.getSucceedingProcedure());
+			break;
+		case PATH_PROGRAM:
+			exitLoc = mPathProgram.getProcedureExitNodes().get(action.getSucceedingProcedure());
+			break;
+		default:
+			throw new AssertionError("unknown value " + program);
+		}
+		if (exitLoc == null) {
+			// corresponding return not in path program
+			return null;
+		} else {
+			for (final IcfgEdge returnEdge : exitLoc.getOutgoingEdges()) {
+				final IIcfgReturnTransition ret = (IIcfgReturnTransition) returnEdge;
+				if (ret.getCorrespondingCall().equals(action)) {
+					if (correspondingReturn == null) {
+						correspondingReturn = ret;
+					} else {
+						throw new AssertionError("several corresponding returns");
+					}
+				}
+			}
+			if (correspondingReturn == null) {
+				throw new AssertionError("no corresponding return");
+			}
+			return correspondingReturn;
+		}
 	}
 
 	/**
