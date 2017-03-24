@@ -23,7 +23,7 @@ public class EqualPermSpeedTest {
 			t1 += System.nanoTime() - t;
 			
 			t = System.nanoTime();
-			a.isEqualToPermutation(b, map);
+			a.isEqualTo(b, map);
 			t2 += System.nanoTime() - t;
 		}
 		final String format = "%15s: %8.2fs%n";

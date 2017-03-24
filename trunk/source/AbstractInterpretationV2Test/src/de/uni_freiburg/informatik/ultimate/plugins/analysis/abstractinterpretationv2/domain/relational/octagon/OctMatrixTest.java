@@ -647,11 +647,11 @@ public class OctMatrixTest {
 				+ " 9  5  0  1 "
 				+ " 8  4  2  3 ");
 		final int[] mapAVarIndexToBVarIndex = {1, 0};
-		Assert.assertTrue(a.isEqualToPermutation(b, mapAVarIndexToBVarIndex));
+		Assert.assertTrue(a.isEqualTo(b, mapAVarIndexToBVarIndex));
 	}
-
+	
 	@Test
-	public void testIsBlockEqualTo() {
+	public void testBlockwiseRelation() {
 		final OctMatrix a = OctMatrix.parseBlockLowerTriangular(
 				  " 0  1 "
 				+ " 2  3 "
@@ -662,11 +662,11 @@ public class OctMatrixTest {
 				+ "10 11 "
 				+ " 9  5  0  1 "
 				+ " 8  4  2  3 ");
-		Assert.assertTrue(a.isBlockEqualTo(1, 0, a, 1, 0));
-		Assert.assertTrue(a.isBlockEqualTo(0, 0, b, 1, 1));
-		Assert.assertTrue(b.isBlockEqualTo(1, 1, a, 0, 0));
-		Assert.assertTrue(a.isBlockEqualTo(1, 0, b, 0, 1));
-		Assert.assertFalse(a.isBlockEqualTo(1, 0, b, 1, 0));
+		Assert.assertTrue(a.blockwiseRelation(1, 0, a, 1, 0, OctMatrix.sRelationEqual));
+		Assert.assertTrue(a.blockwiseRelation(0, 0, b, 1, 1, OctMatrix.sRelationEqual));
+		Assert.assertTrue(b.blockwiseRelation(1, 1, a, 0, 0, OctMatrix.sRelationEqual));
+		Assert.assertTrue(a.blockwiseRelation(1, 0, b, 0, 1, OctMatrix.sRelationEqual));
+		Assert.assertFalse(a.blockwiseRelation(1, 0, b, 1, 0, OctMatrix.sRelationEqual));
 	}
 
 	// utilities ///////////////////////////////////////////////////////////////////////////////////////////////////////
