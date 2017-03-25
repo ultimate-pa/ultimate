@@ -188,7 +188,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 			NwaSimulationUtil.retrieveGeneralNwaAutomataPerformance(sim.getSimulationPerformance(), mOperand, result,
 					mServices);
 
-			mStatistics = addStatistics(initialPairs, sizeOfLargestEquivalenceClass, gameAutomatonSize, graph, sim,
+			mStatistics = collectStatistics(initialPairs, sizeOfLargestEquivalenceClass, gameAutomatonSize, graph, sim,
 					resultPair, timePreprocessing, timeSimulation);
 
 		} catch (final AutomataOperationCanceledException aoce) {
@@ -207,12 +207,12 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		printExitMessage();
 	}
 
-	private AutomataOperationStatistics addStatistics(final ISetOfPairs<STATE, ?> initialPairs,
+	private AutomataOperationStatistics collectStatistics(final ISetOfPairs<STATE, ?> initialPairs,
 			final int sizeOfLargestEquivalenceClass, final int gameAutomatonSize, final AGameGraph<LETTER, STATE> graph,
 			final ParsimoniousSimulation sim,
 			final Pair<IDoubleDeckerAutomaton<LETTER, STATE>, MinimizeNwaMaxSat2<LETTER, STATE, ?>> resultPair,
 			final long timePreprocessing, final long timeSimulation) {
-		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
+		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();
 		statistics.addKeyValuePair(StatisticsType.TIME_PREPROCESSING, timePreprocessing);
 		statistics.addKeyValuePair(StatisticsType.TIME_SIMULATION, timeSimulation);
 		if (initialPairs instanceof PartitionBackedSetOfPairs<?>) {
@@ -355,7 +355,9 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
-		return mStatistics;
+		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
+		statistics.addAllStatistics(mStatistics);
+		return statistics;
 	}
 
 	/**
