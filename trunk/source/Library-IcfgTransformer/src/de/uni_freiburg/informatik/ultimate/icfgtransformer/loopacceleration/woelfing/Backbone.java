@@ -27,20 +27,10 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.woelfing;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * A Backbone.
@@ -51,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 public class Backbone {
 
 	private final List<IcfgEdge> mTransitions;
-	private TransFormula mTransFormula;
 
 	/**
 	 * Constructs a Backbone with an initial transition.
@@ -72,50 +61,6 @@ public class Backbone {
 	 */
 	public Backbone(final Backbone other) {
 		mTransitions = new ArrayList<>(other.mTransitions);
-	}
-
-	/**
-	 * Calculates a TransFormula that holds after the given backbone was taken once.
-	 *
-	 * @param script
-	 *            A ManagedScipt.
-	 * @return A Transformula.
-	 */
-	public TransFormula getTransformula(final ManagedScript script) {
-		if (mTransFormula != null) {
-			return mTransFormula;
-		}
-
-		Term term = script.getScript().term("true");
-
-		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
-		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
-
-		for (final IcfgEdge edge : mTransitions) {
-			final TransFormula tf = edge.getTransformula();
-
-			for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-				if (!outVars.containsKey(entry.getKey())) {
-					assert !inVars.containsKey(entry.getKey());
-					inVars.put(entry.getKey(), entry.getValue());
-				} else if (outVars.get(entry.getKey()) != entry.getValue()) {
-					term = Util.and(script.getScript(), term,
-							script.getScript().term("=", entry.getValue(), outVars.get(entry.getKey())));
-				}
-			}
-
-			term = Util.and(script.getScript(), term, tf.getFormula());
-
-			for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-				outVars.put(entry.getKey(), entry.getValue());
-			}
-		}
-
-		final TransFormulaBuilder builder = new TransFormulaBuilder(inVars, outVars, true, null, true, null, true);
-		builder.setFormula(term);
-		builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		mTransFormula = builder.finishConstruction(script);
-		return mTransFormula;
 	}
 
 	/**
