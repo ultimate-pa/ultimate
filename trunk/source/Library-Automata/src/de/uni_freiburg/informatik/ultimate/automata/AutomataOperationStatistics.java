@@ -40,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
  * Object that stores statistics of an automata library operation.
  * <p>
  * Stores a single row of a CSV as a key-value map.
+ * <p>
+ * Statistics are not allowed to be overwritten.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)

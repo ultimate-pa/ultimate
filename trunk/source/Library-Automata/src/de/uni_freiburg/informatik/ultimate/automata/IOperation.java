@@ -113,7 +113,7 @@ public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 	boolean checkResult(CRSF stateFactory) throws AutomataLibraryException;
 
 	/**
-	 * Get information about the runtime and resource consumption of the operation.
+	 * Get information about the performance (e.g., runtime) of the operation.
 	 * <p>
 	 * Delivering this information is optional.
 	 * 
