@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRan
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex;
@@ -80,7 +81,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	/**
 	 * Performance statistics of this operation.
 	 */
-	private final AutomataOperationStatistics mStatistics;
+	private final SimulationPerformance mStatistics;
 	/**
 	 * If the simulation calculation should be optimized using SCC, Strongly
 	 * Connected Components.
@@ -237,7 +238,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 		simulation.doSimulation();
 		mResult = mSimulation.getResult();
 		super.directResultConstruction(mResult);
-		mStatistics = simulation.getSimulationPerformance().exportToAutomataOperationStatistics();
+		mStatistics = simulation.getSimulationPerformance();
 
 		// Debugging flag
 		if (checkOperationDeeply) {
@@ -263,7 +264,9 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
-		return mStatistics;
+		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
+		mStatistics.exportToExistingAutomataOperationStatistics(statistics);
+		return statistics;
 	}
 
 	@Override

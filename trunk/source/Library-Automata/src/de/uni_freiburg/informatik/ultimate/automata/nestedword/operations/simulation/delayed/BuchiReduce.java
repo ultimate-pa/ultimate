@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -73,7 +74,7 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 	/**
 	 * Performance statistics of this operation.
 	 */
-	private final AutomataOperationStatistics mStatistics;
+	private final SimulationPerformance mStatistics;
 
 	/**
 	 * Creates a new buechi reduce object that starts reducing the given buechi
@@ -127,7 +128,7 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 		simulation.doSimulation();
 		mResult = simulation.getResult();
 		super.directResultConstruction(mResult);
-		mStatistics = simulation.getSimulationPerformance().exportToAutomataOperationStatistics();
+		mStatistics = simulation.getSimulationPerformance();
 
 		final boolean compareWithSccResult = false;
 		if (compareWithSccResult) {
@@ -154,7 +155,9 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
-		return mStatistics;
+		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
+		mStatistics.exportToExistingAutomataOperationStatistics(statistics);
+		return statistics;
 	}
 
 	@Override
