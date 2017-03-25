@@ -206,7 +206,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			final FullMultipebbleStateFactory<STATE, GS> gameFactory, final int maxGameAutomatonSize,
 			final long timePreprocessing, final long timeSimulation,
 			final MinimizeNwaMaxSat2<LETTER, STATE, ?> maxSatMinimizer) {
-		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
+		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();
 		statistics.addKeyValuePair(StatisticsType.MAX_NUMBER_OF_DOUBLEDECKER_PEBBLES,
 				gameFactory.getMaxNumberOfDoubleDeckerPebbles());
 		statistics.addKeyValuePair(StatisticsType.TIME_PREPROCESSING, timePreprocessing);
