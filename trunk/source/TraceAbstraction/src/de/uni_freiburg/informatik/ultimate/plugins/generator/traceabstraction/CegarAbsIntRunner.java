@@ -311,6 +311,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		private IInterpolantGenerator mInterpolantGenerator;
 		private CachingHoareTripleChecker mHtc;
 		private final AbsIntPredicate<STATE, IBoogieVar> mFalsePredicate;
+		private final AbsIntPredicate<STATE, IBoogieVar> mTruePredicate;
 
 		public AbsIntCurrentIteration(final IRun<LETTER, IPredicate, ?> cex,
 				final IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> result) {
@@ -318,6 +319,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			mResult = Objects.requireNonNull(result);
 			mFalsePredicate = new AbsIntPredicate<>(mPredicateUnifier.getFalsePredicate(),
 					mResult.getUsedDomain().createBottomState());
+			mTruePredicate = new AbsIntPredicate<>(mPredicateUnifier.getTruePredicate(),
+					mResult.getUsedDomain().createTopState());
 		}
 
 		public IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> getResult() {
@@ -362,7 +365,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 						+ " but interpolant sequence has length " + interpolants.size();
 				assert isInductive(mCex.getWord().asList(), interpolants) : "Sequence of interpolants not inductive!";
 				return new AbsIntInterpolantGenerator(mPredicateUnifier, mCex.getWord(),
-						interpolants.toArray(new IPredicate[interpolants.size()]), getHoareTripleChecker());
+						interpolants.toArray(new IPredicate[interpolants.size()]), getHoareTripleChecker(),
+						mTruePredicate, mFalsePredicate);
 			} catch (final ToolchainCanceledException tce) {
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), "generating AI predicates"));
 				throw tce;
@@ -462,8 +466,9 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		private final CachingHoareTripleChecker mHtc;
 
 		private AbsIntInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<? extends IAction> cex,
-				final IPredicate[] sequence, final CachingHoareTripleChecker htc) {
-			super(predicateUnifier, cex, new InterpolantComputationStatus(true, null, null));
+				final IPredicate[] sequence, final CachingHoareTripleChecker htc, final AbsIntPredicate<?, ?> preCond,
+				final AbsIntPredicate<?, ?> postCond) {
+			super(predicateUnifier, cex, preCond, postCond, new InterpolantComputationStatus(true, null, null));
 			mInterpolants = Objects.requireNonNull(sequence);
 			mHtc = Objects.requireNonNull(htc);
 		}
@@ -476,7 +481,6 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 		@Override
 		public Map<Integer, IPredicate> getPendingContexts() {
-			// TODO: Do I need this?
 			return null;
 		}
 
@@ -497,7 +501,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 		private AbsIntFailedInterpolantGenerator(final IPredicateUnifier predicateUnifier,
 				final Word<? extends IAction> cex, final ItpErrorStatus status, final Exception ex) {
-			super(predicateUnifier, cex, new InterpolantComputationStatus(false, status, ex));
+			super(predicateUnifier, cex, null, null, new InterpolantComputationStatus(false, status, ex));
 		}
 
 		@Override

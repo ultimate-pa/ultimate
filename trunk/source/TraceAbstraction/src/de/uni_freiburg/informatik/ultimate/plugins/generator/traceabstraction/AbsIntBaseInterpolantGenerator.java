@@ -30,6 +30,7 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
@@ -50,12 +51,13 @@ public abstract class AbsIntBaseInterpolantGenerator implements IInterpolantGene
 	private final InterpolantComputationStatus mStatus;
 
 	AbsIntBaseInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<? extends IAction> cex,
+			final AbsIntPredicate<?, ?> precondition, final AbsIntPredicate<?, ?> postcondition,
 			final InterpolantComputationStatus status) {
 		mPredicateUnifier = Objects.requireNonNull(predicateUnifier);
 		mCex = cex;
 		mStatus = Objects.requireNonNull(status);
-		mPrecondition = mPredicateUnifier.getTruePredicate();
-		mPostcondition = mPredicateUnifier.getFalsePredicate();
+		mPrecondition = precondition;
+		mPostcondition = postcondition;
 	}
 
 	@Override
