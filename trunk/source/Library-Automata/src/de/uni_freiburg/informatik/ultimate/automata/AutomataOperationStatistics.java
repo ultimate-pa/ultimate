@@ -180,4 +180,9 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 		}
 		return (Integer) raw;
 	}
+
+	@Override
+	public String toString() {
+		return mKeyValueMap.toString();
+	}
 }
