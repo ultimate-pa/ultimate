@@ -213,7 +213,6 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 			final Pair<IDoubleDeckerAutomaton<LETTER, STATE>, MinimizeNwaMaxSat2<LETTER, STATE, ?>> resultPair,
 			final long timePreprocessing, final long timeSimulation) {
 		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
-		sim.getSimulationPerformance().exportToExistingAutomataOperationStatistics(statistics);
 		statistics.addKeyValuePair(StatisticsType.TIME_PREPROCESSING, timePreprocessing);
 		statistics.addKeyValuePair(StatisticsType.TIME_SIMULATION, timeSimulation);
 		if (initialPairs instanceof PartitionBackedSetOfPairs<?>) {
