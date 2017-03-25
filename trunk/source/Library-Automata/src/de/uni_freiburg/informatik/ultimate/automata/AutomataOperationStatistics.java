@@ -90,6 +90,16 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	}
 
 	/**
+	 * @param other
+	 *            Statistics object whose entries are added.
+	 */
+	public void addAllStatistics(final AutomataOperationStatistics other) {
+		for (final Entry<StatisticsType, Object> entry : other.mKeyValueMap.entrySet()) {
+			addKeyValuePair(entry.getKey(), entry.getValue());
+		}
+	}
+
+	/**
 	 * Adds a key-value pair with the content being the percentage of the first key <tt>sndBaseKey</tt> wrt. the second
 	 * key <tt>fstBaseKey</tt>.
 	 * 
