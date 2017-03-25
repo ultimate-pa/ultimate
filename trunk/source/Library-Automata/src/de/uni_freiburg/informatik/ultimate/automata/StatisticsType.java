@@ -396,6 +396,11 @@ public enum StatisticsType {
 	 */
 	TIME_SIMULATION,
 	/**
+	 * Run time for old simulation implementation.
+	 */
+	@Deprecated
+	TIME_SIMULATION_OLD,
+	/**
 	 * Run time for solving.
 	 */
 	TIME_SOLVING,

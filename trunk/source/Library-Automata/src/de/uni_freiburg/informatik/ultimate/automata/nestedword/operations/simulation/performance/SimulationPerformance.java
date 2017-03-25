@@ -138,7 +138,7 @@ public final class SimulationPerformance {
 	 */
 	public static StatisticsType convertTimeMeasureToStatistic(final TimeMeasure timeMeasure) {
 		if (timeMeasure.equals(TimeMeasure.OVERALL)) {
-			return StatisticsType.RUNTIME_TOTAL;
+			return StatisticsType.TIME_SIMULATION_OLD;
 		}
 
 		// Try to find a type with an equal name
@@ -244,8 +244,8 @@ public final class SimulationPerformance {
 	 */
 	public void exportToExistingAutomataOperationStatistics(final AutomataOperationStatistics stats) {
 		// Meta data
-		stats.addKeyValuePair(StatisticsType.OPERATION_NAME, getSimType());
-		stats.addKeyValuePair(StatisticsType.ATS_ID, getName());
+//		stats.addKeyValuePair(StatisticsType.OPERATION_NAME, getSimType());
+//		stats.addKeyValuePair(StatisticsType.ATS_ID, getName());
 		stats.addKeyValuePair(StatisticsType.HAS_TIMED_OUT, hasTimedOut());
 		stats.addKeyValuePair(StatisticsType.IS_OUT_OF_MEMORY, isOutOfMemory());
 		stats.addKeyValuePair(StatisticsType.IS_USING_SCCS, isUsingSccs());
