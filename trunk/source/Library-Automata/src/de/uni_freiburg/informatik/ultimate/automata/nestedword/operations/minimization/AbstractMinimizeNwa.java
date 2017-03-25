@@ -143,7 +143,6 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 					StatisticsType.STATES_REDUCTION_ABSOLUTE);
 			statistics.addPercentageDataInverted(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
 					StatisticsType.STATES_REDUCTION_RELATIVE);
-
 		}
 
 		/* TODO Christian 2016-10-12: make this optional, this has performance impact */
@@ -171,8 +170,6 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 					inputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
 			statistics.addKeyValuePair(StatisticsType.TRANSITIONS_RETURN_INPUT,
 					inputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
-			statistics.addKeyValuePair(StatisticsType.BUCHI_NONDETERMINISTIC_STATES,
-					inputAnalyzer.getNumberOfNondeterministicStates());
 
 			if (mResult != null) {
 				// Output automaton
@@ -192,8 +189,6 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 						outputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
 				statistics.addKeyValuePair(StatisticsType.TRANSITIONS_RETURN_OUTPUT,
 						outputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
-				statistics.addKeyValuePair(StatisticsType.RESULT_NONDETERMINISTIC_STATES,
-						outputAnalyzer.getNumberOfNondeterministicStates());
 
 				// comparisons (can only be computed after relevant data was added)
 				statistics.addDifferenceData(StatisticsType.BUCHI_TRANSITIONS, StatisticsType.RESULT_TRANSITIONS,
