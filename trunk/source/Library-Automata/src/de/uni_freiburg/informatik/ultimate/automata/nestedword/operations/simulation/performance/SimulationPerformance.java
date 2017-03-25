@@ -259,12 +259,13 @@ public final class SimulationPerformance {
 		}
 
 		// Counting measures
-		for (final CountingMeasure measure : getCountingMeasures().keySet()) {
-			final int value = getCountingMeasureResult(measure);
-			if (value != NO_COUNTING_RESULT) {
-				stats.addKeyValuePair(convertCountingMeasureToStatistic(measure), value);
-			}
-		}
+		// Christian 2017-03-25 I commented this out because it overwrites existing statistics from the superclass.
+//		for (final CountingMeasure measure : getCountingMeasures().keySet()) {
+//			final int value = getCountingMeasureResult(measure);
+//			if (value != NO_COUNTING_RESULT) {
+//				stats.addKeyValuePair(convertCountingMeasureToStatistic(measure), value);
+//			}
+//		}
 	}
 
 	/**
