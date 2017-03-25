@@ -115,7 +115,10 @@ public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 	/**
 	 * Get information about the performance (e.g., runtime) of the operation.
 	 * <p>
-	 * Delivering this information is optional.
+	 * Delivering this information is optional.<br>
+	 * This method should only be called by statistic collection frameworks. Implementing classes may decide to only
+	 * compute the statistics on demand, so this may be an expensive method. It is, however, not wise to keep huge data
+	 * structures in memory just for creating statistics data.
 	 * 
 	 * @return statistics object
 	 */
