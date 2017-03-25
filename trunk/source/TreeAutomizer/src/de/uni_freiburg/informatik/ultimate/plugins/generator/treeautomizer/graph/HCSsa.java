@@ -35,6 +35,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * HCSsa HornClause-SSA
@@ -45,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public class HCSsa {
 
-	private final TreeRun<Term, HCPredicate> mNestedFormulas;
+	private final TreeRun<Term, IPredicate> mNestedFormulas;
 	private final Term mPostCondition;
 	private final Term mPreCondition;
 	private final Map<Term, Integer> mCounters;
@@ -63,7 +64,7 @@ public class HCSsa {
 	 * @param counters
 	 *            A map of the counts of each Term.
 	 */
-	public HCSsa(final TreeRun<Term, HCPredicate> nestedFormulas, final Term pre, final Term post,
+	public HCSsa(final TreeRun<Term, IPredicate> nestedFormulas, final Term pre, final Term post,
 			final Map<Term, Integer> counters) {
 		mNestedFormulas = nestedFormulas;
 		mPostCondition = post;
@@ -77,7 +78,7 @@ public class HCSsa {
 	 * @param ssa Old SSA
 	 * @param nestedFormulas The new tree run.
 	 */
-	public HCSsa(final HCSsa ssa, final TreeRun<Term, HCPredicate> nestedFormulas) {
+	public HCSsa(final HCSsa ssa, final TreeRun<Term, IPredicate> nestedFormulas) {
 		mNestedFormulas = nestedFormulas;
 		mPostCondition = ssa.mPostCondition;
 		mPreCondition = ssa.mPreCondition;
@@ -116,9 +117,9 @@ public class HCSsa {
 		return flatten(mNestedFormulas);
 	}
 
-	private static List<Term> flatten(final TreeRun<Term, HCPredicate> tree) {
+	private static List<Term> flatten(final TreeRun<Term, IPredicate> tree) {
 		ArrayList<Term> res = new ArrayList<>();
-		for (final TreeRun<Term, HCPredicate> child : tree.getChildren()) {
+		for (final TreeRun<Term, IPredicate> child : tree.getChildren()) {
 			res.addAll(flatten(child));
 		}
 		if (tree.getRootSymbol() != null) {
@@ -127,7 +128,7 @@ public class HCSsa {
 		return res;
 	}
 
-	public TreeRun<Term, HCPredicate> getFormulasTree() {
+	public TreeRun<Term, IPredicate> getFormulasTree() {
 		return mNestedFormulas;
 	}
 

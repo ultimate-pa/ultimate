@@ -42,51 +42,59 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
+ * This is the equivalent of Automizer's TraceChecker. Here we check a tree for
+ * feasibility instead of a trace.
+ * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
 public class TreeChecker {
-	
-	private final ITreeRun<HornClause, HCPredicate> mTree;
+
+	private final ITreeRun<HornClause, IPredicate> mTree;
 	private final ManagedScript mBackendSmtSolverScript;
 	private final HCPredicate mPostCondition;
 	private final HCPredicate mPreCondition;
 	private final HCSSABuilder mSSABuilder;
 	private final ILogger mLogger;
 	private final PredicateUnifier mPredicateUnifier;
-	
+
 	/***
-	 * Checker of a tree run
+	 * Standard constructor.
+	 * 
 	 * @param tree
 	 * @param backendSmtSolverScript
 	 * @param preCondition
 	 * @param postCondition
 	 * @param logger
 	 * @param predicateFactory
+	 * @param predicateUnifier
 	 */
-	public TreeChecker(final ITreeRun<HornClause, HCPredicate> tree,
-			final ManagedScript backendSmtSolverScript, final HCPredicate preCondition,
-			final HCPredicate postCondition, ILogger logger, final PredicateUnifier predicateUnifier) {
+	public TreeChecker(final ITreeRun<HornClause, IPredicate> tree, final ManagedScript backendSmtSolverScript,
+			final HCPredicate preCondition, final HCPredicate postCondition, ILogger logger,
+			final PredicateUnifier predicateUnifier) {
 		mTree = tree;
 		mBackendSmtSolverScript = backendSmtSolverScript;
 		mPostCondition = postCondition;
 		mPreCondition = preCondition;
 		mPredicateUnifier = predicateUnifier;
-		mSSABuilder = new HCSSABuilder(mTree, mPreCondition, mPostCondition, mBackendSmtSolverScript, mPredicateUnifier);
-		
+		mSSABuilder = new HCSSABuilder(mTree, mPreCondition, mPostCondition, mBackendSmtSolverScript,
+				mPredicateUnifier);
+
 		mLogger = logger;
 	}
-	
+
 	/***
 	 * Rebuild the SSA with the interpolants.
-	 * @param interpolantsMap the map of predicates to the corresponding interpolants.
+	 * 
+	 * @param interpolantsMap
+	 *            the map of predicates to the corresponding interpolants.
 	 * @return
 	 */
-	public Map<HCPredicate, IPredicate> rebuild(final Map<HCPredicate, Term> interpolantsMap) {
+	public Map<IPredicate, IPredicate> rebuild(final Map<IPredicate, Term> interpolantsMap) {
 		return mSSABuilder.rebuildSSApredicates(interpolantsMap);
 	}
-	
+
 	protected HCSsa getSSA() {
 		return mSSABuilder.getSSA();
 	}

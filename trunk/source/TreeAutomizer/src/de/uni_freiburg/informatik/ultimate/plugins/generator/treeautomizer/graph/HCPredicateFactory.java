@@ -44,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
 /**
@@ -111,13 +110,18 @@ public class HCPredicateFactory extends PredicateFactory {
 		return mDontCarePredicate;
 	}
 	
-	public HCPredicate convertItoHCPredicate(final IPredicate p) {
-		return newPredicate(mSymbolTable.getDontCareHornClausePredicateSymbol(), p.getFormula(), new HashMap<>());
-	}
+//	public HCPredicate convertItoHCPredicate(final IPredicate p) {
+//		return newPredicate(mSymbolTable.getDontCareHornClausePredicateSymbol(), p.getFormula(), new HashMap<>());
+//	}
 
 	private HCPredicate newPredicate(HornClausePredicateSymbol loc, Term term, List<TermVariable> vars) {
 		return new HCPredicate(loc, term, computeHcOutVarsFromTermVariables(vars), computeClosedFormula(term), vars);
 	}
+	
+	public HCPredicate newHCPredicate(HornClausePredicateSymbol loc, Term term, List<TermVariable> vars) {
+		return newPredicate(loc, term, vars);
+	}
+	
 
 //	/**
 //	 * Create a new predicate from symbol and formula.

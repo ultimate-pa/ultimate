@@ -35,11 +35,20 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
  * A predicate object for HornClauses.
+ * 
+ * Convention: The "signature" of any Predicate that we use in TreeAutomizer is fixed by a sequence of Sorts. (I.e.
+ *  the length and the contents of that sequence.)
+ *  Thus the signature is given by a sequence of TermVariables. This sequence is identical to the free variabels in the
+ *  predicate's formula except for the ordering.
+ *  Alternatively, the signature can be given through an unordered set of TermVariables because we fix an (the natural?)
+ *   ordering on the TermVariables. (note sure about this..)
+ *  Furthermore each of the free variables in the predicate formula corresponds to an HCOutVar, which can also give us
+ *   the "index" in the order of each of the free variables.
+ * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -49,7 +58,7 @@ public class HCPredicate extends BasicPredicate {
 	private static final int SERIAL_HCPREDICATE = 1000000007;
 	
 //	@Visualizable
-	protected final HornClausePredicateSymbol mProgramPoint;
+	protected final HornClausePredicateSymbol mHcPredicateSymbol;
 //	private final Map<Term, HCVar> mProgramVars;
 	private final List<TermVariable> mVariables;
 
@@ -64,7 +73,7 @@ public class HCPredicate extends BasicPredicate {
 			final Set<IProgramVar> vars, final Term closedFormula,
 			final List<TermVariable> variables) {
 		super(serialNumber, new String[0], term, vars, closedFormula);
-		mProgramPoint = programPoint;
+		mHcPredicateSymbol = programPoint;
 //		mProgramVars = varsMap;
 		mVariables = variables;
 	}
@@ -124,17 +133,25 @@ public class HCPredicate extends BasicPredicate {
 	@Override
 	public String toString() {
 		String result = "#";
-		if (mProgramPoint != null) {
-			if ("true".equals(mProgramPoint.getName())) {
+		if (mHcPredicateSymbol != null) {
+			if ("true".equals(mHcPredicateSymbol.getName())) {
 				result += "True";
-			} else if ("false".equals(mProgramPoint.getName())) {
+			} else if ("false".equals(mHcPredicateSymbol.getName())) {
 				result += "False";
 			} else {
-				result += mProgramPoint.getName();
+				result += mHcPredicateSymbol.getName();
 			}
 		}
 		result += "@(" + mFormula.toString() + ")";
 		return result;
+	}
+
+	public HornClausePredicateSymbol getHcPredicatedSymbol() {
+		return mHcPredicateSymbol;
+	}
+	
+	public List<TermVariable> getSignature() {
+		return mVariables;
 	}
 	
 //	@Override
