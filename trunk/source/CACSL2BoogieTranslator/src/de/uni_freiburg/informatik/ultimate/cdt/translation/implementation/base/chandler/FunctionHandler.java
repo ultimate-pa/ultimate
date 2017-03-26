@@ -1126,6 +1126,10 @@ public class FunctionHandler {
 			builder.setLRVal(lrVal);
 			return builder.build();
 		} else if (methodName.equals("__builtin_return_address")) {
+			if (arguments.length != 1) {
+				throw new IllegalArgumentException(methodName + "has one argumens");
+			}
+			main.dispatch(arguments[0]);
 			/*
 			 * The GNU C online documentation at https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html on 09 Nov 2016
 			 * says: "— Built-in Function: void * __builtin_return_address (unsigned int level) This function returns
@@ -1150,6 +1154,20 @@ public class FunctionHandler {
 			return constructOverapproximationForFunctionCall(main, loc, methodName, resultType);
 			// } else if (methodName.equals("abs")) { // made obsolete by StdlibSupportInUltimate.java
 			// throw new UnsupportedOperationException("function abs from stdlib.h not yet implemented");
+		} else if (methodName.equals("__builtin_bswap32")) {
+			if (arguments.length != 1) {
+				throw new IllegalArgumentException(methodName + "has one argumens");
+			}
+			main.dispatch(arguments[0]);
+			final CPrimitive resultType = new CPrimitive(CPrimitives.UINT);
+			return constructOverapproximationForFunctionCall(main, loc, methodName, resultType);
+		} else if (methodName.equals("__builtin_bswap64")) {
+			if (arguments.length != 1) {
+				throw new IllegalArgumentException(methodName + "has one argumens");
+			}
+			main.dispatch(arguments[0]);
+			final CPrimitive resultType = new CPrimitive(CPrimitives.ULONG);
+			return constructOverapproximationForFunctionCall(main, loc, methodName, resultType);
 		} else {
 			final FloatFunction floatFunction = FloatFunction.decode(methodName);
 			if (floatFunction != null) {
@@ -1189,7 +1207,7 @@ public class FunctionHandler {
 	 *            CType that determinies the type of the auxiliary variable
 	 */
 	private ExpressionResult constructOverapproximationForFunctionCall(final Dispatcher main, final ILocation loc,
-			final String functionName, final CPointer resultType) {
+			final String functionName, final CType resultType) {
 		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
 		// introduce fresh aux variable
 		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
