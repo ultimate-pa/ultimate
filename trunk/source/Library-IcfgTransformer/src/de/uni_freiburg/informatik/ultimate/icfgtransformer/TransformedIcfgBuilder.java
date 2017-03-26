@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -34,7 +35,10 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer.TransforumlaTransformationResult;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -46,6 +50,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * 
@@ -227,6 +237,45 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 			return elem.getPayload();
 		}
 		return null;
+	}
+	
+	
+	/**
+	 * 2017-03-26 Matthias: Can we used to transform axioms. Not yet tested
+	 * 
+	 */
+	private IPredicate transformAxioms() {
+		final IUltimateServiceProvider services = null;
+		final ILogger logger = null;
+
+		final ManagedScript mgdScript = mOriginalIcfg.getCfgSmtToolkit().getManagedScript();
+		final IPredicate axioms = mOriginalIcfg.getCfgSmtToolkit().getAxioms();
+		final UnmodifiableTransFormula axiomsAsTransFormula = TransFormulaBuilder
+				.constructTransFormulaFromPredicate(axioms, mgdScript);
+		assert axiomsAsTransFormula.getInVars().isEmpty() : "axiom must not contain variables";
+		assert axiomsAsTransFormula.getOutVars().isEmpty() : "axiom must not contain variables";
+		assert axiomsAsTransFormula.getAuxVars().isEmpty() : "axiom must not contain variables";
+		final TransforumlaTransformationResult translationResult = mTransformer.transform(axiomsAsTransFormula);
+		if (translationResult.isOverapproximation()) {
+			throw new UnsupportedOperationException("overapproximation of axioms is not yet supported");
+		}
+		final UnmodifiableTransFormula transformedAxiomsAsTransFormula = translationResult.getTransformula();
+		assert transformedAxiomsAsTransFormula.getInVars().isEmpty() : "axiom must not contain variables";
+		assert transformedAxiomsAsTransFormula.getOutVars().isEmpty() : "axiom must not contain variables";
+		assert transformedAxiomsAsTransFormula.getAuxVars().isEmpty() : "axiom must not contain variables";
+		// Axioms may have serial number 0, hence we do not need a
+		// PredicateFactory here.
+		final int serialNumber = 0;
+		// Axioms do not contains local variables
+		final String[] procedures = new String[0];
+		// no variables, hence we do not need to renamed inVarss
+		final Term term = transformedAxiomsAsTransFormula.getFormula();
+		final Set<IProgramVar> vars = Collections.emptySet();
+		// no variables, hence term already closed
+		final Term closedFormula = term;
+		final IPredicate newAxioms = new BasicPredicate(serialNumber, procedures, term, vars, closedFormula);
+		return newAxioms;
+		
 	}
 
 }
