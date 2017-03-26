@@ -1878,7 +1878,7 @@ public class CHandler implements ICHandler {
 			final ExpressionResult divisorExpRes) {
 		final Expression divisor = divisorExpRes.lrVal.getValue();
 		final CPrimitive divisorType = (CPrimitive) divisorExpRes.lrVal.getCType();
-		
+
 		final PointerCheckMode checkMode;
 		if (divisorType.isIntegerType()) {
 			checkMode = main.getTranslationSettings().getDivisionByZeroOfIntegerTypes();
@@ -1887,24 +1887,26 @@ public class CHandler implements ICHandler {
 		} else {
 			throw new UnsupportedOperationException("cannot check division by zero for type " + divisorType);
 		}
-		
+
 		if (checkMode == PointerCheckMode.IGNORE) {
 			return;
 		}
-		
+
 		final Expression divisorNotZero;
 		if (divisorType.isIntegerType()) {
-			final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, divisorType, BigInteger.ZERO);
+			final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, divisorType,
+					BigInteger.ZERO);
 			divisorNotZero = mExpressionTranslation.constructBinaryEqualityExpression(loc,
 					IASTBinaryExpression.op_notequals, divisor, divisorType, zero, divisorType);
 		} else if (divisorType.isFloatingType()) {
-			final Expression zero = mExpressionTranslation.constructLiteralForFloatingType(loc, divisorType, BigDecimal.ZERO);
+			final Expression zero = mExpressionTranslation.constructLiteralForFloatingType(loc, divisorType,
+					BigDecimal.ZERO);
 			divisorNotZero = mExpressionTranslation.constructBinaryComparisonFloatingPointExpression(loc,
 					IASTBinaryExpression.op_notequals, divisor, divisorType, zero, divisorType);
 		} else {
 			throw new UnsupportedOperationException("cannot check division by zero for type " + divisorType);
 		}
-		
+
 		final Statement additionalStatement;
 		if (checkMode == PointerCheckMode.ASSUME) {
 			additionalStatement = new AssumeStatement(loc, divisorNotZero);
