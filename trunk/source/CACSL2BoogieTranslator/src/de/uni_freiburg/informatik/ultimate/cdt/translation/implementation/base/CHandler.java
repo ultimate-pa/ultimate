@@ -1878,35 +1878,46 @@ public class CHandler implements ICHandler {
 			final ExpressionResult divisorExpRes) {
 		final Expression divisor = divisorExpRes.lrVal.getValue();
 		final CPrimitive divisorType = (CPrimitive) divisorExpRes.lrVal.getCType();
-		if (main.getTranslationSettings().getDivisionByZero() == PointerCheckMode.IGNORE) {
-			return;
-		} else if (divisorType.isRealFloatingType()) {
-			// division by zero is defined for real floating types
-			return;
+		
+		final PointerCheckMode checkMode;
+		if (divisorType.isIntegerType()) {
+			checkMode = main.getTranslationSettings().getDivisionByZeroOfIntegerTypes();
+		} else if (divisorType.isFloatingType()) {
+			checkMode = main.getTranslationSettings().getDivisionByZeroOfFloatingTypes();
 		} else {
-			final Expression zero;
-			if (divisorType.isIntegerType()) {
-				zero = mExpressionTranslation.constructLiteralForIntegerType(loc, divisorType, BigInteger.ZERO);
-			} else if (divisorType.isRealFloatingType()) {
-				throw new AssertionError("case should have been handled before");
-			} else {
-				throw new UnsupportedOperationException("unsupported " + divisorType);
-			}
-			final Expression divisorNotZero = mExpressionTranslation.constructBinaryEqualityExpression(loc,
-					IASTBinaryExpression.op_notequals, divisor, divisorType, zero, divisorType);
-			final Statement additionalStatement;
-			if (main.getTranslationSettings().getDivisionByZero() == PointerCheckMode.ASSUME) {
-				additionalStatement = new AssumeStatement(loc, divisorNotZero);
-			} else if (main.getTranslationSettings().getDivisionByZero() == PointerCheckMode.ASSERTandASSUME) {
-				additionalStatement = new AssertStatement(loc, divisorNotZero);
-				final Check check = new Check(Check.Spec.DIVISION_BY_ZERO);
-				check.annotate(additionalStatement);
-			} else {
-				throw new AssertionError("illegal");
-			}
-			divisorExpRes.stmt.add(additionalStatement);
+			throw new UnsupportedOperationException("cannot check division by zero for type " + divisorType);
 		}
+		
+		if (checkMode == PointerCheckMode.IGNORE) {
+			return;
+		}
+		
+		final Expression divisorNotZero;
+		if (divisorType.isIntegerType()) {
+			final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(loc, divisorType, BigInteger.ZERO);
+			divisorNotZero = mExpressionTranslation.constructBinaryEqualityExpression(loc,
+					IASTBinaryExpression.op_notequals, divisor, divisorType, zero, divisorType);
+		} else if (divisorType.isFloatingType()) {
+			final Expression zero = mExpressionTranslation.constructLiteralForFloatingType(loc, divisorType, BigDecimal.ZERO);
+			divisorNotZero = mExpressionTranslation.constructBinaryComparisonFloatingPointExpression(loc,
+					IASTBinaryExpression.op_notequals, divisor, divisorType, zero, divisorType);
+		} else {
+			throw new UnsupportedOperationException("cannot check division by zero for type " + divisorType);
+		}
+		
+		final Statement additionalStatement;
+		if (checkMode == PointerCheckMode.ASSUME) {
+			additionalStatement = new AssumeStatement(loc, divisorNotZero);
+		} else if (checkMode == PointerCheckMode.ASSERTandASSUME) {
+			additionalStatement = new AssertStatement(loc, divisorNotZero);
+			final Check check = new Check(Check.Spec.DIVISION_BY_ZERO);
+			check.annotate(additionalStatement);
+		} else {
+			throw new AssertionError("illegal");
+		}
+		divisorExpRes.stmt.add(additionalStatement);
 	}
+	
 
 	/**
 	 * Handle additive operators according to Sections 6.5.6 of C11. Assumes that left (resp. right) are the results

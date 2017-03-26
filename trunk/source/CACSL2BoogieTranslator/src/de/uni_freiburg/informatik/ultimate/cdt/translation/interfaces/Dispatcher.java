@@ -326,16 +326,25 @@ public abstract class Dispatcher {
 	}
 
 	public static final class TranslationSettings {
-		private final PointerCheckMode mDivisionByZero;
+		private final PointerCheckMode mDivisionByZeroOfIntegerTypes;
+		private final PointerCheckMode mDivisionByZeroOfFloatingTypes;
 
 		public TranslationSettings(final IPreferenceProvider preferences) {
-			mDivisionByZero = preferences.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO,
+			mDivisionByZeroOfIntegerTypes = preferences.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES,
 					PointerCheckMode.class);
+			mDivisionByZeroOfFloatingTypes = preferences.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES,
+					PointerCheckMode.class);
+
 		}
 
-		public PointerCheckMode getDivisionByZero() {
-			return mDivisionByZero;
+		public PointerCheckMode getDivisionByZeroOfIntegerTypes() {
+			return mDivisionByZeroOfIntegerTypes;
 		}
+		
+		public PointerCheckMode getDivisionByZeroOfFloatingTypes() {
+			return mDivisionByZeroOfFloatingTypes;
+		}
+
 	}
 
 }
