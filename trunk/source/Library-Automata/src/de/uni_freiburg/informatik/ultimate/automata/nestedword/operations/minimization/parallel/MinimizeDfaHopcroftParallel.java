@@ -50,8 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Class for minimize deterministic finite automaton by the Hopcroft -
- * Algorithm.
+ * Class for minimize deterministic finite automaton by the Hopcroft - Algorithm.
  * 
  * @author Layla Franke
  * @param <LETTER>
@@ -62,13 +61,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		implements IMinimize {
 	/**
-	 * True if Hopcroft algorithm shall help Incremental algorithm, false
-	 * otherwise.
+	 * True if Hopcroft algorithm shall help Incremental algorithm, false otherwise.
 	 */
 	public static final boolean HELP_INCREMENTAL = true;
 	/**
-	 * Boolean variable for determining to run the algorithm with or without
-	 * producing tasks for parallel execution.
+	 * Boolean variable for determining to run the algorithm with or without producing tasks for parallel execution.
 	 */
 	private static boolean sParallel;
 
@@ -96,8 +93,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	 */
 	private ArrayList<Block> mBlocks;
 	/**
-	 * Interrupt object. The algorithm terminates without the complete result if
-	 * status is set to true.
+	 * Interrupt object. The algorithm terminates without the complete result if status is set to true.
 	 */
 	private Interrupt mInterrupt;
 
@@ -121,8 +117,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	 */
 	private MinimizeDfaIncrementalParallel<LETTER, STATE> mIncrementalAlgorithm;
 	/**
-	 * This variable will be true as soon as the mappings of states to integer
-	 * are entirely computed.
+	 * This variable will be true as soon as the mappings of states to integer are entirely computed.
 	 * <p>
 	 * Christian: 2016-08-02: This variable is neither used nor changed.
 	 */
@@ -421,8 +416,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	// ----------------------------ConstructResult-----------------------------
 
 	/**
-	 * This method constructs the resulting automaton from the set of equivalent
-	 * states.
+	 * This method constructs the resulting automaton from the set of equivalent states.
 	 */
 	private void constructResult() {
 		assert !mResultConstructed;
@@ -524,8 +518,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	 * Method for setting the flag before constructor is called.
 	 * 
 	 * @param parallel
-	 *            True if MinimizeDfaParallel is called originally, false
-	 *            otherwise.
+	 *            True if MinimizeDfaParallel is called originally, false otherwise.
 	 */
 	public static void setParallelFlag(final boolean parallel) {
 		sParallel = parallel;
@@ -534,8 +527,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 	/**
 	 * Getter for parallel computation.
 	 * 
-	 * @return True if mappings have already been computed entirely, false
-	 *         otherwise.
+	 * @return True if mappings have already been computed entirely, false otherwise.
 	 */
 	public boolean getMappings() {
 		return mInitialized;

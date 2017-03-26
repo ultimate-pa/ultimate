@@ -32,16 +32,12 @@ import java.util.Set;
 
 /**
  * A vertex base class for the game defined by a
- * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph
- * AGameGraph}.<br/>
+ * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph AGameGraph}.<br/>
  * <br/>
- * The vertex representation is <b>(q0, q1, bit)</b> which means <i>Spoiler</i>
- * is currently at state q0 whereas <i>Duplicator</i> now is at q1. The bit
- * encodes extra information if needed.<br/>
- * A vertex also holds several fields used for simulation calculation, for more
- * information see
- * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation
- * ASimulation}.
+ * The vertex representation is <b>(q0, q1, bit)</b> which means <i>Spoiler</i> is currently at state q0 whereas
+ * <i>Duplicator</i> now is at q1. The bit encodes extra information if needed.<br/>
+ * A vertex also holds several fields used for simulation calculation, for more information see
+ * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation ASimulation}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -52,8 +48,7 @@ import java.util.Set;
 public class Vertex<LETTER, STATE> {
 	/**
 	 * The progress measure of this vertex as needed for the
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation
-	 * ASimulation}.
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation ASimulation}.
 	 */
 	protected int mPm;
 	/**
@@ -62,44 +57,37 @@ public class Vertex<LETTER, STATE> {
 	private final boolean mB;
 	/**
 	 * The best neighbor measure of this vertex as needed for the
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation
-	 * ASimulation}.
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation ASimulation}.
 	 */
 	private int mBEff;
 	/**
 	 * The neighbor counter of this vertex as needed for the
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation
-	 * ASimulation}.
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation ASimulation}.
 	 */
 	private int mC;
 	/**
 	 * Whether this vertex is in the working list of the
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation
-	 * ASimulation} or not.
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation ASimulation} or
+	 * not.
 	 */
 	private boolean mInWL;
 	/**
 	 * The priority of this vertex as needed for the
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation
-	 * ASimulation}.
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation ASimulation}.
 	 */
 	private int mPriority;
 	/**
-	 * The label of the first buechi automaton state where <i>Spoiler</i>
-	 * currently is at.
+	 * The label of the first buechi automaton state where <i>Spoiler</i> currently is at.
 	 */
 	private final STATE mQ0;
 	/**
-	 * The label of the second buechi automaton state where <i>Duplicator</i>
-	 * currently is at.
+	 * The label of the second buechi automaton state where <i>Duplicator</i> currently is at.
 	 */
 	private final STATE mQ1;
 
 	/**
-	 * Constructs a new vertex with given representation <b>(q0, q1, bit)</b>
-	 * which means <i>Spoiler</i> is currently at state q0 whereas
-	 * <i>Duplicator</i> now is at q1. The bit encodes extra information if
-	 * needed.
+	 * Constructs a new vertex with given representation <b>(q0, q1, bit)</b> which means <i>Spoiler</i> is currently at
+	 * state q0 whereas <i>Duplicator</i> now is at q1. The bit encodes extra information if needed.
 	 * 
 	 * @param priority
 	 *            The priority of the vertex
@@ -160,8 +148,7 @@ public class Vertex<LETTER, STATE> {
 
 	/**
 	 * Gets the best neighbor measure of this vertex as needed for the
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation
-	 * ASimulation}.
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation ASimulation}.
 	 * 
 	 * @return The best neighbor measure of this vertex
 	 */
@@ -171,8 +158,7 @@ public class Vertex<LETTER, STATE> {
 
 	/**
 	 * Gets the neighbor counter of this vertex as needed for the
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation
-	 * ASimulation}.
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation ASimulation}.
 	 * 
 	 * @return The neighbor counter of this vertex
 	 */
@@ -181,8 +167,7 @@ public class Vertex<LETTER, STATE> {
 	}
 
 	/**
-	 * Gets a human readable name of the object. For example: "q0, q1" or
-	 * "q0, q1, a".
+	 * Gets a human readable name of the object. For example: "q0, q1" or "q0, q1, a".
 	 * 
 	 * @return A human readable name of the object
 	 */
@@ -192,18 +177,15 @@ public class Vertex<LETTER, STATE> {
 
 	/**
 	 * Gets the progress measure of this vertex as needed for the
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation
-	 * ASimulation}.
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation ASimulation}.
 	 * 
 	 * @param scc
 	 *            The SCC currently working from
 	 * @param infinity
-	 *            The currently known upper bound for infinity, for more
-	 *            information see
+	 *            The currently known upper bound for infinity, for more information see
 	 *            {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph#getGlobalInfinity()
 	 *            AGameGraph.getGlobalInfinity()}.
-	 * @return The progress measure of this vertex or 0 if the SCC is not
-	 *         <tt>null</tt> and not contains this vertex
+	 * @return The progress measure of this vertex or 0 if the SCC is not <tt>null</tt> and not contains this vertex
 	 */
 	public int getPM(final Set<Vertex<LETTER, STATE>> scc, final int infinity) {
 		if (scc == null) {
@@ -227,22 +209,18 @@ public class Vertex<LETTER, STATE> {
 	}
 
 	/**
-	 * Gets the label of the first buechi automaton state where <i>Spoiler</i>
-	 * currently is at.
+	 * Gets the label of the first buechi automaton state where <i>Spoiler</i> currently is at.
 	 * 
-	 * @return The label of the first buechi automaton state where
-	 *         <i>Spoiler</i> currently is at.
+	 * @return The label of the first buechi automaton state where <i>Spoiler</i> currently is at.
 	 */
 	public STATE getQ0() {
 		return mQ0;
 	}
 
 	/**
-	 * Gets the label of the second buechi automaton state where
-	 * <i>Duplicator</i> currently is at.
+	 * Gets the label of the second buechi automaton state where <i>Duplicator</i> currently is at.
 	 * 
-	 * @return The label of the second buechi automaton state where
-	 *         <i>Duplicator</i> currently is at.
+	 * @return The label of the second buechi automaton state where <i>Duplicator</i> currently is at.
 	 */
 	public STATE getQ1() {
 		return mQ1;
@@ -266,8 +244,7 @@ public class Vertex<LETTER, STATE> {
 	/**
 	 * Returns the bit which encodes extra information if needed.
 	 * 
-	 * @return True if the bit which encodes extra information if needed is
-	 *         true, false if not.
+	 * @return True if the bit which encodes extra information if needed is true, false if not.
 	 */
 	public boolean isB() {
 		return mB;
@@ -276,8 +253,7 @@ public class Vertex<LETTER, STATE> {
 	/**
 	 * Returns if the vertex is an instance of a {@link DuplicatorVertex}.
 	 * 
-	 * @return True if the vertex is an instance of a {@link DuplicatorVertex},
-	 *         false if not.
+	 * @return True if the vertex is an instance of a {@link DuplicatorVertex}, false if not.
 	 */
 	public boolean isDuplicatorVertex() {
 		return this instanceof DuplicatorVertex;
@@ -285,8 +261,8 @@ public class Vertex<LETTER, STATE> {
 
 	/**
 	 * Returns whether this vertex is in the working list of the
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation
-	 * ASimulation} or not.
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation ASimulation} or
+	 * not.
 	 * 
 	 * @return True if this vertex is in the working list, false if not.
 	 */
@@ -297,8 +273,7 @@ public class Vertex<LETTER, STATE> {
 	/**
 	 * Returns if the vertex is an instance of a {@link SpoilerVertex}.
 	 * 
-	 * @return True if the vertex is an instance of a {@link SpoilerVertex},
-	 *         false if not.
+	 * @return True if the vertex is an instance of a {@link SpoilerVertex}, false if not.
 	 */
 	public boolean isSpoilerVertex() {
 		return !(this instanceof DuplicatorVertex);
@@ -306,8 +281,7 @@ public class Vertex<LETTER, STATE> {
 
 	/**
 	 * Sets the best neighbor measure of this vertex as needed for the
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation
-	 * ASimulation}.
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation ASimulation}.
 	 * 
 	 * @param b
 	 *            The best neighbor measure to set
@@ -318,8 +292,7 @@ public class Vertex<LETTER, STATE> {
 
 	/**
 	 * Sets the neighbor counter of this vertex as needed for the
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation
-	 * ASimulation}.
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation ASimulation}.
 	 * 
 	 * @param c
 	 *            The neighbor counter to set
@@ -330,8 +303,8 @@ public class Vertex<LETTER, STATE> {
 
 	/**
 	 * Sets whether this vertex is in the working list of the
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation
-	 * ASimulation} or not.
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation ASimulation} or
+	 * not.
 	 * 
 	 * @param inWL
 	 *            The value to set
@@ -342,8 +315,7 @@ public class Vertex<LETTER, STATE> {
 
 	/**
 	 * Sets the progress measure of this vertex as needed for the
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation
-	 * ASimulation}.
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.ASimulation ASimulation}.
 	 * 
 	 * @param pm
 	 *            The progress measure to set

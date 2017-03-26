@@ -35,11 +35,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 
 /**
- * Supports all methods that are required by
- * {@link NestedWordAutomatonReachableStates} which is able to transform
- * objects of this class into an {@link IDoubleDeckerAutomaton}.
- * Who implements this class must only define outgoing letters and successors
- * for letters.
+ * Supports all methods that are required by {@link NestedWordAutomatonReachableStates} which is able to transform
+ * objects of this class into an {@link IDoubleDeckerAutomaton}. Who implements this class must only define outgoing
+ * letters and successors for letters.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>

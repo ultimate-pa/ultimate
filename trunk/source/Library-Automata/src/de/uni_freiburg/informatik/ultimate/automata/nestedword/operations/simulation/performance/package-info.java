@@ -26,7 +26,6 @@
  * resulting work.
  */
 /**
- * This packages contains classes to measure the performance of buchi reduction
- * operations.
+ * This packages contains classes to measure the performance of buchi reduction operations.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance;

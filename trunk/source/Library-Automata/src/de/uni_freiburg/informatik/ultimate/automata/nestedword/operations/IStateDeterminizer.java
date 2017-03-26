@@ -82,12 +82,11 @@ public interface IStateDeterminizer<LETTER, STATE> {
 
 	/**
 	 * If {@code true}, the constructed DeterminizedStates are sets of
-	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker DoubleDecker},
-	 * needed, e.g. for exact determinization of nested word automata.
-	 * If {@code false}, the constructed DeterminizedStates are sets of {@link STATE}s. This
-	 * is sufficient for exact determinization of finite automata. We also use
-	 * these DeterminizedStates for determinizations where the resulting
-	 * automaton recognizes a superset of the input automaton's language.
+	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker DoubleDecker}, needed, e.g. for exact
+	 * determinization of nested word automata. If {@code false}, the constructed DeterminizedStates are sets of
+	 * {@link STATE}s. This is sufficient for exact determinization of finite automata. We also use these
+	 * DeterminizedStates for determinizations where the resulting automaton recognizes a superset of the input
+	 * automaton's language.
 	 * 
 	 * @return {@code true} iff {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker
 	 *         DoubleDecker} is used.

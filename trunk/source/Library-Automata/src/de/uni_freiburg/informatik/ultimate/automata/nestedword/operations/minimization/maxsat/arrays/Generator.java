@@ -37,8 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 
 /**
- * Formulate "merge relation constraints" (as defined in my thesis) as a
- * MAX-SAT instance.
+ * Formulate "merge relation constraints" (as defined in my thesis) as a MAX-SAT instance.
  * <p>
  * A solution to the instance can be converted to a merge relation later.
  *
@@ -82,8 +81,7 @@ final class Generator {
 	 *            input NWA.
 	 * @param history
 	 *            precalculated history states for <code>inNWA</code>.
-	 * @return A (consistent) Partition which represents the minimized
-	 *         automaton.
+	 * @return A (consistent) Partition which represents the minimized automaton.
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
@@ -402,8 +400,7 @@ final class Generator {
 	}
 
 	/**
-	 * This encapsulates some evil intricate knowledge about the
-	 * representation of the equivalence variables as integers
+	 * This encapsulates some evil intricate knowledge about the representation of the equivalence variables as integers
 	 */
 	private static final class EqVarCalc {
 		private final int mN;

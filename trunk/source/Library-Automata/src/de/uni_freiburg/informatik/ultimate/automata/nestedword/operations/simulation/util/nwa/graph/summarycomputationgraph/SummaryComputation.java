@@ -66,8 +66,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * Class for computation of game graph summaries.
- * The computation of the summaries is done in the game automaton.
+ * Class for computation of game graph summaries. The computation of the summaries is done in the game automaton.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>

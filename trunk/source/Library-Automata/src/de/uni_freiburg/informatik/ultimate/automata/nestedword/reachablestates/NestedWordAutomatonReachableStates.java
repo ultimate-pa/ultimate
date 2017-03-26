@@ -118,7 +118,12 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	public enum ReachProp {
-		REACHABLE, NODEADEND_AD, NODEADEND_SD, FINANC, LIVE_AD, LIVE_SD
+		REACHABLE,
+		NODEADEND_AD,
+		NODEADEND_SD,
+		FINANC,
+		LIVE_AD,
+		LIVE_SD
 	}
 
 	/**
@@ -127,7 +132,10 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
 	enum InCaRe {
-		INTERNAL, CALL, RETURN, SUMMARY
+		INTERNAL,
+		CALL,
+		RETURN,
+		SUMMARY
 	}
 
 	/**

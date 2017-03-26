@@ -40,19 +40,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * This class implements Brzozowski's minimization algorithm.
  * <p>
- * The key idea is to reverse and determinize the automaton twice.
- * After each reversal the resulting DFA is minimal wrt. its language
- * (i.e., the reversed DFA minimally accepts the reverse language and the
- * twice reversed DFA minimally accepts the original language).
+ * The key idea is to reverse and determinize the automaton twice. After each reversal the resulting DFA is minimal wrt.
+ * its language (i.e., the reversed DFA minimally accepts the reverse language and the twice reversed DFA minimally
+ * accepts the original language).
  * <p>
- * Reversal means that
- * - the transitions are turned around,
- * - the final states become the initial states,
- * - the initial states become the final states.
+ * Reversal means that - the transitions are turned around, - the final states become the initial states, - the initial
+ * states become the final states.
  * <p>
- * NOTE: The implementation is naive in the sense that both a new automaton is
- * created after each operation and the reversal and determinization do not
- * know each other (potentially they may .
+ * NOTE: The implementation is naive in the sense that both a new automaton is created after each operation and the
+ * reversal and determinization do not know each other (potentially they may .
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -100,8 +96,7 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	}
 
 	/**
-	 * This method simply reverses and determinizes the automaton twice, which
-	 * results in the minimal DFA.
+	 * This method simply reverses and determinizes the automaton twice, which results in the minimal DFA.
 	 * 
 	 * @throws AutomataOperationCanceledException
 	 *             when execution is cancelled
@@ -122,10 +117,8 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	/**
 	 * This method reverses the automaton.
 	 * <p>
-	 * Reversal means that
-	 * - the transitions are turned around,
-	 * - the final states become the initial states,
-	 * - the initial states become the final states.
+	 * Reversal means that - the transitions are turned around, - the final states become the initial states, - the
+	 * initial states become the final states.
 	 * 
 	 * @param automaton
 	 *            automaton

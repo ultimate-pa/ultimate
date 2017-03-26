@@ -41,9 +41,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * 
  * @author Jan Hättig (haettigj@informatik.uni-freiburg.de)
  * @param <STATE>
- *            Content. Type of the labels that are assigned to the states of the
- *            automata. In many cases you want to use {@link String} as {@link STATE} and your
- *            states are labeled, e.g., with "q0", "q1", ...
+ *            Content. Type of the labels that are assigned to the states of the automata. In many cases you want to use
+ *            {@link String} as {@link STATE} and your states are labeled, e.g., with "q0", "q1", ...
  */
 public class AutomatonEpimorphism<STATE> {
 	private static final String INVALID_STATE_NAME_MESSAGE = "Invalid state name: ";
@@ -64,13 +63,10 @@ public class AutomatonEpimorphism<STATE> {
 	}
 
 	/**
-	 * Creates the epimorphism for two automata from {@code nwa1} to {@code nwa2}. The Labels of
-	 * {@code nwa1} have to be of type {@link String} and have to be of the following scheme:
-	 * <blockquote>
-	 * {@code l1_l2},
-	 * </blockquote>
-	 * where {@code l1} is the actual label of the state and {@code l2} is
-	 * the label of the state of {@code nwa2} which it is epimorphic to.
+	 * Creates the epimorphism for two automata from {@code nwa1} to {@code nwa2}. The Labels of {@code nwa1} have to be
+	 * of type {@link String} and have to be of the following scheme: <blockquote> {@code l1_l2}, </blockquote> where
+	 * {@code l1} is the actual label of the state and {@code l2} is the label of the state of {@code nwa2} which it is
+	 * epimorphic to.
 	 * 
 	 * @param services
 	 *            Ultimate services

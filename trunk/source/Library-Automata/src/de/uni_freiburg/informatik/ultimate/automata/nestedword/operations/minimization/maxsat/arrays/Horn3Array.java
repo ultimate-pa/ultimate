@@ -83,9 +83,8 @@ final class Horn3Array implements Iterable<Horn3Clause> {
 	}
 
 	/**
-	 * Iterate over all clauses of an <code>Horn3Array</code>. For efficiency,
-	 * each iteration returns the same pre-allocated Horn3Clause, modified to
-	 * contain the values of the current clause. The caller must make a copy if
+	 * Iterate over all clauses of an <code>Horn3Array</code>. For efficiency, each iteration returns the same
+	 * pre-allocated Horn3Clause, modified to contain the values of the current clause. The caller must make a copy if
 	 * the clause is used longer.
 	 *
 	 * @author stimpflj

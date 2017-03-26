@@ -85,10 +85,9 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 	}
 
 	/**
-	 * Given an {@link INestedWordAutomatonSimple} return an {@link INestedWordAutomaton} that has
-	 * the same states, but all states that are not reachable are omitted.
-	 * Each state of the result also occurred in the input. Only the auxiliary
-	 * empty stack state of the result is different.
+	 * Given an {@link INestedWordAutomatonSimple} return an {@link INestedWordAutomaton} that has the same states, but
+	 * all states that are not reachable are omitted. Each state of the result also occurred in the input. Only the
+	 * auxiliary empty stack state of the result is different.
 	 * 
 	 * @param services
 	 *            Ultimate services

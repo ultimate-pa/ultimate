@@ -32,8 +32,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword;
  * <p>
  * For many algorithms (e.g. determinization) we do not have to use configurations (current state + stack) of the
  * automaton, the {@link DoubleDecker}s are sufficient.<br>
- * In "JACM2009 - Alur,Madhusudan - Adding nesting structure to words" a
- * {@link DoubleDecker} is called "summary state", but to avoid clashes in variable names I decided to use this name.
+ * In "JACM2009 - Alur,Madhusudan - Adding nesting structure to words" a {@link DoubleDecker} is called "summary state",
+ * but to avoid clashes in variable names I decided to use this name.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <STATE>

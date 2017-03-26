@@ -49,8 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Buchi Complementation based on
- * 2004ATVA - Friedgut,Kupferman,Vardi - Büchi Complementation Made Tighter.
+ * Buchi Complementation based on 2004ATVA - Friedgut,Kupferman,Vardi - Büchi Complementation Made Tighter.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -71,9 +70,8 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 	private final ILogger mLogger;
 
 	/**
-	 * TODO Allow definition of a maximal rank for cases where you know that
-	 * this is sound. E.g. if the automaton is reverse deterministic a maximal
-	 * rank of 2 is sufficient, see paper of Seth Forgaty.
+	 * TODO Allow definition of a maximal rank for cases where you know that this is sound. E.g. if the automaton is
+	 * reverse deterministic a maximal rank of 2 is sufficient, see paper of Seth Forgaty.
 	 */
 	private final int mUserDefinedMaxRank;
 
@@ -89,8 +87,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 	private final Map<DeterminizedState<LETTER, STATE>, STATE> mDet2res = new HashMap<>();
 
 	/**
-	 * Maps a state in resulting automaton to the FkvSubsetComponentState for which it
-	 * was created.
+	 * Maps a state in resulting automaton to the FkvSubsetComponentState for which it was created.
 	 */
 	private final Map<STATE, FkvSubsetComponentState<LETTER, STATE>> mRes2scs = new HashMap<>();
 
@@ -100,16 +97,14 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 	private final Map<LevelRankingState<LETTER, STATE>, STATE> mLrk2res = new HashMap<>();
 
 	/**
-	 * Maps a state in resulting automaton to the LevelRankingState for which it
-	 * was created.
+	 * Maps a state in resulting automaton to the LevelRankingState for which it was created.
 	 */
 	private final Map<STATE, LevelRankingState<LETTER, STATE>> mRes2lrk = new HashMap<>();
 
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 
 	/**
-	 * Highest rank that occured during the construction. Used only for
-	 * statistics.
+	 * Highest rank that occured during the construction. Used only for statistics.
 	 */
 	private int mHighestRank = -1;
 
@@ -168,8 +163,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 	}
 
 	/**
-	 * Return state of result automaton that represents lrkState. If no such
-	 * state was constructed yet, construct it.
+	 * Return state of result automaton that represents lrkState. If no such state was constructed yet, construct it.
 	 */
 	private STATE getOrAdd(final LevelRankingState<LETTER, STATE> lrkState) {
 		if (lrkState.isEmpty()) {
@@ -190,8 +184,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 	}
 
 	/**
-	 * Return state of result automaton that represents detState. If no such
-	 * state was constructed yet, construct it.
+	 * Return state of result automaton that represents detState. If no such state was constructed yet, construct it.
 	 */
 	private STATE getOrAdd(final DeterminizedState<LETTER, STATE> detState, final boolean isInitial) {
 		if (detState.isEmpty()) {

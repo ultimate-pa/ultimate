@@ -45,9 +45,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplemen
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Buchi Complementation based on the algorithm proposed by Frantisek Blahoudek
- * and Jan Stejcek. This complementation is only sound for a special class of
- * automata whose working title is <i>TABA</i> (termination analysis Büchi automata).
+ * Buchi Complementation based on the algorithm proposed by Frantisek Blahoudek and Jan Stejcek. This complementation is
+ * only sound for a special class of automata whose working title is <i>TABA</i> (termination analysis Büchi automata).
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -62,9 +61,8 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 	private static final Integer RANK_NONFINAL = Integer.valueOf(3);
 
 	/**
-	 * Heuristic where we move to accepting sink already from states with
-	 * nonempty difference C\F. Warning: yet this is only implemented for
-	 * internal transitions.
+	 * Heuristic where we move to accepting sink already from states with nonempty difference C\F. Warning: yet this is
+	 * only implemented for internal transitions.
 	 */
 	private static final boolean EARLY_SINK_HEURISTIC = false;
 
@@ -84,8 +82,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 	private final Map<LevelRankingState<LETTER, STATE>, STATE> mDet2res = new HashMap<>();
 
 	/**
-	 * Maps a state in resulting automaton to the BlaStState for which it
-	 * was created.
+	 * Maps a state in resulting automaton to the BlaStState for which it was created.
 	 */
 	private final Map<STATE, LevelRankingState<LETTER, STATE>> mRes2det = new HashMap<>();
 
@@ -130,8 +127,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 	}
 
 	/**
-	 * Return state of result automaton that represents detState. If no such
-	 * state was constructed yet, construct it.
+	 * Return state of result automaton that represents detState. If no such state was constructed yet, construct it.
 	 */
 	private STATE getOrAdd(final boolean isInitial, final LevelRankingState<LETTER, STATE> lvlrk) {
 		STATE resState = mDet2res.get(lvlrk);

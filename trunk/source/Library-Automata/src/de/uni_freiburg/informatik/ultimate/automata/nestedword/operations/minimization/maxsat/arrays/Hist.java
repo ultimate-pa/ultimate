@@ -74,9 +74,8 @@ final class Hist {
 	}
 
 	/**
-	 * @return whether <code>history</code> is consistent with <code>nwa</code>
-	 *         NOTE: history states can be -1. This means "bottom-of-stack"
-	 *         state.
+	 * @return whether <code>history</code> is consistent with <code>nwa</code> NOTE: history states can be -1. This
+	 *         means "bottom-of-stack" state.
 	 */
 	static boolean checkConsistency(final NwaWithArrays nwa, final ArrayList<Hist> hist) {
 		for (int i = 0; i < hist.size(); i++) {

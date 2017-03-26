@@ -37,8 +37,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  */
 public interface INwaGameGraph<LETTER, STATE> {
 	/**
-	 * Undoes changes that where made for removing return vertices and their
-	 * edges.
+	 * Undoes changes that where made for removing return vertices and their edges.
 	 */
 	public void undoRemovedReturnBridgesChanges();
 }

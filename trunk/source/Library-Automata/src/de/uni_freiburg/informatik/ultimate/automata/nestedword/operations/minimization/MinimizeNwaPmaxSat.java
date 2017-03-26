@@ -151,7 +151,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	@Override
 	public void addStatistics(final AutomataOperationStatistics statistics) {
 		super.addStatistics(statistics);
-		
+
 		if (mLargestBlockInitialPartition != 0) {
 			statistics.addKeyValuePair(mSettings.getLibraryMode()
 					? StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK_PMAXSAT

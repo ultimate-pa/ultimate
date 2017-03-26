@@ -58,8 +58,8 @@ public class DelayedFullMultipebbleGameState<STATE> extends FullMultipebbleGameS
 	}
 
 	/**
-	 * @return true iff all DoubleDeckers are mapped to true. This includes the
-	 *         special case where we have the empty set of DeckerDeckers.
+	 * @return true iff all DoubleDeckers are mapped to true. This includes the special case where we have the empty set
+	 *         of DeckerDeckers.
 	 */
 	protected boolean checkIfAllBitsAreTrue(final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers) {
 		for (final Triple<STATE, STATE, Boolean> triple : duplicatorDoubleDeckers.entrySet()) {

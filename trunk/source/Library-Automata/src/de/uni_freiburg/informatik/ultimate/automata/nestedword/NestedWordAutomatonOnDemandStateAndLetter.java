@@ -40,10 +40,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Nested word automaton with on-demand construction for letters and states.
- * Supports all methods that are required by
- * {@link NestedWordAutomatonReachableStates} which is able to transform
- * objects of this class into an {@link IDoubleDeckerAutomaton}.
+ * Nested word automaton with on-demand construction for letters and states. Supports all methods that are required by
+ * {@link NestedWordAutomatonReachableStates} which is able to transform objects of this class into an
+ * {@link IDoubleDeckerAutomaton}.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -185,8 +184,7 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE>
 
 	/**
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#internalSuccessors(
-	 *      java.lang.Object,
-	 *      java.lang.Object)
+	 *      java.lang.Object, java.lang.Object)
 	 */
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
@@ -209,8 +207,7 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE>
 
 	/**
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#callSuccessors(
-	 *      java.lang.Object,
-	 *      java.lang.Object)
+	 *      java.lang.Object, java.lang.Object)
 	 */
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
@@ -232,8 +229,7 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE>
 
 	/**
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#returnSuccessors(
-	 *      java.lang.Object,
-	 *      java.lang.Object, java.lang.Object)
+	 *      java.lang.Object, java.lang.Object, java.lang.Object)
 	 */
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
@@ -243,8 +239,7 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE>
 
 	/**
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#returnSuccessorsGivenHier(
-	 *      java.lang.Object,
-	 *      java.lang.Object)
+	 *      java.lang.Object, java.lang.Object)
 	 */
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,

@@ -263,9 +263,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 	}
 
 	/**
-	 * @return relation that contains a pair of states (q0, q1) iff the
-	 *         analysis of the game graph yielded the information that the state q1
-	 *         simulates the state q0.
+	 * @return relation that contains a pair of states (q0, q1) iff the analysis of the game graph yielded the
+	 *         information that the state q1 simulates the state q0.
 	 */
 	private void readoutSimulationRelation(final AGameGraph<LETTER, STATE> gameGraph,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
@@ -282,9 +281,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 	}
 
 	/**
-	 * Workaround to check if vertex is auxiliary vertex. This method check
-	 * if one the vertex' states is null. In the future we want to have
-	 * separate classes for auxiliary vertices.
+	 * Workaround to check if vertex is auxiliary vertex. This method check if one the vertex' states is null. In the
+	 * future we want to have separate classes for auxiliary vertices.
 	 */
 	private boolean isAuxiliaryVertex(final SpoilerVertex<LETTER, STATE> spoilerVertex) {
 		return spoilerVertex.getQ0() == null || spoilerVertex.getQ1() == null;

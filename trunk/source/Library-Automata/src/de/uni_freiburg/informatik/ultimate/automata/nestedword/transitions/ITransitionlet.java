@@ -27,9 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions;
 
 /**
- * Interface for outgoing (resp. incoming) transitions of nested word automata.
- * For reasons of efficiency these transitions do not contain the predecessor
- * (resp. successor) because the automaton already stores this information.
+ * Interface for outgoing (resp. incoming) transitions of nested word automata. For reasons of efficiency these
+ * transitions do not contain the predecessor (resp. successor) because the automaton already stores this information.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>

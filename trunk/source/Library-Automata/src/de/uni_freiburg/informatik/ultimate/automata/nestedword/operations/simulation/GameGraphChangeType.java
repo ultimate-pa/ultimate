@@ -27,8 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation;
 
 /**
- * Types of possible game graph changes, mainly used by
- * {@link GameGraphChanges}.
+ * Types of possible game graph changes, mainly used by {@link GameGraphChanges}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */

@@ -45,8 +45,7 @@ public final class GameSpoilerNwaVertex<LETTER, STATE> implements IGameState {
 	private final SpoilerNwaVertex<LETTER, STATE> mSpoilerNwaVertex;
 
 	/**
-	 * Creates a new game automaton state that represents the given Spoiler
-	 * vertex.
+	 * Creates a new game automaton state that represents the given Spoiler vertex.
 	 * 
 	 * @param spoilerNwaVertex
 	 *            The Spoiler vertex represented by this wrapper

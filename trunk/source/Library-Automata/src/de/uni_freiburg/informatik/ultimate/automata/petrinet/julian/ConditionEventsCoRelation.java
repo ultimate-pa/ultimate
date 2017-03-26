@@ -155,16 +155,15 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 	 * with *e i denote the predecessor-nodes of e.
 	 * </p>
 	 * <p>
-	 * 1. If e1 ic e2 then their parents are pairwise in irreflexive
-	 * co-relation.<br>
+	 * 1. If e1 ic e2 then their parents are pairwise in irreflexive co-relation.<br>
 	 * <b>Proof:</b> <br>
 	 * let e1 co e2. Furthermore let ci be a predecessor of ei for i \in {1,2}
 	 * </p>
 	 * <p>
 	 * If c1#c2 then e1#e2 _|_.<br>
 	 * If c1 and c2 are equal then e1#e2 or e1=e2 _|_.<br>
-	 * If c1 and c2 are in causal relation, then one of the following must hold:
-	 * e1 is in causal relation to e2 e1 # e2 _|_ <br>
+	 * If c1 and c2 are in causal relation, then one of the following must hold: e1 is in causal relation to e2 e1 # e2
+	 * _|_ <br>
 	 * q.e.d.
 	 * </p>
 	 * <p>
@@ -173,16 +172,13 @@ public class ConditionEventsCoRelation<S, C> implements ICoRelation<S, C> {
 	 * </p>
 	 * <p>
 	 * If e1 = e2 it is trivial, that there are c1,c2 s.t. c1=c2 _|_<br>
-	 * Assume e1 < e2, then there has to be a path between e1 and e2 s.t.
-	 * \exists c1 \in *e1 s.t. c1 < e2. For each parent c2 \in *e2 then c1 < c2
-	 * holds. (e1 > e2 analogously) _|_<br>
-	 * Note: This is based on the assumption, that both Events have at least one
-	 * predecessor-condition. <br>
-	 * Assume e1#e2. There is a Condition c and Events e1', e2' \in c* s.t. e1'
-	 * < e1 and e2' < e2. There is c1 \in *e1 s.t. either c1 < c or c1=c.<br>
+	 * Assume e1 < e2, then there has to be a path between e1 and e2 s.t. \exists c1 \in *e1 s.t. c1 < e2. For each
+	 * parent c2 \in *e2 then c1 < c2 holds. (e1 > e2 analogously) _|_<br>
+	 * Note: This is based on the assumption, that both Events have at least one predecessor-condition. <br>
+	 * Assume e1#e2. There is a Condition c and Events e1', e2' \in c* s.t. e1' < e1 and e2' < e2. There is c1 \in *e1
+	 * s.t. either c1 < c or c1=c.<br>
 	 * If e2 = e2' then c \in *e2 _|_ (e1=e1' analogously). <br>
-	 * If e1 != e1' and e2 != e2' then there are predecessor-conditions c1 \in
-	 * *e1, c2 \in *e2 s.t. c1#c2 _|_. <br>
+	 * If e1 != e1' and e2 != e2' then there are predecessor-conditions c1 \in *e1, c2 \in *e2 s.t. c1#c2 _|_. <br>
 	 * q.e.d.
 	 * </p>
 	 */

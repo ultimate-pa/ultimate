@@ -38,10 +38,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
  * Checks whether a nested word automaton is total.
  * <p>
- * An NWA is total if for each state and symbol there is an outgoing
- * transition.
- * For return transitions, we require that for each hierarchical predecessor
- * there is a transition with each return symbol.
+ * An NWA is total if for each state and symbol there is an outgoing transition. For return transitions, we require that
+ * for each hierarchical predecessor there is a transition with each return symbol.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>

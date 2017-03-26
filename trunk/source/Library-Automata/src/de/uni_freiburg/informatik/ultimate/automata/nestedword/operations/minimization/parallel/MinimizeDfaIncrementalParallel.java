@@ -48,28 +48,23 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 
 /**
- * This class implements the incremental DFA minimization algorithm by Almeida,
- * Moreira, and Reis ('Incremental DFA minimisation').
+ * This class implements the incremental DFA minimization algorithm by Almeida, Moreira, and Reis ('Incremental DFA
+ * minimisation').
  * <p>
- * The basic idea is to check equivalence of each pair of states exactly once
- * (with an order on the states even only once per two states, so
- * <code>q, q'</code> we either check as <code>(q, q')</code> or
- * <code>(q', q)</code>).
+ * The basic idea is to check equivalence of each pair of states exactly once (with an order on the states even only
+ * once per two states, so <code>q, q'</code> we either check as <code>(q, q')</code> or <code>(q', q)</code>).
  * <p>
- * Initially each state is not equivalent to all states that have a different
- * final status (<code>q !~ q' <=> (q in F <=> q' not in F)</code>). Also it is
- * clear that each state is equivalent to itself.
+ * Initially each state is not equivalent to all states that have a different final status
+ * (<code>q !~ q' <=> (q in F <=> q' not in F)</code>). Also it is clear that each state is equivalent to itself.
  * <p>
- * If for a pair of states it is not clear whether they are equivalent, then the
- * they are equivalent if and only if all successor states (wrt. a symbol) are
- * equivalent, so we shift the task for one level. Loops are avoided by storing
- * the visited pairs.
+ * If for a pair of states it is not clear whether they are equivalent, then the they are equivalent if and only if all
+ * successor states (wrt. a symbol) are equivalent, so we shift the task for one level. Loops are avoided by storing the
+ * visited pairs.
  * <p>
- * If the result was finally found for a pair of states, typically some more
- * pairs of states were investigated. If the answer was positive, all pairs of
- * states that were tested are equivalent. If the answer was negative, some
- * pairs of states were not equivalent. All those pairs are stored and the
- * information is then propagated to avoid checking these states later.
+ * If the result was finally found for a pair of states, typically some more pairs of states were investigated. If the
+ * answer was positive, all pairs of states that were tested are equivalent. If the answer was negative, some pairs of
+ * states were not equivalent. All those pairs are stored and the information is then propagated to avoid checking these
+ * states later.
  * 
  * @author Layla Franke
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
@@ -81,26 +76,22 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinimizeIncremental<LETTER, STATE>
 		implements IMinimize {
 	/**
-	 * True if Incremental algorithm shall help Hopcroft algorithm, false
-	 * otherwise.
+	 * True if Incremental algorithm shall help Hopcroft algorithm, false otherwise.
 	 */
 	public static final boolean HELP_HOPCROFT = true;
 
 	/**
 	 * Option: Separate states with different transitions.
 	 * <p>
-	 * That is, if there is a letter {@code l} where one of the states has an
-	 * outgoing transitions with {@code l} and one has not (hence this
-	 * transition would go to an implicit sink state.
+	 * That is, if there is a letter {@code l} where one of the states has an outgoing transitions with {@code l} and
+	 * one has not (hence this transition would go to an implicit sink state.
 	 * <p>
-	 * NOTE: This is only reasonable if the input automaton is not total.
-	 * Furthermore, the method becomes incomplete (i.e., may not find the
-	 * minimum) if dead ends have not been removed beforehand.
+	 * NOTE: This is only reasonable if the input automaton is not total. Furthermore, the method becomes incomplete
+	 * (i.e., may not find the minimum) if dead ends have not been removed beforehand.
 	 */
 	private static final boolean OPTION_NEQ_TRANS = false;
 	/**
-	 * Boolean variable for determining to run the algorithm with or without
-	 * producing tasks for parallel execution.
+	 * Boolean variable for determining to run the algorithm with or without producing tasks for parallel execution.
 	 */
 	private static boolean sParallel = false;
 
@@ -156,8 +147,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 */
 	private MinimizeDfaHopcroftParallel<LETTER, STATE> mHopcroftAlgorithm;
 	/**
-	 * This variable will be true as soon as the union-find data structure is
-	 * initialized.
+	 * This variable will be true as soon as the union-find data structure is initialized.
 	 */
 	private boolean mInitialized = false;
 
@@ -253,8 +243,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	 * Method for setting the flag before constructor is called.
 	 * 
 	 * @param parallel
-	 *            True if MinimizeDfaParallel is called originally, false
-	 *            otherwise.
+	 *            True if MinimizeDfaParallel is called originally, false otherwise.
 	 */
 	public static void setParallelFlag(final boolean parallel) {
 		sParallel = parallel;
@@ -272,8 +261,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	/**
 	 * Get state of this algorithm instance.
 	 * 
-	 * @return True if union-find data structure is initialized, false
-	 *         otherwise.
+	 * @return True if union-find data structure is initialized, false otherwise.
 	 */
 	public boolean getInitialized() {
 		return mInitialized;
@@ -369,8 +357,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	}
 
 	/**
-	 * This method makes the preprocessing step to map states to integers and
-	 * vice versa.
+	 * This method makes the preprocessing step to map states to integers and vice versa.
 	 */
 	private void preprocess() {
 		mState2int = new HashMap<>(mSize);
@@ -388,8 +375,8 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	}
 
 	/**
-	 * This method is the main method of the minimization. As long as it runs,
-	 * it finds for each pair of states whether they are equivalent or not.
+	 * This method is the main method of the minimization. As long as it runs, it finds for each pair of states whether
+	 * they are equivalent or not.
 	 * <p>
 	 * It terminates automatically, but can also be halted at any time.
 	 * <p>
@@ -452,13 +439,11 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	}
 
 	/**
-	 * This method initializes the set of pairs of states which are definitely
-	 * not equivalent.
+	 * This method initializes the set of pairs of states which are definitely not equivalent.
 	 * <p>
 	 * The certain candidates are pairs where exactly one state is final.
 	 * <p>
-	 * There is a global option for separating states with different outgoing
-	 * transitions.
+	 * There is a global option for separating states with different outgoing transitions.
 	 * 
 	 * @return set of pairs of states not equivalent to each other
 	 */
@@ -499,9 +484,8 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	}
 
 	/**
-	 * This method originally recursively calls itself to find out whether two
-	 * states are equivalent. It uses the global set lists to store the paths it
-	 * searched through.
+	 * This method originally recursively calls itself to find out whether two states are equivalent. It uses the global
+	 * set lists to store the paths it searched through.
 	 * <p>
 	 * The recursion was transformed to an explicit form using a stack.
 	 * <p>
@@ -565,14 +549,12 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	}
 
 	/**
-	 * This method handles the case of {@link #isPairEquiv(Tuple)} when
-	 * the pair of states has not yet been expanded.
+	 * This method handles the case of {@link #isPairEquiv(Tuple)} when the pair of states has not yet been expanded.
 	 * <p>
 	 * It pushes the pairs of successor states on the stack.
 	 * <p>
-	 * If the states have not been separated wrt. different outgoing transitions
-	 * at the beginning, this is checked here and then possibly a reason for
-	 * non-equivalence is found.
+	 * If the states have not been separated wrt. different outgoing transitions at the beginning, this is checked here
+	 * and then possibly a reason for non-equivalence is found.
 	 * 
 	 * @param tuple
 	 *            pair of states
@@ -637,8 +619,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	}
 
 	/**
-	 * This method constructs the resulting automaton from the set of equivalent
-	 * states.
+	 * This method constructs the resulting automaton from the set of equivalent states.
 	 */
 	private void constructResult() {
 		// mapping from states to their representative
@@ -722,12 +703,10 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	}
 
 	/**
-	 * This method implements the find operation of the Union-Find data
-	 * structure.
+	 * This method implements the find operation of the Union-Find data structure.
 	 * <p>
-	 * That is, the representative chain is searched and afterwards all
-	 * intermediate representatives in this chain are updated accordingly for
-	 * faster future find operations.
+	 * That is, the representative chain is searched and afterwards all intermediate representatives in this chain are
+	 * updated accordingly for faster future find operations.
 	 * <p>
 	 * pseudocode name: FIND
 	 * 
@@ -762,15 +741,12 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	}
 
 	/**
-	 * This method implements the union operation of the Union-Find data
-	 * structure.
+	 * This method implements the union operation of the Union-Find data structure.
 	 * <p>
-	 * That is, the representative of the second state is set to the
-	 * representative of the first state.
+	 * That is, the representative of the second state is set to the representative of the first state.
 	 * <p>
-	 * NOTE: The find operation is used in order to safe one update later on.
-	 * This way the direct representatives are certainly the true
-	 * representatives.
+	 * NOTE: The find operation is used in order to safe one update later on. This way the direct representatives are
+	 * certainly the true representatives.
 	 * <p>
 	 * pseudocode name: UNION
 	 * 
@@ -786,19 +762,18 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	// ------------------- auxiliary classes and methods ------------------- //
 
 	/**
-	 * This is a data structure containing a map and a list for fast operations
-	 * on the data (tuples, i.e., pairs of states).
+	 * This is a data structure containing a map and a list for fast operations on the data (tuples, i.e., pairs of
+	 * states).
 	 * <p>
-	 * The map holds pairs(tuple, list node), i.e., it maps a pair of states to
-	 * the list node containing it. For iteration the list is used.
+	 * The map holds pairs(tuple, list node), i.e., it maps a pair of states to the list node containing it. For
+	 * iteration the list is used.
 	 * <p>
-	 * Insertion and removal both work in {@code O(1)}. The problem here is that
-	 * hash maps must be initialized and this takes time {@code O(size)}. Since
-	 * {@code size} is in {@code O(n^2)} throughout the execution and the sets
-	 * are repeatedly recreated, this comes with a big cost.
+	 * Insertion and removal both work in {@code O(1)}. The problem here is that hash maps must be initialized and this
+	 * takes time {@code O(size)}. Since {@code size} is in {@code O(n^2)} throughout the execution and the sets are
+	 * repeatedly recreated, this comes with a big cost.
 	 * <p>
-	 * To avoid this, the map is instead cleaned for all entries, which might
-	 * hopefully be much less than all possible entries.
+	 * To avoid this, the map is instead cleaned for all entries, which might hopefully be much less than all possible
+	 * entries.
 	 */
 	private final class SetList {
 		/**
@@ -824,9 +799,8 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 		/**
 		 * This method adds a pair of states.
 		 * <p>
-		 * NOTE: The original pseudocode allows elements to be present
-		 * beforehand and removes them first. That is avoided by this
-		 * implementation.
+		 * NOTE: The original pseudocode allows elements to be present beforehand and removes them first. That is
+		 * avoided by this implementation.
 		 * <p>
 		 * pseudocode name: SET-INSERT
 		 * 
@@ -843,8 +817,8 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 		/**
 		 * This method removes a pair of states.
 		 * <p>
-		 * NOTE: The original pseudocode allows elements to not be present
-		 * beforehand. That is avoided by this implementation.
+		 * NOTE: The original pseudocode allows elements to not be present beforehand. That is avoided by this
+		 * implementation.
 		 * <p>
 		 * pseudocode name: SET-REMOVE
 		 * 
@@ -883,9 +857,8 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 		}
 
 		/**
-		 * To avoid re-allocation of the whole memory (and default
-		 * initialization), the map is instead cleaned for all entries in the
-		 * list.
+		 * To avoid re-allocation of the whole memory (and default initialization), the map is instead cleaned for all
+		 * entries in the list.
 		 * <p>
 		 * pseudocode name: SET-MAKE
 		 */
@@ -954,9 +927,8 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 		}
 
 		/**
-		 * This class implements a simple doubly-linked list where the list
-		 * nodes can be accessed. This is used to store them in a hash map for
-		 * fast access.
+		 * This class implements a simple doubly-linked list where the list nodes can be accessed. This is used to store
+		 * them in a hash map for fast access.
 		 */
 		private final class DoublyLinkedList {
 			/**
@@ -977,8 +949,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 			}
 
 			/**
-			 * This method adds a new pair of states to the end of the list in
-			 * {@code O(1)}.
+			 * This method adds a new pair of states to the end of the list in {@code O(1)}.
 			 * 
 			 * @param tuple
 			 *            pair of states
@@ -1042,8 +1013,7 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 			/**
 			 * This method returns an iterator of the list elements.
 			 * <p>
-			 * NOTE: It is assumed that the list is not modified during
-			 * iteration.
+			 * NOTE: It is assumed that the list is not modified during iteration.
 			 * 
 			 * @param size
 			 *            the size of the list (known by the set)
@@ -1102,11 +1072,9 @@ public class MinimizeDfaIncrementalParallel<LETTER, STATE> extends AbstractMinim
 	}
 
 	/**
-	 * This class represents an auxiliary wrapper for stack elements. An
-	 * instance contains both a pair of states and a flag indicating whether
-	 * this pair has already been investigated or not. The stack is used is to
-	 * give an explicit version of the recursive procedure in the equivalence
-	 * checking algorithm.
+	 * This class represents an auxiliary wrapper for stack elements. An instance contains both a pair of states and a
+	 * flag indicating whether this pair has already been investigated or not. The stack is used is to give an explicit
+	 * version of the recursive procedure in the equivalence checking algorithm.
 	 */
 	private class StackElem {
 		/**

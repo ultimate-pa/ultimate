@@ -31,17 +31,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game.IGameLetter;
 
 /**
- * A vertex representing that its <i>Duplicator</i>s turn in the game defined by
- * a
- * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph
- * AGameGraph}.<br/>
+ * A vertex representing that its <i>Duplicator</i>s turn in the game defined by a
+ * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph AGameGraph}.<br/>
  * <br/>
- * The vertex representation is <b>(q0, q1, a, bit)</b> which means
- * <i>Spoiler</i> is currently at state q0 and made a move using an a-transition
- * before whereas <i>Duplicator</i> now is at q1 and must try to also use an
- * a-transition. The bit encodes extra information if needed.
- * This object extends regular DuplicatorVertices by giving it extra information
- * that only occur in Nwa Game Graphs, like sinks.
+ * The vertex representation is <b>(q0, q1, a, bit)</b> which means <i>Spoiler</i> is currently at state q0 and made a
+ * move using an a-transition before whereas <i>Duplicator</i> now is at q1 and must try to also use an a-transition.
+ * The bit encodes extra information if needed. This object extends regular DuplicatorVertices by giving it extra
+ * information that only occur in Nwa Game Graphs, like sinks.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -53,27 +49,23 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 		implements IGameLetter<LETTER, STATE> {
 
 	/**
-	 * The sink this vertex belongs to if it is generated as a shadow vertex for
-	 * such, <tt>null</tt> if not set.
+	 * The sink this vertex belongs to if it is generated as a shadow vertex for such, <tt>null</tt> if not set.
 	 */
 	private final IWinningSink<LETTER, STATE> mSink;
 	/**
-	 * The summarize edge this vertex belongs to if it is generated as a shadow
-	 * vertex for such, <tt>null</tt> if not set.
+	 * The summarize edge this vertex belongs to if it is generated as a shadow vertex for such, <tt>null</tt> if not
+	 * set.
 	 */
 	private final SummarizeEdge<LETTER, STATE> mSummarizeEdge;
 	/**
-	 * The type of the transition, i.e. if it stands for an internal, call or
-	 * return transition.
+	 * The type of the transition, i.e. if it stands for an internal, call or return transition.
 	 */
 	private final TransitionType mTransitionType;
 
 	/**
-	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
-	 * a, bit)</b> which means <i>Spoiler</i> is currently at state q0 and made
-	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
-	 * q1 and must try to also use an a-transition. The bit encodes extra
-	 * information if needed.
+	 * Constructs a new duplicator vertex with given representation <b>(q0, q1, a, bit)</b> which means <i>Spoiler</i>
+	 * is currently at state q0 and made a move using an a-transition before whereas <i>Duplicator</i> now is at q1 and
+	 * must try to also use an a-transition. The bit encodes extra information if needed.
 	 * 
 	 * @param priority
 	 *            The priority of the vertex
@@ -86,8 +78,7 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * @param a
 	 *            The letter spoiler used before
 	 * @param transitionType
-	 *            The type of the transition, i.e. if it stands for an internal,
-	 *            call or return transition
+	 *            The type of the transition, i.e. if it stands for an internal, call or return transition
 	 */
 	public DuplicatorNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1, final LETTER a,
 			final TransitionType transitionType) {
@@ -95,13 +86,10 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	}
 
 	/**
-	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
-	 * a, bit)</b> which means <i>Spoiler</i> is currently at state q0 and made
-	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
-	 * q1 and must try to also use an a-transition. The bit encodes extra
-	 * information if needed.
-	 * If the used transition is of type {@link TransitionType#SINK} one can
-	 * set <tt>sink</tt> to distinguish between similar sinks.
+	 * Constructs a new duplicator vertex with given representation <b>(q0, q1, a, bit)</b> which means <i>Spoiler</i>
+	 * is currently at state q0 and made a move using an a-transition before whereas <i>Duplicator</i> now is at q1 and
+	 * must try to also use an a-transition. The bit encodes extra information if needed. If the used transition is of
+	 * type {@link TransitionType#SINK} one can set <tt>sink</tt> to distinguish between similar sinks.
 	 * 
 	 * @param priority
 	 *            The priority of the vertex
@@ -114,11 +102,9 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * @param a
 	 *            The letter spoiler used before
 	 * @param transitionType
-	 *            The type of the transition, i.e. if it stands for an internal,
-	 *            call or return transition
+	 *            The type of the transition, i.e. if it stands for an internal, call or return transition
 	 * @param sink
-	 *            The sink this vertex belongs to if it is generated as a shadow
-	 *            vertex for such.
+	 *            The sink this vertex belongs to if it is generated as a shadow vertex for such.
 	 */
 	public DuplicatorNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1, final LETTER a,
 			final TransitionType transitionType, final IWinningSink<LETTER, STATE> sink) {
@@ -126,13 +112,10 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	}
 
 	/**
-	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
-	 * a, bit)</b> which means <i>Spoiler</i> is currently at state q0 and made
-	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
-	 * q1 and must try to also use an a-transition. The bit encodes extra
-	 * information if needed.
-	 * If the used transition is of type {@link TransitionType#SUMMARIZE_ENTRY}
-	 * or {@link TransitionType#SUMMARIZE_EXIT} one can set
+	 * Constructs a new duplicator vertex with given representation <b>(q0, q1, a, bit)</b> which means <i>Spoiler</i>
+	 * is currently at state q0 and made a move using an a-transition before whereas <i>Duplicator</i> now is at q1 and
+	 * must try to also use an a-transition. The bit encodes extra information if needed. If the used transition is of
+	 * type {@link TransitionType#SUMMARIZE_ENTRY} or {@link TransitionType#SUMMARIZE_EXIT} one can set
 	 * <tt>summarizeEdge</tt> to distinguish between similar summarize edges.
 	 * 
 	 * @param priority
@@ -146,11 +129,9 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * @param a
 	 *            The letter spoiler used before
 	 * @param transitionType
-	 *            The type of the transition, i.e. if it stands for an internal,
-	 *            call or return transition
+	 *            The type of the transition, i.e. if it stands for an internal, call or return transition
 	 * @param summarizeEdge
-	 *            The summarize edge this vertex belongs to if it is generated
-	 *            as a shadow vertex.
+	 *            The summarize edge this vertex belongs to if it is generated as a shadow vertex.
 	 */
 	public DuplicatorNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1, final LETTER a,
 			final TransitionType transitionType, final SummarizeEdge<LETTER, STATE> summarizeEdge) {
@@ -158,16 +139,12 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	}
 
 	/**
-	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
-	 * a, bit)</b> which means <i>Spoiler</i> is currently at state q0 and made
-	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
-	 * q1 and must try to also use an a-transition. The bit encodes extra
-	 * information if needed.
-	 * If the used transition is of type {@link TransitionType#SUMMARIZE_ENTRY}
-	 * or {@link TransitionType#SUMMARIZE_EXIT} one can set
-	 * <tt>summarizeEdge</tt> to distinguish between similar summarize edges. If
-	 * the used transition is of type {@link TransitionType#SINK} one can set
-	 * <tt>sink</tt> to distinguish between similar sinks.
+	 * Constructs a new duplicator vertex with given representation <b>(q0, q1, a, bit)</b> which means <i>Spoiler</i>
+	 * is currently at state q0 and made a move using an a-transition before whereas <i>Duplicator</i> now is at q1 and
+	 * must try to also use an a-transition. The bit encodes extra information if needed. If the used transition is of
+	 * type {@link TransitionType#SUMMARIZE_ENTRY} or {@link TransitionType#SUMMARIZE_EXIT} one can set
+	 * <tt>summarizeEdge</tt> to distinguish between similar summarize edges. If the used transition is of type
+	 * {@link TransitionType#SINK} one can set <tt>sink</tt> to distinguish between similar sinks.
 	 * 
 	 * @param priority
 	 *            The priority of the vertex
@@ -180,14 +157,11 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	 * @param a
 	 *            The letter spoiler used before
 	 * @param transitionType
-	 *            The type of the transition, i.e. if it stands for an internal,
-	 *            call or return transition
+	 *            The type of the transition, i.e. if it stands for an internal, call or return transition
 	 * @param summarizeEdge
-	 *            The summarize edge this vertex belongs to if it is generated
-	 *            as a shadow vertex for such.
+	 *            The summarize edge this vertex belongs to if it is generated as a shadow vertex for such.
 	 * @param sink
-	 *            The sink this vertex belongs to if it is generated as a shadow
-	 *            vertex for such.
+	 *            The sink this vertex belongs to if it is generated as a shadow vertex for such.
 	 */
 	private DuplicatorNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1, final LETTER a,
 			final TransitionType transitionType, final SummarizeEdge<LETTER, STATE> summarizeEdge,
@@ -256,25 +230,20 @@ public final class DuplicatorNwaVertex<LETTER, STATE> extends DuplicatorVertex<L
 	}
 
 	/**
-	 * Gets the sink this vertex belongs to or <tt>null</tt> if not set. This
-	 * field should only be used if the type of the used transition is
-	 * {@link TransitionType#SINK}.
+	 * Gets the sink this vertex belongs to or <tt>null</tt> if not set. This field should only be used if the type of
+	 * the used transition is {@link TransitionType#SINK}.
 	 * 
-	 * @return The summarize edge this vertex belongs to or <tt>null</tt> if not
-	 *         set.
+	 * @return The summarize edge this vertex belongs to or <tt>null</tt> if not set.
 	 */
 	public IWinningSink<LETTER, STATE> getSink() {
 		return mSink;
 	}
 
 	/**
-	 * Gets the summarize edge this vertex belongs to or <tt>null</tt> if not
-	 * set. This field should only be used if the type of the used transition is
-	 * {@link TransitionType#SUMMARIZE_ENTRY} or
-	 * {@link TransitionType#SUMMARIZE_EXIT}.
+	 * Gets the summarize edge this vertex belongs to or <tt>null</tt> if not set. This field should only be used if the
+	 * type of the used transition is {@link TransitionType#SUMMARIZE_ENTRY} or {@link TransitionType#SUMMARIZE_EXIT}.
 	 * 
-	 * @return The summarize edge this vertex belongs to or <tt>null</tt> if not
-	 *         set.
+	 * @return The summarize edge this vertex belongs to or <tt>null</tt> if not set.
 	 */
 	public SummarizeEdge<LETTER, STATE> getSummarizeEdge() {
 		return mSummarizeEdge;

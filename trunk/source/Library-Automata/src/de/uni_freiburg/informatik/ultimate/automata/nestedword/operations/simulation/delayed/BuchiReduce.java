@@ -48,10 +48,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Operation that reduces a given buechi automaton by using
- * {@link DelayedSimulation}.<br/>
- * Once constructed the reduction automatically starts, the result can be get by
- * using {@link #getResult()}.
+ * Operation that reduces a given buechi automaton by using {@link DelayedSimulation}.<br/>
+ * Once constructed the reduction automatically starts, the result can be get by using {@link #getResult()}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
@@ -77,8 +75,7 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 	private final SimulationPerformance mStatistics;
 
 	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton.<br/>
+	 * Creates a new buechi reduce object that starts reducing the given buechi automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -88,8 +85,7 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 	 * @param operand
 	 *            The buechi automaton to reduce
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public BuchiReduce(final AutomataLibraryServices services, final IMinimizationStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
@@ -101,8 +97,7 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 	}
 
 	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton with a given simulation.<br/>
+	 * Creates a new buechi reduce object that starts reducing the given buechi automaton with a given simulation.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -114,8 +109,7 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 	 * @param simulation
 	 *            Simulation to use for reduction
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	protected BuchiReduce(final AutomataLibraryServices services, final IMinimizationStateFactory<STATE> stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final DelayedSimulation<LETTER, STATE> simulation)

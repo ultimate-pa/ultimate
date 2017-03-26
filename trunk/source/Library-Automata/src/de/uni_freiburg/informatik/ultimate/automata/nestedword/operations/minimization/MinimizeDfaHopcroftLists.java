@@ -46,13 +46,12 @@ import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPai
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Utility class for minimizing incomplete DFAs (Deterministic Finite
- * Automaton). Uses a modification of the Hopcroft algorithm.<br/>
+ * Utility class for minimizing incomplete DFAs (Deterministic Finite Automaton). Uses a modification of the Hopcroft
+ * algorithm.<br/>
  * Runtime is in:<br/>
  * <b>O(m * log(n))</b> with usage of<br/>
  * <b>O(k + n + m)</b> space<br/>
- * where 'n' is the number of states, 'm' the number of edges and 'k' the size
- * of the alphabet.
+ * where 'n' is the number of states, 'm' the number of edges and 'k' the size of the alphabet.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -115,8 +114,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 	 * Runtime is in:<br/>
 	 * <b>O(m * log(n))</b> with usage of<br/>
 	 * <b>O(k + n + m)</b> space<br/>
-	 * where 'n' is the number of states, 'm' the number of edges and 'k' the
-	 * size of the alphabet.
+	 * where 'n' is the number of states, 'm' the number of edges and 'k' the size of the alphabet.
 	 */
 	public MinimizeDfaHopcroftLists(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
@@ -157,8 +155,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 	 * Runtime is in:<br/>
 	 * <b>O(m * log(n))</b> with usage of<br/>
 	 * <b>O(k + n + m)</b> space<br/>
-	 * where 'n' is the number of states, 'm' the number of edges and 'k' the
-	 * size of the alphabet.
+	 * where 'n' is the number of states, 'm' the number of edges and 'k' the size of the alphabet.
 	 * 
 	 * @param services
 	 *            Service provider
@@ -182,8 +179,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 	}
 
 	/**
-	 * Builds the minimized automaton using the block
-	 * representation of all nodes.
+	 * Builds the minimized automaton using the block representation of all nodes.
 	 * 
 	 * @param addMapping
 	 *            true iff mapping old state -> new state should be included
@@ -339,8 +335,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 	 * Runtime is in:<br/>
 	 * <b>O(m * log(n))</b> with usage of<br/>
 	 * <b>O(k + n + m)</b> space<br/>
-	 * where 'n' is the number of states, 'm' the number of edges and 'k' the
-	 * size of the alphabet.
+	 * where 'n' is the number of states, 'm' the number of edges and 'k' the size of the alphabet.
 	 * 
 	 * @param initialPartition
 	 *            Initial partition of states
@@ -457,14 +452,12 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 	}
 
 	/**
-	 * Splits blocks in order to find blocks that can be left out for
-	 * minimizing.
+	 * Splits blocks in order to find blocks that can be left out for minimizing.
 	 * 
 	 * @param splitter
 	 *            Splitter block
 	 * @param letterAmount
-	 *            Amount of letters the automaton has,
-	 *            i.e. the size of the alphabet
+	 *            Amount of letters the automaton has, i.e. the size of the alphabet
 	 * @return List of blocks to append to list of split candidates
 	 */
 	private LinkedList<LinkedHashSet<Integer>> split(final LinkedHashSet<Integer> splitter, final int letterAmount) {

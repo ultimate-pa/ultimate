@@ -32,9 +32,8 @@ import java.util.Iterator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Clause used by the MAX-SAT solver. Although there is only one
- * positive atom in Horn clauses, this class allows one to use
- * several positive atoms.
+ * Clause used by the MAX-SAT solver. Although there is only one positive atom in Horn clauses, this class allows one to
+ * use several positive atoms.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <V>
@@ -187,16 +186,14 @@ class Clause<V> {
 	}
 
 	/**
-	 * Positive atoms.
-	 * DO NOT EDIT THE ARRAY!
+	 * Positive atoms. DO NOT EDIT THE ARRAY!
 	 */
 	public V[] getPositiveAtoms() {
 		return mPositiveAtoms;
 	}
 
 	/**
-	 * Negative atoms.
-	 * DO NOT EDIT THE ARRAY!
+	 * Negative atoms. DO NOT EDIT THE ARRAY!
 	 */
 	public V[] getNegativeAtoms() {
 		return mNegativeAtoms;
@@ -275,9 +272,8 @@ class Clause<V> {
 	}
 
 	/**
-	 * Returns the Horn status of the last evaluation of the clause.
-	 * It is intended that this does not necessarily correspond to the current
-	 * assignment.
+	 * Returns the Horn status of the last evaluation of the clause. It is intended that this does not necessarily
+	 * correspond to the current assignment.
 	 * 
 	 * @return true iff the clause is a Horn clause under the current assignment
 	 */
@@ -288,8 +284,7 @@ class Clause<V> {
 	/**
 	 * Checks whether the clause is a Horn clause under the current assignment.
 	 * 
-	 * @deprecated The method is currently not used as we report the Horn status
-	 *             of the last evaluation time.
+	 * @deprecated The method is currently not used as we report the Horn status of the last evaluation time.
 	 * @param solver
 	 *            solver
 	 * @return true iff the clause is a Horn clause under the current assignment

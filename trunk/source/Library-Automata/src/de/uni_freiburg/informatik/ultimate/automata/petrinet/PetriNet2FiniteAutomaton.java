@@ -115,9 +115,8 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 	}
 
 	/**
-	 * Returns the automaton state that represents marking. If this state is not
-	 * yet constructed, construct it and enqueue the marking. If it has to be
-	 * constructed it is an initial state iff isInitial is true.
+	 * Returns the automaton state that represents marking. If this state is not yet constructed, construct it and
+	 * enqueue the marking. If it has to be constructed it is an initial state iff isInitial is true.
 	 */
 	private C getState(final Marking<S, C> marking, final boolean isInitial) {
 		C state = mMarking2State.get(marking);
@@ -141,9 +140,8 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 	}
 
 	/**
-	 * Given a marking. Get the state that represents the marking. Add all
-	 * possible outgoing automaton transitions to state. Construct (and
-	 * enqueue to worklist) successor states if necessary.
+	 * Given a marking. Get the state that represents the marking. Add all possible outgoing automaton transitions to
+	 * state. Construct (and enqueue to worklist) successor states if necessary.
 	 */
 	private void constructOutgoingTransitions(final Marking<S, C> marking) {
 		final C state = getState(marking, false);

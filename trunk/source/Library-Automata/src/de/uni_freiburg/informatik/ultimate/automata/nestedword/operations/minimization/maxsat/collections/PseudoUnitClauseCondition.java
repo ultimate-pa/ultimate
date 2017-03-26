@@ -28,8 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections;
 
 /**
- * Clause condition for clause with exactly one literal with undetermined truth
- * value. This literal is also called pseudo-unit.
+ * Clause condition for clause with exactly one literal with undetermined truth value. This literal is also called
+ * pseudo-unit.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
@@ -43,8 +43,7 @@ public final class PseudoUnitClauseCondition implements IClauseCondition {
 	 * @param unitIndex
 	 *            index of the unit literal (only if 'unsetAtoms == 1')
 	 * @param unitIsPositive
-	 *            true iff the unit literal is positive
-	 *            (only if 'unsetAtoms == 1')
+	 *            true iff the unit literal is positive (only if 'unsetAtoms == 1')
 	 */
 	public PseudoUnitClauseCondition(final int unitIndex, final boolean unitIsPositive) {
 		if (unitIsPositive) {

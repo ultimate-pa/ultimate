@@ -29,9 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 import java.util.Set;
 
 /**
- * Meta state used in the rank-based complementation of Buchi nested word
- * automata. Can be either a {@link #FkvSubsetComponentState} or a
- * {@link #LevelRankingState}.
+ * Meta state used in the rank-based complementation of Buchi nested word automata. Can be either a
+ * {@link #FkvSubsetComponentState} or a {@link #LevelRankingState}.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>

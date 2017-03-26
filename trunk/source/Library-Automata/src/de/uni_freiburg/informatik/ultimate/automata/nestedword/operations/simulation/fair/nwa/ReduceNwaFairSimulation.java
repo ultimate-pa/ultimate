@@ -41,8 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPai
 
 /**
  * Operation that reduces a given nwa by using {@link FairSimulation}. <br/>
- * Once constructed the reduction automatically starts, the result can be get by
- * using {@link #getResult()}.
+ * Once constructed the reduction automatically starts, the result can be get by using {@link #getResult()}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -53,8 +52,7 @@ import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPai
 public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFairSimulation<LETTER, STATE> {
 
 	/**
-	 * Creates a new nwa reduce object that starts reducing the given nwa
-	 * automaton.<br/>
+	 * Creates a new nwa reduce object that starts reducing the given nwa automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -64,8 +62,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 * @param operand
 	 *            The nwa to reduce
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public ReduceNwaFairSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
@@ -74,8 +71,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	}
 
 	/**
-	 * Creates a new nwa reduce object that starts reducing the given nwa
-	 * automaton.<br/>
+	 * Creates a new nwa reduce object that starts reducing the given nwa automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -85,11 +81,9 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 * @param operand
 	 *            The nwa to reduce
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public ReduceNwaFairSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
@@ -99,8 +93,7 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	}
 
 	/**
-	 * Creates a new nwa reduce object that starts reducing the given nwa
-	 * automaton.<br/>
+	 * Creates a new nwa reduce object that starts reducing the given nwa automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -110,16 +103,13 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 	 * @param operand
 	 *            The nwa to reduce
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @param possibleEquivalentClasses
-	 *            A collection of sets which contains states of the nwa
-	 *            automaton that may be merge-able. States which are not in the
-	 *            same set are definitely not merge-able which is used as an
-	 *            optimization for the simulation
+	 *            A collection of sets which contains states of the nwa automaton that may be merge-able. States which
+	 *            are not in the same set are definitely not merge-able which is used as an optimization for the
+	 *            simulation
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public ReduceNwaFairSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,

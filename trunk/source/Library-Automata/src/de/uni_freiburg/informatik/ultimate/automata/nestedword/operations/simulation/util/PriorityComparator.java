@@ -29,21 +29,17 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import java.util.Comparator;
 
 /**
- * Comparator for priorities in a priority game in which priorities 0, 1, and 2
- * are used.
+ * Comparator for priorities in a priority game in which priorities 0, 1, and 2 are used.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class PriorityComparator implements Comparator<Integer> {
 
 	/**
-	 * Compares two priorities according to the order 0 > 2 > 1 (i.e.,
-	 * the "better-for-duplicator-order").
-	 * Throws an Exception if the priorities are not from the set {0,1,2}.
+	 * Compares two priorities according to the order 0 > 2 > 1 (i.e., the "better-for-duplicator-order"). Throws an
+	 * Exception if the priorities are not from the set {0,1,2}.
 	 * 
-	 * @return 1 if the lhs is better for duplicator,
-	 *         0 if lhs und rhs are equal
-	 *         -1 if lhs is better for spoiler.
+	 * @return 1 if the lhs is better for duplicator, 0 if lhs und rhs are equal -1 if lhs is better for spoiler.
 	 */
 	@Override
 	public int compare(final Integer lhs, final Integer rhs) {

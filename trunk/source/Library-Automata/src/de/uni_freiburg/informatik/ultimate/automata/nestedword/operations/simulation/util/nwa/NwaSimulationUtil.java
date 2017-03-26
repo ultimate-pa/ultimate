@@ -207,12 +207,10 @@ public final class NwaSimulationUtil {
 	}
 
 	/**
-	 * Computes the <i>inner simulation</i> on a given nwa game graph. The
-	 * simulation makes predecessors of non-simulating vertices also to
-	 * non-simulating vertices. In the case of Duplicator vertices this only
-	 * happens if they have no other simulating successors. The simulation
-	 * allows propagation over return, summarize and internal edges, but
-	 * disallows it over call edges.
+	 * Computes the <i>inner simulation</i> on a given nwa game graph. The simulation makes predecessors of
+	 * non-simulating vertices also to non-simulating vertices. In the case of Duplicator vertices this only happens if
+	 * they have no other simulating successors. The simulation allows propagation over return, summarize and internal
+	 * edges, but disallows it over call edges.
 	 * 
 	 * @param <LETTER>
 	 *            Letter class of nwa automaton
@@ -223,11 +221,9 @@ public final class NwaSimulationUtil {
 	 * @param logger
 	 *            ILogger of the Ultimate framework
 	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation
+	 *            Timer used for responding to timeouts and operation cancellation
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	@SuppressWarnings("unchecked")
 	public static <LETTER, STATE> void doInnerNwaSimulation(final AGameGraph<LETTER, STATE> gameGraph,
@@ -328,10 +324,9 @@ public final class NwaSimulationUtil {
 	}
 
 	/**
-	 * Retrieves general performance data of the input and output nwa automaton.
-	 * Saves the data in the given internal performance object. Only nwa
-	 * specific information are saved, thus it can be used together with the
-	 * more general version of {@link ASimulation}.
+	 * Retrieves general performance data of the input and output nwa automaton. Saves the data in the given internal
+	 * performance object. Only nwa specific information are saved, thus it can be used together with the more general
+	 * version of {@link ASimulation}.
 	 * 
 	 * @param simulationPerformance
 	 *            Performance object to save the data in

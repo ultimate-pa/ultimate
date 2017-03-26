@@ -26,7 +26,6 @@
  * resulting work.
  */
 /**
- * This packages contains classes to reduce buechi automata using delayed
- * simulation.
+ * This packages contains classes to reduce buechi automata using delayed simulation.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed;

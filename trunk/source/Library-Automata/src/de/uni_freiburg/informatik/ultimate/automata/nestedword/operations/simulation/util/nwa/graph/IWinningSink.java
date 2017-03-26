@@ -27,8 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph;
 
 /**
- * Represents a sink that is winning for a given player. The winning player is
- * specified by {@link #getPriority()}.
+ * Represents a sink that is winning for a given player. The winning player is specified by {@link #getPriority()}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -45,11 +44,10 @@ public interface IWinningSink<LETTER, STATE> {
 	public int getPriority();
 
 	/**
-	 * Whether the sink is winning for the player <tt>Spoiler</tt>, else it is
-	 * winning for <tt>Duplicator</tt>.
+	 * Whether the sink is winning for the player <tt>Spoiler</tt>, else it is winning for <tt>Duplicator</tt>.
 	 * 
-	 * @return <tt>True</tt> if the sink is winning for <tt>Spoiler</tt>,
-	 *         <tt>false</tt> if it is winning for <tt>Duplicator</tt>.
+	 * @return <tt>True</tt> if the sink is winning for <tt>Spoiler</tt>, <tt>false</tt> if it is winning for
+	 *         <tt>Duplicator</tt>.
 	 */
 	public boolean isWinningForSpoiler();
 }

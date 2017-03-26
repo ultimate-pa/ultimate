@@ -68,8 +68,7 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 	protected Map<DeterminizedState<LETTER, STATE>, STATE> mDet2res = new HashMap<>();
 
 	/**
-	 * Maps a state in resulting automaton to the DeterminizedState for which it
-	 * was created.
+	 * Maps a state in resulting automaton to the DeterminizedState for which it was created.
 	 */
 	protected final Map<STATE, DeterminizedState<LETTER, STATE>> mRes2det = new HashMap<>();
 
@@ -209,9 +208,8 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 	}
 
 	/**
-	 * Get the state in the resulting automaton that represents a
-	 * DeterminizedState. If this state in the resulting automaton does not exist
-	 * yet, construct it.
+	 * Get the state in the resulting automaton that represents a DeterminizedState. If this state in the resulting
+	 * automaton does not exist yet, construct it.
 	 */
 	protected STATE getResState(final DeterminizedState<LETTER, STATE> detState) {
 		if (mDet2res.containsKey(detState)) {

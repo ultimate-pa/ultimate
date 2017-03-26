@@ -174,7 +174,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	@Override
 	public void addStatistics(final AutomataOperationStatistics statistics) {
 		super.addStatistics(statistics);
-		
+
 		statistics.addKeyValuePair(
 				mSettings.getLibraryMode()
 						? StatisticsType.NUMBER_INITIAL_PAIRS_PMAXSAT

@@ -13,8 +13,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Provides utility methods for converting benchmark data provided by the Rabit
- * tool to formats used by Ultimates simulation benchmark framework.
+ * Provides utility methods for converting benchmark data provided by the Rabit tool to formats used by Ultimates
+ * simulation benchmark framework.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
@@ -132,9 +132,8 @@ public final class RabitUtil {
 	}
 
 	/**
-	 * Collects all BA-automata from a given directory, executes the RABIT tool
-	 * on them and finally aggregates and converts the results to a format used
-	 * by Ultimate.
+	 * Collects all BA-automata from a given directory, executes the RABIT tool on them and finally aggregates and
+	 * converts the results to a format used by Ultimate.
 	 * 
 	 * @param args
 	 *            Not supported
@@ -169,14 +168,13 @@ public final class RabitUtil {
 	}
 
 	/**
-	 * Processes the given automaton by executing the Rabit tool with all given
-	 * commands and saving the output to a file.
+	 * Processes the given automaton by executing the Rabit tool with all given commands and saving the output to a
+	 * file.
 	 * 
 	 * @param automaton
 	 *            The automaton to process
 	 * @param commands
-	 *            A list of Rabit tool commands with each pair having the
-	 *            argument to pass and a name for the argument
+	 *            A list of Rabit tool commands with each pair having the argument to pass and a name for the argument
 	 */
 	public static void processAutomaton(final File automaton,
 			final List<Pair<String, SimulationOrMinimizationType>> commands) throws IOException {
@@ -265,8 +263,7 @@ public final class RabitUtil {
 	}
 
 	/**
-	 * Lists all files in the given directory and all sub-directories by adding
-	 * them to the given list.
+	 * Lists all files in the given directory and all sub-directories by adding them to the given list.
 	 * 
 	 * @param directory
 	 *            The directory to list all files of

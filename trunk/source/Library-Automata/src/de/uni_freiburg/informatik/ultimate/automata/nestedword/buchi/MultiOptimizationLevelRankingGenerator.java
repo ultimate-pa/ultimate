@@ -45,13 +45,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRela
 /**
  * Builder used by buchiComplementFKV to obtain TightLevelRankingStateGenerators.
  * <p>
- * TODO Christian 2016-08-16: FindBugs reports 7 problems in this class of
- * the following form:
- * The code uses x % 2 != 0 to check to see if a value is odd, but this
- * won't work for negative numbers (e.g., (-5) % 2 == -1). If this code
- * is intending to check for oddness, consider using x & 1 == 1, or
- * x % 2 != 0.
- * TODO Christian 2016-08-19: Writes <tt>"Sacrifice!"</tt> to logger on <tt>INFO</tt> level.
+ * TODO Christian 2016-08-16: FindBugs reports 7 problems in this class of the following form: The code uses x % 2 != 0
+ * to check to see if a value is odd, but this won't work for negative numbers (e.g., (-5) % 2 == -1). If this code is
+ * intending to check for oddness, consider using x & 1 == 1, or x % 2 != 0. TODO Christian 2016-08-19: Writes
+ * <tt>"Sacrifice!"</tt> to logger on <tt>INFO</tt> level.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -137,8 +134,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 	}
 
 	/**
-	 * Generates all LevelRanking states that are tight (see 2004ATVA paper)
-	 * and fulfill given LevelRankingConstraints.
+	 * Generates all LevelRanking states that are tight (see 2004ATVA paper) and fulfill given LevelRankingConstraints.
 	 * 
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
@@ -188,9 +184,8 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 		}
 
 		/**
-		 * Partition DoubleDeckerWithRankInfo into Restricted and Unrestricted.
-		 * A double Decker is restricted iff is has to have an even rank in
-		 * each LevelRankingState defined by this LevelRankingConstraint.
+		 * Partition DoubleDeckerWithRankInfo into Restricted and Unrestricted. A double Decker is restricted iff is has
+		 * to have an even rank in each LevelRankingState defined by this LevelRankingConstraint.
 		 */
 		private void partitionIntoRestrictedAndUnrestricted() {
 			for (final StateWithRankInfo<STATE> downState : mConstraint.getDownStates()) {
@@ -235,8 +230,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 		}
 
 		/**
-		 * @return The maximal entry in given array, 0 if array is empty or maximum
-		 *         is < 0.
+		 * @return The maximal entry in given array, 0 if array is empty or maximum is < 0.
 		 */
 		private int getMaxNatOrZero(final int[] array) {
 			int max = 0;
@@ -253,8 +247,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 		 *            of natural numbers
 		 * @param an
 		 *            odd number
-		 * @return true iff every odd number from 1 up to x (including x) occurs
-		 *         in array.
+		 * @return true iff every odd number from 1 up to x (including x) occurs in array.
 		 */
 		private boolean isOntoOddNatsUpToX(final int[] array, final int theX) {
 			assert theX % 2 != 0;
@@ -284,8 +277,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 		}
 
 		/**
-		 * @return true if overflow occured and therefore counter was reset
-		 *         or counter has length 0.
+		 * @return true if overflow occured and therefore counter was reset or counter has length 0.
 		 */
 		private boolean increaseCounterUnrestricted() {
 			if (mUnrestrictedRank.length == 0) {
@@ -313,8 +305,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 		}
 
 		/**
-		 * @return true if overflow occured and therefore counter was reset
-		 *         or counter has length 0.
+		 * @return true if overflow occured and therefore counter was reset or counter has length 0.
 		 */
 		protected boolean increaseCounterRestricted(final int highestOddRank) {
 			if (mRestrictedRank.length == 0) {
@@ -424,20 +415,15 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 		}
 
 		/**
-		 * Construct all stuffed levelRankings that are compatible with the
-		 * partially constructed levelRanking lrwsi.
-		 * In this iteration, we assign the (even) rank rk and the (odd)
-		 * rank rk - 1.
+		 * Construct all stuffed levelRankings that are compatible with the partially constructed levelRanking lrwsi. In
+		 * this iteration, we assign the (even) rank rk and the (odd) rank rk - 1.
 		 * 
 		 * @param rank
-		 *            even rank such that all (odd?) ranks <tt>{@literal <} rk-2</tt> have already
-		 *            been assigned
+		 *            even rank such that all (odd?) ranks <tt>{@literal <} rk-2</tt> have already been assigned
 		 * @param assignedUnrestricted
-		 *            unrestricted DoubleDeckerWithRankInfos whose rank is
-		 *            already assigned
+		 *            unrestricted DoubleDeckerWithRankInfos whose rank is already assigned
 		 * @param unassignedUnrestricted
-		 *            restricted DoubleDeckerWithRankInfos whose rank is
-		 *            not yet assigned
+		 *            restricted DoubleDeckerWithRankInfos whose rank is not yet assigned
 		 */
 		private void recursivelyComputeResults(final int rank, final LevelRankingWithSacrificeInformation lrwsi,
 				final int assignedUnrestricted, final int unassignedUnrestricted) {
@@ -469,14 +455,13 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 			// List<DoubleDecker<StateWithRankInfo<STATE>>> constraintToRankInO =
 			//		new ArrayList<DoubleDecker<StateWithRankInfo<STATE>>>();
 			/**
-			 * States for which we definitely construct a copy in which they
-			 * give up their even rank for the lower odd rank.
+			 * States for which we definitely construct a copy in which they give up their even rank for the lower odd
+			 * rank.
 			 */
 			final List<DoubleDecker<StateWithRankInfo<STATE>>> constraintToRankInO_WantLeave = new ArrayList<>();
 			/**
-			 * States for which we only construct a copy in which their rank
-			 * is reduced if this helps another state to obtain a high odd rank
-			 * in a tight level ranking.
+			 * States for which we only construct a copy in which their rank is reduced if this helps another state to
+			 * obtain a high odd rank in a tight level ranking.
 			 */
 			final List<DoubleDecker<StateWithRankInfo<STATE>>> constraintToRankInO_WantStay = new ArrayList<>();
 			final List<DoubleDecker<StateWithRankInfo<STATE>>> constraintToRankNotInO = new ArrayList<>();
@@ -667,19 +652,13 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 		}
 
 		/**
-		 * If we assign ranks starting from the highest down to i such that we
-		 * given even ranks for even bounds, how many ranks do we have as
-		 * surplus that we can use to satisfy odd ranks < i without having
-		 * DoubleDeckerWithRankInfos for this rank.
-		 * E.g.,
-		 * for the ranks 5 3 1, the surplus for i = 3 is 0
-		 * for the ranks 3 3 1, the surplus for i = 3 is 1
-		 * for the ranks 3 2 1, the surplus for i = 3 is 0
-		 * for the ranks 4 3 1, the surplus for i = 3 is 1
-		 * for the ranks ∞ ∞ 3, the surplus for i = 3 is 0
-		 * for the ranks ∞ ∞ 3, 3 the surplus for i = 3 is 1
-		 * for the ranks ∞ ∞ 4, 3 the surplus for i = 3 is 0
-		 * for the ranks 11 9 5 5 3 the surplus for i = 3 is 1
+		 * If we assign ranks starting from the highest down to i such that we given even ranks for even bounds, how
+		 * many ranks do we have as surplus that we can use to satisfy odd ranks < i without having
+		 * DoubleDeckerWithRankInfos for this rank. E.g., for the ranks 5 3 1, the surplus for i = 3 is 0 for the ranks
+		 * 3 3 1, the surplus for i = 3 is 1 for the ranks 3 2 1, the surplus for i = 3 is 0 for the ranks 4 3 1, the
+		 * surplus for i = 3 is 1 for the ranks ∞ ∞ 3, the surplus for i = 3 is 0 for the ranks ∞ ∞ 3, 3 the surplus for
+		 * i = 3 is 1 for the ranks ∞ ∞ 4, 3 the surplus for i = 3 is 0 for the ranks 11 9 5 5 3 the surplus for i = 3
+		 * is 1
 		 */
 		private int surplus(final int i) {
 			final int highestBound;
@@ -783,15 +762,14 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 			private final LevelRankingState<LETTER, STATE> mLrs;
 			private int mCurrentRank = -1;
 			/**
-			 * Number of odd ranks rk such that the number of DoubleDeckerWithRankInfos that
-			 * have an odd rank i >= rk is smaller than or equal to
-			 * (mCurrentRank - rk + 1).
+			 * Number of odd ranks rk such that the number of DoubleDeckerWithRankInfos that have an odd rank i >= rk is
+			 * smaller than or equal to (mCurrentRank - rk + 1).
 			 */
 			private final TreeSet<Integer> mUnSatisfiedOddRanks;
 			//			private final Map<DoubleDecker<StateWithRankInfo<STATE>>, Integer> mSacrificable;
 			/**
-			 * DoubleDeckerWithRankInfos that we assigned the odd rank rk although its
-			 * constraints would have allows the even rank rk + 1.
+			 * DoubleDeckerWithRankInfos that we assigned the odd rank rk although its constraints would have allows the
+			 * even rank rk + 1.
 			 */
 			private final List<DoubleDecker<StateWithRankInfo<STATE>>> mSacrificedDoubleDeckerWithRankInfos;
 
@@ -920,13 +898,10 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 	}
 
 	/**
-	 * Generates all LevelRanking states that are tight (see 2004ATVA paper),
-	 * fulfill given LevelRankingConstraints and fulfill the following property:
-	 * If a DoubleDeckerWithRankInfo has an even rank it must the the highest possible even
-	 * rank.
-	 * Warning: I think a restriction to LevelRanking that satisfy also the
-	 * latter property leads to a sound complementation, but it is not mentioned
-	 * in any paper and I do not have a proof for that.
+	 * Generates all LevelRanking states that are tight (see 2004ATVA paper), fulfill given LevelRankingConstraints and
+	 * fulfill the following property: If a DoubleDeckerWithRankInfo has an even rank it must the the highest possible
+	 * even rank. Warning: I think a restriction to LevelRanking that satisfy also the latter property leads to a sound
+	 * complementation, but it is not mentioned in any paper and I do not have a proof for that.
 	 * 
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
@@ -989,15 +964,11 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 	}
 
 	/**
-	 * Use this together with MaxTightLevelRankingStateGeneratorNonInitial.
-	 * The MaxTightLevelRankingStateGeneratorInitial should generate the
-	 * LevelRankings for successors of determinized states (from powerset
-	 * construction) the MaxTightLevelRankingStateGeneratorNonInitial should
-	 * generate other LevelRankings.
-	 * I tried to implement the optimization suggested in Section 4 of
-	 * 2009STACS - Schewe - Büchi Complementation Made Tight
-	 * This is still buggy and meanwhile I think that my optimization is more
-	 * efficient.
+	 * Use this together with MaxTightLevelRankingStateGeneratorNonInitial. The
+	 * MaxTightLevelRankingStateGeneratorInitial should generate the LevelRankings for successors of determinized states
+	 * (from powerset construction) the MaxTightLevelRankingStateGeneratorNonInitial should generate other
+	 * LevelRankings. I tried to implement the optimization suggested in Section 4 of 2009STACS - Schewe - Büchi
+	 * Complementation Made Tight This is still buggy and meanwhile I think that my optimization is more efficient.
 	 * 
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */

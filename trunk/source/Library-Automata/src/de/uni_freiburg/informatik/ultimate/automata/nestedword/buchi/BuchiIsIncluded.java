@@ -33,8 +33,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Operation that checks if the language of the first Buchi automaton is
- * included in the language of the second Buchi automaton.
+ * Operation that checks if the language of the first Buchi automaton is included in the language of the second Buchi
+ * automaton.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>

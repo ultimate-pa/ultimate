@@ -51,13 +51,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
 
 /**
  * Game graph that realizes <b>fair simulation</b> for NWA automata.<br/>
- * In fair simulation each time <i>Spoiler</i> builds an accepting word
- * <i>Duplicator</i>s word must also be accepting.<br/>
+ * In fair simulation each time <i>Spoiler</i> builds an accepting word <i>Duplicator</i>s word must also be
+ * accepting.<br/>
  * <br/>
- * If its impossible for <i>Spoiler</i> to build a word such that
- * <i>Duplicator</i> can not fulfill its condition we say <b>q1 fair simulates
- * q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of
- * <i>Duplicator</i>.
+ * If its impossible for <i>Spoiler</i> to build a word such that <i>Duplicator</i> can not fulfill its condition we say
+ * <b>q1 fair simulates q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of <i>Duplicator</i>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -72,8 +70,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 */
 	private final NwaGameGraphGeneration<LETTER, STATE> mGeneration;
 	/**
-	 * The underlying nwa, as double decker automaton, from which the
-	 * game graph gets generated.
+	 * The underlying nwa, as double decker automaton, from which the game graph gets generated.
 	 */
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mNwa;
 
@@ -85,21 +82,16 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	 * @param stateFactory
 	 *            State factory used for state creation
 	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
+	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 * @param nwa
-	 *            The underlying nwa from which the game graph gets
-	 *            generated.
+	 *            The underlying nwa from which the game graph gets generated.
 	 * @param possibleEquivalenceClasses
-	 *            A collection of sets which contains states of an
-	 *            automaton that may be merge-able. States which are not in the
-	 *            same set are definitely not merge-able which is used as an
-	 *            optimization for the game graph
+	 *            A collection of sets which contains states of an automaton that may be merge-able. States which are
+	 *            not in the same set are definitely not merge-able which is used as an optimization for the game graph
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public FairNwaGameGraph(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final IProgressAwareTimer progressTimer, final ILogger logger,
@@ -159,8 +151,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 
 	/**
 	 * Unsupported operation. Use
-	 * {@link #getDuplicatorVertex(Object, Object, Object, boolean, TransitionType, SummarizeEdge, Sink)}
-	 * instead.
+	 * {@link #getDuplicatorVertex(Object, Object, Object, boolean, TransitionType, SummarizeEdge, Sink)} instead.
 	 */
 	@Override
 	public DuplicatorVertex<LETTER, STATE> getDuplicatorVertex(final STATE q0, final STATE q1, final LETTER a,
@@ -170,9 +161,7 @@ public final class FairNwaGameGraph<LETTER, STATE> extends FairGameGraph<LETTER,
 	}
 
 	/**
-	 * Unsupported operation. Use
-	 * {@link #getSpoilerVertex(Object, Object, boolean, SummarizeEdge, Sink)}
-	 * instead.
+	 * Unsupported operation. Use {@link #getSpoilerVertex(Object, Object, boolean, SummarizeEdge, Sink)} instead.
 	 */
 	@Override
 	public SpoilerVertex<LETTER, STATE> getSpoilerVertex(final STATE q0, final STATE q1, final boolean bit) {

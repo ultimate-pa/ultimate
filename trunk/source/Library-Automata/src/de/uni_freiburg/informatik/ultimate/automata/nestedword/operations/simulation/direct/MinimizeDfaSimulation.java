@@ -48,13 +48,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Operation that reduces a given buechi automaton by using
- * {@link DirectSimulation}.<br/>
- * Once constructed the reduction automatically starts, the result can be get by
- * using {@link #getResult()}.<br/>
+ * Operation that reduces a given buechi automaton by using {@link DirectSimulation}.<br/>
+ * Once constructed the reduction automatically starts, the result can be get by using {@link #getResult()}.<br/>
  * <br/>
- * For correctness its important that the inputed automaton has <b>no dead
- * ends</b> nor <b>duplicate transitions</b>.
+ * For correctness its important that the inputed automaton has <b>no dead ends</b> nor <b>duplicate transitions</b>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author heizmann@informatik.uni-freiburg.de
@@ -81,8 +78,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	private final SimulationPerformance mStatistics;
 
 	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton.<br/>
+	 * Creates a new buechi reduce object that starts reducing the given buechi automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -92,8 +88,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	 * @param operand
 	 *            The buechi automaton to reduce
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public MinimizeDfaSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
@@ -106,8 +101,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	}
 
 	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton using a given simulation.<br/>
+	 * Creates a new buechi reduce object that starts reducing the given buechi automaton using a given simulation.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -119,8 +113,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	 * @param simulation
 	 *            Simulation to use for reduction
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	protected MinimizeDfaSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,

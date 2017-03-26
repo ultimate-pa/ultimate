@@ -647,9 +647,8 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	private Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessorsMap() {
 		assert mapModeIncoming();
 		/**
-		 * Iterates over all IncomingInternalTransition of succ.
-		 * Iterates over all incoming internal letters and uses the
-		 * iterators returned by internalPredecessorsMap(letter, succ)
+		 * Iterates over all IncomingInternalTransition of succ. Iterates over all incoming internal letters and uses
+		 * the iterators returned by internalPredecessorsMap(letter, succ)
 		 */
 		return () -> new Iterator<IncomingInternalTransition<LETTER, STATE>>() {
 			private Iterator<LETTER> mLetterIterator;
@@ -728,8 +727,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	private Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessorsMap() {
 		assert mapModeIncoming();
 		/**
-		 * Iterates over all IncomingCallTransition of succ.
-		 * Iterates over all incoming call letters and uses the
+		 * Iterates over all IncomingCallTransition of succ. Iterates over all incoming call letters and uses the
 		 * iterators returned by callPredecessorsMap(letter, succ)
 		 */
 		return () -> new Iterator<IncomingCallTransition<LETTER, STATE>>() {
@@ -813,8 +811,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	private Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessorsMap(final LETTER letter) {
 		assert mapModeIncoming();
 		/**
-		 * Iterates over all IncomingReturnTransition of succ.
-		 * Iterates over all incoming return letters and uses the
+		 * Iterates over all IncomingReturnTransition of succ. Iterates over all incoming return letters and uses the
 		 * iterators returned by returnPredecessorsMap(hier, letter, succ)
 		 */
 		return () -> new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
@@ -865,8 +862,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	private Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessorsMap() {
 		assert mapModeIncoming();
 		/**
-		 * Iterates over all IncomingReturnTransition of succ.
-		 * Iterates over all incoming return letters and uses the
+		 * Iterates over all IncomingReturnTransition of succ. Iterates over all incoming return letters and uses the
 		 * iterators returned by returnPredecessorsMap(letter, succ)
 		 */
 		return () -> new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
@@ -946,9 +942,8 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	private Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessorsMap() {
 		assert mapModeOutgoing();
 		/**
-		 * Iterates over all OutgoingInternalTransition of state.
-		 * Iterates over all outgoing internal letters and uses the
-		 * iterators returned by internalSuccessorsMap(state, letter)
+		 * Iterates over all OutgoingInternalTransition of state. Iterates over all outgoing internal letters and uses
+		 * the iterators returned by internalSuccessorsMap(state, letter)
 		 */
 		return () -> new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
 			private Iterator<LETTER> mLetterIterator;
@@ -1027,8 +1022,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	private Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessorsMap() {
 		assert mapModeOutgoing();
 		/**
-		 * Iterates over all OutgoingCallTransition of state.
-		 * Iterates over all outgoing call letters and uses the
+		 * Iterates over all OutgoingCallTransition of state. Iterates over all outgoing call letters and uses the
 		 * iterators returned by callSuccessorsMap(state, letter)
 		 */
 		return () -> new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
@@ -1113,8 +1107,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	private Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsMap(final LETTER letter) {
 		assert mapModeOutgoing();
 		/**
-		 * Iterates over all OutgoingReturnTransition of state.
-		 * Iterates over all outgoing return letters and uses the
+		 * Iterates over all OutgoingReturnTransition of state. Iterates over all outgoing return letters and uses the
 		 * iterators returned by returnSuccecessorsMap(state, letter)
 		 */
 		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
@@ -1165,8 +1158,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	private Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsMap() {
 		assert mapModeOutgoing();
 		/**
-		 * Iterates over all OutgoingReturnTransition of state.
-		 * Iterates over all outgoing return letters and uses the
+		 * Iterates over all OutgoingReturnTransition of state. Iterates over all outgoing return letters and uses the
 		 * iterators returned by returnSuccessorsMap(state, letter)
 		 */
 		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
@@ -1217,10 +1209,8 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	private Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHierMap(final STATE hier) {
 		assert mapModeOutgoing();
 		/**
-		 * Iterates over all OutgoingReturnTransition of state with
-		 * hierarchical successor hier.
-		 * Iterates over all outgoing return letters and uses the
-		 * iterators returned by returnSuccecessorsMap(state, hier, letter)
+		 * Iterates over all OutgoingReturnTransition of state with hierarchical successor hier. Iterates over all
+		 * outgoing return letters and uses the iterators returned by returnSuccecessorsMap(state, hier, letter)
 		 */
 		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
 			private Iterator<LETTER> mLetterIterator;

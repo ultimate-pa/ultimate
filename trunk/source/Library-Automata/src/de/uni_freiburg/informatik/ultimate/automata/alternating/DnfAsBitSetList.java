@@ -33,10 +33,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Salomaa style representation of a DNF as a list of conjunctions.
- * Each conjunction is stored as two {@code int}s.
- * alpha says which state variables appear in the conjunction.
- * beta says whether the appearing ones appear positive or negative.
+ * Salomaa style representation of a DNF as a list of conjunctions. Each conjunction is stored as two {@code int}s.
+ * alpha says which state variables appear in the conjunction. beta says whether the appearing ones appear positive or
+ * negative.
  * 
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  */
@@ -94,8 +93,8 @@ public class DnfAsBitSetList {
 	}
 
 	/**
-	 * "this" is a DNF where the indices refer to the entries of oldStateList. This method
-	 * yields a DNF whose indices refer to the predicates as given by newStateToIndex.
+	 * "this" is a DNF where the indices refer to the entries of oldStateList. This method yields a DNF whose indices
+	 * refer to the predicates as given by newStateToIndex.
 	 * 
 	 * @param oldStateList
 	 *            List indicating the old (predicate -> index) mapping
@@ -173,8 +172,7 @@ public class DnfAsBitSetList {
 	}
 
 	/**
-	 * Function application to a {@link BitSet}.
-	 * This is the same as an evaluation under a given assignment.
+	 * Function application to a {@link BitSet}. This is the same as an evaluation under a given assignment.
 	 * <p>
 	 * The idea (Salomaa 2010) is as follows:<br>
 	 * <tt>f(u) = 1 <-> (alpha & u) xor beta == 0</tt>

@@ -33,8 +33,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
  */
 public enum CountingMeasure {
 	/**
-	 * One if the game automaton of a nwa game graph already was deterministic
-	 * before using the determinizer, zero or not set else.
+	 * One if the game automaton of a nwa game graph already was deterministic before using the determinizer, zero or
+	 * not set else.
 	 */
 	ALREADY_WAS_DETERMINISTIC,
 	/**
@@ -62,23 +62,19 @@ public enum CountingMeasure {
 	 */
 	BUCHI_STATES,
 	/**
-	 * The call transition density the automaton has before simulation
-	 * multiplied with 1_000_000, then rounded.
+	 * The call transition density the automaton has before simulation multiplied with 1_000_000, then rounded.
 	 */
 	BUCHI_TRANSITION_CALL_DENSITY_MILLION,
 	/**
-	 * The transition density the automaton has before simulation multiplied
-	 * with 1_000_000, then rounded.
+	 * The transition density the automaton has before simulation multiplied with 1_000_000, then rounded.
 	 */
 	BUCHI_TRANSITION_DENSITY_MILLION,
 	/**
-	 * The internal transition density the automaton has before simulation
-	 * multiplied with 1_000_000, then rounded.
+	 * The internal transition density the automaton has before simulation multiplied with 1_000_000, then rounded.
 	 */
 	BUCHI_TRANSITION_INTERNAL_DENSITY_MILLION,
 	/**
-	 * The return transition density the automaton has before simulation
-	 * multiplied with 1_000_000, then rounded.
+	 * The return transition density the automaton has before simulation multiplied with 1_000_000, then rounded.
 	 */
 	BUCHI_TRANSITION_RETURN_DENSITY_MILLION,
 	/**
@@ -154,23 +150,19 @@ public enum CountingMeasure {
 	 */
 	RESULT_STATES,
 	/**
-	 * The call transition density the automaton has after simulation multiplied
-	 * with 1_000_000, then rounded.
+	 * The call transition density the automaton has after simulation multiplied with 1_000_000, then rounded.
 	 */
 	RESULT_TRANSITION_CALL_DENSITY_MILLION,
 	/**
-	 * The transition density the automaton has after simulation multiplied with
-	 * 1_000_000, then rounded.
+	 * The transition density the automaton has after simulation multiplied with 1_000_000, then rounded.
 	 */
 	RESULT_TRANSITION_DENSITY_MILLION,
 	/**
-	 * The internal transition density the automaton has after simulation
-	 * multiplied with 1_000_000, then rounded.
+	 * The internal transition density the automaton has after simulation multiplied with 1_000_000, then rounded.
 	 */
 	RESULT_TRANSITION_INTERNAL_DENSITY_MILLION,
 	/**
-	 * The return transition density the automaton has after simulation
-	 * multiplied with 1_000_000, then rounded.
+	 * The return transition density the automaton has after simulation multiplied with 1_000_000, then rounded.
 	 */
 	RESULT_TRANSITION_RETURN_DENSITY_MILLION,
 	/**

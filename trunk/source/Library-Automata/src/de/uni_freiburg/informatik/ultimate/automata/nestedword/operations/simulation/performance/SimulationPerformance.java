@@ -37,8 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.SimulationOrMinimizationType;
 
 /**
- * Class that is used by {@link ASimulation} to measure its performance. Has
- * timer and counter to save performance data.
+ * Class that is used by {@link ASimulation} to measure its performance. Has timer and counter to save performance data.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
@@ -67,8 +66,7 @@ public final class SimulationPerformance {
 	 */
 	private String mName;
 	/**
-	 * If the performance object represents a simulation that has thrown an out
-	 * of memory error.
+	 * If the performance object represents a simulation that has thrown an out of memory error.
 	 */
 	private boolean mOutOfMemory;
 	/**
@@ -90,8 +88,7 @@ public final class SimulationPerformance {
 	private final LinkedHashMap<TimeMeasure, Long> mTimeMeasureStartTimes;
 
 	/**
-	 * Creates a simulation performance object that monitors the performance of
-	 * a given simulation.
+	 * Creates a simulation performance object that monitors the performance of a given simulation.
 	 * 
 	 * @param simType
 	 *            Type of the simulation
@@ -178,8 +175,8 @@ public final class SimulationPerformance {
 	}
 
 	/**
-	 * Adds all counting and time measures of the other object to this given
-	 * object. Counting measures will get merged additive.
+	 * Adds all counting and time measures of the other object to this given object. Counting measures will get merged
+	 * additive.
 	 * 
 	 * @param other
 	 *            Simulation object to add measures from
@@ -223,11 +220,9 @@ public final class SimulationPerformance {
 	}
 
 	/**
-	 * Exports this simulation performance object to an
-	 * AutomataOperationStatistics object.
+	 * Exports this simulation performance object to an AutomataOperationStatistics object.
 	 * 
-	 * @return An AutomataOperationStatistics object holding the equivalent data
-	 *         than this object
+	 * @return An AutomataOperationStatistics object holding the equivalent data than this object
 	 */
 	public AutomataOperationStatistics exportToAutomataOperationStatistics() {
 		final AutomataOperationStatistics stats = new AutomataOperationStatistics();
@@ -236,8 +231,7 @@ public final class SimulationPerformance {
 	}
 
 	/**
-	 * Exports this simulation performance object to an
-	 * AutomataOperationStatistics object.
+	 * Exports this simulation performance object to an AutomataOperationStatistics object.
 	 * 
 	 * @param stats
 	 *            existing statistics object to add data to
@@ -269,13 +263,11 @@ public final class SimulationPerformance {
 	}
 
 	/**
-	 * Gets the result for a given counting measure if known or
-	 * {@link #NO_COUNTING_RESULT}.
+	 * Gets the result for a given counting measure if known or {@link #NO_COUNTING_RESULT}.
 	 * 
 	 * @param type
 	 *            Type of the counting measure to get
-	 * @return The result for a given counting measure if known or
-	 *         {@link #NO_COUNTING_RESULT}.
+	 * @return The result for a given counting measure if known or {@link #NO_COUNTING_RESULT}.
 	 */
 	public int getCountingMeasureResult(final CountingMeasure type) {
 		if (!mCountingMeasures.containsKey(type)) {
@@ -312,9 +304,8 @@ public final class SimulationPerformance {
 	}
 
 	/**
-	 * Gets the result for a given time measure if known or
-	 * {@link #NO_TIME_RESULT}. If there are multiple stored values for this
-	 * measure they can be handled using a given {@link MultipleDataOption}.
+	 * Gets the result for a given time measure if known or {@link #NO_TIME_RESULT}. If there are multiple stored values
+	 * for this measure they can be handled using a given {@link MultipleDataOption}.
 	 * 
 	 * @param type
 	 *            Type of the time measure to get
@@ -376,19 +367,16 @@ public final class SimulationPerformance {
 	}
 
 	/**
-	 * Returns whether the performance object represents a simulation that has
-	 * timed out.
+	 * Returns whether the performance object represents a simulation that has timed out.
 	 * 
-	 * @return Whether the performance object represents a simulation that has
-	 *         timed out.
+	 * @return Whether the performance object represents a simulation that has timed out.
 	 */
 	public boolean hasTimedOut() {
 		return mTimedOut;
 	}
 
 	/**
-	 * Increases the stored counter of a given counting measure or sets it to 1
-	 * if it was not stored.
+	 * Increases the stored counter of a given counting measure or sets it to 1 if it was not stored.
 	 * 
 	 * @param type
 	 *            Type of the counting measure to increase
@@ -403,11 +391,9 @@ public final class SimulationPerformance {
 	}
 
 	/**
-	 * Returns whether the performance object represents a simulation that has
-	 * thrown an out of memory error.
+	 * Returns whether the performance object represents a simulation that has thrown an out of memory error.
 	 * 
-	 * @return Whether the performance object represents a simulation that has
-	 *         throen an out of memory error.
+	 * @return Whether the performance object represents a simulation that has throen an out of memory error.
 	 */
 	public boolean isOutOfMemory() {
 		return mOutOfMemory;
@@ -423,8 +409,7 @@ public final class SimulationPerformance {
 	}
 
 	/**
-	 * If called the performance object indicates that the represented
-	 * simulation has thrown an out of memory error.
+	 * If called the performance object indicates that the represented simulation has thrown an out of memory error.
 	 */
 	public void outOfMemory() {
 		mOutOfMemory = true;
@@ -466,8 +451,7 @@ public final class SimulationPerformance {
 	}
 
 	/**
-	 * Stops and saves the timer for a given time measure and returns the
-	 * duration of the measure.
+	 * Stops and saves the timer for a given time measure and returns the duration of the measure.
 	 * 
 	 * @param type
 	 *            Type of the time measure to stop
@@ -485,8 +469,7 @@ public final class SimulationPerformance {
 	}
 
 	/**
-	 * If called the performance object indicates that the represented
-	 * simulation timed out.
+	 * If called the performance object indicates that the represented simulation timed out.
 	 */
 	public void timeOut() {
 		mTimedOut = true;

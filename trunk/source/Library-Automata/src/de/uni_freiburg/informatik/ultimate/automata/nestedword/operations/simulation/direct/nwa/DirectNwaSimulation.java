@@ -36,12 +36,10 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
 /**
- * Simulation that realizes <b>direct simulation</b> for reduction of a given
- * nwa automaton.<br/>
+ * Simulation that realizes <b>direct simulation</b> for reduction of a given nwa automaton.<br/>
  * Once started, results can then be get by using {@link #getResult()}.<br/>
  * <br/>
- * For more information on the type of simulation see {@link DirectNwaGameGraph}
- * .
+ * For more information on the type of simulation see {@link DirectNwaGameGraph} .
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -52,29 +50,25 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
 public final class DirectNwaSimulation<LETTER, STATE> extends DirectSimulation<LETTER, STATE> {
 
 	/**
-	 * Creates a new direct nwa simulation with a given graph that tries to
-	 * reduce the given nwa automaton using <b>direct simulation</b>.<br/>
-	 * After construction the simulation can be started and results can be get
-	 * by using {@link #getResult()}.<br/>
+	 * Creates a new direct nwa simulation with a given graph that tries to reduce the given nwa automaton using
+	 * <b>direct simulation</b>.<br/>
+	 * After construction the simulation can be started and results can be get by using {@link #getResult()}.<br/>
 	 * <br/>
-	 * For correctness its important that the inputed automaton has <b>no dead
-	 * ends</b> nor <b>duplicate transitions</b>.
+	 * For correctness its important that the inputed automaton has <b>no dead ends</b> nor <b>duplicate
+	 * transitions</b>.
 	 * 
 	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
+	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
 	 * @param game
 	 *            The game graph to use for simulation.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public DirectNwaSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final IStateFactory<STATE> stateFactory, final DirectNwaGameGraph<LETTER, STATE> game)

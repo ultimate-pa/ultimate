@@ -27,8 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.game;
 
 /**
- * Represents a state in a game automaton. Such a state may represent a
- * SpoilerVertex in a Nwa game graph.
+ * Represents a state in a game automaton. Such a state may represent a SpoilerVertex in a Nwa game graph.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */

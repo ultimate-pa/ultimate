@@ -45,22 +45,18 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
- * SuperDifference can compute a NWA nwa_difference such that nwa_difference
- * accepts all words that are accepted by nwa_minuend but not by
- * Psi(nwa_subtrahend), i.e. L(nwa_difference) = L(nwa_minuend) \ L(
- * Psi(nwa_subtrahend) ), where Psi is a transformation of the automaton
+ * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a SuperDifference can compute a NWA nwa_difference
+ * such that nwa_difference accepts all words that are accepted by nwa_minuend but not by Psi(nwa_subtrahend), i.e.
+ * L(nwa_difference) = L(nwa_minuend) \ L( Psi(nwa_subtrahend) ), where Psi is a transformation of the automaton
  * nwa_subtrahend that is defined by an implementation of IStateDeterminizer.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Jan Hättig (haettigj@informatik.uni-freiburg.de)
  * @param <LETTER>
- *            Symbol. Type of the elements of the alphabet over which the
- *            automata are defined.
+ *            Symbol. Type of the elements of the alphabet over which the automata are defined.
  * @param <STATE>
- *            Content. Type of the labels that are assigned to the states of
- *            automata. In many cases you want to use String as STATE and your
- *            states are labeled e.g. with "q0", "q1", ...
+ *            Content. Type of the labels that are assigned to the states of automata. In many cases you want to use
+ *            String as STATE and your states are labeled e.g. with "q0", "q1", ...
  */
 
 public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
@@ -79,10 +75,9 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 	private final IIntersectionStateFactory<STATE> mStateFactory;
 
 	/**
-	 * Computes the an automaton A' which is the over approximation of the
-	 * difference of the two automatons minuend and subtrahend such that L(A')
-	 * >= L(minuend) - L(subtrahend) and L(A') <= L(minuend). Therefore it needs
-	 * an automaton epimorphism.
+	 * Computes the an automaton A' which is the over approximation of the difference of the two automatons minuend and
+	 * subtrahend such that L(A') >= L(minuend) - L(subtrahend) and L(A') <= L(minuend). Therefore it needs an automaton
+	 * epimorphism.
 	 * 
 	 * @param services
 	 *            Ultimate services
@@ -183,15 +178,14 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 	}
 
 	/**
-	 * (for computing the super difference) Adds a state into the result
-	 * automaton. Respectively adds all necessary transitions and states.
+	 * (for computing the super difference) Adds a state into the result automaton. Respectively adds all necessary
+	 * transitions and states.
 	 * 
 	 * @param r
 	 *            first part of the label of the state
 	 * @param s
 	 *            second part of the label of the state
-	 * @return
-	 * 		the state in the new automaton
+	 * @return the state in the new automaton
 	 */
 	@SuppressWarnings("squid:S1698")
 	private STATE addState(final STATE r, final STATE s) {

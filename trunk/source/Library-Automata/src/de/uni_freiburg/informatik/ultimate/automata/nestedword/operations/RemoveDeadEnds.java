@@ -53,12 +53,10 @@ public final class RemoveDeadEnds<LETTER, STATE> extends StateRemoval<LETTER, ST
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mResult;
 
 	/**
-	 * Given an INestedWordAutomaton nwa return a nested word automaton that has
-	 * the same states, but all states that are not reachable or dead ends are
-	 * omitted. (A dead end is a state from which no accepting state can be
-	 * reached).
-	 * Each state of the result also occurred in the input. Only the auxiliary
-	 * empty stack state of the result is different.
+	 * Given an INestedWordAutomaton nwa return a nested word automaton that has the same states, but all states that
+	 * are not reachable or dead ends are omitted. (A dead end is a state from which no accepting state can be reached).
+	 * Each state of the result also occurred in the input. Only the auxiliary empty stack state of the result is
+	 * different.
 	 * 
 	 * @param services
 	 *            Ultimate services

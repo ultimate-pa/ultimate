@@ -31,8 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Wrapper that represents a double decker set of a game automaton. They assign
- * multiply up states to each down state.
+ * Wrapper that represents a double decker set of a game automaton. They assign multiply up states to each down state.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
@@ -82,8 +81,7 @@ public final class GameDoubleDeckerSet implements IGameState {
 	}
 
 	/**
-	 * Gets the down states of this double decker, they are used as key for the
-	 * up states.
+	 * Gets the down states of this double decker, they are used as key for the up states.
 	 * 
 	 * @return The down states of this double decker
 	 */
@@ -92,13 +90,11 @@ public final class GameDoubleDeckerSet implements IGameState {
 	}
 
 	/**
-	 * Gets the up states of this double decker that are associated to the given
-	 * down state.
+	 * Gets the up states of this double decker that are associated to the given down state.
 	 * 
 	 * @param downState
 	 *            Down state associated to the up states to get
-	 * @return The up states of this double decker that are associated to the
-	 *         given down state
+	 * @return The up states of this double decker that are associated to the given down state
 	 */
 	public Set<IGameState> getUpStates(final IGameState downState) {
 		return mDownToUp.get(downState);

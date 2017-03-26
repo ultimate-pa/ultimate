@@ -56,11 +56,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 /**
  * TODO Documentation
  * <p>
- * TODO: Optimization: For most operations the internal and call successors of
- * (<i>down</i>,<i>up</i>) are the same for all down states. So a lot of
- * successors are computed several times, but you could see the already in
- * mTraversedNwa. Suggestion: Extension that implements
- * visitAndGetInternalSuccessors(DoubleDecker) and has abstract
+ * TODO: Optimization: For most operations the internal and call successors of (<i>down</i>,<i>up</i>) are the same for
+ * all down states. So a lot of successors are computed several times, but you could see the already in mTraversedNwa.
+ * Suggestion: Extension that implements visitAndGetInternalSuccessors(DoubleDecker) and has abstract
  * constructInternalSuccessors(IState) method.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -104,9 +102,8 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	protected boolean mRemoveNonLiveStates;
 
 	/**
-	 * Compute the predecessors of all DoubleDeckers. Neccessary for removal of
-	 * dead ends. TODO: Optimization make this optional for cases where we don't
-	 * want to minimize.
+	 * Compute the predecessors of all DoubleDeckers. Neccessary for removal of dead ends. TODO: Optimization make this
+	 * optional for cases where we don't want to minimize.
 	 */
 	protected boolean mComputePredecessorDoubleDeckers = true;
 
@@ -139,9 +136,8 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	 */
 
 	/**
-	 * We call a DoubleDecker marked if it has been visited or is contained in
-	 * the worklist. The DoubleDecker (<i>down</i>,<i>up</i>) is marked iff
-	 * <i>down</i> is contained in the range of <i>up</i>.
+	 * We call a DoubleDecker marked if it has been visited or is contained in the worklist. The DoubleDecker
+	 * (<i>down</i>,<i>up</i>) is marked iff <i>down</i> is contained in the range of <i>up</i>.
 	 */
 	private final Map<STATE, Map<STATE, ReachFinal>> mMarkedUp2Down = new HashMap<>();
 
@@ -151,9 +147,8 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	private final List<DoubleDecker<STATE>> mWorklist = new LinkedList<>();
 
 	/**
-	 * Pairs of states (q,q') of the automaton such that q' is reachable from q
-	 * via a well-matched nested word in which the first position is a call
-	 * position and the last position is a return position.
+	 * Pairs of states (q,q') of the automaton such that q' is reachable from q via a well-matched nested word in which
+	 * the first position is a call position and the last position is a return position.
 	 */
 	private final Map<STATE, Map<STATE, STATE>> mCallReturnSummary = new HashMap<>();
 
@@ -177,8 +172,8 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	}
 
 	/**
-	 * True iff the DoubleDecker doubleDecker has been marked. A DoubleDecker is
-	 * marked iff it has been visited or is in the mWorklist.
+	 * True iff the DoubleDecker doubleDecker has been marked. A DoubleDecker is marked iff it has been visited or is in
+	 * the mWorklist.
 	 */
 	private final boolean wasMarked(final DoubleDecker<STATE> doubleDecker) {
 		final Map<STATE, ReachFinal> downState = mMarkedUp2Down.get(doubleDecker.getUp());
@@ -247,8 +242,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	*/
 
 	/**
-	 * Record that summarySucc is reachable from summaryPred via a run over a
-	 * well-matched NestedWord.
+	 * Record that summarySucc is reachable from summaryPred via a run over a well-matched NestedWord.
 	 */
 	private final void addSummary(final STATE summaryPred, final STATE summarySucc, final STATE returnPred) {
 		Map<STATE, STATE> summarySuccessors = mCallReturnSummary.get(summaryPred);
@@ -261,9 +255,8 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	}
 
 	/**
-	 * For all DoubleDeckers (<i>down</i>,summaryPred) that have been marked
-	 * enqueue and mark the DoubleDecker (<i>down</i>,summarySucc) and record
-	 * that the DoubleDecker (summaryPred,returnPred) is a predecessor of
+	 * For all DoubleDeckers (<i>down</i>,summaryPred) that have been marked enqueue and mark the DoubleDecker
+	 * (<i>down</i>,summarySucc) and record that the DoubleDecker (summaryPred,returnPred) is a predecessor of
 	 * (<i>down</i>,summarySucc).
 	 */
 	private final void enqueueSummarySuccs(final STATE summaryPred, final STATE summarySucc, final STATE returnPred) {
@@ -280,8 +273,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	}
 
 	/**
-	 * Get all states <i>down</i> such that the DoubleDecker
-	 * (<i>down</i>,<i>up</i>) has been visited so far.
+	 * Get all states <i>down</i> such that the DoubleDecker (<i>down</i>,<i>up</i>) has been visited so far.
 	 */
 	private final Set<STATE> getKnownDownStates(final STATE upState) {
 		final Set<STATE> downStates = mMarkedUp2Down.get(upState).keySet();
@@ -721,13 +713,11 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	*/
 
 	/**
-	 * Remove in the resulting automaton all states that can not reach a final
-	 * state.
+	 * Remove in the resulting automaton all states that can not reach a final state.
 	 * 
 	 * @param computeRemovedDoubleDeckersAndCallSuccessors
-	 *            compute the set of all DoubleDeckers which occurred in the
-	 *            build automaton but are not reachable after the removal
-	 *            TODO non-existent parameter
+	 *            compute the set of all DoubleDeckers which occurred in the build automaton but are not reachable after
+	 *            the removal TODO non-existent parameter
 	 * @return true iff at least one state was removed.
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
@@ -873,8 +863,7 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	}
 
 	/**
-	 * Remove all states from which only finitely many accepting states are
-	 * reachable.
+	 * Remove all states from which only finitely many accepting states are reachable.
 	 * 
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled

@@ -30,15 +30,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 
 /**
  * A vertex representing that its <i>Spoiler</i>s turn in the game defined by a
- * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph
- * AGameGraph}.<br/>
+ * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph AGameGraph}.<br/>
  * <br/>
- * The vertex representation is <b>(q0, q1, bit)</b> which means <i>Spoiler</i>
- * is currently at state q0 and must make a move using an arbitrary transition
- * whereas <i>Duplicator</i> now is at q1 and later must respond to
- * <i>Spoiler</i>s decision. The bit encodes extra information if needed.
- * This object extends regular SpoilerVertices by giving it extra information
- * that only occur in Nwa Game Graphs, like sinks.
+ * The vertex representation is <b>(q0, q1, bit)</b> which means <i>Spoiler</i> is currently at state q0 and must make a
+ * move using an arbitrary transition whereas <i>Duplicator</i> now is at q1 and later must respond to <i>Spoiler</i>s
+ * decision. The bit encodes extra information if needed. This object extends regular SpoilerVertices by giving it extra
+ * information that only occur in Nwa Game Graphs, like sinks.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -49,22 +46,19 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 public final class SpoilerNwaVertex<LETTER, STATE> extends SpoilerVertex<LETTER, STATE> {
 
 	/**
-	 * The sink this vertex belongs to if it is generated as a shadow vertex for
-	 * such, <tt>null</tt> if not set.
+	 * The sink this vertex belongs to if it is generated as a shadow vertex for such, <tt>null</tt> if not set.
 	 */
 	private final IWinningSink<LETTER, STATE> mSink;
 	/**
-	 * The summarize edge this vertex belongs to if it is generated as a shadow
-	 * vertex for such, <tt>null</tt> if not set.
+	 * The summarize edge this vertex belongs to if it is generated as a shadow vertex for such, <tt>null</tt> if not
+	 * set.
 	 */
 	private final SummarizeEdge<LETTER, STATE> mSummarizeEdge;
 
 	/**
-	 * Constructs a new spoiler vertex with given representation <b>(q0, q1,
-	 * bit)</b> which means <i>Spoiler</i> is currently at state q0 and must
-	 * make a move using an arbitrary transition whereas <i>Duplicator</i> now
-	 * is at q1 and later must respond to <i>Spoiler</i>s decision. The bit
-	 * encodes extra information if needed.
+	 * Constructs a new spoiler vertex with given representation <b>(q0, q1, bit)</b> which means <i>Spoiler</i> is
+	 * currently at state q0 and must make a move using an arbitrary transition whereas <i>Duplicator</i> now is at q1
+	 * and later must respond to <i>Spoiler</i>s decision. The bit encodes extra information if needed.
 	 * 
 	 * @param priority
 	 *            The priority of the vertex
@@ -80,11 +74,9 @@ public final class SpoilerNwaVertex<LETTER, STATE> extends SpoilerVertex<LETTER,
 	}
 
 	/**
-	 * Constructs a new spoiler vertex with given representation <b>(q0, q1,
-	 * bit)</b> which means <i>Spoiler</i> is currently at state q0 and must
-	 * make a move using an arbitrary transition whereas <i>Duplicator</i> now
-	 * is at q1 and later must respond to <i>Spoiler</i>s decision. The bit
-	 * encodes extra information if needed.
+	 * Constructs a new spoiler vertex with given representation <b>(q0, q1, bit)</b> which means <i>Spoiler</i> is
+	 * currently at state q0 and must make a move using an arbitrary transition whereas <i>Duplicator</i> now is at q1
+	 * and later must respond to <i>Spoiler</i>s decision. The bit encodes extra information if needed.
 	 * 
 	 * @param priority
 	 *            The priority of the vertex
@@ -95,8 +87,7 @@ public final class SpoilerNwaVertex<LETTER, STATE> extends SpoilerVertex<LETTER,
 	 * @param q1
 	 *            The state duplicator is at, interpreted as up state
 	 * @param sink
-	 *            The sink this vertex belongs to if it is generated as a shadow
-	 *            vertex for such.
+	 *            The sink this vertex belongs to if it is generated as a shadow vertex for such.
 	 */
 	public SpoilerNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
 			final IWinningSink<LETTER, STATE> sink) {
@@ -104,11 +95,9 @@ public final class SpoilerNwaVertex<LETTER, STATE> extends SpoilerVertex<LETTER,
 	}
 
 	/**
-	 * Constructs a new spoiler vertex with given representation <b>(q0, q1,
-	 * bit)</b> which means <i>Spoiler</i> is currently at state q0 and must
-	 * make a move using an arbitrary transition whereas <i>Duplicator</i> now
-	 * is at q1 and later must respond to <i>Spoiler</i>s decision. The bit
-	 * encodes extra information if needed.
+	 * Constructs a new spoiler vertex with given representation <b>(q0, q1, bit)</b> which means <i>Spoiler</i> is
+	 * currently at state q0 and must make a move using an arbitrary transition whereas <i>Duplicator</i> now is at q1
+	 * and later must respond to <i>Spoiler</i>s decision. The bit encodes extra information if needed.
 	 * 
 	 * @param priority
 	 *            The priority of the vertex
@@ -119,8 +108,7 @@ public final class SpoilerNwaVertex<LETTER, STATE> extends SpoilerVertex<LETTER,
 	 * @param q1
 	 *            The state duplicator is at, interpreted as up state
 	 * @param summarizeEdge
-	 *            The summarize edge this vertex belongs to if it is generated
-	 *            as a shadow vertex.
+	 *            The summarize edge this vertex belongs to if it is generated as a shadow vertex.
 	 */
 	public SpoilerNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
 			final SummarizeEdge<LETTER, STATE> summarizeEdge) {
@@ -128,11 +116,9 @@ public final class SpoilerNwaVertex<LETTER, STATE> extends SpoilerVertex<LETTER,
 	}
 
 	/**
-	 * Constructs a new spoiler vertex with given representation <b>(q0, q1,
-	 * bit)</b> which means <i>Spoiler</i> is currently at state q0 and must
-	 * make a move using an arbitrary transition whereas <i>Duplicator</i> now
-	 * is at q1 and later must respond to <i>Spoiler</i>s decision. The bit
-	 * encodes extra information if needed.
+	 * Constructs a new spoiler vertex with given representation <b>(q0, q1, bit)</b> which means <i>Spoiler</i> is
+	 * currently at state q0 and must make a move using an arbitrary transition whereas <i>Duplicator</i> now is at q1
+	 * and later must respond to <i>Spoiler</i>s decision. The bit encodes extra information if needed.
 	 * 
 	 * @param priority
 	 *            The priority of the vertex
@@ -143,11 +129,9 @@ public final class SpoilerNwaVertex<LETTER, STATE> extends SpoilerVertex<LETTER,
 	 * @param q1
 	 *            The state duplicator is at, interpreted as up state
 	 * @param summarizeEdge
-	 *            The summarize edge this vertex belongs to if it is generated
-	 *            as a shadow vertex.
+	 *            The summarize edge this vertex belongs to if it is generated as a shadow vertex.
 	 * @param sink
-	 *            The sink this vertex belongs to if it is generated as a shadow
-	 *            vertex for such.
+	 *            The sink this vertex belongs to if it is generated as a shadow vertex for such.
 	 */
 	private SpoilerNwaVertex(final int priority, final boolean b, final STATE q0, final STATE q1,
 			final SummarizeEdge<LETTER, STATE> summarizeEdge, final IWinningSink<LETTER, STATE> sink) {
@@ -220,11 +204,9 @@ public final class SpoilerNwaVertex<LETTER, STATE> extends SpoilerVertex<LETTER,
 	}
 
 	/**
-	 * Gets the summarize edge this vertex belongs to or <tt>null</tt> if not
-	 * set.
+	 * Gets the summarize edge this vertex belongs to or <tt>null</tt> if not set.
 	 * 
-	 * @return The summarize edge this vertex belongs to or <tt>null</tt> if not
-	 *         set.
+	 * @return The summarize edge this vertex belongs to or <tt>null</tt> if not set.
 	 */
 	public SummarizeEdge<LETTER, STATE> getSummarizeEdge() {
 		return mSummarizeEdge;

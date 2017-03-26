@@ -136,12 +136,10 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 	 * @param operand
 	 *            Petri net
 	 * @param order
-	 *            the order on events and configurations respectively is used to
-	 *            determine cut-off events.
+	 *            the order on events and configurations respectively is used to determine cut-off events.
 	 * @param sameTransitionCutOff
-	 *            if true, an additional condition for cut-off events is used:
-	 *            An event and its companion must belong to the same transition
-	 *            from the net.
+	 *            if true, an additional condition for cut-off events is used: An event and its companion must belong to
+	 *            the same transition from the net.
 	 * @param stopIfAcceptingRunFound
 	 *            if false, the complete finite Prefix will be build.
 	 * @throws AutomataOperationCanceledException
@@ -239,8 +237,8 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 	}
 
 	/**
-	 * constructs a run over the unfolding which leads to the marking
-	 * corresponding with the local configuration of the specified event e.
+	 * constructs a run over the unfolding which leads to the marking corresponding with the local configuration of the
+	 * specified event e.
 	 * <p>
 	 * uses the recursive helper-method {@code #constructRun(Event, Marking)}
 	 */
@@ -250,9 +248,8 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 	}
 
 	/**
-	 * Recursively builds a part of a run over the unfolding which leads to the
-	 * marking corresponding with the local configuration of the specified event
-	 * e.
+	 * Recursively builds a part of a run over the unfolding which leads to the marking corresponding with the local
+	 * configuration of the specified event e.
 	 * <p>
 	 * The run starts with the given Marking {@code initialMarking}
 	 */
@@ -295,25 +292,22 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 	}
 
 	/**
-	 * @return Some accepting run of PetriNet net, return null if net does not
-	 *         have an accepting run.
+	 * @return Some accepting run of PetriNet net, return null if net does not have an accepting run.
 	 */
 	public PetriNetRun<S, C> getAcceptingRun() {
 		return mRun;
 	}
 
 	/**
-	 * @return The occurrence net which is the finite prefix of the unfolding of
-	 *         net.
+	 * @return The occurrence net which is the finite prefix of the unfolding of net.
 	 */
 	public BranchingProcess<S, C> getFinitePrefix() {
 		return mUnfolding;
 	}
 
 	/**
-	 * @return A PetriNet that recognizes the same language as net but has a a
-	 *         similar structure as the occurrence net which is the finite prefix of
-	 *         net.
+	 * @return A PetriNet that recognizes the same language as net but has a a similar structure as the occurrence net
+	 *         which is the finite prefix of net.
 	 */
 	public PetriNetJulian<S, C> getUnfoldedPetriNet() {
 		// TODO Julian and Matthias have to discuss what similar means.

@@ -333,35 +333,28 @@ class LassoExtractor<LETTER, STATE> {
 		 */
 		protected final boolean mVisitAccepting;
 		/**
-		 * Successor mapping. If you build a path starting with this mapping
-		 * it is guaranteed that the requirement (e.g., final state visited)
-		 * is fulfilled. If you are rebuilding a run and requirement is
-		 * already met, my may need mSuccessorsNoGuarantee for the
-		 * remainder of the run.
-		 * If there is no requirement all successor informations are in
-		 * these Maps.
+		 * Successor mapping. If you build a path starting with this mapping it is guaranteed that the requirement
+		 * (e.g., final state visited) is fulfilled. If you are rebuilding a run and requirement is already met, my may
+		 * need mSuccessorsNoGuarantee for the remainder of the run. If there is no requirement all successor
+		 * informations are in these Maps.
 		 */
 		//	protected final List<Map<STATE, Object>> mSuccessorsWithGuarantee;
 
 		/**
-		 * States that have already been visited (without start state) from
-		 * which there is a run to the start state (of this search) such the
-		 * equirement (e.g., final state visited) is fulfilled.
+		 * States that have already been visited (without start state) from which there is a run to the start state (of
+		 * this search) such the equirement (e.g., final state visited) is fulfilled.
 		 */
 		//	protected final Set<STATE> mVisitedWithGuarantee;
 
 		/**
-		 * Successor mapping. I you use this to build a run, it is not
-		 * guaranteed that the requirement (e.g., final state visited) is
-		 * fulfilled.
+		 * Successor mapping. I you use this to build a run, it is not guaranteed that the requirement (e.g., final
+		 * state visited) is fulfilled.
 		 */
 		//	protected final List<Map<STATE, Object>> mSuccessorsNoGuarantee;
 
 		/**
-		 * States that have already been visited (without start state) from
-		 * which there is a run to the start state (of this search) it is not
-		 * guaranteed that the requirement (e.g., final state visited) is
-		 * fulfilled.
+		 * States that have already been visited (without start state) from which there is a run to the start state (of
+		 * this search) it is not guaranteed that the requirement (e.g., final state visited) is fulfilled.
 		 */
 		//	protected final Set<STATE> mVisitedNoGuarantee;
 
@@ -374,11 +367,8 @@ class LassoExtractor<LETTER, STATE> {
 		protected int mIteration;
 
 		/**
-		 * Contains a pair of states (pre,post) if there is an run from
-		 * pre to post such that
-		 * - this run visits an accepting state
-		 * - this run starts with a call
-		 * - this run ends with a return
+		 * Contains a pair of states (pre,post) if there is an run from pre to post such that - this run visits an
+		 * accepting state - this run starts with a call - this run ends with a return
 		 * <p>
 		 * May be null if visiting an accepting state is not required.
 		 */
@@ -477,9 +467,8 @@ class LassoExtractor<LETTER, STATE> {
 				IncomingInternalTransition<LETTER, STATE> inTrans, boolean summaryUsed, boolean isGuaranteed);
 
 		/**
-		 * Add for a predecessor predSc information about successors to succMap.
-		 * If there is already a successor information that is as good as this
-		 * (requirement already fulfilled) nothing is added.
+		 * Add for a predecessor predSc information about successors to succMap. If there is already a successor
+		 * information that is as good as this (requirement already fulfilled) nothing is added.
 		 * 
 		 * @param type
 		 *            call, internal, or summary
@@ -488,8 +477,7 @@ class LassoExtractor<LETTER, STATE> {
 		 * @param succSc
 		 *            successor state
 		 * @param isGuranteed
-		 *            is the requirement (e.g., accepting state) visited
-		 *            guaranteed?
+		 *            is the requirement (e.g., accepting state) visited guaranteed?
 		 */
 		private void addSuccessorInformation(final StateContainer<LETTER, STATE> predSc, final boolean summaryUsed,
 				final SuccInfo newSuccInfo) {

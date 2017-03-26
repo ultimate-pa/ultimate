@@ -35,8 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Operation that checks if the language of the first operand is included in the
- * language of the second automaton.
+ * Operation that checks if the language of the first operand is included in the language of the second automaton.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>

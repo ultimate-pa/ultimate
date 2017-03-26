@@ -205,8 +205,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	}
 
 	/**
-	 * Get number of states and labels for calling initializeMappings and
-	 * initializeLables.
+	 * Get number of states and labels for calling initializeMappings and initializeLables.
 	 */
 	private void preprocessingData() {
 		mNumberOfFinalStates = mOperand.getFinalStates().size();
@@ -249,9 +248,8 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	}
 
 	/**
-	 * Initialize structure for labels.
-	 * Iterate over all states and get their OutgoingInternalTransistion
-	 * for storing nOfLabel, headOfLabel and tailOfLabel.
+	 * Initialize structure for labels. Iterate over all states and get their OutgoingInternalTransistion for storing
+	 * nOfLabel, headOfLabel and tailOfLabel.
 	 */
 	private void initializeLables() {
 		// TODO: Better size handling.
@@ -289,8 +287,8 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	}
 
 	/**
-	 * Make initial partition mblocks. Therefor allocate memory for arrays
-	 * and set number of final states as marked states.
+	 * Make initial partition mblocks. Therefor allocate memory for arrays and set number of final states as marked
+	 * states.
 	 */
 	private void makeInitialPartition(final PartitionBackedSetOfPairs<STATE> initialPartition) {
 		mSetsWithMarkedElements = new int[mNumberOfTransitions + 1];
@@ -357,12 +355,9 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	}
 
 	/**
-	 * Create adjacent transitions. Computes either the outgoing or incoming
-	 * transitions of states.
-	 * Using labelHeads[] as K[] --> computes incoming transitions.
-	 * Using labelTails[] as K[] --> computes outgoing transitions.
-	 * Adjacent transitions of state q are:
-	 * madjacent[mF[q]], madjacent[mF[q] + 1], ... , madjacent[mF[q+1] - 1]
+	 * Create adjacent transitions. Computes either the outgoing or incoming transitions of states. Using labelHeads[]
+	 * as K[] --> computes incoming transitions. Using labelTails[] as K[] --> computes outgoing transitions. Adjacent
+	 * transitions of state q are: madjacent[mF[q]], madjacent[mF[q] + 1], ... , madjacent[mF[q+1] - 1]
 	 */
 	private void makeAdjacent(final int[] arrayK) {
 		int q;
@@ -382,8 +377,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	}
 
 	/**
-	 * Method for building the result automaton with reduced states
-	 * and transitions.
+	 * Method for building the result automaton with reduced states and transitions.
 	 */
 	private void buildResult(final boolean addMapping) {
 		final ArrayList<STATE> newStates = new ArrayList<>(mBlocks.mNumberOfSets);
@@ -470,8 +464,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 	}
 
 	/**
-	 * Implementation of partition data structure out of paper:
-	 * "Fast brief practical DFA minimization".
+	 * Implementation of partition data structure out of paper: "Fast brief practical DFA minimization".
 	 */
 	public class Partition {
 		private int mNumberOfSets;

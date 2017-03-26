@@ -37,14 +37,11 @@ import java.util.Set;
 
 // TODO: rewrite this class, possibly split it up to resolve this horrible ambiguity
 /**
- * Represents a Suffix of a Configuration. A Configuration is a Set of Events
- * which is causally closed and conflict-free. A Set E is called Suffix if there
- * is a Configuration C, such that
+ * Represents a Suffix of a Configuration. A Configuration is a Set of Events which is causally closed and
+ * conflict-free. A Set E is called Suffix if there is a Configuration C, such that
  * <ul>
- * <li>
- * C united with E is a Configuration</li>
- * <li>
- * The intersection of C and E is empty</li>
+ * <li>C united with E is a Configuration</li>
+ * <li>The intersection of C and E is empty</li>
  * </ul>
  * 
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
@@ -59,8 +56,8 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 	private ArrayList<Transition<S, C>> mPhi;
 
 	/**
-	 * Constructs a Configuration (Not a Suffix). The set given as parameter has
-	 * to be causally closed and conflict-free.
+	 * Constructs a Configuration (Not a Suffix). The set given as parameter has to be causally closed and
+	 * conflict-free.
 	 * 
 	 * @param events
 	 *            set of events
@@ -106,9 +103,8 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 	/**
 	 * Returns the minimum of the Set of Events regarding the causal relation.
 	 * <p>
-	 * only yields the correct result, if it either has been precomputed when
-	 * the Object was constructed, or this is a proper Configuration (not a
-	 * suffix.)
+	 * only yields the correct result, if it either has been precomputed when the Object was constructed, or this is a
+	 * proper Configuration (not a suffix.)
 	 * 
 	 * @param unf
 	 *            TODO Christian 2016-09-25: undocumented
@@ -193,8 +189,8 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 	}
 
 	/**
-	 * @return A new Configuration that contains the set difference between the
-	 *         original configuration and its minimum regarding the casual relation.
+	 * @return A new Configuration that contains the set difference between the original configuration and its minimum
+	 *         regarding the casual relation.
 	 *         <p>
 	 *         requires, that getMin() has been called.
 	 */
@@ -237,9 +233,8 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 	}
 
 	/**
-	 * Compares configurations initially based on size. In case of equal size,
-	 * lexically compares the ordered sequences of events with respect to the
-	 * the total order on their transitions.
+	 * Compares configurations initially based on size. In case of equal size, lexically compares the ordered sequences
+	 * of events with respect to the the total order on their transitions.
 	 */
 	@Override
 	public int compareTo(final Configuration<S, C> other) {
@@ -262,8 +257,8 @@ public class Configuration<S, C> extends AbstractSet<Event<S, C>> implements Com
 	}
 
 	/**
-	 * TODO Christian 2016-08-16: This does not override the Object.equals()
-	 * method. It may be confusing when using in Collections.
+	 * TODO Christian 2016-08-16: This does not override the Object.equals() method. It may be confusing when using in
+	 * Collections.
 	 * 
 	 * @param other
 	 *            another configuration

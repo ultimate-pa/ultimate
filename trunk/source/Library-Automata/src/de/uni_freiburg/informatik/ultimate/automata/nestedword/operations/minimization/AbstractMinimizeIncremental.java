@@ -36,12 +36,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * This is the superclass of all incremental minimization classes.
  * <p>
- * The idea is to use threading. One thread controls the state of the interrupt
- * and one thread runs the minimization. This is the caller's job.
+ * The idea is to use threading. One thread controls the state of the interrupt and one thread runs the minimization.
+ * This is the caller's job.
  * <p>
- * Whenever the first thread decides to stop the minimization, it informs the
- * interrupt. The minimization is expected to regularly check the state of the
- * interrupt and if it should terminate it stops its normal execution and only
+ * Whenever the first thread decides to stop the minimization, it informs the interrupt. The minimization is expected to
+ * regularly check the state of the interrupt and if it should terminate it stops its normal execution and only
  * constructs the result from the information it has gathered so far.
  * 
  * @author Christian Schilling

@@ -32,9 +32,8 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 /**
- * Int array with get, set, add, and clear operations which is implemented using
- * a native int[] array for efficiency. This is crucial if millions of integers
- * should be stored, because storing these as
+ * Int array with get, set, add, and clear operations which is implemented using a native int[] array for efficiency.
+ * This is crucial if millions of integers should be stored, because storing these as
  * <code>ArrayList&lt;Integer&gt;</code> is too much for the GC.
  *
  * @author stimpflj

@@ -75,10 +75,8 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 	 * @param stateFactory
 	 *            state factory
 	 * @param assumeInSndNonFinalIsTrap
-	 *            assume that in the second operand a non-final state is a trap
-	 *            (i.e., whenever we reach a non-final state we can never go
-	 *            back to a final state.
-	 *            2016-11-19 Matthias: I don't know if "trap" is well-known
+	 *            assume that in the second operand a non-final state is a trap (i.e., whenever we reach a non-final
+	 *            state we can never go back to a final state. 2016-11-19 Matthias: I don't know if "trap" is well-known
 	 *            terminology or a term that we invented.)
 	 * @throws AutomataLibraryException
 	 *             if alphabets differ

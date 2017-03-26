@@ -36,14 +36,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * MAX-SAT solver for Horn clauses.
- * The satisfying assignment returned by this solver is a locally optimal
- * solution in the following sense. If you replace one false-assignment to
- * a variable by a true-assignment then the resulting mapping is not a valid
- * assignment any more.
- * There is no guarantee that this locally optimal solution does not have to
- * be a globally optimal solution (which is a solution in which the number
- * of true-assigned variables is maximal).
+ * MAX-SAT solver for Horn clauses. The satisfying assignment returned by this solver is a locally optimal solution in
+ * the following sense. If you replace one false-assignment to a variable by a true-assignment then the resulting
+ * mapping is not a valid assignment any more. There is no guarantee that this locally optimal solution does not have to
+ * be a globally optimal solution (which is a solution in which the number of true-assigned variables is maximal).
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <V>

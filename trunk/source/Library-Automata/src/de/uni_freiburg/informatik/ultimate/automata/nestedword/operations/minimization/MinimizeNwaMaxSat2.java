@@ -65,9 +65,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * <p>
  * For small deterministic NWA it produces small results efficiently. For large NWA it runs out of memory.
  * <p>
- * TODO For generating nondeterministic clauses, the order of the arguments
- * is not specified. Hence we might want to rearrange state1 and state2 such
- * that we have either few long clauses or many short clauses (for all types of
+ * TODO For generating nondeterministic clauses, the order of the arguments is not specified. Hence we might want to
+ * rearrange state1 and state2 such that we have either few long clauses or many short clauses (for all types of
  * transitions).
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)

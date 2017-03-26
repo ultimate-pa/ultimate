@@ -50,19 +50,15 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
- * Computes an accepting nested lasso run for a given Honda state. Expects
- * that the Honda state is contained in an accepting SCC. Nested Runs from
- * the Honda to an initial state (stem) and from the Honda to the Honda are
- * computed backwards using StacksOfFlaggedStates. The boolean flag is true
- * iff on the path from this stack to the honda an accepting state was
- * visited.
+ * Computes an accepting nested lasso run for a given Honda state. Expects that the Honda state is contained in an
+ * accepting SCC. Nested Runs from the Honda to an initial state (stem) and from the Honda to the Honda are computed
+ * backwards using StacksOfFlaggedStates. The boolean flag is true iff on the path from this stack to the honda an
+ * accepting state was visited.
  * <p>
- * This is slow, old and superseded by the class LassoConstructor.
- * Problem: we do a backward search and store information about visited stacks,
- * this seems to be too costly.
+ * This is slow, old and superseded by the class LassoConstructor. Problem: we do a backward search and store
+ * information about visited stacks, this seems to be too costly.
  * <p>
- * This class does not give us the shortest lasso, because the construction of
- * the stem is not optimal.
+ * This class does not give us the shortest lasso, because the construction of the stem is not optimal.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -463,8 +459,8 @@ class ShortestLassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 		}
 
 		/**
-		 * @return true if there is only one element on the stack, i.e., if
-		 *         the topmost element is the only element on the stack.
+		 * @return true if there is only one element on the stack, i.e., if the topmost element is the only element on
+		 *         the stack.
 		 */
 		public boolean hasOnlyTopmostElement() {
 			return mStateStack.length == 0;

@@ -51,14 +51,12 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ToolchainSto
 public final class RandomNwaBenchmarkCreator {
 
 	/**
-	 * Default path where the Nwa automata benchmark set gets saved if no other
-	 * path is specified.
+	 * Default path where the Nwa automata benchmark set gets saved if no other path is specified.
 	 */
 	public static final File DEFAULT_PATH =
 			new File(new File(System.getProperty("user.home"), "Desktop"), "randomNwaBenchmark");
 	/**
-	 * Default amount of created Nwa automata after which a logging message gets
-	 * printed.
+	 * Default amount of created Nwa automata after which a logging message gets printed.
 	 */
 	public static final int LOG_EVERY = 100;
 	/**
@@ -66,8 +64,7 @@ public final class RandomNwaBenchmarkCreator {
 	 */
 	private static final int PERC_LOWER_BOUND = 0;
 	/**
-	 * Converts a value in percentage, if multiplied with, into a value between
-	 * 0.0 and 1.0.
+	 * Converts a value in percentage, if multiplied with, into a value between 0.0 and 1.0.
 	 */
 	private static final int PERC_TO_DOUBLE = 100;
 	/**
@@ -76,8 +73,7 @@ public final class RandomNwaBenchmarkCreator {
 	private static final int PERC_UPPER_BOUND = 100;
 
 	/**
-	 * The percentage of how many states should be accepting, between 0 and 100
-	 * (both inclusive).
+	 * The percentage of how many states should be accepting, between 0 and 100 (both inclusive).
 	 */
 	private final float mAcceptance;
 	/**
@@ -85,29 +81,25 @@ public final class RandomNwaBenchmarkCreator {
 	 */
 	private final int mAlphabetSize;
 	/**
-	 * The percentage of how many call transitions each state should be have,
-	 * between 0 and 100 (both inclusive).
+	 * The percentage of how many call transitions each state should be have, between 0 and 100 (both inclusive).
 	 */
 	private final float mCallTotality;
 	/**
-	 * The percentage of how many hierarchical predecessor for return
-	 * transitions each state should have, greater equals 0.
+	 * The percentage of how many hierarchical predecessor for return transitions each state should have, greater equals
+	 * 0.
 	 */
 	private final float mHierarchicalPredecessorDensity;
 	/**
-	 * The percentage of how many internal transitions each state should be
-	 * have, between 0 and 100 (both inclusive).
+	 * The percentage of how many internal transitions each state should be have, between 0 and 100 (both inclusive).
 	 */
 	private final float mInternalTotality;
 	/**
-	 * The text that gets saved in every following created ats-File right before
-	 * the automaton itself. Can be used to write operations, that use the
-	 * automaton, directly in the same file.
+	 * The text that gets saved in every following created ats-File right before the automaton itself. Can be used to
+	 * write operations, that use the automaton, directly in the same file.
 	 */
 	private String mPreamble;
 	/**
-	 * The percentage of how many return transitions each state should be have,
-	 * between 0 and 100 (both inclusive).
+	 * The percentage of how many return transitions each state should be have, between 0 and 100 (both inclusive).
 	 */
 	private final float mReturnTotality;
 
@@ -121,33 +113,30 @@ public final class RandomNwaBenchmarkCreator {
 	 */
 	private final int mSize;
 	/**
-	 * If <tt>true</tt> {@link GetRandomNwaTv}, else {@link GetRandomNwa} gets
-	 * used for creation.
+	 * If <tt>true</tt> {@link GetRandomNwaTv}, else {@link GetRandomNwa} gets used for creation.
 	 */
 	private final boolean mUseRandomTvModel;
 
 	/**
-	 * Creates a new creator object that is able to generate random automata
-	 * with the given properties. A benchmark set can then be created using
-	 * {@link #createAndSaveABenchmark(int, File, int)}. This constructor
-	 * internally uses {@link GetRandomNwa}.
+	 * Creates a new creator object that is able to generate random automata with the given properties. A benchmark set
+	 * can then be created using {@link #createAndSaveABenchmark(int, File, int)}. This constructor internally uses
+	 * {@link GetRandomNwa}.
 	 *
 	 * @param size
 	 *            The amount of states generated Nwa automata should have
 	 * @param alphabetSize
 	 *            The size of the alphabet generated Nwa automata should have
 	 * @param acceptance
-	 *            The percentage of how many states should be accepting, between
-	 *            0 and 100 (both inclusive)
+	 *            The percentage of how many states should be accepting, between 0 and 100 (both inclusive)
 	 * @param internalTotality
-	 *            The percentage of how many internal transitions each state
-	 *            should be have, between 0 and 100 (both inclusive)
+	 *            The percentage of how many internal transitions each state should be have, between 0 and 100 (both
+	 *            inclusive)
 	 * @param callTotality
-	 *            The percentage of how many call transitions each state should
-	 *            be have, between 0 and 100 (both inclusive)
+	 *            The percentage of how many call transitions each state should be have, between 0 and 100 (both
+	 *            inclusive)
 	 * @param returnTotality
-	 *            The percentage of how many return transitions each state
-	 *            should be have, between 0 and 100 (both inclusive)
+	 *            The percentage of how many return transitions each state should be have, between 0 and 100 (both
+	 *            inclusive)
 	 * @throws IllegalArgumentException
 	 *             If a percentage value is not between 0 and 100 (inclusive)
 	 */
@@ -168,30 +157,25 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Creates a new creator object that is able to generate random automata
-	 * with the given properties. A benchmark set can then be created using
-	 * {@link #createAndSaveABenchmark(int, File, int)}. This constructor
-	 * internally uses {@link GetRandomNwaTv}.
+	 * Creates a new creator object that is able to generate random automata with the given properties. A benchmark set
+	 * can then be created using {@link #createAndSaveABenchmark(int, File, int)}. This constructor internally uses
+	 * {@link GetRandomNwaTv}.
 	 *
 	 * @param size
 	 *            The amount of states generated Nwa automata should have
 	 * @param alphabetSize
 	 *            The size of the alphabet generated Nwa automata should have
 	 * @param acceptance
-	 *            The percentage of how many states should be accepting, between
-	 *            0 and 100 (both inclusive)
+	 *            The percentage of how many states should be accepting, between 0 and 100 (both inclusive)
 	 * @param internalDensity
-	 *            The percentage of how many internal transitions each state
-	 *            should have, greater equals 0
+	 *            The percentage of how many internal transitions each state should have, greater equals 0
 	 * @param callDensity
-	 *            The percentage of how many call transitions each state should
-	 *            have, greater equals 0
+	 *            The percentage of how many call transitions each state should have, greater equals 0
 	 * @param returnDensity
-	 *            The percentage of how many return transitions each state
-	 *            should have, greater equals 0
+	 *            The percentage of how many return transitions each state should have, greater equals 0
 	 * @param hierarchicalPredecessorDensity
-	 *            The percentage of how many hierarchical predecessor for return
-	 *            transitions each state should have, greater equals 0
+	 *            The percentage of how many hierarchical predecessor for return transitions each state should have,
+	 *            greater equals 0
 	 * @throws IllegalArgumentException
 	 *             If a percentage value is not in the given range.
 	 */
@@ -212,10 +196,8 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Creates and saves random generated Nwa automata to the default path,
-	 * specified by {@link #DEFAULT_PATH}, in the ats-Format. Prints a debug
-	 * message to {@link System#out} after every {@link #LOG_EVERY} created
-	 * automata.
+	 * Creates and saves random generated Nwa automata to the default path, specified by {@link #DEFAULT_PATH}, in the
+	 * ats-Format. Prints a debug message to {@link System#out} after every {@link #LOG_EVERY} created automata.
 	 *
 	 * @param amount
 	 *            Amount of random Nwa automata to generate
@@ -227,9 +209,8 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Creates and saves random generated Nwa automata to the given path in the
-	 * ats-Format. Prints a debug message to {@link System#out} after every
-	 * {@link #LOG_EVERY} created automata.
+	 * Creates and saves random generated Nwa automata to the given path in the ats-Format. Prints a debug message to
+	 * {@link System#out} after every {@link #LOG_EVERY} created automata.
 	 *
 	 * @param amount
 	 *            Amount of random Nwa automata to generate
@@ -243,16 +224,14 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Creates and saves random generated Nwa automata to the given path in the
-	 * ats-Format.
+	 * Creates and saves random generated Nwa automata to the given path in the ats-Format.
 	 *
 	 * @param amount
 	 *            Amount of random Nwa automata to generate
 	 * @param pathToSaveBenchmark
 	 *            The path where the automata should get saved
 	 * @param logEvery
-	 *            Amount of generated automata after which a logging message
-	 *            gets printed to {@link System#out}
+	 *            Amount of generated automata after which a logging message gets printed to {@link System#out}
 	 * @throws IOException
 	 *             If an I/O-Exception occurred
 	 */
@@ -308,16 +287,13 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Creates and saves random generated Nwa automata to the default path,
-	 * specified by {@link #DEFAULT_PATH}, in the ats-Format. Prints a debug
-	 * message to {@link System#out} after every {@link #LOG_EVERY} created
-	 * automata.
+	 * Creates and saves random generated Nwa automata to the default path, specified by {@link #DEFAULT_PATH}, in the
+	 * ats-Format. Prints a debug message to {@link System#out} after every {@link #LOG_EVERY} created automata.
 	 *
 	 * @param amount
 	 *            Amount of random Nwa automata to generate
 	 * @param folderName
-	 *            Name of the folder to save the files in, the folder itself is
-	 *            located at the default path
+	 *            Name of the folder to save the files in, the folder itself is located at the default path
 	 * @throws IOException
 	 *             If an I/O-Exception occurred
 	 */
@@ -326,9 +302,8 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Sets a text that gets saved in every following created ats-File right
-	 * before the automaton itself. Can be used to write operations, that use
-	 * the automaton, directly in the same file.
+	 * Sets a text that gets saved in every following created ats-File right before the automaton itself. Can be used to
+	 * write operations, that use the automaton, directly in the same file.
 	 *
 	 * @param preamble
 	 *            Text to set right before the generated automata
@@ -338,15 +313,13 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Ensures the given value is a percentage. For this, it must be between 0
-	 * and 100 (both inclusive).
+	 * Ensures the given value is a percentage. For this, it must be between 0 and 100 (both inclusive).
 	 *
 	 * @param percentage
 	 *            Value to ensure
 	 * @return The given value if it is valid
 	 * @throws IllegalArgumentException
-	 *             If the given value is no percentage, i.e. not between 0 and
-	 *             100 (both inclusive)
+	 *             If the given value is no percentage, i.e. not between 0 and 100 (both inclusive)
 	 */
 	private float ensureIsPercentage(final float percentage) throws IllegalArgumentException {
 		if (percentage < PERC_LOWER_BOUND || percentage > PERC_UPPER_BOUND) {
@@ -356,8 +329,7 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Converts a given value, in percentage, to a double value between 0.0 and
-	 * 1.0.
+	 * Converts a given value, in percentage, to a double value between 0.0 and 1.0.
 	 *
 	 * @param percentage
 	 *            Value between 0 and 100 (both inclusive).
@@ -419,8 +391,7 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Creates benchmark sets that cover the whole given spice by using the
-	 * {@link RandomNwaBenchmarkCreator} class.
+	 * Creates benchmark sets that cover the whole given spice by using the {@link RandomNwaBenchmarkCreator} class.
 	 * 
 	 * @param n
 	 *            The amount of states generated Nwa automata should have
@@ -433,43 +404,32 @@ public final class RandomNwaBenchmarkCreator {
 	 * @param useRandomTvModel
 	 *            If the random TV-Model should be used for generation
 	 * @param acceptanceInPercMin
-	 *            The minimum percentage of how many states should be accepting,
-	 *            between 0 and 100 (both inclusive)
+	 *            The minimum percentage of how many states should be accepting, between 0 and 100 (both inclusive)
 	 * @param acceptanceInPercMax
-	 *            The maximum percentage of how many states should be accepting,
-	 *            between 0 and 100 (both inclusive)
+	 *            The maximum percentage of how many states should be accepting, between 0 and 100 (both inclusive)
 	 * @param totalityInternalInPercMin
-	 *            The minimum percentage of how many internal transitions each
-	 *            state should have, greater equals 0
+	 *            The minimum percentage of how many internal transitions each state should have, greater equals 0
 	 * @param totalityInternalInPercMax
-	 *            The maximum percentage of how many internal transitions each
-	 *            state should have, greater equals 0
+	 *            The maximum percentage of how many internal transitions each state should have, greater equals 0
 	 * @param totalityCallInPercMin
-	 *            The minimum percentage of how many call transitions each state
-	 *            should have, greater equals 0
+	 *            The minimum percentage of how many call transitions each state should have, greater equals 0
 	 * @param totalityCallInPercMax
-	 *            The maximum percentage of how many call transitions each state
-	 *            should have, greater equals 0
+	 *            The maximum percentage of how many call transitions each state should have, greater equals 0
 	 * @param totalityReturnInPercMin
-	 *            The minimum percentage of how many return transitions each
-	 *            state should have, greater equals 0
+	 *            The minimum percentage of how many return transitions each state should have, greater equals 0
 	 * @param totalityReturnInPercMax
-	 *            The maximum percentage of how many return transitions each
-	 *            state should have, greater equals 0
+	 *            The maximum percentage of how many return transitions each state should have, greater equals 0
 	 * @param totalityHierPredInPercMin
-	 *            The minimum percentage of how many hierarchical predecessor
-	 *            for return transitions each state should have, greater equals
-	 *            0
+	 *            The minimum percentage of how many hierarchical predecessor for return transitions each state should
+	 *            have, greater equals 0
 	 * @param totalityHierPredInPercMax
-	 *            The maximum percentage of how many hierarchical predecessor
-	 *            for return transitions each state should have, greater equals
-	 *            0
+	 *            The maximum percentage of how many hierarchical predecessor for return transitions each state should
+	 *            have, greater equals 0
 	 * @param stepSize
 	 *            How big the steps between each iteration should be
 	 * @param uniformStep
-	 *            If <tt>true</tt> each parameter will equally be increased at
-	 *            the same time. If <tt>false</tt> they will be changed
-	 *            independently.
+	 *            If <tt>true</tt> each parameter will equally be increased at the same time. If <tt>false</tt> they
+	 *            will be changed independently.
 	 * @throws IOException
 	 *             If an I/O-Exception occurred
 	 */
@@ -614,28 +574,23 @@ public final class RandomNwaBenchmarkCreator {
 	}
 
 	/**
-	 * Creates a benchmark set with given explicit settings by using the
-	 * {@link RandomNwaBenchmarkCreator} class.
+	 * Creates a benchmark set with given explicit settings by using the {@link RandomNwaBenchmarkCreator} class.
 	 * 
 	 * @param n
 	 *            The amount of states generated Nwa automata should have
 	 * @param k
 	 *            The size of the alphabet generated Nwa automata should have
 	 * @param acceptanceInPerc
-	 *            The percentage of how many states should be accepting, between
-	 *            0 and 100 (both inclusive)
+	 *            The percentage of how many states should be accepting, between 0 and 100 (both inclusive)
 	 * @param totalityInternalInPerc
-	 *            The percentage of how many internal transitions each state
-	 *            should have, greater equals 0
+	 *            The percentage of how many internal transitions each state should have, greater equals 0
 	 * @param totalityCallInPerc
-	 *            The percentage of how many call transitions each state should
-	 *            have, greater equals 0
+	 *            The percentage of how many call transitions each state should have, greater equals 0
 	 * @param totalityReturnInPerc
-	 *            The percentage of how many return transitions each state
-	 *            should have, greater equals 0
+	 *            The percentage of how many return transitions each state should have, greater equals 0
 	 * @param totalityHierPredInPerc
-	 *            The percentage of how many hierarchical predecessor for return
-	 *            transitions each state should have, greater equals 0
+	 *            The percentage of how many hierarchical predecessor for return transitions each state should have,
+	 *            greater equals 0
 	 * @param amount
 	 *            Amount of random Nwa automata to generate
 	 * @param operationSwitch

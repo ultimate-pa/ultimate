@@ -30,15 +30,12 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util;
 
 /**
- * A vertex representing that its <i>Duplicator</i>s turn in the game defined by
- * a
- * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph
- * AGameGraph}.<br/>
+ * A vertex representing that its <i>Duplicator</i>s turn in the game defined by a
+ * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph AGameGraph}.<br/>
  * <br/>
- * The vertex representation is <b>(q0, q1, a, bit)</b> which means
- * <i>Spoiler</i> is currently at state q0 and made a move using an a-transition
- * before whereas <i>Duplicator</i> now is at q1 and must try to also use an
- * a-transition. The bit encodes extra information if needed.
+ * The vertex representation is <b>(q0, q1, a, bit)</b> which means <i>Spoiler</i> is currently at state q0 and made a
+ * move using an a-transition before whereas <i>Duplicator</i> now is at q1 and must try to also use an a-transition.
+ * The bit encodes extra information if needed.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
@@ -56,11 +53,9 @@ public class DuplicatorVertex<LETTER, STATE> extends Vertex<LETTER, STATE> {
 	private final LETTER a;
 
 	/**
-	 * Constructs a new duplicator vertex with given representation <b>(q0, q1,
-	 * a, bit)</b> which means <i>Spoiler</i> is currently at state q0 and made
-	 * a move using an a-transition before whereas <i>Duplicator</i> now is at
-	 * q1 and must try to also use an a-transition. The bit encodes extra
-	 * information if needed.
+	 * Constructs a new duplicator vertex with given representation <b>(q0, q1, a, bit)</b> which means <i>Spoiler</i>
+	 * is currently at state q0 and made a move using an a-transition before whereas <i>Duplicator</i> now is at q1 and
+	 * must try to also use an a-transition. The bit encodes extra information if needed.
 	 * 
 	 * @param priority
 	 *            The priority of the vertex

@@ -33,13 +33,12 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 
 /**
- * Represents an incomplete Event.
- * A <i>Candidate</i> consists of
+ * Represents an incomplete Event. A <i>Candidate</i> consists of
  * <ul>
  * <li>the transition which belongs to the event</li>
  * <li>a subset of conditions of the set of predecessors of the event.</li>
- * <li>the set of predecessor-places of the transition minus the places that
- * correspond with the conditions in the given condition-set.</li>
+ * <li>the set of predecessor-places of the transition minus the places that correspond with the conditions in the given
+ * condition-set.</li>
  * </ul>
  * 
  * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)

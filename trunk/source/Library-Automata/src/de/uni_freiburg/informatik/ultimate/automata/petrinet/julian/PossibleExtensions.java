@@ -83,9 +83,8 @@ public class PossibleExtensions<S, C> implements IPossibleExtensions<S, C> {
 	}
 
 	/**
-	 * Evolves a {@code Candidate} for a new possible Event in all possible ways
-	 * and, as a side-effect, adds valid extensions (ones whose predecessors are
-	 * a co-set) to he possible extension set.
+	 * Evolves a {@code Candidate} for a new possible Event in all possible ways and, as a side-effect, adds valid
+	 * extensions (ones whose predecessors are a co-set) to he possible extension set.
 	 */
 	@SuppressWarnings("squid:S1698")
 	private void evolveCandidate(final Candidate<S, C> cand) {

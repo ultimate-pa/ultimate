@@ -32,9 +32,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.AcceptingComponentsAnalysis.StronglyConnectedComponentWithAcceptanceInformation;
 
 /**
- * Interface for computation of strongly connected components (SCC) for a given
- * automaton. Objects that implement this interface also allow the computation
- * of balls (SCCs with at least one edge) for subgraphs of the automaton.
+ * Interface for computation of strongly connected components (SCC) for a given automaton. Objects that implement this
+ * interface also allow the computation of balls (SCCs with at least one edge) for subgraphs of the automaton.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>

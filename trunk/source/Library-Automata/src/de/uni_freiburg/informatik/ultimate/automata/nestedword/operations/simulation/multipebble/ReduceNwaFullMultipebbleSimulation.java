@@ -183,9 +183,9 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 
 				result = maxSatMinimizer.getResult();
 			}
-		super.directResultConstruction(result);
-		mStatistics = collectStatistics(initialPairs, gameFactory, maxGameAutomatonSize, timePreprocessing,
-				timeSimulation, maxSatMinimizer);
+			super.directResultConstruction(result);
+			mStatistics = collectStatistics(initialPairs, gameFactory, maxGameAutomatonSize, timePreprocessing,
+					timeSimulation, maxSatMinimizer);
 
 		} catch (final AutomataOperationCanceledException aoce) {
 			if (initialPairs instanceof PartitionBackedSetOfPairs<?>) {

@@ -41,17 +41,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Game graph that realizes <b>fair and direct simulation</b>. It primarily uses
- * fair simulation and uses direct simulation as an optimization.<br/>
- * In fair simulation each time <i>Spoiler</i> builds an accepting word
- * <i>Duplicator</i>s word must also be accepting.<br/>
- * In direct simulation each time <i>Spoiler</i> visits an accepting state
- * <i>Duplicator</i> must also do so.<br/>
+ * Game graph that realizes <b>fair and direct simulation</b>. It primarily uses fair simulation and uses direct
+ * simulation as an optimization.<br/>
+ * In fair simulation each time <i>Spoiler</i> builds an accepting word <i>Duplicator</i>s word must also be
+ * accepting.<br/>
+ * In direct simulation each time <i>Spoiler</i> visits an accepting state <i>Duplicator</i> must also do so.<br/>
  * <br/>
- * If its impossible for <i>Spoiler</i> to build a word such that
- * <i>Duplicator</i> can not fulfill its condition we say <b>q1 fair simulates
- * q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of
- * <i>Duplicator</i>.
+ * If its impossible for <i>Spoiler</i> to build a word such that <i>Duplicator</i> can not fulfill its condition we say
+ * <b>q1 fair simulates q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of <i>Duplicator</i>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -62,28 +59,25 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETTER, STATE> {
 
 	/**
-	 * Stores information about vertices that, interpreted as (q0, q1),
-	 * represent a simulation where q1 direct simulates q0.
+	 * Stores information about vertices that, interpreted as (q0, q1), represent a simulation where q1 direct simulates
+	 * q0.
 	 */
 	private final Set<SpoilerVertex<LETTER, STATE>> mDirectSimulations;
 
 	/**
-	 * Stores information about all edges that need to be removed if
-	 * transforming from direct to a fair game graph, added for the other
-	 * direction.
+	 * Stores information about all edges that need to be removed if transforming from direct to a fair game graph,
+	 * added for the other direction.
 	 */
 	private final HashSet<Pair<Vertex<LETTER, STATE>, Vertex<LETTER, STATE>>> mEdgesToBeChangedForTransformation;
 
 	/**
-	 * True if the game graph currently mimics the behavior of a
-	 * DirectGameGraph, false if it mimics a FairGameGraph.
+	 * True if the game graph currently mimics the behavior of a DirectGameGraph, false if it mimics a FairGameGraph.
 	 */
 	private boolean mIsCurrentlyDirectGameGraph;
 
 	/**
-	 * Creates a new fair direct game graph by using the given buechi automaton.
-	 * After construction it mimics the behavior of a FairGameGraph, it can be
-	 * transformed to a DirectGameGraph using
+	 * Creates a new fair direct game graph by using the given buechi automaton. After construction it mimics the
+	 * behavior of a FairGameGraph, it can be transformed to a DirectGameGraph using
 	 * {@link #transformToDirectGameGraph()}.
 	 * <p>
 	 * Throws an IllegalArgumentException If the input automaton is no Buchi automaton. It must have an empty call and
@@ -94,16 +88,13 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	 * @param stateFactory
 	 *            State factory used for state creation
 	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
+	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 * @param buechi
-	 *            The underlying buechi automaton from which the game graph gets
-	 *            generated.
+	 *            The underlying buechi automaton from which the game graph gets generated.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public FairDirectGameGraph(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final IProgressAwareTimer progressTimer, final ILogger logger,
@@ -184,23 +175,22 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	}
 
 	/**
-	 * Returns if the given vertex, interpreted as (q0, q1), represents a
-	 * simulation where q1 direct simulates q0.<br/>
+	 * Returns if the given vertex, interpreted as (q0, q1), represents a simulation where q1 direct simulates q0.<br/>
 	 * This needs a previous made direct simulation and usage of the method
 	 * {@link #rememberAndClearDirectSimulationResults()} in order to work.
 	 * 
 	 * @param vertex
 	 *            The vertex of interest
-	 * @return True if vertex, interpreted as (q0, q1), represents a simulation
-	 *         where q1 direct simulates q0, false if not.
+	 * @return True if vertex, interpreted as (q0, q1), represents a simulation where q1 direct simulates q0, false if
+	 *         not.
 	 */
 	public boolean isDirectSimulating(final SpoilerVertex<LETTER, STATE> vertex) {
 		return mDirectSimulations.contains(vertex) || vertex.getQ0().equals(vertex.getQ1());
 	}
 
 	/**
-	 * Calculates which edges need to be removed if transforming from direct to
-	 * a fair game graph, added for the other direction.
+	 * Calculates which edges need to be removed if transforming from direct to a fair game graph, added for the other
+	 * direction.
 	 */
 	private void calculateTransformationChanges() {
 		for (final Vertex<LETTER, STATE> vertex : getVertices()) {
@@ -222,21 +212,18 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	}
 
 	/**
-	 * Returns if the game graph currently mimics the behavior of a
-	 * DirectGameGraph or a FairGameGraph.
+	 * Returns if the game graph currently mimics the behavior of a DirectGameGraph or a FairGameGraph.
 	 * 
-	 * @return True if the game graph currently mimics the behavior of a
-	 *         DirectGameGraph, false if it mimics a FairGameGraph.
+	 * @return True if the game graph currently mimics the behavior of a DirectGameGraph, false if it mimics a
+	 *         FairGameGraph.
 	 */
 	protected boolean isCurrentlyDirectGameGraph() {
 		return mIsCurrentlyDirectGameGraph;
 	}
 
 	/**
-	 * Remembers the result of a made direct simulation and clears all made
-	 * changes to values of all vertices.<br/>
-	 * This is mainly used after a direct simulation and before the
-	 * transformation to a FairGameGraph.
+	 * Remembers the result of a made direct simulation and clears all made changes to values of all vertices.<br/>
+	 * This is mainly used after a direct simulation and before the transformation to a FairGameGraph.
 	 */
 	protected void rememberAndClearDirectSimulationResults() {
 		// Remember direct simulations
@@ -267,8 +254,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	}
 
 	/**
-	 * Transforms the game graph to a DirectGameGraph, it then mimics its
-	 * behavior.
+	 * Transforms the game graph to a DirectGameGraph, it then mimics its behavior.
 	 */
 	protected void transformToDirectGameGraph() {
 		if (mIsCurrentlyDirectGameGraph) {
@@ -284,8 +270,7 @@ public final class FairDirectGameGraph<LETTER, STATE> extends FairGameGraph<LETT
 	}
 
 	/**
-	 * Transforms the game graph to a FairGameGraph, it then mimics its
-	 * behavior.
+	 * Transforms the game graph to a FairGameGraph, it then mimics its behavior.
 	 */
 	protected void transformToFairGameGraph() {
 		if (!mIsCurrentlyDirectGameGraph) {

@@ -45,8 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeSta
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Buchi Complementation based on
- * 2004ATVA - Friedgut,Kupferman,Vardi - Büchi Complementation Made Tighter.
+ * Buchi Complementation based on 2004ATVA - Friedgut,Kupferman,Vardi - Büchi Complementation Made Tighter.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -137,9 +136,8 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	 * @param userDefinedMaxRank
 	 *            user-defined maximal rank
 	 *            <p>
-	 *            TODO Allow definition of a maximal rank for cases where you know that
-	 *            this is sound. E.g. if the automaton is reverse deterministic a maximal
-	 *            rank of 2 is sufficient, see paper of Seth Forgaty.
+	 *            TODO Allow definition of a maximal rank for cases where you know that this is sound. E.g. if the
+	 *            automaton is reverse deterministic a maximal rank of 2 is sufficient, see paper of Seth Forgaty.
 	 * @param stateDeterminizer
 	 *            state determinizer
 	 * @throws AutomataOperationCanceledException

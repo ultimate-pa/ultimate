@@ -39,16 +39,14 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
  */
 public interface IPossibleExtensions<S, C> {
 	/**
-	 * Removes and returns the minimal element with respect to the specified Order.
-	 * Throws an Exception if queue empty.
+	 * Removes and returns the minimal element with respect to the specified Order. Throws an Exception if queue empty.
 	 * 
 	 * @return the minimal element
 	 */
 	Event<S, C> remove();
 
 	/**
-	 * Extends set of possible extensions by all possible extensions which are
-	 * successors of e.
+	 * Extends set of possible extensions by all possible extensions which are successors of e.
 	 * 
 	 * @param event
 	 *            event

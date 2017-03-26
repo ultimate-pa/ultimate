@@ -65,8 +65,8 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	private static final String LOOP = " loop";
 
 	/**
-	 * Use also other methods for lasso construction. This is only useful if you
-	 * want to analyze if the lasso construction can be optimized.
+	 * Use also other methods for lasso construction. This is only useful if you want to analyze if the lasso
+	 * construction can be optimized.
 	 */
 	private static final boolean USE_ALTERNATIVE_LASSO_CONSTRUCTION = false;
 
@@ -290,9 +290,8 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	}
 
 	/**
-	 * Extension of {@link StronglyConnectedcomponent} that stores an maintains
-	 * information which is needed by {@link NestedWordAutomatonReachableStates}
-	 * to efficiently computed accepting runs.
+	 * Extension of {@link StronglyConnectedcomponent} that stores an maintains information which is needed by
+	 * {@link NestedWordAutomatonReachableStates} to efficiently computed accepting runs.
 	 * 
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 * @param <LETTER>
@@ -305,9 +304,8 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 		private final Set<StateContainer<LETTER, STATE>> mAcceptingStates = new HashSet<>();
 		private final NestedWordAutomatonReachableStates<LETTER, STATE> mNestedWordAutomatonReachableStates;
 		/**
-		 * States that have an outgoing summary. The summary successor may
-		 * could be outside of this SCC. We determine the needed set only if
-		 * construction of this SCC is finished.
+		 * States that have an outgoing summary. The summary successor may could be outside of this SCC. We determine
+		 * the needed set only if construction of this SCC is finished.
 		 */
 		private Set<StateContainer<LETTER, STATE>> mHasOutgoingAcceptingSum = new HashSet<>();
 		private final HashRelation<StateContainer<LETTER, STATE>, Summary<LETTER, STATE>> mAcceptingSummariesOfScc =
@@ -317,8 +315,7 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 		 */
 		private StateContainer<LETTER, STATE> mStateWithLowestSerialNumber;
 		/**
-		 * State of SCC with lowest serial number that is accepting or
-		 * successor.
+		 * State of SCC with lowest serial number that is accepting or successor.
 		 */
 		private StateContainer<LETTER, STATE> mAcceptingWithLowestSerialNumber;
 
@@ -387,19 +384,16 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 		}
 
 		/**
-		 * @return The state with the lowest serial number that is accepting
-		 *         or call predecessor of an accepting summary. Returns null if no
-		 *         such state exists.
+		 * @return The state with the lowest serial number that is accepting or call predecessor of an accepting
+		 *         summary. Returns null if no such state exists.
 		 */
 		public StateContainer<LETTER, STATE> getAcceptingWithLowestSerialNumber() {
 			return mAcceptingWithLowestSerialNumber;
 		}
 
 		/**
-		 * @return all states (not state containers) of this SCC.
-		 *         This methods is not efficient because a new Set is constructed.
-		 *         At the moment this is a workaround for Thomas' loop complexity
-		 *         project.
+		 * @return all states (not state containers) of this SCC. This methods is not efficient because a new Set is
+		 *         constructed. At the moment this is a workaround for Thomas' loop complexity project.
 		 */
 		public Set<STATE> getAllStates() {
 			final Set<STATE> result = new HashSet<>();
@@ -431,8 +425,8 @@ public class AcceptingComponentsAnalysis<LETTER, STATE> {
 	}
 
 	/**
-	 * Provides for a given StateContiner all StateContainers that are
-	 * successors of internal transitions, summaries and call transitions.
+	 * Provides for a given StateContiner all StateContainers that are successors of internal transitions, summaries and
+	 * call transitions.
 	 * 
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */

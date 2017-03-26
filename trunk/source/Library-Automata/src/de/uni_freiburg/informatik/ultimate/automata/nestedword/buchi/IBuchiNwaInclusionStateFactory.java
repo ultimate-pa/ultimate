@@ -35,8 +35,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
  * State factory for checking inclusion of Buchi nested word automata.
  * <p>
- * This interface is only defined for abbreviation purposes. All {@link IOperation}s that check Buchi inclusion or
- * Buchi equivalence in their
+ * This interface is only defined for abbreviation purposes. All {@link IOperation}s that check Buchi inclusion or Buchi
+ * equivalence in their
  * {@link IOperation#checkResult(de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory) checkResult()}
  * method can use this interface to bound the {@link IStateFactory}.
  * 

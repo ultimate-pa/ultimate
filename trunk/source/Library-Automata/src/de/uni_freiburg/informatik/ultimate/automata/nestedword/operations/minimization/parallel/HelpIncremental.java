@@ -41,8 +41,8 @@ public class HelpIncremental implements Runnable {
 	private final Set<Integer> mArray2;
 
 	/**
-	 * For each pair (a, b) of states where w.l.o.g. a in array1, b in array2 we
-	 * know that a and b are not in the same equivalence class.
+	 * For each pair (a, b) of states where w.l.o.g. a in array1, b in array2 we know that a and b are not in the same
+	 * equivalence class.
 	 * 
 	 * @param incremental
 	 *            Currently running instance of the incremental algorithm

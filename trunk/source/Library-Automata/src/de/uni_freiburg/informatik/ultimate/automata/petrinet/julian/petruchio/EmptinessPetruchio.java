@@ -47,12 +47,9 @@ import petruchio.interfaces.petrinet.Place;
 import petruchio.interfaces.petrinet.Transition;
 
 /**
- * Check if a PetriNetJulian has an accepting run.
- * The emptiness check uses Tim Strazny's Petruchio.
- * A marking of a PetriNetJulian is accepting if the marking contains an
- * accepting place.
- * EmptinessPetruchio checks if any (singleton) marking {p} such that p is an
- * accepting place can be covered.
+ * Check if a PetriNetJulian has an accepting run. The emptiness check uses Tim Strazny's Petruchio. A marking of a
+ * PetriNetJulian is accepting if the marking contains an accepting place. EmptinessPetruchio checks if any (singleton)
+ * marking {p} such that p is an accepting place can be covered.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <S>
@@ -92,10 +89,8 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPet
 	}
 
 	/**
-	 * @return Some accepting run if the Petri net has an accepting run, null
-	 *         otherwise.
-	 *         Note: A run should be an interleaved sequence of markings and symbols.
-	 *         Here each marking will be null instead.
+	 * @return Some accepting run if the Petri net has an accepting run, null otherwise. Note: A run should be an
+	 *         interleaved sequence of markings and symbols. Here each marking will be null instead.
 	 */
 	private NestedRun<S, C> constructAcceptingRun() {
 		if (mLogger.isDebugEnabled()) {

@@ -39,16 +39,13 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Summarize edge that summarizes transitions representing moves on the same
- * stack level. If a summarize edge from <tt>src</tt> to <tt>dest</tt> exists it
- * means that one can move from that vertex to the vertex ending up with the
- * same stack level than before. Such edges connect Spoiler vertices with
- * Spoiler vertices. To ensure a a legal game graph it creates auxiliary
- * vertices between the source and destination. A summarize edge contains
- * sub-summarize edges that offer Duplicator the possibility to make a decision
- * between several paths. Each sub-summarize edge can be assigned a priority. By
- * default the priorities are not valid and need to be assigned after creation,
- * else the graph is in an illegal state.
+ * Summarize edge that summarizes transitions representing moves on the same stack level. If a summarize edge from
+ * <tt>src</tt> to <tt>dest</tt> exists it means that one can move from that vertex to the vertex ending up with the
+ * same stack level than before. Such edges connect Spoiler vertices with Spoiler vertices. To ensure a a legal game
+ * graph it creates auxiliary vertices between the source and destination. A summarize edge contains sub-summarize edges
+ * that offer Duplicator the possibility to make a decision between several paths. Each sub-summarize edge can be
+ * assigned a priority. By default the priorities are not valid and need to be assigned after creation, else the graph
+ * is in an illegal state.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -64,16 +61,13 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 */
 	private final Map<Pair<STATE, Boolean>, SpoilerNwaVertex<LETTER, STATE>> mChoiceToDestination;
 	/**
-	 * Provides a fast access to the Duplicator auxiliary vertices that
-	 * represent the choice of Duplicator after Spoiler has made a decision.
-	 * Those vertices are connected to the destinations and represent the exit
-	 * of a summary path.
+	 * Provides a fast access to the Duplicator auxiliary vertices that represent the choice of Duplicator after Spoiler
+	 * has made a decision. Those vertices are connected to the destinations and represent the exit of a summary path.
 	 */
 	private final Map<Pair<STATE, Boolean>, DuplicatorNwaVertex<LETTER, STATE>> mChoiceToDuplicatorAux;
 	/**
-	 * Provides a fast access to the Spoiler auxiliary vertices that represent
-	 * the choice of Duplicator after Spoiler has made a decision. Those
-	 * vertices also hold the priority of the summary path.
+	 * Provides a fast access to the Spoiler auxiliary vertices that represent the choice of Duplicator after Spoiler
+	 * has made a decision. Those vertices also hold the priority of the summary path.
 	 */
 	private final Map<Pair<STATE, Boolean>, SpoilerNwaVertex<LETTER, STATE>> mChoiceToSpoilerAux;
 	/**
@@ -82,8 +76,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	private final Map<Pair<STATE, Boolean>, Set<SpoilerNwaVertex<LETTER, STATE>>> mChoiceToSpoilerInvokers;
 
 	/**
-	 * The Duplicator auxiliary vertex that represents the choice of Spoiler. It
-	 * is the entry of the summarize edge
+	 * The Duplicator auxiliary vertex that represents the choice of Spoiler. It is the entry of the summarize edge
 	 */
 	private final DuplicatorNwaVertex<LETTER, STATE> mDuplicatorAux;
 	/**
@@ -104,11 +97,9 @@ public final class SummarizeEdge<LETTER, STATE> {
 	private final SpoilerNwaVertex<LETTER, STATE> mSrc;
 
 	/**
-	 * Creates a new summarize edge with given source and destination vertices.
-	 * The priorities of the sub-summaries are initially all
-	 * {@link #NO_PRIORITY} and can be set via the provided methods. The
-	 * summarize edge initially is not connected to the game graph,
-	 * {@link #addToGameGraph()} must be used.
+	 * Creates a new summarize edge with given source and destination vertices. The priorities of the sub-summaries are
+	 * initially all {@link #NO_PRIORITY} and can be set via the provided methods. The summarize edge initially is not
+	 * connected to the game graph, {@link #addToGameGraph()} must be used.
 	 * 
 	 * @param src
 	 *            Source of the edge
@@ -211,8 +202,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * Gets the destination of the given sub-summarize edge.
 	 * 
 	 * @param duplicatorChoice
-	 *            The choice duplicator did make, determines the sub-summarize
-	 *            edge
+	 *            The choice duplicator did make, determines the sub-summarize edge
 	 * @return Returns the destination of the given sub-summarize edge
 	 */
 	public SpoilerNwaVertex<LETTER, STATE> getDestination(final Pair<STATE, Boolean> duplicatorChoice) {
@@ -229,11 +219,9 @@ public final class SummarizeEdge<LETTER, STATE> {
 	}
 
 	/**
-	 * Gets all choices that Duplicator can make in this summarize edge.
-	 * Identifies all sub-summarize edges.
+	 * Gets all choices that Duplicator can make in this summarize edge. Identifies all sub-summarize edges.
 	 * 
-	 * @return All choices that Duplicator can make in this summarize edge.
-	 *         Identifies all sub-summarize edges.
+	 * @return All choices that Duplicator can make in this summarize edge. Identifies all sub-summarize edges.
 	 */
 	public Set<Pair<STATE, Boolean>> getDuplicatorChoices() {
 		return mDuplicatorChoices;
@@ -243,8 +231,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * Gets the priority of the given sub-summarize edge.
 	 * 
 	 * @param duplicatorChoice
-	 *            The choice duplicator did make, determines the sub-summarize
-	 *            edge
+	 *            The choice duplicator did make, determines the sub-summarize edge
 	 * @return Returns the priority of the given sub-summarize edge
 	 */
 	public int getPriority(final Pair<STATE, Boolean> duplicatorChoice) {
@@ -271,8 +258,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * Gets the spoiler invokers of the given sub-summarize edge.
 	 * 
 	 * @param duplicatorChoice
-	 *            The choice duplicator did make, determines the sub-summarize
-	 *            edge
+	 *            The choice duplicator did make, determines the sub-summarize edge
 	 * @return Returns the spoiler invokers of the given sub-summarize edge
 	 */
 	public Set<SpoilerNwaVertex<LETTER, STATE>> getSpoilerInvokers(final Pair<STATE, Boolean> duplicatorChoice) {
@@ -310,8 +296,7 @@ public final class SummarizeEdge<LETTER, STATE> {
 	 * Sets the priority of the given sub-summarize edge.
 	 * 
 	 * @param duplicatorChoice
-	 *            The choice duplicator did make, determines the sub-summarize
-	 *            edge
+	 *            The choice duplicator did make, determines the sub-summarize edge
 	 * @param priority
 	 *            The priority to set
 	 */

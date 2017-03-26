@@ -173,9 +173,8 @@ final class Scan {
 	}
 
 	/**
-	 * Convenience method which calls <code>inputAsRelations(Reader)</code> with
-	 * an <code>InputStreamReader</code> made from the <code>filepath</code>
-	 * argument.
+	 * Convenience method which calls <code>inputAsRelations(Reader)</code> with an <code>InputStreamReader</code> made
+	 * from the <code>filepath</code> argument.
 	 */
 	static NwaWithArrays inputAsRelations(final String filepath) throws IOException {
 		final InputStream inputStream = new FileInputStream(filepath);

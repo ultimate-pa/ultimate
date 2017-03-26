@@ -39,13 +39,11 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
  * Represents a state (S,O,g) in the complement automaton.
  * <ul>
  * <li>The level ranking g is modeled by mLevelRanking
- * <li>The set O is modeled by mO (set O contains all states of S that
- * have not visited an odd state since the last time O was emptied)
- * <li>The set S contains all DoubleDecker for which mLevelRanking is
- * defined
+ * <li>The set O is modeled by mO (set O contains all states of S that have not visited an odd state since the last time
+ * O was emptied)
+ * <li>The set S contains all DoubleDecker for which mLevelRanking is defined
  * </ul>
- * TODO Encode O in mLevelRanking. E.g. map DoubleDecker in O instead of
- * its rank to rank-1000.
+ * TODO Encode O in mLevelRanking. E.g. map DoubleDecker in O instead of its rank to rank-1000.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
