@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -21,7 +22,7 @@ public class ProcedureSignature {
 	public ASTType returnType = null;
 	public boolean takesVarArgs = false;
 	
-	public ProcedureSignature(Dispatcher main, CFunction cf) {
+	public ProcedureSignature(final Dispatcher main, final CFunction cf) {
 		for (final CDeclaration ip : cf.getParameterTypes()) {
 			final ASTType type = main.mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), ip.getType());
 			inParams.add(type);
@@ -41,19 +42,20 @@ public class ProcedureSignature {
 		String times = "";
 		for (int i = 0; i < inParams.size(); i++) {
 			sb.append(times);
-			sb.append(inParams.get(i).toString());
+			final ASTType inParam = inParams.get(i);
+			sb.append(BoogiePrettyPrinter.printASTType(inParam));
 			times = "~X~";
 		}
 		if (takesVarArgs) {
 			sb.append("X~varArgs~");
 		}
 		sb.append("~TO~");
-		sb.append(returnType != null ? returnType.toString() : "VOID");
+		sb.append(returnType != null ? BoogiePrettyPrinter.printASTType(returnType) : "VOID");
 		return sb.toString();
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 //		if (!(o instanceof ProcedureSignature)) {
 //			return false;
 //		}
