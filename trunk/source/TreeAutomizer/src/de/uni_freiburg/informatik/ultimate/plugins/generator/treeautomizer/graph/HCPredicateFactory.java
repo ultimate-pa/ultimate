@@ -119,15 +119,23 @@ public class HCPredicateFactory extends PredicateFactory {
 	// return newPredicate(mSymbolTable.getDontCareHornClausePredicateSymbol(),
 	// p.getFormula(), new HashMap<>());
 	// }
-
+	
 	private HCPredicate newPredicate(HornClausePredicateSymbol loc, Term term, List<TermVariable> vars) {
+		return newPredicate(Collections.singleton(loc), term, vars);
+	}
+
+	private HCPredicate newPredicate(Set<HornClausePredicateSymbol> loc, Term term, List<TermVariable> vars) {
 		final ComputeHcOutVarsAndNormalizeTerm chovant = new ComputeHcOutVarsAndNormalizeTerm(term, vars);
 
 		return new HCPredicate(loc, chovant.getNormalizedTerm(), chovant.getProgramVars(),
 				computeClosedFormula(chovant.getNormalizedTerm()), vars);
 	}
 
-	public HCPredicate newHCPredicate(HornClausePredicateSymbol loc, Term term, List<TermVariable> vars) {
+//	public HCPredicate newHCPredicate(HornClausePredicateSymbol loc, Term term, List<TermVariable> vars) {
+//
+//	}
+
+	public HCPredicate newHCPredicate(Set<HornClausePredicateSymbol> loc, Term term, List<TermVariable> vars) {
 		return newPredicate(loc, term, vars);
 	}
 
@@ -179,6 +187,14 @@ public class HCPredicateFactory extends PredicateFactory {
 		return new Substitution(mBackendSmtSolverScript, substitutionMapping).transform(formula);
 	}
 
+	/**
+	 * When we construct a HCPredicate from a formula, then there are two cases:
+	 *  - the formula is already normalized, i.e., each of its free 
+	 *  .. TODO..
+	 * 
+	 * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+	 *
+	 */
 	class ComputeHcOutVarsAndNormalizeTerm {
 		private final Term mNormalizedTerm;
 		private final Set<IProgramVar> mProgramVars;

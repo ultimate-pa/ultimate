@@ -29,11 +29,15 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.grap
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.logic.simplification.SimplifyDDA;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
@@ -222,12 +226,12 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		assert state1.getVars().equals(state2.getVars());
 		assert !(state2 instanceof HCPredicate) : "convention: first argument is an HCPredicate, second is not..";
 
-		final HornClausePredicateSymbol state1PredSymbol = ((HCPredicate) state1).getHcPredicatedSymbol();
+		final Set<HornClausePredicateSymbol> state1PredSymbols = ((HCPredicate) state1).getHcPredicatedSymbols();
 
 		final Term conjoinedFormula = mSimplifier.getSimplifiedTerm(Util.and(mBackendSmtSolverScript.getScript(), 
 				state1.getFormula(), state2.getFormula()));
 
-		final HCPredicate result = mPredicateFactory.newHCPredicate(state1PredSymbol, conjoinedFormula, 
+		final HCPredicate result = mPredicateFactory.newHCPredicate(state1PredSymbols, conjoinedFormula, 
 				Arrays.asList(state1.getFormula().getFreeVars()));
 		
 		return result;
@@ -241,13 +245,27 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		 * For now we just treat everything as a generic IPredicate..
 		 */
 
-		IPredicate currentPred = mPredicateFactory.getFalsePredicate();
-		for (IPredicate pred : states) {
-			final Term conjoinedFormula = mSimplifier.getSimplifiedTerm(Util.or(mBackendSmtSolverScript.getScript(), 
-					currentPred.getFormula(), pred.getFormula()));
-			currentPred = mPredicateFactory.newPredicate(conjoinedFormula);
-		}
+//		IPredicate currentPred = mPredicateFactory.getFalsePredicate();
+		final Set<HornClausePredicateSymbol> mergedLocations = new HashSet<>();
+		Term mergedFormula = mBackendSmtSolverScript.getScript().term("false");
+		
+		List<TermVariable> varsForHcPred = null;
 
-		return currentPred;
+		for (IPredicate pred : states) {
+			if (pred instanceof HCPredicate) {
+				mergedLocations.addAll(((HCPredicate) pred).getHcPredicatedSymbols());
+				assert varsForHcPred == null || varsForHcPred.equals(((HCPredicate) pred).getSignature()) : "merging "
+						+ "predicates with a different signature. Does that make sense??";
+				varsForHcPred = ((HCPredicate) pred).getSignature();
+			}
+			mergedFormula = mSimplifier.getSimplifiedTerm(Util.or(mBackendSmtSolverScript.getScript(), 
+					mergedFormula, pred.getFormula()));
+		}
+		
+		if (mergedLocations.isEmpty()) {
+			return mPredicateFactory.newPredicate(mergedFormula);
+		} else {
+			return mPredicateFactory.newHCPredicate(mergedLocations, mergedFormula, varsForHcPred);
+		}
 	}
 }

@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -58,8 +59,8 @@ public class HCPredicate extends BasicPredicate {
 	private static final int SERIAL_HCPREDICATE = 1000000007;
 	
 //	@Visualizable
-	protected final HornClausePredicateSymbol mHcPredicateSymbol;
-//	private final Map<Term, HCVar> mProgramVars;
+	protected final Set<HornClausePredicateSymbol> mHcPredicateSymbols;
+
 	private final List<TermVariable> mVariables;
 
 	
@@ -69,12 +70,10 @@ public class HCPredicate extends BasicPredicate {
 //	private static final String[] s_AttribFields = { "ProgramPoint", "Formula", "Vars" };
 
 	protected HCPredicate(final HornClausePredicateSymbol programPoint, final int serialNumber, final Term term,
-//			final Set<IProgramVar> vars, final Map<Term, HCVar> varsMap, final Term closedFormula) {
 			final Set<IProgramVar> vars, final Term closedFormula,
 			final List<TermVariable> variables) {
 		super(serialNumber, new String[0], term, vars, closedFormula);
-		mHcPredicateSymbol = programPoint;
-//		mProgramVars = varsMap;
+		mHcPredicateSymbols = Collections.singleton(programPoint);
 		mVariables = variables;
 	}
 	
@@ -86,39 +85,30 @@ public class HCPredicate extends BasicPredicate {
 				term, vars, closedFormula,  variables);
 	}
 	
-
-//	protected HCPredicate(final HornClausePredicateSymbol programPoint, final Term term,
-//			final Map<Term, HCOutVar> varsMap, final Term closedFormula) {
-//		this(programPoint, HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoint, term),
-//			term, new HashSet<>(varsMap.values()), varsMap, closedFormula);
-//	}
 	
-
-//	@Override
-//	public Term getFormula() {
-//		return mFormula;
-//	}
-//	
-//	@Override
-//	public Term getClosedFormula() {
-//		return mClosedFormula;
-//	}
-//	
-//	@Override
-//	public Set<IProgramVar> getVars() {
-//		return mVars;
-//	}
-//
-//	public Map<Term, HCVar> getVarsMap() {
-//		return mProgramVars;
-//	}
-	
-	/*
-	@Override
-	public int hashCode() {
-		return HashUtils.hashHsieh(serialHCPredicate, mProgramPoint, mFormula);// mClosedFormula);
+	protected HCPredicate(final Set<HornClausePredicateSymbol> programPoints, final int serialNumber, final Term term,
+			final Set<IProgramVar> vars, final Term closedFormula,
+			final List<TermVariable> variables) {
+		super(serialNumber, new String[0], term, vars, closedFormula);
+		mHcPredicateSymbols = programPoints;
+		mVariables = variables;
 	}
-	*/
+	
+	protected HCPredicate(final Set<HornClausePredicateSymbol> programPoints, final Term term,
+			final Set<IProgramVar> vars, final Term closedFormula,
+			final List<TermVariable> variables) {
+		this(programPoints, 
+				HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoints, term, variables),
+				term, vars, closedFormula,  variables);
+	}
+	
+
+	
+//	@Override
+//	public int hashCode() {
+//		return HashUtils.hashHsieh(serialHCPredicate, mProgramPoint, mFormula);// mClosedFormula);
+//	}
+
 	@Override
 	public boolean equals(final Object p) {
 		if (p instanceof HCPredicate) {
@@ -133,21 +123,22 @@ public class HCPredicate extends BasicPredicate {
 	@Override
 	public String toString() {
 		String result = "#";
-		if (mHcPredicateSymbol != null) {
-			if ("true".equals(mHcPredicateSymbol.getName())) {
-				result += "True";
-			} else if ("false".equals(mHcPredicateSymbol.getName())) {
-				result += "False";
-			} else {
-				result += mHcPredicateSymbol.getName();
-			}
-		}
+//		if (mHcPredicateSymbol != null) {
+//			if ("true".equals(mHcPredicateSymbol.getName())) {
+//				result += "True";
+//			} else if ("false".equals(mHcPredicateSymbol.getName())) {
+//				result += "False";
+//			} else {
+//				result += mHcPredicateSymbol.getName();
+//			}
+//		}
+		result += mHcPredicateSymbols;
 		result += "@(" + mFormula.toString() + ")";
 		return result;
 	}
 
-	public HornClausePredicateSymbol getHcPredicatedSymbol() {
-		return mHcPredicateSymbol;
+	public Set<HornClausePredicateSymbol> getHcPredicatedSymbols() {
+		return mHcPredicateSymbols;
 	}
 	
 	public List<TermVariable> getSignature() {
