@@ -241,7 +241,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	
 	
 	/**
-	 * 2017-03-26 Matthias: Can we used to transform axioms. Not yet tested
+	 * 2017-03-26 Matthias: Can be used to transform axioms. Not yet tested
 	 * 
 	 */
 	private IPredicate transformAxioms() {
