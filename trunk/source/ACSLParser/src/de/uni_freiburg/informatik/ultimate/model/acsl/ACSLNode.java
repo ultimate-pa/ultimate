@@ -22,9 +22,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ACSLParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ACSLParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ACSLParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -53,7 +53,7 @@ public abstract class ACSLNode {
 	/**
 	 * The list of children.
 	 */
-	private final List<Object> children = new ArrayList<>();
+	private final List<ACSLNode> children = new ArrayList<>();
 	/**
 	 * File Name.
 	 */
@@ -86,7 +86,7 @@ public abstract class ACSLNode {
 	 * 
 	 * @return list of children.
 	 */
-	public List<Object> getChildren() {
+	public List<ACSLNode> getOutgoingNodes() {
 		return children;
 	}
 
@@ -105,7 +105,7 @@ public abstract class ACSLNode {
 	 * @param fileName
 	 *            the fileName to set
 	 */
-	public void setFileName(String fileName) {
+	public void setFileName(final String fileName) {
 		this.fileName = fileName;
 	}
 
@@ -124,7 +124,7 @@ public abstract class ACSLNode {
 	 * @param location
 	 *            the location to set
 	 */
-	public void setLocation(ACSLSourceLocation location) {
+	public void setLocation(final ACSLSourceLocation location) {
 		this.location = location;
 	}
 
@@ -146,7 +146,7 @@ public abstract class ACSLNode {
 		final int endLine;
 		final int endColumn;
 
-		public ACSLSourceLocation(int startLine, int startColumn, int endLine, int endColumn) {
+		public ACSLSourceLocation(final int startLine, final int startColumn, final int endLine, final int endColumn) {
 			super();
 			this.startLine = startLine;
 			this.startColumn = startColumn;

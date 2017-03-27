@@ -988,7 +988,7 @@ public class ACSLHandler implements IACSLHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IfThenElseExpression node) {
 		final ILocation loc = LocationFactory.createACSLLocation(node);
-		assert node.getChildren().size() == 4;
+		assert node.getOutgoingNodes().size() == 4;
 
 		final MemoryHandler memoryHandler = ((CHandler) main.mCHandler).getMemoryHandler();
 		final StructHandler structHandler = ((CHandler) main.mCHandler).mStructHandler;

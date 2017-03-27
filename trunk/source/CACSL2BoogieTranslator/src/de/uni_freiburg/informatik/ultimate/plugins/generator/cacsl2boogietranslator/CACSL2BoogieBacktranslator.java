@@ -67,6 +67,8 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstTransformer;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
@@ -1389,6 +1391,16 @@ public class CACSL2BoogieBacktranslator
 		@Override
 		public String toString() {
 			return mBase.toString() + " " + mOffset.toString();
+		}
+
+		@Override
+		public void accept(final GeneratedBoogieAstVisitor visitor) {
+
+		}
+
+		@Override
+		public Expression accept(final GeneratedBoogieAstTransformer visitor) {
+			return null;
 		}
 	}
 
