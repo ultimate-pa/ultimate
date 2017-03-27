@@ -21,6 +21,7 @@ public class ProcedureSignature {
 	private final ArrayList<ASTType> mInParams = new ArrayList<>();
 	private final ASTType mReturnType;
 	private final boolean mTakesVarArgs;
+	private final String mStringRepresentation;
 	
 	public ProcedureSignature(final Dispatcher main, final CFunction cf) {
 		for (final CDeclaration ip : cf.getParameterTypes()) {
@@ -33,6 +34,7 @@ public class ProcedureSignature {
 			mReturnType = main.mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), cf.getResultType());
 		}
 		mTakesVarArgs = cf.takesVarArgs();
+		mStringRepresentation = buildStringRepresentation();
 	}
 	
 	public ASTType getReturnType() {
@@ -41,6 +43,10 @@ public class ProcedureSignature {
 
 	@Override
 	public String toString() {
+		return mStringRepresentation;
+	}
+	
+	private String buildStringRepresentation() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("##fun~");
 		String times = "";
