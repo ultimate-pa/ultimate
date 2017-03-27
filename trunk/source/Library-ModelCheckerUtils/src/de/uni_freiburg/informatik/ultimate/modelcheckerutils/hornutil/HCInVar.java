@@ -47,7 +47,6 @@ public class HCInVar implements IProgramVar {
 
 	private static final long serialVersionUID = 4653727851496150630L;
 
-	private final TermVariable mTermVariable;
 	private final int mInPredPos;
 	private final int mArgumentPos;
 	
@@ -58,6 +57,7 @@ public class HCInVar implements IProgramVar {
 	private final Sort mSort;
 
 	
+	private final TermVariable mTermVariable;
 	private final ApplicationTerm mDefaultConstant;
 	private final ApplicationTerm mPrimedConstant;
 

@@ -87,7 +87,7 @@ public class TreeRun<R, S> implements ITreeRun<R, S> {
 		return new TreeRun<>(stMap.containsKey(state) ? stMap.get(state) : null, letter, child);
 	}
 	
-	public Collection<TreeRun<R, S>> getChildren() {
+	public List<TreeRun<R, S>> getChildren() {
 		return children;
 	}
 	

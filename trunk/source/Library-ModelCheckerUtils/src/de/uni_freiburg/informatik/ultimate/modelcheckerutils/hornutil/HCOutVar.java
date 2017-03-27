@@ -147,6 +147,14 @@ public class HCOutVar implements IProgramVar {
 		return true;
 	}
 
+	public int getArgumentPos() {
+		return mArgumentPos;
+	}
+
+	public Sort getSort() {
+		return mSort;
+	}
+
 
 //	@Override
 //	public String getIdentifier() {

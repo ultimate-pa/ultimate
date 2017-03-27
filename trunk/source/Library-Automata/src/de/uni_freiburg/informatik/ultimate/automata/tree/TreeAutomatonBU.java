@@ -228,6 +228,10 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 		return mInitalStates;
 	}
 
+	public Set<STATE> getFinalStates() {
+		return mFinalStates;
+	}
+
 	@Override
 	public Set<STATE> getStates() {
 		return mStates;

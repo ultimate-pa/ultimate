@@ -49,10 +49,10 @@ public class HornClause implements IInternalAction {
 	private final HornClausePredicateSymbol mHeadPredicate;
 
 	private final UnmodifiableTransFormula mTransitionFormula;
+
+	private final HCSymbolTable mHornClauseSymbolTable;
 	
-//	private final HCTransFormula mHcTransFormula;
-	
-	/**
+/**
 	 * Standard constructor for a Horn clause as used by TreeAutomizer.
 	 * 
 	 * @param script The script that will be used in TreeAutomizer (not the HornClauseParserScript)
@@ -85,6 +85,7 @@ public class HornClause implements IInternalAction {
 						.collect(Collectors.toList()))
 				.collect(Collectors.toList());
 
+		mHornClauseSymbolTable = symbolTable;
 		
 		mHeadPredicate = head;
 		mBodyPreds = bodyPreds;
@@ -151,10 +152,10 @@ public class HornClause implements IInternalAction {
 //
 //		final String body = mHeadPredicate.getName() + mHeadPredTermVariables;
 
-//		return mTransitionFormula.getFormula().toString();
+		return mTransitionFormula.getFormula().toString();
 		//return String.format("(%s) ^^ (%s) ~~> (%s) || in : %s || out : %s ", cobody, mTransitionFormula, body,
 		//return String.format("(%s) ^^ (%s) ~~> (%s)", cobody, mTransitionFormula.getFormula(), body);
-		return "HornClause TODO: better description"; //TODO
+//		return "HornClause TODO: better description"; //TODO
 	}
 
 	/**
@@ -171,6 +172,12 @@ public class HornClause implements IInternalAction {
 	@Override
 	public String getSucceedingProcedure() {
 		return HornUtilConstants.HORNCLAUSEMETHODNAME;
+	}
+
+	//	private final HCTransFormula mHcTransFormula;
+	
+	public HCSymbolTable getHornClauseSymbolTable() {
+		return mHornClauseSymbolTable;
 	}
 
 //	public HCTransFormula getHcTransformula() {
