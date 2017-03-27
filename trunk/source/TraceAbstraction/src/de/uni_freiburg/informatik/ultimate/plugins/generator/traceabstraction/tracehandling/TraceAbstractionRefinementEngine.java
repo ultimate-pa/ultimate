@@ -60,10 +60,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public final class TraceAbstractionRefinementEngine<LETTER>
 		implements IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> {
 	private final ILogger mLogger;
-	private final RefinementStrategyExceptionBlacklist mExceptionBlacklist;
+	private final IRefinementStrategy<LETTER> mStrategy;
 
 	/* outputs */
-	private final IPredicateUnifier mPredicateUnifier;
 	private final LBool mFeasibility;
 	private NestedWordAutomaton<LETTER, IPredicate> mInterpolantAutomaton;
 	private boolean mProvidesIcfgProgramExecution;
@@ -80,10 +79,9 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	public TraceAbstractionRefinementEngine(final ILogger logger, final IRefinementStrategy<LETTER> strategy) {
 		// initialize fields
 		mLogger = logger;
-		mExceptionBlacklist = strategy.getExceptionBlacklist();
-		mPredicateUnifier = strategy.getPredicateUnifier();
-		mLogger.info("Using refinement strategy " + strategy.getClass().getSimpleName());
-		mFeasibility = executeStrategy(strategy);
+		mStrategy = Objects.requireNonNull(strategy);
+		mLogger.info("Using refinement strategy " + mStrategy.getClass().getSimpleName());
+		mFeasibility = executeStrategy();
 	}
 
 	@Override
@@ -108,7 +106,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 
 	@Override
 	public IPredicateUnifier getPredicateUnifier() {
-		return mPredicateUnifier;
+		return mStrategy.getPredicateUnifier();
 	}
 
 	@Override
@@ -121,11 +119,9 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	 * It first checks feasibility of the counterexample. If infeasible, the method tries to find a perfect interpolant
 	 * sequence. If unsuccessful, it collects all tested sequences. In the end an interpolant automaton is created.
 	 *
-	 * @param strategy
-	 *            refinement strategy
 	 * @return counterexample feasibility
 	 */
-	private LBool executeStrategy(final IRefinementStrategy<LETTER> strategy) {
+	private LBool executeStrategy() {
 		final List<InterpolantsPreconditionPostcondition> perfectIpps = new LinkedList<>();
 		final List<InterpolantsPreconditionPostcondition> imperfectIpps = new LinkedList<>();
 		while (true) {
@@ -136,37 +132,37 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 			 * asking the same trace checker several times does not cost much. On the plus side, the strategy does not
 			 * have to take care of exception handling if it decides to exchange the backing trace checker.
 			 */
-			final LBool feasibility = checkFeasibility(strategy);
+			final LBool feasibility = checkFeasibility();
 
 			switch (feasibility) {
 			case SAT:
 				// feasible counterexample, nothing more to do here
-				return handleFeasibleCase(strategy);
+				return handleFeasibleCase();
 			case UNKNOWN:
-				return handleUnknownCase(strategy, perfectIpps, imperfectIpps);
+				return handleUnknownCase(perfectIpps, imperfectIpps);
 			case UNSAT:
-				final boolean doContinue = handleInfeasibleCase(strategy, perfectIpps, imperfectIpps);
+				final boolean doContinue = handleInfeasibleCase(perfectIpps, imperfectIpps);
 				if (!perfectIpps.isEmpty()) {
 					mSomePerfectSequenceFound = true;
 				}
 				if (doContinue) {
 					continue;
 				}
-				return constructAutomatonFromIpps(strategy, perfectIpps, imperfectIpps);
+				return constructAutomatonFromIpps(perfectIpps, imperfectIpps);
 			default:
 				throw new IllegalArgumentException("Unknown case: " + feasibility);
 			}
 		}
 	}
 
-	private LBool checkFeasibility(final IRefinementStrategy<LETTER> strategy) {
+	private LBool checkFeasibility() {
 		while (true) {
 			// NOTE: Do not convert to method reference!
-			final LBool feasibility = strategy.getTraceChecker().isCorrect();
+			final LBool feasibility = mStrategy.getTraceChecker().isCorrect();
 			Objects.requireNonNull(feasibility);
 
 			if (feasibility == LBool.UNKNOWN) {
-				final TraceCheckReasonUnknown tcra = strategy.getTraceChecker().getTraceCheckReasonUnknown();
+				final TraceCheckReasonUnknown tcra = mStrategy.getTraceChecker().getTraceCheckReasonUnknown();
 				if (tcra.getException() != null) {
 					final ExceptionHandlingCategory exceptionCategory = tcra.getExceptionHandlingCategory();
 					switch (exceptionCategory) {
@@ -186,7 +182,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 						throw new IllegalArgumentException("Unknown exception category: " + exceptionCategory);
 					}
 					final boolean throwException =
-							tcra.getExceptionHandlingCategory().throwException(mExceptionBlacklist);
+							tcra.getExceptionHandlingCategory().throwException(mStrategy.getExceptionBlacklist());
 					if (throwException) {
 						if (mLogger.isInfoEnabled()) {
 							mLogger.info("Global settings require throwing the exception.");
@@ -195,10 +191,10 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 					}
 				}
 
-				if (strategy.hasNextTraceChecker()) {
+				if (mStrategy.hasNextTraceChecker()) {
 					// feasibility check failed, try next combination in the strategy
 					mLogger.info("Advancing trace checker");
-					strategy.nextTraceChecker();
+					mStrategy.nextTraceChecker();
 				} else {
 					return feasibility;
 				}
@@ -208,24 +204,23 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 		}
 	}
 
-	private LBool handleFeasibleCase(final IRefinementStrategy<LETTER> strategy) {
-		if (strategy.getTraceChecker().providesRcfgProgramExecution()) {
+	private LBool handleFeasibleCase() {
+		if (mStrategy.getTraceChecker().providesRcfgProgramExecution()) {
 			mProvidesIcfgProgramExecution = true;
-			mIcfgProgramExecution = strategy.getTraceChecker().getRcfgProgramExecution();
+			mIcfgProgramExecution = mStrategy.getTraceChecker().getRcfgProgramExecution();
 		}
 		return LBool.SAT;
 	}
 
-	private LBool handleUnknownCase(final IRefinementStrategy<LETTER> strategy,
-			final List<InterpolantsPreconditionPostcondition> perfectIpps,
+	private LBool handleUnknownCase(final List<InterpolantsPreconditionPostcondition> perfectIpps,
 			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
 		if (perfectIpps.size() + imperfectIpps.size() > 0) {
 			// infeasibility was shown in previous attempt already
-			constructAutomatonFromIpps(strategy, perfectIpps, imperfectIpps);
+			constructAutomatonFromIpps(perfectIpps, imperfectIpps);
 			return LBool.UNSAT;
 		}
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Strategy " + strategy.getClass().getSimpleName()
+			mLogger.info("Strategy " + mStrategy.getClass().getSimpleName()
 					+ " was unsuccessful and could not determine trace feasibility.");
 		}
 		return LBool.UNKNOWN;
@@ -234,32 +229,30 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	/**
 	 * @return {@code true} iff outer loop should be continued.
 	 */
-	private boolean handleInfeasibleCase(final IRefinementStrategy<LETTER> strategy,
-			final List<InterpolantsPreconditionPostcondition> perfectIpps,
+	private boolean handleInfeasibleCase(final List<InterpolantsPreconditionPostcondition> perfectIpps,
 			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
-		extractInterpolants(strategy, perfectIpps, imperfectIpps);
-		if (strategy.hasNextInterpolantGenerator(perfectIpps, imperfectIpps)) {
+		extractInterpolants(perfectIpps, imperfectIpps);
+		if (mStrategy.hasNextInterpolantGenerator(perfectIpps, imperfectIpps)) {
 			// construct the next sequence of interpolants
 			if (mLogger.isInfoEnabled()) {
 				mLogger.info("The current sequences of interpolants are not accepted, trying to find more.");
 			}
-			strategy.nextInterpolantGenerator();
+			mStrategy.nextInterpolantGenerator();
 			return true;
 		}
 		return false;
 	}
 
-	private void extractInterpolants(final IRefinementStrategy<LETTER> strategy,
-			final List<InterpolantsPreconditionPostcondition> perfectIpps,
+	private void extractInterpolants(final List<InterpolantsPreconditionPostcondition> perfectIpps,
 			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
 		IInterpolantGenerator interpolantGenerator = null;
 		try {
-			interpolantGenerator = strategy.getInterpolantGenerator();
+			interpolantGenerator = mStrategy.getInterpolantGenerator();
 		} catch (final ToolchainCanceledException tce) {
 			throw tce;
 		} catch (final Exception e) {
 			final ExceptionHandlingCategory category = ExceptionHandlingCategory.UNKNOWN;
-			final boolean throwException = category.throwException(mExceptionBlacklist);
+			final boolean throwException = category.throwException(mStrategy.getExceptionBlacklist());
 			if (throwException) {
 				throw new AssertionError(e);
 			}
@@ -291,7 +284,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 			default:
 				throw new AssertionError("unknown case : " + status.getStatus());
 			}
-			final boolean throwException = category.throwException(mExceptionBlacklist);
+			final boolean throwException = category.throwException(mStrategy.getExceptionBlacklist());
 			if (throwException) {
 				throw new AssertionError(status.getException());
 			}
@@ -360,8 +353,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 		}
 	}
 
-	private LBool constructAutomatonFromIpps(final IRefinementStrategy<LETTER> strategy,
-			final List<InterpolantsPreconditionPostcondition> perfectIpps,
+	private LBool constructAutomatonFromIpps(final List<InterpolantsPreconditionPostcondition> perfectIpps,
 			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
 		// construct the interpolant automaton from the sequences we have found
 		if (mLogger.isInfoEnabled()) {
@@ -383,7 +375,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 			mLogger.info("Number of different interpolants: perfect sequences " + numberInterpolantsPerfect
 					+ " imperfect sequences " + numberInterpolantsImperfect + " total " + allInterpolants.size());
 		}
-		mInterpolantAutomaton = strategy.getInterpolantAutomatonBuilder(perfectIpps, imperfectIpps).getResult();
+		mInterpolantAutomaton = mStrategy.getInterpolantAutomatonBuilder(perfectIpps, imperfectIpps).getResult();
 		if (!perfectIpps.isEmpty()) {
 			mSomePerfectSequenceFound = true;
 		}
