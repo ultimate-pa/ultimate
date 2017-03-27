@@ -18,25 +18,25 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
  * @author Alexander Nutz
  */
 public class ProcedureSignature {
-	private final ArrayList<ASTType> inParams = new ArrayList<>();
-	private final ASTType returnType;
-	private final boolean takesVarArgs;
+	private final ArrayList<ASTType> mInParams = new ArrayList<>();
+	private final ASTType mReturnType;
+	private final boolean mTakesVarArgs;
 	
 	public ProcedureSignature(final Dispatcher main, final CFunction cf) {
 		for (final CDeclaration ip : cf.getParameterTypes()) {
 			final ASTType type = main.mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), ip.getType());
-			inParams.add(type);
+			mInParams.add(type);
 		}
 		if (cf.getResultType() instanceof CPrimitive && ((CPrimitive) cf.getResultType()).getType() == CPrimitives.VOID) {
-			returnType = null;
+			mReturnType = null;
 		} else {
-			returnType = main.mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), cf.getResultType());
+			mReturnType = main.mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), cf.getResultType());
 		}
-		takesVarArgs = cf.takesVarArgs();
+		mTakesVarArgs = cf.takesVarArgs();
 	}
 	
 	public ASTType getReturnType() {
-		return returnType;
+		return mReturnType;
 	}
 
 	@Override
@@ -44,17 +44,17 @@ public class ProcedureSignature {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("##fun~");
 		String times = "";
-		for (int i = 0; i < inParams.size(); i++) {
+		for (int i = 0; i < mInParams.size(); i++) {
 			sb.append(times);
-			final ASTType inParam = inParams.get(i);
+			final ASTType inParam = mInParams.get(i);
 			sb.append(BoogiePrettyPrinter.printASTType(inParam));
 			times = "~X~";
 		}
-		if (takesVarArgs) {
+		if (mTakesVarArgs) {
 			sb.append("X~varArgs~");
 		}
 		sb.append("~TO~");
-		sb.append(returnType != null ? BoogiePrettyPrinter.printASTType(returnType) : "VOID");
+		sb.append(mReturnType != null ? BoogiePrettyPrinter.printASTType(mReturnType) : "VOID");
 		return sb.toString();
 	}
 
