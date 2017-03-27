@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.boogie.output;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
@@ -114,6 +115,14 @@ public final class BoogiePrettyPrinter {
 		final BoogieOutput output = new BoogieOutput(null);
 		final StringBuilder sb = new StringBuilder();
 		output.appendProcedure(sb, actual);
+		removeLastLinebreak(sb);
+		return sb.toString();
+	}
+	
+	public static String printASTType(final ASTType astType) {
+		final BoogieOutput output = new BoogieOutput(null);
+		final StringBuilder sb = new StringBuilder();
+		output.appendType(sb, astType, 0);
 		removeLastLinebreak(sb);
 		return sb.toString();
 	}
