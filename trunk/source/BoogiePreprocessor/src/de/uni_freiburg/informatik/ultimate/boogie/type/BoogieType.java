@@ -42,388 +42,355 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnifyHash;
  * 
  */
 public abstract class BoogieType implements IBoogieType {
-    /**
-     * long serialVersionUID
-     */
-    private static final long serialVersionUID = -1366978000551630241L;
-    
-    private static final BoogieType[] EMPTY = new BoogieType[0];
-    
-    private final static ArrayList<PlaceholderType> PLACEHOLDER_TYPES = new ArrayList<PlaceholderType>();
-    private final static ArrayList<PrimitiveType> BITVECTOR_TYPES = new ArrayList<PrimitiveType>();
-    private final static UnifyHash<BoogieType> GLOBAL_TYPES = new UnifyHash<BoogieType>();
-    
-    public final static PrimitiveType TYPE_INT = new PrimitiveType(
-            PrimitiveType.INT);
-    public final static PrimitiveType TYPE_REAL = new PrimitiveType(
-            PrimitiveType.REAL);
-    public final static PrimitiveType TYPE_BOOL = new PrimitiveType(
-            PrimitiveType.BOOL);
-    public final static PrimitiveType TYPE_ERROR = new PrimitiveType(
-            PrimitiveType.ERROR);
+	/**
+	 * long serialVersionUID
+	 */
+	private static final long serialVersionUID = -1366978000551630241L;
 
-    /**
-     * Create a bit vector type; reuses an old instance if it already exists.
-     * 
-     * @param len
-     *            the number of bits in this type
-     * @return the bit vector type.
-     */
-    public static BoogieType createBitvectorType(final int len) {
-        for (int j = BITVECTOR_TYPES.size(); j <= len; j++) {
-            BITVECTOR_TYPES.add(new PrimitiveType(j));
-        }
-        return BITVECTOR_TYPES.get(len);
-    }
+	private static final BoogieType[] EMPTY = new BoogieType[0];
 
-    /**
-     * Create a new placeholder type; reuses an old instance if it already
-     * exists. A placeholder is a type variable and is represented by the number
-     * giving the position of the scope (de Bruijn's normal form). The
-     * placeholders are numbered from inside to outside and in the same scope
-     * from left to right. For example the type <code>
-     * 	  &lt;x,y&gt;[&lt;z&gt;[x, y, z]y, x, y]x
-     * </code> is represented as <code>
-     *    &lt;2&gt;[&lt;1&gt;[1,2,0]2, 0, 1]0
-     * </code> This weird numbering makes it easy to substitute the outermost
-     * placeholders.
-     * 
-     * @param i
-     *            the index of the typevar argument.
-     * @return the placeholder type.
-     */
-    public static BoogieType createPlaceholderType(final int i) {
-        for (int j = PLACEHOLDER_TYPES.size(); j <= i; j++) {
-            PLACEHOLDER_TYPES.add(new PlaceholderType(j));
-        }
-        return PLACEHOLDER_TYPES.get(i);
-    }
+	private static final ArrayList<PlaceholderType> PLACEHOLDER_TYPES = new ArrayList<>();
+	private static final ArrayList<PrimitiveType> BITVECTOR_TYPES = new ArrayList<>();
+	private static final UnifyHash<BoogieType> GLOBAL_TYPES = new UnifyHash<>();
 
-    /**
-     * Create a new constructed type; reuses an old instance if it already
-     * exists. A constructed type is build from a TypeConstructor and some type
-     * arguments.
-     * 
-     * @param constr
-     *            the type constructor.
-     * @param params
-     *            the arguments. The length must be equal to
-     *            constr.getParamCount().
-     * @return The constructed type.
-     */
-    /*
-     * @ requires constr.getParamCount() == params.length;
-     * 
-     * @
-     */
-    public static ConstructedType createConstructedType(final TypeConstructor constr,
-            final BoogieType... params) {
-        assert (constr.getParamCount() == params.length);
-        int hashcode = constr.hashCode();
-        for (int i = 0; i < params.length; i++) {
-            hashcode = hashcode * 31 + params[i].hashCode();
-        }
-        for (final BoogieType t : GLOBAL_TYPES.iterateHashCode(hashcode)) {
-            if (!(t instanceof ConstructedType)) {
+	public static final PrimitiveType TYPE_INT = new PrimitiveType(PrimitiveType.INT);
+	public static final PrimitiveType TYPE_REAL = new PrimitiveType(PrimitiveType.REAL);
+	public static final PrimitiveType TYPE_BOOL = new PrimitiveType(PrimitiveType.BOOL);
+	public static final PrimitiveType TYPE_ERROR = new PrimitiveType(PrimitiveType.ERROR);
+
+	/**
+	 * Create a bit vector type; reuses an old instance if it already exists.
+	 * 
+	 * @param len
+	 *            the number of bits in this type
+	 * @return the bit vector type.
+	 */
+	public static BoogieType createBitvectorType(final int len) {
+		for (int j = BITVECTOR_TYPES.size(); j <= len; j++) {
+			BITVECTOR_TYPES.add(new PrimitiveType(j));
+		}
+		return BITVECTOR_TYPES.get(len);
+	}
+
+	/**
+	 * Create a new placeholder type; reuses an old instance if it already exists. A placeholder is a type variable and
+	 * is represented by the number giving the position of the scope (de Bruijn's normal form). The placeholders are
+	 * numbered from inside to outside and in the same scope from left to right. For example the type <code>
+	 * 	  &lt;x,y&gt;[&lt;z&gt;[x, y, z]y, x, y]x
+	 * </code> is represented as <code>
+	 *    &lt;2&gt;[&lt;1&gt;[1,2,0]2, 0, 1]0
+	 * </code> This weird numbering makes it easy to substitute the outermost placeholders.
+	 * 
+	 * @param i
+	 *            the index of the typevar argument.
+	 * @return the placeholder type.
+	 */
+	public static BoogieType createPlaceholderType(final int i) {
+		for (int j = PLACEHOLDER_TYPES.size(); j <= i; j++) {
+			PLACEHOLDER_TYPES.add(new PlaceholderType(j));
+		}
+		return PLACEHOLDER_TYPES.get(i);
+	}
+
+	/**
+	 * Create a new constructed type; reuses an old instance if it already exists. A constructed type is build from a
+	 * TypeConstructor and some type arguments.
+	 * 
+	 * @param constr
+	 *            the type constructor.
+	 * @param params
+	 *            the arguments. The length must be equal to constr.getParamCount().
+	 * @return The constructed type.
+	 */
+	/*
+	 * @ requires constr.getParamCount() == params.length;
+	 * 
+	 * @
+	 */
+	public static ConstructedType createConstructedType(final TypeConstructor constr, final BoogieType... params) {
+		assert constr.getParamCount() == params.length;
+		int hashcode = constr.hashCode();
+		for (int i = 0; i < params.length; i++) {
+			hashcode = hashcode * 31 + params[i].hashCode();
+		}
+		for (final BoogieType t : GLOBAL_TYPES.iterateHashCode(hashcode)) {
+			if (!(t instanceof ConstructedType)) {
 				continue;
 			}
-            final ConstructedType c = (ConstructedType) t;
-            if (c.getConstr() != constr) {
+			final ConstructedType c = (ConstructedType) t;
+			if (c.getConstr() != constr) {
 				continue;
 			}
-            for (int i = 0; true; i++) {
-                if (i == params.length) {
+			for (int i = 0; true; i++) {
+				if (i == params.length) {
 					return c;
 				}
-                if (params[i] != c.getParameter(i)) {
+				if (params[i] != c.getParameter(i)) {
 					break;
 				}
-            }
-        }
-        final ConstructedType newType = new ConstructedType(constr, params);
-        GLOBAL_TYPES.put(hashcode, newType);
-        return newType;
-    }
+			}
+		}
+		final ConstructedType newType = new ConstructedType(constr, params);
+		GLOBAL_TYPES.put(hashcode, newType);
+		return newType;
+	}
 
-    /**
-     * Creates a new constructed type without parameters; reuses an old instance
-     * if it already exists. A constructed type is build from a TypeConstructor
-     * and some type arguments.
-     * 
-     * @param constr
-     *            the type constructor, constr.getParamCount() must be 0.
-     * @return The constructed type.
-     */
-    public static ConstructedType createConstructedType(final TypeConstructor constr) {
-        return createConstructedType(constr, EMPTY);
-    }
+	/**
+	 * Creates a new constructed type without parameters; reuses an old instance if it already exists. A constructed
+	 * type is build from a TypeConstructor and some type arguments.
+	 * 
+	 * @param constr
+	 *            the type constructor, constr.getParamCount() must be 0.
+	 * @return The constructed type.
+	 */
+	public static ConstructedType createConstructedType(final TypeConstructor constr) {
+		return createConstructedType(constr, EMPTY);
+	}
 
-    /**
-     * Creates a new array type; reuses an old instance if it already exists. An
-     * array has a number of placeholders (type variables), some index types and
-     * a value type.
-     * 
-     * @param numPlaceholders
-     *            number of declared placeholders
-     * @param indexTypes
-     *            the types used in the array indices. One entry for each
-     *            dimension of the array.
-     * @param valueType
-     *            the type of the values stored in the array.
-     * @return The array type.
-     */
-    public static ArrayType createArrayType(final int numPlaceholders,
-            final BoogieType[] indexTypes, final BoogieType valueType) {
-        int hashcode = numPlaceholders;
-        for (int i = 0; i < indexTypes.length; i++) {
-            hashcode = hashcode * 31 + indexTypes[i].hashCode();
-        }
-        hashcode = hashcode * 31 + valueType.hashCode();
-        for (final BoogieType t : GLOBAL_TYPES.iterateHashCode(hashcode)) {
-            if (!(t instanceof ArrayType)) {
+	/**
+	 * Creates a new array type; reuses an old instance if it already exists. An array has a number of placeholders
+	 * (type variables), some index types and a value type.
+	 * 
+	 * @param numPlaceholders
+	 *            number of declared placeholders
+	 * @param indexTypes
+	 *            the types used in the array indices. One entry for each dimension of the array.
+	 * @param valueType
+	 *            the type of the values stored in the array.
+	 * @return The array type.
+	 */
+	public static ArrayType createArrayType(final int numPlaceholders, final BoogieType[] indexTypes,
+			final BoogieType valueType) {
+		int hashcode = numPlaceholders;
+		for (int i = 0; i < indexTypes.length; i++) {
+			hashcode = hashcode * 31 + indexTypes[i].hashCode();
+		}
+		hashcode = hashcode * 31 + valueType.hashCode();
+		for (final BoogieType t : GLOBAL_TYPES.iterateHashCode(hashcode)) {
+			if (!(t instanceof ArrayType)) {
 				continue;
 			}
-            final ArrayType arrType = (ArrayType) t;
-            if (arrType.getNumPlaceholders() != numPlaceholders
-                    || arrType.getIndexCount() != indexTypes.length
-                    || arrType.getValueType() != valueType) {
+			final ArrayType arrType = (ArrayType) t;
+			if (arrType.getNumPlaceholders() != numPlaceholders || arrType.getIndexCount() != indexTypes.length
+					|| arrType.getValueType() != valueType) {
 				continue;
 			}
-            for (int i = 0; true; i++) {
-                if (i == indexTypes.length) {
+			for (int i = 0; true; i++) {
+				if (i == indexTypes.length) {
 					return arrType;
 				}
-                if (indexTypes[i] != arrType.getIndexType(i)) {
+				if (indexTypes[i] != arrType.getIndexType(i)) {
 					break;
 				}
-            }
-        }
-        final ArrayType newType = new ArrayType(numPlaceholders, indexTypes,
-                valueType);
-        GLOBAL_TYPES.put(hashcode, newType);
-        return newType;
-    }
+			}
+		}
+		final ArrayType newType = new ArrayType(numPlaceholders, indexTypes, valueType);
+		GLOBAL_TYPES.put(hashcode, newType);
+		return newType;
+	}
 
-    /**
-     * Creates a new struct type; reuses an old instance if it already exists.
-     * 
-     * @param fNames
-     *            Field names.
-     * @param fTypes
-     *            Field types.
-     * @return The struct type.
-     */
-    public static StructType createStructType(final String[] fNames,
-            final BoogieType[] fTypes) {
-        assert fNames.length == fTypes.length;
-        int hashCode = 1031;
-        for (int i = 0; i < fNames.length; i++) {
-            hashCode = hashCode * 31 + fTypes[i].hashCode();
-            hashCode = hashCode * 31 + fNames[i].hashCode();
-        }
-        outer: for (final BoogieType t : GLOBAL_TYPES.iterateHashCode(hashCode)) {
-            if (!(t instanceof StructType)) {
+	/**
+	 * Creates a new struct type; reuses an old instance if it already exists.
+	 * 
+	 * @param fNames
+	 *            Field names.
+	 * @param fTypes
+	 *            Field types.
+	 * @return The struct type.
+	 */
+	public static StructType createStructType(final String[] fNames, final BoogieType[] fTypes) {
+		assert fNames.length == fTypes.length;
+		int hashCode = 1031;
+		for (int i = 0; i < fNames.length; i++) {
+			hashCode = hashCode * 31 + fTypes[i].hashCode();
+			hashCode = hashCode * 31 + fNames[i].hashCode();
+		}
+		outer: for (final BoogieType t : GLOBAL_TYPES.iterateHashCode(hashCode)) {
+			if (!(t instanceof StructType)) {
 				continue;
 			}
-            final StructType strType = (StructType) t;
-            if (strType.getFieldCount() != fNames.length) {
+			final StructType strType = (StructType) t;
+			if (strType.getFieldCount() != fNames.length) {
 				continue;
 			}
-            if (!Arrays.equals(fNames, strType.getFieldIds())) {
+			if (!Arrays.equals(fNames, strType.getFieldIds())) {
 				break;
 			}
-            for (int i = 0; i < fNames.length; i++) {
-                if (fTypes[i] != strType.getFieldType(fNames[i])) {
+			for (int i = 0; i < fNames.length; i++) {
+				if (fTypes[i] != strType.getFieldType(fNames[i])) {
 					break outer;
 				}
-            }
-            return strType;
-        }
-        // no match found -> create a new one
-        final StructType newType = new StructType(fNames, fTypes);
-        GLOBAL_TYPES.put(hashCode, newType);
-        return newType;
-    }
+			}
+			return strType;
+		}
+		// no match found -> create a new one
+		final StructType newType = new StructType(fNames, fTypes);
+		GLOBAL_TYPES.put(hashCode, newType);
+		return newType;
+	}
 
-    /**
-     * Substitute placeholders in given type. This is called recursively to
-     * substitute.
-     * 
-     * @param depth
-     *            the depth into the type to substitute. Normally 0.
-     * @param substType
-     *            The types to substitute.
-     * @return The substituted type
-     */
-    protected abstract BoogieType substitutePlaceholders(int depth,
-            BoogieType[] substType);
+	/**
+	 * Substitute placeholders in given type. This is called recursively to substitute.
+	 * 
+	 * @param depth
+	 *            the depth into the type to substitute. Normally 0.
+	 * @param substType
+	 *            The types to substitute.
+	 * @return The substituted type
+	 */
+	protected abstract BoogieType substitutePlaceholders(int depth, BoogieType[] substType);
 
-    /**
-     * Increment all placeholders in given type. This is used to adapt the place
-     * holders in a substitution if it is applied deep inside another type.
-     * 
-     * @param depth
-     *            the depth into the type to substitute. Normally 0.
-     * @param incDepth
-     *            the depth by which to increment placeholders.
-     * @return The type with incremented placeholders.
-     */
-    protected abstract BoogieType incrementPlaceholders(int depth, int incDepth);
+	/**
+	 * Increment all placeholders in given type. This is used to adapt the place holders in a substitution if it is
+	 * applied deep inside another type.
+	 * 
+	 * @param depth
+	 *            the depth into the type to substitute. Normally 0.
+	 * @param incDepth
+	 *            the depth by which to increment placeholders.
+	 * @return The type with incremented placeholders.
+	 */
+	protected abstract BoogieType incrementPlaceholders(int depth, int incDepth);
 
-    /**
-     * Substitute placeholders in given type. This is called recursively to
-     * substitute.
-     * 
-     * @param substType
-     *            The types to substitute.
-     * @return The substituted type
-     */
-    public BoogieType substitutePlaceholders(final BoogieType[] substType) {
-        return substitutePlaceholders(0, substType);
-    }
+	/**
+	 * Substitute placeholders in given type. This is called recursively to substitute.
+	 * 
+	 * @param substType
+	 *            The types to substitute.
+	 * @return The substituted type
+	 */
+	public BoogieType substitutePlaceholders(final BoogieType[] substType) {
+		return substitutePlaceholders(0, substType);
+	}
 
-    /**
-     * Returns the type as which this type was ultimately defined.
-     * 
-     * @return The underlying type (this if it is a basic or a free type).
-     */
-    public abstract BoogieType getUnderlyingType();
+	/**
+	 * Returns the type as which this type was ultimately defined.
+	 * 
+	 * @return The underlying type (this if it is a basic or a free type).
+	 */
+	public abstract BoogieType getUnderlyingType();
 
-    /**
-     * Returns true if this type is a synonym of the give object o. This can
-     * only be the case if o is a BoogieType.
-     */
-    @Override
+	/**
+	 * Returns true if this type is a synonym of the give object o. This can only be the case if o is a BoogieType.
+	 */
+	@Override
 	public boolean equals(final Object o) {
-        return (o instanceof BoogieType)
-                && getUnderlyingType() == ((BoogieType) o).getUnderlyingType();
-    }
+		return o instanceof BoogieType && getUnderlyingType() == ((BoogieType) o).getUnderlyingType();
+	}
 
-    /**
-     * Unify the this type (which contains Placeholders) with another type
-     * (which doesn't) and compute a suitable substitution.
-     * 
-     * @param depth
-     *            the depth into the type to unify. Normally 0.
-     * @param other
-     *            the other type
-     * @param substitution
-     *            the substitution array. should be initialized to null and
-     *            contains a suitable substitution.
-     * @returns true if unification was successful, false on type mismatch.
-     */
-    protected abstract boolean unify(int depth, BoogieType other,
-            BoogieType[] substitution);
+	/**
+	 * Unify the this type (which contains Placeholders) with another type (which doesn't) and compute a suitable
+	 * substitution.
+	 * 
+	 * @param depth
+	 *            the depth into the type to unify. Normally 0.
+	 * @param other
+	 *            the other type
+	 * @param substitution
+	 *            the substitution array. should be initialized to null and contains a suitable substitution.
+	 * @returns true if unification was successful, false on type mismatch.
+	 */
+	protected abstract boolean unify(int depth, BoogieType other, BoogieType[] substitution);
 
-    /**
-     * Unify the this type (which contains Placeholders) with another type
-     * (which doesn't) and compute a suitable substitution.
-     * 
-     * @param other
-     *            the other type
-     * @param substitution
-     *            the substitution array. should be initialized to null and
-     *            contains a suitable substitution.
-     * @returns true if unification was successful, false on type mismatch.
-     */
-    public boolean unify(final BoogieType other, final BoogieType[] substitution) {
-        return getUnderlyingType().unify(0, other.getUnderlyingType(),
-                substitution);
-    }
+	/**
+	 * Unify the this type (which contains Placeholders) with another type (which doesn't) and compute a suitable
+	 * substitution.
+	 * 
+	 * @param other
+	 *            the other type
+	 * @param substitution
+	 *            the substitution array. should be initialized to null and contains a suitable substitution.
+	 * @returns true if unification was successful, false on type mismatch.
+	 */
+	public boolean unify(final BoogieType other, final BoogieType[] substitution) {
+		return getUnderlyingType().unify(0, other.getUnderlyingType(), substitution);
+	}
 
-    /**
-     * Determines if this type contains a placeholder to the given depth range.
-     * Needed for the occur check in unification.
-     * 
-     * @param minDepth
-     *            the minimum index of the placeholder. Measured from the start
-     *            of this type.
-     * @param maxDepth
-     *            the maximum index of the placeholder.
-     * @return true if placeholder with given depth occurs in this type.
-     */
-    protected abstract boolean hasPlaceholder(int minDepth, int maxDepth);
+	/**
+	 * Determines if this type contains a placeholder to the given depth range. Needed for the occur check in
+	 * unification.
+	 * 
+	 * @param minDepth
+	 *            the minimum index of the placeholder. Measured from the start of this type.
+	 * @param maxDepth
+	 *            the maximum index of the placeholder.
+	 * @return true if placeholder with given depth occurs in this type.
+	 */
+	protected abstract boolean hasPlaceholder(int minDepth, int maxDepth);
 
-    /**
-     * Check whether this and the other type are unifiable by replacing
-     * Placeholders. This is symmetric, i.e. place holders are considered in
-     * both types.
-     * 
-     * @param depth
-     *            the depth
-     * @param other
-     *            the other type
-     * @param subst
-     *            the partial substitution
-     * @returns true if unification was successful, false on type mismatch.
-     */
-    protected abstract boolean isUnifiableTo(int depth, BoogieType other,
-            ArrayList<BoogieType> subst);
+	/**
+	 * Check whether this and the other type are unifiable by replacing Placeholders. This is symmetric, i.e. place
+	 * holders are considered in both types.
+	 * 
+	 * @param depth
+	 *            the depth
+	 * @param other
+	 *            the other type
+	 * @param subst
+	 *            the partial substitution
+	 * @returns true if unification was successful, false on type mismatch.
+	 */
+	protected abstract boolean isUnifiableTo(int depth, BoogieType other, ArrayList<BoogieType> subst);
 
-    /**
-     * Check whether this and the other type are unifiable by replacing
-     * Placeholders. This is symmetric, i.e. place holders are considered in
-     * both types.
-     * 
-     * @param other
-     *            the other type
-     * @returns true if unification was successful, false on type mismatch.
-     */
-    public boolean isUnifiableTo(final BoogieType other) {
-        final BoogieType realThis = getUnderlyingType();
-        final BoogieType realOther = other.getUnderlyingType();
-        return (realThis.isUnifiableTo(0, realOther,
-                new ArrayList<BoogieType>()));
-    }
+	/**
+	 * Check whether this and the other type are unifiable by replacing Placeholders. This is symmetric, i.e. place
+	 * holders are considered in both types.
+	 * 
+	 * @param other
+	 *            the other type
+	 * @returns true if unification was successful, false on type mismatch.
+	 */
+	public boolean isUnifiableTo(final BoogieType other) {
+		final BoogieType realThis = getUnderlyingType();
+		final BoogieType realOther = other.getUnderlyingType();
+		return realThis.isUnifiableTo(0, realOther, new ArrayList<BoogieType>());
+	}
 
-    /**
-     * Computes a string representation. It uses depth to compute artificial
-     * names for the placeholders.
-     * 
-     * @param depth
-     *            the number of placeholders outside this expression.
-     * @param needParentheses
-     *            true if parentheses should be set for constructed types
-     * @return a string representation of this type.
-     */
-    protected abstract String toString(int depth, boolean needParentheses);
+	/**
+	 * Computes a string representation. It uses depth to compute artificial names for the placeholders.
+	 * 
+	 * @param depth
+	 *            the number of placeholders outside this expression.
+	 * @param needParentheses
+	 *            true if parentheses should be set for constructed types
+	 * @return a string representation of this type.
+	 */
+	protected abstract String toString(int depth, boolean needParentheses);
 
-    /**
-     * Computes an AST type representation. It uses depth to compute artificial
-     * names for the placeholders.
-     * 
-     * @param depth
-     *            the number of placeholders outside this expression.
-     * @param needParentheses
-     *            true if parentheses should be set for constructed types
-     * @return a string representation of this type.
-     */
-    protected abstract ASTType toASTType(ILocation loc, int depth);
+	/**
+	 * Computes an AST type representation. It uses depth to compute artificial names for the placeholders.
+	 * 
+	 * @param depth
+	 *            the number of placeholders outside this expression.
+	 * @param needParentheses
+	 *            true if parentheses should be set for constructed types
+	 * @return a string representation of this type.
+	 */
+	protected abstract ASTType toASTType(ILocation loc, int depth);
 
-    /**
-     * Computes a string representation.
-     * 
-     * @return a string representation of this type.
-     */
-    @Override
+	/**
+	 * Computes a string representation.
+	 * 
+	 * @return a string representation of this type.
+	 */
+	@Override
 	public String toString() {
-        return toString(0, false);
-    }
+		return toString(0, false);
+	}
 
-    /**
-     * Computes an AST type representation.
-     * 
-     * @return the AST type representation of this type.
-     */
-    public ASTType toASTType(final ILocation loc) {
-        return toASTType(loc, 0);
-    }
+	/**
+	 * Computes an AST type representation.
+	 * 
+	 * @return the AST type representation of this type.
+	 */
+	public ASTType toASTType(final ILocation loc) {
+		return toASTType(loc, 0);
+	}
 
-    /**
-     * Returns whether the type has finitely many elements.
-     * 
-     * @return true if this type has finitely many elements, or if it is
-     *         unknown.
-     */
-    public abstract boolean isFinite();
+	/**
+	 * Returns whether the type has finitely many elements.
+	 * 
+	 * @return true if this type has finitely many elements, or if it is unknown.
+	 */
+	public abstract boolean isFinite();
 }

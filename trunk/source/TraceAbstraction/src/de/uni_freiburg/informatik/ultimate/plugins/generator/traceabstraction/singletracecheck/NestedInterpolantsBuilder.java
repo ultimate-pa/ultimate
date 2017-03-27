@@ -99,19 +99,19 @@ public class NestedInterpolantsBuilder {
 
 	private final Set<Integer> mInterpolatedPositions;
 
-	private ArrayList<Term> interpolInput;
+	private ArrayList<Term> mInterpolInput;
 
-	private ArrayList<Integer> treeStructure;
+	private ArrayList<Integer> mTreeStructure;
 
-	private ArrayList<Integer> craigInt2interpolantIndex;
+	private ArrayList<Integer> mCraigInt2interpolantIndex;
 
-	private int startOfCurrentSubtree;
+	private int mStartOfCurrentSubtree;
 
 	private final NestedWord<? extends IAction> mTrace;
 
-	private int mstackHeightAtLastInterpolatedPosition;
+	private int mStackHeightAtLastInterpolatedPosition;
 
-	private Stack<Integer> mstartOfSubtreeStack;
+	private Stack<Integer> mStartOfSubtreeStack;
 
 	private final boolean mTreeInterpolation;
 
@@ -163,12 +163,12 @@ public class NestedInterpolantsBuilder {
 	}
 
 	public void computeCraigInterpolants() {
-		interpolInput = new ArrayList<>();
-		treeStructure = new ArrayList<>();
-		craigInt2interpolantIndex = new ArrayList<>();
-		startOfCurrentSubtree = 0;
-		mstartOfSubtreeStack = new Stack<>();
-		mstackHeightAtLastInterpolatedPosition = 0;
+		mInterpolInput = new ArrayList<>();
+		mTreeStructure = new ArrayList<>();
+		mCraigInt2interpolantIndex = new ArrayList<>();
+		mStartOfCurrentSubtree = 0;
+		mStartOfSubtreeStack = new Stack<>();
+		mStackHeightAtLastInterpolatedPosition = 0;
 		boolean startNewFormula = true;
 
 		for (int i = 0; i < mAnnotSSA.getTrace().length(); i++) {
@@ -179,9 +179,9 @@ public class NestedInterpolantsBuilder {
 					newInterpolInputFormula(i);
 				} else if (mTrace.isCallPosition(i)) {
 					if (!mTrace.isPendingCall(i)) {
-						final int nextPosition = interpolInput.size();
-						mstartOfSubtreeStack.push(startOfCurrentSubtree);
-						startOfCurrentSubtree = nextPosition;
+						final int nextPosition = mInterpolInput.size();
+						mStartOfSubtreeStack.push(mStartOfCurrentSubtree);
+						mStartOfCurrentSubtree = nextPosition;
 					}
 					newInterpolInputFormula(i);
 					if (mTrace.isPendingCall(i)) {
@@ -195,7 +195,7 @@ public class NestedInterpolantsBuilder {
 						addToLastInterpolInputFormula(mAnnotSSA.getOldVarAssignment(i));
 						addToLastInterpolInputFormula(mAnnotSSA.getPendingContext(i));
 					} else {
-						startOfCurrentSubtree = mstartOfSubtreeStack.pop();
+						mStartOfCurrentSubtree = mStartOfSubtreeStack.pop();
 						newInterpolInputFormula(i);
 						final int correspondingCallPosition = mTrace.getCallPosition(i);
 						addToLastInterpolInputFormula(mAnnotSSA.getLocalVarAssignment(correspondingCallPosition));
@@ -211,8 +211,8 @@ public class NestedInterpolantsBuilder {
 					addToLastInterpolInputFormula(mAnnotSSA.getFormulaFromNonCallPos(i));
 				} else if (mTrace.isCallPosition(i)) {
 					if (!mTrace.isPendingCall(i)) {
-						mstartOfSubtreeStack.push(startOfCurrentSubtree);
-						startOfCurrentSubtree = -23;
+						mStartOfSubtreeStack.push(mStartOfCurrentSubtree);
+						mStartOfCurrentSubtree = -23;
 					}
 					addToLastInterpolInputFormula(mAnnotSSA.getGlobalVarAssignment(i));
 					if (mTrace.isPendingCall(i)) {
@@ -226,7 +226,7 @@ public class NestedInterpolantsBuilder {
 						addToLastInterpolInputFormula(mAnnotSSA.getOldVarAssignment(i));
 						addToLastInterpolInputFormula(mAnnotSSA.getPendingContext(i));
 					} else {
-						startOfCurrentSubtree = mstartOfSubtreeStack.pop();
+						mStartOfCurrentSubtree = mStartOfSubtreeStack.pop();
 						addToLastInterpolInputFormula(mAnnotSSA.getFormulaFromNonCallPos(i));
 						final int correspondingCallPosition = mTrace.getCallPosition(i);
 						addToLastInterpolInputFormula(mAnnotSSA.getLocalVarAssignment(correspondingCallPosition));
@@ -238,12 +238,12 @@ public class NestedInterpolantsBuilder {
 			}
 			startNewFormula = isInterpolatedPositio(i);
 			if (isInterpolatedPositio(i)) {
-				mstackHeightAtLastInterpolatedPosition = mstartOfSubtreeStack.size();
-				craigInt2interpolantIndex.add(i);
+				mStackHeightAtLastInterpolatedPosition = mStartOfSubtreeStack.size();
+				mCraigInt2interpolantIndex.add(i);
 			}
 
 		}
-		final Term[] interpolInput = this.interpolInput.toArray(new Term[0]);
+		final Term[] interpolInput = this.mInterpolInput.toArray(new Term[0]);
 		// add precondition to first term
 		// special case: if first position is non pending call, then we add the
 		// precondition to the corresponding return.
@@ -266,7 +266,7 @@ public class NestedInterpolantsBuilder {
 		interpolInput[interpolInput.length - 1] = Util.and(mMgdScriptTc.getScript(),
 				interpolInput[interpolInput.length - 1], mAnnotSSA.getPostcondition());
 
-		final int[] startOfSubtree = integerListToIntArray(treeStructure);
+		final int[] startOfSubtree = integerListToIntArray(mTreeStructure);
 		if (mTreeInterpolation) {
 			mCraigInterpolants = mMgdScriptTc.getInterpolants(mScriptLockOwner, interpolInput, startOfSubtree);
 		} else {
@@ -284,14 +284,14 @@ public class NestedInterpolantsBuilder {
 	}
 
 	private void newInterpolInputFormula(final int i) {
-		if (mstackHeightAtLastInterpolatedPosition == mstartOfSubtreeStack.size()) {
+		if (mStackHeightAtLastInterpolatedPosition == mStartOfSubtreeStack.size()) {
 			// everything ok
 		} else {
-			if (mstackHeightAtLastInterpolatedPosition + 1 == mstartOfSubtreeStack.size() && mTrace.isCallPosition(i)
+			if (mStackHeightAtLastInterpolatedPosition + 1 == mStartOfSubtreeStack.size() && mTrace.isCallPosition(i)
 					&& (i == 0 || isInterpolatedPositio(i - 1))) {
 				// everything ok
 			} else {
-				if (mstackHeightAtLastInterpolatedPosition - 1 == mstartOfSubtreeStack.size()
+				if (mStackHeightAtLastInterpolatedPosition - 1 == mStartOfSubtreeStack.size()
 						&& mTrace.isReturnPosition(i) && isInterpolatedPositio(i - 1)) {
 					// everything ok
 				} else {
@@ -306,19 +306,19 @@ public class NestedInterpolantsBuilder {
 		} else {
 			term = mAnnotSSA.getFormulaFromNonCallPos(i);
 		}
-		interpolInput.add(term);
+		mInterpolInput.add(term);
 		// the interpolant between last formula and this new formula can be
 		// found
 		// at position i-1
 
-		treeStructure.add(startOfCurrentSubtree);
+		mTreeStructure.add(mStartOfCurrentSubtree);
 	}
 
 	private void addToLastInterpolInputFormula(final Term term) {
-		final int lastPosition = interpolInput.size() - 1;
-		final Term newFormula = Util.and(mMgdScriptTc.getScript(), interpolInput.get(lastPosition), term);
+		final int lastPosition = mInterpolInput.size() - 1;
+		final Term newFormula = Util.and(mMgdScriptTc.getScript(), mInterpolInput.get(lastPosition), term);
 		assert newFormula != null : "newFormula must be != null";
-		interpolInput.set(lastPosition, newFormula);
+		mInterpolInput.set(lastPosition, newFormula);
 	}
 
 	public boolean isInterpolatedPositio(final int i) {
@@ -527,7 +527,7 @@ public class NestedInterpolantsBuilder {
 
 	private IPredicate[] computePredicates() {
 		final IPredicate[] result = new IPredicate[mTrace.length() - 1];
-		assert mCraigInterpolants.length == craigInt2interpolantIndex.size();
+		assert mCraigInterpolants.length == mCraigInt2interpolantIndex.size();
 		// assert mInterpolatedPositions.size() == mCraigInterpolants.length;
 
 		final Map<Term, IPredicate> withIndices2Predicate = new HashMap<>();
@@ -544,12 +544,12 @@ public class NestedInterpolantsBuilder {
 				assert mTrace.isReturnPosition(mTrace.length() - 1);
 				positionOfThisCraigInterpolant = Integer.MAX_VALUE;
 			} else {
-				positionOfThisCraigInterpolant = craigInt2interpolantIndex.get(craigInterpolPos);
+				positionOfThisCraigInterpolant = mCraigInt2interpolantIndex.get(craigInterpolPos);
 			}
 			assert positionOfThisCraigInterpolant >= resultPos;
 			if (isInterpolatedPositio(resultPos)) {
 				Term withIndices = mCraigInterpolants[craigInterpolPos];
-				assert resultPos == craigInt2interpolantIndex.get(craigInterpolPos);
+				assert resultPos == mCraigInt2interpolantIndex.get(craigInterpolPos);
 				craigInterpolPos++;
 				result[resultPos] = withIndices2Predicate.get(withIndices);
 				if (result[resultPos] == null) {

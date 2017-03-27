@@ -640,17 +640,18 @@ public class PredicateUnifier implements IPredicateUnifier {
 		}
 
 		/**
-		 * In case the pair of input predicates is not in the coverage relation
-		 * use this method to throw an AssertionError with a more detailed
-		 * error message. 
+		 * In case the pair of input predicates is not in the coverage relation use this method to throw an
+		 * AssertionError with a more detailed error message.
 		 * 
 		 */
 		private void throwAssertionErrorWithMessage(final IPredicate o1, final IPredicate o2) throws AssertionError {
 			if (!mLhs2RhsValidity.keySet().contains(o1)) {
-				throw new AssertionError("PredicateUnifier does not know the following predicate " + String.valueOf(o1));
+				throw new AssertionError(
+						"PredicateUnifier does not know the following predicate " + String.valueOf(o1));
 			}
 			if (!mLhs2RhsValidity.keySet().contains(o2)) {
-				throw new AssertionError("PredicateUnifier does not know the following predicate " + String.valueOf(o2));
+				throw new AssertionError(
+						"PredicateUnifier does not know the following predicate " + String.valueOf(o2));
 			}
 			throw new AssertionError("PredicateUnifier is in inconsistent state");
 		}

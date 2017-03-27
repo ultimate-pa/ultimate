@@ -58,16 +58,19 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public class BasicPredicateFactory {
 
+	protected static final Set<IProgramVar> EMPTY_VARS = Collections.emptySet();
+	protected static final String[] NO_PROCEDURE = new String[0];
+
 	protected final IIcfgSymbolTable mSymbolTable;
 	protected final Script mScript;
 	protected final SimplificationTechnique mSimplificationTechnique;
 	protected final XnfConversionTechnique mXnfConversionTechnique;
+
 	/**
 	 * Serial numbers for predicates start with 1, because 0 is reserved for the axioms.
 	 */
 	protected int mSerialNumberCounter = 1;
-	protected static final Set<IProgramVar> EMPTY_VARS = Collections.emptySet();
-	protected static final String[] NO_PROCEDURE = new String[0];
+
 	protected final IUltimateServiceProvider mServices;
 	protected final ManagedScript mMgdScript;
 	protected final ILogger mLogger;
@@ -195,9 +198,9 @@ public class BasicPredicateFactory {
 
 	private static final class AuxiliaryTerm extends Term {
 
-		String mName;
+		private final String mName;
 
-		AuxiliaryTerm(final String name) {
+		private AuxiliaryTerm(final String name) {
 			super(0);
 			mName = name;
 		}

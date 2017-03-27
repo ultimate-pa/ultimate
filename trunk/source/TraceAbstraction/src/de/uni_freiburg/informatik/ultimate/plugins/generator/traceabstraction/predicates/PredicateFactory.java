@@ -77,7 +77,6 @@ public class PredicateFactory extends BasicPredicateFactory {
 	public ISLPredicate newEmptyStackPredicate() {
 		final BoogieIcfgLocation pp = new BoogieIcfgLocation("noCaller", "noCaller", false, null);
 		return newSPredicate(pp, new TermVarsProc(mEmptyStackTerm, EMPTY_VARS, NO_PROCEDURE, mEmptyStackTerm));
-
 	}
 
 	public MLPredicate newMLPredicate(final IcfgLocation[] programPoints, final Term term) {

@@ -121,8 +121,8 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 
 		switch (strategy) {
 		case FIXED_PREFERENCES:
-			final ManagedScript managedScript = setupManagedScriptFromPreferences(mServices, mInitialIcfg, mStorage,
-					iteration, mPrefs);
+			final ManagedScript managedScript =
+					setupManagedScriptFromPreferences(mServices, mInitialIcfg, mStorage, iteration, mPrefs);
 			return new FixedTraceAbstractionRefinementStrategy<>(mLogger, mPrefs, managedScript, mServices,
 					mPredicateFactory, predicateUnifier, counterexample, abstraction, mPrefsConsolidation, iteration,
 					benchmark);

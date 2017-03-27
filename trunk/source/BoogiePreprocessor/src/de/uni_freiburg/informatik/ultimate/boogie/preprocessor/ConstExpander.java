@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Trigger;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
@@ -60,16 +60,16 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 	private final HashMap<IBoogieType, List<ConstDeclaration>> mConstDecls;
 	private final BoogiePreprocessorBacktranslator mBacktranslator;
 
-	protected ConstExpander(BoogiePreprocessorBacktranslator backtranslator) {
+	protected ConstExpander(final BoogiePreprocessorBacktranslator backtranslator) {
 		mBacktranslator = backtranslator;
-		mConstDecls = new HashMap<IBoogieType, List<ConstDeclaration>>();
+		mConstDecls = new HashMap<>();
 	}
 
 	@Override
-	public boolean process(IElement root) {
+	public boolean process(final IElement root) {
 		if (root instanceof Unit) {
 			final Unit unit = (Unit) root;
-			final ArrayList<Declaration> newDecls = new ArrayList<Declaration>();
+			final ArrayList<Declaration> newDecls = new ArrayList<>();
 			for (final Declaration decl : unit.getDeclarations()) {
 				if (decl instanceof ConstDeclaration) {
 					final ConstDeclaration constDecl = (ConstDeclaration) decl;
@@ -98,22 +98,23 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 		return true;
 	}
 
-	private void addPartOrderAxioms(ArrayList<Declaration> newDecls, List<ConstDeclaration> cdlist) {
-		//TODO: PartOrderAxioms are currently not considered for back translation (its unclear how they should be treated) 
-		
-		final HashMap<String, List<String>> childrens = new HashMap<String, List<String>>();
-		final HashMap<String, List<String>> uniqueChildrens = new HashMap<String, List<String>>();
-		final HashSet<String> uniqueValues = new HashSet<String>();
+	private static void addPartOrderAxioms(final ArrayList<Declaration> newDecls, final List<ConstDeclaration> cdlist) {
+		// TODO: PartOrderAxioms are currently not considered for back translation (its unclear how they should be
+		// treated)
+
+		final HashMap<String, List<String>> childrens = new HashMap<>();
+		final HashMap<String, List<String>> uniqueChildrens = new HashMap<>();
+		final HashSet<String> uniqueValues = new HashSet<>();
 		final ASTType asttype = cdlist.get(0).getVarList().getType();
 		final IBoogieType type = asttype.getBoogieType();
-		final IdentifierExpression var = new IdentifierExpression(asttype.getLocation(), type, "$$",
-		/*
-		 * FIXME : ask Jochen about storage class
-		 */null);
+		final IdentifierExpression var =
+				new IdentifierExpression(asttype.getLocation(), type, "$$", /*
+																			 * FIXME : ask Jochen about storage class
+																			 */null);
 		final IdentifierExpression var2 = new IdentifierExpression(asttype.getLocation(), type, "$$2",
-		/*
-		 * FIXME : ask Jochen about storage class
-		 */null);
+				/*
+				 * FIXME : ask Jochen about storage class
+				 */null);
 		for (final ConstDeclaration c : cdlist) {
 			final ParentEdge[] parents = c.getParentInfo();
 			for (final String child : c.getVarList().getIdentifiers()) {
@@ -123,62 +124,62 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 
 				if (parents != null) {
 					final IdentifierExpression cid = new IdentifierExpression(c.getLocation(), type, child,
-					/*
-					 * FIXME : ask Jochen about storage class
-					 */null);
+							/*
+							 * FIXME : ask Jochen about storage class
+							 */null);
 					Expression polist = null;
 					for (final ParentEdge p : parents) {
 						final String parent = p.getIdentifier();
 						final IdentifierExpression pid = new IdentifierExpression(c.getLocation(), type, parent,
-						/*
-						 * FIXME : ask Jochen about storage class
-						 */null);
-						final Expression partorder = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+								/*
+								 * FIXME : ask Jochen about storage class
+								 */null);
+						final Expression partorder = new BinaryExpression(c.getLocation(), BoogieType.TYPE_BOOL,
 								BinaryExpression.Operator.COMPPO, cid, pid);
 						if (polist == null) {
 							polist = partorder;
 						} else {
-							polist = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+							polist = new BinaryExpression(c.getLocation(), BoogieType.TYPE_BOOL,
 									BinaryExpression.Operator.LOGICAND, partorder, polist);
 						}
 					}
 					if (polist != null) {
 						newDecls.add(new Axiom(c.getLocation(), new Attribute[0], polist));
 					}
-					polist = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+					polist = new BinaryExpression(c.getLocation(), BoogieType.TYPE_BOOL,
 							BinaryExpression.Operator.COMPEQ, cid, var);
 					for (final ParentEdge p : parents) {
 						final String parent = p.getIdentifier();
 						final IdentifierExpression pid = new IdentifierExpression(c.getLocation(), type, parent,
-						/*
-						 * FIXME : ask Jochen about storage class
-						 */null);
+								/*
+								 * FIXME : ask Jochen about storage class
+								 */null);
 						List<String> childList = childrens.get(parent);
 						if (childList == null) {
-							childList = new ArrayList<String>();
+							childList = new ArrayList<>();
 							childrens.put(parent, childList);
 						}
 						childList.add(child);
 						if (p.isUnique()) {
 							childList = uniqueChildrens.get(parent);
 							if (childList == null) {
-								childList = new ArrayList<String>();
+								childList = new ArrayList<>();
 								uniqueChildrens.put(parent, childList);
 							}
 							childList.add(child);
 						}
-						final Expression partorder = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+						final Expression partorder = new BinaryExpression(c.getLocation(), BoogieType.TYPE_BOOL,
 								BinaryExpression.Operator.COMPPO, pid, var);
-						polist = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+						polist = new BinaryExpression(c.getLocation(), BoogieType.TYPE_BOOL,
 								BinaryExpression.Operator.LOGICOR, partorder, polist);
 					}
-					final Expression lhs = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+					final Expression lhs = new BinaryExpression(c.getLocation(), BoogieType.TYPE_BOOL,
 							BinaryExpression.Operator.COMPPO, cid, var);
-					final Expression impl = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+					final Expression impl = new BinaryExpression(c.getLocation(), BoogieType.TYPE_BOOL,
 							BinaryExpression.Operator.LOGICIMPLIES, lhs, polist);
 					final VarList vl = new VarList(c.getLocation(), new String[] { "$$" }, asttype);
 					final Trigger trigger = new Trigger(c.getLocation(), new Expression[] { lhs });
-					final Expression quant = new QuantifierExpression(c.getLocation(), PrimitiveType.TYPE_BOOL, true,
+					final Expression quant = new QuantifierExpression(c.getLocation(), BoogieType.TYPE_BOOL, true,
 							new String[0], new VarList[] { vl }, new Attribute[] { trigger }, impl);
 
 					newDecls.add(new Axiom(c.getLocation(), new Attribute[0], quant));
@@ -190,10 +191,10 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 			if (c.isComplete()) {
 				for (final String parent : c.getVarList().getIdentifiers()) {
 					final IdentifierExpression pid = new IdentifierExpression(c.getLocation(), type, parent,
-					/*
-					 * FIXME : ask Jochen about storage class
-					 */null);
-					Expression polist = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+							/*
+							 * FIXME : ask Jochen about storage class
+							 */null);
+					Expression polist = new BinaryExpression(c.getLocation(), BoogieType.TYPE_BOOL,
 							BinaryExpression.Operator.COMPEQ, var, pid);
 					List<String> childList = childrens.get(parent);
 					if (childList == null) {
@@ -201,21 +202,21 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 					}
 					for (final String child : childList) {
 						final IdentifierExpression cid = new IdentifierExpression(c.getLocation(), type, child,
-						/*
-						 * FIXME : ask Jochen about storage class
-						 */null);
-						final Expression partorder = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+								/*
+								 * FIXME : ask Jochen about storage class
+								 */null);
+						final Expression partorder = new BinaryExpression(c.getLocation(), BoogieType.TYPE_BOOL,
 								BinaryExpression.Operator.COMPPO, var, cid);
-						polist = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+						polist = new BinaryExpression(c.getLocation(), BoogieType.TYPE_BOOL,
 								BinaryExpression.Operator.LOGICOR, partorder, polist);
 					}
-					final Expression lhs = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+					final Expression lhs = new BinaryExpression(c.getLocation(), BoogieType.TYPE_BOOL,
 							BinaryExpression.Operator.COMPPO, var, pid);
-					final Expression impl = new BinaryExpression(c.getLocation(), PrimitiveType.TYPE_BOOL,
+					final Expression impl = new BinaryExpression(c.getLocation(), BoogieType.TYPE_BOOL,
 							BinaryExpression.Operator.LOGICIMPLIES, lhs, polist);
 					final VarList vl = new VarList(c.getLocation(), new String[] { "$$" }, asttype);
 					final Trigger trigger = new Trigger(c.getLocation(), new Expression[] { lhs });
-					final Expression quant = new QuantifierExpression(c.getLocation(), PrimitiveType.TYPE_BOOL, true,
+					final Expression quant = new QuantifierExpression(c.getLocation(), BoogieType.TYPE_BOOL, true,
 							new String[0], new VarList[] { vl }, new Attribute[] { trigger }, impl);
 
 					newDecls.add(new Axiom(c.getLocation(), new Attribute[0], quant));
@@ -225,10 +226,10 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 
 		final Collection<String> uniqueParents = uniqueChildrens.keySet();
 		for (final String p1 : uniqueParents) {
-			final IdentifierExpression p1id = new IdentifierExpression(null, type, p1,
-			/*
-			 * FIXME : ask Jochen about storage class
-			 */null);
+			final IdentifierExpression p1id =
+					new IdentifierExpression(null, type, p1, /*
+																 * FIXME : ask Jochen about storage class
+																 */null);
 			Collection<String> p2list = uniqueParents;
 			if (uniqueValues.contains(p1)) {
 				p2list = Collections.singleton(p1);
@@ -243,53 +244,52 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 					p2id = p1id;
 					pre = null;
 				} else {
-					p2id = new IdentifierExpression(null, type, p2,
-					/*
-					 * FIXME: ask Jochen about storage class
-					 */null);
-					pre = new BinaryExpression(null, PrimitiveType.TYPE_BOOL, BinaryExpression.Operator.COMPEQ, p1id,
+					p2id = new IdentifierExpression(null, type, p2, /*
+																	 * FIXME: ask Jochen about storage class
+																	 */null);
+					pre = new BinaryExpression(null, BoogieType.TYPE_BOOL, BinaryExpression.Operator.COMPEQ, p1id,
 							p2id);
 				}
 				for (final String c1 : uniqueChildrens.get(p1)) {
-					final IdentifierExpression c1id = new IdentifierExpression(null, type, c1,
-					/*
-					 * FIXME : ask Jochen about storage class
-					 */null);
+					final IdentifierExpression c1id =
+							new IdentifierExpression(null, type, c1, /*
+																		 * FIXME : ask Jochen about storage class
+																		 */null);
 					for (final String c2 : uniqueChildrens.get(p2)) {
 						if (p1.equals(p2) && c1.compareTo(c2) >= 0 || c1.equals(c2)) {
 							continue;
 						}
-						final IdentifierExpression c2id = new IdentifierExpression(null, type, c2,
-						/*
-						 * FIXME : ask Jochen about storage class
-						 */null);
+						final IdentifierExpression c2id =
+								new IdentifierExpression(null, type, c2, /*
+																			 * FIXME : ask Jochen about storage class
+																			 */null);
 						Expression pre2 = pre;
 						if (!uniqueValues.contains(c1) || !uniqueValues.contains(c2)) {
-							final Expression neq = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
+							final Expression neq = new BinaryExpression(null, BoogieType.TYPE_BOOL,
 									BinaryExpression.Operator.COMPNEQ, c1id, c2id);
 							if (pre == null) {
 								pre2 = neq;
 							} else {
-								pre2 = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
+								pre2 = new BinaryExpression(null, BoogieType.TYPE_BOOL,
 										BinaryExpression.Operator.LOGICAND, pre, neq);
 							}
 						}
-						final Expression po1 = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
+						final Expression po1 = new BinaryExpression(null, BoogieType.TYPE_BOOL,
 								BinaryExpression.Operator.COMPPO, var, c1id);
-						final Expression po2 = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
+						final Expression po2 = new BinaryExpression(null, BoogieType.TYPE_BOOL,
 								BinaryExpression.Operator.COMPPO, var2, c2id);
-						final Expression lhs = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
+						final Expression lhs = new BinaryExpression(null, BoogieType.TYPE_BOOL,
 								BinaryExpression.Operator.LOGICAND, po1, po2);
-						final Expression diseq = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
+						final Expression diseq = new BinaryExpression(null, BoogieType.TYPE_BOOL,
 								BinaryExpression.Operator.COMPNEQ, var, var2);
-						final Expression impl = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
+						final Expression impl = new BinaryExpression(null, BoogieType.TYPE_BOOL,
 								BinaryExpression.Operator.LOGICIMPLIES, lhs, diseq);
 						final VarList vl = new VarList(null, new String[] { "$$", "$$2" }, asttype);
 						final Trigger trigger = new Trigger(null, new Expression[] { po1, po2 });
-						Expression ax = new QuantifierExpression(null, PrimitiveType.TYPE_BOOL, true, new String[0],
+						Expression ax = new QuantifierExpression(null, BoogieType.TYPE_BOOL, true, new String[0],
 								new VarList[] { vl }, new Attribute[] { trigger }, impl);
 						if (pre2 != null) {
-							ax = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
+							ax = new BinaryExpression(null, BoogieType.TYPE_BOOL,
 									BinaryExpression.Operator.LOGICIMPLIES, pre2, ax);
 						}
 
@@ -301,15 +301,14 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 	}
 
 	/**
-	 * Add to {@code newDecls} the axiom c1 != c2 for each pair of constant
-	 * declarations in {@code cdlist} where c1 and c2 are unique. For these new
-	 * axioms we can not determine a location.
+	 * Add to {@code newDecls} the axiom c1 != c2 for each pair of constant declarations in {@code cdlist} where c1 and
+	 * c2 are unique. For these new axioms we can not determine a location.
 	 * 
 	 * @param newDecls
 	 * @param cdlist
 	 */
-	private void addUniquenessAxioms(ArrayList<Declaration> newDecls, List<ConstDeclaration> cdlist) {
-		final ArrayList<String> identifiers = new ArrayList<String>();
+	private void addUniquenessAxioms(final ArrayList<Declaration> newDecls, final List<ConstDeclaration> cdlist) {
+		final ArrayList<String> identifiers = new ArrayList<>();
 		final HashMap<String, VarList> nodeMap = new HashMap<>();
 		final IBoogieType type = cdlist.get(0).getVarList().getType().getBoogieType();
 		for (final ConstDeclaration c : cdlist) {
@@ -324,18 +323,17 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 		assert nodeMap.size() == identifiers.size();
 
 		for (int i = 0; i < identifiers.size(); i++) {
-			final DeclarationInformation declInfo = new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL,
-					null);
+			final DeclarationInformation declInfo =
+					new DeclarationInformation(DeclarationInformation.StorageClass.GLOBAL, null);
 			final String ident1 = identifiers.get(i);
 			final IdentifierExpression id1 = new IdentifierExpression(null, type, ident1, declInfo);
 			for (int j = i + 1; j < identifiers.size(); j++) {
 				final String ident2 = identifiers.get(j);
 				final IdentifierExpression id2 = new IdentifierExpression(null, type, ident2, declInfo);
-				final Expression diseq = new BinaryExpression(null, PrimitiveType.TYPE_BOOL,
-						BinaryExpression.Operator.COMPNEQ, id1, id2);
+				final Expression diseq =
+						new BinaryExpression(null, BoogieType.TYPE_BOOL, BinaryExpression.Operator.COMPNEQ, id1, id2);
 				/*
-				 * Add the axioms one by one. This prevents the syntax tree from
-				 * getting too deep.
+				 * Add the axioms one by one. This prevents the syntax tree from getting too deep.
 				 */
 				final Axiom newAxiom = new Axiom(null, new Attribute[0], diseq);
 				mBacktranslator.addMapping(nodeMap.get(ident1), newAxiom);
@@ -345,10 +343,10 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 		}
 	}
 
-	private void addConstDeclaration(IBoogieType type, ConstDeclaration constDecl) {
+	private void addConstDeclaration(final IBoogieType type, final ConstDeclaration constDecl) {
 		List<ConstDeclaration> declList = mConstDecls.get(type);
 		if (declList == null) {
-			declList = new ArrayList<ConstDeclaration>();
+			declList = new ArrayList<>();
 			mConstDecls.put(type, declList);
 		}
 		declList.add(constDecl);
@@ -359,8 +357,8 @@ public class ConstExpander extends BoogieTransformer implements IUnmanagedObserv
 	}
 
 	@Override
-	public void init(ModelType modelType, int currentModelIndex, int numberOfModels) {
-		
+	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) {
+
 	}
 
 	@Override
