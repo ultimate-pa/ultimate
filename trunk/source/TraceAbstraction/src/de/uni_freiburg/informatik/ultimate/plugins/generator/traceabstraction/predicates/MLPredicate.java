@@ -91,9 +91,4 @@ public class MLPredicate extends BasicPredicate implements IMLPredicate {
 		return false;
 	}
 
-	@Override
-	public int hashCode() {
-		return super.mSerialNumber;
-	}
-
 }

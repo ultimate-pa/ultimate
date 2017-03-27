@@ -41,14 +41,12 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 /**
  * A predicate object for HornClauses.
  * 
- * Convention: The "signature" of any Predicate that we use in TreeAutomizer is fixed by a sequence of Sorts. (I.e.
- *  the length and the contents of that sequence.)
- *  Thus the signature is given by a sequence of TermVariables. This sequence is identical to the free variabels in the
- *  predicate's formula except for the ordering.
- *  Alternatively, the signature can be given through an unordered set of TermVariables because we fix an (the natural?)
- *   ordering on the TermVariables. (note sure about this..)
- *  Furthermore each of the free variables in the predicate formula corresponds to an HCOutVar, which can also give us
- *   the "index" in the order of each of the free variables.
+ * Convention: The "signature" of any Predicate that we use in TreeAutomizer is fixed by a sequence of Sorts. (I.e. the
+ * length and the contents of that sequence.) Thus the signature is given by a sequence of TermVariables. This sequence
+ * is identical to the free variabels in the predicate's formula except for the ordering. Alternatively, the signature
+ * can be given through an unordered set of TermVariables because we fix an (the natural?) ordering on the
+ * TermVariables. (note sure about this..) Furthermore each of the free variables in the predicate formula corresponds
+ * to an HCOutVar, which can also give us the "index" in the order of each of the free variables.
  * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
@@ -57,81 +55,40 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 public class HCPredicate extends BasicPredicate {
 	private static final long serialVersionUID = 1750137515726690834L;
 	private static final int SERIAL_HCPREDICATE = 1000000007;
-	
-//	@Visualizable
+
 	protected final Set<HornClausePredicateSymbol> mHcPredicateSymbols;
 
 	private final List<TermVariable> mVariables;
 
-	
-//	/**
-//	 * The published attributes. Update this and getFieldValue() if you add new attributes.
-//	 */
-//	private static final String[] s_AttribFields = { "ProgramPoint", "Formula", "Vars" };
-
 	protected HCPredicate(final HornClausePredicateSymbol programPoint, final int serialNumber, final Term term,
-			final Set<IProgramVar> vars, final Term closedFormula,
-			final List<TermVariable> variables) {
+			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables) {
 		super(serialNumber, new String[0], term, vars, closedFormula);
 		mHcPredicateSymbols = Collections.singleton(programPoint);
 		mVariables = variables;
 	}
-	
-	protected HCPredicate(final HornClausePredicateSymbol programPoint, final Term term,
-			final Set<IProgramVar> vars, final Term closedFormula,
-			final List<TermVariable> variables) {
-		this(programPoint, 
-				HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoint, term, variables),
-				term, vars, closedFormula,  variables);
+
+	protected HCPredicate(final HornClausePredicateSymbol programPoint, final Term term, final Set<IProgramVar> vars,
+			final Term closedFormula, final List<TermVariable> variables) {
+		this(programPoint, HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoint, term, variables), term, vars,
+				closedFormula, variables);
 	}
-	
-	
+
 	protected HCPredicate(final Set<HornClausePredicateSymbol> programPoints, final int serialNumber, final Term term,
-			final Set<IProgramVar> vars, final Term closedFormula,
-			final List<TermVariable> variables) {
+			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables) {
 		super(serialNumber, new String[0], term, vars, closedFormula);
 		mHcPredicateSymbols = programPoints;
 		mVariables = variables;
 	}
-	
+
 	protected HCPredicate(final Set<HornClausePredicateSymbol> programPoints, final Term term,
-			final Set<IProgramVar> vars, final Term closedFormula,
-			final List<TermVariable> variables) {
-		this(programPoints, 
-				HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoints, term, variables),
-				term, vars, closedFormula,  variables);
+			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables) {
+		this(programPoints, HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoints, term, variables), term, vars,
+				closedFormula, variables);
 	}
-	
 
-	
-//	@Override
-//	public int hashCode() {
-//		return HashUtils.hashHsieh(serialHCPredicate, mProgramPoint, mFormula);// mClosedFormula);
-//	}
-
-	@Override
-	public boolean equals(final Object p) {
-		if (p instanceof HCPredicate) {
-			return super.equals(p);
-		}
-		if (p instanceof HCPredicate) {
-			return super.equals(p);
-		}
-		return false;
-	}
-	
 	@Override
 	public String toString() {
 		String result = "#";
-//		if (mHcPredicateSymbol != null) {
-//			if ("true".equals(mHcPredicateSymbol.getName())) {
-//				result += "True";
-//			} else if ("false".equals(mHcPredicateSymbol.getName())) {
-//				result += "False";
-//			} else {
-//				result += mHcPredicateSymbol.getName();
-//			}
-//		}
 		result += mHcPredicateSymbols;
 		result += "@(" + mFormula.toString() + ")";
 		return result;
@@ -140,17 +97,8 @@ public class HCPredicate extends BasicPredicate {
 	public Set<HornClausePredicateSymbol> getHcPredicatedSymbols() {
 		return mHcPredicateSymbols;
 	}
-	
+
 	public List<TermVariable> getSignature() {
 		return mVariables;
 	}
-	
-//	@Override
-//	public boolean isUnknown() {
-//		return false;
-//	}
-	
-//	protected String[] getFieldNames() {
-//		return s_AttribFields;
-//	}
 }

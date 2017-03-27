@@ -87,9 +87,4 @@ public class SPredicate extends BasicPredicate implements ISLPredicate {
 	public boolean isUnknown() {
 		return false;
 	}
-
-	@Override
-	public int hashCode() {
-		return super.mSerialNumber;
-	}
 }
