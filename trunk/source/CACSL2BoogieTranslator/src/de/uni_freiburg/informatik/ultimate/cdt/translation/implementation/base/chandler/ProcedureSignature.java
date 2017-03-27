@@ -89,6 +89,6 @@ public class ProcedureSignature {
 //			result += HashUtils.hashJenkins(result, inParams.get(i));
 //		result = HashUtils.hashJenkins(result, takesVarArgs);
 //		return result;
-		return 0;
+		return mStringRepresentation.hashCode();
 	}
 }
