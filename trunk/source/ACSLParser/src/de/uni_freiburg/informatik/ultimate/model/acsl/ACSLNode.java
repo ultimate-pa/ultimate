@@ -33,7 +33,10 @@
 package de.uni_freiburg.informatik.ultimate.model.acsl;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLTransformer;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLVisitor;
@@ -50,18 +53,21 @@ public abstract class ACSLNode {
 	 */
 	public static final ACSLSourceLocation INVALID_LOCATION = new ACSLSourceLocation(-1, -1, -1, -1);
 
+	// do not rename this field as auto-generated subclasses depend on it
+	protected static final Map<Class<?>, Predicate<ACSLNode>> VALIDATORS = new HashMap<>();
+
 	/**
 	 * The list of children.
 	 */
-	private final List<ACSLNode> children = new ArrayList<>();
+	private final List<ACSLNode> mChildren = new ArrayList<>();
 	/**
 	 * File Name.
 	 */
-	private String fileName;
+	private String mFileName;
 	/**
 	 * The location in the source code.
 	 */
-	private ACSLSourceLocation location = INVALID_LOCATION;
+	private ACSLSourceLocation mLocation = INVALID_LOCATION;
 
 	/**
 	 * Getter for the starting line number of this ACSL comment.
@@ -69,7 +75,7 @@ public abstract class ACSLNode {
 	 * @return the starting line number of the ACSL-comment.
 	 */
 	public int getStartingLineNumber() {
-		return location.getStartLine();
+		return mLocation.getStartLine();
 	}
 
 	/**
@@ -78,7 +84,7 @@ public abstract class ACSLNode {
 	 * @return the ending line number of the ACSL-comment.
 	 */
 	public int getEndingLineNumber() {
-		return location.getEndLine();
+		return mLocation.getEndLine();
 	}
 
 	/**
@@ -87,7 +93,7 @@ public abstract class ACSLNode {
 	 * @return list of children.
 	 */
 	public List<ACSLNode> getOutgoingNodes() {
-		return children;
+		return mChildren;
 	}
 
 	/**
@@ -96,7 +102,7 @@ public abstract class ACSLNode {
 	 * @return the fileName
 	 */
 	public String getFileName() {
-		return fileName;
+		return mFileName;
 	}
 
 	/**
@@ -106,7 +112,7 @@ public abstract class ACSLNode {
 	 *            the fileName to set
 	 */
 	public void setFileName(final String fileName) {
-		this.fileName = fileName;
+		mFileName = fileName;
 	}
 
 	/**
@@ -115,7 +121,7 @@ public abstract class ACSLNode {
 	 * @return the location of this node
 	 */
 	public ACSLSourceLocation getLocation() {
-		return location;
+		return mLocation;
 	}
 
 	/**
@@ -125,7 +131,7 @@ public abstract class ACSLNode {
 	 *            the location to set
 	 */
 	public void setLocation(final ACSLSourceLocation location) {
-		this.location = location;
+		mLocation = location;
 	}
 
 	/**

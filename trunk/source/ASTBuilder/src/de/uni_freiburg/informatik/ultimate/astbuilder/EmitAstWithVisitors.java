@@ -39,11 +39,11 @@ import java.util.Set;
  */
 public abstract class EmitAstWithVisitors extends Emit {
 
-	protected boolean isOther(final Node node) {
-		return getOtherNames().contains(node.getName());
+	protected boolean isNonClassicNode(final Node node) {
+		return getNonClassicNode().contains(node.getName());
 	}
 
-	protected abstract Set<String> getOtherNames();
+	protected abstract Set<String> getNonClassicNode();
 
 	protected abstract String getVisitorName();
 
@@ -51,14 +51,18 @@ public abstract class EmitAstWithVisitors extends Emit {
 
 	protected abstract String getRootClassName();
 
+	protected boolean isRootSerializable() {
+		return false;
+	}
+
 	@Override
 	public void emitPreamble(final Node node) throws IOException {
 		super.emitPreamble(node);
 		mWriter.println("import java.util.List;");
-		mWriter.println("import java.util.ArrayList;");
 
 		if (getAllParameters(node).stream().anyMatch(p -> isArrayType(p))) {
 			mWriter.println("import java.util.Arrays;");
+			mWriter.println("import java.util.ArrayList;");
 		}
 	}
 
@@ -75,7 +79,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 		if (node.getParent() != null) {
 			classDecl.append(" extends ");
 			classDecl.append(node.getParent().getName());
-		} else if (!isOther(node)) {
+		} else if (!isNonClassicNode(node)) {
 			classDecl.append(" extends " + getRootClassName());
 		}
 
@@ -85,72 +89,90 @@ public abstract class EmitAstWithVisitors extends Emit {
 		}
 		classDecl.append(" {");
 		mWriter.println(classDecl.toString());
-		mWriter.println("    private static final long serialVersionUID = 1L;");
+		if (isNonClassicNode(node)) {
+			return;
+		}
+
+		if (isRootSerializable()) {
+			mWriter.println("    private static final long serialVersionUID = 1L;");
+		}
+
+		mWriter.println(
+				"    private static final java.util.function.Predicate<" + getRootClassName() + "> VALIDATOR = ");
+		mWriter.println("			" + getRootClassName() + ".VALIDATORS.get(" + node.getName() + ".class);");
 	}
 
 	@Override
 	public void emitNodeHook(final Node node) throws IOException {
 		if (node.name.equals(getVisitorName())) {
-			for (final Node n : mGrammar.getNodeTable().values()) {
-				if (getOtherNames().contains(n.getName())) {
-					continue;
-				}
-				mWriter.println();
-				mWriter.println("    public boolean visit(" + n.name + " node) {");
-				mWriter.println("        return true;");
-				mWriter.println("    }");
-			}
-
+			emitVisitorHook();
 		} else if (node.name.equals(getTransformerName())) {
-			for (final Node n : mGrammar.getNodeTable().values()) {
-				if (getOtherNames().contains(n.getName())) {
-					continue;
-				}
-				mWriter.println();
-				mWriter.println("    public " + n.name + " transform(" + n.name + " node) {");
-				mWriter.println("        return node;");
-				mWriter.println("    }");
+			emitTransformerHook();
+		} else {
+			emitClassicNodeHook(node);
+		}
+	}
+
+	private void emitClassicNodeHook(final Node node) {
+		mWriter.println();
+		mWriter.println("    public List<" + getRootClassName() + "> getOutgoingNodes() {");
+		mWriter.println("        List<" + getRootClassName() + "> children = super.getOutgoingNodes();");
+		final Parameter[] parameters = node.getParameters();
+		System.out.println(node.getName() + " has " + parameters.length + " parameters");
+		for (int i = 0; i < parameters.length; i++) {
+
+			if (isNoRegularChild(parameters[i].getType())) {
+				continue;
 			}
+			System.out.println(parameters[i].getName() + " is an array? " + isArray(parameters[i].getType()));
+
+			if (isArray(parameters[i].getType())) {
+				mWriter.println(String.format("        if(%s!=null){", parameters[i].getName()));
+				mWriter.println(
+						String.format("            children.addAll(Arrays.asList(%s));", parameters[i].getName()));
+				mWriter.println("        }");
+			} else {
+				mWriter.println("        children.add(" + parameters[i].getName() + ");");
+			}
+		}
+		mWriter.println("        return children;");
+		mWriter.println("    }");
+
+		if (!node.isAbstract()) {
+			final List<Parameter> allParameters = getAllParameters(node);
+			writeVisitorAcceptMethod(node, allParameters);
+			writeTransformerAcceptMethod(node, allParameters);
 
 		} else {
+			mWriter.println();
+			mWriter.println("    public abstract void accept(" + getVisitorName() + " visitor);");
 
 			mWriter.println();
-			mWriter.println("    public List<" + getRootClassName() + "> getOutgoingNodes() {");
-			mWriter.println("        List<" + getRootClassName() + "> children = super.getOutgoingNodes();");
-			final Parameter[] parameters = node.getParameters();
-			System.out.println(node.getName() + " has " + parameters.length + " parameters");
-			for (int i = 0; i < parameters.length; i++) {
+			mWriter.println("    public abstract " + node.name + " accept(" + getTransformerName() + " visitor);");
+		}
+	}
 
-				if (isNoRegularChild(parameters[i].getType())) {
-					continue;
-				}
-				System.out.println(parameters[i].getName() + " is an array? " + isArray(parameters[i].getType()));
-
-				if (isArray(parameters[i].getType())) {
-					mWriter.println(String.format("        if(%s!=null){", parameters[i].getName()));
-					mWriter.println(
-							String.format("            children.addAll(Arrays.asList(%s));", parameters[i].getName()));
-					mWriter.println("        }");
-				} else {
-					mWriter.println("        children.add(" + parameters[i].getName() + ");");
-				}
+	private void emitTransformerHook() {
+		for (final Node n : mGrammar.getNodeTable().values()) {
+			if (getNonClassicNode().contains(n.getName())) {
+				continue;
 			}
-			mWriter.println("        return children;");
+			mWriter.println();
+			mWriter.println("    public " + n.name + " transform(" + n.name + " node) {");
+			mWriter.println("        return node;");
 			mWriter.println("    }");
+		}
+	}
 
-			if (!node.isAbstract()) {
-				final List<Parameter> allParameters = getAllParameters(node);
-				writeVisitorAcceptMethod(node, allParameters);
-				writeTransformerAcceptMethod(node, allParameters);
-
-			} else {
-				mWriter.println();
-				mWriter.println("    public abstract void accept(" + getVisitorName() + " visitor);");
-
-				mWriter.println();
-				mWriter.println("    public abstract " + node.name + " accept(" + getTransformerName() + " visitor);");
+	private void emitVisitorHook() {
+		for (final Node n : mGrammar.getNodeTable().values()) {
+			if (getNonClassicNode().contains(n.getName())) {
+				continue;
 			}
-
+			mWriter.println();
+			mWriter.println("    public boolean visit(" + n.name + " node) {");
+			mWriter.println("        return true;");
+			mWriter.println("    }");
 		}
 	}
 
@@ -176,6 +198,16 @@ public abstract class EmitAstWithVisitors extends Emit {
 			emitConstructor(node, false);
 		}
 		emitConstructor(node, true);
+	}
+
+	@Override
+	public void emitConstructorAfterParamAssign(final Node node, final boolean optional) throws IOException {
+		super.emitConstructorAfterParamAssign(node, optional);
+		if (isNonClassicNode(node)) {
+			return;
+		}
+		mWriter.println("        assert VALIDATOR == null || VALIDATOR.test(this) : \"Invalid " + node.getName()
+				+ ": \" + this;");
 	}
 
 	protected static boolean isArray(final String type) {

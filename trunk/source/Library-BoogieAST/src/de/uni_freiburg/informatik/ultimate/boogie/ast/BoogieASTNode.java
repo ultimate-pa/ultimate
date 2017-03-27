@@ -27,7 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.boogie.ast;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import de.uni_freiburg.informatik.ultimate.boogie.BoogieLocation;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
@@ -41,6 +45,17 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
 public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<BoogieASTNode, VisualizationNode> {
 
 	private static final long serialVersionUID = 5856434889026482850L;
+
+	// do not rename this field as auto-generated subclasses depend on it
+	protected static final Map<Class<?>, Predicate<BoogieASTNode>> VALIDATORS = new HashMap<>();
+
+	static {
+		final Predicate<BoogieASTNode> iexprValidator = instance -> {
+			final IdentifierExpression iexpr = (IdentifierExpression) instance;
+			return Pattern.matches("[a-zA-z\\.$#_'`~^\\\\\\?]+[a-zA-z\\.$#_'`~^\\\\\\?\\d]*", iexpr.identifier);
+		};
+		VALIDATORS.put(IdentifierExpression.class, iexprValidator);
+	}
 
 	public BoogieASTNode(final ILocation location) {
 		super();

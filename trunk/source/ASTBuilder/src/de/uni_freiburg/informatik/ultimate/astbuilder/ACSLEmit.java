@@ -46,7 +46,7 @@ public class ACSLEmit extends EmitAstWithVisitors {
 			new HashSet<>(Arrays.asList(new String[] { NAME_VISITOR, NAME_TRANSFORMER }));
 
 	@Override
-	protected Set<String> getOtherNames() {
+	protected Set<String> getNonClassicNode() {
 		return OTHERS;
 	}
 

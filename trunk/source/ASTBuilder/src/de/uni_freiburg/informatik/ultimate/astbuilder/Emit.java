@@ -232,8 +232,13 @@ public class Emit {
 				mWriter.println("        this." + pname + " = " + pname + ";");
 			}
 		}
+		emitConstructorAfterParamAssign(node, optional);
 		mWriter.println("    }");
 		mWriter.println();
+	}
+
+	public void emitConstructorAfterParamAssign(final Node node, final boolean optional) throws IOException {
+		// do nothing per default
 	}
 
 	public void emitConstructors(final Node node) throws IOException {
