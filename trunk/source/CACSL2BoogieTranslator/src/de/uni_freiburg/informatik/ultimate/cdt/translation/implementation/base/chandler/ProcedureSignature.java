@@ -18,9 +18,9 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
  * @author Alexander Nutz
  */
 public class ProcedureSignature {
-	public final ArrayList<ASTType> inParams = new ArrayList<>();
-	public final ASTType returnType;
-	public final boolean takesVarArgs;
+	private final ArrayList<ASTType> inParams = new ArrayList<>();
+	private final ASTType returnType;
+	private final boolean takesVarArgs;
 	
 	public ProcedureSignature(final Dispatcher main, final CFunction cf) {
 		for (final CDeclaration ip : cf.getParameterTypes()) {
@@ -35,6 +35,10 @@ public class ProcedureSignature {
 		takesVarArgs = cf.takesVarArgs();
 	}
 	
+	public ASTType getReturnType() {
+		return returnType;
+	}
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
