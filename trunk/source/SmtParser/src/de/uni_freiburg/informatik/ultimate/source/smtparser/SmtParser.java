@@ -201,7 +201,8 @@ public class SmtParser implements ISource {
 		if (inHornSolverMode) {
 			mLogger.info("Parsing .smt2 file as a set of Horn Clauses");
 			final ConstructAndInitializeBackendSmtSolver caibss =
-					new HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver(mServices, mStorage, null);
+					new HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver(mServices, mStorage, 
+							"treeAutomizerSolver");
 			script = new HornClauseParserScript(caibss.getScript(), caibss.getLogicForExternalSolver(),
 					caibss.getSolverSettings());
 		} else {

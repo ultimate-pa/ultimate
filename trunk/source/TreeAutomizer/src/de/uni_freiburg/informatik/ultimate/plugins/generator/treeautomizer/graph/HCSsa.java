@@ -132,15 +132,15 @@ public class HCSsa {
 		return mNestedFormulas;
 	}
 
-	protected Term getPredicateVariable(final Term term, final ManagedScript script) {
-		script.lock(this);
+	protected Term getPredicateVariable(final Term term, final ManagedScript script, final Object lockOwner) {
+//		script.lock(this);
 		if (!mTermToAssertion.containsKey(term)) {
 			final String name = getName(term);
-			mTermToAssertion.put(term, script.term(this, name));
+			mTermToAssertion.put(term, script.term(lockOwner, name));
 		}
 
 		final Term result = mTermToAssertion.get(term);
-		script.unlock(this);
+//		script.unlock(this);
 		return result;
 	}
 }

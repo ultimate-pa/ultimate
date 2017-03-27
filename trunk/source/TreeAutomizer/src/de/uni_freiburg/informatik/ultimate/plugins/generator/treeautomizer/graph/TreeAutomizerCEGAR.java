@@ -198,34 +198,14 @@ public class TreeAutomizerCEGAR {
 		return false;
 	}
 
-	public LBool getCounterexampleFeasibility() {
+	public LBool getCounterexampleFeasibility(Object lockOwner) {
 		mChecker = new TreeChecker(mCounterexample, mBackendSmtSolverScript, mInitialPredicate, mFinalPredicate,
 				mLogger, mPredicateUnifier);
 		mSSA = mChecker.getSSA();
-		return mChecker.checkTrace();
+		return mChecker.checkTrace(lockOwner);
 	}
 
-	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
-		// Using simple interpolant automaton : the counterexample's automaton.
-		PostfixTree<Term, IPredicate> postfixT = new PostfixTree<>(mSSA.getFormulasTree());
-
-		Term[] ts = new Term[postfixT.getPostFix().size()];
-		for (int i = 0; i < ts.length; ++i) {
-			ts[i] = mSSA.getPredicateVariable(postfixT.getPostFix().get(i), mBackendSmtSolverScript);
-		}
-		int[] idx = new int[postfixT.getStartIdx().size()];
-		for (int i = 0; i < idx.length; ++i) {
-			idx[i] = postfixT.getStartIdx().get(i);
-		}
-		mBackendSmtSolverScript.lock(this);
-		Term[] interpolants = mBackendSmtSolverScript.getInterpolants(this, ts, idx);
-		mBackendSmtSolverScript.unlock(this);
-
-		Map<IPredicate, Term> interpolantsMap = new HashMap<>();
-		for (int i = 0; i < interpolants.length; ++i) {
-			IPredicate p = postfixT.getPostFixStates().get(i);
-			interpolantsMap.put(p, interpolants[i]);
-		}
+	protected void constructInterpolantAutomaton(Map<IPredicate, Term> interpolantsMap) throws AutomataOperationCanceledException {
 
 		mInterpolAutomaton = ((TreeRun<HornClause, IPredicate>) mCounterexample)
 				.reconstruct(mChecker.rebuild(interpolantsMap)).getAutomaton();
@@ -332,9 +312,9 @@ public class TreeAutomizerCEGAR {
 
 			mBackendSmtSolverScript.lock(this);
 			mBackendSmtSolverScript.push(this, 1);
-			mBackendSmtSolverScript.unlock(this);
-			if (getCounterexampleFeasibility() == LBool.SAT) {
-				mBackendSmtSolverScript.lock(this);
+
+			if (getCounterexampleFeasibility(this) == LBool.SAT) {
+				
 				mLogger.info("The program is unsafe, feasible counterexample.");
 				mLogger.info(mCounterexample.getTree());
 				mBackendSmtSolverScript.pop(this, 1);
@@ -343,14 +323,13 @@ public class TreeAutomizerCEGAR {
 
 			}
 			mLogger.debug("Getting Interpolants...");
-			constructInterpolantAutomaton();
-
-			mLogger.debug("Interpolant automaton:");
-			mLogger.debug(mInterpolAutomaton);
-
-			mBackendSmtSolverScript.lock(this);
+			final Map<IPredicate, Term> interpolantsMap = retrieveInterpolantsMap();
 			mBackendSmtSolverScript.pop(this, 1);
 			mBackendSmtSolverScript.unlock(this);
+
+			constructInterpolantAutomaton(interpolantsMap);
+			mLogger.debug("Interpolant automaton:");
+			mLogger.debug(mInterpolAutomaton);
 
 			mLogger.debug("Refining abstract model...");
 			refineAbstraction();
@@ -359,6 +338,30 @@ public class TreeAutomizerCEGAR {
 		}
 		mLogger.info("The program is not decieded...");
 		return Result.UNKNOWN;
+	}
+
+	private Map<IPredicate, Term> retrieveInterpolantsMap() {
+		// Using simple interpolant automaton : the counterexample's automaton.
+		PostfixTree<Term, IPredicate> postfixT = new PostfixTree<>(mSSA.getFormulasTree());
+
+		Term[] ts = new Term[postfixT.getPostFix().size()];
+		for (int i = 0; i < ts.length; ++i) {
+			ts[i] = mSSA.getPredicateVariable(postfixT.getPostFix().get(i), mBackendSmtSolverScript, this);
+		}
+		int[] idx = new int[postfixT.getStartIdx().size()];
+		for (int i = 0; i < idx.length; ++i) {
+			idx[i] = postfixT.getStartIdx().get(i);
+		}
+//		mBackendSmtSolverScript.lock(this);
+		Term[] interpolants = mBackendSmtSolverScript.getInterpolants(this, ts, idx);
+//		mBackendSmtSolverScript.unlock(this);
+
+		final Map<IPredicate, Term> interpolantsMap = new HashMap<>();
+		for (int i = 0; i < interpolants.length; ++i) {
+			IPredicate p = postfixT.getPostFixStates().get(i);
+			interpolantsMap.put(p, interpolants[i]);
+		}
+		return interpolantsMap;
 	}
 
 	protected void computeCFGHoareAnnotation() {

@@ -99,8 +99,8 @@ public class TreeChecker {
 		return mSSABuilder.getSSA();
 	}
 
-	protected LBool checkTrace() {
-		mBackendSmtSolverScript.lock(this);
+	protected LBool checkTrace(Object lockOwner) {
+//		mBackendSmtSolverScript.lock(this);
 		final HCSsa ssa = getSSA();
 		final List<Term> nestedExp = ssa.flatten();
 		HashSet<Integer> visited = new HashSet<>();
@@ -109,12 +109,12 @@ public class TreeChecker {
 			if (!visited.contains(ssa.getCounter(t))) {
 				mLogger.debug("assert: " + ssa.getName(t) + " :: " + t.toString());
 				visited.add(ssa.getCounter(t));
-				final Term annT = mBackendSmtSolverScript.annotate(this, t, ann);
+				final Term annT = mBackendSmtSolverScript.annotate(lockOwner, t, ann);
 				mBackendSmtSolverScript.assertTerm(this, annT);
 			}
 		}
-		final LBool result = mBackendSmtSolverScript.checkSat(this);
-		mBackendSmtSolverScript.unlock(this);
+		final LBool result = mBackendSmtSolverScript.checkSat(lockOwner);
+//		mBackendSmtSolverScript.unlock(this);
 		return result;
 	}
 }

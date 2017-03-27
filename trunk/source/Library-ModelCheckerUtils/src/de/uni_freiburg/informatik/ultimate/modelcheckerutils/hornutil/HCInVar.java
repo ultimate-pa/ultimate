@@ -121,11 +121,22 @@ public class HCInVar implements IProgramVar {
 		return mTermVariable;
 	}
 
+	public int getInPredPos() {
+		return mInPredPos;
+	}
+
+	public int getArgumentPos() {
+		return mArgumentPos;
+	}
+
+	public Sort getSort() {
+		return mSort;
+	}
+
 	@Override
 	public int hashCode() {
 		return mGloballyUniqueId.hashCode();
 	}
-
 
 	@Override
 	public boolean equals(Object arg0) {

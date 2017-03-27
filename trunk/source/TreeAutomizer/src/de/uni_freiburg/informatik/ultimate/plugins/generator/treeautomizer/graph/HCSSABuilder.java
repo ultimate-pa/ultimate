@@ -304,17 +304,18 @@ public class HCSSABuilder {
 		/**
 		 * We are going through the TreeRun from root to leaf. Thus the first versioning we do is to version the outVars
 		 * of a HornClause according to the versions we got from the parent node.
-		 * @param currentTree 
+		 * @param currentPos 
 		 */
-		public void versionOutVars(int currentTree) {
+		public void versionOutVars(int currentPos) {
 			for (final Entry<IProgramVar, TermVariable> en : mTF.getTransformula().getOutVars().entrySet()) {
 				final HCOutVar hv = (HCOutVar) en.getKey();
 				final TermVariable tv = transferToCurrentScriptIfNecessary(en.getValue());
-				final HCInVar inVar = mTF.getHornClauseSymbolTable().getOrConstructHCInVar(currentTree, 
+				final HCInVar inVar = mTF.getHornClauseSymbolTable().getOrConstructHCInVar(currentPos, 
 						hv.getArgumentPos(), hv.getSort());
 				final Term versioneered = getOrConstructCurrentVarVersion(inVar);
 				mConstants2HCOutVar.put(versioneered, hv);
 				mSubstitutionMapping.put(tv, versioneered);
+				mBackSubstitutionMapping.put(versioneered, hv);
 			}
 		}
 
@@ -337,8 +338,12 @@ public class HCSSABuilder {
 				final TermVariable tv = transferToCurrentScriptIfNecessary(en.getValue());
 				final Term versioneered = setCurrentVarVersion(hv, mCurrentTree);
 //				mConstants2HCOutVar.put(versioneered, hv);
+
 				mSubstitutionMapping.put(tv, versioneered);
-//				mBackSubstitutionMapping.put(versioneered, hv);
+				
+				final HCOutVar outVar = mTF.getHornClauseSymbolTable().getOrConstructHCOutVar(hv.getArgumentPos(), 
+						hv.getSort());
+				mBackSubstitutionMapping.put(versioneered, outVar);
 			}
 			
 			for (TermVariable aux : mTF.getTransformula().getAuxVars()) {
