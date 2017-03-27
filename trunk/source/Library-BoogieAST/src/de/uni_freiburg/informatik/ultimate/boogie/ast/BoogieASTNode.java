@@ -55,6 +55,11 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 			return Pattern.matches("[a-zA-z\\.$#_'`~^\\\\\\?]+[a-zA-z\\.$#_'`~^\\\\\\?\\d]*", iexpr.identifier);
 		};
 		VALIDATORS.put(IdentifierExpression.class, iexprValidator);
+		final Predicate<BoogieASTNode> procIdValidator = instance -> {
+			final Procedure proc = (Procedure) instance;
+			return Pattern.matches("[a-zA-z\\.$#_'`~^\\\\\\?]+[a-zA-z\\.$#_'`~^\\\\\\?\\d]*", proc.identifier);
+		};
+		VALIDATORS.put(Procedure.class, procIdValidator);
 	}
 
 	public BoogieASTNode(final ILocation location) {
