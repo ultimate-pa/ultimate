@@ -49,15 +49,17 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 	// do not rename this field as auto-generated subclasses depend on it
 	protected static final Map<Class<?>, Predicate<BoogieASTNode>> VALIDATORS = new HashMap<>();
 
+	private static final String IDENTIFIER_REGEX = "[a-zA-z\\.$#_'~^\\?]+[a-zA-z.$#_'~^\\\\\\?\\!\\d]*";
+
 	static {
 		final Predicate<BoogieASTNode> iexprValidator = instance -> {
 			final IdentifierExpression iexpr = (IdentifierExpression) instance;
-			return Pattern.matches("[a-zA-z\\.$#_'`~^\\\\\\?]+[a-zA-z\\.$#_'`~^\\\\\\?\\d]*", iexpr.identifier);
+			return Pattern.matches(IDENTIFIER_REGEX, iexpr.identifier);
 		};
 		VALIDATORS.put(IdentifierExpression.class, iexprValidator);
 		final Predicate<BoogieASTNode> procIdValidator = instance -> {
 			final Procedure proc = (Procedure) instance;
-			return Pattern.matches("[a-zA-z\\.$#_'`~^\\\\\\?]+[a-zA-z\\.$#_'`~^\\\\\\?\\d]*", proc.identifier);
+			return Pattern.matches(IDENTIFIER_REGEX, proc.identifier);
 		};
 		VALIDATORS.put(Procedure.class, procIdValidator);
 	}
