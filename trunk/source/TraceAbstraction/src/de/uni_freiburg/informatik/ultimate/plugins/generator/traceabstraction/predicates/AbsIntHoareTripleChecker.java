@@ -160,7 +160,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			mLogger.debug("Post: " + succ.toLogString());
 		}
 
-		final Validity result = checkScopeChangingTransitionWithValidState(preBeforeLeaving, preAfterLeaving, action, succ);
+		final Validity result =
+				checkScopeChangingTransitionWithValidState(preBeforeLeaving, preAfterLeaving, action, succ);
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Result: " + result);
@@ -201,7 +202,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			mLogger.debug("Post: " + succ.toLogString());
 		}
 
-		final Validity result = checkScopeChangingTransitionWithValidState(validPreLinState, stateAfterLeaving, action, succ);
+		final Validity result =
+				checkScopeChangingTransitionWithValidState(validPreLinState, stateAfterLeaving, action, succ);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Result: " + result);
 			mLogger.debug("--");
@@ -226,35 +228,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		}
 
 		final AbstractMultiState<STATE, ACTION, VARDECL> calculatedPost = preState.apply(mPostOp, act);
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Calculated post: " + calculatedPost.toLogString());
-		}
-		if (calculatedPost.isBottom() && postState.isBottom()) {
-			return trackPost(Validity.VALID, act);
-		}
-
-		final AbstractMultiState<STATE, ACTION, VARDECL> synchronizedCalculatedPost =
-				synchronizeState(postState, calculatedPost);
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Synchronized calculated post: " + synchronizedCalculatedPost.toLogString());
-		}
-		assert postState.getVariables()
-				.equals(synchronizedCalculatedPost.getVariables()) : MSG_TRACKED_VARIABLES_DIFFER;
-		final SubsetResult included = synchronizedCalculatedPost.isSubsetOf(postState);
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Inclusion (NO): " + included);
-		}
-		if (included != SubsetResult.NONE) {
-			return trackPost(Validity.VALID, act);
-		}
-		final SubsetResult excluded = postState.isSubsetOf(synchronizedCalculatedPost);
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Exclusion (ON): " + excluded);
-		}
-		if (excluded == SubsetResult.NONE) {
-			return trackPost(Validity.INVALID, act);
-		}
-		return Validity.UNKNOWN;
+		return comparePostAndCalculatedPost(act, postState, calculatedPost);
 	}
 
 	private Validity checkScopeChangingTransitionWithValidState(
@@ -272,6 +246,12 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 
 		final AbstractMultiState<STATE, ACTION, VARDECL> calculatedPost =
 				stateAfterLeaving.apply(mPostOp, stateBeforeLeaving, act);
+		return comparePostAndCalculatedPost(act, postState, calculatedPost);
+	}
+
+	private Validity comparePostAndCalculatedPost(final ACTION act,
+			final AbstractMultiState<STATE, ACTION, VARDECL> postState,
+			final AbstractMultiState<STATE, ACTION, VARDECL> calculatedPost) {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Calculated post: " + calculatedPost.toLogString());
 		}
