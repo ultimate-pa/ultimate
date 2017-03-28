@@ -48,6 +48,12 @@ assert(Accepts(ta1, Tree [ g(f(a), b) ]));
 assert(Accepts(ta1, Tree [ g(a, f(f(b))) ]));
 assert(Accepts(ta1, Tree [ a ]));
 
+assert(Accepts(ta2, Tree [ g(f(a), b) ]));
+assert(Accepts(ta2, Tree [ g(a, f(f(b))) ]));
+assert(Accepts(ta2, Tree [ a ]));
+
+
+
 TreeAutomaton taIntersect = Intersect(ta1, ta2);
 print(taIntersect);
 //assert(false);

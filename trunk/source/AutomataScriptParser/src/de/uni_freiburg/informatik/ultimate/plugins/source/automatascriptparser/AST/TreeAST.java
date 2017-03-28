@@ -67,4 +67,28 @@ public class TreeAST extends AtsASTNode {
 		final List<Tree<String>> childTrees = mArguments.stream().map(ta -> ta.getTree()).collect(Collectors.toList());
 		return new Tree<>(mSymbol.toString(), childTrees);
 	}
+	
+	@Override
+	public String getAsString() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append(mSymbol.toString());
+
+		if (!mArguments.isEmpty()) {
+			sb.append("(");
+		}
+		String sep = "";
+		for (TreeAST arg : mArguments) {
+			sb.append(sep);
+			sb.append(arg.getAsString());
+			sep = ", ";
+		}
+		if (!mArguments.isEmpty()) {
+			sb.append(")");
+		}
+		
+		
+		return sb.toString();
+		
+//		return getTree().toString();
+	}
 }
