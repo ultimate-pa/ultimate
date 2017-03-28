@@ -276,7 +276,7 @@ non terminal TreeSymbolAST tree_symbol;
 // 3. States & Places
 terminal Object STATES, PLACES, INITIAL_STATES, FINAL_STATES, TRANSITION_TABLE, ACCEPTING_FUNCTION, EXPR_STATE_NEGATE, EXPR_STATE_AND, EXPR_STATE_OR, IS_REVERSED;
 // 4. Transitions
-terminal Object NET_TRANSITIONS, TRANSITIONS, INTERNAL_TRANSITIONS, CALL_TRANSITIONS, RETURN_TRANSITIONS;
+terminal Object TRANSITIONS, INTERNAL_TRANSITIONS, CALL_TRANSITIONS, RETURN_TRANSITIONS;
 // 5. 
 terminal Object INITIAL_MARKINGS, ACCEPTING_PLACES;
  /* -------------------- Specification of non-terminals   -----------------------*/
@@ -1161,7 +1161,7 @@ alphabet ::= ALPHABET EQ LBRACE:l identifier_list_opt:idList RBRACE:r
 places ::= PLACES EQ LBRACE:l  identifier_list_opt:idList RBRACE:r
 							{:RESULT = idList; :};
 
-net_transitions ::= NET_TRANSITIONS EQ LBRACE net_transition_list_opt:net_trans RBRACE
+net_transitions ::= TRANSITIONS EQ LBRACE net_transition_list_opt:net_trans RBRACE
                     {: RESULT = net_trans; :} ;
 
 net_transition_list_opt ::= net_transition_list:trans {: RESULT = trans; :}  | {:com.github.jhoenicke.javacup.runtime.Symbol symb = ((com.github.jhoenicke.javacup.runtime.Symbol) CUP$stack.get(CUP$size - 1));  RESULT = new TransitionListAST(getLocation(symb,symb)); :} ;
