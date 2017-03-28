@@ -12,7 +12,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage;
 
 public abstract class TCPServer<T> implements IInteractiveServer<T> {
