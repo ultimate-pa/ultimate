@@ -56,11 +56,8 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 		IBuchiComplementNcsbStateFactory<String>, IBuchiComplementSvwStateFactory<String>,
 		IPetriNet2FiniteAutomatonStateFactory<String>, IIncrementalInclusionStateFactory<String>,
 		IMinimizationStateFactory<String>, IMinimizationCheckResultStateFactory<String> {
-	/*
-	 * 2017-06-02 Christian: I made this a char because Sonar complained, but feel free to make it a String again if it
-	 *            causes problems with the encoding (for me it worked, though).
-	 */
-	public static final char INFINITY = '∞';
+
+	public static final String INFINITY = "∞";
 	private static final String EMPTY_STRING = "";
 	private static final String EMPTY_SET = "{}";
 	private static final char X_STRING = 'X';
@@ -217,17 +214,17 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 					throw new IllegalArgumentException("must have rank");
 				}
 				switch (upState.getRank()) {
-					case RANK_THREE:
-						listN.add(new Pair<>(downState, upState.getState()));
-						break;
-					case RANK_TWO:
-						buchiComplementNcsbHelperRankTwo(listC, listB, downState, upState);
-						break;
-					case RANK_ONE:
-						listS.add(new Pair<>(downState, upState.getState()));
-						break;
-					default:
-						throw new IllegalArgumentException("Only ranks 1, 2, 3 are allowed.");
+				case RANK_THREE:
+					listN.add(new Pair<>(downState, upState.getState()));
+					break;
+				case RANK_TWO:
+					buchiComplementNcsbHelperRankTwo(listC, listB, downState, upState);
+					break;
+				case RANK_ONE:
+					listS.add(new Pair<>(downState, upState.getState()));
+					break;
+				default:
+					throw new IllegalArgumentException("Only ranks 1, 2, 3 are allowed.");
 				}
 			}
 		}
