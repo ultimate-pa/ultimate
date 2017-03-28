@@ -129,7 +129,7 @@ public class Worker {
 			case NameStrings.TOOL_LASSO_RANKER:
 				result = NameStrings.TASK_SYNTHESIZE;
 				break;
-			case NameStrings.TOOL_AUTOMATA_SCRIPT_INTERPRETER:
+			case NameStrings.TOOL_AUTOMATA_LIBRARY:
 				result = NameStrings.TASK_RUN;
 				break;
 			default:
