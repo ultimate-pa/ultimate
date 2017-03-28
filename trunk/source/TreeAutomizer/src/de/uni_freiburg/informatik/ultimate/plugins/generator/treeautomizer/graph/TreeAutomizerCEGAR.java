@@ -188,7 +188,7 @@ public class TreeAutomizerCEGAR {
 		final TreeEmptinessCheck<HornClause, IPredicate> emptiness = new TreeEmptinessCheck<>(mAutomataLibraryServices,
 				mAbstraction);
 
-		mCounterexample = emptiness.getResult();
+		mCounterexample = emptiness.getTreeRun();
 		if (mCounterexample == null) {
 			return true;
 		}

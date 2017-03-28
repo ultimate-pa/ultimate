@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
-	protected final TreeRun<LETTER, STATE> mResult;
+	protected final TreeRun<LETTER, STATE> mResultTreeRun;
 
 	/***
 	 * TreeEmptiness checker
@@ -63,7 +63,7 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 	 */
 	public TreeEmptinessCheck(final AutomataLibraryServices services, final TreeAutomatonBU<LETTER, STATE> tree) {
 		mTreeAutomaton = tree;
-		mResult = computeResult();
+		mResultTreeRun = computeResult();
 	}
 
 	@Override
@@ -150,8 +150,12 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 	}
 
 	@Override
-	public TreeRun<LETTER, STATE> getResult() {
-		return mResult;
+	public Boolean getResult() {
+		return mResultTreeRun == null;
+	}
+
+	public TreeRun<LETTER, STATE> getTreeRun() {
+		return mResultTreeRun;
 	}
 
 	@Override

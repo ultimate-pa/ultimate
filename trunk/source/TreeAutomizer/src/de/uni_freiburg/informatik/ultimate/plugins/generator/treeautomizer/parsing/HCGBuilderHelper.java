@@ -74,7 +74,7 @@ public class HCGBuilderHelper {
 			final boolean fakeNonIncrementalSolver = false;
 			mSolverSettings = SolverBuilder.constructSolverSettings(
 					filename, solverMode, fakeNonIncrementalSolver , 
-					commandExternalSolver, false, null);
+					commandExternalSolver, true, "C:\\Temp\\smt");
 
 			final Script script = SolverBuilder.buildAndInitializeSolver(services,
 					storage,
