@@ -75,22 +75,19 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	private final Set<LETTER> mReturnAlphabet;
 
 	/**
-	 * Set of internal transitions PREs x LETTERs x SUCCs stored as map
-	 * PREs -> LETTERs -> SUCCs.
-	 * The keySet of this map is used to store the set of states of this
-	 * automaton.
+	 * Set of internal transitions PREs x LETTERs x SUCCs stored as map PREs -> LETTERs -> SUCCs. The keySet of this map
+	 * is used to store the set of states of this automaton.
 	 */
 	private final Map<STATE, Map<LETTER, Set<STATE>>> mInternalOut = new HashMap<>();
 
 	/**
-	 * Set of call transitions PREs x LETTERs x SUCCs stored as map
-	 * PREs -> LETTERs -> SUCCs.
+	 * Set of call transitions PREs x LETTERs x SUCCs stored as map PREs -> LETTERs -> SUCCs.
 	 */
 	private final Map<STATE, Map<LETTER, Set<STATE>>> mCallOut = new HashMap<>();
 
 	/**
-	 * Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as
-	 * map LinPREs -> LETTERs -> HierPREs -> SUCCs.
+	 * Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as map LinPREs -> LETTERs -> HierPREs ->
+	 * SUCCs.
 	 */
 	private final Map<STATE, Map<LETTER, Map<STATE, Set<STATE>>>> mReturnOut = new HashMap<>();
 
@@ -349,9 +346,8 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
 		/**
-		 * Iterates over all OutgoingInternalTransition of state.
-		 * Iterates over all outgoing internal letters and uses the
-		 * iterators returned by internalSuccessors(state, letter)
+		 * Iterates over all OutgoingInternalTransition of state. Iterates over all outgoing internal letters and uses
+		 * the iterators returned by internalSuccessors(state, letter)
 		 */
 		return () -> new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
 			private Iterator<LETTER> mLetterIterator;
@@ -430,8 +426,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
 		/**
-		 * Iterates over all OutgoingCallTransition of state.
-		 * Iterates over all outgoing call letters and uses the
+		 * Iterates over all OutgoingCallTransition of state. Iterates over all outgoing call letters and uses the
 		 * iterators returned by callSuccessors(state, letter)
 		 */
 		return () -> new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
@@ -568,10 +563,8 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
 			final STATE hier) {
 		/**
-		 * Iterates over all OutgoingReturnTransition of state with
-		 * hierarchical successor hier.
-		 * Iterates over all outgoing return letters and uses the
-		 * iterators returned by returnSuccecessors(state, hier, letter)
+		 * Iterates over all OutgoingReturnTransition of state with hierarchical successor hier. Iterates over all
+		 * outgoing return letters and uses the iterators returned by returnSuccecessors(state, hier, letter)
 		 */
 		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
 			private Iterator<LETTER> mLetterIterator;

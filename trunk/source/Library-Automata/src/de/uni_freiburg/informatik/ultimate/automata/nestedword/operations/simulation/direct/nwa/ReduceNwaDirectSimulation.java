@@ -37,13 +37,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
 /**
- * Operation that reduces a given nwa automaton by using
- * {@link DirectNwaSimulation}.<br/>
- * Once constructed the reduction automatically starts, the result can be get by
- * using {@link #getResult()}.<br/>
+ * Operation that reduces a given nwa automaton by using {@link DirectNwaSimulation}.<br/>
+ * Once constructed the reduction automatically starts, the result can be get by using {@link #getResult()}.<br/>
  * <br/>
- * For correctness its important that the inputed automaton has <b>no dead
- * ends</b> nor <b>duplicate transitions</b>.
+ * For correctness its important that the inputed automaton has <b>no dead ends</b> nor <b>duplicate transitions</b>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -53,8 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPai
  */
 public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaSimulation<LETTER, STATE> {
 	/**
-	 * Creates a new nwa reduce object that starts reducing the given nwa
-	 * automaton.<br/>
+	 * Creates a new nwa reduce object that starts reducing the given nwa automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -64,8 +60,7 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 	 * @param operand
 	 *            The nwa to reduce
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public ReduceNwaDirectSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand)
@@ -74,8 +69,7 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 	}
 
 	/**
-	 * Creates a new nwa reduce object that starts reducing the given nwa
-	 * automaton.<br/>
+	 * Creates a new nwa reduce object that starts reducing the given nwa automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -85,11 +79,9 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 	 * @param operand
 	 *            The nwa to reduce
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public ReduceNwaDirectSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
@@ -99,8 +91,7 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 	}
 
 	/**
-	 * Creates a new nwa reduce object that starts reducing the given nwa
-	 * automaton.<br/>
+	 * Creates a new nwa reduce object that starts reducing the given nwa automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -110,16 +101,12 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 	 * @param operand
 	 *            The nwa to reduce
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @param possibleEquivalenceClasses
-	 *            A collection of sets which contains states of an automaton
-	 *            that may be merge-able. States which are not in the same set
-	 *            are definitely not merge-able which is used as an optimization
-	 *            for the game graph
+	 *            A collection of sets which contains states of an automaton that may be merge-able. States which are
+	 *            not in the same set are definitely not merge-able which is used as an optimization for the game graph
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public ReduceNwaDirectSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final IDoubleDeckerAutomaton<LETTER, STATE> operand,

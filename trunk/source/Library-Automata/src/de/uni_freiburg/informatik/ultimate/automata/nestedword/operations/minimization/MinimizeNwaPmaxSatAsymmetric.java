@@ -172,21 +172,9 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	}
 
 	@Override
-	public AutomataOperationStatistics getAutomataOperationStatistics() {
-		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
-		addStatistics(statistics, false);
-		return statistics;
-	}
-
-	@Override
 	public void addStatistics(final AutomataOperationStatistics statistics) {
-		addStatistics(statistics, true);
-	}
+		super.addStatistics(statistics);
 
-	private void addStatistics(final AutomataOperationStatistics statistics, final boolean addSuperStatistics) {
-		if (addSuperStatistics) {
-			super.addStatistics(statistics);
-		}
 		statistics.addKeyValuePair(
 				mSettings.getLibraryMode()
 						? StatisticsType.NUMBER_INITIAL_PAIRS_PMAXSAT

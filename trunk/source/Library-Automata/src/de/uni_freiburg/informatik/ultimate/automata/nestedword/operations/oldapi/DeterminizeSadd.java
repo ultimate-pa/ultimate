@@ -289,8 +289,7 @@ public final class DeterminizeSadd<LETTER, STATE>
 	}
 
 	/**
-	 * Compute successor Macrostate under internal transition of a Macrostate
-	 * and symbol.
+	 * Compute successor Macrostate under internal transition of a Macrostate and symbol.
 	 */
 	private Macrostate internalSuccMacrostate(final Macrostate macrostate, final LETTER symbol) {
 		final Macrostate succMacrostate = new Macrostate();
@@ -305,8 +304,7 @@ public final class DeterminizeSadd<LETTER, STATE>
 	}
 
 	/**
-	 * Compute successor Macrostate under call transition of a Macrostate
-	 * and symbol.
+	 * Compute successor Macrostate under call transition of a Macrostate and symbol.
 	 */
 	private Macrostate callSuccMacrostate(final Macrostate macrostate, final LETTER symbol) {
 		final Macrostate succMacrostate = new Macrostate();
@@ -320,8 +318,8 @@ public final class DeterminizeSadd<LETTER, STATE>
 	}
 
 	/**
-	 * Compute successor Macrostate under return transition of a Macrostate,
-	 * a linear predecessor Macrostate and a symbol.
+	 * Compute successor Macrostate under return transition of a Macrostate, a linear predecessor Macrostate and a
+	 * symbol.
 	 */
 	private Macrostate returnSuccMacrostate(final Macrostate macrostate, final Macrostate linPredMacrostate,
 			final LETTER symbol) {

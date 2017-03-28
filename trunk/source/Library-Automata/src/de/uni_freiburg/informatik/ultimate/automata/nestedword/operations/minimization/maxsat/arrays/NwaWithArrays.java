@@ -32,8 +32,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 /**
- * A Nested Word automaton. There is no distinction between linear and
- * hierarchical states.
+ * A Nested Word automaton. There is no distinction between linear and hierarchical states.
  * <p>
  * This is a mostly normalized POD (plain old data) representation of NWAs.
  * <p>
@@ -42,12 +41,11 @@ import java.util.HashSet;
  * <li>numStates &ge; 0 && numISyms &ge; 0 && numRSyms &ge; 0
  * <li>isInitial &ne; null && isInitial.length = numStates
  * <li>isFinal &ne; null && isFinal.length = numStates
- * <li>iTrans, cTrans, rTrans are not null and use only symbols and states from
- * the ranges [0, numStates), [0, numISyms), [0, numCSyms), [0, numRSyms)
+ * <li>iTrans, cTrans, rTrans are not null and use only symbols and states from the ranges [0, numStates), [0,
+ * numISyms), [0, numCSyms), [0, numRSyms)
  * </ul>
  * <p>
- * This class has static methods to verify these constraints, and also methods
- * to assert determinism.
+ * This class has static methods to verify these constraints, and also methods to assert determinism.
  *
  * @author stimpflj
  */
@@ -147,10 +145,9 @@ final class NwaWithArrays implements Cloneable {
 
 	/**
 	 * @param nwa
-	 *            readonly <code>NWA</code> which is consistent as by
-	 *            <code>checkConsistency()</code>
-	 * @return <code>true</code> iff the automaton is deterministic (multiple
-	 *         identical transitions count as non-deterministic)
+	 *            readonly <code>NWA</code> which is consistent as by <code>checkConsistency()</code>
+	 * @return <code>true</code> iff the automaton is deterministic (multiple identical transitions count as
+	 *         non-deterministic)
 	 */
 	static boolean checkDeterminism(final NwaWithArrays nwa) {
 		final HashSet<ITrans> iSeen = new HashSet<ITrans>();
@@ -178,8 +175,7 @@ final class NwaWithArrays implements Cloneable {
 	/**
 	 * @param nwa
 	 *            a NWA which is consistent as by checkConsistency()
-	 * @return ArrayList containing all final states of <code>nwa</code>, in
-	 *         strictly ascending order.
+	 * @return ArrayList containing all final states of <code>nwa</code>, in strictly ascending order.
 	 */
 	static ArrayList<Integer> computeInitialStates(final NwaWithArrays nwa) {
 		final ArrayList<Integer> out = new ArrayList<Integer>();
@@ -196,8 +192,7 @@ final class NwaWithArrays implements Cloneable {
 	/**
 	 * @param nwa
 	 *            an NWA which is consistent as by checkConsistency
-	 * @return ArrayList containing all final states of <code>nwa</code>, in
-	 *         strictly ascending order.
+	 * @return ArrayList containing all final states of <code>nwa</code>, in strictly ascending order.
 	 */
 	static ArrayList<Integer> computeFinalStates(final NwaWithArrays nwa) {
 		final ArrayList<Integer> out = new ArrayList<Integer>();
@@ -212,8 +207,7 @@ final class NwaWithArrays implements Cloneable {
 	}
 
 	/**
-	 * @return A copy of this NWA instance. No references are shared with the
-	 *         instance on which this method is called.
+	 * @return A copy of this NWA instance. No references are shared with the instance on which this method is called.
 	 */
 	@Override
 	public NwaWithArrays clone() {

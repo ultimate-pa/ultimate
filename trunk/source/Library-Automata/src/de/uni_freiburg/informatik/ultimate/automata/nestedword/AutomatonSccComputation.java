@@ -44,13 +44,10 @@ import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorPro
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /**
- * Compute SCCs of an automaton. Allows to restrict computation to a subgraph
- * (subset of states with corresponding edges) of the automaton.
- * This computation should work for each {@link INestedWordAutomaton}, however, it is
- * only sound if each return transition is reachable (i.e., each summary
- * transition can actually be taken). To enforce soundness we restricted the
- * input to {@link NestedWordAutomatonReachableStates}. We might relax this in the
- * future.
+ * Compute SCCs of an automaton. Allows to restrict computation to a subgraph (subset of states with corresponding
+ * edges) of the automaton. This computation should work for each {@link INestedWordAutomaton}, however, it is only
+ * sound if each return transition is reachable (i.e., each summary transition can actually be taken). To enforce
+ * soundness we restricted the input to {@link NestedWordAutomatonReachableStates}. We might relax this in the future.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -94,8 +91,7 @@ public class AutomatonSccComputation<LETTER, STATE> {
 	/**
 	 * Provides - for a given state - all states that are
 	 * <ul>
-	 * <li>successors of internal transitions, summaries and call transitions,
-	 * and
+	 * <li>successors of internal transitions, summaries and call transitions, and
 	 * <li>contained in a given set of states.
 	 * </ul>
 	 * 

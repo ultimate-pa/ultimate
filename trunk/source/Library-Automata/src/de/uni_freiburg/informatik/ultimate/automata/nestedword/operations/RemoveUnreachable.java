@@ -49,10 +49,9 @@ public final class RemoveUnreachable<LETTER, STATE> extends StateRemoval<LETTER,
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 
 	/**
-	 * Given an INestedWordAutomaton nwa return a NestedWordAutomaton that has
-	 * the same states, but all states that are not reachable are omitted.
-	 * Each state of the result also occurred in the input. Only the auxiliary
-	 * empty stack state of the result is different.
+	 * Given an INestedWordAutomaton nwa return a NestedWordAutomaton that has the same states, but all states that are
+	 * not reachable are omitted. Each state of the result also occurred in the input. Only the auxiliary empty stack
+	 * state of the result is different.
 	 * 
 	 * @param services
 	 *            Ultimate services

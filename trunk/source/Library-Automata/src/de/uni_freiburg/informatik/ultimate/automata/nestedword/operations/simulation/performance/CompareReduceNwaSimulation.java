@@ -58,8 +58,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
 /**
- * Operation that compares the different types of simulation methods for nwa
- * reduction.<br/>
+ * Operation that compares the different types of simulation methods for nwa reduction.<br/>
  * The resulting automaton is the input automaton.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
@@ -71,8 +70,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
 public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareReduceBuchiSimulation<LETTER, STATE> {
 
 	/**
-	 * Compares the different types of simulation methods for nwa reduction.
-	 * Resulting automaton is the input automaton.
+	 * Compares the different types of simulation methods for nwa reduction. Resulting automaton is the input automaton.
 	 * 
 	 * @param services
 	 *            Service provider of Ultimate framework
@@ -81,8 +79,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	 * @param operand
 	 *            The nwa automaton to compare with
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public CompareReduceNwaSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory,

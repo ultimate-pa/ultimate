@@ -47,68 +47,69 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Summa
  */
 public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomatonSimple<LETTER, STATE> {
 	/**
-	 * @return The set of states of this automaton. <b>Use with caution!</b>
-	 *         Some implementations (e.g., automaton which represents result of
-	 *         a complementation) construct their set of states on the fly.
+	 * @return The set of states of this automaton. <b>Use with caution!</b> Some implementations (e.g., automaton which
+	 *         represents result of a complementation) construct their set of states on the fly.
 	 *         <p>
-	 *         Using the {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple#
-	 * 		getInitialStates() getInitialStates()} method and the successor methods is preferred.
+	 *         Using the
+	 *         {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple# getInitialStates()
+	 *         getInitialStates()} method and the successor methods is preferred.
 	 */
 	Set<STATE> getStates();
 
 	/**
 	 * @return The set of initial states.
 	 *         <p>
-	 *         For iteration, the {@link de.uni_freiburg.informatik.ultimate.automata.nestedword
-	 * 		.INestedWordAutomatonSimple#InitialStates() getInitialStates()} method is preferred.<br>
-	 *         To perform a check for an initial state, the {@link de.uni_freiburg.informatik.ultimate.automata
-	 * 		.nestedword.INestedWordAutomatonSimple#isInitial(Object) isInitial(state)} method is preferred.
+	 *         For iteration, the
+	 *         {@link de.uni_freiburg.informatik.ultimate.automata.nestedword .INestedWordAutomatonSimple#InitialStates()
+	 *         getInitialStates()} method is preferred.<br>
+	 *         To perform a check for an initial state, the
+	 *         {@link de.uni_freiburg.informatik.ultimate.automata .nestedword.INestedWordAutomatonSimple#isInitial(Object)
+	 *         isInitial(state)} method is preferred.
 	 */
 	@Override
 	Set<STATE> getInitialStates();
 
 	/**
-	 * @return The set of final states of this automaton. <b>Use with caution!</b>
-	 *         Some implementations (e.g., automaton which represents result of
-	 *         a complementation) construct their set of states on the fly.
+	 * @return The set of final states of this automaton. <b>Use with caution!</b> Some implementations (e.g., automaton
+	 *         which represents result of a complementation) construct their set of states on the fly.
 	 *         <p>
 	 *         Although the result type is not a {@link Set}, the collection is guaranteed to not contain any
 	 *         duplicates.
 	 *         <p>
-	 *         Using the {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple#
-	 * 		isFinal(Object) isFinal(Object)} method to check if a specific state is final is preferred.
+	 *         Using the
+	 *         {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple# isFinal(Object)
+	 *         isFinal(Object)} method to check if a specific state is final is preferred.
 	 */
 	Collection<STATE> getFinalStates();
 
 	/**
 	 * @param state
 	 *            state
-	 * @return All letters <tt>a</tt> such that <tt>state</tt> has an incoming internal
-	 *         transition labeled with letter <tt>a</tt>.
+	 * @return All letters <tt>a</tt> such that <tt>state</tt> has an incoming internal transition labeled with letter
+	 *         <tt>a</tt>.
 	 */
 	Set<LETTER> lettersInternalIncoming(STATE state);
 
 	/**
 	 * @param state
 	 *            state
-	 * @return All letters <tt>a</tt> such that <tt>state</tt> has an incoming call
-	 *         transition labeled with letter <tt>a</tt>.
+	 * @return All letters <tt>a</tt> such that <tt>state</tt> has an incoming call transition labeled with letter
+	 *         <tt>a</tt>.
 	 */
 	Set<LETTER> lettersCallIncoming(STATE state);
 
 	/**
 	 * @param state
 	 *            state
-	 * @return All letters a such that <tt>state</tt> has an incoming return
-	 *         transition labeled with letter <tt>a</tt>.
+	 * @return All letters a such that <tt>state</tt> has an incoming return transition labeled with letter <tt>a</tt>.
 	 */
 	Set<LETTER> lettersReturnIncoming(STATE state);
 
 	/**
 	 * @param state
 	 *            state
-	 * @return All letters <tt>a</tt> such that <tt>state</tt> occurs as hierarchical predecessor state
-	 *         in a return transition labeled with letter <tt>a</tt>.
+	 * @return All letters <tt>a</tt> such that <tt>state</tt> occurs as hierarchical predecessor state in a return
+	 *         transition labeled with letter <tt>a</tt>.
 	 */
 	Set<LETTER> lettersSummary(STATE state);
 

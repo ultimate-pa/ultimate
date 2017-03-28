@@ -37,9 +37,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 
 /**
- * Determinization where a DeterminizedState is only accepting if all its
- * states are accepting. The language of the resulting automaton is a subset
- * of the language of the original automaton.
+ * Determinization where a DeterminizedState is only accepting if all its states are accepting. The language of the
+ * resulting automaton is a subset of the language of the original automaton.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -90,9 +89,8 @@ public class DeterminizeUnderappox<LETTER, STATE> extends DeterminizeDD<LETTER, 
 	}
 
 	/**
-	 * Get the state in the resulting automaton that represents a
-	 * DeterminizedState. If this state in the resulting automaton does not
-	 * exist yet, construct it. As opposed to
+	 * Get the state in the resulting automaton that represents a DeterminizedState. If this state in the resulting
+	 * automaton does not exist yet, construct it. As opposed to
 	 * {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determinize Determinize}, here a
 	 * determinized state is only accepting if all its states are accepting.
 	 */

@@ -35,8 +35,7 @@ import java.util.Set;
  * <p>
  * It is updated when an event is added to a branching-process.
  * <p>
- * Two Nodes x,y are in <i>co-relation</i> if all of the following conditions
- * are false:
+ * Two Nodes x,y are in <i>co-relation</i> if all of the following conditions are false:
  * <ul>
  * <li>x&lt;y</li>
  * <li>y&lt;x</li>
@@ -54,8 +53,7 @@ import java.util.Set;
  */
 public interface ICoRelation<S, C> {
 	/**
-	 * Updates the Co-relation regarding an event that just has been added to
-	 * the branching process.
+	 * Updates the Co-relation regarding an event that just has been added to the branching process.
 	 * 
 	 * @param event
 	 *            the Event that has been added.
@@ -77,8 +75,8 @@ public interface ICoRelation<S, C> {
 	int getCoRelationQueries();
 
 	/**
-	 * All initial Conditions in a branchin process are in co relation. Hence,
-	 * all pairs of Conditions from <code>initialConditions</code> are added.
+	 * All initial Conditions in a branchin process are in co relation. Hence, all pairs of Conditions from
+	 * <code>initialConditions</code> are added.
 	 * 
 	 * @param initialConditions
 	 *            set of initial conditions
@@ -90,8 +88,8 @@ public interface ICoRelation<S, C> {
 	 *            A co-set.
 	 * @param cond
 	 *            condition
-	 * @return {@code true} iff, given the co-set <code>coSet</code>, the unification with
-	 *         condition <code>c</code> is still a co-set.
+	 * @return {@code true} iff, given the co-set <code>coSet</code>, the unification with condition <code>c</code> is
+	 *         still a co-set.
 	 */
 	boolean isCoset(Collection<Condition<S, C>> coSet, Condition<S, C> cond);
 }

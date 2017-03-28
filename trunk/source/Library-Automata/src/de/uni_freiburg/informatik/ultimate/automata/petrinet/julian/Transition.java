@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 /**
  * A Petri net transition.
  * 
- * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de)
- *         Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Julian Jarecki (jareckij@informatik.uni-freiburg.de) Copyright (C) 2011-2015 Matthias Heizmann
+ *         (heizmann@informatik.uni-freiburg.de)
  * @param <S>
  *            symbol type
  * @param <C>
@@ -58,8 +58,8 @@ public class Transition<S, C> implements ITransition<S, C>, Serializable, Compar
 	/**
 	 * Constructor.
 	 * <p>
-	 * TODO Christian 2016-08-16: The code assumes that the Collection
-	 * parameters are of type List. Why not explicitly type-check this?
+	 * TODO Christian 2016-08-16: The code assumes that the Collection parameters are of type List. Why not explicitly
+	 * type-check this?
 	 * 
 	 * @param symbol
 	 *            symbol

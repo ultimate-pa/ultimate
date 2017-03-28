@@ -42,14 +42,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProd
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Product of two automata that is similar to the synchronization operator
- * for parallel transition systems.
- * For shared letters of both input automata move if the letter is read.
- * For the other letters only the corresponding automaton moves.
- * 2016-11-18 Matthias: It seems that for similar alphabets the result of this
- * operation is equivalent to the intersection if the parameter
- * concurrentPrefixProduct is true and it is equivalent to the union if
- * the parameter concurrentPrefixProduct if false.
+ * Product of two automata that is similar to the synchronization operator for parallel transition systems. For shared
+ * letters of both input automata move if the letter is read. For the other letters only the corresponding automaton
+ * moves. 2016-11-18 Matthias: It seems that for similar alphabets the result of this operation is equivalent to the
+ * intersection if the parameter concurrentPrefixProduct is true and it is equivalent to the union if the parameter
+ * concurrentPrefixProduct if false.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -75,8 +72,7 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 	private final StatePairQueue mWorklist = new StatePairQueue();
 
 	/**
-	 * Map from state pairs of the input automata to corresponding states
-	 * in the result automaton.
+	 * Map from state pairs of the input automata to corresponding states in the result automaton.
 	 */
 	private final StatePair2StateMap mInputPair2resultState = new StatePair2StateMap();
 
@@ -139,10 +135,9 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 	}
 
 	/**
-	 * Returns the automaton state that represents the state pair
-	 * (state1,state2). If this state is not yet constructed, construct it
-	 * and enqueue the pair (state1,state2). If it has to be
-	 * constructed it is an initial state iff isInitial is true.
+	 * Returns the automaton state that represents the state pair (state1,state2). If this state is not yet constructed,
+	 * construct it and enqueue the pair (state1,state2). If it has to be constructed it is an initial state iff
+	 * isInitial is true.
 	 */
 	private STATE getState(final STATE state1, final STATE state2, final boolean isInitial) {
 		STATE state = mInputPair2resultState.get(state1, state2);
@@ -260,8 +255,7 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 	}
 
 	/**
-	 * Queue for pairs of states. Pairs are not dequeued in the same order as
-	 * inserted.
+	 * Queue for pairs of states. Pairs are not dequeued in the same order as inserted.
 	 * 
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */

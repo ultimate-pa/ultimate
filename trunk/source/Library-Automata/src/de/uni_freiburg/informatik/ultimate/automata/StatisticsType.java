@@ -31,8 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 
 /**
  * Type of statistics that can be reported to the
- * {@link de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics
- * AutomataOperationStatistics} class.
+ * {@link de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics AutomataOperationStatistics} class.
  * <p>
  * The fields are used as keys in the statistics map.
  * 
@@ -54,9 +53,8 @@ public enum StatisticsType {
 	 */
 	ALPHABET_SIZE_RETURN,
 	/**
-	 * One if the game automaton of a nwa game graph already was deterministic
-	 * before using the determinizer, zero or not set else (used in simulation,
-	 * for compatibility with {@link ECountingMeasure}).
+	 * One if the game automaton of a nwa game graph already was deterministic before using the determinizer, zero or
+	 * not set else (used in simulation, for compatibility with {@link ECountingMeasure}).
 	 */
 	ALREADY_WAS_DETERMINISTIC,
 	/**
@@ -64,77 +62,72 @@ public enum StatisticsType {
 	 */
 	ATS_ID,
 	/**
-	 * Size of the alphabet the automaton has before simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 * Size of the alphabet the automaton has before simulation (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	BUCHI_ALPHABET_SIZE,
 	/**
-	 * Size of the call alphabet the automaton has before simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 * Size of the call alphabet the automaton has before simulation (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	BUCHI_ALPHABET_SIZE_CALL,
 	/**
-	 * Size of the internal alphabet the automaton has before simulation (used
-	 * in simulation, for compatibility with {@link ECountingMeasure}).
+	 * Size of the internal alphabet the automaton has before simulation (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	BUCHI_ALPHABET_SIZE_INTERNAL,
 	/**
-	 * Size of the return alphabet the automaton has before simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 * Size of the return alphabet the automaton has before simulation (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	BUCHI_ALPHABET_SIZE_RETURN,
 	/**
-	 * Amount of nondeterministic states the automaton has before simulation
-	 * (used in simulation, for compatibility with {@link ECountingMeasure}).
+	 * Amount of nondeterministic states the automaton has before simulation (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	BUCHI_NONDETERMINISTIC_STATES,
 	/**
-	 * Amount of transitions the automaton has before simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 * Amount of transitions the automaton has before simulation (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	BUCHI_TRANSITIONS,
 	/**
-	 * Amount of call transitions the automaton has before simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 * Amount of call transitions the automaton has before simulation (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	BUCHI_TRANSITIONS_CALL,
 	/**
-	 * Amount of internal transitions the automaton has before simulation (used
-	 * in simulation, for compatibility with {@link ECountingMeasure}).
+	 * Amount of internal transitions the automaton has before simulation (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	BUCHI_TRANSITIONS_INTERNAL,
 	/**
-	 * Amount of return transitions the automaton has before simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 * Amount of return transitions the automaton has before simulation (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	BUCHI_TRANSITIONS_RETURN,
 	/**
-	 * The call transition density the automaton has before simulation
-	 * multiplied with 1_000_000, then rounded (used in simulation, for
-	 * compatibility with {@link ECountingMeasure}).
+	 * The call transition density the automaton has before simulation multiplied with 1_000_000, then rounded (used in
+	 * simulation, for compatibility with {@link ECountingMeasure}).
 	 */
 	BUCHI_TRANSITION_CALL_DENSITY_MILLION,
 	/**
-	 * The transition density the automaton has before simulation multiplied
-	 * with 1_000_000, then rounded (used in simulation, for compatibility with
-	 * {@link ECountingMeasure}).
+	 * The transition density the automaton has before simulation multiplied with 1_000_000, then rounded (used in
+	 * simulation, for compatibility with {@link ECountingMeasure}).
 	 */
 	BUCHI_TRANSITION_DENSITY_MILLION,
 	/**
-	 * The internal transition density the automaton has before simulation
-	 * multiplied with 1_000_000, then rounded (used in simulation, for
-	 * compatibility with {@link ECountingMeasure}).
+	 * The internal transition density the automaton has before simulation multiplied with 1_000_000, then rounded (used
+	 * in simulation, for compatibility with {@link ECountingMeasure}).
 	 */
 	BUCHI_TRANSITION_INTERNAL_DENSITY_MILLION,
 	/**
-	 * The return transition density the automaton has before simulation
-	 * multiplied with 1_000_000, then rounded (used in simulation, for
-	 * compatibility with {@link ECountingMeasure}).
+	 * The return transition density the automaton has before simulation multiplied with 1_000_000, then rounded (used
+	 * in simulation, for compatibility with {@link ECountingMeasure}).
 	 */
 	BUCHI_TRANSITION_RETURN_DENSITY_MILLION,
 	/**
-	 * The time building the game graph took (used in simulation, for
-	 * compatibility with {@link ETimeMeasure}).
+	 * The time building the game graph took (used in simulation, for compatibility with {@link ETimeMeasure}).
 	 */
 	BUILD_GRAPH,
 	/**
@@ -146,49 +139,45 @@ public enum StatisticsType {
 	 */
 	BUILD_SCC,
 	/**
-	 * The time needed for computing which vertex down states are safe (used in
-	 * simulation, for compatibility with {@link ETimeMeasure}).
+	 * The time needed for computing which vertex down states are safe (used in simulation, for compatibility with
+	 * {@link ETimeMeasure}).
 	 */
 	COMPUTE_SAFE_VERTEX_DOWN_STATES,
 	/**
-	 * The time computing priorities for summarize edges took in nwa game graph
-	 * generation (used in simulation, for compatibility with
-	 * {@link ETimeMeasure}).
+	 * The time computing priorities for summarize edges took in nwa game graph generation (used in simulation, for
+	 * compatibility with {@link ETimeMeasure}).
 	 */
 	COMPUTE_SUMMARIZE_EDGE_PRIORITIES,
 	/**
-	 * The amount of states the determinized game automaton has (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 * The amount of states the determinized game automaton has (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	DETERMINIZED_GAME_AUTOMATON_STATES,
 	/**
-	 * Amount of merge attempts that where aborted (used in simulation, for
-	 * compatibility with {@link ECountingMeasure}).
+	 * Amount of merge attempts that where aborted (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	FAILED_MERGE_ATTEMPTS,
 	/**
-	 * Amount of transition removal attempts that where aborted (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 * Amount of transition removal attempts that where aborted (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	FAILED_TRANSREMOVE_ATTEMPTS,
 	/**
-	 * Amount of edges the game graph has (used in simulation, for compatibility
-	 * with {@link ECountingMeasure}).
+	 * Amount of edges the game graph has (used in simulation, for compatibility with {@link ECountingMeasure}).
 	 */
 	GAMEGRAPH_EDGES,
 	/**
-	 * Amount of vertices the game graph has (used in simulation, for
-	 * compatibility with {@link ECountingMeasure}).
+	 * Amount of vertices the game graph has (used in simulation, for compatibility with {@link ECountingMeasure}).
 	 */
 	GAMEGRAPH_VERTICES,
 	/**
-	 * The time generating summarize edges took in nwa game graph generation
-	 * (used in simulation, for compatibility with {@link ETimeMeasure}).
+	 * The time generating summarize edges took in nwa game graph generation (used in simulation, for compatibility with
+	 * {@link ETimeMeasure}).
 	 */
 	GENERATE_SUMMARIZE_EDGES,
 	/**
-	 * The global bound for infinty (used in simulation, for compatibility with
-	 * {@link ECountingMeasure}).
+	 * The global bound for infinty (used in simulation, for compatibility with {@link ECountingMeasure}).
 	 */
 	GLOBAL_INFINITY,
 	/**
@@ -232,77 +221,73 @@ public enum StatisticsType {
 	 */
 	OPERATION_NAME,
 	/**
-	 * Amount of transitions a simulation has removed (used in simulation, for
-	 * compatibility with {@link ECountingMeasure}).
+	 * Amount of transitions a simulation has removed (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	REMOVED_TRANSITIONS,
 	/**
-	 * Size of the alphabet the automaton has after simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 * Size of the alphabet the automaton has after simulation (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	RESULT_ALPHABET_SIZE,
 	/**
-	 * Size of the call alphabet the automaton has after simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 * Size of the call alphabet the automaton has after simulation (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	RESULT_ALPHABET_SIZE_CALL,
 	/**
-	 * Size of the internal alphabet the automaton has after simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 * Size of the internal alphabet the automaton has after simulation (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	RESULT_ALPHABET_SIZE_INTERNAL,
 	/**
-	 * Size of the return alphabet the automaton has after simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 * Size of the return alphabet the automaton has after simulation (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	RESULT_ALPHABET_SIZE_RETURN,
 	/**
-	 * Amount of nondeterministic states the automaton has after simulation
-	 * (used in simulation, for compatibility with {@link ECountingMeasure}).
+	 * Amount of nondeterministic states the automaton has after simulation (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	RESULT_NONDETERMINISTIC_STATES,
 	/**
-	 * Amount of transitions the automaton has after simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 * Amount of transitions the automaton has after simulation (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	RESULT_TRANSITIONS,
 	/**
-	 * Amount of call transitions the automaton has after simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 * Amount of call transitions the automaton has after simulation (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	RESULT_TRANSITIONS_CALL,
 	/**
-	 * Amount of internal transitions the automaton has after simulation (used
-	 * in simulation, for compatibility with {@link ECountingMeasure}).
+	 * Amount of internal transitions the automaton has after simulation (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	RESULT_TRANSITIONS_INTERNAL,
 	/**
-	 * Amount of return transitions the automaton has after simulation (used in
-	 * simulation, for compatibility with {@link ECountingMeasure}).
+	 * Amount of return transitions the automaton has after simulation (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	RESULT_TRANSITIONS_RETURN,
 	/**
-	 * The call transition density the automaton has after simulation multiplied
-	 * with 1_000_000, then rounded (used in simulation, for compatibility with
-	 * {@link ECountingMeasure}).
+	 * The call transition density the automaton has after simulation multiplied with 1_000_000, then rounded (used in
+	 * simulation, for compatibility with {@link ECountingMeasure}).
 	 */
 	RESULT_TRANSITION_CALL_DENSITY_MILLION,
 	/**
-	 * The transition density the automaton has after simulation multiplied with
-	 * 1_000_000, then rounded (used in simulation, for compatibility with
-	 * {@link ECountingMeasure}).
+	 * The transition density the automaton has after simulation multiplied with 1_000_000, then rounded (used in
+	 * simulation, for compatibility with {@link ECountingMeasure}).
 	 */
 	RESULT_TRANSITION_DENSITY_MILLION,
 	/**
-	 * The internal transition density the automaton has after simulation
-	 * multiplied with 1_000_000, then rounded (used in simulation, for
-	 * compatibility with {@link ECountingMeasure}).
+	 * The internal transition density the automaton has after simulation multiplied with 1_000_000, then rounded (used
+	 * in simulation, for compatibility with {@link ECountingMeasure}).
 	 */
 	RESULT_TRANSITION_INTERNAL_DENSITY_MILLION,
 	/**
-	 * The return transition density the automaton has after simulation
-	 * multiplied with 1_000_000, then rounded (used in simulation, for
-	 * compatibility with {@link ECountingMeasure}).
+	 * The return transition density the automaton has after simulation multiplied with 1_000_000, then rounded (used in
+	 * simulation, for compatibility with {@link ECountingMeasure}).
 	 */
 	RESULT_TRANSITION_RETURN_DENSITY_MILLION,
 	/**
@@ -310,29 +295,24 @@ public enum StatisticsType {
 	 */
 	RUNTIME_TOTAL,
 	/**
-	 * Amount of SCCs the game graph has (used in simulation, for compatibility
-	 * with {@link ECountingMeasure}).
+	 * Amount of SCCs the game graph has (used in simulation, for compatibility with {@link ECountingMeasure}).
 	 */
 	SCCS,
 	/**
-	 * The time the simulation only took, this is the overall time minus the
-	 * time to build the graph and the result (used in simulation, for
-	 * compatibility with {@link ETimeMeasure}).
+	 * The time the simulation only took, this is the overall time minus the time to build the graph and the result
+	 * (used in simulation, for compatibility with {@link ETimeMeasure}).
 	 */
 	SIMULATION_ONLY,
 	/**
-	 * Amount of steps a simulation needed (used in simulation, for
-	 * compatibility with {@link ECountingMeasure}).
+	 * Amount of steps a simulation needed (used in simulation, for compatibility with {@link ECountingMeasure}).
 	 */
 	SIMULATION_STEPS,
 	/**
-	 * Number of states of a game automaton which is e.g., constructed in
-	 * {@link ReduceNwaSimulationBased}.
+	 * Number of states of a game automaton which is e.g., constructed in {@link ReduceNwaSimulationBased}.
 	 */
 	SIZE_GAME_AUTOMATON,
 	/**
-	 * Number of nodes of a game graph that is used to compute simulation
-	 * relations.
+	 * Number of nodes of a game graph that is used to compute simulation relations.
 	 */
 	SIZE_GAME_GRAPH,
 	/**
@@ -352,9 +332,8 @@ public enum StatisticsType {
 	 */
 	SIZE_MAXIMAL_INITIAL_BLOCK_PMAXSAT,
 	/**
-	 * The time solving the Max-Sat problem at nwa game graph resulting
-	 * automaton generation took (used in simulation, for compatibility with
-	 * {@link ETimeMeasure}).
+	 * The time solving the Max-Sat problem at nwa game graph resulting automaton generation took (used in simulation,
+	 * for compatibility with {@link ETimeMeasure}).
 	 */
 	SOLVE_MAX_SAT,
 	/**
@@ -374,13 +353,13 @@ public enum StatisticsType {
 	 */
 	STATES_REDUCTION_RELATIVE,
 	/**
-	 * Amount of sub-summarize edges a nwa game graph has (used in simulation,
-	 * for compatibility with {@link ECountingMeasure}).
+	 * Amount of sub-summarize edges a nwa game graph has (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	SUB_SUMMARIZE_EDGES,
 	/**
-	 * Amount of summarize edges a nwa game graph has (used in simulation, for
-	 * compatibility with {@link ECountingMeasure}).
+	 * Amount of summarize edges a nwa game graph has (used in simulation, for compatibility with
+	 * {@link ECountingMeasure}).
 	 */
 	SUMMARIZE_EDGES,
 	/**
@@ -395,6 +374,11 @@ public enum StatisticsType {
 	 * Run time for simulation.
 	 */
 	TIME_SIMULATION,
+	/**
+	 * Run time for old simulation implementation.
+	 */
+	@Deprecated
+	TIME_SIMULATION_OLD,
 	/**
 	 * Run time for solving.
 	 */

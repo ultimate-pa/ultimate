@@ -134,7 +134,6 @@ StringCharacter = [^\r\n\"\\]
   "rankedAlphabet"              { m_LastToken = m_CurToken; m_CurToken = "rankedAlphabet"; return symbol(sym.RANKED_ALPHABET); }
   
   // Net transitions  
-  "transitions"                     { m_LastToken = m_CurToken; m_CurToken = "transitions"; return symbol(sym.NET_TRANSITIONS); }
   "initialMarking"                  { m_LastToken = m_CurToken; m_CurToken = "initialMarking"; return symbol(sym.INITIAL_MARKINGS); }
   "acceptingPlaces"                 { m_LastToken = m_CurToken; m_CurToken = "acceptingPlaces"; return symbol(sym.ACCEPTING_PLACES); }
   /* boolean literals */

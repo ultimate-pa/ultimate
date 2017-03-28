@@ -379,7 +379,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 						(NestedRun<LETTER, IPredicate>) mCounterexample, cfg, mServices, mCsToolkit, mPredicateFactory,
 						mCsToolkit.getModifiableGlobalsTable(), predicateUnifier, mDoFaultLocalizationNonFlowSensitive,
 						mDoFaultLocalizationFlowSensitive, mSimplificationTechnique, mXnfConversionTechnique,
-						mIcfgContainer.getSymboltable());
+						mIcfgContainer.getCfgSmtToolkit().getSymbolTable());
 				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
 			}
 		} else {
@@ -398,9 +398,11 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	@Override
 	protected void constructInterpolantAutomaton() throws AutomataOperationCanceledException {
 		mInterpolAutomaton = mTraceCheckAndRefinementEngine.getInfeasibilityProof();
+		assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
 		if (NON_EA_INDUCTIVITY_CHECK) {
 			final boolean inductive = new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
 					new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
+
 			if (!inductive) {
 				throw new AssertionError("not inductive");
 			}
@@ -409,6 +411,19 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Interpolant automaton broken!";
 		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
 				new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
+	}
+
+	private boolean isInterpolantAutomatonOfSingleStateType(final INestedWordAutomaton<?, IPredicate> automaton) {
+		Class<? extends IPredicate> typeofState = null;
+		for (final IPredicate state : automaton.getStates()) {
+			if (typeofState == null) {
+				typeofState = state.getClass();
+			}
+			if (state.getClass() != typeofState) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 	@Override
@@ -485,25 +500,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				super.writeAutomatonToFile(interpolantAutomaton, filename);
 			}
 
-			if (!new Accepts<>(new AutomataLibraryServices(mServices), interpolantAutomaton,
-					(NestedWord<LETTER>) mCounterexample.getWord(), true, false).getResult()) {
-
-				final boolean isOriginalBroken =
-						!new Accepts<>(new AutomataLibraryServices(mServices), inputInterpolantAutomaton,
-								(NestedWord<LETTER>) mCounterexample.getWord(), true, false).getResult();
-				try {
-					debugLogBrokenInterpolantAutomaton(inputInterpolantAutomaton, interpolantAutomaton,
-							mCounterexample);
-				} catch (final Error e) {
-					// suppress any exception, throw assertion error instead
-				}
-				throw new AssertionError("enhanced interpolant automaton in iteration " + mIteration
-						+ " broken: counterexample of length " + mCounterexample.getLength() + " not accepted"
-						+ (isOriginalBroken ? " (original was already broken)" : " (original is ok)"));
-			}
-			assert new InductivityCheck<>(mServices,
-					new RemoveUnreachable<>(new AutomataLibraryServices(mServices), interpolantAutomaton).getResult(),
-					false, true, new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
+			checkEnhancement(inputInterpolantAutomaton, interpolantAutomaton);
 
 			if (REMOVE_DEAD_ENDS) {
 				if (mComputeHoareAnnotation) {
@@ -556,6 +553,32 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction,
 				(NestedWord<LETTER>) mCounterexample.getWord()).getResult();
 		return !stillAccepted;
+	}
+
+	private void checkEnhancement(final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
+			final INestedWordAutomatonSimple<LETTER, IPredicate> interpolantAutomaton)
+			throws AutomataLibraryException, AssertionError, AutomataOperationCanceledException {
+		if (!new Accepts<>(new AutomataLibraryServices(mServices), interpolantAutomaton,
+				(NestedWord<LETTER>) mCounterexample.getWord(), true, false).getResult()) {
+
+			final boolean isOriginalBroken =
+					!new Accepts<>(new AutomataLibraryServices(mServices), inputInterpolantAutomaton,
+							(NestedWord<LETTER>) mCounterexample.getWord(), true, false).getResult();
+			try {
+				debugLogBrokenInterpolantAutomaton(inputInterpolantAutomaton, interpolantAutomaton,
+						mCounterexample);
+			} catch (final Error e) {
+				// suppress any exception, throw assertion error instead
+			}
+			throw new AssertionError("enhanced interpolant automaton in iteration " + mIteration
+					+ " broken: counterexample of length " + mCounterexample.getLength() + " not accepted"
+					+ (isOriginalBroken ? " (original was already broken)" : " (original is ok)"));
+		}
+		assert isInterpolantAutomatonOfSingleStateType(
+				new RemoveUnreachable<>(new AutomataLibraryServices(mServices), interpolantAutomaton).getResult());
+		assert new InductivityCheck<>(mServices,
+				new RemoveUnreachable<>(new AutomataLibraryServices(mServices), interpolantAutomaton).getResult(),
+				false, true, new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
 	}
 
 	private void debugLogBrokenInterpolantAutomaton(

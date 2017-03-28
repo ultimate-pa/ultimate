@@ -26,7 +26,6 @@
  * resulting work.
  */
 /**
- * This packages contains classes to reduce buechi automata using direct
- * simulation.
+ * This packages contains classes to reduce buechi automata using direct simulation.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct;

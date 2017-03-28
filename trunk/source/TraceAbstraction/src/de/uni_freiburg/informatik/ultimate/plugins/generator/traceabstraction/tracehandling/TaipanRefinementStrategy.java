@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
@@ -86,7 +87,7 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> impleme
 	private final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
 	private final PredicateFactory mPredicateFactory;
-	private final PredicateUnifier mPredicateUnifier;
+	private final PredicateUnifier mPredicateUnifierSmt;
 	private final CegarAbsIntRunner<LETTER> mAbsIntRunner;
 	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
 	private final IRun<LETTER, IPredicate, ?> mCounterexample;
@@ -143,7 +144,7 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> impleme
 		mLogger = logger;
 		mPrefs = prefs;
 		mPredicateFactory = predicateFactory;
-		mPredicateUnifier = predicateUnifier;
+		mPredicateUnifierSmt = predicateUnifier;
 		mAbsIntRunner = absIntRunner;
 		mAssertionOrderModulation = assertionOrderModulation;
 		mCounterexample = counterexample;
@@ -337,7 +338,7 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> impleme
 		TraceCheckerConstructor<LETTER> result;
 		if (mPrevTcConstructor == null) {
 			result = new TraceCheckerConstructor<>(mPrefs, managedScript, mServices, mPredicateFactory,
-					mPredicateUnifier, mCounterexample, assertionOrder, interpolationTechnique, mIteration,
+					mPredicateUnifierSmt, mCounterexample, assertionOrder, interpolationTechnique, mIteration,
 					mCegarLoopBenchmark);
 		} else {
 			result = new TraceCheckerConstructor<>(mPrevTcConstructor, managedScript, assertionOrder,
@@ -451,7 +452,7 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> impleme
 		case ABSTRACT_INTERPRETATION:
 			mCurrentMode = Mode.ABSTRACT_INTERPRETATION;
 			mAbsIntRunner.generateFixpoints(mCounterexample,
-					(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction, getPredicateUnifier());
+					(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction, mPredicateUnifierSmt);
 			return mAbsIntRunner.getInterpolantGenerator();
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
@@ -465,8 +466,13 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> impleme
 	}
 
 	@Override
-	public PredicateUnifier getPredicateUnifier() {
-		return mPredicateUnifier;
+	public IPredicateUnifier getPredicateUnifier() {
+		if (mCurrentMode == Mode.ABSTRACT_INTERPRETATION) {
+			if (getInterpolantGenerator().getInterpolantComputationStatus().wasComputationSuccesful()) {
+				return getInterpolantGenerator().getPredicateUnifier();
+			}
+		}
+		return mPredicateUnifierSmt;
 	}
 
 	@Override

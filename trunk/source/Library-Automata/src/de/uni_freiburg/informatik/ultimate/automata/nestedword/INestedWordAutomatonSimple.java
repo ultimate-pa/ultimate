@@ -38,30 +38,26 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.Nwa
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
- * Interface for the most basic data structure that represents a nested word
- * automaton (NWA). This data structure neither provides a method for getting all
- * states nor for getting incoming transitions and hence allows an
- * implementation that constructs automata lazily.
- * (See {@link INestedWordAutomaton} for an interface that provides these methods.)
+ * Interface for the most basic data structure that represents a nested word automaton (NWA). This data structure
+ * neither provides a method for getting all states nor for getting incoming transitions and hence allows an
+ * implementation that constructs automata lazily. (See {@link INestedWordAutomaton} for an interface that provides
+ * these methods.)
  * <p>
- * A nested word automaton is a machine model which accepts nested words (see {@link NestedWord})
- * introduced by Alur et al.
+ * A nested word automaton is a machine model which accepts nested words (see {@link NestedWord}) introduced by Alur et
+ * al.
  * <ul>
  * <li>[1] http://www.cis.upenn.edu/~alur/nw.html</li>
  * <li>[2] Rajeev Alur, P. Madhusudan: Adding Nesting Structure to Words. Developments in Language Theory 2006:1-13</li>
  * <li>[3] Rajeev Alur, P. Madhusudan: Adding nesting structure to words. J. ACM (JACM) 56(3) (2009)</li>
  * </ul>
- * We stick to the definitions of [2] and deviate from [3] by using only one
- * kind of states (instead of a separation of hierarchical states and linear states).
+ * We stick to the definitions of [2] and deviate from [3] by using only one kind of states (instead of a separation of
+ * hierarchical states and linear states).
  * <p>
- * We also deviate from all common definitions of NWA by specifying three kinds
- * of Alphabets. The idea is that they do not have to be disjoint and allow to
- * totalize and complement the automaton with respect to the limitation of
- * which letter can occur in which kind of transition (which is convenient to
- * speed up applications where the automaton models a program and call
- * statements occur anyway only at call transitions).
- * If a user wants to use NWA according to the common definition, they should just use the same
- * set for the internal, call, and return alphabet.
+ * We also deviate from all common definitions of NWA by specifying three kinds of Alphabets. The idea is that they do
+ * not have to be disjoint and allow to totalize and complement the automaton with respect to the limitation of which
+ * letter can occur in which kind of transition (which is convenient to speed up applications where the automaton models
+ * a program and call statements occur anyway only at call transitions). If a user wants to use NWA according to the
+ * common definition, they should just use the same set for the internal, call, and return alphabet.
  * <p>
  * Another deviation from the general model is that we generally do not accept nested words with pending returns. We do
  * accept, however, nested words with pending calls.
@@ -76,11 +72,10 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	/**
 	 * @return Set of all letters that can occur as label of an internal transition.
 	 *         <p>
-	 *         The default definition of nested word automata does not allow separate
-	 *         alphabets for internal, call, and return symbols. The default definition of
-	 *         visibly pushdown automata requires that all three alphabets are disjoint.
-	 *         We deviate from both definitions. We allow separate alphabets but do not
-	 *         require that they are disjoint.
+	 *         The default definition of nested word automata does not allow separate alphabets for internal, call, and
+	 *         return symbols. The default definition of visibly pushdown automata requires that all three alphabets are
+	 *         disjoint. We deviate from both definitions. We allow separate alphabets but do not require that they are
+	 *         disjoint.
 	 */
 	Set<LETTER> getInternalAlphabet();
 
@@ -97,13 +92,10 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	Set<LETTER> getReturnAlphabet();
 
 	/**
-	 * @return Auxiliary state used to model the hierarchical predecessor of a
-	 *         pending return in some operations.<br>
-	 *         Recall that we generally do not accept nested
-	 *         words with pending returns. This auxiliary state is <i>never</i> contained
-	 *         in the set of states.
-	 *         Viewing nested word automata as visibly pushdown automata, this state can
-	 *         be seen as a "bottom letter" of the pushdown alphabet.
+	 * @return Auxiliary state used to model the hierarchical predecessor of a pending return in some operations.<br>
+	 *         Recall that we generally do not accept nested words with pending returns. This auxiliary state is
+	 *         <i>never</i> contained in the set of states. Viewing nested word automata as visibly pushdown automata,
+	 *         this state can be seen as a "bottom letter" of the pushdown alphabet.
 	 */
 	STATE getEmptyStackState();
 
@@ -129,24 +121,24 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	/**
 	 * @param state
 	 *            state
-	 * @return Superset of all letters <tt>a</tt> such that <tt>state</tt> has an outgoing
-	 *         internal transition labeled with letter <tt>a</tt>.
+	 * @return Superset of all letters <tt>a</tt> such that <tt>state</tt> has an outgoing internal transition labeled
+	 *         with letter <tt>a</tt>.
 	 */
 	Set<LETTER> lettersInternal(STATE state);
 
 	/**
 	 * @param state
 	 *            state
-	 * @return Superset of all letters <tt>a</tt> such that <tt>state</tt> has an outgoing call
-	 *         transition labeled with letter <tt>a</tt>.
+	 * @return Superset of all letters <tt>a</tt> such that <tt>state</tt> has an outgoing call transition labeled with
+	 *         letter <tt>a</tt>.
 	 */
 	Set<LETTER> lettersCall(STATE state);
 
 	/**
 	 * @param state
 	 *            state
-	 * @return Superset of all letters <tt>a</tt> such that <tt>state</tt> has an outgoing return
-	 *         transition labeled with letter <tt>a</tt>.
+	 * @return Superset of all letters <tt>a</tt> such that <tt>state</tt> has an outgoing return transition labeled
+	 *         with letter <tt>a</tt>.
 	 */
 	Set<LETTER> lettersReturn(STATE state);
 

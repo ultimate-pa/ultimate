@@ -88,14 +88,12 @@ public class SenwaWalker<LETTER, STATE> {
 	private final List<STATE> mWorklist = new LinkedList<>();
 
 	/**
-	 * STATEs that have already been marked. (Which means already visited or in
-	 * the worklist.)
+	 * STATEs that have already been marked. (Which means already visited or in the worklist.)
 	 */
 	private final Set<STATE> mMarked = new HashSet<>();
 
 	/**
-	 * DoubleDeckers that have been constructed but do not occur in any
-	 * accepting run of the automaton.
+	 * DoubleDeckers that have been constructed but do not occur in any accepting run of the automaton.
 	 */
 	private final Map<STATE, Set<STATE>> mRemovedDoubleDeckers = new HashMap<>();
 
@@ -131,8 +129,8 @@ public class SenwaWalker<LETTER, STATE> {
 	}
 
 	/**
-	 * True iff the STATE state has been marked. A DoubleDecker
-	 * is marked iff it has been visited or is in the mWorklist.
+	 * True iff the STATE state has been marked. A DoubleDecker is marked iff it has been visited or is in the
+	 * mWorklist.
 	 */
 	private final boolean wasMarked(final STATE state) {
 		return mMarked.contains(state);
@@ -392,13 +390,11 @@ public class SenwaWalker<LETTER, STATE> {
 	}
 
 	/**
-	 * Remove in the resulting automaton all states that can not reach a final
-	 * state.
+	 * Remove in the resulting automaton all states that can not reach a final state.
 	 * 
 	 * @param computeRemovedDoubleDeckersAndCallSuccessors
-	 *            compute the set of
-	 *            all DoubleDeckers which occurred in the build automaton but are not
-	 *            reachable after the removal
+	 *            compute the set of all DoubleDeckers which occurred in the build automaton but are not reachable after
+	 *            the removal
 	 * @return true iff at least one state was removed.
 	 */
 	public final boolean removeStatesThatCanNotReachFinal(final boolean computeRemovedDoubleDeckersAndCallSuccessors) {
@@ -447,8 +443,8 @@ public class SenwaWalker<LETTER, STATE> {
 	}
 
 	/**
-	 * Announce removal of all DoubleDeckers (<i>down</i>,<i>up</i>) such that
-	 * <i>down</i> or <i>up</i> is contained in statesGoingToBeRemoved.
+	 * Announce removal of all DoubleDeckers (<i>down</i>,<i>up</i>) such that <i>down</i> or <i>up</i> is contained in
+	 * statesGoingToBeRemoved.
 	 */
 	// _before_ because on removal we want to be able to access all states
 	// of the automaton
@@ -456,8 +452,7 @@ public class SenwaWalker<LETTER, STATE> {
 		mCallSuccOfRemovedDown = new HashMap<>();
 
 		/**
-		 * DoubleDeckers that have been constructed but do not occur in any
-		 * accepting run of the automaton.
+		 * DoubleDeckers that have been constructed but do not occur in any accepting run of the automaton.
 		 */
 		for (final STATE upState : statesGoingToBeRemoved) {
 			final STATE entry = mTraversedSenwa.getEntry(upState);
@@ -531,8 +526,7 @@ public class SenwaWalker<LETTER, STATE> {
 	}
 
 	/**
-	 * Remove all states from which only finitely many accepting states are
-	 * reachable.
+	 * Remove all states from which only finitely many accepting states are reachable.
 	 */
 	private final void removeNonLiveStates() {
 		boolean stateRemovedInInteration;

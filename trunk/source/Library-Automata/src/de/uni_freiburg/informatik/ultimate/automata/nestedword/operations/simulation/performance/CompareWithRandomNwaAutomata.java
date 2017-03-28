@@ -36,8 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 
 /**
- * Operation that compares the different types of nwa simulation methods for nwa
- * reduction using random automata.<br/>
+ * Operation that compares the different types of nwa simulation methods for nwa reduction using random automata.<br/>
  * The resulting automaton is the input automaton.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
@@ -55,16 +54,15 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE>
 	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
 
 	/**
-	 * Compares the different types of nwa simulation methods for nwa reduction
-	 * using random automata. Resulting automaton is the input automaton.
+	 * Compares the different types of nwa simulation methods for nwa reduction using random automata. Resulting
+	 * automaton is the input automaton.
 	 * 
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param operand
 	 *            A nwa, it is not used by the operation
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public CompareWithRandomNwaAutomata(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {

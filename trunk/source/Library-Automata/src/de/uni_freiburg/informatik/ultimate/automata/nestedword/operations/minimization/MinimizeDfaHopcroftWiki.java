@@ -112,8 +112,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	}
 
 	/**
-	 * Get number of states and labels for calling initializeMappings and
-	 * initializeLables.
+	 * Get number of states and labels for calling initializeMappings and initializeLables.
 	 */
 	private void initializeData() {
 		final int nOfStates = mOperand.size();
@@ -146,9 +145,8 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 
 	// NOTE: Is this necessary - how could the algorithm even use it??
 	/**
-	 * Initialize structure for lables. Iterate over all states and get their
-	 * OutgoingInternalTransition for storing nOfLabel,
-	 * headOfLabel and tailOfLabel.
+	 * Initialize structure for lables. Iterate over all states and get their OutgoingInternalTransition for storing
+	 * nOfLabel, headOfLabel and tailOfLabel.
 	 */
 	private void initializeLables() {
 		final int capacity = (int) Math.min(Integer.MAX_VALUE,
@@ -245,8 +243,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	}
 
 	/**
-	 * @return Natural number (position of set in worklist) if worklist contains
-	 *         set, -1 otherwise.
+	 * @return Natural number (position of set in worklist) if worklist contains set, -1 otherwise.
 	 */
 	private int findSet(final int[] set, final Worklist worklist) {
 		for (int i = 0; i < worklist.getSize(); i++) {
@@ -295,8 +292,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	}
 
 	/**
-	 * This method constructs the resulting automaton from the set of equivalent
-	 * states.
+	 * This method constructs the resulting automaton from the set of equivalent states.
 	 */
 	private void constructResult() {
 		// mapping from states to their representative
@@ -362,8 +358,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 
 	// ---------- Unused methods.---------- //
 	/**
-	 * Returns true if there exists an incoming transition to the state labeled
-	 * with the letter.
+	 * Returns true if there exists an incoming transition to the state labeled with the letter.
 	 * 
 	 * @param state
 	 *            state
@@ -378,8 +373,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	}
 
 	/**
-	 * Returns true, if an outgoing transition from the state labeled with
-	 * the letter exists.
+	 * Returns true, if an outgoing transition from the state labeled with the letter exists.
 	 * 
 	 * @param state
 	 *            state
@@ -395,8 +389,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 
 	// NOTE: There can be several such states in a DFA!!
 	/**
-	 * Returns number of state, which is predecessor of the state with transition
-	 * labeled with the letter.
+	 * Returns number of state, which is predecessor of the state with transition labeled with the letter.
 	 * 
 	 * @param state
 	 *            state
@@ -412,8 +405,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	}
 
 	/**
-	 * Returns number of state, which is successor of the state with transition
-	 * labeled with the letter.
+	 * Returns number of state, which is successor of the state with transition labeled with the letter.
 	 * 
 	 * @param state
 	 *            state
@@ -430,9 +422,8 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 
 	// ---------------------------------------------------------------------------------------------//
 	/**
-	 * Class for representing a partition. A partition P contains blocks of
-	 * states Y_1 ... Y_n. As initial blocks a partition P should contain P =
-	 * {Y_1, Y_2} with Y_1 = {F} and Y_2 = {Q\F}.
+	 * Class for representing a partition. A partition P contains blocks of states Y_1 ... Y_n. As initial blocks a
+	 * partition P should contain P = {Y_1, Y_2} with Y_1 = {F} and Y_2 = {Q\F}.
 	 */
 	public class Partition {
 		// ArrayList, to represent the sets in partition.
@@ -453,9 +444,8 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		}
 
 		/**
-		 * Initialize Partition. Transfer collection of finalStates and states
-		 * to int[] mfinalStates and int[] mnonfinalStates and create
-		 * workList.
+		 * Initialize Partition. Transfer collection of finalStates and states to int[] mfinalStates and int[]
+		 * mnonfinalStates and create workList.
 		 */
 		public void init() {
 			final Collection<STATE> finalStates = mOperand.getFinalStates();

@@ -36,8 +36,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 
 /**
- * Contains a {@link STATE} and information of transitions in field/map implementation
- * of NWAs.
+ * Contains a {@link STATE} and information of transitions in field/map implementation of NWAs.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>

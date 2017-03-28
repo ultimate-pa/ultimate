@@ -29,9 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import java.util.Comparator;
 
 /**
- * Compares two vertices based on their progress measure as returned by
- * {@link Vertex#getPM(java.util.Set, int)} but with reverse ordering, i.e.
- * greater values come before smaller ones.
+ * Compares two vertices based on their progress measure as returned by {@link Vertex#getPM(java.util.Set, int)} but
+ * with reverse ordering, i.e. greater values come before smaller ones.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>

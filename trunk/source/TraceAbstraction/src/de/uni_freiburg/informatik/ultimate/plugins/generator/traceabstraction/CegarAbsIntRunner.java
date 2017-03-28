@@ -84,6 +84,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 
 /**
  *
@@ -107,7 +108,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 
 	private AbsIntCurrentIteration<?> mCurrentIteration;
-	private IPredicateUnifier mPredicateUnifier;
+	private IPredicateUnifier mPredicateUnifierSmt;
 
 	public CegarAbsIntRunner(final IUltimateServiceProvider services, final CegarLoopStatisticsGenerator benchmark,
 			final IIcfg<?> root, final SimplificationTechnique simplificationTechnique,
@@ -148,7 +149,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			throw new UnsupportedOperationException(
 					"AbsInt only supports BoogieIcfgLocations and Codeblocks at the moment");
 		}
-		mPredicateUnifier = Objects.requireNonNull(unifier);
+		mPredicateUnifierSmt = Objects.requireNonNull(unifier);
 		mCurrentIteration = null;
 
 		if (mMode == AbstractInterpretationMode.NONE) {
@@ -175,7 +176,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
 			mLogger.info("Running AI on error trace of length " + currentCex.getLength()
 					+ " with the following transitions: ");
-			mLogger.info(String.join(", ", pathProgramSet.stream().map(a -> a.hashCode()).sorted()
+			mLogger.info(String.join(", ", pathProgramSet.stream().map(LETTER::hashCode).sorted()
 					.map(a -> '[' + String.valueOf(a) + ']').collect(Collectors.toList())));
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("Trace:");
@@ -221,7 +222,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 	public IInterpolantGenerator getInterpolantGenerator() {
 		if (mCurrentIteration == null) {
-			return new AbsIntFailedInterpolantGenerator(mPredicateUnifier, null, ItpErrorStatus.OTHER,
+			return new AbsIntFailedInterpolantGenerator(mPredicateUnifierSmt, null, ItpErrorStatus.OTHER,
 					createNoFixpointsException());
 		}
 		return mCurrentIteration.getInterpolantGenerator();
@@ -311,13 +312,21 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		private IInterpolantGenerator mInterpolantGenerator;
 		private CachingHoareTripleChecker mHtc;
 		private final AbsIntPredicate<STATE, IBoogieVar> mFalsePredicate;
+		private final AbsIntPredicate<STATE, IBoogieVar> mTruePredicate;
+		private final PredicateUnifier mPredicateUnifierAbsInt;
 
 		public AbsIntCurrentIteration(final IRun<LETTER, IPredicate, ?> cex,
 				final IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> result) {
 			mCex = Objects.requireNonNull(cex);
 			mResult = Objects.requireNonNull(result);
-			mFalsePredicate = new AbsIntPredicate<>(mPredicateUnifier.getFalsePredicate(),
+			mFalsePredicate = new AbsIntPredicate<>(mPredicateUnifierSmt.getFalsePredicate(),
 					mResult.getUsedDomain().createBottomState());
+			mTruePredicate = new AbsIntPredicate<>(mPredicateUnifierSmt.getTruePredicate(),
+					mResult.getUsedDomain().createTopState());
+			mPredicateUnifierAbsInt = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
+					mPredicateUnifierSmt.getPredicateFactory(), mCsToolkit.getSymbolTable(),
+					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+					mFalsePredicate, mTruePredicate);
 		}
 
 		public IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> getResult() {
@@ -330,9 +339,10 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 		public CachingHoareTripleChecker getHoareTripleChecker() {
 			if (mHtc == null) {
-				final IHoareTripleChecker htc = new AbsIntHoareTripleChecker<>(mLogger, mServices,
-						mResult.getUsedDomain(), mResult.getUsedVariableProvider(), mPredicateUnifier, mCsToolkit);
-				mHtc = new CachingHoareTripleCheckerMap(mServices, htc, mPredicateUnifier);
+				final IHoareTripleChecker htc =
+						new AbsIntHoareTripleChecker<>(mLogger, mServices, mResult.getUsedDomain(),
+								mResult.getUsedVariableProvider(), mPredicateUnifierAbsInt, mCsToolkit);
+				mHtc = new CachingHoareTripleCheckerMap(mServices, htc, mPredicateUnifierAbsInt);
 			}
 			return mHtc;
 		}
@@ -347,7 +357,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		private IInterpolantGenerator createInterpolantGenerator() {
 			if (mResult.hasReachedError()) {
 				// analysis was not strong enough
-				return new AbsIntFailedInterpolantGenerator(mPredicateUnifier, mCex.getWord(),
+				return new AbsIntFailedInterpolantGenerator(mPredicateUnifierAbsInt, mCex.getWord(),
 						ItpErrorStatus.ALGORITHM_FAILED, null);
 			}
 			// we were strong enough!
@@ -361,8 +371,9 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				assert word.length() - 1 == interpolants.size() : "Word has length " + word.length()
 						+ " but interpolant sequence has length " + interpolants.size();
 				assert isInductive(mCex.getWord().asList(), interpolants) : "Sequence of interpolants not inductive!";
-				return new AbsIntInterpolantGenerator(mPredicateUnifier, mCex.getWord(),
-						interpolants.toArray(new IPredicate[interpolants.size()]), getHoareTripleChecker());
+				return new AbsIntInterpolantGenerator(mPredicateUnifierAbsInt, mCex.getWord(),
+						interpolants.toArray(new IPredicate[interpolants.size()]), getHoareTripleChecker(),
+						mTruePredicate, mFalsePredicate);
 			} catch (final ToolchainCanceledException tce) {
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), "generating AI predicates"));
 				throw tce;
@@ -378,10 +389,10 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			assert trace.size() == interpolants.size() + 1 : "trace size does not match interpolants size";
 
 			final List<AbsIntPredicate<STATE, IBoogieVar>> completeInterpolants = new ArrayList<>();
-			completeInterpolants.add(new AbsIntPredicate<>(mPredicateUnifier.getTruePredicate(),
+			completeInterpolants.add(new AbsIntPredicate<>(mPredicateUnifierAbsInt.getTruePredicate(),
 					mResult.getUsedDomain().createTopState()));
 			completeInterpolants.addAll(interpolants);
-			completeInterpolants.add(new AbsIntPredicate<>(mPredicateUnifier.getFalsePredicate(),
+			completeInterpolants.add(new AbsIntPredicate<>(mPredicateUnifierAbsInt.getFalsePredicate(),
 					mResult.getUsedDomain().createBottomState()));
 
 			final CachingHoareTripleChecker htc = getHoareTripleChecker();
@@ -450,8 +461,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				return mFalsePredicate;
 			}
 			final Set<IPredicate> predicates = postStates.stream().map(s -> s.getTerm(script))
-					.map(mPredicateUnifier::getOrConstructPredicate).collect(Collectors.toSet());
-			final IPredicate disjunction = mPredicateUnifier.getOrConstructPredicateForDisjunction(predicates);
+					.map(mPredicateUnifierAbsInt::getOrConstructPredicate).collect(Collectors.toSet());
+			final IPredicate disjunction = mPredicateUnifierAbsInt.getOrConstructPredicateForDisjunction(predicates);
 			return new AbsIntPredicate<>(disjunction, postStates);
 		}
 	}
@@ -462,8 +473,9 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		private final CachingHoareTripleChecker mHtc;
 
 		private AbsIntInterpolantGenerator(final IPredicateUnifier predicateUnifier, final Word<? extends IAction> cex,
-				final IPredicate[] sequence, final CachingHoareTripleChecker htc) {
-			super(predicateUnifier, cex, new InterpolantComputationStatus(true, null, null));
+				final IPredicate[] sequence, final CachingHoareTripleChecker htc, final AbsIntPredicate<?, ?> preCond,
+				final AbsIntPredicate<?, ?> postCond) {
+			super(predicateUnifier, cex, preCond, postCond, new InterpolantComputationStatus(true, null, null));
 			mInterpolants = Objects.requireNonNull(sequence);
 			mHtc = Objects.requireNonNull(htc);
 		}
@@ -476,7 +488,6 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 		@Override
 		public Map<Integer, IPredicate> getPendingContexts() {
-			// TODO: Do I need this?
 			return null;
 		}
 
@@ -497,7 +508,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 		private AbsIntFailedInterpolantGenerator(final IPredicateUnifier predicateUnifier,
 				final Word<? extends IAction> cex, final ItpErrorStatus status, final Exception ex) {
-			super(predicateUnifier, cex, new InterpolantComputationStatus(false, status, ex));
+			super(predicateUnifier, cex, null, null, new InterpolantComputationStatus(false, status, ex));
 		}
 
 		@Override

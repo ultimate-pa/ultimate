@@ -225,12 +225,12 @@ public class NwaApproximateBisimulation<LETTER, STATE>
 			}
 			states.add(state);
 		}
-		
+
 		if (letters2states.size() == 1) {
 			// only one set, nothing happens
 			return false;
 		}
-		
+
 		// split into new blocks
 		mPartition.remove(block);
 		for (final Set<STATE> newBlock : letters2states.values()) {

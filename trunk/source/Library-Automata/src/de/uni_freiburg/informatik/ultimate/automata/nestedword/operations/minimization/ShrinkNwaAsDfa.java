@@ -55,9 +55,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * This class minimizes nested word automata.
  * <p>
- * It is based on Hopcroft's minimization for deterministic finite automata. All
- * nested edges (calls and returns) are seen as fresh symbols consisting of the
- * tuple <code>(symbol, hierarchical state)</code>
+ * It is based on Hopcroft's minimization for deterministic finite automata. All nested edges (calls and returns) are
+ * seen as fresh symbols consisting of the tuple <code>(symbol, hierarchical state)</code>
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -84,8 +83,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	 * @param stateFactory
 	 *            state factory
 	 * @param operand
-	 *            preprocessed nested word automaton preprocessing: dead end
-	 *            and unreachable states/transitions removed
+	 *            preprocessed nested word automaton preprocessing: dead end and unreachable states/transitions removed
 	 * @throws AutomataOperationCanceledException
 	 *             if cancel signal is received
 	 */
@@ -100,8 +98,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	 * @param services
 	 *            Ultimate services
 	 * @param operand
-	 *            preprocessed nested word automaton preprocessing: dead end
-	 *            and unreachable states/transitions removed
+	 *            preprocessed nested word automaton preprocessing: dead end and unreachable states/transitions removed
 	 * @param equivalenceClasses
 	 *            represent initial equivalence classes
 	 * @param stateFactory
@@ -145,8 +142,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	// --- [start] main methods --- //
 
 	/**
-	 * This is the main method that merges states not distinguishable (based on
-	 * Hopcroft's algorithm).
+	 * This is the main method that merges states not distinguishable (based on Hopcroft's algorithm).
 	 * 
 	 * @param isFiniteAutomaton
 	 *            true iff automaton is a finite automaton
@@ -201,8 +197,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	}
 
 	/**
-	 * The partition object is initialized. Final states are separated from
-	 * non-final states. For the passed modules this is assumed.
+	 * The partition object is initialized. Final states are separated from non-final states. For the passed modules
+	 * this is assumed.
 	 * 
 	 * @param modulesWrapped
 	 *            modules that must be split
@@ -239,12 +235,10 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	}
 
 	/**
-	 * For each state and symbol respectively do the usual Hopcroft backwards
-	 * split.
+	 * For each state and symbol respectively do the usual Hopcroft backwards split.
 	 * <p>
-	 * First all predecessor sets (with respect to a single symbol) are found
-	 * and then for each such set the states are split from their equivalence
-	 * classes.
+	 * First all predecessor sets (with respect to a single symbol) are found and then for each such set the states are
+	 * split from their equivalence classes.
 	 * 
 	 * @param block
 	 *            the splitter equivalence class
@@ -319,8 +313,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	}
 
 	/**
-	 * For each remaining equivalence class create a new state. Also remove all
-	 * other objects references.
+	 * For each remaining equivalence class create a new state. Also remove all other objects references.
 	 * 
 	 * @param addMapping
 	 *            true iff mapping old to new state is needed
@@ -346,8 +339,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	// --- [start] helper methods and classes --- //
 
 	/**
-	 * This method checks that the states in each equivalence class initially
-	 * passed in the constructor are all either final or non-final.
+	 * This method checks that the states in each equivalence class initially passed in the constructor are all either
+	 * final or non-final.
 	 *
 	 * @param equivalenceClasses
 	 *            partition passed in constructor
@@ -377,13 +370,11 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	}
 
 	/**
-	 * This enum is used to tell for an equivalence class whether it contains
-	 * incoming transitions. Since it is expensive to compute this each time,
-	 * only the answer "no" is correct. This status is inherited by the two
-	 * resulting equivalence classes after a split. The idea is to not insert
-	 * such equivalence classes in the work list for which it is known that
-	 * there are no incoming transitions. The status is updated as a byproduct
-	 * after the search for transitions.
+	 * This enum is used to tell for an equivalence class whether it contains incoming transitions. Since it is
+	 * expensive to compute this each time, only the answer "no" is correct. This status is inherited by the two
+	 * resulting equivalence classes after a split. The idea is to not insert such equivalence classes in the work list
+	 * for which it is known that there are no incoming transitions. The status is updated as a byproduct after the
+	 * search for transitions.
 	 */
 	private enum IncomingStatus {
 		/** Unknown whether there are incoming transitions. */
@@ -397,8 +388,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	}
 
 	/**
-	 * A transition iterator is used for splitting internal and call
-	 * predecessors.
+	 * A transition iterator is used for splitting internal and call predecessors.
 	 *
 	 * @param <STATE>
 	 *            state type
@@ -534,8 +524,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	// --- [start] important inner classes --- //
 
 	/**
-	 * The partition is the main object of the procedure. It contains and
-	 * handles the equivalence classes and works as the resulting automaton.
+	 * The partition is the main object of the procedure. It contains and handles the equivalence classes and works as
+	 * the resulting automaton.
 	 */
 	private class Partition implements IPartition<STATE> {
 		// equivalence classes
@@ -552,8 +542,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		}
 
 		/**
-		 * This method adds an equivalence class (also to the work list) during
-		 * the initialization phase.
+		 * This method adds an equivalence class (also to the work list) during the initialization phase.
 		 *
 		 * @param module
 		 *            the states in the equivalence class
@@ -567,8 +556,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		}
 
 		/**
-		 * This method adds an equivalence class to the partition that resulted
-		 * from a split.
+		 * This method adds an equivalence class to the partition that resulted from a split.
 		 *
 		 * @param parent
 		 *            the parent equivalence class
@@ -589,8 +577,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		}
 
 		/**
-		 * This method splits a state from its equivalence class during the
-		 * internal and call split. The equivalence class is remembered.
+		 * This method splits a state from its equivalence class during the internal and call split. The equivalence
+		 * class is remembered.
 		 * 
 		 * @param state
 		 *            the state
@@ -612,8 +600,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		}
 
 		/**
-		 * This method splits a state for a given equivalence class without any
-		 * further considerations.
+		 * This method splits a state for a given equivalence class without any further considerations.
 		 * 
 		 * @param state
 		 *            state
@@ -629,11 +616,9 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		}
 
 		/**
-		 * This method finally splits the marked equivalence classes into two
-		 * (for the internal and call split). The states have already been split
-		 * in the equivalence class before. Only if there are states remaining
-		 * the split is executed, otherwise the old equivalence class is
-		 * restored.
+		 * This method finally splits the marked equivalence classes into two (for the internal and call split). The
+		 * states have already been split in the equivalence class before. Only if there are states remaining the split
+		 * is executed, otherwise the old equivalence class is restored.
 		 * 
 		 * @param states
 		 *            set of states to split
@@ -722,8 +707,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	}
 
 	/**
-	 * An equivalence class contains states and knows whether it is in the work
-	 * list.
+	 * An equivalence class contains states and knows whether it is in the work list.
 	 * <p>
 	 * Two equivalence class objects are equal iff they share the same pointer.
 	 */
@@ -742,8 +726,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		private boolean mIsInitial;
 
 		/**
-		 * This is a partial constructor which is used for both initialization
-		 * and splitting.
+		 * This is a partial constructor which is used for both initialization and splitting.
 		 * 
 		 * @param states
 		 *            the set of states for the equivalence class
@@ -888,8 +871,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		}
 
 		/**
-		 * This method returns a short representation of the equivalence class
-		 * with only the states. States in the intersection are not visible.
+		 * This method returns a short representation of the equivalence class with only the states. States in the
+		 * intersection are not visible.
 		 *
 		 * @return a short string representation of the states
 		 */
@@ -941,10 +924,9 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	/**
 	 * The work list has a priority queue of equivalence classes.
 	 * <p>
-	 * Since the size of the equivalence classes may change due to splitting, it
-	 * is not guaranteed that the order is correct over time, but since it is a
-	 * heuristic rather than a rule to prefer smaller splitters first, this is
-	 * not considered bad and additional overhead is avoided.
+	 * Since the size of the equivalence classes may change due to splitting, it is not guaranteed that the order is
+	 * correct over time, but since it is a heuristic rather than a rule to prefer smaller splitters first, this is not
+	 * considered bad and additional overhead is avoided.
 	 */
 	private abstract class AWorkList implements Iterator<EquivalenceClass> {
 		protected final PriorityQueue<EquivalenceClass> mQueue;
@@ -959,9 +941,8 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		}
 
 		/**
-		 * This method adds an equivalence class to the work list. The caller
-		 * asserts that the class is not already in the work list and must
-		 * inform the equivalence class beforehand.
+		 * This method adds an equivalence class to the work list. The caller asserts that the class is not already in
+		 * the work list and must inform the equivalence class beforehand.
 		 *
 		 * @param block
 		 *            the equivalence class

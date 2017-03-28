@@ -45,8 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Utility class that offers methods which create comparison tables for
- * performance analyze.
+ * Utility class that offers methods which create comparison tables for performance analyze.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
@@ -78,16 +77,14 @@ public final class ComparisonTables {
 	}
 
 	/**
-	 * Creates a table that holds information about the actual work the
-	 * algorithm needs to do for each simulation type averaged over all automata
-	 * instances respectively.
+	 * Creates a table that holds information about the actual work the algorithm needs to do for each simulation type
+	 * averaged over all automata instances respectively.
 	 * 
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @param separator
 	 *            Separator to use for separating cells
-	 * @return A table in a tsv-like format, specified by
-	 *         {@link #LOG_SEPARATOR}.
+	 * @return A table in a tsv-like format, specified by {@link #LOG_SEPARATOR}.
 	 */
 	public static List<String> createAveragedSimulationAlgoWorkTable(
 			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries, final String separator) {
@@ -224,28 +221,24 @@ public final class ComparisonTables {
 	}
 
 	/**
-	 * Creates a table that holds the full comparison data for each simulation
-	 * type averaged over all automata instances respectively.
+	 * Creates a table that holds the full comparison data for each simulation type averaged over all automata instances
+	 * respectively.
 	 * 
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @param separator
 	 *            Separator to use for separating cells
 	 * @param simulationType
-	 *            The simulation type interested in, or <tt>null</tt> if
-	 *            interested in all results
+	 *            The simulation type interested in, or <tt>null</tt> if interested in all results
 	 * @param filtered
-	 *            If the result should not contain results where the input
-	 *            automaton has an empty size, at least one of the methods timed
-	 *            out or an OutOfMemory-Error occurred.
+	 *            If the result should not contain results where the input automaton has an empty size, at least one of
+	 *            the methods timed out or an OutOfMemory-Error occurred.
 	 * @param filterOnlyNwa
-	 *            If the result should only contain nested word automaton, this
-	 *            removes every automaton which has no return transitions
+	 *            If the result should only contain nested word automaton, this removes every automaton which has no
+	 *            return transitions
 	 * @param convertTransitionDensityToDouble
-	 *            Converts transition density values from Integer back to
-	 *            Double.
-	 * @return A table in a tsv-like format, specified by
-	 *         {@link #LOG_SEPARATOR}.
+	 *            Converts transition density values from Integer back to Double.
+	 * @return A table in a tsv-like format, specified by {@link #LOG_SEPARATOR}.
 	 */
 	public static List<String> createAveragedSimulationFullComparisonTable(
 			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries, final String separator,
@@ -376,29 +369,24 @@ public final class ComparisonTables {
 	}
 
 	/**
-	 * Creates a table that holds the full comparison data for each simulation
-	 * type averaged over all directories of the automata instances
-	 * respectively.
+	 * Creates a table that holds the full comparison data for each simulation type averaged over all directories of the
+	 * automata instances respectively.
 	 * 
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @param separator
 	 *            Separator to use for separating cells
 	 * @param simulationType
-	 *            The simulation type interested in, or <tt>null</tt> if
-	 *            interested in all results
+	 *            The simulation type interested in, or <tt>null</tt> if interested in all results
 	 * @param filtered
-	 *            If the result should not contain results where the input
-	 *            automaton has an empty size, at least one of the methods timed
-	 *            out or an OutOfMemory-Error occurred.
+	 *            If the result should not contain results where the input automaton has an empty size, at least one of
+	 *            the methods timed out or an OutOfMemory-Error occurred.
 	 * @param filterOnlyNwa
-	 *            If the result should only contain nested word automaton, this
-	 *            removes every automaton which has no return transitions
+	 *            If the result should only contain nested word automaton, this removes every automaton which has no
+	 *            return transitions
 	 * @param convertTransitionDensityToDouble
-	 *            Converts transition density values from Integer back to
-	 *            Double.
-	 * @return A table in a tsv-like format, specified by
-	 *         {@link #LOG_SEPARATOR}.
+	 *            Converts transition density values from Integer back to Double.
+	 * @return A table in a tsv-like format, specified by {@link #LOG_SEPARATOR}.
 	 */
 	public static List<String> createAveragedSimulationPerDirectoryTable(
 			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries, final String separator,
@@ -532,16 +520,14 @@ public final class ComparisonTables {
 	}
 
 	/**
-	 * Creates a table that holds the time partitioning for each simulation type
-	 * averaged over all automata instances respectively. The work measure gets
-	 * calculated by (SIMULATION_STEPS / GAMEGRAPH_STATES).
+	 * Creates a table that holds the time partitioning for each simulation type averaged over all automata instances
+	 * respectively. The work measure gets calculated by (SIMULATION_STEPS / GAMEGRAPH_STATES).
 	 * 
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @param separator
 	 *            Separator to use for separating cells
-	 * @return A table in a tsv-like format, specified by
-	 *         {@link #LOG_SEPARATOR}.
+	 * @return A table in a tsv-like format, specified by {@link #LOG_SEPARATOR}.
 	 */
 	public static List<String> createAveragedSimulationTimePartitioningTable(
 			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries, final String separator) {
@@ -650,16 +636,14 @@ public final class ComparisonTables {
 	}
 
 	/**
-	 * Creates a table that holds information about the actual work the
-	 * algorithm needs to do for each automata instance respectively. The work
-	 * measure gets calculated by (SIMULATION_STEPS / GAMEGRAPH_STATES).
+	 * Creates a table that holds information about the actual work the algorithm needs to do for each automata instance
+	 * respectively. The work measure gets calculated by (SIMULATION_STEPS / GAMEGRAPH_STATES).
 	 * 
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @param separator
 	 *            Separator to use for separating cells
-	 * @return A table in a tsv-like format, specified by
-	 *         {@link #LOG_SEPARATOR}.
+	 * @return A table in a tsv-like format, specified by {@link #LOG_SEPARATOR}.
 	 */
 	public static List<String> createInstanceAlgoWorkTable(
 			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries, final String separator) {
@@ -762,28 +746,24 @@ public final class ComparisonTables {
 	}
 
 	/**
-	 * Creates a table that holds the full comparison data for each automata
-	 * instance respectively, but only for the given simulation type.
+	 * Creates a table that holds the full comparison data for each automata instance respectively, but only for the
+	 * given simulation type.
 	 * 
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @param separator
 	 *            Separator to use for separating cells
 	 * @param simulationType
-	 *            The simulation type interested in, or <tt>null</tt> if
-	 *            interested in all results
+	 *            The simulation type interested in, or <tt>null</tt> if interested in all results
 	 * @param filtered
-	 *            If the result should not contain results where the input
-	 *            automaton has an empty size, at least one of the methods timed
-	 *            out or an OutOfMemory-Error occurred.
+	 *            If the result should not contain results where the input automaton has an empty size, at least one of
+	 *            the methods timed out or an OutOfMemory-Error occurred.
 	 * @param filterOnlyNwa
-	 *            If the result should only contain nested word automaton, this
-	 *            removes every automaton which has no return transitions
+	 *            If the result should only contain nested word automaton, this removes every automaton which has no
+	 *            return transitions
 	 * @param convertTransitionDensityToDouble
-	 *            Converts transition density values from Integer back to
-	 *            Double.
-	 * @return A table in a tsv-like format, specified by
-	 *         {@link #LOG_SEPARATOR}.
+	 *            Converts transition density values from Integer back to Double.
+	 * @return A table in a tsv-like format, specified by {@link #LOG_SEPARATOR}.
 	 */
 	public static List<String> createInstanceFullComparisonTable(
 			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries, final String separator,
@@ -886,15 +866,13 @@ public final class ComparisonTables {
 	}
 
 	/**
-	 * Creates a table that holds the time partitioning for each automata
-	 * instance respectively.
+	 * Creates a table that holds the time partitioning for each automata instance respectively.
 	 * 
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
 	 * @param separator
 	 *            Separator to use for separating cells
-	 * @return A table in a tsv-like format, specified by
-	 *         {@link #LOG_SEPARATOR}.
+	 * @return A table in a tsv-like format, specified by {@link #LOG_SEPARATOR}.
 	 */
 	public static List<String> createInstanceTimePartitioningTable(
 			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries, final String separator) {
@@ -990,13 +968,11 @@ public final class ComparisonTables {
 	}
 
 	/**
-	 * Creates a table that holds all names of automata where the overall time
-	 * needed was greater than one second.
+	 * Creates a table that holds all names of automata where the overall time needed was greater than one second.
 	 * 
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
-	 * @return A table in a tsv-like format, specified by
-	 *         {@link #LOG_SEPARATOR}.
+	 * @return A table in a tsv-like format, specified by {@link #LOG_SEPARATOR}.
 	 */
 	public static List<String> createLongerThanOneSecondNamesTable(
 			final LinkedList<LinkedList<SimulationPerformance>> performanceEntries) {
@@ -1031,13 +1007,11 @@ public final class ComparisonTables {
 	}
 
 	/**
-	 * Creates a table that holds all names of automata where no method could
-	 * remove states.
+	 * Creates a table that holds all names of automata where no method could remove states.
 	 * 
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
-	 * @return A table in a tsv-like format, specified by
-	 *         {@link #LOG_SEPARATOR}.
+	 * @return A table in a tsv-like format, specified by {@link #LOG_SEPARATOR}.
 	 */
 	public static List<String>
 			createNoRemoveNamesTable(final LinkedList<LinkedList<SimulationPerformance>> performanceEntries) {
@@ -1072,13 +1046,11 @@ public final class ComparisonTables {
 	}
 
 	/**
-	 * Creates a table that holds all names of automata where the amount of
-	 * states is small, i.e. less than 20.
+	 * Creates a table that holds all names of automata where the amount of states is small, i.e. less than 20.
 	 * 
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
-	 * @return A table in a tsv-like format, specified by
-	 *         {@link #LOG_SEPARATOR}.
+	 * @return A table in a tsv-like format, specified by {@link #LOG_SEPARATOR}.
 	 */
 	public static List<String>
 			createSmallSizeNamesTable(final LinkedList<LinkedList<SimulationPerformance>> performanceEntries) {
@@ -1113,13 +1085,11 @@ public final class ComparisonTables {
 	}
 
 	/**
-	 * Creates a table that holds all names of automata where at least one
-	 * method timed out.
+	 * Creates a table that holds all names of automata where at least one method timed out.
 	 * 
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
-	 * @return A table in a tsv-like format, specified by
-	 *         {@link #LOG_SEPARATOR}.
+	 * @return A table in a tsv-like format, specified by {@link #LOG_SEPARATOR}.
 	 */
 	public static List<String>
 			createTimedOutNamesTable(final LinkedList<LinkedList<SimulationPerformance>> performanceEntries) {
@@ -1152,13 +1122,12 @@ public final class ComparisonTables {
 	}
 
 	/**
-	 * Converts a given long value, representing milliseconds, to seconds and
-	 * rounds it to {@link #DECIMAL_PLACES} places after the decimal.
+	 * Converts a given long value, representing milliseconds, to seconds and rounds it to {@link #DECIMAL_PLACES}
+	 * places after the decimal.
 	 * 
 	 * @param millis
 	 *            Value, representing milliseconds, that should be converted
-	 * @return The given value in seconds, rounded to two places after the
-	 *         decimal.
+	 * @return The given value in seconds, rounded to two places after the decimal.
 	 */
 	public static float millisToSeconds(final long millis) {
 		return roundTo((millis + 0.0) / SECONDS_TO_MILLIS, DECIMAL_PLACES);
@@ -1176,9 +1145,8 @@ public final class ComparisonTables {
 	}
 
 	/**
-	 * Processes a given performance list into a sorted map structure. A
-	 * performance entry is completely ignored if one simulation of it had a
-	 * timeout.
+	 * Processes a given performance list into a sorted map structure. A performance entry is completely ignored if one
+	 * simulation of it had a timeout.
 	 * 
 	 * @param performanceEntries
 	 *            List of performances to process
@@ -1239,9 +1207,8 @@ public final class ComparisonTables {
 	}
 
 	/**
-	 * Processes a given performance list into a sorted map structure. A
-	 * performance entry is completely ignored if one simulation of it had a
-	 * timeout.
+	 * Processes a given performance list into a sorted map structure. A performance entry is completely ignored if one
+	 * simulation of it had a timeout.
 	 * 
 	 * @param performanceEntries
 	 *            List of performances to process
@@ -1290,15 +1257,14 @@ public final class ComparisonTables {
 	}
 
 	/**
-	 * Converts the given value to a double format if the given measure is a
-	 * transition density measure.
+	 * Converts the given value to a double format if the given measure is a transition density measure.
 	 * 
 	 * @param measure
 	 *            Current measure
 	 * @param sumOfAllValues
 	 *            Value to convert
-	 * @return The given value in a double format if the given measure is a
-	 *         transition density measure or <tt>null</tt> if it is not.
+	 * @return The given value in a double format if the given measure is a transition density measure or <tt>null</tt>
+	 *         if it is not.
 	 */
 	private static Double convertTransitionDensityToDouble(final CountingMeasure measure, final long sumOfAllValues) {
 		if (measure == CountingMeasure.BUCHI_TRANSITION_DENSITY_MILLION
@@ -1317,13 +1283,11 @@ public final class ComparisonTables {
 	}
 
 	/**
-	 * Gets all time and counting measures where at least one performance entry
-	 * has a value for.
+	 * Gets all time and counting measures where at least one performance entry has a value for.
 	 * 
 	 * @param performanceEntries
 	 *            Data structure holding the performance entries
-	 * @return All time and counting measures where at least one performance
-	 *         entry has a value for
+	 * @return All time and counting measures where at least one performance entry has a value for
 	 */
 	private static Pair<Set<TimeMeasure>, Set<CountingMeasure>>
 			getCompleteHeaderMeasures(final LinkedList<LinkedList<SimulationPerformance>> performanceEntries) {

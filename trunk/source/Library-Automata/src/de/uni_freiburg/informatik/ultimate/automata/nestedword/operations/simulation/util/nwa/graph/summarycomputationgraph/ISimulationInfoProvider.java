@@ -30,8 +30,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 
 /**
- * Provide information about simulations that are needed for constructing
- * the game graph and for obtaining simulation results.
+ * Provide information about simulations that are needed for constructing the game graph and for obtaining simulation
+ * results.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>

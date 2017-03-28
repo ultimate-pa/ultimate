@@ -139,8 +139,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	}
 
 	/**
-	 * Get number of states and labels for calling initializeMappings and
-	 * initializeLables.
+	 * Get number of states and labels for calling initializeMappings and initializeLables.
 	 */
 	private void preprocessingData() {
 		mNumberOfStates = mOperand.size();
@@ -405,8 +404,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	}
 
 	/**
-	 * Returns true, if there exists an incoming transition to state labeled
-	 * with letter letter.
+	 * Returns true, if there exists an incoming transition to state labeled with letter letter.
 	 * 
 	 * @param state
 	 *            state
@@ -419,8 +417,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	}
 
 	/**
-	 * Returns state, which is predecessors of state with transition labeled
-	 * with letter.
+	 * Returns state, which is predecessors of state with transition labeled with letter.
 	 * 
 	 * @param state
 	 *            state
@@ -471,8 +468,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 	}
 
 	/**
-	 * Method for building the result automaton with reduced states and
-	 * transitions.
+	 * Method for building the result automaton with reduced states and transitions.
 	 */
 	private void buildResult() {
 		// Store new states in ArrayList with size = # blocks in partition.

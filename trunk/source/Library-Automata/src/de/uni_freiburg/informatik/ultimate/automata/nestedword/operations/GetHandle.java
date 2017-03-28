@@ -49,8 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * <li>there is exactly one initial state
  * <li>each state but the last of the run has exactly one successor
  * <li>each state but the first of the run has exactly one predecessor
- * <li>no state occurs more than once in the handle (automaton does not have
- * a cycle shape)
+ * <li>no state occurs more than once in the handle (automaton does not have a cycle shape)
  * </ul>
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)

@@ -32,13 +32,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 
 /**
- * Simple SAT solver.
- * Takes a set of Horn clauses. Goes through all variables in sequence, and
- * tries to set each to true.
+ * Simple SAT solver. Takes a set of Horn clauses. Goes through all variables in sequence, and tries to set each to
+ * true.
  * <p>
- * Note that we stick to the convention introduced in HornClause3.java:
- * the variables 0 and 1 are reserved for constant true and false,
- * respectively.
+ * Note that we stick to the convention introduced in HornClause3.java: the variables 0 and 1 are reserved for constant
+ * true and false, respectively.
  *
  * @author stimpflj
  */
@@ -162,13 +160,10 @@ final class Solver {
 	}
 
 	/**
-	 * Solve the thing. Call only once, i.e.
-	 * char[] = new Solver(numVars, theclauses).solve()
-	 * (Yes, this is a broken design. But I bet Java is happy to create
-	 * another object for you.)
+	 * Solve the thing. Call only once, i.e. char[] = new Solver(numVars, theclauses).solve() (Yes, this is a broken
+	 * design. But I bet Java is happy to create another object for you.)
 	 *
-	 * @return <code>null</code> if there is no solution, or an array
-	 *         of assignments (TRUE or FALSE) for each variable.
+	 * @return <code>null</code> if there is no solution, or an array of assignments (TRUE or FALSE) for each variable.
 	 */
 	char[] solve() {
 		assert mOp.size() == 0;

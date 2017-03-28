@@ -219,8 +219,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 	 * @param inputState
 	 *            input state
 	 * @param skipInternalsCalls
-	 *            true iff internal and call transitions can be
-	 *            skipped
+	 *            true iff internal and call transitions can be skipped
 	 */
 	private void constructStateAndSuccessors(final IResultStateConstructor<STATE> resStateConstructor,
 			final STATE inputState, final boolean skipInternalsCalls) {
@@ -468,10 +467,9 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 	/**
 	 * This map only supports the <code>get()</code> method.
 	 * <p>
-	 * We use it here for the map 'old state -> new state' as this is the only
-	 * operation used later on.
-	 * The reason why we use this map instead of a fresh one is that we create
-	 * the backing data structure already during construction time.
+	 * We use it here for the map 'old state -> new state' as this is the only operation used later on. The reason why
+	 * we use this map instead of a fresh one is that we create the backing data structure already during construction
+	 * time.
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */

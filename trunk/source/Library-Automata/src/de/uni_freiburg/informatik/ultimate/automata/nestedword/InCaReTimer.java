@@ -27,8 +27,8 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 /**
- * Encapsulates three stopwatches, one for internal, one for call, and one for return transitions.
- * Only one stopwatch may run at the same time.
+ * Encapsulates three stopwatches, one for internal, one for call, and one for return transitions. Only one stopwatch
+ * may run at the same time.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */

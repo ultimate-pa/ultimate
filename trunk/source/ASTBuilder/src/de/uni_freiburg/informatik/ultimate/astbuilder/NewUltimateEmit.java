@@ -19,15 +19,21 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ASTBuilder plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ASTBuilder plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ASTBuilder plug-in grant you additional permission
  * to convey the resulting work.
  */
 
 package de.uni_freiburg.informatik.ultimate.astbuilder;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 
@@ -35,62 +41,26 @@ import java.io.IOException;
  *
  */
 @SuppressWarnings("squid:S106")
-public class NewUltimateEmit extends Emit {
+public class NewUltimateEmit extends EmitAstWithVisitors {
+
+	private static final String VISITOR_NAME = "GeneratedBoogieAstVisitor";
+	private static final String TRANSFORMER_NAME = "GeneratedBoogieAstTransformer";
+	private static final String ROOT_NAME = "BoogieASTNode";
+
+	private static final Set<String> OTHERS =
+			new HashSet<>(Arrays.asList(new String[] { VISITOR_NAME, TRANSFORMER_NAME }));
 
 	@Override
-	public void emitClassDeclaration(Node node) throws IOException {
-		mWriter.println("public " + (node.isAbstract() ? "abstract " : "") + "class " + node.getName()
-				+ (node.getParent() != null ? (" extends " + node.getParent().getName()) : " extends BoogieASTNode")
-				+ (node.getInterfaces() != null ? (" implements " + node.getInterfaces()) : "") + " {");
-		formatComment(mWriter, "    ", "The serial version UID.");
-		mWriter.println("    private static final long serialVersionUID = 1L;");
+	public String getRootConstructorParam(final Node node, final boolean optional) {
+		if (OTHERS.contains(node.getName())) {
+			return super.getRootConstructorParam(node, optional);
+		}
+		return "loc";
 	}
 
 	@Override
-	public String getConstructorParam(Node node, boolean optional) {
-		if (node == null) {
-			return "loc";
-		}
-		return super.getConstructorParam(node, optional);
-	}
-
-	@Override
-	protected void fillConstructorParamComment(Node node, StringBuffer param, StringBuffer comment, boolean optional) {
-		if (node.getParent() == null) {
-			param.append("ILocation loc");
-			comment.append("\n@param loc the node's location");
-		}
-		super.fillConstructorParamComment(node, param, comment, optional);
-	}
-
-	@Override
-	public void emitConstructors(Node node) throws IOException {
-		int numNotOptionalParams = 1;
-		int numTotalParams = 1;
-
-		/* Default constructor is only emitted if all fields are writeable */
-		/* Optional constructor is only emitted if there are optional fields */
-		Node ancestor = node;
-		while (ancestor != null) {
-			for (final Parameter p : ancestor.parameters) {
-				numTotalParams++;
-				if (!p.isOptional()) {
-					numNotOptionalParams++;
-				}
-			}
-			ancestor = ancestor.getParent();
-		}
-
-		if (numNotOptionalParams < numTotalParams) {
-			emitConstructor(node, false);
-		}
-		emitConstructor(node, true);
-	}
-
-	@Override
-	public void emitPreamble(Node node) throws IOException {
+	public void emitPreamble(final Node node) throws IOException {
 		super.emitPreamble(node);
-		mWriter.println("import java.util.List;");
 		mWriter.println("import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;");
 		mWriter.println("import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;");
 		if (needsArraysPackage(node)) {
@@ -98,42 +68,7 @@ public class NewUltimateEmit extends Emit {
 		}
 	}
 
-	@Override
-	public void emitNodeHook(Node node) throws IOException {
-		mWriter.println();
-		mWriter.println("    public List<BoogieASTNode> getOutgoingNodes() {");
-		mWriter.println("        List<BoogieASTNode> children = super.getOutgoingNodes();");
-		final Parameter[] parameters = node.getParameters();
-		System.out.println(node.getName() + " has " + parameters.length + " parameters");
-		for (int i = 0; i < parameters.length; i++) {
-
-			if (isNoRegularChild(parameters[i].getType())) {
-				continue;
-			}
-			System.out.println(parameters[i].getName() + " is an array? " + isArray(parameters[i].getType()));
-
-			if (isArray(parameters[i].getType())) {
-				mWriter.println(String.format("        if(%s!=null){", parameters[i].getName()));
-				mWriter.println(
-						String.format("            children.addAll(Arrays.asList(%s));", parameters[i].getName()));
-				mWriter.println("        }");
-			} else {
-				mWriter.println("        children.add(" + parameters[i].getName() + ");");
-			}
-		}
-		mWriter.println("        return children;");
-		mWriter.println("    }");
-	}
-
-	private boolean isNoRegularChild(final String type) {
-		String acc = type;
-		while (acc.endsWith("[]")) {
-			acc = acc.substring(0, acc.length() - 2);
-		}
-		return !(mGrammar.getNodeTable().containsKey(acc));
-	}
-
-	private boolean needsArraysPackage(Node node) {
+	private boolean needsArraysPackage(final Node node) {
 		for (final Parameter s : node.getParameters()) {
 
 			if (isNoRegularChild(s.getType())) {
@@ -147,8 +82,46 @@ public class NewUltimateEmit extends Emit {
 		return false;
 	}
 
-	private boolean isArray(String type) {
-		return type.contains("[");
+	@Override
+	protected Set<String> getNonClassicNode() {
+		return OTHERS;
+	}
+
+	@Override
+	protected String getVisitorName() {
+		return VISITOR_NAME;
+	}
+
+	@Override
+	protected String getTransformerName() {
+		return TRANSFORMER_NAME;
+	}
+
+	@Override
+	protected String getRootClassName() {
+		return ROOT_NAME;
+	}
+
+	@Override
+	protected boolean isRootSerializable() {
+		return true;
+	}
+
+	@Override
+	public void setGrammar(final Grammar grammar) {
+		final List<Entry<String, Node>> parentless = grammar.nodeTable.entrySet().stream()
+				.filter(a -> a.getValue().getParent() == null).collect(Collectors.toList());
+		for (final Entry<String, Node> p : parentless) {
+			final Parameter[] oldParams = p.getValue().getParameters();
+			final int newLength = oldParams == null ? 1 : oldParams.length + 1;
+			final Parameter[] newParams = new Parameter[newLength];
+			if (newLength > 1) {
+				System.arraycopy(oldParams, 0, newParams, 1, newLength - 1);
+			}
+			newParams[0] = new Parameter("loc", "ILocation", "the location of this node", true, true, false);
+			p.getValue().setParameters(newParams);
+		}
+		super.setGrammar(grammar);
 	}
 
 }

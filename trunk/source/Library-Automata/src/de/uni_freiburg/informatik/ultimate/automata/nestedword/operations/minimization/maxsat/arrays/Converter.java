@@ -44,10 +44,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 
 /**
- * Convert a <code>INestedWordAutomaton</code> to a <code>NWA</code> structure.
- * Using the <code>constructMerged()</code> method, a smaller equivalent
- * <code>NestedWordAutomaton</code> can be made later given a
- * <code>Partition</code> structure.
+ * Convert a <code>INestedWordAutomaton</code> to a <code>NWA</code> structure. Using the <code>constructMerged()</code>
+ * method, a smaller equivalent <code>NestedWordAutomaton</code> can be made later given a <code>Partition</code>
+ * structure.
  *
  * @author stimpflj
  * @param <LETTER>
@@ -90,15 +89,13 @@ final class Converter<LETTER, STATE> {
 	private final NwaWithArrays mConverted;
 
 	/**
-	 * Constructor. Remembers the necessary things about the input
-	 * INestedWordAutomaton for later minimization. Stores a NWA converted from
-	 * the INestedWordAutomaton.
+	 * Constructor. Remembers the necessary things about the input INestedWordAutomaton for later minimization. Stores a
+	 * NWA converted from the INestedWordAutomaton.
 	 *
 	 * @param services
 	 *            Ultimate services
 	 * @param stateFactory
-	 *            the StateFactory that was used to make the states in the
-	 *            input automaton
+	 *            the StateFactory that was used to make the states in the input automaton
 	 * @param automaton
 	 *            input INestedWordAutomaton
 	 */
@@ -203,8 +200,7 @@ final class Converter<LETTER, STATE> {
 	}
 
 	/**
-	 * @return NWA generated from input <code>INestedWordAutomaton</code>
-	 *         automaton.
+	 * @return NWA generated from input <code>INestedWordAutomaton</code> automaton.
 	 */
 	NwaWithArrays getNwa() {
 		return mConverted.clone();
@@ -212,13 +208,11 @@ final class Converter<LETTER, STATE> {
 
 	/**
 	 * @param partition
-	 *            A (consistent) <code>Partition</code> which represents state
-	 *            equivalencies. The number of old states in
-	 *            <code>partition</code> (i.e., partition.classOf.length) must
-	 *            be consistent with the NWA stored in this Convert instance.
-	 * @return A NestedWordAutomaton constructed from <code>partition</code> and
-	 *         from the data which was remembered from the input
-	 *         INestedWordAutomaton at construction time.
+	 *            A (consistent) <code>Partition</code> which represents state equivalencies. The number of old states
+	 *            in <code>partition</code> (i.e., partition.classOf.length) must be consistent with the NWA stored in
+	 *            this Convert instance.
+	 * @return A NestedWordAutomaton constructed from <code>partition</code> and from the data which was remembered from
+	 *         the input INestedWordAutomaton at construction time.
 	 */
 	INestedWordAutomaton<LETTER, STATE> constructMerged(final Partition partition) {
 		assert partition.mClassOf.length == mOldState.size();

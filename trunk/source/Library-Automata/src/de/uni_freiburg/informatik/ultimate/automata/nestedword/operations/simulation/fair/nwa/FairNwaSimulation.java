@@ -41,8 +41,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
 /**
- * Simulation that realizes <b>fair simulation</b> for reduction of a given nwa
- * automaton.<br/>
+ * Simulation that realizes <b>fair simulation</b> for reduction of a given nwa automaton.<br/>
  * Once started, results can then be get by using {@link #getResult()}.<br/>
  * <br/>
  * For more information on the type of simulation see {@link FairNwaGameGraph}.
@@ -56,35 +55,29 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
 public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTER, STATE> {
 
 	/**
-	 * Creates a new fair simulation that tries to reduce the given nwa
-	 * automaton using <b>fair simulation</b>. Uses a given collection of
-	 * equivalence classes to optimize the simulation.<br/>
-	 * After construction the simulation can be started and results can be get
-	 * by using {@link #getResult()}.<br/>
+	 * Creates a new fair simulation that tries to reduce the given nwa automaton using <b>fair simulation</b>. Uses a
+	 * given collection of equivalence classes to optimize the simulation.<br/>
+	 * After construction the simulation can be started and results can be get by using {@link #getResult()}.<br/>
 	 * <br/>
-	 * For correctness its important that the inputed automaton has <b>no dead
-	 * ends</b> nor <b>duplicate transitions</b>.
+	 * For correctness its important that the inputed automaton has <b>no dead ends</b> nor <b>duplicate
+	 * transitions</b>.
 	 * 
 	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
+	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
 	 * @param possibleEquivalentClasses
-	 *            A collection of sets which contains states of the nwa
-	 *            automaton that may be merge-able. States which are not in the
-	 *            same set are definitely not merge-able which is used as an
-	 *            optimization for the simulation
+	 *            A collection of sets which contains states of the nwa automaton that may be merge-able. States which
+	 *            are not in the same set are definitely not merge-able which is used as an optimization for the
+	 *            simulation
 	 * @param game
 	 *            The fair nwa game graph to use for simulation.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public FairNwaSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final IStateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
@@ -93,29 +86,24 @@ public final class FairNwaSimulation<LETTER, STATE> extends FairSimulation<LETTE
 	}
 
 	/**
-	 * Creates a new fair simulation that tries to reduce the given nwa
-	 * automaton using <b>fair simulation</b>.<br/>
-	 * After construction the simulation starts and results can be get by using
-	 * {@link #getResult()}.<br/>
+	 * Creates a new fair simulation that tries to reduce the given nwa automaton using <b>fair simulation</b>.<br/>
+	 * After construction the simulation starts and results can be get by using {@link #getResult()}.<br/>
 	 * <br/>
-	 * For correctness its important that the inputed automaton has <b>no dead
-	 * ends</b> nor <b>duplicate transitions</b>.
+	 * For correctness its important that the inputed automaton has <b>no dead ends</b> nor <b>duplicate
+	 * transitions</b>.
 	 * 
 	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
+	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
 	 * @param game
 	 *            The fair nwa game graph to use for simulation.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public FairNwaSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final IStateFactory<STATE> stateFactory, final FairNwaGameGraph<LETTER, STATE> game)

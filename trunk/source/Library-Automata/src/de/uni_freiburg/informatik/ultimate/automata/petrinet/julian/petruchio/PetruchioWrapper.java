@@ -117,8 +117,8 @@ public class PetruchioWrapper<S, C> {
 	}
 
 	/**
-	 * Write Petri net to file by using Petruchio. The ending of the filename
-	 * determines how the Petri net is encoded (e.g., .spec, .lola, etc.).
+	 * Write Petri net to file by using Petruchio. The ending of the filename determines how the Petri net is encoded
+	 * (e.g., .spec, .lola, etc.).
 	 * 
 	 * @param filename
 	 *            file name

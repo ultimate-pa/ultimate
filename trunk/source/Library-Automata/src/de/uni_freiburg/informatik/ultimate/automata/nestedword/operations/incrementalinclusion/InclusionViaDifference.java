@@ -42,12 +42,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 
 /**
- * This is an implementation of our incremental inclusion check based on a
- * difference construction. This implementation is not efficient and should
- * not used in practice. We use this implementation only for comparison with
- * the "real" incremental inclusion.
- * This implementation could be improved by applying a removal of dead ends
- * and a minimization to the difference after each step.
+ * This is an implementation of our incremental inclusion check based on a difference construction. This implementation
+ * is not efficient and should not used in practice. We use this implementation only for comparison with the "real"
+ * incremental inclusion. This implementation could be improved by applying a removal of dead ends and a minimization to
+ * the difference after each step.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -84,9 +82,8 @@ public class InclusionViaDifference<LETTER, STATE, SF extends IIntersectionState
 	}
 
 	/**
-	 * Constructor that uses different stateFactories for intersection and
-	 * determinization. This is currently needed when we use the inclusion
-	 * check in program verification.
+	 * Constructor that uses different stateFactories for intersection and determinization. This is currently needed
+	 * when we use the inclusion check in program verification.
 	 * 
 	 * @param services
 	 *            Ultimate services

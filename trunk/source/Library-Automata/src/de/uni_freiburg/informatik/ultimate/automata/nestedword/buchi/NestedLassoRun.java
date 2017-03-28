@@ -29,8 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 
 /**
- * Infinite run of a Büchi nested word automaton for a nested word of the
- * form <tt>u.v^ω</tt>.
+ * Infinite run of a Büchi nested word automaton for a nested word of the form <tt>u.v^ω</tt>.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>

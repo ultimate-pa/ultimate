@@ -30,11 +30,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.TransitionType;
 
 /**
- * Represents a sink that is winning for Spoiler. If such a sink exists with
- * <tt>sinkEntry</tt> it means that one can move from that vertex into a sink
- * with priority 1, which is winning for Spoiler. In detail such a sink is
- * <b>sinkEntry -> DuplicatorSink -> SpoilerSink -> DuplicatorSink -> ...</b>.
- * Where <tt>SpoilerSink</tt> has a priority of 1.
+ * Represents a sink that is winning for Spoiler. If such a sink exists with <tt>sinkEntry</tt> it means that one can
+ * move from that vertex into a sink with priority 1, which is winning for Spoiler. In detail such a sink is
+ * <b>sinkEntry -> DuplicatorSink -> SpoilerSink -> DuplicatorSink -> ...</b>. Where <tt>SpoilerSink</tt> has a priority
+ * of 1.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -64,9 +63,8 @@ public final class SpoilerWinningSinkExtended<LETTER, STATE> implements IWinning
 	private final SpoilerNwaVertex<LETTER, STATE> mSpoilerSink;
 
 	/**
-	 * Creates a new sink that initially is not connected to the game graph.
-	 * Therefore {@link #addToGraph()} must be used. Multiple entries can be
-	 * added using {@link #connectToEntry(SpoilerNwaVertex)}.
+	 * Creates a new sink that initially is not connected to the game graph. Therefore {@link #addToGraph()} must be
+	 * used. Multiple entries can be added using {@link #connectToEntry(SpoilerNwaVertex)}.
 	 * 
 	 * @param graph
 	 *            The game graph this sink belongs to

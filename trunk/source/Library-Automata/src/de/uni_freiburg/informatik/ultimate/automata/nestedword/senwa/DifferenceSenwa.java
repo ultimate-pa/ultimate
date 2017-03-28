@@ -82,14 +82,12 @@ public final class DifferenceSenwa<LETTER, STATE>
 	private final SenwaWalker<LETTER, STATE> mSenwaWalker;
 
 	/**
-	 * Maps a state in resulting automaton to the DifferenceState for which it
-	 * was created.
+	 * Maps a state in resulting automaton to the DifferenceState for which it was created.
 	 */
 	private final Map<STATE, DifferenceState<LETTER, STATE>> mResult2Operand = new HashMap<>();
 
 	/**
-	 * Maps a DifferenceState and an entry state to its representative in the
-	 * resulting automaton.
+	 * Maps a DifferenceState and an entry state to its representative in the resulting automaton.
 	 */
 	private final Map<DifferenceState<LETTER, STATE>, Map<DifferenceState<LETTER, STATE>, STATE>> mEntry2Operand2Result =
 			new HashMap<>();
@@ -130,8 +128,7 @@ public final class DifferenceSenwa<LETTER, STATE>
 	 * @param stateDeterminizer
 	 *            state determinizer
 	 * @param removeDeadEndsImmediately
-	 *            true iff dead ends should be removed
-	 *            immediately
+	 *            true iff dead ends should be removed immediately
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */

@@ -92,12 +92,12 @@ public class BasicPredicate extends ModernAnnotations implements IPredicate {
 	}
 
 	@Override
-	public int hashCode() {
+	public final int hashCode() {
 		return mSerialNumber;
 	}
 
 	@Override
-	public boolean equals(final Object obj) {
+	public final boolean equals(final Object obj) {
 		if (this == obj) {
 			return true;
 		}

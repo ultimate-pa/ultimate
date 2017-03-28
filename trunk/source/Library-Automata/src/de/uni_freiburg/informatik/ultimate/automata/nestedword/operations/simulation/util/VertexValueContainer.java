@@ -55,8 +55,7 @@ public final class VertexValueContainer {
 	private int mProgressMeasure;
 
 	/**
-	 * Creates a new vertex value container where all values are
-	 * {@link #NO_VALUE}.
+	 * Creates a new vertex value container where all values are {@link #NO_VALUE}.
 	 */
 	public VertexValueContainer() {
 		mBestNeighborMeasure = NO_VALUE;
@@ -92,8 +91,7 @@ public final class VertexValueContainer {
 	}
 
 	/**
-	 * Ensures that a given value is valid by comparing it to the internal field
-	 * {@link #NO_VALUE}.
+	 * Ensures that a given value is valid by comparing it to the internal field {@link #NO_VALUE}.
 	 * 
 	 * @param value
 	 *            Value to ensure that it is valid

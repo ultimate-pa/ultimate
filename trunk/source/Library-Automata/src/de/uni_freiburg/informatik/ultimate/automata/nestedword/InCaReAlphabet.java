@@ -32,10 +32,9 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 
 /**
- * Alphabet consisting of three not necessarily disjoint sets.
- * For visibly pushdown automata a (disjoint) partition into internal, call, and
- * return alphabets is necessary. For our NestedWordAutomata this segmentation
- * can increase the performance of operations but is not necessary.
+ * Alphabet consisting of three not necessarily disjoint sets. For visibly pushdown automata a (disjoint) partition into
+ * internal, call, and return alphabets is necessary. For our NestedWordAutomata this segmentation can increase the
+ * performance of operations but is not necessary.
  * 
  * @author Matthias Heizmann
  * @param <LETTER>

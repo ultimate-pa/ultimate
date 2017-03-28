@@ -101,8 +101,8 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	}
 
 	/**
-	 * @return Gets the "root" event, which is a dummy (has no transition
-	 *         associated) with all initial conditions as successors.
+	 * @return Gets the "root" event, which is a dummy (has no transition associated) with all initial conditions as
+	 *         successors.
 	 */
 	public Event<S, C> getDummyRoot() {
 		return mDummyRoot;
@@ -154,8 +154,8 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	}
 
 	/**
-	 * Checks if a new event {@code event}, with regards to {@code order} is a
-	 * cut-off event. In that case, companions are computed as a side-effect.
+	 * Checks if a new event {@code event}, with regards to {@code order} is a cut-off event. In that case, companions
+	 * are computed as a side-effect.
 	 * 
 	 * @param event
 	 *            event
@@ -204,8 +204,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	@SuppressWarnings("unused")
 	private boolean isInCoRelationChecker(final Condition<S, C> c1, final Condition<S, C> c2) {
 		/**
-		 * Christian 2016-08-16: Probably a bug: isAncestorChecker(c1, c2)
-		 * is repeated twice.
+		 * Christian 2016-08-16: Probably a bug: isAncestorChecker(c1, c2) is repeated twice.
 		 */
 		return !(isAncestorChecker(c1, c2) || isAncestorChecker(c1, c2) || inConflict(c1, c2));
 	}
@@ -259,8 +258,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	}
 
 	/**
-	 * returns all minimal events of the branching process with respect to the
-	 * causal order.
+	 * returns all minimal events of the branching process with respect to the causal order.
 	 * 
 	 * @return all minimal events
 	 */
@@ -288,8 +286,7 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	}
 
 	/**
-	 * Check if the Conditions c1 and c2 are in causal relation. Conditions c1
-	 * and c2 are in causal relation if
+	 * Check if the Conditions c1 and c2 are in causal relation. Conditions c1 and c2 are in causal relation if
 	 * <ul>
 	 * <li>c1 != c2 and c1 is ancestor of c2</li>
 	 * <li>or c1 != c2 and c2 is ancestor of c1</li>
@@ -336,9 +333,8 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	}
 
 	/**
-	 * Check if the Conditions c1 and c2 are in conflict. In a branching process
-	 * Conditions c1 and c2 are in conflict iff c1 != c2 and there exist two
-	 * paths leading to c1 and c2 which start at the same condition and diverge
+	 * Check if the Conditions c1 and c2 are in conflict. In a branching process Conditions c1 and c2 are in conflict
+	 * iff c1 != c2 and there exist two paths leading to c1 and c2 which start at the same condition and diverge
 	 * immediately and never converge again.
 	 * 
 	 * @param c1
@@ -356,9 +352,8 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	}
 
 	/**
-	 * @return if c1 != c2 and c2 is no ancestor of c1 the result is true iff
-	 *         there is a path from a condition in c2Ancestors to c1 that does
-	 *         not contain other elements of c2Ancestors.
+	 * @return if c1 != c2 and c2 is no ancestor of c1 the result is true iff there is a path from a condition in
+	 *         c2Ancestors to c1 that does not contain other elements of c2Ancestors.
 	 */
 	private boolean conflictPathCheck(final Condition<S, C> c1, final Condition<S, C> c2,
 			final Set<Object> c2Ancestors) {
@@ -383,9 +378,8 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	}
 
 	/**
-	 * @return Set containing all Conditions and Events which are (strict)
-	 *         ancestors of a Condition. The dummyRoot is not considered as an
-	 *         ancestor.
+	 * @return Set containing all Conditions and Events which are (strict) ancestors of a Condition. The dummyRoot is
+	 *         not considered as an ancestor.
 	 */
 	private Set<Object> ancestorNodes(final Condition<S, C> condition) {
 		final Set<Object> ancestorConditionAndEvents = new HashSet<>();
@@ -394,8 +388,8 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	}
 
 	/**
-	 * @return Set containing all Conditions and Events which are ancestors of an
-	 *         Event. The dummyRoot is not considered as an ancestor.
+	 * @return Set containing all Conditions and Events which are ancestors of an Event. The dummyRoot is not considered
+	 *         as an ancestor.
 	 */
 	private Set<Object> ancestorNodes(final Event<S, C> event) {
 		final Set<Object> ancestorConditionAndEvents = new HashSet<>();
@@ -404,9 +398,8 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	}
 
 	/**
-	 * Add to a set that contains only Conditions and Events the Condition and
-	 * all (strict) ancestors. The dummyRoot is not considered as an
-	 * ancestor.
+	 * Add to a set that contains only Conditions and Events the Condition and all (strict) ancestors. The dummyRoot is
+	 * not considered as an ancestor.
 	 */
 	private void addAllAncestors(final Condition<S, C> condition, final Set<Object> setOfConditionsAndEvents) {
 		final Event<S, C> pred = condition.getPredecessorEvent();
@@ -415,8 +408,8 @@ public final class BranchingProcess<S, C> implements IAutomaton<S, C> {
 	}
 
 	/**
-	 * Add to a set that contains only Conditions and Events the Event and all
-	 * (strict) ancestors. The dummyRoot is not considered as an ancestor.
+	 * Add to a set that contains only Conditions and Events the Event and all (strict) ancestors. The dummyRoot is not
+	 * considered as an ancestor.
 	 */
 	private void addAllAncestors(final Event<S, C> event, final Set<Object> setOfConditionsAndEvents) {
 		if (event == mDummyRoot) {

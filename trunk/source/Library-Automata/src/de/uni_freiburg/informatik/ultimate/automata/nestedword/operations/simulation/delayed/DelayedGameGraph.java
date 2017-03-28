@@ -51,19 +51,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
 
 /**
  * Game graph that realizes <b>delayed simulation</b>.<br/>
- * In delayed simulation each time <i>Spoiler</i> visits a final state
- * <i>Duplicator</i> must at least visit one in the future for coverage.<br/>
- * To reflect <i>Duplicator</i>s coverage the delayed game graph uses vertices
- * that have an extra bit.<br/>
+ * In delayed simulation each time <i>Spoiler</i> visits a final state <i>Duplicator</i> must at least visit one in the
+ * future for coverage.<br/>
+ * To reflect <i>Duplicator</i>s coverage the delayed game graph uses vertices that have an extra bit.<br/>
  * <br/>
- * If its impossible for <i>Spoiler</i> to build a word such that
- * <i>Duplicator</i> can not fulfill its condition we say <b>q1 delayed
- * simulates q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of
- * <i>Duplicator</i>.
- * The implementation is based on the following paper. Kousha Etessami, Thomas
- * Wilke, Rebecca A. Schuller: Fair Simulation Relations, Parity Games, and
- * State Space Reduction for Bu"chi Automata. SIAM J. Comput. 34(5): 1159-1175
- * (2005)
+ * If its impossible for <i>Spoiler</i> to build a word such that <i>Duplicator</i> can not fulfill its condition we say
+ * <b>q1 delayed simulates q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of <i>Duplicator</i>. The
+ * implementation is based on the following paper. Kousha Etessami, Thomas Wilke, Rebecca A. Schuller: Fair Simulation
+ * Relations, Parity Games, and State Space Reduction for Bu"chi Automata. SIAM J. Comput. 34(5): 1159-1175 (2005)
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
@@ -99,16 +94,13 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * @param stateFactory
 	 *            State factory used for state creation
 	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
+	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 * @param buechi
-	 *            The underlying buechi automaton from which the game graph gets
-	 *            generated.
+	 *            The underlying buechi automaton from which the game graph gets generated.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public DelayedGameGraph(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final IProgressAwareTimer progressTimer, final ILogger logger,
@@ -335,18 +327,16 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Gets the amount of {@link SpoilerVertex} objects that exist in the game
-	 * graph with representation (q0, q1). Since there can be such vertices with
-	 * the extra bit false and true the returned value is between zero and two.
+	 * Gets the amount of {@link SpoilerVertex} objects that exist in the game graph with representation (q0, q1). Since
+	 * there can be such vertices with the extra bit false and true the returned value is between zero and two.
 	 * 
 	 * @param q0
 	 *            The state spoiler is at
 	 * @param q1
 	 *            The state duplicator is at
-	 * @return The amount of {@link SpoilerVertex} objects that exist in the
-	 *         game graph with representation (q0, q1). Since there can be such
-	 *         vertices with the extra bit false and true the returned value is
-	 *         between zero and two.
+	 * @return The amount of {@link SpoilerVertex} objects that exist in the game graph with representation (q0, q1).
+	 *         Since there can be such vertices with the extra bit false and true the returned value is between zero and
+	 *         two.
 	 */
 	private int getAmountOfBitsForSpoilerVertices(final STATE q0, final STATE q1) {
 		int amount = 0;

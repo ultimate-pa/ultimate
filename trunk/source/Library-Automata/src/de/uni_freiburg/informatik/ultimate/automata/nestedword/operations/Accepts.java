@@ -58,13 +58,11 @@ public final class Accepts<LETTER, STATE> extends AbstractAcceptance<LETTER, STA
 	 * @param word
 	 *            word
 	 * @param prefixOfIntputIsAccepted
-	 *            is a prefix of the input accepted? Coincides with usual
-	 *            acceptance for automata where accepting states can not be
-	 *            left.
+	 *            is a prefix of the input accepted? Coincides with usual acceptance for automata where accepting states
+	 *            can not be left.
 	 * @param inputIsSuffixOfAcceptedWord
-	 *            is the input the suffix of an accepted word? Coincides with
-	 *            the usual acceptance for automata where each transition can
-	 *            also (nondeterministically) lead to an initial state.
+	 *            is the input the suffix of an accepted word? Coincides with the usual acceptance for automata where
+	 *            each transition can also (nondeterministically) lead to an initial state.
 	 * @throws AutomataLibraryException
 	 *             if acceptance fails
 	 */
@@ -168,9 +166,8 @@ public final class Accepts<LETTER, STATE> extends AbstractAcceptance<LETTER, STA
 	}
 
 	/**
-	 * Check if set of configurations contains an accepting configuration. We
-	 * say that a configuration is accepting if the topmost stack element is an
-	 * accepting state.
+	 * Check if set of configurations contains an accepting configuration. We say that a configuration is accepting if
+	 * the topmost stack element is an accepting state.
 	 * 
 	 * @param configurations
 	 *            set of configurations

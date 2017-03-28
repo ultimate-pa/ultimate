@@ -69,16 +69,15 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 	/**
 	 * Check if a Buchi nested word automaton accepts a nested lasso word.
 	 * <p>
-	 * Returns true iff nlw is accepted by nwa. Note that here a nested lasso
-	 * word is always rejected if its loop contains pending returns.
+	 * Returns true iff nlw is accepted by nwa. Note that here a nested lasso word is always rejected if its loop
+	 * contains pending returns.
 	 * 
 	 * @param services
 	 *            Ultimate services
 	 * @param nlw
 	 *            NestedLassoWord whose acceptance is checked
 	 * @param nwa
-	 *            NestedWordAutomaton which is interpreted as Buchi nested word
-	 *            automaton here
+	 *            NestedWordAutomaton which is interpreted as Buchi nested word automaton here
 	 */
 	public BuchiAcceptsRecursive(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final NestedLassoWord<LETTER> nlw) {
@@ -176,13 +175,11 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 	 * <li>we started processing mStem in some state,
 	 * <li>we processed mStem until position currentPosition
 	 * <li>and ended in state currentState,
-	 * <li>while processing, we pushed the current state to callStack whenever we
-	 * processed a call position and pop'ed the top element from the callStack whenever
-	 * we processed a return position.
+	 * <li>while processing, we pushed the current state to callStack whenever we processed a call position and pop'ed
+	 * the top element from the callStack whenever we processed a return position.
 	 * </ul>
-	 * getReachableStates computes the states that we can reach by processing
-	 * mStem further. If the automaton is deterministic this result will always be a
-	 * singleton.
+	 * getReachableStates computes the states that we can reach by processing mStem further. If the automaton is
+	 * deterministic this result will always be a singleton.
 	 */
 	private Set<STATE> getReachableStates(final int currentPosition, final STATE currentState,
 			final List<STATE> callStack) {
@@ -220,28 +217,23 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 	}
 
 	/**
-	 * Recursive check for an accepting loop run for the NestedWord mLoop.
-	 * Therefore we process mLoop several times (see
-	 * examples/Automata/BuchiNWA/BugAccepts). Before reading mLoop, (again)
-	 * we store the current state in hondaCandidates. Whenever a
-	 * hondaCandidate was visited twice we terminate.
+	 * Recursive check for an accepting loop run for the NestedWord mLoop. Therefore we process mLoop several times (see
+	 * examples/Automata/BuchiNWA/BugAccepts). Before reading mLoop, (again) we store the current state in
+	 * hondaCandidates. Whenever a hondaCandidate was visited twice we terminate.
 	 * <p>
 	 * Assume,
 	 * <ul>
-	 * <li>before reading mLoop, we have always been in one of the states
-	 * stored in the domain of hondaCandidates2visitedFinal,
+	 * <li>before reading mLoop, we have always been in one of the states stored in the domain of
+	 * hondaCandidates2visitedFinal,
 	 * <li>we processed mLoop until position currentPosition
 	 * <li>and ended in state currentState,
-	 * <li>since visiting hondaState (for the first time) we visited an
-	 * accepting state, iff the image of hondateStates is true.
-	 * <li>while processing, we pushed the current state to callStack whenever
-	 * we processed a call position and pop'ed the top element from the
-	 * callStack whenever we processed a return position.
+	 * <li>since visiting hondaState (for the first time) we visited an accepting state, iff the image of hondateStates
+	 * is true.
+	 * <li>while processing, we pushed the current state to callStack whenever we processed a call position and pop'ed
+	 * the top element from the callStack whenever we processed a return position.
 	 * </ul>
-	 * isCompleteableToAcceptingRun gives an answer to the question if
-	 * processing mLoop further can (nondeterminism! We have to check all
-	 * possibilities) lead to hondaState such that an accepting state was
-	 * visited.
+	 * isCompleteableToAcceptingRun gives an answer to the question if processing mLoop further can (nondeterminism! We
+	 * have to check all possibilities) lead to hondaState such that an accepting state was visited.
 	 */
 	boolean isCompleteableToAcceptingRun(final Map<STATE, Boolean> hondaCandidates2visitedFinal,
 			final int currentPositionIn, final STATE currentState, final List<STATE> callStack) {

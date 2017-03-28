@@ -103,11 +103,11 @@ public class BoogieOutput {
 	 */
 	PrintWriter mWriter;
 
-	public BoogieOutput(PrintWriter output) {
+	public BoogieOutput(final PrintWriter output) {
 		mWriter = output;
 	}
 
-	public void printBoogieProgram(Unit unit) {
+	public void printBoogieProgram(final Unit unit) {
 		for (final Declaration d : unit.getDeclarations()) {
 			if (d instanceof TypeDeclaration) {
 				printTypeDeclaration((TypeDeclaration) d);
@@ -138,7 +138,7 @@ public class BoogieOutput {
 	 *            bitvec concat 7: addition 8: multiplication 9: unary
 	 *            minus/logical not 10: struct/array/bitvector access 11: old
 	 */
-	private void appendExpression(StringBuilder sb, Expression expr, int precedence) {
+	private void appendExpression(final StringBuilder sb, final Expression expr, int precedence) {
 		if (expr instanceof BinaryExpression) {
 			final BinaryExpression binexpr = (BinaryExpression) expr;
 			int opPrec, lPrec, rPrec;
@@ -438,7 +438,7 @@ public class BoogieOutput {
 	 * @param precedence
 	 *            TODO: what is precedence?
 	 */
-	private void appendType(StringBuilder sb, ASTType type, int precedence) {
+	public void appendType(final StringBuilder sb, final ASTType type, final int precedence) {
 		if (type instanceof NamedType) {
 			final NamedType nt = (NamedType) type;
 			final ASTType[] args = nt.getTypeArgs();
@@ -502,7 +502,7 @@ public class BoogieOutput {
 	 * @param attributes
 	 *            the attributes to handle.
 	 */
-	private void appendAttributes(StringBuilder sb, Attribute[] attributes) {
+	private void appendAttributes(final StringBuilder sb, final Attribute[] attributes) {
 		for (final Attribute a : attributes) {
 			if (a instanceof NamedAttribute) {
 				final NamedAttribute attr = (NamedAttribute) a;
@@ -527,7 +527,7 @@ public class BoogieOutput {
 		}
 	}
 
-	public void appendExpression(StringBuilder sb, Expression expr) {
+	public void appendExpression(final StringBuilder sb, final Expression expr) {
 		appendExpression(sb, expr, 0);
 	}
 
@@ -540,7 +540,7 @@ public class BoogieOutput {
 	 * @param vls
 	 *            the variable declaration that are appended.
 	 */
-	public void appendVarList(StringBuilder sb, VarList[] vls) {
+	public void appendVarList(final StringBuilder sb, final VarList[] vls) {
 		String comma = "";
 		for (final VarList vl : vls) {
 			sb.append(comma);
@@ -571,7 +571,7 @@ public class BoogieOutput {
 	 * @param decl
 	 *            the type declaration.
 	 */
-	public void printTypeDeclaration(TypeDeclaration decl) {
+	public void printTypeDeclaration(final TypeDeclaration decl) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("type ");
 		appendAttributes(sb, decl.getAttributes());
@@ -597,7 +597,7 @@ public class BoogieOutput {
 	 * @param decl
 	 *            the function declaration.
 	 */
-	public void printFunctionDeclaration(FunctionDeclaration decl) {
+	public void printFunctionDeclaration(final FunctionDeclaration decl) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("function ");
 		appendAttributes(sb, decl.getAttributes());
@@ -631,13 +631,13 @@ public class BoogieOutput {
 	 * @param decl
 	 *            the procedure to print.
 	 */
-	public void printProcedure(Procedure decl) {
+	public void printProcedure(final Procedure decl) {
 		final StringBuilder sb = new StringBuilder();
 		appendProcedure(sb, decl);
 		mWriter.print(sb.toString());
 	}
 
-	public void appendProcedure(StringBuilder sb, Procedure decl) {
+	public void appendProcedure(final StringBuilder sb, final Procedure decl) {
 		if (decl.getSpecification() != null) {
 			sb.append("procedure ");
 		} else {
@@ -681,13 +681,13 @@ public class BoogieOutput {
 	 * @param spec
 	 *            the specification to print.
 	 */
-	public void printSpecification(Specification spec) {
+	public void printSpecification(final Specification spec) {
 		final StringBuilder sb = new StringBuilder();
 		appendSpecification(sb, spec);
 		mWriter.print(sb.toString());
 	}
 
-	public void appendSpecification(StringBuilder sb, Specification spec) {
+	public void appendSpecification(final StringBuilder sb, final Specification spec) {
 		if (spec.isFree()) {
 			sb.append("free ");
 		}
@@ -719,13 +719,13 @@ public class BoogieOutput {
 	 * @param body
 	 *            the body to print.
 	 */
-	public void printBody(Body body) {
+	public void printBody(final Body body) {
 		final StringBuilder sb = new StringBuilder();
 		appendBody(sb, body);
 		mWriter.print(sb.toString());
 	}
 
-	public void appendBody(StringBuilder sb, Body body) {
+	public void appendBody(final StringBuilder sb, final Body body) {
 		for (final VariableDeclaration decl : body.getLocalVars()) {
 			appendVariableDeclaration(sb, decl, "    ");
 		}
@@ -743,17 +743,17 @@ public class BoogieOutput {
 	 * @param indent
 	 *            the current indent level.
 	 */
-	public void printBlock(Statement[] block, String indent) {
+	public void printBlock(final Statement[] block, final String indent) {
 		final StringBuilder sb = new StringBuilder();
 		appendBlock(sb, block, indent);
 		mWriter.print(sb.toString());
 	}
 
-	public void appendBlock(StringBuilder sb, Statement[] block) {
+	public void appendBlock(final StringBuilder sb, final Statement[] block) {
 		appendBlock(sb, block, "");
 	}
 
-	public void appendBlock(StringBuilder sb, Statement[] block, String indent) {
+	public void appendBlock(final StringBuilder sb, final Statement[] block, final String indent) {
 		final String nextIndent = indent + "    ";
 		for (final Statement s : block) {
 			if (s instanceof Label) {
@@ -767,7 +767,7 @@ public class BoogieOutput {
 
 	}
 
-	public void appendStatement(StringBuilder sb, Statement s) {
+	public void appendStatement(final StringBuilder sb, final Statement s) {
 		appendStatement(sb, s, "");
 	}
 
@@ -781,7 +781,7 @@ public class BoogieOutput {
 	 * @param indent
 	 *            The current identation
 	 */
-	public void appendStatement(StringBuilder sb, Statement s, String indent) {
+	public void appendStatement(final StringBuilder sb, final Statement s, final String indent) {
 		sb.append(indent);
 		if (s instanceof AssertStatement) {
 			final AssertStatement assertstmt = (AssertStatement) s;
@@ -913,7 +913,7 @@ public class BoogieOutput {
 	 * @param indent
 	 *            the current indent level.
 	 */
-	public void printStatement(Statement s, String indent) {
+	public void printStatement(final Statement s, final String indent) {
 		final StringBuilder sb = new StringBuilder();
 		appendStatement(sb, s, indent);
 		mWriter.print(sb.toString());
@@ -927,7 +927,7 @@ public class BoogieOutput {
 	 * @param lhs
 	 *            the left hand side
 	 */
-	private void appendLHS(StringBuilder sb, LeftHandSide lhs) {
+	private void appendLHS(final StringBuilder sb, final LeftHandSide lhs) {
 		if (lhs instanceof VariableLHS) {
 			sb.append(((VariableLHS) lhs).getIdentifier());
 		} else if (lhs instanceof ArrayLHS) {
@@ -957,7 +957,7 @@ public class BoogieOutput {
 	 * @param decl
 	 *            the axiom to print.
 	 */
-	public void printAxiom(Axiom decl) {
+	public void printAxiom(final Axiom decl) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("axiom ");
 		appendAttributes(sb, decl.getAttributes());
@@ -974,13 +974,13 @@ public class BoogieOutput {
 	 * @param indent
 	 *            the current indent level.
 	 */
-	public void printVarDeclaration(VariableDeclaration decl, String indent) {
+	public void printVarDeclaration(final VariableDeclaration decl, final String indent) {
 		final StringBuilder sb = new StringBuilder();
 		appendVariableDeclaration(sb, decl, indent);
 		mWriter.println(sb.toString());
 	}
 
-	protected void appendVariableDeclaration(StringBuilder sb, VariableDeclaration decl, String indent) {
+	protected void appendVariableDeclaration(final StringBuilder sb, final VariableDeclaration decl, final String indent) {
 		sb.append(indent).append("var ");
 		appendAttributes(sb, decl.getAttributes());
 		appendVarList(sb, decl.getVariables());
@@ -988,7 +988,7 @@ public class BoogieOutput {
 		sb.append(LINEBREAK);
 	}
 
-	public void appendVariableDeclaration(StringBuilder sb, VariableDeclaration decl) {
+	public void appendVariableDeclaration(final StringBuilder sb, final VariableDeclaration decl) {
 		appendVariableDeclaration(sb, decl, "");
 	}
 
@@ -998,7 +998,7 @@ public class BoogieOutput {
 	 * @param decl
 	 *            the constant declaration to print.
 	 */
-	public void printConstDeclaration(ConstDeclaration decl) {
+	public void printConstDeclaration(final ConstDeclaration decl) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("const ");
 		appendAttributes(sb, decl.getAttributes());

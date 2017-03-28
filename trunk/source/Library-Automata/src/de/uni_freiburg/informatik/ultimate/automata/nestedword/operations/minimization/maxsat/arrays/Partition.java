@@ -55,10 +55,8 @@ final class Partition {
 	 * Check consistency of equivalence classes:
 	 * <ul>
 	 * <li><code>0 &le; numClasses</code>
-	 * <li><code>0 &le; x &lt; numClasses</code> for all <code>x</code> in
-	 * <code>classOf</code>
-	 * <li><code>x</code> in <code>classOf</code> for each <code>x</code> in [0,
-	 * <code>numClasses</code>)
+	 * <li><code>0 &le; x &lt; numClasses</code> for all <code>x</code> in <code>classOf</code>
+	 * <li><code>x</code> in <code>classOf</code> for each <code>x</code> in [0, <code>numClasses</code>)
 	 * </ul>
 	 *
 	 * @param eq
@@ -92,19 +90,16 @@ final class Partition {
 	}
 
 	/**
-	 * This static utility method is useful for making a Partition structure
-	 * from a root node array as returned by UnionFind.
+	 * This static utility method is useful for making a Partition structure from a root node array as returned by
+	 * UnionFind.
 	 * <p>
-	 * It creates a copy of the input array with the values renamed to fit in
-	 * the range <code>[0, numClasses)</code> where <code>numClasses</code> is
-	 * the number of distinct values in the array.
+	 * It creates a copy of the input array with the values renamed to fit in the range <code>[0, numClasses)</code>
+	 * where <code>numClasses</code> is the number of distinct values in the array.
 	 * <p>
-	 * This "compressed" array is returned together with the
-	 * <code>numClasses</code> value as a <code>Partition</code>.
+	 * This "compressed" array is returned together with the <code>numClasses</code> value as a <code>Partition</code>.
 	 *
 	 * @param root
-	 *            Represents equivalence classes.
-	 *            <code>0 <= root[x] < root.length</code> for all x.
+	 *            Represents equivalence classes. <code>0 <= root[x] < root.length</code> for all x.
 	 * @return a <code>Partition</code> carrying the compressed array
 	 */
 	public static Partition compress(final int[] root) {

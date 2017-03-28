@@ -57,8 +57,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Standard implementation of the
- * #{@link de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton}
+ * Standard implementation of the #{@link de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton}
  * interface.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -84,45 +83,41 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	private final Set<LETTER> mReturnAlphabet;
 
 	/**
-	 * Set of internal transitions PREs x LETTERs x SUCCs stored as map PREs ->
-	 * LETTERs -> SUCCs The keySet of this map is used to store the set of
-	 * states of this automaton.
+	 * Set of internal transitions PREs x LETTERs x SUCCs stored as map PREs -> LETTERs -> SUCCs The keySet of this map
+	 * is used to store the set of states of this automaton.
 	 */
 	private final Map<STATE, Map<LETTER, Set<STATE>>> mInternalOut = new HashMap<>();
 
 	/**
-	 * Set of internal transitions PREs x LETTERs x SUCCs stored as map SUCCs ->
-	 * LETTERs -> PREs.
+	 * Set of internal transitions PREs x LETTERs x SUCCs stored as map SUCCs -> LETTERs -> PREs.
 	 */
 	private final Map<STATE, Map<LETTER, Set<STATE>>> mInternalIn = new HashMap<>();
 
 	/**
-	 * Set of call transitions PREs x LETTERs x SUCCs stored as map PREs ->
-	 * LETTERs -> SUCCs.
+	 * Set of call transitions PREs x LETTERs x SUCCs stored as map PREs -> LETTERs -> SUCCs.
 	 */
 	private final Map<STATE, Map<LETTER, Set<STATE>>> mCallOut = new HashMap<>();
 
 	/**
-	 * Set of call transitions PREs x LETTERs x SUCCs stored as map SUCCs ->
-	 * LETTERs -> PREs.
+	 * Set of call transitions PREs x LETTERs x SUCCs stored as map SUCCs -> LETTERs -> PREs.
 	 */
 	private final Map<STATE, Map<LETTER, Set<STATE>>> mCallIn = new HashMap<>();
 
 	/**
-	 * Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as
-	 * map LinPREs -> LETTERs -> HierPREs -> SUCCs.
+	 * Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as map LinPREs -> LETTERs -> HierPREs ->
+	 * SUCCs.
 	 */
 	private final Map<STATE, Map<LETTER, Map<STATE, Set<STATE>>>> mReturnOut = new HashMap<>();
 
 	/**
-	 * Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as
-	 * map HierPREs -> LETTERs -> LinPREs -> SUCCs.
+	 * Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as map HierPREs -> LETTERs -> LinPREs ->
+	 * SUCCs.
 	 */
 	private final Map<STATE, Map<LETTER, Map<STATE, Set<STATE>>>> mReturnSummary = new HashMap<>();
 
 	/**
-	 * Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as
-	 * map SUCCs -> LETTERs -> HierPREs -> LinPREs.
+	 * Set of return transitions LinPREs x HierPREs x LETTERs x SUCCs stored as map SUCCs -> LETTERs -> HierPREs ->
+	 * LinPREs.
 	 */
 	private final Map<STATE, Map<LETTER, Map<STATE, Set<STATE>>>> mReturnIn = new HashMap<>();
 
@@ -534,9 +529,8 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	@Override
 	public Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessors(final STATE succ) {
 		/**
-		 * Iterates over all IncomingInternalTransition of succ. Iterates
-		 * over all incoming internal letters and uses the iterators
-		 * returned by internalPredecessors(letter, succ)
+		 * Iterates over all IncomingInternalTransition of succ. Iterates over all incoming internal letters and uses
+		 * the iterators returned by internalPredecessors(letter, succ)
 		 */
 		return () -> new Iterator<IncomingInternalTransition<LETTER, STATE>>() {
 			private Iterator<LETTER> mLetterIterator;
@@ -615,9 +609,8 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	@Override
 	public Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessors(final STATE succ) {
 		/**
-		 * Iterates over all IncomingCallTransition of succ. Iterates over
-		 * all incoming call letters and uses the iterators returned by
-		 * callPredecessors(letter, succ)
+		 * Iterates over all IncomingCallTransition of succ. Iterates over all incoming call letters and uses the
+		 * iterators returned by callPredecessors(letter, succ)
 		 */
 		return () -> new Iterator<IncomingCallTransition<LETTER, STATE>>() {
 			private Iterator<LETTER> mLetterIterator;
@@ -700,9 +693,8 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ, final LETTER letter) {
 		/**
-		 * Iterates over all IncomingReturnTransition of succ. Iterates over
-		 * all incoming return letters and uses the iterators returned by
-		 * returnPredecessors(hier, letter, succ)
+		 * Iterates over all IncomingReturnTransition of succ. Iterates over all incoming return letters and uses the
+		 * iterators returned by returnPredecessors(hier, letter, succ)
 		 */
 		return () -> new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
 			private Iterator<STATE> mHierIterator;
@@ -752,9 +744,8 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	@Override
 	public Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessors(final STATE succ) {
 		/**
-		 * Iterates over all IncomingReturnTransition of succ. Iterates over
-		 * all incoming return letters and uses the iterators returned by
-		 * returnPredecessors(letter, succ)
+		 * Iterates over all IncomingReturnTransition of succ. Iterates over all incoming return letters and uses the
+		 * iterators returned by returnPredecessors(letter, succ)
 		 */
 		return () -> new Iterator<IncomingReturnTransition<LETTER, STATE>>() {
 			private Iterator<LETTER> mLetterIterator;
@@ -834,9 +825,8 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
 		/**
-		 * Iterates over all OutgoingInternalTransition of state. Iterates
-		 * over all outgoing internal letters and uses the iterators
-		 * returned by internalSuccessors(state, letter)
+		 * Iterates over all OutgoingInternalTransition of state. Iterates over all outgoing internal letters and uses
+		 * the iterators returned by internalSuccessors(state, letter)
 		 */
 		return () -> new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
 			private Iterator<LETTER> mLetterIterator;
@@ -915,9 +905,8 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
 		/**
-		 * Iterates over all OutgoingCallTransition of state. Iterates over
-		 * all outgoing call letters and uses the iterators returned by
-		 * callSuccessors(state, letter)
+		 * Iterates over all OutgoingCallTransition of state. Iterates over all outgoing call letters and uses the
+		 * iterators returned by callSuccessors(state, letter)
 		 */
 		return () -> new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
 			private Iterator<LETTER> mLetterIterator;
@@ -1000,9 +989,8 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final LETTER letter) {
 		/**
-		 * Iterates over all OutgoingReturnTransition of state. Iterates
-		 * over all outgoing return letters and uses the iterators returned
-		 * by returnSuccecessors(state, letter)
+		 * Iterates over all OutgoingReturnTransition of state. Iterates over all outgoing return letters and uses the
+		 * iterators returned by returnSuccecessors(state, letter)
 		 */
 		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
 			private Iterator<STATE> mHierIterator;
@@ -1052,9 +1040,8 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
 		/**
-		 * Iterates over all OutgoingReturnTransition of state. Iterates
-		 * over all outgoing return letters and uses the iterators returned
-		 * by returnSuccessors(state, letter)
+		 * Iterates over all OutgoingReturnTransition of state. Iterates over all outgoing return letters and uses the
+		 * iterators returned by returnSuccessors(state, letter)
 		 */
 		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
 			private Iterator<LETTER> mLetterIterator;
@@ -1105,10 +1092,8 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
 			final STATE hier) {
 		/**
-		 * Iterates over all OutgoingReturnTransition of state with
-		 * hierarchical successor hier. Iterates over all outgoing return
-		 * letters and uses the iterators returned by
-		 * returnSuccecessors(state, hier, letter)
+		 * Iterates over all OutgoingReturnTransition of state with hierarchical successor hier. Iterates over all
+		 * outgoing return letters and uses the iterators returned by returnSuccecessors(state, hier, letter)
 		 */
 		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
 			private Iterator<LETTER> mLetterIterator;
@@ -2043,8 +2028,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	*/
 
 	/**
-	 * Return true iff this automaton is deterministic.
-	 * TODO: Currently not used. Should we keep it?
+	 * Return true iff this automaton is deterministic. TODO: Currently not used. Should we keep it?
 	 */
 	private boolean isDeterministic() {
 		if (getInitialStates().size() > 1) {
@@ -2073,8 +2057,7 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	}
 
 	/**
-	 * Return true iff this automaton is total.
-	 * TODO: Currently not used. Should we keep it?
+	 * Return true iff this automaton is total. TODO: Currently not used. Should we keep it?
 	 */
 	private boolean isTotal() {
 		if (getInitialStates().isEmpty()) {
@@ -2425,15 +2408,13 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	}
 
 	/**
-	 * Given a nested word (without pending returns) a_0,...,a_n and a sequence
-	 * of states q_0,...,q_{n+1}, add for each i
+	 * Given a nested word (without pending returns) a_0,...,a_n and a sequence of states q_0,...,q_{n+1}, add for each
+	 * i
 	 * <ul>
-	 * <li>the internal transition (q_i, a_i, a_{i+1}) if i is an internal
-	 * position,
+	 * <li>the internal transition (q_i, a_i, a_{i+1}) if i is an internal position,
 	 * <li>the call transition (q_i, a_i, a_{i+1}) if i is a call position, and
-	 * <li>the return transition (q_i, q_k, a_i, a_{i+1}) where k is the
-	 * corresponding call position. Expects that all symbols are contained in
-	 * the alphabets and the all states are contained in the automaton.
+	 * <li>the return transition (q_i, q_k, a_i, a_{i+1}) where k is the corresponding call position. Expects that all
+	 * symbols are contained in the alphabets and the all states are contained in the automaton.
 	 * </ul>
 	 * 
 	 * @param nestedWord

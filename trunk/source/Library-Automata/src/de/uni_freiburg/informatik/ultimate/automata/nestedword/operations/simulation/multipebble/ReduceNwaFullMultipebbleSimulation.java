@@ -141,7 +141,9 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			final boolean addMapOldState2NewState = false;
 
 			INestedWordAutomaton<LETTER, STATE> result;
+			final MinimizeNwaMaxSat2<LETTER, STATE, ?> maxSatMinimizer;
 			if (OMIT_MAX_SAT_FOR_FINITE_AUTOMATA && NestedWordAutomataUtils.isFiniteAutomaton(operand)) {
+				maxSatMinimizer = null;
 				final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor = new QuotientNwaConstructor<>(
 						mServices, stateFactory, mOperand,
 						readoutSymmetricCoreOfSimulationRelation(initialPairs, gsm, simRes.getFirst(), gameFactory)
@@ -151,9 +153,6 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 					super.setOld2NewStateMap(quotientNwaConstructor.getOldState2newState());
 				}
 				result = quotientNwaConstructor.getResult();
-				super.directResultConstruction(result);
-				mStatistics = addStatistics(initialPairs, gameFactory, maxGameAutomatonSize, timePreprocessing,
-						timeSimulation, null);
 			} else {
 				final BiPredicate<STATE, STATE> finalNonfinalConstraint = allowToMergeFinalAndNonFinalStates
 						? new MinimizeNwaMaxSat2.RelationBackedBiPredicate<>(new HashRelationBackedSetOfPairs<>())
@@ -162,7 +161,6 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 						.setFinalNonfinalConstraintPredicate(finalNonfinalConstraint)
 						.setAddMapOldState2NewState(addMapOldState2NewState);
 
-				final MinimizeNwaMaxSat2<LETTER, STATE, ?> maxSatMinimizer;
 				switch (mMetriePostprocessing) {
 					case ASYM:
 						maxSatMinimizer = new MinimizeNwaPmaxSatAsymmetric<>(mServices, stateFactory, mOperand,
@@ -184,10 +182,10 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 				}
 
 				result = maxSatMinimizer.getResult();
-				super.directResultConstruction(result);
-				mStatistics = addStatistics(initialPairs, gameFactory, maxGameAutomatonSize, timePreprocessing,
-						timeSimulation, maxSatMinimizer);
 			}
+			super.directResultConstruction(result);
+			mStatistics = collectStatistics(initialPairs, gameFactory, maxGameAutomatonSize, timePreprocessing,
+					timeSimulation, maxSatMinimizer);
 
 		} catch (final AutomataOperationCanceledException aoce) {
 			if (initialPairs instanceof PartitionBackedSetOfPairs<?>) {
@@ -204,11 +202,11 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 		printExitMessage();
 	}
 
-	private AutomataOperationStatistics addStatistics(final ISetOfPairs<STATE, ?> initialPairs,
+	private AutomataOperationStatistics collectStatistics(final ISetOfPairs<STATE, ?> initialPairs,
 			final FullMultipebbleStateFactory<STATE, GS> gameFactory, final int maxGameAutomatonSize,
 			final long timePreprocessing, final long timeSimulation,
 			final MinimizeNwaMaxSat2<LETTER, STATE, ?> maxSatMinimizer) {
-		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
+		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();
 		statistics.addKeyValuePair(StatisticsType.MAX_NUMBER_OF_DOUBLEDECKER_PEBBLES,
 				gameFactory.getMaxNumberOfDoubleDeckerPebbles());
 		statistics.addKeyValuePair(StatisticsType.TIME_PREPROCESSING, timePreprocessing);
@@ -294,7 +292,9 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
-		return mStatistics;
+		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
+		statistics.addAllStatistics(mStatistics);
+		return statistics;
 	}
 
 	private class ReadoutSimulation extends InitialPartitionProcessor<STATE> {

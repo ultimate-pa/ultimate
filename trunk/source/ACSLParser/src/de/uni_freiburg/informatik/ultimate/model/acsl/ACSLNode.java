@@ -22,9 +22,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ACSLParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ACSLParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ACSLParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -33,7 +33,10 @@
 package de.uni_freiburg.informatik.ultimate.model.acsl;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLTransformer;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLVisitor;
@@ -50,18 +53,21 @@ public abstract class ACSLNode {
 	 */
 	public static final ACSLSourceLocation INVALID_LOCATION = new ACSLSourceLocation(-1, -1, -1, -1);
 
+	// do not rename this field as auto-generated subclasses depend on it
+	protected static final Map<Class<?>, Predicate<ACSLNode>> VALIDATORS = new HashMap<>();
+
 	/**
 	 * The list of children.
 	 */
-	private final List<Object> children = new ArrayList<>();
+	private final List<ACSLNode> mChildren = new ArrayList<>();
 	/**
 	 * File Name.
 	 */
-	private String fileName;
+	private String mFileName;
 	/**
 	 * The location in the source code.
 	 */
-	private ACSLSourceLocation location = INVALID_LOCATION;
+	private ACSLSourceLocation mLocation = INVALID_LOCATION;
 
 	/**
 	 * Getter for the starting line number of this ACSL comment.
@@ -69,7 +75,7 @@ public abstract class ACSLNode {
 	 * @return the starting line number of the ACSL-comment.
 	 */
 	public int getStartingLineNumber() {
-		return location.getStartLine();
+		return mLocation.getStartLine();
 	}
 
 	/**
@@ -78,7 +84,7 @@ public abstract class ACSLNode {
 	 * @return the ending line number of the ACSL-comment.
 	 */
 	public int getEndingLineNumber() {
-		return location.getEndLine();
+		return mLocation.getEndLine();
 	}
 
 	/**
@@ -86,8 +92,8 @@ public abstract class ACSLNode {
 	 * 
 	 * @return list of children.
 	 */
-	public List<Object> getChildren() {
-		return children;
+	public List<ACSLNode> getOutgoingNodes() {
+		return mChildren;
 	}
 
 	/**
@@ -96,7 +102,7 @@ public abstract class ACSLNode {
 	 * @return the fileName
 	 */
 	public String getFileName() {
-		return fileName;
+		return mFileName;
 	}
 
 	/**
@@ -105,8 +111,8 @@ public abstract class ACSLNode {
 	 * @param fileName
 	 *            the fileName to set
 	 */
-	public void setFileName(String fileName) {
-		this.fileName = fileName;
+	public void setFileName(final String fileName) {
+		mFileName = fileName;
 	}
 
 	/**
@@ -115,7 +121,7 @@ public abstract class ACSLNode {
 	 * @return the location of this node
 	 */
 	public ACSLSourceLocation getLocation() {
-		return location;
+		return mLocation;
 	}
 
 	/**
@@ -124,8 +130,8 @@ public abstract class ACSLNode {
 	 * @param location
 	 *            the location to set
 	 */
-	public void setLocation(ACSLSourceLocation location) {
-		this.location = location;
+	public void setLocation(final ACSLSourceLocation location) {
+		mLocation = location;
 	}
 
 	/**
@@ -146,7 +152,7 @@ public abstract class ACSLNode {
 		final int endLine;
 		final int endColumn;
 
-		public ACSLSourceLocation(int startLine, int startColumn, int endLine, int endColumn) {
+		public ACSLSourceLocation(final int startLine, final int startColumn, final int endLine, final int endColumn) {
 			super();
 			this.startLine = startLine;
 			this.startColumn = startColumn;

@@ -27,8 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections;
 
 /**
- * Clause condition for clause with more than one literal whose truth value is
- * undetermined.
+ * Clause condition for clause with more than one literal whose truth value is undetermined.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */

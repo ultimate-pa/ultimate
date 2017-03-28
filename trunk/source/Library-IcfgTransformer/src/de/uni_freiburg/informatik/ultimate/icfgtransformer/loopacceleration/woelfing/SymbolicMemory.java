@@ -32,6 +32,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -131,6 +132,22 @@ public class SymbolicMemory {
 		return term;
 	}
 
+	/**
+	 * Converts the symbolic memory to a term.
+	 *
+	 * @return A Term containing all variable assignments.
+	 */
+	public Term toTerm() {
+		Term term = mScript.getScript().term("true");
+
+		for (final TermVariable termVar : mVariableTerms.keySet()) {
+			term = Util.and(mScript.getScript(), term,
+					mScript.getScript().term("=", termVar, mVariableTerms.get(termVar)));
+		}
+
+		return term;
+	}
+
 	public Map<IProgramVar, TermVariable> getInVars() {
 		return mInVars;
 	}
@@ -141,6 +158,31 @@ public class SymbolicMemory {
 
 	public Map<TermVariable, Term> getVariableTerms() {
 		return mVariableTerms;
+	}
+
+	/**
+	 * Returns a term for a given output program variable.
+	 *
+	 * @param var
+	 *            A IProgramVar.
+	 * @return A Term for the given variable or null if the variable has an unknown value.
+	 */
+	public Term getVariableTerm(final IProgramVar var) {
+		if (!mOutVars.containsKey(var)) {
+			return null;
+		}
+		return getVariableTerm(mOutVars.get(var));
+	}
+
+	/**
+	 * Returns a term for a given term variable.
+	 *
+	 * @param termVar
+	 *            A TermVariable.
+	 * @return A Term for the given variable or null if the variable has an unknown value.
+	 */
+	public Term getVariableTerm(final TermVariable termVar) {
+		return mVariableTerms.get(termVar);
 	}
 
 	@Override

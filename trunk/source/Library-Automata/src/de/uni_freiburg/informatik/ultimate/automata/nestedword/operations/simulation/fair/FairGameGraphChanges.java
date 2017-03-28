@@ -37,13 +37,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * Class that stores information of changes made to a {@link FairGameGraph}.
+ * Class that stores information of changes made to a {@link FairGameGraph}. <br/>
  * <br/>
- * <br/>
- * Additionally to {@link GameGraphChanges} it can also remember changed buechi
- * transitions.<br/>
- * A FairGameGraphChanges object can then be used to undo made changes for a
- * fair game graph by using {@link FairGameGraph#undoChanges(GameGraphChanges)}.
+ * Additionally to {@link GameGraphChanges} it can also remember changed buechi transitions.<br/>
+ * A FairGameGraphChanges object can then be used to undo made changes for a fair game graph by using
+ * {@link FairGameGraph#undoChanges(GameGraphChanges)}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -229,8 +227,7 @@ public final class FairGameGraphChanges<LETTER, STATE> extends GameGraphChanges<
 
 	/**
 	 * Stores information about a changed buechi transition.<br/>
-	 * Nullifies changes if the given buechi transition was added before if it
-	 * was now removed or vice versa.
+	 * Nullifies changes if the given buechi transition was added before if it was now removed or vice versa.
 	 * 
 	 * @param src
 	 *            Source of the changed buechi transition

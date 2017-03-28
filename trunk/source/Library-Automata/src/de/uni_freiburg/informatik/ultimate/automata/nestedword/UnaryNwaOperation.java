@@ -31,8 +31,8 @@ import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Abstract operation taking one nested word automaton as input.
- * The most common methods are provided but can also be overwritten.
+ * Abstract operation taking one nested word automaton as input. The most common methods are provided but can also be
+ * overwritten.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>

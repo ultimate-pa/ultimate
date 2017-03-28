@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -91,104 +92,141 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 
 			for (final IProgramVar var : symbolicMemory.mOutVars.keySet()) {
 				final TermVariable termVar = symbolicMemory.mOutVars.get(var);
+
+				if (mRenamedVars.containsKey(termVar)) {
+					continue;
+				}
+
 				if (mOutVars.containsKey(var)) {
-					assert mOutVars.get(var) == termVar;
+					mRenamedVars.put(termVar, mOutVars.get(var));
 				} else {
 					mOutVars.put(var, termVar);
 				}
 			}
 		}
 
-		final Deque<TermVariable> deque = new ArrayDeque<>(mOutVars.values());
+		final Deque<IProgramVar> deque = new ArrayDeque<>(mOutVars.keySet());
 
 		while (!deque.isEmpty()) {
-			final TermVariable termVar = deque.pop();
-			if (mLoopCounters.contains(termVar) || mInVars.containsValue(termVar)) {
-				continue;
-			}
-
+			final IProgramVar var = deque.pop();
 			final Term[] terms = new Term[numLoops];
 			for (int i = 0; i < numLoops; i++) {
-				if (mSymbolicMemories.get(i).mVariableTerms.containsKey(termVar)) {
-					terms[i] = mSymbolicMemories.get(i).mVariableTerms.get(termVar);
-				}
+				terms[i] = mSymbolicMemories.get(i).getVariableTerm(var);
 			}
 
-			final Term iteratedTerm = getIteratedTerm(terms, deque);
+			final Term iteratedTerm = getIteratedTerm(terms);
 			if (iteratedTerm != null) {
-				mVariableTerms.put(termVar, iteratedTerm);
+				mVariableTerms.put(mOutVars.get(var), iteratedTerm);
 			}
 		}
 	}
 
-	private Term getIteratedTerm(final Term[] terms, final Deque<TermVariable> deque) {
+	/**
+	 * Calculates an iterated term for the given terms.
+	 *
+	 * @param terms
+	 *            An array of terms from the symbolic memories.
+	 * @return An iterated Term or null.
+	 */
+	private Term getIteratedTerm(final Term[] terms) {
 		Term result = null;
 		Term inVar = null;
 		for (int i = 0; i < terms.length; i++) {
 			if (terms[i] == null) {
-				continue;
+				return null;
 			}
 
-			final Term term = simplifyTerm(terms[i]);
+			final Term term = simplifyTerm(mSymbolicMemories.get(i), terms[i]);
 
-			// TODO: Parse terms that are not additions.
-			if (term instanceof ApplicationTerm && "+".equals(((ApplicationTerm) term).getFunction().getName())) {
+			if (term instanceof ApplicationTerm) {
 				final ApplicationTerm appTerm = (ApplicationTerm) term;
-				assert appTerm.getParameters().length == 2;
+				assert "+".equals(appTerm.getFunction().getName());
+				final Term[] params = appTerm.getParameters().clone();
 				if (inVar == null) {
-					inVar = simplifyTerm(appTerm.getParameters()[0]);
+					inVar = params[0];
 					result = inVar;
 				} else {
-					assert inVar == simplifyTerm(appTerm.getParameters()[0]);
+					assert inVar == params[0];
 				}
 
-				final Term newTerm = mScript.getScript().term("*", mLoopCounters.get(i), appTerm.getParameters()[1]);
-				result = mScript.getScript().term("+", result, newTerm);
-			}
-		}
+				final Term[] newParams = new Term[params.length];
+				newParams[0] = result;
 
-		if (result != null) {
-			deque.addAll(Arrays.asList(result.getFreeVars()));
+				for (int j = 1; j < params.length; j++) {
+					assert params[j] instanceof ConstantTerm;
+					newParams[j] = mScript.getScript().term("*", mLoopCounters.get(i), params[j]);
+				}
+
+				result = mScript.getScript().term("+", mergeSums(newParams));
+			} else {
+				// TODO: Parse terms that are not additions.
+				return null;
+			}
 		}
 
 		return result;
 	}
 
 	/**
-	 * Simplifies a term.
+	 * Merges the parameters of of a + term.
 	 *
-	 * @param term
-	 *            The term to be simplified.
-	 * @return A simplified Term.
+	 * @param params
+	 *            The parameters of a + term.
+	 * @return The parameters of a new + term equivalent to the original term.
 	 */
-	private Term simplifyTerm(final Term term) {
-		if (!(term instanceof TermVariable)) {
-			return term;
-		}
+	private static Term[] mergeSums(final Term[] params) {
+		final List<Term> newParams = new ArrayList<>(Arrays.asList(params));
 
-		if (mRenamedVars.containsKey(term)) {
-			return simplifyTerm(mRenamedVars.get(term));
-		}
-
-		Term simplifiedTerm = null;
-
-		for (final SymbolicMemory symbolicMemory : mSymbolicMemories) {
-			if (symbolicMemory.mVariableTerms.containsKey(term)) {
-				// Recursively simplify the term.
-				final Term temp = simplifyTerm(symbolicMemory.mVariableTerms.get(term));
-				if (simplifiedTerm == null) {
-					simplifiedTerm = temp;
-				} else if (simplifiedTerm != temp) {
-					// The term cannot be simplified.
-					return term;
-				}
+		for (int i = 0; i < newParams.size(); i++) {
+			if (newParams.get(i) instanceof ApplicationTerm
+					&& "+".equals(((ApplicationTerm) newParams.get(i)).getFunction().getName())) {
+				final ApplicationTerm appTerm = (ApplicationTerm) newParams.get(i);
+				newParams.remove(i);
+				newParams.addAll(i, Arrays.asList(appTerm.getParameters()));
 			}
 		}
 
-		if (simplifiedTerm != null) {
-			return simplifiedTerm;
+		return newParams.toArray(new Term[0]);
+	}
+
+	/**
+	 * Simplifies a given term.
+	 *
+	 * @param symbolicMemory
+	 *            The symbolic memory the term was taken from.
+	 * @param term
+	 *            A Term.
+	 * @return A simplifies term.
+	 */
+	private Term simplifyTerm(final SymbolicMemory symbolicMemory, final Term term) {
+		if (term instanceof TermVariable) {
+			if (mRenamedVars.containsKey(term)) {
+				return simplifyTerm(symbolicMemory, mRenamedVars.get(term));
+			} else if (mInVars.containsValue(term)) {
+				return term;
+			}
+
+			final Term t = symbolicMemory.getVariableTerm((TermVariable) term);
+			return simplifyTerm(symbolicMemory, t);
+		} else if (term instanceof ApplicationTerm) {
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
+			if ("+".equals(appTerm.getFunction().getName())) {
+				Term[] params = appTerm.getParameters();
+
+				for (int i = 0; i < params.length; i++) {
+					params[i] = simplifyTerm(symbolicMemory, params[i]);
+					assert params[i] != null;
+				}
+
+				params = mergeSums(params);
+				assert mInVars.containsValue(params[0]);
+				return mScript.getScript().term("+", params);
+			}
+		} else if (term instanceof ConstantTerm) {
+			return term;
 		}
-		return term;
+
+		return null;
 	}
 
 	public List<TermVariable> getLoopCounters() {

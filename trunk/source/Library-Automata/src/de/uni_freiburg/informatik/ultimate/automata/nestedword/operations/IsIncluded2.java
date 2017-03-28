@@ -36,11 +36,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.increm
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Operation that takes three Operands A, B_1 and B_2 and checks if the language
- * of A is included in the union of the languages of B_1 and B_2.
- * Since this operation is restricted to exactly three operands
- * it is not useful in practice and only used for testing correctness
- * of our incremental inclusion check.
+ * Operation that takes three Operands A, B_1 and B_2 and checks if the language of A is included in the union of the
+ * languages of B_1 and B_2. Since this operation is restricted to exactly three operands it is not useful in practice
+ * and only used for testing correctness of our incremental inclusion check.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>

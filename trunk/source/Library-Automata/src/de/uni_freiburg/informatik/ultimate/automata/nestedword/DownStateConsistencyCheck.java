@@ -188,18 +188,15 @@ public class DownStateConsistencyCheck<LETTER, STATE> extends UnaryNwaOperation<
 
 	/**
 	 * Check if {@link IDoubleDeckerAutomaton#getDownStates(Object)} and
-	 * {@link IDoubleDeckerAutomaton#isDoubleDecker(Object, Object)} are
-	 * consistent.
+	 * {@link IDoubleDeckerAutomaton#isDoubleDecker(Object, Object)} are consistent.
 	 */
 	private boolean getIsComparison(final STATE state, final Set<STATE> downStates) {
 		return getIsComparison1(state, downStates) && getIsComparison2(state, downStates);
 	}
 
 	/**
-	 * Check if doubleDeckers claimed by
-	 * {@link IDoubleDeckerAutomaton#isDoubleDecker(Object, Object)}
-	 * are a superset of the doubleDeckers claimed by
-	 * {@link IDoubleDeckerAutomaton#getDownStates(Object)}.
+	 * Check if doubleDeckers claimed by {@link IDoubleDeckerAutomaton#isDoubleDecker(Object, Object)} are a superset of
+	 * the doubleDeckers claimed by {@link IDoubleDeckerAutomaton#getDownStates(Object)}.
 	 */
 	private boolean getIsComparison1(final STATE state, final Set<STATE> downStates) {
 		boolean result = true;
@@ -210,11 +207,9 @@ public class DownStateConsistencyCheck<LETTER, STATE> extends UnaryNwaOperation<
 	}
 
 	/**
-	 * Check if doubleDeckers claimed by
-	 * {@link IDoubleDeckerAutomaton#getDownStates(Object)}
-	 * are a superset of the doubleDeckers claimed by
-	 * {@link IDoubleDeckerAutomaton#isDoubleDecker(Object, Object)}
-	 * This check is expensive, because we have to iterate over all states.
+	 * Check if doubleDeckers claimed by {@link IDoubleDeckerAutomaton#getDownStates(Object)} are a superset of the
+	 * doubleDeckers claimed by {@link IDoubleDeckerAutomaton#isDoubleDecker(Object, Object)} This check is expensive,
+	 * because we have to iterate over all states.
 	 */
 	private boolean getIsComparison2(final STATE state, final Set<STATE> downStates) {
 		boolean result = true;

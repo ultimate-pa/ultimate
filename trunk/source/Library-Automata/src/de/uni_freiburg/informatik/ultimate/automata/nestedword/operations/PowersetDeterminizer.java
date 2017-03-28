@@ -36,10 +36,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 
 /**
- * Construct deterministic states like in the classical powerset construction.
- * For determinization of NWAs there is also a powerset construction. This
- * class implements the computation of deterministic successor states according
- * to this powerset construction.
+ * Construct deterministic states like in the classical powerset construction. For determinization of NWAs there is also
+ * a powerset construction. This class implements the computation of deterministic successor states according to this
+ * powerset construction.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>

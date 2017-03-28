@@ -57,11 +57,11 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Automaton that is returned as the result of the {@link BuchiComplementSVW}
- * operation. States and transitions are built on the fly.
+ * Automaton that is returned as the result of the {@link BuchiComplementSVW} operation. States and transitions are
+ * built on the fly.
  * <p>
- * The implementation follows the notation introduced in “Improved Ramsey-Based
- * Büchi Complementation” by Breuers, Löding and Olschewski (Springer, 2012).
+ * The implementation follows the notation introduced in “Improved Ramsey-Based Büchi Complementation” by Breuers,
+ * Löding and Olschewski (Springer, 2012).
  * 
  * @author Fabian Reiter
  * @param <LETTER>
@@ -120,8 +120,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 
 	/**
 	 * @return an equivalent {@code NestedWordAutomaton} object <br>
-	 *         <b>Use with caution!</b> The automaton has to be computed
-	 *         entirely.
+	 *         <b>Use with caution!</b> The automaton has to be computed entirely.
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
@@ -592,8 +591,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	}
 
 	/**
-	 * @return whether {@code state} is known, i.e. if it has already been seen
-	 *         by the automaton
+	 * @return whether {@code state} is known, i.e. if it has already been seen by the automaton
 	 */
 	private boolean knows(final STATE state) {
 		return mMapState2Ms.containsKey(state);
@@ -743,9 +741,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		private Set<Integer> mStatesWithLeftRejectingPartners;
 
 		/**
-		 * Precomputes all the transitions and rejecting s-t-pairs and then
-		 * forgets about the underlying transition profiles. After that, states
-		 * are simply represented by Integer objects.
+		 * Precomputes all the transitions and rejecting s-t-pairs and then forgets about the underlying transition
+		 * profiles. After that, states are simply represented by Integer objects.
 		 */
 		public TransitionMonoidAutomaton(final INestedWordAutomaton<LETTER, STATE> origAutomaton)
 				throws AutomataOperationCanceledException {
@@ -855,8 +852,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		 *            state
 		 * @param letter
 		 *            letter
-		 * @return the (unique) successor of {@code state} under letter
-		 *         {@code letter}, i.e. δ(state, letter)
+		 * @return the (unique) successor of {@code state} under letter {@code letter}, i.e. δ(state, letter)
 		 */
 		public Integer successor(final Integer state, final LETTER letter) {
 			return mTransitionsOutTma.get(state).get(letter);
@@ -867,8 +863,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		 *            state
 		 * @param letter
 		 *            letter
-		 * @return the set of predecessors of {@code state} under letter
-		 *         {@code letter}, i.e. δ⁻¹(state, letter)
+		 * @return the set of predecessors of {@code state} under letter {@code letter}, i.e. δ⁻¹(state, letter)
 		 */
 		public Set<Integer> predecessors(final Integer state, final LETTER letter) {
 			return mTransitionsInTma.get(state).get(letter);
@@ -877,13 +872,11 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		/**
 		 * @param state
 		 *            state
-		 * @return The largest set of states such that for any included state qₜ
-		 *         it holds that ⟨s,t⟩ is a rejecting s-t-pair, where
+		 * @return The largest set of states such that for any included state qₜ it holds that ⟨s,t⟩ is a rejecting
+		 *         s-t-pair, where
 		 *         <ul>
-		 *         <li>
-		 *         s is the TP corresponding to {@code state}</li>
-		 *         <li>
-		 *         t is the TP corresponding to qₜ.</li>
+		 *         <li>s is the TP corresponding to {@code state}</li>
+		 *         <li>t is the TP corresponding to qₜ.</li>
 		 *         </ul>
 		 */
 		public Set<Integer> rightRejectingPartners(final Integer state) {
@@ -893,13 +886,11 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		/**
 		 * @param state
 		 *            state
-		 * @return The largest set of states such that for any included state qₛ
-		 *         it holds that ⟨s,t⟩ is a rejecting s-t-pair, where
+		 * @return The largest set of states such that for any included state qₛ it holds that ⟨s,t⟩ is a rejecting
+		 *         s-t-pair, where
 		 *         <ul>
-		 *         <li>
-		 *         s is the TP corresponding to qₛ</li>
-		 *         <li>
-		 *         t is the TP corresponding to {@code state}.</li>
+		 *         <li>s is the TP corresponding to qₛ</li>
+		 *         <li>t is the TP corresponding to {@code state}.</li>
 		 *         </ul>
 		 */
 		public Set<Integer> leftRejectingPartners(final Integer state) {
@@ -907,8 +898,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 
 		/**
-		 * @return The set of states for which {@code leftRejectingPartners()}
-		 *         would return a nonempty set.
+		 * @return The set of states for which {@code leftRejectingPartners()} would return a nonempty set.
 		 */
 		public Set<Integer> statesWithLeftRejectingPartners() {
 			if (mStatesWithLeftRejectingPartners == null) {
@@ -934,8 +924,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			private final Map<Transition, Boolean> mTransitions = new HashMap<>();
 
 			/**
-			 * @return The copy of the transition profile τ(ε), i.e. the initial
-			 *         state of the TMA.
+			 * @return The copy of the transition profile τ(ε), i.e. the initial state of the TMA.
 			 */
 			public TransitionProfile() {
 				mIsInitial = true;
@@ -1009,8 +998,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			 * @param transProfile
 			 *            Transition profile.
 			 * @return whether L(⟨s,t⟩) ⊆ L_ω(A), where s = {@code this} <br>
-			 *         Assumes that ⟨s,t⟩ is an s-t-pair, i.e. that L(⟨s,t⟩) is
-			 *         “proper”.
+			 *         Assumes that ⟨s,t⟩ is an s-t-pair, i.e. that L(⟨s,t⟩) is “proper”.
 			 */
 			public boolean hasAcceptingLasso(final TransitionProfile transProfile) {
 				for (final Transition trans1 : this.mTransitions.keySet()) {
@@ -1048,8 +1036,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		}
 
 		/**
-		 * Transitions are the basic building blocks of transition profiles.
-		 * They are implemented as tuples of states.
+		 * Transitions are the basic building blocks of transition profiles. They are implemented as tuples of states.
 		 */
 		private final class Transition {
 			private final STATE mQ1;

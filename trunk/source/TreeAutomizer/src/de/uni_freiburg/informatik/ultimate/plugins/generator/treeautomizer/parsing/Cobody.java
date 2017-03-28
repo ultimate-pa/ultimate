@@ -28,11 +28,11 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -43,19 +43,28 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
+ * Body of a Horn clause according to our grammar for Horn clauses in SMTLib2.
+ * Once the Horn clause is fixed (we make no more derivations in the grammar), we also call this the body of the Horn
+ * clause.
+ * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
 public class Cobody {
 	private final Set<Term> mTransitions;
-	private final Set<ApplicationTerm> mPredicates;
+	private final List<ApplicationTerm> mPredicates;
+	
+	private boolean mFinalized = false;
+
+	private final List<HornClausePredicateSymbol> mPredicateSymbols = new ArrayList<>();
+	private final List<List<TermVariable>> mPredicateSymbolToVariables = new ArrayList<>();
 
 	/***
 	 * Constructor of the cobody of a horn statement.
 	 */
 	public Cobody() {
-		mPredicates = new HashSet<>();
+		mPredicates = new ArrayList<>();
 		mTransitions = new HashSet<>();
 	}
 
@@ -64,6 +73,7 @@ public class Cobody {
 	 * @param literal
 	 */
 	public void addPredicate(ApplicationTerm literal) {
+		assert !mFinalized;
 		mPredicates.add(literal);
 	}
 
@@ -72,6 +82,7 @@ public class Cobody {
 	 * @param formula
 	 */
 	public void addTransitionFormula(Term formula) {
+		assert !mFinalized;
 		mTransitions.add(formula);
 	}
 
@@ -80,6 +91,7 @@ public class Cobody {
 	 * @param cobody
 	 */
 	public void mergeCobody(Cobody cobody) {
+		assert !mFinalized;
 		for (final ApplicationTerm predicate : cobody.mPredicates) {
 			addPredicate(predicate);
 		}
@@ -93,6 +105,7 @@ public class Cobody {
 	 * @return A body of the negation of the this.
 	 */
 	public Body negate() {
+		assert !mFinalized;
 		final Body res = new Body();
 		res.mergeCobody(this);
 		return res;
@@ -106,27 +119,56 @@ public class Cobody {
 	public Term getTransitionFormula(ManagedScript script) {
 		return Util.and(script.getScript(), mTransitions.toArray(new Term[mTransitions.size()]));
 	}
+	
+	List<HornClausePredicateSymbol> getPredicates(final HCSymbolTable symbolTable) {
+		computePredicates(symbolTable);
+
+		return mPredicateSymbols;
+	}
 
 	/***
 	 * Get a map from literals to TermVariable.
 	 * @param symbolTable
 	 * @return
 	 */
-	public Map<HornClausePredicateSymbol, List<TermVariable>> getPredicateToVars(
-			final HCSymbolTable symbolTable) {
+	public List<List<TermVariable>> getPredicateToVars(final HCSymbolTable symbolTable) {
+		computePredicates(symbolTable);
+		return mPredicateSymbolToVariables;
 
-		final HashMap<HornClausePredicateSymbol, List<TermVariable>> res = new HashMap<>();
-		for (final ApplicationTerm predicate : mPredicates) {
-			final ArrayList<TermVariable> vars = new ArrayList<>();
-			for (final Term par : predicate.getParameters()) {
-				vars.add((TermVariable) par);
-			}
-
-			res.put(symbolTable.getOrConstructHornClausePredicateSymbol(
-						predicate.getFunction().getName(), predicate.getFunction().getParameterSorts()), 
-					vars);
+//		final List<List<TermVariable>> res = new ArrayList<>();
+//		for (final ApplicationTerm predicate : mPredicates) {
+//			final ArrayList<TermVariable> vars = new ArrayList<>();
+//			for (final Term par : predicate.getParameters()) {
+//				vars.add((TermVariable) par);
+//			}
+//
+//			res.put(symbolTable.getOrConstructHornClausePredicateSymbol(
+//						predicate.getFunction().getName(), predicate.getFunction().getParameterSorts()), 
+//					vars);
+//		}
+//		return res;
+	}
+	
+	private void computePredicates(HCSymbolTable symbolTable) {
+		if (mFinalized) {
+			// already did this before
+			return;
 		}
-		return res;
+		
+		for (ApplicationTerm pred : mPredicates) {
+			final HornClausePredicateSymbol bodySymbol = symbolTable.getOrConstructHornClausePredicateSymbol(
+					pred.getFunction().getName(), pred.getFunction().getParameterSorts());
+			mPredicateSymbols.add(bodySymbol);
+
+			final List<TermVariable> parameterTermVariables = Arrays.asList(pred.getParameters()).stream()
+					.map(t -> (TermVariable) t)
+					.collect(Collectors.toList());
+			assert parameterTermVariables.size() == new HashSet<>(parameterTermVariables).size() : "TODO: eliminate "
+					+ "duplicate arguments";
+			final List<TermVariable> bodyVars = parameterTermVariables;
+			mPredicateSymbolToVariables.add(bodyVars);
+		}
+		mFinalized = true;
 	}
 
 	@Override

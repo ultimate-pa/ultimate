@@ -40,8 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 
 /**
- * Auxiliary data structure used by {@link NestedWordAutomatonReachableStates}.
- * This data structure stores
+ * Auxiliary data structure used by {@link NestedWordAutomatonReachableStates}. This data structure stores
  * <ul>
  * <li>a state together with its incoming and outgoing transitions
  * <li>the down states of this state
@@ -65,26 +64,24 @@ public abstract class StateContainer<LETTER, STATE> {
 	 */
 	enum DownStateProp {
 		/**
-		 * There is a (not necessarily initial) run starting in DoubleDecker
-		 * (up, down) that visits a final state at least once.
+		 * There is a (not necessarily initial) run starting in DoubleDecker (up, down) that visits a final state at
+		 * least once.
 		 */
 		REACH_FINAL_ONCE(1),
 		/**
-		 * There is a (not necessarily initial) run starting in DoubleDecker
-		 * (up, down) that visits a final state at infinitely often.
+		 * There is a (not necessarily initial) run starting in DoubleDecker (up, down) that visits a final state at
+		 * infinitely often.
 		 */
 		REACH_FINAL_INFTY(2),
 		REACHABLE_FROM_FINAL_WITHOUT_CALL(4),
 		/**
-		 * The DoubleDecker (up,down) cannot reach a final state
-		 * (REACH_FINAL_ONCE does not hold), but is still reachable, if dead
-		 * ends have been removed.
+		 * The DoubleDecker (up,down) cannot reach a final state (REACH_FINAL_ONCE does not hold), but is still
+		 * reachable, if dead ends have been removed.
 		 */
 		REACHABLE_AFTER_DEADEND_REMOVAL(8),
 		/**
-		 * The DoubleDecker (up,down) cannot reach a final state infinitely
-		 * often (REACH_FINAL_INFTY) does not hold, but is still reachable,
-		 * if dead ends have been removed.
+		 * The DoubleDecker (up,down) cannot reach a final state infinitely often (REACH_FINAL_INFTY) does not hold, but
+		 * is still reachable, if dead ends have been removed.
 		 */
 		REACHABLE_AFTER_NONLIVE_REMOVAL(16);
 
@@ -190,10 +187,8 @@ public abstract class StateContainer<LETTER, STATE> {
 	}
 
 	/**
-	 * Add down state. Without any properties set. Returns true iff this down
-	 * state was not already there.
-	 * If the down state was already there it may not have had any
-	 * DownStateProps
+	 * Add down state. Without any properties set. Returns true iff this down state was not already there. If the down
+	 * state was already there it may not have had any DownStateProps
 	 */
 	boolean addReachableDownState(final STATE down) {
 		assert !mDownStates.containsKey(down) || mDownStates.get(down) == 0;
@@ -209,8 +204,7 @@ public abstract class StateContainer<LETTER, STATE> {
 	}
 
 	/**
-	 * Set DownStateProp prop for down state. Returns true iff this property was
-	 * modified (not already set).
+	 * Set DownStateProp prop for down state. Returns true iff this property was modified (not already set).
 	 */
 	boolean setDownProp(final STATE down, final DownStateProp prop) {
 		final int currentProps = mDownStates.get(down);
@@ -499,8 +493,8 @@ public abstract class StateContainer<LETTER, STATE> {
 	 *            first state container
 	 * @param snd
 	 *            second state container
-	 * @return The StateContainer that has the lower serial number.
-	 *         If one is null return the other. If both are null return null;
+	 * @return The StateContainer that has the lower serial number. If one is null return the other. If both are null
+	 *         return null;
 	 * @param <LETTER>
 	 *            letter type
 	 * @param <STATE>

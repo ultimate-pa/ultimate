@@ -64,7 +64,8 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY =
 			"If two pointers are subtracted or compared they have the same base address";
 	public static final String LABEL_UNSIGNED_TREATMENT = "How to treat unsigned ints differently from normal ones";
-	public static final String LABEL_CHECK_DIVISION_BY_ZERO = "Check division by zero";
+	public static final String LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES = "Check division by zero";
+	public static final String LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES = "Check division by zero for floating types";
 	public static final String LABEL_CHECK_SIGNED_INTEGER_BOUNDS = "Check absence of signed integer overflows";
 	public static final String LABEL_ASSUME_NONDET_VALUES_IN_RANGE = "Assume nondeterminstic values are in range";
 	public static final String LABEL_BITVECTOR_TRANSLATION = "Use bitvectors instead of ints";
@@ -148,7 +149,9 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_UNSIGNED_TREATMENT, UnsignedTreatment.WRAPAROUND,
 						PreferenceType.Combo, UnsignedTreatment.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO, PointerCheckMode.ASSERTandASSUME,
+				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES, PointerCheckMode.ASSERTandASSUME,
+						PreferenceType.Combo, PointerCheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, PointerCheckMode.IGNORE,
 						PreferenceType.Combo, PointerCheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_SIGNED_INTEGER_BOUNDS, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ASSUME_NONDET_VALUES_IN_RANGE, true, PreferenceType.Boolean),

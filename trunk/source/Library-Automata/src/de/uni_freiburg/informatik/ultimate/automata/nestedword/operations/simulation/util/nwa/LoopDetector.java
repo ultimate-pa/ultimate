@@ -62,14 +62,12 @@ public final class LoopDetector<LETTER, STATE> {
 	private final IProgressAwareTimer mProgressAwareTimer;
 
 	/**
-	 * Creates a new loop detector which can detect special loops on a given
-	 * game graph.
+	 * Creates a new loop detector which can detect special loops on a given game graph.
 	 * 
 	 * @param gameGraph
 	 *            Game graph to use for loop detection
 	 * @param progressAwareTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
+	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 */
@@ -87,11 +85,9 @@ public final class LoopDetector<LETTER, STATE> {
 	 *            Vertex in question
 	 * @param destination
 	 *            Destination to reach
-	 * @return <tt>True</tt> if destination is reachable from vertex,
-	 *         <tt>false</tt> if not.
+	 * @return <tt>True</tt> if destination is reachable from vertex, <tt>false</tt> if not.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public boolean canVertexReachDestination(final Vertex<LETTER, STATE> vertex,
 			final Vertex<LETTER, STATE> destination) throws AutomataOperationCanceledException {
@@ -99,27 +95,21 @@ public final class LoopDetector<LETTER, STATE> {
 	}
 
 	/**
-	 * Returns whether the given vertex is a loop vertex. This is the case if it
-	 * is not possible for the vertex to reach the given destination without
-	 * visiting the vertex toAvoid. <br/>
+	 * Returns whether the given vertex is a loop vertex. This is the case if it is not possible for the vertex to reach
+	 * the given destination without visiting the vertex toAvoid. <br/>
 	 * <br/>
-	 * The cost for this operation is comparable high, it computes the property
-	 * on demand, without pre-processing or caching, by a breadth-first search
-	 * through the graph.
+	 * The cost for this operation is comparable high, it computes the property on demand, without pre-processing or
+	 * caching, by a breadth-first search through the graph.
 	 * 
 	 * @param vertex
 	 *            Vertex in question
 	 * @param destination
-	 *            The destination, the given vertex should reach without
-	 *            visiting toAvoid
+	 *            The destination, the given vertex should reach without visiting toAvoid
 	 * @param toAvoid
-	 *            The vertex, the given vertex must not visit while trying to
-	 *            reach the destination
-	 * @return <tt>True</tt> if the given vertex is a loop vertex,
-	 *         <tt>false</tt> if not.
+	 *            The vertex, the given vertex must not visit while trying to reach the destination
+	 * @return <tt>True</tt> if the given vertex is a loop vertex, <tt>false</tt> if not.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public boolean isLoopVertex(final Vertex<LETTER, STATE> vertex, final Vertex<LETTER, STATE> destination,
 			final Vertex<LETTER, STATE> toAvoid) throws AutomataOperationCanceledException {

@@ -10,8 +10,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs;
 
 /**
- * Nested word automaton minimization using a partial Max-SAT reduction.
- * The problem instance is solved using an external solver.
+ * Nested word automaton minimization using a partial Max-SAT reduction. The problem instance is solved using an
+ * external solver.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>

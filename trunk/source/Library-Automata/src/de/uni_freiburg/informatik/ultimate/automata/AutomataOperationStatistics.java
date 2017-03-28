@@ -40,6 +40,8 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
  * Object that stores statistics of an automata library operation.
  * <p>
  * Stores a single row of a CSV as a key-value map.
+ * <p>
+ * Statistics are not allowed to be overwritten.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
@@ -85,6 +87,16 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 		assert !mKeyValueMap.containsKey(key) : "The statistics for key " + key
 				+ " would be overwritten, which is not allowed.";
 		mKeyValueMap.put(key, value);
+	}
+
+	/**
+	 * @param other
+	 *            Statistics object whose entries are added.
+	 */
+	public void addAllStatistics(final AutomataOperationStatistics other) {
+		for (final Entry<StatisticsType, Object> entry : other.mKeyValueMap.entrySet()) {
+			addKeyValuePair(entry.getKey(), entry.getValue());
+		}
 	}
 
 	/**
@@ -179,5 +191,10 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 			throw new IllegalArgumentException(key + MUST_BE_OF_INTEGER_TYPE);
 		}
 		return (Integer) raw;
+	}
+
+	@Override
+	public String toString() {
+		return mKeyValueMap.toString();
 	}
 }

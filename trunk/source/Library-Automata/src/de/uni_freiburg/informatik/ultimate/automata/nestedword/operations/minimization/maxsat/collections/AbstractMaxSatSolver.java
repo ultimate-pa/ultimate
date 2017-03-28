@@ -71,9 +71,8 @@ public abstract class AbstractMaxSatSolver<V> {
 	 */
 	protected final Set<V> mUnsetVariables = new HashSet<>();
 	/**
-	 * A clause is pseudo-unit if it has exactly one unset literal and is not
-	 * equivalent to true at the moment.
-	 * We call the pair (variable, assignment) a propagatee.
+	 * A clause is pseudo-unit if it has exactly one unset literal and is not equivalent to true at the moment. We call
+	 * the pair (variable, assignment) a propagatee.
 	 */
 	protected Map<V, Boolean> mPropagatees = new LinkedHashMap<>();
 	protected boolean mConjunctionEquivalentToFalse;
@@ -91,8 +90,7 @@ public abstract class AbstractMaxSatSolver<V> {
 	protected int mWrongDecisions;
 	protected int mClauses;
 	/**
-	 * A clause is trivial if we were able to evaluate it to true when it was
-	 * added.
+	 * A clause is trivial if we were able to evaluate it to true when it was added.
 	 */
 	protected int mTrivialClauses;
 	protected int mCurrentLiveClauses;
@@ -127,8 +125,7 @@ public abstract class AbstractMaxSatSolver<V> {
 	}
 
 	/**
-	 * Add a new variable. Variables have to be added before they can be
-	 * used in clauses.
+	 * Add a new variable. Variables have to be added before they can be used in clauses.
 	 * 
 	 * @param var
 	 *            variable
@@ -142,36 +139,30 @@ public abstract class AbstractMaxSatSolver<V> {
 	}
 
 	/**
-	 * Add a new Horn clause. We call the variables on the left-hand side
-	 * negativeAtoms and the variable on the right-hand side the positive
-	 * atom.
+	 * Add a new Horn clause. We call the variables on the left-hand side negativeAtoms and the variable on the
+	 * right-hand side the positive atom.
 	 * 
 	 * @param negativeAtoms
 	 *            array of non-null variables
 	 * @param positiveAtom
-	 *            variable that may be null. If the variable is null
-	 *            it considered as true. If you want to assert only a negative atom, you
-	 *            have to use null as positive Atom
-	 * @deprecated This method is only present for legacy reasons and just
-	 *             converts the Horn clause to a general clause in the general solver.
-	 *             The caller should instead directly call the general
-	 *             <code>addClause()</code> method.
-	 *             For the old solver, this method is still needed.
+	 *            variable that may be null. If the variable is null it considered as true. If you want to assert only a
+	 *            negative atom, you have to use null as positive Atom
+	 * @deprecated This method is only present for legacy reasons and just converts the Horn clause to a general clause
+	 *             in the general solver. The caller should instead directly call the general <code>addClause()</code>
+	 *             method. For the old solver, this method is still needed.
 	 */
 	@Deprecated
 	public abstract void addHornClause(final V[] negativeAtoms, final V positiveAtom);
 
 	/**
-	 * Add a new clause. We call the variables on the left-hand side
-	 * negativeAtoms and the variables on the right-hand side the positive
-	 * atoms.
+	 * Add a new clause. We call the variables on the left-hand side negativeAtoms and the variables on the right-hand
+	 * side the positive atoms.
 	 * 
 	 * @param negativeAtoms
 	 *            array of non-null variables considered negative
 	 * @param positiveAtoms
-	 *            array of non-null variables considered positive.
-	 *            If you want to assert only a negative atom, you have to use an empty
-	 *            array as positive atoms.
+	 *            array of non-null variables considered positive. If you want to assert only a negative atom, you have
+	 *            to use an empty array as positive atoms.
 	 */
 	public abstract void addClause(final V[] negativeAtoms, final V[] positiveAtoms);
 
@@ -207,14 +198,12 @@ public abstract class AbstractMaxSatSolver<V> {
 	}
 
 	/**
-	 * Called after all clauses have been added and pseudo-unit clauses have
-	 * been propagated.
+	 * Called after all clauses have been added and pseudo-unit clauses have been propagated.
 	 * <p>
-	 * In other words, this method is called before the first decision in
-	 * case there is at least one unassigned variable left.
+	 * In other words, this method is called before the first decision in case there is at least one unassigned variable
+	 * left.
 	 * <p>
-	 * The intention is that implementing solvers are informed about the
-	 * beginning of the decision phase.
+	 * The intention is that implementing solvers are informed about the beginning of the decision phase.
 	 */
 	protected void firstDecisionOrStop() {
 		// do nothing in the general case
@@ -253,8 +242,7 @@ public abstract class AbstractMaxSatSolver<V> {
 	 * 
 	 * @param var
 	 *            variable
-	 * @return <code>true</code>/<code>false</code> if assigned,
-	 *         <code>null</code> otherwise
+	 * @return <code>true</code>/<code>false</code> if assigned, <code>null</code> otherwise
 	 */
 	protected abstract Boolean getPersistentAssignment(V var);
 
@@ -313,15 +301,14 @@ public abstract class AbstractMaxSatSolver<V> {
 	/**
 	 * current policy: just return the next propagatee from the set
 	 * <p>
-	 * TODO other policies
-	 * The only goal for optimization here is to find contradictions faster.
-	 * If no contradiction is found, all policies should take the same time.
+	 * TODO other policies The only goal for optimization here is to find contradictions faster. If no contradiction is
+	 * found, all policies should take the same time.
 	 * <p>
-	 * One policy could be to prefer clauses with positive/negative
-	 * variable, but it is not clear whether this makes sense.
+	 * One policy could be to prefer clauses with positive/negative variable, but it is not clear whether this makes
+	 * sense.
 	 * <p>
-	 * Another possibility could be to prefer variables which also
-	 * occur in a non-Horn clause to remove the number of such clauses.
+	 * Another possibility could be to prefer variables which also occur in a non-Horn clause to remove the number of
+	 * such clauses.
 	 * 
 	 * @return pair of unset variable and assignment value
 	 */

@@ -44,20 +44,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /**
- * Simulation that realizes <b>fair and direct simulation</b> for reduction of a
- * given buechi automaton. It primarily uses fair simulation and uses direct
- * simulation as an optimization.<br/>
- * Once created it starts the simulation, results can then be get by using
- * {@link #getResult()}.<br/>
+ * Simulation that realizes <b>fair and direct simulation</b> for reduction of a given buechi automaton. It primarily
+ * uses fair simulation and uses direct simulation as an optimization.<br/>
+ * Once created it starts the simulation, results can then be get by using {@link #getResult()}.<br/>
  * <br/>
- * For more information on the type of simulation see
- * {@link FairDirectGameGraph}.<br/>
+ * For more information on the type of simulation see {@link FairDirectGameGraph}.<br/>
  * <br/>
- * The algorithm runs in <b>O(n^4 * k^2)</b> time and <b>O(n * k)</b> space
- * where n is the amount of states and k the amount of transitions from the
- * inputed automaton.<br/>
- * The algorithm is based on the paper: <i>Fair simulation minimization</i> by
- * <i>Gurumurthy, Bloem and Somenzi</i>.
+ * The algorithm runs in <b>O(n^4 * k^2)</b> time and <b>O(n * k)</b> space where n is the amount of states and k the
+ * amount of transitions from the inputed automaton.<br/>
+ * The algorithm is based on the paper: <i>Fair simulation minimization</i> by <i>Gurumurthy, Bloem and Somenzi</i>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -68,8 +63,7 @@ import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LETTER, STATE> {
 
 	/**
-	 * True if the simulation currently mimics the behavior of a
-	 * DirectSimulation, false if it mimics a FairSimulation.
+	 * True if the simulation currently mimics the behavior of a DirectSimulation, false if it mimics a FairSimulation.
 	 */
 	private boolean mIsCurrentlyDirectSimulation;
 
@@ -83,29 +77,25 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	private boolean mHasFinished;
 
 	/**
-	 * Creates a new fair simulation that tries to reduce the given buechi
-	 * automaton using <b>fair and direct simulation</b>.<br/>
-	 * After construction the simulation starts and results can be get by using
-	 * {@link #getResult()}.<br/>
+	 * Creates a new fair simulation that tries to reduce the given buechi automaton using <b>fair and direct
+	 * simulation</b>.<br/>
+	 * After construction the simulation starts and results can be get by using {@link #getResult()}.<br/>
 	 * <br/>
-	 * For correctness its important that the inputed automaton has <b>no dead
-	 * ends</b> nor <b>duplicate transitions</b>.
+	 * For correctness its important that the inputed automaton has <b>no dead ends</b> nor <b>duplicate
+	 * transitions</b>.
 	 * 
 	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
+	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
 	 * @param game
 	 *            The fair direct game graph to use for simulation.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public FairDirectSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final IStateFactory<STATE> stateFactory, final FairDirectGameGraph<LETTER, STATE> game)
@@ -114,35 +104,29 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	}
 
 	/**
-	 * Creates a new fair simulation that tries to reduce the given buechi
-	 * automaton using <b>fair and direct simulation</b>. Uses a given
-	 * collection of equivalence classes to optimize the simulation.<br/>
-	 * After construction the simulation starts and results can be get by using
-	 * {@link #getResult()}.<br/>
+	 * Creates a new fair simulation that tries to reduce the given buechi automaton using <b>fair and direct
+	 * simulation</b>. Uses a given collection of equivalence classes to optimize the simulation.<br/>
+	 * After construction the simulation starts and results can be get by using {@link #getResult()}.<br/>
 	 * <br/>
-	 * For correctness its important that the inputed automaton has <b>no dead
-	 * ends</b> nor <b>duplicate transitions</b>.
+	 * For correctness its important that the inputed automaton has <b>no dead ends</b> nor <b>duplicate
+	 * transitions</b>.
 	 * 
 	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
+	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
 	 * @param possibleEquivalentClasses
-	 *            A collection of sets which contains states of the buechi
-	 *            automaton that may be merge-able. States which are not in the
-	 *            same set are definitely not merge-able which is used as an
-	 *            optimization for the simulation
+	 *            A collection of sets which contains states of the buechi automaton that may be merge-able. States
+	 *            which are not in the same set are definitely not merge-able which is used as an optimization for the
+	 *            simulation
 	 * @param game
 	 *            The fair direct game graph to use for simulation.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public FairDirectSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final IStateFactory<STATE> stateFactory, final Collection<Set<STATE>> possibleEquivalentClasses,
@@ -355,11 +339,10 @@ public final class FairDirectSimulation<LETTER, STATE> extends FairSimulation<LE
 	}
 
 	/**
-	 * Returns if the simulation currently mimics the behavior of a
-	 * DirectSimulation or a FairSimulation.
+	 * Returns if the simulation currently mimics the behavior of a DirectSimulation or a FairSimulation.
 	 * 
-	 * @return True if the simulation currently mimics the behavior of a
-	 *         DirectSimulation, false if it mimics a FairSimulation.
+	 * @return True if the simulation currently mimics the behavior of a DirectSimulation, false if it mimics a
+	 *         FairSimulation.
 	 */
 	protected boolean isCurrentlyDirectGameGraph() {
 		return mIsCurrentlyDirectSimulation;

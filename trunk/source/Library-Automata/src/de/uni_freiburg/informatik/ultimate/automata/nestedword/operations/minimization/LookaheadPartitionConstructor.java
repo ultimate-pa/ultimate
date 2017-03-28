@@ -47,26 +47,18 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Detect non-mergeable states quickly.
- * Construct a partition of an automaton's states such that all elements of a
- * block are potential candidates for merging states without changing the
- * language. This means that each pair of states whose two elements are in
- * different blocks is considered unmergeable.
+ * Detect non-mergeable states quickly. Construct a partition of an automaton's states such that all elements of a block
+ * are potential candidates for merging states without changing the language. This means that each pair of states whose
+ * two elements are in different blocks is considered unmergeable.
  * <p>
- * WARNING: The result is only correct if the input automaton did not have
- * any dead-end states.
+ * WARNING: The result is only correct if the input automaton did not have any dead-end states.
  * <p>
- * We detect non-mergeable states as follows.
- * A pair of states is non-mergeable if
- * <br>
- * - both states do not have the same outgoing internal symbols
- * <br>
- * - both states do not have the same outgoing call symbols,
- * <br>
- * - only one state is accepting (used only when respective option is set),
- * <br>
- * - the respective successors for each internal and call symbol under which
- * both states are deterministic are mergeable.
+ * We detect non-mergeable states as follows. A pair of states is non-mergeable if <br>
+ * - both states do not have the same outgoing internal symbols <br>
+ * - both states do not have the same outgoing call symbols, <br>
+ * - only one state is accepting (used only when respective option is set), <br>
+ * - the respective successors for each internal and call symbol under which both states are deterministic are
+ * mergeable.
  * <p>
  * TODO: Extend this to returns by providing a partition of DoubleDeckers.
  * 
@@ -76,9 +68,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            letter type
  * @param <STATE>
  *            state type
- * @deprecated This class is obsolete, use {@link NwaApproximateBisimulation} instead.
- *             In particular, the result of this class differs from the other class for nondeterministic automata and
- *             may hence be unexpected.
+ * @deprecated This class is obsolete, use {@link NwaApproximateBisimulation} instead. In particular, the result of this
+ *             class differs from the other class for nondeterministic automata and may hence be unexpected.
  */
 @Deprecated
 public class LookaheadPartitionConstructor<LETTER, STATE> {
@@ -107,8 +98,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 	 * @param operand
 	 *            input automaton
 	 * @param separateAcceptingStates
-	 *            true iff only accepting or non-accepting
-	 *            states can be in a set
+	 *            true iff only accepting or non-accepting states can be in a set
 	 */
 	public LookaheadPartitionConstructor(final AutomataLibraryServices services,
 			final INestedWordAutomaton<LETTER, STATE> operand, final boolean separateAcceptingStates,
@@ -126,8 +116,7 @@ public class LookaheadPartitionConstructor<LETTER, STATE> {
 	 * @param initialPartition
 	 *            initial partition
 	 * @param separateAcceptingStates
-	 *            true iff only accepting or non-accepting
-	 *            states can be in a set
+	 *            true iff only accepting or non-accepting states can be in a set
 	 * @param useSimulationHack
 	 *            {@code true} iff simulation hack should be used
 	 */

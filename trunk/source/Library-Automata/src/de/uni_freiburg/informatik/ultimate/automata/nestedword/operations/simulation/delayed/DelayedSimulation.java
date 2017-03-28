@@ -45,19 +45,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 
 /**
- * Simulation that realizes <b>delayed simulation</b> for reduction of a given
- * buechi automaton.<br/>
+ * Simulation that realizes <b>delayed simulation</b> for reduction of a given buechi automaton.<br/>
  * Once started, results can then be get by using {@link #getResult()}.<br/>
  * <br/>
- * For more information on the type of simulation see {@link DelayedGameGraph}.
+ * For more information on the type of simulation see {@link DelayedGameGraph}. <br/>
  * <br/>
- * <br/>
- * The algorithm runs in <b>O(n^3 * k)</b> time and <b>O(n * k)</b> space where
- * n is the amount of states and k the amount of transitions from the inputed
- * automaton.<br/>
- * The algorithm is based on the paper: <i>Fair simulation relations, parity
- * games, and state space reduction for büchi automata</i> by <i>Etessami, Wilke
- * and Schuller</i>.
+ * The algorithm runs in <b>O(n^3 * k)</b> time and <b>O(n * k)</b> space where n is the amount of states and k the
+ * amount of transitions from the inputed automaton.<br/>
+ * The algorithm is based on the paper: <i>Fair simulation relations, parity games, and state space reduction for büchi
+ * automata</i> by <i>Etessami, Wilke and Schuller</i>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author Markus Lindenmann (lindenmm@informatik.uni-freiburg.de)
@@ -76,29 +72,25 @@ public class DelayedSimulation<LETTER, STATE> extends ASimulation<LETTER, STATE>
 	private final DelayedGameGraph<LETTER, STATE> mGame;
 
 	/**
-	 * Creates a new delayed simulation that tries to reduce the given buechi
-	 * automaton using <b>delayed simulation</b>.<br/>
-	 * After construction the simulation can be started and results can be get
-	 * by using {@link #getResult()}.<br/>
+	 * Creates a new delayed simulation that tries to reduce the given buechi automaton using <b>delayed
+	 * simulation</b>.<br/>
+	 * After construction the simulation can be started and results can be get by using {@link #getResult()}.<br/>
 	 * <br/>
-	 * For correctness its important that the inputed automaton has <b>no dead
-	 * ends</b> nor <b>duplicate transitions</b>.
+	 * For correctness its important that the inputed automaton has <b>no dead ends</b> nor <b>duplicate
+	 * transitions</b>.
 	 * 
 	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
+	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @param stateFactory
 	 *            The state factory used for creating states.
 	 * @param game
 	 *            The game graph to use for simulation.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public DelayedSimulation(final IProgressAwareTimer progressTimer, final ILogger logger, final boolean useSCCs,
 			final IStateFactory<STATE> stateFactory, final DelayedGameGraph<LETTER, STATE> game)

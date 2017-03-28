@@ -77,8 +77,7 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 	/**
 	 * @param states
 	 *            states
-	 * @return Result contains a configuration for each state which contains
-	 *         only this state.
+	 * @return Result contains a configuration for each state which contains only this state.
 	 */
 	public Set<ArrayDeque<STATE>> emptyStackConfiguration(final Iterable<STATE> states) {
 		final Set<ArrayDeque<STATE>> configurations = new HashSet<>();
@@ -100,22 +99,17 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 	}
 
 	/**
-	 * Compute successor configurations for a set of given configurations and
-	 * one letter of a nested word. A configuration is given as a stack of
-	 * states. (topmost element: current state, other elements: states occurred
-	 * on a run at call positions) If the letter is at an internal position we
-	 * consider only internal successors. If the letter is at a call position we
-	 * consider only call successors. If the letter is at a return position we
-	 * consider only return successors and consider the second topmost stack
-	 * element as hierarchical predecessor.
+	 * Compute successor configurations for a set of given configurations and one letter of a nested word. A
+	 * configuration is given as a stack of states. (topmost element: current state, other elements: states occurred on
+	 * a run at call positions) If the letter is at an internal position we consider only internal successors. If the
+	 * letter is at a call position we consider only call successors. If the letter is at a return position we consider
+	 * only return successors and consider the second topmost stack element as hierarchical predecessor.
 	 * 
 	 * @param position
-	 *            of the symbol in the nested word for which the successors are
-	 *            computed.
+	 *            of the symbol in the nested word for which the successors are computed.
 	 * @param addInitial
-	 *            if true we add for each initial state an stack that contains
-	 *            only this initial state. Useful to check if suffix of word is
-	 *            accepted. If set the input configurations is modified.
+	 *            if true we add for each initial state an stack that contains only this initial state. Useful to check
+	 *            if suffix of word is accepted. If set the input configurations is modified.
 	 * @throws AutomataLibraryException
 	 *             if symbol not contained in alphabet or timeout
 	 */

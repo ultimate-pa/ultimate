@@ -79,9 +79,8 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	private final Collection<ITransition<S, C>> mTransitions = new HashSet<>();
 
 	/**
-	 * If true the number of tokens in this petri net is constant. Formally:
-	 * There is a natural number n such that every reachable marking consists of
-	 * n places.
+	 * If true the number of tokens in this petri net is constant. Formally: There is a natural number n such that every
+	 * reachable marking consists of n places.
 	 */
 	private final boolean mConstantTokenAmount;
 
@@ -329,8 +328,8 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	}
 
 	/**
-	 * @return {@code true} if the number of tokens in the net is constant (= size of
-	 *         initial marking) during every run of the net.
+	 * @return {@code true} if the number of tokens in the net is constant (= size of initial marking) during every run
+	 *         of the net.
 	 */
 	public boolean constantTokenAmount() {
 		return mConstantTokenAmount;

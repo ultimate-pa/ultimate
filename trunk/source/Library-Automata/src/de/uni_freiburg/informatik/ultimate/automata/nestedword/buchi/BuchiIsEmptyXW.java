@@ -346,8 +346,8 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	 *            linear predecessor
 	 * @param returnAlphabet
 	 *            return alphabet
-	 * @return All return successors of the hierarchical return predecessor and
-	 *         the linear return predecessor through all symbols.
+	 * @return All return successors of the hierarchical return predecessor and the linear return predecessor through
+	 *         all symbols.
 	 */
 	public Collection<STATE> getReturnSuccStates(final STATE hierarcReturnPredState, final STATE linearReturnPredState,
 			final Collection<LETTER> returnAlphabet) {
@@ -362,9 +362,8 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	}
 
 	/**
-	 * Returns the first internal symbol in the iteration such that
-	 * "(internalPred, symbol, internalSucc)" is contained in the internal
-	 * transitions.
+	 * Returns the first internal symbol in the iteration such that "(internalPred, symbol, internalSucc)" is contained
+	 * in the internal transitions.
 	 */
 	LETTER getFirstInternalSymbol(final STATE internalPred, final STATE internalSucc) {
 		for (final LETTER internalSymbol : mOperand.lettersInternal(internalPred)) {
@@ -379,8 +378,8 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	}
 
 	/**
-	 * Returns the first call symbol in the iteration such that
-	 * "(callPred, symbol, callSucc)" is contained in the call transitions.
+	 * Returns the first call symbol in the iteration such that "(callPred, symbol, callSucc)" is contained in the call
+	 * transitions.
 	 */
 	LETTER getFirstCallSymbol(final STATE callPred, final STATE callSucc) {
 		for (final LETTER callSymbol : mOperand.lettersCall(callPred)) {
@@ -394,9 +393,8 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	}
 
 	/**
-	 * Returns the first return symbol in the iteration such that
-	 * "(returnPredHierarc, returnPredLinear, symbol, returnSucc)"
-	 * is contained in the return transitions.
+	 * Returns the first return symbol in the iteration such that "(returnPredHierarc, returnPredLinear, symbol,
+	 * returnSucc)" is contained in the return transitions.
 	 */
 	LETTER getFirstReturnSymbol(final STATE returnPredHierarc, final STATE returnPredLinear, final STATE returnSucc) {
 		for (final LETTER returnSymbol : mOperand.lettersReturn(returnPredHierarc)) {
@@ -506,8 +504,7 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	}
 
 	/**
-	 * Copy the bridge to bridgeWithPendingCall and add domain of bridge to
-	 * worklist.
+	 * Copy the bridge to bridgeWithPendingCall and add domain of bridge to worklist.
 	 */
 	// Reachability-C line1--2
 	// TODO: xw: naming
@@ -693,8 +690,7 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	}
 
 	/**
-	 * Singleton bridge.
-	 * TODO: xw: naming
+	 * Singleton bridge. TODO: xw: naming
 	 */
 	private class SingletonBridge implements IBridgeRange {
 		private final STATE mSingleton;
@@ -812,8 +808,7 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	}
 
 	/**
-	 * Stores newly deduced reachable state pairs (source, target).
-	 * Pair deleted after exploitation.
+	 * Stores newly deduced reachable state pairs (source, target). Pair deleted after exploitation.
 	 */
 	private class Worklist {
 		private final LinkedList<StatePair> mWorklist;

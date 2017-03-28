@@ -26,7 +26,7 @@
  * resulting work.
  */
 /**
- * This packages contains utility classes used for NWA reduction using
- * simulation. For example vertices used in game graphs.
+ * This packages contains utility classes used for NWA reduction using simulation. For example vertices used in game
+ * graphs.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa;

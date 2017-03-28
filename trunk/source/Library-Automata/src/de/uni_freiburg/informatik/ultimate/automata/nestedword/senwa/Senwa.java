@@ -37,17 +37,14 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Special case of NestedWordAutomaton in which we can partition the set of
- * states into modules. Each module has an unique entry state.
+ * Special case of NestedWordAutomaton in which we can partition the set of states into modules. Each module has an
+ * unique entry state.
  * <ul>
- * <li>The entry state is the only state of a module which may have incoming
- * call transitions.
- * <li>The entry state is the only state of the module which may be an initial
- * state.
+ * <li>The entry state is the only state of a module which may have incoming call transitions.
+ * <li>The entry state is the only state of the module which may be an initial state.
  * </ul>
- * ( I think 2012-09-17 the following should also apply:
- * Each entry state must be an initial state or has at least one incoming call
- * transition.)
+ * ( I think 2012-09-17 the following should also apply: Each entry state must be an initial state or has at least one
+ * incoming call transition.)
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -108,8 +105,7 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 	/**
 	 * @param entry
 	 *            An entry.
-	 * @return The set of all states which have an outgoing call transition to
-	 *         entry.
+	 * @return The set of all states which have an outgoing call transition to entry.
 	 */
 	public Set<STATE> getCallPredecessors(final STATE entry) {
 		assert mEntry2Module.containsKey(entry);
@@ -118,9 +114,8 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 	}
 
 	/**
-	 * * Return all states <i>down</i> such that a configuration is reachable,
-	 * where <i>up</i> is the current state and <i>down</i> is the topmost stack
-	 * element.
+	 * * Return all states <i>down</i> such that a configuration is reachable, where <i>up</i> is the current state and
+	 * <i>down</i> is the topmost stack element.
 	 * 
 	 * @deprecated Use the {@link #isDoubleDecker(Object, Object)} check instead.
 	 */
@@ -132,9 +127,8 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 	}
 
 	/**
-	 * Returns true iff there is a reachable configuration in which the
-	 * automaton is in STATE <i>up</i> and the STATE <i>down</i> is the topmost
-	 * stack element.
+	 * Returns true iff there is a reachable configuration in which the automaton is in STATE <i>up</i> and the STATE
+	 * <i>down</i> is the topmost stack element.
 	 */
 	@Override
 	public boolean isDoubleDecker(final STATE upState, final STATE downState) {

@@ -201,26 +201,27 @@ public final class ISOIEC9899TC3 {
 	 * Given a suffix-free decimal value, compute a BigDecimal representation of
 	 * this value.
 	 */
-	private static BigDecimal getDecimalForm(String suffixFreeValue) {
+	private static BigDecimal getDecimalForm(final String suffixFreeValue) {
+		final BigDecimal floatVal;
 		// convert literal in hex form to decimal form
 		if (suffixFreeValue.startsWith("0x") || suffixFreeValue.startsWith("0X")) {
-			suffixFreeValue = suffixFreeValue.substring(2);
+			String hexValue = suffixFreeValue.substring(2);
 			int suffixLength = -1;
 			String hexExponentValue = null;
 			
 			// extract exponent value of the hex literal
-			if (suffixFreeValue.contains("p")) {
-				hexExponentValue = suffixFreeValue.substring(suffixFreeValue.indexOf('p') + 1);
-				suffixFreeValue = suffixFreeValue.substring(0, suffixFreeValue.indexOf('p'));
+			if (hexValue.contains("p")) {
+				hexExponentValue = hexValue.substring(hexValue.indexOf('p') + 1);
+				hexValue = hexValue.substring(0, hexValue.indexOf('p'));
 			}
 			
-			if (suffixFreeValue.contains(".")) {
-				final int dotPosition = suffixFreeValue.indexOf('.');
-				suffixLength = suffixFreeValue.substring(dotPosition + 1).length();
-				suffixFreeValue =
-						suffixFreeValue.substring(0, dotPosition) + suffixFreeValue.substring(dotPosition + 1);
+			if (hexValue.contains(".")) {
+				final int dotPosition = hexValue.indexOf('.');
+				suffixLength = hexValue.substring(dotPosition + 1).length();
+				hexValue =
+						hexValue.substring(0, dotPosition) + hexValue.substring(dotPosition + 1);
 			}
-			final BigInteger hexValueToDecimalValue = new BigInteger(suffixFreeValue, 16);
+			final BigInteger hexValueToDecimalValue = new BigInteger(hexValue, 16);
 			BigDecimal hexValueBigDecimal = new BigDecimal(hexValueToDecimalValue.toString());
 			
 			if (hexExponentValue != null) {
@@ -239,42 +240,18 @@ public final class ISOIEC9899TC3 {
 			if (suffixLength != -1) {
 				hexValueBigDecimal = hexValueBigDecimal.divide(BigDecimal.valueOf(Math.pow(16, suffixLength)));
 			}
-			suffixFreeValue = hexValueBigDecimal.toString();
+			floatVal = hexValueBigDecimal;
 		} else if (suffixFreeValue.contains("e")) {
 			// if value contains e calculate the number according to it
 			final int eLocatation = suffixFreeValue.indexOf('e');
 			final String floatString = suffixFreeValue.substring(0, eLocatation);
-			String exponentString = suffixFreeValue.substring(eLocatation + 1, suffixFreeValue.length());
-			BigDecimal base = new BigDecimal(floatString);
-			if (exponentString.startsWith("0")) {
-				while (exponentString.startsWith("0")) {
-					exponentString = exponentString.substring(1);
-				}
-			} else if (exponentString.startsWith("+") || exponentString.startsWith("-")) {
-				if (exponentString.substring(1, 2).equals("0")) {
-					while (exponentString.substring(1, 2).equals("0")) {
-						exponentString =
-								exponentString.substring(0, 1) + exponentString.substring(2, exponentString.length());
-					}
-				}
-			}
-			
-			int exponentValue = Integer.parseInt(exponentString);
-			if (exponentValue < 0) {
-				while (exponentValue < 0) {
-					base = base.multiply(new BigDecimal("0.1"));
-					exponentValue++;
-				}
-			} else {
-				while (exponentValue > 0) {
-					base = base.multiply(BigDecimal.TEN);
-					exponentValue--;
-				}
-			}
-			suffixFreeValue = base.toString();
+			final String exponentString = suffixFreeValue.substring(eLocatation + 1, suffixFreeValue.length());
+			final BigDecimal base = new BigDecimal(floatString);
+			final int exponent = Integer.parseInt(exponentString);
+			floatVal = base.scaleByPowerOfTen(exponent);
+		} else {
+			floatVal = new BigDecimal(suffixFreeValue);
 		}
-		
-		final BigDecimal floatVal = new BigDecimal(suffixFreeValue);
 		return floatVal;
 	}
 	

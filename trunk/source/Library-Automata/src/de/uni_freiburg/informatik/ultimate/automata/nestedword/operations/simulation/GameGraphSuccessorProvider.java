@@ -33,8 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.util.scc.SccComputation.ISuccessorProvider;
 
 /**
- * Successor provider for a {@link AGameGraph}. Given a vertex it gets all its
- * successors.
+ * Successor provider for a {@link AGameGraph}. Given a vertex it gets all its successors.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>

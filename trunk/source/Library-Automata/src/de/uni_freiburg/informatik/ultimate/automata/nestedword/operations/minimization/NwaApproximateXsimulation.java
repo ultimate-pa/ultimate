@@ -112,7 +112,7 @@ public abstract class NwaApproximateXsimulation<LETTER, STATE, T> {
 		 *      If it has negative impact, we should only call it if the flag is true.
 		 */
 		separateByDifferentSymbols();
-		
+
 		if (separateByTransitionConstraints) {
 			separateByTransitionConstraints();
 		}

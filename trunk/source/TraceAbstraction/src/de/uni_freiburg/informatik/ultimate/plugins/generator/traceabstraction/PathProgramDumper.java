@@ -431,7 +431,12 @@ public class PathProgramDumper {
 			}
 			final List<IcfgEdge> nonSummaryOutgoingEdges = new ArrayList<>();
 			for (final IcfgEdge edge : node.getOutgoingEdges()) {
-				if (!(edge instanceof Summary)) {
+				if (edge instanceof Summary) {
+					if (!((Summary) edge).calledProcedureHasImplementation()) {
+						// summaries that do not have an implementation are allowed
+						nonSummaryOutgoingEdges.add(edge);
+					}
+				} else {
 					nonSummaryOutgoingEdges.add(edge);
 				}
 			}
@@ -562,6 +567,15 @@ public class PathProgramDumper {
 				for (final Statement st : stseq.getStatements()) {
 					statements.add(st);
 				}
+				return edge.getTarget();
+			} else if (edge.getLabel() instanceof Summary) {
+				addVars(action.getTransformula().getInVars().keySet(), localVars, globalVars);
+				addVars(action.getTransformula().getOutVars().keySet(), localVars, globalVars);
+				final Summary summary = (Summary) edge.getLabel();
+				if (summary.calledProcedureHasImplementation()) {
+					throw new AssertionError("edges like this should have been omitted");
+				}
+				statements.add(summary.getCallStatement());
 				return edge.getTarget();
 			} else {
 				throw new UnsupportedOperationException("unsupported edge " + action.getClass().getSimpleName());

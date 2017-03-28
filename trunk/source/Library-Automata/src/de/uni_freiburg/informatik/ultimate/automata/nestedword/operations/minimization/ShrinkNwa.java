@@ -71,8 +71,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * <p>
  * It is based on Hopcroft's minimization for deterministic finite automata.
  * <p>
- * Basically we do an over-approximation of the language by merging all states.
- * Then iteratively the so-called
+ * Basically we do an over-approximation of the language by merging all states. Then iteratively the so-called
  * equivalence classes are split until no more witness for a split is found.
  * <p>
  * For DFAs the algorithm just performs Hopcroft's algorithm.
@@ -815,8 +814,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * This method assures correctness for the naive return split.
 	 * <p>
-	 * Currently it just executes the old return split, which seems to be too expensive.
-	 * Hierarchical states are not
+	 * Currently it just executes the old return split, which seems to be too expensive. Hierarchical states are not
 	 * analyzed.
 	 * 
 	 * @param linEc
@@ -1282,8 +1280,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * This method checks and potentially triggers a linear return split.
 	 * <p>
-	 * TODO(nondeterminism) at most one successor for deterministic automata,
-	 * offer improved version (no Set of STATE , no Set of EquivalenceClass)?
+	 * TODO(nondeterminism) at most one successor for deterministic automata, offer improved version (no Set of STATE ,
+	 * no Set of EquivalenceClass)?
 	 * <p>
 	 * TODO(ignoreMarked) ignore already marked pairs
 	 * 
@@ -1394,8 +1392,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	/**
 	 * This method checks and potentially triggers a hierarchical return split.
 	 * <p>
-	 * TODO(nondeterminism) at most one successor for deterministic automata,
-	 * offer improved version (no Set of STATE, no Set of EquivalenceClass)?
+	 * TODO(nondeterminism) at most one successor for deterministic automata, offer improved version (no Set of STATE,
+	 * no Set of EquivalenceClass)?
 	 * 
 	 * @param hier2lin2letter2succ
 	 *            map hier. to lin. to letter to succ. state
@@ -2624,8 +2622,8 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 		Set<LETTER> letters(final STATE state);
 
 		/**
-		 * This method returns a new collection. This is for efficiency reasons,
-		 * since first only a list is needed, where later a set is needed.
+		 * This method returns a new collection. This is for efficiency reasons, since first only a list is needed,
+		 * where later a set is needed.
 		 *
 		 * @return new collection
 		 */

@@ -45,18 +45,15 @@ public enum TransitionType {
 	 */
 	RETURN,
 	/**
-	 * Type for auxiliary transitions that represent the a sink that is winning
-	 * for a given player.
+	 * Type for auxiliary transitions that represent the a sink that is winning for a given player.
 	 */
 	SINK,
 	/**
-	 * Type for auxiliary transitions that represent the entry of a summarize
-	 * edge.
+	 * Type for auxiliary transitions that represent the entry of a summarize edge.
 	 */
 	SUMMARIZE_ENTRY,
 	/**
-	 * Type for auxiliary transitions that represent the exit of a summarize
-	 * edge.
+	 * Type for auxiliary transitions that represent the exit of a summarize edge.
 	 */
 	SUMMARIZE_EXIT
 }

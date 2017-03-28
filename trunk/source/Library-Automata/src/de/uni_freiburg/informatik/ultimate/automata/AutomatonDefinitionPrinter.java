@@ -53,6 +53,8 @@ import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJuli
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterToString;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterToStringWithUniqueNumber;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.visualization.NetWriterUniqueId;
+import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
+import de.uni_freiburg.informatik.ultimate.automata.tree.visualization.TreeAutomatonWriter;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -305,8 +307,25 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 			printPetriNet(name, (IPetriNet<LETTER, STATE>) automaton, format);
 		} else if (automaton instanceof AlternatingAutomaton) {
 			printAlternatingAutomaton(name, (AlternatingAutomaton<LETTER, STATE>) automaton, format);
+		} else if (automaton instanceof TreeAutomatonBU<?, ?>) {
+			printTreeAutomaton(name, (TreeAutomatonBU<LETTER, STATE>) automaton, format);
 		}
 		mPrintWriter.close();
+	}
+
+	private void printTreeAutomaton(String name, TreeAutomatonBU<LETTER, STATE> automaton, Format format) {
+		switch (format) {
+			case ATS:
+				new TreeAutomatonWriter<>(mPrintWriter, name, automaton);
+				break;
+			case ATS_QUOTED:
+			case ATS_NUMERATE:
+			case BA:
+			case GFF:
+			case HOA:
+			default:
+				throw new AssertionError(UNSUPPORTED_LABELING);
+		}
 	}
 
 	@SuppressWarnings("unused")

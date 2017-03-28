@@ -372,7 +372,7 @@ public class TreeAutomizerTests {
 		final AutomataLibraryServices services = new AutomataLibraryServices(usp);
 
 		final TreeEmptinessCheck<String, String> op = new TreeEmptinessCheck<>(services, treeA);
-		final TreeRun<String, String> res = op.getResult();
+		final TreeRun<String, String> res = op.getTreeRun();
 
 		mLogger.info(treeA.toString());
 		mLogger.info("");

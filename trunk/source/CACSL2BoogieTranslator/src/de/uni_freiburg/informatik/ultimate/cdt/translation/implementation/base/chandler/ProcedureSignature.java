@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.
 import java.util.ArrayList;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CFunction;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -17,43 +18,54 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher
  * @author Alexander Nutz
  */
 public class ProcedureSignature {
-	public ArrayList<ASTType> inParams = new ArrayList<>();
-	public ASTType returnType = null;
-	public boolean takesVarArgs = false;
+	private final ArrayList<ASTType> mInParams = new ArrayList<>();
+	private final ASTType mReturnType;
+	private final boolean mTakesVarArgs;
+	private final String mStringRepresentation;
 	
-	public ProcedureSignature(Dispatcher main, CFunction cf) {
+	public ProcedureSignature(final Dispatcher main, final CFunction cf) {
 		for (final CDeclaration ip : cf.getParameterTypes()) {
 			final ASTType type = main.mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), ip.getType());
-			inParams.add(type);
+			mInParams.add(type);
 		}
 		if (cf.getResultType() instanceof CPrimitive && ((CPrimitive) cf.getResultType()).getType() == CPrimitives.VOID) {
-			returnType = null;
+			mReturnType = null;
 		} else {
-			returnType = main.mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), cf.getResultType());
+			mReturnType = main.mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), cf.getResultType());
 		}
-		takesVarArgs = cf.takesVarArgs();
+		mTakesVarArgs = cf.takesVarArgs();
+		mStringRepresentation = buildStringRepresentation();
 	}
 	
+	public ASTType getReturnType() {
+		return mReturnType;
+	}
+
 	@Override
 	public String toString() {
+		return mStringRepresentation;
+	}
+	
+	private String buildStringRepresentation() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("##fun~");
 		String times = "";
-		for (int i = 0; i < inParams.size(); i++) {
+		for (int i = 0; i < mInParams.size(); i++) {
 			sb.append(times);
-			sb.append(inParams.get(i).toString());
+			final ASTType inParam = mInParams.get(i);
+			sb.append(BoogiePrettyPrinter.printASTType(inParam));
 			times = "~X~";
 		}
-		if (takesVarArgs) {
+		if (mTakesVarArgs) {
 			sb.append("X~varArgs~");
 		}
 		sb.append("~TO~");
-		sb.append(returnType != null ? returnType.toString() : "VOID");
+		sb.append(mReturnType != null ? BoogiePrettyPrinter.printASTType(mReturnType) : "VOID");
 		return sb.toString();
 	}
 
 	@Override
-	public boolean equals(Object o) {
+	public boolean equals(final Object o) {
 //		if (!(o instanceof ProcedureSignature)) {
 //			return false;
 //		}
@@ -77,6 +89,6 @@ public class ProcedureSignature {
 //			result += HashUtils.hashJenkins(result, inParams.get(i));
 //		result = HashUtils.hashJenkins(result, takesVarArgs);
 //		return result;
-		return 0;
+		return mStringRepresentation.hashCode();
 	}
 }

@@ -36,16 +36,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 
 /**
- * Determinized state in the classical determinization algorithm for NWAs.
- * While determinizing a nondeterministic finite automaton NFA using the
- * powerset construction a state in the determinized automaton corresponds to a
- * subset of the states of A.
- * For NWAs there exists a similar construction. Let A be a nondeterministic
- * NWA. A state in the determinized NWA corresponds to a set of ordered pairs
- * of A's states. In such a pair, the first state (present) represents a
- * state "in which A can be at the moment", the second state (caller)
- * represents the state "before the last call statement", i.e. the second state
- * represents "the top of the stack".
+ * Determinized state in the classical determinization algorithm for NWAs. While determinizing a nondeterministic finite
+ * automaton NFA using the powerset construction a state in the determinized automaton corresponds to a subset of the
+ * states of A. For NWAs there exists a similar construction. Let A be a nondeterministic NWA. A state in the
+ * determinized NWA corresponds to a set of ordered pairs of A's states. In such a pair, the first state (present)
+ * represents a state "in which A can be at the moment", the second state (caller) represents the state "before the last
+ * call statement", i.e. the second state represents "the top of the stack".
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -55,8 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeSta
  */
 public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETTER, STATE> {
 	/**
-	 * Set of ordered pairs. The pair (present,caller) is in this set iff
-	 * present is contained in the image of caller.
+	 * Set of ordered pairs. The pair (present,caller) is in this set iff present is contained in the image of caller.
 	 */
 	private final Map<STATE, Set<STATE>> mCaller2presents;
 	private boolean mContainsFinal;
@@ -88,8 +83,7 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 	}
 
 	/**
-	 * @return true iff for some pair in the set, the first entry is an
-	 *         accepting state.
+	 * @return true iff for some pair in the set, the first entry is an accepting state.
 	 */
 	public boolean containsFinal() {
 		return mContainsFinal;
@@ -98,8 +92,7 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 	/**
 	 * @param nwa
 	 *            A nested word automaton.
-	 * @return true iff for all pair in the set, the first entry is an
-	 *         accepting state and the set is not empty
+	 * @return true iff for all pair in the set, the first entry is an accepting state and the set is not empty
 	 */
 	public boolean allFinal(final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		if (mCaller2presents.isEmpty()) {
@@ -153,8 +146,7 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 	}
 
 	/**
-	 * Two DeterminizedStates are equivalent iff they represent the same set of
-	 * state pairs.
+	 * Two DeterminizedStates are equivalent iff they represent the same set of state pairs.
 	 */
 	@Override
 	public boolean equals(final Object obj) {

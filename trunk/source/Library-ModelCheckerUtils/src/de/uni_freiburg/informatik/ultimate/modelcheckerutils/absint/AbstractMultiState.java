@@ -166,7 +166,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		SubsetResult result = SubsetResult.EQUAL;
 		for (final STATE state : mStates) {
 			final Optional<SubsetResult> min =
-					other.mStates.stream().map(a -> state.isSubsetOf(a)).min((a, b) -> a.compareTo(b));
+					other.mStates.stream().map(state::isSubsetOf).min((a, b) -> a.compareTo(b));
 			if (min.isPresent()) {
 				result = result.update(min.get());
 			}

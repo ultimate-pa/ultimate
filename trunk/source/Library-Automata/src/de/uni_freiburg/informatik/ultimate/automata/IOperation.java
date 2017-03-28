@@ -34,38 +34,30 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * If possible,
  * <ul>
  * <li>each operation is defined in its own class
- * <li>for every application of the operation a new instance of this class is
- * constructed
+ * <li>for every application of the operation a new instance of this class is constructed
  * <li>the result is returned via the {@link #getResult()} method
- * <li>start and end of the operation are reported to the logger using log
- * level <tt>INFO</tt>
- * <li>correctness checks for this operation are implemented in the
- * checkResult method. Whoever executes this operation should add an
- * <blockquote>
- * {@code assert} {@link #checkResult()}
- * </blockquote>
- * in the code.
+ * <li>start and end of the operation are reported to the logger using log level <tt>INFO</tt>
+ * <li>correctness checks for this operation are implemented in the checkResult method. Whoever executes this operation
+ * should add an <blockquote> {@code assert} {@link #checkResult()} </blockquote> in the code.
  * </ul>
  * By convention the constructor of an IOperation has the following parameters.
  * <ul>
- * <li>The fist parameter are the {@link AutomataLibraryServices}. If the operation
- * is executed by the automata script interpreter, the interpreter will use
- * the {@link AutomataLibraryServices} of the current toolchain as an argument.
- * <li>If the IOperation requires a {@link IStateFactory}, the {@link IStateFactory} should
- * be the second parameter. If the second parameter is a {@link IStateFactory}, the
- * automata script interpreter uses a {@link StringFactory} as argument.
- * <li>The remaining parameters of the constructor are the parameters of the
- * operation (i.e., the parameters for which you provide arguments in an
- * .ats file). It is good practice to have a default constructor with a minimal number of arguments, and optionally
- * other constructors with more arguments. The minimal constructor should be considered the default for .ats files.
+ * <li>The fist parameter are the {@link AutomataLibraryServices}. If the operation is executed by the automata script
+ * interpreter, the interpreter will use the {@link AutomataLibraryServices} of the current toolchain as an argument.
+ * <li>If the IOperation requires a {@link IStateFactory}, the {@link IStateFactory} should be the second parameter. If
+ * the second parameter is a {@link IStateFactory}, the automata script interpreter uses a {@link StringFactory} as
+ * argument.
+ * <li>The remaining parameters of the constructor are the parameters of the operation (i.e., the parameters for which
+ * you provide arguments in an .ats file). It is good practice to have a default constructor with a minimal number of
+ * arguments, and optionally other constructors with more arguments. The minimal constructor should be considered the
+ * default for .ats files.
  * </ul>
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            Type of objects that are contained in the alphabet.
  * @param <STATE>
- *            Type of objects that are used to label states (resp. places
- *            for PetriNet)
+ *            Type of objects that are used to label states (resp. places for PetriNet)
  * @param <CRSF>
  *            type of {@link IStateFactory} that is used in the {@link #checkResult(IStateFactory)} method
  */
@@ -113,9 +105,12 @@ public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 	boolean checkResult(CRSF stateFactory) throws AutomataLibraryException;
 
 	/**
-	 * Get information about the runtime and resource consumption of the operation.
+	 * Get information about the performance (e.g., runtime) of the operation.
 	 * <p>
-	 * Delivering this information is optional.
+	 * Delivering this information is optional.<br>
+	 * This method should only be called by statistic collection frameworks. Implementing classes may decide to only
+	 * compute the statistics on demand, so this may be an expensive method. It is, however, not wise to keep huge data
+	 * structures in memory just for creating statistics data.
 	 * 
 	 * @return statistics object
 	 */

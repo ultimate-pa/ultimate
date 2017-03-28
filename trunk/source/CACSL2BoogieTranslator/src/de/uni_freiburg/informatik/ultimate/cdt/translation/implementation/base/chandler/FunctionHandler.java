@@ -1126,6 +1126,10 @@ public class FunctionHandler {
 			builder.setLRVal(lrVal);
 			return builder.build();
 		} else if (methodName.equals("__builtin_return_address")) {
+			if (arguments.length != 1) {
+				throw new IllegalArgumentException(methodName + "has one argumens");
+			}
+			main.dispatch(arguments[0]);
 			/*
 			 * The GNU C online documentation at https://gcc.gnu.org/onlinedocs/gcc/Return-Address.html on 09 Nov 2016
 			 * says: "— Built-in Function: void * __builtin_return_address (unsigned int level) This function returns
@@ -1146,38 +1150,24 @@ public class FunctionHandler {
 			 *
 			 * Current solution: replace call by a havocced aux variable.
 			 */
-			// final List<Declaration> decl = new ArrayList<>();
-			// final List<Statement> stmt = new ArrayList<>();
-			// final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-			final ExpressionResultBuilder builder = new ExpressionResultBuilder();
-
-			// introduce fresh aux variable
 			final CPointer resultType = new CPointer(new CPrimitive(CPrimitives.VOID));
-			final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
-			final VariableDeclaration tmpVarDecl =
-					SFO.getTempVarVariableDeclaration(tmpId, main.mTypeHandler.constructPointerType(loc), loc);
-			builder.addDeclaration(tmpVarDecl);
-			builder.putAuxVar(tmpVarDecl, loc);
-
-			final IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
-
-			// final List<Overapprox> overapprox = new ArrayList<>();
-			// overapprox.add(new Overapprox("builtin_return_address", loc));
-
-			// current strategy (alex, Dec 2016) for Overapprox:
-			// annotate it as soon as possible, don't use ExpressionResult.overappr
-			final Overapprox overAppFlag = new Overapprox("builtin_return_address", loc);
-			// tmpVarIdExpr.getPayload().getAnnotations().put(Overapprox.getIdentifier(), overAppFlag);
-			builder.addOverapprox(overAppFlag); // TODO -should- be redundant, but is not... (actually both
-												// registrations seem necessary)
-
-			final RValue lrVal = new RValue(tmpVarIdExpr, resultType);
-
-			builder.setLRVal(lrVal);
-
-			return builder.build();
+			return constructOverapproximationForFunctionCall(main, loc, methodName, resultType);
 			// } else if (methodName.equals("abs")) { // made obsolete by StdlibSupportInUltimate.java
 			// throw new UnsupportedOperationException("function abs from stdlib.h not yet implemented");
+		} else if (methodName.equals("__builtin_bswap32")) {
+			if (arguments.length != 1) {
+				throw new IllegalArgumentException(methodName + "has one argumens");
+			}
+			main.dispatch(arguments[0]);
+			final CPrimitive resultType = new CPrimitive(CPrimitives.UINT);
+			return constructOverapproximationForFunctionCall(main, loc, methodName, resultType);
+		} else if (methodName.equals("__builtin_bswap64")) {
+			if (arguments.length != 1) {
+				throw new IllegalArgumentException(methodName + "has one argumens");
+			}
+			main.dispatch(arguments[0]);
+			final CPrimitive resultType = new CPrimitive(CPrimitives.ULONG);
+			return constructOverapproximationForFunctionCall(main, loc, methodName, resultType);
 		} else {
 			final FloatFunction floatFunction = FloatFunction.decode(methodName);
 			if (floatFunction != null) {
@@ -1202,6 +1192,33 @@ public class FunctionHandler {
 			}
 			return null;
 		}
+	}
+
+	/**
+	 * Construct an auxiliary variable that will be use as a substitute for a
+	 * function call. The result will be marked as an overapproximation.
+	 * If you overapproximate a function call, don't forget to dispatch
+	 * the function call's arguments: the arguments may have side effects.
+	 * 
+	 * @param functionName
+	 *            the named of the function will be annotated to the
+	 *            overapproximation
+	 * @param resultType
+	 *            CType that determinies the type of the auxiliary variable
+	 */
+	private ExpressionResult constructOverapproximationForFunctionCall(final Dispatcher main, final ILocation loc,
+			final String functionName, final CType resultType) {
+		final ExpressionResultBuilder builder = new ExpressionResultBuilder();
+		// introduce fresh aux variable
+		final String tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.NONDET, resultType);
+		final ASTType astType = main.mTypeHandler.cType2AstType(loc, resultType);
+		final VariableDeclaration tmpVarDecl = SFO.getTempVarVariableDeclaration(tmpId, astType, loc);
+		builder.addDeclaration(tmpVarDecl);
+		builder.putAuxVar(tmpVarDecl, loc);
+		final IdentifierExpression tmpVarIdExpr = new IdentifierExpression(loc, tmpId);
+		builder.addOverapprox(new Overapprox(functionName, loc));
+		builder.setLRVal(new RValue(tmpVarIdExpr, resultType));
+		return builder.build();
 	}
 
 	/**

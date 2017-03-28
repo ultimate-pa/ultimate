@@ -13,8 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * Provides utility methods for CSV files used for plotting performance entry
- * tables.
+ * Provides utility methods for CSV files used for plotting performance entry tables.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  */
@@ -189,8 +188,7 @@ public final class PlotCsvUtils {
 	}
 
 	/**
-	 * Writes the given file with the given content. Existing content will be
-	 * overwritten.
+	 * Writes the given file with the given content. Existing content will be overwritten.
 	 * 
 	 * @param file
 	 *            The file to write to

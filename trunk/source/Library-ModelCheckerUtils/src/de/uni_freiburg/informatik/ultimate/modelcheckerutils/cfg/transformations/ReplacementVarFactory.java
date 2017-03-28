@@ -100,6 +100,7 @@ public class ReplacementVarFactory {
 		final IReplacementVarOrConst newRepVar;
 		if (mUseIntraproceduralReplacementVar) {
 			newRepVar = new IntraproceduralReplacementVar(tv.getName(), definition, tv);
+			mRepVarMapping.put(definition, newRepVar);
 		} else {
 			final Pair<Set<Class<? extends IProgramVarOrConst>>, Set<String>> analysisResult =
 					analyzeDefinition(definition);
@@ -112,32 +113,36 @@ public class ReplacementVarFactory {
 				}
 				final String proc = analysisResult.getSecond().iterator().next();
 				newRepVar = constructLocalReplacementVar(definition, tv, proc);
+				mRepVarMapping.put(definition, newRepVar);
 			} else if (analysisResult.getFirst().contains(IProgramNonOldVar.class)) {
-				newRepVar = constructReplacementVarWithOldVar(definition, tv);
+				final ReplacementOldVar oldVar = constructOldNonOldPairForNonOldDefinition(definition, tv);
+				final ReplacementNonOldVar nonOldVar = (ReplacementNonOldVar) oldVar.getNonOldVar();
+				mRepVarMapping.put(oldVar.getDefinition(), oldVar);
+				mRepVarMapping.put(nonOldVar.getDefinition(), nonOldVar);
+				newRepVar = nonOldVar;
 			} else if (analysisResult.getFirst().contains(IProgramOldVar.class)) {
-				final ReplacementOldVar oldVar = constructReplacementOldVar(definition, tv);
-				constructAndAddCorrespondingNonOldVarForOldVarDefinition(definition, tv, oldVar);
+				final ReplacementOldVar oldVar = constructOldNonOldPairForOldVarDefinition(definition, tv);
+				final ReplacementNonOldVar nonOldVar = (ReplacementNonOldVar) oldVar.getNonOldVar();
+				mRepVarMapping.put(oldVar.getDefinition(), oldVar);
+				mRepVarMapping.put(nonOldVar.getDefinition(), nonOldVar);
 				newRepVar = oldVar;
 			} else {
 				if (useGlobalVarInsteadOfConstant) {
-					newRepVar = constructReplacementVarWithOldVar(definition, tv);
+					final ReplacementOldVar oldVar = constructOldNonOldPairForNonOldDefinition(definition, tv);
+					final ReplacementNonOldVar nonOldVar = (ReplacementNonOldVar) oldVar.getNonOldVar();
+					mRepVarMapping.put(oldVar.getDefinition(), oldVar);
+					mRepVarMapping.put(nonOldVar.getDefinition(), nonOldVar);
+					newRepVar = nonOldVar;
 				} else {
 					newRepVar = constructReplacementConst(definition, tv);
+					mRepVarMapping.put(definition, newRepVar);
 				}
 			}
 		}
 		assert checkOldVar(newRepVar) : newRepVar + " breaks oldVar-nonOldVar relation";
-		mRepVarMapping.put(definition, newRepVar);
+		
 		return newRepVar;
 
-	}
-
-	private IReplacementVarOrConst constructReplacementVarWithOldVar(final Term definition, final TermVariable tv) {
-		final IReplacementVarOrConst newRepVar;
-		final ReplacementOldVar oldVar =
-				constructAndAddCorrespondingOldVarForNonOldDefinition(definition, tv);
-		newRepVar = constructReplacementNonOldVar(definition, tv, oldVar);
-		return newRepVar;
 	}
 
 	private boolean checkOldVar(final IReplacementVarOrConst newRepVar) {
@@ -152,24 +157,38 @@ public class ReplacementVarFactory {
 		return true;
 	}
 
-	private void constructAndAddCorrespondingNonOldVarForOldVarDefinition(final Term definition, final TermVariable tv,
-			final ReplacementOldVar oldVar) {
+	
+	/**
+	 * Construct both, the oldVar and the non-oldVar for a definition that
+	 * represents the oldVar
+	 * @return the oldVar
+	 */
+	private ReplacementOldVar constructOldNonOldPairForOldVarDefinition(final Term oldVarDefinition,
+			final TermVariable oldVarTv) {
+		final ReplacementOldVar oldVar = constructReplacementOldVar(oldVarDefinition, oldVarTv);
+		final Term definition = oldVar.getDefinition();
 		final Term nonOldVarDefinition =
 				ProgramVarUtils.renameOldGlobalsToNonOldGlobals(definition, mCsToolkit.getSymbolTable(), mMgdScript);
 		final TermVariable nonoldVarTv =
-				mMgdScript.constructFreshTermVariable("nonold(" + tv.getName() + ")", definition.getSort());
-		final ReplacementNonOldVar nonoldVar = constructReplacementNonOldVar(nonOldVarDefinition, nonoldVarTv, oldVar);
-		mRepVarMapping.put(nonOldVarDefinition, nonoldVar);
+				mMgdScript.constructFreshTermVariable("nonold(" + oldVar.getIdentifierOfNonOldVar() + ")", definition.getSort());
+		constructReplacementNonOldVar(nonOldVarDefinition, nonoldVarTv, oldVar);
+		return oldVar;
+		
 	}
 
-	private ReplacementOldVar constructAndAddCorrespondingOldVarForNonOldDefinition(final Term definition,
-			final TermVariable tv) {
+	/**
+	 * Construct both, the oldVar and the non-oldVar for a definition that
+	 * represents the non-oldVar
+	 * @return the oldVar
+	 */
+	private ReplacementOldVar constructOldNonOldPairForNonOldDefinition(final Term nonOldDefinition,
+			final TermVariable nonOldTv) {
 		final Term oldVarDefinition =
-				ProgramVarUtils.renameNonOldGlobalsToOldGlobals(definition, mCsToolkit.getSymbolTable(), mMgdScript);
+				ProgramVarUtils.renameNonOldGlobalsToOldGlobals(nonOldDefinition, mCsToolkit.getSymbolTable(), mMgdScript);
 		final TermVariable oldVarTv =
-				mMgdScript.constructFreshTermVariable("old(" + tv.getName() + ")", definition.getSort());
+				mMgdScript.constructFreshTermVariable("old(" + nonOldTv.getName() + ")", nonOldDefinition.getSort());
 		final ReplacementOldVar oldVar = constructReplacementOldVar(oldVarDefinition, oldVarTv);
-		mRepVarMapping.put(oldVarDefinition, oldVar);
+		constructReplacementNonOldVar(nonOldDefinition, nonOldTv, oldVar);
 		return oldVar;
 	}
 

@@ -56,24 +56,19 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeSta
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 
 /**
- * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
- * DifferenceAutomatonBuilder can compute a NWA nwa_difference
- * such that nwa_difference accepts all words that are accepted by nwa_minuend
- * but not by Psi(nwa_subtrahend), i.e.
- * L(nwa_difference) = L(nwa_minuend) \ L( Psi(nwa_subtrahend) ),
- * where Psi is a transformation of the automaton nwa_subtrahend that is defined
- * by an implementation of IStateDeterminizer.
+ * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a DifferenceAutomatonBuilder can compute a NWA
+ * nwa_difference such that nwa_difference accepts all words that are accepted by nwa_minuend but not by
+ * Psi(nwa_subtrahend), i.e. L(nwa_difference) = L(nwa_minuend) \ L( Psi(nwa_subtrahend) ), where Psi is a
+ * transformation of the automaton nwa_subtrahend that is defined by an implementation of IStateDeterminizer.
  * <p>
  * TODO Christian 2017-02-16 The constructors seem very confusing, are they really intended?
  * 
  * @author heizmann@informatik.uni-freiburg.de
  * @param <LETTER>
- *            Symbol. Type of the elements of the alphabet over which the
- *            automata are defined.
+ *            Symbol. Type of the elements of the alphabet over which the automata are defined.
  * @param <STATE>
- *            Content. Type of the labels that are assigned to the states of
- *            automata. In many cases you want to use String as STATE and your states are
- *            labeled e.g. with "q0", "q1", ...
+ *            Content. Type of the labels that are assigned to the states of automata. In many cases you want to use
+ *            String as STATE and your states are labeled e.g. with "q0", "q1", ...
  */
 //TODO: Optimization for special case where subtrahend is closed under
 // concatenation with Sigma^*. Use only one DeterminizedState detFin state that
@@ -81,10 +76,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
 public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, STATE>
 		implements IOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>> {
 	/**
-	 * If set the language of the subtrahend is closed under concatenation with
-	 * sigma star. This means for determinized subtrahends: Once in the final
-	 * state you can never escape the final states. Hence the result can omit
-	 * all states where the subtrahend is final.
+	 * If set the language of the subtrahend is closed under concatenation with sigma star. This means for determinized
+	 * subtrahends: Once in the final state you can never escape the final states. Hence the result can omit all states
+	 * where the subtrahend is final.
 	 */
 	private final boolean mSubtrahendSigmaStarClosed;
 
@@ -99,8 +93,7 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 	private final Map<DifferenceState<LETTER, STATE>, STATE> mDiff2res = new HashMap<>();
 
 	/**
-	 * Maps a state in resulting automaton to the DifferenceState for which it
-	 * was created.
+	 * Maps a state in resulting automaton to the DifferenceState for which it was created.
 	 */
 	private final Map<STATE, DifferenceState<LETTER, STATE>> mRes2diff = new HashMap<>();
 
@@ -509,9 +502,8 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 	}
 
 	/**
-	 * Get the state in the resulting automaton that represents a
-	 * DifferenceState. If this state in the resulting automaton does not exist
-	 * yet, construct it.
+	 * Get the state in the resulting automaton that represents a DifferenceState. If this state in the resulting
+	 * automaton does not exist yet, construct it.
 	 */
 	STATE getResState(final DifferenceState<LETTER, STATE> diffState) {
 		if (mDiff2res.containsKey(diffState)) {

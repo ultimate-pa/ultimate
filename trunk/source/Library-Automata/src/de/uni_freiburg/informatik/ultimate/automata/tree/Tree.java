@@ -71,11 +71,12 @@ public class Tree<LETTER> {
 
 	@Override
 	public String toString() {
-		String res = symbol.toString();
+		final StringBuilder sb = new StringBuilder();
+		sb.append(symbol.toString());
 		if (!getChildren().isEmpty()) {
-			res += getChildren();
+			sb.append(getChildren().toString());
 		}
-		return res;
+		return sb.toString();
 	}
 	
  }

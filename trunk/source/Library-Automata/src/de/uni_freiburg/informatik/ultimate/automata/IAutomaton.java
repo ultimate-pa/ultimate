@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  * @param <LETTER>
  *            Type of objects that are contained in the alphabet.
  * @param <STATE>
- *            Type of objects that are used to label states (resp. places
- *            for {@link de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet IPetriNet})
+ *            Type of objects that are used to label states (resp. places for
+ *            {@link de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet IPetriNet})
  */
 public interface IAutomaton<LETTER, STATE> {
 	/**
@@ -48,15 +48,12 @@ public interface IAutomaton<LETTER, STATE> {
 	Set<LETTER> getAlphabet();
 
 	/**
-	 * Can the alphabet still change after the automaton was constructed?
-	 * Note that the correctness of this property is not checked and the user
-	 * of the library has to use this with caution. (There is no simple check
-	 * for this property since the automata usually take user provided Set
-	 * objects as alphabet and for performance reasons we do not want to change
-	 * this.)
+	 * Can the alphabet still change after the automaton was constructed? Note that the correctness of this property is
+	 * not checked and the user of the library has to use this with caution. (There is no simple check for this property
+	 * since the automata usually take user provided Set objects as alphabet and for performance reasons we do not want
+	 * to change this.)
 	 * 
-	 * @return true iff the automaton's alphabet may be modified after the
-	 *         automaton was constructed
+	 * @return true iff the automaton's alphabet may be modified after the automaton was constructed
 	 */
 	default boolean hasModifiableAlphabet() {
 		return false;

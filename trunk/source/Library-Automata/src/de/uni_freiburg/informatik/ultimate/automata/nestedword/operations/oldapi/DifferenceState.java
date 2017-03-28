@@ -30,10 +30,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IState
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 
 /**
- * State of an NWA that accepts the language difference of two NWAs.
- * A DifferenceState is a pair whose first entry is a state of the minuend, the
- * second entry is a DeterminizedState of the subtrahend. A DifferenceState is
- * final iff the minuend state is final and the subtrahend state is not final.
+ * State of an NWA that accepts the language difference of two NWAs. A DifferenceState is a pair whose first entry is a
+ * state of the minuend, the second entry is a DeterminizedState of the subtrahend. A DifferenceState is final iff the
+ * minuend state is final and the subtrahend state is not final.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>

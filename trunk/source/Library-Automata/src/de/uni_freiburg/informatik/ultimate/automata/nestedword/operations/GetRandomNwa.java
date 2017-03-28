@@ -164,14 +164,12 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 	 * @param mSize
 	 *            number of states of the automaton
 	 * @param mInternalTransitionDensity
-	 *            fraction of possible internal transitions that actually exist in the
-	 *            automaton (number between 0 and 1)
+	 *            fraction of possible internal transitions that actually exist in the automaton (number between 0 and
+	 *            1)
 	 * @param mCallTransitionDensity
-	 *            fraction of possible call transitions that actually exist in the
-	 *            automaton (number between 0 and 1)
+	 *            fraction of possible call transitions that actually exist in the automaton (number between 0 and 1)
 	 * @param mReturnTransitionDensity
-	 *            fraction of possible return transitions that actually exist in the
-	 *            automaton (number between 0 and 1)
+	 *            fraction of possible return transitions that actually exist in the automaton (number between 0 and 1)
 	 * @param mAcceptanceDensity
 	 *            fraction of states that are accepting (number between 0 and 1)
 	 * @return a randomly generated NFA that fulfills the given specification

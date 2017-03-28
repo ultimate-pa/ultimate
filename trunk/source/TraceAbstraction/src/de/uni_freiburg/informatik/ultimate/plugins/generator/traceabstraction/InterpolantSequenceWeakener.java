@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
@@ -67,14 +68,28 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		mHtc = Objects.requireNonNull(htc);
 		final List<LETTER> checkedTrace = Objects.requireNonNull(trace, "trace is null");
 		final List<P> checkedPredicates = Objects.requireNonNull(predicates, "predicates are null");
-		assert checkedTrace.size() == checkedPredicates.size()
-				+ 1 : "trace and predicates do not match, their size is incorrect";
+		if (checkedTrace.size() != checkedPredicates.size() + 1) {
+			throw new IllegalStateException("Trace and predicates do not match - their size is incorrect");
+		}
+
 		mResult = generateResult(checkedPredicates, checkedTrace);
-		assert mResult.size() == predicates.size();
+
+		if (mResult.size() != predicates.size()) {
+			throw new IllegalStateException("The size of the produced result list is invalid.");
+		}
 	}
 
 	private List<P> generateResult(final List<P> predicates, final List<LETTER> list) {
-		// TODO Auto-generated method stub
+		// Reverse iterate over the list.
+		final TripleList<P, LETTER> tripleList = new TripleList<>(predicates, list);
+		final Iterator<StateTriple<P, LETTER>> it = tripleList.iterator();
+		while (it.hasNext()) {
+			final StateTriple<P, LETTER> triple = it.next();
+			triple.getFirstState();
+			triple.getTransition();
+			triple.getSecondState();
+		}
+
 		return null;
 	}
 
@@ -83,5 +98,88 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	 */
 	public List<P> getResult() {
 		return mResult;
+	}
+
+	/**
+	 * Represents a triple of two states (predicates) and a transition.
+	 * 
+	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+	 *
+	 * @param <P>
+	 *            The type of the states (predicates).
+	 * @param <LETTER>
+	 *            The type of the transition.
+	 */
+	private static final class StateTriple<P, LETTER> {
+		private final P mFirstState;
+		private final P mSecondState;
+		private final LETTER mTransition;
+
+		public StateTriple(final P firstState, final LETTER transition, final P secondState) {
+			mFirstState = firstState;
+			mSecondState = secondState;
+			mTransition = transition;
+		}
+
+		public P getFirstState() {
+			return mFirstState;
+		}
+
+		public P getSecondState() {
+			return mSecondState;
+		}
+
+		public LETTER getTransition() {
+			return mTransition;
+		}
+
+		@Override
+		public String toString() {
+			final StringBuilder sb = new StringBuilder();
+			sb.append("{").append(mFirstState).append("} ").append(mTransition).append(" {").append(mSecondState)
+					.append("}");
+			return sb.toString();
+		}
+	}
+
+	/**
+	 * Represents a list of triples consisting of states (predicates) and transitions of the form {st1} tr {st2}, where
+	 * st1, st2 are states and tr is a transition.
+	 * 
+	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+	 *
+	 * @param <P>
+	 *            The type of the states (predicates).
+	 * @param <LETTER>
+	 *            The type of the transition.
+	 */
+	private static final class TripleList<P, LETTER> implements Iterable<StateTriple<P, LETTER>> {
+		private final List<P> mPredicates;
+		private final List<LETTER> mTrace;
+
+		public TripleList(final List<P> predicates, final List<LETTER> trace) {
+			mPredicates = predicates;
+			mTrace = trace;
+		}
+
+		@Override
+		public Iterator<StateTriple<P, LETTER>> iterator() {
+			final Iterator<StateTriple<P, LETTER>> it = new Iterator<StateTriple<P, LETTER>>() {
+
+				private final int mLetterIndex = mTrace.size() - 1;
+
+				@Override
+				public boolean hasNext() {
+					return mLetterIndex > 0;
+				}
+
+				@Override
+				public StateTriple<P, LETTER> next() {
+					return new StateTriple<>(mPredicates.get(mLetterIndex - 1), mTrace.get(mLetterIndex),
+							mPredicates.get(mLetterIndex + 1));
+				}
+			};
+			return it;
+		}
 	}
 }

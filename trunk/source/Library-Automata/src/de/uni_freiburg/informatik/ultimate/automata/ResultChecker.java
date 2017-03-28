@@ -55,7 +55,8 @@ public final class ResultChecker {
 		final int numberOfSamples = 10;
 		boolean correct = true;
 		for (int i = 0; i < numberOfSamples; i++) {
-			final NestedLassoWord<LETTER> lasso = NestedWordAutomataUtils.getRandomNestedLassoWord(operand, maxLength, i);
+			final NestedLassoWord<LETTER> lasso =
+					NestedWordAutomataUtils.getRandomNestedLassoWord(operand, maxLength, i);
 			final boolean operandAccepts = (new BuchiAccepts<>(services, operand, lasso)).getResult();
 			final boolean resultAccepts = (new BuchiAccepts<>(services, result, lasso)).getResult();
 			if (operandAccepts ^ resultAccepts) {

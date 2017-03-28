@@ -51,13 +51,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 /**
  * Game graph that realizes <b>direct simulation</b>.<br/>
- * In direct simulation each time <i>Spoiler</i> visits a final state
- * <i>Duplicator</i> must also visit one at his next turn.<br/>
+ * In direct simulation each time <i>Spoiler</i> visits a final state <i>Duplicator</i> must also visit one at his next
+ * turn.<br/>
  * <br/>
- * If its impossible for <i>Spoiler</i> to build a word such that
- * <i>Duplicator</i> can not fulfill its condition we say <b>q1 direct simulates
- * q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of
- * <i>Duplicator</i>.
+ * If its impossible for <i>Spoiler</i> to build a word such that <i>Duplicator</i> can not fulfill its condition we say
+ * <b>q1 direct simulates q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of <i>Duplicator</i>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -93,19 +91,15 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param stateFactory
-	 *            State factory used for state creation The state factory used
-	 *            for creating states.
+	 *            State factory used for state creation The state factory used for creating states.
 	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
+	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 * @param buechi
-	 *            The underlying buechi automaton from which the game graph gets
-	 *            generated.
+	 *            The underlying buechi automaton from which the game graph gets generated.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public DirectGameGraph(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final IProgressAwareTimer progressTimer, final ILogger logger,

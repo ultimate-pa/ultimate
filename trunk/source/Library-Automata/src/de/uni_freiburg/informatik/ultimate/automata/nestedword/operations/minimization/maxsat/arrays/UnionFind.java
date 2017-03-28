@@ -45,9 +45,8 @@ final class UnionFind {
 	}
 
 	/**
-	 * Add an edge between two nodes. This makes them equivalent and they will
-	 * be together, with a root right over their heads. They'll share the same
-	 * root, yeah!
+	 * Add an edge between two nodes. This makes them equivalent and they will be together, with a root right over their
+	 * heads. They'll share the same root, yeah!
 	 *
 	 * @param n1
 	 *            The one node.

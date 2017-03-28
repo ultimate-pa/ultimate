@@ -45,8 +45,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 /**
  * Partial MAX-SAT solver bridge to an external solver.
  * <p>
- * Communication happens via a DIMACS file of the following format (description inspired by the
- * <a href=http://www.maxsat.udl.cat/16/index.html>Max-SAT 2016 web page</a>):
+ * Communication happens via a DIMACS file of the following format (description inspired by the <a
+ * href=http://www.maxsat.udl.cat/16/index.html>Max-SAT 2016 web page</a>):
  * <p>
  * <ol>
  * <li>The file can start with comments( lines beginning with the character 'c').</li>

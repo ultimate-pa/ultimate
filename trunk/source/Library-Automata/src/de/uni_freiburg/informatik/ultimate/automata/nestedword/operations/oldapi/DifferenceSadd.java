@@ -52,22 +52,17 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeSta
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 
 /**
- * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a
- * DifferenceAutomatonBuilder can compute a NWA nwa_difference
- * such that nwa_difference accepts all words that are accepted by nwa_minuend
- * but not by Psi(nwa_subtrahend), i.e.
- * L(nwa_difference) = L(nwa_minuend) \ L( Psi(nwa_subtrahend) ),
- * where Psi is a transformation of the automaton nwa_subtrahend that is defined
- * by an implementation of IStateDeterminizer.
+ * Given two nondeterministic NWAs nwa_minuend and nwa_subtrahend a DifferenceAutomatonBuilder can compute a NWA
+ * nwa_difference such that nwa_difference accepts all words that are accepted by nwa_minuend but not by
+ * Psi(nwa_subtrahend), i.e. L(nwa_difference) = L(nwa_minuend) \ L( Psi(nwa_subtrahend) ), where Psi is a
+ * transformation of the automaton nwa_subtrahend that is defined by an implementation of IStateDeterminizer.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
- *            Symbol. Type of the elements of the alphabet over which the
- *            automata are defined.
+ *            Symbol. Type of the elements of the alphabet over which the automata are defined.
  * @param <STATE>
- *            Content. Type of the labels that are assigned to the states of
- *            automata. In many cases you want to use String as STATE and your states are
- *            labeled e.g. with "q0", "q1", ...
+ *            Content. Type of the labels that are assigned to the states of automata. In many cases you want to use
+ *            String as STATE and your states are labeled e.g. with "q0", "q1", ...
  */
 public final class DifferenceSadd<LETTER, STATE>
 		extends BinaryNwaOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>> {
@@ -83,28 +78,24 @@ public final class DifferenceSadd<LETTER, STATE>
 	private final Map<DifferenceState, STATE> mDiff2res = new HashMap<>();
 
 	/**
-	 * Maps a state in resulting automaton to the DifferenceState for which it
-	 * was created.
+	 * Maps a state in resulting automaton to the DifferenceState for which it was created.
 	 */
 	private final Map<STATE, DifferenceState> mRes2diff = new HashMap<>();
 
 	/**
-	 * Summary states of the resulting automaton that have been visited so far.
-	 * If the summary state (<i>caller</i>,<i>present</i>) has been visited,
-	 * <i>present</i> is contained in the range of <i>caller</i>.
+	 * Summary states of the resulting automaton that have been visited so far. If the summary state
+	 * (<i>caller</i>,<i>present</i>) has been visited, <i>present</i> is contained in the range of <i>caller</i>.
 	 */
 	private final Map<STATE, Set<STATE>> mVisited = new HashMap<>();
 
 	/**
-	 * Summary states of the resulting automaton that still have to be
-	 * processed.
+	 * Summary states of the resulting automaton that still have to be processed.
 	 */
 	private final List<SummaryState> mWorklist = new LinkedList<>();
 
 	/**
-	 * Pairs of states (q,q') of the resulting automaton such that q' is
-	 * reachable from q via a well-matched nested word in which the first
-	 * position is a call position and the last position is a return position.
+	 * Pairs of states (q,q') of the resulting automaton such that q' is reachable from q via a well-matched nested word
+	 * in which the first position is a call position and the last position is a return position.
 	 */
 	private final Map<STATE, Set<STATE>> mSummary = new HashMap<>();
 
@@ -270,9 +261,8 @@ public final class DifferenceSadd<LETTER, STATE>
 	}
 
 	/**
-	 * Get all states <i>resCaller</i> of the resulting automaton (computed so
-	 * far) such that the summary state (<i>resCaller</i>,<i>resPresent</i>) has
-	 * been visited so far.
+	 * Get all states <i>resCaller</i> of the resulting automaton (computed so far) such that the summary state
+	 * (<i>resCaller</i>,<i>resPresent</i>) has been visited so far.
 	 */
 	private Set<STATE> getKnownCallerStates(final STATE resPresent) {
 		final Set<STATE> callerStates = mVisited.get(resPresent);
@@ -310,10 +300,9 @@ public final class DifferenceSadd<LETTER, STATE>
 	}
 
 	/**
-	 * Let resSummaryState=(<i>caller</i>,<i>present</i>). Extend the
-	 * construction of the resulting automaton at <i>present</i> by outgoing
-	 * transitions. To decide if a return transition can be added <i>caller</i>
-	 * is taken into account.
+	 * Let resSummaryState=(<i>caller</i>,<i>present</i>). Extend the construction of the resulting automaton at
+	 * <i>present</i> by outgoing transitions. To decide if a return transition can be added <i>caller</i> is taken into
+	 * account.
 	 */
 	@SuppressWarnings("squid:S1698")
 	private void processSummaryState(final SummaryState resSummaryState) {
@@ -383,9 +372,8 @@ public final class DifferenceSadd<LETTER, STATE>
 	}
 
 	/**
-	 * Get the state in the resulting automaton that represents a
-	 * DifferenceState. If this state in the resulting automaton does not exist
-	 * yet, construct it.
+	 * Get the state in the resulting automaton that represents a DifferenceState. If this state in the resulting
+	 * automaton does not exist yet, construct it.
 	 */
 	STATE getResState(final DifferenceState diffState) {
 		if (mDiff2res.containsKey(diffState)) {
@@ -420,10 +408,9 @@ public final class DifferenceSadd<LETTER, STATE>
 	}
 
 	/**
-	 * State of an NWA that accepts the language difference of two NWAs.
-	 * A DifferenceState is a pair whose first entry is a state of the minuend, the
-	 * second entry is a DeterminizedState of the subtrahend. A DifferenceState is
-	 * final iff the minuend state is final and the subtrahend state is not final.
+	 * State of an NWA that accepts the language difference of two NWAs. A DifferenceState is a pair whose first entry
+	 * is a state of the minuend, the second entry is a DeterminizedState of the subtrahend. A DifferenceState is final
+	 * iff the minuend state is final and the subtrahend state is not final.
 	 * 
 	 * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
 	 */
@@ -458,8 +445,8 @@ public final class DifferenceSadd<LETTER, STATE>
 		}
 
 		/**
-		 * Two DifferenceStates are equivalent iff each, their minuend states
-		 * and their subtrahend states are equivalent.
+		 * Two DifferenceStates are equivalent iff each, their minuend states and their subtrahend states are
+		 * equivalent.
 		 */
 		@SuppressWarnings("unchecked")
 		@Override

@@ -149,21 +149,9 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	}
 
 	@Override
-	public AutomataOperationStatistics getAutomataOperationStatistics() {
-		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
-		addStatistics(statistics, false);
-		return statistics;
-	}
-
-	@Override
 	public void addStatistics(final AutomataOperationStatistics statistics) {
-		addStatistics(statistics, true);
-	}
+		super.addStatistics(statistics);
 
-	private void addStatistics(final AutomataOperationStatistics statistics, final boolean addSuperStatistics) {
-		if (addSuperStatistics) {
-			super.addStatistics(statistics);
-		}
 		if (mLargestBlockInitialPartition != 0) {
 			statistics.addKeyValuePair(mSettings.getLibraryMode()
 					? StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK_PMAXSAT

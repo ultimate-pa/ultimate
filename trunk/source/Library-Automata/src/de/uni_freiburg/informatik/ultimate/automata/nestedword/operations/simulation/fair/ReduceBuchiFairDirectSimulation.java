@@ -37,10 +37,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
 
 /**
- * Operation that reduces a given buechi automaton by using
- * {@link FairDirectSimulation}.<br/>
- * Once constructed the reduction automatically starts, the result can be get by
- * using {@link #getResult()}.
+ * Operation that reduces a given buechi automaton by using {@link FairDirectSimulation}.<br/>
+ * Once constructed the reduction automatically starts, the result can be get by using {@link #getResult()}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -51,8 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends ReduceBuchiFairSimulation<LETTER, STATE> {
 
 	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton.<br/>
+	 * Creates a new buechi reduce object that starts reducing the given buechi automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -62,8 +59,7 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 * @param operand
 	 *            The buechi automaton to reduce
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
@@ -72,8 +68,7 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	}
 
 	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton.<br/>
+	 * Creates a new buechi reduce object that starts reducing the given buechi automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -83,11 +78,9 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 * @param operand
 	 *            The buechi automaton to reduce
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
@@ -96,8 +89,7 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	}
 
 	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton.<br/>
+	 * Creates a new buechi reduce object that starts reducing the given buechi automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -107,16 +99,13 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	 * @param operand
 	 *            The buechi automaton to reduce
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @param possibleEquivalentClasses
-	 *            A collection of sets which contains states of the buechi
-	 *            automaton that may be merge-able. States which are not in the
-	 *            same set are definitely not merge-able which is used as an
-	 *            optimization for the simulation
+	 *            A collection of sets which contains states of the buechi automaton that may be merge-able. States
+	 *            which are not in the same set are definitely not merge-able which is used as an optimization for the
+	 *            simulation
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public ReduceBuchiFairDirectSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,

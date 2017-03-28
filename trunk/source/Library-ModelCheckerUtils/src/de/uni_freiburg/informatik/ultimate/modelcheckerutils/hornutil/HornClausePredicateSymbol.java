@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -37,6 +36,10 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
  * Represents an uninterpreted predicate symbol that appears in a set of Horn clauses. This class is the node class for
  * the Horn clause graph.
  * 
+ * 
+ * TODO: this effectively is a FunctionSymbol, right?.. (one might think it is theory-independent, but it is not because
+ *   it stores the sorts)
+ * 
  * @author nutz, mostafa-mahmoud
  *
  */
@@ -45,7 +48,7 @@ public class HornClausePredicateSymbol {
 //	private final int mArity;
 //	private final String mName;
 //	private final FunctionSymbol mFunctionSymbol;
-	private final List<HCVar> mVars;
+//	private final List<HCVar> mVars;
 	private final String mFunctionName;
 	private final List<Sort> mParameterSorts;
 
@@ -53,11 +56,11 @@ public class HornClausePredicateSymbol {
 			final String functionName, final List<Sort> functionParameters) {
 		mFunctionName = functionName;
 		mParameterSorts = functionParameters;
-		List<HCVar> vars = new ArrayList<>();
-		for (int i = 0; i < functionParameters.size(); i++) {
-			vars.add(symbolTable.getOrConstructHCVar(this, i, functionParameters.get(i)));
-		}
-		mVars = Collections.unmodifiableList(vars);
+//		List<HCVar> vars = new ArrayList<>();
+//		for (int i = 0; i < functionParameters.size(); i++) {
+//			vars.add(symbolTable.getOrConstructHCVar(this, i, functionParameters.get(i)));
+//		}
+//		mVars = Collections.unmodifiableList(vars);
 	}
 
 	public String getName() {
@@ -73,9 +76,9 @@ public class HornClausePredicateSymbol {
 		return mFunctionName;
 	}
 	
-	public List<HCVar> getHCVars() {
-		return mVars;
-	}
+//	public List<HCVar> getHCVars() {
+//		return mVars;
+//	}
 
 	public static class HornClauseFalsePredicateSymbol extends HornClausePredicateSymbol {
 		public HornClauseFalsePredicateSymbol() {

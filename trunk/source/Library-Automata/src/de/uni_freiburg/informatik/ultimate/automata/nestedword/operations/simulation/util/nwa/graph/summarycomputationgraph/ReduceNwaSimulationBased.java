@@ -188,7 +188,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 			NwaSimulationUtil.retrieveGeneralNwaAutomataPerformance(sim.getSimulationPerformance(), mOperand, result,
 					mServices);
 
-			mStatistics = addStatistics(initialPairs, sizeOfLargestEquivalenceClass, gameAutomatonSize, graph, sim,
+			mStatistics = collectStatistics(initialPairs, sizeOfLargestEquivalenceClass, gameAutomatonSize, graph, sim,
 					resultPair, timePreprocessing, timeSimulation);
 
 		} catch (final AutomataOperationCanceledException aoce) {
@@ -207,13 +207,12 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		printExitMessage();
 	}
 
-	private AutomataOperationStatistics addStatistics(final ISetOfPairs<STATE, ?> initialPairs,
+	private AutomataOperationStatistics collectStatistics(final ISetOfPairs<STATE, ?> initialPairs,
 			final int sizeOfLargestEquivalenceClass, final int gameAutomatonSize, final AGameGraph<LETTER, STATE> graph,
 			final ParsimoniousSimulation sim,
 			final Pair<IDoubleDeckerAutomaton<LETTER, STATE>, MinimizeNwaMaxSat2<LETTER, STATE, ?>> resultPair,
 			final long timePreprocessing, final long timeSimulation) {
-		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
-		sim.getSimulationPerformance().exportToExistingAutomataOperationStatistics(statistics);
+		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();
 		statistics.addKeyValuePair(StatisticsType.TIME_PREPROCESSING, timePreprocessing);
 		statistics.addKeyValuePair(StatisticsType.TIME_SIMULATION, timeSimulation);
 		if (initialPairs instanceof PartitionBackedSetOfPairs<?>) {
@@ -264,9 +263,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 	}
 
 	/**
-	 * @return relation that contains a pair of states (q0, q1) iff the
-	 *         analysis of the game graph yielded the information that the state q1
-	 *         simulates the state q0.
+	 * @return relation that contains a pair of states (q0, q1) iff the analysis of the game graph yielded the
+	 *         information that the state q1 simulates the state q0.
 	 */
 	private void readoutSimulationRelation(final AGameGraph<LETTER, STATE> gameGraph,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
@@ -283,9 +281,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 	}
 
 	/**
-	 * Workaround to check if vertex is auxiliary vertex. This method check
-	 * if one the vertex' states is null. In the future we want to have
-	 * separate classes for auxiliary vertices.
+	 * Workaround to check if vertex is auxiliary vertex. This method check if one the vertex' states is null. In the
+	 * future we want to have separate classes for auxiliary vertices.
 	 */
 	private boolean isAuxiliaryVertex(final SpoilerVertex<LETTER, STATE> spoilerVertex) {
 		return spoilerVertex.getQ0() == null || spoilerVertex.getQ1() == null;
@@ -356,7 +353,9 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
-		return mStatistics;
+		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
+		statistics.addAllStatistics(mStatistics);
+		return statistics;
 	}
 
 	/**

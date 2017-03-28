@@ -41,11 +41,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 /**
  * Büchi complementation based on the method of Sistla, Vardi, Wolper.
  * <p>
- * “The Complementation Problem for Büchi Automata with Applications to
- * Temporal Logic” (Elsevier, 1987)
+ * “The Complementation Problem for Büchi Automata with Applications to Temporal Logic” (Elsevier, 1987)
  * <p>
- * The actual implementation of this complementation method is located in the
- * class {@code BuchiComplementAutomatonSVW}.
+ * The actual implementation of this complementation method is located in the class {@code BuchiComplementAutomatonSVW}.
  * 
  * @author Fabian Reiter
  * @param <LETTER>

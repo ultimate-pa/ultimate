@@ -48,9 +48,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
 
 /**
- * Construction of initial runs and runs for summaries. Runs are constructed
- * backwards, therefore mStart is the last state of the run and mGoal is
- * the first state of the run.
+ * Construction of initial runs and runs for summaries. Runs are constructed backwards, therefore mStart is the last
+ * state of the run and mGoal is the first state of the run.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -63,9 +62,8 @@ class RunConstructor<LETTER, STATE> {
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mNwars;
 	private final StateContainer<LETTER, STATE> mStart;
 	/**
-	 * If goal is a down state of start we construct a run whose first state
-	 * is goal and whose last state is start. If goal is null we construct
-	 * an initial run whose last state is start.
+	 * If goal is a down state of start we construct a run whose first state is goal and whose last state is start. If
+	 * goal is null we construct an initial run whose last state is start.
 	 */
 	private final StateContainer<LETTER, STATE> mGoal;
 	private final Set<SummaryWithObligation> mForbiddenSummaries;
@@ -91,11 +89,9 @@ class RunConstructor<LETTER, STATE> {
 	}
 
 	/**
-	 * Construction of run whose last state is start. The state goal can be
-	 * either a down state of start or null.
-	 * If goal is a down state of start we construct a run whose first state
-	 * is goal and whose last state is start. If goal is null we construct
-	 * an initial run whose last state is start.
+	 * Construction of run whose last state is start. The state goal can be either a down state of start or null. If
+	 * goal is a down state of start we construct a run whose first state is goal and whose last state is start. If goal
+	 * is null we construct an initial run whose last state is start.
 	 */
 	public RunConstructor(final AutomataLibraryServices services,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> nwars, final Summary<LETTER, STATE> summary,
@@ -113,10 +109,9 @@ class RunConstructor<LETTER, STATE> {
 	}
 
 	/**
-	 * Run construction for a summary where we may not take any summary in
-	 * forbiddenSummaries. This avoids endless loop in recursive calls (if there
-	 * is a run that takes a summary twice, then there is a run that takes the
-	 * summary once).
+	 * Run construction for a summary where we may not take any summary in forbiddenSummaries. This avoids endless loop
+	 * in recursive calls (if there is a run that takes a summary twice, then there is a run that takes the summary
+	 * once).
 	 */
 	private RunConstructor(final AutomataLibraryServices services,
 			final NestedWordAutomatonReachableStates<LETTER, STATE> nwars, final Summary<LETTER, STATE> summary,
@@ -135,9 +130,8 @@ class RunConstructor<LETTER, STATE> {
 	}
 
 	/**
-	 * Find suitable predecessor in run construction. Returns incoming
-	 * transition from the state with the lowest serial number (that has
-	 * not been visited before).
+	 * Find suitable predecessor in run construction. Returns incoming transition from the state with the lowest serial
+	 * number (that has not been visited before).
 	 */
 	@SuppressWarnings("unchecked")
 	private Collection<TransitionWithObligation> findSuitablePredecessors(final StateContainerWithObligation current) {
@@ -312,8 +306,7 @@ class RunConstructor<LETTER, STATE> {
 	}
 
 	/**
-	 * Returns run whose first state is mGoal and whose last state is
-	 * mStart.
+	 * Returns run whose first state is mGoal and whose last state is mStart.
 	 * 
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds

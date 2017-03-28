@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRan
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex;
@@ -51,10 +52,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Operation that reduces a given buechi automaton by using
- * {@link FairSimulation}.<br/>
- * Once constructed the reduction automatically starts, the result can be get by
- * using {@link #getResult()}.
+ * Operation that reduces a given buechi automaton by using {@link FairSimulation}.<br/>
+ * Once constructed the reduction automatically starts, the result can be get by using {@link #getResult()}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -80,16 +79,14 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	/**
 	 * Performance statistics of this operation.
 	 */
-	private final AutomataOperationStatistics mStatistics;
+	private final SimulationPerformance mStatistics;
 	/**
-	 * If the simulation calculation should be optimized using SCC, Strongly
-	 * Connected Components.
+	 * If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 */
 	private final boolean mUseSCCs;
 
 	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton.<br/>
+	 * Creates a new buechi reduce object that starts reducing the given buechi automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -99,8 +96,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	 * @param operand
 	 *            The buechi automaton to reduce
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand)
@@ -109,8 +105,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	}
 
 	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton.<br/>
+	 * Creates a new buechi reduce object that starts reducing the given buechi automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -120,11 +115,9 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	 * @param operand
 	 *            The buechi automaton to reduce
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
@@ -133,8 +126,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	}
 
 	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton.<br/>
+	 * Creates a new buechi reduce object that starts reducing the given buechi automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -144,16 +136,13 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	 * @param operand
 	 *            The buechi automaton to reduce
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @param possibleEquivalentClasses
-	 *            A collection of sets which contains states of the buechi
-	 *            automaton that may be merge-able. States which are not in the
-	 *            same set are definitely not merge-able which is used as an
-	 *            optimization for the simulation
+	 *            A collection of sets which contains states of the buechi automaton that may be merge-able. States
+	 *            which are not in the same set are definitely not merge-able which is used as an optimization for the
+	 *            simulation
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
@@ -163,8 +152,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	}
 
 	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton.<br/>
+	 * Creates a new buechi reduce object that starts reducing the given buechi automaton.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -174,19 +162,16 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	 * @param operand
 	 *            The buechi automaton to reduce
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @param possibleEquivalentClasses
-	 *            A collection of sets which contains states of the buechi
-	 *            automaton that may be merge-able. States which are not in the
-	 *            same set are definitely not merge-able which is used as an
-	 *            optimization for the simulation
+	 *            A collection of sets which contains states of the buechi automaton that may be merge-able. States
+	 *            which are not in the same set are definitely not merge-able which is used as an optimization for the
+	 *            simulation
 	 * @param checkOperationDeeply
-	 *            If true the operation gets deeply checked for correctness,
-	 *            false if that is not desired. This can take some time.
+	 *            If true the operation gets deeply checked for correctness, false if that is not desired. This can take
+	 *            some time.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public ReduceBuchiFairSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
@@ -201,8 +186,8 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	}
 
 	/**
-	 * Creates a new buechi reduce object that starts reducing the given buechi
-	 * automaton using a given fair simulation.<br/>
+	 * Creates a new buechi reduce object that starts reducing the given buechi automaton using a given fair
+	 * simulation.<br/>
 	 * Once finished the result can be get by using {@link #getResult()}.
 	 * 
 	 * @param services
@@ -212,16 +197,14 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	 * @param operand
 	 *            The buechi automaton to reduce
 	 * @param useSCCs
-	 *            If the simulation calculation should be optimized using SCC,
-	 *            Strongly Connected Components.
+	 *            If the simulation calculation should be optimized using SCC, Strongly Connected Components.
 	 * @param checkOperationDeeply
-	 *            If true the operation gets deeply checked for correctness,
-	 *            false if that is not desired. This can take some time.
+	 *            If true the operation gets deeply checked for correctness, false if that is not desired. This can take
+	 *            some time.
 	 * @param simulation
 	 *            The simulation used by the operation
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	protected ReduceBuchiFairSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
@@ -237,7 +220,7 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 		simulation.doSimulation();
 		mResult = mSimulation.getResult();
 		super.directResultConstruction(mResult);
-		mStatistics = simulation.getSimulationPerformance().exportToAutomataOperationStatistics();
+		mStatistics = simulation.getSimulationPerformance();
 
 		// Debugging flag
 		if (checkOperationDeeply) {
@@ -263,7 +246,9 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
-		return mStatistics;
+		final AutomataOperationStatistics statistics = super.getAutomataOperationStatistics();
+		mStatistics.exportToExistingAutomataOperationStatistics(statistics);
+		return statistics;
 	}
 
 	@Override
@@ -305,26 +290,23 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	}
 
 	/**
-	 * Checks the operation deeply by using a given instance and comparing
-	 * results of all stages to an instance with no SCC optimization if used SCC
-	 * optimization and vice versa. Also checks the language equivalence of the
-	 * results from both instances.
+	 * Checks the operation deeply by using a given instance and comparing results of all stages to an instance with no
+	 * SCC optimization if used SCC optimization and vice versa. Also checks the language equivalence of the results
+	 * from both instances.
 	 * 
 	 * @param operation
 	 *            Operation instance for reference
 	 * @param logNoErrorDebug
 	 *            If true some debugging information gets logged
 	 * @param useLogger
-	 *            True if internal logger should be used, false if
-	 *            {@link System#out} should be used.
+	 *            True if internal logger should be used, false if {@link System#out} should be used.
 	 * @param <LETTER>
 	 *            Letter class of the operation
 	 * @param <STATE>
 	 *            State class of the operation
 	 * @return True if operation is correct, false if not.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	private static <LETTER, STATE> boolean checkOperationDeep(final ReduceBuchiFairSimulation<LETTER, STATE> operation,
 			final boolean logNoErrorDebug, final boolean useLogger) throws AutomataOperationCanceledException {
@@ -469,14 +451,13 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	}
 
 	/**
-	 * Logs a given message to the debugging channel of a given logger or to
-	 * {@link System#out} if logger is <tt>null</tt>.
+	 * Logs a given message to the debugging channel of a given logger or to {@link System#out} if logger is
+	 * <tt>null</tt>.
 	 * 
 	 * @param message
 	 *            Message to log
 	 * @param logger
-	 *            ILogger to log to or <tt>null</tt> if logging to
-	 *            {@link System#out} is desired
+	 *            ILogger to log to or <tt>null</tt> if logging to {@link System#out} is desired
 	 */
 	private static void logMessage(final String message, final ILogger logger) {
 		if (logger != null) {
@@ -489,14 +470,12 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 	}
 
 	/**
-	 * Demo usage of fair simulation in general. Also used for debugging
-	 * purpose.
+	 * Demo usage of fair simulation in general. Also used for debugging purpose.
 	 * 
 	 * @param args
 	 *            Not supported
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public static void main(final String[] args) throws AutomataOperationCanceledException {
 		// Test correctness of operation using random automata or single given

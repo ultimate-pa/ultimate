@@ -32,10 +32,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * State together with an int and a boolean. Such a triple is needed for rank-based complementations of Büchi automata.
  * There we assign a state a rank store if it is contained in a set O (O for odd: state never had an odd rank since the
  * set O was emptied the last time). The rank has to be nonnegative. A state can only be "in O" if the rank is even. We
- * use this class in the complementation to store rank and "in O" information about down states. States of the
- * "subset component" do not yet have a rank. To accomodate for this we use Integer.MIN_VALUE to store that a state does
- * not have a rank. In the toString() representation we use the infinity symbol ∞ for states that do not yet have a
- * rank.
+ * use this class in the complementation to store rank and "in O" information about down states. States of the "subset
+ * component" do not yet have a rank. To accomodate for this we use Integer.MIN_VALUE to store that a state does not
+ * have a rank. In the toString() representation we use the infinity symbol ∞ for states that do not yet have a rank.
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <STATE>

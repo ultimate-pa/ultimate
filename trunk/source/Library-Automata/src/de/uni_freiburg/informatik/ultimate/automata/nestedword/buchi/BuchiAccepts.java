@@ -62,16 +62,15 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 	/**
 	 * Check if a Buchi nested word automaton accepts a nested lasso word.
 	 * <p>
-	 * Returns true iff nlw is accepted by nwa. Note that here a nested lasso
-	 * word is always rejected if its loop contains pending returns.
+	 * Returns true iff nlw is accepted by nwa. Note that here a nested lasso word is always rejected if its loop
+	 * contains pending returns.
 	 * 
 	 * @param services
 	 *            Ultimate services
 	 * @param nlw
 	 *            NestedLassoWord whose acceptance is checked
 	 * @param operand
-	 *            NestedWordAutomaton which is interpreted as Buchi nested word
-	 *            automaton here
+	 *            NestedWordAutomaton which is interpreted as Buchi nested word automaton here
 	 * @throws AutomataLibraryException
 	 *             if accept fails
 	 */
@@ -169,9 +168,8 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 	}
 
 	/**
-	 * Compute for each hondaState if processing mLoop repeatedly can lead to
-	 * a run that contains an accepting state and brings the automaton back to
-	 * the honda state.
+	 * Compute for each hondaState if processing mLoop repeatedly can lead to a run that contains an accepting state and
+	 * brings the automaton back to the honda state.
 	 * 
 	 * @throws AutomataLibraryException
 	 *             if construction fails
@@ -248,8 +246,7 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 	}
 
 	/**
-	 * Remove from the input all accepting configurations. Return all these
-	 * configurations which were accepting.
+	 * Remove from the input all accepting configurations. Return all these configurations which were accepting.
 	 */
 	private Set<ArrayDeque<STATE>> removeAcceptingConfigurations(final Set<ArrayDeque<STATE>> configurations,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {

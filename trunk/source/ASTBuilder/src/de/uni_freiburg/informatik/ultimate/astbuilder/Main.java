@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ASTBuilder plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ASTBuilder plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ASTBuilder plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.astbuilder;
@@ -36,7 +36,7 @@ public final class Main {
 		// prevent instantiation of the main class
 	}
 
-	public static void main(String[] param) {
+	public static void main(final String[] param) {
 		if (param.length == 0) {
 			usage();
 			System.exit(1);
@@ -85,7 +85,7 @@ public final class Main {
 		}
 	}
 
-	private static Grammar parseParam(String[] param, boolean debug, int i) throws Exception {
+	private static Grammar parseParam(final String[] param, final boolean debug, final int i) throws Exception {
 		final Lexer lexer = new Lexer(new FileReader(param[i]));
 		final parser p = new parser(lexer);
 		p.setFileName(param[i]);

@@ -29,8 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.TransitionType;
 
 /**
- * Represents a letter in a game automaton. Such a letter is a Duplicator
- * game graph node.
+ * Represents a letter in a game automaton. Such a letter is a Duplicator game graph node.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @author Matthias Heizmann

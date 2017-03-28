@@ -673,7 +673,7 @@ public class PostProcessor {
 			final StructHandler structHandler, final String fpfName, final ProcedureSignature funcSignature, final VarList[] inParams,
 			final VarList[] outParam) {
 
-		final boolean resultTypeIsVoid = funcSignature.returnType == null;
+		final boolean resultTypeIsVoid = (funcSignature.getReturnType() == null);
 
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		final ArrayList<VariableDeclaration> decl = new ArrayList<>();
@@ -750,7 +750,7 @@ public class PostProcessor {
 				tmpId = main.mNameHandler.getTempVarUID(SFO.AUXVAR.FUNCPTRRES, null);
 				final VariableDeclaration tmpVarDec = new VariableDeclaration(loc, new Attribute[0],
 						new VarList[] { new VarList(loc, new String[] { tmpId },
-								funcSignature.returnType) });
+								funcSignature.getReturnType()) });
 				decl.add(tmpVarDec);
 				auxVars.put(tmpVarDec, loc);
 				funcCallResult = new IdentifierExpression(loc, tmpId);

@@ -127,12 +127,20 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	}
 
 	/**
-	 * Subclasses which need to add specific data should call this method first and extend the result.
+	 * {@inheritDoc}
+	 * <p>
+	 * This method can be overridden by subclasses to add more statistics, but then they should call
+	 * {@code super.}{@link #getAutomataOperationStatistics()} and add their statistics, e.g., using
+	 * {@link AutomataOperationStatistics#addAllStatistics(AutomataOperationStatistics)}.
 	 */
 	@Override
 	public AutomataOperationStatistics getAutomataOperationStatistics() {
 		final AutomataOperationStatistics statistics = new AutomataOperationStatistics();
+		addStatistics(statistics);
+		return statistics;
+	}
 
+	private void addStatistics(final AutomataOperationStatistics statistics) {
 		final int inputSize = getOperand().size();
 		statistics.addKeyValuePair(StatisticsType.STATES_INPUT, inputSize);
 
@@ -143,7 +151,6 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 					StatisticsType.STATES_REDUCTION_ABSOLUTE);
 			statistics.addPercentageDataInverted(StatisticsType.STATES_INPUT, StatisticsType.STATES_OUTPUT,
 					StatisticsType.STATES_REDUCTION_RELATIVE);
-
 		}
 
 		/* TODO Christian 2016-10-12: make this optional, this has performance impact */
@@ -171,8 +178,6 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 					inputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
 			statistics.addKeyValuePair(StatisticsType.TRANSITIONS_RETURN_INPUT,
 					inputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
-			statistics.addKeyValuePair(StatisticsType.BUCHI_NONDETERMINISTIC_STATES,
-					inputAnalyzer.getNumberOfNondeterministicStates());
 
 			if (mResult != null) {
 				// Output automaton
@@ -192,18 +197,14 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 						outputAnalyzer.getNumberOfTransitions(SymbolType.CALL));
 				statistics.addKeyValuePair(StatisticsType.TRANSITIONS_RETURN_OUTPUT,
 						outputAnalyzer.getNumberOfTransitions(SymbolType.RETURN));
-				statistics.addKeyValuePair(StatisticsType.RESULT_NONDETERMINISTIC_STATES,
-						outputAnalyzer.getNumberOfNondeterministicStates());
 
 				// comparisons (can only be computed after relevant data was added)
 				statistics.addDifferenceData(StatisticsType.BUCHI_TRANSITIONS, StatisticsType.RESULT_TRANSITIONS,
 						StatisticsType.TRANSITIONS_REDUCTION_ABSOLUTE);
-				statistics.addPercentageDataInverted(StatisticsType.BUCHI_TRANSITIONS, StatisticsType.RESULT_TRANSITIONS,
-						StatisticsType.TRANSITIONS_REDUCTION_RELATIVE);
+				statistics.addPercentageDataInverted(StatisticsType.BUCHI_TRANSITIONS,
+						StatisticsType.RESULT_TRANSITIONS, StatisticsType.TRANSITIONS_REDUCTION_RELATIVE);
 			}
 		}
-
-		return statistics;
 	}
 
 	@Override

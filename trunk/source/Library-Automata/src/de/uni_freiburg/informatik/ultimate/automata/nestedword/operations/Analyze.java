@@ -123,8 +123,7 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	 * @param operand
 	 *            input NWA
 	 * @param computeEverything
-	 *            true: information is computed at construction time;
-	 *            false: information is computed at access time
+	 *            true: information is computed at construction time; false: information is computed at access time
 	 */
 	public Analyze(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> operand,
 			final boolean computeEverything) {
@@ -228,14 +227,12 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	}
 
 	/**
-	 * The transition density is defined as the number of transitions
-	 * <code>T</code> divided by the number of states <code>S</code> and the
-	 * number of symbols <code>L</code>. <br>
+	 * The transition density is defined as the number of transitions <code>T</code> divided by the number of states
+	 * <code>S</code> and the number of symbols <code>L</code>. <br>
 	 * transition density = <code>T / (S * L)</code> <br>
 	 * <p>
-	 * In particular, for return transitions the number of symbols
-	 * <code>L</code> is the number of return symbol multiplied by the number
-	 * of states.
+	 * In particular, for return transitions the number of symbols <code>L</code> is the number of return symbol
+	 * multiplied by the number of states.
 	 * 
 	 * @param type
 	 *            symbol type
@@ -270,11 +267,9 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	}
 
 	/**
-	 * A state is nondeterministic if it contains at least two outgoing
-	 * transitions with the same symbol. <br>
+	 * A state is nondeterministic if it contains at least two outgoing transitions with the same symbol. <br>
 	 * <p>
-	 * In particular, for return transitions the same return symbol and
-	 * hierarchical predecessor state must occur twice.
+	 * In particular, for return transitions the same return symbol and hierarchical predecessor state must occur twice.
 	 * 
 	 * @return number of nondeterministic states
 	 */

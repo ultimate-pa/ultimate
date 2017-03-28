@@ -51,23 +51,17 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
- * Abstract class for game graphs which are needed for simulation calculation.
+ * Abstract class for game graphs which are needed for simulation calculation. <br/>
  * <br/>
+ * A game graph represents a game played by <i>Spoiler</i> and <i>Duplicator</i> on an original buechi automaton.<br/>
+ * <i>Spoiler</i> tries to build an accepting word <i>Duplicator</i> can not reproduce. If <i>Spoiler</i> fails we say
+ * <b>q1 simulates q0</b> if <i>Spoilers</i> starting state was q0 and <i>Duplicators</i> q1.<br/>
  * <br/>
- * A game graph represents a game played by <i>Spoiler</i> and <i>Duplicator</i>
- * on an original buechi automaton.<br/>
- * <i>Spoiler</i> tries to build an accepting word <i>Duplicator</i> can not
- * reproduce. If <i>Spoiler</i> fails we say <b>q1 simulates q0</b> if
- * <i>Spoilers</i> starting state was q0 and <i>Duplicators</i> q1.<br/>
- * <br/>
- * The exact winning conditions are determined by special instances of graphs
- * which should extend this class.<br/>
- * Given such an instance a game graph needs to generate itself out of a buechi
- * automaton and be able to generate a reduced buechi automaton as a result of a
- * so called simulation.<br/>
- * This game graph class is also capable of undoing made changes by using the
- * {@link #undoChanges(GameGraphChanges) undoChanges} method and maintaining a
- * {@link GameGraphChanges} object.<br/>
+ * The exact winning conditions are determined by special instances of graphs which should extend this class.<br/>
+ * Given such an instance a game graph needs to generate itself out of a buechi automaton and be able to generate a
+ * reduced buechi automaton as a result of a so called simulation.<br/>
+ * This game graph class is also capable of undoing made changes by using the {@link #undoChanges(GameGraphChanges)
+ * undoChanges} method and maintaining a {@link GameGraphChanges} object.<br/>
  * <br/>
  * For simulations see {@link ASimulation}.
  * 
@@ -83,15 +77,12 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	private final INestedWordAutomaton<LETTER, STATE> mBuechi;
 	/**
-	 * Data structure that allows a fast access to {@link DuplicatorVertex}
-	 * objects by using their representation:<br/>
-	 * <b>(State of spoiler or q0, Letter spoiler used before, State of
-	 * duplicator or q1, bit)</b>.
+	 * Data structure that allows a fast access to {@link DuplicatorVertex} objects by using their representation:<br/>
+	 * <b>(State of spoiler or q0, Letter spoiler used before, State of duplicator or q1, bit)</b>.
 	 */
 	private final NestedMap4<STATE, STATE, LETTER, Boolean, DuplicatorVertex<LETTER, STATE>> mBuechiStatesToGraphDuplicatorVertex;
 	/**
-	 * Data structure that allows a fast access to {@link SpoilerVertex} objects
-	 * by using their representation:<br/>
+	 * Data structure that allows a fast access to {@link SpoilerVertex} objects by using their representation:<br/>
 	 * <b>(State of spoiler or q0, State of duplicator or q1, bit)</b>.
 	 */
 	private final NestedMap3<STATE, STATE, Boolean, SpoilerVertex<LETTER, STATE>> mBuechiStatesToGraphSpoilerVertex;
@@ -100,9 +91,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	private final HashSet<DuplicatorVertex<LETTER, STATE>> mDuplicatorVertices;
 	/**
-	 * The upper bound which, as counter interpreted, represents at which point
-	 * one can be sure that vertices with priority 1 can be visited infinite
-	 * times without visiting priority 0.<br/>
+	 * The upper bound which, as counter interpreted, represents at which point one can be sure that vertices with
+	 * priority 1 can be visited infinite times without visiting priority 0.<br/>
 	 * In general this is the <b>number of vertices with priority 1 plus 1</b>.
 	 */
 	private int mGlobalInfinity;
@@ -115,8 +105,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	private SimulationPerformance mPerformance;
 	/**
-	 * Data structure that allows a fast access to predecessors of a given
-	 * vertex in the game graph.
+	 * Data structure that allows a fast access to predecessors of a given vertex in the game graph.
 	 */
 	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> mPredecessors;
 	/**
@@ -124,13 +113,11 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	private final IProgressAwareTimer mProgressTimer;
 	/**
-	 * Data structure that allows a fast access to push-over predecessors of a
-	 * given vertex in the game graph.
+	 * Data structure that allows a fast access to push-over predecessors of a given vertex in the game graph.
 	 */
 	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> mPushOverPredecessors;
 	/**
-	 * Data structure that allows a fast access to push-over successors of a
-	 * given vertex in the game graph.
+	 * Data structure that allows a fast access to push-over successors of a given vertex in the game graph.
 	 */
 	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> mPushOverSuccessors;
 	/**
@@ -146,30 +133,26 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 */
 	private final IMergeStateFactory<STATE> mStateFactory;
 	/**
-	 * Data structure that allows a fast access to successors of a given vertex
-	 * in the game graph.
+	 * Data structure that allows a fast access to successors of a given vertex in the game graph.
 	 */
 	private final HashMap<Vertex<LETTER, STATE>, HashSet<Vertex<LETTER, STATE>>> mSuccessors;
 
 	/**
-	 * Creates a new game graph object that initializes all needed data
-	 * structures.
+	 * Creates a new game graph object that initializes all needed data structures.
 	 * 
 	 * @param services
 	 *            Service provider of Ultimate framework
 	 * @param stateFactory
 	 *            State factory used for state creation.
 	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
+	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 * @param buechi
-	 *            The underlying buechi automaton from which the game graph gets
-	 *            generated. It must not have any dead ends.
+	 *            The underlying buechi automaton from which the game graph gets generated. It must not have any dead
+	 *            ends.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public AGameGraph(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final IProgressAwareTimer progressTimer, final ILogger logger,
@@ -207,8 +190,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Adds a given edge, represented by its source and destination, to the game
-	 * graph.
+	 * Adds a given edge, represented by its source and destination, to the game graph.
 	 * 
 	 * @param src
 	 *            Source of the edge
@@ -230,8 +212,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Adds a given push-over edge, represented by its source and destination,
-	 * to the game graph.
+	 * Adds a given push-over edge, represented by its source and destination, to the game graph.
 	 * 
 	 * @param src
 	 *            Source of the push-over edge
@@ -264,32 +245,28 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Generates a possible reduced buechi automaton by using the current state
-	 * of the game graph that may hold information, usable for reduction,
-	 * generated by an {@link ASimulation}.
+	 * Generates a possible reduced buechi automaton by using the current state of the game graph that may hold
+	 * information, usable for reduction, generated by an {@link ASimulation}.
 	 * 
 	 * @return A possible reduced buechi automaton
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public abstract INestedWordAutomaton<LETTER, STATE> generateAutomatonFromGraph()
 			throws AutomataOperationCanceledException;
 
 	/**
-	 * Generates the game graph out of an original buechi automaton. The graph
-	 * represents a game, see {@link AGameGraph}.
+	 * Generates the game graph out of an original buechi automaton. The graph represents a game, see
+	 * {@link AGameGraph}.
 	 * 
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public abstract void generateGameGraphFromAutomaton() throws AutomataOperationCanceledException;
 
 	/**
-	 * Gets the amount of edges the game graph has. The method computes the
-	 * number at method-call, which takes time linear in the size of the game
-	 * graph.
+	 * Gets the amount of edges the game graph has. The method computes the number at method-call, which takes time
+	 * linear in the size of the game graph.
 	 * 
 	 * @return The amount of edges the game graph has
 	 */
@@ -320,8 +297,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Gets the {@link DuplicatorVertex} object of the game graph by its
-	 * representation or <tt>null</tt> if there is no such.
+	 * Gets the {@link DuplicatorVertex} object of the game graph by its representation or <tt>null</tt> if there is no
+	 * such.
 	 * 
 	 * @param q0
 	 *            The state spoiler is currently at
@@ -331,8 +308,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *            The letter spoiler used before
 	 * @param bit
 	 *            The bit of the vertex
-	 * @return The {@link DuplicatorVertex} object represented by arguments or
-	 *         <tt>null</tt> if there is no such.
+	 * @return The {@link DuplicatorVertex} object represented by arguments or <tt>null</tt> if there is no such.
 	 */
 	public DuplicatorVertex<LETTER, STATE> getDuplicatorVertex(final STATE q0, final STATE q1, final LETTER a,
 			final boolean bit) {
@@ -340,11 +316,9 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Gets an unmodifiable set of all {@link DuplicatorVertex} objects the game
-	 * graph has.
+	 * Gets an unmodifiable set of all {@link DuplicatorVertex} objects the game graph has.
 	 * 
-	 * @return An unmodifiable set of all {@link DuplicatorVertex} objects the
-	 *         game graph has.
+	 * @return An unmodifiable set of all {@link DuplicatorVertex} objects the game graph has.
 	 */
 	public Set<DuplicatorVertex<LETTER, STATE>> getDuplicatorVertices() {
 		return Collections.unmodifiableSet(mDuplicatorVertices);
@@ -352,9 +326,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Gets the global infinity.<br/>
-	 * The upper bound which, as counter interpreted, represents at which point
-	 * one can be sure that vertices with priority 1 can be visited infinite
-	 * times without visiting priority 0.<br/>
+	 * The upper bound which, as counter interpreted, represents at which point one can be sure that vertices with
+	 * priority 1 can be visited infinite times without visiting priority 0.<br/>
 	 * In general this is the <b>number of vertices with priority 1 plus 1</b>.
 	 * 
 	 * @return The global infinity
@@ -364,8 +337,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Gets the internal used field for duplicator vertices. <b>Use with
-	 * caution!</b> By modifying this field the game graph may get messed up.
+	 * Gets the internal used field for duplicator vertices. <b>Use with caution!</b> By modifying this field the game
+	 * graph may get messed up.
 	 * 
 	 * @return The internal used field for duplicator vertices.
 	 */
@@ -374,8 +347,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Gets the internal used field for spoiler vertices. <b>Use with
-	 * caution!</b> By modifying this field the game graph may get messed up.
+	 * Gets the internal used field for spoiler vertices. <b>Use with caution!</b> By modifying this field the game
+	 * graph may get messed up.
 	 * 
 	 * @return The internal used field for spoiler vertices.
 	 */
@@ -384,24 +357,21 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Gets an unmodifiable set of all {@link Vertex} objects the game graph has
-	 * that do have successors, also known as non dead end.
+	 * Gets an unmodifiable set of all {@link Vertex} objects the game graph has that do have successors, also known as
+	 * non dead end.
 	 * 
-	 * @return An unmodifiable set of all {@link Vertex} objects the game graph
-	 *         has that do have successors.
+	 * @return An unmodifiable set of all {@link Vertex} objects the game graph has that do have successors.
 	 */
 	public Set<Vertex<LETTER, STATE>> getNonDeadEndVertices() {
 		return Collections.unmodifiableSet(mSuccessors.keySet());
 	}
 
 	/**
-	 * Gets an unmodifiable set of all predecessors a given {@link Vertex} has
-	 * or <tt>null</tt> if it has no.
+	 * Gets an unmodifiable set of all predecessors a given {@link Vertex} has or <tt>null</tt> if it has no.
 	 * 
 	 * @param vertex
 	 *            The vertex of interest
-	 * @return An unmodifiable set of all predecessors the given {@link Vertex}
-	 *         has or <tt>null</tt> if it has no.
+	 * @return An unmodifiable set of all predecessors the given {@link Vertex} has or <tt>null</tt> if it has no.
 	 */
 	public Set<Vertex<LETTER, STATE>> getPredecessors(final Vertex<LETTER, STATE> vertex) {
 		if (hasPredecessors(vertex)) {
@@ -428,13 +398,12 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Gets an unmodifiable set of all push-over predecessors a given
-	 * {@link Vertex} has or <tt>null</tt> if it has no.
+	 * Gets an unmodifiable set of all push-over predecessors a given {@link Vertex} has or <tt>null</tt> if it has no.
 	 * 
 	 * @param vertex
 	 *            The vertex of interest
-	 * @return An unmodifiable set of all push-over predecessors the given
-	 *         {@link Vertex} has or <tt>null</tt> if it has no.
+	 * @return An unmodifiable set of all push-over predecessors the given {@link Vertex} has or <tt>null</tt> if it has
+	 *         no.
 	 */
 	public Set<Vertex<LETTER, STATE>> getPushOverPredecessors(final Vertex<LETTER, STATE> vertex) {
 		if (hasPushOverPredecessors(vertex)) {
@@ -445,13 +414,12 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Gets an unmodifiable set of all push-over successors a given
-	 * {@link Vertex} has or <tt>null</tt> if it has no.
+	 * Gets an unmodifiable set of all push-over successors a given {@link Vertex} has or <tt>null</tt> if it has no.
 	 * 
 	 * @param vertex
 	 *            The vertex of interest
-	 * @return An unmodifiable set of all push-over successors the given
-	 *         {@link Vertex} has or <tt>null</tt> if it has no.
+	 * @return An unmodifiable set of all push-over successors the given {@link Vertex} has or <tt>null</tt> if it has
+	 *         no.
 	 */
 	public Set<Vertex<LETTER, STATE>> getPushOverSuccessors(final Vertex<LETTER, STATE> vertex) {
 		if (hasPushOverSuccessors(vertex)) {
@@ -480,8 +448,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Gets the {@link SpoilerVertex} object of the game graph by its
-	 * representation or <tt>null</tt> if there is no such.
+	 * Gets the {@link SpoilerVertex} object of the game graph by its representation or <tt>null</tt> if there is no
+	 * such.
 	 * 
 	 * @param q0
 	 *            The state spoiler is currently at
@@ -489,32 +457,27 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *            The state duplicator is currently at
 	 * @param bit
 	 *            The bit of the vertex
-	 * @return The {@link SpoilerVertex} object represented by arguments or
-	 *         <tt>null</tt> if there is no such.
+	 * @return The {@link SpoilerVertex} object represented by arguments or <tt>null</tt> if there is no such.
 	 */
 	public SpoilerVertex<LETTER, STATE> getSpoilerVertex(final STATE q0, final STATE q1, final boolean bit) {
 		return mBuechiStatesToGraphSpoilerVertex.get(q0, q1, bit);
 	}
 
 	/**
-	 * Gets an unmodifiable set of all {@link SpoilerVertex} objects the game
-	 * graph has.
+	 * Gets an unmodifiable set of all {@link SpoilerVertex} objects the game graph has.
 	 * 
-	 * @return An unmodifiable set of all {@link SpoilerVertex} objects the game
-	 *         graph has.
+	 * @return An unmodifiable set of all {@link SpoilerVertex} objects the game graph has.
 	 */
 	public Set<SpoilerVertex<LETTER, STATE>> getSpoilerVertices() {
 		return Collections.unmodifiableSet(mSpoilerVertices);
 	}
 
 	/**
-	 * Gets an unmodifiable set of all successors a given {@link Vertex} has or
-	 * <tt>null</tt> if it has no.
+	 * Gets an unmodifiable set of all successors a given {@link Vertex} has or <tt>null</tt> if it has no.
 	 * 
 	 * @param vertex
 	 *            The vertex of interest
-	 * @return An unmodifiable set of all successors the given {@link Vertex}
-	 *         has or <tt>null</tt> if it has no.
+	 * @return An unmodifiable set of all successors the given {@link Vertex} has or <tt>null</tt> if it has no.
 	 */
 	public Set<Vertex<LETTER, STATE>> getSuccessors(final Vertex<LETTER, STATE> vertex) {
 		if (hasSuccessors(vertex)) {
@@ -600,8 +563,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Removes a given edge, represented by its source and destination, from the
-	 * game graph.
+	 * Removes a given edge, represented by its source and destination, from the game graph.
 	 * 
 	 * @param src
 	 *            Source of the edge
@@ -627,8 +589,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Removes a given push-over edge, represented by its source and
-	 * destination, from the game graph.
+	 * Removes a given push-over edge, represented by its source and destination, from the game graph.
 	 * 
 	 * @param src
 	 *            Source of the edge
@@ -675,8 +636,8 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Returns the graph in the <tt>ats</tt> file format. This can be used for
-	 * example to visualize it via the toolchain.
+	 * Returns the graph in the <tt>ats</tt> file format. This can be used for example to visualize it via the
+	 * toolchain.
 	 * 
 	 * @return Representation of the graph in the <tt>ats</tt> file format.
 	 */
@@ -795,8 +756,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Undoes to the graph made changes represented by a given
-	 * {@link GameGraphChanges} object.
+	 * Undoes to the graph made changes represented by a given {@link GameGraphChanges} object.
 	 * 
 	 * @param changes
 	 *            The changes to undo
@@ -905,11 +865,9 @@ public abstract class AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Gets the timer used for responding to timeouts and operation
-	 * cancellation.
+	 * Gets the timer used for responding to timeouts and operation cancellation.
 	 * 
-	 * @return The timer used for responding to timeouts and operation
-	 *         cancellation.
+	 * @return The timer used for responding to timeouts and operation cancellation.
 	 */
 	protected IProgressAwareTimer getProgressTimer() {
 		return mProgressTimer;

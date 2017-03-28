@@ -49,8 +49,7 @@ public enum TimeMeasure {
 	 */
 	COMPUTE_SAFE_VERTEX_DOWN_STATES,
 	/**
-	 * The time computing priorities for summarize edges took in nwa game graph
-	 * generation.
+	 * The time computing priorities for summarize edges took in nwa game graph generation.
 	 */
 	COMPUTE_SUMMARIZE_EDGE_PRIORITIES,
 	/**
@@ -62,13 +61,11 @@ public enum TimeMeasure {
 	 */
 	OVERALL,
 	/**
-	 * The time the simulation only took, this is the overall time minus the
-	 * time to build the graph and the result.
+	 * The time the simulation only took, this is the overall time minus the time to build the graph and the result.
 	 */
 	SIMULATION_ONLY,
 	/**
-	 * The time solving the Max-Sat problem at nwa game graph resulting
-	 * automaton generation took.
+	 * The time solving the Max-Sat problem at nwa game graph resulting automaton generation took.
 	 */
 	SOLVE_MAX_SAT
 }

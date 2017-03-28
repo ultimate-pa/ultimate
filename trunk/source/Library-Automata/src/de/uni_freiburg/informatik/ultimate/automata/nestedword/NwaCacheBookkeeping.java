@@ -32,15 +32,14 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * If you write a nested word automaton that computes its transitions on demand,
- * then use this class to store which transitions have already been computed.
+ * If you write a nested word automaton that computes its transitions on demand, then use this class to store which
+ * transitions have already been computed.
  * <p>
  * Use this together with {@link NestedWordAutomatonCache}.<br>
- * Problem solved by this class: Assume you query an on-demand built automaton
- * for a transition, the automaton checks its cache and returns null.
- * Does this mean there is no such transition or does this mean the transition
- * was not yet computed? If you want to distinguish both cases, you have to do
- * some bookkeeping to remember which transitions have already been computed.
+ * Problem solved by this class: Assume you query an on-demand built automaton for a transition, the automaton checks
+ * its cache and returns null. Does this mean there is no such transition or does this mean the transition was not yet
+ * computed? If you want to distinguish both cases, you have to do some bookkeeping to remember which transitions have
+ * already been computed.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>

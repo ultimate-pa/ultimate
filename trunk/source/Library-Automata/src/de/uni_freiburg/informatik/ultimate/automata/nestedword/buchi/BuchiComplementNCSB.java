@@ -41,9 +41,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplemen
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
- * Buchi Complementation based on the algorithm proposed by Frantisek Blahoudek
- * and Jan Stejcek. This complementation is only sound for a special class of
- * automata whose working title is TABA (termination analysis Büchi automata).
+ * Buchi Complementation based on the algorithm proposed by Frantisek Blahoudek and Jan Stejcek. This complementation is
+ * only sound for a special class of automata whose working title is TABA (termination analysis Büchi automata).
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>

@@ -48,10 +48,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.scc.StronglyConnectedComponent;
 
 /**
- * Operation that computes the loop complexity of an automaton.
- * We define the loop complexity of an automaton as the
- * loop complexity of the underlying graph representation.
- * This number is also called cycle rank.
+ * Operation that computes the loop complexity of an automaton. We define the loop complexity of an automaton as the
+ * loop complexity of the underlying graph representation. This number is also called cycle rank.
  * <p>
  * <a href="https://en.wikipedia.org/wiki/Cycle_rank">See Wikipedia</a>.
  * 
@@ -107,8 +105,8 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	/**
 	 * Construct an automaton that represents the graph structure of the operand.
 	 * 
-	 * @return The Result is a copy of the operand where each edge has the same
-	 *         label. As label we us some letter form the alphabet.
+	 * @return The Result is a copy of the operand where each edge has the same label. As label we us some letter form
+	 *         the alphabet.
 	 */
 	private NestedWordAutomatonReachableStates<LETTER, STATE> constructGraph()
 			throws AutomataOperationCanceledException {
@@ -217,8 +215,7 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	}
 
 	/**
-	 * Returns a new collection that contains only the non-chain states.
-	 * We call a state a non-chain state if it has not
+	 * Returns a new collection that contains only the non-chain states. We call a state a non-chain state if it has not
 	 * exactly one predecessor or not exactly one successor.
 	 */
 	private Collection<STATE> extractNonchainStates(final Set<STATE> states) {

@@ -58,9 +58,8 @@ public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipeb
 	}
 
 	/**
-	 * @return true iff	(spoilerState, duplicatorState) has not yet been 
-	 * excluded by the preprocessing which provided the set of simulation 
-	 * candidate pairs
+	 * @return true iff (spoilerState, duplicatorState) has not yet been excluded by the preprocessing which provided
+	 *         the set of simulation candidate pairs
 	 */
 	protected boolean isSimulationCandidate(final STATE spoilerState, final STATE duplicatorState) {
 		return mInitialPairs.containsPair(spoilerState, duplicatorState);

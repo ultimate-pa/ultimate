@@ -41,8 +41,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * Class that stores information of changes made to a {@link AGameGraph}.<br/>
  * <br/>
  * It can remember changed edges, vertices and values of vertices.<br/>
- * A GameGraphChanges object can then be used to undo made changes for a game
- * graph by using {@link AGameGraph#undoChanges(GameGraphChanges)}.
+ * A GameGraphChanges object can then be used to undo made changes for a game graph by using
+ * {@link AGameGraph#undoChanges(GameGraphChanges)}.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -77,14 +77,12 @@ public class GameGraphChanges<LETTER, STATE> {
 	private final HashMap<Vertex<LETTER, STATE>, VertexValueContainer> mRememberedValues;
 
 	/**
-	 * Stores information about vertices that are either source or destination
-	 * of an changed edges.
+	 * Stores information about vertices that are either source or destination of an changed edges.
 	 */
 	private final HashSet<Vertex<LETTER, STATE>> mVerticesInvolvedInEdgeChanges;
 
 	/**
-	 * Stores information about vertices that are either source or destination
-	 * of an changed push-over edges.
+	 * Stores information about vertices that are either source or destination of an changed push-over edges.
 	 */
 	private final HashSet<Vertex<LETTER, STATE>> mVerticesInvolvedInPushOverEdgeChanges;
 
@@ -178,13 +176,11 @@ public class GameGraphChanges<LETTER, STATE> {
 	}
 
 	/**
-	 * Returns if the given vertex has a remembered entry for the <i>BEff
-	 * value</i> stored.
+	 * Returns if the given vertex has a remembered entry for the <i>BEff value</i> stored.
 	 * 
 	 * @param vertex
 	 *            The vertex of interest
-	 * @return True if there is a remembered entry for the <i>BEff value</i>
-	 *         stored, false if not.
+	 * @return True if there is a remembered entry for the <i>BEff value</i> stored, false if not.
 	 */
 	public boolean hasBEffEntry(final Vertex<LETTER, STATE> vertex) {
 		return mRememberedValues.get(vertex) != null
@@ -192,13 +188,11 @@ public class GameGraphChanges<LETTER, STATE> {
 	}
 
 	/**
-	 * Returns if the given vertex has a remembered entry for the <i>C value</i>
-	 * stored.
+	 * Returns if the given vertex has a remembered entry for the <i>C value</i> stored.
 	 * 
 	 * @param vertex
 	 *            The vertex of interest
-	 * @return True if there is a remembered entry for the <i>C value</i>
-	 *         stored, false if not.
+	 * @return True if there is a remembered entry for the <i>C value</i> stored, false if not.
 	 */
 	public boolean hasCEntry(final Vertex<LETTER, STATE> vertex) {
 		return mRememberedValues.get(vertex) != null
@@ -206,13 +200,11 @@ public class GameGraphChanges<LETTER, STATE> {
 	}
 
 	/**
-	 * Returns if the given vertex has a remembered entry for the <i>Progress
-	 * measure value</i> stored.
+	 * Returns if the given vertex has a remembered entry for the <i>Progress measure value</i> stored.
 	 * 
 	 * @param vertex
 	 *            The vertex of interest
-	 * @return True if there is a remembered entry for the <i>Progress measure
-	 *         value</i> stored, false if not.
+	 * @return True if there is a remembered entry for the <i>Progress measure value</i> stored, false if not.
 	 */
 	public boolean hasPmEntry(final Vertex<LETTER, STATE> vertex) {
 		return mRememberedValues.get(vertex) != null
@@ -224,8 +216,7 @@ public class GameGraphChanges<LETTER, STATE> {
 	 * 
 	 * @param vertex
 	 *            The vertex of interest
-	 * @return True if the given vertex has an <i>vertex addition</i> entry
-	 *         stored, false if not
+	 * @return True if the given vertex has an <i>vertex addition</i> entry stored, false if not
 	 */
 	public boolean isAddedVertex(final Vertex<LETTER, STATE> vertex) {
 		final GameGraphChangeType type = mChangedVertices.get(vertex);
@@ -233,46 +224,43 @@ public class GameGraphChanges<LETTER, STATE> {
 	}
 
 	/**
-	 * Returns if the given vertex is either the source or destination of an
-	 * edge that has a <i>change entry</i> stored.
+	 * Returns if the given vertex is either the source or destination of an edge that has a <i>change entry</i> stored.
 	 * 
 	 * @param vertex
 	 *            Vertex of interest
-	 * @return True if the given vertex is either the source or destination of
-	 *         an edge that has a <i>change entry</i> stored, false if not.
+	 * @return True if the given vertex is either the source or destination of an edge that has a <i>change entry</i>
+	 *         stored, false if not.
 	 */
 	public boolean isVertexInvolvedInEdgeChanges(final Vertex<LETTER, STATE> vertex) {
 		return mVerticesInvolvedInEdgeChanges.contains(vertex);
 	}
 
 	/**
-	 * Returns if the given vertex is either the source or destination of an
-	 * push-over edge that has a <i>change entry</i> stored.
+	 * Returns if the given vertex is either the source or destination of an push-over edge that has a <i>change
+	 * entry</i> stored.
 	 * 
 	 * @param vertex
 	 *            Vertex of interest
-	 * @return True if the given vertex is either the source or destination of
-	 *         an push-over edge that has a <i>change entry</i> stored, false if
-	 *         not.
+	 * @return True if the given vertex is either the source or destination of an push-over edge that has a <i>change
+	 *         entry</i> stored, false if not.
 	 */
 	public boolean isVertexInvolvedInPushOverEdgeChanges(final Vertex<LETTER, STATE> vertex) {
 		return mVerticesInvolvedInPushOverEdgeChanges.contains(vertex);
 	}
 
 	/**
-	 * Merges the given {@link GameGraphChanges} object with this object by
-	 * adding all information of the second to the first.<br/>
-	 * If the second has stored an addition whereas the first has a removal the
-	 * resulting change gets nullified and vice versa.<br/>
-	 * The given boolean argument gives the option to keep the remembered value
-	 * of this object if the second also has a remembered value. This can be
-	 * used to always keep the oldest entry or the newest.
+	 * Merges the given {@link GameGraphChanges} object with this object by adding all information of the second to the
+	 * first.<br/>
+	 * If the second has stored an addition whereas the first has a removal the resulting change gets nullified and vice
+	 * versa.<br/>
+	 * The given boolean argument gives the option to keep the remembered value of this object if the second also has a
+	 * remembered value. This can be used to always keep the oldest entry or the newest.
 	 * 
 	 * @param changes
 	 *            Change object to merge with
 	 * @param rememberValuesOfFirst
-	 *            True if the remembered values of this object should be kept if
-	 *            the second also has an entry, false if not.
+	 *            True if the remembered values of this object should be kept if the second also has an entry, false if
+	 *            not.
 	 */
 	public void merge(final GameGraphChanges<LETTER, STATE> changes, final boolean rememberValuesOfFirst) {
 		if (changes == null) {
@@ -414,8 +402,7 @@ public class GameGraphChanges<LETTER, STATE> {
 	}
 
 	/**
-	 * Stores information about the <i>Progress measure value</i> of a given
-	 * vertex.
+	 * Stores information about the <i>Progress measure value</i> of a given vertex.
 	 * 
 	 * @param vertex
 	 *            The vertex of interest
@@ -530,8 +517,7 @@ public class GameGraphChanges<LETTER, STATE> {
 
 	/**
 	 * Stores information about a changed edge.<br/>
-	 * Nullifies changes if the given edge was added before if it was now
-	 * removed or vice versa.
+	 * Nullifies changes if the given edge was added before if it was now removed or vice versa.
 	 * 
 	 * @param src
 	 *            Source of the changed edge
@@ -557,8 +543,7 @@ public class GameGraphChanges<LETTER, STATE> {
 
 	/**
 	 * Stores information about a changed push-over edge.<br/>
-	 * Nullifies changes if the given push-over edge was added before if it was
-	 * now removed or vice versa.
+	 * Nullifies changes if the given push-over edge was added before if it was now removed or vice versa.
 	 * 
 	 * @param src
 	 *            Source of the changed push-over edge
@@ -584,8 +569,7 @@ public class GameGraphChanges<LETTER, STATE> {
 
 	/**
 	 * Stores information about a changed vertex.<br/>
-	 * Nullifies changes if the given vertex was added before if it was now
-	 * removed or vice versa.
+	 * Nullifies changes if the given vertex was added before if it was now removed or vice versa.
 	 * 
 	 * @param vertex
 	 *            Vertex that was changed
@@ -605,8 +589,7 @@ public class GameGraphChanges<LETTER, STATE> {
 	}
 
 	/**
-	 * Ensures the given vertex has a value container stored by creating a new
-	 * empty container if there is no.<br/>
+	 * Ensures the given vertex has a value container stored by creating a new empty container if there is no.<br/>
 	 * This is used to prevent NPE at access.
 	 * 
 	 * @param key

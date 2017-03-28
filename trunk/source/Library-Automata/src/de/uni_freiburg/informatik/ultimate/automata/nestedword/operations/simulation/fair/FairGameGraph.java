@@ -60,13 +60,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Game graph that realizes <b>fair simulation</b>.<br/>
- * In fair simulation each time <i>Spoiler</i> builds an accepting word
- * <i>Duplicator</i>s word must also be accepting.<br/>
+ * In fair simulation each time <i>Spoiler</i> builds an accepting word <i>Duplicator</i>s word must also be
+ * accepting.<br/>
  * <br/>
- * If its impossible for <i>Spoiler</i> to build a word such that
- * <i>Duplicator</i> can not fulfill its condition we say <b>q1 fair simulates
- * q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of
- * <i>Duplicator</i>.
+ * If its impossible for <i>Spoiler</i> to build a word such that <i>Duplicator</i> can not fulfill its condition we say
+ * <b>q1 fair simulates q0</b> where q0 was the starting state of <i>Spoiler</i> and q1 of <i>Duplicator</i>.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -84,22 +82,20 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 */
 	private final INestedWordAutomaton<LETTER, STATE> mBuechi;
 	/**
-	 * Data structure that allows a fast access to all transitions of the buechi
-	 * automaton.<br/>
+	 * Data structure that allows a fast access to all transitions of the buechi automaton.<br/>
 	 * Gets used for example by {@link #hasBuechiTransition(Triple)}.
 	 */
 	private final Set<Triple<STATE, LETTER, STATE>> mBuechiTransitions;
 	/**
-	 * Data structure that stores changes that where made on buechi transitions
-	 * from the perspective of this game graph.<br/>
-	 * The transitions are stored <b>inversely</b> by <i>(destination, letter,
-	 * source)</i> instead of <i>(source, letter, destination)</i>.
+	 * Data structure that stores changes that where made on buechi transitions from the perspective of this game
+	 * graph.<br/>
+	 * The transitions are stored <b>inversely</b> by <i>(destination, letter, source)</i> instead of <i>(source,
+	 * letter, destination)</i>.
 	 */
 	private final NestedMap3<STATE, LETTER, STATE, GameGraphChangeType> mChangedBuechiTransitionsInverse;
 	/**
-	 * Maintains equivalence classes for every state. The game graph has methods
-	 * that allow to union the classes of states. The data structure is used for
-	 * result generation and indicates states that should be merged, all states
+	 * Maintains equivalence classes for every state. The game graph has methods that allow to union the classes of
+	 * states. The data structure is used for result generation and indicates states that should be merged, all states
 	 * of an equivalence class then get merged to one state.
 	 */
 	private final UnionFind<STATE> mEquivalenceClasses;
@@ -127,16 +123,13 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * @param stateFactory
 	 *            State factory used for state creation
 	 * @param progressTimer
-	 *            Timer used for responding to timeouts and operation
-	 *            cancellation.
+	 *            Timer used for responding to timeouts and operation cancellation.
 	 * @param logger
 	 *            ILogger of the Ultimate framework.
 	 * @param buechi
-	 *            The underlying buechi automaton from which the game graph gets
-	 *            generated.
+	 *            The underlying buechi automaton from which the game graph gets generated.
 	 * @throws AutomataOperationCanceledException
-	 *             If the operation was canceled, for example from the Ultimate
-	 *             framework.
+	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public FairGameGraph(final AutomataLibraryServices services, final IMergeStateFactory<STATE> stateFactory,
 			final IProgressAwareTimer progressTimer, final ILogger logger,
@@ -160,8 +153,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	/**
 	 * Returns whether there are merge-able states in the game graph.
 	 * 
-	 * @return <tt>True</tt> if there are merge-able states in the graph,
-	 *         <tt>false</tt> if not.
+	 * @return <tt>True</tt> if there are merge-able states in the graph, <tt>false</tt> if not.
 	 */
 	public boolean areThereMergeableStates() {
 		return mAreThereMergeableStates;
@@ -387,11 +379,9 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Gets the list of transitions that should be removed from the input
-	 * automaton.
+	 * Gets the list of transitions that should be removed from the input automaton.
 	 * 
-	 * @return List of transitions that should be removed from the input
-	 *         automaton.
+	 * @return List of transitions that should be removed from the input automaton.
 	 */
 	public List<Triple<STATE, LETTER, STATE>> getTransitionsToRemove() {
 		return mTransitionsToRemove;
@@ -434,20 +424,17 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Equalizes a given state to another by adding transitions so that the
-	 * state to align has the same out- and in-going transitions that the state
-	 * to align to has.
+	 * Equalizes a given state to another by adding transitions so that the state to align has the same out- and
+	 * in-going transitions that the state to align to has.
 	 * 
 	 * @param stateToAlign
 	 *            The state to align
 	 * @param stateToAlignTo
 	 *            The state to align to
-	 * @return A game graph changes object that has all made changes stored or
-	 *         <tt>null</tt> if no changes where made. Can be used to undo
-	 *         changes by using {@link #undoChanges(GameGraphChanges)}.
+	 * @return A game graph changes object that has all made changes stored or <tt>null</tt> if no changes where made.
+	 *         Can be used to undo changes by using {@link #undoChanges(GameGraphChanges)}.
 	 * @throws IllegalArgumentException
-	 *             If arguments are <tt>null</tt>, equal or do not exist in the
-	 *             buechi automaton.
+	 *             If arguments are <tt>null</tt>, equal or do not exist in the buechi automaton.
 	 */
 	private FairGameGraphChanges<LETTER, STATE> equalizeBuechiStatesOneDir(final STATE stateToAlign,
 			final STATE stateToAlignTo) {
@@ -496,10 +483,9 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Simulates the addition of a transition to the buechi automaton. More
-	 * precisely to the buechi automaton <i>Spoiler</i> plays on.<br/>
-	 * It will add the corresponding edges and vertices to the game graph and
-	 * remember the changes made.
+	 * Simulates the addition of a transition to the buechi automaton. More precisely to the buechi automaton
+	 * <i>Spoiler</i> plays on.<br/>
+	 * It will add the corresponding edges and vertices to the game graph and remember the changes made.
 	 * 
 	 * @param src
 	 *            Source of the transition to add
@@ -507,12 +493,11 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 *            Letter of the transition to add
 	 * @param dest
 	 *            Destination of the transition to add
-	 * @return A game graph changes object that has all made changes stored or
-	 *         <tt>null</tt> if no changes where made. Can be used to undo
-	 *         changes by using {@link #undoChanges(GameGraphChanges)}.
+	 * @return A game graph changes object that has all made changes stored or <tt>null</tt> if no changes where made.
+	 *         Can be used to undo changes by using {@link #undoChanges(GameGraphChanges)}.
 	 * @throws IllegalArgumentException
-	 *             If arguments are <tt>null</tt>, equal, do not exist in the
-	 *             buechi automaton or the transition already existed.
+	 *             If arguments are <tt>null</tt>, equal, do not exist in the buechi automaton or the transition already
+	 *             existed.
 	 */
 	protected FairGameGraphChanges<LETTER, STATE> addBuechiTransition(final STATE src, final LETTER a,
 			final STATE dest) {
@@ -633,19 +618,16 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Returns if the given states are in the same equivalence class.<br/>
-	 * A equivalence class contains states that where marked as merge-able using
-	 * {@link #markMergeable(Object, Object)}. This is especially useful if for
-	 * example <i>firstState</i> and <i>secondState</i> came into the class with
-	 * <i>thirdState</i> respectively. In this case <i>firstState</i> and
-	 * <i>secondState</i> are also in the same equivalence class and so
-	 * merge-able.
+	 * A equivalence class contains states that where marked as merge-able using {@link #markMergeable(Object, Object)}.
+	 * This is especially useful if for example <i>firstState</i> and <i>secondState</i> came into the class with
+	 * <i>thirdState</i> respectively. In this case <i>firstState</i> and <i>secondState</i> are also in the same
+	 * equivalence class and so merge-able.
 	 * 
 	 * @param firstState
 	 *            First state
 	 * @param secondState
 	 *            Second state
-	 * @return True if the given states are in the same equivalence class, false
-	 *         if not
+	 * @return True if the given states are in the same equivalence class, false if not
 	 * @throws IllegalArgumentException
 	 *             If one or both states are <tt>null</tt>.
 	 */
@@ -663,17 +645,16 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Calculates the priority of a given {@link SpoilerVertex} by its
-	 * representation <i>(state spoiler is at, state duplicator is at)</i>.<br/>
+	 * Calculates the priority of a given {@link SpoilerVertex} by its representation <i>(state spoiler is at, state
+	 * duplicator is at)</i>.<br/>
 	 * Note that {@link DuplicatorVertex} objects always should have priority 2.
 	 * 
 	 * @param leftState
 	 *            The state spoiler is at
 	 * @param rightState
 	 *            The state duplicator is at
-	 * @return The calculated priority of the given {@link SpoilerVertex} which
-	 *         is 0 if the right state is final, 2 if both are final and 1 if
-	 *         only the left state is final.
+	 * @return The calculated priority of the given {@link SpoilerVertex} which is 0 if the right state is final, 2 if
+	 *         both are final and 1 if only the left state is final.
 	 */
 	protected int calculatePriority(final STATE leftState, final STATE rightState) {
 		if (mBuechi.isFinal(rightState)) {
@@ -686,19 +667,17 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Equalizes two given states to each other by adding transitions so that
-	 * both have the same out- and in-going transitions.
+	 * Equalizes two given states to each other by adding transitions so that both have the same out- and in-going
+	 * transitions.
 	 * 
 	 * @param firstState
 	 *            First state to equalize
 	 * @param secondState
 	 *            Second state to equalize
-	 * @return A game graph changes object that has all made changes stored or
-	 *         <tt>null</tt> if no changes where made. Can be used to undo
-	 *         changes by using {@link #undoChanges(GameGraphChanges)}.
+	 * @return A game graph changes object that has all made changes stored or <tt>null</tt> if no changes where made.
+	 *         Can be used to undo changes by using {@link #undoChanges(GameGraphChanges)}.
 	 * @throws IllegalArgumentException
-	 *             If arguments are <tt>null</tt>, equal or do not exist in the
-	 *             buechi automaton.
+	 *             If arguments are <tt>null</tt>, equal or do not exist in the buechi automaton.
 	 */
 	protected FairGameGraphChanges<LETTER, STATE> equalizeBuechiStates(final STATE firstState,
 			final STATE secondState) {
@@ -736,8 +715,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * 
 	 * @param transition
 	 *            The transition of interest
-	 * @return True if the underlying buechi automaton has a given transition,
-	 *         false if not.
+	 * @return True if the underlying buechi automaton has a given transition, false if not.
 	 */
 	protected boolean hasBuechiTransition(final Triple<STATE, LETTER, STATE> transition) {
 		return mBuechiTransitions.contains(transition);
@@ -745,9 +723,8 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Marks two given states merge-able.<br/>
-	 * This unions the internal equivalence classes of the two given states. The
-	 * equivalence classes indicate which states are merge-able. All states in a
-	 * class get merged to one state.
+	 * This unions the internal equivalence classes of the two given states. The equivalence classes indicate which
+	 * states are merge-able. All states in a class get merged to one state.
 	 * 
 	 * @param firstState
 	 *            First state
@@ -771,8 +748,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 	/**
 	 * Marks a given transition remove-able.<br/>
-	 * When generating the resulting automaton the marked transitions will be
-	 * left.
+	 * When generating the resulting automaton the marked transitions will be left.
 	 * 
 	 * @param src
 	 *            Source of the transition
@@ -781,8 +757,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 * @param dest
 	 *            Destination of the transition
 	 * @throws IllegalArgumentException
-	 *             If the given transition does not exist in the buechi
-	 *             automaton.
+	 *             If the given transition does not exist in the buechi automaton.
 	 */
 	protected void markRemoveableTransition(final STATE src, final LETTER a, final STATE dest) {
 		final Triple<STATE, LETTER, STATE> transition = new Triple<>(src, a, dest);
@@ -798,10 +773,9 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	}
 
 	/**
-	 * Simulates the removal of a transition from the buechi automaton. More
-	 * precisely to the buechi automaton <i>Duplicator</i> plays on.<br/>
-	 * It will remove the corresponding edges from the game graph and remember
-	 * the changes made.
+	 * Simulates the removal of a transition from the buechi automaton. More precisely to the buechi automaton
+	 * <i>Duplicator</i> plays on.<br/>
+	 * It will remove the corresponding edges from the game graph and remember the changes made.
 	 * 
 	 * @param src
 	 *            Source of the transition to remove
@@ -809,12 +783,11 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 	 *            Letter of the transition to remove
 	 * @param dest
 	 *            Destination of the transition to remove
-	 * @return A game graph changes object that has all made changes stored or
-	 *         <tt>null</tt> if no changes where made. Can be used to undo
-	 *         changes by using {@link #undoChanges(GameGraphChanges)}.
+	 * @return A game graph changes object that has all made changes stored or <tt>null</tt> if no changes where made.
+	 *         Can be used to undo changes by using {@link #undoChanges(GameGraphChanges)}.
 	 * @throws IllegalArgumentException
-	 *             If arguments are <tt>null</tt>, equal, do not exist in the
-	 *             buechi automaton or the transition does not existed.
+	 *             If arguments are <tt>null</tt>, equal, do not exist in the buechi automaton or the transition does
+	 *             not existed.
 	 */
 	protected FairGameGraphChanges<LETTER, STATE> removeBuechiTransition(final STATE src, final LETTER a,
 			final STATE dest) {

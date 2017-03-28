@@ -26,7 +26,6 @@
  * resulting work.
  */
 /**
- * This packages contains utility classes used for NWA game graph
- * representation.
+ * This packages contains utility classes used for NWA game graph representation.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph;

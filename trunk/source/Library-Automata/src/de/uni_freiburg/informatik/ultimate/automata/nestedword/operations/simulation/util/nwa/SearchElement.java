@@ -31,8 +31,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simula
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Element for a breadth-first search that computes the priority of a given
- * summarize edge based on the priorities of vertices in the game graph.
+ * Element for a breadth-first search that computes the priority of a given summarize edge based on the priorities of
+ * vertices in the game graph.
  * 
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
  * @param <LETTER>
@@ -42,8 +42,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public final class SearchElement<LETTER, STATE> {
 	/**
-	 * The choice Duplicator made in the summarize edge for this element,
-	 * specifies the sub-summarize edge.
+	 * The choice Duplicator made in the summarize edge for this element, specifies the sub-summarize edge.
 	 */
 	private final Pair<STATE, Boolean> mDuplicatorChoice;
 	/**
@@ -75,13 +74,11 @@ public final class SearchElement<LETTER, STATE> {
 	 * @param target
 	 *            The target vertex this element is searching
 	 * @param history
-	 *            The vertex that was used right before this element,
-	 *            <tt>null</tt> if there is no.
+	 *            The vertex that was used right before this element, <tt>null</tt> if there is no.
 	 * @param summarizeEdge
 	 *            The summarize edge this element belongs to
 	 * @param duplicatorChoice
-	 *            The choice Duplicator makes in the summarize edge, specifies
-	 *            the sub-summarize edge
+	 *            The choice Duplicator makes in the summarize edge, specifies the sub-summarize edge
 	 * @param origin
 	 *            The origin of this search element
 	 */

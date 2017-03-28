@@ -201,8 +201,7 @@ class LassoConstructor<LETTER, STATE> {
 	}
 
 	/**
-	 * Add for all predecessors of sc that have not yet been visited the
-	 * successor information to map.
+	 * Add for all predecessors of sc that have not yet been visited the successor information to map.
 	 */
 	private void addPredecessors(final StateContainer<LETTER, STATE> stateContainer,
 			final Map<StateContainer<LETTER, STATE>, SuccessorInfo> succInfo) {
@@ -223,8 +222,7 @@ class LassoConstructor<LETTER, STATE> {
 	}
 
 	/**
-	 * Add successor information for predSc and inTrans, if predSc is in
-	 * SCC and has not been visited before.
+	 * Add successor information for predSc and inTrans, if predSc is in SCC and has not been visited before.
 	 */
 	private void checkAndAddPredecessor(final StateContainer<LETTER, STATE> stateContainer,
 			final Map<StateContainer<LETTER, STATE>, SuccessorInfo> succInfo,

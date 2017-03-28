@@ -40,9 +40,8 @@ public final class PlotUtil {
 	}
 
 	/**
-	 * Reads a given benchmark file in the plot format and writes the benchmark
-	 * data to a CSV file next to it containing the transition densities and
-	 * benchmark data.
+	 * Reads a given benchmark file in the plot format and writes the benchmark data to a CSV file next to it containing
+	 * the transition densities and benchmark data.
 	 * 
 	 * @param benchmarkPlotFile
 	 *            The file to read

@@ -41,8 +41,7 @@ public class HelpHopcroft implements Runnable {
 	private final int mState1;
 
 	/**
-	 * The incremental algorithm determined, that state1 and state2 are of the
-	 * same equivalence class.
+	 * The incremental algorithm determined, that state1 and state2 are of the same equivalence class.
 	 * 
 	 * @param incremental
 	 *            Instance of incremental algorithm that creates the task

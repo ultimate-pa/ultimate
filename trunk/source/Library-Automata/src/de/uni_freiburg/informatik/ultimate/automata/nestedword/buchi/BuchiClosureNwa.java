@@ -108,8 +108,7 @@ public final class BuchiClosureNwa<LETTER, STATE> implements IDoubleDeckerAutoma
 	}
 
 	/**
-	 * Add all predecessors of state that are not in the set newFinalStates
-	 * to worklist.
+	 * Add all predecessors of state that are not in the set newFinalStates to worklist.
 	 */
 	private void addAllNonFinalPredecessors(final STATE state, final Set<STATE> worklist,
 			final Set<STATE> newFinalStates) {

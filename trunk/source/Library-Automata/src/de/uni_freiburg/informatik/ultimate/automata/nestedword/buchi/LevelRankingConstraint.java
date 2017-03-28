@@ -40,10 +40,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 /**
  * Constraints that define a set of LevelRankingStates.
  * <ul>
- * <li>mLevelRanking represents an upper bound for ranks of
- * LevelRankingStates defined by this LevelRankingConstraints.
- * <li>A DoubleDecker is in LevelRankingState.mO iff (it is in
- * LevelRankingConstraints.mO and it has an even level rank)
+ * <li>mLevelRanking represents an upper bound for ranks of LevelRankingStates defined by this LevelRankingConstraints.
+ * <li>A DoubleDecker is in LevelRankingState.mO iff (it is in LevelRankingConstraints.mO and it has an even level rank)
  * </ul>
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -57,15 +55,14 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 
 	private final int mUserDefinedMaxRank;
 	/**
-	 * if !mUseDoubleDeckers we always use getEmptyStackState()
-	 * as down state to obtain sets of states instead of
-	 * sets of DoubleDeckers.
+	 * if !mUseDoubleDeckers we always use getEmptyStackState() as down state to obtain sets of states instead of sets
+	 * of DoubleDeckers.
 	 */
 	private final boolean mUseDoubleDeckers;
 
 	/**
-	 * Information if the direct predecessor of a DoubleDecker was accepting.
-	 * If this information is used by the LevelRankingGenerator.
+	 * Information if the direct predecessor of a DoubleDecker was accepting. If this information is used by the
+	 * LevelRankingGenerator.
 	 */
 	private final Set<DoubleDecker<StateWithRankInfo<STATE>>> mPredecessorWasAccepting = new HashSet<>();
 
@@ -90,8 +87,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	}
 
 	/**
-	 * Constructor for the constraint that is only satisfied by the
-	 * non accepting sink state.
+	 * Constructor for the constraint that is only satisfied by the non accepting sink state.
 	 */
 	public LevelRankingConstraint() {
 		super();
@@ -207,10 +203,8 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	}
 
 	/**
-	 * Add constraint to the double decker (down,up). This constraints
-	 * are only obtained from incoming transitions. Further constraints
-	 * (odd rank only allowed for non-finals or state in o if not odd)
-	 * are added later.
+	 * Add constraint to the double decker (down,up). This constraints are only obtained from incoming transitions.
+	 * Further constraints (odd rank only allowed for non-finals or state in o if not odd) are added later.
 	 */
 	protected void addConstraint(final StateWithRankInfo<STATE> downState, final STATE upState,
 			final Integer predecessorRank, final boolean predecessorIsInO, final boolean predecessorIsAccepting) {

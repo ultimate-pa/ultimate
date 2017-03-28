@@ -35,6 +35,10 @@ import java.util.Set;
 
 /**
  * A run of a tree automaton.
+ * 
+ * (alex:) Effectively this is used for representing any tree with some nodes and some edge labels. (e.g. in HCSsa)
+ * 
+ * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  *
  * @param <R> Symbols of the automaton
@@ -83,7 +87,7 @@ public class TreeRun<R, S> implements ITreeRun<R, S> {
 		return new TreeRun<>(stMap.containsKey(state) ? stMap.get(state) : null, letter, child);
 	}
 	
-	public Collection<TreeRun<R, S>> getChildren() {
+	public List<TreeRun<R, S>> getChildren() {
 		return children;
 	}
 	

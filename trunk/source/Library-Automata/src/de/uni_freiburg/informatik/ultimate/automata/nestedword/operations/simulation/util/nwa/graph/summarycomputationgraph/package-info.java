@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 /**
- * Package provides classes for computation of summaries in a game graph.
- * The computation of the summaries is done on the game automaton.
+ * Package provides classes for computation of summaries in a game graph. The computation of the summaries is done on
+ * the game automaton.
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph;

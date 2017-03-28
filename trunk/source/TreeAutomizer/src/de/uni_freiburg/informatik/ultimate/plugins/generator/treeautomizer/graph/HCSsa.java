@@ -35,6 +35,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
  * HCSsa HornClause-SSA
@@ -45,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public class HCSsa {
 
-	private final TreeRun<Term, HCPredicate> mNestedFormulas;
+	private final TreeRun<Term, IPredicate> mNestedFormulas;
 	private final Term mPostCondition;
 	private final Term mPreCondition;
 	private final Map<Term, Integer> mCounters;
@@ -63,7 +64,7 @@ public class HCSsa {
 	 * @param counters
 	 *            A map of the counts of each Term.
 	 */
-	public HCSsa(final TreeRun<Term, HCPredicate> nestedFormulas, final Term pre, final Term post,
+	public HCSsa(final TreeRun<Term, IPredicate> nestedFormulas, final Term pre, final Term post,
 			final Map<Term, Integer> counters) {
 		mNestedFormulas = nestedFormulas;
 		mPostCondition = post;
@@ -77,7 +78,7 @@ public class HCSsa {
 	 * @param ssa Old SSA
 	 * @param nestedFormulas The new tree run.
 	 */
-	public HCSsa(final HCSsa ssa, final TreeRun<Term, HCPredicate> nestedFormulas) {
+	public HCSsa(final HCSsa ssa, final TreeRun<Term, IPredicate> nestedFormulas) {
 		mNestedFormulas = nestedFormulas;
 		mPostCondition = ssa.mPostCondition;
 		mPreCondition = ssa.mPreCondition;
@@ -93,20 +94,32 @@ public class HCSsa {
 		return mCounters.get(t);
 	}
 
-	protected String getName(final Term t) {
+	/**
+	 * Returns a name for the given term. The term must be one of those that are in the List returned by flatten().
+	 * The name will be used by Tree checker for making annotated terms out of the flattened terms, and for posing
+	 * the get-interpolants query.
+	 * 
+	 * @param t
+	 * @return
+	 */
+	public String getName(final Term t) {
 		return "HCsSATerm_" + getCounter(t);
 	}
 
 	/**
-	 * @return return a flat version of the SSA.
+	 * Computes a flat version of the SSA.
+	 * This flat version is used by the TreeChecker to construct named formulas from it and assert each one in the 
+	 *  solver.
+	 * 
+	 * @return 
 	 */
 	public List<Term> flatten() {
 		return flatten(mNestedFormulas);
 	}
 
-	private static List<Term> flatten(final TreeRun<Term, HCPredicate> tree) {
+	private static List<Term> flatten(final TreeRun<Term, IPredicate> tree) {
 		ArrayList<Term> res = new ArrayList<>();
-		for (final TreeRun<Term, HCPredicate> child : tree.getChildren()) {
+		for (final TreeRun<Term, IPredicate> child : tree.getChildren()) {
 			res.addAll(flatten(child));
 		}
 		if (tree.getRootSymbol() != null) {
@@ -115,19 +128,19 @@ public class HCSsa {
 		return res;
 	}
 
-	public TreeRun<Term, HCPredicate> getFormulasTree() {
+	public TreeRun<Term, IPredicate> getFormulasTree() {
 		return mNestedFormulas;
 	}
 
-	protected Term getPredicateVariable(final Term term, final ManagedScript script) {
-		script.lock(this);
+	protected Term getPredicateVariable(final Term term, final ManagedScript script, final Object lockOwner) {
+//		script.lock(this);
 		if (!mTermToAssertion.containsKey(term)) {
 			final String name = getName(term);
-			mTermToAssertion.put(term, script.term(this, name));
+			mTermToAssertion.put(term, script.term(lockOwner, name));
 		}
 
 		final Term result = mTermToAssertion.get(term);
-		script.unlock(this);
+//		script.unlock(this);
 		return result;
 	}
 }

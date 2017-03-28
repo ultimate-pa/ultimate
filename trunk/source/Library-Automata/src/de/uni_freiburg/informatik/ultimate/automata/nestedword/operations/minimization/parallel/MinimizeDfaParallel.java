@@ -44,8 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * This class manages the parallel computation of minimization by Hopcroft's and
- * Incremental AMR algorithm.
+ * This class manages the parallel computation of minimization by Hopcroft's and Incremental AMR algorithm.
  * 
  * @author Layla Franke
  * @param <LETTER>
@@ -55,9 +54,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE> {
 	/**
-	 * Switches for setting priority. Setting both to true will have the same
-	 * effect as setting both to false. Then they will just all run with the
-	 * same priority as the main thread.
+	 * Switches for setting priority. Setting both to true will have the same effect as setting both to false. Then they
+	 * will just all run with the same priority as the main thread.
 	 */
 	public static final boolean PREFER_HELPER_THREADS = false;
 	public static final boolean PREFER_ALGORITHM_THREADS = false;
@@ -244,8 +242,7 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 	/**
 	 * Measure CPU Time of all Threads.
 	 * 
-	 * @return Array that holds the cpu times of all threads except for the main
-	 *         thread.
+	 * @return Array that holds the cpu times of all threads except for the main thread.
 	 */
 	private void measureTime() {
 		mCpuTime = new double[mThreads.size() + 2];
@@ -302,23 +299,18 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 
 	// ------------------- WorkingThread --------------------//
 	/**
-	 * This class defines the worker threads that make up the thread pool. A
-	 * WorkerThread runs in a loop in which it retrieves a task from the
-	 * taskQueue and calls the run() method in that task. Note that if the queue
-	 * is empty, the thread blocks until a task becomes available in the queue.
-	 * The constructor starts the thread, so there is no need for the main
-	 * program to do so. The thread will run at a priority that is one less than
-	 * the priority of the thread that calls the constructor.
+	 * This class defines the worker threads that make up the thread pool. A WorkerThread runs in a loop in which it
+	 * retrieves a task from the taskQueue and calls the run() method in that task. Note that if the queue is empty, the
+	 * thread blocks until a task becomes available in the queue. The constructor starts the thread, so there is no need
+	 * for the main program to do so. The thread will run at a priority that is one less than the priority of the thread
+	 * that calls the constructor.
 	 * <p>
-	 * A WorkerThread is designed to run in an infinite loop. It will end only
-	 * when the Java virtual machine exits. (This assumes that the tasks that
-	 * are executed don't throw exceptions, which is true in this program.) The
-	 * constructor sets the thread to run as a daemon thread; the Java virtual
-	 * machine will exit when the only threads are daemon threads. (In this
-	 * program, this is not necessary since the virtual machine is set to exit
-	 * when the window is closed. In a multi-window program, however, that would
-	 * not be the case and it would be important for the threads to be daemon
-	 * threads.)
+	 * A WorkerThread is designed to run in an infinite loop. It will end only when the Java virtual machine exits.
+	 * (This assumes that the tasks that are executed don't throw exceptions, which is true in this program.) The
+	 * constructor sets the thread to run as a daemon thread; the Java virtual machine will exit when the only threads
+	 * are daemon threads. (In this program, this is not necessary since the virtual machine is set to exit when the
+	 * window is closed. In a multi-window program, however, that would not be the case and it would be important for
+	 * the threads to be daemon threads.)
 	 */
 	private class WorkingThread extends Thread {
 		/**
@@ -364,8 +356,7 @@ public final class MinimizeDfaParallel<LETTER, STATE> extends AbstractMinimizeNw
 
 	// -------------- Algorithm Tasks -------------//
 	/**
-	 * The algorithm task is a thread that performs a given algorithm for
-	 * minimizing DFA.
+	 * The algorithm task is a thread that performs a given algorithm for minimizing DFA.
 	 * 
 	 * @author layla
 	 */

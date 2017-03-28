@@ -63,10 +63,9 @@ public final class Event<S, C> implements Serializable {
 	private final Transition<S, C> mTransition;
 
 	/**
-	 * Creates an Event from its predecessor conditions and the transition from
-	 * the net system it is mapped to by the homomorphism. Its successor
-	 * conditions are automatically created. The given set not be referenced
-	 * directly, but copied.
+	 * Creates an Event from its predecessor conditions and the transition from the net system it is mapped to by the
+	 * homomorphism. Its successor conditions are automatically created. The given set not be referenced directly, but
+	 * copied.
 	 * 
 	 * @param predecessors
 	 *            predecessor conditions
@@ -207,9 +206,8 @@ public final class Event<S, C> implements Serializable {
 	}
 
 	/**
-	 * returns true, if the homomorphism h of the corresponding branching
-	 * process reduced to conditions and places is a well defined isomorphism.
-	 * this is a helper method used only for assertions.
+	 * returns true, if the homomorphism h of the corresponding branching process reduced to conditions and places is a
+	 * well defined isomorphism. this is a helper method used only for assertions.
 	 */
 	private boolean conditionToPlaceEqual(final Collection<Condition<S, C>> conditions,
 			final Collection<Place<S, C>> placesIn) {
@@ -251,9 +249,8 @@ public final class Event<S, C> implements Serializable {
 	 *            <ul>
 	 *            <li>e and e' belong to the same transition</li>
 	 *            </ul>
-	 *            which will produce fewer cut-off events and a bigger prefix hence.
-	 *            However, we assume the blowup is not so big TODO: check this claim.
-	 *            (maybe linear? with respect to what?)
+	 *            which will produce fewer cut-off events and a bigger prefix hence. However, we assume the blowup is
+	 *            not so big TODO: check this claim. (maybe linear? with respect to what?)
 	 * @return If the event is a companion of this
 	 *         <ul>
 	 *         <li>return true and calls {@link Event#setCompanion(Event)}.</li>
@@ -264,8 +261,7 @@ public final class Event<S, C> implements Serializable {
 	 *         <li>e < e' with respect to order</li>
 	 *         <li>Mark([e]) == Mark([e'])</li>
 	 *         </ul>
-	 *         So far this definition corresponds to cut-off events as defined in the
-	 *         1996 TACAS Paper.
+	 *         So far this definition corresponds to cut-off events as defined in the 1996 TACAS Paper.
 	 */
 	public boolean checkCutOffSetCompanion(final Event<S, C> event, final Comparator<Event<S, C>> order,
 			final boolean sameTransitionCutOff) {
@@ -287,8 +283,7 @@ public final class Event<S, C> implements Serializable {
 	}
 
 	/**
-	 * set this.companion to e, or, if e is a cut-off event itself to the
-	 * companion of e.
+	 * set this.companion to e, or, if e is a cut-off event itself to the companion of e.
 	 */
 	private void setCompanion(final Event<S, C> event) {
 		assert mCompanion == null;
@@ -303,8 +298,8 @@ public final class Event<S, C> implements Serializable {
 	 * @return {@code true} iff the event is a cutoff event. requires, that
 	 *         {@link #checkCutOffSetCompanion(Event, Comparator)} was called.
 	 *         <p>
-	 *         In the implementation of the construction of the unfolding, it is called
-	 *         after being added to a the Branchinprocess.
+	 *         In the implementation of the construction of the unfolding, it is called after being added to a the
+	 *         Branchinprocess.
 	 * @see BranchingProcess#isCutoffEvent(Event, Comparator)
 	 */
 	public boolean isCutoffEvent() {
@@ -312,8 +307,7 @@ public final class Event<S, C> implements Serializable {
 	}
 
 	/**
-	 * @return The size of the local configuration, that is the number of
-	 *         ancestor events.
+	 * @return The size of the local configuration, that is the number of ancestor events.
 	 */
 	public int getAncestors() {
 		return mLocalConfiguration.size();
