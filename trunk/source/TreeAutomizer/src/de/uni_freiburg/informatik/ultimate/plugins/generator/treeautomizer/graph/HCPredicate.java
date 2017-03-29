@@ -94,11 +94,15 @@ public class HCPredicate extends BasicPredicate {
 		return result;
 	}
 
-	public Set<HornClausePredicateSymbol> getHcPredicatedSymbols() {
+	public Set<HornClausePredicateSymbol> getHcPredicateSymbols() {
 		return mHcPredicateSymbols;
 	}
 
 	public List<TermVariable> getSignature() {
 		return mVariables;
 	}
+	
+//	public TermVariable getArgumentTermVariable(int argPos) {
+//		return mVariables.get(argPos);
+//	}
 }
