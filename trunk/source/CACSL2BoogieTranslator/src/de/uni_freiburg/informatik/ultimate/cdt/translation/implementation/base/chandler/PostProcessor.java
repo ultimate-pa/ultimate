@@ -172,7 +172,7 @@ public class PostProcessor {
 		decl.addAll(declareFunctionPointerProcedures(main, functionHandler, memoryHandler, structHandler));
 		decl.addAll(declareConversionFunctions(main, functionHandler, memoryHandler, structHandler));
 		
-		if (!(typeHandler).useIntForAllIntegerTypes()) {
+		if ((typeHandler).isBitvectorTranslation()) {
 			decl.addAll(PostProcessor.declarePrimitiveDataTypeSynonyms(loc, main.getTypeSizes(),
 					typeHandler));
 

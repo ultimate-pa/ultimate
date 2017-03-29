@@ -371,7 +371,7 @@ public class MainDispatcher extends Dispatcher {
 	protected void init() {
 
 		mSideEffectHandler = new SideEffectHandler();
-		mTypeHandler = new TypeHandler(!mBitvectorTranslation);
+		mTypeHandler = new TypeHandler(mBitvectorTranslation);
 		mAcslHandler = new ACSLHandler(mWitnessInvariants != null);
 		mNameHandler = new NameHandler(mBacktranslator);
 		mCHandler = new CHandler(this, mBacktranslator, true, mLogger, mTypeHandler, mBitvectorTranslation,

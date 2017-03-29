@@ -51,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
  */
 public class SVCompTypeHandler extends TypeHandler {
 
-	public SVCompTypeHandler(final boolean useIntForAllIntegerTypes) {
-		super(useIntForAllIntegerTypes);
+	public SVCompTypeHandler(final boolean bitvectorTranslation) {
+		super(bitvectorTranslation);
 	}
 
 	@Override
