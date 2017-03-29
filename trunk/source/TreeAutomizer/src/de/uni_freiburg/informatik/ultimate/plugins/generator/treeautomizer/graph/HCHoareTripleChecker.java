@@ -122,7 +122,6 @@ public class HCHoareTripleChecker {
 		 */
 		final Term postConditionFormula = substitutePredicateFormula(succ, hornClause.getProgramVarsForHeadPred());
 
-		
 		mManagedScript.assertTerm(this, preConditionFormula);
 		mManagedScript.assertTerm(this, hornClause.getTransformula().getClosedFormula());
 		mManagedScript.assertTerm(this, postConditionFormula);
