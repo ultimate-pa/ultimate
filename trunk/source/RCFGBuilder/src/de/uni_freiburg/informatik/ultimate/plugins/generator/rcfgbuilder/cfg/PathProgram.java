@@ -85,26 +85,20 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	}
 
 	/**
-	 * Create a new {@link PathProgram} from an {@link IIcfg} and from a set of
-	 * transitions that should be retained.
+	 * Create a new {@link PathProgram} from an {@link IIcfg} and from a set of transitions that should be retained.
 	 * 
 	 * @param identifier
 	 *            The new {@link IIcfg} identifier of the path program.
 	 * @param originalIcfg
-	 *            The {@link IIcfg} from which the path program should be
-	 *            constructed.
+	 *            The {@link IIcfg} from which the path program should be constructed.
 	 * @param allowedTransitions
 	 *            The set of transitions that should be retained.
-	 * @return A {@link PathProgramConstructionResult} that contains the
-	 *         {@link PathProgram} and an explicit mapping between the locations
-	 *         of the given {@link IIcfg} and the locations of the path program.
+	 * @return A {@link PathProgramConstructionResult} that contains the {@link PathProgram} and an explicit mapping
+	 *         between the locations of the given {@link IIcfg} and the locations of the path program.
 	 */
 	public static PathProgramConstructionResult constructPathProgram(final String identifier,
 			final IIcfg<?> originalIcfg, final Set<? extends IcfgEdge> allowedTransitions) {
 		final PathProgram pp = new PathProgram(identifier, originalIcfg.getCfgSmtToolkit());
-		
-		originalIcfg.getCfgSmtToolkit().getSymbolTable().
-		
 		final PathProgram.PathProgramConstructor ppc = pp.new PathProgramConstructor(originalIcfg, allowedTransitions);
 		assert !pp.getInitialNodes()
 				.isEmpty() : "You cannot have a path program that does not start at an initial location";
