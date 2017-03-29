@@ -92,6 +92,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CNamed;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CType;
@@ -962,7 +963,7 @@ public class MemoryHandler {
 		final Expression arr = new IdentifierExpression(loc, hda.getVariableName());
 		final Expression ptrExpr = new IdentifierExpression(loc, ptrId);
 
-		final Expression dataFromHeap;
+		Expression dataFromHeap;
 		if (rda.getBytesize() == hda.getSize()) {
 			dataFromHeap = constructOneDimensionalArrayAccess(loc, arr, ptrExpr);
 		} else if (rda.getBytesize() < hda.getSize()) {
@@ -982,6 +983,12 @@ public class MemoryHandler {
 			}
 			dataFromHeap = mExpressionTranslation.concatBits(loc, Arrays.asList(dataChunks), hda.getSize());
 		}
+		final CPrimitives cprimitive = rda.getPrimitives().iterator().next();
+		if ((mMemoryModel instanceof MemoryModel_SingleBitprecise)
+				&& cprimitive.getPrimitiveCategory() == CPrimitiveCategory.FLOATTYPE) {
+			dataFromHeap = mExpressionTranslation.transformBitvectorToFloat(loc, dataFromHeap, cprimitive);
+		}
+		
 		final Expression valueExpr = new IdentifierExpression(loc, value);
 		final Expression equality =
 				ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, valueExpr, dataFromHeap);
