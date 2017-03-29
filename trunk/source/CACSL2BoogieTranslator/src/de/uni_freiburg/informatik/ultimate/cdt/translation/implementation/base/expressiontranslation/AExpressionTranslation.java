@@ -741,5 +741,5 @@ public abstract class AExpressionTranslation {
 		return attributes;
 	}
 
-	public abstract Expression transformBitvectorToFloat(ILocation loc, Expression bitvector, CPrimitive floatType);
+	public abstract Expression transformBitvectorToFloat(ILocation loc, Expression bitvector, CPrimitives floatType);
 }

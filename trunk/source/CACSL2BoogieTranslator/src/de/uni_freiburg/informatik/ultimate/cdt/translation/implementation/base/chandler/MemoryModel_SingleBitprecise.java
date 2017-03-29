@@ -52,7 +52,7 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
 	private final HeapDataArray mDataArray;
 	private final int mResolution;
 	
-	public MemoryModel_SingleBitprecise(int memoryModelResolution, TypeSizes typeSizes, TypeHandler typeHandler, AExpressionTranslation expressionTranslation) {
+	public MemoryModel_SingleBitprecise(final int memoryModelResolution, final TypeSizes typeSizes, final TypeHandler typeHandler, final AExpressionTranslation expressionTranslation) {
 		super(typeSizes, typeHandler, expressionTranslation);
 		
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
@@ -64,7 +64,7 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
 	}
        	
 	@Override
-	public String getProcedureSuffix(CPrimitives primitive) {
+	public String getProcedureSuffix(final CPrimitives primitive) {
 		if (primitive.isFloatingtype()) {
 			throw new UnsupportedOperationException("Floating types are not yet supported in "
 						+ this.getClass().getSimpleName());
@@ -75,12 +75,12 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
 
 
 	@Override
-	public HeapDataArray getDataHeapArray(CPrimitives primitive) {
+	public HeapDataArray getDataHeapArray(final CPrimitives primitive) {
 		return mDataArray;
 	}
 	
 	@Override
-	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(HeapDataArray hda, RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(final HeapDataArray hda, final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
 		final HashRelation<Integer, CPrimitives> bytesizes2primitives = new HashRelation<>();
 		for (final CPrimitives primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
 			final int bytesize = mTypeSizes.getSize(primitive);

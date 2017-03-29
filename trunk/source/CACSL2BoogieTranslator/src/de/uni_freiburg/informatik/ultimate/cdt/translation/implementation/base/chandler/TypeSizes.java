@@ -229,11 +229,11 @@ public class TypeSizes {
 	/**
 	 * @return FloatingPointSize of a float, double, or long double.
 	 */
-	public FloatingPointSize getFloatingPointSize(final CPrimitive cPrimitive) {
+	public FloatingPointSize getFloatingPointSize(final CPrimitives cPrimitive) {
 		final FloatingPointSize result;
-		switch (cPrimitive.getType()) {
+		switch (cPrimitive) {
 		case FLOAT: {
-			final int sizeof = getSize(cPrimitive.getType());  
+			final int sizeof = getSize(cPrimitive);  
 			if (sizeof == 4) {
 				result = new FloatingPointSize(24, 8);
 			} else {
@@ -242,7 +242,7 @@ public class TypeSizes {
 		}
 		break;
 		case DOUBLE: {
-			final int sizeof = getSize(cPrimitive.getType());  
+			final int sizeof = getSize(cPrimitive);  
 			if (sizeof == 8) {
 				result = new FloatingPointSize(53, 11);
 			} else {
@@ -251,7 +251,7 @@ public class TypeSizes {
 		} 
 		break;
 		case LONGDOUBLE: {
-			final int sizeof = getSize(cPrimitive.getType());  
+			final int sizeof = getSize(cPrimitive);  
 			if (sizeof == 12 || sizeof == 16) {
 				result = new FloatingPointSize(113, 15);
 			} else {

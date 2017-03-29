@@ -850,7 +850,7 @@ public class IntegerTranslation extends AExpressionTranslation {
 	}
 
 	@Override
-	public Expression transformBitvectorToFloat(final ILocation loc, final Expression bitvector, final CPrimitive floatType) {
+	public Expression transformBitvectorToFloat(final ILocation loc, final Expression bitvector, final CPrimitives floatType) {
 		throw new UnsupportedOperationException("not yet implemented");
 	}
 	
