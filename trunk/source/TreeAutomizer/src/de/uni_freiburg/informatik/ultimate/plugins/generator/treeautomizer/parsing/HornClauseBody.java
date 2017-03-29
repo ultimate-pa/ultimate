@@ -43,21 +43,22 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 
 /**
  * Body of a Horn clause according to our grammar for Horn clauses in SMTLib2.
+ * Confusing terminology-warning:
  * Once the Horn clause is fixed (we make no more derivations in the grammar), we also call this the head.
  * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class Body {
-	private final Cobody mCobody;
+public class HornClauseBody {
+	private final HornClauseCobody mCobody;
 	private ApplicationTerm mHead;
 
 	/***
 	 * Construct a Body of a Horn statement.
 	 */
-	public Body() {
-		mCobody = new Cobody();
+	public HornClauseBody() {
+		mCobody = new HornClauseCobody();
 	}
 
 	/***
@@ -137,7 +138,7 @@ public class Body {
 	 * Merge the cobody of the body with the given cobody.
 	 * @param cobody
 	 */
-	public void mergeCobody(final Cobody cobody) {
+	public void mergeCobody(final HornClauseCobody cobody) {
 		this.mCobody.mergeCobody(cobody);
 	}
 

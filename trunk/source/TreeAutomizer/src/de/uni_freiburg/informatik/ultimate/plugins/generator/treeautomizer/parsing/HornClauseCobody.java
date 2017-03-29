@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class Cobody {
+public class HornClauseCobody {
 	private final Set<Term> mTransitions;
 	private final List<ApplicationTerm> mPredicates;
 	
@@ -63,7 +63,7 @@ public class Cobody {
 	/***
 	 * Constructor of the cobody of a horn statement.
 	 */
-	public Cobody() {
+	public HornClauseCobody() {
 		mPredicates = new ArrayList<>();
 		mTransitions = new HashSet<>();
 	}
@@ -90,7 +90,7 @@ public class Cobody {
 	 * Merge with a different cobody, the results is stored in @this.
 	 * @param cobody
 	 */
-	public void mergeCobody(Cobody cobody) {
+	public void mergeCobody(HornClauseCobody cobody) {
 		assert !mFinalized;
 		for (final ApplicationTerm predicate : cobody.mPredicates) {
 			addPredicate(predicate);
@@ -104,9 +104,9 @@ public class Cobody {
 	 * Negate the cobody.
 	 * @return A body of the negation of the this.
 	 */
-	public Body negate() {
+	public HornClauseBody negate() {
 		assert !mFinalized;
-		final Body res = new Body();
+		final HornClauseBody res = new HornClauseBody();
 		res.mergeCobody(this);
 		return res;
 	}

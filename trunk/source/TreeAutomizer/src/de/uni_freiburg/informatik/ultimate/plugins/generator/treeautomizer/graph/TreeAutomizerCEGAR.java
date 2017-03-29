@@ -143,8 +143,9 @@ public class TreeAutomizerCEGAR {
 		mPredicateUnifier = new PredicateUnifier(services, mBackendSmtSolverScript, mPredicateFactory, mSymbolTable,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED, mInitialPredicate,
 				mFinalPredicate);
-		mHoareTripleChecker = new HCHoareTripleChecker(mPredicateUnifier, mCfgSmtToolkit, mPredicateFactory, mSymbolTable);
-		
+		mHoareTripleChecker = new HCHoareTripleChecker(mPredicateUnifier, mCfgSmtToolkit, mPredicateFactory,
+				mSymbolTable);
+
 		mPredicateUnifier.getOrConstructPredicate(mInitialPredicate.getFormula());
 		mPredicateUnifier.getOrConstructPredicate(mFinalPredicate.getFormula());
 
@@ -205,7 +206,8 @@ public class TreeAutomizerCEGAR {
 		return mChecker.checkTrace(lockOwner);
 	}
 
-	protected void constructInterpolantAutomaton(Map<IPredicate, Term> interpolantsMap) throws AutomataOperationCanceledException {
+	protected void constructInterpolantAutomaton(Map<IPredicate, Term> interpolantsMap)
+			throws AutomataOperationCanceledException {
 
 		mInterpolAutomaton = ((TreeRun<HornClause, IPredicate>) mCounterexample)
 				.reconstruct(mChecker.rebuild(interpolantsMap)).getAutomaton();
@@ -214,7 +216,7 @@ public class TreeAutomizerCEGAR {
 		}
 
 		((TreeAutomatonBU<HornClause, IPredicate>) mInterpolAutomaton).extendAlphabet(mAbstraction.getAlphabet());
-		
+
 		generalizeCounterExample();
 
 		assert allRulesAreInductive(mInterpolAutomaton);
@@ -252,24 +254,22 @@ public class TreeAutomizerCEGAR {
 			mInterpolAutomaton.addRule(rule);
 		}
 	}
-	
-//	private TreeAutomatonBU<HornClause, HCPredicate> getCounterExample() {
+
+	// private TreeAutomatonBU<HornClause, HCPredicate> getCounterExample() {
 	private ITreeAutomatonBU<HornClause, IPredicate> getCounterExample() {
-//		//generalizeCounterExample();
-//		final Map<IPredicate, HCPredicate> mp = new HashMap<>();
-//		for (final IPredicate p : mInterpolAutomaton.getStates()) {
-//			mp.put(p, mPredicateFactory.convertItoHCPredicate(p));
-//		}
-//		return ((TreeAutomatonBU<HornClause, IPredicate>) mInterpolAutomaton).reconstruct(mp);
+		// //generalizeCounterExample();
+		// final Map<IPredicate, HCPredicate> mp = new HashMap<>();
+		// for (final IPredicate p : mInterpolAutomaton.getStates()) {
+		// mp.put(p, mPredicateFactory.convertItoHCPredicate(p));
+		// }
+		// return ((TreeAutomatonBU<HornClause, IPredicate>)
+		// mInterpolAutomaton).reconstruct(mp);
 		return mInterpolAutomaton;
 	}
 
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		ITreeAutomatonBU<HornClause, IPredicate> cCounterExample = (new Complement<HornClause, IPredicate>(
-				mAutomataLibraryServices, 
-				mStateFactory, 
-				getCounterExample()))
-					.getResult();
+				mAutomataLibraryServices, mStateFactory, getCounterExample())).getResult();
 		mLogger.debug("Complemented counter example automaton:");
 		mLogger.debug(cCounterExample);
 
@@ -316,7 +316,7 @@ public class TreeAutomizerCEGAR {
 			mBackendSmtSolverScript.push(this, 1);
 
 			if (getCounterexampleFeasibility(this) == LBool.SAT) {
-				
+
 				mLogger.info("The program is unsafe, feasible counterexample.");
 				mLogger.info(mCounterexample.getTree());
 				mBackendSmtSolverScript.pop(this, 1);
@@ -354,9 +354,9 @@ public class TreeAutomizerCEGAR {
 		for (int i = 0; i < idx.length; ++i) {
 			idx[i] = postfixT.getStartIdx().get(i);
 		}
-//		mBackendSmtSolverScript.lock(this);
+		// mBackendSmtSolverScript.lock(this);
 		Term[] interpolants = mBackendSmtSolverScript.getInterpolants(this, ts, idx);
-//		mBackendSmtSolverScript.unlock(this);
+		// mBackendSmtSolverScript.unlock(this);
 
 		final Map<IPredicate, Term> interpolantsMap = new HashMap<>();
 		for (int i = 0; i < interpolants.length; ++i) {
