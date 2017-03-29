@@ -222,7 +222,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 	public IInterpolantGenerator getInterpolantGenerator() {
 		if (mCurrentIteration == null) {
-			return new AbsIntFailedInterpolantGenerator(mPredicateUnifierSmt, null, ItpErrorStatus.OTHER,
+			return new AbsIntFailedInterpolantGenerator(mPredicateUnifierSmt, null, ItpErrorStatus.ALGORITHM_FAILED,
 					createNoFixpointsException());
 		}
 		return mCurrentIteration.getInterpolantGenerator();
