@@ -871,5 +871,23 @@ public class BitvectorTranslation extends AExpressionTranslation {
 				new FunctionApplication(loc, boogieFunctionName, new Expression[] { argument.getValue() });
 		return new RValue(expr, resultCType, true);
 	}
+	
+	
+	@Override
+	public Expression transformBitvectorToFloat(final ILocation loc, 
+			final Expression bitvector, final CPrimitive floatType) {
+		final FloatingPointSize floatingPointSize = mTypeSizes.getFloatingPointSize(floatType);
+		final Expression signBit = extractBits(loc, bitvector, 1, 0);
+		final Expression exponentBits = extractBits(loc, bitvector, 1, 1 + floatingPointSize.getExponent());
+		final Expression significantBits = extractBits(loc, bitvector, 1 + floatingPointSize.getExponent(),
+				1 + floatingPointSize.getExponent() + floatingPointSize.getSignificant());
+		
+		final ASTType astType = mTypeHandler.cType2AstType(loc, floatType);
+		final String smtFunctionName = "fp";
+		final Expression result = new FunctionApplication(loc, SFO.getBoogieFunctionName(smtFunctionName, floatType),
+				new Expression[] { getRoundingMode(), signBit, exponentBits, significantBits });
+		return result;
+
+	}
 
 }
