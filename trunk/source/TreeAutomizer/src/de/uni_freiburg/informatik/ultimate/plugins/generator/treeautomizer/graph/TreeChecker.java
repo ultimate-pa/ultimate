@@ -110,7 +110,7 @@ public class TreeChecker {
 				mLogger.debug("assert: " + ssa.getName(t) + " :: " + t.toString());
 				visited.add(ssa.getCounter(t));
 				final Term annT = mBackendSmtSolverScript.annotate(lockOwner, t, ann);
-				mBackendSmtSolverScript.assertTerm(this, annT);
+				mBackendSmtSolverScript.assertTerm(lockOwner, annT);
 			}
 		}
 		final LBool result = mBackendSmtSolverScript.checkSat(lockOwner);
