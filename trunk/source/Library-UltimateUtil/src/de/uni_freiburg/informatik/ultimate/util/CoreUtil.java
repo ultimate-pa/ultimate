@@ -62,10 +62,12 @@ import java.util.function.Predicate;
  */
 public class CoreUtil {
 
-	private static String sPlatformLineSeparator = System.getProperty("line.separator");
+	private static final String PLATFORM_LINE_SEPARATOR = System.getProperty("line.separator");
+	public static final String OS = System.getProperty("os.name");
+	public static final boolean OS_IS_WINDOWS = OS.toLowerCase().indexOf("win") >= 0;
 
 	public static String getPlatformLineSeparator() {
-		return sPlatformLineSeparator;
+		return PLATFORM_LINE_SEPARATOR;
 	}
 
 	public static String getIsoUtcTimestamp() {
@@ -101,7 +103,7 @@ public class CoreUtil {
 		final IWriterConsumer funWrite = fw -> {
 			for (final String line : content) {
 				fw.append(line);
-				fw.append(sPlatformLineSeparator);
+				fw.append(PLATFORM_LINE_SEPARATOR);
 			}
 		};
 		writeFile(funWrite, append, file);
@@ -147,7 +149,7 @@ public class CoreUtil {
 			String line = br.readLine();
 			while (line != null) {
 				sb.append(line);
-				sb.append(sPlatformLineSeparator);
+				sb.append(PLATFORM_LINE_SEPARATOR);
 				line = br.readLine();
 			}
 			return sb.toString();
