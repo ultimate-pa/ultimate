@@ -885,7 +885,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		final String smtFunctionName = "fp";
 		final Expression result = new FunctionApplication(loc,
 				SFO.getBoogieFunctionName(smtFunctionName, new CPrimitive(floatType)),
-				new Expression[] { getRoundingMode(), signBit, exponentBits, significantBits });
+				new Expression[] { signBit, exponentBits, significantBits });
 		return result;
 
 	}
