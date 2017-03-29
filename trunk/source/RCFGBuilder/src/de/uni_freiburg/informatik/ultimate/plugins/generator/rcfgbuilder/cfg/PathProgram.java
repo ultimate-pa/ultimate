@@ -51,12 +51,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * An {@link IIcfg} representing an explicitly constructed path program that
- * results from the projection of a given {@link IIcfg} to a {@link Set} of
- * transitions.
+ * An {@link IIcfg} representing an explicitly constructed path program that results from the projection of a given
+ * {@link IIcfg} to a {@link Set} of transitions.
  *
- * The transition labels of a {@link PathProgram} are the {@link IAction}s of
- * the original {@link IIcfg}.
+ * The transition labels of a {@link PathProgram} are the {@link IAction}s of the original {@link IIcfg}.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -104,6 +102,9 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	public static PathProgramConstructionResult constructPathProgram(final String identifier,
 			final IIcfg<?> originalIcfg, final Set<? extends IcfgEdge> allowedTransitions) {
 		final PathProgram pp = new PathProgram(identifier, originalIcfg.getCfgSmtToolkit());
+		
+		originalIcfg.getCfgSmtToolkit().getSymbolTable().
+		
 		final PathProgram.PathProgramConstructor ppc = pp.new PathProgramConstructor(originalIcfg, allowedTransitions);
 		assert !pp.getInitialNodes()
 				.isEmpty() : "You cannot have a path program that does not start at an initial location";
@@ -161,8 +162,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	}
 
 	/**
-	 * The result of a path program construction. Contains the path program and
-	 * a mapping of locations.
+	 * The result of a path program construction. Contains the path program and a mapping of locations.
 	 * 
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
