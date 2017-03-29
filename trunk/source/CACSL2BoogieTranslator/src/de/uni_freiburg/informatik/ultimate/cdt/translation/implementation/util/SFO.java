@@ -113,7 +113,7 @@ public final class SFO {
 	/**
 	 * Identifier of free procedure.
 	 */
-	public static final String FREE = "~free";
+	public static final String FREE = "ULTIMATE.free";
 	/**
 	 * Identifier of free procedure.
 	 */
@@ -291,7 +291,7 @@ public final class SFO {
 
 		private final String mId;
 
-		AUXVAR(String id) {
+		AUXVAR(final String id) {
 			mId = id;
 		}
 
@@ -307,7 +307,7 @@ public final class SFO {
 	/**
 	 * Return Variable Declaration for single variable with name tmpName, InferredType tmpIType at location loc.
 	 */
-	public static VariableDeclaration getTempVarVariableDeclaration(String tmpName, ASTType astType, ILocation loc) {
+	public static VariableDeclaration getTempVarVariableDeclaration(final String tmpName, final ASTType astType, final ILocation loc) {
 		final VarList tempVar = new VarList(loc, new String[] { tmpName }, astType);
 		return new VariableDeclaration(loc, new Attribute[0], new VarList[] { tempVar });
 	}
