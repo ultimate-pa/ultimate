@@ -214,8 +214,10 @@ public class TreeAutomizerCEGAR {
 		}
 
 		((TreeAutomatonBU<HornClause, IPredicate>) mInterpolAutomaton).extendAlphabet(mAbstraction.getAlphabet());
+		
+		generalizeCounterExample();
 
-		assert allRulesAreInductive(mInterpolAutomaton); //TODO comment this assertion back in
+		assert allRulesAreInductive(mInterpolAutomaton);
 	}
 
 	/**
