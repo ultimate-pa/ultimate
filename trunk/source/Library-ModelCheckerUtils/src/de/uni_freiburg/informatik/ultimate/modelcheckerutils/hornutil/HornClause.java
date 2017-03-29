@@ -116,6 +116,7 @@ public class HornClause implements IInternalAction {
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
 		for (int i = 0; i < mBodyPredToTermVariables.size(); i++) {
 			mBodyPredToHCInVars.add(new ArrayList<>());
+			mBodyPredToIProgramVar.add(new ArrayList<>());
 			for (int j = 0; j < mBodyPredToTermVariables.get(i).size(); j++) {
 				final TermVariable tv = mBodyPredToTermVariables.get(i).get(j);
 				final Sort sort = tv.getSort();
