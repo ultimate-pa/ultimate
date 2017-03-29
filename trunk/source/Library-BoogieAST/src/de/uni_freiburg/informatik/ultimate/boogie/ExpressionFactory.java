@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.boogie;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -380,5 +381,10 @@ public class ExpressionFactory extends BoogieTransformer {
 		} else {
 			return new BitVectorAccessExpression(loc, operand, high, low);
 		}
+	}
+	
+	public static Expression and(final ILocation loc, final List<Expression> exprs) {
+		return exprs.stream().reduce(new BooleanLiteral(loc, true),
+				(x, y) -> new BinaryExpression(loc, Operator.LOGICAND, x, y));
 	}
 }

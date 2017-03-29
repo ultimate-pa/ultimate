@@ -894,13 +894,13 @@ public class MemoryHandler {
 
 		final ModifiesSpecification mod = constructModifiesSpecification(loc, heapDataArrays, x -> x.getVariableName());
 		swrite.add(mod);
+		final List<Expression> conjuncts = new ArrayList<>();
 		if (rda.getBytesize() == heapDataArray.getSize()) {
-			addWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray, value, x -> x, inPtr, x -> x, swrite);
+			conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray, value, x -> x, inPtr, x -> x));
 		} else if (rda.getBytesize() < heapDataArray.getSize()) {
 			final Function<Expression, Expression> valueExtension =
 					x -> mExpressionTranslation.signExtend(loc, x, rda.getBytesize() * 8, heapDataArray.getSize() * 8);
-			addWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray, value, valueExtension, inPtr, x -> x,
-					swrite);
+					conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray, value, valueExtension, inPtr, x -> x));
 		} else {
 			assert rda.getBytesize() % heapDataArray.getSize() == 0 : "incompatible sizes";
 			for (int i = 0; i < rda.getBytesize() / heapDataArray.getSize(); i++) {
@@ -909,35 +909,36 @@ public class MemoryHandler {
 				extractBits = x -> mExpressionTranslation.extractBits(loc, x,
 						heapDataArray.getSize() * (currentI + 1) * 8, heapDataArray.getSize() * currentI * 8);
 				if (i == 0) {
-					addWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray, value, extractBits, inPtr, x -> x,
-							swrite);
+					conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray, value, extractBits, inPtr, x -> x));
 				} else {
 					final BigInteger additionalOffset = BigInteger.valueOf(i * heapDataArray.getSize());
 					final Function<Expression, Expression> pointerAddition =
 							x -> addIntegerConstantToPointer(loc, x, additionalOffset);
-					addWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray, value, extractBits, inPtr,
-							pointerAddition, swrite);
+							conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray, value, extractBits, inPtr,
+							pointerAddition));
 				}
 			}
 		}
-
+		swrite.add(new EnsuresSpecification(loc, false, ExpressionFactory.and(loc, conjuncts)));
 		final Procedure result = new Procedure(loc, new Attribute[0], rda.getWriteProcedureName(), new String[0],
 				inWrite, new VarList[0], swrite.toArray(new Specification[swrite.size()]), null);
 		return result;
 	}
 
-	private static void addWriteEnsuresSpecification(final ILocation loc,
+	private static List<Expression> constructConjunctsForWriteEnsuresSpecification(final ILocation loc,
 			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray, final String value,
 			final Function<Expression, Expression> valueModification, final String inPtr,
-			final Function<Expression, Expression> ptrModification, final ArrayList<Specification> swrite) {
+			final Function<Expression, Expression> ptrModification) {
+		final List<Expression> conjuncts = new ArrayList<>();
 		for (final HeapDataArray other : heapDataArrays) {
 			if (heapDataArray == other) {
-				swrite.add(ensuresHeapArrayUpdate(loc, value, valueModification, inPtr, ptrModification, other));
+				conjuncts.add(ensuresHeapArrayUpdate(loc, value, valueModification, inPtr, ptrModification, other));
 			} else {
-				swrite.add(ensuresHeapArrayHardlyModified(loc, inPtr, ptrModification, other));
+				conjuncts.add(ensuresHeapArrayHardlyModified(loc, inPtr, ptrModification, other));
 			}
 
 		}
+		return conjuncts;
 	}
 
 	private Procedure constructReadProcedure(final ILocation loc, final HeapDataArray hda,
@@ -1037,7 +1038,7 @@ public class MemoryHandler {
 	}
 
 	// ensures #memory_X == old(#memory_X)[#ptr := #value];
-	private static EnsuresSpecification ensuresHeapArrayUpdate(final ILocation loc, final String valueId,
+	private static Expression ensuresHeapArrayUpdate(final ILocation loc, final String valueId,
 			final Function<Expression, Expression> valueModification, final String ptrId,
 			final Function<Expression, Expression> ptrModification, final HeapDataArray hda) {
 		final Expression valueExpr = new IdentifierExpression(loc, valueId);
@@ -1047,7 +1048,7 @@ public class MemoryHandler {
 	}
 
 	// #memory_$Pointer$ == old(#memory_X)[#ptr := #memory_X[#ptr]];
-	private static EnsuresSpecification ensuresHeapArrayHardlyModified(final ILocation loc, final String ptrId,
+	private static Expression ensuresHeapArrayHardlyModified(final ILocation loc, final String ptrId,
 			final Function<Expression, Expression> ptrModification, final HeapDataArray hda) {
 		final Expression memArray = new IdentifierExpression(loc, hda.getVariableName());
 		final Expression ptrExpr = new IdentifierExpression(loc, ptrId);
@@ -1055,12 +1056,12 @@ public class MemoryHandler {
 		return ensuresArrayUpdate(loc, aae, ptrModification.apply(ptrExpr), memArray);
 	}
 
-	private static EnsuresSpecification ensuresArrayUpdate(final ILocation loc, final Expression newValue,
+	private static Expression ensuresArrayUpdate(final ILocation loc, final Expression newValue,
 			final Expression index, final Expression arrayExpr) {
 		final Expression oldArray = ExpressionFactory.newUnaryExpression(loc, UnaryExpression.Operator.OLD, arrayExpr);
 		final Expression ase = constructOneDimensionalArrayStore(loc, oldArray, index, newValue);
 		final Expression eq = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, arrayExpr, ase);
-		return new EnsuresSpecification(loc, false, eq);
+		return eq;
 	}
 
 	/**
@@ -1392,7 +1393,7 @@ public class MemoryHandler {
 								Operator.COMPEQ, new ArrayAccessExpression(tuLoc, ExpressionFactory
 										.newUnaryExpression(tuLoc, UnaryExpression.Operator.OLD, valid), idcMalloc),
 								bLFalse)));
-		specMalloc.add(ensuresArrayUpdate(tuLoc, bLTrue, base, valid));
+		specMalloc.add(new EnsuresSpecification(tuLoc, false,ensuresArrayUpdate(tuLoc, bLTrue, base, valid)));
 		specMalloc.add(new EnsuresSpecification(tuLoc, false, ExpressionFactory.newBinaryExpression(tuLoc,
 				Operator.COMPEQ, new StructAccessExpression(tuLoc, res, SFO.POINTER_OFFSET), nr0)));
 		specMalloc.add(new EnsuresSpecification(tuLoc, false, ExpressionFactory.newBinaryExpression(tuLoc,
