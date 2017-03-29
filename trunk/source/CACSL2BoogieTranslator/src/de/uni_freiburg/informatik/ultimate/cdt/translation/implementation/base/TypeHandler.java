@@ -138,7 +138,7 @@ public class TypeHandler implements ITypeHandler {
 	/**
 	 * Is true iff we yet processed a floating type. (And hence floating types have to be added to Boogie).
 	 */
-	private final boolean mFloatingTypesNeeded = false;
+	private boolean mFloatingTypesNeeded = false;
 
 	public Set<CPrimitive.CPrimitives> getOccurredPrimitiveTypes() {
 		return mOccurredPrimitiveTypes;
@@ -601,6 +601,7 @@ public class TypeHandler implements ITypeHandler {
 				return new PrimitiveType(loc, SFO.INT);
 			}
 		case FLOATTYPE:
+			mFloatingTypesNeeded = true;
 			if (mBitvectorTranslation) {
 				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);				
 			} else {
@@ -626,6 +627,7 @@ public class TypeHandler implements ITypeHandler {
 				return new PrimitiveType(loc, SFO.INT);
 			}
 		case FLOATTYPE:
+			mFloatingTypesNeeded = true;
 			if (mBitvectorTranslation) {
 				final int bitsize = bytesize * 8;
 				final String name = "bv" + bitsize;
