@@ -114,7 +114,6 @@ public class SpaceExMathHelper {
 	}
 	
 	public List<String> infixToGroups(final String infix) {
-		mLogger.info("INFIX" + infix);
 		final String infixWithLiterals = replaceAllWithLiterals(infix);
 		final List<String> infixToArray = SpaceExMathHelper.expressionToArray(infixWithLiterals);
 		final List<String> postfix = SpaceExMathHelper.postfix(infixToArray);
@@ -252,51 +251,6 @@ public class SpaceExMathHelper {
 		return res;
 	}
 	
-	// update of the form x := x+1 becomes x := (x+1)
-	// needed for postfix form.
-	public static List<String> preprocessForUpdate(final List<String> infixArray) {
-		final List<String> res = new ArrayList<>();
-		boolean open = false;
-		for (final String el : infixArray) {
-			if ("==".equals(el)) {
-				res.add(el);
-				res.add("(");
-				open = true;
-			} else if ("&".equals(el)) {
-				if (open) {
-					res.add(")");
-					open = false;
-				}
-				res.add(el);
-			} else {
-				res.add(el);
-			}
-		}
-		if (open) {
-			res.add(")");
-			open = false;
-		}
-		return res;
-	}
-	
-	public static List<String> preprocessForTermBuilding(final List<String> postfix) {
-		final List<String> newPostfix = new ArrayList<>();
-		for (String el : postfix) {
-			// & is "and" in SMT
-			// == is "=" in SMT
-			// | is "or" in SMT
-			if ("&".equals(el) || "&&".equals(el)) {
-				el = "and";
-			} else if ("==".equals(el) || ":=".equals(el)) {
-				el = "=";
-			} else if ("|".equals(el) || "||".equals(el)) {
-				el = "or";
-			}
-			newPostfix.add(el);
-		}
-		return newPostfix;
-	}
-	
 	/**
 	 * This function splits a given expression into an array. e.g "x == 5" will return [x,==,5].
 	 *
@@ -372,7 +326,6 @@ public class SpaceExMathHelper {
 		while (!stack.isEmpty()) {
 			output.add(stack.pop());
 		}
-		
 		return output;
 	}
 	

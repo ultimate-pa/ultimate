@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridPreprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.SpaceExMathHelper;
 
 /**
@@ -48,10 +49,10 @@ public class HybridTermBuilder {
 	public Term infixToTerm(final String infix, final BuildScenario scenario) {
 		List<String> infixArray = SpaceExMathHelper.expressionToArray(infix);
 		if (scenario == BuildScenario.UPDATE) {
-			infixArray = SpaceExMathHelper.preprocessForUpdate(infixArray);
+			infixArray = HybridPreprocessor.preprocessForUpdate(infixArray);
 		}
 		final List<String> postfix = SpaceExMathHelper.postfix(infixArray);
-		final List<String> postfixSMTConform = SpaceExMathHelper.preprocessForTermBuilding(postfix);
+		final List<String> postfixSMTConform = HybridPreprocessor.preprocessForTermBuilding(postfix);
 		return postfixToTerm(postfixSMTConform, scenario);
 	}
 	
@@ -184,7 +185,7 @@ public class HybridTermBuilder {
 	// helper function to get the correct termvariable for each scenario
 	private TermVariable checkAndGetTermVariable(final String operand1, final BuildScenario scenario,
 			final boolean isAssignedValue) {
-		if (mVariableManager.getConstants().contains(operand1)) {
+		if (mVariableManager.getConstants().contains(operand1) && scenario != BuildScenario.INITIALLY) {
 			return null;
 		} else if (scenario == BuildScenario.INITIALLY) {
 			return getInitiallyTV(operand1);
@@ -228,7 +229,6 @@ public class HybridTermBuilder {
 		if (mVariableManager.getVar2InVarTermVariable().containsKey(operand1)) {
 			final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
 			final TermVariable invar = mVariableManager.getVar2InVarTermVariable().get(operand1);
-			final TermVariable outvar = mVariableManager.getVar2OutVarTermVariable().get(operand1);
 			mInVars.put(progvar, invar);
 			mOutVars.put(progvar, invar);
 			return invar;
@@ -263,7 +263,6 @@ public class HybridTermBuilder {
 	private void testTermBuilding() {
 		final Map<String, BuildScenario> tests = new HashMap<>();
 		tests.put("0 <= x <= y <= 5", BuildScenario.INVARIANT);
-		tests.put("x==y*4+x", BuildScenario.UPDATE);
 		tests.put("x==y", BuildScenario.UPDATE);
 		tests.put("x==5", BuildScenario.UPDATE);
 		tests.put("x==5 & y==5.01", BuildScenario.UPDATE);
@@ -286,7 +285,7 @@ public class HybridTermBuilder {
 	public Map<HybridProgramVar, TermVariable> getmOutVars() {
 		return mOutVars;
 	}
-
+	
 	public TermVariable getAuxVar() {
 		return mAuxVar;
 	}

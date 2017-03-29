@@ -84,7 +84,7 @@ public class Location {
 	}
 	
 	protected void setFlow(final String flow) {
-		if (flow != null) {
+		if (flow != null && !"false".equals(flow)) {
 			mFlow = flow.replaceAll("&&", "&");
 		} else {
 			mFlow = "";

@@ -73,7 +73,7 @@ public class HybridModel {
 		mLogger = logger;
 		mHybridSystemFactory = new HybridSystemFactory(mLogger);
 		mHybridAutomatonFactory = new HybridAutomatonFactory(mLogger);
-		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger, mPreferenceManager);
+		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger);
 		mSystems = new HashMap<>();
 		final Map<String, ComponentType> automata = root.getComponent().stream().filter(c -> c.getBind().isEmpty())
 				.collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {
@@ -124,7 +124,7 @@ public class HybridModel {
 		mPreferenceManager = preferenceManager;
 		mHybridSystemFactory = new HybridSystemFactory(mLogger);
 		mHybridAutomatonFactory = new HybridAutomatonFactory(mLogger);
-		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger, mPreferenceManager);
+		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger);
 		mSystems = new HashMap<>();
 		final Map<String, ComponentType> automata = root.getComponent().stream().filter(c -> c.getBind().isEmpty())
 				.collect(Collectors.toMap(ComponentType::getId, Function.identity(), (oldEntry, newEntry) -> {

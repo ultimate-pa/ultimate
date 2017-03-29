@@ -29,17 +29,17 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsyste
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.Stack;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
@@ -57,18 +57,15 @@ public class ParallelCompositionGenerator {
 	private Set<String> mLocalParamsMerge;
 	private Set<String> mLabelsMerge;
 	private Set<String> mGlobalLabels;
-	private Map<String, Set<String>> mLocalLabels;
 	private Map<Integer, Location> mLocationsMerge;
-	private Location mInitialLocationMerge;
 	private List<Transition> mTransitionMerge;
 	private AtomicInteger mIdCounter;
 	private Map<Set<Location>, Integer> mCreatedLocations;
-	private final Stack<List<Location>> mComputationStackNWay;
+	private final Deque<List<Location>> mComputationStackNWay;
 	private Set<Set<Location>> mVisitedLocations;
-	private final SpaceExPreferenceManager mPreferencemanager;
 	private final AtomicInteger mNameIDCounter;
 	
-	public ParallelCompositionGenerator(final ILogger logger, final SpaceExPreferenceManager preferenceManager) {
+	public ParallelCompositionGenerator(final ILogger logger) {
 		mLogger = logger;
 		mGlobalConstsMerge = new HashSet<>();
 		mGlobalParamsMerge = new HashSet<>();
@@ -76,14 +73,12 @@ public class ParallelCompositionGenerator {
 		mLocalParamsMerge = new HashSet<>();
 		mLabelsMerge = new HashSet<>();
 		mGlobalLabels = new HashSet<>();
-		mLocalLabels = new HashMap<>();
 		mLocationsMerge = new HashMap<>();
 		mTransitionMerge = new ArrayList<>();
 		mCreatedLocations = new HashMap<>();
 		mIdCounter = new AtomicInteger(0);
-		mComputationStackNWay = new Stack<>();
+		mComputationStackNWay = new LinkedList<>();
 		mVisitedLocations = new HashSet<>();
-		mPreferencemanager = preferenceManager;
 		mNameIDCounter = new AtomicInteger(0);
 	}
 	
@@ -106,7 +101,7 @@ public class ParallelCompositionGenerator {
 		// 3. compare and merge the outgoing transitions
 		// 4. Repeat
 		final List<Location> initialLocations = new ArrayList<>(automataAndInitial.values());
-		mInitialLocationMerge = getLocationNWay(initialLocations);
+		final Location initialLocationMerge = getLocationNWay(initialLocations);
 		// Add the initial locations to a Stack which holds LocationPair objects
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("###################### STACK UPDATE #########################");
@@ -116,7 +111,7 @@ public class ParallelCompositionGenerator {
 		mComputationStackNWay.push(initialLocations);
 		// compute the parallel composition starting from the initial location
 		createLocationsAndTransitionsNWay();
-		final HybridAutomaton hybAut = new HybridAutomaton(nameMerge, mLocationsMerge, mInitialLocationMerge,
+		final HybridAutomaton hybAut = new HybridAutomaton(nameMerge, mLocationsMerge, initialLocationMerge,
 				mTransitionMerge, mLocalParamsMerge, mLocalConstsMerge, mGlobalParamsMerge, mGlobalConstsMerge,
 				mLabelsMerge, mLogger);
 		// clean up
@@ -356,7 +351,6 @@ public class ParallelCompositionGenerator {
 		String flow = "";
 		String forbiddenConstraint = "";
 		boolean forbidden = false;
-		final List<String> forbiddenLocNames = new ArrayList<>();
 		mergeList.sort(Comparator.comparing(Location::getInvariant));
 		// merge each locations invariant,flow and name
 		for (final Location loc : mergeList) {
@@ -412,15 +406,13 @@ public class ParallelCompositionGenerator {
 	}
 	
 	private void cleanUpMembers() {
-		// clean up all members because necessary for multiple parallel compositions
-		// dirty hack
+		// clean up all members, necessary for multiple parallel compositions
 		mGlobalConstsMerge = new HashSet<>();
 		mGlobalParamsMerge = new HashSet<>();
 		mLocalConstsMerge = new HashSet<>();
 		mLocalParamsMerge = new HashSet<>();
 		mLabelsMerge = new HashSet<>();
 		mGlobalLabels = new HashSet<>();
-		mLocalLabels = new HashMap<>();
 		mLocationsMerge = new HashMap<>();
 		mTransitionMerge = new ArrayList<>();
 		mCreatedLocations = new HashMap<>();
@@ -458,7 +450,7 @@ public class ParallelCompositionGenerator {
 		if (string1.equals(string2) || (!"".equals(string1) && "".equals(string2))) {
 			intersection = string1;
 		} else if (!"".equals(string1) && !"".equals(string2)) {
-			intersection = string1 + " && " + string2;
+			intersection = string1 + " & " + string2;
 		} else if ("".equals(string1) && !"".equals(string2)) {
 			intersection = string2;
 		} else {
