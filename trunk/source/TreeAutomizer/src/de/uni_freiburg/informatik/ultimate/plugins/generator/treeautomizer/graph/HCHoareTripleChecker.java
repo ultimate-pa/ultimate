@@ -95,7 +95,8 @@ public class HCHoareTripleChecker {
 	 * @return a Validity value for the Hoare triple
 	 */
 	public Validity check(List<IPredicate> pre, HornClause hornClause, IPredicate succ) {
-		assert pre.size() == hornClause.getNoBodyPredicates();
+		assert pre.size() == hornClause.getNoBodyPredicates() : "The number of preconditions must match the number of "
+				+ "uninterpreted predicates in the Horn clause's body!";
 		
 		mManagedScript.lock(this);
 		mManagedScript.push(this, 1);
@@ -112,15 +113,19 @@ public class HCHoareTripleChecker {
 
 			final Term substitutedFormula = substitutePredicateFormula(currentPrePred, 
 					hornClause.getProgramVarsForPredPos(predPos));
+			assert substitutedFormula != null;
+			assert substitutedFormula.getFreeVars().length == 0 : "formula should have been closed by substitution";
 			substitutedPredicateFormulas[predPos] = substitutedFormula;
 		}
 		
 		final Term preConditionFormula = Util.and(mManagedScript.getScript(), substitutedPredicateFormulas);
+		assert preConditionFormula.getFreeVars().length == 0 : "formula should have been closed by substitution";
 		
 		/*
 		 * Compute the postcondition
 		 */
 		final Term postConditionFormula = substitutePredicateFormula(succ, hornClause.getProgramVarsForHeadPred());
+		assert postConditionFormula.getFreeVars().length == 0 : "formula should have been closed by substitution";
 
 		mManagedScript.assertTerm(this, preConditionFormula);
 		mManagedScript.assertTerm(this, hornClause.getTransformula().getClosedFormula());
