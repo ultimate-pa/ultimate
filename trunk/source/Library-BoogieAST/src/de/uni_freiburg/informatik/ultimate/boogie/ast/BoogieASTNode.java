@@ -62,6 +62,11 @@ public class BoogieASTNode extends BasePayloadContainer implements ISimpleAST<Bo
 			return Pattern.matches(IDENTIFIER_REGEX, proc.identifier);
 		};
 		VALIDATORS.put(Procedure.class, procIdValidator);
+		final Predicate<BoogieASTNode> funDeclValidator = instance -> {
+			final FunctionDeclaration funDecl = (FunctionDeclaration) instance;
+			return Pattern.matches(IDENTIFIER_REGEX, funDecl.identifier);
+		};
+		VALIDATORS.put(FunctionDeclaration.class, funDeclValidator);
 	}
 
 	public BoogieASTNode(final ILocation location) {
