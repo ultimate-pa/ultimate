@@ -59,6 +59,8 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 	private final GS mEmptyStackState;
 	private final NestedMap2<STATE, STATE, GS> mGameStateMapping;
 	private final Set<GS> mInitialStates;
+	private final LETTER mInternalLetterForSpoilerWinningSink;
+	private final LETTER mCallLetterForSpoilerWinningSink;
 
 	public FullMultipebbleGameAutomaton(final AutomataLibraryServices services,
 			final FullMultipebbleStateFactory<STATE, GS> gameFactory, final ISetOfPairs<STATE, ?> initialPairs,
@@ -69,6 +71,16 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 		mEmptyStackState = gameFactory.createEmptyStackState();
 		mInitialStates = new HashSet<>();
 		mGameStateMapping = new NestedMap2<>();
+		if (mOperand.getInternalAlphabet().isEmpty()) {
+			mInternalLetterForSpoilerWinningSink = null;
+			if (mOperand.getCallAlphabet().isEmpty()) {
+				throw new UnsupportedOperationException("Unsupported: automata where internal alphabet and call alphabet are empty.");
+			}
+			mCallLetterForSpoilerWinningSink = mOperand.getCallAlphabet().iterator().next();
+		} else {
+			mInternalLetterForSpoilerWinningSink = mOperand.getInternalAlphabet().iterator().next();
+			mCallLetterForSpoilerWinningSink = null; 
+		}
 		constructInitialStates(initialPairs);
 	}
 
@@ -151,23 +163,31 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 
 	@Override
 	public Set<LETTER> lettersInternal(final GS state) {
-		if (IFullMultipebbleAuxiliaryGameState.isDuplicatorWinningSink(state)) {
-			return Collections.emptySet();
+		if (IFullMultipebbleAuxiliaryGameState.isSpoilerWinningSink(state)) {
+			if (mInternalLetterForSpoilerWinningSink == null) {
+				return Collections.emptySet();
+			} else {
+				return Collections.singleton(mInternalLetterForSpoilerWinningSink);
+			}
 		}
 		return mOperand.lettersInternal(state.getSpoilerDoubleDecker().getUp());
 	}
 
 	@Override
 	public Set<LETTER> lettersCall(final GS state) {
-		if (IFullMultipebbleAuxiliaryGameState.isDuplicatorWinningSink(state)) {
-			return Collections.emptySet();
+		if (IFullMultipebbleAuxiliaryGameState.isSpoilerWinningSink(state)) {
+			if (mCallLetterForSpoilerWinningSink == null) {
+				return Collections.emptySet();
+			} else {
+				return Collections.singleton(mCallLetterForSpoilerWinningSink);
+			}
 		}
 		return mOperand.lettersCall(state.getSpoilerDoubleDecker().getUp());
 	}
 
 	@Override
 	public Set<LETTER> lettersReturn(final GS state) {
-		if (IFullMultipebbleAuxiliaryGameState.isDuplicatorWinningSink(state)) {
+		if (IFullMultipebbleAuxiliaryGameState.isSpoilerWinningSink(state)) {
 			return Collections.emptySet();
 		}
 		return mOperand.lettersReturn(state.getSpoilerDoubleDecker().getUp());
