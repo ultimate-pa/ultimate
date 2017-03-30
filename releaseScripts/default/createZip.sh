@@ -97,7 +97,7 @@ else
 	LTLTOOLCHAIN=
 fi
 
-SETTINGS=../../trunk/examples/settings/svcomp2017/${LCTOOLNAME}/*${TOOLNAME}*
+SETTINGS=../../trunk/examples/settings/default/${LCTOOLNAME}/*${TOOLNAME}*
 
 if [ -d "$TARGETDIR" ]; then
 	echo "Removing old ""$TARGETDIR"
