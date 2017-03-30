@@ -21,10 +21,12 @@ public class IcfgLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends Icf
 
 		mResultIcfg = new LoopDetectionBB<INLOC, OUTLOC>(null, originalIcfg, outLocationClass, funLocFac,
 				newIcfgIdentifier, transformer, backtranslationTracker, services).getResult();
-		System.out.println(mResultIcfg);
 	}
 
 	private void createMatrix(final Script script, final IIcfg<OUTLOC> loop) {
+		script.assertTerm(mResultIcfg.getInitialNodes().iterator().next().getOutgoingEdges().iterator().next()
+				.getTransformula().getFormula());
+		
 	}
 
 	@Override
