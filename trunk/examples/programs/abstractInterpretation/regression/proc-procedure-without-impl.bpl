@@ -1,6 +1,6 @@
 //#Safe 
 
-procedure foo() returns ()
+procedure ULTIMATE.start() returns ()
 {
     var x, y : int;
 	x := 0;
