@@ -11,26 +11,21 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 public class FastUPRUtils {
-	
+
 	private FastUPRUtils() {
 		// Prevent instantiation of this utility class
 	}
-	
-	public static UnmodifiableTransFormula composition(ILogger logger, IUltimateServiceProvider services, ManagedScript managedScript, UnmodifiableTransFormula formula, int count) {
-		ArrayList<UnmodifiableTransFormula> formulas = new ArrayList<>();
+
+	public static UnmodifiableTransFormula composition(final ILogger logger, final IUltimateServiceProvider services,
+			final ManagedScript managedScript, final UnmodifiableTransFormula formula, final int count) {
+		final ArrayList<UnmodifiableTransFormula> formulas = new ArrayList<>();
 		for (int i = 1; i <= count; i++) {
 			formulas.add(formula);
 		}
-		
-		return TransFormulaUtils.sequentialComposition(logger,
-				services,
-				managedScript,
-				false,
-				false,
-				false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-				SimplificationTechnique.SIMPLIFY_DDA,
+
+		return TransFormulaUtils.sequentialComposition(logger, services, managedScript, false, false, false,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA,
 				formulas);
-		
+
 	}
 }

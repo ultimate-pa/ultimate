@@ -84,19 +84,23 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public class TransFormulaUtils {
+public final class TransFormulaUtils {
+
+	private TransFormulaUtils() {
+		// do not instantiate utility class
+	}
 
 	/**
 	 * compute the assigned/updated variables. A variable is updated by this transition if it occurs as outVar and - it
 	 * does not occur as inVar - or the inVar is represented by a different TermVariable
 	 */
-	public static HashSet<IProgramVar> computeAssignedVars(final Map<IProgramVar, TermVariable> inVars,
+	public static Set<IProgramVar> computeAssignedVars(final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars) {
 		final HashSet<IProgramVar> assignedVars = new HashSet<>();
-		for (final IProgramVar var : outVars.keySet()) {
-			assert outVars.get(var) != null;
-			if (outVars.get(var) != inVars.get(var)) {
-				assignedVars.add(var);
+		for (final Entry<IProgramVar, TermVariable> entry : outVars.entrySet()) {
+			assert entry.getValue() != null;
+			if (entry.getValue() != inVars.get(entry.getKey())) {
+				assignedVars.add(entry.getKey());
 			}
 		}
 		return assignedVars;
@@ -324,8 +328,9 @@ public class TransFormulaUtils {
 
 		// overwrite (see comment above) the outvars if the outvar does not
 		// coincide with the invar in some of the transFormulas
-		for (final IProgramVar bv : assignedInSomeBranch.keySet()) {
-			final Sort sort = assignedInSomeBranch.get(bv);
+		for (final Entry<IProgramVar, Sort> entry : assignedInSomeBranch.entrySet()) {
+			final IProgramVar bv = entry.getKey();
+			final Sort sort = entry.getValue();
 			final String outVarName = bv.getGloballyUniqueId() + "_Out" + serialNumber;
 			tfb.addOutVar(bv, mgdScript.variable(outVarName, sort));
 		}
@@ -362,17 +367,13 @@ public class TransFormulaUtils {
 			for (final IProgramVar bv : assignedInSomeBranch.keySet()) {
 				final TermVariable inVar = transFormulas[i].getInVars().get(bv);
 				final TermVariable outVar = transFormulas[i].getOutVars().get(bv);
-				if (inVar == null && outVar == null) {
-					// bv does not occur in transFormula
-					assert tfb.getInVar(bv) != null;
-					assert tfb.getOutVar(bv) != null;
-					final Term equality = mgdScript.getScript().term("=", tfb.getInVar(bv), tfb.getOutVar(bv));
-					renamedFormulas[i] = Util.and(mgdScript.getScript(), renamedFormulas[i], equality);
-				} else if (inVar == outVar) {
-					// bv is not modified in transFormula
-					assert tfb.getInVar(bv) != null;
-					assert tfb.getOutVar(bv) != null;
-					final Term equality = mgdScript.getScript().term("=", tfb.getInVar(bv), tfb.getOutVar(bv));
+				if ((inVar == null && outVar == null) || inVar == outVar) {
+					// bv does not occur in transFormula or bv is not modified in transFormula
+					final TermVariable termInVar = tfb.getInVar(bv);
+					final TermVariable termOutVar = tfb.getOutVar(bv);
+					assert termInVar != null;
+					assert termOutVar != null;
+					final Term equality = mgdScript.getScript().term("=", termInVar, termOutVar);
 					renamedFormulas[i] = Util.and(mgdScript.getScript(), renamedFormulas[i], equality);
 				}
 			}
@@ -854,9 +855,9 @@ public class TransFormulaUtils {
 		}
 		// yes! outVars of result are indeed the inVars of input
 
-		final Pair<Term, Set<TermVariable>> termAndAuxVars = tryToEliminateAuxVars(services, logger, mgdScript,
-				tf.getFormula(), auxVars);
-		
+		final Pair<Term, Set<TermVariable>> termAndAuxVars =
+				tryToEliminateAuxVars(services, logger, mgdScript, tf.getFormula(), auxVars);
+
 		final TransFormulaBuilder tfb =
 				new TransFormulaBuilder(tf.getInVars(), tf.getInVars(), tf.getNonTheoryConsts().isEmpty(),
 						tf.getNonTheoryConsts().isEmpty() ? null : tf.getNonTheoryConsts(), true, null, false);
@@ -873,8 +874,8 @@ public class TransFormulaUtils {
 		if (!tf.getBranchEncoders().isEmpty()) {
 			throw new AssertionError("I think this does not make sense with branch enconders");
 		}
-		final Pair<Term, Set<TermVariable>> termAndAuxVars = tryToEliminateAuxVars(services, logger, maScript,
-				tf.getFormula(), tf.getAuxVars());
+		final Pair<Term, Set<TermVariable>> termAndAuxVars =
+				tryToEliminateAuxVars(services, logger, maScript, tf.getFormula(), tf.getAuxVars());
 		if (!termAndAuxVars.getSecond().isEmpty()) {
 			throw new UnsupportedOperationException("cannot negate if there are auxVars");
 		}
@@ -890,16 +891,18 @@ public class TransFormulaUtils {
 
 	/**
 	 * Given the return of a {@link Transformula} try to eliminate auxvars.
-	 * @return new term and set of remaining auxvars. 
+	 *
+	 * @return new term and set of remaining auxvars.
 	 */
 	private static Pair<Term, Set<TermVariable>> tryToEliminateAuxVars(final IUltimateServiceProvider services,
-			final ILogger logger, final ManagedScript maScript, Term formula, final Set<TermVariable> oldAuxVars) {
-		final Pair<Term, Set<TermVariable>> result;
-		formula = PartialQuantifierElimination.quantifier(services, logger, maScript, SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, QuantifiedFormula.EXISTS, oldAuxVars, formula, new Term[0]);
-		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(formula.getFreeVars()));
+			final ILogger logger, final ManagedScript maScript, final Term formula,
+			final Set<TermVariable> oldAuxVars) {
+		final Term resultTerm = PartialQuantifierElimination.quantifier(services, logger, maScript,
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+				QuantifiedFormula.EXISTS, oldAuxVars, formula, new Term[0]);
+		final Set<TermVariable> freeVars = new HashSet<>(Arrays.asList(resultTerm.getFreeVars()));
 		freeVars.retainAll(oldAuxVars);
-		result = new Pair<Term, Set<TermVariable>>(formula, freeVars);
+		final Pair<Term, Set<TermVariable>> result = new Pair<>(resultTerm, freeVars);
 		return result;
 	}
 
@@ -927,22 +930,20 @@ public class TransFormulaUtils {
 			}
 		}
 	}
-	
-	
+
 	public static <V, K> Map<V, K> constructReverseMapping(final Map<K, V> map) {
 		return map.entrySet().stream().collect(Collectors.toMap(Entry::getValue, c -> c.getKey()));
 	}
-	
+
 	public static Term renameInvarsToDefaultVars(final TransFormula tf, final ManagedScript mgdScript) {
 		final Map<TermVariable, IProgramVar> inVarsReverseMapping = constructReverseMapping(tf.getInVars());
-		final Map<Term, Term> substitutionMapping = new HashMap<Term, Term>();
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final TermVariable tv : tf.getFormula().getFreeVars()) {
 			final IProgramVar pv = inVarsReverseMapping.get(tv);
 			if (pv == null) {
 				throw new IllegalArgumentException("TransFormula contains non-Invar");
-			} else {
-				substitutionMapping.put(tv, pv.getTermVariable());	
 			}
+			substitutionMapping.put(tv, pv.getTermVariable());
 		}
 		return (new Substitution(mgdScript, substitutionMapping)).transform(tf.getFormula());
 	}

@@ -15,32 +15,35 @@ public class ConsistencyChecker {
 	ManagedScript mManagedScript;
 	ILogger mLogger;
 	IUltimateServiceProvider mServices;
-	
-	public ConsistencyChecker(ILogger logger, ManagedScript managedScript, IUltimateServiceProvider services, UnmodifiableTransFormula formula, int b, int c) {
+
+	public ConsistencyChecker(final ILogger logger, final ManagedScript managedScript,
+			final IUltimateServiceProvider services, final UnmodifiableTransFormula formula, final int b, final int c) {
 		mLogger = logger;
 		mServices = services;
 		mManagedScript = managedScript;
-		Script script = mManagedScript.getScript();
+		final Script script = mManagedScript.getScript();
 		mResult = check(formula, b, c, script);
 		mSuccess = (mResult.equals(null) ? true : false);
 	}
 
-	private Term check(UnmodifiableTransFormula formula, int b, int c, Script script) {
+	private Term check(final UnmodifiableTransFormula formula, final int b, final int c, final Script script) {
 		for (int k = 0; k <= 2; k++) {
-			if(!solve(formula, b, c, k, script)) {
+			if (!solve(formula, b, c, k, script)) {
 				// return S1
-				return null;	
+				return null;
 			}
 		}
-		
+
 		return null;
 	}
-	
-	private boolean solve(UnmodifiableTransFormula formula, int b, int c, int k, Script script) {
-		UnmodifiableTransFormula toCheck = FastUPRUtils.composition(mLogger, mServices, mManagedScript, formula, b + (k * c));
+
+	private boolean solve(final UnmodifiableTransFormula formula, final int b, final int c, final int k,
+			final Script script) {
+		final UnmodifiableTransFormula toCheck =
+				FastUPRUtils.composition(mLogger, mServices, mManagedScript, formula, b + (k * c));
 		return (script.checkSatAssuming(toCheck.getFormula()).equals(LBool.SAT));
 	}
-	
+
 	public boolean isSuccess() {
 		return mSuccess;
 	}
