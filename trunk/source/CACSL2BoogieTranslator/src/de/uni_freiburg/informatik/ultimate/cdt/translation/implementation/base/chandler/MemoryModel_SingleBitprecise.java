@@ -65,12 +65,7 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
        	
 	@Override
 	public String getProcedureSuffix(final CPrimitives primitive) {
-		if (primitive.isFloatingtype()) {
-			throw new UnsupportedOperationException("Floating types are not yet supported in "
-						+ this.getClass().getSimpleName());
-		}
 		return mDataArray.getName() + mTypeSizes.getSize(primitive);
-
 	}
 
 

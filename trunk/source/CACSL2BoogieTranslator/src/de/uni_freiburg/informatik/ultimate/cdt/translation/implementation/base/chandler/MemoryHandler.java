@@ -71,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.LoopInvariantSpecification
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RequiresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -121,7 +122,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashM
  */
 public class MemoryHandler {
 
-	private static final boolean SUPPORT_FLOATS_ON_HEAP = false;
+	private static final boolean SUPPORT_FLOATS_ON_HEAP = true;
 	private static final String FLOAT_ON_HEAP_UNSOUND_MESSAGE =
 			"Analysis for floating types on heap by default disabled (soundness first).";
 
@@ -874,7 +875,7 @@ public class MemoryHandler {
 
 	private Procedure constructWriteProcedure(final ILocation loc, final Collection<HeapDataArray> heapDataArrays,
 			final HeapDataArray heapDataArray, final ReadWriteDefinition rda) {
-		final String value = "#value";
+		String value = "#value";
 		final ASTType valueAstType = rda.getASTType();
 		final String inPtr = "#ptr";
 		final String writtenTypeSize = "#sizeOfWrittenType";
@@ -894,6 +895,13 @@ public class MemoryHandler {
 
 		final ModifiesSpecification mod = constructModifiesSpecification(loc, heapDataArrays, x -> x.getVariableName());
 		swrite.add(mod);
+		
+		final CPrimitives cprimitive = rda.getPrimitives().iterator().next();
+		final boolean floating2bitvectorTransformationNeeded = ((mMemoryModel instanceof MemoryModel_SingleBitprecise)
+				&& cprimitive.getPrimitiveCategory() == CPrimitiveCategory.FLOATTYPE);
+		if (floating2bitvectorTransformationNeeded) {
+			value = "#valueAsBitvector";
+		}
 		final List<Expression> conjuncts = new ArrayList<>();
 		if (rda.getBytesize() == heapDataArray.getSize()) {
 			conjuncts.addAll(constructConjunctsForWriteEnsuresSpecification(loc, heapDataArrays, heapDataArray, value, x -> x, inPtr, x -> x));
@@ -919,7 +927,20 @@ public class MemoryHandler {
 				}
 			}
 		}
-		swrite.add(new EnsuresSpecification(loc, false, ExpressionFactory.and(loc, conjuncts)));
+		if (floating2bitvectorTransformationNeeded) {
+			final Expression valueAsBitvector = new IdentifierExpression(loc, "#valueAsBitvector");
+			final Expression transformedToFloat = mExpressionTranslation.transformBitvectorToFloat(loc, valueAsBitvector, cprimitive);
+			final Expression inputValue = new IdentifierExpression(loc, "#value");
+			final Expression eq = ExpressionFactory.newBinaryExpression(loc, Operator.COMPEQ, transformedToFloat, inputValue);
+			conjuncts.add(eq);
+			final Expression conjunction = ExpressionFactory.and(loc, conjuncts);
+			final ASTType type = ((TypeHandler) mTypeHandler).bytesize2asttype(loc, cprimitive.getPrimitiveCategory(), mTypeSizes.getSize(cprimitive));
+			final VarList[] parameters = new VarList[] { new VarList(loc, new String[] { "#valueAsBitvector" }, type) }; 
+			final QuantifierExpression qe = new QuantifierExpression(loc, false, new String[0], parameters, new Attribute[0], conjunction);
+			swrite.add(new EnsuresSpecification(loc, false, qe));
+		} else {
+			swrite.add(new EnsuresSpecification(loc, false, ExpressionFactory.and(loc, conjuncts)));
+		}
 		final Procedure result = new Procedure(loc, new Attribute[0], rda.getWriteProcedureName(), new String[0],
 				inWrite, new VarList[0], swrite.toArray(new Specification[swrite.size()]), null);
 		return result;

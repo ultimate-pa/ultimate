@@ -86,6 +86,10 @@ public class MemoryModel_MultiBitprecise extends AMemoryModel {
 
 	@Override
 	public String getProcedureSuffix(final CPrimitives primitive) {
+		if (primitive.isFloatingtype()) {
+			throw new UnsupportedOperationException("Floating types are not yet supported in "
+					+ this.getClass().getSimpleName());
+		}
 		return getDataHeapArray(primitive).getName();
 	}
 
