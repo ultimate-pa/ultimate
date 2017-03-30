@@ -396,7 +396,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		paramASTTypes[1] = new PrimitiveType(loc, "bv" + fps.getExponent());
 		paramASTTypes[2] = new PrimitiveType(loc, "bv" + (fps.getSignificant() - 1));
 		final Attribute[] attributes =
-				generateAttributes(loc, mOverapproximateFloatingPointOperations, smtFunctionName, new int[] { 1, fps.getExponent(), fps.getSignificant() - 1 });
+				generateAttributes(loc, mOverapproximateFloatingPointOperations, smtFunctionName, null);
 		final ASTType resultASTType = mTypeHandler.cType2AstType(loc, type);
 		mFunctionDeclarations.declareFunction(loc, SFO.getBoogieFunctionName(smtFunctionName, type), attributes,
 				resultASTType, paramASTTypes);
@@ -878,9 +878,10 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			final CPrimitives floatType) {
 		final FloatingPointSize floatingPointSize = mTypeSizes.getFloatingPointSize(floatType);
 		final Expression signBit = extractBits(loc, bitvector, 1, 0);
-		final Expression exponentBits = extractBits(loc, bitvector, 1, 1 + floatingPointSize.getExponent());
-		final Expression significantBits = extractBits(loc, bitvector, 1 + floatingPointSize.getExponent(),
-				1 + floatingPointSize.getExponent() + floatingPointSize.getSignificant());
+		final Expression exponentBits = extractBits(loc, bitvector, 1 + floatingPointSize.getExponent(), 1);
+		final Expression significantBits = extractBits(loc, bitvector,
+				floatingPointSize.getExponent() + floatingPointSize.getSignificant(),
+				1 + floatingPointSize.getExponent());
 
 		final String smtFunctionName = "fp";
 		final Expression result = new FunctionApplication(loc,
