@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.contai
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 
 /**
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
@@ -65,7 +65,7 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
        	
 	@Override
 	public String getProcedureSuffix(final CPrimitives primitive) {
-		return mDataArray.getName() + mTypeSizes.getSize(primitive);
+		return mDataArray.getName() + primitive.getPrimitiveCategory() + mTypeSizes.getSize(primitive);
 	}
 
 
@@ -75,20 +75,26 @@ public class MemoryModel_SingleBitprecise extends AMemoryModel {
 	}
 	
 	@Override
-	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(final HeapDataArray hda, final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
-		final HashRelation<Integer, CPrimitives> bytesizes2primitives = new HashRelation<>();
+	public List<ReadWriteDefinition> getReadWriteDefinitionForNonPointerHeapDataArray(final HeapDataArray hda,
+			final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+		final HashRelation3<CPrimitiveCategory, Integer, CPrimitives> bytesizes2primitives = new HashRelation3<>();
 		for (final CPrimitives primitive : requiredMemoryModelFeatures.getDataOnHeapRequired()) {
 			final int bytesize = mTypeSizes.getSize(primitive);
 			if (getDataHeapArray(primitive) == hda) {
-				bytesizes2primitives.addPair(bytesize, primitive);
+				bytesizes2primitives.addTriple(primitive.getPrimitiveCategory(), bytesize, primitive);
 			}
 		}
 		final List<ReadWriteDefinition> result = new ArrayList<>();
-		for (final Integer bytesize : bytesizes2primitives.getDomain()) {
-			final CPrimitives representative = bytesizes2primitives.getImage(bytesize).iterator().next();
-			final String procedureName = getProcedureSuffix(representative);
-			final ASTType astType = mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(), new CPrimitive(representative));
-			result.add(new ReadWriteDefinition(procedureName, bytesize, astType, bytesizes2primitives.getImage(bytesize)));
+		for (final CPrimitiveCategory cPrimitiveCategory : bytesizes2primitives.projectToFst()) {
+			for (final Integer bytesize : bytesizes2primitives.projectToSnd(cPrimitiveCategory)) {
+				final CPrimitives representative = bytesizes2primitives.projectToTrd(cPrimitiveCategory, bytesize)
+						.iterator().next();
+				final String procedureName = getProcedureSuffix(representative);
+				final ASTType astType = mTypeHandler.cType2AstType(LocationFactory.createIgnoreCLocation(),
+						new CPrimitive(representative));
+				result.add(new ReadWriteDefinition(procedureName, bytesize, astType,
+						bytesizes2primitives.projectToTrd(cPrimitiveCategory, bytesize)));
+			}
 		}
 		return result;
 	}
