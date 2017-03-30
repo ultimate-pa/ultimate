@@ -1,0 +1,16 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Library-IcfgTransformerTest
+Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.lib.icfgtransformer.test
+Bundle-Version: 0.1.9
+Fragment-Host: de.uni_freiburg.informatik.ultimate.lib.icfgtransformer
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
+ de.uni_freiburg.informatik.ultimate.lib.test,
+ org.junit,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib
+Import-Package: junit.framework,
+ org.junit,
+ org.junit.runner,
+ org.junit.runner.notification,
+ org.junit.runners
