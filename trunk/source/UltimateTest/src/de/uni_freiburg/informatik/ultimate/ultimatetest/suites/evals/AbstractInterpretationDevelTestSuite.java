@@ -72,6 +72,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Taipan_Default.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Taipan_Default_Debug.epf"),
+			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Taipan_Default_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-Taipan_INT.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-RubberTaipan_Default.epf"),
 
@@ -147,8 +148,9 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/programs/abstractInterpretation/regression",
 
 			/* current fails */
+			"examples/programs/abstractInterpretation/regression/proc-procedure-without-impl.bpl",
 
-			"examples/programs/abstractInterpretation/regression/all/proc-implies-statesplit.bpl",
+//			"examples/programs/abstractInterpretation/regression/all/proc-implies-statesplit.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/recursive-easy-2.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
