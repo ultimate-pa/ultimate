@@ -30,13 +30,13 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 import java.util.Iterator;
 
 /**
- * Interface for a general partition data structure.
- * 
+ * Interface for a general partition data structure for automaton states.
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <STATE>
  *            state type
  */
-public interface IPartition<STATE> {
+public interface IAutomatonStatePartition<STATE> {
 	/**
 	 * @param state
 	 *            state.

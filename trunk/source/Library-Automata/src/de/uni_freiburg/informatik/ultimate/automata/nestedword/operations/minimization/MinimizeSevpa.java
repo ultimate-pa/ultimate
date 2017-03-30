@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.FalseFlag;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IBlock;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IFlag;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IPartition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IAutomatonStatePartition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
@@ -1685,7 +1685,7 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 	/**
 	 * Collection of equivalence classes and a mapping 'state -> equivalence class' for fast access.
 	 */
-	public class Partition implements IPartition<STATE> {
+	public class Partition implements IAutomatonStatePartition<STATE> {
 		// original nested word automaton
 		private final INestedWordAutomaton<LETTER, STATE> mParentOperand;
 		// equivalence classes

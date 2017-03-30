@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IBlock;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IPartition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IAutomatonStatePartition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
@@ -527,7 +527,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 	 * The partition is the main object of the procedure. It contains and handles the equivalence classes and works as
 	 * the resulting automaton.
 	 */
-	private class Partition implements IPartition<STATE> {
+	private class Partition implements IAutomatonStatePartition<STATE> {
 		// equivalence classes
 		private final Collection<EquivalenceClass> mEquivalenceClasses;
 		// mapping 'state -> equivalence class'
