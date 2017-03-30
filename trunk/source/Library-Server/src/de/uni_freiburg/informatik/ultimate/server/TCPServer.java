@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -12,6 +13,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage;
 
 public abstract class TCPServer<T> implements IInteractiveServer<T> {
@@ -25,15 +27,20 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 
 	// multiple Clients?
 	protected FutureClient<T> mClient;
+	protected CompletableFuture<FutureClient<T>> mNextClient;
 	protected ExecutorService mExecutor;
 	protected Future<?> mServerFuture;
 	protected Supplier<ExecutorService> mGetExecutorService;
+
+	protected boolean mCancelled;
+	protected ITypeRegistry<T> mTypeRegistry;
 
 	public TCPServer(ILogger logger, int port) {
 		mLogger = logger;
 		mPort = port;
 		mGetExecutorService = Executors::newWorkStealingPool;
-		mClient = new FutureClient<T>(mLogger);
+		mCancelled = false;
+		mNextClient = new CompletableFuture<>();
 	}
 
 	public abstract IWrappedMessage<T> newMessage();
@@ -57,8 +64,7 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 		mLogger.info("stopping Server..");
 		mRunning = false;
 		try {
-			// mClient.closeConnection();
-			mClient.cancel(true);
+			mCancelled = true;
 			mServerFuture.get(10, TimeUnit.SECONDS);
 			mLogger.info("Server stopped.");
 		} catch (InterruptedException | ExecutionException e) {
@@ -73,16 +79,25 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 		try {
 			mSocket = new ServerSocket(mPort);
 		} catch (IOException e1) {
-			mClient.cancel(true);
+			mCancelled = true;
 			mLogger.error("Server could not be started.", e1);
 			return;
 		}
-		// mClient = new FutureClient<T>(mLogger);
 
-		mClient.setRegistry(getTypeRegistry());
+		mTypeRegistry = getTypeRegistry();
+
+		while (true) {
+			listen();
+		}
+	}
+
+	private void listen() {
+		mClient = new FutureClient<T>(mLogger);
+		mNextClient.complete(mClient);
+		mNextClient = new CompletableFuture<>();
+		mClient.setRegistry(mTypeRegistry);
 		mClient.setFactory(this::newMessage);
 
-		// while (mRunning) {
 		try {
 			mLogger.info("listening on port " + mPort);
 			Socket clientSocket = mSocket.accept();
@@ -101,7 +116,13 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 		try {
 			Client<T> client = mClient.get(1, TimeUnit.MINUTES);
 
-			client.finished().get();
+			while (!client.hasIOExceptionOccurred()) {
+				try {
+					client.finished().get(5, TimeUnit.SECONDS);
+				} catch (TimeoutException e) {
+					continue;
+				}
+			}
 		} catch (InterruptedException | ExecutionException e) {
 			mLogger.error("Client", e);
 			return;
@@ -117,7 +138,7 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 			throw new IllegalStateException("Server not running.");
 		}
 
-		return mClient.get(60, TimeUnit.SECONDS);
+		return mNextClient.get(10, TimeUnit.SECONDS).get(60, TimeUnit.SECONDS);
 	}
 
 }

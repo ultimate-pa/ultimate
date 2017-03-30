@@ -48,6 +48,8 @@ public abstract class Client<T> {
 	private Future<?> mInputFuture;
 	private Future<?> mOutputFuture;
 
+	private boolean mIOExceptionOccurred = false;
+
 	Client(Socket connectionSocket, ILogger logger, ITypeRegistry<T> typeRegistry) {
 		mLogger = logger;
 
@@ -148,8 +150,13 @@ public abstract class Client<T> {
 		try {
 			mSocket.close();
 		} catch (IOException e) {
+			mIOExceptionOccurred = true;
 			mLogger.error("failed to shut down connection gracefully.", e);
 		}
+	}
+
+	public boolean hasIOExceptionOccurred() {
+		return mIOExceptionOccurred;
 	}
 
 	public void startQueue(ExecutorService executor) throws IOException {
@@ -186,8 +193,9 @@ public abstract class Client<T> {
 			try {
 				msg.writeTo(output);
 			} catch (IOException e) {
+				mIOExceptionOccurred = true;
 				mLogger.error(e);
-				continue;
+				break;
 			}
 		}
 	}
@@ -211,6 +219,7 @@ public abstract class Client<T> {
 					continue;
 				}
 			} catch (IOException e) {
+				mIOExceptionOccurred = true;
 				mLogger.error("failed to read input", e);
 				return;
 			} catch (InterruptedException e) {
