@@ -109,20 +109,22 @@ public class HybridSystem {
 			mLogger.info(mBinds);
 		}
 		// rename variables according to binds
-		// TODO: find out how IDS are set, we need autName instead of autName_1
 		mLogger.debug("########## Rename variables according to Binds ###########");
 		mLogger.debug("Binds before replacements: " + mBinds);
 		mAutomata.forEach((id, aut) -> {
-			// mLogger.debug("before replace: " + aut);
 			final Map<String, String> newBinds = aut.renameAccordingToBinds(mBinds.get(id));
 			mBinds.put(id, newBinds);
-			// mLogger.debug("after replace: " + aut);
 			if (mPreferenceManager != null) {
 				aut.renameConstants();
 			}
 		});
+		// TODO: fix for subsystems
 		mSubSystems.forEach((id, sys) -> {
-			sys.mAutomata.values().forEach(aut -> aut.renameAccordingToBinds(mBinds.get(id)));
+			for (final Map.Entry<String, HybridAutomaton> entry : sys.mAutomata.entrySet()) {
+				final String autID = entry.getKey();
+				final HybridAutomaton aut = entry.getValue();
+				aut.renameAccordingToBinds(mBinds.get(id));
+			}
 		});
 		mLogger.debug("Binds after replacements: " + mBinds);
 	}
@@ -142,7 +144,6 @@ public class HybridSystem {
 		mGlobalConstants = globalConstants;
 		mLabels = labels;
 		mBinds = binds;
-		// TODO Add bind.
 	}
 	
 	public Map<String, HybridAutomaton> getAutomata() {

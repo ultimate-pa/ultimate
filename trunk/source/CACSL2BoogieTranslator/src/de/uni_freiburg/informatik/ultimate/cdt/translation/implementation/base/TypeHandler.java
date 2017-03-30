@@ -125,10 +125,10 @@ public class TypeHandler implements ITypeHandler {
 	private final Set<CPrimitive.CPrimitives> mOccurredPrimitiveTypes = new HashSet<>();
 
 	/**
-	 * if true we translate CPrimitives whose general type is INT to int. If false we translate CPrimitives whose
+	 * if false we translate CPrimitives whose general type is INT to int. If true we translate CPrimitives whose
 	 * general type is INT to identically named types,
 	 */
-	private final boolean mUseIntForAllIntegerTypes;
+	private final boolean mBitvectorTranslation;
 
 	/**
 	 * States if an ASTNode for the pointer type was constructed and hence this type has to be declared.
@@ -143,18 +143,22 @@ public class TypeHandler implements ITypeHandler {
 	public Set<CPrimitive.CPrimitives> getOccurredPrimitiveTypes() {
 		return mOccurredPrimitiveTypes;
 	}
+	
+	
 
-	public boolean useIntForAllIntegerTypes() {
-		return mUseIntForAllIntegerTypes;
+	public boolean isBitvectorTranslation() {
+		return mBitvectorTranslation;
 	}
+
+
 
 	/**
 	 * Constructor.
 	 *
 	 * @param useIntForAllIntegerTypes
 	 */
-	public TypeHandler(final boolean useIntForAllIntegerTypes) {
-		mUseIntForAllIntegerTypes = useIntForAllIntegerTypes;
+	public TypeHandler(final boolean bitvectorTranslation) {
+		mBitvectorTranslation = bitvectorTranslation;
 		mDefinedTypes = new LinkedScopedHashMap<>();
 		mIncompleteType = new LinkedHashSet<>();
 	}
@@ -591,16 +595,18 @@ public class TypeHandler implements ITypeHandler {
 		case VOID:
 			return null; // (alex:) seems to be lindemm's convention, see FunctionHandler.isInParamVoid(..)
 		case INTTYPE:
-			if (mUseIntForAllIntegerTypes) {
+			if (mBitvectorTranslation) {
+				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);				
+			} else {
 				return new PrimitiveType(loc, SFO.INT);
 			}
-			return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
 		case FLOATTYPE:
 			mFloatingTypesNeeded = true;
-			if (mUseIntForAllIntegerTypes) {
+			if (mBitvectorTranslation) {
+				return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);				
+			} else {
 				return new PrimitiveType(loc, SFO.REAL);
 			}
-			return new NamedType(loc, "C_" + cPrimitive.getType().toString(), new ASTType[0]);
 		default:
 			throw new UnsupportedSyntaxException(loc, "unknown primitive type");
 		}
@@ -612,15 +618,24 @@ public class TypeHandler implements ITypeHandler {
 		case VOID:
 			throw new UnsupportedOperationException();
 		case INTTYPE:
-			if (mUseIntForAllIntegerTypes) {
+			if (mBitvectorTranslation) {
+				final int bitsize = bytesize * 8;
+				final String name = "bv" + bitsize;
+				final ASTType astType = new PrimitiveType(loc, name);
+				return astType;
+			} else {
 				return new PrimitiveType(loc, SFO.INT);
 			}
-			final int bitsize = bytesize * 8;
-			final String name = "bv" + bitsize;
-			final ASTType astType = new PrimitiveType(loc, name);
-			return astType;
 		case FLOATTYPE:
-			return new PrimitiveType(loc, SFO.REAL);
+			mFloatingTypesNeeded = true;
+			if (mBitvectorTranslation) {
+				final int bitsize = bytesize * 8;
+				final String name = "bv" + bitsize;
+				final ASTType astType = new PrimitiveType(loc, name);
+				return astType;
+			} else {
+				return new PrimitiveType(loc, SFO.REAL);
+			}
 		default:
 			throw new UnsupportedSyntaxException(loc, "unknown primitive type");
 		}

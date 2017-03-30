@@ -104,7 +104,7 @@ public class BasicPredicate extends ModernAnnotations implements IPredicate {
 		if (obj == null) {
 			return false;
 		}
-		if (getClass() != obj.getClass()) {
+		if (!(obj instanceof BasicPredicate)) {
 			return false;
 		}
 		final BasicPredicate other = (BasicPredicate) obj;

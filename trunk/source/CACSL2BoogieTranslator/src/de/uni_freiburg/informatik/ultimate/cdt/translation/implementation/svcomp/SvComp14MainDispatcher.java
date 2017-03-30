@@ -62,7 +62,7 @@ public class SvComp14MainDispatcher extends MainDispatcher {
 	@Override
 	protected void init() {
 		mSideEffectHandler = new SideEffectHandler();
-		mTypeHandler = new SVCompTypeHandler(!mBitvectorTranslation);
+		mTypeHandler = new SVCompTypeHandler(mBitvectorTranslation);
 		mAcslHandler = new ACSLHandler(mWitnessInvariants != null);
 		mNameHandler = new NameHandler(mBacktranslator);
 		mCHandler = new SvComp14CHandler(this, mBacktranslator, mLogger, mTypeHandler, mBitvectorTranslation,

@@ -223,12 +223,12 @@ public class HornClauseParserScript extends NoopScript {
 	}
 	*/
 
-	private Cobody parseCobody(Term term) throws SMTLIBException {
+	private HornClauseCobody parseCobody(Term term) throws SMTLIBException {
 		final ApplicationTerm t = (ApplicationTerm) term;
 
 		if (t.getFunction().getName().equals("and")) {
 			// t = And (y1 y2 ... yn)
-			final Cobody tail = new Cobody();
+			final HornClauseCobody tail = new HornClauseCobody();
 			for (final Term literal : t.getParameters()) {
 				final ApplicationTerm par = (ApplicationTerm) literal;
 				if (mDeclaredPredicateSymbols.contains(par.getFunction().getName())) {
@@ -244,7 +244,7 @@ public class HornClauseParserScript extends NoopScript {
 			}
 			return tail;
 		}
-		final Cobody tail = new Cobody();
+		final HornClauseCobody tail = new HornClauseCobody();
 		if (mDeclaredPredicateSymbols.contains(t.getFunction().getName())) {
 			// yi = I
 			tail.addPredicate(t);
@@ -259,19 +259,19 @@ public class HornClauseParserScript extends NoopScript {
 		return tail;
 	}
 
-	private Body parseBody(Term term) throws SMTLIBException {
+	private HornClauseBody parseBody(Term term) throws SMTLIBException {
 		final ApplicationTerm t = (ApplicationTerm) term;
 		if (t.getFunction().getName().equals("=>")) {
 			// implication
-			final Body head = parseBody(t.getParameters()[1]);
-			final Cobody tail = parseCobody(t.getParameters()[0]);
+			final HornClauseBody head = parseBody(t.getParameters()[1]);
+			final HornClauseCobody tail = parseCobody(t.getParameters()[0]);
 
 			head.mergeCobody(tail);
 			return head;
 		}
 		if (t.getFunction().getName().equals("or")) {
 			// t = Or (y1 ... yn)
-			final Body head = new Body();
+			final HornClauseBody head = new HornClauseBody();
 			for (final Term literal : t.getParameters()) {
 				final ApplicationTerm par = (ApplicationTerm) literal;
 				if (mDeclaredPredicateSymbols.contains(par.getFunction().getName())) {
@@ -292,7 +292,7 @@ public class HornClauseParserScript extends NoopScript {
 			}
 			return head;
 		}
-		final Body head = new Body();
+		final HornClauseBody head = new HornClauseBody();
 		if (mDeclaredPredicateSymbols.contains(t.getFunction().getName())) {
 			if (!head.setHead(t)) {
 				throw new SMTLIBException("The head has more than a positive predicate symbol.");
@@ -315,7 +315,7 @@ public class HornClauseParserScript extends NoopScript {
 
 			final QuantifiedFormula thisTerm = (QuantifiedFormula) term;
 			if (thisTerm.getQuantifier() == FORALL) {
-				final Body body = parseBody(thisTerm.getSubformula());
+				final HornClauseBody body = parseBody(thisTerm.getSubformula());
 				mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable));
 				//System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
 			}
@@ -326,8 +326,8 @@ public class HornClauseParserScript extends NoopScript {
 			if (nested instanceof QuantifiedFormula) {
 				final QuantifiedFormula thisTerm = (QuantifiedFormula) nested;
 				if (thisTerm.getQuantifier() == EXISTS) {
-					final Cobody cobody = parseCobody(thisTerm.getSubformula());
-					final Body body = cobody.negate();
+					final HornClauseCobody cobody = parseCobody(thisTerm.getSubformula());
+					final HornClauseBody body = cobody.negate();
 					mCurrentHornClause.add(body.convertToHornClause(mBackendSmtSolver, mSymbolTable));
 					//System.err.println(mCurrentHornClause.get(mCurrentHornClause.size() - 1));
 				}

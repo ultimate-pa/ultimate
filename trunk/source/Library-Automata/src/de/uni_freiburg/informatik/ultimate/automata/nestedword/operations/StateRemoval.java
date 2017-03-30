@@ -2,22 +2,22 @@
  * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
  * This is a common superclass for operations that remove states and transitions.
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -63,11 +63,9 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 	 *            Ultimate services.
 	 * @param operand
 	 *            operand
-	 * @throws AutomataOperationCanceledException
-	 *             if timeout exceeds
 	 */
-	public StateRemoval(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand)
-			throws AutomataOperationCanceledException {
+	public StateRemoval(final AutomataLibraryServices services,
+			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
 		super(services);
 		mOperand = operand;
 
@@ -199,4 +197,10 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 
 	protected abstract boolean checkResultFurther(IDoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy)
 			throws AutomataLibraryException;
+
+	@Override
+	public String toString() {
+		final IDoubleDeckerAutomaton<LETTER, STATE> result = getResult();
+		return result == null ? "Result not computed yet." : result.toString();
+	}
 }

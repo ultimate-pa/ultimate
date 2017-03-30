@@ -191,7 +191,11 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 							(INestedWordAutomatonSimple<CodeBlock, ?>) currentAbstraction,
 							(NestedRun<CodeBlock, IPredicate>) currentCex, (Set<CodeBlock>) pathProgramSet, timer,
 							mServices);
-			mCurrentIteration = new AbsIntCurrentIteration<>(currentCex, result);
+			if (result == null) {
+				mCurrentIteration = null;
+			} else {
+				mCurrentIteration = new AbsIntCurrentIteration<>(currentCex, result);
+			}
 			if (hasShownInfeasibility()) {
 				mCegarLoopBenchmark.announceStrongAbsInt();
 			}
@@ -222,7 +226,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 	public IInterpolantGenerator getInterpolantGenerator() {
 		if (mCurrentIteration == null) {
-			return new AbsIntFailedInterpolantGenerator(mPredicateUnifierSmt, null, ItpErrorStatus.OTHER,
+			return new AbsIntFailedInterpolantGenerator(mPredicateUnifierSmt, null, ItpErrorStatus.ALGORITHM_FAILED,
 					createNoFixpointsException());
 		}
 		return mCurrentIteration.getInterpolantGenerator();

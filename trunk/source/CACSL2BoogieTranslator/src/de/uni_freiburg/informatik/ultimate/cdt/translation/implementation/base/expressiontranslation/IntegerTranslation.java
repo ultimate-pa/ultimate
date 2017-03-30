@@ -848,6 +848,11 @@ public class IntegerTranslation extends AExpressionTranslation {
 		}
 		return prefixedFunctionName;
 	}
+
+	@Override
+	public Expression transformBitvectorToFloat(final ILocation loc, final Expression bitvector, final CPrimitives floatType) {
+		throw new UnsupportedOperationException("not yet implemented");
+	}
 	
 	
 }

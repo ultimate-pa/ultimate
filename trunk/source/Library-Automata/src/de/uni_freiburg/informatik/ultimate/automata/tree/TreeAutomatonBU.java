@@ -103,7 +103,8 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 		if (!childLetter.containsKey(letter)) {
 			childLetter.put(letter, new HashSet<TreeAutomatonRule<LETTER, STATE>>());
 		}
-		final HashSet<TreeAutomatonRule<LETTER, STATE>> children = (HashSet<TreeAutomatonRule<LETTER, STATE>>) childLetter.get(letter);
+		final HashSet<TreeAutomatonRule<LETTER, STATE>> children = 
+				(HashSet<TreeAutomatonRule<LETTER, STATE>>) childLetter.get(letter);
 		children.add(rule);
 
 		// parents(q1, ..., qn)[f] = q

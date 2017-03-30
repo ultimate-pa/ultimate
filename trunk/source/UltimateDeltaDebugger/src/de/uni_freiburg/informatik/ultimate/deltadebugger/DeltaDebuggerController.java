@@ -80,6 +80,12 @@ public class DeltaDebuggerController extends CommandLineController {
 	private IToolchainStorage mStorage;
 
 	@Override
+	public int init(final ICore<RunDefinition> core) {
+		core.getCoreLoggingService().getControllerLogger().info("Starting delta-debugger");
+		return super.init(core);
+	}
+
+	@Override
 	public void displayException(final IToolchainData<RunDefinition> toolchain, final String description,
 			final Throwable ex) {
 		mException = Optional.of(new ToolchainException(description, ex));

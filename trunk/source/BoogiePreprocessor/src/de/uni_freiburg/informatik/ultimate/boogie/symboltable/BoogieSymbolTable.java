@@ -71,7 +71,7 @@ public class BoogieSymbolTable {
 	 */
 	protected void addProcedureOrFunction(final String symbolName, final Procedure decl) {
 		final Map<String, Declaration> procMap = getProcedureMap(decl);
-		assert !procMap.containsKey(symbolName);
+		assert !procMap.containsKey(symbolName) : "double declaration of " + symbolName;
 		procMap.put(symbolName, decl);
 	}
 

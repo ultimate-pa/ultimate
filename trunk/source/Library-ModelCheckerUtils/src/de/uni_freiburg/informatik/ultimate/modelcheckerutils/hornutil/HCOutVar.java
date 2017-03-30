@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class HCOutVar implements IProgramVar {
+public class HCOutVar implements IProgramVar, Comparable<HCOutVar> {
 
 	private static final long serialVersionUID = 4653727851496150630L;
 
@@ -153,6 +153,11 @@ public class HCOutVar implements IProgramVar {
 
 	public Sort getSort() {
 		return mSort;
+	}
+
+	@Override
+	public int compareTo(HCOutVar arg0) {
+		return this.mArgumentPos - arg0.mArgumentPos;
 	}
 
 

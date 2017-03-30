@@ -8,7 +8,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 public class FirstOrderLinearODE {
 	String mODE;
 	String mSolution;
-	
 	String mTimeVar;
 	Term mSolutionTerm;
 	
@@ -25,7 +24,7 @@ public class FirstOrderLinearODE {
 		for (int i = 0; i < equationArray.size(); i++) {
 			final String element = equationArray.get(i);
 			if (i == 0) {
-				result += element.replaceAll("'", "") + "==" + element.replaceAll("'", "");
+				result += element + "==" + element;
 			} else if ("==".equals(element) || "=".equals(element)) {
 				continue;
 			} else {

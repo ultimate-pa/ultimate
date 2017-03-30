@@ -33,6 +33,9 @@ import java.util.function.Consumer;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
@@ -70,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDECL>, ACTION extends IIcfgTransition<?>, VARDECL>
 		implements IHoareTripleChecker {
 
+	private static final String MSG_IS_SUBSET_OF_IS_UNSOUND = "isSubsetOf is unsound";
 	private static final String MSG_TRACKED_VARIABLES_DIFFER = "Tracked variables differ";
 	private static final String MSG_INVALID_HOARE_TRIPLE_CHECK = "Invalid hoare triple check";
 
@@ -87,6 +91,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	private final IUltimateServiceProvider mServices;
 	private final CfgSmtToolkit mCsToolkit;
 	private final SimplificationTechnique mSimplificationTechnique;
+	private final ManagedScript mManagedScript;
 
 	public AbsIntHoareTripleChecker(final ILogger logger, final IUltimateServiceProvider services,
 			final IAbstractDomain<STATE, ACTION, VARDECL> domain,
@@ -99,6 +104,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		mPredicateUnifier = Objects.requireNonNull(predicateUnifer);
 		mVarProvider = Objects.requireNonNull(varProvider);
 		mCsToolkit = Objects.requireNonNull(csToolkit);
+		mManagedScript = Objects.requireNonNull(mCsToolkit.getManagedScript());
 
 		mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 		mBenchmark = new HoareTripleCheckerStatisticsGenerator();
@@ -115,13 +121,61 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	}
 
 	@Override
-	public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
-		return checkNonReturn(pre, act, succ);
+	public Validity checkInternal(final IPredicate prePred, final IInternalAction act, final IPredicate succPred) {
+		mBenchmark.continueEdgeCheckerTime();
+		final AbstractMultiState<STATE, ACTION, VARDECL> pre = getState(prePred);
+		final AbstractMultiState<STATE, ACTION, VARDECL> succ = getState(succPred);
+		final ACTION action = getAction(act);
+		final AbstractMultiState<STATE, ACTION, VARDECL> preState =
+				createValidPostOpStateAfterLeaving(action, pre, null);
+		if (mLogger.isDebugEnabled()) {
+			logDebugIfNotEqual(pre, preState, "Modified preState");
+			mLogger.debug("Pre : " + preState.toLogString());
+			mLogger.debug("Act : " + action);
+			mLogger.debug("Post: " + succ.toLogString());
+		}
+
+		final Validity result = checkInternalTransitionWithValidState(preState, action, succ);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Result: " + result);
+			mLogger.debug("--");
+		}
+		assert assertValidity(preState, null, action, succ, result) : MSG_INVALID_HOARE_TRIPLE_CHECK;
+		final Validity rtr = result;
+		mBenchmark.stopEdgeCheckerTime();
+		return rtr;
 	}
 
 	@Override
-	public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
-		return checkNonReturn(pre, act, succ);
+	public Validity checkCall(final IPredicate prePred, final ICallAction act, final IPredicate succPred) {
+		mBenchmark.continueEdgeCheckerTime();
+		final AbstractMultiState<STATE, ACTION, VARDECL> pre = getState(prePred);
+		final AbstractMultiState<STATE, ACTION, VARDECL> succ = getState(succPred);
+		final ACTION action = getAction(act);
+
+		final AbstractMultiState<STATE, ACTION, VARDECL> preBeforeLeaving =
+				createValidPostOpStateBeforeLeaving(action, pre);
+		final AbstractMultiState<STATE, ACTION, VARDECL> preAfterLeaving =
+				createValidPostOpStateAfterLeaving(action, pre, null);
+		if (mLogger.isDebugEnabled()) {
+			logDebugIfNotEqual(pre, preBeforeLeaving, "Modified PSBL");
+			logDebugIfNotEqual(pre, preAfterLeaving, "Modified PSAL");
+			mLogger.debug("PSBL : " + pre.toLogString());
+			mLogger.debug("PSAL: " + preAfterLeaving.toLogString());
+			mLogger.debug("Act : " + action);
+			mLogger.debug("Post: " + succ.toLogString());
+		}
+
+		final Validity result =
+				checkScopeChangingTransitionWithValidState(preBeforeLeaving, preAfterLeaving, action, succ);
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Result: " + result);
+			mLogger.debug("--");
+		}
+		assert assertValidity(preBeforeLeaving, null, action, succ, result) : MSG_INVALID_HOARE_TRIPLE_CHECK;
+		mBenchmark.stopEdgeCheckerTime();
+		return result;
 	}
 
 	@Override
@@ -133,8 +187,37 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		final AbstractMultiState<STATE, ACTION, VARDECL> preHier = getState(preHierPred);
 		final AbstractMultiState<STATE, ACTION, VARDECL> succ = getState(succPred);
 		final ACTION action = getAction(act);
+		assert action instanceof IIcfgReturnTransition<?, ?>;
+		final IIcfgReturnTransition<?, ?> retAct = (IIcfgReturnTransition<?, ?>) action;
+		final ACTION correspondingCall = (ACTION) retAct.getCorrespondingCall();
 
-		final Validity rtr = checkReturnTransition(preLin, preHier, action, succ);
+		final AbstractMultiState<STATE, ACTION, VARDECL> validPreLinState =
+				createValidPostOpStateBeforeLeaving(action, preLin);
+		final AbstractMultiState<STATE, ACTION, VARDECL> validPreHierState =
+				createValidPostOpStateBeforeLeaving(correspondingCall, preHier);
+		final AbstractMultiState<STATE, ACTION, VARDECL> stateAfterLeaving =
+				createValidPostOpStateAfterLeaving(action, validPreLinState, validPreHierState);
+		if (mLogger.isDebugEnabled()) {
+			logDebugIfNotEqual(preLin, validPreLinState, "Modified preLinState");
+			logDebugIfNotEqual(preHier, validPreHierState, "Modified preHierState");
+			mLogger.debug("Pre : " + validPreLinState.toLogString());
+			mLogger.debug("PreH: " + validPreHierState.toLogString());
+			mLogger.debug("PSAL: " + stateAfterLeaving.toLogString());
+			mLogger.debug("Act : (" + action.getPrecedingProcedure() + ") " + action + " ("
+					+ action.getSucceedingProcedure() + ")");
+			mLogger.debug("Post: " + succ.toLogString());
+		}
+
+		final Validity result =
+				checkScopeChangingTransitionWithValidState(validPreLinState, stateAfterLeaving, action, succ);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Result: " + result);
+			mLogger.debug("--");
+		}
+		assert assertValidity(validPreLinState, stateAfterLeaving, action, succ,
+				result) : MSG_INVALID_HOARE_TRIPLE_CHECK;
+
+		final Validity rtr = result;
 		mBenchmark.stopEdgeCheckerTime();
 		return rtr;
 	}
@@ -144,103 +227,22 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		return mBenchmark;
 	}
 
-	private Validity checkNonReturnTransition(final AbstractMultiState<STATE, ACTION, VARDECL> pre, final ACTION act,
-			final AbstractMultiState<STATE, ACTION, VARDECL> succ) {
-		final AbstractMultiState<STATE, ACTION, VARDECL> preState = createValidPostOpStateAfterLeaving(act, pre, null);
-		if (mLogger.isDebugEnabled()) {
-			logDebugIfNotEqual(pre, preState, "Modified preState");
-			mLogger.debug("Pre : " + preState.toLogString());
-			mLogger.debug("Act : " + act);
-			mLogger.debug("Post: " + succ.toLogString());
-		}
-
-		final Validity result = checkNonReturnTransitionWithValidState(preState, act, succ);
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Result: " + result);
-			mLogger.debug("--");
-		}
-		assert assertValidity(preState, null, act, succ, result) : MSG_INVALID_HOARE_TRIPLE_CHECK;
-		return result;
-	}
-
-	private Validity checkNonReturnTransitionWithValidState(final AbstractMultiState<STATE, ACTION, VARDECL> preState,
+	private Validity checkInternalTransitionWithValidState(final AbstractMultiState<STATE, ACTION, VARDECL> preState,
 			final ACTION act, final AbstractMultiState<STATE, ACTION, VARDECL> postState) {
 		if (preState.isBottom()) {
 			return Validity.VALID;
 		}
 
 		final AbstractMultiState<STATE, ACTION, VARDECL> calculatedPost = preState.apply(mPostOp, act);
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Calculated post: " + calculatedPost.toLogString());
-		}
-		if (calculatedPost.isBottom() && postState.isBottom()) {
-			return trackPost(Validity.VALID, act);
-		}
-
-		final AbstractMultiState<STATE, ACTION, VARDECL> synchronizedCalculatedPost =
-				synchronizeState(postState, calculatedPost);
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Synchronized calculated post: " + synchronizedCalculatedPost.toLogString());
-		}
-		assert postState.getVariables()
-				.equals(synchronizedCalculatedPost.getVariables()) : MSG_TRACKED_VARIABLES_DIFFER;
-		final SubsetResult included = synchronizedCalculatedPost.isSubsetOf(postState);
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Inclusion (NO): " + included);
-		}
-		if (included != SubsetResult.NONE) {
-			return trackPost(Validity.VALID, act);
-		}
-		final SubsetResult excluded = postState.isSubsetOf(synchronizedCalculatedPost);
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Exclusion (ON): " + excluded);
-		}
-		if (excluded == SubsetResult.NONE) {
-			return trackPost(Validity.INVALID, act);
-		}
-		return Validity.UNKNOWN;
+		return comparePostAndCalculatedPost(act, postState, calculatedPost);
 	}
 
-	private Validity checkReturnTransition(final AbstractMultiState<STATE, ACTION, VARDECL> preLin,
-			final AbstractMultiState<STATE, ACTION, VARDECL> preHier, final ACTION act,
-			final AbstractMultiState<STATE, ACTION, VARDECL> succ) {
-
-		assert act instanceof IIcfgReturnTransition<?, ?>;
-		final IIcfgReturnTransition<?, ?> retAct = (IIcfgReturnTransition<?, ?>) act;
-		final ACTION correspondingCall = (ACTION) retAct.getCorrespondingCall();
-
-		final AbstractMultiState<STATE, ACTION, VARDECL> validPreLinState =
-				createValidPostOpStateBeforeLeaving(act, preLin);
-		final AbstractMultiState<STATE, ACTION, VARDECL> validPreHierState =
-				createValidPostOpStateBeforeLeaving(correspondingCall, preHier);
-		final AbstractMultiState<STATE, ACTION, VARDECL> stateAfterLeaving =
-				createValidPostOpStateAfterLeaving(act, validPreLinState, validPreHierState);
-		if (mLogger.isDebugEnabled()) {
-			logDebugIfNotEqual(preLin, validPreLinState, "Modified preLinState");
-			logDebugIfNotEqual(preHier, validPreHierState, "Modified preHierState");
-			mLogger.debug("Pre : " + validPreLinState.toLogString());
-			mLogger.debug("PreH: " + validPreHierState.toLogString());
-			mLogger.debug("PSAL: " + stateAfterLeaving.toLogString());
-			mLogger.debug(
-					"Act : (" + act.getPrecedingProcedure() + ") " + act + " (" + act.getSucceedingProcedure() + ")");
-			mLogger.debug("Post: " + succ.toLogString());
-		}
-
-		final Validity result = checkReturnTransitionWithValidState(validPreLinState, stateAfterLeaving, act, succ);
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Result: " + result);
-			mLogger.debug("--");
-		}
-		assert assertValidity(validPreLinState, stateAfterLeaving, act, succ, result) : MSG_INVALID_HOARE_TRIPLE_CHECK;
-		return result;
-	}
-
-	private Validity checkReturnTransitionWithValidState(
-			final AbstractMultiState<STATE, ACTION, VARDECL> validPreLinState,
+	private Validity checkScopeChangingTransitionWithValidState(
+			final AbstractMultiState<STATE, ACTION, VARDECL> stateBeforeLeaving,
 			final AbstractMultiState<STATE, ACTION, VARDECL> stateAfterLeaving, final ACTION act,
 			final AbstractMultiState<STATE, ACTION, VARDECL> postState) {
 
-		if (validPreLinState.isBottom()) {
+		if (stateBeforeLeaving.isBottom()) {
 			return Validity.VALID;
 		}
 
@@ -249,7 +251,13 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		}
 
 		final AbstractMultiState<STATE, ACTION, VARDECL> calculatedPost =
-				stateAfterLeaving.apply(mPostOp, validPreLinState, act);
+				stateAfterLeaving.apply(mPostOp, stateBeforeLeaving, act);
+		return comparePostAndCalculatedPost(act, postState, calculatedPost);
+	}
+
+	private Validity comparePostAndCalculatedPost(final ACTION act,
+			final AbstractMultiState<STATE, ACTION, VARDECL> postState,
+			final AbstractMultiState<STATE, ACTION, VARDECL> calculatedPost) {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Calculated post: " + calculatedPost.toLogString());
 		}
@@ -262,16 +270,19 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Synchronized calculated post: " + calculatedPost.toLogString());
 		}
-		assert postState.getVariables()
+		assert synchronizedCalculatedPost.isBottom() || postState.getVariables()
 				.equals(synchronizedCalculatedPost.getVariables()) : MSG_TRACKED_VARIABLES_DIFFER;
 		final SubsetResult included = synchronizedCalculatedPost.isSubsetOf(postState);
+		assert assertIsSubsetOf(synchronizedCalculatedPost, postState, included) : MSG_IS_SUBSET_OF_IS_UNSOUND;
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Inclusion (NO): " + included);
+
 		}
 		if (included != SubsetResult.NONE) {
 			return trackPost(Validity.VALID, act);
 		}
 		final SubsetResult excluded = postState.isSubsetOf(synchronizedCalculatedPost);
+		assert assertIsSubsetOf(postState, synchronizedCalculatedPost, included) : MSG_IS_SUBSET_OF_IS_UNSOUND;
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Exclusion (ON): " + excluded);
 		}
@@ -321,16 +332,6 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		return (ACTION) act;
 	}
 
-	private Validity checkNonReturn(final IPredicate prePred, final IAction act, final IPredicate succPred) {
-		mBenchmark.continueEdgeCheckerTime();
-		final AbstractMultiState<STATE, ACTION, VARDECL> pre = getState(prePred);
-		final AbstractMultiState<STATE, ACTION, VARDECL> succ = getState(succPred);
-		final ACTION action = getAction(act);
-		final Validity rtr = checkNonReturnTransition(pre, action, succ);
-		mBenchmark.stopEdgeCheckerTime();
-		return rtr;
-	}
-
 	private AbstractMultiState<STATE, ACTION, VARDECL> synchronizeState(
 			final AbstractMultiState<STATE, ACTION, VARDECL> template,
 			final AbstractMultiState<STATE, ACTION, VARDECL> toSynchronize) {
@@ -368,8 +369,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	}
 
 	private IPredicate createPredicateFromState(final AbstractMultiState<STATE, ACTION, VARDECL> preState) {
-		final ManagedScript managedScript = mCsToolkit.getManagedScript();
-		return mPredicateUnifier.getPredicateFactory().newPredicate(preState.getTerm(managedScript.getScript()));
+		return mPredicateUnifier.getPredicateFactory().newPredicate(preState.getTerm(mManagedScript.getScript()));
 	}
 
 	private boolean assertValidity(final AbstractMultiState<STATE, ACTION, VARDECL> preState,
@@ -385,7 +385,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			precondHier = createPredicateFromState(validPreLinState);
 		}
 
-		final Validity checkedResult = isPostSound(precond, precondHier, transition, postcond);
+		final Validity checkedResult = assertIsPostSound(precond, precondHier, transition, postcond);
 		if (checkedResult == result) {
 			return true;
 		}
@@ -395,25 +395,26 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		mLogger.fatal("Check was " + result + " but should have been " + checkedResult);
 		mLogger.fatal("Failing Hoare triple:");
 		final String simplePre = SmtUtils
-				.simplify(mCsToolkit.getManagedScript(), precond.getFormula(), mServices, mSimplificationTechnique)
-				.toStringDirect();
+				.simplify(mManagedScript, precond.getFormula(), mServices, mSimplificationTechnique).toStringDirect();
 		if (precondHier == null) {
 			mLogger.fatal("Pre: {" + simplePre + "}");
 		} else {
 			mLogger.fatal("PreBefore: {" + simplePre + "}");
-			mLogger.fatal("PreAfter: {" + SmtUtils.simplify(mCsToolkit.getManagedScript(), precondHier.getFormula(),
-					mServices, mSimplificationTechnique).toStringDirect() + "}");
+			mLogger.fatal("PreAfter: {"
+					+ SmtUtils.simplify(mManagedScript, precondHier.getFormula(), mServices, mSimplificationTechnique)
+							.toStringDirect()
+					+ "}");
 		}
 		mLogger.fatal(
 				IcfgUtils.getTransformula(transition).getClosedFormula().toStringDirect() + " (" + transition + ")");
 		mLogger.fatal("Post: {" + SmtUtils
-				.simplify(mCsToolkit.getManagedScript(), postcond.getFormula(), mServices, mSimplificationTechnique)
-				.toStringDirect() + "}");
+				.simplify(mManagedScript, postcond.getFormula(), mServices, mSimplificationTechnique).toStringDirect()
+				+ "}");
 		return false;
 
 	}
 
-	private Validity isPostSound(final IPredicate precond, final IPredicate precondHier, final ACTION transition,
+	private Validity assertIsPostSound(final IPredicate precond, final IPredicate precondHier, final ACTION transition,
 			final IPredicate postcond) {
 		final Validity result;
 		if (transition instanceof Call) {
@@ -425,6 +426,46 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		}
 		mDebugHtc.releaseLock();
 		return result;
+	}
+
+	private boolean assertIsSubsetOf(final AbstractMultiState<STATE, ACTION, VARDECL> leftState,
+			final AbstractMultiState<STATE, ACTION, VARDECL> rightState, final SubsetResult subResult) {
+		final Script script = mManagedScript.getScript();
+		final Term left = leftState.getTerm(script);
+		final Term right = rightState.getTerm(script);
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Checking if " + left + " ⊆ " + right + " is " + subResult);
+		}
+
+		final LBool result;
+		final LBool expected;
+		final Term checkedTerm;
+		switch (subResult) {
+		case EQUAL:
+			checkedTerm = script.term("distinct", left, right);
+			expected = LBool.UNSAT;
+			result = SmtUtils.checkSatTerm(script, checkedTerm);
+			break;
+		case NONE:
+			checkedTerm = script.term("and", script.term("=>", right, left), script.term("=>", left, right));
+			expected = LBool.UNSAT;
+			result = SmtUtils.checkSatTerm(script, checkedTerm);
+			break;
+		case NON_STRICT:
+		case STRICT:
+			checkedTerm = script.term("=>", right, left);
+			expected = LBool.SAT;
+			result = SmtUtils.checkSatTerm(script, checkedTerm);
+			break;
+		default:
+			throw new UnsupportedOperationException("Unsupported subset result: " + subResult);
+		}
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Result of " + checkedTerm + " is " + result + " and should be " + expected);
+		}
+		return result == LBool.UNKNOWN || result == expected;
 	}
 
 }

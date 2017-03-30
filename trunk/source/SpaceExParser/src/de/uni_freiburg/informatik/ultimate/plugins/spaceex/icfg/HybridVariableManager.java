@@ -1,9 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -18,7 +18,7 @@ public class HybridVariableManager {
 	private final Map<HybridProgramVar, String> mProgramVar2Var;
 	private final Map<String, TermVariable> mVar2InVarTermVariable;
 	private final Map<String, TermVariable> mVar2OutVarTermVariable;
-	private final List<String> mConstants;
+	private final Set<String> mConstants;
 	private Map<TermVariable, String> mTermVariable2Var;
 	private final Map<TermVariable, String> mTermVariable2InVar;
 	private final Map<TermVariable, String> mTermVariable2OutVar;
@@ -31,7 +31,7 @@ public class HybridVariableManager {
 		mVar2OutVarTermVariable = new HashMap<>();
 		mTermVariable2InVar = new HashMap<>();
 		mTermVariable2OutVar = new HashMap<>();
-		mConstants = new ArrayList<>();
+		mConstants = new HashSet<>();
 	}
 	
 	public HybridProgramVar constructProgramVar(final String identifier, final String procedure) {
@@ -88,12 +88,16 @@ public class HybridVariableManager {
 		mTermVariable2OutVar.put(termVariable, varName);
 	}
 	
+	public Set<String> getConstants() {
+		return mConstants;
+	}
+	
 	public void addVarToConstants(final String var) {
 		mConstants.add(var);
 	}
 	
-	public List<String> getConstants() {
-		return mConstants;
+	public void addVarsToConstants(final Set<String> constants) {
+		mConstants.addAll(constants);
 	}
 	
 }

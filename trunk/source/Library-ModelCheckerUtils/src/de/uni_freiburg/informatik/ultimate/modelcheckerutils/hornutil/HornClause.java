@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,17 +41,22 @@ public class HornClause implements IInternalAction {
 	private final List<HornClausePredicateSymbol> mBodyPreds;
 
 	private final List<List<TermVariable>> mBodyPredToTermVariables;
+	private final List<List<HCInVar>> mBodyPredToHCInVars;
+	private List<List<IProgramVar>> mBodyPredToIProgramVar;
 
 	/**
 	 * Stores for the predicate symbol in the head at every argument position of the represented atom, which
 	 * TermVariable in the transition formula represents that argument in the represented atom.
 	 */
 	private final List<TermVariable> mHeadPredTermVariables;
+	private final List<IProgramVar> mHeadPredProgramVariables;
 	private final HornClausePredicateSymbol mHeadPredicate;
 
 	private final UnmodifiableTransFormula mTransitionFormula;
 
 	private final HCSymbolTable mHornClauseSymbolTable;
+
+
 	
 /**
 	 * Standard constructor for a Horn clause as used by TreeAutomizer.
@@ -90,7 +96,11 @@ public class HornClause implements IInternalAction {
 		mHeadPredicate = head;
 		mBodyPreds = bodyPreds;
 		
+		mBodyPredToHCInVars = new ArrayList<>();
+		mBodyPredToIProgramVar = new ArrayList<>();
 		
+		mHeadPredProgramVariables = new ArrayList<>();
+
 		/*
 		 * build the TransFormula
 		 */
@@ -99,15 +109,20 @@ public class HornClause implements IInternalAction {
 			final TermVariable tv = mHeadPredTermVariables.get(i);
 			final Sort sort = tv.getSort();
 			final HCOutVar hcOutVar = symbolTable.getOrConstructHCOutVar(i, sort);
+			mHeadPredProgramVariables.add(hcOutVar);
 			outVars.put(hcOutVar, tv);
 		}
 	
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
 		for (int i = 0; i < mBodyPredToTermVariables.size(); i++) {
+			mBodyPredToHCInVars.add(new ArrayList<>());
+			mBodyPredToIProgramVar.add(new ArrayList<>());
 			for (int j = 0; j < mBodyPredToTermVariables.get(i).size(); j++) {
 				final TermVariable tv = mBodyPredToTermVariables.get(i).get(j);
 				final Sort sort = tv.getSort();
 				final HCInVar hcInVar = symbolTable.getOrConstructHCInVar(i, j, sort);
+				mBodyPredToHCInVars.get(i).add(hcInVar);
+				mBodyPredToIProgramVar.get(i).add(hcInVar);
 				inVars.put(hcInVar, tv);
 			}
 		}
@@ -135,6 +150,34 @@ public class HornClause implements IInternalAction {
 	public List<HornClausePredicateSymbol> getBodyPredicates() {
 //		return mBodyPredToTermVariables.keySet();
 		return mBodyPreds;
+	}
+	
+	public int getNoBodyPredicates() {
+		return mBodyPreds.size();
+	}
+	
+	public TermVariable getPredArgTermVariable(int predPos, int argPos) {
+		return mBodyPredToTermVariables.get(predPos).get(argPos);
+	}
+	
+	public List<TermVariable> getTermVariablesForPredPos(int predPos) {
+		return mBodyPredToTermVariables.get(predPos);
+	}
+	
+	public List<HCInVar> getHCInVarsForPredPos(int predPos) {
+		return mBodyPredToHCInVars.get(predPos);
+	}
+	
+	public List<IProgramVar> getProgramVarsForPredPos(int predPos) {
+		return mBodyPredToIProgramVar.get(predPos);
+	}
+
+	public List<TermVariable> getTermVariablesForHeadPred() {
+		return mHeadPredTermVariables;
+	}
+	
+	public List<IProgramVar> getProgramVarsForHeadPred() {
+		return mHeadPredProgramVariables;
 	}
 	
 	@Override

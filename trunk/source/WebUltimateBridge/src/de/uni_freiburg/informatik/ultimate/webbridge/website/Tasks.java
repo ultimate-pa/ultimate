@@ -191,7 +191,7 @@ public class Tasks {
 
 		addWorker(NameStrings.TOOL_AUTOMIZER_BUCHI, NameStrings.TASK_ANALYZE, NameStrings.DESCRIPTION_AUTOMIZER_BUCHI);
 
-		addWorker("Kojak", NameStrings.TASK_VERIFY, "A software model checker");
+		addWorker(NameStrings.TOOL_KOJAK, NameStrings.TASK_VERIFY, "A software model checker");
 
 		addWorker(NameStrings.TOOL_TAIPAN, NameStrings.TASK_VERIFY, NameStrings.DESCRIPTION_TAIPAN);
 
@@ -199,7 +199,7 @@ public class Tasks {
 
 		addWorker(NameStrings.TOOL_LASSO_RANKER, NameStrings.TASK_SYNTHESIZE, NameStrings.DESCRIPTION_LASSO_RANKER);
 
-		final Worker automataScriptInterpreter = addWorker(NameStrings.TOOL_AUTOMATA_SCRIPT_INTERPRETER,
+		final Worker automataScriptInterpreter = addWorker(NameStrings.TOOL_AUTOMATA_LIBRARY,
 				NameStrings.TASK_RUN, NameStrings.DESCRIPTION_AUTOMATA_SCRIPT_INTERPRETER);
 		automataScriptInterpreter.setUserInfo("");
 

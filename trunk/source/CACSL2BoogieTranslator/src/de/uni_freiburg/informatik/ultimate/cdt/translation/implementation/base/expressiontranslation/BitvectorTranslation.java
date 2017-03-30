@@ -380,7 +380,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		final ASTType[] paramASTTypes = new ASTType[2];
 		paramASTTypes[0] = new NamedType(loc, BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
 		paramASTTypes[1] = new PrimitiveType(loc, SFO.REAL);
-		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type);
+		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type.getType());
 		final Attribute[] attributes =
 				generateAttributes(loc, mOverapproximateFloatingPointOperations, smtFunctionName, new int[] { fps.getExponent(), fps.getSignificant() });
 		final ASTType resultASTType = mTypeHandler.cType2AstType(loc, type);
@@ -390,13 +390,13 @@ public class BitvectorTranslation extends AExpressionTranslation {
 
 	private void declareFloatingPointConstructorFromBitvec(final ILocation loc, final CPrimitive type) {
 		final String smtFunctionName = "fp";
-		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type);
+		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type.getType());
 		final ASTType[] paramASTTypes = new ASTType[3];
 		paramASTTypes[0] = new PrimitiveType(loc, "bv1");
 		paramASTTypes[1] = new PrimitiveType(loc, "bv" + fps.getExponent());
 		paramASTTypes[2] = new PrimitiveType(loc, "bv" + (fps.getSignificant() - 1));
 		final Attribute[] attributes =
-				generateAttributes(loc, mOverapproximateFloatingPointOperations, smtFunctionName, new int[] { 1, fps.getExponent(), fps.getSignificant() - 1 });
+				generateAttributes(loc, mOverapproximateFloatingPointOperations, smtFunctionName, null);
 		final ASTType resultASTType = mTypeHandler.cType2AstType(loc, type);
 		mFunctionDeclarations.declareFunction(loc, SFO.getBoogieFunctionName(smtFunctionName, type), attributes,
 				resultASTType, paramASTTypes);
@@ -668,7 +668,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			final ASTType roundingMode = new NamedType(loc, BOOGIE_ROUNDING_MODE_IDENTIFIER, new ASTType[0]);
 			if (newType.isFloatingType()) {
 				final int[] indices = new int[2];
-				final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(newType);
+				final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(newType.getType());
 				indices[0] = fps.getExponent();
 				indices[1] = fps.getSignificant();
 				if (oldType.isIntegerType() && mTypeSizes.isUnsigned(oldType)) {
@@ -723,7 +723,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	}
 
 	public void declareFloatConstant(final ILocation loc, final String smtFunctionName, final CPrimitive type) {
-		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type);
+		final FloatingPointSize fps = mTypeSizes.getFloatingPointSize(type.getType());
 		final Attribute[] attributes =
 				generateAttributes(loc, mOverapproximateFloatingPointOperations, smtFunctionName, new int[] { fps.getExponent(), fps.getSignificant() });
 		final ASTType asttype = mTypeHandler.cType2AstType(loc, type);
@@ -870,6 +870,25 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		final Expression expr =
 				new FunctionApplication(loc, boogieFunctionName, new Expression[] { argument.getValue() });
 		return new RValue(expr, resultCType, true);
+	}
+	
+	
+	@Override
+	public Expression transformBitvectorToFloat(final ILocation loc, final Expression bitvector,
+			final CPrimitives floatType) {
+		final FloatingPointSize floatingPointSize = mTypeSizes.getFloatingPointSize(floatType);
+		final Expression signBit = extractBits(loc, bitvector, 1, 0);
+		final Expression exponentBits = extractBits(loc, bitvector, 1 + floatingPointSize.getExponent(), 1);
+		final Expression significantBits = extractBits(loc, bitvector,
+				floatingPointSize.getExponent() + floatingPointSize.getSignificant(),
+				1 + floatingPointSize.getExponent());
+
+		final String smtFunctionName = "fp";
+		final Expression result = new FunctionApplication(loc,
+				SFO.getBoogieFunctionName(smtFunctionName, new CPrimitive(floatType)),
+				new Expression[] { signBit, exponentBits, significantBits });
+		return result;
+
 	}
 
 }

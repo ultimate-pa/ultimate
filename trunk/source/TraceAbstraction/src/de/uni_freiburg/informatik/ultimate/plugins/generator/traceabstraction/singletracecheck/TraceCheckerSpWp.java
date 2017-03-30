@@ -64,7 +64,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.PredicatePostprocessor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.IPredicatePostprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException.Reason;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -271,7 +271,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (mConstructForwardInterpolantSequence) {
 			mLogger.info("Computing forward predicates...");
 			try {
-				final List<PredicatePostprocessor> postprocs = new ArrayList<>();
+				final List<IPredicatePostprocessor> postprocs = new ArrayList<>();
 				if (mLiveVariables) {
 					postprocs.add(new LiveVariablesPostprocessor_Forward(liveVariables));
 				}
@@ -315,7 +315,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		if (wasBackwardsPredicatesComputationRequested()) {
 			mLogger.info("Computing backward predicates...");
 			try {
-				final List<PredicatePostprocessor> postprocs = new ArrayList<>();
+				final List<IPredicatePostprocessor> postprocs = new ArrayList<>();
 				if (mLiveVariables) {
 					postprocs.add(new LiveVariablesPostprocessor_Backward(liveVariables));
 				}
@@ -518,7 +518,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		return codeBlocksInUnsatCore;
 	}
 
-	public class LiveVariablesPostprocessor_Forward implements PredicatePostprocessor {
+	public class LiveVariablesPostprocessor_Forward implements IPredicatePostprocessor {
 		private final Set<IProgramVar>[] mRelevantVars;
 
 		public LiveVariablesPostprocessor_Forward(final Set<IProgramVar>[] relevantVars) {
@@ -542,7 +542,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 
 	}
 
-	public class LiveVariablesPostprocessor_Backward implements PredicatePostprocessor {
+	public class LiveVariablesPostprocessor_Backward implements IPredicatePostprocessor {
 		private final Set<IProgramVar>[] mRelevantVars;
 
 		public LiveVariablesPostprocessor_Backward(final Set<IProgramVar>[] relevantVars) {
@@ -566,7 +566,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		}
 	}
 
-	public class UnifyPostprocessor implements PredicatePostprocessor {
+	public class UnifyPostprocessor implements IPredicatePostprocessor {
 		@Override
 		public IPredicate postprocess(final IPredicate pred, final int i) {
 			final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(pred.getFormula());

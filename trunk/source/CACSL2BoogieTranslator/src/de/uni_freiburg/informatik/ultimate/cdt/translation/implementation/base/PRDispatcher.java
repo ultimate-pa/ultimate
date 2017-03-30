@@ -145,8 +145,8 @@ public class PRDispatcher extends Dispatcher {
 	
     private final LinkedHashSet<IASTNode> mVariablesOnHeap;
 
-	public PRDispatcher(CACSL2BoogieBacktranslator backtranslator,
-			IUltimateServiceProvider services, ILogger logger, LinkedHashMap<String,Integer> functionToIndex, LinkedHashSet<IASTDeclaration> reachableDeclarations) {
+	public PRDispatcher(final CACSL2BoogieBacktranslator backtranslator,
+			final IUltimateServiceProvider services, final ILogger logger, final LinkedHashMap<String,Integer> functionToIndex, final LinkedHashSet<IASTDeclaration> reachableDeclarations) {
 		super(backtranslator, services, logger);
 		mFunctionToIndex = functionToIndex;
 		this.reachableDeclarations = reachableDeclarations;
@@ -168,12 +168,12 @@ public class PRDispatcher extends Dispatcher {
 		final boolean bitvectorTranslation = getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_BITVECTOR_TRANSLATION);
 		final boolean overapproximateFloatingPointOperations = getPreferences().getBoolean(CACSLPreferenceInitializer.LABEL_OVERAPPROXIMATE_FLOATS);
 		mNameHandler = new NameHandler(mBacktranslator);
-		mTypeHandler = new SVCompTypeHandler(!bitvectorTranslation);
+		mTypeHandler = new SVCompTypeHandler(bitvectorTranslation);
 		mCHandler = new SvComp14CHandler(this, mBacktranslator, mLogger, mTypeHandler, bitvectorTranslation, overapproximateFloatingPointOperations, mNameHandler);
 	}
 
 	@Override
-	public Result dispatch(DecoratorNode node) {
+	public Result dispatch(final DecoratorNode node) {
 //		this.decoratorTree = node;
 //		this.decoratorTreeIterator = node.iterator();
 		if (node.getCNode() != null) {
@@ -183,7 +183,7 @@ public class PRDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public Result dispatch(IASTNode n) {
+	public Result dispatch(final IASTNode n) {
 		if (n instanceof IASTTranslationUnit) {
 			return mCHandler.visit(this, ((IASTTranslationUnit) n));
 		}
@@ -426,12 +426,12 @@ public class PRDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public Result dispatch(IASTPreprocessorStatement node) {
+	public Result dispatch(final IASTPreprocessorStatement node) {
         return new SkipResult();
 	}
 
 	@Override
-	public InferredType dispatch(IType type) {
+	public InferredType dispatch(final IType type) {
 		if (type instanceof IBasicType) {
 			return mTypeHandler.visit(this, (IBasicType) type);
 		}
@@ -445,13 +445,13 @@ public class PRDispatcher extends Dispatcher {
 	}
 
 	@Override
-	public Result dispatch(ACSLNode node) {
+	public Result dispatch(final ACSLNode node) {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	protected void preRun(DecoratorNode node) {
+	protected void preRun(final DecoratorNode node) {
 		// TODO Auto-generated method stub
 
 	}
@@ -474,7 +474,7 @@ public class PRDispatcher extends Dispatcher {
 	}
 	
 	
-	public void moveArrayAndStructIdsOnHeap(ILocation loc, Expression expr, Map<VariableDeclaration, ILocation> auxVars) {
+	public void moveArrayAndStructIdsOnHeap(final ILocation loc, final Expression expr, final Map<VariableDeclaration, ILocation> auxVars) {
 		final Set<String> auxVarIds = new HashSet<>();
 		for (final VariableDeclaration decl : auxVars.keySet()) {
 			for (final VarList varList : decl.getVariables()) {
@@ -500,7 +500,7 @@ public class PRDispatcher extends Dispatcher {
 		}
 	}
 	
-	public void moveIdOnHeap(ILocation loc, IdentifierExpression idExpr) {
+	public void moveIdOnHeap(final ILocation loc, final IdentifierExpression idExpr) {
 		final String id = idExpr.getIdentifier();
 		final SymbolTable st = mCHandler.getSymbolTable();
 		final String cid = st.getCID4BoogieID(id, loc);

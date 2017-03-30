@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Para
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.TransitionType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceGroup;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridPreprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridSystemHelper;
 
 public class HybridAutomaton {
@@ -147,22 +148,20 @@ public class HybridAutomaton {
 		}
 		
 		final Location newLoc = new Location(location);
-		newLoc.setInvariant(location.getInvariant());
-		newLoc.setFlow(location.getFlow());
+		newLoc.setInvariant(HybridPreprocessor.preprocessStatement(location.getInvariant()));
+		newLoc.setFlow(HybridPreprocessor.preprocessStatement(location.getFlow()));
 		if (mPreferenceManager != null && mPreferenceManager.isLocationForbidden(mName, newLoc.getName())) {
 			newLoc.setForbidden(true);
 			mPreferenceManager.getForbiddenGroups().forEach(forb -> {
 				if (forb.getLocations().containsKey(mName)
 						&& forb.getLocations().get(mName).contains(newLoc.getName())) {
-					newLoc.setForbiddenConstraint(forb.getVariableInfix());
-				} else if (!forb.hasLocations() && forb.hasVariables()) {
-					newLoc.setForbiddenConstraint(forb.getVariableInfix());
+					newLoc.setForbiddenConstraint(HybridPreprocessor.preprocessStatement(forb.getVariableInfix()));
 				}
 			});
 		} else if (mPreferenceManager != null) {
 			mPreferenceManager.getForbiddenGroups().forEach(forb -> {
 				if (forb.hasVariables() && !forb.hasLocations()) {
-					newLoc.setForbiddenConstraint(forb.getVariableInfix());
+					newLoc.setForbiddenConstraint(HybridPreprocessor.preprocessStatement(forb.getVariableInfix()));
 				}
 			});
 		}
@@ -184,9 +183,9 @@ public class HybridAutomaton {
 		}
 		
 		final Transition newTrans = new Transition(source, target);
-		newTrans.setGuard(trans.getGuard());
+		newTrans.setGuard(HybridPreprocessor.preprocessStatement(trans.getGuard()));
 		newTrans.setLabel(trans.getLabel());
-		newTrans.setUpdate(trans.getAssignment());
+		newTrans.setUpdate(HybridPreprocessor.preprocessStatement(trans.getAssignment()));
 		
 		mTransitions.add(newTrans);
 		
@@ -199,6 +198,7 @@ public class HybridAutomaton {
 	 * Function that renames constants according to the replacements the preference manager calculated.
 	 */
 	public void renameConstants() {
+		// TODO: do while renaming binds.
 		final Map<String, Map<String, String>> requiresRename = mPreferenceManager.getRequiresRename();
 		if (requiresRename.containsKey(mName)) {
 			// reverse map so we cna use an existing function instead of writing a new one.
@@ -253,10 +253,10 @@ public class HybridAutomaton {
 	private void renameTransitionVariables(final String loc, final String glob) {
 		mTransitions.forEach(trans -> {
 			String guard = trans.getGuard() != null ? trans.getGuard() : "";
-			guard = guard.replaceAll(loc, glob);
+			guard = guard.replaceAll("\\b" + loc + "\\b", glob);
 			trans.setGuard(guard);
 			String update = trans.getUpdate() != null ? trans.getUpdate() : "";
-			update = update.replaceAll(loc, glob);
+			update = update.replaceAll("\\b" + loc + "\\b", glob);
 			trans.setUpdate(update);
 		});
 	}
@@ -364,4 +364,5 @@ public class HybridAutomaton {
 	public Map<String, Integer> getNametoId() {
 		return mNametoId;
 	}
+	
 }

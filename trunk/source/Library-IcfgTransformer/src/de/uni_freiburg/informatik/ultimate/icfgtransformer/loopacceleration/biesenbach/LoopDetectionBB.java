@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Extracts the loops from an {@link IIcfg}.
@@ -107,36 +108,9 @@ public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 
 			mLoopIcfgs.addLast(resultLoop);
 		}
-
-		// DD: Some code snippets
-		// final CfgSmtToolkit cfgSmtToolkit = originalIcfg.getCfgSmtToolkit();
-		// final ManagedScript mgScript = cfgSmtToolkit.getManagedScript();
-		//
-		// mgScript.lock(this);
-		// final Term formula = null;
-		// // final LBool result = SmtUtils.checkSatTerm(mgScript.getScript(), formula);
-		// mgScript.push(this, 1);
-		// // ...
-		// final Rational one = Rational.valueOf(1, 1);
-		// final Term oneTerm = one.toTerm(mgScript.getScript().sort("Int"));
-		// mgScript.assertTerm(this, oneTerm);
-		// final Model model = mgScript.getScript().getModel();
-		//
-		// final SimplificationTechnique simpl = SimplificationTechnique.SIMPLIFY_DDA;
-		// final XnfConversionTechnique xnfConvTech = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
-		// final PredicateTransformer ptf = new PredicateTransformer(services, mgScript, simpl, xnfConvTech);
-		//
-		// final BasicPredicateFactory predFac =
-		// new BasicPredicateFactory(services, mgScript, cfgSmtToolkit.getSymbolTable(), simpl, xnfConvTech);
-		//
-		// final UnmodifiableTransFormula tf = null;
-		// final IPredicate pre = predFac.newPredicate(mgScript.getScript().term("true"));
-		// final Term postTerm = ptf.strongestPostcondition(pre, tf);
-		// final IPredicate post = predFac.newPredicate(postTerm);
-		//
-		// mgScript.pop(this, 1);
-		// mgScript.unlock(this);
-
+		
+		LoopAccelerationMatrix lam = new LoopAccelerationMatrix(mLogger, mLoopIcfgs.getLast(), services);
+		
 		mLogger.info("BB_End...");
 	}
 

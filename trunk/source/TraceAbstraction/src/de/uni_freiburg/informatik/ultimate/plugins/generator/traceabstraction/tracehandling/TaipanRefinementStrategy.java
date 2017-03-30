@@ -61,6 +61,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * {@link IRefinementStrategy} that is used by Taipan. It first tries an {@link InterpolatingTraceChecker} using
@@ -76,11 +77,6 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> implements IRefinementStrategy<LETTER> {
-	/**
-	 * @see #getModeForWindowsUsers().
-	 */
-	private static final boolean I_AM_A_POOR_WINDOWS_USER = false;
-
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
 
 	private final IUltimateServiceProvider mServices;
@@ -321,7 +317,7 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> impleme
 		final boolean useTimeout = mHasShownInfeasibilityBefore;
 
 		final Mode scriptMode;
-		if (I_AM_A_POOR_WINDOWS_USER) {
+		if (CoreUtil.OS_IS_WINDOWS) {
 			scriptMode = getModeForWindowsUsers();
 		} else {
 			scriptMode = mCurrentMode;
@@ -477,7 +473,7 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> impleme
 
 	@Override
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
-		return RefinementStrategyExceptionBlacklist.NONE;
+		return RefinementStrategyExceptionBlacklist.UNKNOWN;
 	}
 
 	/**

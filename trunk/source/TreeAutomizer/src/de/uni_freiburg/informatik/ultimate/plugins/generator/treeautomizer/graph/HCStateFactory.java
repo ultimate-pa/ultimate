@@ -226,7 +226,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		assert state1.getVars().equals(state2.getVars());
 		assert !(state2 instanceof HCPredicate) : "convention: first argument is an HCPredicate, second is not..";
 
-		final Set<HornClausePredicateSymbol> state1PredSymbols = ((HCPredicate) state1).getHcPredicatedSymbols();
+		final Set<HornClausePredicateSymbol> state1PredSymbols = ((HCPredicate) state1).getHcPredicateSymbols();
 
 		final Term conjoinedFormula = mSimplifier.getSimplifiedTerm(Util.and(mBackendSmtSolverScript.getScript(), 
 				state1.getFormula(), state2.getFormula()));
@@ -253,7 +253,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 
 		for (IPredicate pred : states) {
 			if (pred instanceof HCPredicate) {
-				mergedLocations.addAll(((HCPredicate) pred).getHcPredicatedSymbols());
+				mergedLocations.addAll(((HCPredicate) pred).getHcPredicateSymbols());
 				assert varsForHcPred == null || varsForHcPred.equals(((HCPredicate) pred).getSignature()) : "merging "
 						+ "predicates with a different signature. Does that make sense??";
 				varsForHcPred = ((HCPredicate) pred).getSignature();

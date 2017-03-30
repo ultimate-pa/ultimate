@@ -59,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * {@link RubberTaipanRefinementStrategy} is the small brother of the {@link TaipanRefinementStrategy}. It behaves the
@@ -68,11 +69,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> implements IRefinementStrategy<LETTER> {
-	/**
-	 * @see #getModeForWindowsUsers().
-	 */
-	private static final boolean I_AM_A_POOR_WINDOWS_USER = false;
-
 	private static final String UNKNOWN_MODE = "Unknown mode: ";
 
 	private final IUltimateServiceProvider mServices;
@@ -310,7 +306,7 @@ public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> i
 		final boolean useTimeout = mHasShownInfeasibilityBefore;
 
 		final Mode scriptMode;
-		if (I_AM_A_POOR_WINDOWS_USER) {
+		if (CoreUtil.OS_IS_WINDOWS) {
 			scriptMode = getModeForWindowsUsers();
 		} else {
 			scriptMode = mCurrentMode;
@@ -462,7 +458,7 @@ public class RubberTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> i
 
 	@Override
 	public RefinementStrategyExceptionBlacklist getExceptionBlacklist() {
-		return RefinementStrategyExceptionBlacklist.NONE;
+		return RefinementStrategyExceptionBlacklist.UNKNOWN;
 	}
 
 	/**

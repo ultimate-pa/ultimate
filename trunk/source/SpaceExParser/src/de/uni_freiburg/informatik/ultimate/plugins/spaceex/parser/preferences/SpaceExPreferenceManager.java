@@ -77,6 +77,7 @@ public class SpaceExPreferenceManager {
 	private boolean mHasPreferenceGroups;
 	private boolean mHasForbiddenGroup;
 	private final SpaceExMathHelper mMathHelper;
+	// Trace abstraction settings / SMT toolkit settings
 	private SolverMode mSolverMode;
 	private boolean mFakeNonIncrementalScript;
 	private boolean mDumpSmtScriptToFile;
@@ -108,20 +109,22 @@ public class SpaceExPreferenceManager {
 				.getBoolean(SpaceExParserPreferenceInitializer.LABEL_LOAD_CONFIG_FILE_OF_SPACEEX_MODEL);
 		// check if the configfile name is not empty
 		// if it is search for a config file in the directory.
-		if (!"".equals(configfile)) {
-			final File config = new File(configfile);
-			if (config.exists() && !config.isDirectory()) {
-				parseConfigFile(config);
-			}
+		if (!configfile.isEmpty()) {
+			initializeConfigParsing(configfile);
 		} else if (loadconfig) {
 			configfile = spaceExFile.getAbsolutePath().replaceAll(".xml", ".cfg");
-			final File config = new File(configfile);
-			if (config.exists() && !config.isDirectory()) {
-				parseConfigFile(config);
-			} else {
-				mLogger.info("no configfile with the name " + configfile + " exists");
-			}
+			initializeConfigParsing(configfile);
 		}
+	}
+	
+	private void initializeConfigParsing(final String configfile) throws Exception {
+		final File config = new File(configfile);
+		if (config.exists() && !config.isDirectory()) {
+			parseConfigFile(config);
+		} else {
+			mLogger.info("no configfile with the name " + configfile + " exists");
+		}
+		
 	}
 	
 	// function that get the settings of the TraceAbstraction in order to create the correct solver.
@@ -197,9 +200,9 @@ public class SpaceExPreferenceManager {
 	private void parseInitially(final String initially) {
 		if (!initially.isEmpty()) {
 			final AtomicInteger id = new AtomicInteger(0);
-			final List<String> formerGroups = mMathHelper.infixToGroups(initially);
+			final List<String> groups = mMathHelper.infixToGroups(initially);
 			// Parse the found groups and create Preference Groups.
-			for (final String group : formerGroups) {
+			for (final String group : groups) {
 				final SpaceExPreferenceGroup preferenceGroup = createPreferenceGroup(group, id.incrementAndGet());
 				mPreferenceGroups.put(preferenceGroup.getId(), preferenceGroup);
 				if (mLogger.isDebugEnabled()) {
@@ -219,7 +222,7 @@ public class SpaceExPreferenceManager {
 	}
 	
 	private SpaceExForbiddenGroup createForbiddenGroup(final String infix, final int id) {
-		String initialVariableInfix = "";
+		final StringBuilder sb = new StringBuilder();
 		final Map<String, List<String>> initialLocations = new HashMap<>();
 		// split at &
 		final String[] splitted = infix.split("&");
@@ -251,14 +254,12 @@ public class SpaceExPreferenceManager {
 				String varString = varMatcher.group(0);
 				final List<Pair<String, String>> renameList = analyseVariable(varMatcher.group(0));
 				for (final Pair<String, String> pair : renameList) {
-					mLogger.info(pair.getFirst());
-					mLogger.info(pair.getSecond());
 					varString = varString.replaceAll(pair.getFirst(), pair.getSecond());
 				}
-				mLogger.info(varString);
-				initialVariableInfix += varString + "&";
+				sb.append(varString + "&");
 			}
 		}
+		String initialVariableInfix = sb.toString();
 		if (!initialVariableInfix.isEmpty()) {
 			initialVariableInfix = initialVariableInfix.substring(0, initialVariableInfix.length() - 1);
 		}
@@ -267,7 +268,7 @@ public class SpaceExPreferenceManager {
 	}
 	
 	private SpaceExPreferenceGroup createPreferenceGroup(final String infix, final int id) {
-		String initialVariableInfix = "";
+		final StringBuilder sb = new StringBuilder();
 		final Map<String, String> initialLocations = new HashMap<>();
 		// split at &
 		final String[] splitted = infix.split("&");
@@ -296,9 +297,10 @@ public class SpaceExPreferenceManager {
 					varString = varString.replaceAll(pair.getFirst(), pair.getSecond());
 				}
 				saveDirectAssignments(varString, id);
-				initialVariableInfix += varString + "&";
+				sb.append(varString + "&");
 			}
 		}
+		String initialVariableInfix = sb.toString();
 		if (!initialVariableInfix.isEmpty()) {
 			initialVariableInfix = initialVariableInfix.substring(0, initialVariableInfix.length() - 1);
 		}

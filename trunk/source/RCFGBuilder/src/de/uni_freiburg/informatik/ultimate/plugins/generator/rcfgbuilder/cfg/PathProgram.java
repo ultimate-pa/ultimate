@@ -51,12 +51,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
- * An {@link IIcfg} representing an explicitly constructed path program that
- * results from the projection of a given {@link IIcfg} to a {@link Set} of
- * transitions.
+ * An {@link IIcfg} representing an explicitly constructed path program that results from the projection of a given
+ * {@link IIcfg} to a {@link Set} of transitions.
  *
- * The transition labels of a {@link PathProgram} are the {@link IAction}s of
- * the original {@link IIcfg}.
+ * The transition labels of a {@link PathProgram} are the {@link IAction}s of the original {@link IIcfg}.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -87,19 +85,16 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	}
 
 	/**
-	 * Create a new {@link PathProgram} from an {@link IIcfg} and from a set of
-	 * transitions that should be retained.
+	 * Create a new {@link PathProgram} from an {@link IIcfg} and from a set of transitions that should be retained.
 	 * 
 	 * @param identifier
 	 *            The new {@link IIcfg} identifier of the path program.
 	 * @param originalIcfg
-	 *            The {@link IIcfg} from which the path program should be
-	 *            constructed.
+	 *            The {@link IIcfg} from which the path program should be constructed.
 	 * @param allowedTransitions
 	 *            The set of transitions that should be retained.
-	 * @return A {@link PathProgramConstructionResult} that contains the
-	 *         {@link PathProgram} and an explicit mapping between the locations
-	 *         of the given {@link IIcfg} and the locations of the path program.
+	 * @return A {@link PathProgramConstructionResult} that contains the {@link PathProgram} and an explicit mapping
+	 *         between the locations of the given {@link IIcfg} and the locations of the path program.
 	 */
 	public static PathProgramConstructionResult constructPathProgram(final String identifier,
 			final IIcfg<?> originalIcfg, final Set<? extends IcfgEdge> allowedTransitions) {
@@ -161,8 +156,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	}
 
 	/**
-	 * The result of a path program construction. Contains the path program and
-	 * a mapping of locations.
+	 * The result of a path program construction. Contains the path program and a mapping of locations.
 	 * 
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *

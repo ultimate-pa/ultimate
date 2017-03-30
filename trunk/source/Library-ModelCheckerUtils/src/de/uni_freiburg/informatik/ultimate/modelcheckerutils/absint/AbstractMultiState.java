@@ -156,6 +156,17 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		if (other == null) {
 			return SubsetResult.NONE;
 		}
+
+		if (other.isBottom() && isBottom()) {
+			return SubsetResult.EQUAL;
+		}
+		if (other.isBottom()) {
+			return SubsetResult.NONE;
+		}
+		if (isBottom()) {
+			return SubsetResult.STRICT;
+		}
+
 		if (!other.getVariables().equals(getVariables())) {
 			return SubsetResult.NONE;
 		}

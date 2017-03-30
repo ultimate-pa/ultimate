@@ -196,6 +196,12 @@ public class PathProgramDumper {
 
 		if (USE_BOOGIE_INPUT) {
 			final BoogieIcfgContainer boogieIcfg = (BoogieIcfgContainer) icfg;
+			for (final Entry<String, Procedure> entry : boogieIcfg.getBoogieDeclarations().getProcSpecification().entrySet()) {
+				if (entry.getValue().getBody() == null && !boogieIcfg.getProcedureEntryNodes().containsKey(entry.getKey())) {
+					// is specification without implementation
+					newDeclarations.add(entry.getValue());
+				}
+			}
 			newDeclarations.addAll(0,
 					Arrays.asList(filter(boogieIcfg.getBoogieDeclarations().getGlobalVarDeclarations(),
 							extractIdentifiers(globalVars))));

@@ -34,9 +34,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * Representation of an abstract state predicate that contains an abstract state from abstract interpretation.
@@ -48,7 +46,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @param <ACTION>
  * @param <VARDECL>
  */
-public class AbsIntPredicate<STATE extends IAbstractState<STATE, VARDECL>, VARDECL> implements IPredicate {
+public class AbsIntPredicate<STATE extends IAbstractState<STATE, VARDECL>, VARDECL> extends BasicPredicate {
+
+	private static final long serialVersionUID = 1L;
 
 	private final Set<STATE> mAbstractStates;
 	private final IPredicate mPredicate;
@@ -62,6 +62,8 @@ public class AbsIntPredicate<STATE extends IAbstractState<STATE, VARDECL>, VARDE
 	}
 
 	public AbsIntPredicate(final IPredicate classicPredicate, final Set<STATE> abstractState) {
+		super(classicPredicate.hashCode(), classicPredicate.getProcedures(), classicPredicate.getFormula(),
+				classicPredicate.getVars(), classicPredicate.getClosedFormula());
 		mAbstractStates = Objects.requireNonNull(abstractState);
 		mPredicate = Objects.requireNonNull(classicPredicate);
 		assert !mAbstractStates.isEmpty();
@@ -75,50 +77,6 @@ public class AbsIntPredicate<STATE extends IAbstractState<STATE, VARDECL>, VARDE
 	@Visualizable
 	public IPredicate getBackingPredicate() {
 		return mPredicate;
-	}
-
-	@Override
-	public String[] getProcedures() {
-		return mPredicate.getProcedures();
-	}
-
-	@Override
-	public Term getFormula() {
-		return mPredicate.getFormula();
-	}
-
-	@Override
-	public Term getClosedFormula() {
-		return mPredicate.getClosedFormula();
-	}
-
-	@Override
-	public Set<IProgramVar> getVars() {
-		return mPredicate.getVars();
-	}
-
-	@Override
-	public int hashCode() {
-		return mPredicate.hashCode();
-	}
-
-	@Override
-	public boolean equals(final Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (obj == null) {
-			return false;
-		}
-
-		if (obj instanceof IPredicate && !(obj instanceof AbsIntPredicate<?, ?>)) {
-			return mPredicate.equals(obj);
-		}
-		if (getClass() != obj.getClass()) {
-			return false;
-		}
-		final AbsIntPredicate<?, ?> other = (AbsIntPredicate<?, ?>) obj;
-		return mPredicate.equals(other.mPredicate);
 	}
 
 	@Override

@@ -2,7 +2,7 @@ package de.uni_freiburg.informatik.ultimate.webbridge.toolchains;
 
 public class NameStrings {
 
-	public static final String TOOL_AUTOMATA_SCRIPT_INTERPRETER = "Automata Script Interpreter";
+	public static final String TOOL_AUTOMATA_LIBRARY = "Automata Library";
 	public static final String TOOL_AUTOMIZER = "Automizer";
 	public static final String TOOL_AUTOMIZER_BUCHI = "Büchi Automizer";
 	public static final String TOOL_LASSO_RANKER = "Lasso Ranker";
