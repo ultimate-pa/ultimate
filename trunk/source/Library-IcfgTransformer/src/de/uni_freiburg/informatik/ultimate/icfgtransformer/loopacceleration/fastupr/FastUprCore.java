@@ -29,9 +29,9 @@ public class FastUprCore {
 	private UnmodifiableTransFormula prefixLoop() {
 		int b = 0;
 		final boolean resultFound = false;
-		while (!resultFound) {
-			periodLoop(b++);
-		}
+		// while (!resultFound) {
+		periodLoop(b++);
+		// }
 
 		return null;
 	}
