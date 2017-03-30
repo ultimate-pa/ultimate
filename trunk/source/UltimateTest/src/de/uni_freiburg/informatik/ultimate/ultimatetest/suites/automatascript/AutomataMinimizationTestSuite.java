@@ -75,9 +75,12 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 	private static int sTimeout = 60 * 1_000;
 	private static final String[] mDirectories = {
 //			"examples/Automata/regression/nwa/operations/minimization",
+//			"examples/Automata/benchmarks/nwa/operations/minimization",
 
-			"examples/Automata/nwaOperations/MinimizationBenchmarks/workspace",
-//			"examples/Automata/nwaOperations/MinimizationBenchmarks/quickeval",
+			
+			// The following folder is not in the repository.
+			// Copy your automata benchmark sets into this folder.
+			"examples/Automata/benchmarks/nwa/operations/minimization/workspace",
 	};
 	
 	private static final String[] mFileEndings = { ".ats" };
