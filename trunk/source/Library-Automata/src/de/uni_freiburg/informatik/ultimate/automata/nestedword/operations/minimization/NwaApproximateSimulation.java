@@ -2,22 +2,22 @@
  * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -71,7 +71,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * <li>for each common internal and call symbol there is a successor pair {@code (p', q')} in the output</li>
  * <li>(optionally) {@code p} is not accepting or {@code q} is accepting</li>
  * </ul>
- * 
+ *
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -161,18 +161,21 @@ public class NwaApproximateSimulation<LETTER, STATE>
 				throw new AutomataOperationCanceledException(getClass());
 			}
 
-			final STATE lhs = states.get(i);
-			final boolean lhsIsAccepting = mOperand.isFinal(lhs);
 			final Set<STATE> rhsStates = new HashSet<>();
-			for (int j = 0; j < states.size(); ++j) {
-				if (i == j) {
-					continue;
-				}
-				final STATE rhs = states.get(j);
-				if (!lhsIsAccepting || mOperand.isFinal(rhs)) {
-					rhsStates.add(rhs);
-				} else {
-					mIsNotSimulatedBy.addPair(lhs, rhs);
+			final STATE lhs = states.get(i);
+			if (!mOperand.isFinal(lhs)) {
+				rhsStates.addAll(states);
+			} else {
+				for (int j = 0; j < states.size(); ++j) {
+					if (i == j) {
+						continue;
+					}
+					final STATE rhs = states.get(j);
+					if (mOperand.isFinal(rhs)) {
+						rhsStates.add(rhs);
+					} else {
+						mIsNotSimulatedBy.addPair(lhs, rhs);
+					}
 				}
 			}
 			mMayBeSimulatedBy.put(lhs, rhsStates);
@@ -248,7 +251,7 @@ public class NwaApproximateSimulation<LETTER, STATE>
 	 * letter {@code a} such that the pair {@code (p, q)} is also not in the simulation. For that we search for all
 	 * successors {@code q''} of {@code q} under {@code a} and check whether {@code (p', q'')} is in the simulation. If
 	 * no such {@code q''} exists, we separate {@code (p, q)}.
-	 * 
+	 *
 	 * @param lhs
 	 *            lhs state of nonsimulating pair.
 	 * @param rhs
@@ -316,7 +319,7 @@ public class NwaApproximateSimulation<LETTER, STATE>
 
 	/**
 	 * Result type that emulates reflexive pairs without storing them.
-	 * 
+	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	private static class ReflexiveMapBackedSetOfPairs<STATE> extends MapBackedSetOfPairs<STATE> {
