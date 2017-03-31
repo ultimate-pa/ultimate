@@ -59,7 +59,7 @@ public final class TypeUtils {
 			final Consumer<VARDECL> boolConsumer, final Consumer<VARDECL> arrayConsumer, final VARDECL variable) {
 		assert arrayConsumer == null;
 		assert variable != null;
-		
+
 		consumeVariablePerType(varConsumer, boolConsumer, arrayConsumer, variable);
 	}
 
@@ -138,7 +138,7 @@ public final class TypeUtils {
 		}
 
 	}
-	
+
 	public static <R> R applyTypeFunction(final Function<Sort, R> intFunction, final Function<Sort, R> realFunction,
 			final Function<Sort, R> boolFunction, final Function<Sort, R> arrayFunction, final Sort sort) {
 		assert sort != null;
@@ -267,7 +267,7 @@ public final class TypeUtils {
 	 * @return a and b are of the same type category
 	 */
 	public static boolean categoryEquals(final IBoogieType a, final IBoogieType b) {
-		return (isBoolean(a) == isBoolean(b)) && (isNumeric(a) == isNumeric(b));
+		return isBoolean(a) == isBoolean(b) && isNumeric(a) == isNumeric(b);
 	}
 
 	public static boolean isIntTerm(final Term t) {
@@ -281,7 +281,7 @@ public final class TypeUtils {
 	public static Sort getInnermostArrayValueSort(final Sort sort) {
 		Sort currentSort = sort;
 		while (currentSort.isArraySort()) {
-			currentSort = getValueSort(sort);
+			currentSort = getValueSort(currentSort);
 		}
 		return currentSort;
 	}
