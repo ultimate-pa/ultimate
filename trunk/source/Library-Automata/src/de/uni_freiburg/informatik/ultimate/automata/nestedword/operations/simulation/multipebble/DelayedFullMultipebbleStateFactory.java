@@ -83,7 +83,8 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 					// duplicator succs contains spoiler succ, hence spoiler cannot win
 					return null;
 				}
-				if (isSimulationCandidate(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
+				if (isSimulationCandidate(spoilerSucc.getUp(), duplicatorSucc.getUp())
+						&& !alreadyHasBetterObligationBit(duplicatorSucc, duplicatorSuccStates)) {
 					duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(),
 							succDuplicatorObligationBit);
 				} else {
@@ -114,7 +115,8 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 					// duplicator succs contains spoiler succ, hence spoiler cannot win
 					return null;
 				}
-				if (isSimulationCandidate(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
+				if (isSimulationCandidate(spoilerSucc.getUp(), duplicatorSucc.getUp())
+						&& !alreadyHasBetterObligationBit(duplicatorSucc, duplicatorSuccStates)) {
 					duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(),
 							succDuplicatorObligationBit);
 				} else {
@@ -154,7 +156,8 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 								duplicatorSucc.getUp()) == Boolean.FALSE) {
 							// do nothing, DoubleDecker without obligation already contained
 						} else {
-							if (isSimulationCandidate(spoilerSucc.getUp(), duplicatorSucc.getUp())) {
+							if (isSimulationCandidate(spoilerSucc.getUp(), duplicatorSucc.getUp())
+									&& !alreadyHasBetterObligationBit(duplicatorSucc, duplicatorSuccStates)) {
 								duplicatorSuccStates.put(duplicatorSucc.getDown(), duplicatorSucc.getUp(),
 										succDuplicatorObligationBit);
 							} else {
@@ -170,6 +173,15 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 			return mSpoilerWinningSink;
 		}
 		return new DelayedFullMultipebbleGameState<>(spoilerSucc, duplicatorSuccStates);
+	}
+
+	/**
+	 * @return true iff DoubleDecker is already in map with obligation bit set
+	 *         to false (false is better for duplicator)
+	 */
+	private boolean alreadyHasBetterObligationBit(final DoubleDecker<STATE> duplicatorSucc,
+			final NestedMap2<STATE, STATE, Boolean> duplicatorSuccStates) {
+		return (Boolean.FALSE.equals(duplicatorSuccStates.get(duplicatorSucc.getDown(), duplicatorSucc.getUp())));
 	}
 
 	private <LETTER> boolean computeSuccDuplicatorObligationBit(final boolean spoilerSuccIsFinal,
