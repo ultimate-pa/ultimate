@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -104,7 +105,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	 *         between the locations of the given {@link IIcfg} and the locations of the path program.
 	 */
 	public static PathProgramConstructionResult constructPathProgram(final String identifier,
-			final IIcfg<?> originalIcfg, final Set<? extends IcfgEdge> allowedTransitions) {
+			final IIcfg<?> originalIcfg, final Set<? extends IIcfgTransition<?>> allowedTransitions) {
 		return new PathProgramConstructor(originalIcfg, allowedTransitions, identifier).getResult();
 	}
 
@@ -187,7 +188,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 
 		private final IIcfg<?> mOriginalIcfg;
 		private final Map<IcfgLocation, IcfgLocation> mOldLoc2NewLoc;
-		private final Map<IcfgEdge, PathProgramCallAction<?>> mOldCall2NewCall;
+		private final Map<IIcfgTransition<?>, PathProgramCallAction<?>> mOldCall2NewCall;
 		private final DefaultIcfgSymbolTable mSymbolTable;
 		private final Set<String> mProcedures;
 
@@ -199,10 +200,10 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 		private final Set<IcfgLocation> mLoopLocations;
 		private final PathProgramConstructionResult mResult;
 
-		private PathProgramConstructor(final IIcfg<?> originalIcfg, final Set<? extends IcfgEdge> allowedTransitions,
-				final String newIdentifier) {
+		private PathProgramConstructor(final IIcfg<?> originalIcfg,
+				final Set<? extends IIcfgTransition<?>> allowedTransitions, final String newIdentifier) {
 			final String nonNullIdentifier = Objects.requireNonNull(newIdentifier);
-			final Set<? extends IcfgEdge> nonNullTransitions = Objects.requireNonNull(allowedTransitions);
+			final Set<? extends IIcfgTransition<?>> nonNullTransitions = Objects.requireNonNull(allowedTransitions);
 			mOriginalIcfg = Objects.requireNonNull(originalIcfg);
 
 			mOldLoc2NewLoc = new HashMap<>();
@@ -217,7 +218,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			mInitialNodes = new HashSet<>();
 			mLoopLocations = new HashSet<>();
 
-			final Predicate<IcfgEdge> onlyReturn = a -> a instanceof IIcfgReturnTransition<?, ?>;
+			final Predicate<IIcfgTransition<?>> onlyReturn = a -> a instanceof IIcfgReturnTransition<?, ?>;
 			nonNullTransitions.stream().filter(onlyReturn.negate()).forEach(this::createPathProgramTransition);
 			nonNullTransitions.stream().filter(onlyReturn).forEach(this::createPathProgramTransition);
 
@@ -241,7 +242,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			return mResult;
 		}
 
-		private void createPathProgramTransition(final IcfgEdge transition) {
+		private void createPathProgramTransition(final IIcfgTransition<?> transition) {
 			final IcfgLocation origSource = transition.getSource();
 			final IcfgLocation origTarget = transition.getTarget();
 			final IcfgLocation ppSource = addPathProgramLocation(origSource);
@@ -255,7 +256,7 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 		}
 
 		private IcfgEdge createPathProgramTransition(final IcfgLocation source, final IcfgLocation target,
-				final IcfgEdge transition) {
+				final IIcfgTransition<?> transition) {
 			if (transition instanceof IIcfgCallTransition<?>) {
 				final IIcfgCallTransition<?> calltrans = (IIcfgCallTransition<?>) transition;
 				addVarsToSymboltable(calltrans.getLocalVarsAssignment(), transition);
@@ -275,7 +276,8 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			}
 		}
 
-		private void addVarsToSymboltable(final UnmodifiableTransFormula transformula, final IcfgEdge transition) {
+		private void addVarsToSymboltable(final UnmodifiableTransFormula transformula,
+				final IIcfgTransition<?> transition) {
 			mProcedures.add(transition.getPrecedingProcedure());
 			mProcedures.add(transition.getSucceedingProcedure());
 			transformula.getInVars().keySet().forEach(mSymbolTable::add);

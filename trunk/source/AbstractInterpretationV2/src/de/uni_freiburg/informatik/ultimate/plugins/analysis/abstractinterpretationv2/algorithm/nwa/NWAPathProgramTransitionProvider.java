@@ -47,12 +47,12 @@ public class NWAPathProgramTransitionProvider extends RcfgTransitionProvider imp
 	}
 
 	@Override
-	public boolean isErrorLocation(final BoogieIcfgLocation loc) {
+	public boolean isErrorLocation(final IcfgLocation loc) {
 		return loc.equals(mPostErrorLoc);
 	}
 
 	@Override
-	public Collection<CodeBlock> getSuccessorActions(final BoogieIcfgLocation loc) {
+	public Collection<CodeBlock> getSuccessorActions(final IcfgLocation loc) {
 		return super.getSuccessorActions(loc).stream().filter(mLetters::contains).collect(Collectors.toSet());
 	}
 

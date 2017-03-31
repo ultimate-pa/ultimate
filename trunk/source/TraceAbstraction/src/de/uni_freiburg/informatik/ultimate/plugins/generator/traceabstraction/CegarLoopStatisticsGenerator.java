@@ -78,7 +78,7 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 	public void addInterpolationConsolidationData(final IStatisticsDataProvider tcbd) {
 		mInterpolantConsolidationBenchmarks.aggregateBenchmarkData(tcbd);
 	}
-	
+
 	public void addPathInvariantsData(final IStatisticsDataProvider tcbd) {
 		mPathInvariantsStatistics.aggregateBenchmarkData(tcbd);
 	}
@@ -95,18 +95,19 @@ public class CegarLoopStatisticsGenerator extends StatisticsGeneratorWithStopwat
 		mIterations++;
 	}
 
-	public void announceNextAbsIntIteration() {
+	public int announceNextAbsIntIteration() {
 		mAbsIntIterations++;
+		return mAbsIntIterations;
 	}
 
 	public void announceStrongAbsInt() {
 		mAbsIntStrong++;
 	}
-	
+
 	public void addAutomataMinimizationData(final IStatisticsDataProvider tcbd) {
 		mAmData.aggregateBenchmarkData(tcbd);
 	}
-	
+
 	public void addHoareAnnotationData(final IStatisticsDataProvider hasp) {
 		mHaData.aggregateBenchmarkData(hasp);
 	}

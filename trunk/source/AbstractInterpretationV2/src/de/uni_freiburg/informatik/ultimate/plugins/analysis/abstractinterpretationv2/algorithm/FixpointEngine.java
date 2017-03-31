@@ -96,7 +96,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 	}
 
 	@Override
-	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> run(final Collection<LOC> start,
+	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> run(final Collection<? extends LOC> start,
 			final Script script) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
@@ -109,7 +109,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		return mResult;
 	}
 
-	private void calculateFixpoint(final Collection<LOC> start) {
+	private void calculateFixpoint(final Collection<? extends LOC> start) {
 		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOC>> worklist = new ArrayDeque<>();
 		final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp = mDomain.getPostOperator();
 		final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
