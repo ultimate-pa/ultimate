@@ -76,6 +76,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 	}
 
 	private static final boolean OMIT_MAX_SAT_FOR_FINITE_AUTOMATA = true;
+	private static final boolean USE_FULL_PREPROCESSING = false;
 
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final AutomataOperationStatistics mStatistics;
@@ -107,19 +108,16 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 		switch (mMetriePreprocessing) {
 			case SYM:
 				final PartitionAndMapBackedSetOfPairs<STATE> partition =
-						new PartitionAndMapBackedSetOfPairs<>(
-								new NwaApproximateBisimulation<>(services, operand,
-										allowToMergeFinalAndNonFinalStates
-												? SimulationType.ORDINARY
-												: SimulationType.DIRECT,
-										false).getResult().getRelation());
+						new PartitionAndMapBackedSetOfPairs<>(new NwaApproximateBisimulation<>(services, operand,
+								allowToMergeFinalAndNonFinalStates ? SimulationType.ORDINARY : SimulationType.DIRECT,
+								USE_FULL_PREPROCESSING).getResult().getRelation());
 				mLogger.info("Initial partition has " + partition.getOrConstructPartitionSizeInformation().toString());
 				initialPairs = partition;
 				break;
 			case ASYM:
 				initialPairs = new NwaApproximateSimulation<>(services, operand,
-						allowToMergeFinalAndNonFinalStates ? SimulationType.ORDINARY : SimulationType.DIRECT, false)
-								.getResult();
+						allowToMergeFinalAndNonFinalStates ? SimulationType.ORDINARY : SimulationType.DIRECT,
+						USE_FULL_PREPROCESSING).getResult();
 				break;
 			default:
 				throw new AssertionError("illegal value " + mMetriePreprocessing);
