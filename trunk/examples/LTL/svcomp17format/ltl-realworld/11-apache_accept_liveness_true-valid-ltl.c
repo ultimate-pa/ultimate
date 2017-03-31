@@ -284,7 +284,7 @@ int main()
                 lr = 1; //pdesc[last_poll_idx++].client_data;
 		break;
 
-	    loc_continueA: {int yyy2; yyy2=yyy2; }
+	    loc_continueA: { }
             }
         }
         /* if we accept() something we don't want to die, so we have to
@@ -332,5 +332,6 @@ int main()
     }
     clean_child_exit(0);
  loc_return:
+	;
     
 }

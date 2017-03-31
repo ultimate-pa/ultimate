@@ -82,7 +82,8 @@ int main() {
 			bufHdr = &LocalBufferDescriptors_i;
 			if (RelFileNodeEquals(bufHdr_tag_rnode, rnode) && bufHdr_tag_blockNum >= firstDelBlock)
 			{
-				if (LocalRefCount_i != 0) ;
+				if (LocalRefCount_i != 0) 
+					;
 
 				//DD: replaced the line
 				//bufHdr_flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
@@ -114,7 +115,8 @@ recheck:
 				goto recheck;
 			}
 
-			if (bufHdr_refcount != 0);
+			if (bufHdr_refcount != 0)
+				;
 
 			//DD: replaced the line
 			//bufHdr_flags &= ~(BM_DIRTY | BM_JUST_DIRTIED);
@@ -130,5 +132,6 @@ recheck:
 
 	RELEASE = 1; RELEASE = 0; //LWLockRelease(BufMgrLock);
 my_exit:
+;
 	
 }
