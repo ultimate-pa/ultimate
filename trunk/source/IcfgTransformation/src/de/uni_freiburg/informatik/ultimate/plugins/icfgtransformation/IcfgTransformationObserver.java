@@ -249,7 +249,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider =
 				new DefaultEqualityAnalysisProvider<>();
 		final MapEliminationSettings settings =
-				new MapEliminationSettings(!false, !true, !true, !true, mSimplificationTechnique, mXnfConversionTechnique);
+				new MapEliminationSettings(false, true, true, true, mSimplificationTechnique, mXnfConversionTechnique);
 		transformers.add(new MapEliminationTransformer(mServices, mLogger, icfg.getCfgSmtToolkit().getManagedScript(),
 				icfg.getCfgSmtToolkit().getSymbolTable(), fac, settings, equalityProvider));
 		return new IcfgTransformerSequence<>(icfg, locFac, (ILocationFactory<OUTLOC, OUTLOC>) locFac,
