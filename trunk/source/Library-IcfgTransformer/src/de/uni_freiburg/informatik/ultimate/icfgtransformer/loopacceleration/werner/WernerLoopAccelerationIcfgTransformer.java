@@ -32,18 +32,18 @@ import java.util.Deque;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ExampleLoopAccelerationTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
  * A basic IcfgTransformer that applies the {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
- * transformulas of an {@link IIcfg} with a new instance.
- * +
- * First tries for loop acceleration.
+ * transformulas of an {@link IIcfg} with a new instance. + First tries for loop acceleration.
  *
  * @param <INLOC>
  *            The type of the locations of the old IIcfg.
@@ -54,74 +54,73 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  * @author Jonas Werner (jonaswerner95@gmail.com)
  *
  */
-public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
+public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
 
-	private final ILogger mLogger;	
+	private final ILogger mLogger;
 
 	private final Deque<Deque<Backbone>> mBackBones;
-	
+
 	private final LoopDetector<INLOC> mLoopDetector;
 
-	@SuppressWarnings("unused")
-	public LoopAccelerationIcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
+	private final IIcfg<OUTLOC> mResult;
+
+	public WernerLoopAccelerationIcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
 			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
 			final ITransformulaTransformer transformer) {
-
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
 		mLogger = Objects.requireNonNull(logger);
-		
 		mLoopDetector = new LoopDetector<>(mLogger, origIcfg);
-		
 		mBackBones = new ArrayDeque<>();
-		
-		IIcfg<OUTLOC> result = transform(originalIcfg, newIcfgIdentifier, outLocationClass);
+		mResult = transform(originalIcfg, newIcfgIdentifier, outLocationClass);
 
+	}
+
+	public IIcfg<OUTLOC> getResult() {
+		return mResult;
 	}
 
 	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> originalIcfg, final String newIcfgIdentifier,
 			final Class<OUTLOC> outLocationClass) {
-		
+
 		mLogger.debug("transforming...");
-		
+
 		getBackbones();
-		
+
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
 
-		
-		
 		return resultIcfg;
 	}
-	
+
 	private void getBackbones() {
-		
+
 		final Deque<Deque<IcfgEdge>> loopBodies = mLoopDetector.getLoopBodies();
-		
+
 		mLogger.debug("getting Backbones...");
-		
-		if(loopBodies.isEmpty()) {
+
+		if (loopBodies.isEmpty()) {
 			// something
 		}
 
 		// @todo finding more than one backbone...
 		for (final Deque<IcfgEdge> loopBody : loopBodies) {
-			
+
 			final Deque<Backbone> backBones = new ArrayDeque<>();
 			final IcfgLocation loopHeader = loopBody.getFirst().getSource();
-			
-			Deque<IcfgEdge> possibleBackbone = new ArrayDeque<>();
+
+			final Deque<IcfgEdge> possibleBackbone = new ArrayDeque<>();
 			IcfgEdge current = loopBody.getFirst();
 			possibleBackbone.addFirst(current);
-			for (IcfgEdge transition : loopBody) {
+			for (final IcfgEdge transition : loopBody) {
 				if (current.getTarget() == loopHeader) {
-					
-					Backbone backbone = new Backbone(possibleBackbone);
-					
+
+					final Backbone backbone = new Backbone(possibleBackbone);
+
 					backBones.addLast(backbone);
 					break;
 				}
-				
+
 				if (transition.getSource() == current.getTarget()) {
 					possibleBackbone.addLast(transition);
 					current = transition;
@@ -129,38 +128,6 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 			}
 			mBackBones.addLast(backBones);
 		}
-	}
-	
-	/*
-	private void executeBackbones() {
-		
-	}
-	
-	private void computeSummary() {
-		
-	}
-	
-	*/
-
-
-	/**
-	 * Interface that describes a factory which creates locations for an {@link IIcfg} based on an old location.
-	 *
-	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
-	 *
-	 * @param <INLOC>
-	 *            The type of the old locations.
-	 * @param <OUTLOC>
-	 *            The type of locations that should be produced.
-	 */
-	@FunctionalInterface
-	public static interface ILocationFactory<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
-		OUTLOC createLocation(final INLOC oldLocation, final String debugIdentifier, final String procedure);
-	}
-
-	@FunctionalInterface
-	public static interface IBacktranslationTracker {
-		void rememberRelation(final IIcfgTransition<?> oldTransition, final IIcfgTransition<?> newTransition);
 	}
 
 }

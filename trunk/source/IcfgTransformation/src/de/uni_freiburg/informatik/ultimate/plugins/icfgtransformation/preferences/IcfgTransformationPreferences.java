@@ -53,7 +53,7 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 		MAP_ELIMINATION,
 
 		REMOVE_DIV_MOD,
-		
+
 		MODULO_NEIGHBOR,
 
 		LOOP_ACCELERATION_EXAMPLE,
@@ -63,8 +63,10 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 		LOOP_ACCELERATION_MOHR,
 
 		LOOP_ACCELERATION_WOELFING,
-		
-		LOOP_ACCELERATION_FASTUPR
+
+		LOOP_ACCELERATION_FASTUPR,
+
+		LOOP_ACCELERATION_WERNER
 
 	}
 
