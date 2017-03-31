@@ -117,6 +117,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public class PathProgramDumper {
 
 	private final boolean USE_BOOGIE_INPUT = true;
+	private final boolean FILTER_VARIABLES = false;
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -202,9 +203,13 @@ public class PathProgramDumper {
 					newDeclarations.add(entry.getValue());
 				}
 			}
-			newDeclarations.addAll(0,
+			if (FILTER_VARIABLES) {
+				newDeclarations.addAll(0,
 					Arrays.asList(filter(boogieIcfg.getBoogieDeclarations().getGlobalVarDeclarations(),
 							extractIdentifiers(globalVars))));
+			} else {
+				newDeclarations.addAll(0,boogieIcfg.getBoogieDeclarations().getGlobalVarDeclarations());
+			}
 			newDeclarations.addAll(0, boogieIcfg.getBoogieDeclarations().getFunctionDeclarations());
 			newDeclarations.addAll(0, boogieIcfg.getBoogieDeclarations().getAxioms());
 			newDeclarations.addAll(0, boogieIcfg.getBoogieDeclarations().getConstDeclarations());
@@ -249,16 +254,26 @@ public class PathProgramDumper {
 				proc, entryLoc, exitLoc, errorLocs);
 		final List<Statement> newStatements = varsAndNewSt.getFirst();
 
-		final VariableDeclaration[] localVars = filter(Arrays.asList(body.getLocalVars()),
+		
+		final VariableDeclaration[] localVars;
+		if (FILTER_VARIABLES) {
+			localVars = filter(Arrays.asList(body.getLocalVars()),
 				extractIdentifiers(varsAndNewSt.getSecond()));
+		} else {
+			localVars = body.getLocalVars();
+		}
 		final Body newBody = new Body(constructNewLocation(), localVars,
 				newStatements.toArray(new Statement[newStatements.size()]));
 		Specification[] newSpecifications;
 		if (impl.getSpecification() == null) {
 			newSpecifications = null;
 		} else {
-			newSpecifications = filterModifiesSpecifications(impl.getSpecification(),
+			if (FILTER_VARIABLES) {
+				newSpecifications = filterModifiesSpecifications(impl.getSpecification(),
 					extractIdentifiers(varsAndNewSt.getThird()));
+			} else {
+				newSpecifications = impl.getSpecification();
+			}
 		}
 		final Procedure newProc = new Procedure(constructNewLocation(), impl.getAttributes(), impl.getIdentifier(),
 				impl.getTypeParams(), impl.getInParams(), impl.getOutParams(), newSpecifications, newBody);
