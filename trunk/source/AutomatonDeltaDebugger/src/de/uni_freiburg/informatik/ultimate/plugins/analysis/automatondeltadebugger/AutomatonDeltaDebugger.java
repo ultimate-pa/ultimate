@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.BridgeShrinker;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.CallTransitionShrinker;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.ChangeInitialStatesShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.CommonSingleExitShrinker;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.InternalTransitionShrinker;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.NormalizeStateShrinker;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.ReturnTransitionShrinker;
@@ -128,6 +129,7 @@ public class AutomatonDeltaDebugger implements IAnalysis {
 		shrinkersLoop.add(new CallTransitionShrinker<>(mServices));
 		shrinkersLoop.add(new ReturnTransitionShrinker<>(mServices));
 		shrinkersLoop.add(new SingleExitShrinker<>(mServices));
+		shrinkersLoop.add(new CommonSingleExitShrinker<>(mServices));
 		
 		return shrinkersLoop;
 	}
