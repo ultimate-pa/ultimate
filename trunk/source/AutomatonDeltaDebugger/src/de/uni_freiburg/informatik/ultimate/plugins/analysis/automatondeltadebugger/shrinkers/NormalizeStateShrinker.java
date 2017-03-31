@@ -62,6 +62,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STATE, LETTER, STATE> {
+	// true: try to reuse old names if they fit the pattern; false: always use fresh names
+	private static final boolean REUSE_OLD_NAMES = false;
+
 	/**
 	 * @param services
 	 *            Ultimate services.
@@ -131,7 +134,8 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 			
 			// create new state if not already present
 			final STATE newState;
-			if (remaining.remove(oldState)) {
+			// NOTE: order matters, state must be removed in any case!
+			if (remaining.remove(oldState) && REUSE_OLD_NAMES) {
 				// do not reassign this state name (was not in the list)
 				newState = oldState;
 			} else {
@@ -177,12 +181,9 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 	}
 	
 	private boolean isUsedName(final STATE newStateCandidate, final STATE oldState, final Set<STATE> oldStates) {
-		// current policy: ignore old state names completely
-		/*
-		if (oldStates.contains(newStateCandidate)) {
+		if (REUSE_OLD_NAMES && oldStates.contains(newStateCandidate)) {
 			return !oldState.equals(newStateCandidate);
 		}
-		*/
 		return false;
 	}
 	
