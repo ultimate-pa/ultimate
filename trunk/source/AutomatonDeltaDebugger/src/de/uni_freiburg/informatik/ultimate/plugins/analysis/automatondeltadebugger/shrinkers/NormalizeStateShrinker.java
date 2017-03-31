@@ -62,9 +62,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            state type
  */
 public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STATE, LETTER, STATE> {
-	// true: try to reuse old names if they fit the pattern; false: always use fresh names
-	private static final boolean REUSE_OLD_NAMES = false;
-
 	/**
 	 * @param services
 	 *            Ultimate services.
@@ -100,6 +97,14 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 	private HashMap<STATE, STATE> renameStates(
 			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final List<STATE> list) {
+		/*
+		 * true: try to reuse old names if they fit the pattern<br>
+		 * false: always use fresh names
+		 * <p>
+		 * This does only work if all states are renamed, otherwise there can be name clashes with existing states.
+		 */
+		final boolean reuseOldNames = mAutomaton.size() != list.size();
+		
 		final HashSet<STATE> noninitialStates = new HashSet<>();
 		final ArrayDeque<STATE> stack = new ArrayDeque<>();
 		final HashSet<STATE> remaining = filterStates(list, noninitialStates, stack);
@@ -135,7 +140,7 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 			// create new state if not already present
 			final STATE newState;
 			// NOTE: order matters, state must be removed in any case!
-			if (remaining.remove(oldState) && REUSE_OLD_NAMES) {
+			if (remaining.remove(oldState) && reuseOldNames) {
 				// do not reassign this state name (was not in the list)
 				newState = oldState;
 			} else {
@@ -146,13 +151,13 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 				assert oldState instanceof String : "The state was a string during list creation.";
 				Pair<Integer, STATE> pair;
 				if (isInitial) {
-					pair = getFreshName(oldStates, "qI_", initials, oldState);
+					pair = getFreshName(oldStates, "qI_", initials, oldState, reuseOldNames);
 					initials = pair.getFirst();
 				} else if (isFinal) {
-					pair = getFreshName(oldStates, "qF_", finals, oldState);
+					pair = getFreshName(oldStates, "qF_", finals, oldState, reuseOldNames);
 					finals = pair.getFirst();
 				} else {
-					pair = getFreshName(oldStates, "q_", normals, oldState);
+					pair = getFreshName(oldStates, "q_", normals, oldState, reuseOldNames);
 					normals = pair.getFirst();
 				}
 				newState = pair.getSecond();
@@ -170,18 +175,19 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 	
 	@SuppressWarnings("unchecked")
 	private Pair<Integer, STATE> getFreshName(final Set<STATE> oldStates, final String prefix, final int indexIn,
-			final STATE oldState) {
+			final STATE oldState, final boolean reuseOldNames) {
 		STATE newStateCandidate;
 		int index = indexIn;
 		do {
 			++index;
 			newStateCandidate = (STATE) (prefix + index);
-		} while (isUsedName(newStateCandidate, oldState, oldStates));
+		} while (isUsedName(newStateCandidate, oldState, oldStates, reuseOldNames));
 		return new Pair<>(index, newStateCandidate);
 	}
 	
-	private boolean isUsedName(final STATE newStateCandidate, final STATE oldState, final Set<STATE> oldStates) {
-		if (REUSE_OLD_NAMES && oldStates.contains(newStateCandidate)) {
+	private boolean isUsedName(final STATE newStateCandidate, final STATE oldState, final Set<STATE> oldStates,
+			final boolean reuseOldNames) {
+		if (reuseOldNames && oldStates.contains(newStateCandidate)) {
 			return !oldState.equals(newStateCandidate);
 		}
 		return false;
