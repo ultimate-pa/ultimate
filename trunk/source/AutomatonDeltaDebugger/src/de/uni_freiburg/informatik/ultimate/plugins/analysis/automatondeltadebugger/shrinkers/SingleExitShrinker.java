@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.INestedWordAutomatonFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -92,7 +93,58 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 		 * data structures which contain all transitive chains
 		 */
 		final HashSet<STATE> states = new HashSet<>(mAutomaton.getStates());
-		for (final Pair<STATE, STATE> pair : list) {
+		fillTransitivityMaps(left2right, right2left, states, list);
+		
+		constructResuLt(automaton, left2right, states, mAutomaton, mFactory);
+		
+		return automaton;
+	}
+
+	protected static <LETTER, STATE> void constructResuLt(final INestedWordAutomaton<LETTER, STATE> oldAutomaton,
+			final HashMap<STATE, STATE> left2right, final HashSet<STATE> states,
+			final INestedWordAutomaton<LETTER, STATE> newAutomaton,
+			final INestedWordAutomatonFactory<LETTER, STATE> factory) {
+		factory.addStates(oldAutomaton, states);
+		
+		// add transitions which are still unconcerned by removing the states
+		factory.addFilteredTransitions(oldAutomaton, newAutomaton);
+		
+		// add transitions which close a (transitive) chain of removed states
+		for (final Entry<STATE, STATE> entry : left2right.entrySet()) {
+			final STATE source = entry.getKey();
+			final STATE transitiveTarget = entry.getValue();
+			if ((transitiveTarget == null) || (!states.contains(transitiveTarget))) {
+				// source state is no entry of a transitive chain, ignore it
+				continue;
+			}
+			// add missing transitions and bend them to transitive chain target
+			for (final IncomingInternalTransition<LETTER, STATE> trans : newAutomaton.internalPredecessors(source)) {
+				final STATE pred = trans.getPred();
+				if (states.contains(pred)) {
+					factory.addInternalTransition(oldAutomaton, pred, trans.getLetter(), transitiveTarget);
+				}
+			}
+			for (final IncomingCallTransition<LETTER, STATE> trans : newAutomaton.callPredecessors(source)) {
+				final STATE pred = trans.getPred();
+				if (states.contains(pred)) {
+					factory.addCallTransition(oldAutomaton, pred, trans.getLetter(), transitiveTarget);
+				}
+			}
+			for (final IncomingReturnTransition<LETTER, STATE> trans : newAutomaton.returnPredecessors(source)) {
+				final STATE linPred = trans.getLinPred();
+				final STATE hierPred = trans.getHierPred();
+				if (states.contains(linPred) && states.contains(hierPred)) {
+					factory.addReturnTransition(oldAutomaton, trans.getLinPred(), hierPred, trans.getLetter(),
+							transitiveTarget);
+				}
+			}
+		}
+	}
+
+	protected static <STATE> void fillTransitivityMaps(final HashMap<STATE, STATE> left2right,
+			final HashMap<STATE, STATE> right2left, final HashSet<STATE> states,
+			final Iterable<Pair<STATE, STATE>> pairs) {
+		for (final Pair<STATE, STATE> pair : pairs) {
 			final STATE source = pair.getFirst();
 			final STATE target = pair.getSecond();
 			
@@ -114,44 +166,6 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 			left2right.put(lhs, rhs);
 			right2left.put(rhs, lhs);
 		}
-		
-		mFactory.addStates(automaton, states);
-		
-		// add transitions which are still unconcerned by removing the states
-		mFactory.addFilteredTransitions(automaton, mAutomaton);
-		
-		// add transitions which close a (transitive) chain of removed states
-		for (final Entry<STATE, STATE> entry : left2right.entrySet()) {
-			final STATE source = entry.getKey();
-			final STATE transitiveTarget = entry.getValue();
-			if ((transitiveTarget == null) || (!states.contains(transitiveTarget))) {
-				// source state is no entry of a transitive chain, ignore it
-				continue;
-			}
-			// add missing transitions and bend them to transitive chain target
-			for (final IncomingInternalTransition<LETTER, STATE> trans : mAutomaton.internalPredecessors(source)) {
-				final STATE pred = trans.getPred();
-				if (states.contains(pred)) {
-					mFactory.addInternalTransition(automaton, pred, trans.getLetter(), transitiveTarget);
-				}
-			}
-			for (final IncomingCallTransition<LETTER, STATE> trans : mAutomaton.callPredecessors(source)) {
-				final STATE pred = trans.getPred();
-				if (states.contains(pred)) {
-					mFactory.addCallTransition(automaton, pred, trans.getLetter(), transitiveTarget);
-				}
-			}
-			for (final IncomingReturnTransition<LETTER, STATE> trans : mAutomaton.returnPredecessors(source)) {
-				final STATE linPred = trans.getLinPred();
-				final STATE hierPred = trans.getHierPred();
-				if (states.contains(linPred) && states.contains(hierPred)) {
-					mFactory.addReturnTransition(automaton, trans.getLinPred(), hierPred, trans.getLetter(),
-							transitiveTarget);
-				}
-			}
-		}
-		
-		return automaton;
 	}
 	
 	@Override
@@ -185,7 +199,7 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 			
 			if (target != null) {
 				// state has exactly one successor, add the pair
-				list.add(new Pair<STATE, STATE>(state, target));
+				list.add(new Pair<>(state, target));
 			}
 		}
 		return list;
