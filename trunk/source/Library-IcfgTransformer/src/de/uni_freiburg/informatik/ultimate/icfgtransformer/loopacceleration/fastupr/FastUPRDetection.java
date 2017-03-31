@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  * @author Jill Enke (enkei@informatik.uni-freiburg.de)
  *
  */
+
 public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
 
 	private final ILogger mLogger;
@@ -82,7 +83,7 @@ public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLoc
 
 	@SuppressWarnings("unchecked")
 	private HashSet<INLOC> getLoopHeads(final IIcfg<INLOC> originalIcfg) {
-		final HashSet<INLOC> loopHeads = new HashSet<INLOC>();
+		final HashSet<INLOC> loopHeads = new HashSet<>();
 		final Set<INLOC> init = originalIcfg.getInitialNodes();
 		final Set<INLOC> closed = new HashSet<>();
 		final Deque<INLOC> open = new ArrayDeque<>(init);
@@ -121,10 +122,11 @@ public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLoc
 			// mLogger.debug(currentPathIndices.size());
 			if (currentPath.getLast().getOutgoingEdges().size() > currentPathIndices.getLast()) {
 
-				final INLOC target =
-						(INLOC) currentPath.getLast().getOutgoingEdges().get(currentPathIndices.getLast()).getTarget();
+				final INLOC target = (INLOC) currentPath.getLast().getOutgoingEdges().get(currentPathIndices.getLast())
+						.getTarget();
 
-				// mLogger.debug("Current node: " + currentPath.getLast().toString());
+				// mLogger.debug("Current node: " +
+				// currentPath.getLast().toString());
 				// mLogger.debug("Target node: " + target.toString());
 
 				final int index = currentPathIndices.removeLast();

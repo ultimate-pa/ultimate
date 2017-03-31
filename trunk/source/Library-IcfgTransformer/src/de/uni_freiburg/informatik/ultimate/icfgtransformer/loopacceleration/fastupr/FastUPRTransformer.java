@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr;
 
+import java.lang.annotation.Target;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.HashMap;
@@ -35,131 +36,153 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgCallTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * The main class for Fast Acceleration of Ultimately Periodic Relations
- *
+ * 
  * @param <INLOC>
  *            The type of the locations of the old IIcfg.
  * @param <OUTLOC>
  *            The type of the locations of the transformed IIcfg.
- *
+ * 
  * @author Jill Enke (enkei@informatik.uni-freiburg.de)
  *
  */
-public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
-		implements IIcfgTransformer<OUTLOC> {
+public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> implements IIcfgTransformer<OUTLOC> {
 
 	private final ILogger mLogger;
 	private final IIcfg<OUTLOC> mResultIcfg;
 	private final ManagedScript mManagedScript;
 	private final Map<INLOC, OUTLOC> mOldLoc2NewLoc;
 	private final Map<IIcfgCallTransition<INLOC>, IcfgCallTransition> mOldCalls2NewCalls;
-	private final IBacktranslationTracker mBacktranslationTracker;
-	private final ILocationFactory<INLOC, OUTLOC> mLocationFactory;
+	private IBacktranslationTracker mBacktranslationTracker;
+	private ILocationFactory<INLOC, OUTLOC> mLocationFactory;
+	private IUltimateServiceProvider mServices;
 
-	public FastUPRTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
-			final Class<OUTLOC> outLocationClass, final ILocationFactory<INLOC, OUTLOC> locationFactory,
-			final String newIcfgIdentifier, final ITransformulaTransformer transformer,
-			final IBacktranslationTracker backtranslationTracker, final IUltimateServiceProvider services) {
+	public FastUPRTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg, final Class<OUTLOC> outLocationClass, 
+			final ILocationFactory<INLOC, OUTLOC> locationFactory, String newIcfgIdentifier, ITransformulaTransformer transformer,
+			final IBacktranslationTracker backtranslationTracker, IUltimateServiceProvider services) {
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
 		mLogger = Objects.requireNonNull(logger);
-		mLocationFactory = Objects.requireNonNull(locationFactory);
+		mLocationFactory = (ILocationFactory<INLOC, OUTLOC>) Objects.requireNonNull(locationFactory);
 		mManagedScript = origIcfg.getCfgSmtToolkit().getManagedScript();
 		mOldLoc2NewLoc = new HashMap<>();
 		mOldCalls2NewCalls = new HashMap<>();
-		mBacktranslationTracker = backtranslationTracker;
+		mBacktranslationTracker = (IBacktranslationTracker) backtranslationTracker;
+		mServices = services;
 
+		
+		
 		// perform transformation last
 		mLogger.debug("Starting fastUPR Transformation");
 		mResultIcfg = transform(origIcfg, Objects.requireNonNull(newIcfgIdentifier),
 				Objects.requireNonNull(outLocationClass), transformer);
 	}
 
+
 	@SuppressWarnings("unchecked")
 	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> originalIcfg, final String newIcfgIdentifier,
-			final Class<OUTLOC> outLocationClass, final ITransformulaTransformer transformer) {
-
+			final Class<OUTLOC> outLocationClass, ITransformulaTransformer transformer) {
+		
+		
 		mLogger.debug("Getting List of loop paths ...");
-
-		final FastUPRDetection loopDetection =
-				new FastUPRDetection<>(mLogger, originalIcfg, outLocationClass, newIcfgIdentifier);
+		
+		final FastUPRDetection loopDetection = new FastUPRDetection<>(mLogger, originalIcfg, outLocationClass, newIcfgIdentifier);
 		final List<Deque<INLOC>> loopPaths = loopDetection.getLoopPaths();
-
-		if (loopPaths.size() < 1) {
+		
+		if (loopPaths.size() < 1) { 
 			mLogger.debug("No loop paths found");
 		} else {
 			mLogger.debug("Found " + loopPaths.size() + " loop paths");
 		}
+		
+		final BasicIcfg<OUTLOC> resultIcfg = new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
+		
 
-		final BasicIcfg<OUTLOC> resultIcfg =
-				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
-
-		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(mLocationFactory,
-				mBacktranslationTracker, transformer, originalIcfg, resultIcfg);
-
+		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
+				new TransformedIcfgBuilder<>(mLocationFactory, mBacktranslationTracker, transformer, originalIcfg, resultIcfg);
+		
 		mLogger.debug("Transforming loop into icfg...");
-
+		
 		getLoopIcfg(loopPaths, resultIcfg, originalIcfg, lst);
-
+		
 		mLogger.debug("Icfg created.");
-
+		
 		final IIcfgSymbolTable origSymbolTable = originalIcfg.getSymboltable();
 		final ReplacementVarFactory fac = new ReplacementVarFactory(resultIcfg.getCfgSmtToolkit(), false);
 
 		final Set<INLOC> init = originalIcfg.getInitialNodes();
 		final Deque<INLOC> open = new ArrayDeque<>(init);
 		final Set<INLOC> closed = new HashSet<>();
-
+		
 		return resultIcfg;
 	}
 
 	@SuppressWarnings("unchecked")
-	private void getLoopIcfg(final List<Deque<INLOC>> loopPaths, final BasicIcfg<OUTLOC> result,
-			final IIcfg<INLOC> origIcfg, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
-		// TODO: actual loop path, maybe split in three?
+	private void getLoopIcfg(List<Deque<INLOC>> loopPaths, final BasicIcfg<OUTLOC> result, final IIcfg<INLOC> origIcfg,
+			final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
+		// TODO: actual loop path, maybe split in three? 
 		// 1 - before loop
 		// 2 - during loop
 		// 3 - after loop
-
+		
+		
+		
 		final Deque<INLOC> path = loopPaths.get(0);
-
+		
+		INLOC start = path.getFirst();
+		IcfgEdge edge = start.getOutgoingEdges().get(0);
+		
+		try {
+			FastUPRCore fastUpr = new FastUPRCore(edge.getTransformula(),
+					mLocationFactory,
+					mManagedScript,
+					mLogger,
+					mServices);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
 		final Set<INLOC> init = origIcfg.getInitialNodes();
 		final Deque<INLOC> open = new ArrayDeque<>(init);
 		final Set<INLOC> closed = new HashSet<>();
 		final Deque<INLOC> afterLoop = new ArrayDeque<>();
-
+		
 		mLogger.debug("Starting main transformation loop...");
-
-		while (!open.isEmpty()) {
+		
+		while(!open.isEmpty()) {
 			final INLOC oldSource = open.removeFirst();
-
-			if (!closed.add(oldSource)) {
-				continue;
-			}
-
+			
+			if (!closed.add(oldSource)) continue;
+			
 			final OUTLOC newSource = lst.createNewLocation(oldSource);
-
-			createNewLocations(oldSource, newSource, closed, result, lst);
+			
+			createNewLocations(oldSource, newSource, closed, result, lst);			
 		}
 	}
-
+	
 	private void createNewLocations(final INLOC oldSource, final OUTLOC newSource, final Set<INLOC> closed,
 			final BasicIcfg<OUTLOC> result, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
 
@@ -171,14 +194,12 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 			final IcfgEdge newEdge = lst.createNewTransition(newSource, newTarget, oldEdge);
 			newSource.addOutgoing(newEdge);
 			newTarget.addIncoming(newEdge);
-
-			if (!closed.add(oldTarget)) {
-				return;
-			}
-
+			
+			if(!closed.add(oldTarget)) return;
+			
 			createNewLocations(oldTarget, newTarget, closed, result, lst);
 		}
-
+		
 	}
 
 	@Override
