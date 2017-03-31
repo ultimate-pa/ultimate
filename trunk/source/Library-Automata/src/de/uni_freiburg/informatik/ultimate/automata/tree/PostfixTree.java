@@ -40,47 +40,47 @@ import java.util.List;
  */
 public class PostfixTree<LETTER, STATE> {
 
-	private final ArrayList<LETTER> postFix;
-	private final ArrayList<STATE> postFixStates;
-	private final ArrayList<Integer> depths;
+	private final ArrayList<LETTER> mPostFix;
+	private final ArrayList<STATE> mPostFixStates;
+	private final ArrayList<Integer> mDepths;
 
-	private final ArrayList<Integer> startIdx;
+	private final ArrayList<Integer> mStartIdx;
 
 	private final HashMap<Integer, Integer> mBeg;
-
-	public List<LETTER> getPostFix() {
-		return postFix;
-	}
-
-	public List<Integer> getStartIdx() {
-		return startIdx;
-	}
-
-	public List<STATE> getPostFixStates() {
-		return postFixStates;
-	}
 
 	/***
 	 * Construct a postfix Tree from a treeRun
 	 * @param run
 	 */
 	public PostfixTree(final TreeRun<LETTER, STATE> run) {
-		postFix = new ArrayList<>();
-		postFixStates = new ArrayList<>();
-		startIdx = new ArrayList<>();
-		depths = new ArrayList<>();
+		mPostFix = new ArrayList<>();
+		mPostFixStates = new ArrayList<>();
+		mStartIdx = new ArrayList<>();
+		mDepths = new ArrayList<>();
 		mBeg = new HashMap<>();
 		constructTree(run, 0);
 	}
 
+	public List<LETTER> getPostFix() {
+		return mPostFix;
+	}
+
+	public List<Integer> getStartIdx() {
+		return mStartIdx;
+	}
+
+	public List<STATE> getPostFixStates() {
+		return mPostFixStates;
+	}
+
 	private void addSymbol(final LETTER lt, final STATE st, final int depth) {
 		if (!mBeg.containsKey(depth)) {
-			mBeg.put(depth, depths.size());
+			mBeg.put(depth, mDepths.size());
 		}
-		startIdx.add(mBeg.get(depth));
-		postFix.add(lt);
-		postFixStates.add(st);
-		depths.add(depth);
+		mStartIdx.add(mBeg.get(depth));
+		mPostFix.add(lt);
+		mPostFixStates.add(st);
+		mDepths.add(depth);
 	}
 
 	private void constructTree(final TreeRun<LETTER, STATE> run, final int depth) {
@@ -143,10 +143,10 @@ public class PostfixTree<LETTER, STATE> {
 
 		PostfixTree<Character, Integer> tt = new PostfixTree<>(r1);
 		System.out.println(r1.toString());
-		System.out.println(tt.postFix);
-		System.out.println(tt.depths);
-		System.out.println(tt.startIdx);
-		System.out.println(tt.postFixStates);
+		System.out.println(tt.mPostFix);
+		System.out.println(tt.mDepths);
+		System.out.println(tt.mStartIdx);
+		System.out.println(tt.mPostFixStates);
 
 		HashMap<Integer, Integer> map = new HashMap<>();
 		for (int i = 1; i <= 12; ++i)
@@ -155,10 +155,10 @@ public class PostfixTree<LETTER, STATE> {
 		PostfixTree<Character, Integer> tt2 = new PostfixTree<>(r1.reconstruct(map));
 
 		System.out.println(r1.reconstruct(map).toString());
-		System.out.println(tt2.postFix);
-		System.out.println(tt2.depths);
-		System.out.println(tt2.startIdx);
-		System.out.println(tt2.postFixStates);
+		System.out.println(tt2.mPostFix);
+		System.out.println(tt2.mDepths);
+		System.out.println(tt2.mStartIdx);
+		System.out.println(tt2.mPostFixStates);
 
 	}
 }
