@@ -177,9 +177,12 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 	}
 	
 	private boolean isUsedName(final STATE newStateCandidate, final STATE oldState, final Set<STATE> oldStates) {
+		// current policy: ignore old state names completely
+		/*
 		if (oldStates.contains(newStateCandidate)) {
 			return !oldState.equals(newStateCandidate);
 		}
+		*/
 		return false;
 	}
 	
