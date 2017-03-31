@@ -642,7 +642,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 		/**
 		 * In case the pair of input predicates is not in the coverage relation use this method to throw an
 		 * AssertionError with a more detailed error message.
-		 * 
+		 *
 		 */
 		private void throwAssertionErrorWithMessage(final IPredicate o1, final IPredicate o2) throws AssertionError {
 			if (!mLhs2RhsValidity.keySet().contains(o1)) {
@@ -980,7 +980,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 				mImpliedPredicates.put(mFalsePredicate, Validity.INVALID);
 				break;
 			case UNKNOWN:
-				mLogger.warn(new DebugMessage("unable to proof that {0} is different from false", mClosedTerm));
+				mLogger.warn(new DebugMessage("unable to prove that {0} is different from false", mClosedTerm));
 				mImpliedPredicates.put(mFalsePredicate, Validity.UNKNOWN);
 				mIsIntricatePredicate = true;
 				break;
@@ -1002,7 +1002,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 				mExpliedPredicates.put(mTruePredicate, Validity.INVALID);
 				break;
 			case UNKNOWN:
-				mLogger.warn(new DebugMessage("unable to proof that {0} is different from true", mClosedTerm));
+				mLogger.warn(new DebugMessage("unable to prove that {0} is different from true", mClosedTerm));
 				mExpliedPredicates.put(mTruePredicate, Validity.UNKNOWN);
 				mIsIntricatePredicate = true;
 				break;

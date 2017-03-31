@@ -5,6 +5,8 @@
  * 
  */
 
+extern void __VERIFIER_error() __attribute__ ((__noreturn__));
+
 #include <stdlib.h>
 
 int nonMain(void) {
@@ -12,6 +14,8 @@ int nonMain(void) {
 	*p = 1.0;
 	*p = *p + 1.0;
 	float f = *p;
-	//@ assert f == 2.0;
+	if (f == 2.0) {
+		__VERIFIER_error();
+	}
 	return 0;
 }
