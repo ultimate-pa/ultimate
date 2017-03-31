@@ -120,7 +120,7 @@ int main(){
                            } else {
                            }
                        }
-		   loc_continue: { int ddd; ddd = ddd; }
+		   loc_continue: {  }
                    } while( TRUE );
                }
 //---------------------------------------------

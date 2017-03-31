@@ -328,9 +328,9 @@ int main()
              */
             die_now = 1;
         }
-    loc_continueB: { int uuu; uuu=uuu; }
+    loc_continueB: {  }
     }
     clean_child_exit(0);
  loc_return:
-    while(1) { int ddd; ddd=ddd; }
+    
 }

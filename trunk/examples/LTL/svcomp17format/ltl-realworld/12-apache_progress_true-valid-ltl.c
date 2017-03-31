@@ -279,7 +279,7 @@ __VERIFIER_assume(ap_listeners > 0);
                 lr = 1; //pdesc[last_poll_idx++].client_data;
 		break;
 
-	    loc_continueA: {int yyy2; yyy2=yyy2; }
+	    loc_continueA: { }
             }
         }
         /* if we accept() something we don't want to die, so we have to
@@ -323,9 +323,9 @@ __VERIFIER_assume(ap_listeners > 0);
              */
             die_now = 1;
         }
-    loc_continueB: { int uuu; uuu=uuu; }
+    loc_continueB: {  }
     }
     clean_child_exit(0);
  loc_return:
-    while(1) { int ddd; ddd=ddd; }
+    
 }

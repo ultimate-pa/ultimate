@@ -143,7 +143,7 @@ NTSTATUS main()
 	Mask = 0xff;
 	if (STATUS_SUCCESS != status)
 	{
-		while(1) { int ddd2; ddd2 = ddd2; }
+
 	}
 	
 	if(1) 
@@ -210,8 +210,7 @@ NTSTATUS main()
 			{
 				status = STATUS_BUFFER_TOO_SMALL;
 			}
-			//DD: Changed & to && to prevent LassoRanker error
-			if (Mask && SERIAL_PURGE_RXABORT) 
+			if (Mask & SERIAL_PURGE_RXABORT) 
 			{
 				keA = 1; keA = 0; 
 				lock = 1; OldIrql = irql;
@@ -480,5 +479,4 @@ NTSTATUS main()
 		}
 	}
 	RemoveReferenceForDispatch(DeviceObject);
-	while (1) { int rrr; rrr = rrr; }
 }

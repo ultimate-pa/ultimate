@@ -40,5 +40,4 @@ int main() {
 			curr_serv--;
 		}
 	}
-	while(1) { int ddd; ddd=ddd; }
 }

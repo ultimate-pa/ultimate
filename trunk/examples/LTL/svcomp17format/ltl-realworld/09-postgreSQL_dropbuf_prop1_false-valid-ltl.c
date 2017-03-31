@@ -130,5 +130,5 @@ recheck:
 
 	RELEASE = 1; RELEASE = 0; //LWLockRelease(BufMgrLock);
 my_exit:
-	while(1) { int yyy;yyy=yyy;}
+	
 }
