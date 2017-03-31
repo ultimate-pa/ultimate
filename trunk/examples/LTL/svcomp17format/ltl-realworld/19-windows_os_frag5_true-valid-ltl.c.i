@@ -390,7 +390,6 @@ int main()
  Mask = 0xff;
  if (2 != status)
  {
-  while(1) { int ddd2; ddd2 = ddd2; }
  }
  if(1)
  {
@@ -456,7 +455,7 @@ int main()
    {
     status = 4;
    }
-   if (Mask && 10)
+   if (Mask & 10)
    {
     keA = 1; keA = 0;
     lock = 1; OldIrql = irql;
@@ -723,5 +722,4 @@ int main()
   }
  }
  RemoveReferenceForDispatch(DeviceObject);
- while (1) { int rrr; rrr = rrr; }
 }

@@ -442,7 +442,4 @@ int main()
     a=1; a=0;
       }
   r=1; r=0;
-  while(1) {
-    { int ddd; ddd = ddd; }
-  }
 }
