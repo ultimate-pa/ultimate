@@ -278,6 +278,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		// check if the pending post state is already subsumed by a pre-existing state and if this is not a return
 		if (checkSubset(currentStateStorage, currentItem.getAction(), pendingPostState)) {
 			// it is subsumed, we can skip all successors safely
+			mResult.getBenchmark().addFixpoint();
 			return true;
 		}
 
@@ -317,7 +318,11 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(getLogMessageNewPostState(postState));
 		}
-		return currentStorage.addAbstractState(target, postState);
+		final AbstractMultiState<STATE, ACTION, VARDECL> rtrState = currentStorage.addAbstractState(target, postState);
+		if (rtrState != postState) {
+			mResult.getBenchmark().addMerge();
+		}
+		return rtrState;
 	}
 
 	private void checkReachedError(final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
@@ -410,6 +415,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 			}
 			return null;
 		}
+		mResult.getBenchmark().addWiden();
 		return postStateAfterWidening;
 	}
 

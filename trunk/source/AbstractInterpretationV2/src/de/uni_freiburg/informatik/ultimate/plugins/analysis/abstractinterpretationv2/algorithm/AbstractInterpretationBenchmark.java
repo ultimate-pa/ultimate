@@ -37,7 +37,7 @@ public class AbstractInterpretationBenchmark<ACTION, LOCATION> implements ICsvPr
 		addOrIncrement(mAction2Visits);
 	}
 
-	public void addMerge(final int availablePostStatesCount) {
+	public void addMerge() {
 		addOrIncrement(mAction2Merges);
 	}
 
