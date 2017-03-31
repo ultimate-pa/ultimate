@@ -72,7 +72,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		mLogger = Objects.requireNonNull(logger);
 		mLoopDetector = new LoopDetector<>(mLogger, origIcfg);
 		mBackBones = new ArrayDeque<>();
-		mResult = transform(originalIcfg, newIcfgIdentifier, outLocationClass);
+		mResult = transform(origIcfg, newIcfgIdentifier, outLocationClass);
 
 	}
 
@@ -83,51 +83,12 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> originalIcfg, final String newIcfgIdentifier,
 			final Class<OUTLOC> outLocationClass) {
 
-		mLogger.debug("transforming...");
+		mLogger.debug("Transforming...");
 
-		getBackbones();
 
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
 
 		return resultIcfg;
 	}
-
-	private void getBackbones() {
-
-		final Deque<Deque<IcfgEdge>> loopBodies = mLoopDetector.getLoopBodies();
-
-		mLogger.debug("getting Backbones...");
-
-		if (loopBodies.isEmpty()) {
-			// something
-		}
-
-		// @todo finding more than one backbone...
-		for (final Deque<IcfgEdge> loopBody : loopBodies) {
-
-			final Deque<Backbone> backBones = new ArrayDeque<>();
-			final IcfgLocation loopHeader = loopBody.getFirst().getSource();
-
-			final Deque<IcfgEdge> possibleBackbone = new ArrayDeque<>();
-			IcfgEdge current = loopBody.getFirst();
-			possibleBackbone.addFirst(current);
-			for (final IcfgEdge transition : loopBody) {
-				if (current.getTarget() == loopHeader) {
-
-					final Backbone backbone = new Backbone(possibleBackbone);
-
-					backBones.addLast(backbone);
-					break;
-				}
-
-				if (transition.getSource() == current.getTarget()) {
-					possibleBackbone.addLast(transition);
-					current = transition;
-				}
-			}
-			mBackBones.addLast(backBones);
-		}
-	}
-
 }
