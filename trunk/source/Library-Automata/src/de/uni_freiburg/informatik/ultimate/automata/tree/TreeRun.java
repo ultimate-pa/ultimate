@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.tree;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -41,20 +42,29 @@ import java.util.Set;
  * 
  * @author Mostafa M.A. (mostafa.amin93@gmail.com)
  *
- * @param <R> Symbols of the automaton
- * @param <S> States of the automaton.
+ * @param <LETTER> Symbols of the automaton
+ * @param <STATE> States of the automaton.
  */
-public class TreeRun<R, S> implements ITreeRun<R, S> {
+public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 
-	private final S state;
-	private final R letter;
-	private final List<TreeRun<R, S>> children;
+	/*
+	 * fields that determine the TreeRun
+	 */
+	private final STATE mState;
+	private final LETTER mLetter;
+	private final List<TreeRun<LETTER, STATE>> mChildren;
+	
+	/*
+	 * helper fields
+	 */
+	private final Collection<STATE> mAllStates;
+	private final Collection<TreeAutomatonRule<LETTER, STATE>> mAllRules;
 	
 	/**
 	 * Constructs a run that consists of one state, and no transitions.
 	 * @param state
 	 */
-	public TreeRun(final S state) {
+	public TreeRun(final STATE state) {
 		this(state, null, new ArrayList<>());
 	}
 	
@@ -65,10 +75,27 @@ public class TreeRun<R, S> implements ITreeRun<R, S> {
 	 * @param letter: the letter taken by the final transition.
 	 * @param children: The children runs.
 	 */
-	public TreeRun(final S state, final R letter, final List<TreeRun<R, S>> children) {
-		this.state = state;
-		this.letter = letter;
-		this.children = children;
+	public TreeRun(final STATE state, final LETTER letter, final List<TreeRun<LETTER, STATE>> children) {
+		this.mState = state;
+		this.mLetter = letter;
+		this.mChildren = children;
+		
+		/*
+		 * compute all rules and all states from this and children
+		 */
+		final Set<STATE> allStates = new HashSet<>();
+		final Set<TreeAutomatonRule<LETTER, STATE>> allRules = new HashSet<>();
+		final List<STATE> childStates = new ArrayList<>();
+		for (TreeRun<LETTER, STATE> child : children) {
+			allStates.addAll(child.getStates());
+			childStates.add(child.getRoot());
+			allRules.addAll(child.getRules());
+		}
+		allRules.add(new TreeAutomatonRule<LETTER, STATE>(mLetter, childStates, state));
+		allStates.add(mState);
+		
+		mAllStates = Collections.unmodifiableSet(allStates);
+		mAllRules = Collections.unmodifiableSet(allRules);
 	}
 
 	/***
@@ -78,47 +105,49 @@ public class TreeRun<R, S> implements ITreeRun<R, S> {
 	 * @return
 	 */
 	
-	public <ST> TreeRun<R, ST> reconstruct(final Map<S, ST> stMap) {
-		List<TreeRun<R, ST>> child = new ArrayList<>();
-		for (final TreeRun<R, S> c : children) {
+	public <ST> TreeRun<LETTER, ST> reconstruct(final Map<STATE, ST> stMap) {
+		List<TreeRun<LETTER, ST>> child = new ArrayList<>();
+		for (final TreeRun<LETTER, STATE> c : mChildren) {
 			child.add(c.reconstruct(stMap));
 		}
 		
-		return new TreeRun<>(stMap.containsKey(state) ? stMap.get(state) : null, letter, child);
+		return new TreeRun<>(stMap.containsKey(mState) ? stMap.get(mState) : null, mLetter, child);
 	}
 	
-	public List<TreeRun<R, S>> getChildren() {
-		return children;
+	public List<TreeRun<LETTER, STATE>> getChildren() {
+		return mChildren;
 	}
 	
-	private Collection<TreeAutomatonRule<R, S>> getRules() {
-		final Set<TreeAutomatonRule<R, S>> res = new HashSet<>();
-		
-		if (!children.isEmpty()) {
-			final List<S> src = new ArrayList<>();
-			for (final TreeRun<R, S> run : children) {
-				src.add(run.state); // Index States
-				res.addAll(run.getRules());
-			}
-			res.add(new TreeAutomatonRule<R, S>(letter, src, state));
-		}
-		return res;
+	private Collection<TreeAutomatonRule<LETTER, STATE>> getRules() {
+		return mAllRules;
+//		final Set<TreeAutomatonRule<LETTER, STATE>> res = new HashSet<>();
+//		
+//		if (!mChildren.isEmpty()) {
+//			final List<STATE> src = new ArrayList<>();
+//			for (final TreeRun<LETTER, STATE> run : mChildren) {
+//				src.add(run.mState); // Index States
+//				res.addAll(run.getRules());
+//			}
+//			res.add(new TreeAutomatonRule<LETTER, STATE>(mLetter, src, mState));
+//		}
+//		return res;
 	}
-	private Collection<S> getStates() {
-		final Set<S> res = new HashSet<>();
-		res.add(state);
-		for (final TreeRun<R, S> st : children) {
-			res.addAll(st.getStates());
-		}
-		return res;
+	private Collection<STATE> getStates() {
+		return mAllStates;
+//		final Set<STATE> res = new HashSet<>();
+//		res.add(mState);
+//		for (final TreeRun<LETTER, STATE> st : mChildren) {
+//			res.addAll(st.getStates());
+//		}
+//		return res;
 	}
 	
-	private Collection<S> getInitialStates() {
-		final Set<S> res = new HashSet<>();
-		if (children.isEmpty()) {
-			res.add(state);
+	private Collection<STATE> getInitialStates() {
+		final Set<STATE> res = new HashSet<>();
+		if (mChildren.isEmpty()) {
+			res.add(mState);
 		} else {
-			for (final TreeRun<R, S> st : children) {
+			for (final TreeRun<LETTER, STATE> st : mChildren) {
 				res.addAll(st.getInitialStates());
 			}
 		}
@@ -126,18 +155,18 @@ public class TreeRun<R, S> implements ITreeRun<R, S> {
 	}
 	
 	@Override
-	public ITreeAutomatonBU<R, S> getAutomaton() {
-		final TreeAutomatonBU<R, S> treeAutomaton = new TreeAutomatonBU<>();
+	public ITreeAutomatonBU<LETTER, STATE> getAutomaton() {
+		final TreeAutomatonBU<LETTER, STATE> treeAutomaton = new TreeAutomatonBU<>();
 		
-		for (final S st : getStates()) {
+		for (final STATE st : getStates()) {
 			treeAutomaton.addState(st);
 		}
-		for (final S st : getInitialStates()) {
+		for (final STATE st : getInitialStates()) {
 			treeAutomaton.addInitialState(st);
 		}
-		treeAutomaton.addFinalState(state);
+		treeAutomaton.addFinalState(mState);
 		
-		for (final TreeAutomatonRule<R, S> rule : getRules()) {
+		for (final TreeAutomatonRule<LETTER, STATE> rule : getRules()) {
 			treeAutomaton.addRule(rule);
 		}
 		
@@ -145,34 +174,34 @@ public class TreeRun<R, S> implements ITreeRun<R, S> {
 	}
 
 	@Override
-	public Tree<R> getTree() {
-		if (children.isEmpty()) {
+	public Tree<LETTER> getTree() {
+		if (mChildren.isEmpty()) {
 			return null;
 		}
-		final List<Tree<R>> treeChildren = new ArrayList<>();
-		for (final TreeRun<R, S> run : this.children) {
+		final List<Tree<LETTER>> treeChildren = new ArrayList<>();
+		for (final TreeRun<LETTER, STATE> run : this.mChildren) {
 			treeChildren.add(run.getTree());
 		}
-		return new Tree<>(letter, treeChildren);
+		return new Tree<>(mLetter, treeChildren);
 	}
 
 	@Override
-	public S getRoot() {
-		return state;
+	public STATE getRoot() {
+		return mState;
 	}
 	
 	@Override
-	public R getRootSymbol() {
-		return letter;
+	public LETTER getRootSymbol() {
+		return mLetter;
 	}
 	
 	@Override
 	public String toString() {
-		if (children.isEmpty()) {
-			return state.toString();
+		if (mChildren.isEmpty()) {
+			return mState.toString();
 		}
 		final StringBuilder res = new StringBuilder();
-		for (final TreeRun<R, S> st : children) {
+		for (final TreeRun<LETTER, STATE> st : mChildren) {
 			if (res.length() > 0) {
 				res.append(", ");
 			}
@@ -183,6 +212,6 @@ public class TreeRun<R, S> implements ITreeRun<R, S> {
 			res.append(res);
 			res.append(")");
 		}
-		return String.format("%s[%s]%s", letter, state, res);
+		return String.format("%s[%s]%s", mLetter, mState, res);
 	}
 }
