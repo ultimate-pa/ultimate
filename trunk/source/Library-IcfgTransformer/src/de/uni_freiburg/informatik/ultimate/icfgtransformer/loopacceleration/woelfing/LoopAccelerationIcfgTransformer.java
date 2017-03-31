@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
@@ -186,11 +187,18 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 				open.add(oldTarget);
 				final OUTLOC newTarget = lst.createNewLocation(oldTarget);
 				if (mBackbones.containsKey(oldSource)) {
-					final TransFormula loopTf = getLoopTransFormula(oldSource);
+					final IteratedSymbolicMemory iteratedSymbolicMemory = getIteratedSymbolicMemoryForLoop(oldSource);
+					final TransFormula loopTf = getLoopTransFormula(iteratedSymbolicMemory, mBackbones.get(oldSource));
 					final UnmodifiableTransFormula tf = mergeTransFormulas(loopTf, oldTransition.getTransformula());
 					assert oldTransition instanceof IIcfgInternalTransition;
 					final IcfgInternalTransition newTransition =
 							new IcfgInternalTransition(newSource, newTarget, null, tf);
+					if (iteratedSymbolicMemory.isOverapproximation()
+							|| iteratedSymbolicMemory.getLoopCounters().size() > 1) {
+						// When the iterated symbolic memory cannot represent the values of all variables or when there
+						// are multiple backbones the calculated loop transformula might be an overapproximation.
+						new Overapprox(getClass().getSimpleName(), null).annotate(newTransition);
+					}
 					newSource.addOutgoing(newTransition);
 					newTarget.addIncoming(newTransition);
 					backtranslationTracker.rememberRelation(oldTransition, newTransition);
@@ -282,44 +290,6 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 	}
 
 	/**
-	 * Calculates a TransFormula that holds after the given backbone was taken once.
-	 *
-	 * @param backbone
-	 *            A Backbone.
-	 * @return A Transformula.
-	 */
-	private TransFormula getTransformulaForBackbone(final Backbone backbone) {
-		if (mBackboneTransformulas.containsKey(backbone)) {
-			return mBackboneTransformulas.get(backbone);
-		}
-
-		Term term = mScript.getScript().term("true");
-
-		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
-		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
-		final Set<TermVariable> auxVars = new HashSet<>();
-
-		for (final IcfgEdge edge : backbone.getTransitions()) {
-			final TransFormula tf = edge.getTransformula();
-
-			term = getTransformulaForBackboneHelper(tf, term, inVars, outVars, auxVars);
-
-			if (edge.getTarget() != backbone.getLastLocation() && mBackbones.containsKey(edge.getTarget())) {
-				final TransFormula loopTf = getLoopTransFormula((INLOC) edge.getTarget());
-				term = getTransformulaForBackboneHelper(loopTf, term, inVars, outVars, auxVars);
-			}
-		}
-
-		final TransFormulaBuilder builder = new TransFormulaBuilder(inVars, outVars, true, null, true, null, false);
-		builder.setFormula(term);
-		builder.addAuxVarsButRenameToFreshCopies(auxVars, mScript);
-		builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		final TransFormula result = builder.finishConstruction(mScript);
-		mBackboneTransformulas.put(backbone, result);
-		return result;
-	}
-
-	/**
 	 * Calculates an iterated symbolic memory for a given loop entry.
 	 *
 	 * @param loopEntry
@@ -331,7 +301,36 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		final List<SymbolicMemory> symbolicMemories = new ArrayList<>();
 
 		for (final Backbone backbone : backbones) {
-			final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, getTransformulaForBackbone(backbone));
+			Term term = mScript.getScript().term("true");
+			boolean overapproximation = false;
+
+			final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
+			final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
+			final Set<TermVariable> auxVars = new HashSet<>();
+
+			for (final IcfgEdge edge : backbone.getTransitions()) {
+				final TransFormula tf = edge.getTransformula();
+
+				term = getTransformulaForBackboneHelper(tf, term, inVars, outVars, auxVars);
+
+				final INLOC target = (INLOC) edge.getTarget();
+				if (target != backbone.getLastLocation() && mBackbones.containsKey(target)) {
+					final IteratedSymbolicMemory iteratedSymbolicMemory = getIteratedSymbolicMemoryForLoop(target);
+					overapproximation |= iteratedSymbolicMemory.isOverapproximation()
+							|| iteratedSymbolicMemory.getLoopCounters().size() > 1;
+					final TransFormula loopTf = getLoopTransFormula(iteratedSymbolicMemory, mBackbones.get(target));
+					term = getTransformulaForBackboneHelper(loopTf, term, inVars, outVars, auxVars);
+				}
+			}
+
+			final TransFormulaBuilder builder = new TransFormulaBuilder(inVars, outVars, true, null, true, null, false);
+			builder.setFormula(term);
+			builder.addAuxVarsButRenameToFreshCopies(auxVars, mScript);
+			builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
+			final TransFormula tf = builder.finishConstruction(mScript);
+			mBackboneTransformulas.put(backbone, tf);
+
+			final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, tf, overapproximation);
 			symbolicMemories.add(symbolicMemory);
 		}
 		return new IteratedSymbolicMemory(mScript, symbolicMemories);
@@ -340,16 +339,18 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 	/**
 	 * Calculates a TransFormula that holds when each backbone can be taken as often as specified by its loopCounter.
 	 *
-	 * @param loopEntry
-	 *            The loop entry location.
+	 * @param iteratedSymbolicMemory
+	 *            The IteratedSymbolicMemory of the loop.
+	 * @param backbones
+	 *            The backbones of the loop.
 	 * @return The loop TransFormula (containing loopCounters).
 	 */
-	private TransFormula getLoopTransFormula(final INLOC loopEntry) {
-		final IteratedSymbolicMemory iteratedSymbolicMemory = getIteratedSymbolicMemoryForLoop(loopEntry);
-		final List<Backbone> backbones = mBackbones.get(loopEntry);
+	private TransFormula getLoopTransFormula(final IteratedSymbolicMemory iteratedSymbolicMemory,
+			final List<Backbone> backbones) {
 		final int numLoops = backbones.size();
 		final List<TermVariable> loopCounters = iteratedSymbolicMemory.getLoopCounters();
 		assert loopCounters.size() == numLoops;
+		final Set<TermVariable> auxVars = new HashSet<>(loopCounters);
 
 		final List<TermVariable> loopIterators = new ArrayList<>(numLoops);
 		final Map<Term, Term> substitutionMapping = new HashMap<>();
@@ -365,7 +366,8 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		final Term zeroTerm = Rational.ZERO.toTerm(sort);
 
 		for (int i = 0; i < numLoops; i++) {
-			final TransFormula tf = getTransformulaForBackbone(backbones.get(i));
+			final TransFormula tf = mBackboneTransformulas.get(backbones.get(i));
+			auxVars.addAll(tf.getAuxVars());
 			Term term = tf.getFormula();
 			term = iteratedSymbolicMemory.getSymbolicMemory(i).replaceTermVars(term, null);
 			term = iteratedSymbolicMemory.replaceTermVars(term, tf.getInVars());
@@ -416,7 +418,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		final TransFormulaBuilder builder = new TransFormulaBuilder(iteratedSymbolicMemory.getInVars(),
 				iteratedSymbolicMemory.getOutVars(), true, null, true, null, false);
 		builder.setFormula(resultTerm);
-		builder.addAuxVarsButRenameToFreshCopies(new HashSet<>(loopCounters), mScript);
+		builder.addAuxVarsButRenameToFreshCopies(auxVars, mScript);
 		builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		return builder.finishConstruction(mScript);
 	}

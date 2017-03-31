@@ -48,6 +48,7 @@ public class SymbolicMemory {
 	protected final Map<IProgramVar, TermVariable> mInVars;
 	protected final Map<IProgramVar, TermVariable> mOutVars;
 	protected final Map<TermVariable, Term> mVariableTerms;
+	protected boolean mOverapproximation;
 
 	protected SymbolicMemory(final ManagedScript script) {
 		mScript = script;
@@ -63,12 +64,15 @@ public class SymbolicMemory {
 	 *            A ManagedScript.
 	 * @param tf
 	 *            A transformula that is a conjunction of equalities.
+	 * @param overapproximation
+	 *            Whether or not the given TransFormula is an overapproximation.
 	 */
-	public SymbolicMemory(final ManagedScript script, final TransFormula tf) {
+	public SymbolicMemory(final ManagedScript script, final TransFormula tf, final boolean overapproximation) {
 		mScript = script;
 		mInVars = tf.getInVars();
 		mOutVars = tf.getOutVars();
 		mVariableTerms = new HashMap<>();
+		mOverapproximation = overapproximation;
 
 		final Term term = tf.getFormula();
 		if (!(term instanceof ApplicationTerm)) {
@@ -102,7 +106,8 @@ public class SymbolicMemory {
 	 */
 	public Term replaceTermVars(final Term term, final Map<IProgramVar, TermVariable> termInVars) {
 		if (mVariableTerms.containsKey(term)) {
-			return replaceTermVars(mVariableTerms.get(term), termInVars);
+			final Term newTerm = mVariableTerms.get(term);
+			return newTerm == null ? term : replaceTermVars(newTerm, termInVars);
 		}
 
 		if (termInVars != null && termInVars.values().contains(term)) {
@@ -183,6 +188,15 @@ public class SymbolicMemory {
 	 */
 	public Term getVariableTerm(final TermVariable termVar) {
 		return mVariableTerms.get(termVar);
+	}
+
+	/**
+	 * Returns whether this symbolic memory is an overapproximation.
+	 *
+	 * @return true if the symbolic memory is an overapproximation.
+	 */
+	public boolean isOverapproximation() {
+		return mOverapproximation;
 	}
 
 	@Override
