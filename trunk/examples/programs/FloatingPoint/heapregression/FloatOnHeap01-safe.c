@@ -1,6 +1,7 @@
 //#Safe
 /* 
  * Author: heizmann@informatik.uni-freiburg.de
+ *         greitsch@informatik.uni-freiburg.de
  * Date: 2016-08-09
  * 
  */
@@ -14,8 +15,10 @@ int nonMain(void) {
 	*p = 1.0;
 	*p = *p + 1.0;
 	float f = *p;
-	if (f == 2.0) {
+	if (f != 2.0) {
 		__VERIFIER_error();
 	}
+
+	free(p);
 	return 0;
 }
