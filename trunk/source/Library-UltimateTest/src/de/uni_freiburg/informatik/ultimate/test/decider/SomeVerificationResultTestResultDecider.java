@@ -94,11 +94,13 @@ public class SomeVerificationResultTestResultDecider extends TestResultDecider {
 			}
 		}
 
-		if (!fail) {
-			final String msg = customMessages.stream().collect(Collectors.joining(", "));
+		final String msg = customMessages.stream().collect(Collectors.joining(", "));
+		if (fail) {
+			setResultCategory("NOT_SUCCESS");
+		} else {
 			setResultCategory(msg);
-			setResultMessage(msg);
 		}
+		setResultMessage(msg);
 		TestUtil.logResults(log, mInputFileNames, fail, customMessages, resultService);
 		return fail ? TestResult.FAIL : TestResult.SUCCESS;
 	}
