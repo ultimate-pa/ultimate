@@ -34,6 +34,7 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinitionGenerator;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SomeVerificationResultTestResultDecider;
@@ -172,7 +173,8 @@ public class MapEliminationTest extends AbstractTraceAbstractionTestSuite {
 	 * "trunk/examples/settings/",
 	 */
 	private static final String[] SETTINGS = {
-		"automizer/Reach-64bit-Automizer-SingleStatement-Penguin.epf"
+		"automizer/Reach-64bit-Automizer-SingleStatement-Penguin.epf",
+//		"automizer/DumpDifficultPathProgramsFromIcfg_svcomp-Reach-64bit-Automizer.epf",
 	};
 	
 
@@ -195,25 +197,25 @@ public class MapEliminationTest extends AbstractTraceAbstractionTestSuite {
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
-//		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_32BIT) {
-//			for (final String toolchain : TOOLCHAINS_C) {
-//				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
-//						new String[]{dfep.getDirectory()}, dfep.getFileEndings(), SETTINGS, 
-//						toolchain, dfep.getOffset(), dfep.getLimit()));
-//			}
-//		}
-//		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_64BIT) {
-//			for (final String toolchain : TOOLCHAINS_C) {
-//				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
-//						new String[]{dfep.getDirectory()}, dfep.getFileEndings(), SETTINGS, 
-//						toolchain, dfep.getOffset(), dfep.getLimit()));
-//			}
-//		}
-//		for (final String setting : SETTINGS) {
-//			for (final String toolchain : TOOLCHAINS_C) {
-//				addTestCase(toolchain, setting, ULTIMATE_REPO, new String[] {".c", ".i"});
-//			}
-//		}
+		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_32BIT) {
+			for (final String toolchain : TOOLCHAINS_C) {
+				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
+						new String[]{dfep.getDirectory()}, dfep.getFileEndings(), SETTINGS, 
+						toolchain, dfep.getOffset(), dfep.getLimit()));
+			}
+		}
+		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_64BIT) {
+			for (final String toolchain : TOOLCHAINS_C) {
+				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
+						new String[]{dfep.getDirectory()}, dfep.getFileEndings(), SETTINGS, 
+						toolchain, dfep.getOffset(), dfep.getLimit()));
+			}
+		}
+		for (final String setting : SETTINGS) {
+			for (final String toolchain : TOOLCHAINS_C) {
+				addTestCase(toolchain, setting, ULTIMATE_REPO, new String[] {".c", ".i"});
+			}
+		}
 		for (final String setting : SETTINGS) {
 			for (final String toolchain : TOOLCHAINS_BPL) {
 				addTestCase(toolchain, setting, ULTIMATE_REPO, new String[] {".bpl"});
