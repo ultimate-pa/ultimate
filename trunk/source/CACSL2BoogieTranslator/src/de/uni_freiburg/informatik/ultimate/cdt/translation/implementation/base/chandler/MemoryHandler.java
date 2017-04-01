@@ -896,9 +896,9 @@ public class MemoryHandler {
 		final ModifiesSpecification mod = constructModifiesSpecification(loc, heapDataArrays, x -> x.getVariableName());
 		swrite.add(mod);
 		
-		final CPrimitives cprimitive = rda.getPrimitives().iterator().next();
+		
 		final boolean floating2bitvectorTransformationNeeded = ((mMemoryModel instanceof MemoryModel_SingleBitprecise)
-				&& cprimitive.getPrimitiveCategory() == CPrimitiveCategory.FLOATTYPE);
+				&& rda.getCPrimitiveCategory().contains(CPrimitiveCategory.FLOATTYPE));
 		if (floating2bitvectorTransformationNeeded) {
 			value = "#valueAsBitvector";
 		}
@@ -928,6 +928,7 @@ public class MemoryHandler {
 			}
 		}
 		if (floating2bitvectorTransformationNeeded) {
+			final CPrimitives cprimitive = rda.getPrimitives().iterator().next();
 			final Expression valueAsBitvector = new IdentifierExpression(loc, "#valueAsBitvector");
 			final Expression transformedToFloat = mExpressionTranslation.transformBitvectorToFloat(loc, valueAsBitvector, cprimitive);
 			final Expression inputValue = new IdentifierExpression(loc, "#value");
@@ -1005,9 +1006,10 @@ public class MemoryHandler {
 			}
 			dataFromHeap = mExpressionTranslation.concatBits(loc, Arrays.asList(dataChunks), hda.getSize());
 		}
-		final CPrimitives cprimitive = rda.getPrimitives().iterator().next();
+		
 		if ((mMemoryModel instanceof MemoryModel_SingleBitprecise)
-				&& cprimitive.getPrimitiveCategory() == CPrimitiveCategory.FLOATTYPE) {
+				&& rda.getCPrimitiveCategory().contains(CPrimitiveCategory.FLOATTYPE)) {
+			final CPrimitives cprimitive = rda.getPrimitives().iterator().next();
 			dataFromHeap = mExpressionTranslation.transformBitvectorToFloat(loc, dataFromHeap, cprimitive);
 		}
 		

@@ -34,11 +34,14 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.RequiredMemoryModelFeatures;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitiveCategory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive.CPrimitives;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.handler.ITypeHandler;
@@ -57,7 +60,7 @@ public abstract class AMemoryModel {
 	
 	private final HeapDataArray mPointerArray;
 	
-	public AMemoryModel(TypeSizes typeSizes, ITypeHandler typeHandler, AExpressionTranslation expressionTranslation) {
+	public AMemoryModel(final TypeSizes typeSizes, final ITypeHandler typeHandler, final AExpressionTranslation expressionTranslation) {
 		mTypeSizes = typeSizes;
 		mTypeHandler = typeHandler;
 		final ILocation ignoreLoc = LocationFactory.createIgnoreCLocation();
@@ -68,11 +71,11 @@ public abstract class AMemoryModel {
 	
 	protected abstract String getProcedureSuffix(CPrimitives primitive);
        	
-	public final String getReadProcedureName(CPrimitives primitive) {
+	public final String getReadProcedureName(final CPrimitives primitive) {
 		return s_ReadProcedurePrefix + getProcedureSuffix(primitive);
 	}
 
-	public final String getWriteProcedureName(CPrimitives primitive) {
+	public final String getWriteProcedureName(final CPrimitives primitive) {
 		return s_WriteProcedurePrefix + getProcedureSuffix(primitive);
 	}
 	
@@ -94,7 +97,7 @@ public abstract class AMemoryModel {
 		return mPointerArray;
 	}
 
-	public final Collection<HeapDataArray> getDataHeapArrays(RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+	public final Collection<HeapDataArray> getDataHeapArrays(final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
 		final Set<HeapDataArray> result = new HashSet<>();
 		if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
 			result.add(getPointerHeapArray());
@@ -105,11 +108,11 @@ public abstract class AMemoryModel {
 		return result;
 	}
 	
-	public final List<ReadWriteDefinition> getReadWriteDefinitionForHeapDataArray(HeapDataArray hda, RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
+	public final List<ReadWriteDefinition> getReadWriteDefinitionForHeapDataArray(final HeapDataArray hda, final RequiredMemoryModelFeatures requiredMemoryModelFeatures) {
 		if (hda == mPointerArray) {
 			if (requiredMemoryModelFeatures.isPointerOnHeapRequired()) {
 				return Collections.singletonList(new ReadWriteDefinition(
-						getPointerHeapArray().getName(), bytesizeOfStoredPointerComponents(), getPointerHeapArray().getASTType(), null));
+						getPointerHeapArray().getName(), bytesizeOfStoredPointerComponents(), getPointerHeapArray().getASTType(), Collections.emptySet()));
 			} else {
 				return Collections.emptyList();
 			}
@@ -126,12 +129,15 @@ public abstract class AMemoryModel {
 		private final int mBytesize;
 		private final ASTType mASTType;
 		private final Set<CPrimitives> mPrimitives;
-		public ReadWriteDefinition(String procedureName, int bytesize, ASTType aSTType, Set<CPrimitives> primitives) {
+		private final Set<CPrimitiveCategory> mCPrimitiveCategory;
+		public ReadWriteDefinition(final String procedureName, final int bytesize, final ASTType aSTType, final Set<CPrimitives> primitives) {
 			super();
 			mProcedureSuffix = procedureName;
 			mBytesize = bytesize;
 			mASTType = aSTType;
 			mPrimitives = primitives;
+			final Function<CPrimitives, CPrimitiveCategory> mapper = (x -> x.getPrimitiveCategory());
+			mCPrimitiveCategory = primitives.stream().map(mapper).collect(Collectors.toSet());
 		}
 		public String getReadProcedureName() {
 			return s_ReadProcedurePrefix + mProcedureSuffix;
@@ -147,6 +153,9 @@ public abstract class AMemoryModel {
 		}
 		public Set<CPrimitives> getPrimitives() {
 			return mPrimitives;
+		}
+		public Set<CPrimitiveCategory> getCPrimitiveCategory() {
+			return mCPrimitiveCategory;
 		}
 		@Override
 		public String toString() {
