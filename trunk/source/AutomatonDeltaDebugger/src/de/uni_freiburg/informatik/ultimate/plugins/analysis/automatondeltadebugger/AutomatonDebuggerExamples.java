@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.BuchiReduce;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.delayed.nwa.ReduceNwaDelayedSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.direct.nwa.ReduceNwaDirectSimulation;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.fair.ReduceBuchiFairDirectSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.ReduceNwaDelayedFullMultipebbleSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.ReduceNwaDirectFullMultipebbleSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.CompareSimulations;
@@ -146,7 +147,11 @@ public class AutomatonDebuggerExamples {
 		/**
 		 * {@link CompareSimulations}
 		 */
-		COMPARE_SIMULATIONS
+		COMPARE_SIMULATIONS,
+		/**
+		 * {@link ReduceBuchiFairDirectSimulation}
+		 */
+		REDUCE_BUCHI_FAIR_DIRECT_SIMULATION
 	}
 	
 	/**
@@ -233,13 +238,17 @@ public class AutomatonDebuggerExamples {
 			case COMPARE_SIMULATIONS:
 				operation = compareSimulations(automaton, factory);
 				break;
+				
+			case REDUCE_BUCHI_FAIR_DIRECT_SIMULATION:
+				operation = reduceBuchiFairDirectSimulation(automaton, factory);
+				break;
 			
 			default:
 				throw new IllegalArgumentException("Unknown operation.");
 		}
 		return operation;
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.
@@ -437,7 +446,7 @@ public class AutomatonDebuggerExamples {
 	 * @throws Throwable
 	 *             when error occurs
 	 */
-	private IOperation<String, String, ? super StringFactory> directSimulationComparison(
+	public IOperation<String, String, ? super StringFactory> directSimulationComparison(
 			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
 		return new DirectSimulationComparison<>(mServices, factory, automaton);
 	}
@@ -467,7 +476,7 @@ public class AutomatonDebuggerExamples {
 	 * @throws Throwable
 	 *             when error occurs
 	 */
-	private IOperation<String, String, ? super StringFactory> compareSimulations(
+	public IOperation<String, String, ? super StringFactory> compareSimulations(
 			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
 		final IDoubleDeckerAutomaton<String, String> preprocessed =
 				new RemoveUnreachable<>(mServices, automaton).getResult();
@@ -488,5 +497,21 @@ public class AutomatonDebuggerExamples {
 		final IDoubleDeckerAutomaton<String, String> preprocessed =
 				new RemoveDeadEnds<>(mServices, automaton).getResult();
 		return new MinimizeNwaPmaxSatAsymmetric<>(mServices, factory, preprocessed);
+	}
+	
+	/**
+	 * @param automaton
+	 *            The automaton.
+	 * @param factory
+	 *            state factory
+	 * @return new {@link ReduceBuchiFairDirectSimulation} instance
+	 * @throws Throwable
+	 *             when error occurs
+	 */
+	public IOperation<String, String, ? super StringFactory> reduceBuchiFairDirectSimulation(
+			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
+		final IDoubleDeckerAutomaton<String, String> preprocessed =
+				new RemoveDeadEnds<>(mServices, automaton).getResult();
+		return new ReduceBuchiFairDirectSimulation<>(mServices, factory, preprocessed);
 	}
 }
