@@ -33,11 +33,10 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AbstractShrinker;
 
 /**
- * Reduces a list of objects in a binary search manner until a local minimum is
- * found.
- * Note that the local minimum is only according to the current shrinker, i.e.,
- * the respective shrinker cannot be applied to a subinterval of objects anymore
- * while still producing the error. However, removing, say, objects 1 and 3
+ * Reduces a list of objects in a binary search manner until a local minimum is found.
+ * <p>
+ * Note that the local minimum is only according to the current shrinker, i.e., the respective shrinker cannot be
+ * applied to a subinterval of objects anymore while still producing the error. However, removing, say, objects 1 and 3
  * might still work.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
@@ -51,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 public class BinaryDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STATE> {
 	private final ArrayDeque<SublistBounds> mStack;
 	private SublistBounds mSublistBounds;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -60,13 +59,12 @@ public class BinaryDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STAT
 	 * @param shrinker
 	 *            shrinker
 	 */
-	public BinaryDebug(final AbstractTester<LETTER, STATE> tester,
-			final AbstractShrinker<T, LETTER, STATE> shrinker) {
+	public BinaryDebug(final AbstractTester<LETTER, STATE> tester, final AbstractShrinker<T, LETTER, STATE> shrinker) {
 		super(tester, shrinker);
 		mStack = new ArrayDeque<>();
 		mSublistBounds = null;
 	}
-	
+
 	/**
 	 * Splits a list into two sublists of equal size.
 	 * 
@@ -76,12 +74,12 @@ public class BinaryDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STAT
 	private void split(final SublistBounds bounds) {
 		final int left = bounds.mLeft;
 		final int right = bounds.mRight;
-		
+
 		// do not split intervals of size <= 1 (useless and would run forever)
 		if (right - left <= 1) {
 			return;
 		}
-		
+
 		final int mid = (left + right) / 2;
 		final boolean isLhs;
 		if (mid < right) {
@@ -94,7 +92,7 @@ public class BinaryDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STAT
 			mStack.push(new SublistBounds(left, mid, isLhs));
 		}
 	}
-	
+
 	@Override
 	public boolean run() {
 		boolean result = false;
@@ -107,19 +105,19 @@ public class BinaryDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STAT
 			if (mShrinker.isTimeoutRequested()) {
 				return result;
 			}
-			
+
 			mSublistBounds = mStack.poll();
 			final List<T> sublist = list.subList(mSublistBounds.mLeft, mSublistBounds.mRight);
 			if (sublist.isEmpty()) {
 				continue;
 			}
-			
+
 			// run test
 			result |= super.test(sublist);
 		}
 		return result;
 	}
-	
+
 	@Override
 	protected void errorAction() {
 		/*
@@ -133,12 +131,12 @@ public class BinaryDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STAT
 			split(mStack.poll());
 		}
 	}
-	
+
 	@Override
 	protected void noErrorAction() {
 		split(mSublistBounds);
 	}
-	
+
 	/**
 	 * Left and right bound for the list of objects.
 	 */
@@ -146,13 +144,13 @@ public class BinaryDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STAT
 		private final int mLeft;
 		private final int mRight;
 		private final boolean mIsLhs;
-		
+
 		SublistBounds(final int left, final int right, final boolean isLhs) {
 			this.mLeft = left;
 			this.mRight = right;
 			this.mIsLhs = isLhs;
 		}
-		
+
 		@Override
 		public String toString() {
 			final StringBuilder builder = new StringBuilder();

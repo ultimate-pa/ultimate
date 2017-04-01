@@ -55,25 +55,23 @@ public class StateShrinker<LETTER, STATE> extends AbstractShrinker<STATE, LETTER
 	public StateShrinker(final IUltimateServiceProvider services) {
 		super(services);
 	}
-	
+
 	@Override
-	public INestedWordAutomaton<LETTER, STATE>
-			createAutomaton(final List<STATE> states) {
+	public INestedWordAutomaton<LETTER, STATE> createAutomaton(final List<STATE> states) {
 		// create fresh automaton
-		final INestedWordAutomaton<LETTER, STATE> automaton =
-				mFactory.create(mAutomaton);
-		
+		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create(mAutomaton);
+
 		// add the complement of the passed states
 		final Set<STATE> oldStates = new HashSet<>(mAutomaton.getStates());
 		oldStates.removeAll(states);
 		mFactory.addStates(automaton, oldStates);
-		
+
 		// add transitions which still remain
 		mFactory.addFilteredTransitions(automaton, mAutomaton);
-		
+
 		return automaton;
 	}
-	
+
 	@Override
 	public List<STATE> extractList() {
 		return new ArrayList<>(mAutomaton.getStates());

@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  */
 public class AutomatonDebuggerTesters {
 	private final IUltimateServiceProvider mServices;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -64,7 +64,7 @@ public class AutomatonDebuggerTesters {
 	public AutomatonDebuggerTesters(final IUltimateServiceProvider services) {
 		mServices = services;
 	}
-	
+
 	/**
 	 * Possible test mode of the debugger.
 	 */
@@ -84,7 +84,7 @@ public class AutomatonDebuggerTesters {
 		 */
 		MINIMIZATION
 	}
-	
+
 	/**
 	 * Getter for an {@link IOperation}.
 	 * 
@@ -101,21 +101,21 @@ public class AutomatonDebuggerTesters {
 			case GENERAL:
 				tester = getGeneralTester(operationType);
 				break;
-			
+
 			case CHECK_RESULT:
 				tester = getCheckResultTester(operationType);
 				break;
-			
+
 			case MINIMIZATION:
 				tester = getMinimizationResultTester();
 				break;
-			
+
 			default:
 				throw new IllegalArgumentException("Unknown tester: " + testMode);
 		}
 		return tester;
 	}
-	
+
 	/**
 	 * Constructs an {@link IOperation} object from the setting.
 	 * 
@@ -133,7 +133,7 @@ public class AutomatonDebuggerTesters {
 			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
 		return new AutomatonDebuggerExamples(mServices).getOperation(operationType, automaton, factory);
 	}
-	
+
 	/**
 	 * Example tester for debugging general problems.
 	 * 
@@ -144,17 +144,17 @@ public class AutomatonDebuggerTesters {
 	public AbstractTester<String, String> getGeneralTester(final EOperationType operationType) {
 		// 'null' stands for any exception
 		final Throwable throwable = null;
-		
+
 		return new AbstractTester<String, String>(throwable) {
 			@Override
 			public void execute(final INestedWordAutomaton<String, String> automaton) throws Throwable {
 				final StringFactory factory = new StringFactory();
-				
+
 				getIOperation(operationType, automaton, factory);
 			}
 		};
 	}
-	
+
 	/**
 	 * Example tester for debugging problems with the {@code checkResult()} method of {@code IOperation}.
 	 * 
@@ -165,15 +165,15 @@ public class AutomatonDebuggerTesters {
 	private AbstractTester<String, String> getCheckResultTester(final EOperationType operationType) {
 		final String message = "'checkResult' failed";
 		final Throwable throwable = new DebuggerException(message);
-		
+
 		return new AbstractTester<String, String>(throwable) {
 			@Override
 			public void execute(final INestedWordAutomaton<String, String> automaton) throws Throwable {
 				final StringFactory factory = new StringFactory();
-				
+
 				final IOperation<String, String, ? super StringFactory> op =
 						getIOperation(operationType, automaton, factory);
-				
+
 				// throws a fresh exception iff checkResult() fails
 				if (!op.checkResult(factory)) {
 					throw throwable;
@@ -181,7 +181,7 @@ public class AutomatonDebuggerTesters {
 			}
 		};
 	}
-	
+
 	/**
 	 * Example tester for debugging problems with the {@code checkResult()} method of {@code IOperation}.
 	 * 
@@ -191,23 +191,23 @@ public class AutomatonDebuggerTesters {
 		final String message = "result size differs";
 		final Throwable throwable = new DebuggerException(message);
 		final IUltimateServiceProvider services2 = mServices;
-		
+
 		return new AbstractTester<String, String>(throwable) {
 			@Override
 			public void execute(final INestedWordAutomaton<String, String> automaton) throws Throwable {
 				final AutomataLibraryServices services = new AutomataLibraryServices(services2);
 				final StringFactory factory = new StringFactory();
-				
+
 				final IDoubleDeckerAutomaton<String, String> doubleDecker =
 						(automaton instanceof IDoubleDeckerAutomaton<?, ?>)
 								? (IDoubleDeckerAutomaton<String, String>) automaton
 								: new RemoveUnreachable<>(services, automaton).getResult();
-				
+
 				final INestedWordAutomaton<String, String> result1 =
 						new MinimizeDfaSimulation<>(services, factory, doubleDecker).getResult();
 				final INestedWordAutomaton<String, String> result2 =
 						new ReduceNwaDirectSimulationB<>(services, factory, doubleDecker).getResult();
-				
+
 				// throws a fresh exception iff checkResult() fails
 				if (result1.size() != result2.size()) {
 					throw throwable;

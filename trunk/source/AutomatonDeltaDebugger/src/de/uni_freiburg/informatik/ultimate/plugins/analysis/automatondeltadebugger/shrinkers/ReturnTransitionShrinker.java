@@ -55,28 +55,27 @@ public class ReturnTransitionShrinker<LETTER, STATE>
 	}
 
 	@Override
-	public INestedWordAutomaton<LETTER, STATE>
-			createAutomaton(final List<TypedTransition<LETTER, STATE>> list) {
+	public INestedWordAutomaton<LETTER, STATE> createAutomaton(final List<TypedTransition<LETTER, STATE>> list) {
 		// create fresh automaton
 		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create(mAutomaton);
-		
+
 		// add all states
 		mFactory.addStates(automaton, mAutomaton.getStates());
-		
+
 		// add all internal transitions
 		mFactory.addFilteredInternalTransitions(automaton, mAutomaton);
-		
+
 		// add all call transitions
 		mFactory.addFilteredCallTransitions(automaton, mAutomaton);
-		
+
 		// add the complement of the passed return transitions
 		final Set<TypedTransition<LETTER, STATE>> oldTransitions = mFactory.getReturnTransitions(mAutomaton);
 		oldTransitions.removeAll(list);
 		mFactory.addReturnTransitions(automaton, oldTransitions);
-		
+
 		return automaton;
 	}
-	
+
 	@Override
 	public List<TypedTransition<LETTER, STATE>> extractList() {
 		return new ArrayList<>(mFactory.getReturnTransitions(mAutomaton));

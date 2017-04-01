@@ -37,7 +37,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 public final class TypedLetter<LETTER> {
 	private final LETTER mLetter;
 	private final LetterType mType;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -50,15 +50,15 @@ public final class TypedLetter<LETTER> {
 		this.mLetter = letter;
 		this.mType = type;
 	}
-	
+
 	public LETTER getLetter() {
 		return mLetter;
 	}
-	
+
 	public LetterType getType() {
 		return mType;
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder b = new StringBuilder();
@@ -68,12 +68,12 @@ public final class TypedLetter<LETTER> {
 		b.append(")");
 		return b.toString();
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mLetter.hashCode() + mType.hashCode();
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
 		if ((obj == null) || (this.getClass() != obj.getClass())) {

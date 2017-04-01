@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
  */
 public abstract class AbstractTester<LETTER, STATE> {
 	private final Throwable mThrowable;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -55,7 +55,7 @@ public abstract class AbstractTester<LETTER, STATE> {
 	public AbstractTester(final Throwable throwable) {
 		this.mThrowable = throwable;
 	}
-	
+
 	/**
 	 * Tests whether an input still produces an error.
 	 * 
@@ -74,7 +74,7 @@ public abstract class AbstractTester<LETTER, STATE> {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Executes the method to be tested on the given automaton.
 	 * 
@@ -85,7 +85,7 @@ public abstract class AbstractTester<LETTER, STATE> {
 	 */
 	@SuppressWarnings("squid:S00112")
 	public abstract void execute(final INestedWordAutomaton<LETTER, STATE> automaton) throws Throwable;
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();

@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  */
 public class NestedWordAutomatonFactory<LETTER, STATE> extends INestedWordAutomatonFactory<LETTER, STATE> {
 	private final IUltimateServiceProvider mServices;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -59,7 +59,7 @@ public class NestedWordAutomatonFactory<LETTER, STATE> extends INestedWordAutoma
 		super(automaton);
 		this.mServices = services;
 	}
-	
+
 	/**
 	 * Casts the automaton interface to a concrete class.
 	 * 
@@ -70,32 +70,32 @@ public class NestedWordAutomatonFactory<LETTER, STATE> extends INestedWordAutoma
 	private NestedWordAutomaton<LETTER, STATE> getNwa(final INestedWordAutomaton<LETTER, STATE> automaton) {
 		return (NestedWordAutomaton<LETTER, STATE>) automaton;
 	}
-	
+
 	@Override
 	protected INestedWordAutomaton<LETTER, STATE> createWithAlphabets(final Set<LETTER> internalAlphabet,
 			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet) {
 		return new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), internalAlphabet, callAlphabet,
 				returnAlphabet, mAutomaton.getStateFactory());
 	}
-	
+
 	@Override
 	public void addState(final INestedWordAutomaton<LETTER, STATE> automaton, final STATE state,
 			final boolean isInitial, final boolean isFinal) {
 		getNwa(automaton).addState(isInitial, isFinal, state);
 	}
-	
+
 	@Override
 	public void addInternalTransition(final INestedWordAutomaton<LETTER, STATE> automaton, final STATE pred,
 			final LETTER letter, final STATE succ) {
 		getNwa(automaton).addInternalTransition(pred, letter, succ);
 	}
-	
+
 	@Override
 	public void addCallTransition(final INestedWordAutomaton<LETTER, STATE> automaton, final STATE pred,
 			final LETTER letter, final STATE succ) {
 		getNwa(automaton).addCallTransition(pred, letter, succ);
 	}
-	
+
 	@Override
 	public void addReturnTransition(final INestedWordAutomaton<LETTER, STATE> automaton, final STATE pred,
 			final STATE hier, final LETTER letter, final STATE succ) {

@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 @SuppressWarnings("squid:S00112")
 public class AutomatonDebuggerExamples {
 	private final AutomataLibraryServices mServices;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -73,7 +73,7 @@ public class AutomatonDebuggerExamples {
 	public AutomatonDebuggerExamples(final IUltimateServiceProvider services) {
 		mServices = new AutomataLibraryServices(services);
 	}
-	
+
 	/**
 	 * Implemented operations for quick usage.
 	 * <p>
@@ -153,7 +153,7 @@ public class AutomatonDebuggerExamples {
 		 */
 		REDUCE_BUCHI_FAIR_DIRECT_SIMULATION
 	}
-	
+
 	/**
 	 * Getter for an {@link IOperation}.
 	 * 
@@ -168,81 +168,80 @@ public class AutomatonDebuggerExamples {
 	 *             when operation fails
 	 */
 	public IOperation<String, String, ? super StringFactory> getOperation(final EOperationType type,
-			final INestedWordAutomaton<String, String> automaton, final StringFactory factory)
-			throws Throwable {
+			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
 		final IOperation<String, String, ? super StringFactory> operation;
 		switch (type) {
 			case EXCEPTION_DUMMY:
 				throw new IllegalArgumentException("Select a valid operation for delta debugging.");
-			
+
 			case MINIMIZE_NWA_MAXSAT:
 				operation = minimizeNwaMaxSat(automaton, factory);
 				break;
-			
+
 			case MINIMIZE_NWA_PMAXSAT:
 				operation = minimizeNwaPmaxSat(automaton, factory);
 				break;
-			
+
 			case MINIMIZE_NWA_PMAXSAT_ASYMMETRIC:
 				operation = minimizeNwaPmaxSatAsymmetric(automaton, factory);
 				break;
-			
+
 			case REDUCE_NWA_DIRECT_SIMULATION:
 				operation = reduceNwaDirectSimulation(automaton, factory);
 				break;
-			
+
 			case REDUCE_NWA_DIRECT_SIMULATION_B:
 				operation = reduceNwaDirectSimulationB(automaton, factory);
 				break;
-			
+
 			case REDUCE_NWA_DELAYED_SIMULATION:
 				operation = reduceNwaDelayedSimulation(automaton, factory);
 				break;
-			
+
 			case REDUCE_NWA_DELAYED_SIMULATION_B:
 				operation = reduceNwaDelayedSimulationB(automaton, factory);
 				break;
-			
+
 			case REDUCE_NWA_DELAYED_FULL_MULTIPEBBLE_SIMULATION:
 				operation = reduceNwaDelayedFullMultipebbleSimulation(automaton, factory);
 				break;
-			
+
 			case SHRINK_NWA:
 				operation = shrinkNwa(automaton, factory);
 				break;
-			
+
 			case BUCHI_REDUCE:
 				operation = buchiReduce(automaton, factory);
 				break;
-			
+
 			case COMPLEMENT:
 				operation = complement(automaton, factory);
 				break;
-			
+
 			case MINIMIZE_NWA_OVERAPPROXIMATION:
 				operation = minimizeNwaOverapproximation(automaton, factory);
 				break;
-			
+
 			case REMOVE_NON_LIVE_StringS:
 				operation = removeNonLiveStates(automaton);
 				break;
-			
+
 			case DIRECT_SIMULATION_COMPARISON:
 				operation = directSimulationComparison(automaton, factory);
 				break;
-				
+
 			case REDUCE_NWA_DIRECT_FULL_MULTIPEBBLE_SIMULATION:
 				operation = reduceNwaDirectFullMultipebbleSimulation(automaton, factory);
 				break;
-				
+
 			case COMPARE_SIMULATIONS:
 				operation = compareSimulations(automaton, factory);
 				break;
-				
+
 			case REDUCE_BUCHI_FAIR_DIRECT_SIMULATION:
 				operation = reduceBuchiFairDirectSimulation(automaton, factory);
 				break;
-			
+
 			default:
 				throw new IllegalArgumentException("Unknown operation.");
 		}
@@ -264,7 +263,7 @@ public class AutomatonDebuggerExamples {
 				new RemoveUnreachable<>(mServices, automaton).getResult();
 		return new MinimizeNwaMaxSAT<>(mServices, factory, preprocessed);
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.
@@ -280,7 +279,7 @@ public class AutomatonDebuggerExamples {
 				new RemoveDeadEnds<>(mServices, automaton).getResult();
 		return new MinimizeNwaPmaxSat<>(mServices, factory, preprocessed);
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.
@@ -296,7 +295,7 @@ public class AutomatonDebuggerExamples {
 				new RemoveDeadEnds<>(mServices, automaton).getResult();
 		return new ReduceNwaDirectSimulation<>(mServices, factory, preprocessed, false);
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.
@@ -312,7 +311,7 @@ public class AutomatonDebuggerExamples {
 				new RemoveDeadEnds<>(mServices, automaton).getResult();
 		return new ReduceNwaDirectSimulationB<>(mServices, factory, preprocessed);
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.
@@ -328,7 +327,7 @@ public class AutomatonDebuggerExamples {
 				new RemoveDeadEnds<>(mServices, automaton).getResult();
 		return new ReduceNwaDelayedSimulation<>(mServices, factory, preprocessed, false);
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.
@@ -344,7 +343,7 @@ public class AutomatonDebuggerExamples {
 				new RemoveNonLiveStates<>(mServices, automaton).getResult();
 		return new ReduceNwaDelayedSimulationB<>(mServices, factory, preprocessed);
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.
@@ -360,7 +359,7 @@ public class AutomatonDebuggerExamples {
 				new RemoveUnreachable<>(mServices, automaton).getResult();
 		return new ReduceNwaDelayedFullMultipebbleSimulation<>(mServices, factory, preprocessed);
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.
@@ -376,7 +375,7 @@ public class AutomatonDebuggerExamples {
 				new RemoveUnreachable<>(mServices, automaton).getResult();
 		return new ShrinkNwa<>(mServices, factory, preprocessed);
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.
@@ -392,7 +391,7 @@ public class AutomatonDebuggerExamples {
 				new RemoveDeadEnds<>(mServices, automaton).getResult();
 		return new BuchiReduce<>(mServices, factory, preprocessed);
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.
@@ -406,7 +405,7 @@ public class AutomatonDebuggerExamples {
 			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
 		return new Complement<>(mServices, factory, automaton);
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.
@@ -422,7 +421,7 @@ public class AutomatonDebuggerExamples {
 				new RemoveUnreachable<>(mServices, automaton).getResult();
 		return new MinimizeNwaOverapproximation<>(mServices, factory, preprocessed);
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.
@@ -436,7 +435,7 @@ public class AutomatonDebuggerExamples {
 			removeNonLiveStates(final INestedWordAutomaton<String, String> automaton) throws Throwable {
 		return new RemoveNonLiveStates<>(mServices, automaton);
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.
@@ -450,7 +449,7 @@ public class AutomatonDebuggerExamples {
 			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
 		return new DirectSimulationComparison<>(mServices, factory, automaton);
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.
@@ -482,7 +481,7 @@ public class AutomatonDebuggerExamples {
 				new RemoveUnreachable<>(mServices, automaton).getResult();
 		return new CompareSimulations<>(mServices, factory, preprocessed);
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.
@@ -498,7 +497,7 @@ public class AutomatonDebuggerExamples {
 				new RemoveDeadEnds<>(mServices, automaton).getResult();
 		return new MinimizeNwaPmaxSatAsymmetric<>(mServices, factory, preprocessed);
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.

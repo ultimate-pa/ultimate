@@ -39,16 +39,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.INestedWordAutomatonFactory;
 
 /**
- * Shrinks an automaton according to a certain criterion while still producing
- * the same error.
- * A shrinker can be seen as a rule according to which the debugger tries to
- * shrink an automaton. For this purpose the shrinker defines a list of objects
- * which are to be removed and then applies binary search on this list.
- * Implementing subclasses should make certain that no exception is thrown
- * during construction of shrunk automata. Otherwise this might lead to unwanted
- * behavior, namely the debugger might return an automaton object which has
- * crashed during construction (e.g., a transition was inserted whose state or
- * letter was not present).
+ * Shrinks an automaton according to a certain criterion while still producing the same error.
+ * <p>
+ * A shrinker can be seen as a rule according to which the debugger tries to shrink an automaton. For this purpose the
+ * shrinker defines a list of objects which are to be removed and then applies binary search on this list. Implementing
+ * subclasses should make certain that no exception is thrown during construction of shrunk automata. Otherwise this
+ * might lead to unwanted behavior, namely the debugger might return an automaton object which has crashed during
+ * construction (e.g., a transition was inserted whose state or letter was not present).
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <T>
@@ -62,7 +59,7 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 	protected INestedWordAutomaton<LETTER, STATE> mAutomaton;
 	protected INestedWordAutomatonFactory<LETTER, STATE> mFactory;
 	protected final IUltimateServiceProvider mServices;
-	
+
 	/**
 	 * @param services
 	 *            Ultimate services.
@@ -70,9 +67,10 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 	public AbstractShrinker(final IUltimateServiceProvider services) {
 		mServices = services;
 	}
-	
+
 	/**
 	 * Creates an automaton.
+	 * <p>
 	 * NOTE: Implementing subclasses must store the automaton.
 	 * 
 	 * @param list
@@ -80,15 +78,14 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 	 * @return automaton according to (complement of the) list
 	 */
 	public abstract INestedWordAutomaton<LETTER, STATE> createAutomaton(final List<T> list);
-	
+
 	/**
-	 * Extracts a list of objects containing all respective objects of the
-	 * current automaton.
+	 * Extracts a list of objects containing all respective objects of the current automaton.
 	 * 
 	 * @return list of objects to be removed
 	 */
 	public abstract List<T> extractList();
-	
+
 	/**
 	 * Called when the error still occurs for a shrunk automaton (i.e., success).
 	 * 
@@ -99,7 +96,7 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 		// use shrunk automaton henceforth
 		mAutomaton = newAutomaton;
 	}
-	
+
 	/**
 	 * Called when no error occurs for a shrunk automaton (i.e., failure).
 	 * 
@@ -109,10 +106,9 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 	public void noError(final INestedWordAutomaton<LETTER, STATE> newAutomaton) {
 		// no action for standard shrinker
 	}
-	
+
 	/**
-	 * Runs a binary search according to the shrinking rule implemented by this
-	 * shrinker.
+	 * Runs a binary search according to the shrinking rule implemented by this shrinker.
 	 * 
 	 * @param automaton
 	 *            automaton
@@ -130,10 +126,10 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 		mAutomaton = automaton;
 		mFactory = factory;
 		final AbstractDebug<T, LETTER, STATE> debugger;
-		
+
 		// check for policy override
 		final DebugPolicy policy = isPolicyOverridden() ? getPolicy() : policyUser;
-		
+
 		switch (policy) {
 			case SINGLE:
 				debugger = new SingleDebug<>(tester, this);
@@ -147,7 +143,7 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 		final boolean isReduced = debugger.run();
 		return isReduced ? mAutomaton : null;
 	}
-	
+
 	/**
 	 * @return true iff this shrinker demands a special policy.
 	 */
@@ -155,7 +151,7 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 		// default: do not override user policy
 		return false;
 	}
-	
+
 	/**
 	 * If {@link #isPolicyOverridden()} returns <tt>true</tt>, this method returns the demanded policy. Otherwise a
 	 * shrinker may just define its preferred shrinker here, which is only respected if the user allows that.
@@ -166,7 +162,7 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 		// default: use binary search
 		return DebugPolicy.BINARY;
 	}
-	
+
 	/**
 	 * @return true iff this shrinker requests that the current shrinking process be terminated.
 	 */
@@ -174,14 +170,14 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 		// default: never cancel
 		return false;
 	}
-	
+
 	/**
 	 * @return {@code true} iff timeout is requested by Ultimate.
 	 */
 	public boolean isTimeoutRequested() {
 		return !mServices.getProgressMonitorService().continueProcessing();
 	}
-	
+
 	@Override
 	public String toString() {
 		return this.getClass().getSimpleName();

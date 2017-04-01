@@ -60,7 +60,7 @@ public abstract class BridgeShrinker<T, LETTER, STATE> extends AbstractShrinker<
 	public BridgeShrinker(final IUltimateServiceProvider services) {
 		super(services);
 	}
-	
+
 	/**
 	 * Resets the internal state of the shrinker.
 	 * 
@@ -68,17 +68,17 @@ public abstract class BridgeShrinker<T, LETTER, STATE> extends AbstractShrinker<
 	 *            automaton to use henceforth
 	 */
 	public abstract void reset(INestedWordAutomaton<LETTER, STATE> automaton);
-	
+
 	/**
 	 * @return true iff all possible changes have been applied.
 	 */
 	public abstract boolean isFinished();
-	
+
 	@Override
 	public boolean isPolicyOverridden() {
 		return true;
 	}
-	
+
 	@Override
 	public DebugPolicy getPolicy() {
 		return DebugPolicy.SINGLE;

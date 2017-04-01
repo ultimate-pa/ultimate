@@ -40,24 +40,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.BridgeShrinker;
 
 /**
- * Delta debugger for automaton-related methods.
- * This is the main class to run the delta debugger. To run it, the user needs
- * the following ingredients: 1) an initial {@link INestedWordAutomaton} object
- * 2) a {@link INestedWordAutomatonFactory} which can create new automaton objects 3) a
- * {@link AbstractTester} which executes the method under consideration on automaton
- * objects and checks whether the same type of error as in the original
- * (unshrunk) problem still occurs.
- * At 2) It is advised that the factory returns objects of the same type as the
- * initial automaton in 1) to exclude the possibility that the bug comes from
- * different sources. This is, however, not a constraint of the class.
- * At 3) It is possible to check for any type of {@link Throwable} as an error.
- * However, in order to prevent misinterpretation by more than one possible
- * sources of the error, it is advised that the error is of a unique type. For
- * instance, if the method code under consideration is available, the
- * {@link DebuggerException} could be thrown at the place where the designated
- * error occurs. Example: If the user wants to find the cause for an
- * {@link AutomataLibraryException}, this might be introduced during the process
- * of shrinking the automaton as well.
+ * Delta debugger for automaton-related methods. This is the main class to run the delta debugger. To run it, the user
+ * needs the following ingredients:
+ * <ol>
+ * <li>an initial {@link INestedWordAutomaton} object</li>
+ * <li>a {@link INestedWordAutomatonFactory} which can create new automaton objects</li>
+ * <li>a {@link AbstractTester} that executes the method under consideration on automaton objects and checks whether the
+ * same type of error as in the original (unshrunk) problem still occurs.</li>
+ * </ul>
+ * At 2. It is advised that the factory returns objects of the same type as the initial automaton in 1. to exclude the
+ * possibility that the bug comes from different sources. This is, however, not a constraint of the class. At 3. It is
+ * possible to check for any type of {@link Throwable} as an error. However, in order to prevent misinterpretation by
+ * more than one possible sources of the error, it is advised that the error is of a unique type. For instance, if the
+ * method code under consideration is available, the {@link DebuggerException} could be thrown at the place where the
+ * designated error occurs. Example: If the user wants to find the cause for an {@link AutomataLibraryException}, this
+ * might be introduced during the process of shrinking the automaton as well.<br>
  * For further explanations see {@link #shrink(List, List)}.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
@@ -71,7 +68,7 @@ public class AutomatonDebugger<LETTER, STATE> {
 	private INestedWordAutomaton<LETTER, STATE> mAutomaton;
 	private final INestedWordAutomatonFactory<LETTER, STATE> mFactory;
 	private final AbstractTester<LETTER, STATE> mTester;
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -82,14 +79,15 @@ public class AutomatonDebugger<LETTER, STATE> {
 	 * @param tester
 	 *            tester
 	 */
-	public AutomatonDebugger(final IUltimateServiceProvider services, final INestedWordAutomaton<LETTER, STATE> automaton,
+	public AutomatonDebugger(final IUltimateServiceProvider services,
+			final INestedWordAutomaton<LETTER, STATE> automaton,
 			final INestedWordAutomatonFactory<LETTER, STATE> factory, final AbstractTester<LETTER, STATE> tester) {
 		mServices = services;
 		mAutomaton = automaton;
 		mFactory = factory;
 		mTester = tester;
 	}
-	
+
 	/**
 	 * Shrinks an automaton according to given rules.
 	 * <p>
@@ -117,16 +115,16 @@ public class AutomatonDebugger<LETTER, STATE> {
 			final List<AbstractShrinker<?, LETTER, STATE>> shrinkersEnd, final DebugPolicy policy) {
 		// apply loop shrinkers until nothing has changed
 		applyLoopShrinkers(shrinkersLoop, policy);
-		
+
 		// now try the bridge shrinkers
 		applyBridgeShrinkers(shrinkersLoop, shrinkersBridge, policy);
-		
+
 		// in the end, try the final shrinkers (applied only once)
 		applyShrinkers(shrinkersEnd, policy);
-		
+
 		return mAutomaton;
 	}
-	
+
 	private boolean applyLoopShrinkers(final List<AbstractShrinker<?, LETTER, STATE>> shrinkersLoop,
 			final DebugPolicy policy) {
 		boolean isReducedAtLeastOnce = false;
@@ -137,7 +135,7 @@ public class AutomatonDebugger<LETTER, STATE> {
 		} while (isReduced);
 		return isReducedAtLeastOnce;
 	}
-	
+
 	private void applyBridgeShrinkers(final List<AbstractShrinker<?, LETTER, STATE>> shrinkersLoop,
 			final List<BridgeShrinker<?, LETTER, STATE>> shrinkersBridge, final DebugPolicy policy) {
 		final List<BridgeShrinker<?, LETTER, STATE>> shrinkersBridgeCopy = new LinkedList<>(shrinkersBridge);
@@ -151,10 +149,10 @@ public class AutomatonDebugger<LETTER, STATE> {
 				shrinkersBridgeCopy.remove(0);
 				break;
 			}
-			
+
 			// now run all loop shrinkers again on the result
 			final boolean isReducedAtLeastOnce = applyLoopShrinkers(shrinkersLoop, policy);
-			
+
 			if (isReducedAtLeastOnce) {
 				// the bridge triggered a change, so it might be useful in the future; enqueue to bridges again
 				bridge.reset(mAutomaton);
@@ -169,12 +167,12 @@ public class AutomatonDebugger<LETTER, STATE> {
 		if (!isReducedAtLeastOnceByAny) {
 			// reset the factory (most bridge shrinkers edit it, here we reset it once)
 			mFactory.setAutomaton(automatonBackup);
-			
+
 			// not necessary, but the rationale is that we should not change the input too much if it does not help
 			mAutomaton = automatonBackup;
 		}
 	}
-	
+
 	/**
 	 * Runs a binary search for each shrinker in a list.
 	 * 
@@ -191,7 +189,7 @@ public class AutomatonDebugger<LETTER, STATE> {
 			if (isTimeoutRequested()) {
 				break;
 			}
-			
+
 			final INestedWordAutomaton<LETTER, STATE> newAutomaton =
 					shrinker.runSearch(mAutomaton, mTester, mFactory, policy);
 			if (newAutomaton != null) {
@@ -217,7 +215,7 @@ public class AutomatonDebugger<LETTER, STATE> {
 		// @formatter:on
 		return builder.toString();
 	}
-	
+
 	private boolean isTimeoutRequested() {
 		return !mServices.getProgressMonitorService().continueProcessing();
 	}

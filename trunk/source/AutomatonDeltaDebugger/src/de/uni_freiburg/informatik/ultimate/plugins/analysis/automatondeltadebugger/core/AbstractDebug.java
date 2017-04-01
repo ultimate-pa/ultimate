@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 public abstract class AbstractDebug<T, LETTER, STATE> {
 	protected final AbstractTester<LETTER, STATE> mTester;
 	protected final AbstractShrinker<T, LETTER, STATE> mShrinker;
-	
+
 	/**
 	 * Policy for delta debugging a list of items.
 	 */
@@ -60,7 +60,7 @@ public abstract class AbstractDebug<T, LETTER, STATE> {
 		 */
 		BINARY
 	}
-	
+
 	/**
 	 * Constructor.
 	 * 
@@ -74,19 +74,19 @@ public abstract class AbstractDebug<T, LETTER, STATE> {
 		mTester = tester;
 		mShrinker = shrinker;
 	}
-	
+
 	/**
 	 * Runs the search for the current shrinker.
 	 * 
 	 * @return true iff the sublist could be shrunk
 	 */
 	public abstract boolean run();
-	
+
 	@Override
 	public String toString() {
 		return this.getClass().getSimpleName();
 	}
-	
+
 	/**
 	 * Executes sublist test and informs the shrinker.
 	 * 
@@ -97,10 +97,10 @@ public abstract class AbstractDebug<T, LETTER, STATE> {
 	protected boolean test(final List<T> list) {
 		// initialize test for the sublist
 		final INestedWordAutomaton<LETTER, STATE> automaton = mShrinker.createAutomaton(list);
-		
+
 		// run test
 		final boolean isTestSuccessful = mTester.test(automaton);
-		
+
 		if (isTestSuccessful) {
 			// error reproduced
 			mShrinker.error(automaton);
@@ -112,12 +112,12 @@ public abstract class AbstractDebug<T, LETTER, STATE> {
 		}
 		return isTestSuccessful;
 	}
-	
+
 	/**
 	 * Executed when the shrinking was successful.
 	 */
 	protected abstract void errorAction();
-	
+
 	/**
 	 * Executed when the shrinking was not successful.
 	 */

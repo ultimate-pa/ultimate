@@ -45,23 +45,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Removes states which only have one outgoing transition and bends over all
- * incoming transitions to the respective target state.
+ * Removes states which only have one outgoing transition and bends over all incoming transitions to the respective
+ * target state.
  * <p>
- * Example: Two simple chains of four states connected by internal transitions
- * "q1 -a-> q2 -b-> q4" and call-return transitions "q1 -c-> q3 -r/q1-> q4" can
- * be simplified by removing the states in the middle, i.e., q2 and q3 to
- * "q1 -a-> q4" and "q1 -c-> q4". There is an important difference, namely that
- * the internal b-transition and the return transition have been removed, which
- * may not always be reasonable. But often all that matters is that the target
- * state is still reachable.
+ * Example: Two simple chains of four states connected by internal transitions "q1 -a-> q2 -b-> q4" and call-return
+ * transitions "q1 -c-> q3 -r/q1-> q4" can be simplified by removing the states in the middle, i.e., q2 and q3 to "q1
+ * -a-> q4" and "q1 -c-> q4". There is an important difference, namely that the internal b-transition and the return
+ * transition have been removed, which may not always be reasonable. But often all that matters is that the target state
+ * is still reachable.
  * <p>
- * This shrinker is best used together with a general transition shrinker to
- * raise the number of states with only one outgoing transition.
+ * This shrinker is best used together with a general transition shrinker to raise the number of states with only one
+ * outgoing transition.
  * <p>
- * This class could also be generalized to states with more than one outgoing
- * transition, but then it is not clear where the transitions should be bent to,
- * and the data structures become more complicated.
+ * This class could also be generalized to states with more than one outgoing transition, but then it is not clear where
+ * the transitions should be bent to, and the data structures become more complicated.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -77,26 +74,25 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 	public SingleExitShrinker(final IUltimateServiceProvider services) {
 		super(services);
 	}
-	
+
 	@Override
-	public INestedWordAutomaton<LETTER, STATE>
-			createAutomaton(final List<Pair<STATE, STATE>> list) {
+	public INestedWordAutomaton<LETTER, STATE> createAutomaton(final List<Pair<STATE, STATE>> list) {
 		// create fresh automaton
 		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create(mAutomaton);
-		
+
 		// data structures to contain all transitive chains (forward & backward)
 		final HashMap<STATE, STATE> left2right = new HashMap<>();
 		final HashMap<STATE, STATE> right2left = new HashMap<>();
-		
+
 		/*
 		 * add states which are not a left-hand side in the list; also set up
 		 * data structures which contain all transitive chains
 		 */
 		final HashSet<STATE> states = new HashSet<>(mAutomaton.getStates());
 		fillTransitivityMaps(left2right, right2left, states, list);
-		
+
 		constructResuLt(automaton, left2right, states, mAutomaton, mFactory);
-		
+
 		return automaton;
 	}
 
@@ -105,10 +101,10 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 			final INestedWordAutomaton<LETTER, STATE> newAutomaton,
 			final INestedWordAutomatonFactory<LETTER, STATE> factory) {
 		factory.addStates(oldAutomaton, states);
-		
+
 		// add transitions which are still unconcerned by removing the states
 		factory.addFilteredTransitions(oldAutomaton, newAutomaton);
-		
+
 		// add transitions which close a (transitive) chain of removed states
 		for (final Entry<STATE, STATE> entry : left2right.entrySet()) {
 			final STATE source = entry.getKey();
@@ -147,11 +143,11 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 		for (final Pair<STATE, STATE> pair : pairs) {
 			final STATE source = pair.getFirst();
 			final STATE target = pair.getSecond();
-			
+
 			// left-hand side state will be removed
 			final boolean wasPresent = states.remove(source);
 			assert wasPresent : "Pairs in the list should be left-unique.";
-			
+
 			// update transitive chains
 			STATE lhs = right2left.remove(source);
 			STATE rhs = left2right.remove(target);
@@ -167,7 +163,7 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 			right2left.put(rhs, lhs);
 		}
 	}
-	
+
 	@Override
 	@SuppressWarnings("squid:LabelsShouldNotBeUsedCheck")
 	public List<Pair<STATE, STATE>> extractList() {
@@ -196,7 +192,7 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 				}
 				target = trans.getSucc();
 			}
-			
+
 			if (target != null) {
 				// state has exactly one successor, add the pair
 				list.add(new Pair<>(state, target));
