@@ -877,12 +877,13 @@ public class BitvectorTranslation extends AExpressionTranslation {
 	public Expression transformBitvectorToFloat(final ILocation loc, final Expression bitvector,
 			final CPrimitives floatType) {
 		final FloatingPointSize floatingPointSize = mTypeSizes.getFloatingPointSize(floatType);
-		final Expression signBit = extractBits(loc, bitvector, 1, 0);
-		final Expression exponentBits = extractBits(loc, bitvector, 1 + floatingPointSize.getExponent(), 1);
-		final Expression significantBits = extractBits(loc, bitvector,
-				floatingPointSize.getExponent() + floatingPointSize.getSignificant(),
-				1 + floatingPointSize.getExponent());
-
+		final Expression significantBits = extractBits(loc, bitvector, floatingPointSize.getSignificant() - 1, 0);
+		final Expression exponentBits = extractBits(loc, bitvector,
+				floatingPointSize.getSignificant() - 1 + floatingPointSize.getExponent(),
+				floatingPointSize.getSignificant() - 1);
+		final Expression signBit = extractBits(loc, bitvector,
+				floatingPointSize.getSignificant() - 1 + floatingPointSize.getExponent() + 1,
+				floatingPointSize.getSignificant() - 1 + floatingPointSize.getExponent());
 		final String smtFunctionName = "fp";
 		final Expression result = new FunctionApplication(loc,
 				SFO.getBoogieFunctionName(smtFunctionName, new CPrimitive(floatType)),
