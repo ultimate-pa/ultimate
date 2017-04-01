@@ -38,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransfor
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ExampleLoopAccelerationTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
@@ -54,14 +53,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  * @author Jonas Werner (jonaswerner95@gmail.com)
  *
  */
+
 public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
-
 	private final ILogger mLogger;
-
 	private final Deque<Deque<Backbone>> mBackBones;
-
 	private final LoopDetector<INLOC> mLoopDetector;
-
 	private final IIcfg<OUTLOC> mResult;
 
 	public WernerLoopAccelerationIcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
@@ -73,7 +69,6 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		mLoopDetector = new LoopDetector<>(mLogger, origIcfg);
 		mBackBones = new ArrayDeque<>();
 		mResult = transform(origIcfg, newIcfgIdentifier, outLocationClass);
-
 	}
 
 	public IIcfg<OUTLOC> getResult() {
@@ -82,13 +77,9 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> originalIcfg, final String newIcfgIdentifier,
 			final Class<OUTLOC> outLocationClass) {
-
 		mLogger.debug("Transforming...");
-
-
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
-
 		return resultIcfg;
 	}
 }
