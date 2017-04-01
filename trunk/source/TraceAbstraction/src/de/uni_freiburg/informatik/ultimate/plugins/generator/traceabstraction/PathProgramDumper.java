@@ -115,9 +115,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *
  */
 public class PathProgramDumper {
+	
+	public enum InputMode { BOOGIE, ICFG };
 
-	private final boolean USE_BOOGIE_INPUT = true;
-	private final boolean FILTER_VARIABLES = false;
+	private final InputMode mInputMode;
+	private final boolean FILTER_VARIABLES_OF_BOOGIE_INPUT = false;
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -142,11 +144,12 @@ public class PathProgramDumper {
 	private enum Program { PATH_PROGRAM, ORIGINAL_PROGRAM };
 
 	public PathProgramDumper(final IIcfg<?> icfg, final IUltimateServiceProvider services,
-			final NestedRun<? extends IAction, IPredicate> run, final String filename) {
+			final NestedRun<? extends IAction, IPredicate> run, final String filename, final InputMode inputMode) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mOriginalIcfg = icfg;
-		if (USE_BOOGIE_INPUT) {
+		mInputMode = inputMode;
+		if (mInputMode == InputMode.BOOGIE) {
 			if (!(icfg instanceof BoogieIcfgContainer)) {
 				throw new UnsupportedOperationException("PathProgramDumper currently needs BoogieIcfgContainer");
 			}
@@ -173,7 +176,7 @@ public class PathProgramDumper {
 		for (final Entry<String, IcfgLocation> entry : mPathProgram.getProcedureEntryNodes().entrySet()) {
 			final Pair<Procedure, Set<IProgramVar>> newImplAndGlobalVars;
 			final IcfgLocation exitLoc = mPathProgram.getProcedureExitNodes().get(entry.getKey());
-			if (USE_BOOGIE_INPUT) {
+			if (mInputMode == InputMode.BOOGIE) {
 				final BoogieIcfgContainer boogieIcfg = (BoogieIcfgContainer) icfg;
 				newImplAndGlobalVars = constructNewImplementation(entry.getKey(), entry.getValue(), exitLoc, boogieIcfg,
 						mPathProgram.getProcedureErrorNodes().get(entry.getKey()));
@@ -185,7 +188,7 @@ public class PathProgramDumper {
 			newDeclarations.add(newImplAndGlobalVars.getFirst());
 			globalVars.addAll(newImplAndGlobalVars.getSecond());
 
-			if (USE_BOOGIE_INPUT) {
+			if (mInputMode == InputMode.BOOGIE) {
 				final BoogieIcfgContainer boogieIcfg = (BoogieIcfgContainer) icfg;
 				final Procedure spec = boogieIcfg.getBoogieDeclarations().getProcSpecification().get(entry.getKey());
 				final Procedure impl = boogieIcfg.getBoogieDeclarations().getProcImplementation().get(entry.getKey());
@@ -195,7 +198,7 @@ public class PathProgramDumper {
 			}
 		}
 
-		if (USE_BOOGIE_INPUT) {
+		if (mInputMode == InputMode.BOOGIE) {
 			final BoogieIcfgContainer boogieIcfg = (BoogieIcfgContainer) icfg;
 			for (final Entry<String, Procedure> entry : boogieIcfg.getBoogieDeclarations().getProcSpecification().entrySet()) {
 				if (entry.getValue().getBody() == null && !boogieIcfg.getProcedureEntryNodes().containsKey(entry.getKey())) {
@@ -203,7 +206,7 @@ public class PathProgramDumper {
 					newDeclarations.add(entry.getValue());
 				}
 			}
-			if (FILTER_VARIABLES) {
+			if (FILTER_VARIABLES_OF_BOOGIE_INPUT) {
 				newDeclarations.addAll(0,
 					Arrays.asList(filter(boogieIcfg.getBoogieDeclarations().getGlobalVarDeclarations(),
 							extractIdentifiers(globalVars))));
@@ -256,7 +259,7 @@ public class PathProgramDumper {
 
 		
 		final VariableDeclaration[] localVars;
-		if (FILTER_VARIABLES) {
+		if (FILTER_VARIABLES_OF_BOOGIE_INPUT) {
 			localVars = filter(Arrays.asList(body.getLocalVars()),
 				extractIdentifiers(varsAndNewSt.getSecond()));
 		} else {
@@ -268,7 +271,7 @@ public class PathProgramDumper {
 		if (impl.getSpecification() == null) {
 			newSpecifications = null;
 		} else {
-			if (FILTER_VARIABLES) {
+			if (FILTER_VARIABLES_OF_BOOGIE_INPUT) {
 				newSpecifications = filterModifiesSpecifications(impl.getSpecification(),
 					extractIdentifiers(varsAndNewSt.getThird()));
 			} else {
@@ -557,7 +560,7 @@ public class PathProgramDumper {
 	private IcfgLocation addStatementsAndVariables(final IcfgEdge edge, final List<Statement> statements,
 			final Set<IProgramVar> localVars, final Set<IProgramVar> globalVars) {
 		final IAction action = edge;
-		if (USE_BOOGIE_INPUT) {
+		if (mInputMode == InputMode.BOOGIE) {
 			if (edge.getLabel() instanceof Call) {
 				addVars(action.getTransformula().getInVars().keySet(), localVars, globalVars);
 				final IIcfgReturnTransition correspondingReturn = getCorrespondingReturn(action, Program.PATH_PROGRAM);
