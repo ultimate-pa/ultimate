@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * <li>a {@link INestedWordAutomatonFactory} which can create new automaton objects</li>
  * <li>a {@link AbstractTester} that executes the method under consideration on automaton objects and checks whether the
  * same type of error as in the original (unshrunk) problem still occurs.</li>
- * </ul>
+ * </ol>
  * At 2. It is advised that the factory returns objects of the same type as the initial automaton in 1. to exclude the
  * possibility that the bug comes from different sources. This is, however, not a constraint of the class. At 3. It is
  * possible to check for any type of {@link Throwable} as an error. However, in order to prevent misinterpretation by
@@ -70,8 +70,8 @@ public class AutomatonDebugger<LETTER, STATE> {
 	private final AbstractTester<LETTER, STATE> mTester;
 
 	/**
-	 * Constructor.
-	 * 
+	 * @param services
+	 *            Ultimate services.
 	 * @param automaton
 	 *            automaton
 	 * @param factory

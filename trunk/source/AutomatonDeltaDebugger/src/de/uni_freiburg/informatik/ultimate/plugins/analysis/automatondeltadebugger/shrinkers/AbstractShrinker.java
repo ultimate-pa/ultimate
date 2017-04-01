@@ -147,6 +147,7 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 	/**
 	 * @return true iff this shrinker demands a special policy.
 	 */
+	@SuppressWarnings("static-method")
 	public boolean isPolicyOverridden() {
 		// default: do not override user policy
 		return false;
@@ -158,6 +159,7 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 	 * 
 	 * @return The policy preferred by this shrinker.
 	 */
+	@SuppressWarnings("static-method")
 	public DebugPolicy getPolicy() {
 		// default: use binary search
 		return DebugPolicy.BINARY;
@@ -166,6 +168,7 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 	/**
 	 * @return true iff this shrinker requests that the current shrinking process be terminated.
 	 */
+	@SuppressWarnings("static-method")
 	public boolean isCancelRequested() {
 		// default: never cancel
 		return false;
@@ -180,6 +183,6 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 
 	@Override
 	public String toString() {
-		return this.getClass().getSimpleName();
+		return getClass().getSimpleName();
 	}
 }

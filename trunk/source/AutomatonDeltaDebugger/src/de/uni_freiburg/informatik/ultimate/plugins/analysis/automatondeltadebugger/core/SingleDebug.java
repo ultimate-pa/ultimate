@@ -52,10 +52,8 @@ public class SingleDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STAT
 	private ListIterator<T> mIterator;
 
 	/**
-	 * Constructor.
-	 * 
 	 * @param tester
-	 *            tester
+	 *            Tester.
 	 * @param shrinker
 	 *            shrinker
 	 */

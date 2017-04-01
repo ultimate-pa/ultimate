@@ -47,19 +47,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  * NOTE: Users may insert their sample code as a new method and leave it here.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
- * @param <String>
- *            letter type
- * @param <String>
- *            state type
  */
 public class AutomatonDebuggerTesters {
 	private final IUltimateServiceProvider mServices;
 
 	/**
-	 * Constructor.
-	 * 
 	 * @param services
-	 *            Ultimate services
+	 *            Ultimate services.
 	 */
 	public AutomatonDebuggerTesters(final IUltimateServiceProvider services) {
 		mServices = services;
@@ -129,6 +123,7 @@ public class AutomatonDebuggerTesters {
 	 * @throws Throwable
 	 *             when error occurs
 	 */
+	@SuppressWarnings("squid:S1452")
 	public IOperation<String, String, ? super StringFactory> getIOperation(final EOperationType operationType,
 			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
 		return new AutomatonDebuggerExamples(mServices).getOperation(operationType, automaton, factory);

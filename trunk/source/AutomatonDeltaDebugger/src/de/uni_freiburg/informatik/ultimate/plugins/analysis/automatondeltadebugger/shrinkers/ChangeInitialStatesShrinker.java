@@ -56,8 +56,6 @@ public class ChangeInitialStatesShrinker<LETTER, STATE> extends BridgeShrinker<P
 	private INestedWordAutomaton<LETTER, STATE> mAutomatonBackup;
 
 	/**
-	 * Constructor.
-	 * <p>
 	 * Implementation detail: The assignment of the fields is useless.
 	 * 
 	 * @param services

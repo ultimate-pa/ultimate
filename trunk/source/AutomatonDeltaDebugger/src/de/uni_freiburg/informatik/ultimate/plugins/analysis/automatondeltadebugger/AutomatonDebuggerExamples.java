@@ -60,15 +60,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-@SuppressWarnings("squid:S00112")
+@SuppressWarnings({ "squid:S00112", "squid:S1452" })
 public class AutomatonDebuggerExamples {
 	private final AutomataLibraryServices mServices;
 
 	/**
-	 * Constructor.
-	 * 
 	 * @param services
-	 *            Ultimate services
+	 *            Ultimate services.
 	 */
 	public AutomatonDebuggerExamples(final IUltimateServiceProvider services) {
 		mServices = new AutomataLibraryServices(services);
@@ -135,7 +133,7 @@ public class AutomatonDebuggerExamples {
 		/**
 		 * {@link RemoveNonLiveStates}.
 		 */
-		REMOVE_NON_LIVE_StringS,
+		REMOVE_NON_LIVE_STATES,
 		/**
 		 * {@link DirectSimulationComparison}.
 		 */
@@ -145,11 +143,11 @@ public class AutomatonDebuggerExamples {
 		 */
 		REDUCE_NWA_DIRECT_FULL_MULTIPEBBLE_SIMULATION,
 		/**
-		 * {@link CompareSimulations}
+		 * {@link CompareSimulations}.
 		 */
 		COMPARE_SIMULATIONS,
 		/**
-		 * {@link ReduceBuchiFairDirectSimulation}
+		 * {@link ReduceBuchiFairDirectSimulation}.
 		 */
 		REDUCE_BUCHI_FAIR_DIRECT_SIMULATION
 	}
@@ -167,6 +165,7 @@ public class AutomatonDebuggerExamples {
 	 * @throws Throwable
 	 *             when operation fails
 	 */
+	@SuppressWarnings("squid:MethodCyclomaticComplexity")
 	public IOperation<String, String, ? super StringFactory> getOperation(final EOperationType type,
 			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
 		final IOperation<String, String, ? super StringFactory> operation;
@@ -222,7 +221,7 @@ public class AutomatonDebuggerExamples {
 				operation = minimizeNwaOverapproximation(automaton, factory);
 				break;
 
-			case REMOVE_NON_LIVE_StringS:
+			case REMOVE_NON_LIVE_STATES:
 				operation = removeNonLiveStates(automaton);
 				break;
 
@@ -425,8 +424,6 @@ public class AutomatonDebuggerExamples {
 	/**
 	 * @param automaton
 	 *            The automaton.
-	 * @param factory
-	 *            state factory
 	 * @return new {@link RemoveNonLiveStates} instance
 	 * @throws Throwable
 	 *             when error occurs

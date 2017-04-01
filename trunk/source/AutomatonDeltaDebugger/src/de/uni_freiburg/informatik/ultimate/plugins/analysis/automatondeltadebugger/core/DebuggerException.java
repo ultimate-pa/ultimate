@@ -46,10 +46,8 @@ public class DebuggerException extends Exception {
 	private final String mMessage;
 
 	/**
-	 * Constructor with throwable and message.
-	 * 
 	 * @param thrower
-	 *            class of the thrower (for better identification)
+	 *            Class of the thrower (for better identification).
 	 * @param message
 	 *            message to print when throwing
 	 */
@@ -59,10 +57,8 @@ public class DebuggerException extends Exception {
 	}
 
 	/**
-	 * Constructor with message.
-	 * 
 	 * @param message
-	 *            message to print when throwing
+	 *            Message to print when throwing.
 	 */
 	public DebuggerException(final String message) {
 		mClassOfThrower = null;
@@ -73,7 +69,7 @@ public class DebuggerException extends Exception {
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
 		// @formatter:off
-		builder.append(this.getClass().getSimpleName())
+		builder.append(getClass().getSimpleName())
 				.append('(')
 				.append(mClassOfThrower == null ? "null" : mClassOfThrower.toString())
 				.append(" : ")

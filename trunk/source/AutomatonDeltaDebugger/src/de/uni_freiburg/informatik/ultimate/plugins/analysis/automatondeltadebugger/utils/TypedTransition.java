@@ -43,10 +43,8 @@ public final class TypedTransition<LETTER, STATE> {
 	private final TypedLetter<LETTER> mLetter;
 
 	/**
-	 * Constructor.
-	 * 
 	 * @param pred
-	 *            predecessor state
+	 *            Predecessor state.
 	 * @param succ
 	 *            successor state
 	 * @param hier
@@ -55,10 +53,10 @@ public final class TypedTransition<LETTER, STATE> {
 	 *            letter
 	 */
 	public TypedTransition(final STATE pred, final STATE succ, final STATE hier, final TypedLetter<LETTER> letter) {
-		this.mPred = pred;
-		this.mSucc = succ;
-		this.mHier = hier;
-		this.mLetter = letter;
+		mPred = pred;
+		mSucc = succ;
+		mHier = hier;
+		mLetter = letter;
 	}
 
 	public STATE getPred() {
@@ -86,15 +84,14 @@ public final class TypedTransition<LETTER, STATE> {
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(final Object obj) {
-		if ((obj == null) || (this.getClass() != obj.getClass())) {
+		if ((obj == null) || (getClass() != obj.getClass())) {
 			return false;
 		}
 		final TypedTransition<LETTER, STATE> other = (TypedTransition<LETTER, STATE>) obj;
-		if (this.mHier == null ^ other.mHier == null) {
+		if (mHier == null ^ other.mHier == null) {
 			return false;
 		}
-		return (other.mPred.equals(this.mPred)) && (other.mSucc.equals(this.mSucc))
-				&& (other.mLetter.equals(this.mLetter));
+		return (other.mPred.equals(mPred)) && (other.mSucc.equals(mSucc)) && (other.mLetter.equals(mLetter));
 	}
 
 	@Override

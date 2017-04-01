@@ -165,39 +165,42 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 	}
 
 	@Override
-	@SuppressWarnings("squid:LabelsShouldNotBeUsedCheck")
 	public List<Pair<STATE, STATE>> extractList() {
 		final ArrayList<Pair<STATE, STATE>> list = new ArrayList<>();
 		/*
 		 * check that there is exactly one internal/call/return successor which
 		 * is not a self-loop
 		 */
-		chooseState: for (final STATE state : mAutomaton.getStates()) {
-			STATE target = null;
-			for (final OutgoingInternalTransition<LETTER, STATE> trans : mAutomaton.internalSuccessors(state)) {
-				if ((target != null) && (!target.equals(state))) {
-					continue chooseState;
-				}
-				target = trans.getSucc();
-			}
-			for (final OutgoingCallTransition<LETTER, STATE> trans : mAutomaton.callSuccessors(state)) {
-				if ((target != null) && (!target.equals(state))) {
-					continue chooseState;
-				}
-				target = trans.getSucc();
-			}
-			for (final OutgoingReturnTransition<LETTER, STATE> trans : mAutomaton.returnSuccessors(state)) {
-				if ((target != null) && (!target.equals(state))) {
-					continue chooseState;
-				}
-				target = trans.getSucc();
-			}
-
+		for (final STATE state : mAutomaton.getStates()) {
+			final STATE target = checkForUniqueTarget(state);
 			if (target != null) {
 				// state has exactly one successor, add the pair
 				list.add(new Pair<>(state, target));
 			}
 		}
 		return list;
+	}
+
+	private STATE checkForUniqueTarget(final STATE state) {
+		STATE target = null;
+		for (final OutgoingInternalTransition<LETTER, STATE> trans : mAutomaton.internalSuccessors(state)) {
+			if ((target != null) && (!target.equals(state))) {
+				return null;
+			}
+			target = trans.getSucc();
+		}
+		for (final OutgoingCallTransition<LETTER, STATE> trans : mAutomaton.callSuccessors(state)) {
+			if ((target != null) && (!target.equals(state))) {
+				return null;
+			}
+			target = trans.getSucc();
+		}
+		for (final OutgoingReturnTransition<LETTER, STATE> trans : mAutomaton.returnSuccessors(state)) {
+			if ((target != null) && (!target.equals(state))) {
+				return null;
+			}
+			target = trans.getSucc();
+		}
+		return target;
 	}
 }

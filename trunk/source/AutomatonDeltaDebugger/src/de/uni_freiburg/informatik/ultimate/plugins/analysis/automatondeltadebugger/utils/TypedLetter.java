@@ -39,16 +39,14 @@ public final class TypedLetter<LETTER> {
 	private final LetterType mType;
 
 	/**
-	 * Constructor.
-	 * 
 	 * @param letter
-	 *            letter
+	 *            Letter.
 	 * @param type
 	 *            letter type
 	 */
 	public TypedLetter(final LETTER letter, final LetterType type) {
-		this.mLetter = letter;
-		this.mType = type;
+		mLetter = letter;
+		mType = type;
 	}
 
 	public LETTER getLetter() {
@@ -76,10 +74,10 @@ public final class TypedLetter<LETTER> {
 
 	@Override
 	public boolean equals(final Object obj) {
-		if ((obj == null) || (this.getClass() != obj.getClass())) {
+		if ((obj == null) || (getClass() != obj.getClass())) {
 			return false;
 		}
 		final TypedLetter<?> other = (TypedLetter<?>) obj;
-		return (other.mLetter.equals(this.mLetter)) && (other.mType == this.mType);
+		return (other.mLetter.equals(mLetter)) && (other.mType == mType);
 	}
 }

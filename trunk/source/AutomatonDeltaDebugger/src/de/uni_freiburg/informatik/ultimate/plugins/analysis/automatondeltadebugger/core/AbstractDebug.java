@@ -62,10 +62,8 @@ public abstract class AbstractDebug<T, LETTER, STATE> {
 	}
 
 	/**
-	 * Constructor.
-	 * 
 	 * @param tester
-	 *            tester
+	 *            Tester.
 	 * @param shrinker
 	 *            shrinker
 	 */
@@ -84,7 +82,7 @@ public abstract class AbstractDebug<T, LETTER, STATE> {
 
 	@Override
 	public String toString() {
-		return this.getClass().getSimpleName();
+		return getClass().getSimpleName();
 	}
 
 	/**

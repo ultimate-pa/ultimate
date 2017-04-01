@@ -55,13 +55,11 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	protected INestedWordAutomaton<LETTER, STATE> mAutomaton;
 
 	/**
-	 * Constructor.
-	 * 
 	 * @param automaton
-	 *            nested word automaton
+	 *            Nested word automaton.
 	 */
 	public INestedWordAutomatonFactory(final INestedWordAutomaton<LETTER, STATE> automaton) {
-		this.mAutomaton = automaton;
+		mAutomaton = automaton;
 	}
 
 	/**
@@ -269,8 +267,8 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 		final Set<TypedTransition<LETTER, STATE>> transitions = new HashSet<>();
 		for (final STATE state : automaton.getStates()) {
 			for (final OutgoingInternalTransition<LETTER, STATE> trans : automaton.internalSuccessors(state)) {
-				transitions.add(new TypedTransition<LETTER, STATE>(state, trans.getSucc(), null,
-						new TypedLetter<LETTER>(trans.getLetter(), LetterType.INTERNAL)));
+				transitions.add(new TypedTransition<>(state, trans.getSucc(), null,
+						new TypedLetter<>(trans.getLetter(), LetterType.INTERNAL)));
 			}
 		}
 		return transitions;
@@ -285,8 +283,8 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 		final Set<TypedTransition<LETTER, STATE>> transitions = new HashSet<>();
 		for (final STATE state : automaton.getStates()) {
 			for (final OutgoingCallTransition<LETTER, STATE> trans : automaton.callSuccessors(state)) {
-				transitions.add(new TypedTransition<LETTER, STATE>(state, trans.getSucc(), null,
-						new TypedLetter<LETTER>(trans.getLetter(), LetterType.CALL)));
+				transitions.add(new TypedTransition<>(state, trans.getSucc(), null,
+						new TypedLetter<>(trans.getLetter(), LetterType.CALL)));
 			}
 		}
 		return transitions;
@@ -302,8 +300,8 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 		final Set<TypedTransition<LETTER, STATE>> transitions = new HashSet<>();
 		for (final STATE state : automaton.getStates()) {
 			for (final OutgoingReturnTransition<LETTER, STATE> trans : automaton.returnSuccessors(state)) {
-				transitions.add(new TypedTransition<LETTER, STATE>(state, trans.getSucc(), trans.getHierPred(),
-						new TypedLetter<LETTER>(trans.getLetter(), LetterType.RETURN)));
+				transitions.add(new TypedTransition<>(state, trans.getSucc(), trans.getHierPred(),
+						new TypedLetter<>(trans.getLetter(), LetterType.RETURN)));
 			}
 		}
 		return transitions;
@@ -390,7 +388,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 
 	@Override
 	public String toString() {
-		return this.getClass().getSimpleName();
+		return getClass().getSimpleName();
 	}
 
 	/**

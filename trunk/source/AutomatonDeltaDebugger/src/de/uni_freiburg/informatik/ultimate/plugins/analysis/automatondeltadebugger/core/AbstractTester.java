@@ -47,13 +47,11 @@ public abstract class AbstractTester<LETTER, STATE> {
 	private final Throwable mThrowable;
 
 	/**
-	 * Constructor.
-	 * 
 	 * @param throwable
-	 *            instance of a throwable
+	 *            Instance of a throwable.
 	 */
 	public AbstractTester(final Throwable throwable) {
-		this.mThrowable = throwable;
+		mThrowable = throwable;
 	}
 
 	/**
@@ -89,7 +87,7 @@ public abstract class AbstractTester<LETTER, STATE> {
 	@Override
 	public String toString() {
 		final StringBuilder builder = new StringBuilder();
-		builder.append(this.getClass().getSimpleName());
+		builder.append(getClass().getSimpleName());
 		if (mThrowable != null) {
 			// @formatter:off
 			builder.append(" with exception type '")

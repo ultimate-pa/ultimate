@@ -47,17 +47,15 @@ public class NestedWordAutomatonFactory<LETTER, STATE> extends INestedWordAutoma
 	private final IUltimateServiceProvider mServices;
 
 	/**
-	 * Constructor.
-	 * 
+	 * @param services
+	 *            Ultimate services.
 	 * @param automaton
 	 *            nested word automaton
-	 * @param services
-	 *            Ultimate services
 	 */
-	public NestedWordAutomatonFactory(final INestedWordAutomaton<LETTER, STATE> automaton,
-			final IUltimateServiceProvider services) {
+	public NestedWordAutomatonFactory(final IUltimateServiceProvider services,
+			final INestedWordAutomaton<LETTER, STATE> automaton) {
 		super(automaton);
-		this.mServices = services;
+		mServices = services;
 	}
 
 	/**

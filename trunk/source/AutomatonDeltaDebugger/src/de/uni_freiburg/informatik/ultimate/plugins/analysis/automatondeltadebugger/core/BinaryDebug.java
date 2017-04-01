@@ -52,10 +52,8 @@ public class BinaryDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STAT
 	private SublistBounds mSublistBounds;
 
 	/**
-	 * Constructor.
-	 * 
 	 * @param tester
-	 *            tester
+	 *            Tester.
 	 * @param shrinker
 	 *            shrinker
 	 */
@@ -141,14 +139,14 @@ public class BinaryDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STAT
 	 * Left and right bound for the list of objects.
 	 */
 	private static class SublistBounds {
-		private final int mLeft;
-		private final int mRight;
-		private final boolean mIsLhs;
+		protected final int mLeft;
+		protected final int mRight;
+		protected final boolean mIsLhs;
 
 		SublistBounds(final int left, final int right, final boolean isLhs) {
-			this.mLeft = left;
-			this.mRight = right;
-			this.mIsLhs = isLhs;
+			mLeft = left;
+			mRight = right;
+			mIsLhs = isLhs;
 		}
 
 		@Override

@@ -66,10 +66,8 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE> extends BaseObserver 
 	private final ILogger mLogger;
 
 	/**
-	 * Constructor.
-	 * 
 	 * @param services
-	 *            Ultimate services
+	 *            Ultimate services.
 	 * @param tester
 	 *            tester
 	 * @param shrinkersLoop
@@ -131,7 +129,7 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE> extends BaseObserver 
 	private void deltaDebug(final INestedWordAutomaton<LETTER, STATE> automaton) {
 		// automaton factory
 		final INestedWordAutomatonFactory<LETTER, STATE> automatonFactory =
-				new NestedWordAutomatonFactory<>(automaton, mServices);
+				new NestedWordAutomatonFactory<>(mServices, automaton);
 
 		// construct delta debugger
 		final AutomatonDebugger<LETTER, STATE> debugger =
