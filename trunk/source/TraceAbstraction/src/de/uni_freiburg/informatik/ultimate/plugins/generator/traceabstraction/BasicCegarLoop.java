@@ -276,7 +276,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("trace histogram " + traceHistogram.toString());
 		}
-		if (DUMP_PATH_PROGRAMS_THAT_EXCEED_TRACE_HIST_MAX_THRESHOLD > traceHistogram.getMax()) {
+		if (traceHistogram.getMax() > DUMP_PATH_PROGRAMS_THAT_EXCEED_TRACE_HIST_MAX_THRESHOLD) {
 			final String filename = mPref.dumpPath() + File.separator + mIcfgContainer.getIdentifier() + "_"
 					+ mIteration + ".bpl";
 			new PathProgramDumper(mIcfgContainer, mServices,
