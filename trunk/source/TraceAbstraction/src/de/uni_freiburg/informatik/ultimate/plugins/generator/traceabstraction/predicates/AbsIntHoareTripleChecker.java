@@ -102,7 +102,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		mDomain = Objects.requireNonNull(domain);
 		mPostOp = Objects.requireNonNull(mDomain.getPostOperator());
 		mPredicateUnifier = Objects.requireNonNull(predicateUnifer);
-		mVarProvider = Objects.requireNonNull(varProvider);
+		mVarProvider = Objects.requireNonNull(varProvider.createNewVariableProvider(csToolkit.getSymbolTable()));
 		mCsToolkit = Objects.requireNonNull(csToolkit);
 		mManagedScript = Objects.requireNonNull(mCsToolkit.getManagedScript());
 

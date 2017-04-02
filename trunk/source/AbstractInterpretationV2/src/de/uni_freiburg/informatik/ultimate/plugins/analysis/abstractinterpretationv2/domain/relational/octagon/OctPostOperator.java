@@ -50,15 +50,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPos
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
-public class OctPostOperator implements IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar> {
+public class OctPostOperator implements IAbstractPostOperator<OctDomainState, IcfgEdge, IBoogieVar> {
 
 	private final ILogger mLogger;
 	private final BoogieSymbolTable mSymbolTable;
@@ -177,14 +177,14 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 	}
 
 	@Override
-	public List<OctDomainState> apply(final OctDomainState oldState, final CodeBlock codeBlock) {
+	public List<OctDomainState> apply(final OctDomainState oldState, final IcfgEdge edge) {
 		// TODO fix WORKAROUND unsoundness for summary code blocks without procedure implementation
-		if (codeBlock instanceof Summary && !((Summary) codeBlock).calledProcedureHasImplementation()) {
-	        throw new UnsupportedOperationException("Summary for procedure without implementation");
-	    }
+		if (edge instanceof Summary && !((Summary) edge).calledProcedureHasImplementation()) {
+			throw new UnsupportedOperationException("Summary for procedure without implementation");
+		}
 
 		List<OctDomainState> currentState = deepCopy(Collections.singletonList(oldState));
-		final List<Statement> statements = mHavocBundler.bundleHavocsCached(codeBlock);
+		final List<Statement> statements = mHavocBundler.bundleHavocsCached(edge);
 		for (final Statement statement : statements) {
 			currentState = mStatementProcessor.processStatement(statement, currentState);
 		}
@@ -193,18 +193,20 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Co
 
 	@Override
 	public List<OctDomainState> apply(final OctDomainState stateBeforeTransition,
-			final OctDomainState stateAfterTransition, final CodeBlock transition) {
+			final OctDomainState stateAfterTransition, final IcfgEdge transition) {
 
+		final IcfgEdge transitionLabel = transition.getLabel();
 		List<OctDomainState> result;
-		if (transition instanceof Call) {
-			result = applyCall(stateBeforeTransition, stateAfterTransition, (Call) transition);
-		} else if (transition instanceof Return) {
-			result = applyReturn(stateBeforeTransition, stateAfterTransition, ((Return) transition).getCallStatement());
-		} else if (transition instanceof Summary) {
+		if (transitionLabel instanceof Call) {
+			result = applyCall(stateBeforeTransition, stateAfterTransition, (Call) transitionLabel);
+		} else if (transitionLabel instanceof Return) {
 			result = applyReturn(stateBeforeTransition, stateAfterTransition,
-					((Summary) transition).getCallStatement());
+					((Return) transitionLabel).getCallStatement());
+		} else if (transitionLabel instanceof Summary) {
+			result = applyReturn(stateBeforeTransition, stateAfterTransition,
+					((Summary) transitionLabel).getCallStatement());
 		} else {
-			throw new UnsupportedOperationException("Unsupported transition: " + transition);
+			throw new UnsupportedOperationException("Unsupported transition: " + transitionLabel);
 		}
 		return result;
 	}

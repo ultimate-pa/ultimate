@@ -35,6 +35,7 @@ import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -226,12 +227,13 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			final ModifiableGlobalsTable newModGlobTable =
 					constructModifiableGlobalsTable(oldCfgSmtToolkit.getModifiableGlobalsTable());
 
-			// TODO: Can we reduce axioms?
 			final CfgSmtToolkit newCfgSmtToolkit = new CfgSmtToolkit(newModGlobTable,
 					oldCfgSmtToolkit.getManagedScript(), mSymbolTable, oldCfgSmtToolkit.getAxioms(), mProcedures);
 
 			final PathProgram pp = new PathProgram(nonNullIdentifier, newCfgSmtToolkit, mProgramPoints, mProcEntries,
 					mProcExits, mProcError, mInitialNodes, mLoopLocations);
+
+			ModelUtils.copyAnnotations(originalIcfg, pp);
 
 			mResult = new PathProgramConstructionResult(pp, mOldLoc2NewLoc);
 			assert !mResult.getPathProgram().getInitialNodes()

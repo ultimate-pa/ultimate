@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
@@ -49,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  */
-public class SignPostOperator implements IAbstractPostOperator<SignDomainState<IBoogieVar>, CodeBlock, IBoogieVar> {
-	
+public class SignPostOperator implements IAbstractPostOperator<SignDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> {
+
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final SignDomainStatementProcessor mStatementProcessor;
 	private final ILogger mLogger;
@@ -75,7 +76,7 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState<I
 	 */
 	@Override
 	public List<SignDomainState<IBoogieVar>> apply(final SignDomainState<IBoogieVar> oldstate,
-			final CodeBlock transition) {
+			final IcfgEdge transition) {
 		assert oldstate != null;
 		assert !oldstate.isBottom();
 		assert transition != null;
@@ -105,7 +106,7 @@ public class SignPostOperator implements IAbstractPostOperator<SignDomainState<I
 
 	@Override
 	public List<SignDomainState<IBoogieVar>> apply(final SignDomainState<IBoogieVar> stateBeforeLeaving,
-			final SignDomainState<IBoogieVar> stateAfterLeaving, final CodeBlock transition) {
+			final SignDomainState<IBoogieVar> stateAfterLeaving, final IcfgEdge transition) {
 		assert transition instanceof Call || transition instanceof Return;
 
 		final List<SignDomainState<IBoogieVar>> returnList = new ArrayList<>();

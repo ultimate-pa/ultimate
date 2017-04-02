@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activat
  * of this RootNode. The ILocation of the RootNode should be the ILocation of the unit of a Boogie Program.
  * 
  * @author heizmann@informatik.uni-freiburg.de
- * 
  */
+@Deprecated
 public class RootNode extends IcfgLocation {
 
 	/**
@@ -54,6 +54,7 @@ public class RootNode extends IcfgLocation {
 		location.annotate(this);
 	}
 
+	@Deprecated
 	public BoogieIcfgContainer getRootAnnot() {
 		return (BoogieIcfgContainer) getPayload().getAnnotations().get(Activator.PLUGIN_ID);
 	}

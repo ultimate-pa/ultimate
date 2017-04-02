@@ -7,12 +7,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  *
@@ -21,7 +24,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 
-public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState<IBoogieVar>, CodeBlock, IBoogieVar> {
+public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> {
 
 	private final BoogieSymbolTable mSymbolTable;
 	private final ILogger mLogger;
@@ -30,14 +33,14 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState<I
 
 	private IAbstractStateBinaryOperator<CongruenceDomainState<IBoogieVar>> mWideningOperator;
 	private IAbstractStateBinaryOperator<CongruenceDomainState<IBoogieVar>> mMergeOperator;
-	private IAbstractPostOperator<CongruenceDomainState<IBoogieVar>, CodeBlock, IBoogieVar> mPostOperator;
+	private IAbstractPostOperator<CongruenceDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> mPostOperator;
 
 	public CongruenceDomain(final ILogger logger, final IUltimateServiceProvider services,
-			final BoogieSymbolTable symbolTable, final BoogieIcfgContainer rootAnnotation) {
+			final BoogieSymbolTable symbolTable, final IIcfg<?> icfg) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		mServices = services;
-		mRootAnnotation = rootAnnotation;
+		mRootAnnotation = AbsIntUtil.getBoogieIcfgContainer(icfg);
 	}
 
 	@Override
@@ -73,15 +76,16 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState<I
 	}
 
 	@Override
-	public IAbstractPostOperator<CongruenceDomainState<IBoogieVar>, CodeBlock, IBoogieVar> getPostOperator() {
+	public IAbstractPostOperator<CongruenceDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
 			final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 			final int maxParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
+			final Boogie2SMT boogie2smt = mRootAnnotation.getBoogie2SMT();
+			final Boogie2SmtSymbolTable bpl2SmtSymbolTable = boogie2smt.getBoogie2SmtSymbolTable();
 			final CongruenceDomainStatementProcessor stmtProcessor = new CongruenceDomainStatementProcessor(mLogger,
-					mSymbolTable, mRootAnnotation.getBoogie2SMT().getBoogie2SmtSymbolTable(), maxParallelStates);
-			final Boogie2SmtSymbolTable bpl2SmtSymbolTable = mRootAnnotation.getBoogie2SMT().getBoogie2SmtSymbolTable();
+					mSymbolTable, bpl2SmtSymbolTable, maxParallelStates);
 			mPostOperator = new CongruencePostOperator(mLogger, mSymbolTable, stmtProcessor, bpl2SmtSymbolTable,
-					maxParallelStates, mRootAnnotation.getBoogie2SMT(), mRootAnnotation);
+					maxParallelStates, boogie2smt, mRootAnnotation);
 		}
 		return mPostOperator;
 	}

@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+
 /**
  *
  * An {@link IVariableProvider} creates abstract states that track certain variables according to the actions that
@@ -88,5 +90,7 @@ public interface IVariableProvider<STATE extends IAbstractState<STATE, VARDECL>,
 	STATE createValidPostOpStateAfterLeaving(ACTION act, STATE origPreLinState, STATE preHierState);
 
 	STATE createValidPostOpStateBeforeLeaving(final ACTION action, final STATE stateHier);
+
+	IVariableProvider<STATE, ACTION, VARDECL> createNewVariableProvider(IIcfgSymbolTable table);
 
 }

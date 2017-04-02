@@ -39,11 +39,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPos
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.generic.LiteralCollection;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * This abstract domain stores intervals for all variable valuations. Intervals can be of the form [num; num], where num
@@ -53,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  *
  */
-public class IntervalDomain implements IAbstractDomain<IntervalDomainState<IBoogieVar>, CodeBlock, IBoogieVar> {
+public class IntervalDomain implements IAbstractDomain<IntervalDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> {
 
 	private final ILogger mLogger;
 	private final LiteralCollection mLiteralCollection;
@@ -63,15 +65,14 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState<IBoog
 
 	private IAbstractStateBinaryOperator<IntervalDomainState<IBoogieVar>> mWideningOperator;
 	private IAbstractStateBinaryOperator<IntervalDomainState<IBoogieVar>> mMergeOperator;
-	private IAbstractPostOperator<IntervalDomainState<IBoogieVar>, CodeBlock, IBoogieVar> mPostOperator;
+	private IAbstractPostOperator<IntervalDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> mPostOperator;
 
 	public IntervalDomain(final ILogger logger, final BoogieSymbolTable symbolTable,
-			final LiteralCollection literalCollector, final IUltimateServiceProvider services,
-			final BoogieIcfgContainer rootAnnotation) {
+			final LiteralCollection literalCollector, final IUltimateServiceProvider services, final IIcfg<?> icfg) {
 		mLogger = logger;
 		mLiteralCollection = literalCollector;
 		mServices = services;
-		mRootAnnotation = rootAnnotation;
+		mRootAnnotation = AbsIntUtil.getBoogieIcfgContainer(icfg);
 		mSymbolTable = symbolTable;
 	}
 
@@ -123,7 +124,7 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState<IBoog
 	}
 
 	@Override
-	public IAbstractPostOperator<IntervalDomainState<IBoogieVar>, CodeBlock, IBoogieVar> getPostOperator() {
+	public IAbstractPostOperator<IntervalDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
 			final Boogie2SmtSymbolTable bpl2SmtSymbolTable = mRootAnnotation.getBoogie2SMT().getBoogie2SmtSymbolTable();
 			final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);

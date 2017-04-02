@@ -98,7 +98,7 @@ public class RCFGLiteralCollector extends RCFGEdgeVisitor implements ILiteralCol
 			if (!finished.add(current)) {
 				continue;
 			}
-			visit(current);
+			visit(current.getLabel());
 			worklist.addAll(current.getTarget().getOutgoingEdges());
 		}
 	}

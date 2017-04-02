@@ -30,6 +30,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -58,6 +59,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -195,7 +198,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			if (result == null) {
 				mCurrentIteration = null;
 			} else {
-				mCurrentIteration = new AbsIntCurrentIteration<>(currentCex, result);
+				mCurrentIteration = new AbsIntCurrentIteration<>(currentCex, result, pp);
 			}
 			if (hasShownInfeasibility()) {
 				mCegarLoopBenchmark.announceStrongAbsInt();
@@ -319,9 +322,12 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		private final AbsIntPredicate<STATE, IBoogieVar> mFalsePredicate;
 		private final AbsIntPredicate<STATE, IBoogieVar> mTruePredicate;
 		private final PredicateUnifier mPredicateUnifierAbsInt;
+		private final PathProgram mPathProgram;
 
 		public AbsIntCurrentIteration(final IRun<LETTER, IPredicate, ?> cex,
-				final IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> result) {
+				final IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> result,
+				final PathProgram pathprogram) {
+			mPathProgram = Objects.requireNonNull(pathprogram);
 			mCex = Objects.requireNonNull(cex);
 			mResult = Objects.requireNonNull(result);
 			mFalsePredicate = new AbsIntPredicate<>(mPredicateUnifierSmt.getFalsePredicate(),
@@ -368,7 +374,9 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			// we were strong enough!
 			final Word<LETTER> word = mCex.getWord();
 			try {
-				final List<AbsIntPredicate<STATE, IBoogieVar>> interpolants = generateInterpolants(word);
+
+				final List<AbsIntPredicate<STATE, IBoogieVar>> interpolants =
+						generateInterpolants(constructTraceFromWord(word, mPathProgram));
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Interpolant sequence:");
 					mLogger.debug(interpolants);
@@ -383,6 +391,23 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), "generating AI predicates"));
 				throw tce;
 			}
+		}
+
+		private List<LETTER> constructTraceFromWord(final Word<LETTER> word, final PathProgram pathProgram) {
+			final Map<LETTER, LETTER> wordLetter2PathProgramLetter = new HashMap<>();
+			final IcfgEdgeIterator iter = new IcfgEdgeIterator(pathProgram);
+			while (iter.hasNext()) {
+				final IcfgEdge current = iter.next();
+				wordLetter2PathProgramLetter.put((LETTER) current.getLabel(), (LETTER) current);
+			}
+			final List<LETTER> rtr = new ArrayList<>(word.length());
+			for (final LETTER letter : word.asList()) {
+				final LETTER ppLetter = wordLetter2PathProgramLetter.get(letter);
+				assert ppLetter != null : "Path program construction broken";
+				rtr.add(ppLetter);
+			}
+			assert rtr.size() == word.length();
+			return rtr;
 		}
 
 		private boolean isInductive(final List<LETTER> trace,
@@ -415,35 +440,43 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 				final Validity result;
 				if (trans instanceof IInternalAction) {
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug(String.format("Checking {%s} %s {%s}", pre, trans, post));
+					}
 					result = htc.checkInternal(pre, (IInternalAction) trans, post);
 				} else if (trans instanceof ICallAction) {
 					preHierStates.addFirst(pre);
 					result = htc.checkCall(pre, (ICallAction) trans, post);
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug(String.format("Checking {%s} %s {%s}", pre, trans, post));
+					}
 				} else if (trans instanceof IReturnAction) {
 					final IPredicate preHier = preHierStates.removeFirst();
 					result = htc.checkReturn(pre, preHier, (IReturnAction) trans, post);
+					if (mLogger.isDebugEnabled()) {
+						mLogger.debug(String.format("Checking {%s} {%s} %s {%s}", pre, preHier, trans, post));
+					}
 				} else {
 					throw new UnsupportedOperationException("Unknown transition type " + trans.getClass());
 				}
 
 				if (result != Validity.VALID) {
 					// the absint htc must solve all queries from those interpolants
+					mLogger.fatal("HTC check failed: result was " + result);
 					return false;
 				}
 			}
 			return true;
 		}
 
-		private List<AbsIntPredicate<STATE, IBoogieVar>> generateInterpolants(final Word<LETTER> word) {
+		private List<AbsIntPredicate<STATE, IBoogieVar>> generateInterpolants(final List<LETTER> cexTrace) {
 			mLogger.info("Generating AI predicates...");
 
 			final List<AbsIntPredicate<STATE, IBoogieVar>> rtr = new ArrayList<>();
 			final Deque<LETTER> callstack = new ArrayDeque<>();
 			final Script script = mCsToolkit.getManagedScript().getScript();
-			final int wordlength = word.length();
 			Set<STATE> previousStates = Collections.emptySet();
-			for (int i = 0; i < wordlength - 1; i++) {
-				final LETTER symbol = word.getSymbol(i);
+			for (final LETTER symbol : cexTrace) {
 				if (symbol instanceof ICallAction) {
 					callstack.addFirst(symbol);
 				} else if (symbol instanceof IReturnAction) {
@@ -457,6 +490,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				previousStates = postStates;
 				rtr.add(next);
 			}
+			final AbsIntPredicate<STATE, IBoogieVar> lastPred = rtr.remove(rtr.size() - 1);
+			assert lastPred.getFormula().toString().equals("false");
 			return rtr;
 		}
 

@@ -55,19 +55,22 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 		implements IVariableProvider<STATE, ACTION, IProgramVarOrConst> {
 
 	private final ILogger mLogger;
-	private final IIcfgSymbolTable mBoogieVarTable;
+	private final IIcfgSymbolTable mSymbolTable;
 
 	public FutureRcfgVariableProvider(final IIcfgSymbolTable boogieVarTable, final IUltimateServiceProvider services) {
-		assert services != null;
-		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mBoogieVarTable = boogieVarTable;
+		this(boogieVarTable, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
+	}
+
+	public FutureRcfgVariableProvider(final IIcfgSymbolTable boogieVarTable, final ILogger logger) {
+		mLogger = logger;
+		mSymbolTable = boogieVarTable;
 	}
 
 	@Override
 	public STATE defineInitialVariables(final ACTION current, final STATE state) {
 		final Set<IProgramVarOrConst> vars = new HashSet<>();
-		mBoogieVarTable.getGlobals().stream().forEach(a -> vars.add(a));
-		mBoogieVarTable.getLocals(current.getPrecedingProcedure()).stream().forEach(a -> vars.add(a));
+		mSymbolTable.getGlobals().stream().forEach(a -> vars.add(a));
+		mSymbolTable.getLocals(current.getPrecedingProcedure()).stream().forEach(a -> vars.add(a));
 
 		return state.addVariables(vars);
 	}
@@ -90,7 +93,8 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 	}
 
 	@Override
-	public STATE createValidPostOpStateAfterLeaving(final ACTION action, final STATE stateLin, final STATE preHierState) {
+	public STATE createValidPostOpStateAfterLeaving(final ACTION action, final STATE stateLin,
+			final STATE preHierState) {
 		throw new UnsupportedOperationException();
 	}
 
@@ -205,7 +209,7 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 	private Set<IProgramVarOrConst> getMaskedGlobalsVariables(final String procedure) {
 		assert procedure != null;
 		final Set<IProgramVarOrConst> globals = new HashSet<>();
-		for (final IProgramNonOldVar global : mBoogieVarTable.getGlobals()) {
+		for (final IProgramNonOldVar global : mSymbolTable.getGlobals()) {
 			globals.add(global);
 		}
 		// globals.addAll(mBoogieVarTable.getConsts().values());
@@ -230,8 +234,7 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 
 	private Set<IProgramVarOrConst> getLocalVariables(final String procedure) {
 		assert procedure != null;
-		return mBoogieVarTable.getLocals(procedure).stream().map(a -> (IProgramVarOrConst) a)
-				.collect(Collectors.toSet());
+		return mSymbolTable.getLocals(procedure).stream().map(a -> (IProgramVarOrConst) a).collect(Collectors.toSet());
 	}
 
 	private StringBuilder getLogMessageRemoveLocalsPreCall(final STATE state,
@@ -243,6 +246,12 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 	private StringBuilder getLogMessageNoRemoveLocalsPreCall(final STATE state) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" using unchanged pre-call state [")
 				.append(state.hashCode()).append("] ").append(state.toLogString());
+	}
+
+	@Override
+	public IVariableProvider<STATE, ACTION, IProgramVarOrConst>
+			createNewVariableProvider(final IIcfgSymbolTable table) {
+		return new FutureRcfgVariableProvider<>(table, mLogger);
 	}
 
 }

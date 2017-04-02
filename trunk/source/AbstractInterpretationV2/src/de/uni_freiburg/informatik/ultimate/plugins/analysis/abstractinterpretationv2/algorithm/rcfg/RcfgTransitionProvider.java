@@ -34,11 +34,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICall
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.ITransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 
 /**
@@ -46,40 +46,40 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, IcfgLocation> {
+public class RcfgTransitionProvider implements ITransitionProvider<IcfgEdge, IcfgLocation> {
 
 	@Override
-	public Collection<CodeBlock> getSuccessors(final CodeBlock elem, final CodeBlock scope) {
+	public Collection<IcfgEdge> getSuccessors(final IcfgEdge elem, final IcfgEdge scope) {
 		final IcfgLocation target = elem.getTarget();
 		if (target == null) {
 			return Collections.emptyList();
 		}
-		return target.getOutgoingEdges().stream().map(a -> (CodeBlock) a)
+		return target.getOutgoingEdges().stream().map(a -> a)
 				.filter(a -> !(a instanceof IReturnAction) || isLeavingScope(a, scope)).collect(Collectors.toSet());
 	}
 
 	@Override
-	public Collection<CodeBlock> getPredecessors(final CodeBlock elem, final CodeBlock scope) {
+	public Collection<IcfgEdge> getPredecessors(final IcfgEdge elem, final IcfgEdge scope) {
 		final IcfgLocation source = elem.getSource();
 		if (source == null) {
 			return Collections.emptyList();
 		}
-		return source.getIncomingEdges().stream().map(a -> (CodeBlock) a)
+		return source.getIncomingEdges().stream().map(a -> a)
 				.filter(a -> !(a instanceof ICallAction) || isEnteringScope(a, scope)).collect(Collectors.toSet());
 	}
 
 	@Override
-	public String toLogString(final CodeBlock elem) {
+	public String toLogString(final IcfgEdge elem) {
 		return elem.toString();
 	}
 
 	@Override
-	public boolean isEnteringScope(final CodeBlock current) {
+	public boolean isEnteringScope(final IcfgEdge current) {
 		return current instanceof Call;
 	}
 
 	@Override
-	public boolean isLeavingScope(final CodeBlock current, final CodeBlock scope) {
+	public boolean isLeavingScope(final IcfgEdge current, final IcfgEdge scope) {
 		assert current != null;
 		if (current instanceof IIcfgReturnTransition<?, ?>) {
 			return RcfgUtils.isAllowedReturn((IIcfgReturnTransition<?, ?>) current, scope);
@@ -88,7 +88,7 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, Ic
 	}
 
 	@Override
-	public boolean isEnteringScope(final CodeBlock action, final CodeBlock scope) {
+	public boolean isEnteringScope(final IcfgEdge action, final IcfgEdge scope) {
 		if (action instanceof IIcfgCallTransition<?> && scope instanceof IIcfgReturnTransition<?, ?>) {
 			final IIcfgCallTransition<?> call = (IIcfgCallTransition<?>) action;
 			final IIcfgReturnTransition<?, ?> retTran = (IIcfgReturnTransition<?, ?>) scope;
@@ -98,42 +98,42 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, Ic
 	}
 
 	@Override
-	public boolean isLeavingScope(final CodeBlock action) {
+	public boolean isLeavingScope(final IcfgEdge action) {
 		return action instanceof IIcfgReturnTransition<?, ?>;
 	}
 
 	@Override
-	public IcfgLocation getSource(final CodeBlock current) {
+	public IcfgLocation getSource(final IcfgEdge current) {
 		return current.getSource();
 	}
 
 	@Override
-	public IcfgLocation getTarget(final CodeBlock current) {
+	public IcfgLocation getTarget(final IcfgEdge current) {
 		return current.getTarget();
 	}
 
 	@Override
-	public Collection<CodeBlock> getSuccessorActions(final IcfgLocation loc) {
-		return loc.getOutgoingEdges().stream().map(e -> (CodeBlock) e).collect(Collectors.toList());
+	public Collection<IcfgEdge> getSuccessorActions(final IcfgLocation loc) {
+		return loc.getOutgoingEdges().stream().collect(Collectors.toList());
 	}
 
 	@Override
-	public Collection<CodeBlock> getPredecessorActions(final IcfgLocation loc) {
-		return loc.getIncomingEdges().stream().map(e -> (CodeBlock) e).collect(Collectors.toList());
+	public Collection<IcfgEdge> getPredecessorActions(final IcfgLocation loc) {
+		return loc.getIncomingEdges().stream().collect(Collectors.toList());
 	}
 
 	@Override
-	public boolean isSummaryForCall(final CodeBlock action, final CodeBlock possibleCall) {
+	public boolean isSummaryForCall(final IcfgEdge action, final IcfgEdge possibleCall) {
 		return RcfgUtils.isSummaryForCall(action, possibleCall);
 	}
 
 	@Override
-	public boolean isSummaryWithImplementation(final CodeBlock action) {
+	public boolean isSummaryWithImplementation(final IcfgEdge action) {
 		return RcfgUtils.isSummaryWithImplementation(action);
 	}
 
 	@Override
-	public String getProcedureName(final CodeBlock current) {
+	public String getProcedureName(final IcfgEdge current) {
 		if (current == null) {
 			return null;
 		}
@@ -145,12 +145,12 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, Ic
 	}
 
 	@Override
-	public CodeBlock getSummaryForCall(final CodeBlock call) {
+	public IcfgEdge getSummaryForCall(final IcfgEdge call) {
 		if (!(call instanceof Call)) {
 			throw new IllegalArgumentException("call is not a Call");
 		}
-		return call.getSource().getOutgoingEdges().stream().map(a -> (CodeBlock) a)
-				.filter(a -> isSummaryForCall(a, call)).findFirst().orElse(null);
+		return call.getSource().getOutgoingEdges().stream().map(a -> a).filter(a -> isSummaryForCall(a, call))
+				.findFirst().orElse(null);
 	}
 
 	@Override

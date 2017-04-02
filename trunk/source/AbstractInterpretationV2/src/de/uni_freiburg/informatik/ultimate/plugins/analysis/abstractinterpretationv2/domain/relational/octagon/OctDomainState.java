@@ -1055,7 +1055,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 					usedClosure = true;
 				}
 				final Integer sourceIndex = mMapNumericVarToIndex.get(sourceVar);
-				assert sourceIndex != null : "Incompatible types";
+				assert sourceIndex != null : "Incompatible types: " + sourceVar + " (" + sourceVar.getSort()
+						+ ") has no matching target";
 				mNumericAbstraction.assignVarCopy(targetIndex, sourceIndex);
 
 			} else if (mBooleanAbstraction.containsKey(targetVar)) {
