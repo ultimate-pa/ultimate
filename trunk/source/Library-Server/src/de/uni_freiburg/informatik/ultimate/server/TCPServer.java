@@ -27,7 +27,6 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 
 	// multiple Clients?
 	protected FutureClient<T> mClient;
-	protected CompletableFuture<FutureClient<T>> mNextClient;
 	protected ExecutorService mExecutor;
 	protected Future<?> mServerFuture;
 	protected Supplier<ExecutorService> mGetExecutorService;
@@ -40,7 +39,7 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 		mPort = port;
 		mGetExecutorService = Executors::newWorkStealingPool;
 		mCancelled = false;
-		mNextClient = new CompletableFuture<>();
+		mClient = new FutureClient<>(mLogger);
 	}
 
 	public abstract IWrappedMessage<T> newMessage();
@@ -86,15 +85,15 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 
 		mTypeRegistry = getTypeRegistry();
 
+		// use FutureClient set in constructor here.
+		listen();
 		while (true) {
+			mClient = new FutureClient<T>(mLogger);
 			listen();
 		}
 	}
 
 	private void listen() {
-		mClient = new FutureClient<T>(mLogger);
-		mNextClient.complete(mClient);
-		mNextClient = new CompletableFuture<>();
 		mClient.setRegistry(mTypeRegistry);
 		mClient.setFactory(this::newMessage);
 
@@ -138,7 +137,7 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 			throw new IllegalStateException("Server not running.");
 		}
 
-		return mNextClient.get(10, TimeUnit.SECONDS).get(60, TimeUnit.SECONDS);
+		return mClient.get(60, TimeUnit.SECONDS);
 	}
 
 }

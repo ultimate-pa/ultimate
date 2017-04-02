@@ -143,11 +143,18 @@ public class ServerController implements IController<RunDefinition> {
 
 		mLogger.debug("Starting Server on Port " + cla.getPort());
 		mServer.start();
+		
+		registerTypes();
 
 		try {
-			initWrapper(core, availableToolchains, availableSettingsFiles, availableInputFiles);
+			while (true) {
+				initWrapper(core, availableToolchains, availableSettingsFiles, availableInputFiles);
+				
+				if (false) break; 
+			}
 		} catch (InterruptedException | ExecutionException | TimeoutException e) {
 			mLogger.fatal(e);
+			e.printStackTrace();
 			return -1;
 		} finally {
 			mLogger.info("Interactive Controller terminated - shutting down Server.");
@@ -155,6 +162,15 @@ public class ServerController implements IController<RunDefinition> {
 		}
 
 		return IApplication.EXIT_OK;
+	}
+	
+	private void registerTypes() {
+		mServer.getTypeRegistry().register(Controller.Choice.Request.class);
+		mServer.getTypeRegistry().register(Controller.Choice.class);
+		
+		// If we wanted files directly - but thats not supported by Ultimate Core.
+		// mServer.getTypeRegistry().register(Controller.File.class);
+		// mServer.getTypeRegistry().register(Controller.File.Request.class);		
 	}
 
 	private void initWrapper(final ICore<RunDefinition> core,
@@ -170,14 +186,7 @@ public class ServerController implements IController<RunDefinition> {
 		ControllerConverter converter = ControllerConverter.get();
 		mInternalInterface = mConverterInitializer.getConvertedInteractiveInterface(converter);
 
-		// If we wanted files directly - but thats not supported by Ultimate Core.
-		// mServer.getTypeRegistry().register(Controller.File.class);
-		// mServer.getTypeRegistry().register(Controller.File.Request.class);
-
 		final List<File> tcFiles = new ArrayList<>(availableToolchains.keySet());
-
-		mServer.getTypeRegistry().register(Controller.Choice.Request.class);
-		mServer.getTypeRegistry().register(Controller.Choice.class);
 
 		requestAndLoadSettings(core, availableSettingsFiles);
 		requestAndLoadToolchain(core, tcFiles);
