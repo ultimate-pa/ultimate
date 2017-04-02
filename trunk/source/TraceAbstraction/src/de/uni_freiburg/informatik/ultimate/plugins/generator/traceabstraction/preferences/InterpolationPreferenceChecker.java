@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE TraceAbstraction plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE TraceAbstraction plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences;
@@ -47,7 +47,7 @@ public class InterpolationPreferenceChecker {
 			final IUltimateServiceProvider services) {
 		final SolverMode currentSolverMode = services.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
-		final Set<SolverMode> legalSolverSettings = new HashSet<SolverMode>();
+		final Set<SolverMode> legalSolverSettings = new HashSet<>();
 		switch (interpolation) {
 		case Craig_TreeInterpolation:
 		case Craig_NestedInterpolation:
