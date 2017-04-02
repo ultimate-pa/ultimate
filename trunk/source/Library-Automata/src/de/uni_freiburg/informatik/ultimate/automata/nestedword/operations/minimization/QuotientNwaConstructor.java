@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IBlock;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IPartition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IAutomatonStatePartition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DoubleDeckerVisitor.ReachFinal;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -55,7 +55,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 /**
  * Constructs the quotient for a given nested word automaton and an equivalence relation on its states.
  * <p>
- * The equivalence relation has to be given as a {@link UnionFind} or a {@link IPartition} data structure.
+ * The equivalence relation has to be given as a {@link UnionFind} or a {@link IAutomatonStatePartition} data structure.
  * <p>
  * If the operand is an {@link IDoubleDeckerAutomaton}, the output will also be an {@link IDoubleDeckerAutomaton}.
  * 
@@ -130,7 +130,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 	 */
 	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> QuotientNwaConstructor(
 			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand, final IPartition<STATE> partition,
+			final INestedWordAutomaton<LETTER, STATE> operand, final IAutomatonStatePartition<STATE> partition,
 			final boolean addMapOldState2newState) {
 		this(services, stateFactory, operand, partition.size());
 
@@ -187,7 +187,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 	 *            partition
 	 */
 	private void constructResultPartition(final IResultStateConstructor<STATE> resStateConstructor,
-			final IPartition<STATE> partition) {
+			final IAutomatonStatePartition<STATE> partition) {
 		final Iterator<IBlock<STATE>> blocksIt = partition.blocksIterator();
 		/*
 		 * iterate over all blocks
@@ -431,9 +431,9 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 	 */
 	private class ResultStateConstructorFromPartition implements IResultStateConstructor<STATE> {
 		private final ConstructionCache<IBlock<STATE>, STATE> mConstructionCache;
-		private final IPartition<STATE> mPartition;
+		private final IAutomatonStatePartition<STATE> mPartition;
 
-		public ResultStateConstructorFromPartition(final IPartition<STATE> partition) {
+		public ResultStateConstructorFromPartition(final IAutomatonStatePartition<STATE> partition) {
 			mPartition = partition;
 
 			final IValueConstruction<IBlock<STATE>, STATE> valueConstruction =

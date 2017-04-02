@@ -37,28 +37,26 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 public final class TypedLetter<LETTER> {
 	private final LETTER mLetter;
 	private final LetterType mType;
-	
+
 	/**
-	 * Constructor.
-	 * 
 	 * @param letter
-	 *            letter
+	 *            Letter.
 	 * @param type
 	 *            letter type
 	 */
 	public TypedLetter(final LETTER letter, final LetterType type) {
-		this.mLetter = letter;
-		this.mType = type;
+		mLetter = letter;
+		mType = type;
 	}
-	
+
 	public LETTER getLetter() {
 		return mLetter;
 	}
-	
+
 	public LetterType getType() {
 		return mType;
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder b = new StringBuilder();
@@ -68,18 +66,18 @@ public final class TypedLetter<LETTER> {
 		b.append(")");
 		return b.toString();
 	}
-	
+
 	@Override
 	public int hashCode() {
 		return mLetter.hashCode() + mType.hashCode();
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
-		if ((obj == null) || (this.getClass() != obj.getClass())) {
+		if ((obj == null) || (getClass() != obj.getClass())) {
 			return false;
 		}
 		final TypedLetter<?> other = (TypedLetter<?>) obj;
-		return (other.mLetter.equals(this.mLetter)) && (other.mType == this.mType);
+		return (other.mLetter.equals(mLetter)) && (other.mType == mType);
 	}
 }

@@ -93,7 +93,7 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 	}
 
 	@Override
-	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> run(final Collection<LOC> start,
+	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> run(final Collection<? extends LOC> start,
 			final Script script) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
@@ -105,7 +105,7 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 		return mResult;
 	}
 
-	private void calculateFixpoint(final Collection<LOC> sinks) {
+	private void calculateFixpoint(final Collection<? extends LOC> sinks) {
 		final Deque<BackwardsWorklistItem<STATE, ACTION, VARDECL, LOC>> worklist = new ArrayDeque<>();
 		final IAbstractTransformer<STATE, ACTION, VARDECL> preOp = mDomain.getPreOperator();
 		final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();

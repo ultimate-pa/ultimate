@@ -13,5 +13,7 @@ Export-Package: de.uni_freiburg.informatik.ultimate.icfgtransformer,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr,
+ de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.woelfing,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers
+Import-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon

@@ -124,7 +124,7 @@ int main() {
                            } else {
                            }
                        }
-		   mylabl: { int ddd; ddd = ddd; }
+		   mylabl: {  }
                    } while( --Count>0 );
                }
 //---------------------------------------------

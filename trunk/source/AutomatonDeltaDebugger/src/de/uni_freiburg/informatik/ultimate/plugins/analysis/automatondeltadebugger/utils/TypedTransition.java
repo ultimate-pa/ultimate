@@ -41,12 +41,10 @@ public final class TypedTransition<LETTER, STATE> {
 	private final STATE mSucc;
 	private final STATE mHier;
 	private final TypedLetter<LETTER> mLetter;
-	
+
 	/**
-	 * Constructor.
-	 * 
 	 * @param pred
-	 *            predecessor state
+	 *            Predecessor state.
 	 * @param succ
 	 *            successor state
 	 * @param hier
@@ -54,50 +52,48 @@ public final class TypedTransition<LETTER, STATE> {
 	 * @param letter
 	 *            letter
 	 */
-	public TypedTransition(final STATE pred, final STATE succ, final STATE hier,
-			final TypedLetter<LETTER> letter) {
-		this.mPred = pred;
-		this.mSucc = succ;
-		this.mHier = hier;
-		this.mLetter = letter;
+	public TypedTransition(final STATE pred, final STATE succ, final STATE hier, final TypedLetter<LETTER> letter) {
+		mPred = pred;
+		mSucc = succ;
+		mHier = hier;
+		mLetter = letter;
 	}
-	
+
 	public STATE getPred() {
 		return mPred;
 	}
-	
+
 	public STATE getSucc() {
 		return mSucc;
 	}
-	
+
 	public STATE getHier() {
 		return mHier;
 	}
-	
+
 	public TypedLetter<LETTER> getLetter() {
 		return mLetter;
 	}
-	
+
 	@Override
 	public int hashCode() {
 		final int hashCode = (mHier == null) ? 0 : mHier.hashCode();
 		return hashCode + mPred.hashCode() + mSucc.hashCode() + mLetter.hashCode();
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean equals(final Object obj) {
-		if ((obj == null) || (this.getClass() != obj.getClass())) {
+		if ((obj == null) || (getClass() != obj.getClass())) {
 			return false;
 		}
 		final TypedTransition<LETTER, STATE> other = (TypedTransition<LETTER, STATE>) obj;
-		if (this.mHier == null ^ other.mHier == null) {
+		if (mHier == null ^ other.mHier == null) {
 			return false;
 		}
-		return (other.mPred.equals(this.mPred)) && (other.mSucc.equals(this.mSucc))
-				&& (other.mLetter.equals(this.mLetter));
+		return (other.mPred.equals(mPred)) && (other.mSucc.equals(mSucc)) && (other.mLetter.equals(mLetter));
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder b = new StringBuilder();

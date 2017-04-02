@@ -35,8 +35,7 @@ import org.eclipse.core.runtime.Plugin;
  * @author Daniel Dietsch
  */
 public class Activator extends Plugin {
-	public static final String PLUGIN_ID =
-			AutomatonDeltaDebugger.class.getPackage().getName();
-	
+	public static final String PLUGIN_ID = AutomatonDeltaDebugger.class.getPackage().getName();
+
 	public static final String PLUGIN_NAME = "AutomatonDeltaDebugger";
 }

@@ -85,6 +85,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	}
 
 	private static final PreprocessingMode PREPROCESSING_STANDALONE = PreprocessingMode.PAIRS;
+	private static final boolean USE_FULL_PREPROCESSING = false;
 
 	@SuppressWarnings("rawtypes")
 	private static final Pair[] EMPTY_LITERALS = new Pair[0];
@@ -195,11 +196,11 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 			throws AutomataOperationCanceledException {
 		switch (PREPROCESSING_STANDALONE) {
 			case PARTITION:
-				return createPairsWithInitialPartition(
-						new NwaApproximateBisimulation<>(services, operand, SimulationType.DIRECT).getResult()
-								.getRelation());
+				return createPairsWithInitialPartition(new NwaApproximateBisimulation<>(services, operand,
+						SimulationType.DIRECT, USE_FULL_PREPROCESSING).getResult().getRelation());
 			case PAIRS:
-				return new NwaApproximateSimulation<>(services, operand, SimulationType.DIRECT).getResult();
+				return new NwaApproximateSimulation<>(services, operand, SimulationType.DIRECT, USE_FULL_PREPROCESSING)
+						.getResult();
 			case NONE:
 				return createPairs(operand.getStates());
 			default:

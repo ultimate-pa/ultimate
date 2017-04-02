@@ -54,10 +54,8 @@ public class ChangeInitialStatesShrinker<LETTER, STATE> extends BridgeShrinker<P
 	private List<Pair<STATE, STATE>> mPairs;
 	private boolean mChangeWasSuccessful;
 	private INestedWordAutomaton<LETTER, STATE> mAutomatonBackup;
-	
+
 	/**
-	 * Constructor.
-	 * <p>
 	 * Implementation detail: The assignment of the fields is useless.
 	 * 
 	 * @param services
@@ -69,48 +67,48 @@ public class ChangeInitialStatesShrinker<LETTER, STATE> extends BridgeShrinker<P
 		mChangeWasSuccessful = false;
 		mAutomatonBackup = null;
 	}
-	
+
 	@Override
 	public INestedWordAutomaton<LETTER, STATE> createAutomaton(final List<Pair<STATE, STATE>> list) {
 		// create fresh automaton
 		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create(mAutomatonBackup);
-		
+
 		assert list.size() == 1 : "There should be only one element in the list.";
 		final Pair<STATE, STATE> swap = list.get(0);
 		final STATE oldInit = swap.getFirst();
 		final STATE newInit = swap.getSecond();
 		assert mAutomatonBackup.isInitial(oldInit) : "The (supposedly) old initial state not initial.";
 		assert !mAutomatonBackup.isInitial(newInit) : "The new initial state was already initial.";
-		
+
 		// add all old states except for the two states passed
 		final Set<STATE> oldStates = new HashSet<>(mAutomatonBackup.getStates());
 		boolean wasPresent = oldStates.remove(oldInit);
 		assert wasPresent;
 		wasPresent = oldStates.remove(newInit);
 		assert wasPresent;
-		
+
 		for (final STATE state : oldStates) {
 			mFactory.addState(automaton, state, mAutomatonBackup.isInitial(state), mAutomatonBackup.isFinal(state));
 		}
-		
+
 		// add two transitions with swapped initial status
 		mFactory.addState(automaton, oldInit, false, mAutomatonBackup.isFinal(oldInit));
 		mFactory.addState(automaton, newInit, true, mAutomatonBackup.isFinal(newInit));
-		
+
 		// add transitions which still remain
 		mFactory.addFilteredTransitions(automaton, mAutomatonBackup);
-		
+
 		/*
 		 * Update the factory. This is necessary for the "normal" shrinkers to construct the result with respect to the
 		 * new initial states.
 		 */
 		mFactory.setAutomaton(automaton);
-		
+
 		assert sameNumberOfInitialStates(mAutomatonBackup, automaton);
-		
+
 		return automaton;
 	}
-	
+
 	@Override
 	public List<Pair<STATE, STATE>> extractList() {
 		// there are still more things to change
@@ -119,7 +117,7 @@ public class ChangeInitialStatesShrinker<LETTER, STATE> extends BridgeShrinker<P
 			// make a copy so we can modify it here
 			return new ArrayList<>(mPairs);
 		}
-		
+
 		reset(mAutomaton);
 		final Iterator<STATE> initialStates = mAutomatonBackup.getInitialStates().iterator();
 		if (!initialStates.hasNext()) {
@@ -128,7 +126,7 @@ public class ChangeInitialStatesShrinker<LETTER, STATE> extends BridgeShrinker<P
 		// just use the first initial state (avoid the combinatorial explosion if there is more than one initial state)
 		final STATE init = initialStates.next();
 		mPairs = new LinkedList<>();
-		
+
 		// add all pairs of the initial state and any other state
 		for (final STATE state : mAutomatonBackup.getStates()) {
 			if (mAutomatonBackup.isInitial(state)) {
@@ -136,42 +134,42 @@ public class ChangeInitialStatesShrinker<LETTER, STATE> extends BridgeShrinker<P
 			}
 			mPairs.add(new Pair<>(init, state));
 		}
-		
+
 		// make a copy so we can modify it here
 		return new ArrayList<>(mPairs);
 	}
-	
+
 	@Override
 	public void reset(final INestedWordAutomaton<LETTER, STATE> automaton) {
 		mPairs = null;
 		mChangeWasSuccessful = false;
 		mAutomatonBackup = automaton;
 	}
-	
+
 	@Override
 	public boolean isCancelRequested() {
 		return mChangeWasSuccessful;
 	}
-	
+
 	@Override
 	public boolean isFinished() {
 		return mPairs.isEmpty();
 	}
-	
+
 	@Override
 	public void error(final INestedWordAutomaton<LETTER, STATE> newAutomaton) {
 		super.error(newAutomaton);
 		mChangeWasSuccessful = true;
 		mPairs.remove(0);
 	}
-	
+
 	@Override
 	public void noError(final INestedWordAutomaton<LETTER, STATE> newAutomaton) {
 		super.noError(newAutomaton);
 		mFactory.setAutomaton(mAutomatonBackup);
 		mPairs.remove(0);
 	}
-	
+
 	private boolean sameNumberOfInitialStates(final INestedWordAutomaton<LETTER, STATE> automaton1,
 			final INestedWordAutomaton<LETTER, STATE> automaton2) {
 		final boolean result = automaton1.getInitialStates().size() == automaton2.getInitialStates().size();

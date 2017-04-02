@@ -82,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PathProgramDumper.InputMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
@@ -126,7 +127,11 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected static final boolean TRACE_HISTOGRAMM_BAILOUT = false;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;
 	private static final boolean NON_EA_INDUCTIVITY_CHECK = false;
+	
+	private static final int DUMP_PATH_PROGRAMS_THAT_EXCEED_TRACE_HIST_MAX_THRESHOLD = Integer.MAX_VALUE;
 	private static final boolean DUMP_DIFFICULT_PATH_PROGRAMS = false;
+	private static final boolean STOP_AFTER_FIRST_PATH_PROGRAM_WAS_DUMPED = true;
+	private static final InputMode DUMP_PATH_PROGRAMS_INPUT_MODE = InputMode.ICFG;
 
 	protected final PredicateFactoryRefinement mStateFactoryForRefinement;
 	protected final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
@@ -324,8 +329,20 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("trace histogram " + traceHistogram.toString());
 		}
+		if (traceHistogram.getMax() > DUMP_PATH_PROGRAMS_THAT_EXCEED_TRACE_HIST_MAX_THRESHOLD) {
+			final String filename = mPref.dumpPath() + File.separator + mIcfgContainer.getIdentifier() + "_"
+					+ mIteration + ".bpl";
+			new PathProgramDumper(mIcfgContainer, mServices,
+					(NestedRun<? extends IAction, IPredicate>) mCounterexample, filename,
+					DUMP_PATH_PROGRAMS_INPUT_MODE);
+			if (STOP_AFTER_FIRST_PATH_PROGRAM_WAS_DUMPED) {
+				final String message = "dumped path program with trace histogram max " + traceHistogram.getMax();
+				final String taskDescription = "trying to verify (iteration " + mIteration + ")";
+				throw new ToolchainCanceledException(message, getClass(), taskDescription);
+			}
+		}
 		if (TRACE_HISTOGRAMM_BAILOUT
-				&& traceHistogram.getVisualizationArray()[0] > traceHistogram.getVisualizationArray().length) {
+				&& traceHistogram.getMax() > traceHistogram.getVisualizationArray().length) {
 			final String message = "bailout by trace histogram " + traceHistogram.toString();
 			final String taskDescription = "trying to verify (iteration " + mIteration + ")";
 			throw new ToolchainCanceledException(message, getClass(), taskDescription);
@@ -385,10 +402,16 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		} else {
 			if (DUMP_DIFFICULT_PATH_PROGRAMS && !((TraceAbstractionRefinementEngine) mTraceCheckAndRefinementEngine)
 					.somePerfectSequenceFound()) {
-				final String filename =
-						mPref.dumpPath() + File.separator + mIcfgContainer.getIdentifier() + "_" + mIteration + ".bpl";
+				final String filename = mPref.dumpPath() + File.separator + mIcfgContainer.getIdentifier() + "_"
+						+ mIteration + ".bpl";
 				new PathProgramDumper(mIcfgContainer, mServices,
-						(NestedRun<? extends IAction, IPredicate>) mCounterexample, filename);
+						(NestedRun<? extends IAction, IPredicate>) mCounterexample, filename,
+						DUMP_PATH_PROGRAMS_INPUT_MODE);
+				if (STOP_AFTER_FIRST_PATH_PROGRAM_WAS_DUMPED) {
+					final String message = "dumped path program for which we did not find perfect sequence of interpolants";
+					final String taskDescription = "trying to verify (iteration " + mIteration + ")";
+					throw new ToolchainCanceledException(message, getClass(), taskDescription);
+				}
 			}
 		}
 

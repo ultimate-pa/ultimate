@@ -17,6 +17,5 @@ int main() {
     r = 1;
     r = 0;
   }
-  while(1) { int x; x=x; }
   return 0;
 }

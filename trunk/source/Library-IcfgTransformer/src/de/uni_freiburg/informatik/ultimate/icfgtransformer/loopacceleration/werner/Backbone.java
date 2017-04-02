@@ -22,4 +22,9 @@ public class Backbone {
 		return mPath;
 	}
 	
+	@Override
+	public String toString() {
+		return mPath.toString();
+	}
+	
 }

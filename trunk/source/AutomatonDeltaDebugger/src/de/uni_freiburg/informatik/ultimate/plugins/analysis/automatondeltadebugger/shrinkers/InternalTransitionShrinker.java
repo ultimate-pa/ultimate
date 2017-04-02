@@ -53,30 +53,29 @@ public class InternalTransitionShrinker<LETTER, STATE>
 	public InternalTransitionShrinker(final IUltimateServiceProvider services) {
 		super(services);
 	}
-	
+
 	@Override
-	public INestedWordAutomaton<LETTER, STATE>
-			createAutomaton(final List<TypedTransition<LETTER, STATE>> list) {
+	public INestedWordAutomaton<LETTER, STATE> createAutomaton(final List<TypedTransition<LETTER, STATE>> list) {
 		// create fresh automaton
 		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create(mAutomaton);
-		
+
 		// add all states
 		mFactory.addStates(automaton, mAutomaton.getStates());
-		
+
 		// add the complement of the passed transitions
 		final Set<TypedTransition<LETTER, STATE>> oldTransitions = mFactory.getInternalTransitions(mAutomaton);
 		oldTransitions.removeAll(list);
 		mFactory.addInternalTransitions(automaton, oldTransitions);
-		
+
 		// add all return transitions
 		mFactory.addFilteredCallTransitions(automaton, mAutomaton);
-		
+
 		// add all return transitions
 		mFactory.addFilteredReturnTransitions(automaton, mAutomaton);
-		
+
 		return automaton;
 	}
-	
+
 	@Override
 	public List<TypedTransition<LETTER, STATE>> extractList() {
 		return new ArrayList<>(mFactory.getInternalTransitions(mAutomaton));

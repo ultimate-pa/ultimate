@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateServiceProviderMoc
 public class QuantifierEliminationTest {
 	
 	private IUltimateServiceProvider mServices;
-	private Script script;
+	private Script mScript;
 	private ManagedScript mMgdScript;
 	private ILogger mLogger;
 	
@@ -67,31 +67,31 @@ public class QuantifierEliminationTest {
 		mServices = new UltimateServiceProviderMock();
 		mLogger = mServices.getLoggingService().getLogger("lol");
 		try {
-			script = new Scriptor("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in", mLogger, mServices, new ToolchainStorage(), "z3");
+			mScript = new Scriptor("z3 SMTLIB2_COMPLIANT=true -memory:2024 -smt2 -in", mLogger, mServices, new ToolchainStorage(), "z3");
 		} catch (final IOException e) {
 			throw new AssertionError(e);
 		}
 //		script = new SMTInterpol();
-		mMgdScript = new ManagedScript(mServices, script);
+		mMgdScript = new ManagedScript(mServices, mScript);
 
-		script.setLogic(Logics.ALL);
+		mScript.setLogic(Logics.ALL);
 	}
 	
 	@Test
 	public void prenexQuantifiedCapture() {
 		
-		final Sort sort_Int = script.sort("Int");
-		final Term seventeen = script.numeral(BigInteger.valueOf(17));
-		final Term fourtytwo = script.numeral(BigInteger.valueOf(42));
-		final TermVariable x = script.variable("x", sort_Int);
-		final Term eq1 = script.term("=", x, seventeen);
-		final Term eq2 = script.term("=", x, fourtytwo);
-		final Term qeq1 = script.quantifier(0, new TermVariable[] { x }, eq1);
-		final Term qeq2 = script.quantifier(0, new TermVariable[] { x }, eq2);
-		final Term term = script.term("and", qeq1, qeq2);
+		final Sort sort_Int = mScript.sort("Int");
+		final Term seventeen = mScript.numeral(BigInteger.valueOf(17));
+		final Term fourtytwo = mScript.numeral(BigInteger.valueOf(42));
+		final TermVariable x = mScript.variable("x", sort_Int);
+		final Term eq1 = mScript.term("=", x, seventeen);
+		final Term eq2 = mScript.term("=", x, fourtytwo);
+		final Term qeq1 = mScript.quantifier(0, new TermVariable[] { x }, eq1);
+		final Term qeq2 = mScript.quantifier(0, new TermVariable[] { x }, eq2);
+		final Term term = mScript.term("and", qeq1, qeq2);
 		final Term result = new PrenexNormalForm(mMgdScript).transform(term);
-		script.assertTerm(result);
-		final LBool checkSatRes = script.checkSat();
+		mScript.assertTerm(result);
+		final LBool checkSatRes = mScript.checkSat();
 		Assert.assertTrue(checkSatRes == LBool.SAT);
 	}
 	
@@ -99,25 +99,25 @@ public class QuantifierEliminationTest {
 		
 		
 		//Sorts
-		final Sort sort_Bool = script.sort("Bool");
-		final Sort sort_Int = script.sort("Int");
-		final Sort sort_Array = script.sort("Array", sort_Int, sort_Int);
+		final Sort sort_Bool = mScript.sort("Bool");
+		final Sort sort_Int = mScript.sort("Int");
+		final Sort sort_Array = mScript.sort("Array", sort_Int, sort_Int);
 
 		//Constants
-		final Term con_0 = script.numeral("0");
-		final Term con_1 = script.numeral("1");
+		final Term con_0 = mScript.numeral("0");
+		final Term con_1 = mScript.numeral("1");
 
 		//Vars
-		final TermVariable var_v_oldvalid_88 = script.variable("v_old(#valid)_88", sort_Array);
-		final TermVariable var_v_valid_207 = script.variable("v_#valid_207", sort_Array);
-		final TermVariable var_v_probe3_6_p9base_40 = script.variable("v_probe3_6_~p~9.base_40", sort_Int);
-		final TermVariable var_valid = script.variable("#valid", sort_Array);
-		final TermVariable var_oldvalid = script.variable("old(#valid)", sort_Array);
+		final TermVariable var_v_oldvalid_88 = mScript.variable("v_old(#valid)_88", sort_Array);
+		final TermVariable var_v_valid_207 = mScript.variable("v_#valid_207", sort_Array);
+		final TermVariable var_v_probe3_6_p9base_40 = mScript.variable("v_probe3_6_~p~9.base_40", sort_Int);
+		final TermVariable var_valid = mScript.variable("#valid", sort_Array);
+		final TermVariable var_oldvalid = mScript.variable("old(#valid)", sort_Array);
 
 		//Functions
 
 		//term
-		final Term term = script.quantifier(1, new TermVariable[]{var_v_oldvalid_88, var_v_oldvalid_88, var_v_oldvalid_88}, script.term("or", script.term("not", script.term("and", script.quantifier(1, new TermVariable[]{var_v_probe3_6_p9base_40, var_v_probe3_6_p9base_40}, script.term("or", script.term("=", var_v_oldvalid_88, script.term("store", script.term("store", var_v_valid_207, var_v_probe3_6_p9base_40, con_1), var_v_probe3_6_p9base_40, con_0)), script.term("=", var_v_probe3_6_p9base_40, con_0), script.term("not", script.term("=", script.term("select", var_v_valid_207, var_v_probe3_6_p9base_40), con_0)))), script.term("=", var_oldvalid, var_v_valid_207))), script.term("=", var_valid, var_v_oldvalid_88)));
+		final Term term = mScript.quantifier(1, new TermVariable[]{var_v_oldvalid_88, var_v_oldvalid_88, var_v_oldvalid_88}, mScript.term("or", mScript.term("not", mScript.term("and", mScript.quantifier(1, new TermVariable[]{var_v_probe3_6_p9base_40, var_v_probe3_6_p9base_40}, mScript.term("or", mScript.term("=", var_v_oldvalid_88, mScript.term("store", mScript.term("store", var_v_valid_207, var_v_probe3_6_p9base_40, con_1), var_v_probe3_6_p9base_40, con_0)), mScript.term("=", var_v_probe3_6_p9base_40, con_0), mScript.term("not", mScript.term("=", mScript.term("select", var_v_valid_207, var_v_probe3_6_p9base_40), con_0)))), mScript.term("=", var_oldvalid, var_v_valid_207))), mScript.term("=", var_valid, var_v_oldvalid_88)));
 
 		PartialQuantifierElimination.tryToEliminate(mServices, mServices.getLoggingService().getLogger("lol"), mMgdScript, term, SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 	

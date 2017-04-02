@@ -1067,9 +1067,13 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 			return !mOperand.lettersReturn(state).isEmpty();
 		}
 
-		private void addInternalsAndSuccessors(final StateContainer<LETTER, STATE> cont) {
+		private void addInternalsAndSuccessors(final StateContainer<LETTER, STATE> cont) throws AutomataOperationCanceledException {
 			final STATE state = cont.getState();
 			for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(state)) {
+				if (!getServices().getProgressAwareTimer().continueProcessing()) {
+					final RunningTaskInfo rti = constructRunningTaskInfo();
+					throw new AutomataOperationCanceledException(rti);
+				}
 				final STATE succ = trans.getSucc();
 				StateContainer<LETTER, STATE> succSc = getStatesMap().get(succ);
 				if (succSc == null) {
@@ -1085,10 +1089,14 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 			}
 		}
 
-		private Set<STATE> addCallsAndSuccessors(final StateContainer<LETTER, STATE> cont) {
+		private Set<STATE> addCallsAndSuccessors(final StateContainer<LETTER, STATE> cont) throws AutomataOperationCanceledException {
 			boolean addedSelfloop = false;
 			final STATE state = cont.getState();
 			for (final OutgoingCallTransition<LETTER, STATE> trans : mOperand.callSuccessors(cont.getState())) {
+				if (!getServices().getProgressAwareTimer().continueProcessing()) {
+					final RunningTaskInfo rti = constructRunningTaskInfo();
+					throw new AutomataOperationCanceledException(rti);
+				}
 				final STATE succ = trans.getSucc();
 				StateContainer<LETTER, STATE> succCont = getStatesMap().get(succ);
 				final HashMap<STATE, Integer> succDownStates = new HashMap<>();
@@ -1115,12 +1123,16 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 			return null;
 		}
 
-		private Set<STATE> addReturnsAndSuccessors(final StateContainer<LETTER, STATE> cont, final STATE down) {
+		private Set<STATE> addReturnsAndSuccessors(final StateContainer<LETTER, STATE> cont, final STATE down) throws AutomataOperationCanceledException {
 			boolean addedSelfloop = false;
 			final STATE state = cont.getState();
 			StateContainer<LETTER, STATE> downCont = null;
 			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessorsGivenHier(state,
 					down)) {
+				if (!getServices().getProgressAwareTimer().continueProcessing()) {
+					final RunningTaskInfo rti = constructRunningTaskInfo();
+					throw new AutomataOperationCanceledException(rti);
+				}
 				assert down.equals(trans.getHierPred());
 				if (downCont == null) {
 					downCont = getStatesMap().get(down);
@@ -1180,7 +1192,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 			}
 		}
 
-		private void propagateNewDownStates(final StateContainer<LETTER, STATE> cont) {
+		private void propagateNewDownStates(final StateContainer<LETTER, STATE> cont) throws AutomataOperationCanceledException {
 			final Set<STATE> unpropagatedDownStates = cont.getUnpropagatedDownStates();
 			if (unpropagatedDownStates == null) {
 				return;

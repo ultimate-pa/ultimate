@@ -96,5 +96,5 @@ int main() {
 		}
 	} while (PostmasterIsAlive(true));
 
-	while(1) { int ddd; ddd=ddd;}
+	
 }

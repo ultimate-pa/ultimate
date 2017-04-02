@@ -96,7 +96,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 	}
 
 	@Override
-	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> run(final Collection<LOC> start,
+	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> run(final Collection<? extends LOC> start,
 			final Script script) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
@@ -109,7 +109,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		return mResult;
 	}
 
-	private void calculateFixpoint(final Collection<LOC> start) {
+	private void calculateFixpoint(final Collection<? extends LOC> start) {
 		final Deque<WorklistItem<STATE, ACTION, VARDECL, LOC>> worklist = new ArrayDeque<>();
 		final IAbstractPostOperator<STATE, ACTION, VARDECL> postOp = mDomain.getPostOperator();
 		final IAbstractStateBinaryOperator<STATE> wideningOp = mDomain.getWideningOperator();
@@ -278,6 +278,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		// check if the pending post state is already subsumed by a pre-existing state and if this is not a return
 		if (checkSubset(currentStateStorage, currentItem.getAction(), pendingPostState)) {
 			// it is subsumed, we can skip all successors safely
+			mResult.getBenchmark().addFixpoint();
 			return true;
 		}
 
@@ -317,7 +318,11 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(getLogMessageNewPostState(postState));
 		}
-		return currentStorage.addAbstractState(target, postState);
+		final AbstractMultiState<STATE, ACTION, VARDECL> rtrState = currentStorage.addAbstractState(target, postState);
+		if (rtrState != postState) {
+			mResult.getBenchmark().addMerge();
+		}
+		return rtrState;
 	}
 
 	private void checkReachedError(final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
@@ -410,6 +415,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 			}
 			return null;
 		}
+		mResult.getBenchmark().addWiden();
 		return postStateAfterWidening;
 	}
 

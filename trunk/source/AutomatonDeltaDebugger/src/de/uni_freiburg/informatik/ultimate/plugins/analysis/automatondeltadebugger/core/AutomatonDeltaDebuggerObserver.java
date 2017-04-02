@@ -64,12 +64,10 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE> extends BaseObserver 
 	private final List<AbstractShrinker<?, LETTER, STATE>> mShrinkersEnd;
 	private final DebugPolicy mPolicy;
 	private final ILogger mLogger;
-	
+
 	/**
-	 * Constructor.
-	 * 
 	 * @param services
-	 *            Ultimate services
+	 *            Ultimate services.
 	 * @param tester
 	 *            tester
 	 * @param shrinkersLoop
@@ -93,7 +91,7 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE> extends BaseObserver 
 		mShrinkersEnd = new ArrayList<>(shrinkersEnd);
 		mPolicy = policy;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public boolean process(final IElement root) throws Throwable {
@@ -119,28 +117,28 @@ public class AutomatonDeltaDebuggerObserver<LETTER, STATE> extends BaseObserver 
 		deltaDebug(automaton);
 		return false;
 	}
-	
+
 	/**
 	 * initializes and runs the delta debugging process
+	 * <p>
 	 * NOTE: A user may want to change the type of automaton factory here.
 	 * 
 	 * @param automaton
 	 *            input automaton
 	 */
-	private void deltaDebug(
-			final INestedWordAutomaton<LETTER, STATE> automaton) {
+	private void deltaDebug(final INestedWordAutomaton<LETTER, STATE> automaton) {
 		// automaton factory
 		final INestedWordAutomatonFactory<LETTER, STATE> automatonFactory =
-				new NestedWordAutomatonFactory<>(automaton, mServices);
-		
+				new NestedWordAutomatonFactory<>(mServices, automaton);
+
 		// construct delta debugger
 		final AutomatonDebugger<LETTER, STATE> debugger =
 				new AutomatonDebugger<>(mServices, automaton, automatonFactory, mTester);
-		
+
 		// execute delta debugger (binary search)
 		final INestedWordAutomaton<LETTER, STATE> result =
 				debugger.shrink(mShrinkersLoop, mShrinkersBridge, mShrinkersEnd, mPolicy);
-		
+
 		// print result
 		mLogger.info("The automaton debugger terminated, resulting in the following automaton:");
 		mLogger.info(result);

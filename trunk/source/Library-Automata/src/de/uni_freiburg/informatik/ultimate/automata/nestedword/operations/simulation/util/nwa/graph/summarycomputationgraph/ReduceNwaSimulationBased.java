@@ -86,6 +86,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 	private static final boolean DEFAULT_USE_BISIMULATION = false;
 	private static final boolean DEFAULT_USE_BISIMULATION_PREPROCESSING = false;
 	private static final boolean OMIT_MAX_SAT_FOR_FINITE_AUTOMATA = false;
+	private static final boolean USE_FULL_PREPROCESSING = false;
 
 	private final IDoubleDeckerAutomaton<LETTER, STATE> mOperand;
 	private final AutomataOperationStatistics mStatistics;
@@ -127,7 +128,8 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 					new NwaApproximateBisimulation<>(services, operand,
 							simulationInfoProvider.mayMergeFinalAndNonFinalStates()
 									? SimulationType.ORDINARY
-									: SimulationType.DIRECT).getResult();
+									: SimulationType.DIRECT,
+							USE_FULL_PREPROCESSING).getResult();
 			final Collection<Set<STATE>> initialPartition = partitionBackedSetOfPairs.getRelation();
 			initialPairs = new PartitionAndMapBackedSetOfPairs<>(initialPartition);
 			sizeOfLargestEquivalenceClass =
@@ -136,10 +138,12 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 					+ " equivalence classes, largest equivalence class has " + sizeOfLargestEquivalenceClass
 					+ " states.");
 		} else {
-			initialPairs = new NwaApproximateSimulation<>(services, operand,
-					simulationInfoProvider.mayMergeFinalAndNonFinalStates()
-							? SimulationType.ORDINARY
-							: SimulationType.DIRECT).getResult();
+			initialPairs =
+					new NwaApproximateSimulation<>(services, operand,
+							simulationInfoProvider.mayMergeFinalAndNonFinalStates()
+									? SimulationType.ORDINARY
+									: SimulationType.DIRECT,
+							USE_FULL_PREPROCESSING).getResult();
 			sizeOfLargestEquivalenceClass = -1;
 		}
 		final long timePreprocessing = System.currentTimeMillis() - timer;

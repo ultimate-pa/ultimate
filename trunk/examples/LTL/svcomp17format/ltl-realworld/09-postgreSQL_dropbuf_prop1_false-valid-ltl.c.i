@@ -393,7 +393,8 @@ int main() {
    bufHdr = &LocalBufferDescriptors_i;
    if (RelFileNodeEquals(bufHdr_tag_rnode, rnode) && bufHdr_tag_blockNum >= firstDelBlock)
    {
-    if (LocalRefCount_i != 0) ;
+    if (LocalRefCount_i != 0)
+     ;
     bufHdr_flags = 0;
     bufHdr_cntxDirty = 0;
     bufHdr_tag_rnode_relNode = 1;
@@ -413,7 +414,8 @@ recheck:
     WaitIO(bufHdr);
     goto recheck;
    }
-   if (bufHdr_refcount != 0);
+   if (bufHdr_refcount != 0)
+    ;
    bufHdr_flags = 0;
    bufHdr_cntxDirty = 0;
    StrategyInvalidateBuffer(bufHdr);
@@ -421,5 +423,5 @@ recheck:
  }
  RELEASE = 1; RELEASE = 0;
 my_exit:
- while(1) { int yyy;yyy=yyy;}
+;
 }

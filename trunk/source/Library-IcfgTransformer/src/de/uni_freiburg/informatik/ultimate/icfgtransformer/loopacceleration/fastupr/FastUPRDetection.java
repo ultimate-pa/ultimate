@@ -36,31 +36,25 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * The main class for Fast Acceleration of Ultimately Periodic Relations
- * 
+ *
  * @param <INLOC>
  *            The type of the locations of the old IIcfg.
  * @param <OUTLOC>
  *            The type of the locations of the transformed IIcfg.
- * 
+ *
  * @author Jill Enke (enkei@informatik.uni-freiburg.de)
  *
  */
+
 public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
 
 	private final ILogger mLogger;
@@ -68,8 +62,8 @@ public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLoc
 	private final Map<INLOC, OUTLOC> mOldLoc2NewLoc;
 	private final Map<IIcfgCallTransition<INLOC>, IcfgCallTransition> mOldCalls2NewCalls;
 
-	public FastUPRDetection(final ILogger logger, final IIcfg<INLOC> originalIcfg,
-			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier) {
+	public FastUPRDetection(final ILogger logger, final IIcfg<INLOC> originalIcfg, final Class<OUTLOC> outLocationClass,
+			final String newIcfgIdentifier) {
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
 		mLogger = Objects.requireNonNull(logger);
 		mOldLoc2NewLoc = new HashMap<>();
@@ -81,24 +75,23 @@ public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLoc
 	private List<Deque<INLOC>> getLoops(final IIcfg<INLOC> originalIcfg) {
 		final HashSet<INLOC> loopHeads = getLoopHeads(originalIcfg);
 		final List<Deque<INLOC>> loopPaths = new ArrayList<>();
-		for (INLOC loopHead : loopHeads) {
+		for (final INLOC loopHead : loopHeads) {
 			loopPaths.add(getPath(loopHead));
 		}
 		return loopPaths;
 	}
-	
-	
+
 	@SuppressWarnings("unchecked")
-	private HashSet<INLOC> getLoopHeads(final IIcfg<INLOC> originalIcfg){
-		final HashSet<INLOC> loopHeads = new HashSet<INLOC>();
+	private HashSet<INLOC> getLoopHeads(final IIcfg<INLOC> originalIcfg) {
+		final HashSet<INLOC> loopHeads = new HashSet<>();
 		final Set<INLOC> init = originalIcfg.getInitialNodes();
 		final Set<INLOC> closed = new HashSet<>();
 		final Deque<INLOC> open = new ArrayDeque<>(init);
-		
+
 		while (!open.isEmpty()) {
 			final INLOC currentNode = open.removeFirst();
 			closed.add(currentNode);
-			for (final IcfgEdge transition : currentNode.getOutgoingEdges()) {	
+			for (final IcfgEdge transition : currentNode.getOutgoingEdges()) {
 				final INLOC target = (INLOC) transition.getTarget();
 				mLogger.debug("Current target:" + target.toString());
 				if (closed.contains(target)) {
@@ -111,29 +104,31 @@ public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLoc
 		}
 		return loopHeads;
 	}
-	
+
 	@SuppressWarnings({ "unused", "unchecked" })
 	private Deque<INLOC> getPath(final INLOC loopHead) {
-		
+
 		final Deque<INLOC> currentPath = new ArrayDeque<>();
 		final Deque<Integer> currentPathIndices = new ArrayDeque<>();
-		
+
 		currentPath.addLast(loopHead);
 		currentPathIndices.addLast(0);
-		
+
 		while (!currentPath.isEmpty()) {
-//			mLogger.debug("Outgoing Edges:");
-//			mLogger.debug(currentPath.getLast().getOutgoingEdges().size());
-//			mLogger.debug("Path/Indices");
-//			mLogger.debug(currentPath.size());
-//			mLogger.debug(currentPathIndices.size());
-			if(currentPath.getLast().getOutgoingEdges().size() > currentPathIndices.getLast()) {
-				
-				final INLOC target = (INLOC) currentPath.getLast().getOutgoingEdges().get(currentPathIndices.getLast()).getTarget();
-				
-//				mLogger.debug("Current node: " + currentPath.getLast().toString());
-//				mLogger.debug("Target node: " + target.toString());
-				
+			// mLogger.debug("Outgoing Edges:");
+			// mLogger.debug(currentPath.getLast().getOutgoingEdges().size());
+			// mLogger.debug("Path/Indices");
+			// mLogger.debug(currentPath.size());
+			// mLogger.debug(currentPathIndices.size());
+			if (currentPath.getLast().getOutgoingEdges().size() > currentPathIndices.getLast()) {
+
+				final INLOC target = (INLOC) currentPath.getLast().getOutgoingEdges().get(currentPathIndices.getLast())
+						.getTarget();
+
+				// mLogger.debug("Current node: " +
+				// currentPath.getLast().toString());
+				// mLogger.debug("Target node: " + target.toString());
+
 				final int index = currentPathIndices.removeLast();
 
 				currentPathIndices.addLast(index + 1);
@@ -145,17 +140,17 @@ public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLoc
 					return currentPath;
 				}
 			} else {
-					
+
 				currentPathIndices.removeLast();
 				currentPath.removeLast();
 			}
 		}
-		
+
 		return null;
 	}
-	
+
 	public List<Deque<INLOC>> getLoopPaths() {
-	
+
 		return mLoopPaths;
 	}
 

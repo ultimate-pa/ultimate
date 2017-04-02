@@ -114,7 +114,7 @@ exitOnFailPop mvn clean install -Pmaterialize
 popd > /dev/null
 
 # createZip <toolname> <targetarch> <reachtc> <termtc> <witnessvaltc> <memsafetytc> <ltl>
-./createZip.sh Taipan linux AutomizerC_WitnessPrinter.xml NONE AutomizerC.xml AutomizerC_WitnessPrinter.xml NONE
+./createZip.sh Taipan linux AutomizerCInline_WitnessPrinter.xml NONE AutomizerCInline.xml AutomizerCInline_WitnessPrinter.xml NONE
 ./createZip.sh Automizer linux AutomizerC_WitnessPrinter.xml BuchiAutomizerCInline.xml AutomizerC.xml AutomizerC_WitnessPrinter.xml LTLAutomizerC.xml
 ./createZip.sh Kojak linux KojakC_WitnessPrinter.xml NONE NONE KojakC_WitnessPrinter.xml NONE
 

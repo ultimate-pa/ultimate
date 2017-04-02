@@ -188,9 +188,7 @@ int main()
 	if (!added) 
 	{
 		ret = STATUS_ERROR;
-		while(1) { int rrr; rrr=rrr; }
 	}
 
 	ret = STATUS_OK;
-	while(1) { int ddd; ddd=ddd; }
 }

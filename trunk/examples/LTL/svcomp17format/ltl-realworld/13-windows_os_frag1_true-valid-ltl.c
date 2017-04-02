@@ -185,8 +185,5 @@ int main()
       }
 
   r=1; r=0; //KeReleaseSpinLock( &lock, OldIrql);
-
-  while(1) {
-    { int ddd; ddd = ddd; }
-  }
+ 
 }

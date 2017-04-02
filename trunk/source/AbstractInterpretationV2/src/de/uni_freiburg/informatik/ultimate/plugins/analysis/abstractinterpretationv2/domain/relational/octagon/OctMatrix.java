@@ -377,7 +377,7 @@ public class OctMatrix {
 	 * @param newValue
 	 *            New value of the matrix entry (must be smaller than the old value to have an effect)
 	 */
-	protected void setMin(final int row, final int col, final OctValue newValue) {
+	public void setMin(final int row, final int col, final OctValue newValue) {
 		assert newValue != null : "null is not a valid matrix entry.";
 		mStrongClosure = mTightClosure = null;
 		final int index = indexOf(row, col);

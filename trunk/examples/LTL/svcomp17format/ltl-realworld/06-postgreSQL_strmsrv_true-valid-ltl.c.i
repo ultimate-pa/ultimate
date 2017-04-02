@@ -470,8 +470,6 @@ int main()
  if (!added)
  {
   ret = 0;
-  while(1) { int rrr; rrr=rrr; }
  }
  ret = 1;
- while(1) { int ddd; ddd=ddd; }
 }

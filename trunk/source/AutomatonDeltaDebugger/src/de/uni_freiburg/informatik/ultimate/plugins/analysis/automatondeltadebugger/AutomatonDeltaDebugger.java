@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.BridgeShrinker;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.CallTransitionShrinker;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.ChangeInitialStatesShrinker;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.CommonSingleExitShrinker;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.InternalTransitionShrinker;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.NormalizeStateShrinker;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.ReturnTransitionShrinker;
@@ -76,14 +77,14 @@ public class AutomatonDeltaDebugger implements IAnalysis {
 	protected ILogger mLogger;
 	protected final List<IObserver> mObservers;
 	private IUltimateServiceProvider mServices;
-	
+
 	// debug mode
 	private final EAutomatonDeltaDebuggerTestMode mOperationMode;
 	// debugged operation
 	private final EOperationType mOperationType;
 	// internal debug policy
 	private final DebugPolicy mDebugPolicy;
-	
+
 	/**
 	 * Standard automaton delta debugger.
 	 */
@@ -96,12 +97,12 @@ public class AutomatonDeltaDebugger implements IAnalysis {
 		mOperationType = EOperationType.EXCEPTION_DUMMY;
 		mDebugPolicy = DebugPolicy.BINARY;
 	}
-	
+
 	@Override
 	public void setInputDefinition(final ModelType graphType) {
 		mLogger.info("Receiving input definition " + graphType.toString());
 		mObservers.clear();
-		
+
 		final String creator = graphType.getCreator();
 		if ("de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser".equals(creator)) {
 			mLogger.info("Preparing to process automaton...");
@@ -113,7 +114,7 @@ public class AutomatonDeltaDebugger implements IAnalysis {
 			mLogger.warn("Ignoring input definition " + creator);
 		}
 	}
-	
+
 	/**
 	 * NOTE: Insert or remove shrinkers here.
 	 * 
@@ -121,17 +122,18 @@ public class AutomatonDeltaDebugger implements IAnalysis {
 	 */
 	private List<AbstractShrinker<?, String, String>> getShrinkersLoop() {
 		final List<AbstractShrinker<?, String, String>> shrinkersLoop = new ArrayList<>();
-		
+
 		// examples, use your own shrinkers here
 		shrinkersLoop.add(new StateShrinker<>(mServices));
 		shrinkersLoop.add(new InternalTransitionShrinker<>(mServices));
 		shrinkersLoop.add(new CallTransitionShrinker<>(mServices));
 		shrinkersLoop.add(new ReturnTransitionShrinker<>(mServices));
 		shrinkersLoop.add(new SingleExitShrinker<>(mServices));
-		
+		shrinkersLoop.add(new CommonSingleExitShrinker<>(mServices));
+
 		return shrinkersLoop;
 	}
-	
+
 	/**
 	 * NOTE: Insert or remove shrinkers here.
 	 * 
@@ -139,13 +141,13 @@ public class AutomatonDeltaDebugger implements IAnalysis {
 	 */
 	private List<BridgeShrinker<?, String, String>> getShrinkersBridge() {
 		final List<BridgeShrinker<?, String, String>> shrinkersBridge = new ArrayList<>();
-		
+
 		// examples, use your own shrinkers here
 		shrinkersBridge.add(new ChangeInitialStatesShrinker<>(mServices));
-		
+
 		return shrinkersBridge;
 	}
-	
+
 	/**
 	 * NOTE: Insert or remove shrinkers here.
 	 * 
@@ -153,70 +155,70 @@ public class AutomatonDeltaDebugger implements IAnalysis {
 	 */
 	private List<AbstractShrinker<?, String, String>> getShrinkersEnd() {
 		final List<AbstractShrinker<?, String, String>> shrinkersEnd = new ArrayList<>();
-		
+
 		// examples, use your own shrinkers here
 		shrinkersEnd.add(new UnusedLetterShrinker<>(mServices));
 		shrinkersEnd.add(new NormalizeStateShrinker<>(mServices));
-		
+
 		return shrinkersEnd;
 	}
-	
+
 	@Override
 	public ModelType getOutputDefinition() {
 		return null;
 	}
-	
+
 	@Override
 	public boolean isGuiRequired() {
 		return false;
 	}
-	
+
 	@Override
 	public ModelQuery getModelQuery() {
 		return ModelQuery.LAST;
 	}
-	
+
 	@Override
 	public List<String> getDesiredToolIds() {
 		return Collections.emptyList();
 	}
-	
+
 	@Override
 	public List<IObserver> getObservers() {
 		return mObservers;
 	}
-	
+
 	@Override
 	public void init() {
 		//no init needed
 	}
-	
+
 	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
-	
+
 	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
-	
+
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return null;
 	}
-	
+
 	@Override
 	public void setToolchainStorage(final IToolchainStorage services) {
 		//no storage needed
 	}
-	
+
 	@Override
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
-	
+
 	@Override
 	public void finish() {
 		//no finish needed

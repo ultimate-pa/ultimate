@@ -84,8 +84,8 @@ public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipeb
 
 	public final <LETTER> List<GS> computeSuccessorsInternal(final GS gs, final LETTER letter,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
-		if (IFullMultipebbleAuxiliaryGameState.isDuplicatorWinningSink(gs)) {
-			return Collections.emptyList();
+		if (IFullMultipebbleAuxiliaryGameState.isSpoilerWinningSink(gs)) {
+			return Collections.singletonList(mSpoilerWinningSink);
 		}
 		final List<GS> result = new ArrayList<>();
 		for (final DoubleDecker<STATE> spoilerSucc : gs.computeSpoilerSuccessorsInternal(letter, nwa)) {
@@ -101,8 +101,8 @@ public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipeb
 
 	public final <LETTER> List<GS> computeSuccessorsCall(final GS gs, final LETTER letter,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
-		if (IFullMultipebbleAuxiliaryGameState.isDuplicatorWinningSink(gs)) {
-			return Collections.emptyList();
+		if (IFullMultipebbleAuxiliaryGameState.isSpoilerWinningSink(gs)) {
+			return Collections.singletonList(mSpoilerWinningSink);
 		}
 		final List<GS> result = new ArrayList<>();
 		for (final DoubleDecker<STATE> spoilerSucc : gs.computeSpoilerSuccessorsCall(letter, nwa)) {
@@ -118,8 +118,8 @@ public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipeb
 
 	public final <LETTER> List<GS> computeSuccessorsReturn(final GS gs, final GS hier, final LETTER letter,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
-		if (IFullMultipebbleAuxiliaryGameState.isDuplicatorWinningSink(gs)) {
-			return Collections.emptyList();
+		if (IFullMultipebbleAuxiliaryGameState.isSpoilerWinningSink(gs)) {
+			return Collections.singletonList(mSpoilerWinningSink);
 		}
 		final List<GS> result = new ArrayList<>();
 		for (final DoubleDecker<STATE> spoilerSucc : gs.computeSpoilerSuccessorsReturn(hier.getSpoilerDoubleDecker(),

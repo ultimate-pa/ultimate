@@ -74,6 +74,8 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 		}
 
 		for (final SymbolicMemory symbolicMemory : mSymbolicMemories) {
+			mOverapproximation |= symbolicMemory.isOverapproximation();
+
 			for (final IProgramVar var : symbolicMemory.mInVars.keySet()) {
 				final TermVariable termVar = symbolicMemory.mInVars.get(var);
 
@@ -109,44 +111,44 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 
 		while (!deque.isEmpty()) {
 			final IProgramVar var = deque.pop();
-			final Term[] terms = new Term[numLoops];
-			for (int i = 0; i < numLoops; i++) {
-				terms[i] = mSymbolicMemories.get(i).getVariableTerm(var);
-			}
 
-			final Term iteratedTerm = getIteratedTerm(terms);
+			final Term iteratedTerm = getIteratedTerm(var);
 			if (iteratedTerm != null) {
 				mVariableTerms.put(mOutVars.get(var), iteratedTerm);
+			} else {
+				mOverapproximation = true;
 			}
 		}
 	}
 
 	/**
-	 * Calculates an iterated term for the given terms.
+	 * Calculates an iterated term for the given program variable.
 	 *
-	 * @param terms
-	 *            An array of terms from the symbolic memories.
+	 * @param var
+	 *            An IProgramVar.
 	 * @return An iterated Term or null.
 	 */
-	private Term getIteratedTerm(final Term[] terms) {
-		Term result = null;
-		Term inVar = null;
+	private Term getIteratedTerm(final IProgramVar var) {
+		final Term[] terms = new Term[mSymbolicMemories.size()];
 		for (int i = 0; i < terms.length; i++) {
-			if (terms[i] == null) {
+			terms[i] = mSymbolicMemories.get(i).getVariableTerm(var);
+		}
+
+		Term result = mInVars.get(var);
+		for (int i = 0; i < terms.length; i++) {
+			final Term term = simplifyTerm(mSymbolicMemories.get(i), terms[i]);
+
+			if (term == null) {
 				return null;
 			}
-
-			final Term term = simplifyTerm(mSymbolicMemories.get(i), terms[i]);
 
 			if (term instanceof ApplicationTerm) {
 				final ApplicationTerm appTerm = (ApplicationTerm) term;
 				assert "+".equals(appTerm.getFunction().getName());
-				final Term[] params = appTerm.getParameters().clone();
-				if (inVar == null) {
-					inVar = params[0];
-					result = inVar;
-				} else {
-					assert inVar == params[0];
+				final Term[] params = appTerm.getParameters();
+
+				if (params[0] != mInVars.get(var)) {
+					return null;
 				}
 
 				final Term[] newParams = new Term[params.length];
@@ -158,9 +160,14 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 				}
 
 				result = mScript.getScript().term("+", mergeSums(newParams));
-			} else {
-				// TODO: Parse terms that are not additions.
+			} else if (term instanceof TermVariable) {
+				if (term != mInVars.get(var)) {
+					return null;
+				}
+			} else if (term instanceof ConstantTerm) {
 				return null;
+			} else {
+				throw new AssertionError("Unexpected term type.");
 			}
 		}
 
@@ -211,11 +218,13 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 		} else if (term instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
 			if ("+".equals(appTerm.getFunction().getName())) {
-				Term[] params = appTerm.getParameters();
+				Term[] params = appTerm.getParameters().clone();
 
 				for (int i = 0; i < params.length; i++) {
 					params[i] = simplifyTerm(symbolicMemory, params[i]);
-					assert params[i] != null;
+					if (params[i] == null) {
+						return null;
+					}
 				}
 
 				params = mergeSums(params);

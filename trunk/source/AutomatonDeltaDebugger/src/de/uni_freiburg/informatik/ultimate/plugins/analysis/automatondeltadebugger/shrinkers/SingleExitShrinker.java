@@ -41,26 +41,24 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.factories.INestedWordAutomatonFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Removes states which only have one outgoing transition and bends over all
- * incoming transitions to the respective target state.
+ * Removes states which only have one outgoing transition and bends over all incoming transitions to the respective
+ * target state.
  * <p>
- * Example: Two simple chains of four states connected by internal transitions
- * "q1 -a-> q2 -b-> q4" and call-return transitions "q1 -c-> q3 -r/q1-> q4" can
- * be simplified by removing the states in the middle, i.e., q2 and q3 to
- * "q1 -a-> q4" and "q1 -c-> q4". There is an important difference, namely that
- * the internal b-transition and the return transition have been removed, which
- * may not always be reasonable. But often all that matters is that the target
- * state is still reachable.
+ * Example: Two simple chains of four states connected by internal transitions "q1 -a-> q2 -b-> q4" and call-return
+ * transitions "q1 -c-> q3 -r/q1-> q4" can be simplified by removing the states in the middle, i.e., q2 and q3 to "q1
+ * -a-> q4" and "q1 -c-> q4". There is an important difference, namely that the internal b-transition and the return
+ * transition have been removed, which may not always be reasonable. But often all that matters is that the target state
+ * is still reachable.
  * <p>
- * This shrinker is best used together with a general transition shrinker to
- * raise the number of states with only one outgoing transition.
+ * This shrinker is best used together with a general transition shrinker to raise the number of states with only one
+ * outgoing transition.
  * <p>
- * This class could also be generalized to states with more than one outgoing
- * transition, but then it is not clear where the transitions should be bent to,
- * and the data structures become more complicated.
+ * This class could also be generalized to states with more than one outgoing transition, but then it is not clear where
+ * the transitions should be bent to, and the data structures become more complicated.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -76,30 +74,80 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 	public SingleExitShrinker(final IUltimateServiceProvider services) {
 		super(services);
 	}
-	
+
 	@Override
-	public INestedWordAutomaton<LETTER, STATE>
-			createAutomaton(final List<Pair<STATE, STATE>> list) {
+	public INestedWordAutomaton<LETTER, STATE> createAutomaton(final List<Pair<STATE, STATE>> list) {
 		// create fresh automaton
 		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create(mAutomaton);
-		
+
 		// data structures to contain all transitive chains (forward & backward)
 		final HashMap<STATE, STATE> left2right = new HashMap<>();
 		final HashMap<STATE, STATE> right2left = new HashMap<>();
-		
+
 		/*
 		 * add states which are not a left-hand side in the list; also set up
 		 * data structures which contain all transitive chains
 		 */
 		final HashSet<STATE> states = new HashSet<>(mAutomaton.getStates());
-		for (final Pair<STATE, STATE> pair : list) {
+		fillTransitivityMaps(left2right, right2left, states, list);
+
+		constructResuLt(automaton, left2right, states, mAutomaton, mFactory);
+
+		return automaton;
+	}
+
+	protected static <LETTER, STATE> void constructResuLt(final INestedWordAutomaton<LETTER, STATE> oldAutomaton,
+			final HashMap<STATE, STATE> left2right, final HashSet<STATE> states,
+			final INestedWordAutomaton<LETTER, STATE> newAutomaton,
+			final INestedWordAutomatonFactory<LETTER, STATE> factory) {
+		factory.addStates(oldAutomaton, states);
+
+		// add transitions which are still unconcerned by removing the states
+		factory.addFilteredTransitions(oldAutomaton, newAutomaton);
+
+		// add transitions which close a (transitive) chain of removed states
+		for (final Entry<STATE, STATE> entry : left2right.entrySet()) {
+			final STATE source = entry.getKey();
+			final STATE transitiveTarget = entry.getValue();
+			if ((transitiveTarget == null) || (!states.contains(transitiveTarget))) {
+				// source state is no entry of a transitive chain, ignore it
+				continue;
+			}
+			// add missing transitions and bend them to transitive chain target
+			for (final IncomingInternalTransition<LETTER, STATE> trans : newAutomaton.internalPredecessors(source)) {
+				final STATE pred = trans.getPred();
+				if (states.contains(pred)) {
+					factory.addInternalTransition(oldAutomaton, pred, trans.getLetter(), transitiveTarget);
+				}
+			}
+			for (final IncomingCallTransition<LETTER, STATE> trans : newAutomaton.callPredecessors(source)) {
+				final STATE pred = trans.getPred();
+				if (states.contains(pred)) {
+					factory.addCallTransition(oldAutomaton, pred, trans.getLetter(), transitiveTarget);
+				}
+			}
+			for (final IncomingReturnTransition<LETTER, STATE> trans : newAutomaton.returnPredecessors(source)) {
+				final STATE linPred = trans.getLinPred();
+				final STATE hierPred = trans.getHierPred();
+				if (states.contains(linPred) && states.contains(hierPred)) {
+					factory.addReturnTransition(oldAutomaton, trans.getLinPred(), hierPred, trans.getLetter(),
+							transitiveTarget);
+				}
+			}
+		}
+	}
+
+	protected static <STATE> void fillTransitivityMaps(final HashMap<STATE, STATE> left2right,
+			final HashMap<STATE, STATE> right2left, final HashSet<STATE> states,
+			final Iterable<Pair<STATE, STATE>> pairs) {
+		for (final Pair<STATE, STATE> pair : pairs) {
 			final STATE source = pair.getFirst();
 			final STATE target = pair.getSecond();
-			
+
 			// left-hand side state will be removed
 			final boolean wasPresent = states.remove(source);
 			assert wasPresent : "Pairs in the list should be left-unique.";
-			
+
 			// update transitive chains
 			STATE lhs = right2left.remove(source);
 			STATE rhs = left2right.remove(target);
@@ -114,80 +162,45 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 			left2right.put(lhs, rhs);
 			right2left.put(rhs, lhs);
 		}
-		
-		mFactory.addStates(automaton, states);
-		
-		// add transitions which are still unconcerned by removing the states
-		mFactory.addFilteredTransitions(automaton, mAutomaton);
-		
-		// add transitions which close a (transitive) chain of removed states
-		for (final Entry<STATE, STATE> entry : left2right.entrySet()) {
-			final STATE source = entry.getKey();
-			final STATE transitiveTarget = entry.getValue();
-			if ((transitiveTarget == null) || (!states.contains(transitiveTarget))) {
-				// source state is no entry of a transitive chain, ignore it
-				continue;
-			}
-			// add missing transitions and bend them to transitive chain target
-			for (final IncomingInternalTransition<LETTER, STATE> trans : mAutomaton.internalPredecessors(source)) {
-				final STATE pred = trans.getPred();
-				if (states.contains(pred)) {
-					mFactory.addInternalTransition(automaton, pred, trans.getLetter(), transitiveTarget);
-				}
-			}
-			for (final IncomingCallTransition<LETTER, STATE> trans : mAutomaton.callPredecessors(source)) {
-				final STATE pred = trans.getPred();
-				if (states.contains(pred)) {
-					mFactory.addCallTransition(automaton, pred, trans.getLetter(), transitiveTarget);
-				}
-			}
-			for (final IncomingReturnTransition<LETTER, STATE> trans : mAutomaton.returnPredecessors(source)) {
-				final STATE linPred = trans.getLinPred();
-				final STATE hierPred = trans.getHierPred();
-				if (states.contains(linPred) && states.contains(hierPred)) {
-					mFactory.addReturnTransition(automaton, trans.getLinPred(), hierPred, trans.getLetter(),
-							transitiveTarget);
-				}
-			}
-		}
-		
-		return automaton;
 	}
-	
+
 	@Override
-	@SuppressWarnings("squid:LabelsShouldNotBeUsedCheck")
 	public List<Pair<STATE, STATE>> extractList() {
 		final ArrayList<Pair<STATE, STATE>> list = new ArrayList<>();
 		/*
 		 * check that there is exactly one internal/call/return successor which
 		 * is not a self-loop
 		 */
-		chooseState: for (final STATE state : mAutomaton.getStates()) {
-			STATE target = null;
-			for (final OutgoingInternalTransition<LETTER, STATE> trans : mAutomaton.internalSuccessors(state)) {
-				if ((target != null) && (!target.equals(state))) {
-					continue chooseState;
-				}
-				target = trans.getSucc();
-			}
-			for (final OutgoingCallTransition<LETTER, STATE> trans : mAutomaton.callSuccessors(state)) {
-				if ((target != null) && (!target.equals(state))) {
-					continue chooseState;
-				}
-				target = trans.getSucc();
-			}
-			for (final OutgoingReturnTransition<LETTER, STATE> trans : mAutomaton.returnSuccessors(state)) {
-				if ((target != null) && (!target.equals(state))) {
-					continue chooseState;
-				}
-				target = trans.getSucc();
-			}
-			
+		for (final STATE state : mAutomaton.getStates()) {
+			final STATE target = checkForUniqueTarget(state);
 			if (target != null) {
 				// state has exactly one successor, add the pair
-				list.add(new Pair<STATE, STATE>(state, target));
+				list.add(new Pair<>(state, target));
 			}
 		}
 		return list;
+	}
+
+	private STATE checkForUniqueTarget(final STATE state) {
+		STATE target = null;
+		for (final OutgoingInternalTransition<LETTER, STATE> trans : mAutomaton.internalSuccessors(state)) {
+			if ((target != null) && (!target.equals(state))) {
+				return null;
+			}
+			target = trans.getSucc();
+		}
+		for (final OutgoingCallTransition<LETTER, STATE> trans : mAutomaton.callSuccessors(state)) {
+			if ((target != null) && (!target.equals(state))) {
+				return null;
+			}
+			target = trans.getSucc();
+		}
+		for (final OutgoingReturnTransition<LETTER, STATE> trans : mAutomaton.returnSuccessors(state)) {
+			if ((target != null) && (!target.equals(state))) {
+				return null;
+			}
+			target = trans.getSucc();
+		}
+		return target;
 	}
 }

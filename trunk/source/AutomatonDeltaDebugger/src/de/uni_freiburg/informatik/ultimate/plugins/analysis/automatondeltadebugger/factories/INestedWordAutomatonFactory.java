@@ -43,8 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
 /**
  * Factory for {@link INestedWordAutomaton} objects.
  * <p>
- * NOTE: The automaton field is not updated during the shrinking process. Use it
- * with caution.
+ * NOTE: The automaton field is not updated during the shrinking process. Use it with caution.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -54,17 +53,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  */
 public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	protected INestedWordAutomaton<LETTER, STATE> mAutomaton;
-	
+
 	/**
-	 * Constructor.
-	 * 
 	 * @param automaton
-	 *            nested word automaton
+	 *            Nested word automaton.
 	 */
 	public INestedWordAutomatonFactory(final INestedWordAutomaton<LETTER, STATE> automaton) {
-		this.mAutomaton = automaton;
+		mAutomaton = automaton;
 	}
-	
+
 	/**
 	 * Create new automaton using alphabets of old automaton.
 	 * 
@@ -75,7 +72,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	public INestedWordAutomaton<LETTER, STATE> create(final INestedWordAutomaton<LETTER, STATE> automaton) {
 		return create(automaton.getInternalAlphabet(), automaton.getCallAlphabet(), automaton.getReturnAlphabet());
 	}
-	
+
 	/**
 	 * Create new automaton using given alphabets or those of old automaton if {@code null}.
 	 * 
@@ -89,20 +86,15 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	 */
 	public INestedWordAutomaton<LETTER, STATE> create(final Set<LETTER> internalAlphabet,
 			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet) {
-		final Set<LETTER> internalAlphabetRes = (internalAlphabet == null)
-				? mAutomaton.getInternalAlphabet()
-				: internalAlphabet;
-		final Set<LETTER> callAlphabetRes = (callAlphabet == null)
-				? mAutomaton.getCallAlphabet()
-				: callAlphabet;
-		final Set<LETTER> returnAlphabetRes = (returnAlphabet == null)
-				? mAutomaton.getReturnAlphabet()
-				: returnAlphabet;
-		
-		return createWithAlphabets(internalAlphabetRes, callAlphabetRes,
-				returnAlphabetRes);
+		final Set<LETTER> internalAlphabetRes =
+				(internalAlphabet == null) ? mAutomaton.getInternalAlphabet() : internalAlphabet;
+		final Set<LETTER> callAlphabetRes = (callAlphabet == null) ? mAutomaton.getCallAlphabet() : callAlphabet;
+		final Set<LETTER> returnAlphabetRes =
+				(returnAlphabet == null) ? mAutomaton.getReturnAlphabet() : returnAlphabet;
+
+		return createWithAlphabets(internalAlphabetRes, callAlphabetRes, returnAlphabetRes);
 	}
-	
+
 	/**
 	 * Create new automaton using given alphabets.
 	 * 
@@ -116,10 +108,9 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	 */
 	protected abstract INestedWordAutomaton<LETTER, STATE> createWithAlphabets(final Set<LETTER> internalAlphabet,
 			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet);
-	
+
 	/**
-	 * This method assumes that the passed state is present of the original
-	 * automaton.
+	 * This method assumes that the passed state is present of the original automaton.
 	 * 
 	 * @param automaton
 	 *            automaton
@@ -129,7 +120,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	public void addState(final INestedWordAutomaton<LETTER, STATE> automaton, final STATE state) {
 		addState(automaton, state, mAutomaton.isInitial(state), mAutomaton.isFinal(state));
 	}
-	
+
 	/**
 	 * Adds a state with the initial and final status of the old automaton.
 	 * 
@@ -144,7 +135,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	 */
 	public abstract void addState(final INestedWordAutomaton<LETTER, STATE> automaton, final STATE state,
 			final boolean isInitial, final boolean isFinal);
-	
+
 	/**
 	 * Adds an internal transition.
 	 * 
@@ -159,7 +150,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	 */
 	public abstract void addInternalTransition(final INestedWordAutomaton<LETTER, STATE> automaton, final STATE pred,
 			final LETTER letter, final STATE succ);
-	
+
 	/**
 	 * Adds call transition.
 	 * 
@@ -174,7 +165,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	 */
 	public abstract void addCallTransition(final INestedWordAutomaton<LETTER, STATE> automaton, final STATE pred,
 			final LETTER letter, final STATE succ);
-	
+
 	/**
 	 * Adds a return transition.
 	 * 
@@ -191,7 +182,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	 */
 	public abstract void addReturnTransition(final INestedWordAutomaton<LETTER, STATE> automaton, final STATE pred,
 			final STATE hier, final LETTER letter, final STATE succ);
-	
+
 	/**
 	 * Adds a collection of states.
 	 * <p>
@@ -207,7 +198,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 			addState(automaton, state);
 		}
 	}
-	
+
 	/**
 	 * Adds a collection of internal transitions.
 	 * <p>
@@ -226,7 +217,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 			addInternalTransition(automaton, trans.getPred(), trans.getLetter().getLetter(), trans.getSucc());
 		}
 	}
-	
+
 	/**
 	 * Adds a collection of call transitions.
 	 * <p>
@@ -245,7 +236,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 			addCallTransition(automaton, trans.getPred(), trans.getLetter().getLetter(), trans.getSucc());
 		}
 	}
-	
+
 	/**
 	 * Adds a collection of return transitions.
 	 * <p>
@@ -261,11 +252,11 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 			final Collection<TypedTransition<LETTER, STATE>> transitions) {
 		for (final TypedTransition<LETTER, STATE> trans : transitions) {
 			assert trans.getLetter().getType() == LetterType.RETURN : "No return transition.";
-			addReturnTransition(automaton, trans.getPred(), trans.getHier(),
-					trans.getLetter().getLetter(), trans.getSucc());
+			addReturnTransition(automaton, trans.getPred(), trans.getHier(), trans.getLetter().getLetter(),
+					trans.getSucc());
 		}
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.
@@ -276,13 +267,13 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 		final Set<TypedTransition<LETTER, STATE>> transitions = new HashSet<>();
 		for (final STATE state : automaton.getStates()) {
 			for (final OutgoingInternalTransition<LETTER, STATE> trans : automaton.internalSuccessors(state)) {
-				transitions.add(new TypedTransition<LETTER, STATE>(state, trans.getSucc(), null,
-						new TypedLetter<LETTER>(trans.getLetter(), LetterType.INTERNAL)));
+				transitions.add(new TypedTransition<>(state, trans.getSucc(), null,
+						new TypedLetter<>(trans.getLetter(), LetterType.INTERNAL)));
 			}
 		}
 		return transitions;
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.
@@ -292,13 +283,13 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 		final Set<TypedTransition<LETTER, STATE>> transitions = new HashSet<>();
 		for (final STATE state : automaton.getStates()) {
 			for (final OutgoingCallTransition<LETTER, STATE> trans : automaton.callSuccessors(state)) {
-				transitions.add(new TypedTransition<LETTER, STATE>(state, trans.getSucc(), null,
-						new TypedLetter<LETTER>(trans.getLetter(), LetterType.CALL)));
+				transitions.add(new TypedTransition<>(state, trans.getSucc(), null,
+						new TypedLetter<>(trans.getLetter(), LetterType.CALL)));
 			}
 		}
 		return transitions;
 	}
-	
+
 	/**
 	 * @param automaton
 	 *            The automaton.
@@ -309,13 +300,13 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 		final Set<TypedTransition<LETTER, STATE>> transitions = new HashSet<>();
 		for (final STATE state : automaton.getStates()) {
 			for (final OutgoingReturnTransition<LETTER, STATE> trans : automaton.returnSuccessors(state)) {
-				transitions.add(new TypedTransition<LETTER, STATE>(state, trans.getSucc(), trans.getHierPred(),
-						new TypedLetter<LETTER>(trans.getLetter(), LetterType.RETURN)));
+				transitions.add(new TypedTransition<>(state, trans.getSucc(), trans.getHierPred(),
+						new TypedLetter<>(trans.getLetter(), LetterType.RETURN)));
 			}
 		}
 		return transitions;
 	}
-	
+
 	/**
 	 * Adds original internal transitions filtered by current states.
 	 * 
@@ -336,7 +327,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 			}
 		}
 	}
-	
+
 	/**
 	 * Adds original call transitions filtered by current states.
 	 * 
@@ -357,7 +348,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 			}
 		}
 	}
-	
+
 	/**
 	 * Adds original return transitions filtered by current states.
 	 * 
@@ -379,7 +370,7 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 			}
 		}
 	}
-	
+
 	/**
 	 * Adds original transitions filtered by current states.
 	 * 
@@ -394,12 +385,12 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 		addFilteredCallTransitions(automatonTo, automatonFrom);
 		addFilteredReturnTransitions(automatonTo, automatonFrom);
 	}
-	
+
 	@Override
 	public String toString() {
-		return this.getClass().getSimpleName();
+		return getClass().getSimpleName();
 	}
-	
+
 	/**
 	 * Setter for the backing automaton.
 	 * <p>

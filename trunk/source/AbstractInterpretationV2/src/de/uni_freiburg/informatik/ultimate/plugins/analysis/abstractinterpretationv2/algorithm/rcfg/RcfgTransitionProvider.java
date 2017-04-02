@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, BoogieIcfgLocation> {
+public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, IcfgLocation> {
 
 	@Override
 	public Collection<CodeBlock> getSuccessors(final CodeBlock elem, final CodeBlock scope) {
@@ -103,22 +103,22 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, Bo
 	}
 
 	@Override
-	public BoogieIcfgLocation getSource(final CodeBlock current) {
-		return (BoogieIcfgLocation) current.getSource();
+	public IcfgLocation getSource(final CodeBlock current) {
+		return current.getSource();
 	}
 
 	@Override
-	public BoogieIcfgLocation getTarget(final CodeBlock current) {
-		return (BoogieIcfgLocation) current.getTarget();
+	public IcfgLocation getTarget(final CodeBlock current) {
+		return current.getTarget();
 	}
 
 	@Override
-	public Collection<CodeBlock> getSuccessorActions(final BoogieIcfgLocation loc) {
+	public Collection<CodeBlock> getSuccessorActions(final IcfgLocation loc) {
 		return loc.getOutgoingEdges().stream().map(e -> (CodeBlock) e).collect(Collectors.toList());
 	}
 
 	@Override
-	public Collection<CodeBlock> getPredecessorActions(final BoogieIcfgLocation loc) {
+	public Collection<CodeBlock> getPredecessorActions(final IcfgLocation loc) {
 		return loc.getIncomingEdges().stream().map(e -> (CodeBlock) e).collect(Collectors.toList());
 	}
 
@@ -154,8 +154,8 @@ public class RcfgTransitionProvider implements ITransitionProvider<CodeBlock, Bo
 	}
 
 	@Override
-	public boolean isErrorLocation(final BoogieIcfgLocation loc) {
-		return loc.isErrorLocation();
+	public boolean isErrorLocation(final IcfgLocation loc) {
+		return ((BoogieIcfgLocation) loc).isErrorLocation();
 	}
 
 }

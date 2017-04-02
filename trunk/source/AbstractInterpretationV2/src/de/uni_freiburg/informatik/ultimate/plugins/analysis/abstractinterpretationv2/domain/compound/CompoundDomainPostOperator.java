@@ -29,6 +29,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.compound;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -129,24 +130,16 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			final List<IAbstractState> result =
 					applyInternally(currentPreState, currentDomain.getPostOperator(), currentTrans);
 
-			if (mLogger.isDebugEnabled()) {
-				final StringBuilder sb = new StringBuilder(AbsIntPrefInitializer.DINDENT)
-						.append(currentDomain.getClass().getSimpleName()).append(": ");
-				result.stream().map(a -> a.toLogString())
-						.forEach(a -> mLogger.debug(new StringBuilder(sb).append("post: ").append(a)));
-			}
-
 			if (result.isEmpty()) {
-				return new ArrayList<>();
+				return Collections.emptyList();
 			}
-
 			IAbstractState state = result.get(0);
 			for (int j = 1; j < result.size(); j++) {
 				state = applyMergeInternally(state, result.get(j), currentDomain.getMergeOperator());
 			}
 
 			if (state.isBottom()) {
-				return new ArrayList<>();
+				return Collections.emptyList();
 			}
 
 			resultingStates.add(state);

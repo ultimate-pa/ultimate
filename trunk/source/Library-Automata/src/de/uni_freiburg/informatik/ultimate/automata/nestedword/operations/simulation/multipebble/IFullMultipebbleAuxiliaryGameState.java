@@ -39,7 +39,7 @@ public interface IFullMultipebbleAuxiliaryGameState {
 
 	public AuxiliaryGameStateType getAuxiliaryGameStateType();
 
-	public static <STATE, GS extends FullMultipebbleGameState<STATE>> boolean isDuplicatorWinningSink(final GS gs) {
+	public static <STATE, GS extends FullMultipebbleGameState<STATE>> boolean isSpoilerWinningSink(final GS gs) {
 		if (gs instanceof IFullMultipebbleAuxiliaryGameState) {
 			if (((IFullMultipebbleAuxiliaryGameState) gs)
 					.getAuxiliaryGameStateType() == AuxiliaryGameStateType.SPOILER_WINNING_SINK) {

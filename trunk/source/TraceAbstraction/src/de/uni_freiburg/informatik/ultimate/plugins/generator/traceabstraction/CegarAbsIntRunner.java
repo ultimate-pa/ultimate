@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -70,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntNonSmtInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntStraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntTotalInterpolationAutomatonBuilder;
@@ -170,7 +169,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				return;
 			}
 
-			mCegarLoopBenchmark.announceNextAbsIntIteration();
+			final int currentAbsIntIter = mCegarLoopBenchmark.announceNextAbsIntIteration();
 
 			// allow for 20% of the remaining time
 			final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
@@ -184,12 +183,14 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					mLogger.debug("[" + trans.hashCode() + "] " + trans);
 				}
 			}
+
+			final PathProgram pp =
+					PathProgram.constructPathProgram("absint-pp-iter-" + currentAbsIntIter, mRoot, pathProgramSet)
+							.getPathProgram();
+
 			@SuppressWarnings("unchecked")
 			final IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> result =
-					(IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?>) AbstractInterpreter.runOnPathProgram(
-							(IIcfg<BoogieIcfgLocation>) mRoot,
-							(INestedWordAutomatonSimple<CodeBlock, ?>) currentAbstraction,
-							(NestedRun<CodeBlock, IPredicate>) currentCex, (Set<CodeBlock>) pathProgramSet, timer,
+					(IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?>) AbstractInterpreter.run(pp, timer,
 							mServices);
 			if (result == null) {
 				mCurrentIteration = null;

@@ -31,24 +31,28 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  * An {@link IIcfg} representing an explicitly constructed path program that results from the projection of a given
@@ -73,15 +77,19 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 
 	private final transient CfgSmtToolkit mCfgSmtToolkit;
 
-	private PathProgram(final String identifier, final CfgSmtToolkit cfgSmtToolkit) {
+	private PathProgram(final String identifier, final CfgSmtToolkit cfgSmtToolkit,
+			final Map<String, Map<String, IcfgLocation>> programPoints,
+			final Map<String, IcfgLocation> procedureEntries, final Map<String, IcfgLocation> procedureExits,
+			final Map<String, Set<IcfgLocation>> procedureErrors, final Set<IcfgLocation> initialNodes,
+			final Set<IcfgLocation> loopLocations) {
 		mIdentifier = Objects.requireNonNull(identifier);
 		mCfgSmtToolkit = Objects.requireNonNull(cfgSmtToolkit);
-		mProgramPoints = new HashMap<>();
-		mProcEntries = new HashMap<>();
-		mProcExits = new HashMap<>();
-		mProcError = new HashMap<>();
-		mInitialNodes = new HashSet<>();
-		mLoopLocations = new HashSet<>();
+		mProgramPoints = Objects.requireNonNull(programPoints);
+		mProcEntries = Objects.requireNonNull(procedureEntries);
+		mProcExits = Objects.requireNonNull(procedureExits);
+		mProcError = Objects.requireNonNull(procedureErrors);
+		mInitialNodes = Objects.requireNonNull(initialNodes);
+		mLoopLocations = Objects.requireNonNull(loopLocations);
 	}
 
 	/**
@@ -97,12 +105,8 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 	 *         between the locations of the given {@link IIcfg} and the locations of the path program.
 	 */
 	public static PathProgramConstructionResult constructPathProgram(final String identifier,
-			final IIcfg<?> originalIcfg, final Set<? extends IcfgEdge> allowedTransitions) {
-		final PathProgram pp = new PathProgram(identifier, originalIcfg.getCfgSmtToolkit());
-		final PathProgram.PathProgramConstructor ppc = pp.new PathProgramConstructor(originalIcfg, allowedTransitions);
-		assert !pp.getInitialNodes()
-				.isEmpty() : "You cannot have a path program that does not start at an initial location";
-		return new PathProgramConstructionResult(pp, ppc.mOldLoc2NewLoc);
+			final IIcfg<?> originalIcfg, final Set<? extends IIcfgTransition<?>> allowedTransitions) {
+		return new PathProgramConstructor(originalIcfg, allowedTransitions, identifier).getResult();
 	}
 
 	@Override
@@ -180,50 +184,105 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 		}
 	}
 
-	private final class PathProgramConstructor {
+	private static final class PathProgramConstructor {
 
 		private final IIcfg<?> mOriginalIcfg;
 		private final Map<IcfgLocation, IcfgLocation> mOldLoc2NewLoc;
+		private final Map<IIcfgTransition<?>, PathProgramCallAction<?>> mOldCall2NewCall;
+		private final DefaultIcfgSymbolTable mSymbolTable;
+		private final Set<String> mProcedures;
 
-		private PathProgramConstructor(final IIcfg<?> originalIcfg, final Set<? extends IcfgEdge> allowedTransitions) {
-			mOriginalIcfg = originalIcfg;
+		private final Map<String, Map<String, IcfgLocation>> mProgramPoints;
+		private final Map<String, IcfgLocation> mProcEntries;
+		private final Map<String, IcfgLocation> mProcExits;
+		private final Map<String, Set<IcfgLocation>> mProcError;
+		private final Set<IcfgLocation> mInitialNodes;
+		private final Set<IcfgLocation> mLoopLocations;
+		private final PathProgramConstructionResult mResult;
+
+		private PathProgramConstructor(final IIcfg<?> originalIcfg,
+				final Set<? extends IIcfgTransition<?>> allowedTransitions, final String newIdentifier) {
+			final String nonNullIdentifier = Objects.requireNonNull(newIdentifier);
+			final Set<? extends IIcfgTransition<?>> nonNullTransitions = Objects.requireNonNull(allowedTransitions);
+			mOriginalIcfg = Objects.requireNonNull(originalIcfg);
+
 			mOldLoc2NewLoc = new HashMap<>();
+			mOldCall2NewCall = new HashMap<>();
+			mSymbolTable = new DefaultIcfgSymbolTable();
+			mProcedures = new HashSet<>();
 
-			final Map<IcfgEdge, PathProgramCallAction<?>> oldCall2NewCall = new HashMap<>();
-			final Predicate<IcfgEdge> onlyReturn = a -> a instanceof IIcfgReturnTransition<?, ?>;
-			final Consumer<IcfgEdge> transform = a -> createPathProgramTransition(a, oldCall2NewCall);
-			allowedTransitions.stream().filter(onlyReturn.negate()).forEach(transform);
-			allowedTransitions.stream().filter(onlyReturn).forEach(transform);
+			mProgramPoints = new HashMap<>();
+			mProcEntries = new HashMap<>();
+			mProcExits = new HashMap<>();
+			mProcError = new HashMap<>();
+			mInitialNodes = new HashSet<>();
+			mLoopLocations = new HashSet<>();
+
+			final Predicate<IIcfgTransition<?>> onlyReturn = a -> a instanceof IIcfgReturnTransition<?, ?>;
+			nonNullTransitions.stream().filter(onlyReturn.negate()).forEach(this::createPathProgramTransition);
+			nonNullTransitions.stream().filter(onlyReturn).forEach(this::createPathProgramTransition);
+
+			final CfgSmtToolkit oldCfgSmtToolkit = originalIcfg.getCfgSmtToolkit();
+			final ModifiableGlobalsTable newModGlobTable =
+					constructModifiableGlobalsTable(oldCfgSmtToolkit.getModifiableGlobalsTable());
+
+			// TODO: Can we reduce axioms?
+			final CfgSmtToolkit newCfgSmtToolkit = new CfgSmtToolkit(newModGlobTable,
+					oldCfgSmtToolkit.getManagedScript(), mSymbolTable, oldCfgSmtToolkit.getAxioms(), mProcedures);
+
+			final PathProgram pp = new PathProgram(nonNullIdentifier, newCfgSmtToolkit, mProgramPoints, mProcEntries,
+					mProcExits, mProcError, mInitialNodes, mLoopLocations);
+
+			mResult = new PathProgramConstructionResult(pp, mOldLoc2NewLoc);
+			assert !mResult.getPathProgram().getInitialNodes()
+					.isEmpty() : "You cannot have a path program that does not start at an initial location";
 		}
 
-		private void createPathProgramTransition(final IcfgEdge transition,
-				final Map<IcfgEdge, PathProgramCallAction<?>> oldCall2NewCall) {
+		private PathProgramConstructionResult getResult() {
+			return mResult;
+		}
+
+		private void createPathProgramTransition(final IIcfgTransition<?> transition) {
 			final IcfgLocation origSource = transition.getSource();
 			final IcfgLocation origTarget = transition.getTarget();
 			final IcfgLocation ppSource = addPathProgramLocation(origSource);
 			final IcfgLocation ppTarget = addPathProgramLocation(origTarget);
-			final IcfgEdge ppTransition = createPathProgramTransition(ppSource, ppTarget, transition, oldCall2NewCall);
+			final IcfgEdge ppTransition = createPathProgramTransition(ppSource, ppTarget, transition);
 			if (transition instanceof IIcfgCallTransition<?>) {
-				oldCall2NewCall.put(transition, (PathProgramCallAction<?>) ppTransition);
+				mOldCall2NewCall.put(transition, (PathProgramCallAction<?>) ppTransition);
 			}
 			ppTransition.redirectSource(ppSource);
 			ppTransition.redirectTarget(ppTarget);
 		}
 
 		private IcfgEdge createPathProgramTransition(final IcfgLocation source, final IcfgLocation target,
-				final IcfgEdge transition, final Map<IcfgEdge, PathProgramCallAction<?>> oldCall2NewCall) {
+				final IIcfgTransition<?> transition) {
 			if (transition instanceof IIcfgCallTransition<?>) {
+				final IIcfgCallTransition<?> calltrans = (IIcfgCallTransition<?>) transition;
+				addVarsToSymboltable(calltrans.getLocalVarsAssignment(), transition);
 				return new PathProgramCallAction<>(source, target, (IcfgEdge & ICallAction) transition);
 			} else if (transition instanceof IIcfgInternalTransition<?>) {
+				final IIcfgInternalTransition<?> intTrans = (IIcfgInternalTransition<?>) transition;
+				addVarsToSymboltable(intTrans.getTransformula(), transition);
 				return new PathProgramInternalAction<>(source, target, (IcfgEdge & IInternalAction) transition);
 			} else if (transition instanceof IIcfgReturnTransition<?, ?>) {
 				final IIcfgReturnTransition<?, ?> retTrans = (IIcfgReturnTransition<?, ?>) transition;
-				final PathProgramCallAction<?> corrCall = oldCall2NewCall.get(retTrans.getCorrespondingCall());
+				addVarsToSymboltable(retTrans.getAssignmentOfReturn(), transition);
+				final PathProgramCallAction<?> corrCall = mOldCall2NewCall.get(retTrans.getCorrespondingCall());
 				return new PathProgramReturnAction<>(source, target, corrCall, (IcfgEdge & IReturnAction) transition);
 			} else {
 				throw new UnsupportedOperationException(
 						"Cannot create path program transition for " + transition.getClass().getSimpleName());
 			}
+		}
+
+		private void addVarsToSymboltable(final UnmodifiableTransFormula transformula,
+				final IIcfgTransition<?> transition) {
+			mProcedures.add(transition.getPrecedingProcedure());
+			mProcedures.add(transition.getSucceedingProcedure());
+			transformula.getInVars().keySet().forEach(mSymbolTable::add);
+			transformula.getOutVars().keySet().forEach(mSymbolTable::add);
+			transformula.getNonTheoryConsts().forEach(mSymbolTable::add);
 		}
 
 		private IcfgLocation createPathProgramLocation(final IcfgLocation loc) {
@@ -243,32 +302,32 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 
 			final IcfgLocation procEntry = mOriginalIcfg.getProcedureEntryNodes().get(procedure);
 			if (loc.equals(procEntry)) {
-				getProcedureEntryNodes().put(procedure, ppLoc);
+				mProcEntries.put(procedure, ppLoc);
 			}
 
 			final IcfgLocation procExit = mOriginalIcfg.getProcedureExitNodes().get(procedure);
 			if (loc.equals(procExit)) {
-				getProcedureExitNodes().put(procedure, ppLoc);
+				mProcExits.put(procedure, ppLoc);
 			}
 
 			final Set<? extends IcfgLocation> procError = mOriginalIcfg.getProcedureErrorNodes().get(procedure);
 			if (procError != null && procError.contains(loc)) {
-				final Set<IcfgLocation> ppProcErrors = getProcedureErrorNodes().get(procedure);
+				final Set<IcfgLocation> ppProcErrors = mProcError.get(procedure);
 				final Set<IcfgLocation> newPpProcErrors;
 				if (ppProcErrors == null) {
 					newPpProcErrors = new HashSet<>();
-					getProcedureErrorNodes().put(procedure, newPpProcErrors);
+					mProcError.put(procedure, newPpProcErrors);
 				} else {
 					newPpProcErrors = ppProcErrors;
 				}
 				newPpProcErrors.add(ppLoc);
 			}
 
-			final Map<String, IcfgLocation> procProgramPoints = getProgramPoints().get(procedure);
+			final Map<String, IcfgLocation> procProgramPoints = mProgramPoints.get(procedure);
 			final Map<String, IcfgLocation> newProcProgramPoints;
 			if (procProgramPoints == null) {
 				newProcProgramPoints = new HashMap<>();
-				getProgramPoints().put(procedure, newProcProgramPoints);
+				mProgramPoints.put(procedure, newProcProgramPoints);
 			} else {
 				newProcProgramPoints = procProgramPoints;
 			}
@@ -283,6 +342,23 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 			}
 
 			return ppLoc;
+		}
+
+		private ModifiableGlobalsTable constructModifiableGlobalsTable(final ModifiableGlobalsTable oldModGlobTable) {
+			final HashRelation<String, IProgramNonOldVar> proc2Globals = new HashRelation<>();
+			final Set<IProgramNonOldVar> knownGlobals = mSymbolTable.getGlobals();
+
+			for (final String proc : mProcedures) {
+				final Set<IProgramNonOldVar> mod = oldModGlobTable.getModifiedBoogieVars(proc);
+
+				for (final IProgramNonOldVar nonOld : mod) {
+					if (!knownGlobals.contains(nonOld)) {
+						continue;
+					}
+					proc2Globals.addPair(proc, nonOld);
+				}
+			}
+			return new ModifiableGlobalsTable(proc2Globals);
 		}
 	}
 

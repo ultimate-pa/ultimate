@@ -483,8 +483,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 			}
 		}
 
-		if (!cachedSelectiveClosure().elementwiseRelation(other.mNumericAbstraction,
-				OctMatrix.sRelationLessThanOrEqual, matrixPermutationMap(other))) {
+		if (!cachedSelectiveClosure().elementwiseRelation(other.mNumericAbstraction, OctMatrix.sRelationLessThanOrEqual,
+				matrixPermutationMap(other))) {
 			// no need to use other.closure
 			return SubsetResult.NONE;
 		}
@@ -513,10 +513,11 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 
 	/**
 	 * Compute the permutation between two states with the same numeric variables.
-	 * 
-	 * @param other State with same numeric variables, possibly in another order.
-	 * @return {@code array[index of numeric variable from this state] = index of numeric variable from other state}
-	 *         if permuted, {@code null} otherwise.
+	 *
+	 * @param other
+	 *            State with same numeric variables, possibly in another order.
+	 * @return {@code array[index of numeric variable from this state] = index of numeric variable from other state} if
+	 *         permuted, {@code null} otherwise.
 	 */
 	private int[] matrixPermutationMap(final OctDomainState other) {
 		assert mMapNumericVarToIndex.keySet().equals(other.mMapNumericVarToIndex.keySet());
@@ -533,7 +534,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		}
 		return permuted ? mapThisVarIndexToOtherVarIndex : null;
 	}
-	
+
 	/** For internal use in {@link #isEqualTo(OctDomainState)}. */
 	private boolean numericAbstractionIsEqualTo(final OctDomainState other) {
 		assert mMapNumericVarToIndex.keySet().equals(other.mMapNumericVarToIndex.keySet());
@@ -573,6 +574,12 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 * @return Over-approximated union
 	 */
 	public OctDomainState join(final OctDomainState other) {
+		if (isBottom()) {
+			return other;
+		}
+		if (other.isBottom()) {
+			return this;
+		}
 		final OctMatrix numResult = OctMatrix.max(bestAvailableClosure(), other.bestAvailableClosure());
 		return operation(other, BoolValue::union, numResult);
 	}

@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngineParameters;
@@ -45,14 +46,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 public class FixpointEngineParameterFactory {
-	
+
 	private final BoogieSymbolTable mSymbolTable;
-	private final IIcfg<BoogieIcfgLocation> mRoot;
+	private final IIcfg<?> mRoot;
 	private final IUltimateServiceProvider mServices;
 	private final LiteralCollectorFactory mLiteralCollector;
 
-	public FixpointEngineParameterFactory(final IIcfg<BoogieIcfgLocation> root,
-			final LiteralCollectorFactory literalCollector, final IUltimateServiceProvider services) {
+	public FixpointEngineParameterFactory(final IIcfg<?> root, final LiteralCollectorFactory literalCollector,
+			final IUltimateServiceProvider services) {
 		mRoot = root;
 		mServices = services;
 
@@ -66,43 +67,43 @@ public class FixpointEngineParameterFactory {
 
 	@SuppressWarnings("unchecked")
 	public <STATE extends IAbstractState<STATE, IBoogieVar>>
-			FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation>
+			FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, IcfgLocation>
 			createParams(final IProgressAwareTimer timer,
-					final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transitionProvider,
+					final ITransitionProvider<CodeBlock, IcfgLocation> transitionProvider,
 					final ILoopDetector<CodeBlock> loopDetector) {
 		final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain =
 				(IAbstractDomain<STATE, CodeBlock, IBoogieVar>) selectDomain();
-		final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> storageProvider =
+		final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, IcfgLocation> storageProvider =
 				new IcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
 
 		final IVariableProvider<STATE, CodeBlock, IBoogieVar> variableProvider = new RcfgVariableProvider<>(
-				new DefaultSymbolTableAdapter(mSymbolTable, mRoot.getSymboltable()), mServices);
-		final IDebugHelper<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> debugHelper =
-				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getSymboltable());
-		return new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation>(mServices,
-				IBoogieVar.class).setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
-						.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
-						.setDebugHelper(debugHelper).setTimer(timer);
+				new DefaultSymbolTableAdapter(mSymbolTable, mRoot.getCfgSmtToolkit().getSymbolTable()), mServices);
+		final IDebugHelper<STATE, CodeBlock, IBoogieVar, IcfgLocation> debugHelper =
+				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getCfgSmtToolkit().getSymbolTable());
+		return new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, IcfgLocation>(mServices, IBoogieVar.class)
+				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
+				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
+				.setDebugHelper(debugHelper).setTimer(timer);
 	}
 
 	@SuppressWarnings("unchecked")
 	public <STATE extends IAbstractState<STATE, IBoogieVar>>
-			FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation>
+			FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, IcfgLocation>
 			createParamsPathProgram(final IProgressAwareTimer timer,
-					final ITransitionProvider<CodeBlock, BoogieIcfgLocation> transitionProvider,
+					final ITransitionProvider<CodeBlock, IcfgLocation> transitionProvider,
 					final ILoopDetector<CodeBlock> loopDetector) {
 		final IAbstractDomain<STATE, CodeBlock, IBoogieVar> domain =
 				(IAbstractDomain<STATE, CodeBlock, IBoogieVar>) selectDomain();
-		final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> storageProvider =
+		final IAbstractStateStorage<STATE, CodeBlock, IBoogieVar, IcfgLocation> storageProvider =
 				new IcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
 		final IVariableProvider<STATE, CodeBlock, IBoogieVar> variableProvider = new PathProgramVariableProvider<>(
-				new DefaultSymbolTableAdapter(mSymbolTable, mRoot.getSymboltable()), mServices);
-		final IDebugHelper<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation> debugHelper =
-				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getSymboltable());
-		return new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, BoogieIcfgLocation>(mServices,
-				IBoogieVar.class).setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
-						.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
-						.setDebugHelper(debugHelper).setTimer(timer);
+				new DefaultSymbolTableAdapter(mSymbolTable, mRoot.getCfgSmtToolkit().getSymbolTable()), mServices);
+		final IDebugHelper<STATE, CodeBlock, IBoogieVar, IcfgLocation> debugHelper =
+				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getCfgSmtToolkit().getSymbolTable());
+		return new FixpointEngineParameters<STATE, CodeBlock, IBoogieVar, IcfgLocation>(mServices, IBoogieVar.class)
+				.setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
+				.setTransitionProvider(transitionProvider).setVariableProvider(variableProvider)
+				.setDebugHelper(debugHelper).setTimer(timer);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -116,9 +117,9 @@ public class FixpointEngineParameterFactory {
 		final IAbstractStateStorage<STATE, CodeBlock, IProgramVarOrConst, BoogieIcfgLocation> storageProvider =
 				new IcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
 		final IVariableProvider<STATE, CodeBlock, IProgramVarOrConst> variableProvider =
-				new FutureRcfgVariableProvider<>(mRoot.getSymboltable(), mServices);
+				new FutureRcfgVariableProvider<>(mRoot.getCfgSmtToolkit().getSymbolTable(), mServices);
 		final IDebugHelper<STATE, CodeBlock, IProgramVarOrConst, BoogieIcfgLocation> debugHelper =
-				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getSymboltable());
+				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getCfgSmtToolkit().getSymbolTable());
 
 		return new FixpointEngineParameters<STATE, CodeBlock, IProgramVarOrConst, BoogieIcfgLocation>(mServices,
 				IProgramVarOrConst.class).setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
@@ -150,10 +151,10 @@ public class FixpointEngineParameterFactory {
 				new IcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
 
 		final IVariableProvider<STATE, CodeBlock, IProgramVarOrConst> variableProvider =
-				new FutureRcfgVariableProvider<>(mRoot.getSymboltable(), mServices);
+				new FutureRcfgVariableProvider<>(mRoot.getCfgSmtToolkit().getSymbolTable(), mServices);
 
 		final IDebugHelper<STATE, CodeBlock, IProgramVarOrConst, BoogieIcfgLocation> debugHelper =
-				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getSymboltable());
+				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getCfgSmtToolkit().getSymbolTable());
 
 		return new FixpointEngineParameters<STATE, CodeBlock, IProgramVarOrConst, BoogieIcfgLocation>(mServices,
 				IProgramVarOrConst.class).setDomain(domain).setLoopDetector(loopDetector).setStorage(storageProvider)
@@ -181,8 +182,8 @@ public class FixpointEngineParameterFactory {
 		preAnalysis.postProcess();
 		final VPTransFormulaStateBuilderPreparer tfPreparer =
 				new VPTransFormulaStateBuilderPreparer(preAnalysis, mRoot, logger);
-		return new VPDomain<>(logger, mRoot.getCfgSmtToolkit().getManagedScript(), mServices, mRoot.getSymboltable(),
-				preAnalysis, tfPreparer);
+		return new VPDomain<>(logger, mRoot.getCfgSmtToolkit().getManagedScript(), mServices,
+				mRoot.getCfgSmtToolkit().getSymbolTable(), preAnalysis, tfPreparer);
 	}
 
 	private IAbstractDomain<?, CodeBlock, IBoogieVar> selectDomain() {
@@ -193,7 +194,7 @@ public class FixpointEngineParameterFactory {
 		if (EmptyDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new EmptyDomain<>(IBoogieVar.class);
 		} else if (SignDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new SignDomain(mServices, mRoot, mSymbolTable);
+			return new SignDomain(mServices, (IIcfg<BoogieIcfgLocation>) mRoot, mSymbolTable);
 		} else if (IntervalDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new IntervalDomain(logger, mSymbolTable, mLiteralCollector.create().getLiteralCollection(),
 					mServices, (BoogieIcfgContainer) mRoot);
@@ -208,7 +209,7 @@ public class FixpointEngineParameterFactory {
 				domainList.add(new EmptyDomain<>(IBoogieVar.class));
 			}
 			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_SIGN_DOMAIN)) {
-				domainList.add(new SignDomain(mServices, mRoot, mSymbolTable));
+				domainList.add(new SignDomain(mServices, (IIcfg<BoogieIcfgLocation>) mRoot, mSymbolTable));
 			}
 			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_CONGRUENCE_DOMAIN)) {
 				domainList.add(new CongruenceDomain(logger, mServices, mSymbolTable, (BoogieIcfgContainer) mRoot));

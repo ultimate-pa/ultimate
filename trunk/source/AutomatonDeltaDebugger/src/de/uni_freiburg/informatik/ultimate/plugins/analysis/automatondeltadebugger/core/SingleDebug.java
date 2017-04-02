@@ -34,11 +34,10 @@ import java.util.ListIterator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugger.shrinkers.AbstractShrinker;
 
 /**
- * Reduces a list of objects in a binary search manner until a local minimum is
- * found.
- * Note that the local minimum is only according to the current shrinker, i.e.,
- * the respective shrinker cannot be applied to a subinterval of objects anymore
- * while still producing the error. However, removing, say, objects 1 and 3
+ * Reduces a list of objects in a binary search manner until a local minimum is found.
+ * <p>
+ * Note that the local minimum is only according to the current shrinker, i.e., the respective shrinker cannot be
+ * applied to a subinterval of objects anymore while still producing the error. However, removing, say, objects 1 and 3
  * might still work.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
@@ -51,12 +50,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  */
 public class SingleDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STATE> {
 	private ListIterator<T> mIterator;
-	
+
 	/**
-	 * Constructor.
-	 * 
 	 * @param tester
-	 *            tester
+	 *            Tester.
 	 * @param shrinker
 	 *            shrinker
 	 */
@@ -64,7 +61,7 @@ public class SingleDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STAT
 		super(tester, shrinker);
 		mIterator = null;
 	}
-	
+
 	@Override
 	public boolean run() {
 		boolean result = false;
@@ -77,25 +74,25 @@ public class SingleDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STAT
 			if (mShrinker.isTimeoutRequested()) {
 				return result;
 			}
-			
+
 			// extract next element from the list
 			final List<T> sublist = Collections.singletonList(mIterator.next());
-			
+
 			// run test
 			result |= super.test(sublist);
-			
+
 			if (mShrinker.isCancelRequested()) {
 				break;
 			}
 		}
 		return result;
 	}
-	
+
 	@Override
 	protected void errorAction() {
 		// empty
 	}
-	
+
 	@Override
 	protected void noErrorAction() {
 		// empty

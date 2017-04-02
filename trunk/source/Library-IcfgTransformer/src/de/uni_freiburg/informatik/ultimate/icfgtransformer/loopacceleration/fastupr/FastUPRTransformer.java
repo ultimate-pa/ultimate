@@ -78,6 +78,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 	private final Map<IIcfgCallTransition<INLOC>, IcfgCallTransition> mOldCalls2NewCalls;
 	private IBacktranslationTracker mBacktranslationTracker;
 	private ILocationFactory<INLOC, OUTLOC> mLocationFactory;
+	private IUltimateServiceProvider mServices;
 
 	public FastUPRTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg, final Class<OUTLOC> outLocationClass, 
 			final ILocationFactory<INLOC, OUTLOC> locationFactory, String newIcfgIdentifier, ITransformulaTransformer transformer,
@@ -89,6 +90,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 		mOldLoc2NewLoc = new HashMap<>();
 		mOldCalls2NewCalls = new HashMap<>();
 		mBacktranslationTracker = (IBacktranslationTracker) backtranslationTracker;
+		mServices = services;
 
 		
 		
@@ -148,6 +150,20 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 		
 		
 		final Deque<INLOC> path = loopPaths.get(0);
+		
+		INLOC start = path.getFirst();
+		IcfgEdge edge = start.getOutgoingEdges().get(0);
+		
+		try {
+			FastUPRCore fastUpr = new FastUPRCore(edge.getTransformula(),
+					mLocationFactory,
+					mManagedScript,
+					mLogger,
+					mServices);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		
 		final Set<INLOC> init = origIcfg.getInitialNodes();
 		final Deque<INLOC> open = new ArrayDeque<>(init);
