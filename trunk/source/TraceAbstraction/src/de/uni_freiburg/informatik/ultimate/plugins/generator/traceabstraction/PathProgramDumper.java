@@ -605,6 +605,8 @@ public class PathProgramDumper {
 				throw new UnsupportedOperationException("unsupported edge " + action.getClass().getSimpleName());
 			}
 		} else {
+			addVars(action.getTransformula().getInVars().keySet(), localVars, globalVars);
+			addVars(action.getTransformula().getOutVars().keySet(), localVars, globalVars);
 			final ManagedScript mgdScript = mPathProgram.getCfgSmtToolkit().getManagedScript();
 			final UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(action.getTransformula(), mgdScript,
 					mServices, mLogger);
