@@ -42,12 +42,20 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
+ * Represents a simultaneous variable update that consists of two parts
+ * 1. variables that get the value of an term (deterministically assigned)
+ * 2. variables that are nondeterministically assigned (havoced)
+ * 
+ * We can often transform {@link TransFormula}s into this form.
+ * We note that a {@link TransFormula} is usually not equivalent to this form,
+ * because a {@link TransFormula} consists of a guard and an update.
+ * The guard can be obtained by {@link TransFormulaUtils#computeGuard}.
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
 public class SimultaneousUpdate {
 
-	Map<IProgramVar, Term> mUpdatedVars = new HashMap<>();
+	Map<IProgramVar, Term> mDeterministicallyAssignedVars = new HashMap<>();
 	Set<IProgramVar> mHavocedVars = new HashSet<>();
 
 	public SimultaneousUpdate(final TransFormula tf, final ManagedScript mgdScript) {
@@ -92,7 +100,7 @@ public class SimultaneousUpdate {
 						throw new IllegalArgumentException("cannot bring into simultaneous update form " + pv
 								+ "'s outvar occurs in several conjuncts.");
 					}
-					mUpdatedVars.put(pv, renamed);
+					mDeterministicallyAssignedVars.put(pv, renamed);
 				}
 
 				// else {
@@ -150,7 +158,7 @@ public class SimultaneousUpdate {
 	}
 
 	public Map<IProgramVar, Term> getUpdatedVars() {
-		return mUpdatedVars;
+		return mDeterministicallyAssignedVars;
 	}
 
 	public Set<IProgramVar> getHavocedVars() {
