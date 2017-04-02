@@ -201,7 +201,7 @@ public class ServerController implements IController<RunDefinition> {
 
 	private void requestAndLoadToolchain(final ICore<RunDefinition> core, final List<File> tcFiles)
 			throws InterruptedException, ExecutionException {
-		final File tcFile = requestChoice(tcFiles, File::getName);
+		final File tcFile = requestChoice(tcFiles, File::getName, "Pick a Toolchain");
 		try {
 			mToolchain = core.createToolchainData(tcFile.getAbsolutePath());
 		} catch (final FileNotFoundException e1) {
@@ -216,7 +216,7 @@ public class ServerController implements IController<RunDefinition> {
 			throws InterruptedException, ExecutionException {
 		// TODO: allow custom settings for plugins chosen from toolchain (see
 		// cli controller)
-		final File settingsFile = requestChoice(availableSettingsFiles, File::getName);
+		final File settingsFile = requestChoice(availableSettingsFiles, File::getName, "Pick a Setting File");
 		try {
 			core.resetPreferences();
 			core.loadPreferences(settingsFile.getAbsolutePath());
@@ -227,7 +227,7 @@ public class ServerController implements IController<RunDefinition> {
 
 	private File[] requestInput(final ICore<RunDefinition> core, final File[] availableInputFiles)
 			throws InterruptedException, ExecutionException {
-		final File inputFile = requestChoice(availableInputFiles, File::getName);
+		final File inputFile = requestChoice(availableInputFiles, File::getName, "Pick an Input File");
 
 		return new File[] { inputFile };
 	}
@@ -239,15 +239,16 @@ public class ServerController implements IController<RunDefinition> {
 		tcj.join();
 	}
 
-	private <T> T requestChoice(T[] choices, Function<T, String> toString)
+	private <T> T requestChoice(T[] choices, Function<T, String> toString, String title)
 			throws InterruptedException, ExecutionException {
-		return requestChoice(Arrays.asList(choices), toString);
+		return requestChoice(Arrays.asList(choices), toString, title);
 	}
 
-	private <T> T requestChoice(List<T> choices, Function<T, String> toString)
+	private <T> T requestChoice(List<T> choices, Function<T, String> toString, String title)
 			throws InterruptedException, ExecutionException {
 		Controller.Choice.Request.Builder tcBuilder = Controller.Choice.Request.newBuilder();
 		choices.stream().map(toString).forEach(tcBuilder::addChoice);
+		tcBuilder.setTitle(title);
 		CompletableFuture<Choice> choice = mProtoInterface.request(Controller.Choice.class, tcBuilder.build());
 
 		int choiceid = -1;

@@ -1382,20 +1382,40 @@ public final class Controller {
         com.google.protobuf.MessageOrBuilder {
 
       /**
-       * <code>repeated string choice = 1;</code>
+       * <code>optional string title = 1;</code>
+       */
+      java.lang.String getTitle();
+      /**
+       * <code>optional string title = 1;</code>
+       */
+      com.google.protobuf.ByteString
+          getTitleBytes();
+
+      /**
+       * <code>optional string subtitle = 2;</code>
+       */
+      java.lang.String getSubtitle();
+      /**
+       * <code>optional string subtitle = 2;</code>
+       */
+      com.google.protobuf.ByteString
+          getSubtitleBytes();
+
+      /**
+       * <code>repeated string choice = 3;</code>
        */
       java.util.List<java.lang.String>
           getChoiceList();
       /**
-       * <code>repeated string choice = 1;</code>
+       * <code>repeated string choice = 3;</code>
        */
       int getChoiceCount();
       /**
-       * <code>repeated string choice = 1;</code>
+       * <code>repeated string choice = 3;</code>
        */
       java.lang.String getChoice(int index);
       /**
-       * <code>repeated string choice = 1;</code>
+       * <code>repeated string choice = 3;</code>
        */
       com.google.protobuf.ByteString
           getChoiceBytes(int index);
@@ -1412,6 +1432,8 @@ public final class Controller {
         super(builder);
       }
       private Request() {
+        title_ = "";
+        subtitle_ = "";
         choice_ = com.google.protobuf.LazyStringArrayList.EMPTY;
       }
 
@@ -1442,9 +1464,21 @@ public final class Controller {
               }
               case 10: {
                 java.lang.String s = input.readStringRequireUtf8();
-                if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+
+                title_ = s;
+                break;
+              }
+              case 18: {
+                java.lang.String s = input.readStringRequireUtf8();
+
+                subtitle_ = s;
+                break;
+              }
+              case 26: {
+                java.lang.String s = input.readStringRequireUtf8();
+                if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
                   choice_ = new com.google.protobuf.LazyStringArrayList();
-                  mutable_bitField0_ |= 0x00000001;
+                  mutable_bitField0_ |= 0x00000004;
                 }
                 choice_.add(s);
                 break;
@@ -1457,7 +1491,7 @@ public final class Controller {
           throw new com.google.protobuf.InvalidProtocolBufferException(
               e).setUnfinishedMessage(this);
         } finally {
-          if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+          if (((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
             choice_ = choice_.getUnmodifiableView();
           }
           makeExtensionsImmutable();
@@ -1475,29 +1509,98 @@ public final class Controller {
                 de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Choice.Request.class, de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Choice.Request.Builder.class);
       }
 
-      public static final int CHOICE_FIELD_NUMBER = 1;
+      private int bitField0_;
+      public static final int TITLE_FIELD_NUMBER = 1;
+      private volatile java.lang.Object title_;
+      /**
+       * <code>optional string title = 1;</code>
+       */
+      public java.lang.String getTitle() {
+        java.lang.Object ref = title_;
+        if (ref instanceof java.lang.String) {
+          return (java.lang.String) ref;
+        } else {
+          com.google.protobuf.ByteString bs = 
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          title_ = s;
+          return s;
+        }
+      }
+      /**
+       * <code>optional string title = 1;</code>
+       */
+      public com.google.protobuf.ByteString
+          getTitleBytes() {
+        java.lang.Object ref = title_;
+        if (ref instanceof java.lang.String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          title_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+
+      public static final int SUBTITLE_FIELD_NUMBER = 2;
+      private volatile java.lang.Object subtitle_;
+      /**
+       * <code>optional string subtitle = 2;</code>
+       */
+      public java.lang.String getSubtitle() {
+        java.lang.Object ref = subtitle_;
+        if (ref instanceof java.lang.String) {
+          return (java.lang.String) ref;
+        } else {
+          com.google.protobuf.ByteString bs = 
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          subtitle_ = s;
+          return s;
+        }
+      }
+      /**
+       * <code>optional string subtitle = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getSubtitleBytes() {
+        java.lang.Object ref = subtitle_;
+        if (ref instanceof java.lang.String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          subtitle_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+
+      public static final int CHOICE_FIELD_NUMBER = 3;
       private com.google.protobuf.LazyStringList choice_;
       /**
-       * <code>repeated string choice = 1;</code>
+       * <code>repeated string choice = 3;</code>
        */
       public com.google.protobuf.ProtocolStringList
           getChoiceList() {
         return choice_;
       }
       /**
-       * <code>repeated string choice = 1;</code>
+       * <code>repeated string choice = 3;</code>
        */
       public int getChoiceCount() {
         return choice_.size();
       }
       /**
-       * <code>repeated string choice = 1;</code>
+       * <code>repeated string choice = 3;</code>
        */
       public java.lang.String getChoice(int index) {
         return choice_.get(index);
       }
       /**
-       * <code>repeated string choice = 1;</code>
+       * <code>repeated string choice = 3;</code>
        */
       public com.google.protobuf.ByteString
           getChoiceBytes(int index) {
@@ -1516,8 +1619,14 @@ public final class Controller {
 
       public void writeTo(com.google.protobuf.CodedOutputStream output)
                           throws java.io.IOException {
+        if (!getTitleBytes().isEmpty()) {
+          com.google.protobuf.GeneratedMessageV3.writeString(output, 1, title_);
+        }
+        if (!getSubtitleBytes().isEmpty()) {
+          com.google.protobuf.GeneratedMessageV3.writeString(output, 2, subtitle_);
+        }
         for (int i = 0; i < choice_.size(); i++) {
-          com.google.protobuf.GeneratedMessageV3.writeString(output, 1, choice_.getRaw(i));
+          com.google.protobuf.GeneratedMessageV3.writeString(output, 3, choice_.getRaw(i));
         }
       }
 
@@ -1526,6 +1635,12 @@ public final class Controller {
         if (size != -1) return size;
 
         size = 0;
+        if (!getTitleBytes().isEmpty()) {
+          size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, title_);
+        }
+        if (!getSubtitleBytes().isEmpty()) {
+          size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, subtitle_);
+        }
         {
           int dataSize = 0;
           for (int i = 0; i < choice_.size(); i++) {
@@ -1550,6 +1665,10 @@ public final class Controller {
         de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Choice.Request other = (de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Choice.Request) obj;
 
         boolean result = true;
+        result = result && getTitle()
+            .equals(other.getTitle());
+        result = result && getSubtitle()
+            .equals(other.getSubtitle());
         result = result && getChoiceList()
             .equals(other.getChoiceList());
         return result;
@@ -1562,6 +1681,10 @@ public final class Controller {
         }
         int hash = 41;
         hash = (19 * hash) + getDescriptorForType().hashCode();
+        hash = (37 * hash) + TITLE_FIELD_NUMBER;
+        hash = (53 * hash) + getTitle().hashCode();
+        hash = (37 * hash) + SUBTITLE_FIELD_NUMBER;
+        hash = (53 * hash) + getSubtitle().hashCode();
         if (getChoiceCount() > 0) {
           hash = (37 * hash) + CHOICE_FIELD_NUMBER;
           hash = (53 * hash) + getChoiceList().hashCode();
@@ -1684,8 +1807,12 @@ public final class Controller {
         }
         public Builder clear() {
           super.clear();
+          title_ = "";
+
+          subtitle_ = "";
+
           choice_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-          bitField0_ = (bitField0_ & ~0x00000001);
+          bitField0_ = (bitField0_ & ~0x00000004);
           return this;
         }
 
@@ -1709,11 +1836,15 @@ public final class Controller {
         public de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Choice.Request buildPartial() {
           de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Choice.Request result = new de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Choice.Request(this);
           int from_bitField0_ = bitField0_;
-          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+          int to_bitField0_ = 0;
+          result.title_ = title_;
+          result.subtitle_ = subtitle_;
+          if (((bitField0_ & 0x00000004) == 0x00000004)) {
             choice_ = choice_.getUnmodifiableView();
-            bitField0_ = (bitField0_ & ~0x00000001);
+            bitField0_ = (bitField0_ & ~0x00000004);
           }
           result.choice_ = choice_;
+          result.bitField0_ = to_bitField0_;
           onBuilt();
           return result;
         }
@@ -1755,10 +1886,18 @@ public final class Controller {
 
         public Builder mergeFrom(de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Choice.Request other) {
           if (other == de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Choice.Request.getDefaultInstance()) return this;
+          if (!other.getTitle().isEmpty()) {
+            title_ = other.title_;
+            onChanged();
+          }
+          if (!other.getSubtitle().isEmpty()) {
+            subtitle_ = other.subtitle_;
+            onChanged();
+          }
           if (!other.choice_.isEmpty()) {
             if (choice_.isEmpty()) {
               choice_ = other.choice_;
-              bitField0_ = (bitField0_ & ~0x00000001);
+              bitField0_ = (bitField0_ & ~0x00000004);
             } else {
               ensureChoiceIsMutable();
               choice_.addAll(other.choice_);
@@ -1792,41 +1931,179 @@ public final class Controller {
         }
         private int bitField0_;
 
+        private java.lang.Object title_ = "";
+        /**
+         * <code>optional string title = 1;</code>
+         */
+        public java.lang.String getTitle() {
+          java.lang.Object ref = title_;
+          if (!(ref instanceof java.lang.String)) {
+            com.google.protobuf.ByteString bs =
+                (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            title_ = s;
+            return s;
+          } else {
+            return (java.lang.String) ref;
+          }
+        }
+        /**
+         * <code>optional string title = 1;</code>
+         */
+        public com.google.protobuf.ByteString
+            getTitleBytes() {
+          java.lang.Object ref = title_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b = 
+                com.google.protobuf.ByteString.copyFromUtf8(
+                    (java.lang.String) ref);
+            title_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        /**
+         * <code>optional string title = 1;</code>
+         */
+        public Builder setTitle(
+            java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  
+          title_ = value;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>optional string title = 1;</code>
+         */
+        public Builder clearTitle() {
+          
+          title_ = getDefaultInstance().getTitle();
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>optional string title = 1;</code>
+         */
+        public Builder setTitleBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+          
+          title_ = value;
+          onChanged();
+          return this;
+        }
+
+        private java.lang.Object subtitle_ = "";
+        /**
+         * <code>optional string subtitle = 2;</code>
+         */
+        public java.lang.String getSubtitle() {
+          java.lang.Object ref = subtitle_;
+          if (!(ref instanceof java.lang.String)) {
+            com.google.protobuf.ByteString bs =
+                (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            subtitle_ = s;
+            return s;
+          } else {
+            return (java.lang.String) ref;
+          }
+        }
+        /**
+         * <code>optional string subtitle = 2;</code>
+         */
+        public com.google.protobuf.ByteString
+            getSubtitleBytes() {
+          java.lang.Object ref = subtitle_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b = 
+                com.google.protobuf.ByteString.copyFromUtf8(
+                    (java.lang.String) ref);
+            subtitle_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        /**
+         * <code>optional string subtitle = 2;</code>
+         */
+        public Builder setSubtitle(
+            java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  
+          subtitle_ = value;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>optional string subtitle = 2;</code>
+         */
+        public Builder clearSubtitle() {
+          
+          subtitle_ = getDefaultInstance().getSubtitle();
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>optional string subtitle = 2;</code>
+         */
+        public Builder setSubtitleBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+          
+          subtitle_ = value;
+          onChanged();
+          return this;
+        }
+
         private com.google.protobuf.LazyStringList choice_ = com.google.protobuf.LazyStringArrayList.EMPTY;
         private void ensureChoiceIsMutable() {
-          if (!((bitField0_ & 0x00000001) == 0x00000001)) {
+          if (!((bitField0_ & 0x00000004) == 0x00000004)) {
             choice_ = new com.google.protobuf.LazyStringArrayList(choice_);
-            bitField0_ |= 0x00000001;
+            bitField0_ |= 0x00000004;
            }
         }
         /**
-         * <code>repeated string choice = 1;</code>
+         * <code>repeated string choice = 3;</code>
          */
         public com.google.protobuf.ProtocolStringList
             getChoiceList() {
           return choice_.getUnmodifiableView();
         }
         /**
-         * <code>repeated string choice = 1;</code>
+         * <code>repeated string choice = 3;</code>
          */
         public int getChoiceCount() {
           return choice_.size();
         }
         /**
-         * <code>repeated string choice = 1;</code>
+         * <code>repeated string choice = 3;</code>
          */
         public java.lang.String getChoice(int index) {
           return choice_.get(index);
         }
         /**
-         * <code>repeated string choice = 1;</code>
+         * <code>repeated string choice = 3;</code>
          */
         public com.google.protobuf.ByteString
             getChoiceBytes(int index) {
           return choice_.getByteString(index);
         }
         /**
-         * <code>repeated string choice = 1;</code>
+         * <code>repeated string choice = 3;</code>
          */
         public Builder setChoice(
             int index, java.lang.String value) {
@@ -1839,7 +2116,7 @@ public final class Controller {
           return this;
         }
         /**
-         * <code>repeated string choice = 1;</code>
+         * <code>repeated string choice = 3;</code>
          */
         public Builder addChoice(
             java.lang.String value) {
@@ -1852,7 +2129,7 @@ public final class Controller {
           return this;
         }
         /**
-         * <code>repeated string choice = 1;</code>
+         * <code>repeated string choice = 3;</code>
          */
         public Builder addAllChoice(
             java.lang.Iterable<java.lang.String> values) {
@@ -1863,16 +2140,16 @@ public final class Controller {
           return this;
         }
         /**
-         * <code>repeated string choice = 1;</code>
+         * <code>repeated string choice = 3;</code>
          */
         public Builder clearChoice() {
           choice_ = com.google.protobuf.LazyStringArrayList.EMPTY;
-          bitField0_ = (bitField0_ & ~0x00000001);
+          bitField0_ = (bitField0_ & ~0x00000004);
           onChanged();
           return this;
         }
         /**
-         * <code>repeated string choice = 1;</code>
+         * <code>repeated string choice = 3;</code>
          */
         public Builder addChoiceBytes(
             com.google.protobuf.ByteString value) {
@@ -6984,33 +7261,34 @@ public final class Controller {
       "\n\020controller.proto\022=de.uni_freiburg.info" +
       "rmatik.ultimate.servercontroller.protobu" +
       "f\"B\n\004File\022\021\n\tfile_name\030\001 \001(\t\022\017\n\007content\030" +
-      "\002 \001(\t\032\026\n\007Request\022\013\n\003ext\030\001 \001(\t\"2\n\006Choice\022" +
-      "\r\n\005index\030\001 \001(\005\032\031\n\007Request\022\016\n\006choice\030\001 \003(" +
-      "\t\"\222\001\n\tException\022\r\n\005class\030\001 \001(\t\022\017\n\007messag" +
-      "e\030\002 \001(\t\022e\n\013stack_trace\030\003 \003(\0132P.de.uni_fr" +
-      "eiburg.informatik.ultimate.servercontrol" +
-      "ler.protobuf.StackTraceElement\"i\n\021StackT" +
-      "raceElement\022\027\n\017declaring_class\030\001 \001(\t\022\023\n\013",
-      "method_name\030\002 \001(\t\022\021\n\tfile_name\030\003 \001(\t\022\023\n\013" +
-      "line_number\030\004 \001(\005\"\204\001\n\rResultSummary\022\023\n\013d" +
-      "escription\030\001 \001(\t\022^\n\006result\030\002 \001(\0162N.de.un" +
-      "i_freiburg.informatik.ultimate.servercon" +
-      "troller.protobuf.ToolChainResult\"\371\001\n\020Too" +
-      "lchainResults\022m\n\007results\030\001 \003(\0132\\.de.uni_" +
-      "freiburg.informatik.ultimate.servercontr" +
-      "oller.protobuf.ToolchainResults.ResultsE" +
-      "ntry\032v\n\014ResultsEntry\022\013\n\003key\030\001 \001(\t\022U\n\005val" +
-      "ue\030\002 \001(\0132F.de.uni_freiburg.informatik.ul",
-      "timate.servercontroller.protobuf.Results" +
-      ":\0028\001\"a\n\007Results\022V\n\007results\030\001 \003(\0132E.de.un" +
-      "i_freiburg.informatik.ultimate.servercon" +
-      "troller.protobuf.Result\"K\n\006Result\022\016\n\006plu" +
-      "gin\030\001 \001(\t\022\030\n\020shortDescription\030\002 \001(\t\022\027\n\017l" +
-      "ongDescription\030\003 \001(\t*\205\001\n\017ToolChainResult" +
-      "\022\021\n\rGENERICRESULT\020\000\022\025\n\010NORESULT\020\377\377\377\377\377\377\377\377" +
-      "\377\001\022\013\n\007CORRECT\020\001\022\016\n\nUNPROVABLE\020\002\022\013\n\007TIMEO" +
-      "UT\020\003\022\r\n\tINCORRECT\020\004\022\017\n\013SYNTAXERROR\020\005B\014B\n" +
-      "Controllerb\006proto3"
+      "\002 \001(\t\032\026\n\007Request\022\013\n\003ext\030\001 \001(\t\"S\n\006Choice\022" +
+      "\r\n\005index\030\001 \001(\005\032:\n\007Request\022\r\n\005title\030\001 \001(\t" +
+      "\022\020\n\010subtitle\030\002 \001(\t\022\016\n\006choice\030\003 \003(\t\"\222\001\n\tE" +
+      "xception\022\r\n\005class\030\001 \001(\t\022\017\n\007message\030\002 \001(\t" +
+      "\022e\n\013stack_trace\030\003 \003(\0132P.de.uni_freiburg." +
+      "informatik.ultimate.servercontroller.pro" +
+      "tobuf.StackTraceElement\"i\n\021StackTraceEle",
+      "ment\022\027\n\017declaring_class\030\001 \001(\t\022\023\n\013method_" +
+      "name\030\002 \001(\t\022\021\n\tfile_name\030\003 \001(\t\022\023\n\013line_nu" +
+      "mber\030\004 \001(\005\"\204\001\n\rResultSummary\022\023\n\013descript" +
+      "ion\030\001 \001(\t\022^\n\006result\030\002 \001(\0162N.de.uni_freib" +
+      "urg.informatik.ultimate.servercontroller" +
+      ".protobuf.ToolChainResult\"\371\001\n\020ToolchainR" +
+      "esults\022m\n\007results\030\001 \003(\0132\\.de.uni_freibur" +
+      "g.informatik.ultimate.servercontroller.p" +
+      "rotobuf.ToolchainResults.ResultsEntry\032v\n" +
+      "\014ResultsEntry\022\013\n\003key\030\001 \001(\t\022U\n\005value\030\002 \001(",
+      "\0132F.de.uni_freiburg.informatik.ultimate." +
+      "servercontroller.protobuf.Results:\0028\001\"a\n" +
+      "\007Results\022V\n\007results\030\001 \003(\0132E.de.uni_freib" +
+      "urg.informatik.ultimate.servercontroller" +
+      ".protobuf.Result\"K\n\006Result\022\016\n\006plugin\030\001 \001" +
+      "(\t\022\030\n\020shortDescription\030\002 \001(\t\022\027\n\017longDesc" +
+      "ription\030\003 \001(\t*\205\001\n\017ToolChainResult\022\021\n\rGEN" +
+      "ERICRESULT\020\000\022\025\n\010NORESULT\020\377\377\377\377\377\377\377\377\377\001\022\013\n\007C" +
+      "ORRECT\020\001\022\016\n\nUNPROVABLE\020\002\022\013\n\007TIMEOUT\020\003\022\r\n" +
+      "\tINCORRECT\020\004\022\017\n\013SYNTAXERROR\020\005B\014B\nControl",
+      "lerb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -7047,7 +7325,7 @@ public final class Controller {
     internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Choice_Request_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Choice_Request_descriptor,
-        new java.lang.String[] { "Choice", });
+        new java.lang.String[] { "Title", "Subtitle", "Choice", });
     internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Exception_descriptor =
       getDescriptor().getMessageTypes().get(2);
     internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Exception_fieldAccessorTable = new

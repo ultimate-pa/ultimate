@@ -16,9 +16,10 @@ message File {
 message Choice {
 	int32 index = 1;
 	message Request {
-		repeated string choice = 1;
+		string title = 1;
+		string subtitle = 2;
+		repeated string choice = 3;
 	}
-
 }
 
 message Exception {
