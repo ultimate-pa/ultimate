@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IBlock;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IAutomatonStatePartition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IBlock;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DoubleDeckerVisitor.ReachFinal;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -198,7 +198,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 			final IBlock<STATE> block = blocksIt.next();
 			final boolean isRepresentativeIndependent = block.isRepresentativeIndependentInternalsCalls();
 
-			final Iterator<STATE> statesIt = block.statesIterator();
+			final Iterator<STATE> statesIt = block.iterator();
 			assert statesIt.hasNext() : "There must be at least one state.";
 			boolean pastFirst = false;
 			// iterate over all states

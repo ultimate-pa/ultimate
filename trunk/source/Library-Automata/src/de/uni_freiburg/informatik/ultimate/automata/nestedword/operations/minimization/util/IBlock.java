@@ -27,8 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util;
 
-import java.util.Iterator;
-
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 
 /**
@@ -38,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFact
  * @param <STATE>
  *            state type
  */
-public interface IBlock<STATE> {
+public interface IBlock<STATE> extends Iterable<STATE> {
 	/**
 	 * @return true iff block contains an initial state.
 	 */
@@ -55,11 +53,6 @@ public interface IBlock<STATE> {
 	 * @return state constructed by state factory
 	 */
 	STATE minimize(final IMergeStateFactory<STATE> stateFactory);
-
-	/**
-	 * @return iterator over all states.
-	 */
-	Iterator<STATE> statesIterator();
 
 	/**
 	 * If a block is independent of the representative, then one must only look at one state in the block when
