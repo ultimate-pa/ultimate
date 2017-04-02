@@ -47,7 +47,7 @@ import java.util.Set;
  * @param <E>
  *            element type
  */
-public class UnionFind<E> {
+public class UnionFind<E> implements IPartition<E> {
 	/**
 	 * Maps an element to its equivalence class.
 	 */
@@ -110,6 +110,11 @@ public class UnionFind<E> {
 	 */
 	public Set<E> getEquivalenceClassMembers(final E elem) {
 		return Collections.unmodifiableSet(mEquivalenceClass.get(elem));
+	}
+
+	@Override
+	public Set<E> getContainingSet(final E elem) {
+		return getEquivalenceClassMembers(elem);
 	}
 
 	/**
@@ -175,7 +180,13 @@ public class UnionFind<E> {
 	/**
 	 * @return number of equivalence classes.
 	 */
+	@Override
 	public int size() {
 		return mRepresentative.size();
+	}
+
+	@Override
+	public Iterator<Set<E>> iterator() {
+		return getAllEquivalenceClasses().iterator();
 	}
 }

@@ -1757,6 +1757,11 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 		}
 
 		@Override
+		public Set<STATE> getContainingSet(final STATE state) {
+			return mMapState2EquivalenceClass.get(state).mCollection;
+		}
+
+		@Override
 		public int size() {
 			return mEquivalenceClasses.size();
 		}
@@ -2009,6 +2014,23 @@ public class MinimizeSevpa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, ST
 				@Override
 				public IBlock<STATE> next() {
 					return mIt.next();
+				}
+			};
+		}
+
+		@Override
+		public Iterator<Set<STATE>> iterator() {
+			return new Iterator<Set<STATE>>() {
+				private final Iterator<EquivalenceClass> mIt = mEquivalenceClasses.iterator();
+
+				@Override
+				public boolean hasNext() {
+					return mIt.hasNext();
+				}
+
+				@Override
+				public Set<STATE> next() {
+					return mIt.next().mCollection;
 				}
 			};
 		}

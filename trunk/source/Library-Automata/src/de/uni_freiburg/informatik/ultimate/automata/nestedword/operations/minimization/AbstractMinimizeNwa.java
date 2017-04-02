@@ -51,10 +51,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyz
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IAutomatonStatePartition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DoubleDeckerVisitor.ReachFinal;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.IPartition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -273,24 +272,9 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 * @param addMapping
 	 *            true iff mapping 'old state -> new state' is added
 	 */
-	protected void constructResultFromPartition(final IAutomatonStatePartition<STATE> partition,
-			final boolean addMapping) {
+	protected void constructResultFromPartition(final IPartition<STATE> partition, final boolean addMapping) {
 		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
 				new QuotientNwaConstructor<>(mServices, mStateFactory, getOperand(), partition, addMapping);
-		constructResultFromQuotientConstructor(quotientNwaConstructor);
-	}
-
-	/**
-	 * Constructs the result from a partition.
-	 * 
-	 * @param unionFind
-	 *            union-find data structure
-	 * @param addMapping
-	 *            true iff mapping 'old state -> new state' is added
-	 */
-	protected void constructResultFromUnionFind(final UnionFind<STATE> unionFind, final boolean addMapping) {
-		final QuotientNwaConstructor<LETTER, STATE> quotientNwaConstructor =
-				new QuotientNwaConstructor<>(mServices, mStateFactory, getOperand(), unionFind, addMapping);
 		constructResultFromQuotientConstructor(quotientNwaConstructor);
 	}
 

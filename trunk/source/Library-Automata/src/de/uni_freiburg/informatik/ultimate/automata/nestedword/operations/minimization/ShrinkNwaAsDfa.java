@@ -684,6 +684,11 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		}
 
 		@Override
+		public Set<STATE> getContainingSet(final STATE state) {
+			return mState2EquivalenceClass.get(state).mStates;
+		}
+
+		@Override
 		public int size() {
 			return mEquivalenceClasses.size();
 		}
@@ -701,6 +706,23 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 				@Override
 				public IBlock<STATE> next() {
 					return mIt.next();
+				}
+			};
+		}
+
+		@Override
+		public Iterator<Set<STATE>> iterator() {
+			return new Iterator<Set<STATE>>() {
+				private final Iterator<EquivalenceClass> mIt = mEquivalenceClasses.iterator();
+
+				@Override
+				public boolean hasNext() {
+					return mIt.hasNext();
+				}
+
+				@Override
+				public Set<STATE> next() {
+					return mIt.next().mStates;
 				}
 			};
 		}
