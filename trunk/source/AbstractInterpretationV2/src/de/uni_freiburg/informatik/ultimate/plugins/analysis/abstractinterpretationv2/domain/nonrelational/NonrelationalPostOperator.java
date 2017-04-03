@@ -117,7 +117,8 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 		// TODO fix WORKAROUND unsoundness for summary code blocks without procedure implementation
 		if (transition instanceof Summary && !((Summary) transition).calledProcedureHasImplementation()) {
-			throw new UnsupportedOperationException("Summary for procedure without implementation");
+			throw new UnsupportedOperationException("Summary for procedure without implementation: "
+					+ BoogiePrettyPrinter.print(((Summary) transition).getCallStatement()));
 		}
 
 		List<STATE> currentStates = new ArrayList<>();
