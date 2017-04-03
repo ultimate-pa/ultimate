@@ -31,6 +31,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -90,17 +91,22 @@ public class SimultaneousUpdate {
 						throw new AssertionError("in and out have to be similar");
 					}
 				} else {
-					// extract
-					final Term pvContainingConjunct = pvContainingConjuncts.iterator().next();
-					final Term forbiddenTerm = null;
-					final TermVariable outVar = tf.getOutVars().get(pv);
-					final Term renamed = extractUpdateRhs(outVar, conjuncts, forbiddenTerm, inVarsReverseMapping,
-							outVarsReverseMapping, mgdScript);
-					if (renamed == null) {
-						throw new IllegalArgumentException("cannot bring into simultaneous update form " + pv
-								+ "'s outvar occurs in several conjuncts.");
+					final Term boolConst = isAssignedWithBooleanConstant(mgdScript, tf, pv, pvContainingConjuncts);
+					if (boolConst != null) {
+						mDeterministicallyAssignedVars.put(pv, boolConst);
+					} else {
+						// extract
+						final Term pvContainingConjunct = pvContainingConjuncts.iterator().next();
+						final Term forbiddenTerm = null;
+						final TermVariable outVar = tf.getOutVars().get(pv);
+						final Term renamed = extractUpdateRhs(outVar, conjuncts, forbiddenTerm, inVarsReverseMapping,
+								outVarsReverseMapping, mgdScript);
+						if (renamed == null) {
+							throw new IllegalArgumentException("cannot bring into simultaneous update form " + pv
+									+ "'s outvar occurs in several conjuncts.");
+						}
+						mDeterministicallyAssignedVars.put(pv, renamed);
 					}
-					mDeterministicallyAssignedVars.put(pv, renamed);
 				}
 
 				// else {
@@ -112,6 +118,26 @@ public class SimultaneousUpdate {
 		}
 
 		mgdScript.toString();
+	}
+	
+	private Term isAssignedWithBooleanConstant(final ManagedScript mgdScript, final TransFormula tf, final IProgramVar pv, final Set<Term> pvContainingConjuncts) {
+		if (pv.getTerm().getSort().getName().equals("Bool") &&
+				pvContainingConjuncts.size() == 1) {
+			final Term conjunct = pvContainingConjuncts.iterator().next();
+			if (conjunct.equals(tf.getOutVars().get(pv))) {
+				return mgdScript.getScript().term("true");
+			}
+			if (conjunct instanceof ApplicationTerm) {
+				final ApplicationTerm appTerm = (ApplicationTerm) conjunct;
+				if (appTerm.getFunction().getName().equals("not")) {
+					final Term negated = appTerm.getParameters()[0];
+					if (negated.equals(tf.getOutVars().get(pv))) {
+						return mgdScript.getScript().term("false");
+					}
+				}
+			}
+		}
+		return null;
 	}
 
 	private Term extractUpdateRhs(final TermVariable outVar, final Term[] conjuncts, final Term forbiddenTerm,
