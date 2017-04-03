@@ -282,9 +282,9 @@ public final class PathProgram extends BasePayloadContainer implements IIcfg<Icf
 				final IIcfgTransition<?> transition) {
 			mProcedures.add(transition.getPrecedingProcedure());
 			mProcedures.add(transition.getSucceedingProcedure());
-			transformula.getInVars().keySet().forEach(mSymbolTable::add);
-			transformula.getOutVars().keySet().forEach(mSymbolTable::add);
-			transformula.getNonTheoryConsts().forEach(mSymbolTable::add);
+			transformula.getInVars().keySet().stream().filter(a -> !a.isOldvar()).forEach(mSymbolTable::add);
+			transformula.getOutVars().keySet().stream().filter(a -> !a.isOldvar()).forEach(mSymbolTable::add);
+			transformula.getNonTheoryConsts().stream().forEach(mSymbolTable::add);
 		}
 
 		private IcfgLocation createPathProgramLocation(final IcfgLocation loc) {
