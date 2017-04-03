@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 University of Freiburg
  * 
  * This file is part of the ULTIMATE Regression Test Library.
  * 
@@ -34,10 +34,9 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 /**
  * 
- * This test suite automatically generates test cases from the example folder. If you place input files, toolchains and
- * settings files in a folder named regression, they will automatically be picked up.
+ * This test suite tests the AbstractInterpretation plugin of Ultimate.
  * 
- * @author dietsch@informatik.uni-freiburg.de
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
 public class AbsIntRegressionTestSuite extends AbstractRegressionTestSuite {
