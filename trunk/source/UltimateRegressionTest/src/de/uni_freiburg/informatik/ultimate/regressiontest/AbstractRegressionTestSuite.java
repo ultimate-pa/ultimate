@@ -175,11 +175,19 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 	/**
 	 * @return All the files that should be used in this test suite. The default implementation uses all files that can
-	 *         be found recursively under the folder in which the Toolchain file (specified in runConfiguration) lies
-	 *         and that have the endings specified by mFileTypesToConsider.
+	 *         be found recursively under the folder in which the deeper file (settings or toolchain, specified in
+	 *         runConfiguration) lies and that have the endings specified by mFileTypesToConsider.
 	 */
 	protected Collection<File> getInputFiles(final Pair runConfiguration) {
-		return TestUtil.getFiles(runConfiguration.getToolchainFile().getParentFile(), mFiletypesToConsider);
+		final File tcParent = runConfiguration.getToolchainFile().getParentFile();
+		final File settingParent = runConfiguration.getSettingsFile().getParentFile();
+		final File parent;
+		if (settingParent.toString().startsWith(tcParent.toString())) {
+			parent = settingParent;
+		} else {
+			parent = tcParent;
+		}
+		return TestUtil.getFiles(parent, mFiletypesToConsider);
 	}
 
 	protected abstract ITestResultDecider getTestResultDecider(UltimateRunDefinition runDefinition);
