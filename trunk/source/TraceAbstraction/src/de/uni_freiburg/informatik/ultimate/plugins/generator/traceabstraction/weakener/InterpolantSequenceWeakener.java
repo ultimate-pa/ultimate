@@ -28,12 +28,17 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.weakener;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
@@ -48,7 +53,9 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 
 	private final List<P> mResult;
 	private final ILogger mLogger;
-	private final HTC mHtc;
+	protected final HTC mHtc;
+	private final P mPrecondition;
+	private final P mPostcondition;
 
 	/**
 	 * Default constructor. Generates result directly.
@@ -63,9 +70,11 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	 *            The sequence of LETTERs that connects each predicate.
 	 */
 	public InterpolantSequenceWeakener(final ILogger logger, final HTC htc, final List<P> predicates,
-			final List<LETTER> trace) {
+			final List<LETTER> trace, final P precondition, final P postcondition) {
 		mLogger = logger;
 		mHtc = Objects.requireNonNull(htc);
+		mPrecondition = precondition;
+		mPostcondition = postcondition;
 		final List<LETTER> checkedTrace = Objects.requireNonNull(trace, "trace is null");
 		final List<P> checkedPredicates = Objects.requireNonNull(predicates, "predicates are null");
 		if (checkedTrace.size() != checkedPredicates.size() + 1) {
@@ -79,19 +88,90 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		}
 	}
 
-	protected List<P> generateResult(final List<P> predicates, final List<LETTER> list) {
-		// Reverse iterate over the list.
-		final TripleList<P, LETTER> tripleList = new TripleList<>(predicates, list);
-		final Iterator<StateTriple<P, LETTER>> it = tripleList.reverseIterator();
-		while (it.hasNext()) {
-			final StateTriple<P, LETTER> triple = it.next();
-			final P firstState = triple.getFirstState();
-			final LETTER transition = triple.getTransition();
-			final P secondState = triple.getSecondState();
+	private List<P> generateResult(final List<P> predicates, final List<LETTER> list) {
+		assert list != null;
+
+		final List<P> returnList = new ArrayList<>();
+
+		final TripleList<P, LETTER> tripleList = new TripleList<>(predicates, list, mPrecondition, mPostcondition);
+		final TripleList.TripleListReverseIterator<P, LETTER> it = tripleList.getReverseIterator();
+
+		if (!it.hasNext()) {
+			throw new IllegalStateException("There is no letter in the list to analyze.");
 		}
 
-		return null;
+		StateTriple<P, LETTER> currentStateTriple = it.next();
+		P currentPostState = currentStateTriple.getSecondState();
+
+		// Reverse iterate over the list.
+		while (true) {
+			final P currentPreState = currentStateTriple.getFirstState();
+			final LETTER transition = currentStateTriple.getTransition();
+
+			// If the currentPreState corresponds to the precondition, break.
+			if (currentPreState == mPrecondition) {
+				assert checkIfInductive(currentPreState, transition, currentPostState,
+						mHtc) : "Prestate and poststate are not inductive under the current transition.";
+				break;
+			}
+
+			final P refinedState = refinePreState(currentPreState, transition, currentPostState);
+			returnList.add(refinedState);
+			currentPostState = refinedState;
+
+			if (it.hasNext()) {
+				currentStateTriple = it.next();
+			} else {
+				break;
+			}
+		}
+
+		Collections.reverse(returnList);
+		return returnList;
+
 	}
+
+	/**
+	 * Checks whether a prestate and a post state are inductive under some transition.
+	 *
+	 * @param preState
+	 *            The prestate.
+	 * @param transition
+	 *            The transition.
+	 * @param postState
+	 *            The poststate.
+	 * @return <code>true</code> iff inductive, <code>false</code> otherwise.
+	 */
+	protected final boolean checkIfInductive(final P preState, final LETTER transition, final P postState,
+			final IHoareTripleChecker htc) {
+
+		if (transition instanceof IInternalAction) {
+
+		} else if (transition instanceof ICallAction) {
+
+		} else if (transition instanceof IReturnAction) {
+
+		} else {
+			throw new IllegalStateException(
+					"The transition has an unsupported type: " + transition.getClass().getSimpleName());
+		}
+
+		// TODO: Remove this and move to the respective ifs.
+		return true;
+	}
+
+	/**
+	 * States whether with the given information (pre, transition, post) the prestate can be refined
+	 *
+	 * @param preState
+	 *            The prestate.
+	 * @param transition
+	 *            The transition.
+	 * @param postState
+	 *            The poststate.
+	 * @return A (hopefully) refined prestate.
+	 */
+	protected abstract P refinePreState(final P preState, final LETTER transition, final P postState);
 
 	/**
 	 * @return the (hopefully) weakened sequence of predicates that is still inductive.
@@ -153,57 +233,160 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	 * @param <LETTER>
 	 *            The type of the transition.
 	 */
-	private static final class TripleList<P, LETTER> implements Iterable<StateTriple<P, LETTER>> {
+	private static final class TripleList<P, LETTER> {
 		private final List<P> mPredicates;
 		private final List<LETTER> mTrace;
+		private final P mPostcondition;
+		private final P mPrecondition;
 
-		public TripleList(final List<P> predicates, final List<LETTER> trace) {
+		private TripleList(final List<P> predicates, final List<LETTER> trace, final P precondition,
+				final P postcondition) {
 			mPredicates = predicates;
 			mTrace = trace;
+			mPrecondition = precondition;
+			mPostcondition = postcondition;
 		}
 
-		@Override
-		public Iterator<StateTriple<P, LETTER>> iterator() {
-			final Iterator<StateTriple<P, LETTER>> it = new Iterator<StateTriple<P, LETTER>>() {
+		private Iterator<StateTriple<P, LETTER>> getIterator() {
+			return new TripleListIterator<>(mPredicates, mTrace, mPrecondition, mPostcondition);
+		}
 
-				private final int mLetterIndex = 0;
-
-				@Override
-				public boolean hasNext() {
-					return mLetterIndex < mTrace.size();
-				}
-
-				@Override
-				public StateTriple<P, LETTER> next() {
-					return new StateTriple<>(mPredicates.get(mLetterIndex), mTrace.get(mLetterIndex),
-							mPredicates.get(mLetterIndex + 1));
-				}
-
-			};
-
-			return it;
+		private final TripleListReverseIterator<P, LETTER> getReverseIterator() {
+			return new TripleListReverseIterator<P, LETTER>(mPredicates, mTrace, mPrecondition, mPostcondition);
 		}
 
 		/**
-		 * @return A reverse iterator to iterate through the list reversely.
+		 * An iterator to iterate through a list of predicates and letters.
+		 *
+		 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+		 *
+		 * @param <P>
+		 *            The type of the predicates.
+		 * @param <LETTER>
+		 *            The type of the letters.
 		 */
-		protected final Iterator<StateTriple<P, LETTER>> reverseIterator() {
-			final Iterator<StateTriple<P, LETTER>> it = new Iterator<StateTriple<P, LETTER>>() {
+		private final static class TripleListIterator<P, LETTER> implements Iterator<StateTriple<P, LETTER>> {
 
-				private final int mLetterIndex = mTrace.size() - 1;
+			private final List<P> mPredicates;
+			private final List<LETTER> mTrace;
+			private final P mPostcondition;
+			private final P mPrecondition;
 
-				@Override
-				public boolean hasNext() {
-					return mLetterIndex >= 0;
+			private int mLetterIndex;
+
+			private TripleListIterator(final List<P> predicates, final List<LETTER> trace, final P precondition,
+					final P postcondition) {
+				mPredicates = predicates;
+				mTrace = trace;
+				mPrecondition = precondition;
+				mPostcondition = postcondition;
+				mLetterIndex = 0;
+			}
+
+			@Override
+			public boolean hasNext() {
+				return mLetterIndex < mTrace.size();
+			}
+
+			@Override
+			public StateTriple<P, LETTER> next() {
+				// The predicate list does not contain pre- and postconditions.
+				// Account for this fact here: The first letter leads from the precondition to the first predicate;
+				// the last letter leads from the last predicate to the postcondition.
+				final P prev;
+				if (mLetterIndex == 0) {
+					prev = mPrecondition;
+				} else {
+					prev = mPredicates.get(mLetterIndex - 1);
 				}
 
-				@Override
-				public StateTriple<P, LETTER> next() {
-					return new StateTriple<>(mPredicates.get(mLetterIndex), mTrace.get(mLetterIndex),
-							mPredicates.get(mLetterIndex + 1));
+				final LETTER letter = mTrace.get(mLetterIndex);
+
+				final P next;
+				if (mLetterIndex == mTrace.size() - 1) {
+					next = mPostcondition;
+				} else {
+					next = mPredicates.get(mLetterIndex);
 				}
-			};
-			return it;
+
+				mLetterIndex++;
+				return new StateTriple<>(prev, letter, next);
+			}
+
+			private int getIndex() {
+				return mLetterIndex;
+			}
+
+			private void setToIndex(final int index) {
+				mLetterIndex = index;
+			}
+		}
+
+		/**
+		 * A reverse iterator to iterate through the list reversely.
+		 *
+		 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+		 *
+		 * @param <P>
+		 *            The type of the predicates.
+		 * @param <LETTER>
+		 *            The type of the letters.
+		 */
+		private final static class TripleListReverseIterator<P, LETTER> implements Iterator<StateTriple<P, LETTER>> {
+			private final List<P> mPredicates;
+			private final List<LETTER> mTrace;
+			private final P mPostcondition;
+			private final P mPrecondition;
+
+			private int mLetterIndex;
+
+			private TripleListReverseIterator(final List<P> predicates, final List<LETTER> trace, final P precondition,
+					final P postcondition) {
+				mPredicates = predicates;
+				mTrace = trace;
+				mPrecondition = precondition;
+				mPostcondition = postcondition;
+				mLetterIndex = mTrace.size() - 1;
+			}
+
+			@Override
+			public boolean hasNext() {
+				return mLetterIndex >= 0;
+			}
+
+			@Override
+			public StateTriple<P, LETTER> next() {
+				// The predicate list does not contain pre- and postconditions.
+				// Account for this fact here: The first letter leads from the precondition to the first predicate;
+				// the last letter leads from the last predicate to the postcondition.
+
+				final P prev;
+				if (mLetterIndex == 0) {
+					prev = mPrecondition;
+				} else {
+					prev = mPredicates.get(mLetterIndex - 1);
+				}
+
+				final LETTER letter = mTrace.get(mLetterIndex);
+
+				final P next;
+				if (mLetterIndex == mTrace.size() - 1) {
+					next = mPostcondition;
+				} else {
+					next = mPredicates.get(mLetterIndex);
+				}
+
+				mLetterIndex--;
+				return new StateTriple<>(prev, letter, next);
+			}
+
+			private int getCurrentIndex() {
+				return mLetterIndex;
+			}
+
+			private void setToIndex(final int index) {
+				mLetterIndex = index;
+			}
 		}
 	}
 }

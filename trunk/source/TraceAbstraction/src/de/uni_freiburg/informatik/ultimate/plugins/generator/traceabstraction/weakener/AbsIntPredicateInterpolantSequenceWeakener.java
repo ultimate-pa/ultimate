@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
@@ -35,25 +35,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
 
-/**
- * The {@link DummyInterpolantSequenceWeakener} does nothing. It just returns the sequence of predicates it was given.
- *
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- */
-public class DummyInterpolantSequenceWeakener<STATE extends IAbstractState<STATE, VARDECL>, VARDECL, LETTER extends IIcfgTransition<?>>
+public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractState<STATE, VARDECL>, VARDECL, LETTER extends IIcfgTransition<?>>
 		extends InterpolantSequenceWeakener<IHoareTripleChecker, AbsIntPredicate<STATE, VARDECL>, LETTER> {
 
-	/**
-	 * Default constructor.
-	 *
-	 * @param logger
-	 * @param htc
-	 * @param predicates
-	 * @param trace
-	 * @param precondition
-	 * @param postcondition
-	 */
-	public DummyInterpolantSequenceWeakener(final ILogger logger, final IHoareTripleChecker htc,
+	public AbsIntPredicateInterpolantSequenceWeakener(final ILogger logger, final IHoareTripleChecker htc,
 			final List<AbsIntPredicate<STATE, VARDECL>> predicates, final List<LETTER> trace,
 			final AbsIntPredicate<STATE, VARDECL> precondition, final AbsIntPredicate<STATE, VARDECL> postcondition) {
 		super(logger, htc, predicates, trace, precondition, postcondition);
@@ -62,8 +47,13 @@ public class DummyInterpolantSequenceWeakener<STATE extends IAbstractState<STATE
 	@Override
 	protected AbsIntPredicate<STATE, VARDECL> refinePreState(final AbsIntPredicate<STATE, VARDECL> preState,
 			final LETTER transition, final AbsIntPredicate<STATE, VARDECL> postState) {
-		// Always return the current prestate. The dummy weakener is just supposed to return the original list of
-		// predicates and do nothing with them.
+
+		// States consists of pre = <s1 OR s2 OR s3 OR ...>, post = <p1 OR p2 OR p3 OR ...>
+		for (final STATE s : preState.getAbstractStates()) {
+
+		}
+
 		return preState;
 	}
+
 }
