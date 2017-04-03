@@ -40,11 +40,12 @@ import java.util.List;
  */
 public class PostfixTree<LETTER, STATE> {
 
-	private final ArrayList<LETTER> mPostFix;
-	private final ArrayList<STATE> mPostFixStates;
-	private final ArrayList<Integer> mDepths;
+	private final List<LETTER> mPostFix;
+	private final List<STATE> mPostFixStates;
+	private final List<Integer> mDepths;
+	private final List<TreeRun<LETTER, STATE>> mPostFixSubtrees;
 
-	private final ArrayList<Integer> mStartIdx;
+	private final List<Integer> mStartIdx;
 
 	private final HashMap<Integer, Integer> mBeg;
 
@@ -55,6 +56,7 @@ public class PostfixTree<LETTER, STATE> {
 	public PostfixTree(final TreeRun<LETTER, STATE> run) {
 		mPostFix = new ArrayList<>();
 		mPostFixStates = new ArrayList<>();
+		mPostFixSubtrees = new ArrayList<>();
 		mStartIdx = new ArrayList<>();
 		mDepths = new ArrayList<>();
 		mBeg = new HashMap<>();
@@ -72,8 +74,18 @@ public class PostfixTree<LETTER, STATE> {
 	public List<STATE> getPostFixStates() {
 		return mPostFixStates;
 	}
+	
+	/**
+	 * Retrieve the subtree in the input tree run that corresponds to the given position in the post-order
+	 * 
+	 * @param postFixPos
+	 * @return
+	 */
+	public TreeRun<LETTER, STATE> getPostFixSubtree(int postFixPos) {
+		return mPostFixSubtrees.get(postFixPos);
+	}
 
-	private void addSymbol(final LETTER lt, final STATE st, final int depth) {
+	private void addSymbol(final TreeRun<LETTER, STATE> subTree, final LETTER lt, final STATE st, final int depth) {
 		if (!mBeg.containsKey(depth)) {
 			mBeg.put(depth, mDepths.size());
 		}
@@ -81,13 +93,14 @@ public class PostfixTree<LETTER, STATE> {
 		mPostFix.add(lt);
 		mPostFixStates.add(st);
 		mDepths.add(depth);
+		mPostFixSubtrees.add(subTree);
 	}
 
 	private void constructTree(final TreeRun<LETTER, STATE> run, final int depth) {
 
 		constructSubtrees(run.getChildren().iterator(), depth);
 		if (run.getRootSymbol() != null) {
-			addSymbol(run.getRootSymbol(), run.getRoot(), depth);
+			addSymbol(run, run.getRootSymbol(), run.getRoot(), depth);
 		}
 	}
 
@@ -99,6 +112,7 @@ public class PostfixTree<LETTER, STATE> {
 		constructSubtrees(it, depth + 1);
 	}
 
+	// TODO: convert to a JUnit test
 	public static void main(String[] args) {
 
 		TreeRun<Character, Integer> r9 = new TreeRun<Character, Integer>(9);

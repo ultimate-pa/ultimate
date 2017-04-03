@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.grap
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeRun;
-import de.uni_freiburg.informatik.ultimate.automata.tree.PostfixTree;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
@@ -49,9 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Minimize;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Totalize;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.TreeEmptinessCheck;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -89,7 +85,8 @@ public class TreeAutomizerCEGAR {
 	private int mIteration;
 	private ILogger mLogger;
 
-	private final BasePayloadContainer mRootNode;
+//	private final BasePayloadContainer mRootNode;
+	private final HornAnnot mHornAnnot;
 	private final HCPredicate mInitialPredicate;
 	private final HCPredicate mFinalPredicate;
 
@@ -108,6 +105,8 @@ public class TreeAutomizerCEGAR {
 	private final HCPredicateFactory mPredicateFactory;
 	private final AutomataLibraryServices mAutomataLibraryServices;
 
+	private List<HornClause> mAlphabet;
+
 	/**
 	 * Constructor for TreeAutomizer CEGAR
 	 * 
@@ -120,20 +119,29 @@ public class TreeAutomizerCEGAR {
 	 * @param hcSymbolTable
 	 */
 	public TreeAutomizerCEGAR(IUltimateServiceProvider services, IToolchainStorage storage,
-			BasePayloadContainer rootNode, TAPreferences taPrefs, ILogger logger, ManagedScript script,
-			HCSymbolTable hcSymbolTable) {
-		mBackendSmtSolverScript = script;
-		mSymbolTable = hcSymbolTable;
+//			BasePayloadContainer rootNode, 
+			HornAnnot annot,
+			TAPreferences taPrefs, ILogger logger) {
+//			ManagedScript script,
+//			HCSymbolTable hcSymbolTable) {
+		mBackendSmtSolverScript = annot.getScript();
+		mSymbolTable = annot.getSymbolTable();
 		mLogger = logger;
-		mRootNode = rootNode;
+//		mRootNode = rootNode;
+		mHornAnnot = annot;
+		
+		
+		mAlphabet = (List<HornClause>) mHornAnnot.getAnnotationsAsMap()
+				.get(HornUtilConstants.HORN_ANNOT_NAME);
+
 		mIteration = 0;
 
 		mAutomataLibraryServices = new AutomataLibraryServices(services);
 
-		mPredicateFactory = new HCPredicateFactory(services, mBackendSmtSolverScript, hcSymbolTable,
+		mPredicateFactory = new HCPredicateFactory(services, mBackendSmtSolverScript, mSymbolTable,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED);
 
-		mStateFactory = new HCStateFactory(script, mPredicateFactory, hcSymbolTable);
+		mStateFactory = new HCStateFactory(mBackendSmtSolverScript, mPredicateFactory, mSymbolTable);
 
 		mInitialPredicate = mPredicateFactory.getTruePredicate();
 		mFinalPredicate = mPredicateFactory.getFalsePredicate();
@@ -153,13 +161,17 @@ public class TreeAutomizerCEGAR {
 
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 
-		final Map<String, IAnnotations> st = mRootNode.getPayload().getAnnotations();
-		final HornAnnot annot = (HornAnnot) st.get(HornUtilConstants.HORN_ANNOT_NAME);
-		final List<HornClause> hornClauses = (List<HornClause>) annot.getAnnotationsAsMap()
-				.get(HornUtilConstants.HORN_ANNOT_NAME);
+//		final Map<String, IAnnotations> st = mRootNode.getPayload().getAnnotations();
+//		final HornAnnot annot = (HornAnnot) st.get(HornUtilConstants.HORN_ANNOT_NAME);
+//		final List<HornClause> hornClauses = (List<HornClause>) annot.getAnnotationsAsMap()
+//				.get(HornUtilConstants.HORN_ANNOT_NAME);
+//		final List<HornClause> hornClauses = (List<HornClause>) mHornAnnot.getAnnotationsAsMap()
+//				.get(HornUtilConstants.HORN_ANNOT_NAME);
+//		
+//		mAlphabet = hornClauses;
 
 		mAbstraction = new TreeAutomatonBU<>();
-		for (final HornClause clause : hornClauses) {
+		for (final HornClause clause : mAlphabet) {
 			final List<IPredicate> tail = new ArrayList<>();
 			for (HornClausePredicateSymbol sym : clause.getBodyPredicates()) {
 				tail.add(mPredicateFactory.createTruePredicateWithLocation(sym));
@@ -206,7 +218,7 @@ public class TreeAutomizerCEGAR {
 		return mChecker.checkTrace(lockOwner);
 	}
 
-	protected void constructInterpolantAutomaton(Map<IPredicate, Term> interpolantsMap)
+	protected void constructInterpolantAutomaton(Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap)
 			throws AutomataOperationCanceledException {
 
 		mInterpolAutomaton = ((TreeRun<HornClause, IPredicate>) mCounterexample)
@@ -217,7 +229,7 @@ public class TreeAutomizerCEGAR {
 
 		((TreeAutomatonBU<HornClause, IPredicate>) mInterpolAutomaton).extendAlphabet(mAbstraction.getAlphabet());
 
-		generalizeCounterExample();
+		generalizeCounterExample(mChecker.rebuild(interpolantsMap));
 
 		assert allRulesAreInductive(mInterpolAutomaton);
 	}
@@ -239,14 +251,24 @@ public class TreeAutomizerCEGAR {
 		return true;
 	}
 
-	private void generalizeCounterExample() {
+	private void generalizeCounterExample(Map<IPredicate, IPredicate> hcSymbolsToInterpolants) {
 		final Set<TreeAutomatonRule<HornClause, IPredicate>> rules = new HashSet<>();
-		for (final TreeAutomatonRule<HornClause, IPredicate> r : mInterpolAutomaton.getRules()) {
-			for (final IPredicate pf : mInterpolAutomaton.getStates()) {
-				if (mHoareTripleChecker.check(r.getSource(), r.getLetter(), pf) == Validity.VALID) {
-					mLogger.debug("Adding Rule: " + r.getLetter() + "(" + r.getSource() + ")" + " --> " + pf);
-					rules.add(new TreeAutomatonRule<HornClause, IPredicate>(r.getLetter(), r.getSource(), pf));
-				}
+		// for (final TreeAutomatonRule<HornClause, IPredicate> r :
+		// mInterpolAutomaton.getRules()) {
+		// for (final IPredicate pf : mInterpolAutomaton.getStates()) {
+		for (TreeAutomatonRule<HornClause, IPredicate> rule : 
+			new CandidateRuleProvider(mCounterexample, hcSymbolsToInterpolants, mAlphabet).getCandidateRules()) {
+			// if (mHoareTripleChecker.check(rule.getSource(), rule.getLetter(),
+			// pf) == Validity.VALID) {
+			// mLogger.debug("Adding Rule: " + rule.getLetter() + "(" +
+			// rule.getSource() + ")" + " --> " + pf);
+			// rules.add(new TreeAutomatonRule<HornClause,
+			// IPredicate>(rule.getLetter(), rule.getSource(), pf));
+			// }
+			if (mHoareTripleChecker.check(rule) == Validity.VALID) {
+				mLogger.debug(
+						"Adding Rule: " + rule.getLetter() + "(" + rule.getSource() + ")" + " --> " + rule.getDest());
+				rules.add(rule);
 			}
 		}
 		mLogger.debug("Generalizing counterExample:");
@@ -255,15 +277,7 @@ public class TreeAutomizerCEGAR {
 		}
 	}
 
-	// private TreeAutomatonBU<HornClause, HCPredicate> getCounterExample() {
 	private ITreeAutomatonBU<HornClause, IPredicate> getCounterExample() {
-		// //generalizeCounterExample();
-		// final Map<IPredicate, HCPredicate> mp = new HashMap<>();
-		// for (final IPredicate p : mInterpolAutomaton.getStates()) {
-		// mp.put(p, mPredicateFactory.convertItoHCPredicate(p));
-		// }
-		// return ((TreeAutomatonBU<HornClause, IPredicate>)
-		// mInterpolAutomaton).reconstruct(mp);
 		return mInterpolAutomaton;
 	}
 
@@ -325,7 +339,7 @@ public class TreeAutomizerCEGAR {
 
 			}
 			mLogger.debug("Getting Interpolants...");
-			final Map<IPredicate, Term> interpolantsMap = retrieveInterpolantsMap();
+			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap = retrieveInterpolantsMap();
 			mBackendSmtSolverScript.pop(this, 1);
 			mBackendSmtSolverScript.unlock(this);
 
@@ -342,29 +356,32 @@ public class TreeAutomizerCEGAR {
 		return Result.UNKNOWN;
 	}
 
-	private Map<IPredicate, Term> retrieveInterpolantsMap() {
-		// Using simple interpolant automaton : the counterexample's automaton.
-		PostfixTree<Term, IPredicate> postfixT = new PostfixTree<>(mSSA.getFormulasTree());
-
-		Term[] ts = new Term[postfixT.getPostFix().size()];
-		for (int i = 0; i < ts.length; ++i) {
-			ts[i] = mSSA.getPredicateVariable(postfixT.getPostFix().get(i), mBackendSmtSolverScript, this);
-		}
-		int[] idx = new int[postfixT.getStartIdx().size()];
-		for (int i = 0; i < idx.length; ++i) {
-			idx[i] = postfixT.getStartIdx().get(i);
-		}
-		// mBackendSmtSolverScript.lock(this);
-		Term[] interpolants = mBackendSmtSolverScript.getInterpolants(this, ts, idx);
-		// mBackendSmtSolverScript.unlock(this);
-
-		final Map<IPredicate, Term> interpolantsMap = new HashMap<>();
-		for (int i = 0; i < interpolants.length; ++i) {
-			IPredicate p = postfixT.getPostFixStates().get(i);
-			interpolantsMap.put(p, interpolants[i]);
-		}
-		return interpolantsMap;
-	}
+//	private HashRelation<HCPredicate, Term> retrieveInterpolantsMap() {
+//		// Using simple interpolant automaton : the counterexample's automaton.
+////		final PostfixTree<Term, IPredicate> postfixT = new PostfixTree<>(mSSA.getFormulasTree());
+//		final PostfixTree<HornClause, IPredicate> postfixT = 
+//				new PostfixTree<>((TreeRun<HornClause, IPredicate>) mCounterexample);
+//
+//		Term[] ts = new Term[postfixT.getPostFix().size()];
+//		for (int i = 0; i < ts.length; ++i) {
+////			ts[i] = mSSA.getPredicateVariable(postfixT.getPostFix().get(i), mBackendSmtSolverScript, this);
+//			ts[i] = mSSA.getPredicateVariable(postfixT.getPostFix().get(i), mBackendSmtSolverScript, this);
+//		}
+//		int[] idx = new int[postfixT.getStartIdx().size()];
+//		for (int i = 0; i < idx.length; ++i) {
+//			idx[i] = postfixT.getStartIdx().get(i);
+//		}
+//		final Term[] interpolants = mBackendSmtSolverScript.getInterpolants(this, ts, idx);
+//
+//		final HashRelation<HCPredicate, Term> interpolantsMap = new HashRelation<>();
+//		for (int i = 0; i < interpolants.length; ++i) {
+////			HCPredicate p = (HCPredicate) postfixT.getPostFixStates().get(i);
+//			TreeRun<HornClause, IPredicate> p = postfixT.getPostFixSubtree(i);
+////			interpolantsMap.put(p, interpolants[i]);
+//			interpolantsMap.addPair(p, interpolants[i]);
+//		}
+//		return interpolantsMap;
+//	}
 
 	protected void computeCFGHoareAnnotation() {
 		return;

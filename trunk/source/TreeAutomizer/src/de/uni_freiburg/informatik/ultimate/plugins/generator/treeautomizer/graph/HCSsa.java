@@ -52,6 +52,8 @@ public class HCSsa {
 	private final Map<Term, Integer> mCounters;
 	private final Map<Term, Term> mTermToAssertion;
 
+	private boolean mCountersAreFinalized;
+
 	/**
 	 * Constructor for HC-SSA
 	 * 
@@ -64,30 +66,32 @@ public class HCSsa {
 	 * @param counters
 	 *            A map of the counts of each Term.
 	 */
-	public HCSsa(final TreeRun<Term, IPredicate> nestedFormulas, final Term pre, final Term post,
-			final Map<Term, Integer> counters) {
+	public HCSsa(final TreeRun<Term, IPredicate> nestedFormulas, final Term pre, final Term post) {
 		mNestedFormulas = nestedFormulas;
 		mPostCondition = post;
 		mPreCondition = pre;
-		mCounters = counters;
+//		mCounters = counters;
+		mCounters = new HashMap<>();
+		mCountersAreFinalized = false;
 		mTermToAssertion = new HashMap<>();
 	}
 
-	/**
-	 * Constructor for HC-SSA that overrides the treeRun
-	 * @param ssa Old SSA
-	 * @param nestedFormulas The new tree run.
-	 */
-	public HCSsa(final HCSsa ssa, final TreeRun<Term, IPredicate> nestedFormulas) {
-		mNestedFormulas = nestedFormulas;
-		mPostCondition = ssa.mPostCondition;
-		mPreCondition = ssa.mPreCondition;
-		mCounters = ssa.mCounters;
-		mTermToAssertion = ssa.mTermToAssertion;
-	}
+//	/**
+//	 * Constructor for HC-SSA that overrides the treeRun
+//	 * @param ssa Old SSA
+//	 * @param nestedFormulas The new tree run.
+//	 */
+//	public HCSsa(final HCSsa ssa, final TreeRun<Term, IPredicate> nestedFormulas) {
+//		mNestedFormulas = nestedFormulas;
+//		mPostCondition = ssa.mPostCondition;
+//		mPreCondition = ssa.mPreCondition;
+//		mCounters = ssa.mCounters;
+//		mTermToAssertion = ssa.mTermToAssertion;
+//	}
 
-	protected int getCounter(final Term t) {
+	int getCounter(final Term t) {
 		if (!mCounters.containsKey(t)) {
+			assert mCountersAreFinalized == false;
 			int r = mCounters.size() + 1;
 			mCounters.put(t, r);
 		}
@@ -110,20 +114,25 @@ public class HCSsa {
 	 * Computes a flat version of the SSA.
 	 * This flat version is used by the TreeChecker to construct named formulas from it and assert each one in the 
 	 *  solver.
+	 *  
+	 * The order of the flattened list corresponds to a post-order over the tree, this 
 	 * 
 	 * @return 
 	 */
 	public List<Term> flatten() {
-		return flatten(mNestedFormulas);
+		final List<Term> result = flatten(mNestedFormulas, this);
+		mCountersAreFinalized = true;
+		return result;
 	}
 
-	private static List<Term> flatten(final TreeRun<Term, IPredicate> tree) {
+	private static List<Term> flatten(final TreeRun<Term, IPredicate> tree, HCSsa callingSsa) {
 		ArrayList<Term> res = new ArrayList<>();
 		for (final TreeRun<Term, IPredicate> child : tree.getChildren()) {
-			res.addAll(flatten(child));
+			res.addAll(flatten(child, callingSsa));
 		}
 		if (tree.getRootSymbol() != null) {
 			res.add(tree.getRootSymbol());
+			callingSsa.getCounter(tree.getRootSymbol());
 		}
 		return res;
 	}

@@ -149,31 +149,47 @@ public class HCSSABuilder {
 	 * @param interpolantsMap map of predicates to the corresponding interpolant.
 	 * @return A map of the new predicates.
 	 * */
-	public Map<IPredicate, IPredicate> rebuildSSApredicates(final Map<IPredicate, Term> interpolantsMap) {
-		final Map<IPredicate, IPredicate> res = new HashMap<>();
+	public Map<TreeRun<HornClause, IPredicate>, IPredicate> rebuildSSApredicates(
+			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
+		final Map<TreeRun<HornClause, IPredicate>, IPredicate> res = new HashMap<>();
 		mCurrentTree = 0;
 		rebuild((TreeRun<HornClause, IPredicate>) mTreeRun, res, interpolantsMap);
 		return res;
 	}
 
-	private void rebuild(final TreeRun<HornClause, IPredicate> tree, final Map<IPredicate, IPredicate> res,
-			final Map<IPredicate, Term> interpolantsMap) {
+	/**
+	 * 
+	 * @param tree
+	 * @param res The relation that is to be filled.
+	 * @param interpolantsMap
+	 */
+	private void rebuild(final TreeRun<HornClause, IPredicate> tree, 
+			final Map<TreeRun<HornClause, IPredicate>, IPredicate> res,
+			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
 		for (final TreeRun<HornClause, IPredicate> child : tree.getChildren()) {
 			mCurrentTree = getOrConstructIndex(tree);
 			rebuild(child, res, interpolantsMap);
 		}
 
-		if (tree.getRootSymbol() == null) {
-			res.put(tree.getRoot(), tree.getRoot());
-			return;
-		}
+//		if (tree.getRootSymbol() == null) {
+////			res.put(tree.getRoot(), tree.getRoot());
+//			res.addPair((HCPredicate) tree.getRoot(), tree.getRoot());
+//			return;
+//		}
 		mCurrentTree = getOrConstructIndex(tree);
 		final VariableVersioneer vvRoot = mSubsMap.get(tree);
-		if (interpolantsMap.containsKey(tree.getRoot())) {
-			res.put(tree.getRoot(), vvRoot.backVersion(tree.getRoot(), interpolantsMap.get(tree.getRoot())));
-		} else {
-			res.put(tree.getRoot(), tree.getRoot());
-		}
+		
+		res.put(tree, vvRoot.backVersion(interpolantsMap.get(tree)));
+		
+//		if (interpolantsMap.containsKey(tree.getRoot())) {
+//		if (interpolantsMap.getDomain().contains(tree.getRoot())) {
+////			res.put(tree.getRoot(), vvRoot.backVersion(tree.getRoot(), interpolantsMap.get(tree.getRoot())));
+//			res.addPair(tree.getRoot(), vvRoot.backVersion(tree.getRoot(), interpolantsMap.get(tree.getRoot())));
+//		} else {
+//			res.put(tree.getRoot(), tree.getRoot());
+//		}
+
+//		return res;
 	}
 
 	private TreeRun<Term, IPredicate> buildNestedFormulaTree(final TreeRun<HornClause, IPredicate> tree,
@@ -225,7 +241,7 @@ public class HCSSABuilder {
 		final VariableVersioneer vvPost = new VariableVersioneer(mPostCondition);
 		vvPost.versionPredicate(mCurrentTree);
 
-		return new HCSsa(tree, vvPre.getVersioneeredTerm(), vvPost.getVersioneeredTerm(), mCounters);
+		return new HCSsa(tree, vvPre.getVersioneeredTerm(), vvPost.getVersioneeredTerm());
 	}
 
 	public Map<Term, HCOutVar> getConstants2BoogieVar() {
@@ -397,7 +413,7 @@ public class HCSSABuilder {
 		 * @param term
 		 * @return
 		 */
-		public IPredicate backVersion(final IPredicate pl, final Term term) {
+		public IPredicate backVersion(final Term term) {
 			final Set<IProgramVar> vars = new HashSet<>();
 			final Map<Term, Term> backSubstitutionMap = new HashMap<>();
 			final Map<Term, HCOutVar> termToHcVar = new HashMap<>();

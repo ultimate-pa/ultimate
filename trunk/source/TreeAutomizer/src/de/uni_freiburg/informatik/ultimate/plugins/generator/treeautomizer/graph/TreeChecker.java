@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeRun;
+import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Annotation;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -91,7 +92,8 @@ public class TreeChecker {
 	 *            the map of predicates to the corresponding interpolants.
 	 * @return
 	 */
-	public Map<IPredicate, IPredicate> rebuild(final Map<IPredicate, Term> interpolantsMap) {
+	public Map<TreeRun<HornClause, IPredicate>, IPredicate> rebuild(
+			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
 		return mSSABuilder.rebuildSSApredicates(interpolantsMap);
 	}
 
@@ -100,21 +102,21 @@ public class TreeChecker {
 	}
 
 	protected LBool checkTrace(Object lockOwner) {
-//		mBackendSmtSolverScript.lock(this);
+		
 		final HCSsa ssa = getSSA();
 		final List<Term> nestedExp = ssa.flatten();
-		HashSet<Integer> visited = new HashSet<>();
+		HashSet<String> visited = new HashSet<>();
 		for (final Term t : nestedExp) {
 			final Annotation ann = new Annotation(":named", ssa.getName(t));
-			if (!visited.contains(ssa.getCounter(t))) {
+			if (!visited.contains(ssa.getName(t))) {
 				mLogger.debug("assert: " + ssa.getName(t) + " :: " + t.toString());
-				visited.add(ssa.getCounter(t));
+				visited.add(ssa.getName(t));
 				final Term annT = mBackendSmtSolverScript.annotate(lockOwner, t, ann);
 				mBackendSmtSolverScript.assertTerm(lockOwner, annT);
 			}
 		}
 		final LBool result = mBackendSmtSolverScript.checkSat(lockOwner);
-//		mBackendSmtSolverScript.unlock(this);
+		
 		return result;
 	}
 }
