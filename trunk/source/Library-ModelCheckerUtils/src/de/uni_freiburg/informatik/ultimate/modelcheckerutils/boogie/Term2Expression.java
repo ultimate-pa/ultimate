@@ -412,7 +412,7 @@ public final class Term2Expression implements Serializable {
 			final VarList varList = mQuantifiedVariables.get(term);
 			assert varList.getIdentifiers().length == 1;
 			final String id = varList.getIdentifiers()[0];
-			result = new IdentifierExpression(null, type, id,
+			result = new IdentifierExpression(null, type, translateIdentifier(id),
 					new DeclarationInformation(StorageClass.QUANTIFIED, null));
 		} else if (mBoogie2SmtSymbolTable.getProgramVar(term) == null) {
 			// Case where term contains some auxilliary variable that was
@@ -429,21 +429,28 @@ public final class Term2Expression implements Serializable {
 			final ILocation loc = astNode.getLocation();
 			final DeclarationInformation declInfo = mBoogie2SmtSymbolTable.getDeclarationInformation(pv);
 			if (pv instanceof LocalBoogieVar) {
-				result = new IdentifierExpression(loc, type, ((LocalBoogieVar) pv).getIdentifier(), declInfo);
+				result = new IdentifierExpression(loc, type, translateIdentifier(((LocalBoogieVar) pv).getIdentifier()), declInfo);
 			} else if (pv instanceof BoogieNonOldVar) {
-				result = new IdentifierExpression(loc, type, ((BoogieNonOldVar) pv).getIdentifier(), declInfo);
+				result = new IdentifierExpression(loc, type, translateIdentifier(((BoogieNonOldVar) pv).getIdentifier()), declInfo);
 			} else if (pv instanceof BoogieOldVar) {
 				assert pv.isGlobal();
 				final Expression nonOldExpression =
-						new IdentifierExpression(loc, type, ((BoogieOldVar) pv).getIdentifierOfNonOldVar(), declInfo);
+						new IdentifierExpression(loc, type, translateIdentifier(((BoogieOldVar) pv).getIdentifierOfNonOldVar()), declInfo);
 				result = new UnaryExpression(loc, type, UnaryExpression.Operator.OLD, nonOldExpression);
 			} else if (pv instanceof BoogieConst) {
-				result = new IdentifierExpression(loc, type, ((BoogieConst) pv).getIdentifier(), declInfo);
+				result = new IdentifierExpression(loc, type, translateIdentifier(((BoogieConst) pv).getIdentifier()), declInfo);
 			} else {
 				throw new AssertionError("unsupported kind of variable " + pv.getClass().getSimpleName());
 			}
 		}
 		return result;
+	}
+	
+	/*
+	 * TODO escape all sequences that are not allowed in Boogie 
+	 */
+	private String translateIdentifier(final String id) {
+		return id.replace(" ", "_").replace("(", "_").replace(")", "_").replace("+", "PLUS").replace("-", "MINUS").replace("*", "MUL");
 	}
 
 	private static Operator getBinaryOperator(final FunctionSymbol symb) {
