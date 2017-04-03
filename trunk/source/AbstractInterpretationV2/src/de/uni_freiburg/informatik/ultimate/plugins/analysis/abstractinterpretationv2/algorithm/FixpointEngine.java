@@ -230,6 +230,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		final AbstractMultiState<STATE, ACTION, VARDECL> preStateWithFreshVariables =
 				preState.defineVariablesAfter(mVarProvider, currentAction, hierachicalPreState);
 
+		mResult.getBenchmark().addMaxVariables(preStateWithFreshVariables.getVariables().size());
+
 		AbstractMultiState<STATE, ACTION, VARDECL> postState;
 		if (preState == preStateWithFreshVariables) {
 			postState = preStateWithFreshVariables.apply(postOp, currentAction);
