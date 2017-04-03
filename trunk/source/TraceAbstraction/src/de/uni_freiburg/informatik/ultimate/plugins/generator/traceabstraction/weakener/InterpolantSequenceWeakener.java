@@ -79,7 +79,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		}
 	}
 
-	private List<P> generateResult(final List<P> predicates, final List<LETTER> list) {
+	protected List<P> generateResult(final List<P> predicates, final List<LETTER> list) {
 		// Reverse iterate over the list.
 		final TripleList<P, LETTER> tripleList = new TripleList<>(predicates, list);
 		final Iterator<StateTriple<P, LETTER>> it = tripleList.reverseIterator();

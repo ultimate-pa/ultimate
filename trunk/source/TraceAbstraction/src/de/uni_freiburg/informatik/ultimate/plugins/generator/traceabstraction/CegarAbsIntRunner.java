@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -64,9 +65,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
@@ -87,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.weakener.DummyInterpolantSequenceWeakener;
 
 /**
  *
@@ -375,8 +379,11 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			final Word<LETTER> word = mCex.getWord();
 			try {
 
-				final List<AbsIntPredicate<STATE, IBoogieVar>> interpolants =
-						generateInterpolants(constructTraceFromWord(word, mPathProgram));
+				final List<LETTER> ppTrace = constructTraceFromWord(word, mPathProgram);
+				final List<AbsIntPredicate<STATE, IBoogieVar>> nonUnifiedPredicates = generateAbsIntPredicates(ppTrace);
+				final List<AbsIntPredicate<STATE, IBoogieVar>> weakenedPredicates =
+						weakenPredicates(nonUnifiedPredicates, ppTrace);
+				final List<AbsIntPredicate<STATE, IBoogieVar>> interpolants = unifyPredicates(weakenedPredicates);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Interpolant sequence:");
 					mLogger.debug(interpolants);
@@ -391,6 +398,19 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), "generating AI predicates"));
 				throw tce;
 			}
+		}
+
+		private List<AbsIntPredicate<STATE, IBoogieVar>>
+				unifyPredicates(final List<AbsIntPredicate<STATE, IBoogieVar>> weakenedPredicates) {
+			return weakenedPredicates.stream()
+					.map(a -> getPredicateFromStates(a.getAbstractStates(), mCsToolkit.getManagedScript().getScript()))
+					.collect(Collectors.toList());
+		}
+
+		private List<AbsIntPredicate<STATE, IBoogieVar>> weakenPredicates(
+				final List<AbsIntPredicate<STATE, IBoogieVar>> nonUnifiedPredicates, final List<LETTER> ppTrace) {
+			return new DummyInterpolantSequenceWeakener<>(mLogger, getHoareTripleChecker(), nonUnifiedPredicates,
+					ppTrace).getResult();
 		}
 
 		private List<LETTER> constructTraceFromWord(final Word<LETTER> word, final PathProgram pathProgram) {
@@ -469,7 +489,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			return true;
 		}
 
-		private List<AbsIntPredicate<STATE, IBoogieVar>> generateInterpolants(final List<LETTER> cexTrace) {
+		private List<AbsIntPredicate<STATE, IBoogieVar>> generateAbsIntPredicates(final List<LETTER> cexTrace) {
 			mLogger.info("Generating AI predicates...");
 
 			final List<AbsIntPredicate<STATE, IBoogieVar>> rtr = new ArrayList<>();
@@ -483,7 +503,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					callstack.removeFirst();
 				}
 				final Set<STATE> postStates = mResult.getPostStates(callstack, symbol, previousStates);
-				final AbsIntPredicate<STATE, IBoogieVar> next = getPredicateFromStates(postStates, script);
+				final AbsIntPredicate<STATE, IBoogieVar> next = getNonUnifiedPredicateFromStates(postStates, script);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(symbol + " " + next);
 				}
@@ -503,6 +523,17 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			final Set<IPredicate> predicates = postStates.stream().map(s -> s.getTerm(script))
 					.map(mPredicateUnifierAbsInt::getOrConstructPredicate).collect(Collectors.toSet());
 			final IPredicate disjunction = mPredicateUnifierAbsInt.getOrConstructPredicateForDisjunction(predicates);
+			return new AbsIntPredicate<>(disjunction, postStates);
+		}
+
+		private AbsIntPredicate<STATE, IBoogieVar> getNonUnifiedPredicateFromStates(final Set<STATE> postStates,
+				final Script script) {
+			if (postStates.isEmpty()) {
+				return mFalsePredicate;
+			}
+			final BasicPredicateFactory predFac = mPredicateUnifierAbsInt.getPredicateFactory();
+			final Set<Term> terms = postStates.stream().map(s -> s.getTerm(script)).collect(Collectors.toSet());
+			final IPredicate disjunction = predFac.newPredicate(SmtUtils.or(script, terms));
 			return new AbsIntPredicate<>(disjunction, postStates);
 		}
 	}
