@@ -53,6 +53,7 @@ public class HCSsa {
 	private final Map<Term, Term> mTermToAssertion;
 
 	private boolean mCountersAreFinalized;
+	private Term[] mFlattenedTerms;
 
 	/**
 	 * Constructor for HC-SSA
@@ -74,6 +75,10 @@ public class HCSsa {
 		mCounters = new HashMap<>();
 		mCountersAreFinalized = false;
 		mTermToAssertion = new HashMap<>();
+		
+		final List<Term> flattenedTermslist = flatten(mNestedFormulas, this);
+		mFlattenedTerms = flattenedTermslist.toArray(new Term[flattenedTermslist.size()]);
+		mCountersAreFinalized = true;
 	}
 
 //	/**
@@ -111,7 +116,7 @@ public class HCSsa {
 	}
 
 	/**
-	 * Computes a flat version of the SSA.
+	 * Computes a flat (i.e. array instead of tree) version of the SSA.
 	 * This flat version is used by the TreeChecker to construct named formulas from it and assert each one in the 
 	 *  solver.
 	 *  
@@ -119,10 +124,8 @@ public class HCSsa {
 	 * 
 	 * @return 
 	 */
-	public List<Term> flatten() {
-		final List<Term> result = flatten(mNestedFormulas, this);
-		mCountersAreFinalized = true;
-		return result;
+	public Term[] getFlattenedTermList() {
+		return mFlattenedTerms;
 	}
 
 	private static List<Term> flatten(final TreeRun<Term, IPredicate> tree, HCSsa callingSsa) {
@@ -141,13 +144,21 @@ public class HCSsa {
 		return mNestedFormulas;
 	}
 
-	protected Term getPredicateVariable(final Term term, final ManagedScript script, final Object lockOwner) {
-		if (!mTermToAssertion.containsKey(term)) {
-			final String name = getName(term);
-			mTermToAssertion.put(term, script.term(lockOwner, name));
-		}
+//	protected Term getPredicateVariable(final Term term, final ManagedScript script, final Object lockOwner) {
+//		if (!mTermToAssertion.containsKey(term)) {
+//			final String name = getName(term);
+//			mTermToAssertion.put(term, script.term(lockOwner, name));
+//		}
+//
+//		final Term result = mTermToAssertion.get(term);
+//		return result;
+//	}
 
-		final Term result = mTermToAssertion.get(term);
+	public Term[] getNamedTermList(final ManagedScript script, final Object lockOwner) {
+		final Term[] result = new Term[mFlattenedTerms.length];
+		for (int i = 0; i < mFlattenedTerms.length; i++) {
+			result[i] = script.term(lockOwner, getName(mFlattenedTerms[i]));
+		}
 		return result;
 	}
 }
