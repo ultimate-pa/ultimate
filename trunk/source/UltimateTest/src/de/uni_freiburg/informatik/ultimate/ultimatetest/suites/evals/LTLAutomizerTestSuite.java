@@ -52,12 +52,12 @@ public class LTLAutomizerTestSuite extends AbstractEvalTestSuite {
 			// Note: SBE is currently broken
 
 			// no optimizations
-			"None.epf",
+//			"None.epf",
 
 			// only small and large block encoding
 //			"None+SBE.epf",
 //			"None+SBE+SASBE.epf",
-			"None+LBE-Multi.epf",
+//			"None+LBE-Multi.epf",
 
 			// only local optimizations (sink states, final states, locally infeasible edges)
 			"Default.epf",
@@ -69,16 +69,16 @@ public class LTLAutomizerTestSuite extends AbstractEvalTestSuite {
 
 			// large block encoding + local optimizations
 			"Default-LBE-Multi.epf",
-			"Default-LBE-Multi+IB.epf",
-			"Default-LBE-Single.epf",
-			"Default-LBE-SNME.epf",
+//			"Default-LBE-Multi+IB.epf",
+//			"Default-LBE-Single.epf",
+//			"Default-LBE-SNME.epf",
 
 			// different solver modes
-			"Default-LBE-Multi-z3.epf",
-			"Default-LBE-Multi-z3interpol.epf",
+//			"Default-LBE-Multi-z3.epf",
+//			"Default-LBE-Multi-z3interpol.epf",
 
 			// different buchi automata constructions
-			"Default-LBE-Multi+NondetBuchi.epf",
+//			"Default-LBE-Multi+NondetBuchi.epf",
 
 			// nearly all optimizations
 //			"Default-LBE-Multi+SBE.epf",
@@ -96,21 +96,21 @@ public class LTLAutomizerTestSuite extends AbstractEvalTestSuite {
 			// getPair("examples/LTL/rers2012/P18/", 1),
 			// getPair("examples/LTL/rers2012/P19/", 1),
 
-			// getPair("examples/LTL/rers2012correctencoding/P15/"),
-			// getPair("examples/LTL/rers2012correctencoding/P16/"),
-			// getPair("examples/LTL/rers2012correctencoding/P17/"),
-			// getPair("examples/LTL/rers2012correctencoding/P18/"),
-			// getPair("examples/LTL/rers2012correctencoding/P19/"),
-			// getPair("examples/LTL/rers2012correctencoding/P14/"),
-			//
+//			 getPair("examples/LTL/rers2012correctencoding/P15/"),
+//			 getPair("examples/LTL/rers2012correctencoding/P16/"),
+//			 getPair("examples/LTL/rers2012correctencoding/P17/"),
+//			 getPair("examples/LTL/rers2012correctencoding/P18/"),
+//			 getPair("examples/LTL/rers2012correctencoding/P19/"),
+//			 getPair("examples/LTL/rers2012correctencoding/P14/"),
+
 			getPair("examples/LTL/coolant/"),
 			getPair("examples/LTL/koskinen/ltlcmodelchecker-benchmarks/"),
 			getPair("examples/LTL/bugs/"),
 			getPair("examples/LTL/simple/"),
-			// getPair("examples/LTL/rers2012correctencoding/P14/Problem14_prop_017.c")
 
 			// Possible soundness bug
-			// getPair("examples/LTL/rers2012/P14/Problem14_prop_003.c"),
+//			getPair("examples/LTL/koskinen/ltlcmodelchecker-benchmarks/18-windows_os_frag4_prop2.c"),
+//			getPair("examples/LTL/rers2012/P14/Problem14_prop_003.c"),
 
 	};
 	// @formatter:on
