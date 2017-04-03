@@ -82,12 +82,12 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	private List<P> generateResult(final List<P> predicates, final List<LETTER> list) {
 		// Reverse iterate over the list.
 		final TripleList<P, LETTER> tripleList = new TripleList<>(predicates, list);
-		final Iterator<StateTriple<P, LETTER>> it = tripleList.iterator();
+		final Iterator<StateTriple<P, LETTER>> it = tripleList.reverseIterator();
 		while (it.hasNext()) {
 			final StateTriple<P, LETTER> triple = it.next();
-			triple.getFirstState();
-			triple.getTransition();
-			triple.getSecondState();
+			final P firstState = triple.getFirstState();
+			final LETTER transition = triple.getTransition();
+			final P secondState = triple.getSecondState();
 		}
 
 		return null;
@@ -102,7 +102,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 
 	/**
 	 * Represents a triple of two states (predicates) and a transition.
-	 * 
+	 *
 	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
 	 *
 	 * @param <P>
@@ -145,7 +145,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	/**
 	 * Represents a list of triples consisting of states (predicates) and transitions of the form {st1} tr {st2}, where
 	 * st1, st2 are states and tr is a transition.
-	 * 
+	 *
 	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
 	 *
 	 * @param <P>
@@ -166,16 +166,40 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		public Iterator<StateTriple<P, LETTER>> iterator() {
 			final Iterator<StateTriple<P, LETTER>> it = new Iterator<StateTriple<P, LETTER>>() {
 
-				private final int mLetterIndex = mTrace.size() - 1;
+				private final int mLetterIndex = 0;
 
 				@Override
 				public boolean hasNext() {
-					return mLetterIndex > 0;
+					return mLetterIndex < mTrace.size();
 				}
 
 				@Override
 				public StateTriple<P, LETTER> next() {
-					return new StateTriple<>(mPredicates.get(mLetterIndex - 1), mTrace.get(mLetterIndex),
+					return new StateTriple<>(mPredicates.get(mLetterIndex), mTrace.get(mLetterIndex),
+							mPredicates.get(mLetterIndex + 1));
+				}
+
+			};
+
+			return it;
+		}
+
+		/**
+		 * @return A reverse iterator to iterate through the list reversely.
+		 */
+		protected final Iterator<StateTriple<P, LETTER>> reverseIterator() {
+			final Iterator<StateTriple<P, LETTER>> it = new Iterator<StateTriple<P, LETTER>>() {
+
+				private final int mLetterIndex = mTrace.size() - 1;
+
+				@Override
+				public boolean hasNext() {
+					return mLetterIndex >= 0;
+				}
+
+				@Override
+				public StateTriple<P, LETTER> next() {
+					return new StateTriple<>(mPredicates.get(mLetterIndex), mTrace.get(mLetterIndex),
 							mPredicates.get(mLetterIndex + 1));
 				}
 			};
