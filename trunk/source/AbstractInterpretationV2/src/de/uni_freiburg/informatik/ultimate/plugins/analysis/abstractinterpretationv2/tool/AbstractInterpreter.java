@@ -60,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgLibraryModeResultReporter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgLoopDetector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgResultReporter;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.dataflow.DataflowState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.livevariable.LiveVariableDomain;
@@ -69,7 +68,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineFutureParameterFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.initializer.FixpointEngineParameterFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
 /**
  * Should be used by other tools to run abstract interpretation on various parts of the RCFG.
@@ -118,16 +116,15 @@ public final class AbstractInterpreter {
 	 *
 	 */
 	public static <STATE extends IAbstractState<STATE, IBoogieVar>>
-			IAbstractInterpretationResult<STATE, IcfgEdge, IBoogieVar, IcfgLocation>
-			runWithoutTimeout(final IIcfg<BoogieIcfgLocation> root, final IProgressAwareTimer timer,
-					final IUltimateServiceProvider services) {
+			IAbstractInterpretationResult<STATE, IcfgEdge, IBoogieVar, IcfgLocation> runWithoutTimeoutAndResults(
+					final IIcfg<?> root, final IProgressAwareTimer timer, final IUltimateServiceProvider services) {
 		assert root != null;
 		assert services != null;
 		assert timer != null;
 
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		try {
-			final ITransitionProvider<IcfgEdge, IcfgLocation> transProvider = new RcfgTransitionProvider();
+			final ITransitionProvider<IcfgEdge, IcfgLocation> transProvider = new IcfgTransitionProvider(root);
 			final Script script = root.getCfgSmtToolkit().getManagedScript().getScript();
 			final FixpointEngineParameterFactory domFac =
 					new FixpointEngineParameterFactory(root, () -> new RCFGLiteralCollector(root), services);
@@ -135,7 +132,7 @@ public final class AbstractInterpreter {
 			final FixpointEngineParameters<STATE, IcfgEdge, IBoogieVar, IcfgLocation> params =
 					domFac.createParams(timer, transProvider, loopDetector);
 			final FixpointEngine<STATE, IcfgEdge, IBoogieVar, IcfgLocation> fxpe = new FixpointEngine<>(params);
-			final Set<BoogieIcfgLocation> initial = root.getInitialNodes();
+			final Set<? extends IcfgLocation> initial = root.getInitialNodes();
 			final AbstractInterpretationResult<STATE, IcfgEdge, IBoogieVar, IcfgLocation> result =
 					fxpe.run(initial, script);
 			if (logger.isDebugEnabled()) {

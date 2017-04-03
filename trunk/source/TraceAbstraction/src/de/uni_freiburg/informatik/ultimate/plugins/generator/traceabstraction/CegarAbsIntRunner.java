@@ -193,8 +193,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 			@SuppressWarnings("unchecked")
 			final IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> result =
-					(IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?>) AbstractInterpreter.run(pp, timer,
-							mServices);
+					(IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?>) AbstractInterpreter
+							.runWithoutTimeoutAndResults(pp, timer, mServices);
 			if (result == null) {
 				mCurrentIteration = null;
 			} else {

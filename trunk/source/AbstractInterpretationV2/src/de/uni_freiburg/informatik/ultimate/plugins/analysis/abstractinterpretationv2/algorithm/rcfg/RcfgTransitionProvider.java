@@ -155,7 +155,11 @@ public class RcfgTransitionProvider implements ITransitionProvider<IcfgEdge, Icf
 
 	@Override
 	public boolean isErrorLocation(final IcfgLocation loc) {
-		return ((BoogieIcfgLocation) loc).isErrorLocation();
+		if (loc instanceof BoogieIcfgLocation) {
+			return ((BoogieIcfgLocation) loc).isErrorLocation();
+		}
+		return ((BoogieIcfgLocation) loc.getLabel()).isErrorLocation();
+
 	}
 
 }
