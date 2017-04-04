@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.IcfgTransformerSequen
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.LocalTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.MapEliminationTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ExampleLoopAccelerationTransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ahmed.AhmedLoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.LoopDetectionBB;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.WernerLoopAccelerationIcfgTransformer;
@@ -161,6 +162,8 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			return applyLoopAccelerationFastUPR(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case LOOP_ACCELERATION_WERNER:
 			return applyLoopAccelerationWerner(icfg, locFac, outlocClass, backtranslationTracker, fac);
+		case LOOP_ACCELERATION_AHMED:
+			return applyLoopAccelerationAhmed(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case MAP_ELIMINATION:
 			return applyMapElimination(icfg, locFac, outlocClass, backtranslationTracker, fac);
 		case REMOVE_DIV_MOD:
@@ -171,6 +174,15 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		default:
 			throw new UnsupportedOperationException("Unknown transformation type: " + transformation);
 		}
+	}
+
+	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationAhmed(
+			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
+			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
+		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
+				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
+		return new AhmedLoopAccelerationIcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass,
+				"IcfgWithLoopAccelerationAhmed", transformer, mServices).getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationWoelfing(

@@ -56,6 +56,7 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 //			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr.epf"),
 			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
 			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
+			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Ahmed_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
 	};
