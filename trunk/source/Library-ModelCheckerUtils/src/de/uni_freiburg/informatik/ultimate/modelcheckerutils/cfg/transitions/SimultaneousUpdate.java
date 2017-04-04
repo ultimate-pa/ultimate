@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -103,7 +104,7 @@ public class SimultaneousUpdate {
 								outVarsReverseMapping, mgdScript);
 						if (renamed == null) {
 							throw new IllegalArgumentException("cannot bring into simultaneous update form " + pv
-									+ "'s outvar occurs in several conjuncts.");
+									+ "'s outvar occurs in several conjuncts " + Arrays.toString(conjuncts));
 						}
 						mDeterministicallyAssignedVars.put(pv, renamed);
 					}
@@ -169,14 +170,14 @@ public class SimultaneousUpdate {
 					final Term renamed = extractUpdateRhs(tv, conjuncts, forbiddenTerm, inVarsReverseMapping,
 							outVarsReverseMapping, mgdScript);
 					if (renamed == null) {
-						throw new IllegalArgumentException(
-								"cannot bring into simultaneous update form, two outvars in equality ");
+						throw new IllegalArgumentException("cannot bring into simultaneous update form, " + tv
+								+ " has two outvars in equality " + Arrays.toString(conjuncts));
 
 					}
 					result.put(tv, renamed);
 				} else {
-					throw new IllegalArgumentException(
-							"cannot bring into simultaneous update form, neither invar nor outvar " + tv);
+					throw new IllegalArgumentException("cannot bring into simultaneous update form, " + tv
+							+ " has neither invar nor outvar in " + Arrays.toString(conjuncts));
 				}
 			}
 		}
