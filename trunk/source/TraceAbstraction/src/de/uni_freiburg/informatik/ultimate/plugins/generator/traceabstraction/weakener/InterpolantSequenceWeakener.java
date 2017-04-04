@@ -28,8 +28,10 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.weakener;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
@@ -40,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICall
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -56,6 +59,12 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	protected final HTC mHtc;
 	private final P mPrecondition;
 	private final P mPostcondition;
+
+	/**
+	 * @deprecated For debugging purposes only.
+	 */
+	@Deprecated
+	private final Deque<P> mHierarchicalPreStates;
 
 	/**
 	 * Default constructor. Generates result directly.
@@ -75,6 +84,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		mHtc = Objects.requireNonNull(htc);
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
+		mHierarchicalPreStates = new ArrayDeque<>();
 		final List<LETTER> checkedTrace = Objects.requireNonNull(trace, "trace is null");
 		final List<P> checkedPredicates = Objects.requireNonNull(predicates, "predicates are null");
 		if (checkedTrace.size() != checkedPredicates.size() + 1) {
@@ -108,10 +118,11 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 			final P currentPreState = currentStateTriple.getFirstState();
 			final LETTER transition = currentStateTriple.getTransition();
 
+			assert checkIfInductive(currentPreState, transition, currentPostState,
+					mHtc) : "Prestate and poststate are not inductive under the current transition.";
+
 			// If the currentPreState corresponds to the precondition, break.
 			if (currentPreState == mPrecondition) {
-				assert checkIfInductive(currentPreState, transition, currentPostState,
-						mHtc) : "Prestate and poststate are not inductive under the current transition.";
 				break;
 			}
 
@@ -132,7 +143,8 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	}
 
 	/**
-	 * Checks whether a prestate and a post state are inductive under some transition.
+	 * Checks whether a prestate and a post state are inductive under some transition. This method is only for debugging
+	 * purposes (with enabled assertions) as inductivity should also be checked outside of this class.
 	 *
 	 * @param preState
 	 *            The prestate.
@@ -141,23 +153,34 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	 * @param postState
 	 *            The poststate.
 	 * @return <code>true</code> iff inductive, <code>false</code> otherwise.
+	 *
+	 * @deprecated For debugging purposes only.
 	 */
+	@Deprecated
 	protected final boolean checkIfInductive(final P preState, final LETTER transition, final P postState,
 			final IHoareTripleChecker htc) {
 
+		final Validity validity;
+
 		if (transition instanceof IInternalAction) {
-
+			validity = mHtc.checkInternal(preState, (IInternalAction) transition, postState);
 		} else if (transition instanceof ICallAction) {
-
+			validity = mHtc.checkCall(preState, (ICallAction) transition, postState);
+			mHierarchicalPreStates.addFirst(preState);
 		} else if (transition instanceof IReturnAction) {
-
+			final IReturnAction returnTransition = (IReturnAction) transition;
+			final P hierState = mHierarchicalPreStates.removeFirst();
+			validity = mHtc.checkReturn(preState, hierState, returnTransition, postState);
 		} else {
 			throw new IllegalStateException(
 					"The transition has an unsupported type: " + transition.getClass().getSimpleName());
 		}
 
-		// TODO: Remove this and move to the respective ifs.
-		return true;
+		if (validity == Validity.VALID) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
