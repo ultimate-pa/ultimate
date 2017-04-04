@@ -155,7 +155,12 @@ public class SimpleCsvProvider<T> implements ICsvProvider<T> {
 		}
 		if (printColHeader) {
 			for (final String s : mColumnTitles) {
-				sb.append(s).append(separator);
+				if (s == null || s.isEmpty()) {
+					sb.append("NOTITLE").append(separator);
+				} else {
+					checkForSeparators(s, separator, lineSeparator);
+					sb.append(s).append(separator);
+				}
 			}
 
 			if (sb.length() >= separator.length()) {
