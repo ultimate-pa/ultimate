@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
  *
  * This is a basic example for a unit test.
  *
- * You may need some mock classes. Have a look at QuantifiierEliminiationTest in Library-ModelCheckerUtilsTest to see
+ * You may need some mock classes. Have a look at QuantifierEliminationTest in Library-ModelCheckerUtilsTest to see
  * examples for creating {@link IUltimateServiceProvider}, {@link ILogger} and {@link Script} mocks.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)

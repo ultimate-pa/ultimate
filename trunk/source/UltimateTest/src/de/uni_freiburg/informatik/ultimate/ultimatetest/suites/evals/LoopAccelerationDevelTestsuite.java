@@ -55,6 +55,7 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 //			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr.epf"),
 			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
+			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
 	};
@@ -62,7 +63,8 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 	private static final String[] INPUT = new String[] {
 
 			// Normal regressions
-			"examples/programs/loopAcceleration",
+//			"examples/programs/loopAcceleration",
+			"examples/programs/loopAcceleration/loopAccelerationBB/loop1.bpl",
 	};
 	// @formatter:on
 
