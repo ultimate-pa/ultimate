@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.server;
 
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
@@ -11,7 +12,7 @@ public interface IInteractiveServer<T> extends IServer {
 	 * 
 	 * @throws InterruptedException
 	 */
-	Client<T> waitForConnection() throws InterruptedException, ExecutionException, TimeoutException;
+	Client<T> waitForConnection(final long timeout, final TimeUnit timeunit) throws InterruptedException, ExecutionException, TimeoutException;
 
 	ITypeRegistry<T> getTypeRegistry();
 }

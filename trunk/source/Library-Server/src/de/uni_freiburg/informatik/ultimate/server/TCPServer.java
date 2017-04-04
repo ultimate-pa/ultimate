@@ -132,12 +132,12 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 	}
 
 	@Override
-	public Client<T> waitForConnection() throws InterruptedException, ExecutionException, TimeoutException {
+	public Client<T> waitForConnection(final long timeout, final TimeUnit timeunit) throws InterruptedException, ExecutionException, TimeoutException {
 		if (!mRunning || mServerFuture.isDone()) {
 			throw new IllegalStateException("Server not running.");
 		}
 
-		return mClient.get(60, TimeUnit.SECONDS);
+		return mClient.get(timeout, timeunit);
 	}
 
 }

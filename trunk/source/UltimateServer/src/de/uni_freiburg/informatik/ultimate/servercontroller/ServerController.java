@@ -37,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -178,7 +179,7 @@ public class ServerController implements IController<RunDefinition> {
 			final File[] availableInputFiles) throws InterruptedException, ExecutionException, TimeoutException {
 		mLogger.debug("Waiting for connection...");
 
-		final Client<GeneratedMessageV3> client = mServer.waitForConnection();
+		final Client<GeneratedMessageV3> client = mServer.waitForConnection(5, TimeUnit.MINUTES);
 		mProtoInterface = client.createInteractiveInterface();
 
 		mConverterInitializer = new Converter.Initializer<>(mProtoInterface, mServer.getTypeRegistry());
