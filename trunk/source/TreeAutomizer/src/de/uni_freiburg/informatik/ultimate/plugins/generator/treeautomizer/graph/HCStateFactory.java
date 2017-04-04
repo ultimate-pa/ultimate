@@ -223,8 +223,8 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 //				new HashSet<>(Arrays.asList(state2.getFormula().getFreeVars())))) : "the free variables of the two "
 //						+ "predicates must be equal modulo ordering"; // we cannot demand this, the formula does not need to talk about all variables of that HCPredicatesymbol..
 
-		assert state1.getVars().equals(state2.getVars());
-		assert !(state2 instanceof HCPredicate) : "convention: first argument is an HCPredicate, second is not..";
+//		assert state1.getVars().equals(state2.getVars());
+//		assert !(state2 instanceof HCPredicate) || isTrueHcPredicate(state2) : "convention: first argument is an HCPredicate, second is not..";
 
 		final Set<HornClausePredicateSymbol> state1PredSymbols = ((HCPredicate) state1).getHcPredicateSymbols();
 
@@ -235,6 +235,20 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 				Arrays.asList(state1.getFormula().getFreeVars()));
 		
 		return result;
+	}
+
+	private boolean isTrueHcPredicate(IPredicate state2) {
+		if (!(state2 instanceof HCPredicate)) {
+			return false;
+		}
+		final HCPredicate hcPred = (HCPredicate) state2;
+		if (hcPred.getHcPredicateSymbols().size() != 1) {
+			return false;
+		}
+		if (!"True".equals(hcPred.getHcPredicateSymbols().iterator().next().toString())) {
+			return false;
+		}
+		return true;
 	}
 
 	@Override

@@ -32,7 +32,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+
 
 /**
  * A run of a tree automaton.
@@ -91,11 +93,15 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 			childStates.add(child.getRoot());
 			allRules.addAll(child.getRules());
 		}
-		allRules.add(new TreeAutomatonRule<LETTER, STATE>(mLetter, childStates, state));
+		if (mLetter != null) {
+			allRules.add(new TreeAutomatonRule<LETTER, STATE>(mLetter, childStates, state));
+		}
 		allStates.add(mState);
 		
 		mAllStates = Collections.unmodifiableSet(allStates);
 		mAllRules = Collections.unmodifiableSet(allRules);
+		
+		assert !mAllStates.stream().anyMatch(Objects::isNull);
 	}
 
 	/***
@@ -126,8 +132,11 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 		for (final TreeRun<LETTER, STATE> c : mChildren) {
 			children.add(c.reconstructViaSubtrees(stMap));
 		}
-		
-		return new TreeRun<>(stMap.get(this), mLetter, children);
+		if (stMap.get(this) == null) {
+			return (TreeRun<LETTER, ST>) this;
+		} else {
+			return new TreeRun<>(stMap.get(this), mLetter, children);
+		}
 	}
 	
 	
@@ -212,6 +221,11 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 		return mLetter;
 	}
 	
+	public List<TreeRun<LETTER, STATE>> getSubtreesInPostOrder() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	@Override
 	public String toString() {
 		if (mChildren.isEmpty()) {

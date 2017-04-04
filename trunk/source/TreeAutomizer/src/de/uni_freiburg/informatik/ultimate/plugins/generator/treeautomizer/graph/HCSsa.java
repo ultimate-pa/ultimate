@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * HCSsa HornClause-SSA
@@ -54,6 +55,7 @@ public class HCSsa {
 
 	private boolean mCountersAreFinalized;
 	private Term[] mFlattenedTerms;
+	private int[] mStartsOfSubtrees;
 
 	/**
 	 * Constructor for HC-SSA
@@ -71,32 +73,25 @@ public class HCSsa {
 		mNestedFormulas = nestedFormulas;
 		mPostCondition = post;
 		mPreCondition = pre;
-//		mCounters = counters;
+
 		mCounters = new HashMap<>();
 		mCountersAreFinalized = false;
 		mTermToAssertion = new HashMap<>();
-		
-		final List<Term> flattenedTermslist = flatten(mNestedFormulas, this);
+
+		final Pair<List<Term>, List<Integer>> flattenRes = flatten(mNestedFormulas, 0);
+		final List<Term> flattenedTermslist = flattenRes.getFirst();
+		final List<Integer> startsOfSubtrees = flattenRes.getSecond();
 		mFlattenedTerms = flattenedTermslist.toArray(new Term[flattenedTermslist.size()]);
+		mStartsOfSubtrees = new int[startsOfSubtrees.size()];
+		for (int i = 0; i < startsOfSubtrees.size(); i++) {
+			mStartsOfSubtrees[i] = startsOfSubtrees.get(i);
+		}
 		mCountersAreFinalized = true;
 	}
 
-//	/**
-//	 * Constructor for HC-SSA that overrides the treeRun
-//	 * @param ssa Old SSA
-//	 * @param nestedFormulas The new tree run.
-//	 */
-//	public HCSsa(final HCSsa ssa, final TreeRun<Term, IPredicate> nestedFormulas) {
-//		mNestedFormulas = nestedFormulas;
-//		mPostCondition = ssa.mPostCondition;
-//		mPreCondition = ssa.mPreCondition;
-//		mCounters = ssa.mCounters;
-//		mTermToAssertion = ssa.mTermToAssertion;
-//	}
-
 	int getCounter(final Term t) {
 		if (!mCounters.containsKey(t)) {
-			assert mCountersAreFinalized == false;
+			assert !mCountersAreFinalized;
 			int r = mCounters.size() + 1;
 			mCounters.put(t, r);
 		}
@@ -128,31 +123,27 @@ public class HCSsa {
 		return mFlattenedTerms;
 	}
 
-	private static List<Term> flatten(final TreeRun<Term, IPredicate> tree, HCSsa callingSsa) {
+	private Pair<List<Term>, List<Integer>> flatten(final TreeRun<Term, IPredicate> tree, int depth) {
 		ArrayList<Term> res = new ArrayList<>();
-		for (final TreeRun<Term, IPredicate> child : tree.getChildren()) {
-			res.addAll(flatten(child, callingSsa));
+		ArrayList<Integer> resStartsOfSubtrees = new ArrayList<>();
+//		for (final TreeRun<Term, IPredicate> child : tree.getChildren()) {
+		for (int i = 0; i < tree.getChildren().size(); i++) {
+			TreeRun<Term, IPredicate> child = tree.getChildren().get(i);
+			Pair<List<Term>, List<Integer>> childRes = flatten(child, depth + i);
+			res.addAll(childRes.getFirst());
+			resStartsOfSubtrees.addAll(childRes.getSecond());
 		}
 		if (tree.getRootSymbol() != null) {
 			res.add(tree.getRootSymbol());
-			callingSsa.getCounter(tree.getRootSymbol());
+			resStartsOfSubtrees.add(depth);
+			this.getCounter(tree.getRootSymbol());
 		}
-		return res;
+		return new Pair<>(res, resStartsOfSubtrees);
 	}
 
 	public TreeRun<Term, IPredicate> getFormulasTree() {
 		return mNestedFormulas;
 	}
-
-//	protected Term getPredicateVariable(final Term term, final ManagedScript script, final Object lockOwner) {
-//		if (!mTermToAssertion.containsKey(term)) {
-//			final String name = getName(term);
-//			mTermToAssertion.put(term, script.term(lockOwner, name));
-//		}
-//
-//		final Term result = mTermToAssertion.get(term);
-//		return result;
-//	}
 
 	public Term[] getNamedTermList(final ManagedScript script, final Object lockOwner) {
 		final Term[] result = new Term[mFlattenedTerms.length];
@@ -160,5 +151,9 @@ public class HCSsa {
 			result[i] = script.term(lockOwner, getName(mFlattenedTerms[i]));
 		}
 		return result;
+	}
+
+	public int[] getStartsOfSubTrees() {
+		return mStartsOfSubtrees;
 	}
 }

@@ -100,7 +100,7 @@ public class HCSSABuilder {
 
 	private final Map<TreeRun<HornClause, IPredicate>, Integer> mIdxMap = new HashMap<>();
 	private int mCurrentIdx;
-	private final Map<TreeRun<HornClause, IPredicate>, Term> mSubtreeToVersioneeredTerm;
+//	private final Map<TreeRun<HornClause, IPredicate>, Term> mSubtreeToVersioneeredTerm;
 
 	
 	/**
@@ -125,11 +125,11 @@ public class HCSSABuilder {
 		mSubsMap = new HashMap<>();
 		mPredicateUnifier = predicateUnifier;
 
+//		mSubtreeToVersioneeredTerm = new HashMap<>();
 //		mPredPosToArgPosToCurrentVarVersion = new NestedMap2<>();
 		mCurrentHcInVarVersion = new HashMap<>();
 		mResult = buildSSA();
 
-		mSubtreeToVersioneeredTerm = new HashMap<>();
 	}
 
 	public HCSsa getSSA() {
@@ -162,6 +162,7 @@ public class HCSSABuilder {
 			VariableVersioneer versioneer = mSubsMap.get(en.getKey());
 			assert versioneer != null;
 			backVersionedInterpolantsMap.put(en.getKey(), versioneer.backVersion(en.getValue()));
+			assert backVersionedInterpolantsMap.get(en.getKey()) != null;
 		}
 		
 		return mTreeRun.reconstructViaSubtrees(backVersionedInterpolantsMap);
@@ -213,7 +214,7 @@ public class HCSSABuilder {
 		mCurrentTree = treeIdx;
 		vvRoot.versionOldVars(childPos);
 		mSubsMap.put(tree, vvRoot);
-		mSubtreeToVersioneeredTerm.put(tree, vvRoot.getVersioneeredTerm());
+//		mSubtreeToVersioneeredTerm.put(tree, vvRoot.getVersioneeredTerm());
 		
 		/*
 		 * recursively descend into the tree run

@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
-import de.uni_freiburg.informatik.ultimate.automata.tree.PostfixTree;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
@@ -375,35 +374,40 @@ public class TreeAutomizerCEGAR {
 
 	private Map<TreeRun<HornClause, IPredicate>, Term> retrieveInterpolantsMap(HCSsa ssa, 
 			TreeRun<HornClause, IPredicate> counterExample) {
-		// Using simple interpolant automaton : the counterexample's automaton.
-//		final PostfixTree<Term, IPredicate> postfixT = new PostfixTree<>(ssa.getFormulasTree());
-		final PostfixTree<HornClause, IPredicate> postfixT = 
-				new PostfixTree<>(counterExample);
-		
-//		ssa.getFlattenedTermList();
-//
-//		Term[] ts = new Term[postfixT.getPostFix().size()];
-//		for (int i = 0; i < ts.length; ++i) {
-////			ts[i] = ssa.getPredicateVariable(postfixT.getPostFix().get(i), mBackendSmtSolverScript, this);
-//			ts[i] = ssa.getPredicateVariable(postfixT.getPostFixSubtree(i), mBackendSmtSolverScript, this);
-////			ts[i] = mSSA.getPredicateVariable(postfixT.getPostFix().get(i), mBackendSmtSolverScript, this);
-//		}
-		int[] idx = new int[postfixT.getStartIdx().size()];
-		for (int i = 0; i < idx.length; ++i) {
-			idx[i] = postfixT.getStartIdx().get(i);
-		}
-//		final Term[] interpolants = mBackendSmtSolverScript.getInterpolants(this, ts, idx);
+
 		final Term[] interpolants = mBackendSmtSolverScript.getInterpolants(this, 
-				ssa.getNamedTermList(mBackendSmtSolverScript, this), idx);
+				ssa.getNamedTermList(mBackendSmtSolverScript, this), 
+				ssa.getStartsOfSubTrees());
+		
+		final List<TreeRun<HornClause, IPredicate>> subtreesInPostOrder = computeSubtreesInPostOrder(counterExample);
 
 		final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap = new HashMap<>();
+
 		for (int i = 0; i < interpolants.length; ++i) {
-//			HCPredicate p = (HCPredicate) postfixT.getPostFixStates().get(i);
-			TreeRun<HornClause, IPredicate> p = postfixT.getPostFixSubtree(i);
-			interpolantsMap.put(p, interpolants[i]);
-//			interpolantsMap.addPair(p, interpolants[i]);
+			final TreeRun<HornClause, IPredicate> st = subtreesInPostOrder.get(i);
+			
+			interpolantsMap.put(st, interpolants[i]);
 		}
+
+		// the root of a tree interpolant is implicitly "false"
+		interpolantsMap.put(counterExample, mBackendSmtSolverScript.term(this, "false"));
+
 		return interpolantsMap;
+	}
+
+	private static List<TreeRun<HornClause, IPredicate>> computeSubtreesInPostOrder(
+			final TreeRun<HornClause, IPredicate> root) {
+		final List<TreeRun<HornClause, IPredicate>> result = new ArrayList<>();
+
+		for (TreeRun<HornClause, IPredicate> ch : root.getChildren()) {
+			result.addAll(computeSubtreesInPostOrder(ch));
+		}
+		
+		//need to make an exception for the leafs (related to the fact that our tree automata have initial states)
+		if (root.getRootSymbol() != null) {
+			result.add(root);
+		}
+		return result;
 	}
 
 	protected void computeCFGHoareAnnotation() {
