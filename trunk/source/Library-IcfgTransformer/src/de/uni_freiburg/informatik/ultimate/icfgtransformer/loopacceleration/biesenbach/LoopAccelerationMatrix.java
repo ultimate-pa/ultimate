@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.bie
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -43,6 +44,7 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 				.getTransformula();
 		mMatrix = new MatrixBB(mOriginalTransFormula.getInVars().size(), logger);
 
+		//test(logger);
 		fillMatrix(logger, originalIcfg, services);
 		mMatrix.print();
 
@@ -76,6 +78,7 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 					Term m = mMgScript.getScript().let(
 							mOriginalTransFormula.getInVars().values().toArray(new TermVariable[matrixSize]), constT,
 							mOriginalTransFormula.getFormula());
+					logger.info(m);
 					if (SmtUtils.checkSatTerm(mMgScript.getScript(), m).equals(LBool.SAT)) {
 						newVectors.add(vNumber);
 						mMatrix.setVector(vNumber, constI, constT, 1);
@@ -92,6 +95,26 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 
 		// TODO Was machen wenn der Algorithmus abbrechen soll/keine Lösung
 		// findet?
+	}
+	
+	private void test(final ILogger logger){
+		logger.info(mOriginalTransFormula.getFormula());
+		Term[] c = new Term[mOriginalTransFormula.getInVars().size()];
+		for (int n = 0; n < mOriginalTransFormula.getInVars().size(); n++) {
+			final Rational one = Rational.valueOf(0, 1);
+			c[n] = one.toTerm(mMgScript.getScript().sort("Int"));
+		}
+		c[0] = mOriginalTransFormula.getInVars().values().toArray(new TermVariable[2])[0];
+		Term v = mMgScript.getScript().let(
+				mOriginalTransFormula.getInVars().values().toArray(new TermVariable[mOriginalTransFormula.getInVars().size()]), c,
+				mOriginalTransFormula.getFormula());
+		logger.info(v);
+		if (SmtUtils.checkSatTerm(mMgScript.getScript(), v).equals(LBool.SAT)) {
+			Collection<Term> t = new ArrayList<Term>();
+			t.add(v);
+			Map<Term,Term> termvar2value = SmtUtils.getValues(mMgScript.getScript(),t);
+			logger.info(termvar2value);
+		}
 	}
 
 	private void findInitVector(final ILogger logger, final IIcfg<INLOC> originalIcfg,
