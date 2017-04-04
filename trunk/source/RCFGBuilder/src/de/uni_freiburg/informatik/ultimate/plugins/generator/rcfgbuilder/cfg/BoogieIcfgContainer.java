@@ -216,8 +216,9 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	public String getIdentifier() {
 		if (PREPEND_CLASSNAME_TO_IDENTIFIER) {
 			return getClass().getSimpleName() + "_" + getFilename();
+		} else {
+			return getFilename();
 		}
-		return getFilename();
 	}
 
 	@Override
