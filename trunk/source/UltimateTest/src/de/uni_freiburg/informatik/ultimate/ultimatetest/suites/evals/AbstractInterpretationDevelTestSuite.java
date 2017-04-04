@@ -129,6 +129,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Taipan_Default_Debug.epf"),
+			new Triple<>("AutomizerCInline.xml", C, "default/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf"),
+			new Triple<>("AutomizerCInline.xml", C, "default/taipan/svcomp-Reach-32bit-Taipan_Default.epf"),
 	};
 
 	private static final String[] INPUT = new String[] {
@@ -150,8 +152,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/svcomp/seq-pthread/cs_lazy_false-unreach-call.i",
 //			"examples/svcomp/seq-pthread/cs_stateful_true-unreach-call.i",
 //			"examples/svcomp/seq-pthread/cs_sync_true-unreach-call.i",
-			
-			
+			"examples/svcomp/seq-pthread/cs_stateful_true-unreach-call.i",
+			"examples/svcomp/seq-pthread/cs_lazy_false-unreach-call.i",
 
 			// Normal regressions
 //			"examples/programs/abstractInterpretation/regression",
@@ -159,8 +161,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			/* current fails */
 //			"examples/programs/abstractInterpretation/regression/proc-procedure-without-impl.bpl",
 
-			"examples/programs/abstractInterpretation/regression/open/comp/proc-implies-statesplit.bpl",
-			"examples/programs/abstractInterpretation/regression/non_con/loop-literal-widening.bpl",
+//			"examples/programs/abstractInterpretation/regression/open/comp/proc-implies-statesplit.bpl",
+//			"examples/programs/abstractInterpretation/regression/non_con/loop-literal-widening.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/recursive-easy-2.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
