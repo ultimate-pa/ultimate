@@ -126,7 +126,6 @@ public class HCSsa {
 	private Pair<List<Term>, List<Integer>> flatten(final TreeRun<Term, IPredicate> tree, int depth) {
 		ArrayList<Term> res = new ArrayList<>();
 		ArrayList<Integer> resStartsOfSubtrees = new ArrayList<>();
-//		for (final TreeRun<Term, IPredicate> child : tree.getChildren()) {
 		for (int i = 0; i < tree.getChildren().size(); i++) {
 			TreeRun<Term, IPredicate> child = tree.getChildren().get(i);
 			Pair<List<Term>, List<Integer>> childRes = flatten(child, depth + i);

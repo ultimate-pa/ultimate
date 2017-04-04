@@ -84,6 +84,7 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 		
 		/*
 		 * compute all rules and all states from this and children
+		 * TODO: perhaps do this lazy
 		 */
 		final Set<STATE> allStates = new HashSet<>();
 		final Set<TreeAutomatonRule<LETTER, STATE>> allRules = new HashSet<>();
@@ -146,26 +147,9 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 	
 	private Collection<TreeAutomatonRule<LETTER, STATE>> getRules() {
 		return mAllRules;
-//		final Set<TreeAutomatonRule<LETTER, STATE>> res = new HashSet<>();
-//		
-//		if (!mChildren.isEmpty()) {
-//			final List<STATE> src = new ArrayList<>();
-//			for (final TreeRun<LETTER, STATE> run : mChildren) {
-//				src.add(run.mState); // Index States
-//				res.addAll(run.getRules());
-//			}
-//			res.add(new TreeAutomatonRule<LETTER, STATE>(mLetter, src, mState));
-//		}
-//		return res;
 	}
 	private Collection<STATE> getStates() {
 		return mAllStates;
-//		final Set<STATE> res = new HashSet<>();
-//		res.add(mState);
-//		for (final TreeRun<LETTER, STATE> st : mChildren) {
-//			res.addAll(st.getStates());
-//		}
-//		return res;
 	}
 	
 	private Collection<STATE> getInitialStates() {
@@ -221,11 +205,6 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 		return mLetter;
 	}
 	
-	public List<TreeRun<LETTER, STATE>> getSubtreesInPostOrder() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 	@Override
 	public String toString() {
 		if (mChildren.isEmpty()) {

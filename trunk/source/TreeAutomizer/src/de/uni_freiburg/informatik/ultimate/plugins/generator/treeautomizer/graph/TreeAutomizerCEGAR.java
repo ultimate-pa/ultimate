@@ -79,18 +79,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class TreeAutomizerCEGAR {
 
 	private TreeAutomatonBU<HornClause, IPredicate> mAbstraction;
-//	private ITreeRun<HornClause, IPredicate> mCounterexample;
 	private final HCStateFactory mStateFactory;
 	private final ManagedScript mBackendSmtSolverScript;
 	private int mIteration;
 	private ILogger mLogger;
 
-//	private final BasePayloadContainer mRootNode;
 	private final HornAnnot mHornAnnot;
 	private final HCPredicate mInitialPredicate;
 	private final HCPredicate mFinalPredicate;
 
-//	private HCSsa mSSA;
 	private TreeChecker mChecker;
 
 	/**
@@ -119,15 +116,11 @@ public class TreeAutomizerCEGAR {
 	 * @param hcSymbolTable
 	 */
 	public TreeAutomizerCEGAR(IUltimateServiceProvider services, IToolchainStorage storage,
-//			BasePayloadContainer rootNode, 
 			HornAnnot annot,
 			TAPreferences taPrefs, ILogger logger) {
-//			ManagedScript script,
-//			HCSymbolTable hcSymbolTable) {
 		mBackendSmtSolverScript = annot.getScript();
 		mSymbolTable = annot.getSymbolTable();
 		mLogger = logger;
-//		mRootNode = rootNode;
 		mHornAnnot = annot;
 		
 		
@@ -211,15 +204,6 @@ public class TreeAutomizerCEGAR {
 
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 
-//		final Map<String, IAnnotations> st = mRootNode.getPayload().getAnnotations();
-//		final HornAnnot annot = (HornAnnot) st.get(HornUtilConstants.HORN_ANNOT_NAME);
-//		final List<HornClause> hornClauses = (List<HornClause>) annot.getAnnotationsAsMap()
-//				.get(HornUtilConstants.HORN_ANNOT_NAME);
-//		final List<HornClause> hornClauses = (List<HornClause>) mHornAnnot.getAnnotationsAsMap()
-//				.get(HornUtilConstants.HORN_ANNOT_NAME);
-//		
-//		mAlphabet = hornClauses;
-
 		mAbstraction = new TreeAutomatonBU<>();
 		for (final HornClause clause : mAlphabet) {
 			final List<IPredicate> tail = new ArrayList<>();
@@ -266,7 +250,6 @@ public class TreeAutomizerCEGAR {
 	private LBool getCounterexampleFeasibility(TreeRun<HornClause, IPredicate> counterexample, Object lockOwner) {
 		mChecker = new TreeChecker(counterexample, mBackendSmtSolverScript, mInitialPredicate, mFinalPredicate,
 				mLogger, mPredicateUnifier);
-//		mSSA = mChecker.getSSA();
 		return mChecker.checkTrace(lockOwner);
 	}
 
@@ -274,15 +257,9 @@ public class TreeAutomizerCEGAR {
 			Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMapSsaVersioned)
 			throws AutomataOperationCanceledException {
 		
-//		final Map<TreeRun<HornClause, IPredicate>, IPredicate> interpolantsMapBackVersioned = 
-//				mChecker.backVersionInterpolantsMap(interpolantsMapSsaVersioned);
-		
 		final TreeRun<HornClause, IPredicate> treeRunWithInterpolants = 
 				mChecker.annotateTreeRunWithInterpolants(interpolantsMapSsaVersioned);
-//				 counterexample.reconstructViaSubtrees(interpolantsMapBackVersioned);
 
-//		mInterpolAutomaton = ((TreeRun<HornClause, IPredicate>) counterexample)
-//				.reconstructViaSubtrees(mChecker.rebuild(interpolantsMap)).getAutomaton();
 		mInterpolAutomaton = treeRunWithInterpolants.getAutomaton();
 		for (final IPredicate p : mInterpolAutomaton.getStates()) {
 			mPredicateUnifier.getOrConstructPredicate(p.getFormula());

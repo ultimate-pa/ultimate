@@ -83,23 +83,10 @@ public class TreeChecker {
 		mLogger = logger;
 	}
 	
-	
 	public TreeRun<HornClause, IPredicate> annotateTreeRunWithInterpolants(
 			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
 		return mSSABuilder.buildTreeRunWithBackVersionedInterpolants(interpolantsMap);
 	}
-
-//	/***
-//	 * Rebuild the SSA with the interpolants.
-//	 * 
-//	 * @param interpolantsMap
-//	 *            the map of predicates to the corresponding interpolants.
-//	 * @return
-//	 */
-//	public Map<TreeRun<HornClause, IPredicate>, IPredicate> backVersionInterpolantsMap(
-//			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
-//		return mSSABuilder.rebuildSSApredicates(interpolantsMap);
-//	}
 
 	protected HCSsa getSSA() {
 		return mSSABuilder.getSSA();

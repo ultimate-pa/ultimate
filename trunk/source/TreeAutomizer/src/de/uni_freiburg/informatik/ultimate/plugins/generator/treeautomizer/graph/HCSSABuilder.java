@@ -87,7 +87,6 @@ public class HCSSABuilder {
 	 *  - the child index of H1, i.e., the i, in "H1 is the i-th child of H2), called PredPos
 	 *  - the index of the variable in the predicate, called argPos
 	 */
-//	private final NestedMap2<Integer, HCOutVar, Term> mPredPosToArgPosToCurrentVarVersion;
 	private final Map<HCInVar, Term> mCurrentHcInVarVersion;
 
 
@@ -100,8 +99,6 @@ public class HCSSABuilder {
 
 	private final Map<TreeRun<HornClause, IPredicate>, Integer> mIdxMap = new HashMap<>();
 	private int mCurrentIdx;
-//	private final Map<TreeRun<HornClause, IPredicate>, Term> mSubtreeToVersioneeredTerm;
-
 	
 	/**
 	 * Standard constructor, accepts all the input necessary for building the SSA.
@@ -125,8 +122,6 @@ public class HCSSABuilder {
 		mSubsMap = new HashMap<>();
 		mPredicateUnifier = predicateUnifier;
 
-//		mSubtreeToVersioneeredTerm = new HashMap<>();
-//		mPredPosToArgPosToCurrentVarVersion = new NestedMap2<>();
 		mCurrentHcInVarVersion = new HashMap<>();
 		mResult = buildSSA();
 
@@ -167,40 +162,6 @@ public class HCSSABuilder {
 		
 		return mTreeRun.reconstructViaSubtrees(backVersionedInterpolantsMap);
 	}
-	
-
-//	/**
-//	 * Rebuild the SSA predicates after obtaining the interpolants.
-//	 * @param interpolantsMap map of predicates to the corresponding interpolant.
-//	 * @return A map of the new predicates.
-//	 * */
-//	public Map<TreeRun<HornClause, IPredicate>, IPredicate> rebuildSSApredicates(
-//			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
-//		final Map<TreeRun<HornClause, IPredicate>, IPredicate> res = new HashMap<>();
-//		mCurrentTree = 0;
-//		rebuild((TreeRun<HornClause, IPredicate>) mTreeRun, res, interpolantsMap);
-//		return res;
-//	}
-//
-//	/**
-//	 * 
-//	 * @param tree
-//	 * @param res The relation that is to be filled.
-//	 * @param interpolantsMap
-//	 */
-//	private void rebuild(final TreeRun<HornClause, IPredicate> tree, 
-//			final Map<TreeRun<HornClause, IPredicate>, IPredicate> res,
-//			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
-//		for (final TreeRun<HornClause, IPredicate> child : tree.getChildren()) {
-//			mCurrentTree = getOrConstructIndex(tree);
-//			rebuild(child, res, interpolantsMap);
-//		}
-//
-//		mCurrentTree = getOrConstructIndex(tree);
-//		final VariableVersioneer vvRoot = mSubsMap.get(tree);
-//		
-//		res.put(tree, vvRoot.backVersion(interpolantsMap.get(tree)));
-//	}
 
 	private TreeRun<Term, IPredicate> buildNestedFormulaTree(final TreeRun<HornClause, IPredicate> tree,
 			int treeIdx, int childPos) {
@@ -214,13 +175,11 @@ public class HCSSABuilder {
 		mCurrentTree = treeIdx;
 		vvRoot.versionOldVars(childPos);
 		mSubsMap.put(tree, vvRoot);
-//		mSubtreeToVersioneeredTerm.put(tree, vvRoot.getVersioneeredTerm());
 		
 		/*
 		 * recursively descend into the tree run
 		 */
 		final ArrayList<TreeRun<Term, IPredicate>> childTrees = new ArrayList<>();
-//		for (final TreeRun<HornClause, IPredicate> child : tree.getChildren()) {
 		for (int i = 0; i < tree.getChildren().size(); i++) {
 			TreeRun<HornClause, IPredicate> child = tree.getChildren().get(i);
 			mCurrentTree = getOrConstructIndex(tree);
@@ -228,8 +187,6 @@ public class HCSSABuilder {
 				childTrees.add(buildNestedFormulaTree(child, mCurrentTree, i));
 			}
 		}
-		
-
 
 		return new TreeRun<>(tree.getRoot(), vvRoot.getVersioneeredTerm(), childTrees);
 	}
@@ -294,12 +251,6 @@ public class HCSSABuilder {
 		private Term setCurrentVarVersion(final HCInVar inVar, final int index) {
 			final Term var = buildVersion(inVar, index);
 			mCurrentHcInVarVersion.put(inVar, var);
-//			mPredPosToArgPosToCurrentVarVersion.put(predPos, argPos, var);
-//			if (mCurrentLocalAndOldVarVersion.containsKey(argPos)) {
-//				mCurrentLocalAndOldVarVersion.remove(argPos);
-//			}
-//			mCurrentLocalAndOldVarVersion.put(argPos, var);
-
 			return var;
 		}
 		
@@ -309,9 +260,7 @@ public class HCSSABuilder {
 		 * @param bv
 		 * @return
 		 */
-//		private Term getOrConstructCurrentVarVersion(final HCOutVar bv) {
 		private Term getOrConstructCurrentVarVersion(final HCInVar bv) {
-//			Term result = mCurrentLocalAndOldVarVersion.get(bv);
 			Term result = mCurrentHcInVarVersion.get(bv);
 			if (result == null) {
 				// variable was not yet assigned in the calling context
@@ -346,17 +295,10 @@ public class HCSSABuilder {
 		 */
 		public void versionOldVars(final int currentPos) {
 
-//			for (final IProgramVar bv : mTF.getTransformula().getInVars().keySet()) {
-//				HCOutVar hv = (HCOutVar) bv;
-//				final Term versioneered = getOrConstructCurrentVarVersion(hv);
-//				mBackSubstitutionMapping.put(versioneered, hv);
-//			}
-//
 			for (final Entry<IProgramVar, TermVariable> en : mTF.getTransformula().getInVars().entrySet()) {
 				HCInVar hv = (HCInVar) en.getKey();
 				final TermVariable tv = transferToCurrentScriptIfNecessary(en.getValue());
 				final Term versioneered = setCurrentVarVersion(hv, mCurrentTree);
-//				mConstants2HCOutVar.put(versioneered, hv);
 
 				mSubstitutionMapping.put(tv, versioneered);
 				
@@ -369,17 +311,6 @@ public class HCSSABuilder {
 				assert false : "rename this, too, right?..";
 			}
 		}
-
-//		private Term constructFreshConstant(final TermVariable tv) {
-//			mScript.lock(this);
-//			final Integer newIndex = mConstForTvCounter.increase(tv);
-//			final String name = SmtUtils.removeSmtQuoteCharacters(tv.getName()) + "_fresh_" + newIndex;
-//			final Sort resultSort = tv.getSort();
-//			mScript.declareFun(this, name, new Sort[0], resultSort);
-//			final Term result = mScript.term(this, name);
-//			mScript.unlock(this);
-//			return result;
-//		}
 
 		public void versionPredicate(int currentTree) {
 			for (final IProgramVar bv : mPred.getVars()) {
@@ -438,7 +369,6 @@ public class HCSSABuilder {
 			
 			final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(formula);
 			return unified;
-			//return ((HCPredicateFactory) mPredicateUnifier.getPredicateFactory()).newPredicate(pl.mProgramPoint, pl.hashCode(), unified.getFormula(), vars, termToHcVar);
 		}
 
 		private TermVariable transferToCurrentScriptIfNecessary(final TermVariable tv) {
