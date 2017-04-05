@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
  */
 public class ElimStore3 {
 
-	private final int mQuantifier;
+	private int mQuantifier;
 	private final Script mScript;
 	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
