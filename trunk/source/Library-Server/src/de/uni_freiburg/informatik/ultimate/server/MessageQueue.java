@@ -102,4 +102,8 @@ public class MessageQueue<T> implements IInteractiveQueue<T> {
 		}
 		return result;
 	}
+
+	public boolean completeAllFuturesExceptionally(final Throwable ex) {
+		return mFutureMap.values().stream().reduce(false, (r, f) -> f.completeExceptionally(ex), Boolean::logicalOr);
+	}
 }

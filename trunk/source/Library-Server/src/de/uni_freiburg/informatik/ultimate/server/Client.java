@@ -150,9 +150,16 @@ public abstract class Client<T> {
 		try {
 			mSocket.close();
 		} catch (IOException e) {
-			mIOExceptionOccurred = true;
 			mLogger.error("failed to shut down connection gracefully.", e);
+			handleIoException(e);
 		}
+	}
+	
+	public void handleIoException(final IOException e) {
+		mIOExceptionOccurred = true;
+		mQuitFuture.completeExceptionally(e);
+		mHelloFuture.completeExceptionally(e);
+		mQueue.completeAllFuturesExceptionally(e);
 	}
 
 	public boolean hasIOExceptionOccurred() {
@@ -193,8 +200,8 @@ public abstract class Client<T> {
 			try {
 				msg.writeTo(output);
 			} catch (IOException e) {
-				mIOExceptionOccurred = true;
 				mLogger.error(e);
+				handleIoException(e);
 				break;
 			}
 		}
@@ -219,8 +226,8 @@ public abstract class Client<T> {
 					continue;
 				}
 			} catch (IOException e) {
-				mIOExceptionOccurred = true;
 				mLogger.error("failed to read input", e);
+				handleIoException(e);
 				return;
 			} catch (InterruptedException e) {
 				mLogger.error("input thread interrupted.", e);

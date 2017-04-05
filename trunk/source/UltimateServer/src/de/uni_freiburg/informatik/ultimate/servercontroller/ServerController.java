@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.servercontroller;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -144,40 +145,59 @@ public class ServerController implements IController<RunDefinition> {
 
 		mLogger.debug("Starting Server on Port " + cla.getPort());
 		mServer.start();
-		
+
 		registerTypes();
+
+		int result = IApplication.EXIT_OK;
 
 		try {
 			while (true) {
-				initWrapper(core, availableToolchains, availableSettingsFiles, availableInputFiles);
-				
-				if (false) break; 
+				try {
+					initWrapper(core, availableToolchains, availableSettingsFiles, availableInputFiles);
+
+					if (false)
+						break; // TODO: add settings that limit the server to a single (or fixed numer or time) run
+				} catch (ExecutionException e) {
+					if (e.getCause() instanceof IOException) {
+						mLogger.error("It seems like the Connection has been Lost. Reinitializing controller.", e);
+						Thread.sleep(500);
+						result = IApplication.EXIT_RELAUNCH; // What does/should that do?
+					} else {
+						mLogger.fatal(e);
+						e.printStackTrace();
+						result = -1;
+						break;
+					}
+				}
 			}
-		} catch (InterruptedException | ExecutionException | TimeoutException e) {
+		} catch (InterruptedException | TimeoutException e) {
 			mLogger.fatal(e);
 			e.printStackTrace();
-			return -1;
+			result = -1;
+		} catch (Throwable e) {
+			mLogger.fatal(e);
+			e.printStackTrace();
+			result = -1;
 		} finally {
 			mLogger.info("Interactive Controller terminated - shutting down Server.");
 			mServer.stop();
 		}
-
-		return IApplication.EXIT_OK;
+		return result;
 	}
-	
+
 	private void registerTypes() {
 		mServer.getTypeRegistry().register(Controller.Choice.Request.class);
 		mServer.getTypeRegistry().register(Controller.Choice.class);
-		
+
 		// If we wanted files directly - but thats not supported by Ultimate Core.
 		// mServer.getTypeRegistry().register(Controller.File.class);
-		// mServer.getTypeRegistry().register(Controller.File.Request.class);		
+		// mServer.getTypeRegistry().register(Controller.File.Request.class);
 	}
 
 	private void initWrapper(final ICore<RunDefinition> core,
 			Map<File, IToolchainData<RunDefinition>> availableToolchains, final File[] availableSettingsFiles,
 			final File[] availableInputFiles) throws InterruptedException, ExecutionException, TimeoutException {
-		mLogger.debug("Waiting for connection...");
+		mLogger.info("Waiting for connection...");
 
 		final Client<GeneratedMessageV3> client = mServer.waitForConnection(5, TimeUnit.MINUTES);
 		mProtoInterface = client.createInteractiveInterface();

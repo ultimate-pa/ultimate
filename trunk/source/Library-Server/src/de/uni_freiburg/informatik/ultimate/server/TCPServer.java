@@ -117,7 +117,9 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 
 			while (!client.hasIOExceptionOccurred()) {
 				try {
-					client.finished().get(5, TimeUnit.SECONDS);
+					synchronized (this) {
+						client.finished().get(5, TimeUnit.SECONDS);						
+					}
 				} catch (TimeoutException e) {
 					continue;
 				}
@@ -132,7 +134,7 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 	}
 
 	@Override
-	public Client<T> waitForConnection(final long timeout, final TimeUnit timeunit) throws InterruptedException, ExecutionException, TimeoutException {
+	public synchronized Client<T> waitForConnection(final long timeout, final TimeUnit timeunit) throws InterruptedException, ExecutionException, TimeoutException {
 		if (!mRunning || mServerFuture.isDone()) {
 			throw new IllegalStateException("Server not running.");
 		}
