@@ -435,10 +435,6 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		final Term left = leftState.getTerm(script);
 		final Term right = rightState.getTerm(script);
 
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Checking if " + left + " ⊆ " + right + " is " + subResult);
-		}
-
 		final LBool result;
 		final LBool expected;
 		final Term checkedTerm;
@@ -463,10 +459,33 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			throw new UnsupportedOperationException("Unsupported subset result: " + subResult);
 		}
 
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Result of " + checkedTerm + " is " + result + " and should be " + expected);
+		if (result == LBool.UNKNOWN || result == expected) {
+			return true;
 		}
-		return result == LBool.UNKNOWN || result == expected;
+
+		if (mLogger.isDebugEnabled()) {
+			final Term leftSimpl =
+					SmtUtils.simplify(mManagedScript, left, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+			final Term rightSimpl =
+					SmtUtils.simplify(mManagedScript, right, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+			final Term checkSimpl =
+					SmtUtils.simplify(mManagedScript, checkedTerm, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+
+			mLogger.debug("Checking left isSubsetOrEqual right = " + subResult);
+			mLogger.debug("leftState  : " + leftState.toLogString());
+			mLogger.debug("rightState : " + rightState.toLogString());
+			mLogger.debug("left       : " + left.toStringDirect());
+			mLogger.debug("right      : " + right.toStringDirect());
+			mLogger.debug("leftSim    : " + leftSimpl.toStringDirect());
+			mLogger.debug("rightSim   : " + rightSimpl.toStringDirect());
+			mLogger.debug("checking   : " + checkedTerm.toStringDirect());
+			mLogger.debug("checkingSim: " + checkSimpl.toStringDirect());
+			mLogger.debug("Result is " + result + " and should be " + expected);
+		}
+
+		final SubsetResult reComputeForDebug = leftState.isSubsetOf(rightState);
+		mLogger.debug(reComputeForDebug);
+		return false;
 	}
 
 }
