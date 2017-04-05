@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
@@ -485,9 +486,12 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		@Override
 		public Term getSmtIdentifier(final String id, final DeclarationInformation declInfo, final boolean isOldContext,
 				final BoogieASTNode boogieASTNode) {
-			final BoogieVar boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, isOldContext);
-			assert boogieVar != null;
-			return boogieVar.getTermVariable();
+			IProgramVarOrConst boogieVar = mBoogie2SmtSymbolTable.getBoogieVar(id, declInfo, isOldContext);
+			if (boogieVar == null) {
+				boogieVar = mBoogie2SmtSymbolTable.getBoogieConst(id);
+			}
+			assert boogieVar != null : "Unknown symbol: " + id;
+			return boogieVar.getTerm();
 		}
 	}
 }
