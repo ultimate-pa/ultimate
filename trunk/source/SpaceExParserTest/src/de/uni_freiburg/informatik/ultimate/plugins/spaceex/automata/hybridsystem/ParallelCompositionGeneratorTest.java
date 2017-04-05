@@ -104,11 +104,7 @@ public class ParallelCompositionGeneratorTest {
 						+ "5=loc_loc3_loc3_(5), Invariant: x <= 6 & y <= 6, Flow: x==1 & y==1, IsForbidden?: false}",
 				merge.getLocations().toString());
 		assertEquals(
-				"[(1) === (); {x==0 & y==0}; Label: jump1 ===> (2), "
-				+ "(2) === (); {} ===> (4), "
-				+ "(2) === (); {} ===> (3), "
-				+ "(4) === (); {} ===> (5), "
-				+ "(3) === (); {} ===> (5)]",
+				"[(1) === (); {x==0 & y==0}; Label: jump1 ===> (2), (2) === (); {} ===> (3), (2) === (); {} ===> (4), (4) === (); {} ===> (5), (3) === (); {} ===> (5)]",
 				merge.getTransitions().toString());
 		// @formatter:on
 		estimatedTime = System.nanoTime() - startTime;
@@ -219,9 +215,7 @@ public class ParallelCompositionGeneratorTest {
 						+ "3=loc_loc3_loc2_loc2_(3), Invariant: x <= 9999 & y<=1000 & z<=1000, Flow: , IsForbidden?: false, "
 						+ "4=loc_loc4_loc2_loc2_(4), Invariant: x <= 5000 & y<=1000 & z<=1000, Flow: , IsForbidden?: false}",
 				merge.getLocations().toString());
-		assertEquals("[(1) === (); {}; Label: jump ===> (2), "
-				+ "(2) === (); {} ===> (3), "
-				+ "(2) === (); {} ===> (4)]",
+		assertEquals("[(1) === (); {}; Label: jump ===> (2), (2) === (); {} ===> (4), (2) === (); {} ===> (3)]",
 				merge.getTransitions().toString());
 		//@formatter:on
 		estimatedTime = System.nanoTime() - startTime;
@@ -320,8 +314,8 @@ public class ParallelCompositionGeneratorTest {
 				merge.getLocations().toString());
 		assertEquals(
 				"[(1) === (); {}; Label: jump ===> (2), "
-				+ "(2) === (); {} ===> (3), "
 				+ "(2) === (y <= 9999); {} ===> (4), "
+				+ "(2) === (); {} ===> (3), "
 				+ "(4) === (); {} ===> (5), "
 				+ "(5) === (x <= 5000); {} ===> (6), "
 				+ "(3) === (x <= 5000 & y <= 9999); {} ===> (5), "

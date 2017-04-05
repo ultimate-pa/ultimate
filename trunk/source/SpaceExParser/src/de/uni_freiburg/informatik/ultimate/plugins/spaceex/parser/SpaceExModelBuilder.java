@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 /**
  * Constructs SpaceEx Ultimate model representation.
- * 
+ *
  * @author greitsch@informatik.uni-freiburg.de
  * @author loefflju@informatik.uni-freiburg.de
  *
@@ -63,10 +63,10 @@ public class SpaceExModelBuilder {
 		mLogger.info("Starting creation of hybrid model...");
 		final long startTime = System.nanoTime();
 		final HybridModel model = new HybridModel(spaceEx, mLogger, mPreferenceManager);
+		final HybridSystem system = model.getPreferenceSystem(mPreferenceManager.getSystem());
+		mLogger.debug("SYSTEM:\n " + system);
 		final long estimatedTime = System.nanoTime() - startTime;
 		mLogger.info("Creation of hybrid model done in " + estimatedTime / (float) 1000000 + " milliseconds");
-		// get the System specified in the config.
-		final HybridSystem system = mPreferenceManager.getRegardedSystem(model);
 		// calculate the parallel Compositions of the different preferencegroups.
 		final Map<Integer, HybridAutomaton> parallelCompositions;
 		// if the preferencemanager has preferencegroups, calculate the parallel compositions for those groups.
@@ -91,12 +91,10 @@ public class SpaceExModelBuilder {
 		final CfgSmtToolkit smtToolkit = generateToolkit(automaton);
 		final HybridIcfgGenerator gen =
 				new HybridIcfgGenerator(mLogger, mPreferenceManager, smtToolkit, mVariableManager);
-		// return gen.getSimpleIcfg();
 		return gen.createIfcgFromComponents(automaton);
 	}
 	
 	private CfgSmtToolkit generateToolkit(final HybridAutomaton automaton) {
-		IPredicate axioms = null;
 		final Set<String> procedures = new HashSet<>();
 		procedures.add(HybridIcfgGenerator.PROC_NAME);
 		final Script script = SolverBuilder.buildAndInitializeSolver(mServices, mToolchainStorage,
@@ -111,7 +109,7 @@ public class SpaceExModelBuilder {
 		defaultTable.finishConstruction();
 		final HashRelation<String, IProgramNonOldVar> proc2globals = new HashRelation<>();
 		final ModifiableGlobalsTable modifiableGlobalsTable = new ModifiableGlobalsTable(proc2globals);
-		axioms = new IPredicate() {
+		final IPredicate axioms = new IPredicate() {
 			
 			@Override
 			public Set<IProgramVar> getVars() {

@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2016 Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  * Copyright (C) 2016 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE SpaceExParser plug-in.
- * 
+ *
  * The ULTIMATE SpaceExParser plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE SpaceExParser plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE SpaceExParser plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE SpaceExParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -44,9 +44,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Generator that creates a parallel composition from {@link HybridAutomaton} instances.
- * 
+ *
  * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)
- * 
+ *
  */
 public class ParallelCompositionGenerator {
 	
@@ -84,7 +84,7 @@ public class ParallelCompositionGenerator {
 	
 	/**
 	 * Function that calculates the parallel composition of N Automata
-	 * 
+	 *
 	 * @param automataAndInitial
 	 * @return
 	 */
@@ -246,6 +246,7 @@ public class ParallelCompositionGenerator {
 				}
 			}
 		}
+		// we need at least two synchronizations.
 		return (syncs.size() > 1) ? syncs : new ArrayList<>();
 	}
 	
@@ -285,7 +286,6 @@ public class ParallelCompositionGenerator {
 	// function that returns the target locations of a synchronization.
 	private Map<Location, Triple<String, String, String>>
 			calculateTargetsForSync(final List<Transition> synchronizations, final List<Location> currentLocs) {
-		final List<Location> targetLocs = new ArrayList<>();
 		final List<Location> mergeList = new ArrayList<>();
 		final List<Location> forbiddenSources = new ArrayList<>();
 		final Map<Location, Triple<String, String, String>> targets = new HashMap<>();
@@ -324,7 +324,6 @@ public class ParallelCompositionGenerator {
 	
 	// fucntion that tries to get a location if it exists, else it creates it.
 	private Location getLocationNWay(final List<Location> mergeList) {
-		final String locString = mergeList.toString();
 		final Set<Location> locset = new HashSet<>(mergeList);
 		Location loc;
 		if (mCreatedLocations.containsKey(locset)) {
@@ -357,10 +356,12 @@ public class ParallelCompositionGenerator {
 			name += loc.getName() + "_";
 			invariant = intersectStrings(invariant, loc.getInvariant());
 			flow = intersectStrings(flow, loc.getFlow());
-			if (forbiddenConstraint.isEmpty() && !loc.getForbiddenConstraint().isEmpty()) {
-				forbiddenConstraint += loc.getForbiddenConstraint();
-			} else if (!loc.getForbiddenConstraint().isEmpty()) {
-				forbiddenConstraint += "|" + loc.getForbiddenConstraint();
+			if (!forbiddenConstraint.contains(loc.getForbiddenConstraint())) {
+				if (forbiddenConstraint.isEmpty() && !loc.getForbiddenConstraint().isEmpty()) {
+					forbiddenConstraint += loc.getForbiddenConstraint();
+				} else if (!loc.getForbiddenConstraint().isEmpty()) {
+					forbiddenConstraint += "|" + loc.getForbiddenConstraint();
+				}
 			}
 			
 			if (loc.isForbidden()) {
@@ -378,6 +379,7 @@ public class ParallelCompositionGenerator {
 	
 	// function that merges parameters
 	private void mergeParametersNWay(final Set<HybridAutomaton> automata) {
+		// all parameters and constants are local after the parallel composition is done.
 		for (final HybridAutomaton aut : automata) {
 			mLocalConstsMerge.addAll(aut.getGlobalConstants());
 			mLocalConstsMerge.addAll(aut.getLocalConstants());
@@ -385,11 +387,14 @@ public class ParallelCompositionGenerator {
 			mLocalParamsMerge.addAll(aut.getLocalParameters());
 			mLabelsMerge.addAll(aut.getLabels());
 		}
+		// define global labels.
 		anaylseLabels(automata);
 	}
 	
 	// function that determines which labels are globally used.
 	private void anaylseLabels(final Set<HybridAutomaton> automata) {
+		// just count how often the label appears.
+		// if it appears in an automaton, increment a counter.
 		final Map<String, Integer> labelCount = new HashMap<>();
 		for (final HybridAutomaton aut : automata) {
 			final Set<String> labels = aut.getLabels();
@@ -398,6 +403,7 @@ public class ParallelCompositionGenerator {
 				labelCount.put(label, count + 1);
 			}
 		}
+		// every label, which occurs more than 1 time in the automata, is a global label.
 		labelCount.forEach((lab, val) -> {
 			if (val > 1) {
 				mGlobalLabels.add(lab);
@@ -422,7 +428,7 @@ public class ParallelCompositionGenerator {
 	
 	/**
 	 * Function that creates a transition
-	 * 
+	 *
 	 * @param source
 	 * @param target
 	 * @param label

@@ -6,88 +6,46 @@
 <param d1="1" d2="1" dynamics="const" local="false" name="t_max" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="t_local" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="t_global" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_global" type="real"/>
 <param name="tank_max" type="real" local="false" d1="1" d2="1" dynamics="const" />
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank0" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank1" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank1" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank2" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank2" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank3" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank3" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank4" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank4" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank5" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank5" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank6" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank6" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank7" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank7" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank8" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank8" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank9" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank9" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank10" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank10" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank11" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank11" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank12" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank12" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank13" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank13" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank14" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank14" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank15" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank15" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank16" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank16" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank17" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank17" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank18" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank18" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank19" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank19" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank20" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank20" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank21" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank21" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank22" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank22" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank23" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank23" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank24" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank24" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank25" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank25" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank26" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank26" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank27" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank27" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank28" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank28" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank29" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank29" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank30" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank30" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank31" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank31" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank32" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank32" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank33" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank33" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank34" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank34" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank35" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank35" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank36" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank36" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank37" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank37" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank38" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank38" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank39" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank39" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank40" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank40" type="real"/>
 <location height="185.0" id="0" name="tanksClosed" width="200.0" x="300.0" y="292.0">
 <invariant>t_local &gt;= 0
@@ -3617,7 +3575,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank1&lt;=tank39
 &amp; tank1&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank1 := count_tank1 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -3666,7 +3623,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank2&lt;=tank39
 &amp; tank2&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank2 := count_tank2 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -3715,7 +3671,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank3&lt;=tank39
 &amp; tank3&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank3 := count_tank3 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -3764,7 +3719,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank4&lt;=tank39
 &amp; tank4&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank4 := count_tank4 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -3813,7 +3767,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank5&lt;=tank39
 &amp; tank5&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank5 := count_tank5 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -3862,7 +3815,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank6&lt;=tank39
 &amp; tank6&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank6 := count_tank6 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -3911,7 +3863,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank7&lt;=tank39
 &amp; tank7&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank7 := count_tank7 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -3960,7 +3911,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank8&lt;=tank39
 &amp; tank8&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank8 := count_tank8 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4009,7 +3959,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank9&lt;=tank39
 &amp; tank9&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank9 := count_tank9 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4058,7 +4007,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank10&lt;=tank39
 &amp; tank10&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank10 := count_tank10 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4107,7 +4055,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank11&lt;=tank39
 &amp; tank11&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank11 := count_tank11 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4156,7 +4103,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank12&lt;=tank39
 &amp; tank12&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank12 := count_tank12 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4205,7 +4151,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank13&lt;=tank39
 &amp; tank13&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank13 := count_tank13 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4254,7 +4199,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank14&lt;=tank39
 &amp; tank14&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank14 := count_tank14 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4303,7 +4247,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank15&lt;=tank39
 &amp; tank15&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank15 := count_tank15 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4352,7 +4295,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank16&lt;=tank39
 &amp; tank16&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank16 := count_tank16 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4401,7 +4343,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank17&lt;=tank39
 &amp; tank17&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank17 := count_tank17 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4450,7 +4391,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank18&lt;=tank39
 &amp; tank18&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank18 := count_tank18 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4499,7 +4439,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank19&lt;=tank39
 &amp; tank19&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank19 := count_tank19 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4548,7 +4487,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank20&lt;=tank39
 &amp; tank20&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank20 := count_tank20 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4597,7 +4535,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank21&lt;=tank39
 &amp; tank21&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank21 := count_tank21 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4646,7 +4583,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank22&lt;=tank39
 &amp; tank22&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank22 := count_tank22 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4695,7 +4631,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank23&lt;=tank39
 &amp; tank23&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank23 := count_tank23 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4744,7 +4679,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank24&lt;=tank39
 &amp; tank24&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank24 := count_tank24 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4793,7 +4727,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank25&lt;=tank39
 &amp; tank25&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank25 := count_tank25 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4842,7 +4775,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank26&lt;=tank39
 &amp; tank26&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank26 := count_tank26 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4891,7 +4823,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank27&lt;=tank39
 &amp; tank27&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank27 := count_tank27 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4940,7 +4871,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank28&lt;=tank39
 &amp; tank28&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank28 := count_tank28 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -4989,7 +4919,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank29&lt;=tank39
 &amp; tank29&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank29 := count_tank29 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -5038,7 +4967,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank30&lt;=tank39
 &amp; tank30&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank30 := count_tank30 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -5087,7 +5015,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank31&lt;=tank39
 &amp; tank31&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank31 := count_tank31 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -5136,7 +5063,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank32&lt;=tank39
 &amp; tank32&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank32 := count_tank32 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -5185,7 +5111,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank33&lt;=tank39
 &amp; tank33&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank33 := count_tank33 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -5234,7 +5159,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank34&lt;=tank39
 &amp; tank34&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank34 := count_tank34 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -5283,7 +5207,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank35&lt;=tank39
 &amp; tank35&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank35 := count_tank35 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -5332,7 +5255,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank36&lt;=tank39
 &amp; tank36&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank36 := count_tank36 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -5381,7 +5303,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank37&lt;=tank39
 &amp; tank37&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank37 := count_tank37 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -5430,7 +5351,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank38&lt;=tank39
 &amp; tank38&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank38 := count_tank38 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -5479,7 +5399,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank39&lt;=tank38
 &amp; tank39&lt;=tank40
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank39 := count_tank39 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -5528,7 +5447,6 @@ tank40' == v_in - v_out </flow>
 &amp; tank40&lt;=tank38
 &amp; tank40&lt;=tank39
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank40 := count_tank40 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -7582,89 +7500,47 @@ tank40' == v_in - v_out </flow>
 <param d1="1" d2="1" dynamics="const" local="false" name="t_max" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="t_local" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="t_global" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_global" type="real"/>
 <param name="tank_max" type="real" local="false" d1="1" d2="1" dynamics="const" controlled="true" />
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank0" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank0" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank1" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank1" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank2" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank2" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank3" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank3" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank4" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank4" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank5" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank5" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank6" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank6" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank7" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank7" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank8" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank8" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank9" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank9" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank10" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank10" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank11" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank11" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank12" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank12" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank13" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank13" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank14" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank14" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank15" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank15" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank16" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank16" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank17" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank17" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank18" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank18" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank19" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank19" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank20" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank20" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank21" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank21" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank22" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank22" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank23" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank23" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank24" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank24" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank25" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank25" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank26" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank26" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank27" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank27" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank28" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank28" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank29" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank29" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank30" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank30" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank31" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank31" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank32" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank32" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank33" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank33" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank34" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank34" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank35" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank35" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank36" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank36" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank37" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank37" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank38" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank38" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank39" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank39" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank40" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank40" type="real"/>
 <bind as="tanks" component="tanks" height="100.0" width="200.0" x="400.0" y="300.0">
 	<map key="v_in">v_in</map>
@@ -7672,89 +7548,47 @@ tank40' == v_in - v_out </flow>
 	<map key="t_max">t_max</map>
 	<map key="t_local">t_local</map>
 	<map key="t_global">t_global</map>
-	<map key="count_global">count_global</map>
 	<map key="tank_max">tank_max</map>
-<map key="count_tank0">count_tank0</map>
 <map key="tank0">tank0</map>
-<map key="count_tank1">count_tank1</map>
 <map key="tank1">tank1</map>
-<map key="count_tank2">count_tank2</map>
 <map key="tank2">tank2</map>
-<map key="count_tank3">count_tank3</map>
 <map key="tank3">tank3</map>
-<map key="count_tank4">count_tank4</map>
 <map key="tank4">tank4</map>
-<map key="count_tank5">count_tank5</map>
 <map key="tank5">tank5</map>
-<map key="count_tank6">count_tank6</map>
 <map key="tank6">tank6</map>
-<map key="count_tank7">count_tank7</map>
 <map key="tank7">tank7</map>
-<map key="count_tank8">count_tank8</map>
 <map key="tank8">tank8</map>
-<map key="count_tank9">count_tank9</map>
 <map key="tank9">tank9</map>
-<map key="count_tank10">count_tank10</map>
 <map key="tank10">tank10</map>
-<map key="count_tank11">count_tank11</map>
 <map key="tank11">tank11</map>
-<map key="count_tank12">count_tank12</map>
 <map key="tank12">tank12</map>
-<map key="count_tank13">count_tank13</map>
 <map key="tank13">tank13</map>
-<map key="count_tank14">count_tank14</map>
 <map key="tank14">tank14</map>
-<map key="count_tank15">count_tank15</map>
 <map key="tank15">tank15</map>
-<map key="count_tank16">count_tank16</map>
 <map key="tank16">tank16</map>
-<map key="count_tank17">count_tank17</map>
 <map key="tank17">tank17</map>
-<map key="count_tank18">count_tank18</map>
 <map key="tank18">tank18</map>
-<map key="count_tank19">count_tank19</map>
 <map key="tank19">tank19</map>
-<map key="count_tank20">count_tank20</map>
 <map key="tank20">tank20</map>
-<map key="count_tank21">count_tank21</map>
 <map key="tank21">tank21</map>
-<map key="count_tank22">count_tank22</map>
 <map key="tank22">tank22</map>
-<map key="count_tank23">count_tank23</map>
 <map key="tank23">tank23</map>
-<map key="count_tank24">count_tank24</map>
 <map key="tank24">tank24</map>
-<map key="count_tank25">count_tank25</map>
 <map key="tank25">tank25</map>
-<map key="count_tank26">count_tank26</map>
 <map key="tank26">tank26</map>
-<map key="count_tank27">count_tank27</map>
 <map key="tank27">tank27</map>
-<map key="count_tank28">count_tank28</map>
 <map key="tank28">tank28</map>
-<map key="count_tank29">count_tank29</map>
 <map key="tank29">tank29</map>
-<map key="count_tank30">count_tank30</map>
 <map key="tank30">tank30</map>
-<map key="count_tank31">count_tank31</map>
 <map key="tank31">tank31</map>
-<map key="count_tank32">count_tank32</map>
 <map key="tank32">tank32</map>
-<map key="count_tank33">count_tank33</map>
 <map key="tank33">tank33</map>
-<map key="count_tank34">count_tank34</map>
 <map key="tank34">tank34</map>
-<map key="count_tank35">count_tank35</map>
 <map key="tank35">tank35</map>
-<map key="count_tank36">count_tank36</map>
 <map key="tank36">tank36</map>
-<map key="count_tank37">count_tank37</map>
 <map key="tank37">tank37</map>
-<map key="count_tank38">count_tank38</map>
 <map key="tank38">tank38</map>
-<map key="count_tank39">count_tank39</map>
 <map key="tank39">tank39</map>
-<map key="count_tank40">count_tank40</map>
 <map key="tank40">tank40</map>
 </bind>
 </component>

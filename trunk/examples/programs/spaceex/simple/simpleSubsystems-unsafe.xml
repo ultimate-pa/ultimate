@@ -48,35 +48,59 @@
       <labelposition x="0.0" y="0.0" />
     </transition>
   </component>
+  <component id="sys1">
+    <param name="xTOPSYS" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <param name="jump1" type="label" local="false" />
+    <param name="yTOPSYS" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <bind component="aut1" as="aut1_1" x="420.0" y="335.0">
+      <map key="x">xTOPSYS</map>
+      <map key="jump1">jump1</map>
+    </bind>
+    <bind component="aut2" as="aut2_1" x="414.0" y="419.0">
+      <map key="y">yTOPSYS</map>
+      <map key="jump1">jump1</map>
+    </bind>
+    <bind component="sys4" as="sys4_1" x="416.0" y="518.0" width="126.0" height="92.0">
+      <map key="xsub">xTOPSYS</map>
+      <map key="jump1">jump1</map>
+      <map key="ysub">yTOPSYS</map>
+    </bind>
+  </component>
   <component id="sys4">
     <param name="xsub" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
     <param name="jump1" type="label" local="false" />
     <param name="ysub" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
-    <bind component="aut1" as="aut1_1" x="274.0" y="125.0">
+    <bind component="aut1" as="aut1_1" x="274.0" y="125.0" width="114.0" height="70.0">
       <map key="x">xsub</map>
       <map key="jump1">jump1</map>
     </bind>
-    <bind component="aut2" as="aut2_1" x="272.0" y="224.0">
+    <bind component="aut2" as="aut2_1" x="272.0" y="224.0" width="120.0" height="84.0">
       <map key="y">ysub</map>
       <map key="jump1">jump1</map>
     </bind>
-  </component>
-  <component id="sys1">
-    <param name="x" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
-    <param name="jump1" type="label" local="false" />
-    <param name="y" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
-    <bind component="aut1" as="aut1_1" x="420.0" y="335.0">
-      <map key="x">x</map>
+    <bind component="sys2" as="sys2_1" x="285.0" y="337.0" width="110.0" height="68.0">
+      <map key="xsubsub">xsub</map>
       <map key="jump1">jump1</map>
     </bind>
-    <bind component="aut2" as="aut2_1" x="414.0" y="419.0">
+  </component>
+  <component id="sys3">
+    <param name="y" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <param name="jump1" type="label" local="false" />
+    <bind component="aut2" as="aut2_1" x="357.0" y="176.0">
       <map key="y">y</map>
       <map key="jump1">jump1</map>
     </bind>
-    <bind component="sys4" as="sys4_1" x="416.0" y="518.0">
-      <map key="xsub">x</map>
+  </component>
+  <component id="sys2">
+    <param name="xsubsub" type="real" local="false" d1="1" d2="1" dynamics="any" controlled="true" />
+    <param name="jump1" type="label" local="false" />
+    <bind component="aut1" as="aut1_1" x="193.0" y="185.0">
+      <map key="x">xsubsub</map>
       <map key="jump1">jump1</map>
-      <map key="ysub">y</map>
+    </bind>
+    <bind component="sys3" as="sys3_1" x="221.0" y="289.0">
+      <map key="y">xsubsub</map>
+      <map key="jump1">jump1</map>
     </bind>
   </component>
 </sspaceex>
