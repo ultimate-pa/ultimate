@@ -62,8 +62,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 	}
 
 	public AbstractMultiState(final int maxSize, final STATE state) {
-		this(maxSize, newSet(maxSize));
-		mStates.add(state);
+		this(maxSize, Collections.singleton(state));
 	}
 
 	public AbstractMultiState(final Set<STATE> state) {
@@ -413,6 +412,9 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 	}
 
 	private Set<STATE> getMaximalElements(final Set<STATE> states) {
+		if (states.isEmpty() || states.size() == 1) {
+			return states;
+		}
 		final Set<STATE> maximalElements = newSet(states.size());
 		for (final STATE state : states) {
 			final Iterator<STATE> iter = maximalElements.iterator();
