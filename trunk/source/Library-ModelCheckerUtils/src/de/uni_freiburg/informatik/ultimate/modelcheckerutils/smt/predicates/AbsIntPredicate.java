@@ -67,11 +67,12 @@ public class AbsIntPredicate<STATE extends IAbstractState<STATE, VARDECL>, VARDE
 		mAbstractStates = Objects.requireNonNull(abstractState);
 		mPredicate = Objects.requireNonNull(classicPredicate);
 		assert !mAbstractStates.isEmpty();
+		assert !(mPredicate instanceof AbsIntPredicate<?, ?>);
 	}
 
 	@Visualizable
 	public Set<STATE> getAbstractStates() {
-		return mAbstractStates;
+		return Collections.unmodifiableSet(mAbstractStates);
 	}
 
 	@Visualizable
@@ -83,7 +84,7 @@ public class AbsIntPredicate<STATE extends IAbstractState<STATE, VARDECL>, VARDE
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(mPredicate.toString()).append(" (");
-		sb.append(mAbstractStates.stream().map(STATE::toLogString).collect(Collectors.toSet())).append(")");
-		return sb.toString();
+		return sb.append(mAbstractStates.stream().map(STATE::toLogString).collect(Collectors.toSet())).append(")")
+				.toString();
 	}
 }

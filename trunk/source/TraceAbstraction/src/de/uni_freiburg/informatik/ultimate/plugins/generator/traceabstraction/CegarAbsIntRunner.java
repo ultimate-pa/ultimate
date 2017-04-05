@@ -442,11 +442,9 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			assert trace.size() == interpolants.size() + 1 : "trace size does not match interpolants size";
 
 			final List<AbsIntPredicate<STATE, IBoogieVar>> completeInterpolants = new ArrayList<>();
-			completeInterpolants.add(new AbsIntPredicate<>(mPredicateUnifierAbsInt.getTruePredicate(),
-					mResult.getUsedDomain().createTopState()));
+			completeInterpolants.add(mTruePredicate);
 			completeInterpolants.addAll(interpolants);
-			completeInterpolants.add(new AbsIntPredicate<>(mPredicateUnifierAbsInt.getFalsePredicate(),
-					mResult.getUsedDomain().createBottomState()));
+			completeInterpolants.add(mFalsePredicate);
 
 			final CachingHoareTripleChecker htc = getHoareTripleChecker();
 			final Iterator<LETTER> traceIter = trace.iterator();
@@ -468,24 +466,25 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					}
 					result = htc.checkInternal(pre, (IInternalAction) trans, post);
 				} else if (trans instanceof ICallAction) {
-					preHierStates.addFirst(pre);
-					result = htc.checkCall(pre, (ICallAction) trans, post);
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug(String.format("Checking {%s} %s {%s}", pre, trans, post));
 					}
+					preHierStates.addFirst(pre);
+					result = htc.checkCall(pre, (ICallAction) trans, post);
+
 				} else if (trans instanceof IReturnAction) {
 					final IPredicate preHier = preHierStates.removeFirst();
-					result = htc.checkReturn(pre, preHier, (IReturnAction) trans, post);
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug(String.format("Checking {%s} {%s} %s {%s}", pre, preHier, trans, post));
 					}
+					result = htc.checkReturn(pre, preHier, (IReturnAction) trans, post);
 				} else {
 					throw new UnsupportedOperationException("Unknown transition type " + trans.getClass());
 				}
 
 				if (result != Validity.VALID) {
 					// the absint htc must solve all queries from those interpolants
-					mLogger.fatal("HTC check failed: result was " + result);
+					mLogger.fatal("HTC sequence inductivity check failed: result was " + result);
 					return false;
 				}
 			}
@@ -508,7 +507,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				final Set<STATE> postStates = mResult.getPostStates(callstack, symbol, previousStates);
 				final AbsIntPredicate<STATE, IBoogieVar> next = getNonUnifiedPredicateFromStates(postStates, script);
 				if (mLogger.isDebugEnabled()) {
-					mLogger.debug(symbol + " " + next);
+					mLogger.debug(String.format("[%s] %s %s", symbol.hashCode(), symbol, next));
 				}
 				previousStates = postStates;
 				rtr.add(next);
@@ -525,7 +524,18 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			}
 			final Set<IPredicate> predicates = postStates.stream().map(s -> s.getTerm(script))
 					.map(mPredicateUnifierAbsInt::getOrConstructPredicate).collect(Collectors.toSet());
-			final IPredicate disjunction = mPredicateUnifierAbsInt.getOrConstructPredicateForDisjunction(predicates);
+			final IPredicate disjunction;
+			if (predicates.size() > 1) {
+				disjunction = mPredicateUnifierAbsInt.getOrConstructPredicateForDisjunction(predicates);
+			} else {
+				disjunction = predicates.iterator().next();
+			}
+			if (disjunction.equals(mFalsePredicate)) {
+				return mFalsePredicate;
+			}
+			if (disjunction.equals(mTruePredicate)) {
+				return mTruePredicate;
+			}
 			return new AbsIntPredicate<>(disjunction, postStates);
 		}
 
