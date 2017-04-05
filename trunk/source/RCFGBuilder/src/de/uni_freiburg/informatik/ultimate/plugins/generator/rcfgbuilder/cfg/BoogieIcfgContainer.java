@@ -66,7 +66,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	 * The serial version UID. Change only if serial representation changes.
 	 */
 	private static final long serialVersionUID = -221145005712480077L;
-	private static final boolean PREPEND_CLASSNAME_TO_IDENTIFIER = true;
+	private static final boolean PREPEND_CLASSNAME_TO_IDENTIFIER = false;
 	private static final String KEY = BoogieIcfgContainer.class.getName();
 
 	private final BoogieDeclarations mBoogieDeclarations;
