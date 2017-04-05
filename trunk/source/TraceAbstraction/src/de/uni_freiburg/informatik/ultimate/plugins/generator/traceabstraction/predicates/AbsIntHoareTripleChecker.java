@@ -138,9 +138,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		final Validity result = checkInternalTransitionWithValidState(preState, action, succ);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Result: " + result);
-			mLogger.debug("--");
 		}
 		assert assertValidity(preState, null, action, succ, result) : MSG_INVALID_HOARE_TRIPLE_CHECK;
+		mLogger.debug("--");
 		final Validity rtr = result;
 		mBenchmark.stopEdgeCheckerTime();
 		return rtr;
@@ -171,9 +171,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Result: " + result);
-			mLogger.debug("--");
 		}
 		assert assertValidity(preBeforeLeaving, null, action, succ, result) : MSG_INVALID_HOARE_TRIPLE_CHECK;
+		mLogger.debug("--");
 		mBenchmark.stopEdgeCheckerTime();
 		return result;
 	}
@@ -212,11 +212,10 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 				checkScopeChangingTransitionWithValidState(validPreLinState, stateAfterLeaving, action, succ);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Result: " + result);
-			mLogger.debug("--");
 		}
 		assert assertValidity(validPreLinState, stateAfterLeaving, action, succ,
 				result) : MSG_INVALID_HOARE_TRIPLE_CHECK;
-
+		mLogger.debug("--");
 		final Validity rtr = result;
 		mBenchmark.stopEdgeCheckerTime();
 		return rtr;
@@ -387,9 +386,11 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 
 		final Validity checkedResult = assertIsPostSound(precond, precondHier, transition, postcond);
 		if (checkedResult == result) {
+			mLogger.debug("HTC assert ok");
 			return true;
 		}
 		if (result == Validity.UNKNOWN || result == Validity.NOT_CHECKED) {
+			mLogger.debug("HTC assert ok");
 			return true;
 		}
 		mLogger.fatal("Check was " + result + " but should have been " + checkedResult);
