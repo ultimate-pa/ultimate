@@ -28,17 +28,22 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
@@ -89,12 +94,25 @@ public class HCHoareTripleChecker {
 	 * Checks the validity of a Hoare triple that is given by a set of HCPredicates (precondition),
 	 * a HornClause (action), and a single HCPredicate (postcondition).
 	 * 
-	 * @param pre
+	 * @param preOld
 	 * @param hornClause
 	 * @param succ
 	 * @return a Validity value for the Hoare triple
 	 */
-	public Validity check(List<IPredicate> pre, HornClause hornClause, IPredicate succ) {
+	public Validity check(List<IPredicate> preOld, HornClause hornClause, IPredicate succ) {
+		/*
+		 * sanitize pre
+		 */
+		final List<IPredicate> pre;
+		if (hornClause.getBodyPredicates().size() == 0) {
+			assert preOld.isEmpty() || 
+					(preOld.size() == 1 && preOld.get(0).getClosedFormula().toStringDirect().equals("true"));
+			 pre = Collections.emptyList();
+		} else {
+			pre = preOld;
+		}
+		
+		
 		assert pre.size() == hornClause.getNoBodyPredicates() : "The number of preconditions must match the number of "
 				+ "uninterpreted predicates in the Horn clause's body!";
 		
@@ -126,16 +144,29 @@ public class HCHoareTripleChecker {
 		 */
 		final Term postConditionFormula = substitutePredicateFormula(succ, hornClause.getProgramVarsForHeadPred());
 		assert postConditionFormula.getFreeVars().length == 0 : "formula should have been closed by substitution";
+		final Term negatedPostConditionFormula = Util.not(mManagedScript.getScript(), postConditionFormula);
 
 		mManagedScript.assertTerm(this, preConditionFormula);
-		mManagedScript.assertTerm(this, hornClause.getTransformula().getClosedFormula());
-		mManagedScript.assertTerm(this, postConditionFormula);
+		mManagedScript.assertTerm(this, closeHcTransFormula(hornClause.getTransformula()));
+		mManagedScript.assertTerm(this, negatedPostConditionFormula);
 		
 		final LBool satResult = mManagedScript.checkSat(this);
 		
 		mManagedScript.pop(this, 1);
 		mManagedScript.unlock(this);
 		return IHoareTripleChecker.convertLBool2Validity(satResult);
+	}
+
+
+	private Term closeHcTransFormula(UnmodifiableTransFormula transformula) {
+		Map<Term, Term> substitution = new HashMap<>();
+		for (Entry<IProgramVar, TermVariable> en : transformula.getInVars().entrySet()) {
+			substitution.put(en.getValue(), en.getKey().getDefaultConstant());
+		}
+		for (Entry<IProgramVar, TermVariable> en : transformula.getOutVars().entrySet()) {
+			substitution.put(en.getValue(), en.getKey().getDefaultConstant());
+		}
+		return new Substitution(mManagedScript, substitution).transform(transformula.getFormula());
 	}
 
 
@@ -169,5 +200,10 @@ public class HCHoareTripleChecker {
 		TreeSet<HCOutVar> treeSet = new TreeSet<>();
 		treeSet.addAll(vars.stream().map(v -> ((HCOutVar) v)).collect(Collectors.toSet()));
 		return new ArrayList<HCOutVar>(treeSet);
+	}
+
+
+	public Validity check(TreeAutomatonRule<HornClause, IPredicate> rule) {
+		return check(rule.getSource(), rule.getLetter(), rule.getDest());
 	}
 }

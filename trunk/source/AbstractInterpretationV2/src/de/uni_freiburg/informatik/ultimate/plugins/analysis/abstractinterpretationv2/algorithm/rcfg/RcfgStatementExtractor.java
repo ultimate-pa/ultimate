@@ -49,7 +49,7 @@ public class RcfgStatementExtractor extends RCFGEdgeVisitor {
 
 	public List<Statement> process(final IcfgEdge edge) {
 		mStatements = new ArrayList<>();
-		visit(edge);
+		visit(edge.getLabel());
 		return mStatements;
 	}
 

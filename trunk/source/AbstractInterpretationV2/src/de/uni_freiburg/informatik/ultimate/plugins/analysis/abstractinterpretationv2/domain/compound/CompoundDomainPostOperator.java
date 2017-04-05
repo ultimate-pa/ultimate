@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -68,7 +69,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Tr
  *
  */
 @SuppressWarnings({ "rawtypes", "unchecked" })
-public class CompoundDomainPostOperator implements IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> {
+public class CompoundDomainPostOperator implements IAbstractPostOperator<CompoundDomainState, IcfgEdge, IBoogieVar> {
 
 	private final boolean mCreateStateAssumptions;
 	private final boolean mUseSmtSolverChecks;
@@ -110,14 +111,14 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	}
 
 	@Override
-	public List<CompoundDomainState> apply(final CompoundDomainState oldstate, final CodeBlock transition) {
+	public List<CompoundDomainState> apply(final CompoundDomainState oldstate, final IcfgEdge transition) {
 		final List<CompoundDomainState> returnStates = new ArrayList<>();
 
 		final List<IAbstractState<?, IBoogieVar>> states = oldstate.getAbstractStatesList();
 		final List<IAbstractDomain> domains = oldstate.getDomainList();
 		assert domains.size() == states.size();
 
-		final List<CodeBlock> transitionList = createTransitionList(transition, states);
+		final List<IcfgEdge> transitionList = createTransitionList(transition, states);
 		assert transitionList.size() == domains.size();
 
 		final List<IAbstractState<?, IBoogieVar>> resultingStates = new ArrayList<>();
@@ -125,7 +126,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		for (int i = 0; i < domains.size(); i++) {
 			final IAbstractDomain currentDomain = domains.get(i);
 			final IAbstractState<?, IBoogieVar> currentPreState = states.get(i);
-			final CodeBlock currentTrans = transitionList.get(i);
+			final IcfgEdge currentTrans = transitionList.get(i);
 
 			final List<IAbstractState> result =
 					applyInternally(currentPreState, currentDomain.getPostOperator(), currentTrans);
@@ -177,18 +178,18 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	}
 
 	/**
-	 * Computes the transition {@link CodeBlock} for each domain. If the option is enabled that each state should be
-	 * assumed before each post, a new transition {@link CodeBlock} will be created which contains an assume statement
-	 * at the top corresponding to the formula representation for each state.
+	 * Computes the transition {@link IcfgEdge} for each domain. If the option is enabled that each state should be
+	 * assumed before each post, a new transition {@link IcfgEdge} will be created which contains an assume statement at
+	 * the top corresponding to the formula representation for each state.
 	 *
 	 * @param transition
 	 * @param states
 	 * @return
 	 */
-	private List<CodeBlock> createTransitionList(final CodeBlock transition,
+	private List<IcfgEdge> createTransitionList(final IcfgEdge transition,
 			final List<IAbstractState<?, IBoogieVar>> states) {
 
-		final List<CodeBlock> returnList = new ArrayList<>();
+		final List<IcfgEdge> returnList = new ArrayList<>();
 
 		if (mCreateStateAssumptions) {
 			// If there is only one internal compound state, keep the transitions as they are and do nothing else.
@@ -209,16 +210,16 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	}
 
 	/**
-	 * Creates a new {@link CodeBlock} that includes an assume statement of all states (except the i-th state) at the
-	 * top and the given {@link CodeBlock} as rest.
+	 * Creates a new {@link IcfgEdge} that includes an assume statement of all states (except the i-th state) at the top
+	 * and the given {@link IcfgEdge} as rest.
 	 *
 	 * @param states
 	 * @param index
 	 * @param transition
 	 * @return
 	 */
-	private CodeBlock createBlockWithoutState(final List<IAbstractState<?, IBoogieVar>> states, final int index,
-			final CodeBlock transition) {
+	private IcfgEdge createBlockWithoutState(final List<IAbstractState<?, IBoogieVar>> states, final int index,
+			final IcfgEdge transition) {
 
 		assert !states.isEmpty();
 
@@ -259,7 +260,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 
 	@Override
 	public List<CompoundDomainState> apply(final CompoundDomainState stateBeforeLeaving,
-			final CompoundDomainState stateAfterLeaving, final CodeBlock transition) {
+			final CompoundDomainState stateAfterLeaving, final IcfgEdge transition) {
 		final List<CompoundDomainState> returnStates = new ArrayList<>();
 
 		final List<IAbstractState<?, IBoogieVar>> beforeStates = stateBeforeLeaving.getAbstractStatesList();
@@ -299,13 +300,13 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 	}
 
 	private static List<IAbstractState> applyInternally(final IAbstractState<?, IBoogieVar> currentState,
-			final IAbstractPostOperator postOperator, final CodeBlock transition) {
+			final IAbstractPostOperator postOperator, final IcfgEdge transition) {
 		return postOperator.apply(currentState, transition);
 	}
 
 	private static List<IAbstractState> applyInternally(final IAbstractState<?, IBoogieVar> first,
 			final IAbstractState<?, IBoogieVar> second, final IAbstractPostOperator postOperator,
-			final CodeBlock transition) {
+			final IcfgEdge transition) {
 		return postOperator.apply(first, second, transition);
 	}
 

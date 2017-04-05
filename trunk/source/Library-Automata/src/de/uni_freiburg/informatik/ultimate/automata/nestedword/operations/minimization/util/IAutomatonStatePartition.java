@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minim
 
 import java.util.Iterator;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.IPartition;
+
 /**
  * Interface for a general partition data structure for automaton states.
  *
@@ -36,18 +38,13 @@ import java.util.Iterator;
  * @param <STATE>
  *            state type
  */
-public interface IAutomatonStatePartition<STATE> {
+public interface IAutomatonStatePartition<STATE> extends IPartition<STATE> {
 	/**
 	 * @param state
 	 *            state.
 	 * @return (unique) block containing state
 	 */
 	IBlock<STATE> getBlock(final STATE state);
-
-	/**
-	 * @return number of blocks.
-	 */
-	int size();
 
 	/**
 	 * @return iterator over all blocks.

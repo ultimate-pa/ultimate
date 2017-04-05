@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.IPartition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -196,14 +196,14 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 		if (!satisfiable) {
 			throw new AssertionError("Constructed constraints were unsatisfiable");
 		}
-		final UnionFind<STATE> resultPartition = constructResultEquivalenceClasses();
+		final IPartition<STATE> resultPartition = constructResultEquivalenceClasses();
 		mNumberOfResultPairs = countNumberOfPairs(resultPartition);
-		constructResultFromUnionFind(resultPartition, addMapOldState2newState);
+		constructResultFromPartition(resultPartition, addMapOldState2newState);
 	}
 
-	private long countNumberOfPairs(final UnionFind<STATE> resultPartition) {
+	private long countNumberOfPairs(final IPartition<STATE> resultPartition) {
 		long result = 0;
-		for (final Set<STATE> block : resultPartition.getAllEquivalenceClasses()) {
+		for (final Set<STATE> block : resultPartition) {
 			result += ((long) block.size()) * ((long) block.size()) - block.size();
 		}
 		return result;
@@ -216,7 +216,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	protected abstract void generateTransitionAndTransitivityConstraints(boolean addTransitivityConstraints)
 			throws AutomataOperationCanceledException;
 
-	protected abstract UnionFind<STATE> constructResultEquivalenceClasses() throws AssertionError;
+	protected abstract IPartition<STATE> constructResultEquivalenceClasses() throws AssertionError;
 
 	protected abstract boolean isInitialPair(STATE state1, STATE state2);
 

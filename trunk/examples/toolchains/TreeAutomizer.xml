@@ -1,0 +1,8 @@
+<rundefinition>
+	<name>Ultimate Toolchain</name>
+	<toolchain>
+		
+    <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer"/>
+
+	</toolchain>
+</rundefinition>

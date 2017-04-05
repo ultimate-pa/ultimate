@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.Activator;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
@@ -45,7 +45,7 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 
 	/**
 	 * Select which transformation should be performed by this plugin.
-	 * 
+	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 */
@@ -66,7 +66,9 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 
 		LOOP_ACCELERATION_FASTUPR,
 
-		LOOP_ACCELERATION_WERNER
+		LOOP_ACCELERATION_WERNER,
+
+		LOOP_ACCELERATION_AHMED
 
 	}
 

@@ -36,12 +36,11 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
- * Utility for grouping multiple subsequent havoc statements into a single havoc statement.
- * Transformations are cached.
+ * Utility for grouping multiple subsequent havoc statements into a single havoc statement. Transformations are cached.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
  */
@@ -49,29 +48,30 @@ public class HavocBundler {
 
 	/** Used to extract statements from code blocks. */
 	private final RcfgStatementExtractor mStatementExtractor;
-	
+
 	/**
-	 * Cache of already processed code blocks and their versions with grouped havoc statements.
-	 * Code blocks that are not present as a map key were never processed.
+	 * Cache of already processed code blocks and their versions with grouped havoc statements. Code blocks that are not
+	 * present as a map key were never processed.
 	 */
-	private final Map<CodeBlock, List<Statement>> mCache;
-	
+	private final Map<IcfgEdge, List<Statement>> mCache;
+
 	/** Construct a new HavocBundler. */
 	public HavocBundler() {
 		mStatementExtractor = new RcfgStatementExtractor();
 		mCache = new HashMap<>();
 	}
-	
+
 	/**
 	 * Extracts statements from a code block and groups subsequent havoc statements into a single havoc statement.
 	 * <p>
 	 * The result of the transformation is cached.
 	 *
-	 * @param block Code block to be transformed.
+	 * @param block
+	 *            Code block to be transformed.
 	 * @return Extracted statements from the code block with grouped havoc statements
 	 */
-	public List<Statement> bundleHavocsCached(final CodeBlock block) {
-		// CodeBlock is used as parameter, because CodeBlock does not overwrite equals => faster map access
+	public List<Statement> bundleHavocsCached(final IcfgEdge block) {
+		// IcfgEdge is used as parameter, because IcfgEdge does not overwrite equals => faster map access
 		List<Statement> cachedResult = mCache.get(block);
 		if (cachedResult == null) {
 			cachedResult = bundleHavocs(mStatementExtractor.process(block));
@@ -80,7 +80,7 @@ public class HavocBundler {
 		return cachedResult;
 	}
 
-	/** Internal, non-cached version of {@link #bundleHavocsCached(CodeBlock)}. */
+	/** Internal, non-cached version of {@link #bundleHavocsCached(IcfgEdge)}. */
 	private List<Statement> bundleHavocs(final List<Statement> block) {
 		final List<Statement> result = new ArrayList<>(block.size());
 		final List<HavocStatement> successiveHavocs = new ArrayList<>(block.size());
@@ -100,11 +100,12 @@ public class HavocBundler {
 		}
 		return result;
 	}
-	
+
 	/**
 	 * Creates a single havoc statement, that has the same effect as a list of subsequent havoc statements.
 	 * 
-	 * @param successiveHavocs List of successive havoc statements.
+	 * @param successiveHavocs
+	 *            List of successive havoc statements.
 	 * @return Single havoc statement
 	 */
 	private HavocStatement joinHavocs(final List<HavocStatement> successiveHavocs) {

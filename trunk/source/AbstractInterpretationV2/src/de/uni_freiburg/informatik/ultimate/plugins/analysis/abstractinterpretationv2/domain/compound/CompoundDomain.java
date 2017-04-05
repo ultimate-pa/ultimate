@@ -34,8 +34,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDom
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Implementation of the compound domain for abstract interpretation.
@@ -44,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  */
 @SuppressWarnings("rawtypes")
-public class CompoundDomain implements IAbstractDomain<CompoundDomainState, CodeBlock, IBoogieVar> {
+public class CompoundDomain implements IAbstractDomain<CompoundDomainState, IcfgEdge, IBoogieVar> {
 
 	private final IUltimateServiceProvider mServices;
 	private final List<IAbstractDomain> mDomainList;
@@ -52,13 +54,13 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 
 	private IAbstractStateBinaryOperator<CompoundDomainState> mMergeOperator;
 	private IAbstractStateBinaryOperator<CompoundDomainState> mWideningOperator;
-	private IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> mPostOperator;
+	private IAbstractPostOperator<CompoundDomainState, IcfgEdge, IBoogieVar> mPostOperator;
 
 	public CompoundDomain(final IUltimateServiceProvider serviceProvider, final List<IAbstractDomain> domainList,
-			final BoogieIcfgContainer rootAnnotation) {
+			final IIcfg<?> icfg) {
 		mServices = serviceProvider;
 		mDomainList = domainList;
-		mRootAnnotation = rootAnnotation;
+		mRootAnnotation = AbsIntUtil.getBoogieIcfgContainer(icfg);
 	}
 
 	@Override
@@ -93,7 +95,7 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Code
 	}
 
 	@Override
-	public IAbstractPostOperator<CompoundDomainState, CodeBlock, IBoogieVar> getPostOperator() {
+	public IAbstractPostOperator<CompoundDomainState, IcfgEdge, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
 			mPostOperator = new CompoundDomainPostOperator(mServices, mRootAnnotation);
 		}

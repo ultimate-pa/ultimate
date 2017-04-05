@@ -26,11 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -42,12 +44,20 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
+ * Represents a simultaneous variable update that consists of two parts
+ * 1. variables that get the value of an term (deterministically assigned)
+ * 2. variables that are nondeterministically assigned (havoced)
+ * 
+ * We can often transform {@link TransFormula}s into this form.
+ * We note that a {@link TransFormula} is usually not equivalent to this form,
+ * because a {@link TransFormula} consists of a guard and an update.
+ * The guard can be obtained by {@link TransFormulaUtils#computeGuard}.
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
 public class SimultaneousUpdate {
 
-	Map<IProgramVar, Term> mUpdatedVars = new HashMap<>();
+	Map<IProgramVar, Term> mDeterministicallyAssignedVars = new HashMap<>();
 	Set<IProgramVar> mHavocedVars = new HashSet<>();
 
 	public SimultaneousUpdate(final TransFormula tf, final ManagedScript mgdScript) {
@@ -82,17 +92,22 @@ public class SimultaneousUpdate {
 						throw new AssertionError("in and out have to be similar");
 					}
 				} else {
-					// extract
-					final Term pvContainingConjunct = pvContainingConjuncts.iterator().next();
-					final Term forbiddenTerm = null;
-					final TermVariable outVar = tf.getOutVars().get(pv);
-					final Term renamed = extractUpdateRhs(outVar, conjuncts, forbiddenTerm, inVarsReverseMapping,
-							outVarsReverseMapping, mgdScript);
-					if (renamed == null) {
-						throw new IllegalArgumentException("cannot bring into simultaneous update form " + pv
-								+ "'s outvar occurs in several conjuncts.");
+					final Term boolConst = isAssignedWithBooleanConstant(mgdScript, tf, pv, pvContainingConjuncts);
+					if (boolConst != null) {
+						mDeterministicallyAssignedVars.put(pv, boolConst);
+					} else {
+						// extract
+						final Term pvContainingConjunct = pvContainingConjuncts.iterator().next();
+						final Term forbiddenTerm = null;
+						final TermVariable outVar = tf.getOutVars().get(pv);
+						final Term renamed = extractUpdateRhs(outVar, conjuncts, forbiddenTerm, inVarsReverseMapping,
+								outVarsReverseMapping, mgdScript);
+						if (renamed == null) {
+							throw new IllegalArgumentException("cannot bring into simultaneous update form " + pv
+									+ "'s outvar occurs in several conjuncts " + Arrays.toString(conjuncts));
+						}
+						mDeterministicallyAssignedVars.put(pv, renamed);
 					}
-					mUpdatedVars.put(pv, renamed);
 				}
 
 				// else {
@@ -104,6 +119,26 @@ public class SimultaneousUpdate {
 		}
 
 		mgdScript.toString();
+	}
+	
+	private Term isAssignedWithBooleanConstant(final ManagedScript mgdScript, final TransFormula tf, final IProgramVar pv, final Set<Term> pvContainingConjuncts) {
+		if (pv.getTerm().getSort().getName().equals("Bool") &&
+				pvContainingConjuncts.size() == 1) {
+			final Term conjunct = pvContainingConjuncts.iterator().next();
+			if (conjunct.equals(tf.getOutVars().get(pv))) {
+				return mgdScript.getScript().term("true");
+			}
+			if (conjunct instanceof ApplicationTerm) {
+				final ApplicationTerm appTerm = (ApplicationTerm) conjunct;
+				if (appTerm.getFunction().getName().equals("not")) {
+					final Term negated = appTerm.getParameters()[0];
+					if (negated.equals(tf.getOutVars().get(pv))) {
+						return mgdScript.getScript().term("false");
+					}
+				}
+			}
+		}
+		return null;
 	}
 
 	private Term extractUpdateRhs(final TermVariable outVar, final Term[] conjuncts, final Term forbiddenTerm,
@@ -135,14 +170,14 @@ public class SimultaneousUpdate {
 					final Term renamed = extractUpdateRhs(tv, conjuncts, forbiddenTerm, inVarsReverseMapping,
 							outVarsReverseMapping, mgdScript);
 					if (renamed == null) {
-						throw new IllegalArgumentException(
-								"cannot bring into simultaneous update form, two outvars in equality ");
+						throw new IllegalArgumentException("cannot bring into simultaneous update form, " + tv
+								+ " has two outvars in equality " + Arrays.toString(conjuncts));
 
 					}
 					result.put(tv, renamed);
 				} else {
-					throw new IllegalArgumentException(
-							"cannot bring into simultaneous update form, neither invar nor outvar " + tv);
+					throw new IllegalArgumentException("cannot bring into simultaneous update form, " + tv
+							+ " has neither invar nor outvar in " + Arrays.toString(conjuncts));
 				}
 			}
 		}
@@ -150,7 +185,7 @@ public class SimultaneousUpdate {
 	}
 
 	public Map<IProgramVar, Term> getUpdatedVars() {
-		return mUpdatedVars;
+		return mDeterministicallyAssignedVars;
 	}
 
 	public Set<IProgramVar> getHavocedVars() {

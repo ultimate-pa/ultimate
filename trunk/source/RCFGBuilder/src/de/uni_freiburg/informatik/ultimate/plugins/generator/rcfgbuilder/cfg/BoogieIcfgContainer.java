@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.ModernAnno
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.Visualizable;
@@ -51,7 +52,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGloba
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
 /**
  * Stores references to all objects that represent an interprocedural control-flow graph (ICFG) that was directly
@@ -66,7 +66,8 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	 * The serial version UID. Change only if serial representation changes.
 	 */
 	private static final long serialVersionUID = -221145005712480077L;
-	private static final boolean PREPEND_CLASSNAME_TO_IDENTIFIER = true;
+	private static final boolean PREPEND_CLASSNAME_TO_IDENTIFIER = false;
+	private static final String KEY = BoogieIcfgContainer.class.getName();
 
 	private final BoogieDeclarations mBoogieDeclarations;
 	private final Map<String, BoogieIcfgLocation> mEntryNodes;
@@ -88,15 +89,13 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	final Map<String, BoogieIcfgLocation> mFinalNode;
 
 	private final Boogie2SMT mBoogie2SMT;
-	private final ManagedScript mManagedScript;
-	private final ModifiableGlobalsTable mModifiableGlobalVariableManager;
 	private final CodeBlockFactory mCodeBlockFactory;
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final IPayload mPayload;
 	private final Set<BoogieIcfgLocation> mInitialNodes;
 
 	public BoogieIcfgContainer(final IUltimateServiceProvider services, final BoogieDeclarations boogieDeclarations,
-			final Boogie2SMT mBoogie2smt, final ILocation loc) {
+			final Boogie2SMT mBoogie2smt) {
 
 		mEntryNodes = new HashMap<>();
 		mExitNode = new HashMap<>();
@@ -108,19 +107,18 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 
 		mBoogieDeclarations = boogieDeclarations;
 		mBoogie2SMT = mBoogie2smt;
-		mManagedScript = mBoogie2smt.getManagedScript();
-		mModifiableGlobalVariableManager = new ModifiableGlobalsTable(
-				mBoogie2smt.getBoogie2SmtSymbolTable().constructProc2ModifiableGlobalsMapping());
+		final ManagedScript mgScript = mBoogie2smt.getManagedScript();
 		final Set<String> procs = new HashSet<>();
 		procs.addAll(boogieDeclarations.getProcImplementation().keySet());
 		procs.addAll(boogieDeclarations.getProcSpecification().keySet());
-		mCfgSmtToolkit = new CfgSmtToolkit(mModifiableGlobalVariableManager, mManagedScript,
-				mBoogie2smt.getBoogie2SmtSymbolTable(), mBoogie2SMT.getAxioms(), procs);
+		mCfgSmtToolkit = new CfgSmtToolkit(
+				new ModifiableGlobalsTable(
+						mBoogie2smt.getBoogie2SmtSymbolTable().constructProc2ModifiableGlobalsMapping()),
+				mgScript, mBoogie2smt.getBoogie2SmtSymbolTable(), mBoogie2SMT.getAxioms(), procs);
 		mCodeBlockFactory =
-				new CodeBlockFactory(services, mManagedScript, mCfgSmtToolkit, mBoogie2SMT.getBoogie2SmtSymbolTable());
+				new CodeBlockFactory(services, mgScript, mCfgSmtToolkit, mBoogie2SMT.getBoogie2SmtSymbolTable());
 		mPayload = new Payload();
-		mPayload.getAnnotations().put(Activator.PLUGIN_ID, this);
-		loc.annotate(mPayload);
+		mPayload.getAnnotations().put(KEY, this);
 	}
 
 	@Override
@@ -205,6 +203,7 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 		return IcfgUtils.extractStartEdges(root);
 	}
 
+	@Deprecated
 	public RootNode constructRootNode() {
 		final RootNode rootNode = new RootNode(ILocation.getAnnotation(this), this);
 		for (final Entry<String, BoogieIcfgLocation> entry : getProcedureEntryNodes().entrySet()) {
@@ -235,5 +234,9 @@ public class BoogieIcfgContainer extends ModernAnnotations implements IIcfg<Boog
 	@Override
 	public Class<BoogieIcfgLocation> getLocationClass() {
 		return BoogieIcfgLocation.class;
+	}
+
+	public static BoogieIcfgContainer getAnnotation(final IElement node) {
+		return ModelUtils.getAnnotation(node, KEY, a -> (BoogieIcfgContainer) a);
 	}
 }

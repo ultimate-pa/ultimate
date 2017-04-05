@@ -50,7 +50,7 @@ public class RCFGEdgeVisitor {
 		} else if (e instanceof RootEdge) {
 			visit((RootEdge) e);
 		} else {
-			throw new UnsupportedOperationException("Extend the new type");
+			throw new UnsupportedOperationException("Extend the new type: " + e.getClass());
 		}
 	}
 

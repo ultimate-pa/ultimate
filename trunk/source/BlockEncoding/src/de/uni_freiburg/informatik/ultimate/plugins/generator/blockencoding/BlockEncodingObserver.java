@@ -65,7 +65,7 @@ public class BlockEncodingObserver implements IUnmanagedObserver {
 	private BoogieIcfgContainer makeContainerFromRoot(final RootNode newRoot) {
 		final BoogieIcfgContainer rootAnnot = newRoot.getRootAnnot();
 		final BoogieIcfgContainer container = new BoogieIcfgContainer(mServices,
-				newRoot.getRootAnnot().getBoogieDeclarations(), newRoot.getRootAnnot().getBoogie2SMT(), null);
+				newRoot.getRootAnnot().getBoogieDeclarations(), newRoot.getRootAnnot().getBoogie2SMT());
 		// container.getProcedureEntryNodes().putAll(m);
 		return newRoot.getRootAnnot();
 	}

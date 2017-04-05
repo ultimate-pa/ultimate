@@ -156,7 +156,7 @@ public class CfgBuilder {
 		final boolean bitvectorInsteadInt = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(RcfgPreferenceInitializer.LABEL_BitvectorWorkaround);
 		mBoogie2smt = new Boogie2SMT(maScript, mBoogieDeclarations, bitvectorInsteadInt, mServices);
-		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2smt, unit.getLocation());
+		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2smt);
 		mCbf = mIcfg.getCodeBlockFactory();
 		mCbf.storeFactory(storage);
 	}

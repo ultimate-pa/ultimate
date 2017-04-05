@@ -79,11 +79,11 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1.epf"),
-			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_FUTURE_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_P1_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
-			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+//			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
 //			new Triple<>("AbstractInterpretation.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP.epf"),
@@ -128,6 +128,9 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Taipan_Default_Debug.epf"),
+			new Triple<>("AutomizerCInline.xml", C, "default/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf"),
+			new Triple<>("AutomizerCInline.xml", C, "default/taipan/svcomp-Reach-32bit-Taipan_Default.epf"),
 	};
 
 	private static final String[] INPUT = new String[] {
@@ -144,14 +147,22 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/svcomp/loop-industry-pattern/aiob_1_true-unreach-call.c",
 //			"examples/svcomp/loops/insertion_sort_false-unreach-call_true-termination.i",
 //			"examples/svcomp/loops/bubble_sort_false-unreach-call.i"
+			
+//			"examples/svcomp/array-memsafety/lis-alloca_true-valid-memsafety.i",
+//			"examples/svcomp/seq-pthread/cs_lazy_false-unreach-call.i",
+//			"examples/svcomp/seq-pthread/cs_stateful_true-unreach-call.i",
+//			"examples/svcomp/seq-pthread/cs_sync_true-unreach-call.i",
+			"examples/svcomp/seq-pthread/cs_stateful_true-unreach-call.i",
+			"examples/svcomp/seq-pthread/cs_lazy_false-unreach-call.i",
 
 			// Normal regressions
 //			"examples/programs/abstractInterpretation/regression",
 
 			/* current fails */
-			"examples/programs/abstractInterpretation/regression/proc-procedure-without-impl.bpl",
+//			"examples/programs/abstractInterpretation/regression/proc-procedure-without-impl.bpl",
 
-//			"examples/programs/abstractInterpretation/regression/all/proc-implies-statesplit.bpl",
+//			"examples/programs/abstractInterpretation/regression/open/comp/proc-implies-statesplit.bpl",
+//			"examples/programs/abstractInterpretation/regression/non_con/loop-literal-widening.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/recursive-easy-2.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
@@ -171,7 +182,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	protected long getTimeout() {
 		// return 90 * 1000 * 1000;
 		// return 15 * 1000;
-		return 60 * 1000;
+		return 90 * 1000;
 		// return 15 * 60 * 1000;
 	}
 

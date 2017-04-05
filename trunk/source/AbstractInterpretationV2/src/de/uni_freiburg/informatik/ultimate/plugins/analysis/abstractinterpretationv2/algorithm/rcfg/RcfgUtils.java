@@ -66,7 +66,7 @@ public final class RcfgUtils {
 	/**
 	 * @return true iff <code>action</code> is a summary for <code>call</code>
 	 */
-	public static boolean isSummaryForCall(final CodeBlock action, final CodeBlock possibleCall) {
+	public static boolean isSummaryForCall(final IcfgEdge action, final IcfgEdge possibleCall) {
 		if (possibleCall instanceof Call && action instanceof Summary) {
 			final Call call = (Call) possibleCall;
 			final Summary summary = (Summary) action;

@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
 
@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
+import de.uni_freiburg.informatik.ultimate.util.VMUtils;
 
 public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 
@@ -39,7 +40,8 @@ public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 	private int mCountCurrent;
 	private final long mDeadline;
 
-	public IncrementalLogWithVMParameters(Class<? extends UltimateTestSuite> ultimateTestSuite, long deadline) {
+	public IncrementalLogWithVMParameters(final Class<? extends UltimateTestSuite> ultimateTestSuite,
+			final long deadline) {
 		super(ultimateTestSuite);
 		mFirstRun = true;
 		mCountCurrent = 0;
@@ -47,12 +49,12 @@ public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 		mDeadline = deadline;
 	}
 
-	public void setCountTotal(int total) {
+	public void setCountTotal(final int total) {
 		mCountTotal = total;
 	}
 
 	@Override
-	public void addEntryPreStart(UltimateRunDefinition urd, ILogger testlogger) {
+	public void addEntryPreStart(final UltimateRunDefinition urd, final ILogger testlogger) {
 		mCountCurrent++;
 		final StringBuilder sb = new StringBuilder();
 		final String indent = "\t";
@@ -63,8 +65,9 @@ public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 			sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
 			// add more stats here
 			sb.append(indent)
-					.append(String.format("Parameters: heapMaxSize=%s",
-							Utils.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true)))
+					.append(String.format("Parameters: heapMaxSize=%s assertions=%s",
+							Utils.humanReadableByteCount(Runtime.getRuntime().maxMemory(), true),
+							VMUtils.areAssertionsEnabled()))
 					.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
 			sb.append(indent).append(String.format("Test Suite Parameters: Timeout=%s s", mDeadline / 1000))
 					.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
@@ -81,7 +84,7 @@ public class IncrementalLogWithVMParameters extends DefaultIncrementalLogfile {
 		sb.append(" ### Starting test for ");
 		sb.append(urd);
 		sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getPlatformLineSeparator());
-		writeToFile(sb.toString(),testlogger);
+		writeToFile(sb.toString(), testlogger);
 	}
 
 }

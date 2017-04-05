@@ -96,28 +96,28 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE, IStateF
 
 	private Set<STATE> checkTree(final Tree<LETTER> t) {
 		final Set<STATE> res = new HashSet<>();
-
 		final ArrayList<Set<STATE>> next = new ArrayList<>();
 		for (final Tree<LETTER> ch : t.getChildren()) {
 			next.add(checkTree(ch));
 		}
-
 		final Iterable<TreeAutomatonRule<LETTER, STATE>> st = mTreeAutomaton.getRulesByLetter(t.getSymbol());
-
+		
 		if (st == null) {
 			return res;
 		}
 		for (final TreeAutomatonRule<LETTER, STATE> rule : st) {
-			if (rule.getSource().size() != next.size()) {
-				continue;
-			}
-			for (int i = 0; i < next.size(); ++i) {
+			
+			boolean validDerivation = true;
+			for (int i = 0, k = 0; i < rule.getArity(); ++i) {
 				final STATE sr = rule.getSource().get(i);
-				if (!next.get(i).contains(sr) && !mTreeAutomaton.isInitialState(sr)) {
-					continue;
+				if (!mTreeAutomaton.isInitialState(sr) && (k >= next.size() || !next.get(k++).contains(sr))) {
+					validDerivation = false;
+					break;
 				}
 			}
-			res.add(rule.getDest());
+			if (validDerivation) {
+				res.add(rule.getDest());
+			}
 		}
 		return res;
 	}
@@ -142,4 +142,37 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE, IStateF
 		// TODO implement a meaningful check
 		return true;
 	}
+	
+	
+	public static void main(String[] args) {
+		TreeAutomatonBU<Character, Character> t = new TreeAutomatonBU<>();
+		t.addInitialState('_');
+		t.addFinalState('L');
+		
+		ArrayList<Character> s1 = new ArrayList<>();
+		s1.add('N'); s1.add('L');
+		t.addRule(new TreeAutomatonRule<Character, Character>('c', s1, 'L')); // c(N, L) -> L
+
+		ArrayList<Character> s2 = new ArrayList<>();
+		s2.add('N');
+		t.addRule(new TreeAutomatonRule<Character, Character>('s', s2, 'N')); // s(N) -> N
+
+		ArrayList<Character> s3 = new ArrayList<>();
+		s3.add('_');
+		t.addRule(new TreeAutomatonRule<Character, Character>('0', s3, 'N')); // 0(_) -> N
+		
+		ArrayList<Character> s4 = new ArrayList<>();
+		s4.add('_');
+		t.addRule(new TreeAutomatonRule<Character, Character>('p', s4, 'L')); // p(_) -> L
+		
+		Tree<Character> nil = new Tree<Character>('p');
+		Tree<Character> zero = new Tree<Character>('0');
+		ArrayList<Tree<Character>> zeroL = new ArrayList<>();
+		zeroL.add(zero);
+		Tree<Character> one = new Tree<Character>('s', zeroL);
+		ArrayList<Tree<Character>> listOne = new ArrayList<>();
+		listOne.add(one); listOne.add(nil);
+		System.out.println(new Accepts<Character, Character>(null, t, new Tree<Character>('c', listOne)).getResult());
+	}
+	
 }

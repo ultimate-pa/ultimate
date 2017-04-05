@@ -37,6 +37,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayStoreExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -51,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.FunctionApplication;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StringLiteral;
@@ -364,10 +366,10 @@ public final class Term2Expression implements Serializable {
 		final VarList[] parameters = new VarList[term.getVariables().length];
 		int offset = 0;
 		for (final TermVariable tv : term.getVariables()) {
-			// final IBoogieType type = mTypeSortTranslator.getType(tv.getSort());
+			final IBoogieType boogieType = mTypeSortTranslator.getType(tv.getSort());
 			final String[] identifiers = { tv.getName() };
-			// FIXME: Matthias: How can I get the ASTType of type?
-			final VarList varList = new VarList(null, identifiers, null);
+			final ASTType astType = new PrimitiveType(null, boogieType, boogieType.toString());
+			final VarList varList = new VarList(null, identifiers, astType);
 			parameters[offset] = varList;
 			mQuantifiedVariables.put(tv, varList);
 			offset++;
@@ -386,15 +388,19 @@ public final class Term2Expression implements Serializable {
 			final Annotation annotation = annotations[0];
 			final Object value = annotation.getValue();
 			assert value instanceof Term[] : "expecting Term[]" + value;
-			final Term[] pattern = (Term[]) value;
 			subTerm = ((AnnotatedTerm) subTerm).getSubterm();
-			final Expression[] triggers = new Expression[pattern.length];
-			for (int i = 0; i < pattern.length; i++) {
-				triggers[i] = translate(pattern[i]);
+			final Term[] pattern = (Term[]) value;
+			if (pattern.length == 0) {
+				attributes = new Attribute[0];
+			} else {
+				final Expression[] triggers = new Expression[pattern.length];
+				for (int i = 0; i < pattern.length; i++) {
+					triggers[i] = translate(pattern[i]);
+				}
+				final Trigger trigger = new Trigger(null, triggers);
+				attributes = new Attribute[1];
+				attributes[0] = trigger;
 			}
-			final Trigger trigger = new Trigger(null, triggers);
-			attributes = new Attribute[1];
-			attributes[0] = trigger;
 		} else {
 			attributes = new Attribute[0];
 		}
@@ -412,7 +418,7 @@ public final class Term2Expression implements Serializable {
 			final VarList varList = mQuantifiedVariables.get(term);
 			assert varList.getIdentifiers().length == 1;
 			final String id = varList.getIdentifiers()[0];
-			result = new IdentifierExpression(null, type, id,
+			result = new IdentifierExpression(null, type, translateIdentifier(id),
 					new DeclarationInformation(StorageClass.QUANTIFIED, null));
 		} else if (mBoogie2SmtSymbolTable.getProgramVar(term) == null) {
 			// Case where term contains some auxilliary variable that was
@@ -429,21 +435,29 @@ public final class Term2Expression implements Serializable {
 			final ILocation loc = astNode.getLocation();
 			final DeclarationInformation declInfo = mBoogie2SmtSymbolTable.getDeclarationInformation(pv);
 			if (pv instanceof LocalBoogieVar) {
-				result = new IdentifierExpression(loc, type, ((LocalBoogieVar) pv).getIdentifier(), declInfo);
+				result = new IdentifierExpression(loc, type, translateIdentifier(((LocalBoogieVar) pv).getIdentifier()), declInfo);
 			} else if (pv instanceof BoogieNonOldVar) {
-				result = new IdentifierExpression(loc, type, ((BoogieNonOldVar) pv).getIdentifier(), declInfo);
+				result = new IdentifierExpression(loc, type, translateIdentifier(((BoogieNonOldVar) pv).getIdentifier()), declInfo);
 			} else if (pv instanceof BoogieOldVar) {
 				assert pv.isGlobal();
 				final Expression nonOldExpression =
-						new IdentifierExpression(loc, type, ((BoogieOldVar) pv).getIdentifierOfNonOldVar(), declInfo);
+						new IdentifierExpression(loc, type, translateIdentifier(((BoogieOldVar) pv).getIdentifierOfNonOldVar()), declInfo);
 				result = new UnaryExpression(loc, type, UnaryExpression.Operator.OLD, nonOldExpression);
 			} else if (pv instanceof BoogieConst) {
-				result = new IdentifierExpression(loc, type, ((BoogieConst) pv).getIdentifier(), declInfo);
+				result = new IdentifierExpression(loc, type, translateIdentifier(((BoogieConst) pv).getIdentifier()), declInfo);
 			} else {
 				throw new AssertionError("unsupported kind of variable " + pv.getClass().getSimpleName());
 			}
 		}
 		return result;
+	}
+	
+	/*
+	 * TODO escape all sequences that are not allowed in Boogie 
+	 */
+	private String translateIdentifier(final String id) {
+		return id.replace(" ", "_").replace("(", "_").replace(")", "_").replace("+", "PLUS").replace("-", "MINUS")
+				.replace("*", "MUL");
 	}
 
 	private static Operator getBinaryOperator(final FunctionSymbol symb) {

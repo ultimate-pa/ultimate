@@ -65,7 +65,6 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	private final List<AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>> mCounterexamples;
 	private final AbstractInterpretationBenchmark<ACTION, LOCATION> mBenchmark;
 
-	private final Class<VARDECL> mVariablesType;
 	private final Script mScript;
 
 	private IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> mRootStorage;
@@ -79,12 +78,11 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	protected AbstractInterpretationResult(final Script script,
 			final IAbstractDomain<STATE, ACTION, VARDECL> abstractDomain,
 			final ITransitionProvider<ACTION, LOCATION> transProvider,
-			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final Class<VARDECL> variablesType) {
+			final IVariableProvider<STATE, ACTION, VARDECL> varProvider) {
 		mAbstractDomain = Objects.requireNonNull(abstractDomain);
 		mScript = Objects.requireNonNull(script);
 		mTransProvider = Objects.requireNonNull(transProvider);
 		mVariableProvider = Objects.requireNonNull(varProvider);
-		mVariablesType = Objects.requireNonNull(variablesType);
 		mCounterexamples = new ArrayList<>();
 		mBenchmark = new AbstractInterpretationBenchmark<>();
 
@@ -98,13 +96,13 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 				new ArrayList<>();
 
 		ACTION transition = currentItem.getAction();
-		abstractExecution.add(new Triple<>(postState, transitionProvider.getTarget(transition), transition));
+		abstractExecution.add(getCexTriple(transitionProvider, postState, transition));
 
 		AbstractMultiState<STATE, ACTION, VARDECL> post = currentItem.getState();
 		IWorklistItem<STATE, ACTION, VARDECL, LOCATION> current = currentItem.getPredecessor();
 		while (current != null) {
 			transition = current.getAction();
-			abstractExecution.add(new Triple<>(post, transitionProvider.getTarget(transition), transition));
+			abstractExecution.add(getCexTriple(transitionProvider, post, transition));
 			post = current.getState();
 			current = current.getPredecessor();
 		}
@@ -112,6 +110,12 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		Collections.reverse(abstractExecution);
 		mCounterexamples
 				.add(new AbstractCounterexample<>(post, transitionProvider.getSource(transition), abstractExecution));
+	}
+
+	private Triple<AbstractMultiState<STATE, ACTION, VARDECL>, LOCATION, ACTION> getCexTriple(
+			final ITransitionProvider<ACTION, LOCATION> transitionProvider,
+			final AbstractMultiState<STATE, ACTION, VARDECL> postState, final ACTION transition) {
+		return new Triple<>(postState, transitionProvider.getTarget(transition), transition);
 	}
 
 	void saveRootStorage(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOCATION> rootStateStorage) {
@@ -214,7 +218,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 
 	@Override
 	public String toString() {
-		return toSimplifiedString(a -> a.toStringDirect());
+		return toSimplifiedString(Term::toStringDirect);
 	}
 
 	@Override

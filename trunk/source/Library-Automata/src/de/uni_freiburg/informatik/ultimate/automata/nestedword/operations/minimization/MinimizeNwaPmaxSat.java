@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimi
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.TransitivityGeneralMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.IPartition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 
@@ -302,8 +303,11 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 	}
 
 	@Override
-	protected UnionFind<STATE> constructResultEquivalenceClasses() throws AssertionError {
+	protected IPartition<STATE> constructResultEquivalenceClasses() throws AssertionError {
 		final UnionFind<STATE> resultingEquivalenceClasses = new UnionFind<>();
+		for (final STATE state : mOperand.getStates()) {
+			resultingEquivalenceClasses.makeEquivalenceClass(state);
+		}
 		for (final Entry<Doubleton<STATE>, Boolean> entry : mSolver.getValues().entrySet()) {
 			if (entry.getValue() == null) {
 				throw new AssertionError("value not determined " + entry.getKey());

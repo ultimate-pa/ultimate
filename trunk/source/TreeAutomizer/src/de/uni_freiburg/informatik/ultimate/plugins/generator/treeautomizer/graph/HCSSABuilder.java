@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -44,7 +43,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCInVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCOutVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -70,7 +68,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  */
 public class HCSSABuilder {
 
-	private final ITreeRun<HornClause, IPredicate> mTreeRun;
+	private final TreeRun<HornClause, IPredicate> mTreeRun;
 	private final IPredicate mPostCondition;
 	private final IPredicate mPreCondition;
 	private final ManagedScript mScript;
@@ -89,7 +87,6 @@ public class HCSSABuilder {
 	 *  - the child index of H1, i.e., the i, in "H1 is the i-th child of H2), called PredPos
 	 *  - the index of the variable in the predicate, called argPos
 	 */
-//	private final NestedMap2<Integer, HCOutVar, Term> mPredPosToArgPosToCurrentVarVersion;
 	private final Map<HCInVar, Term> mCurrentHcInVarVersion;
 
 
@@ -102,7 +99,6 @@ public class HCSSABuilder {
 
 	private final Map<TreeRun<HornClause, IPredicate>, Integer> mIdxMap = new HashMap<>();
 	private int mCurrentIdx;
-
 	
 	/**
 	 * Standard constructor, accepts all the input necessary for building the SSA.
@@ -114,7 +110,7 @@ public class HCSSABuilder {
 	 * @param script The backend script
 	 * @param predicateUnifier HornClause Predicate Factory
 	 * */
-	public HCSSABuilder(final ITreeRun<HornClause, IPredicate> trace, final IPredicate preCondition,
+	public HCSSABuilder(final TreeRun<HornClause, IPredicate> trace, final IPredicate preCondition,
 			final IPredicate postCondition, final ManagedScript script, final PredicateUnifier predicateUnifier) {
 		mTreeRun = trace;
 		mScript = script;
@@ -126,9 +122,9 @@ public class HCSSABuilder {
 		mSubsMap = new HashMap<>();
 		mPredicateUnifier = predicateUnifier;
 
-//		mPredPosToArgPosToCurrentVarVersion = new NestedMap2<>();
 		mCurrentHcInVarVersion = new HashMap<>();
 		mResult = buildSSA();
+
 	}
 
 	public HCSsa getSSA() {
@@ -143,49 +139,32 @@ public class HCSSABuilder {
 		}
 		return mIdxMap.get(tree);
 	}
-
+	
+	
 	/**
-	 * Rebuild the SSA predicates after obtaining the interpolants.
-	 * @param interpolantsMap map of predicates to the corresponding interpolant.
-	 * @return A map of the new predicates.
-	 * */
-	public Map<IPredicate, IPredicate> rebuildSSApredicates(final Map<IPredicate, Term> interpolantsMap) {
-		final Map<IPredicate, IPredicate> res = new HashMap<>();
-		mCurrentTree = 0;
-		rebuild((TreeRun<HornClause, IPredicate>) mTreeRun, res, interpolantsMap);
-		return res;
-	}
-
-	private void rebuild(final TreeRun<HornClause, IPredicate> tree, final Map<IPredicate, IPredicate> res,
-			final Map<IPredicate, Term> interpolantsMap) {
-		for (final TreeRun<HornClause, IPredicate> child : tree.getChildren()) {
-			mCurrentTree = getOrConstructIndex(tree);
-			rebuild(child, res, interpolantsMap);
+	 * Given a map from subtrees (TreeRuns) to interpolants in SSA-fomat, this method constructs a TreeRun that
+	 * matches the input TreeRun of this class (in TreeAutomizer: the counterExample from the emptiness check)
+	 * where the HCPredicates representing a Location/HCPredicateSymbol have been replaced by IPredicates representing 
+	 * the corresponding interpolant.
+	 * 
+	 * @param interpolantsMap represents the tree interpolant as received from the SMT solver
+	 * @return
+	 */
+	public TreeRun<HornClause, IPredicate> buildTreeRunWithBackVersionedInterpolants(
+			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap) {
+		final Map<TreeRun<HornClause, IPredicate>, IPredicate> backVersionedInterpolantsMap = new HashMap<>();
+		for (Entry<TreeRun<HornClause, IPredicate>, Term> en : interpolantsMap.entrySet()) {
+			VariableVersioneer versioneer = mSubsMap.get(en.getKey());
+			assert versioneer != null;
+			backVersionedInterpolantsMap.put(en.getKey(), versioneer.backVersion(en.getValue()));
+			assert backVersionedInterpolantsMap.get(en.getKey()) != null;
 		}
-
-		if (tree.getRootSymbol() == null) {
-			res.put(tree.getRoot(), tree.getRoot());
-			return;
-		}
-		mCurrentTree = getOrConstructIndex(tree);
-		final VariableVersioneer vvRoot = mSubsMap.get(tree);
-		if (interpolantsMap.containsKey(tree.getRoot())) {
-			res.put(tree.getRoot(), vvRoot.backVersion(tree.getRoot(), interpolantsMap.get(tree.getRoot())));
-		} else {
-			res.put(tree.getRoot(), tree.getRoot());
-		}
+		
+		return mTreeRun.reconstructViaSubtrees(backVersionedInterpolantsMap);
 	}
 
 	private TreeRun<Term, IPredicate> buildNestedFormulaTree(final TreeRun<HornClause, IPredicate> tree,
 			int treeIdx, int childPos) {
-		
-//		/*
-//		 * exit condition 
-//		 */
-//		if (tree.getRootSymbol() == null) {
-////			return new TreeRun<>(tree.getRoot(), null, childTrees);
-////			return tree;
-//		}
 		
 		/*
 		 * do the actual versioning
@@ -201,7 +180,6 @@ public class HCSSABuilder {
 		 * recursively descend into the tree run
 		 */
 		final ArrayList<TreeRun<Term, IPredicate>> childTrees = new ArrayList<>();
-//		for (final TreeRun<HornClause, IPredicate> child : tree.getChildren()) {
 		for (int i = 0; i < tree.getChildren().size(); i++) {
 			TreeRun<HornClause, IPredicate> child = tree.getChildren().get(i);
 			mCurrentTree = getOrConstructIndex(tree);
@@ -209,8 +187,6 @@ public class HCSSABuilder {
 				childTrees.add(buildNestedFormulaTree(child, mCurrentTree, i));
 			}
 		}
-		
-
 
 		return new TreeRun<>(tree.getRoot(), vvRoot.getVersioneeredTerm(), childTrees);
 	}
@@ -225,7 +201,7 @@ public class HCSSABuilder {
 		final VariableVersioneer vvPost = new VariableVersioneer(mPostCondition);
 		vvPost.versionPredicate(mCurrentTree);
 
-		return new HCSsa(tree, vvPre.getVersioneeredTerm(), vvPost.getVersioneeredTerm(), mCounters);
+		return new HCSsa(tree, vvPre.getVersioneeredTerm(), vvPost.getVersioneeredTerm());
 	}
 
 	public Map<Term, HCOutVar> getConstants2BoogieVar() {
@@ -275,12 +251,6 @@ public class HCSSABuilder {
 		private Term setCurrentVarVersion(final HCInVar inVar, final int index) {
 			final Term var = buildVersion(inVar, index);
 			mCurrentHcInVarVersion.put(inVar, var);
-//			mPredPosToArgPosToCurrentVarVersion.put(predPos, argPos, var);
-//			if (mCurrentLocalAndOldVarVersion.containsKey(argPos)) {
-//				mCurrentLocalAndOldVarVersion.remove(argPos);
-//			}
-//			mCurrentLocalAndOldVarVersion.put(argPos, var);
-
 			return var;
 		}
 		
@@ -290,9 +260,7 @@ public class HCSSABuilder {
 		 * @param bv
 		 * @return
 		 */
-//		private Term getOrConstructCurrentVarVersion(final HCOutVar bv) {
 		private Term getOrConstructCurrentVarVersion(final HCInVar bv) {
-//			Term result = mCurrentLocalAndOldVarVersion.get(bv);
 			Term result = mCurrentHcInVarVersion.get(bv);
 			if (result == null) {
 				// variable was not yet assigned in the calling context
@@ -327,17 +295,10 @@ public class HCSSABuilder {
 		 */
 		public void versionOldVars(final int currentPos) {
 
-//			for (final IProgramVar bv : mTF.getTransformula().getInVars().keySet()) {
-//				HCOutVar hv = (HCOutVar) bv;
-//				final Term versioneered = getOrConstructCurrentVarVersion(hv);
-//				mBackSubstitutionMapping.put(versioneered, hv);
-//			}
-//
 			for (final Entry<IProgramVar, TermVariable> en : mTF.getTransformula().getInVars().entrySet()) {
 				HCInVar hv = (HCInVar) en.getKey();
 				final TermVariable tv = transferToCurrentScriptIfNecessary(en.getValue());
 				final Term versioneered = setCurrentVarVersion(hv, mCurrentTree);
-//				mConstants2HCOutVar.put(versioneered, hv);
 
 				mSubstitutionMapping.put(tv, versioneered);
 				
@@ -349,17 +310,6 @@ public class HCSSABuilder {
 			for (TermVariable aux : mTF.getTransformula().getAuxVars()) {
 				assert false : "rename this, too, right?..";
 			}
-		}
-
-		private Term constructFreshConstant(final TermVariable tv) {
-			mScript.lock(this);
-			final Integer newIndex = mConstForTvCounter.increase(tv);
-			final String name = SmtUtils.removeSmtQuoteCharacters(tv.getName()) + "_fresh_" + newIndex;
-			final Sort resultSort = tv.getSort();
-			mScript.declareFun(this, name, new Sort[0], resultSort);
-			final Term result = mScript.term(this, name);
-			mScript.unlock(this);
-			return result;
 		}
 
 		public void versionPredicate(int currentTree) {
@@ -397,7 +347,7 @@ public class HCSSABuilder {
 		 * @param term
 		 * @return
 		 */
-		public IPredicate backVersion(final IPredicate pl, final Term term) {
+		public IPredicate backVersion(final Term term) {
 			final Set<IProgramVar> vars = new HashSet<>();
 			final Map<Term, Term> backSubstitutionMap = new HashMap<>();
 			final Map<Term, HCOutVar> termToHcVar = new HashMap<>();
@@ -419,7 +369,6 @@ public class HCSSABuilder {
 			
 			final IPredicate unified = mPredicateUnifier.getOrConstructPredicate(formula);
 			return unified;
-			//return ((HCPredicateFactory) mPredicateUnifier.getPredicateFactory()).newPredicate(pl.mProgramPoint, pl.hashCode(), unified.getFormula(), vars, termToHcVar);
 		}
 
 		private TermVariable transferToCurrentScriptIfNecessary(final TermVariable tv) {

@@ -37,15 +37,17 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Data structure that can be used to partition a set of elements <E>.
+ * Data structure that can be used to partition a set of elements {@code <E>}.
  * http://en.wikipedia.org/wiki/Disjoint-set_data_structure Each equivalence class has a unique representative. This
  * implementation uses HashMaps - to store for each element its equivalence class and - to store for each equivalence
  * class the representative
  *
  * @author Matthias Heizmann
  * @author Daniel Tischner {@literal <zabuza.dev@gmail.com>}
+ * @param <E>
+ *            element type
  */
-public class UnionFind<E> {
+public class UnionFind<E> implements IPartition<E> {
 	/**
 	 * Maps an element to its equivalence class.
 	 */
@@ -56,22 +58,26 @@ public class UnionFind<E> {
 	private final Map<Set<E>, E> mRepresentative = new HashMap<>();
 
 	/**
-	 * Returns the representative of the equivalence class of element e.
+	 * @param elem
+	 *            element
+	 * @return the representative of the equivalence class of element e.
 	 */
-	public E find(final E e) {
-		final Set<E> set = mEquivalenceClass.get(e);
+	public E find(final E elem) {
+		final Set<E> set = mEquivalenceClass.get(elem);
 		return mRepresentative.get(set);
 	}
 
 	/**
-	 * Returns the representative of the equivalence class of element e. If there is no equivalence class for e this
-	 * equivalence class is constructed.
+	 * @param elem
+	 *            element
+	 * @return the representative of the equivalence class of element e. If there is no equivalence class for e this
+	 *         equivalence class is constructed.
 	 */
-	public E findAndConstructEquivalenceClassIfNeeded(final E e) {
-		final E findResult = find(e);
+	public E findAndConstructEquivalenceClassIfNeeded(final E elem) {
+		final E findResult = find(elem);
 		if (findResult == null) {
-			makeEquivalenceClass(e);
-			return e;
+			makeEquivalenceClass(elem);
+			return elem;
 		}
 		return findResult;
 	}
@@ -91,30 +97,40 @@ public class UnionFind<E> {
 	}
 
 	/**
-	 * Return collection of all elements e such that e is representative of an equivalence class.
+	 * @return collection of all elements e such that e is representative of an equivalence class.
 	 */
 	public Collection<E> getAllRepresentatives() {
 		return mRepresentative.values();
 	}
 
 	/**
-	 * Return set of all elements that are in the same equivalence class than e. (Returned set also contains e).
+	 * @param elem
+	 *            element
+	 * @return set of all elements that are in the same equivalence class than e. (Returned set also contains e).
 	 */
-	public Set<E> getEquivalenceClassMembers(final E e) {
-		return Collections.unmodifiableSet(mEquivalenceClass.get(e));
+	public Set<E> getEquivalenceClassMembers(final E elem) {
+		return Collections.unmodifiableSet(mEquivalenceClass.get(elem));
+	}
+
+	@Override
+	public Set<E> getContainingSet(final E elem) {
+		return getEquivalenceClassMembers(elem);
 	}
 
 	/**
 	 * Construct a new equivalence class that is a singleton and contains only element e.
+	 * 
+	 * @param elem
+	 *            element
 	 */
-	public void makeEquivalenceClass(final E e) {
-		if (mEquivalenceClass.containsKey(e)) {
-			throw new IllegalArgumentException("Already contained " + e);
+	public void makeEquivalenceClass(final E elem) {
+		if (mEquivalenceClass.containsKey(elem)) {
+			throw new IllegalArgumentException("Already contained " + elem);
 		}
 		final Set<E> result = new HashSet<>();
-		result.add(e);
-		mEquivalenceClass.put(e, result);
-		mRepresentative.put(result, e);
+		result.add(elem);
+		mEquivalenceClass.put(elem, result);
+		mRepresentative.put(result, elem);
 	}
 
 	@Override
@@ -125,10 +141,15 @@ public class UnionFind<E> {
 	/**
 	 * Merge the equivalence classes of the elements e1 and e2. (e1 and e2 do not have to be the representatives of this
 	 * equivalence classes).
+	 * 
+	 * @param elem1
+	 *            first element
+	 * @param elem2
+	 *            second element
 	 */
-	public void union(final E e1, final E e2) {
-		final Set<E> set1 = mEquivalenceClass.get(e1);
-		final Set<E> set2 = mEquivalenceClass.get(e2);
+	public void union(final E elem1, final E elem2) {
+		final Set<E> set1 = mEquivalenceClass.get(elem1);
+		final Set<E> set2 = mEquivalenceClass.get(elem2);
 		final E set1rep = mRepresentative.get(set1);
 		mRepresentative.remove(set1);
 		mRepresentative.remove(set2);
@@ -138,27 +159,34 @@ public class UnionFind<E> {
 		}
 		mRepresentative.put(set1, set1rep);
 	}
-	
+
 	/**
 	 * Union operation for arbitrary number of arguments.
+	 * 
+	 * @param elements
+	 *            elements
 	 */
 	public void union(final Collection<E> elements) {
 		final Iterator<E> it = elements.iterator();
 		if (!it.hasNext()) {
-			return;	
-		} else {
-			final E firstElem = it.next();
-			while (it.hasNext()) {
-				union(firstElem, it.next());
-			}
+			return;
+		}
+		final E firstElem = it.next();
+		while (it.hasNext()) {
+			union(firstElem, it.next());
 		}
 	}
 
 	/**
-	 * @return number of equivalence classes
+	 * @return number of equivalence classes.
 	 */
+	@Override
 	public int size() {
 		return mRepresentative.size();
 	}
 
+	@Override
+	public Iterator<Set<E>> iterator() {
+		return getAllEquivalenceClasses().iterator();
+	}
 }

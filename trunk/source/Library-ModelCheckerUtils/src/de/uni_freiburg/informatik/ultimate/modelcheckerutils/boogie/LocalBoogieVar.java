@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
@@ -31,49 +31,42 @@ import java.io.Serializable;
 
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 
 /**
- * Variable in a boogie program. The procedure field of global variables is null.
- * Only global variables can be old variables. Two BoogieVars are equivalent if 
- * they have the same identifier, same procedure, same old-flag. Equivalence
- * does not depend on the IType. We expect that two equivalent BoogieVars with
- * different ITypes never occur in the same program. 
+ * Variable in a boogie program. The procedure field of global variables is null. Only global variables can be old
+ * variables. Two BoogieVars are equivalent if they have the same identifier, same procedure, same old-flag. Equivalence
+ * does not depend on the IType. We expect that two equivalent BoogieVars with different ITypes never occur in the same
+ * program.
+ * 
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class LocalBoogieVar extends BoogieVar  implements Serializable, ILocalProgramVar {
+public class LocalBoogieVar extends BoogieVar implements Serializable, ILocalProgramVar {
 
 	private static final long serialVersionUID = 103072739646531062L;
 	private final String mProcedure;
-	
+
 	private final int mHashCode;
-	
-	
-	public LocalBoogieVar(final String identifier, final String procedure, final IBoogieType iType, 
-			final TermVariable tv,
-			final ApplicationTerm defaultConstant,
-			final ApplicationTerm primedContant) {
+
+	public LocalBoogieVar(final String identifier, final String procedure, final IBoogieType iType,
+			final TermVariable tv, final ApplicationTerm defaultConstant, final ApplicationTerm primedContant) {
 		super(identifier, tv, defaultConstant, primedContant);
 		mProcedure = procedure;
 		mHashCode = computeHashCode();
 	}
-	
+
 	@Override
 	public String getGloballyUniqueId() {
 		return ILocalProgramVar.super.getGloballyUniqueId();
 	}
-	
+
 	@Override
 	public String getIdentifier() {
 		return mIdentifier;
 	}
-	
-	/* (non-Javadoc)
-	 * @see de.uni_freiburg.informatik.ultimate.boogie.IProgramLocalVar_Backpu#getProcedure()
-	 */
+
 	@Override
 	public String getProcedure() {
 		return mProcedure;
@@ -82,11 +75,9 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable, ILocalPr
 	private int computeHashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result
-				+ ((getIdentifier() == null) ? 0 : getIdentifier().hashCode());
+		result = prime * result + (getIdentifier() == null ? 0 : getIdentifier().hashCode());
 		result = prime * result + (isOldvar() ? 1231 : 1237);
-		result = prime * result
-				+ ((getProcedure() == null) ? 0 : getProcedure().hashCode());
+		result = prime * result + (getProcedure() == null ? 0 : getProcedure().hashCode());
 		return result;
 	}
 
@@ -94,7 +85,7 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable, ILocalPr
 	public int hashCode() {
 		return mHashCode;
 	}
-	
+
 	@Override
 	public boolean equals(final Object obj) {
 		if (this == obj) {
@@ -126,6 +117,5 @@ public class LocalBoogieVar extends BoogieVar  implements Serializable, ILocalPr
 		}
 		return true;
 	}
-
 
 }

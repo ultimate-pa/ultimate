@@ -65,13 +65,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSy
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
@@ -84,8 +84,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public abstract class NonrelationalPostOperator<STATE extends NonrelationalState<STATE, V, IBoogieVar>, V extends INonrelationalValue<V>>
-		implements IAbstractPostOperator<STATE, CodeBlock, IBoogieVar> {
-	
+		implements IAbstractPostOperator<STATE, IcfgEdge, IBoogieVar> {
+
 	private final ILogger mLogger;
 	private final RcfgStatementExtractor mStatementExtractor;
 	private final NonrelationalStatementProcessor<STATE, V> mStatementProcessor;
@@ -110,19 +110,20 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	}
 
 	@Override
-	public List<STATE> apply(final STATE oldstate, final CodeBlock transition) {
+	public List<STATE> apply(final STATE oldstate, final IcfgEdge transition) {
 		assert oldstate != null;
 		assert !oldstate.isBottom() : "You should not need to calculate post of a bottom state";
 		assert transition != null;
 
 		// TODO fix WORKAROUND unsoundness for summary code blocks without procedure implementation
 		if (transition instanceof Summary && !((Summary) transition).calledProcedureHasImplementation()) {
-			throw new UnsupportedOperationException("Summary for procedure without implementation");
+			throw new UnsupportedOperationException("Summary for procedure without implementation: "
+					+ BoogiePrettyPrinter.print(((Summary) transition).getCallStatement()));
 		}
 
 		List<STATE> currentStates = new ArrayList<>();
 		currentStates.add(oldstate);
-		final List<Statement> statements = mStatementExtractor.process(transition);
+		final List<Statement> statements = mStatementExtractor.process(transition.getLabel());
 
 		for (final Statement stmt : statements) {
 			final List<STATE> afterProcessStates = new ArrayList<>();
@@ -148,23 +149,24 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	}
 
 	@Override
-	public List<STATE> apply(final STATE stateBeforeLeaving, final STATE stateAfterLeaving,
-			final CodeBlock transition) {
-		assert transition instanceof Call || transition instanceof Return
-				|| transition instanceof Summary : "Cannot calculate hierachical post for non-hierachical transition";
+	public List<STATE> apply(final STATE stateBeforeLeaving, final STATE stateAfterLeaving, final IcfgEdge transition) {
+		final IcfgEdge transitionLabel = transition.getLabel();
 
-		if (transition instanceof Call) {
-			final Call call = (Call) transition;
+		assert transitionLabel instanceof Call || transitionLabel instanceof Return
+				|| transitionLabel instanceof Summary : "Cannot calculate hierachical post for non-hierachical transition";
+
+		if (transitionLabel instanceof Call) {
+			final Call call = (Call) transitionLabel.getLabel();
 			return handleCallTransition(stateBeforeLeaving, stateAfterLeaving, call);
-		} else if (transition instanceof Return) {
-			final Return ret = (Return) transition;
+		} else if (transitionLabel instanceof Return) {
+			final Return ret = (Return) transitionLabel.getLabel();
 			return handleReturnTransition(stateBeforeLeaving, stateAfterLeaving, ret.getCallStatement());
-		} else if (transition instanceof Summary) {
-			final Summary summary = (Summary) transition;
+		} else if (transitionLabel instanceof Summary) {
+			final Summary summary = (Summary) transitionLabel.getLabel();
 			return handleReturnTransition(stateBeforeLeaving, stateAfterLeaving, summary.getCallStatement());
 		} else {
 			throw new UnsupportedOperationException(
-					"Nonrelational domains do not support context switches other than Call and Return (yet)");
+					"Nonrelational domains do not support context switches other than IIcfgCallTransition<?> and Return (yet)");
 		}
 	}
 
@@ -352,7 +354,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 						+ BoogiePrettyPrinter.print(assume));
 			}
 
-			final CodeBlock newPostBlock = mRootAnnotation.getCodeBlockFactory().constructStatementSequence(null, null,
+			final IcfgEdge newPostBlock = mRootAnnotation.getCodeBlockFactory().constructStatementSequence(null, null,
 					stmtList, Origin.IMPLEMENTATION);
 
 			final List<STATE> postResults = apply(stateAfterLeaving, newPostBlock);
@@ -431,7 +433,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	}
 
 	private Procedure getProcedure(final String procedureName) {
-		
+
 		return mSymbolTable.getFunctionOrProcedureDeclaration(procedureName).stream()
 				.filter(decl -> decl instanceof Procedure).map(decl -> (Procedure) decl)
 				.filter(proc -> proc.getBody() != null).findFirst().orElseThrow(() -> new UnsupportedOperationException(

@@ -39,8 +39,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
-import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeRun;
-import de.uni_freiburg.informatik.ultimate.automata.tree.PostfixTree;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
@@ -49,9 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Minimize;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Totalize;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.TreeEmptinessCheck;
-import de.uni_freiburg.informatik.ultimate.core.lib.models.BasePayloadContainer;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -83,17 +79,15 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class TreeAutomizerCEGAR {
 
 	private TreeAutomatonBU<HornClause, IPredicate> mAbstraction;
-	private ITreeRun<HornClause, IPredicate> mCounterexample;
 	private final HCStateFactory mStateFactory;
 	private final ManagedScript mBackendSmtSolverScript;
 	private int mIteration;
 	private ILogger mLogger;
 
-	private final BasePayloadContainer mRootNode;
+	private final HornAnnot mHornAnnot;
 	private final HCPredicate mInitialPredicate;
 	private final HCPredicate mFinalPredicate;
 
-	private HCSsa mSSA;
 	private TreeChecker mChecker;
 
 	/**
@@ -108,6 +102,8 @@ public class TreeAutomizerCEGAR {
 	private final HCPredicateFactory mPredicateFactory;
 	private final AutomataLibraryServices mAutomataLibraryServices;
 
+	private List<HornClause> mAlphabet;
+
 	/**
 	 * Constructor for TreeAutomizer CEGAR
 	 * 
@@ -120,20 +116,25 @@ public class TreeAutomizerCEGAR {
 	 * @param hcSymbolTable
 	 */
 	public TreeAutomizerCEGAR(IUltimateServiceProvider services, IToolchainStorage storage,
-			BasePayloadContainer rootNode, TAPreferences taPrefs, ILogger logger, ManagedScript script,
-			HCSymbolTable hcSymbolTable) {
-		mBackendSmtSolverScript = script;
-		mSymbolTable = hcSymbolTable;
+			HornAnnot annot,
+			TAPreferences taPrefs, ILogger logger) {
+		mBackendSmtSolverScript = annot.getScript();
+		mSymbolTable = annot.getSymbolTable();
 		mLogger = logger;
-		mRootNode = rootNode;
+		mHornAnnot = annot;
+		
+		
+		mAlphabet = (List<HornClause>) mHornAnnot.getAnnotationsAsMap()
+				.get(HornUtilConstants.HORN_ANNOT_NAME);
+
 		mIteration = 0;
 
 		mAutomataLibraryServices = new AutomataLibraryServices(services);
 
-		mPredicateFactory = new HCPredicateFactory(services, mBackendSmtSolverScript, hcSymbolTable,
+		mPredicateFactory = new HCPredicateFactory(services, mBackendSmtSolverScript, mSymbolTable,
 				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED);
 
-		mStateFactory = new HCStateFactory(script, mPredicateFactory, hcSymbolTable);
+		mStateFactory = new HCStateFactory(mBackendSmtSolverScript, mPredicateFactory, mSymbolTable);
 
 		mInitialPredicate = mPredicateFactory.getTruePredicate();
 		mFinalPredicate = mPredicateFactory.getFalsePredicate();
@@ -151,15 +152,60 @@ public class TreeAutomizerCEGAR {
 
 	}
 
+	/**
+	 * Process the iterations of the CEGAR.
+	 * 
+	 * @return Result: The result of the verification. SAFE, UNSAFE or UNKNOWN
+	 */
+	public Result iterate() throws AutomataLibraryException {
+		getInitialAbstraction();
+	
+		mLogger.debug("Abstraction tree automaton before iteration #" + (mIteration + 1));
+		mLogger.debug(mAbstraction);
+		final int mITERATIONS = 20;
+		while (mITERATIONS == -1 || mIteration < mITERATIONS) {
+			mLogger.debug("Iteration #" + (mIteration + 1));
+			final TreeRun<HornClause, IPredicate> counterExample = isAbstractionCorrect();
+			if (counterExample == null) {
+				mLogger.info("The horn clause set is SAT!!");
+				return Result.SAFE;
+			}
+	
+			mBackendSmtSolverScript.lock(this);
+			mBackendSmtSolverScript.push(this, 1);
+	
+			if (getCounterexampleFeasibility(counterExample, this) == LBool.SAT) {
+	
+				mLogger.info("The program is unsafe, feasible counterexample.");
+				mLogger.info(counterExample.getTree());
+				mBackendSmtSolverScript.pop(this, 1);
+				mBackendSmtSolverScript.unlock(this);
+				return Result.UNSAFE;
+	
+			}
+			mLogger.debug("Getting Interpolants...");
+			final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap = 
+					retrieveInterpolantsMap(mChecker.getSSA(), counterExample);
+			mBackendSmtSolverScript.pop(this, 1);
+			mBackendSmtSolverScript.unlock(this);
+	
+			constructInterpolantAutomaton(counterExample, interpolantsMap);
+			mLogger.debug("Interpolant automaton:");
+			mLogger.debug(mInterpolAutomaton);
+	
+			mLogger.debug("Refining abstract model...");
+			refineAbstraction();
+			mLogger.debug("Abstraction tree automaton before iteration #" + (mIteration + 1));
+			mLogger.debug(mAbstraction);
+		}
+		mLogger.info("The program is not decieded...");
+		return Result.UNKNOWN;
+	}
+
 	protected void getInitialAbstraction() throws AutomataLibraryException {
 
-		final Map<String, IAnnotations> st = mRootNode.getPayload().getAnnotations();
-		final HornAnnot annot = (HornAnnot) st.get(HornUtilConstants.HORN_ANNOT_NAME);
-		final List<HornClause> hornClauses = (List<HornClause>) annot.getAnnotationsAsMap()
-				.get(HornUtilConstants.HORN_ANNOT_NAME);
-
 		mAbstraction = new TreeAutomatonBU<>();
-		for (final HornClause clause : hornClauses) {
+		for (final HornClause clause : mAlphabet) {
 			final List<IPredicate> tail = new ArrayList<>();
 			for (HornClausePredicateSymbol sym : clause.getBodyPredicates()) {
 				tail.add(mPredicateFactory.createTruePredicateWithLocation(sym));
@@ -185,39 +231,43 @@ public class TreeAutomizerCEGAR {
 		mLogger.debug(mAbstraction);
 	}
 
-	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
+	private TreeRun<HornClause, IPredicate> isAbstractionCorrect() throws AutomataOperationCanceledException {
 		final TreeEmptinessCheck<HornClause, IPredicate> emptiness = new TreeEmptinessCheck<>(mAutomataLibraryServices,
 				mAbstraction);
 
-		mCounterexample = emptiness.getTreeRun();
-		if (mCounterexample == null) {
-			return true;
+		final  TreeRun<HornClause, IPredicate> counterexample = emptiness.getTreeRun();
+		
+		if (counterexample != null) {
+			mLogger.debug("Error trace found.");
+			mLogger.debug(counterexample.toString());
+		} else {
+			mLogger.debug("No (further) counterexample found in abstraction.");
 		}
-		mLogger.debug("Error trace found.");
-		mLogger.debug(mCounterexample.toString());
 
-		return false;
+		return counterexample;
 	}
 
-	public LBool getCounterexampleFeasibility(Object lockOwner) {
-		mChecker = new TreeChecker(mCounterexample, mBackendSmtSolverScript, mInitialPredicate, mFinalPredicate,
+	private LBool getCounterexampleFeasibility(TreeRun<HornClause, IPredicate> counterexample, Object lockOwner) {
+		mChecker = new TreeChecker(counterexample, mBackendSmtSolverScript, mInitialPredicate, mFinalPredicate,
 				mLogger, mPredicateUnifier);
-		mSSA = mChecker.getSSA();
 		return mChecker.checkTrace(lockOwner);
 	}
 
-	protected void constructInterpolantAutomaton(Map<IPredicate, Term> interpolantsMap)
+	protected void constructInterpolantAutomaton(TreeRun<HornClause, IPredicate> counterexample, 
+			Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMapSsaVersioned)
 			throws AutomataOperationCanceledException {
+		
+		final TreeRun<HornClause, IPredicate> treeRunWithInterpolants = 
+				mChecker.annotateTreeRunWithInterpolants(interpolantsMapSsaVersioned);
 
-		mInterpolAutomaton = ((TreeRun<HornClause, IPredicate>) mCounterexample)
-				.reconstruct(mChecker.rebuild(interpolantsMap)).getAutomaton();
+		mInterpolAutomaton = treeRunWithInterpolants.getAutomaton();
 		for (final IPredicate p : mInterpolAutomaton.getStates()) {
 			mPredicateUnifier.getOrConstructPredicate(p.getFormula());
 		}
 
 		((TreeAutomatonBU<HornClause, IPredicate>) mInterpolAutomaton).extendAlphabet(mAbstraction.getAlphabet());
 
-		generalizeCounterExample();
+//		generalizeCounterExample(mChecker.backVersionInterpolantsMap(interpolantsMapSsaVersioned));
 
 		assert allRulesAreInductive(mInterpolAutomaton);
 	}
@@ -239,14 +289,25 @@ public class TreeAutomizerCEGAR {
 		return true;
 	}
 
-	private void generalizeCounterExample() {
+	private void generalizeCounterExample(TreeRun<HornClause, IPredicate> counterexample, 
+			Map<IPredicate, IPredicate> hcSymbolsToInterpolants) {
 		final Set<TreeAutomatonRule<HornClause, IPredicate>> rules = new HashSet<>();
-		for (final TreeAutomatonRule<HornClause, IPredicate> r : mInterpolAutomaton.getRules()) {
-			for (final IPredicate pf : mInterpolAutomaton.getStates()) {
-				if (mHoareTripleChecker.check(r.getSource(), r.getLetter(), pf) == Validity.VALID) {
-					mLogger.debug("Adding Rule: " + r.getLetter() + "(" + r.getSource() + ")" + " --> " + pf);
-					rules.add(new TreeAutomatonRule<HornClause, IPredicate>(r.getLetter(), r.getSource(), pf));
-				}
+		// for (final TreeAutomatonRule<HornClause, IPredicate> r :
+		// mInterpolAutomaton.getRules()) {
+		// for (final IPredicate pf : mInterpolAutomaton.getStates()) {
+		for (TreeAutomatonRule<HornClause, IPredicate> rule : 
+			new CandidateRuleProvider(counterexample, hcSymbolsToInterpolants, mAlphabet).getCandidateRules()) {
+			// if (mHoareTripleChecker.check(rule.getSource(), rule.getLetter(),
+			// pf) == Validity.VALID) {
+			// mLogger.debug("Adding Rule: " + rule.getLetter() + "(" +
+			// rule.getSource() + ")" + " --> " + pf);
+			// rules.add(new TreeAutomatonRule<HornClause,
+			// IPredicate>(rule.getLetter(), rule.getSource(), pf));
+			// }
+			if (mHoareTripleChecker.check(rule) == Validity.VALID) {
+				mLogger.debug(
+						"Adding Rule: " + rule.getLetter() + "(" + rule.getSource() + ")" + " --> " + rule.getDest());
+				rules.add(rule);
 			}
 		}
 		mLogger.debug("Generalizing counterExample:");
@@ -255,15 +316,7 @@ public class TreeAutomizerCEGAR {
 		}
 	}
 
-	// private TreeAutomatonBU<HornClause, HCPredicate> getCounterExample() {
 	private ITreeAutomatonBU<HornClause, IPredicate> getCounterExample() {
-		// //generalizeCounterExample();
-		// final Map<IPredicate, HCPredicate> mp = new HashMap<>();
-		// for (final IPredicate p : mInterpolAutomaton.getStates()) {
-		// mp.put(p, mPredicateFactory.convertItoHCPredicate(p));
-		// }
-		// return ((TreeAutomatonBU<HornClause, IPredicate>)
-		// mInterpolAutomaton).reconstruct(mp);
 		return mInterpolAutomaton;
 	}
 
@@ -294,76 +347,44 @@ public class TreeAutomizerCEGAR {
 		return false;
 	}
 
-	/**
-	 * Process the iterations of the CEGAR.
-	 * 
-	 * @return Result: The result of the verification. SAFE, UNSAFE or UNKNOWN
-	 */
-	public Result iterate() throws AutomataLibraryException {
-		getInitialAbstraction();
+	
 
-		mLogger.debug("Abstraction tree automaton before iteration #" + (mIteration + 1));
-		mLogger.debug(mAbstraction);
-		final int mITERATIONS = 20;
-		while (mITERATIONS == -1 || mIteration < mITERATIONS) {
-			mLogger.debug("Iteration #" + (mIteration + 1));
-			if (isAbstractionCorrect()) {
-				mLogger.info("The program is safe.");
-				return Result.SAFE;
-			}
+	private Map<TreeRun<HornClause, IPredicate>, Term> retrieveInterpolantsMap(HCSsa ssa, 
+			TreeRun<HornClause, IPredicate> counterExample) {
 
-			mBackendSmtSolverScript.lock(this);
-			mBackendSmtSolverScript.push(this, 1);
+		final Term[] interpolants = mBackendSmtSolverScript.getInterpolants(this, 
+				ssa.getNamedTermList(mBackendSmtSolverScript, this), 
+				ssa.getStartsOfSubTrees());
+		
+		final List<TreeRun<HornClause, IPredicate>> subtreesInPostOrder = computeSubtreesInPostOrder(counterExample);
 
-			if (getCounterexampleFeasibility(this) == LBool.SAT) {
+		final Map<TreeRun<HornClause, IPredicate>, Term> interpolantsMap = new HashMap<>();
 
-				mLogger.info("The program is unsafe, feasible counterexample.");
-				mLogger.info(mCounterexample.getTree());
-				mBackendSmtSolverScript.pop(this, 1);
-				mBackendSmtSolverScript.unlock(this);
-				return Result.UNSAFE;
-
-			}
-			mLogger.debug("Getting Interpolants...");
-			final Map<IPredicate, Term> interpolantsMap = retrieveInterpolantsMap();
-			mBackendSmtSolverScript.pop(this, 1);
-			mBackendSmtSolverScript.unlock(this);
-
-			constructInterpolantAutomaton(interpolantsMap);
-			mLogger.debug("Interpolant automaton:");
-			mLogger.debug(mInterpolAutomaton);
-
-			mLogger.debug("Refining abstract model...");
-			refineAbstraction();
-			mLogger.debug("Abstraction tree automaton before iteration #" + (mIteration + 1));
-			mLogger.debug(mAbstraction);
+		for (int i = 0; i < interpolants.length; ++i) {
+			final TreeRun<HornClause, IPredicate> st = subtreesInPostOrder.get(i);
+			
+			interpolantsMap.put(st, interpolants[i]);
 		}
-		mLogger.info("The program is not decieded...");
-		return Result.UNKNOWN;
+
+		// the root of a tree interpolant is implicitly "false"
+		interpolantsMap.put(counterExample, mBackendSmtSolverScript.term(this, "false"));
+
+		return interpolantsMap;
 	}
 
-	private Map<IPredicate, Term> retrieveInterpolantsMap() {
-		// Using simple interpolant automaton : the counterexample's automaton.
-		PostfixTree<Term, IPredicate> postfixT = new PostfixTree<>(mSSA.getFormulasTree());
+	private static List<TreeRun<HornClause, IPredicate>> computeSubtreesInPostOrder(
+			final TreeRun<HornClause, IPredicate> root) {
+		final List<TreeRun<HornClause, IPredicate>> result = new ArrayList<>();
 
-		Term[] ts = new Term[postfixT.getPostFix().size()];
-		for (int i = 0; i < ts.length; ++i) {
-			ts[i] = mSSA.getPredicateVariable(postfixT.getPostFix().get(i), mBackendSmtSolverScript, this);
+		for (TreeRun<HornClause, IPredicate> ch : root.getChildren()) {
+			result.addAll(computeSubtreesInPostOrder(ch));
 		}
-		int[] idx = new int[postfixT.getStartIdx().size()];
-		for (int i = 0; i < idx.length; ++i) {
-			idx[i] = postfixT.getStartIdx().get(i);
+		
+		//need to make an exception for the leafs (related to the fact that our tree automata have initial states)
+		if (root.getRootSymbol() != null) {
+			result.add(root);
 		}
-		// mBackendSmtSolverScript.lock(this);
-		Term[] interpolants = mBackendSmtSolverScript.getInterpolants(this, ts, idx);
-		// mBackendSmtSolverScript.unlock(this);
-
-		final Map<IPredicate, Term> interpolantsMap = new HashMap<>();
-		for (int i = 0; i < interpolants.length; ++i) {
-			IPredicate p = postfixT.getPostFixStates().get(i);
-			interpolantsMap.put(p, interpolants[i]);
-		}
-		return interpolantsMap;
+		return result;
 	}
 
 	protected void computeCFGHoareAnnotation() {

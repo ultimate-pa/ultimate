@@ -1,3 +1,4 @@
+
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -26,7 +27,7 @@ public class IcfgLoopAcceleration<INLOC extends IcfgLocation, OUTLOC extends Icf
 	private void createMatrix(final Script script, final IIcfg<OUTLOC> loop) {
 		script.assertTerm(mResultIcfg.getInitialNodes().iterator().next().getOutgoingEdges().iterator().next()
 				.getTransformula().getFormula());
-		
+
 	}
 
 	@Override

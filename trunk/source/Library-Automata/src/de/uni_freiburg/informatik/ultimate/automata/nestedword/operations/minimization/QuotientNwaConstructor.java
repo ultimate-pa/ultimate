@@ -28,28 +28,26 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IBlock;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IAutomatonStatePartition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IBlock;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DoubleDeckerVisitor.ReachFinal;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.IPartition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 
 /**
@@ -67,11 +65,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
  *            state type
  */
 public class QuotientNwaConstructor<LETTER, STATE> {
+	protected final IMergeStateFactory<STATE> mStateFactory;
+	protected final NestedWordAutomaton<LETTER, STATE> mResult;
 	private final AutomataLibraryServices mServices;
-	private final IMergeStateFactory<STATE> mStateFactory;
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	private final NestedWordAutomaton<LETTER, STATE> mResult;
-	private GetOnlyMap mOldState2NewState;
+	private final GetOnlyMap mOldState2NewState;
 
 	private final STATE mOldEmptyStackState;
 	private final STATE mNewEmptyStackState;
@@ -87,12 +85,14 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 	 *            state factory
 	 * @param operand
 	 *            operand automaton
-	 * @param newSize
-	 *            size of new (to be constructed) automaton
+	 * @param partition
+	 *            partition structure
+	 * @param addMapOldState2newState
+	 *            add a map from old to new states?
 	 */
-	private <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> QuotientNwaConstructor(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand, final int newSize) {
+	public QuotientNwaConstructor(final AutomataLibraryServices services,
+			final IMinimizationStateFactory<STATE> stateFactory, final INestedWordAutomaton<LETTER, STATE> operand,
+			final IPartition<STATE> partition, final boolean addMapOldState2newState) {
 		mServices = services;
 		mStateFactory = stateFactory;
 		mOperand = operand;
@@ -101,7 +101,7 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 			// create a DoubleDeckerAutomaton
 			mResult = new DoubleDeckerAutomaton<>(mServices, mOperand.getInternalAlphabet(), mOperand.getCallAlphabet(),
 					mOperand.getReturnAlphabet(), mStateFactory);
-			mUp2Down = new HashMap<>(newSize);
+			mUp2Down = new HashMap<>(partition.size());
 			((DoubleDeckerAutomaton<LETTER, STATE>) mResult).setUp2Down(mUp2Down);
 		} else {
 			// create a NestedWordAutomaton
@@ -112,69 +112,34 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 
 		mOldEmptyStackState = mOperand.getEmptyStackState();
 		mNewEmptyStackState = stateFactory.createEmptyStackState();
-	}
 
-	/**
-	 * Constructor with partition data structure.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param stateFactory
-	 *            state factory
-	 * @param operand
-	 *            operand automaton
-	 * @param partition
-	 *            partition data structure
-	 * @param addMapOldState2newState
-	 *            add a map from old to new states?
-	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> QuotientNwaConstructor(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand, final IAutomatonStatePartition<STATE> partition,
-			final boolean addMapOldState2newState) {
-		this(services, stateFactory, operand, partition.size());
-
-		final ResultStateConstructorFromPartition resStateConstructor =
-				new ResultStateConstructorFromPartition(partition);
-		constructResultPartition(resStateConstructor, partition);
+		final IResultStateConstructor<STATE> resStateConstructor;
+		if (partition instanceof IAutomatonStatePartition<?>) {
+			final IAutomatonStatePartition<STATE> castPartition = (IAutomatonStatePartition<STATE>) partition;
+			resStateConstructor = new ResultStateConstructorFromAutomatonStatePartition(castPartition);
+			constructResultFromAutomatonStatePartition(resStateConstructor, castPartition);
+		} else {
+			resStateConstructor = new ResultStateConstructorFromGeneralPartition(partition, mOperand);
+			constructResultFromGeneralPartition(resStateConstructor, partition);
+		}
 		mOldState2NewState = addMapOldState2newState ? new GetOnlyMap(resStateConstructor) : null;
 	}
 
 	/**
-	 * Constructor with union-find data structure.
-	 * 
-	 * @param services
-	 *            Ultimate services
-	 * @param stateFactory
-	 *            state factory
-	 * @param operand
-	 *            operand automaton
-	 * @param unionFind
-	 *            union-find data structure
-	 * @param addMapOldState2newState
-	 *            add a map from old to new states?
-	 */
-	public <FACTORY extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> QuotientNwaConstructor(
-			final AutomataLibraryServices services, final FACTORY stateFactory,
-			final INestedWordAutomaton<LETTER, STATE> operand, final UnionFind<STATE> unionFind,
-			final boolean addMapOldState2newState) {
-		this(services, stateFactory, operand, unionFind.size());
-
-		final ResultStateConstructorFromUnionFind resStateConstructor =
-				new ResultStateConstructorFromUnionFind(unionFind);
-		constructResultUnionFind(resStateConstructor);
-		mOldState2NewState = addMapOldState2newState ? new GetOnlyMap(resStateConstructor) : null;
-	}
-
-	/**
-	 * Constructs the result automaton from a union-find data structure.
+	 * Constructs the result automaton from a partition data structure.
 	 * 
 	 * @param resStateConstructor
 	 *            state constructor
+	 * @param partition
+	 *            partition
 	 */
-	private void constructResultUnionFind(final IResultStateConstructor<STATE> resStateConstructor) {
-		for (final STATE inputState : mOperand.getStates()) {
-			constructStateAndSuccessors(resStateConstructor, inputState, false);
+	private void constructResultFromAutomatonStatePartition(final IResultStateConstructor<STATE> resStateConstructor,
+			final IAutomatonStatePartition<STATE> partition) {
+		final Iterator<IBlock<STATE>> it = partition.blocksIterator();
+		while (it.hasNext()) {
+			final IBlock<STATE> block = it.next();
+			final boolean isRepresentativeIndependent = block.isRepresentativeIndependentInternalsCalls();
+			constructStateForBlock(resStateConstructor, block.iterator(), isRepresentativeIndependent);
 		}
 	}
 
@@ -186,29 +151,25 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 	 * @param partition
 	 *            partition
 	 */
-	private void constructResultPartition(final IResultStateConstructor<STATE> resStateConstructor,
-			final IAutomatonStatePartition<STATE> partition) {
-		final Iterator<IBlock<STATE>> blocksIt = partition.blocksIterator();
-		/*
-		 * iterate over all blocks
-		 * 
-		 * NOTE: there needs not be any block for an empty automaton
-		 */
-		while (blocksIt.hasNext()) {
-			final IBlock<STATE> block = blocksIt.next();
-			final boolean isRepresentativeIndependent = block.isRepresentativeIndependentInternalsCalls();
-
-			final Iterator<STATE> statesIt = block.statesIterator();
-			assert statesIt.hasNext() : "There must be at least one state.";
-			boolean pastFirst = false;
-			// iterate over all states
-			do {
-				final STATE inputState = statesIt.next();
-				final boolean skipInternalsCalls = isRepresentativeIndependent && pastFirst;
-				constructStateAndSuccessors(resStateConstructor, inputState, skipInternalsCalls);
-				pastFirst = true;
-			} while (statesIt.hasNext());
+	private void constructResultFromGeneralPartition(final IResultStateConstructor<STATE> resStateConstructor,
+			final IPartition<STATE> partition) {
+		for (final Set<STATE> block : partition) {
+			final boolean isRepresentativeIndependent = false;
+			constructStateForBlock(resStateConstructor, block.iterator(), isRepresentativeIndependent);
 		}
+	}
+
+	private void constructStateForBlock(final IResultStateConstructor<STATE> resStateConstructor,
+			final Iterator<STATE> statesIt, final boolean isRepresentativeIndependent) {
+		assert statesIt.hasNext() : "There must be at least one state.";
+		boolean pastFirst = false;
+		// iterate over all states
+		do {
+			final STATE inputState = statesIt.next();
+			final boolean skipInternalsCalls = isRepresentativeIndependent && pastFirst;
+			constructStateAndSuccessors(resStateConstructor, inputState, skipInternalsCalls);
+			pastFirst = true;
+		} while (statesIt.hasNext());
 	}
 
 	/**
@@ -365,75 +326,72 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 	}
 
 	/**
-	 * Result state constructor from a union-find data structure.
+	 * Result state constructor from a partition data structure.
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
-	@SuppressWarnings("squid:S1698")
-	private class ResultStateConstructorFromUnionFind implements IResultStateConstructor<STATE> {
-		private final ConstructionCache<STATE, STATE> mConstructionCache;
-		private final UnionFind<STATE> mUnionFind;
+	private class ResultStateConstructorFromGeneralPartition implements IResultStateConstructor<STATE> {
+		private final ConstructionCache<Set<STATE>, STATE> mConstructionCache;
+		private final IPartition<STATE> mPartition;
+		protected final INestedWordAutomaton<LETTER, STATE> mOperandInner;
 
-		public ResultStateConstructorFromUnionFind(final UnionFind<STATE> unionFind) {
-			mUnionFind = unionFind;
-			final IValueConstruction<STATE, STATE> valueConstruction = new IValueConstruction<STATE, STATE>() {
-				@Override
-				public STATE constructValue(final STATE inputState) {
-					final STATE representative = mUnionFind.find(inputState);
-					assert (representative == inputState)
-							|| (representative == null) : "must be representative or null";
-					final STATE resultState;
-					final boolean isInitial;
-					final boolean isFinal;
-					if (representative == null) {
-						resultState = mStateFactory.merge(Collections.singleton(inputState));
-						isInitial = mOperand.isInitial(inputState);
-						isFinal = mOperand.isFinal(inputState);
-					} else {
-						final Collection<STATE> equivalenceClass =
-								mUnionFind.getEquivalenceClassMembers(representative);
-						resultState = mStateFactory.merge(equivalenceClass);
-						final Predicate<STATE> pInitial = s -> mOperand.isInitial(s);
-						isInitial = equivalenceClass.stream().anyMatch(pInitial);
-						final Predicate<STATE> pFinal = s -> mOperand.isFinal(s);
-						isFinal = equivalenceClass.stream().anyMatch(pFinal);
-					}
-					mResult.addState(isInitial, isFinal, resultState);
-					return resultState;
-				}
-			};
+		public ResultStateConstructorFromGeneralPartition(final IPartition<STATE> partition,
+				final INestedWordAutomaton<LETTER, STATE> operand) {
+			mPartition = partition;
+			mOperandInner = operand;
+
+			final IValueConstruction<Set<STATE>, STATE> valueConstruction =
+					new IValueConstruction<Set<STATE>, STATE>() {
+						@Override
+						public STATE constructValue(final Set<STATE> block) {
+							final STATE resultState = mStateFactory.merge(block);
+							boolean isInitial = false;
+							boolean isFinal = false;
+							for (final STATE state : block) {
+								if (!isInitial && mOperandInner.isInitial(state)) {
+									isInitial = true;
+									if (isFinal) {
+										break;
+									}
+								}
+								if (!isFinal && mOperandInner.isFinal(state)) {
+									isFinal = true;
+									if (isInitial) {
+										break;
+									}
+								}
+							}
+							mResult.addState(isInitial, isFinal, resultState);
+							return resultState;
+						}
+					};
 			mConstructionCache = new ConstructionCache<>(valueConstruction);
 		}
 
 		@Override
 		public STATE getOrConstructResultState(final STATE inputState) {
-			STATE inputRepresentative = mUnionFind.find(inputState);
-			if (inputRepresentative == null) {
-				inputRepresentative = inputState;
-			}
-			return mConstructionCache.getOrConstruct(inputRepresentative);
+			final Set<STATE> block = mPartition.getContainingSet(inputState);
+			assert block != null : "Block is not known.";
+			return mConstructionCache.getOrConstruct(block);
 		}
 
 		@Override
 		public STATE get(final STATE inputState) {
-			STATE inputRepresentative = mUnionFind.find(inputState);
-			if (inputRepresentative == null) {
-				inputRepresentative = inputState;
-			}
-			return mConstructionCache.getMap().get(inputRepresentative);
+			final Set<STATE> block = mPartition.getContainingSet(inputState);
+			return mConstructionCache.getMap().get(block);
 		}
 	}
 
 	/**
-	 * Result state constructor from a partition data structure.
+	 * Result state constructor from a special partition data structure which is more efficient to access.
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
-	private class ResultStateConstructorFromPartition implements IResultStateConstructor<STATE> {
+	private class ResultStateConstructorFromAutomatonStatePartition implements IResultStateConstructor<STATE> {
 		private final ConstructionCache<IBlock<STATE>, STATE> mConstructionCache;
 		private final IAutomatonStatePartition<STATE> mPartition;
 
-		public ResultStateConstructorFromPartition(final IAutomatonStatePartition<STATE> partition) {
+		public ResultStateConstructorFromAutomatonStatePartition(final IAutomatonStatePartition<STATE> partition) {
 			mPartition = partition;
 
 			final IValueConstruction<IBlock<STATE>, STATE> valueConstruction =

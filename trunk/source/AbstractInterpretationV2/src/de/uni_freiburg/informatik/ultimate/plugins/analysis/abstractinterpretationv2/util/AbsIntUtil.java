@@ -50,7 +50,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -368,5 +370,16 @@ public final class AbsIntUtil {
 		default:
 			throw new IllegalArgumentException("Not a negatable relational operator: " + relOp);
 		}
+	}
+
+	public static BoogieIcfgContainer getBoogieIcfgContainer(final IIcfg<?> icfg) {
+		if (icfg instanceof BoogieIcfgContainer) {
+			return (BoogieIcfgContainer) icfg;
+		}
+		final BoogieIcfgContainer bplIcfg = BoogieIcfgContainer.getAnnotation(icfg);
+		if (bplIcfg != null) {
+			return bplIcfg;
+		}
+		throw new IllegalArgumentException("Cannot extract BoogieIcfgContainer from IICFG");
 	}
 }

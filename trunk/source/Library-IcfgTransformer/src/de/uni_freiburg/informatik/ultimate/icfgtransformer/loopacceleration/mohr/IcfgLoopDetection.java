@@ -9,9 +9,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 
 public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 
@@ -19,6 +24,12 @@ public class IcfgLoopDetection<INLOC extends IcfgLocation> {
 
 	public IcfgLoopDetection(final IIcfg<INLOC> icfg) {
 		mLoops = loopExtraction(icfg);
+	}
+
+	private Term[] toDnf(final ManagedScript mgScript, final IUltimateServiceProvider services, final Term term) {
+		final Dnf dnf = new Dnf(mgScript, services);
+		final Term transFormedTerm = dnf.transform(term);
+		return SmtUtils.getDisjuncts(transFormedTerm);
 	}
 
 	@SuppressWarnings("unchecked")

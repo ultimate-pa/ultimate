@@ -1,0 +1,45 @@
+
+
+
+TreeAutomaton taIntList = (
+    alphabet = { nil "0" cons succ },
+    states = { Num List "_" },
+    initialStates = { "_" },
+    finalStates = { List },
+    transitionTable = {
+        ((Num) succ Num)
+        ((Num) "0" "_")
+        ((Num, List) cons List)
+        ((List) nil "_")
+    }
+);
+
+
+TreeAutomaton taEvenIntList = (
+    alphabet = { nil "0" cons succ },
+    states = { OddNum EvenNum List "_" },
+    initialStates = { "_" },
+    finalStates = { List },
+    transitionTable = {
+        ((OddNum) succ EvenNum)
+        ((EvenNum) succ OddNum)
+        ((EvenNum) "0" "_")
+        ((EvenNum, List) cons List)
+        ((List) nil "_")
+    }
+);
+
+
+Tree listA = Tree [ cons(succ(succ(0)),cons(succ(0),nil)) ];
+Tree listB = Tree [ cons(succ(succ(0)),cons(0,nil)) ];
+Tree listC = Tree [ cons(succ(succ(0)),cons(succ(succ(succ(succ(0)))),nil)) ];
+
+assert(Accepts(taIntList, listA));
+assert(Accepts(taIntList, listB));
+assert(Accepts(taIntList, listC));
+assert(!Accepts(taEvenIntList, listA));
+assert(Accepts(taEvenIntList, listB));
+assert(Accepts(taEvenIntList, listC));
+assert(!Accepts(Intersect(taIntList, taEvenIntList), listA));
+assert(Accepts(Intersect(taIntList, taEvenIntList), listB));
+assert(Accepts(Intersect(taIntList, taEvenIntList), listC));

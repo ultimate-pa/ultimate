@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -360,7 +361,9 @@ public class ElimStore3 {
 			result = Util.or(script, intermediateResult, newConjunctsFromSelect);
 		}
 
+		mMgdScript.getScript().echo(new QuotedObject("started simplification for array quantifier elimination"));
 		result = SmtUtils.simplify(mMgdScript, result, mServices, mSimplificationTechnique);
+		mMgdScript.getScript().echo(new QuotedObject("finished simplification for array quantifier elimination"));
 		newAuxVars.addAll(iav.getNewAuxVars());
 
 		return result;

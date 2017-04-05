@@ -19,12 +19,14 @@ public class AbstractInterpretationBenchmark<ACTION, LOCATION> implements ICsvPr
 	private final Map<Integer, Integer> mAction2Widen;
 	private final Map<Integer, Integer> mAction2Fixpoints;
 	private int mLastAction;
+	private int mMaxVariables;
 
 	public AbstractInterpretationBenchmark() {
 		mAction2Visits = new HashMap<>();
 		mAction2Merges = new HashMap<>();
 		mAction2Widen = new HashMap<>();
 		mAction2Fixpoints = new HashMap<>();
+		mMaxVariables = 0;
 	}
 
 	@Override
@@ -47,6 +49,12 @@ public class AbstractInterpretationBenchmark<ACTION, LOCATION> implements ICsvPr
 
 	public void addFixpoint() {
 		addOrIncrement(mAction2Fixpoints);
+	}
+
+	public void addMaxVariables(final int varCount) {
+		if (varCount > mMaxVariables) {
+			mMaxVariables = varCount;
+		}
 	}
 
 	private void addOrIncrement(final Map<Integer, Integer> map) {
@@ -95,6 +103,7 @@ public class AbstractInterpretationBenchmark<ACTION, LOCATION> implements ICsvPr
 			sb.append("Found ").append(fixpoints.get()).append(" fixpoints after ").append(mAction2Fixpoints.size())
 					.append(" different actions.");
 		}
+		sb.append(" Largest state had " + mMaxVariables + " variables.");
 
 		return sb.toString();
 	}

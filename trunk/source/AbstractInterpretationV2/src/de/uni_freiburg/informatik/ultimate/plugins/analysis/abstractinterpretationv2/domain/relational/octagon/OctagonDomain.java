@@ -41,13 +41,15 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPos
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RCFGLiteralCollector;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctPreferences.LogMessageFormatting;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctPreferences.WideningOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 
 /**
  * Octagon abstract domain, based on A. Miné's "The octagon abstract domain"
@@ -59,23 +61,23 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
  *
  * @author schaetzc@informatik.uni-freiburg.de
  */
-public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock, IBoogieVar> {
+public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge, IBoogieVar> {
 
 	private final BoogieSymbolTable mSymbolTable;
 	private final ILogger mLogger;
 	private final LiteralCollectorFactory mLiteralCollectorFactory;
 	private final Function<Boolean, OctDomainState> mOctDomainStateFactory;
 	private final Supplier<IAbstractStateBinaryOperator<OctDomainState>> mWideningOperatorFactory;
-	private final Supplier<IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar>> mPostOperatorFactory;
+	private final Supplier<IAbstractPostOperator<OctDomainState, IcfgEdge, IBoogieVar>> mPostOperatorFactory;
 	private final BoogieIcfgContainer mRootAnnotation;
 
 	public OctagonDomain(final ILogger logger, final BoogieSymbolTable symbolTable,
 			final LiteralCollectorFactory literalCollectorFactory, final IUltimateServiceProvider services,
-			final BoogieIcfgContainer rootAnnotation) {
+			final IIcfg<?> icfg) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		mLiteralCollectorFactory = literalCollectorFactory;
-		mRootAnnotation = rootAnnotation;
+		mRootAnnotation = AbsIntUtil.getBoogieIcfgContainer(icfg);
 
 		final IPreferenceProvider ups = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		mOctDomainStateFactory = makeDomainStateFactory(ups);
@@ -155,7 +157,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 	 *            Preferences
 	 * @return Factory for creating widening operators
 	 */
-	private Supplier<IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar>>
+	private Supplier<IAbstractPostOperator<OctDomainState, IcfgEdge, IBoogieVar>>
 			makePostOperatorFactory(final IPreferenceProvider ups) {
 		final Boogie2SmtSymbolTable bpl2smtSymbolTable = mRootAnnotation.getBoogie2SMT().getBoogie2SmtSymbolTable();
 		final int maxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
@@ -201,16 +203,11 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, CodeBlock,
 
 	@Override
 	public IAbstractStateBinaryOperator<OctDomainState> getMergeOperator() {
-		return new IAbstractStateBinaryOperator<OctDomainState>() {
-			@Override
-			public OctDomainState apply(final OctDomainState first, final OctDomainState second) {
-				return first.join(second);
-			}
-		};
+		return (first, second) -> first.join(second);
 	}
 
 	@Override
-	public IAbstractPostOperator<OctDomainState, CodeBlock, IBoogieVar> getPostOperator() {
+	public IAbstractPostOperator<OctDomainState, IcfgEdge, IBoogieVar> getPostOperator() {
 		return mPostOperatorFactory.get();
 	}
 

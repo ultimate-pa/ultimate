@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IBlock;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IAutomatonStatePartition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.util.IBlock;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
@@ -684,6 +684,11 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		}
 
 		@Override
+		public Set<STATE> getContainingSet(final STATE state) {
+			return mState2EquivalenceClass.get(state).mStates;
+		}
+
+		@Override
 		public int size() {
 			return mEquivalenceClasses.size();
 		}
@@ -701,6 +706,23 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 				@Override
 				public IBlock<STATE> next() {
 					return mIt.next();
+				}
+			};
+		}
+
+		@Override
+		public Iterator<Set<STATE>> iterator() {
+			return new Iterator<Set<STATE>>() {
+				private final Iterator<EquivalenceClass> mIt = mEquivalenceClasses.iterator();
+
+				@Override
+				public boolean hasNext() {
+					return mIt.hasNext();
+				}
+
+				@Override
+				public Set<STATE> next() {
+					return mIt.next().mStates;
 				}
 			};
 		}
@@ -911,7 +933,7 @@ public class ShrinkNwaAsDfa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, S
 		}
 
 		@Override
-		public Iterator statesIterator() {
+		public Iterator<STATE> iterator() {
 			return mStates.iterator();
 		}
 

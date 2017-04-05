@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 
 public abstract class NonrelationalPostOperator<STATE extends NonrelationalState<STATE, V, IProgramVarOrConst>, ACTION, V extends INonrelationalValue<V>>
 		implements IAbstractPostOperator<STATE, ACTION, IProgramVarOrConst> {
-	
+
 	private final ILogger mLogger;
 	private final NonrelationalTermProcessor<V, STATE> mTermProcessor;
 	private final Supplier<STATE> mTopStateSupplier;
@@ -89,14 +89,14 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			throw new UnsupportedOperationException(
 					"Unknown instance of transition: " + transition.getClass().getSimpleName());
 		}
-		
+
 		final Term term = transformula.getFormula();
 
 		final Map<String, IProgramVarOrConst> identifierMap = createIdentifierMap(oldstate, transformula);
 		final STATE newPreState = createNewPreState(oldstate, transformula, identifierMap);
-		
+
 		final List<STATE> result = mTermProcessor.process(term, newPreState);
-		
+
 		return createPostStates(result, oldstate, transformula, identifierMap);
 	}
 
@@ -142,36 +142,36 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 		return identifierMap;
 	}
-	
+
 	private STATE createNewPreState(final STATE oldState, final UnmodifiableTransFormula transformula,
 			final Map<String, IProgramVarOrConst> identifierMap) {
 		STATE newPreState = mTopStateSupplier.get();
-		
+
 		// Add inVars
 		for (final Entry<IProgramVar, TermVariable> entry : transformula.getInVars().entrySet()) {
 			final IProgramVarOrConst programVar = entry.getKey();
 			final TermVariable termVar = entry.getValue();
-			
+
 			assert identifierMap.containsKey(termVar.getName());
-			
-			// TODO: Collect all values at once!
+
+			// TODO: Collect all values at once! Don't use copy of states as this may be too slow!
 			final IProgramVarOrConst var = identifierMap.get(termVar.getName());
 			newPreState = newPreState.addVariable(var);
-			
+
 			// Values
 			final VariableType type = oldState.getVariableType(programVar);
 			switch (type) {
 			case VARIABLE:
-				newPreState.setValue(var, oldState.getValue(programVar));
+				newPreState = newPreState.setValue(var, oldState.getValue(programVar));
 				break;
 			case BOOLEAN:
-				newPreState.setBooleanValue(var, oldState.getBooleanValue(programVar));
+				newPreState = newPreState.setBooleanValue(var, oldState.getBooleanValue(programVar));
 				break;
 			case ARRAY:
 				throw new UnsupportedOperationException("Arrays are not supported at this point.");
 			}
 		}
-		
+
 		// Add outVars
 		for (final TermVariable termVar : transformula.getOutVars().values()) {
 			assert identifierMap.containsKey(termVar.getName());
@@ -180,14 +180,14 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 				newPreState = newPreState.addVariable(var);
 			}
 		}
-		
+
 		// Add the auxvars
 		for (final TermVariable var : transformula.getAuxVars()) {
 			assert identifierMap.containsKey(var.getName());
 			final IProgramVarOrConst newVar = identifierMap.get(var.getName());
 			newPreState = newPreState.addVariable(newVar);
 		}
-		
+
 		return newPreState;
 	}
 
@@ -197,12 +197,12 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		assert processResult.size() > 0;
 		assert oldState != null;
 		assert transformula != null;
-		
+
 		final List<STATE> returnList = new ArrayList<>();
-		
+
 		for (final STATE result : processResult) {
 			STATE newPostState = oldState;
-			
+
 			// OutVars handling
 			for (final Entry<IProgramVar, TermVariable> entry : transformula.getOutVars().entrySet()) {
 				final IProgramVar originalVar = entry.getKey();
@@ -210,14 +210,14 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 				assert oldState.containsVariable(originalVar);
 				assert identifierMap.containsKey(termVar.getName());
-				
+
 				final IProgramVarOrConst termStateVar = identifierMap.get(termVar.getName());
-				
+
 				assert result.containsVariable(termStateVar);
-				
+
 				final VariableType type = oldState.getVariableType(originalVar);
 				assert type.equals(result.getVariableType(termStateVar));
-				
+
 				switch (type) {
 				case VARIABLE:
 					newPostState = newPostState.setValue(originalVar, result.getValue(termStateVar));
@@ -232,7 +232,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 			returnList.add(newPostState);
 		}
-		
+
 		return returnList;
 	}
 
@@ -240,7 +240,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	public List<STATE> apply(final STATE stateBeforeLeaving, final STATE stateAfterLeaving, final ACTION transition) {
 		assert transition instanceof Call || transition instanceof Return
 				|| transition instanceof Summary : "Cannot calculate hierachical post for non-hierachical transition";
-		
+
 		if (transition instanceof Call) {
 			final Call call = (Call) transition;
 			return handleCallTransition(stateBeforeLeaving, stateAfterLeaving, call);
@@ -261,16 +261,16 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		final List<STATE> returnList = new ArrayList<>();
 		final CallStatement callStatement = call.getCallStatement();
 		final Expression[] args = callStatement.getArguments();
-		
+
 		// If there are no arguments, we don't need to rewrite states.
 		if (args.length == 0) {
 			returnList.add(stateAfterLeaving);
 			return returnList;
 		}
-		
+
 		throw new UnsupportedAddressTypeException();
 	}
-	
+
 	private List<STATE> handleReturnTransition(final STATE stateBeforeLeaving, final STATE stateAfterLeaving,
 			final CallStatement callStatement) {
 		throw new UnsupportedOperationException();
@@ -278,32 +278,32 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 	private static final class DummyProgramVar implements IProgramVarOrConst {
 		private static final long serialVersionUID = 1L;
-		
+
 		private final String mName;
 		private final boolean mIsGlobal;
 		private final Term mTerm;
-		
+
 		protected DummyProgramVar(final String name, final boolean isGlobal, final Term term) {
 			mName = name;
 			mIsGlobal = isGlobal;
 			mTerm = term;
 		}
-		
+
 		@Override
 		public String getGloballyUniqueId() {
 			return mName;
 		}
-		
+
 		@Override
 		public boolean isGlobal() {
 			return mIsGlobal;
 		}
-		
+
 		@Override
 		public Term getTerm() {
 			return mTerm;
 		}
-		
+
 		@Override
 		public String toString() {
 			return mName;

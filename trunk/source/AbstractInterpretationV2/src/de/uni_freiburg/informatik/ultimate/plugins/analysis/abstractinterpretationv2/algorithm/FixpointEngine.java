@@ -72,7 +72,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 	private final IDebugHelper<STATE, ACTION, VARDECL, LOC> mDebugHelper;
 	private final IProgressAwareTimer mTimer;
 	private final ILogger mLogger;
-	private final Class<VARDECL> mVariablesType;
 
 	private AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> mResult;
 	private final SummaryMap<STATE, ACTION, VARDECL, LOC> mSummaryMap;
@@ -92,7 +91,6 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		mMaxUnwindings = params.getMaxUnwindings();
 		mMaxParallelStates = params.getMaxParallelStates();
 		mSummaryMap = new SummaryMap<>(mDomain.getMergeOperator(), mTransitionProvider, mLogger);
-		mVariablesType = params.getVariablesType();
 	}
 
 	@Override
@@ -100,8 +98,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 			final Script script) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
-		mResult =
-				new AbstractInterpretationResult<>(script, mDomain, mTransitionProvider, mVarProvider, mVariablesType);
+		mResult = new AbstractInterpretationResult<>(script, mDomain, mTransitionProvider, mVarProvider);
 		calculateFixpoint(start);
 		mResult.saveRootStorage(mStateStorage);
 		mResult.saveSummaryStorage(mSummaryMap);
@@ -232,6 +229,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		// values
 		final AbstractMultiState<STATE, ACTION, VARDECL> preStateWithFreshVariables =
 				preState.defineVariablesAfter(mVarProvider, currentAction, hierachicalPreState);
+
+		mResult.getBenchmark().addMaxVariables(preStateWithFreshVariables.getVariables().size());
 
 		AbstractMultiState<STATE, ACTION, VARDECL> postState;
 		if (preState == preStateWithFreshVariables) {
@@ -366,7 +365,9 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 						.map(succ -> new WorklistItem<>(postState, succ, currentItem)).collect(Collectors.toList());
 
 		if (mLogger.isDebugEnabled()) {
-			successorItems.stream().map(this::getLogMessageAddTransition).forEach(mLogger::debug);
+			for (final WorklistItem<STATE, ACTION, VARDECL, LOC> succItem : successorItems) {
+				mLogger.debug(getLogMessageAddTransition(succItem));
+			}
 		}
 
 		return successorItems;
