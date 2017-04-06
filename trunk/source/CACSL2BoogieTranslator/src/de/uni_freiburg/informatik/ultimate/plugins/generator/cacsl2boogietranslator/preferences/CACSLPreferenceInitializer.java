@@ -70,6 +70,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_ASSUME_NONDET_VALUES_IN_RANGE = "Assume nondeterminstic values are in range";
 	public static final String LABEL_BITVECTOR_TRANSLATION = "Use bitvectors instead of ints";
 	public static final String LABEL_OVERAPPROXIMATE_FLOATS = "Overapproximate operations on floating types";
+	public static final String LABEL_FP_TO_IEEE_BV_EXTENSION = "Use Z3's non-standard fp.to_ieee_bv extension";
 	public static final String LABEL_SMT_BOOL_ARRAYS_WORKAROUND = "SMT bool arrays workaround";
 
 	// typesize stuff
@@ -157,6 +158,7 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_ASSUME_NONDET_VALUES_IN_RANGE, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_OVERAPPROXIMATE_FLOATS, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_FP_TO_IEEE_BV_EXTENSION, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SMT_BOOL_ARRAYS_WORKAROUND, true, PreferenceType.Boolean),
 
 				// typesize stuff

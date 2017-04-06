@@ -326,8 +326,12 @@ public final class SFO {
 	 *         creating constants.
 	 */
 	public static String getBoogieFunctionName(final String smtFunctionName, final CPrimitive type) {
+		return getBoogieFunctionName(smtFunctionName, type.toString());
+	}
+	
+	private static String getBoogieFunctionName(final String smtFunctionName, final String suffix) {
 		final String escapedSmtFunctionName = smtFunctionName.replace("+", "Plus").replace("-", "Minus");
-		return SFO.AUXILIARY_FUNCTION_PREFIX + escapedSmtFunctionName + SFO.AUXILIARY_FUNCTION_PREFIX + type;
+		return SFO.AUXILIARY_FUNCTION_PREFIX + escapedSmtFunctionName + SFO.AUXILIARY_FUNCTION_PREFIX + suffix;
 	}
 
 	public static Pair<String, CPrimitives> reverseBoogieFunctionName(final String functionName) {
