@@ -1290,16 +1290,8 @@ public final class SmtUtils {
 	 * sort we can get values for array cells (resp. the corresponding select term).
 	 */
 	public static boolean isSortForWhichWeCanGetValues(final Sort sort) {
-		return sort.isNumericSort() || "Bool".equals(sort.getRealSort().getName()) || isBitvectorSort(sort)
-				|| isFloatingPointSort(sort);
-	}
-
-	public static boolean isBitvectorSort(final Sort sort) {
-		return SmtSortUtils.isBitvecSort(sort);
-	}
-
-	public static boolean isFloatingPointSort(final Sort sort) {
-		return SmtSortUtils.isFloatingpointSort(sort);
+		return sort.isNumericSort() || SmtSortUtils.isBoolSort(sort) || SmtSortUtils.isBitvecSort(sort)
+				|| SmtSortUtils.isFloatingpointSort(sort);
 	}
 
 	/**

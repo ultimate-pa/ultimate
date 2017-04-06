@@ -118,13 +118,19 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		mPredicateFactory = predicateFactory;
 		mRelevanceOfTrace = initializeRelevanceOfTrace(counterexample);
 
-		if (doNonFlowSensitiveAnalysis) {
-			doNonFlowSensitiveAnalysis(counterexample.getWord(), predicateUnifier.getFalsePredicate(),
-					modifiableGlobalsTable, csToolkit);
-		}
+		try {
+			if (doNonFlowSensitiveAnalysis) {
+				doNonFlowSensitiveAnalysis(counterexample.getWord(), predicateUnifier.getFalsePredicate(),
+						modifiableGlobalsTable, csToolkit);
+			}
 
-		if (doFlowSensitiveAnalysis) {
-			doFlowSensitiveAnalysis(counterexample, cfg, modifiableGlobalsTable, csToolkit);
+			if (doFlowSensitiveAnalysis) {
+				doFlowSensitiveAnalysis(counterexample, cfg, modifiableGlobalsTable, csToolkit);
+			}
+		} catch (final ToolchainCanceledException tce) {
+			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
+					"doing error localization for trace of length " + counterexample.getLength());
+			throw new ToolchainCanceledException(tce, rti);
 		}
 	}
 

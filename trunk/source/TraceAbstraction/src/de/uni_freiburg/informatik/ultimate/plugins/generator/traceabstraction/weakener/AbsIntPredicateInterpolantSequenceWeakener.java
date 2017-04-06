@@ -48,9 +48,47 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsI
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
+/**
+ * Weakens a sequence of predicates by reducing the number of variables occurring in each Hoare-triple of {pred1} letter
+ * {pred2}.
+ * <p>
+ * Each predicate occurring in the resulting sequence of predicates should contain only the necessary variables to prove
+ * inductivity of the sequence of predicates.
+ * </p>
+ *
+ * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ *
+ * @param <STATE>
+ *            The type of the abstract states used.
+ * @param <VARDECL>
+ *            The type of the variable declarations used in each abstract state.
+ * @param <LETTER>
+ *            The type of the letters occurring in the trace of predicate-letter-predicate-triplets.
+ */
 public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractState<STATE, VARDECL>, VARDECL, LETTER extends IIcfgTransition<?>>
 		extends InterpolantSequenceWeakener<IHoareTripleChecker, AbsIntPredicate<STATE, VARDECL>, LETTER> {
 
+	/**
+	 * The default constructor.
+	 *
+	 * @param logger
+	 *            A logger object.
+	 * @param htc
+	 *            The Hoare-triple checker that is able to check validity for the given predicate types.
+	 * @param predicates
+	 *            The sequence of predicates.
+	 * @param trace
+	 *            The sequence of letters who, in combination with the predicates, form an inductive sequence of
+	 *            Hoare-triples.
+	 * @param precondition
+	 *            The precondition of the trace, i.e. the very first predicate to be considered.
+	 * @param postcondition
+	 *            The postcondition of the trace, i.e. the very last predicate to be considered.
+	 * @param script
+	 *            The SMT script to create terms with.
+	 * @param predicateFactory
+	 *            The factory to create new predicates.
+	 */
 	public AbsIntPredicateInterpolantSequenceWeakener(final ILogger logger, final IHoareTripleChecker htc,
 			final List<AbsIntPredicate<STATE, VARDECL>> predicates, final List<LETTER> trace,
 			final AbsIntPredicate<STATE, VARDECL> precondition, final AbsIntPredicate<STATE, VARDECL> postcondition,
@@ -62,6 +100,72 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 	protected AbsIntPredicate<STATE, VARDECL> refinePreState(final AbsIntPredicate<STATE, VARDECL> preState,
 			final LETTER transition, final AbsIntPredicate<STATE, VARDECL> postState) {
 
+		final AbsIntPredicate<STATE, VARDECL> newPreState = removeUnneededVariables(preState, transition);
+		final boolean valid = determineInductivity(newPreState, preState, transition, postState);
+
+		if (valid) {
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("Result of weakening: Number of variables in state before: " + preState.getVars().size()
+						+ ", Now: " + newPreState.getVars().size());
+			}
+			return newPreState;
+		}
+
+		mLogger.debug("Unable to weaken prestate. Returning old prestate.");
+		return preState;
+	}
+
+	/**
+	 * Dtermines whether two states and one transition are inductive, i.e. whether {s1} tr {s2} is a valid Hoare-triple.
+	 * This is done by using the Hoare-triple checker provided by the base class.
+	 *
+	 * @param newPreState
+	 *            The new predicate, resulting from weakening <code>oldPreState</code>.
+	 * @param oldPreState
+	 *            The original prestate that was weakened.
+	 * @param transition
+	 *            The transition to be considered.
+	 * @param postState
+	 *            The predicate that should hold after the transition.
+	 * @return <code>true</code> iff the Hoare-triple {newPreState} transition {postState} is valid, <code>false</code>
+	 *         otherwise.
+	 */
+	private boolean determineInductivity(final AbsIntPredicate<STATE, VARDECL> newPreState,
+			final AbsIntPredicate<STATE, VARDECL> oldPreState, final LETTER transition,
+			final AbsIntPredicate<STATE, VARDECL> postState) {
+		final Validity result;
+
+		if (transition instanceof IInternalAction) {
+			result = mHtc.checkInternal(newPreState, (IInternalAction) transition, postState);
+		} else if (transition instanceof ICallAction) {
+			result = mHtc.checkCall(newPreState, (ICallAction) transition, postState);
+		} else if (transition instanceof IReturnAction) {
+			final PredicateLetterIdentifier<AbsIntPredicate<STATE, VARDECL>, LETTER> predLetter =
+					new PredicateLetterIdentifier<>(oldPreState, transition);
+			final AbsIntPredicate<STATE, VARDECL> hierarchicalPre = mHierarchicalPreStates.get(predLetter);
+			assert hierarchicalPre != null;
+			result = mHtc.checkReturn(newPreState, hierarchicalPre, (IReturnAction) transition, postState);
+		} else {
+			throw new IllegalStateException(
+					"Transition type " + transition.getClass().getSimpleName() + " not supported.");
+		}
+		return result == Validity.VALID;
+	}
+
+	/**
+	 * Removes Not needed variables from the current prestate.
+	 * <p>
+	 * A needed variable is one that occurs in the invars of the transformula of the transition.
+	 * </p>
+	 *
+	 * @param preState
+	 *            The original state.
+	 * @param transition
+	 *            The transition in concern.
+	 * @return A new state stripped from all unnecessary variables wrt. the transition.
+	 */
+	private AbsIntPredicate<STATE, VARDECL> removeUnneededVariables(final AbsIntPredicate<STATE, VARDECL> preState,
+			final LETTER transition) {
 		// Collect all variables occurring in the invars
 		final Set<IProgramVar> varsToKeep = transition.getTransformula().getInVars().keySet();
 
@@ -78,30 +182,7 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 		final IPredicate disjunction = mPredicateFactory.newPredicate(SmtUtils.or(mScript, terms));
 
 		final AbsIntPredicate<STATE, VARDECL> newPreState = new AbsIntPredicate<>(disjunction, newMultiState);
-
-		final Validity result;
-
-		if (transition instanceof IInternalAction) {
-			result = mHtc.checkInternal(newPreState, (IInternalAction) transition, postState);
-		} else if (transition instanceof ICallAction) {
-			result = mHtc.checkCall(newPreState, (ICallAction) transition, postState);
-		} else if (transition instanceof IReturnAction) {
-			final AbsIntPredicate<STATE, VARDECL> hierarchicalPre = mHierarchicalPreStates.get(preState);
-			assert hierarchicalPre != null;
-			result = mHtc.checkReturn(newPreState, hierarchicalPre, (IReturnAction) transition, postState);
-		} else {
-			throw new IllegalStateException(
-					"Transition type " + transition.getClass().getSimpleName() + " not supported.");
-		}
-
-		if (result == Validity.VALID) {
-			mLogger.debug("Result of weakening: Number of variables in state before: " + preState.getVars().size()
-					+ ", Number of variables after: " + newPreState.getVars().size());
-			return newPreState;
-		}
-
-		mLogger.debug("Unable to weaken prestate. Returning old prestate.");
-		return preState;
+		return newPreState;
 	}
 
 }

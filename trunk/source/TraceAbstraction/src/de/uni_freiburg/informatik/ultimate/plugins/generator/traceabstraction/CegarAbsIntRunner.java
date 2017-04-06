@@ -90,7 +90,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.weakener.DummyInterpolantSequenceWeakener;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.weakener.AbsIntPredicateInterpolantSequenceWeakener;
 
 /**
  *
@@ -409,13 +409,13 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 		private List<AbsIntPredicate<STATE, IBoogieVar>> weakenPredicates(
 				final List<AbsIntPredicate<STATE, IBoogieVar>> nonUnifiedPredicates, final List<LETTER> ppTrace) {
-			return new DummyInterpolantSequenceWeakener<>(mLogger, getHoareTripleChecker(), nonUnifiedPredicates,
-					ppTrace, mTruePredicate, mFalsePredicate, mCsToolkit.getManagedScript().getScript(),
-					mPredicateUnifierAbsInt.getPredicateFactory()).getResult();
-			// return new AbsIntPredicateInterpolantSequenceWeakener<>(mLogger, getHoareTripleChecker(),
-			// nonUnifiedPredicates, ppTrace, mTruePredicate, mFalsePredicate,
-			// mCsToolkit.getManagedScript().getScript(), mPredicateUnifierAbsInt.getPredicateFactory())
-			// .getResult();
+			// return new DummyInterpolantSequenceWeakener<>(mLogger, getHoareTripleChecker(), nonUnifiedPredicates,
+			// ppTrace, mTruePredicate, mFalsePredicate, mCsToolkit.getManagedScript().getScript(),
+			// mPredicateUnifierAbsInt.getPredicateFactory()).getResult();
+			return new AbsIntPredicateInterpolantSequenceWeakener<>(mLogger, getHoareTripleChecker(),
+					nonUnifiedPredicates, ppTrace, mTruePredicate, mFalsePredicate,
+					mCsToolkit.getManagedScript().getScript(), mPredicateUnifierAbsInt.getPredicateFactory())
+							.getResult();
 		}
 
 		private List<LETTER> constructTraceFromWord(final Word<LETTER> word, final PathProgram pathProgram) {
