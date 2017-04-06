@@ -59,6 +59,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo.SizeInfo;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.TAConverterFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -431,6 +433,11 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 
 			mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 			mLogger.info("Interpolant automaton has " + mInterpolAutomaton.sizeInformation());
+			if (mInteractiveMode) {
+				IterationInfo.sizeInfo.mAbstraction = mAbstraction.sizeInformation();
+				IterationInfo.sizeInfo.mInterpolantAutomaton = mInterpolAutomaton.sizeInformation();
+				mInteractive.send(IterationInfo.sizeInfo);
+			}
 
 			if (mPref.computeHoareAnnotation() && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
 				assert new InductivityCheck<>(mServices, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, false,

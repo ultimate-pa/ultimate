@@ -218,11 +218,19 @@ message NestedRun {
 }
 
 message IterationInfo {
+	message Biggest {
+		int32 iteration = 1;
+		int32 size = 2;
+	}
+
 	NestedRun run = 1;
 	int32 iteration = 2;
 	int32 states = 3;
 	int32 transitions = 4;
 	int32 wordLength = 5;
+	string abstractionSizeInfo = 6;
+	string interpolantAutomatonSizeInfo = 7;
+	Biggest biggestAbstraction = 8;
 }
 
 message Alphabet {

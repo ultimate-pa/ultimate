@@ -39,6 +39,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType.SizeIterationPair;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo.SizeInfo;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PredicateQueuePair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PredicateQueueResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
@@ -87,12 +90,19 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 		// i -> TraceAbstractionProtos.IterationInfo.newBuilder().setIteration(i.mIteration).build());
 		converterRegistry.registerBA(TraceAbstractionProtos.IterationInfo.class, CegarLoopStatisticsGenerator.class,
 				TAConverter::fromCegarLoopStatisticsGenerator);
+		converterRegistry.registerBA(TraceAbstractionProtos.IterationInfo.class, IterationInfo.SizeInfo.class,
+				i -> TraceAbstractionProtos.IterationInfo.newBuilder().setAbstractionSizeInfo(i.mAbstraction)
+						.setInterpolantAutomatonSizeInfo(i.mInterpolantAutomaton).build());
 	}
 
 	private static TraceAbstractionProtos.IterationInfo
 			fromCegarLoopStatisticsGenerator(CegarLoopStatisticsGenerator benchmark) {
 		final TraceAbstractionProtos.IterationInfo.Builder builder = TraceAbstractionProtos.IterationInfo.newBuilder();
 		builder.setIteration((int) benchmark.getValue(CegarLoopStatisticsDefinitions.OverallIterations.toString()));
+		final SizeIterationPair biggestAbstraction =
+				(SizeIterationPair) benchmark.getValue(CegarLoopStatisticsDefinitions.BiggestAbstraction.toString());
+		builder.setBiggestAbstraction(TraceAbstractionProtos.IterationInfo.Biggest.newBuilder()
+				.setIteration(biggestAbstraction.getIteration()).setSize(biggestAbstraction.getSize()));
 		return builder.build();
 	}
 
