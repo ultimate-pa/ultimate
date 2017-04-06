@@ -300,6 +300,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (mCounterexample == null) {
 			return true;
 		}
+		if (mInteractiveMode) {
+			mInteractive.send(mCounterexample);
+		}
 		
 
 		if (mPref.dumpAutomata()) {
