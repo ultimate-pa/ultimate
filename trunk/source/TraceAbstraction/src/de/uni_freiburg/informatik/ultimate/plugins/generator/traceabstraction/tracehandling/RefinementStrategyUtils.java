@@ -26,23 +26,16 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
-import java.util.Collections;
 import java.util.Objects;
 import java.util.TreeMap;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsSort;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -61,50 +54,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class RefinementStrategyUtils {
 
-	public static final String NAME_OF_FLOAT_SORT = "FloatingPoint";
-	public static final String FP_TO_IEEE_BV_EXTENSION = "fp.to_ieee_bv";
-
 	private RefinementStrategyUtils() {
 	}
 
-	/**
-	 * Returns true iff word contains some float variable.
-	 * 
-	 * @param iPredicate
-	 */
-	public static boolean containsFloats(final Word<? extends IAction> word, final IPredicate axioms) {
-
-		final ContainsSort cs = new ContainsSort(Collections.singleton(NAME_OF_FLOAT_SORT));
-		boolean containsFloats = false;
-		containsFloats |= cs.containsSubtermOfGivenSort(axioms.getFormula());
-		if (containsFloats) {
-			return true;
-		}
-		for (final IAction action : word) {
-			if (action instanceof IInternalAction) {
-				containsFloats |= cs
-						.containsSubtermOfGivenSort(((IInternalAction) action).getTransformula().getFormula());
-				if (containsFloats) {
-					return true;
-				}
-			} else if (action instanceof ICallAction) {
-				containsFloats |= cs
-						.containsSubtermOfGivenSort(((ICallAction) action).getLocalVarsAssignment().getFormula());
-				if (containsFloats) {
-					return true;
-				}
-			} else if (action instanceof IReturnAction) {
-				containsFloats |= cs
-						.containsSubtermOfGivenSort(((IReturnAction) action).getAssignmentOfReturn().getFormula());
-				if (containsFloats) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	
 	public static <LETTER extends IIcfgTransition<?>> IInterpolantGenerator constructInterpolantGenerator(
 			final IUltimateServiceProvider services, final ILogger logger,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final TAPreferences taPrefsForInterpolantConsolidation,

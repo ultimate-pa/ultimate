@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
@@ -74,7 +75,7 @@ public class WolfRefinementStrategy<LETTER extends IIcfgTransition<?>>
 		final TermClassifier tc = TraceCheckerUtils.classifyTermsInTrace(mCounterexample.getWord(),
 				mCsToolkit.getAxioms());
 		if (tc.getOccuringSortNames().contains(SmtSortUtils.FLOATINGPOINT_SORT)) {
-			if (tc.getOccuringFunctionNames().contains(RefinementStrategyUtils.FP_TO_IEEE_BV_EXTENSION)
+			if (tc.getOccuringFunctionNames().contains(SmtUtils.FP_TO_IEEE_BV_EXTENSION)
 					|| !tc.getOccuringQuantifiers().isEmpty()) {
 				// we need Z3, but Z3 is already added later, hence do nothing
 			} else {
