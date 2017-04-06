@@ -30,10 +30,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.w
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 
 /**
  * The {@link DummyInterpolantSequenceWeakener} does nothing. It just returns the sequence of predicates it was given.
@@ -55,15 +57,16 @@ public final class DummyInterpolantSequenceWeakener<STATE extends IAbstractState
 	 */
 	public DummyInterpolantSequenceWeakener(final ILogger logger, final IHoareTripleChecker htc,
 			final List<AbsIntPredicate<STATE, VARDECL>> predicates, final List<LETTER> trace,
-			final AbsIntPredicate<STATE, VARDECL> precondition, final AbsIntPredicate<STATE, VARDECL> postcondition) {
-		super(logger, htc, predicates, trace, precondition, postcondition);
+			final AbsIntPredicate<STATE, VARDECL> precondition, final AbsIntPredicate<STATE, VARDECL> postcondition,
+			final Script script, final BasicPredicateFactory predicateFactory) {
+		super(logger, htc, predicates, trace, precondition, postcondition, script, predicateFactory);
 	}
 
-	@Override
-	protected List<AbsIntPredicate<STATE, VARDECL>>
-			generateResult(final List<AbsIntPredicate<STATE, VARDECL>> predicates, final List<LETTER> list) {
-		return predicates;
-	}
+	// @Override
+	// protected List<AbsIntPredicate<STATE, VARDECL>>
+	// generateResult(final List<P> predicates, final List<LETTER> list) {
+	// return predicates;
+	// }
 
 	@Override
 	protected AbsIntPredicate<STATE, VARDECL> refinePreState(final AbsIntPredicate<STATE, VARDECL> preState,

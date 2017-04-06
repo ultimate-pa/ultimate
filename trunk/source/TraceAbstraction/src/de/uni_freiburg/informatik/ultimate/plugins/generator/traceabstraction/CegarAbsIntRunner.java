@@ -410,10 +410,12 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		private List<AbsIntPredicate<STATE, IBoogieVar>> weakenPredicates(
 				final List<AbsIntPredicate<STATE, IBoogieVar>> nonUnifiedPredicates, final List<LETTER> ppTrace) {
 			return new DummyInterpolantSequenceWeakener<>(mLogger, getHoareTripleChecker(), nonUnifiedPredicates,
-					ppTrace, mTruePredicate, mFalsePredicate).getResult();
-			// return new AbstractPostInterpolantSequenceWeakener<>(mLogger, getHoareTripleChecker(),
-			// nonUnifiedPredicates,
-			// ppTrace, mTruePredicate, mFalsePredicate).getResult();
+					ppTrace, mTruePredicate, mFalsePredicate, mCsToolkit.getManagedScript().getScript(),
+					mPredicateUnifierAbsInt.getPredicateFactory()).getResult();
+			// return new AbsIntPredicateInterpolantSequenceWeakener<>(mLogger, getHoareTripleChecker(),
+			// nonUnifiedPredicates, ppTrace, mTruePredicate, mFalsePredicate,
+			// mCsToolkit.getManagedScript().getScript(), mPredicateUnifierAbsInt.getPredicateFactory())
+			// .getResult();
 		}
 
 		private List<LETTER> constructTraceFromWord(final Word<LETTER> word, final PathProgram pathProgram) {

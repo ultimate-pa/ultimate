@@ -60,7 +60,7 @@ public class HybridTermBuilder {
 	 * Function to convert a given formula postfix notation as array, into a term., sali ge
 	 *
 	 * @param postfix
-	 * @param script
+	 * @param mScript
 	 * @param variableManager
 	 * @return
 	 */
