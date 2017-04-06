@@ -433,13 +433,19 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 	 * @return A merged TransFormula.
 	 */
 	private UnmodifiableTransFormula mergeTransFormulas(final TransFormula first, final TransFormula second) {
-		final TransFormulaBuilder builder =
-				new TransFormulaBuilder(first.getInVars(), second.getOutVars(), true, null, true, null, false);
+		final Map<IProgramVar, TermVariable> inVars = new HashMap<>(first.getInVars());
+		final Map<IProgramVar, TermVariable> outVars = new HashMap<>(second.getOutVars());
+		final Set<TermVariable> auxVars = new HashSet<>(first.getAuxVars());
+		auxVars.addAll(second.getAuxVars());
 
 		Term term = Util.and(mScript.getScript(), first.getFormula(), second.getFormula());
 
-		for (final TermVariable termVar : first.getOutVars().values()) {
-			builder.addAuxVar(termVar);
+		for (final Map.Entry<IProgramVar, TermVariable> entry : first.getOutVars().entrySet()) {
+			if (outVars.containsKey(entry.getKey())) {
+				auxVars.add(entry.getValue());
+			} else {
+				outVars.put(entry.getKey(), entry.getValue());
+			}
 		}
 
 		for (final IProgramVar var : second.getInVars().keySet()) {
@@ -448,21 +454,18 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 					term = Util.and(mScript.getScript(), term,
 							mScript.getScript().term("=", second.getInVars().get(var), first.getOutVars().get(var)));
 					if (second.getInVars().get(var) != second.getOutVars().get(var)) {
-						builder.addAuxVar(second.getInVars().get(var));
+						auxVars.add(second.getInVars().get(var));
 					}
 				}
 			} else if (!first.getInVars().containsKey(var)) {
-				builder.addInVar(var, second.getInVars().get(var));
+				inVars.put(var, second.getInVars().get(var));
 			}
 		}
 
+		final TransFormulaBuilder builder = new TransFormulaBuilder(inVars, outVars, true, null, true, null, false);
 		builder.setFormula(term);
-
-		builder.addAuxVarsButRenameToFreshCopies(first.getAuxVars(), mScript);
-		builder.addAuxVarsButRenameToFreshCopies(second.getAuxVars(), mScript);
-
+		builder.addAuxVarsButRenameToFreshCopies(auxVars, mScript);
 		builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
-
 		return builder.finishConstruction(mScript);
 	}
 
