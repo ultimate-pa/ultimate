@@ -52,6 +52,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * We note that a {@link TransFormula} is usually not equivalent to this form,
  * because a {@link TransFormula} consists of a guard and an update.
  * The guard can be obtained by {@link TransFormulaUtils#computeGuard}.
+ * The conjunction of the guard and the {@link SimultaneousUpdate} (lhs 
+ * variables considered as outVars all other variables considered as inVars)
+ * is equivalent to the original {@link TransFormula}.
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
