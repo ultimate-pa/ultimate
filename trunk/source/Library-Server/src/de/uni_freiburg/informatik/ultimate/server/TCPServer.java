@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage;
+import util.Event;
 
 public abstract class TCPServer<T> implements IInteractiveServer<T> {
 
@@ -32,6 +33,7 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 	protected Supplier<ExecutorService> mGetExecutorService;
 
 	protected boolean mCancelled;
+	protected final Event mConnectionEvent;
 	protected ITypeRegistry<T> mTypeRegistry;
 
 	public TCPServer(ILogger logger, int port) {
@@ -40,6 +42,8 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 		mGetExecutorService = Executors::newWorkStealingPool;
 		mCancelled = false;
 		mClient = new FutureClient<>(mLogger);
+		mConnectionEvent = new Event();
+		mConnectionEvent.set();
 	}
 
 	public abstract IWrappedMessage<T> newMessage();
@@ -88,7 +92,10 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 		// use FutureClient set in constructor here.
 		listen();
 		while (true) {
-			mClient = new FutureClient<T>(mLogger);
+			synchronized (this) {
+				mClient = new FutureClient<T>(mLogger);
+				mConnectionEvent.set();
+			}
 			listen();
 		}
 	}
@@ -115,15 +122,7 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 		try {
 			Client<T> client = mClient.get(1, TimeUnit.MINUTES);
 
-			while (!client.hasIOExceptionOccurred()) {
-				try {
-					synchronized (this) {
-						client.finished().get(5, TimeUnit.SECONDS);						
-					}
-				} catch (TimeoutException e) {
-					continue;
-				}
-			}
+			client.finished().get();
 		} catch (InterruptedException | ExecutionException e) {
 			mLogger.error("Client", e);
 			return;
@@ -134,12 +133,15 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 	}
 
 	@Override
-	public synchronized Client<T> waitForConnection(final long timeout, final TimeUnit timeunit) throws InterruptedException, ExecutionException, TimeoutException {
+	public synchronized Client<T> waitForConnection(final long timeout, final TimeUnit timeunit)
+			throws InterruptedException, ExecutionException, TimeoutException {
 		if (!mRunning || mServerFuture.isDone()) {
 			throw new IllegalStateException("Server not running.");
 		}
 
-		return mClient.get(timeout, timeunit);
+		final Client<T> client = mClient.get(timeout, timeunit);
+		mConnectionEvent.clear();
+		return client;
 	}
 
 }

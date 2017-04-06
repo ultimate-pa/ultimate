@@ -10,6 +10,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -39,14 +40,16 @@ public abstract class Client<T> {
 	protected final MessageQueue<T> mQueue;
 
 	protected CompletableFuture<Client<T>> mHelloFuture = new CompletableFuture<>();
+	protected boolean mQuitting = false;
 	protected CompletableFuture<Void> mQuitFuture = new CompletableFuture<>();
 	protected int mCurrentRequestId = 0;
 
 	private ITypeRegistry<T> mTypeRegistry;
 	private HandlerRegistry<T> mHandlerRegistry;
 
-	private Future<?> mInputFuture;
-	private Future<?> mOutputFuture;
+	private CompletableFuture<Void> mInputFuture;
+	private CompletableFuture<Void> mOutputFuture;
+	private CompletableFuture<Void> mFinishedFuture;
 
 	private boolean mIOExceptionOccurred = false;
 
@@ -131,8 +134,8 @@ public abstract class Client<T> {
 			}
 			break;
 		case QUIT:
-			mLogger.info("Client has sent quit message.");
-			mQuitFuture.complete(null);
+			mLogger.info("Client has sent quit message. Shutting down connection.");
+			mQuitting = true;
 			break;
 		case HELLO:
 			mLogger.info("callign complete on completablefuture for hello: " + mHelloFuture.toString());
@@ -149,15 +152,17 @@ public abstract class Client<T> {
 	public void closeConnection() {
 		try {
 			mSocket.close();
+			mLogger.info("Connection closed.");
 		} catch (IOException e) {
 			mLogger.error("failed to shut down connection gracefully.", e);
 			handleIoException(e);
 		}
 	}
-	
+
 	public void handleIoException(final IOException e) {
 		mIOExceptionOccurred = true;
 		mQuitFuture.completeExceptionally(e);
+		mFinishedFuture.completeExceptionally(e);
 		mHelloFuture.completeExceptionally(e);
 		mQueue.completeAllFuturesExceptionally(e);
 	}
@@ -170,29 +175,29 @@ public abstract class Client<T> {
 		InputStream input = mSocket.getInputStream();
 		OutputStream output = mSocket.getOutputStream();
 
-		mInputFuture = executor.submit(() -> runOutput(output));
-		mOutputFuture = executor.submit(() -> runInput(input, mTypeRegistry));
+		mInputFuture = CompletableFuture.runAsync(() -> runOutput(output), executor);
+		mOutputFuture = CompletableFuture.runAsync(() -> runInput(input, mTypeRegistry), executor);
+
+		mFinishedFuture = CompletableFuture.allOf(mInputFuture, mOutputFuture).thenRun(this::quit);
+	}
+
+	private void quit() {
+		closeConnection();
+		if (mQuitting)
+			mQuitFuture.complete(null);
 	}
 
 	public Future<?> finished() {
-		if (mInputFuture == null || mOutputFuture == null) {
+		if (mFinishedFuture == null) {
 			throw new RuntimeException("Clients Streams have not started");
 		}
 
-		return new CompletableFuture<Void>().thenApply((Function<? super Void, ?>) n -> {
-			try {
-				mInputFuture.get();
-				mOutputFuture.get();
-			} catch (InterruptedException | ExecutionException e) {
-				throw new RuntimeException(e);
-			}
-			return null;
-		});
+		return mFinishedFuture;
 	}
 
 	private void runOutput(OutputStream output) {
 		IWrappedMessage<T> msg;
-		while (true) {
+		while (!mQuitting) {
 			msg = mQueue.poll(5, TimeUnit.SECONDS);
 			if (msg == null)
 				continue;
@@ -209,7 +214,7 @@ public abstract class Client<T> {
 
 	private void runInput(InputStream input, ITypeRegistry<T> typeRegistry) {
 		IWrappedMessage<T> msg;
-		while (true) {
+		while (!mQuitting) {
 			try {
 				msg = construct();
 				if (msg == null) {

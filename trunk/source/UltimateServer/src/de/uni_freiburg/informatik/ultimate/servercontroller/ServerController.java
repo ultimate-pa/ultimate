@@ -154,13 +154,14 @@ public class ServerController implements IController<RunDefinition> {
 			while (true) {
 				try {
 					initWrapper(core, availableToolchains, availableSettingsFiles, availableInputFiles);
+					Thread.sleep(200); // wait a little bit before handling the next client.
 
 					if (false)
 						break; // TODO: add settings that limit the server to a single (or fixed numer or time) run
 				} catch (ExecutionException e) {
 					if (e.getCause() instanceof IOException) {
 						mLogger.error("It seems like the Connection has been Lost. Reinitializing controller.", e);
-						Thread.sleep(500);
+						Thread.sleep(200);
 						result = IApplication.EXIT_RELAUNCH; // What does/should that do?
 					} else {
 						mLogger.fatal(e);
