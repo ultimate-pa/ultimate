@@ -93,6 +93,7 @@ public class ServerController implements IController<RunDefinition> {
 	private IInteractive<GeneratedMessageV3> mProtoInterface;
 
 	private Converter.Initializer<GeneratedMessageV3> mConverterInitializer;
+	private int mListenTimeout;
 
 	@Override
 	public int init(final ICore<RunDefinition> core) {
@@ -143,6 +144,8 @@ public class ServerController implements IController<RunDefinition> {
 			mLogger.error("No Input files found in " + cla.getInputDirPath().getAbsolutePath());
 			return -1;
 		}
+		
+		mListenTimeout = cla.getTimeout();
 
 		mLogger.debug("Starting Server on Port " + cla.getPort());
 		mServer.start();
@@ -206,7 +209,7 @@ public class ServerController implements IController<RunDefinition> {
 			final File[] availableInputFiles) throws InterruptedException, ExecutionException, TimeoutException {
 		mLogger.info("Waiting for connection...");
 
-		final Client<GeneratedMessageV3> client = mServer.waitForConnection(5, TimeUnit.MINUTES);
+		final Client<GeneratedMessageV3> client = mServer.waitForConnection(mListenTimeout, TimeUnit.SECONDS);
 		mProtoInterface = client.createInteractiveInterface();
 
 		mConverterInitializer = new Converter.Initializer<>(mProtoInterface, mServer.getTypeRegistry());
