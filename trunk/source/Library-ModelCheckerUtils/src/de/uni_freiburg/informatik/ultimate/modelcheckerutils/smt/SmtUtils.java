@@ -1290,11 +1290,11 @@ public final class SmtUtils {
 	}
 
 	public static boolean isBitvectorSort(final Sort sort) {
-		return "BitVec".equals(sort.getRealSort().getName());
+		return SmtSortUtils.isBitvecSort(sort);
 	}
 
 	public static boolean isFloatingPointSort(final Sort sort) {
-		return "FloatingPoint".equals(sort.getRealSort().getName());
+		return SmtSortUtils.isFloatingpointSort(sort);
 	}
 
 	/**
