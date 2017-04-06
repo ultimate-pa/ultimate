@@ -86,7 +86,9 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 		} else if (transition instanceof ICallAction) {
 			result = mHtc.checkCall(newPreState, (ICallAction) transition, postState);
 		} else if (transition instanceof IReturnAction) {
-			final AbsIntPredicate<STATE, VARDECL> hierarchicalPre = mHierarchicalPreStates.get(preState);
+			final PredicateLetterIdentifier<AbsIntPredicate<STATE, VARDECL>, LETTER> predLetter =
+					new PredicateLetterIdentifier<>(preState, transition);
+			final AbsIntPredicate<STATE, VARDECL> hierarchicalPre = mHierarchicalPreStates.get(predLetter);
 			assert hierarchicalPre != null;
 			result = mHtc.checkReturn(newPreState, hierarchicalPre, (IReturnAction) transition, postState);
 		} else {
