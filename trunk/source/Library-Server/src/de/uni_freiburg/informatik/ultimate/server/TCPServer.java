@@ -116,6 +116,7 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 			// send(Action.HELLO, null);
 		} catch (IOException e) {
 			mLogger.error("Could not listen on port:" + mPort);
+			mClient.cancel(true);
 			return;
 		}
 
@@ -125,9 +126,11 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 			client.finished().get();
 		} catch (InterruptedException | ExecutionException e) {
 			mLogger.error("Client", e);
+			mClient.cancel(true);
 			return;
 		} catch (TimeoutException e) {
 			mLogger.error("Timed out waiting for Client");
+			mClient.cancel(true);
 			return;
 		}
 	}
