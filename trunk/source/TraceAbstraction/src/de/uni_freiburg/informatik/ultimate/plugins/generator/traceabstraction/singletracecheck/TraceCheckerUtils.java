@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
@@ -47,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IRetu
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
@@ -251,6 +253,29 @@ public final class TraceCheckerUtils {
 		@SuppressWarnings("unchecked")
 		final Map<TermVariable, Boolean>[] branchEncoders = new Map[0];
 		return new IcfgProgramExecution(trace.asList(), Collections.emptyMap(), branchEncoders);
+	}
+	
+	
+	/**
+	 * Use {@link TermClassifier} to classify set of {@link Term}s that belong
+	 * to a trace, and return the {@link TermClassifier}.
+	 * TODO: Maybe also check local vars assignment and global vars assignment?
+	 */
+	public static TermClassifier classifyTermsInTrace(final Word<? extends IAction> word,
+			final IPredicate axioms) {
+
+		final TermClassifier cs = new TermClassifier();
+		cs.checkTerm(axioms.getFormula());
+		for (final IAction action : word) {
+			if (action instanceof IInternalAction) {
+				cs.checkTerm(((IInternalAction) action).getTransformula().getFormula());
+			} else if (action instanceof ICallAction) {
+				cs.checkTerm(((ICallAction) action).getLocalVarsAssignment().getFormula());
+			} else if (action instanceof IReturnAction) {
+				cs.checkTerm(((IReturnAction) action).getAssignmentOfReturn().getFormula());
+			}
+		}
+		return cs;
 	}
 
 	/**
