@@ -98,7 +98,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		}
 	}
 
-	private List<P> generateResult(final List<P> predicates, final List<LETTER> list) {
+	protected List<P> generateResult(final List<P> predicates, final List<LETTER> list) {
 		assert list != null;
 
 		final List<P> returnList = new ArrayList<>();

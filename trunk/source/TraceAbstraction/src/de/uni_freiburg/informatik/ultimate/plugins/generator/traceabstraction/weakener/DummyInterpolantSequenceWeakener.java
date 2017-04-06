@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsI
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class DummyInterpolantSequenceWeakener<STATE extends IAbstractState<STATE, VARDECL>, VARDECL, LETTER extends IIcfgTransition<?>>
+public final class DummyInterpolantSequenceWeakener<STATE extends IAbstractState<STATE, VARDECL>, VARDECL, LETTER extends IIcfgTransition<?>>
 		extends InterpolantSequenceWeakener<IHoareTripleChecker, AbsIntPredicate<STATE, VARDECL>, LETTER> {
 
 	/**
@@ -57,6 +57,12 @@ public class DummyInterpolantSequenceWeakener<STATE extends IAbstractState<STATE
 			final List<AbsIntPredicate<STATE, VARDECL>> predicates, final List<LETTER> trace,
 			final AbsIntPredicate<STATE, VARDECL> precondition, final AbsIntPredicate<STATE, VARDECL> postcondition) {
 		super(logger, htc, predicates, trace, precondition, postcondition);
+	}
+
+	@Override
+	protected List<AbsIntPredicate<STATE, VARDECL>>
+			generateResult(final List<AbsIntPredicate<STATE, VARDECL>> predicates, final List<LETTER> list) {
+		return predicates;
 	}
 
 	@Override
