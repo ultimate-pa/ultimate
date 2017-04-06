@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE SpaceExParser plug-in.
- * 
+ *
  * The ULTIMATE SpaceExParser plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE SpaceExParser plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE SpaceExParser plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE SpaceExParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 
@@ -42,13 +42,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridSystemHelp
 
 /**
  * Representation of a hybrid system that contains of multiple hybrid automata.
- * 
+ *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  *
  */
 public class HybridSystem {
-	
+
 	private final ILogger mLogger;
 	private final String mName;
 	SpaceExPreferenceManager mPreferenceManager;
@@ -60,8 +60,8 @@ public class HybridSystem {
 	private final Set<String> mLocalConstants;
 	private final Set<String> mGlobalConstants;
 	private final Set<String> mLabels;
-	private final Map<String, Map<String, String>> mBinds;
-	
+	private Map<String, Map<String, String>> mBinds;
+
 	protected HybridSystem(final String parentSystemName, final ComponentType system,
 			final Map<String, ComponentType> automata, final Map<String, ComponentType> systems, final ILogger logger,
 			final SpaceExPreferenceManager preferenceManager) {
@@ -106,29 +106,10 @@ public class HybridSystem {
 				throw new UnsupportedOperationException(
 						"The component with name " + comp + " is neither a system nor an automaton component.");
 			}
-			mLogger.info(mBinds);
+			mLogger.debug("BINDS " + mBinds);
 		}
-		// rename variables according to binds
-		mLogger.debug("########## Rename variables according to Binds ###########");
-		mLogger.debug("Binds before replacements: " + mBinds);
-		mAutomata.forEach((id, aut) -> {
-			final Map<String, String> newBinds = aut.renameAccordingToBinds(mBinds.get(id));
-			mBinds.put(id, newBinds);
-			if (mPreferenceManager != null) {
-				aut.renameConstants();
-			}
-		});
-		// TODO: fix for subsystems
-		mSubSystems.forEach((id, sys) -> {
-			for (final Map.Entry<String, HybridAutomaton> entry : sys.mAutomata.entrySet()) {
-				final String autID = entry.getKey();
-				final HybridAutomaton aut = entry.getValue();
-				aut.renameAccordingToBinds(mBinds.get(id));
-			}
-		});
-		mLogger.debug("Binds after replacements: " + mBinds);
 	}
-	
+
 	protected HybridSystem(final String name, final Set<String> globalVariables, final Set<String> localVariables,
 			final Set<String> globalConstants, final Set<String> localConstants, final Set<String> labels,
 			final Map<String, HybridAutomaton> automata, final Map<String, HybridSystem> subsystems,
@@ -145,23 +126,23 @@ public class HybridSystem {
 		mLabels = labels;
 		mBinds = binds;
 	}
-	
+
 	public Map<String, HybridAutomaton> getAutomata() {
 		return mAutomata;
 	}
-	
+
 	public Map<String, HybridSystem> getSubSystems() {
 		return mSubSystems;
 	}
-	
+
 	public String getName() {
 		return mName;
 	}
-	
+
 	public Map<String, Map<String, String>> getBinds() {
 		return mBinds;
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
@@ -188,5 +169,9 @@ public class HybridSystem {
 		});
 		return sb.toString();
 	}
-	
+
+	public void setBinds(final Map<String, Map<String, String>> newBinds) {
+		mBinds = newBinds;
+	}
+
 }

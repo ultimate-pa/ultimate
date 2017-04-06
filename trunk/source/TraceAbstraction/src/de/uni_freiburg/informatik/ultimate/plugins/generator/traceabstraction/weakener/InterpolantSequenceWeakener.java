@@ -32,17 +32,21 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
@@ -55,16 +59,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecker, P extends IPredicate, LETTER extends IAction> {
 
 	private final List<P> mResult;
-	private final ILogger mLogger;
+	protected final ILogger mLogger;
 	protected final HTC mHtc;
 	private final P mPrecondition;
 	private final P mPostcondition;
-
-	/**
-	 * @deprecated For debugging purposes only.
-	 */
-	@Deprecated
-	private final Deque<P> mHierarchicalPreStates;
+	protected final Script mScript;
+	protected final BasicPredicateFactory mPredicateFactory;
+	private final TripleList<P, LETTER> mTripleList;
+	protected final Map<P, P> mHierarchicalPreStates;
 
 	/**
 	 * Default constructor. Generates result directly.
@@ -79,23 +81,56 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	 *            The sequence of LETTERs that connects each predicate.
 	 */
 	public InterpolantSequenceWeakener(final ILogger logger, final HTC htc, final List<P> predicates,
-			final List<LETTER> trace, final P precondition, final P postcondition) {
+			final List<LETTER> trace, final P precondition, final P postcondition, final Script script,
+			final BasicPredicateFactory predicateFactory) {
 		mLogger = logger;
 		mHtc = Objects.requireNonNull(htc);
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
-		mHierarchicalPreStates = new ArrayDeque<>();
+		mScript = script;
+		mPredicateFactory = predicateFactory;
+		mTripleList = new TripleList<>(predicates, trace, mPrecondition, mPostcondition);
 		final List<LETTER> checkedTrace = Objects.requireNonNull(trace, "trace is null");
 		final List<P> checkedPredicates = Objects.requireNonNull(predicates, "predicates are null");
 		if (checkedTrace.size() != checkedPredicates.size() + 1) {
 			throw new IllegalStateException("Trace and predicates do not match - their size is incorrect");
 		}
 
+		mHierarchicalPreStates = generateCallHierarchicalPreStates(predicates, trace);
 		mResult = generateResult(checkedPredicates, checkedTrace);
 
 		if (mResult.size() != predicates.size()) {
 			throw new IllegalStateException("The size of the produced result list is invalid.");
 		}
+	}
+
+	/**
+	 * Generates for the call sequence the hierarchical prestates.
+	 *
+	 * @param predicates
+	 *            The states.
+	 * @param trace
+	 *            The sequence of statements.
+	 * @return A map containing prestate to corresponding hierarchical prestate.
+	 */
+	private Map<P, P> generateCallHierarchicalPreStates(final List<P> predicates, final List<LETTER> trace) {
+		final Map<P, P> returnMap = new HashMap<>();
+		final Deque<P> hierarchicalCallStates = new ArrayDeque<>();
+		final Iterator<StateTriple<P, LETTER>> it = mTripleList.getIterator();
+
+		while (it.hasNext()) {
+			final StateTriple<P, LETTER> triple = it.next();
+			if (triple.getTransition() instanceof ICallAction) {
+				hierarchicalCallStates.addFirst(triple.getFirstState());
+			} else if (triple.getTransition() instanceof IReturnAction) {
+				final P hierState = hierarchicalCallStates.removeFirst();
+				assert !returnMap.containsKey(triple.getFirstState());
+				returnMap.put(triple.getFirstState(), hierState);
+			}
+		}
+
+		assert hierarchicalCallStates.size() == 0;
+		return returnMap;
 	}
 
 	private List<P> generateResult(final List<P> predicates, final List<LETTER> list) {
@@ -121,7 +156,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 			assert checkIfInductive(currentPreState, transition, currentPostState,
 					mHtc) : "Prestate and poststate are not inductive under the current transition.";
 
-			// If the currentPreState corresponds to the precondition, break.
+			// If the currentPreState corresponds to the precondition, we arrived at the top, therefore break.
 			if (currentPreState == mPrecondition) {
 				break;
 			}
@@ -166,10 +201,9 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 			validity = mHtc.checkInternal(preState, (IInternalAction) transition, postState);
 		} else if (transition instanceof ICallAction) {
 			validity = mHtc.checkCall(preState, (ICallAction) transition, postState);
-			mHierarchicalPreStates.addFirst(preState);
 		} else if (transition instanceof IReturnAction) {
 			final IReturnAction returnTransition = (IReturnAction) transition;
-			final P hierState = mHierarchicalPreStates.removeFirst();
+			final P hierState = mHierarchicalPreStates.get(preState);
 			validity = mHtc.checkReturn(preState, hierState, returnTransition, postState);
 		} else {
 			throw new IllegalStateException(
@@ -288,7 +322,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		 * @param <LETTER>
 		 *            The type of the letters.
 		 */
-		private final static class TripleListIterator<P, LETTER> implements Iterator<StateTriple<P, LETTER>> {
+		private static final class TripleListIterator<P, LETTER> implements Iterator<StateTriple<P, LETTER>> {
 
 			private final List<P> mPredicates;
 			private final List<LETTER> mTrace;
@@ -335,14 +369,6 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 				mLetterIndex++;
 				return new StateTriple<>(prev, letter, next);
 			}
-
-			private int getIndex() {
-				return mLetterIndex;
-			}
-
-			private void setToIndex(final int index) {
-				mLetterIndex = index;
-			}
 		}
 
 		/**
@@ -355,7 +381,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		 * @param <LETTER>
 		 *            The type of the letters.
 		 */
-		private final static class TripleListReverseIterator<P, LETTER> implements Iterator<StateTriple<P, LETTER>> {
+		private static final class TripleListReverseIterator<P, LETTER> implements Iterator<StateTriple<P, LETTER>> {
 			private final List<P> mPredicates;
 			private final List<LETTER> mTrace;
 			private final P mPostcondition;
@@ -401,14 +427,6 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 
 				mLetterIndex--;
 				return new StateTriple<>(prev, letter, next);
-			}
-
-			private int getCurrentIndex() {
-				return mLetterIndex;
-			}
-
-			private void setToIndex(final int index) {
-				mLetterIndex = index;
 			}
 		}
 	}

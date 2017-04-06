@@ -167,6 +167,7 @@ public class MemoryHandler {
 	private final INameHandler mNameHandler;
 	private final MemoryModel mMemoryModelPreference;
 	private final IBooleanArrayHelper mBooleanArrayHelper;
+	private final boolean mFpToIeeeBvExtension;
 
 	/**
 	 * Constructor.
@@ -208,6 +209,8 @@ public class MemoryHandler {
 				prefs.getEnum(CACSLPreferenceInitializer.LABEL_CHECK_POINTER_SUBTRACTION_AND_COMPARISON_VALIDITY,
 						PointerCheckMode.class);
 		mMemoryModelPreference = prefs.getEnum(CACSLPreferenceInitializer.LABEL_MEMORY_MODEL, MemoryModel.class);
+		mFpToIeeeBvExtension = prefs.getBoolean(CACSLPreferenceInitializer.LABEL_FP_TO_IEEE_BV_EXTENSION);
+		
 		final MemoryModel memoryModelPreference = mMemoryModelPreference;
 		final AMemoryModel memoryModel = getMemoryModel(bitvectorTranslation, memoryModelPreference);
 		mMemoryModel = memoryModel;
@@ -875,13 +878,13 @@ public class MemoryHandler {
 
 	private Procedure constructWriteProcedure(final ILocation loc, final Collection<HeapDataArray> heapDataArrays,
 			final HeapDataArray heapDataArray, final ReadWriteDefinition rda) {
-		String value = "#value";
+		Expression value = new IdentifierExpression(loc, "#value");
 		final ASTType valueAstType = rda.getASTType();
 		final String inPtr = "#ptr";
 		final String writtenTypeSize = "#sizeOfWrittenType";
 
 		final ASTType sizetType = mTypeHandler.cType2AstType(loc, mTypeSizeAndOffsetComputer.getSize_T());
-		final VarList[] inWrite = new VarList[] { new VarList(loc, new String[] { value }, valueAstType),
+		final VarList[] inWrite = new VarList[] { new VarList(loc, new String[] { "#value" }, valueAstType),
 				new VarList(loc, new String[] { inPtr }, mTypeHandler.constructPointerType(loc)),
 				new VarList(loc, new String[] { writtenTypeSize }, sizetType) };
 
@@ -899,8 +902,16 @@ public class MemoryHandler {
 		
 		final boolean floating2bitvectorTransformationNeeded = ((mMemoryModel instanceof MemoryModel_SingleBitprecise)
 				&& rda.getCPrimitiveCategory().contains(CPrimitiveCategory.FLOATTYPE));
+		final CPrimitives cprimitive;
 		if (floating2bitvectorTransformationNeeded) {
-			value = "#valueAsBitvector";
+			cprimitive = rda.getPrimitives().iterator().next();
+			if (mFpToIeeeBvExtension) {
+				value = mExpressionTranslation.transformFloatToBitvector(loc, value, cprimitive);
+			} else {
+				value = new IdentifierExpression(loc, "#valueAsBitvector");
+			}
+		} else {
+			cprimitive = null;
 		}
 		final List<Expression> conjuncts = new ArrayList<>();
 		if (rda.getBytesize() == heapDataArray.getSize()) {
@@ -927,8 +938,7 @@ public class MemoryHandler {
 				}
 			}
 		}
-		if (floating2bitvectorTransformationNeeded) {
-			final CPrimitives cprimitive = rda.getPrimitives().iterator().next();
+		if (floating2bitvectorTransformationNeeded && !mFpToIeeeBvExtension) {
 			final Expression valueAsBitvector = new IdentifierExpression(loc, "#valueAsBitvector");
 			final Expression transformedToFloat = mExpressionTranslation.transformBitvectorToFloat(loc, valueAsBitvector, cprimitive);
 			final Expression inputValue = new IdentifierExpression(loc, "#value");
@@ -948,7 +958,7 @@ public class MemoryHandler {
 	}
 
 	private static List<Expression> constructConjunctsForWriteEnsuresSpecification(final ILocation loc,
-			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray, final String value,
+			final Collection<HeapDataArray> heapDataArrays, final HeapDataArray heapDataArray, final Expression value,
 			final Function<Expression, Expression> valueModification, final String inPtr,
 			final Function<Expression, Expression> ptrModification) {
 		final List<Expression> conjuncts = new ArrayList<>();
@@ -1061,10 +1071,9 @@ public class MemoryHandler {
 	}
 
 	// ensures #memory_X == old(#memory_X)[#ptr := #value];
-	private static Expression ensuresHeapArrayUpdate(final ILocation loc, final String valueId,
+	private static Expression ensuresHeapArrayUpdate(final ILocation loc, final Expression valueExpr,
 			final Function<Expression, Expression> valueModification, final String ptrId,
 			final Function<Expression, Expression> ptrModification, final HeapDataArray hda) {
-		final Expression valueExpr = new IdentifierExpression(loc, valueId);
 		final Expression memArray = new IdentifierExpression(loc, hda.getVariableName());
 		final Expression ptrExpr = new IdentifierExpression(loc, ptrId);
 		return ensuresArrayUpdate(loc, valueModification.apply(valueExpr), ptrModification.apply(ptrExpr), memArray);

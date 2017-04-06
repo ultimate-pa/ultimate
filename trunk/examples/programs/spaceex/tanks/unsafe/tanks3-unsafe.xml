@@ -6,14 +6,9 @@
 <param d1="1" d2="1" dynamics="const" local="false" name="t_max" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="t_local" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="t_global" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_global" type="real"/>
 <param name="tank_max" type="real" local="false" d1="1" d2="1" dynamics="const" />
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank0" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank1" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank1" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank2" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank2" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank3" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank3" type="real"/>
 <location height="185.0" id="0" name="tanksClosed" width="200.0" x="300.0" y="292.0">
 <invariant>t_local &gt;= 0
@@ -65,7 +60,6 @@ tank3' == v_in - v_out </flow>
 &amp; tank1&lt;=tank2
 &amp; tank1&lt;=tank3
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank1 := count_tank1 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -77,7 +71,6 @@ tank3' == v_in - v_out </flow>
 &amp; tank2&lt;=tank1
 &amp; tank2&lt;=tank3
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank2 := count_tank2 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -89,7 +82,6 @@ tank3' == v_in - v_out </flow>
 &amp; tank3&lt;=tank1
 &amp; tank3&lt;=tank2
 </guard>
-<assignment>count_global := count_global + 1 &amp;  count_tank3 := count_tank3 + 1</assignment>
 <labelposition height="80.0" width="140.0" x="-70.0" y="0.0"/>
 <middlepoint x="1050.0" y="435.0"/>
 <waypoints>
@@ -145,15 +137,10 @@ tank3' == v_in - v_out </flow>
 <param d1="1" d2="1" dynamics="const" local="false" name="t_max" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="t_local" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="t_global" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_global" type="real"/>
 <param name="tank_max" type="real" local="false" d1="1" d2="1" dynamics="const" controlled="true" />
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank0" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank0" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank1" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank1" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank2" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank2" type="real"/>
-<param d1="1" d2="1" dynamics="any" local="false" name="count_tank3" type="real"/>
 <param d1="1" d2="1" dynamics="any" local="false" name="tank3" type="real"/>
 <bind as="tanks" component="tanks" height="100.0" width="200.0" x="400.0" y="300.0">
 	<map key="v_in">v_in</map>
@@ -161,15 +148,10 @@ tank3' == v_in - v_out </flow>
 	<map key="t_max">t_max</map>
 	<map key="t_local">t_local</map>
 	<map key="t_global">t_global</map>
-	<map key="count_global">count_global</map>
 	<map key="tank_max">tank_max</map>
-<map key="count_tank0">count_tank0</map>
 <map key="tank0">tank0</map>
-<map key="count_tank1">count_tank1</map>
 <map key="tank1">tank1</map>
-<map key="count_tank2">count_tank2</map>
 <map key="tank2">tank2</map>
-<map key="count_tank3">count_tank3</map>
 <map key="tank3">tank3</map>
 </bind>
 </component>

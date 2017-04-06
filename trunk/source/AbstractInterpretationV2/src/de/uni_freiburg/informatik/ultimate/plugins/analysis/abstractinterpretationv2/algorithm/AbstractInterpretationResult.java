@@ -130,12 +130,13 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	public Set<STATE> getPostStates(final Deque<ACTION> callStack, final ACTION symbol, final Set<STATE> preStates) {
 		final Set<STATE> states = mRootStorage.computeContextSensitiveAbstractPostStates(callStack, symbol);
 		if (states.isEmpty() && mTransProvider.isEnteringScope(symbol)) {
+			// TODO: this has to be disabled until summary calculation works correctly
 			// because this is a call, it could also be somewhere in the summary map
-			final AbstractMultiState<STATE, ACTION, VARDECL> summaryState =
-					mSummaryMap.getSummaryPostState(symbol, new AbstractMultiState<>(preStates));
-			if (summaryState != null) {
-				states.addAll(summaryState.getStates());
-			}
+			// final AbstractMultiState<STATE, ACTION, VARDECL> summaryState =
+			// mSummaryMap.getSummaryPostState(symbol, new AbstractMultiState<>(preStates));
+			// if (summaryState != null) {
+			// states.addAll(summaryState.getStates());
+			// }
 		}
 		return states;
 	}

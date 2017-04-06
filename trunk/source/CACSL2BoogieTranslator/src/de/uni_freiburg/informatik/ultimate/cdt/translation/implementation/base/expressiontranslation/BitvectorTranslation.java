@@ -892,4 +892,25 @@ public class BitvectorTranslation extends AExpressionTranslation {
 
 	}
 
+
+	@Override
+	public Expression transformFloatToBitvector(final ILocation loc, final Expression value, final CPrimitives cprimitive) {
+		final String smtFunctionName = "fp.to_ieee_bv";
+		final String boogieFunctionName = SFO.getBoogieFunctionName(smtFunctionName, new CPrimitive(cprimitive));
+		
+		if (!mFunctionDeclarations.getDeclaredFunctions().containsKey(boogieFunctionName)) {
+			final int bytesize = mTypeSizes.getSize(cprimitive);
+			final ASTType bvType = ((TypeHandler) mTypeHandler).bytesize2asttype(loc, cprimitive.getPrimitiveCategory(),
+					bytesize);
+			final ASTType paramASTType = mTypeHandler.cType2AstType(loc, new CPrimitive(cprimitive));
+			final ASTType[] params = new ASTType[] { paramASTType };
+			final Attribute[] attributes = generateAttributes(loc, mOverapproximateFloatingPointOperations,
+					smtFunctionName, null);
+			mFunctionDeclarations.declareFunction(loc, boogieFunctionName, attributes, bvType, params);
+		}
+		final Expression result = new FunctionApplication(loc,
+				boogieFunctionName, new Expression[] { value });
+		return result;
+	}
+
 }

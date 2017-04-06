@@ -123,7 +123,7 @@ public class SpaceExMathHelper {
 	
 	/**
 	 * Function to convert a given formula postfix back notation to groups, the DNF.
-	 * 
+	 *
 	 * @param postfix
 	 * @return
 	 */
@@ -259,7 +259,7 @@ public class SpaceExMathHelper {
 	 */
 	public static List<String> expressionToArray(final String expression) {
 		final List<String> res = new ArrayList<>();
-		final Pattern p = Pattern.compile("([&]{1,2}|>=?|<=?|<(?!=)|>(?!=)|==|\\+|(?<!=|&)-|\\*|\\||\\(|\\)| +)");
+		final Pattern p = Pattern.compile("([&]{1,2}|>=?|<=?|<(?!=)|>(?!=)|==|\\+|(?<!=|&)-|/|\\*|\\||\\(|\\)| +)");
 		final String s = expression.replaceAll("\\s", "");
 		final Matcher m = p.matcher(s);
 		int pos = 0;

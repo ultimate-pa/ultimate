@@ -33,6 +33,7 @@ import java.util.function.Consumer;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -138,9 +139,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		final Validity result = checkInternalTransitionWithValidState(preState, action, succ);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Result: " + result);
-			mLogger.debug("--");
 		}
 		assert assertValidity(preState, null, action, succ, result) : MSG_INVALID_HOARE_TRIPLE_CHECK;
+		mLogger.debug("--");
 		final Validity rtr = result;
 		mBenchmark.stopEdgeCheckerTime();
 		return rtr;
@@ -171,9 +172,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Result: " + result);
-			mLogger.debug("--");
 		}
 		assert assertValidity(preBeforeLeaving, null, action, succ, result) : MSG_INVALID_HOARE_TRIPLE_CHECK;
+		mLogger.debug("--");
 		mBenchmark.stopEdgeCheckerTime();
 		return result;
 	}
@@ -212,11 +213,10 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 				checkScopeChangingTransitionWithValidState(validPreLinState, stateAfterLeaving, action, succ);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Result: " + result);
-			mLogger.debug("--");
 		}
 		assert assertValidity(validPreLinState, stateAfterLeaving, action, succ,
 				result) : MSG_INVALID_HOARE_TRIPLE_CHECK;
-
+		mLogger.debug("--");
 		final Validity rtr = result;
 		mBenchmark.stopEdgeCheckerTime();
 		return rtr;
@@ -282,7 +282,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			return trackPost(Validity.VALID, act);
 		}
 		final SubsetResult excluded = postState.isSubsetOf(synchronizedCalculatedPost);
-		assert assertIsSubsetOf(postState, synchronizedCalculatedPost, included) : MSG_IS_SUBSET_OF_IS_UNSOUND;
+		assert assertIsSubsetOf(postState, synchronizedCalculatedPost, excluded) : MSG_IS_SUBSET_OF_IS_UNSOUND;
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Exclusion (ON): " + excluded);
 		}
@@ -387,9 +387,11 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 
 		final Validity checkedResult = assertIsPostSound(precond, precondHier, transition, postcond);
 		if (checkedResult == result) {
+			mLogger.debug("HTC assert ok");
 			return true;
 		}
 		if (result == Validity.UNKNOWN || result == Validity.NOT_CHECKED) {
+			mLogger.debug("HTC assert ok");
 			return true;
 		}
 		mLogger.fatal("Check was " + result + " but should have been " + checkedResult);
@@ -434,38 +436,50 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		final Term left = leftState.getTerm(script);
 		final Term right = rightState.getTerm(script);
 
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Checking if " + left + " ⊆ " + right + " is " + subResult);
-		}
-
 		final LBool result;
 		final LBool expected;
 		final Term checkedTerm;
-		switch (subResult) {
-		case EQUAL:
+		if (subResult == SubsetResult.EQUAL) {
 			checkedTerm = script.term("distinct", left, right);
 			expected = LBool.UNSAT;
-			result = SmtUtils.checkSatTerm(script, checkedTerm);
-			break;
-		case NONE:
-			checkedTerm = script.term("and", script.term("=>", right, left), script.term("=>", left, right));
-			expected = LBool.UNSAT;
-			result = SmtUtils.checkSatTerm(script, checkedTerm);
-			break;
-		case NON_STRICT:
-		case STRICT:
-			checkedTerm = script.term("=>", right, left);
-			expected = LBool.SAT;
-			result = SmtUtils.checkSatTerm(script, checkedTerm);
-			break;
-		default:
-			throw new UnsupportedOperationException("Unsupported subset result: " + subResult);
+		} else {
+			final Term baseTerm = script.term("=>", left, right);
+			if (baseTerm.getFreeVars().length > 0) {
+				checkedTerm = script.quantifier(QuantifiedFormula.FORALL, baseTerm.getFreeVars(), baseTerm);
+			} else {
+				checkedTerm = baseTerm;
+			}
+			expected = subResult == SubsetResult.NONE ? LBool.UNSAT : LBool.SAT;
+		}
+		result = SmtUtils.checkSatTerm(script, checkedTerm);
+
+		if (result == LBool.UNKNOWN || result == expected) {
+			return true;
 		}
 
 		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("Result of " + checkedTerm + " is " + result + " and should be " + expected);
+			final Term leftSimpl =
+					SmtUtils.simplify(mManagedScript, left, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+			final Term rightSimpl =
+					SmtUtils.simplify(mManagedScript, right, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+			final Term checkSimpl =
+					SmtUtils.simplify(mManagedScript, checkedTerm, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+
+			mLogger.debug("Checking left isSubsetOrEqual right = " + subResult);
+			mLogger.debug("leftState  : " + leftState.toLogString());
+			mLogger.debug("rightState : " + rightState.toLogString());
+			mLogger.debug("left       : " + left.toStringDirect());
+			mLogger.debug("right      : " + right.toStringDirect());
+			mLogger.debug("leftSim    : " + leftSimpl.toStringDirect());
+			mLogger.debug("rightSim   : " + rightSimpl.toStringDirect());
+			mLogger.debug("checking   : " + checkedTerm.toStringDirect());
+			mLogger.debug("checkingSim: " + checkSimpl.toStringDirect());
+			mLogger.debug("Result is " + result + " and should be " + expected);
 		}
-		return result == LBool.UNKNOWN || result == expected;
+
+		final SubsetResult reComputeForDebug = leftState.isSubsetOf(rightState);
+		mLogger.debug(reComputeForDebug);
+		return false;
 	}
 
 }

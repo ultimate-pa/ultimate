@@ -853,6 +853,11 @@ public class IntegerTranslation extends AExpressionTranslation {
 	public Expression transformBitvectorToFloat(final ILocation loc, final Expression bitvector, final CPrimitives floatType) {
 		throw new UnsupportedOperationException("not yet implemented");
 	}
+
+	@Override
+	public Expression transformFloatToBitvector(final ILocation loc, final Expression value, final CPrimitives cprimitive) {
+		throw new UnsupportedOperationException("not yet implemented");
+	}
 	
 	
 }

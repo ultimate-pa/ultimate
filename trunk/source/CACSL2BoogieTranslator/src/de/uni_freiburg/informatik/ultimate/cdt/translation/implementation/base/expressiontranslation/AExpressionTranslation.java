@@ -742,4 +742,6 @@ public abstract class AExpressionTranslation {
 	}
 
 	public abstract Expression transformBitvectorToFloat(ILocation loc, Expression bitvector, CPrimitives floatType);
+
+	public abstract Expression transformFloatToBitvector(ILocation loc, Expression value, CPrimitives cprimitive);
 }

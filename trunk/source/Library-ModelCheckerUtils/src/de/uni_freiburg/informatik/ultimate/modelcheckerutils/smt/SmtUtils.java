@@ -80,6 +80,11 @@ public final class SmtUtils {
 	 * Avoid the construction of "bvadd" with more than two arguments and use nested "bvadd" terms instead.
 	 */
 	private static final boolean BINARY_BITVECTOR_SUM_WORKAROUND = false;
+	
+	/**
+	 * Name of a non-standard FloatingPoint extension that is supported by Z3. 
+	 */
+	public static final String FP_TO_IEEE_BV_EXTENSION = "fp.to_ieee_bv";
 
 	public enum XnfConversionTechnique {
 		BDD_BASED, BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION
@@ -1290,11 +1295,11 @@ public final class SmtUtils {
 	}
 
 	public static boolean isBitvectorSort(final Sort sort) {
-		return "BitVec".equals(sort.getRealSort().getName());
+		return SmtSortUtils.isBitvecSort(sort);
 	}
 
 	public static boolean isFloatingPointSort(final Sort sort) {
-		return "FloatingPoint".equals(sort.getRealSort().getName());
+		return SmtSortUtils.isFloatingpointSort(sort);
 	}
 
 	/**
