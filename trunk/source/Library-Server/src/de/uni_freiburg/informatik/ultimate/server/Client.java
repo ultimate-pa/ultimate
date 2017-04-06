@@ -22,6 +22,8 @@ import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage;
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage.Action;
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage.Message;
+import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientException;
+import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientQuittedException;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientSorryException;
 
 /**
@@ -182,7 +184,9 @@ public abstract class Client<T> {
 	}
 
 	private void quit() {
-		closeConnection();
+		mQueue.completeAllFuturesExceptionally(new ClientQuittedException());
+
+		closeConnection();		
 		if (mQuitting)
 			mQuitFuture.complete(null);
 	}

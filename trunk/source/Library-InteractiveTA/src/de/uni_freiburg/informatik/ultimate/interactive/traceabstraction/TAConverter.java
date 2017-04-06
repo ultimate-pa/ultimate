@@ -37,8 +37,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbstractCegarLoop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PredicateQueuePair;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop.PredicateQueueResult;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PredicateQueuePair;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PredicateQueueResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -54,8 +56,8 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 
 	@Override
 	protected void init(ConverterRegistry<GeneratedMessageV3, Object> converterRegistry) {
-		converterRegistry.registerBA(TraceAbstractionProtos.IterationInfo.NestedRun.class, IRun.class,
-				TAConverter::fromNestedRun);
+		converterRegistry.registerBA(TraceAbstractionProtos.NestedRun.class, IRun.class, TAConverter::fromNestedRun);
+		@SuppressWarnings("unchecked")
 		Class<INestedWordAutomaton<CodeBlock, IPredicate>> cls =
 				(Class<INestedWordAutomaton<CodeBlock, IPredicate>>) (Class) INestedWordAutomaton.class;
 		converterRegistry.registerBA(TraceAbstractionProtos.NestedWordAutomaton.class, cls, TAConverter::fromAutomaton);
@@ -81,6 +83,17 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 		converterRegistry.registerRConv(PredicateDoubleDecker.QueueResponse.class, PredicateQueuePair.class,
 				PredicateQueueResult.class, TAConverter::toDoubleDecker);
 
+		// converterRegistry.registerBA(TraceAbstractionProtos.IterationInfo.class, IterationInfo.Iteration.class,
+		// i -> TraceAbstractionProtos.IterationInfo.newBuilder().setIteration(i.mIteration).build());
+		converterRegistry.registerBA(TraceAbstractionProtos.IterationInfo.class, CegarLoopStatisticsGenerator.class,
+				TAConverter::fromCegarLoopStatisticsGenerator);
+	}
+
+	private static TraceAbstractionProtos.IterationInfo
+			fromCegarLoopStatisticsGenerator(CegarLoopStatisticsGenerator benchmark) {
+		final TraceAbstractionProtos.IterationInfo.Builder builder = TraceAbstractionProtos.IterationInfo.newBuilder();
+		builder.setIteration((int) benchmark.getValue(CegarLoopStatisticsDefinitions.OverallIterations.toString()));
+		return builder.build();
 	}
 
 	private static PredicateDoubleDecker.QueuePair fromQueuePair(PredicateQueuePair qPair) {
@@ -134,9 +147,8 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 				.map(convertToEnum(MultiTrackTraceAbstractionRefinementStrategy.Track.class)).toArray(Track[]::new);
 	}
 
-	public static TraceAbstractionProtos.IterationInfo.NestedRun fromNestedRun(IRun<CodeBlock, IPredicate, ?> run) {
-		TraceAbstractionProtos.IterationInfo.NestedRun.Builder builder =
-				TraceAbstractionProtos.IterationInfo.NestedRun.newBuilder();
+	public static TraceAbstractionProtos.NestedRun fromNestedRun(IRun<CodeBlock, IPredicate, ?> run) {
+		TraceAbstractionProtos.NestedRun.Builder builder = TraceAbstractionProtos.NestedRun.newBuilder();
 		run.getWord().asList().stream().map(TAConverter::fromCodeblock).forEach(builder::addNestedWord);
 		// builder.addAllNestedWord(values)
 		return builder.build();

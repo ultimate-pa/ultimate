@@ -193,6 +193,13 @@ message CegarResult {
 }
 
 message NestedWordAutomaton {
+	message transition {
+	// references to letters and states encoded as int32
+		int32 originState = 1;
+		int32 letter = 2;
+		int32 successorState = 3;
+	}
+
 	Alphabet internal = 1;
 	Alphabet call = 2;
 	Alphabet return = 3;
@@ -203,23 +210,19 @@ message NestedWordAutomaton {
 	repeated transition internalEdges = 8;
 	repeated transition callEdges = 9;
 	repeated transition returnEdges = 10;
-	message transition {
-	// references to letters and states encoded as int32
-		int32 originState = 1;
-		int32 letter = 2;
-		int32 successorState = 3;
-	}
+}
 
+message NestedRun {
+	repeated CodeBlock nestedWord = 1;
+	repeated Predicate stateSequence = 2;
 }
 
 message IterationInfo {
 	NestedRun run = 1;
 	int32 iteration = 2;
-	message NestedRun {
-		repeated CodeBlock nestedWord = 1;
-		repeated Predicate stateSequence = 2;
-	}
-
+	int32 states = 3;
+	int32 transitions = 4;
+	int32 wordLength = 5;
 }
 
 message Alphabet {
@@ -230,17 +233,4 @@ message CodeBlock {
 	string code = 1;
 	// the transformulas and lots of other stuff
 	// in CodeBlock is not used for now.
-} /*
-TAPreferences
-
-initial abstraction, interpolant automata:
-
-INestedWordAutomaton
-NestedWordAutomaton<CodeBlock, IPredicate>
-
-Counterexample anzeigen:
-IRun<CodeBlock, IPredicate>
-
-forbiddenStates, startStates, goalstates
-Set<IPredicate>
-*/
+}

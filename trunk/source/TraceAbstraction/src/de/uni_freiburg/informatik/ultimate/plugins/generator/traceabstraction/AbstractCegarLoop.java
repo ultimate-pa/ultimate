@@ -184,6 +184,10 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 */
 	private UnprovabilityReason mReasonUnknown = null;
 	protected final IInteractive<Object> mInteractive;
+	/**
+	 * This variable was merely introduced to avoid frequent null checks on mInteractive for better readability.
+	 */
+	protected final boolean mInteractiveMode;
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 
 	public AbstractCegarLoop(final IUltimateServiceProvider services, final IToolchainStorage storage,
@@ -203,8 +207,8 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mErrorLocs = errorLocs;
 		mToolchainStorage = storage;
 
-		//mInteractive = IInteractive.getFromStorage(mToolchainStorage, Object.class);
 		mInteractive = services.getServiceInstance(TAConverterFactory.class);
+		mInteractiveMode = mInteractive != null;
 	}
 
 	public IRunningTaskStackProvider getRunningTaskStackProvider() {
@@ -312,7 +316,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mLogger.info("Difference is " + mPref.differenceSenwa());
 		mLogger.info("Minimize is " + mPref.getMinimization());
 
-		if (mInteractive != null) {
+		if (mInteractiveMode) {
 			mLogger.info("Interactive Client connected.");
 
 			mInteractive.send(mPref);
@@ -320,6 +324,11 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 
 		mIteration = 0;
 		mLogger.info("======== Iteration " + mIteration + "==of CEGAR loop == " + mName + "========");
+
+		if (mInteractiveMode) {
+			// mInteractive.send(IterationInfo.iteration(0));
+			mInteractive.send(mCegarLoopBenchmark);
+		}
 
 		// initialize dump of debugging output to files if necessary
 		if (mPref.dumpAutomata()) {
@@ -363,6 +372,10 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			mLogger.info("=== Iteration " + mIteration + " === " + errorLocs() + "===");
+			if (mInteractiveMode) {
+				// mInteractive.send(IterationInfo.iteration(mIteration));
+				mInteractive.send(mCegarLoopBenchmark);
+			}
 			mCegarLoopBenchmark.announceNextIteration();
 			if (mPref.dumpAutomata()) {
 				mDumper = new Dumper(mLogger, mPref, mName, mIteration);

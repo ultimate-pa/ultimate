@@ -86,6 +86,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PredicateQueuePair;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PredicateQueueResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
@@ -261,7 +263,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			mAbstraction = new RemoveDeadEnds<>(new AutomataLibraryServices(mServices), wpa).getResult();
 			new LineCoverageCalculator<>(mServices, mAbstraction, origCoverage).reportCoverage("Witness product");
 		}
-		if (mInteractive != null) {
+		if (mInteractiveMode) {
 			mInteractive.send(mAbstraction);
 		}
 	}
@@ -278,31 +280,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		return IsEmptyInteractive.bfsDequeue(callQueue, queue);
 	}
 
-	public static class PredicateQueuePair {
-		public final Deque<DoubleDecker<IPredicate>> mCallQueue;
-		public final Deque<DoubleDecker<IPredicate>> mQueue;
-
-		public PredicateQueuePair(Deque<DoubleDecker<IPredicate>> mCallQueue, Deque<DoubleDecker<IPredicate>> mQueue) {
-			this.mCallQueue = mCallQueue;
-			this.mQueue = mQueue;
-		}
-	}
-
-	public static class PredicateQueueResult {
-		public final DoubleDecker<IPredicate> mResult;
-
-		public PredicateQueueResult(DoubleDecker<IPredicate> mResult) {
-			this.mResult = mResult;
-		}
-	}
-
 	@Override
 	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
 		final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction =
 				(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction;
 
 		if (mPref.getCounterexampleSearchStrategy() == CounterexampleSearchStrategy.Interactive) {
-			if (mInteractive == null) {
+			if (!mInteractiveMode) {
 				throw new IllegalArgumentException(
 						"Interactive couterexample strategy chosen, but interface available. Please start ultimate in Interactive mode.");
 			}
@@ -316,6 +300,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (mCounterexample == null) {
 			return true;
 		}
+		
 
 		if (mPref.dumpAutomata()) {
 			mDumper.dumpNestedRun(mCounterexample);

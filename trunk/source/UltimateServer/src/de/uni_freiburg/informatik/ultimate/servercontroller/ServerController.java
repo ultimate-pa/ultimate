@@ -67,6 +67,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.Converter;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientCrazyException;
+import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientQuittedException;
 import de.uni_freiburg.informatik.ultimate.server.Client;
 import de.uni_freiburg.informatik.ultimate.server.IInteractiveServer;
 import de.uni_freiburg.informatik.ultimate.servercontroller.converter.ControllerConverter;
@@ -159,8 +160,13 @@ public class ServerController implements IController<RunDefinition> {
 					if (false)
 						break; // TODO: add settings that limit the server to a single (or fixed numer or time) run
 				} catch (ExecutionException e) {
+					//throw e.getCause()
 					if (e.getCause() instanceof IOException) {
 						mLogger.error("It seems like the Connection has been Lost. Reinitializing controller.", e);
+						Thread.sleep(200);
+						result = IApplication.EXIT_RELAUNCH; // What does/should that do?
+					} else if (e.getCause() instanceof ClientQuittedException) {
+						mLogger.error("Client quitted. Reinitializing controller.", e);
 						Thread.sleep(200);
 						result = IApplication.EXIT_RELAUNCH; // What does/should that do?
 					} else {
