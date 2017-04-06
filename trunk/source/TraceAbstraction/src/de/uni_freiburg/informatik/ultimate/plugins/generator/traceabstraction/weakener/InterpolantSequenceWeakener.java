@@ -37,6 +37,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -175,6 +176,12 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		}
 
 		Collections.reverse(returnList);
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("Predicate list before weakening   : "
+					+ predicates.stream().map(pred -> pred.getFormula()).collect(Collectors.toList()));
+			mLogger.debug("New predicate list after weakening: "
+					+ returnList.stream().map(pred -> pred.getFormula()).collect(Collectors.toList()));
+		}
 		return returnList;
 
 	}
