@@ -115,8 +115,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  *
  */
 public class PathProgramDumper {
-	
-	public enum InputMode { BOOGIE, ICFG };
+
+	public enum InputMode {
+		BOOGIE, ICFG
+	}
 
 	private final InputMode mInputMode;
 	private final boolean FILTER_VARIABLES_OF_BOOGIE_INPUT = false;
@@ -124,24 +126,27 @@ public class PathProgramDumper {
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
 
-	ConstructionCache.IValueConstruction<IcfgLocation, String> mLoc2LabelVC = new ConstructionCache.IValueConstruction<IcfgLocation, String>() {
+	private final ConstructionCache.IValueConstruction<IcfgLocation, String> mLoc2LabelVC =
+			new ConstructionCache.IValueConstruction<IcfgLocation, String>() {
 
-		int mCounter = 0;
+				private int mCounter = 0;
 
-		@Override
-		public String constructValue(final IcfgLocation key) {
-			final String result = "loc" + String.valueOf(mCounter);
-			mCounter++;
-			return result;
-		}
+				@Override
+				public String constructValue(final IcfgLocation key) {
+					final String result = "loc" + String.valueOf(mCounter);
+					mCounter++;
+					return result;
+				}
 
-	};
+			};
 	private final ConstructionCache<IcfgLocation, String> mLoc2LabelId = new ConstructionCache<>(mLoc2LabelVC);
 	private final PathProgram mPathProgram;
 	private final IIcfg<?> mOriginalIcfg;
 	private final Term2Expression mTerm2Expression;
-	
-	private enum Program { PATH_PROGRAM, ORIGINAL_PROGRAM };
+
+	private enum Program {
+		PATH_PROGRAM, ORIGINAL_PROGRAM
+	}
 
 	public PathProgramDumper(final IIcfg<?> icfg, final IUltimateServiceProvider services,
 			final NestedRun<? extends IAction, IPredicate> run, final String filename, final InputMode inputMode) {
@@ -155,20 +160,20 @@ public class PathProgramDumper {
 			}
 			mTerm2Expression = null;
 		} else {
-			final TypeSortTranslator tsTranslation = constructFakeTypeSortTranslator(
-					icfg.getCfgSmtToolkit().getManagedScript());
+			final TypeSortTranslator tsTranslation =
+					constructFakeTypeSortTranslator(icfg.getCfgSmtToolkit().getManagedScript());
 			final Unit unit = new Unit(constructNewLocation(), new Declaration[0]);
 			final BoogieDeclarations boogieDeclarations = new BoogieDeclarations(unit, mLogger);
-			final Boogie2SmtSymbolTable boogie2SmtSymbolTable = new FakeBoogie2SmtSymbolTable(
-					icfg.getCfgSmtToolkit().getManagedScript(), tsTranslation, icfg.getCfgSmtToolkit().getSymbolTable(),
-					boogieDeclarations);
+			final Boogie2SmtSymbolTable boogie2SmtSymbolTable =
+					new FakeBoogie2SmtSymbolTable(icfg.getCfgSmtToolkit().getManagedScript(), tsTranslation,
+							icfg.getCfgSmtToolkit().getSymbolTable(), boogieDeclarations);
 			mTerm2Expression = new Term2Expression(tsTranslation, boogie2SmtSymbolTable,
 					icfg.getCfgSmtToolkit().getManagedScript());
 		}
 
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run.getWord());
-		final PathProgram.PathProgramConstructionResult ppResult = PathProgram
-				.constructPathProgram("PathInvariantsPathProgram", icfg, allowedTransitions);
+		final PathProgram.PathProgramConstructionResult ppResult =
+				PathProgram.constructPathProgram("PathInvariantsPathProgram", icfg, allowedTransitions);
 		mPathProgram = ppResult.getPathProgram();
 
 		final List<Declaration> newDeclarations = new ArrayList<>();
@@ -200,18 +205,20 @@ public class PathProgramDumper {
 
 		if (mInputMode == InputMode.BOOGIE) {
 			final BoogieIcfgContainer boogieIcfg = (BoogieIcfgContainer) icfg;
-			for (final Entry<String, Procedure> entry : boogieIcfg.getBoogieDeclarations().getProcSpecification().entrySet()) {
-				if (entry.getValue().getBody() == null && !boogieIcfg.getProcedureEntryNodes().containsKey(entry.getKey())) {
+			for (final Entry<String, Procedure> entry : boogieIcfg.getBoogieDeclarations().getProcSpecification()
+					.entrySet()) {
+				if (entry.getValue().getBody() == null
+						&& !boogieIcfg.getProcedureEntryNodes().containsKey(entry.getKey())) {
 					// is specification without implementation
 					newDeclarations.add(entry.getValue());
 				}
 			}
 			if (FILTER_VARIABLES_OF_BOOGIE_INPUT) {
 				newDeclarations.addAll(0,
-					Arrays.asList(filter(boogieIcfg.getBoogieDeclarations().getGlobalVarDeclarations(),
-							extractIdentifiers(globalVars))));
+						Arrays.asList(filter(boogieIcfg.getBoogieDeclarations().getGlobalVarDeclarations(),
+								extractIdentifiers(globalVars))));
 			} else {
-				newDeclarations.addAll(0,boogieIcfg.getBoogieDeclarations().getGlobalVarDeclarations());
+				newDeclarations.addAll(0, boogieIcfg.getBoogieDeclarations().getGlobalVarDeclarations());
 			}
 			newDeclarations.addAll(0, boogieIcfg.getBoogieDeclarations().getFunctionDeclarations());
 			newDeclarations.addAll(0, boogieIcfg.getBoogieDeclarations().getAxioms());
@@ -221,8 +228,8 @@ public class PathProgramDumper {
 			newDeclarations.addAll(0, Arrays.asList(constructDeclarations(globalVars)));
 		}
 
-		final Unit unit = new Unit(constructNewLocation(),
-				newDeclarations.toArray(new Declaration[newDeclarations.size()]));
+		final Unit unit =
+				new Unit(constructNewLocation(), newDeclarations.toArray(new Declaration[newDeclarations.size()]));
 
 		final File file = new File(filename);
 		mLogger.warn("Writing path program to file " + file.getAbsolutePath());
@@ -240,8 +247,8 @@ public class PathProgramDumper {
 	}
 
 	private TypeSortTranslator constructFakeTypeSortTranslator(final ManagedScript managedScript) {
-		final TypeSortTranslator result = new TypeSortTranslator(Collections.emptySet(), managedScript.getScript(),
-				mServices);
+		final TypeSortTranslator result =
+				new TypeSortTranslator(Collections.emptySet(), managedScript.getScript(), mServices);
 		final IBoogieType type = BoogieType.TYPE_INT;
 		final BoogieASTNode astNode = new BoogieASTNode(constructNewLocation());
 		result.getSort(type, astNode);
@@ -253,27 +260,25 @@ public class PathProgramDumper {
 		final Procedure impl = boogieIcfg.getBoogieDeclarations().getProcImplementation().get(proc);
 		final Body body = impl.getBody();
 
-		final Triple<List<Statement>, Set<IProgramVar>, Set<IProgramVar>> varsAndNewSt = constructProcedureStatements(
-				proc, entryLoc, exitLoc, errorLocs);
+		final Triple<List<Statement>, Set<IProgramVar>, Set<IProgramVar>> varsAndNewSt =
+				constructProcedureStatements(proc, entryLoc, exitLoc, errorLocs);
 		final List<Statement> newStatements = varsAndNewSt.getFirst();
 
-		
 		final VariableDeclaration[] localVars;
 		if (FILTER_VARIABLES_OF_BOOGIE_INPUT) {
-			localVars = filter(Arrays.asList(body.getLocalVars()),
-				extractIdentifiers(varsAndNewSt.getSecond()));
+			localVars = filter(Arrays.asList(body.getLocalVars()), extractIdentifiers(varsAndNewSt.getSecond()));
 		} else {
 			localVars = body.getLocalVars();
 		}
-		final Body newBody = new Body(constructNewLocation(), localVars,
-				newStatements.toArray(new Statement[newStatements.size()]));
+		final Body newBody =
+				new Body(constructNewLocation(), localVars, newStatements.toArray(new Statement[newStatements.size()]));
 		Specification[] newSpecifications;
 		if (impl.getSpecification() == null) {
 			newSpecifications = null;
 		} else {
 			if (FILTER_VARIABLES_OF_BOOGIE_INPUT) {
 				newSpecifications = filterModifiesSpecifications(impl.getSpecification(),
-					extractIdentifiers(varsAndNewSt.getThird()));
+						extractIdentifiers(varsAndNewSt.getThird()));
 			} else {
 				newSpecifications = impl.getSpecification();
 			}
@@ -289,8 +294,8 @@ public class PathProgramDumper {
 	private Pair<Procedure, Set<IProgramVar>> constructNewImplementation(final String proc, final IcfgLocation entryLoc,
 			final IcfgLocation exitLoc, final Set<IcfgLocation> errorLocs) {
 
-		final Triple<List<Statement>, Set<IProgramVar>, Set<IProgramVar>> varsAndNewSt = constructProcedureStatements(
-				proc, entryLoc, exitLoc, errorLocs);
+		final Triple<List<Statement>, Set<IProgramVar>, Set<IProgramVar>> varsAndNewSt =
+				constructProcedureStatements(proc, entryLoc, exitLoc, errorLocs);
 		final List<Statement> newStatements = varsAndNewSt.getFirst();
 
 		final Set<IProgramVar> localVars = varsAndNewSt.getSecond();
@@ -361,7 +366,7 @@ public class PathProgramDumper {
 		return result;
 	}
 
-	private Specification[] filterModifiesSpecifications(final Specification[] specification,
+	private static Specification[] filterModifiesSpecifications(final Specification[] specification,
 			final Set<String> globalVars) {
 		final List<Specification> result = new ArrayList<>();
 		for (final Specification spec : specification) {
@@ -374,7 +379,7 @@ public class PathProgramDumper {
 		return result.toArray(new Specification[result.size()]);
 	}
 
-	private ModifiesSpecification filter(final ModifiesSpecification modSpec, final Set<String> globalVars) {
+	private static ModifiesSpecification filter(final ModifiesSpecification modSpec, final Set<String> globalVars) {
 		final List<VariableLHS> filteredIdentifiers = new ArrayList<>();
 		for (final VariableLHS varLhs : modSpec.getIdentifiers()) {
 			if (globalVars.contains(varLhs.getIdentifier())) {
@@ -385,7 +390,7 @@ public class PathProgramDumper {
 				filteredIdentifiers.toArray(new VariableLHS[filteredIdentifiers.size()]));
 	}
 
-	private Set<String> extractIdentifiers(final Set<IProgramVar> vars) {
+	private static Set<String> extractIdentifiers(final Set<IProgramVar> vars) {
 		final Set<String> result = new HashSet<>();
 		for (final IProgramVar var : vars) {
 			if (var instanceof IProgramOldVar) {
@@ -401,7 +406,7 @@ public class PathProgramDumper {
 		return result;
 	}
 
-	private VariableDeclaration[] filter(final List<VariableDeclaration> localVars, final Set<String> vars) {
+	private static VariableDeclaration[] filter(final List<VariableDeclaration> localVars, final Set<String> vars) {
 		final List<VariableDeclaration> result = new ArrayList<>();
 		for (final VariableDeclaration varDecl : localVars) {
 			final VariableDeclaration newDecl = filter(varDecl, vars);
@@ -412,7 +417,7 @@ public class PathProgramDumper {
 		return result.toArray(new VariableDeclaration[result.size()]);
 	}
 
-	private VariableDeclaration filter(final VariableDeclaration varDecl, final Set<String> vars) {
+	private static VariableDeclaration filter(final VariableDeclaration varDecl, final Set<String> vars) {
 		final List<VarList> resultVarLists = new ArrayList<>();
 		for (final VarList varList : varDecl.getVariables()) {
 			final String[] newIdentifiers = filter(varList.getIdentifiers(), vars);
@@ -422,13 +427,12 @@ public class PathProgramDumper {
 		}
 		if (resultVarLists.isEmpty()) {
 			return null;
-		} else {
-			return new VariableDeclaration(varDecl.getLocation(), new Attribute[0],
-					resultVarLists.toArray(new VarList[resultVarLists.size()]));
 		}
+		return new VariableDeclaration(varDecl.getLocation(), new Attribute[0],
+				resultVarLists.toArray(new VarList[resultVarLists.size()]));
 	}
 
-	private String[] filter(final String[] identifiers, final Set<String> vars) {
+	private static String[] filter(final String[] identifiers, final Set<String> vars) {
 		final Predicate<? super String> pred = (x -> vars.contains(x));
 		return Arrays.stream(identifiers).filter(pred).toArray(size -> new String[size]);
 	}
@@ -501,8 +505,8 @@ public class PathProgramDumper {
 	private void processTransition(final ArrayDeque<IcfgLocation> worklist, final Set<IcfgLocation> added,
 			final List<Statement> result, final Set<IProgramVar> localvars, final Set<IProgramVar> globalVars,
 			final IcfgEdge edge) {
-		final Quad<List<Statement>, Set<IProgramVar>, Set<IProgramVar>, IcfgLocation> transResult = constructTransitionStatements(
-				edge);
+		final Quad<List<Statement>, Set<IProgramVar>, Set<IProgramVar>, IcfgLocation> transResult =
+				constructTransitionStatements(edge);
 		final String proc = edge.getPrecedingProcedure();
 		result.addAll(transResult.getFirst());
 		localvars.addAll(transResult.getSecond());
@@ -530,8 +534,8 @@ public class PathProgramDumper {
 		return new Label(constructNewLocation(), constructLabelId(node, i));
 	}
 
-	private Quad<List<Statement>, Set<IProgramVar>, Set<IProgramVar>, IcfgLocation> constructTransitionStatements(
-			IcfgEdge edge) {
+	private Quad<List<Statement>, Set<IProgramVar>, Set<IProgramVar>, IcfgLocation>
+			constructTransitionStatements(IcfgEdge edge) {
 		final String proc = edge.getPrecedingProcedure();
 		final List<Statement> statements = new ArrayList<>();
 		final Set<IProgramVar> localVars = new HashSet<>();
@@ -563,21 +567,22 @@ public class PathProgramDumper {
 		if (mInputMode == InputMode.BOOGIE) {
 			if (edge.getLabel() instanceof Call) {
 				addVars(action.getTransformula().getInVars().keySet(), localVars, globalVars);
-				final IIcfgReturnTransition correspondingReturn = getCorrespondingReturn(action, Program.PATH_PROGRAM);
+				final IIcfgReturnTransition<?, ?> correspondingReturn =
+						getCorrespondingReturn(action, Program.PATH_PROGRAM);
 				final CallStatement callStatement = ((Call) edge.getLabel()).getCallStatement();
 				statements.add(callStatement);
 				if (correspondingReturn == null) {
 					// corresponding return not in path program,
-					// we take outVars of corresponding return in original 
-					// program 
-					final IIcfgReturnTransition correspondingReturnInOriginalProgram =
+					// we take outVars of corresponding return in original
+					// program
+					final IIcfgReturnTransition<?, ?> correspondingReturnInOriginalProgram =
 							getCorrespondingReturn(edge.getLabel(), Program.ORIGINAL_PROGRAM);
-					addVars(correspondingReturnInOriginalProgram.getTransformula().getOutVars().keySet(), localVars, globalVars);
+					addVars(correspondingReturnInOriginalProgram.getTransformula().getOutVars().keySet(), localVars,
+							globalVars);
 					return null;
-				} else {
-					addVars(correspondingReturn.getTransformula().getOutVars().keySet(), localVars, globalVars);
-					return correspondingReturn.getTarget();
 				}
+				addVars(correspondingReturn.getTransformula().getOutVars().keySet(), localVars, globalVars);
+				return correspondingReturn.getTarget();
 			} else if (edge.getLabel() instanceof Return) {
 				throw new AssertionError("we should have stopped at procedure exit");
 				// addVars(action.getTransformula().getInVars().keySet(),
@@ -604,58 +609,57 @@ public class PathProgramDumper {
 			} else {
 				throw new UnsupportedOperationException("unsupported edge " + action.getClass().getSimpleName());
 			}
-		} else {
-			addVars(action.getTransformula().getInVars().keySet(), localVars, globalVars);
-			addVars(action.getTransformula().getOutVars().keySet(), localVars, globalVars);
-			final ManagedScript mgdScript = mPathProgram.getCfgSmtToolkit().getManagedScript();
-			final UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(action.getTransformula(), mgdScript,
-					mServices, mLogger);
-			final Term guardTerm = TransFormulaUtils.renameInvarsToDefaultVars(guardTf, mgdScript);
-			final Expression guardExpression = mTerm2Expression.translate(guardTerm);
-			final AssumeStatement assume = new AssumeStatement(constructNewLocation(), guardExpression);
-
-			final SimultaneousUpdate su = new SimultaneousUpdate(action.getTransformula(), mgdScript);
-			final AssignmentStatement assignment;
-			{
-				final LeftHandSide[] lhs = new LeftHandSide[su.getUpdatedVars().size()];
-				final Expression[] rhs = new Expression[su.getUpdatedVars().size()];
-				int offset = 0;
-				for (final Entry<IProgramVar, Term> entry : su.getUpdatedVars().entrySet()) {
-					lhs[offset] = new VariableLHS(constructNewLocation(),
-							((IdentifierExpression) mTerm2Expression.translate(entry.getKey().getTermVariable()))
-									.getIdentifier());
-					rhs[offset] = mTerm2Expression.translate(entry.getValue());
-					offset++;
-				}
-				assignment = new AssignmentStatement(constructNewLocation(), lhs, rhs);
-			}
-
-			final HavocStatement havoc;
-			{
-				final VariableLHS[] identifiers = new VariableLHS[su.getHavocedVars().size()];
-				int offset = 0;
-				for (final IProgramVar pv : su.getHavocedVars()) {
-					identifiers[offset] = new VariableLHS(constructNewLocation(), translateIdentifier(pv));
-					offset++;
-				}
-				havoc = new HavocStatement(constructNewLocation(), identifiers);
-			}
-			if (!SmtUtils.isTrue(guardTerm)) {
-				statements.add(assume);
-			}
-			if (!su.getUpdatedVars().isEmpty()) {
-				statements.add(assignment);
-			}
-			if (!su.getHavocedVars().isEmpty()) {
-				statements.add(havoc);
-			}
-			return edge.getTarget();
 		}
+		addVars(action.getTransformula().getInVars().keySet(), localVars, globalVars);
+		addVars(action.getTransformula().getOutVars().keySet(), localVars, globalVars);
+		final ManagedScript mgdScript = mPathProgram.getCfgSmtToolkit().getManagedScript();
+		final UnmodifiableTransFormula guardTf =
+				TransFormulaUtils.computeGuard(action.getTransformula(), mgdScript, mServices, mLogger);
+		final Term guardTerm = TransFormulaUtils.renameInvarsToDefaultVars(guardTf, mgdScript);
+		final Expression guardExpression = mTerm2Expression.translate(guardTerm);
+		final AssumeStatement assume = new AssumeStatement(constructNewLocation(), guardExpression);
+
+		final SimultaneousUpdate su = new SimultaneousUpdate(action.getTransformula(), mgdScript);
+		final AssignmentStatement assignment;
+		{
+			final LeftHandSide[] lhs = new LeftHandSide[su.getUpdatedVars().size()];
+			final Expression[] rhs = new Expression[su.getUpdatedVars().size()];
+			int offset = 0;
+			for (final Entry<IProgramVar, Term> entry : su.getUpdatedVars().entrySet()) {
+				lhs[offset] = new VariableLHS(constructNewLocation(),
+						((IdentifierExpression) mTerm2Expression.translate(entry.getKey().getTermVariable()))
+								.getIdentifier());
+				rhs[offset] = mTerm2Expression.translate(entry.getValue());
+				offset++;
+			}
+			assignment = new AssignmentStatement(constructNewLocation(), lhs, rhs);
+		}
+
+		final HavocStatement havoc;
+		{
+			final VariableLHS[] identifiers = new VariableLHS[su.getHavocedVars().size()];
+			int offset = 0;
+			for (final IProgramVar pv : su.getHavocedVars()) {
+				identifiers[offset] = new VariableLHS(constructNewLocation(), translateIdentifier(pv));
+				offset++;
+			}
+			havoc = new HavocStatement(constructNewLocation(), identifiers);
+		}
+		if (!SmtUtils.isTrue(guardTerm)) {
+			statements.add(assume);
+		}
+		if (!su.getUpdatedVars().isEmpty()) {
+			statements.add(assignment);
+		}
+		if (!su.getHavocedVars().isEmpty()) {
+			statements.add(havoc);
+		}
+		return edge.getTarget();
 
 	}
 
-	private IIcfgReturnTransition getCorrespondingReturn(final IAction action, final Program program) {
-		IIcfgReturnTransition correspondingReturn = null;
+	private IIcfgReturnTransition<?, ?> getCorrespondingReturn(final IAction action, final Program program) {
+		IIcfgReturnTransition<?, ?> correspondingReturn = null;
 		final IcfgLocation exitLoc;
 		switch (program) {
 		case ORIGINAL_PROGRAM:
@@ -670,29 +674,27 @@ public class PathProgramDumper {
 		if (exitLoc == null) {
 			// corresponding return not in path program
 			return null;
-		} else {
-			for (final IcfgEdge returnEdge : exitLoc.getOutgoingEdges()) {
-				final IIcfgReturnTransition ret = (IIcfgReturnTransition) returnEdge;
-				if (ret.getCorrespondingCall().equals(action)) {
-					if (correspondingReturn == null) {
-						correspondingReturn = ret;
-					} else {
-						throw new AssertionError("several corresponding returns");
-					}
+		}
+		for (final IcfgEdge returnEdge : exitLoc.getOutgoingEdges()) {
+			final IIcfgReturnTransition<?, ?> ret = (IIcfgReturnTransition<?, ?>) returnEdge;
+			if (ret.getCorrespondingCall().equals(action)) {
+				if (correspondingReturn == null) {
+					correspondingReturn = ret;
+				} else {
+					throw new AssertionError("several corresponding returns");
 				}
 			}
-			if (correspondingReturn == null) {
-				throw new AssertionError("no corresponding return");
-			}
-			return correspondingReturn;
 		}
+		if (correspondingReturn == null) {
+			throw new AssertionError("no corresponding return");
+		}
+		return correspondingReturn;
 	}
 
 	/**
-	 * Given a set of {@link IProgramVar}, sort them into localVars and
-	 * globalVars.
+	 * Given a set of {@link IProgramVar}, sort them into localVars and globalVars.
 	 */
-	private void addVars(final Set<IProgramVar> vars, final Set<IProgramVar> localVars,
+	private static void addVars(final Set<IProgramVar> vars, final Set<IProgramVar> localVars,
 			final Set<IProgramVar> globalVars) {
 		for (final IProgramVar var : vars) {
 			if ((var instanceof IProgramOldVar) || (var instanceof IProgramNonOldVar)) {
@@ -706,18 +708,17 @@ public class PathProgramDumper {
 	}
 
 	/**
-	 * @return true iff location has exactly one outgoing edge and one incoming
-	 *         edge
+	 * @return true iff location has exactly one outgoing edge and one incoming edge
 	 */
-	private boolean isBridgingLocation(final IcfgLocation loc) {
+	private static boolean isBridgingLocation(final IcfgLocation loc) {
 		return loc.getIncomingEdges().size() == 1 && loc.getOutgoingEdges().size() == 1;
 	}
 
-	private ILocation constructNewLocation() {
+	private static ILocation constructNewLocation() {
 		return new DefaultLocation();
 	}
 
-	private Set<? extends IcfgEdge> extractTransitionsFromRun(final NestedWord<? extends IAction> word) {
+	private static Set<? extends IcfgEdge> extractTransitionsFromRun(final NestedWord<? extends IAction> word) {
 		final Set<IcfgEdge> result = new HashSet<>();
 		for (final IAction letter : word) {
 			final IcfgEdge edge = (IcfgEdge) letter;
@@ -726,7 +727,7 @@ public class PathProgramDumper {
 		return result;
 	}
 
-	private class FakeBoogie2SmtSymbolTable extends Boogie2SmtSymbolTable {
+	private static final class FakeBoogie2SmtSymbolTable extends Boogie2SmtSymbolTable {
 
 		private final IIcfgSymbolTable mIIcfgSymbolTable;
 
