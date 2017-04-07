@@ -328,7 +328,6 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mLogger.info("======== Iteration " + mIteration + "==of CEGAR loop == " + mName + "========");
 
 		if (mInteractiveMode) {
-			// mInteractive.send(IterationInfo.iteration(0));
 			mInteractive.send(mCegarLoopBenchmark);
 		}
 
@@ -375,7 +374,6 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			mLogger.info("=== Iteration " + mIteration + " === " + errorLocs() + "===");
 			if (mInteractiveMode) {
-				// mInteractive.send(IterationInfo.iteration(mIteration));
 				mInteractive.send(mCegarLoopBenchmark);
 			}
 			mCegarLoopBenchmark.announceNextIteration();
