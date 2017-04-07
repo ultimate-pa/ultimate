@@ -139,8 +139,6 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	private List<P> generateResult(final List<P> predicates, final List<LETTER> list) {
 		assert list != null;
 
-		final List<P> returnList = new ArrayList<>();
-
 		final TripleList<P, LETTER> tripleList = new TripleList<>(predicates, list, mPrecondition, mPostcondition);
 		final TripleList.TripleListReverseIterator<P, LETTER> it = tripleList.getReverseIterator();
 
@@ -152,6 +150,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		P currentPostState = currentStateTriple.getSecondState();
 
 		// Reverse iterate over the list.
+		final List<P> returnList = new ArrayList<>();
 		while (true) {
 			final P currentPreState = currentStateTriple.getFirstState();
 			final LETTER transition = currentStateTriple.getTransition();
@@ -478,8 +477,8 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		public int hashCode() {
 			final int prime = 31;
 			int result = 1;
-			result = prime * result + ((mLetter == null) ? 0 : mLetter.hashCode());
-			result = prime * result + ((mPredicate == null) ? 0 : mPredicate.hashCode());
+			result = prime * result + (mLetter == null ? 0 : mLetter.hashCode());
+			result = prime * result + (mPredicate == null ? 0 : mPredicate.hashCode());
 			return result;
 		}
 
