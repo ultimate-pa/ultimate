@@ -156,12 +156,12 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 			// Normal regressions
 //			"examples/programs/abstractInterpretation/regression",
-			
+
 			/* current regression fails */
 //			"examples/programs/abstractInterpretation/regression/proc-procedure-without-impl.bpl",
 
 //			"examples/programs/abstractInterpretation/regression/open/comp/proc-implies-statesplit.bpl",
-			"examples/programs/abstractInterpretation/regression/non_con/loop-literal-widening-predicate-weakening.bpl",
+//			"examples/programs/abstractInterpretation/regression/non_con/loop-literal-widening-predicate-weakening.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/recursive-CallABAB_incorrect.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/recursive-easy-2.bpl",
 //			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
@@ -173,8 +173,14 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/programs/abstractInterpretation/regression/recursive-Collatz.bpl",
 //			"examples/programs/abstractInterpretation/regression/recursive-easy-4.bpl",
 //			"examples/programs/abstractInterpretation/regression/recursive-wrong-prestate.bpl",
-			
+
 			/* current svcomp fails */
+
+			/* Weakening Exceptions */
+			// Assertion Error: null
+			"examples/svcomp/eca-rers2012/Problem02_label06_true-unreach-call.c",
+			// ClassCastException
+			"examples/svcomp/recursive-simple/fibo_10_true-unreach-call.c"
 
 			//AssertionError: unreachable return
 //			"examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c",
@@ -186,9 +192,10 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	@Override
 	protected long getTimeout() {
 		// return 90 * 1000 * 1000;
-		return 15 * 1000;
+		// return 15 * 1000;
 		// return 90 * 1000;
 		// return 15 * 60 * 1000;
+		return 15 * 60 * 1000;
 	}
 
 	@Override

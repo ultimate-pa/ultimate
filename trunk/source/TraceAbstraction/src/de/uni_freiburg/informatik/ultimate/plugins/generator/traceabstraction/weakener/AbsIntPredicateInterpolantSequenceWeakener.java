@@ -166,12 +166,19 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 	 */
 	private AbsIntPredicate<STATE, VARDECL> removeUnneededVariables(final AbsIntPredicate<STATE, VARDECL> preState,
 			final LETTER transition) {
+
 		// Collect all variables occurring in the invars
 		final Set<IProgramVar> varsToKeep = transition.getTransformula().getInVars().keySet();
 
 		final Set<STATE> newMultiState = new HashSet<>();
 
 		for (final STATE s : preState.getAbstractStates()) {
+			if (s.isBottom()) {
+				// Simply add the state to the new multi state if the state is bottom.
+				newMultiState.add(s);
+				continue;
+			}
+
 			final Set<VARDECL> varsToRemove =
 					s.getVariables().stream().filter(var -> !varsToKeep.contains(var)).collect(Collectors.toSet());
 
