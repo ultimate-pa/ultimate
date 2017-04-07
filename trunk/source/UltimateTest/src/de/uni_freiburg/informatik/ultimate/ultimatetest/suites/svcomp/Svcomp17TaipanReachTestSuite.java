@@ -54,46 +54,65 @@ public class Svcomp17TaipanReachTestSuite extends AbstractSVCOMPTestSuite {
 	@Override
 	protected int getFilesPerCategory() {
 		// -1 or value larger than 0
-		return -1;
+		return 100;
 	}
 
 	@Override
 	protected List<SVCOMPTestDefinition> getTestDefinitions() {
 		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
-		rtr.addAll(getForAll("ReachSafety-Arrays", 10));
-		rtr.addAll(getForAll("ReachSafety-ControlFlow", 10));
-		rtr.addAll(getForAll("ReachSafety-ECA", 10));
-		rtr.addAll(getForAll("ReachSafety-Heap", 10));
-		rtr.addAll(getForAll("ReachSafety-Loops"));
-		rtr.addAll(getForAll("ReachSafety-ProductLines", 10));
-		rtr.addAll(getForAll("ReachSafety-Recursive", 10));
-		rtr.addAll(getForAll("ReachSafety-Sequentialized", 10));
-		rtr.addAll(getForAll("Systems_DeviceDriversLinux64_ReachSafety", 10));
+		// contains 135 examples
+		rtr.addAll(getForAll("ReachSafety-Arrays", true));
+
+		// contains 94 examples
+		rtr.addAll(getForAll("ReachSafety-ControlFlow", true));
+
+		// contains 1149 examples
+		rtr.addAll(getForAll("ReachSafety-ECA", true));
+
+		// contains 173 examples
+		rtr.addAll(getForAll("ReachSafety-Heap", true));
+
+		// contains 159 examples
+		rtr.addAll(getForAll("ReachSafety-Loops", true));
+
+		// contains 159 examples
+		rtr.addAll(getForAll("ReachSafety-ProductLines", true));
+
+		// contains 98 examples
+		rtr.addAll(getForAll("ReachSafety-Recursive", true));
+
+		// contains 273 examples
+		rtr.addAll(getForAll("ReachSafety-Sequentialized", true));
+
+		// contains 2795 examples
+		rtr.addAll(getForAll("Systems_DeviceDriversLinux64_ReachSafety", false));
 
 		return rtr;
 	}
 
-	private List<SVCOMPTestDefinition> getForAll(final String set, final int limit) {
-		return getForAll(set, getTimeout(), limit);
+	private List<SVCOMPTestDefinition> getForAll(final String set, final int limit, final boolean arch32) {
+		return getForAll(set, getTimeout(), limit, arch32);
 	}
 
-	private List<SVCOMPTestDefinition> getForAll(final String set) {
-		return getForAll(set, getTimeout(), getFilesPerCategory());
+	private List<SVCOMPTestDefinition> getForAll(final String set, final boolean arch32) {
+		return getForAll(set, getTimeout(), getFilesPerCategory(), arch32);
 	}
 
-	private List<SVCOMPTestDefinition> getForAll(final String set, final long timeout, final int limit) {
+	private List<SVCOMPTestDefinition> getForAll(final String set, final long timeout, final int limit,
+			final boolean arch32) {
 		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
 
-		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
-				"svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Default.epf", timeout, limit));
-		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
-				"svcomp2017/taipan/svcomp-Reach-32bit-Taipan_Default.epf", timeout, limit));
-		rtr.add(getTestDefinitionFromExamples(set, "KojakC_WitnessPrinter.xml",
-				"svcomp2017/kojak/svcomp-Reach-32bit-Kojak_Default.epf", timeout, limit));
-		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
-				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple.epf", timeout, limit));
-		rtr.add(getTestDefinitionFromExamples(set, "AutomizerC.xml",
-				"ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Simple_total.epf", timeout, limit));
+		if (arch32) {
+			rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml",
+					"default/taipan/svcomp-Reach-32bit-Taipan_Default.epf", timeout, limit));
+			rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml",
+					"ai/svcomp-Reach-32bit-RubberTaipan_Default.epf", timeout, limit));
+		} else {
+			rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml",
+					"default/taipan/svcomp-Reach-64bit-Taipan_Default.epf", timeout, limit));
+			rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml",
+					"ai/svcomp-Reach-64bit-RubberTaipan_Default.epf", timeout, limit));
+		}
 
 		return rtr;
 	}
