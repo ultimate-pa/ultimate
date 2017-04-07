@@ -70,14 +70,14 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
 			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
 			final ITransformulaTransformer transformer) {
-		
+
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
 		mScript = origIcfg.getCfgSmtToolkit().getManagedScript();
 		mLogger = Objects.requireNonNull(logger);
 		mLoopDetector = new LoopDetector<>(mLogger, origIcfg);
-		
+
 		mLoopBodies = mLoopDetector.getLoopBodies();
-		
+
 		mResult = transform(originalIcfg, funLocFac, backtranslationTracker, outLocationClass, newIcfgIdentifier,
 				transformer);
 	}
@@ -85,32 +85,53 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass,
 			final String newIcfgIdentifier, final ITransformulaTransformer transformer) {
-		
+
 		transformer.preprocessIcfg(originalIcfg);
-		
-		for (Loop loop : mLoopBodies) {
-			for (Backbone backbone : loop.getBackbones()) {
-				for (IcfgEdge edge : backbone.getPath()) {
-					
+
+		for (final Loop loop : mLoopBodies) {
+			for (final Backbone backbone : loop.getBackbones()) {
+				for (final IcfgEdge edge : backbone.getPath()) {
+
+					// use these two to separate assume (guard) and assign (update) in transformulas
+					// TransFormulaUtils.computeGuard(tf, mgdScript, services, logger)
+					// new SimultaneousUpdate()
 					if (edge.toString().contains("assume")) {
 						mLogger.debug("assume: " + edge.getTransformula().toString());
 					}
-					
+					// final Script script = mScript.getScript();
+					// final Term t = script.term("true");
+					// final TermVariable freshvar =
+					// mScript.constructFreshTermVariable("x", script.sort(SmtSortUtils.INT_SORT));
+					// script.quantifier(QuantifiedFormula.FORALL, vars, body);
+					// with rather cheap simplification
+					// SmtUtils.and(script, t, freshvar);
+					// just plain (syntactical) and
+					// script.term("and", t, freshvar);
+
+					// create TF
+					// final UnmodifiableTransFormula someTf = backbone.getPath().getFirst().getTransformula();
+					// final TransFormulaBuilder tfb = new TransFormulaBuilder(someTf.getInVars(), someTf.getOutVars(),
+					// false, someTf.getNonTheoryConsts(), true, Collections.emptySet(), false);
+					// final Term formula = null;
+					// tfb.setFormula(formula);
+					// tfb.finishConstruction(mScript);
+
+					// final Substitution sub = new Substitution(mScript, Collections.emptyMap());
+					// final Term transformedFrmula = sub.transform(formula);
 				}
 			}
 		}
-	
+
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
 		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
 				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg);
 		processLocations(originalIcfg.getInitialNodes(), lst);
 		lst.finish();
-		
+
 		return resultIcfg;
 	}
 
-	
 	private void processLocations(final Set<INLOC> init, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
 		final Deque<INLOC> open = new ArrayDeque<>(init);
 		final Set<INLOC> closed = new HashSet<>();
