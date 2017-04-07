@@ -10,7 +10,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
- * Extracts the loops from an {@link IIcfg}.
+ * Extracts the loops from an {@link IIcfg}. And calculates its backbones, which are
+ * acyclic paths in the loop.
  *
  * @param <INLOC>
  *
@@ -19,11 +20,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 
 public class LoopDetector<INLOC extends IcfgLocation> {
 	private final ILogger mLogger;
-	private final Deque<Deque<IcfgEdge>> mLoopBodies;
-	private final Deque<Deque<Backbone>> mBackbones;
+	private final Deque<Loop> mLoopBodies;
 
 	/**
-	 * Loop Detector for retrieving loops in a {@link IIcfg}.
+	 * Loop Detector for retrieving loops in an {@link IIcfg}.
 	 * 
 	 * @param logger
 	 * @param originalIcfg
@@ -32,26 +32,27 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		mLogger = Objects.requireNonNull(logger);
 		mLogger.debug("Loop detector constructed.");
 		mLoopBodies = getLoop(originalIcfg);
-		mBackbones = getBackbone(mLoopBodies);
-
+		for (Loop loop : mLoopBodies) {
+			Deque<Backbone> backbones = getBackbonePath(loop.getPath());
+			for (Backbone backbone : backbones) {
+				loop.addBackbone(backbone);
+			}
+			mLogger.debug(loop.getBackbones());
+		}
 	}
 
-	/**
-	 * Get Loop bodies of an {@link IIcfg}. as a queue of edges
-	 * 
-	 * @param logger
-	 * @param originalIcfg
-	 */
-	private Deque<Deque<IcfgEdge>> getLoop(final IIcfg<INLOC> originalIcfg) {
+
+	private Deque<Loop> getLoop(final IIcfg<INLOC> originalIcfg) {
 		final Set<INLOC> loopHeads = originalIcfg.getLoopLocations();
-		final Deque<Deque<IcfgEdge>> loopBodies = new ArrayDeque<>();
+		final Deque<Loop> loopBodies = new ArrayDeque<>();
 
 		if (!loopHeads.isEmpty()) {
 			mLogger.debug("Loops found.");
 
 			for (INLOC loopHead : loopHeads) {
 				Deque<IcfgEdge> path = getPath(loopHead);
-				loopBodies.add(path);
+				Loop loop = new Loop(path, loopHead);
+				loopBodies.add(loop);
 			}
 
 		} else {
@@ -62,6 +63,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		return loopBodies;
 	}
 
+	
 	private Deque<IcfgEdge> getPath(final IcfgLocation loopHead) {
 		Deque<IcfgEdge> loopPath = new ArrayDeque<>();
 		final Deque<IcfgEdge> stack = new ArrayDeque<>();
@@ -123,14 +125,6 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		return false;
 	}
 
-	private Deque<Deque<Backbone>> getBackbone(Deque<Deque<IcfgEdge>> loopBodies) {
-		final Deque<Deque<Backbone>> backbones = new ArrayDeque<>();
-		for (Deque<IcfgEdge> loopBody : loopBodies) {
-			backbones.addLast(getBackbonePath(loopBody));
-		}
-		return backbones;
-	}
-
 	private Deque<Backbone> getBackbonePath(final Deque<IcfgEdge> loopBody) {
 		Deque<Backbone> backbones = new ArrayDeque<>();
 		final IcfgLocation loopHead = loopBody.getFirst().getSource();
@@ -171,16 +165,9 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	}
 
 	/**
-	 * Get Loop bodies of an {@link IIcfg}. as a queue of edges
+	 * Get Loop bodies of an {@link IIcfg}. As a Queue of loop datastructures
 	 */
-	public Deque<Deque<IcfgEdge>> getLoopBodies() {
+	public Deque<Loop> getLoopBodies() {
 		return mLoopBodies;
-	}
-
-	/**
-	 * Get Loop Backbones of an {@link IIcfg}. as a queue of backbones
-	 */
-	public Deque<Deque<Backbone>> getLoopBackbones() {
-		return mBackbones;
 	}
 }

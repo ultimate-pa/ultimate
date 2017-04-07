@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.wer
 
 import java.util.Deque;
 
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 
 /**
@@ -12,12 +13,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgE
 
 public class Backbone {
 	
-	private Deque<IcfgEdge> mPath;
+	private final Deque<IcfgEdge> mPath;
+	private final Term mCondition;
 	
-	public Backbone(Deque<IcfgEdge> path) {
+	public Backbone(final Deque<IcfgEdge> path) {
 		mPath = path;
+		mCondition = null;
 	}
 	
+	/**
+	 * Returns the path of the Backbone
+	 */
 	public Deque<IcfgEdge> getPath() {
 		return mPath;
 	}

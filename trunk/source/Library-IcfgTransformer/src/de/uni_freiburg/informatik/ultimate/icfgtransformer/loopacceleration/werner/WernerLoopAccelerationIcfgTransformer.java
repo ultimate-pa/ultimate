@@ -29,16 +29,21 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.wer
 
 import java.util.ArrayDeque;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ExampleLoopAccelerationTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * A basic IcfgTransformer that applies the {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
@@ -56,30 +61,77 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 
 public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
 	private final ILogger mLogger;
-	private final Deque<Deque<Backbone>> mBackBones;
+	private final Deque<Loop> mLoopBodies;
 	private final LoopDetector<INLOC> mLoopDetector;
 	private final IIcfg<OUTLOC> mResult;
+	private final ManagedScript mScript;
 
 	public WernerLoopAccelerationIcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
 			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
 			final ITransformulaTransformer transformer) {
+		
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
+		mScript = origIcfg.getCfgSmtToolkit().getManagedScript();
 		mLogger = Objects.requireNonNull(logger);
 		mLoopDetector = new LoopDetector<>(mLogger, origIcfg);
-		mBackBones = new ArrayDeque<>();
-		mResult = transform(origIcfg, newIcfgIdentifier, outLocationClass);
+		
+		mLoopBodies = mLoopDetector.getLoopBodies();
+		
+		mResult = transform(originalIcfg, funLocFac, backtranslationTracker, outLocationClass, newIcfgIdentifier,
+				transformer);
+	}
+
+	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
+			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass,
+			final String newIcfgIdentifier, final ITransformulaTransformer transformer) {
+		
+		transformer.preprocessIcfg(originalIcfg);
+		
+		for (Loop loop : mLoopBodies) {
+			for (Backbone backbone : loop.getBackbones()) {
+				for (IcfgEdge edge : backbone.getPath()) {
+					
+					if (edge.toString().contains("assume")) {
+						mLogger.debug("assume: " + edge.getTransformula().toString());
+					}
+					
+				}
+			}
+		}
+	
+		final BasicIcfg<OUTLOC> resultIcfg =
+				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
+		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
+				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg);
+		processLocations(originalIcfg.getInitialNodes(), lst);
+		lst.finish();
+		
+		return resultIcfg;
+	}
+
+	
+	private void processLocations(final Set<INLOC> init, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
+		final Deque<INLOC> open = new ArrayDeque<>(init);
+		final Set<INLOC> closed = new HashSet<>();
+
+		while (!open.isEmpty()) {
+			final INLOC oldSource = open.removeFirst();
+			if (!closed.add(oldSource)) {
+				continue;
+			}
+
+			final OUTLOC newSource = lst.createNewLocation(oldSource);
+			for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
+				final INLOC oldTarget = (INLOC) oldTransition.getTarget();
+				open.add(oldTarget);
+				final OUTLOC newTarget = lst.createNewLocation(oldTarget);
+				lst.createNewTransition(newSource, newTarget, oldTransition);
+			}
+		}
 	}
 
 	public IIcfg<OUTLOC> getResult() {
 		return mResult;
-	}
-
-	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> originalIcfg, final String newIcfgIdentifier,
-			final Class<OUTLOC> outLocationClass) {
-		mLogger.debug("Transforming...");
-		final BasicIcfg<OUTLOC> resultIcfg =
-				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
-		return resultIcfg;
 	}
 }
