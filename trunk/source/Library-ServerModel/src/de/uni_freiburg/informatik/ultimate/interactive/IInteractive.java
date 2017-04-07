@@ -19,6 +19,8 @@ public interface IInteractive<M> extends IHandlerRegistry<M>, IInteractiveQueue<
 		// The destroy method will usually not be needed for the Interactive
 		// interface.
 	}
+	
+	IInteractiveQueue<Object> common();
 
 	static <M> IInteractive<M> getFromStorage(final IToolchainStorage storage, final Class<M> typeBound) {
 		return ToolchainStorageUtil.getInteractive(storage, typeBound);

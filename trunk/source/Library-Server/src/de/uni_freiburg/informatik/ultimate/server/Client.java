@@ -17,6 +17,7 @@ import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
+import de.uni_freiburg.informatik.ultimate.interactive.IInteractiveQueue;
 import de.uni_freiburg.informatik.ultimate.interactive.ITypeHandler;
 import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage;
@@ -72,8 +73,8 @@ public abstract class Client<T> {
 		return mQuitFuture;
 	}
 
-	public IInteractive<T> createInteractiveInterface() {
-		return new ClientInteractiveInterface();
+	public IInteractive<T> createInteractiveInterface(CompletableFuture<IInteractiveQueue<Object>> common) {
+		return new ClientInteractiveInterface(common);
 	}
 
 	private void warnUnregistered(String typeName) {
@@ -186,7 +187,7 @@ public abstract class Client<T> {
 	private void quit() {
 		mQueue.completeAllFuturesExceptionally(new ClientQuittedException());
 
-		closeConnection();		
+		closeConnection();
 		if (mQuitting)
 			mQuitFuture.complete(null);
 	}
@@ -246,6 +247,11 @@ public abstract class Client<T> {
 	}
 
 	public class ClientInteractiveInterface implements IInteractive<T> {
+		private final CompletableFuture<IInteractiveQueue<Object>> mCommonInterface;
+
+		public ClientInteractiveInterface(CompletableFuture<IInteractiveQueue<Object>> commonInterface) {
+			mCommonInterface = commonInterface;
+		}
 
 		@Override
 		public <T1 extends T> void register(Class<T1> type, Consumer<T1> consumer) {
@@ -275,6 +281,11 @@ public abstract class Client<T> {
 		@Override
 		public <T1 extends T> CompletableFuture<T1> request(Class<T1> type, T data) {
 			return mQueue.request(type, data);
+		}
+
+		@Override
+		public IInteractiveQueue<Object> common() {
+			return mCommonInterface.getNow(IInteractiveQueue.dummy());
 		}
 
 	}

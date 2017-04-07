@@ -8,6 +8,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
+import de.uni_freiburg.informatik.ultimate.interactive.IInteractiveQueue;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.IConverterRegistry.IConverter;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.IConverterRegistry.IResponseConverter;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.UnregisteredTypeException;
@@ -120,5 +121,10 @@ public class ApplyConversionToInteractive<M, O> implements IInteractive<M> {
 	private <O1 extends O, T extends M, OD extends O> CompletableFuture<T> wrapRequest(IConverter<O1, T> converter,
 			OD oData) {
 		return mOriginal.request(converter.getTypeA(), oData).thenApply(converter);
+	}
+
+	@Override
+	public IInteractiveQueue<Object> common() {
+		return mOriginal.common();
 	}
 }

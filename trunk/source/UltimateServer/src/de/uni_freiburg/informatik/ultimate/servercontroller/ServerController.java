@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
+import de.uni_freiburg.informatik.ultimate.interactive.IInteractiveQueue;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.Converter;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientCrazyException;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientQuittedException;
@@ -144,7 +145,7 @@ public class ServerController implements IController<RunDefinition> {
 			mLogger.error("No Input files found in " + cla.getInputDirPath().getAbsolutePath());
 			return -1;
 		}
-		
+
 		mListenTimeout = cla.getTimeout();
 
 		mLogger.debug("Starting Server on Port " + cla.getPort());
@@ -163,7 +164,7 @@ public class ServerController implements IController<RunDefinition> {
 					if (false)
 						break; // TODO: add settings that limit the server to a single (or fixed numer or time) run
 				} catch (ExecutionException e) {
-					//throw e.getCause()
+					// throw e.getCause()
 					if (e.getCause() instanceof IOException) {
 						mLogger.error("It seems like the Connection has been Lost. Reinitializing controller.", e);
 						Thread.sleep(200);
@@ -210,12 +211,17 @@ public class ServerController implements IController<RunDefinition> {
 		mLogger.info("Waiting for connection...");
 
 		final Client<GeneratedMessageV3> client = mServer.waitForConnection(mListenTimeout, TimeUnit.SECONDS);
-		mProtoInterface = client.createInteractiveInterface();
+		final CompletableFuture<IInteractiveQueue<Object>> commonFuture =
+				new CompletableFuture<IInteractiveQueue<Object>>();
+		mProtoInterface = client.createInteractiveInterface(commonFuture);
 
 		mConverterInitializer = new Converter.Initializer<>(mProtoInterface, mServer.getTypeRegistry());
 
 		ControllerConverter converter = ControllerConverter.get();
 		mInternalInterface = mConverterInitializer.getConvertedInteractiveInterface(converter);
+
+		// TODO: separate internal interface from common interface
+		commonFuture.complete(mInternalInterface);
 
 		final List<File> tcFiles = new ArrayList<>(availableToolchains.keySet());
 
