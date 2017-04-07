@@ -54,7 +54,7 @@ public class Svcomp17TaipanReachTestSuite extends AbstractSVCOMPTestSuite {
 	@Override
 	protected int getFilesPerCategory() {
 		// -1 or value larger than 0
-		return 100;
+		return 20;
 	}
 
 	@Override
@@ -104,12 +104,12 @@ public class Svcomp17TaipanReachTestSuite extends AbstractSVCOMPTestSuite {
 
 		if (arch32) {
 			rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml",
-					"default/taipan/svcomp-Reach-32bit-Taipan_Default.epf", timeout, limit));
+					"ai/svcomp-Reach-32bit-Taipan_Default.epf", timeout, limit));
 			rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml",
 					"ai/svcomp-Reach-32bit-RubberTaipan_Default.epf", timeout, limit));
 		} else {
 			rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml",
-					"default/taipan/svcomp-Reach-64bit-Taipan_Default.epf", timeout, limit));
+					"ai/svcomp-Reach-64bit-Taipan_Default.epf", timeout, limit));
 			rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml",
 					"ai/svcomp-Reach-64bit-RubberTaipan_Default.epf", timeout, limit));
 		}
