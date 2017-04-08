@@ -143,6 +143,7 @@ public class PathProgramDumper {
 	private final PathProgram mPathProgram;
 	private final IIcfg<?> mOriginalIcfg;
 	private final Term2Expression mTerm2Expression;
+	private final TypeSortTranslator mTypeSortTranslator;
 
 	private enum Program {
 		PATH_PROGRAM, ORIGINAL_PROGRAM
@@ -159,6 +160,7 @@ public class PathProgramDumper {
 				throw new UnsupportedOperationException("PathProgramDumper currently needs BoogieIcfgContainer");
 			}
 			mTerm2Expression = null;
+			mTypeSortTranslator = ((BoogieIcfgContainer) icfg).getBoogie2SMT().getTypeSortTranslator();
 		} else {
 			final TypeSortTranslator tsTranslation =
 					constructFakeTypeSortTranslator(icfg.getCfgSmtToolkit().getManagedScript());
@@ -169,6 +171,7 @@ public class PathProgramDumper {
 							icfg.getCfgSmtToolkit().getSymbolTable(), boogieDeclarations);
 			mTerm2Expression = new Term2Expression(tsTranslation, boogie2SmtSymbolTable,
 					icfg.getCfgSmtToolkit().getManagedScript());
+			mTypeSortTranslator = new TypeSortTranslator(icfg.getCfgSmtToolkit().getManagedScript().getScript(), services);
 		}
 
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run.getWord());
@@ -331,18 +334,25 @@ public class PathProgramDumper {
 			final IdentifierExpression id = translateVar(pv);
 			final Attribute[] attributes = new Attribute[0];
 			final String[] identifiers = new String[] { id.getIdentifier() };
-			// FIXME: do not only support int.
-			String typeName;
-			if (pv.getTermVariable().getSort().getName().equals("Int")) {
-				typeName = "int";
-			} else if (pv.getTermVariable().getSort().getName().equals("Bool")) {
-				typeName = "bool";
+			final ASTType astType;
+			if (mInputMode == InputMode.BOOGIE) {
+				// FIXME: do not only support int.
+				String typeName;
+				if (pv.getTermVariable().getSort().getName().equals("Int")) {
+					typeName = "int";
+				} else if (pv.getTermVariable().getSort().getName().equals("Bool")) {
+					typeName = "bool";
+				} else {
+					throw new UnsupportedOperationException(
+							"Translation does not support sort " + pv.getTermVariable().getSort().getName());
+				}
+				astType = new PrimitiveType(constructNewLocation(), typeName);
 			} else {
-				throw new UnsupportedOperationException(
-						"Translation does not support sort " + pv.getTermVariable().getSort().getName());
+				final BoogieType boogieType = (BoogieType) mTypeSortTranslator.getType(pv.getTermVariable().getSort()); 
+				astType = boogieType.toASTType(constructNewLocation());
 			}
-			final ASTType type = new PrimitiveType(constructNewLocation(), typeName);
-			final VarList varList = new VarList(constructNewLocation(), identifiers, type);
+			
+			final VarList varList = new VarList(constructNewLocation(), identifiers, astType);
 			final VarList[] variables = new VarList[] { varList };
 			result[offset] = new VariableDeclaration(constructNewLocation(), attributes, variables);
 			offset++;
