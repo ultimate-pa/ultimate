@@ -45,7 +45,9 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -79,6 +81,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.DefaultTransFormulas;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
  * Relevance information of a trace. Used to compute the relevant statements in an Error trace that are relevant (or
@@ -97,6 +100,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	private final IRelevanceInformation[] mRelevanceOfTrace;
 	private final IIcfgSymbolTable mSymbolTable;
 	private final PredicateFactory mPredicateFactory;
+	private final ErrorLocalizationStatisticsGenerator mErrorLocalizationStatisticsGenerator;
 	/**
 	 * Apply quantifier elimination during the computation of pre and wp. If set to true, there is a higher risk that we
 	 * run into a timeout. If set to false, there is a higher risk that the SMT solver returns unknown.
@@ -117,7 +121,9 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		mSymbolTable = symbolTable;
 		mPredicateFactory = predicateFactory;
 		mRelevanceOfTrace = initializeRelevanceOfTrace(counterexample);
+		mErrorLocalizationStatisticsGenerator = new ErrorLocalizationStatisticsGenerator();
 
+		mErrorLocalizationStatisticsGenerator.continueErrorLocalizationTime();
 		try {
 			if (doNonFlowSensitiveAnalysis) {
 				doNonFlowSensitiveAnalysis(counterexample.getWord(), predicateUnifier.getFalsePredicate(),
@@ -128,10 +134,18 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 				doFlowSensitiveAnalysis(counterexample, cfg, modifiableGlobalsTable, csToolkit);
 			}
 		} catch (final ToolchainCanceledException tce) {
+			mErrorLocalizationStatisticsGenerator.stopErrorLocalizationTime();
 			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
 					"doing error localization for trace of length " + counterexample.getLength());
 			throw new ToolchainCanceledException(tce, rti);
 		}
+		mErrorLocalizationStatisticsGenerator.reportSuccesfullyFinished();
+		mErrorLocalizationStatisticsGenerator.stopErrorLocalizationTime();
+		
+		final StatisticsData stat = new StatisticsData();
+		stat.aggregateBenchmarkData(mErrorLocalizationStatisticsGenerator);
+		final IResult benchmarkResult =	new BenchmarkResult<>(Activator.PLUGIN_NAME, "ErrorLocalizationStatistics", stat);
+		services.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);
 	}
 
 	/**
@@ -362,6 +376,18 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			final Boolean[] relevanceCriterionVariables = relevanceCriterionVariables(relevance);
 			final boolean relevanceCriterion1uc = relevanceCriterionVariables[0];
 			final boolean relevanceCriterion1gf = relevanceCriterionVariables[1];
+			{
+				mErrorLocalizationStatisticsGenerator.reportIcfgEdge();
+				if (relevanceCriterion1uc) {
+					mErrorLocalizationStatisticsGenerator.reportErrorEnforcingIcfgEdge();
+				}
+				if (relevanceCriterion1gf) {
+					mErrorLocalizationStatisticsGenerator.reportErrorAdmittingIcfgEdge();
+				}
+				if (!relevanceCriterion1uc && !relevanceCriterion1uc) {
+					mErrorLocalizationStatisticsGenerator.reportErrorIrrelevantIcfgEdge();
+				}
+			}
 
 			// Adding relevance information in the array list Relevance_of_statements.
 			final RelevanceInformation ri =
@@ -371,6 +397,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 
 			mRelevanceOfTrace[i] = ri;
 		}
+		mErrorLocalizationStatisticsGenerator.addHoareTripleCheckerStatistics(rc.getHoareTripleCheckerStatistics());
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("- - - - - - [Non-Flow Sensitive Analysis with statments + pre/wp information]- - - - - -");
