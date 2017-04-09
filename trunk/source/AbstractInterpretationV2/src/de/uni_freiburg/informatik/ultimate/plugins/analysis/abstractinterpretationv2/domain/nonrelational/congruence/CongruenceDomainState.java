@@ -106,4 +106,9 @@ public class CongruenceDomainState<VARDECL>
 	protected CongruenceDomainValue[] getArray(final int size) {
 		return new CongruenceDomainValue[size];
 	}
+
+	@Override
+	protected CongruenceDomainState<VARDECL> getThis() {
+		return this;
+	}
 }

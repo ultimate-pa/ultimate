@@ -90,4 +90,9 @@ public class IntervalDomainState<VARDECL>
 	protected IntervalDomainValue[] getArray(final int size) {
 		return new IntervalDomainValue[size];
 	}
+
+	@Override
+	protected IntervalDomainState<VARDECL> getThis() {
+		return this;
+	}
 }
