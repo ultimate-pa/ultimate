@@ -61,7 +61,7 @@ public class Svcomp17TaipanReachTestSuite extends AbstractSVCOMPTestSuite {
 	protected List<SVCOMPTestDefinition> getTestDefinitions() {
 		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
 		// contains 135 examples
-		rtr.addAll(getForAll("ReachSafety-Arrays", true));
+		// rtr.addAll(getForAll("ReachSafety-Arrays", true));
 
 		// contains 94 examples
 		rtr.addAll(getForAll("ReachSafety-ControlFlow", true));
@@ -70,7 +70,7 @@ public class Svcomp17TaipanReachTestSuite extends AbstractSVCOMPTestSuite {
 		rtr.addAll(getForAll("ReachSafety-ECA", true));
 
 		// contains 173 examples
-		rtr.addAll(getForAll("ReachSafety-Heap", true));
+		// rtr.addAll(getForAll("ReachSafety-Heap", true));
 
 		// contains 159 examples
 		rtr.addAll(getForAll("ReachSafety-Loops", true));

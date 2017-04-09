@@ -134,9 +134,11 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+
+//			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Taipan_Default.epf"),
+//			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-RubberTaipan_Default.epf"),
 			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Taipan_Default_Debug.epf"),
-//			new Triple<>("AutomizerCInline.xml", C, "default/taipan/svcomp-DerefFreeMemtrack-32bit-Taipan_Default.epf"),
-//			new Triple<>("AutomizerCInline.xml", C, "default/taipan/svcomp-Reach-32bit-Taipan_Default.epf"),
+//			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-RubberTaipan_Default_Debug.epf"),
 	};
 
 	private static final String[] INPUT = new String[] {
@@ -163,7 +165,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 
 			// Normal regressions
 //			"examples/programs/abstractInterpretation/regression",
-			"examples/programs/abstractInterpretation/regression/open/int/stmt-bool-true-assign-top.bpl",
+//			"examples/programs/abstractInterpretation/regression/open/int/stmt-bool-true-assign-top.bpl",
 
 			/* current regression fails */
 //			"examples/programs/abstractInterpretation/regression/proc-procedure-without-impl.bpl",
@@ -188,11 +190,14 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			// Assertion Error: null
 			"examples/svcomp/eca-rers2012/Problem02_label06_true-unreach-call.c",
 			// ClassCastException
-			"examples/svcomp/recursive-simple/fibo_10_true-unreach-call.c",
+//			"examples/svcomp/recursive-simple/fibo_10_true-unreach-call.c",
 
 			//AssertionError: unreachable return
 //			"examples/svcomp/product-lines/email_spec3_product18_false-unreach-call_true-termination.cil.c",
 //			"examples/svcomp/product-lines/email_spec3_product24_false-unreach-call_true-termination.cil.c",
+			
+			//difference rubber vs non-rubber
+//			"examples/svcomp/eca-rers2012/Problem16_label47_true-unreach-call.c"
 
 	};
 	// @formatter:on
@@ -201,9 +206,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	protected long getTimeout() {
 		// return 90 * 1000 * 1000;
 		// return 15 * 1000;
-		// return 90 * 1000;
+		return 90 * 1000;
 		// return 15 * 60 * 1000;
-		return 15 * 60 * 1000;
 	}
 
 	@Override
