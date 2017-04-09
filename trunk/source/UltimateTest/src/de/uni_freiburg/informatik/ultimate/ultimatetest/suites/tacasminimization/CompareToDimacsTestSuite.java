@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.AutomataScriptTestResultDecider;
@@ -51,10 +50,10 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.AutomataScriptTestSummary;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.LatexOverviewSummary;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderColumnFilter;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderRowFilter;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -101,7 +100,7 @@ public class CompareToDimacsTestSuite extends UltimateTestSuite {
 				new ColumnDefinition(CegarLoopStatisticsDefinitions.OverallTime.toString(), "Avg. runtime",
 						ConversionContext.Divide(1_000_000_000, 2, " s"), Aggregate.Sum, Aggregate.Average), };
 
-		final Predicate<String> columnPredicate = (x -> INTERESTING_COLUMNS_AS_SET.contains(x));
+		final Predicate<String> columnPredicate = x -> INTERESTING_COLUMNS_AS_SET.contains(x);
 		final Map<String, Set<Object>> column2allowedValues =
 				Collections.singletonMap(StatisticsType.OPERATION_NAME.toString(), INTERESTING_OPERATIONS_AS_SET);
 		final Predicate<Pair<List<Object>, List<String>>> predicate =
@@ -135,12 +134,7 @@ public class CompareToDimacsTestSuite extends UltimateTestSuite {
 			for (final String settingFileName : SETTINGS) {
 				final File settingsFile = new File(TestUtil.getPathFromTrunk("/examples/settings/" + settingFileName));
 				final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, mToolchainFile);
-				final UltimateStarter starter = new UltimateStarter(urd, mTimeout);
-				final UltimateTestCase utc = new UltimateTestCase(urd.generateShortStringRepresentation(),
-						new AutomataScriptTestResultDecider(), starter,
-						// mDescription + "_" + inputFile.getAbsolutePath(),
-						urd, super.getSummaries(), null);
-				testCases.add(utc);
+				testCases.add(buildTestCase(urd, mTimeout, new AutomataScriptTestResultDecider()));
 			}
 		}
 		testCases.sort(null);

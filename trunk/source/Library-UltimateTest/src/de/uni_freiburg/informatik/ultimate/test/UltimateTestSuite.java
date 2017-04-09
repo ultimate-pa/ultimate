@@ -40,9 +40,11 @@ import org.junit.AfterClass;
 import org.junit.runner.RunWith;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.TestFactory;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimate.test.reporting.IPreTestLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
@@ -55,8 +57,10 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 public abstract class UltimateTestSuite {
 
 	private List<ITestSummary> mSummaries;
-	private final List<IIncrementalLog> mLogFiles;
-	private final ILogger mLogger;
+	private List<IIncrementalLog> mIncrementalLogs;
+	private ILogger mLogger;
+
+	private Collection<UltimateTestCase> mTestCases;
 
 	/**
 	 * Default constructor.
@@ -64,40 +68,48 @@ public abstract class UltimateTestSuite {
 	public UltimateTestSuite() {
 		mLogger = new ConsoleLogger();
 		mSummaries = sanitizeList(this::constructTestSummaries);
-		mLogFiles = sanitizeList(this::constructIncrementalLog);
+		mIncrementalLogs = sanitizeList(this::constructIncrementalLog);
 	}
 
 	private static <T> List<T> sanitizeList(final Supplier<T[]> funSup) {
-		final T[] summaries = funSup.get();
-		if (summaries == null) {
+		final T[] elems = funSup.get();
+		if (elems == null || elems.length == 0) {
 			return Collections.emptyList();
 		}
-		return Arrays.asList(summaries).stream().filter(Objects::nonNull).collect(Collectors.toList());
+		return Arrays.asList(elems).stream().filter(Objects::nonNull).collect(Collectors.toList());
 	}
 
 	@TestFactory
-	public abstract Collection<UltimateTestCase> createTestCases();
+	public Collection<UltimateTestCase> getTestCases() {
+		if (mTestCases == null) {
+			mTestCases = createTestCases();
+		}
+		return mTestCases;
+	}
+
+	protected abstract Collection<UltimateTestCase> createTestCases();
 
 	/**
-	 * Returns the ITestSummaries instances that produce summaries while running the UltimateTestSuite. This method is
-	 * called only once during each run of an UltimateTestSuite.
+	 * Returns the {@link ITestSummary} instances that produce summaries while running the {@link UltimateTestSuite}.
+	 * This method is called only once during each run of an {@link UltimateTestSuite}.
 	 */
 	protected abstract ITestSummary[] constructTestSummaries();
 
 	protected abstract IIncrementalLog[] constructIncrementalLog();
 
-	/**
-	 * Provides a collection of ITestSummary instances.
-	 * 
-	 * @return A collection containing ITestSummary instances. They will be accessed at the end of this test suite and
-	 *         their content written in a file.
-	 */
-	protected List<ITestSummary> getSummaries() {
-		return Collections.unmodifiableList(mSummaries);
+	protected IPreTestLog[] constructPreTestLogs() {
+		return new IPreTestLog[0];
 	}
 
-	protected List<IIncrementalLog> getIncrementalLogs() {
-		return Collections.unmodifiableList(mLogFiles);
+	protected UltimateTestCase buildTestCase(final UltimateRunDefinition urd, final long timeout,
+			final ITestResultDecider decider) {
+		return buildTestCase(urd, timeout, decider, urd.generateShortStringRepresentation());
+	}
+
+	protected UltimateTestCase buildTestCase(final UltimateRunDefinition urd, final long timeout,
+			final ITestResultDecider decider, final String name) {
+		final UltimateStarter starter = new UltimateStarter(urd, timeout);
+		return new UltimateTestCase(name, decider, starter, urd, mSummaries, mIncrementalLogs);
 	}
 
 	@AfterClass
@@ -116,6 +128,9 @@ public abstract class UltimateTestSuite {
 			}
 		}
 		mSummaries = null;
+		mTestCases = null;
+		mLogger = null;
+		mIncrementalLogs = null;
 	}
 
 	public ILogger getLogger() {

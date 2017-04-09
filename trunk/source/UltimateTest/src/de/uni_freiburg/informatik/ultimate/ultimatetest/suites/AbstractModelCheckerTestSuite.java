@@ -34,7 +34,6 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinitionGenerator;
-import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
@@ -76,16 +75,12 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 
 	protected void addTestCase(final Collection<UltimateRunDefinition> urds) {
 		for (final UltimateRunDefinition urd : urds) {
-			final UltimateStarter starter = new UltimateStarter(urd, getTimeout());
-			mTestCases.add(new UltimateTestCase(urd.generateShortStringRepresentation(),
-					constructITestResultDecider(urd), starter, urd, getSummaries(), getIncrementalLogs()));
+			mTestCases.add(buildTestCase(urd, getTimeout(), constructITestResultDecider(urd)));
 		}
 	}
 
 	protected void addTestCase(final UltimateRunDefinition urd) {
-		final UltimateStarter starter = new UltimateStarter(urd, getTimeout());
-		mTestCases.add(new UltimateTestCase(urd.generateShortStringRepresentation(), constructITestResultDecider(urd),
-				starter, urd, getSummaries(), getIncrementalLogs()));
+		mTestCases.add(buildTestCase(urd, getTimeout(), constructITestResultDecider(urd)));
 	}
 
 	protected void addTestCase(final String toolchain, final String settings, final String input) {

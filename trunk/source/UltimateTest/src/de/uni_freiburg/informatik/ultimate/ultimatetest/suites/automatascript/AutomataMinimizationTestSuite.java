@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.AutomataScriptTestResultDecider;
@@ -188,13 +187,7 @@ public class AutomataMinimizationTestSuite extends UltimateTestSuite {
 			for (final String settingFileName : SETTINGS) {
 				final File settingsFile = new File(TestUtil.getPathFromTrunk("/examples/settings/" + settingFileName));
 				final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, TOOLCHAIN_FILE);
-				final UltimateStarter starter = new UltimateStarter(urd, sTimeout);
-				final UltimateTestCase utc = new UltimateTestCase(
-						urd.generateShortStringRepresentation(),
-						new AutomataScriptTestResultDecider(), starter,
-						// mDescription + "_" + inputFile.getAbsolutePath(),
-						urd, getSummaries(), null);
-				testCases.add(utc);
+				testCases.add(buildTestCase(urd, sTimeout, new AutomataScriptTestResultDecider()));
 			}
 		}
 		testCases.sort(null);
