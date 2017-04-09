@@ -56,14 +56,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public final class AbstractInterpretationResult<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION>
+public final class AbsIntResult<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION>
 		implements IAbstractInterpretationResult<STATE, ACTION, VARDECL, LOCATION> {
 
 	private final IAbstractDomain<STATE, ACTION, VARDECL> mAbstractDomain;
 	private final IVariableProvider<STATE, ACTION, VARDECL> mVariableProvider;
 	private final ITransitionProvider<ACTION, LOCATION> mTransProvider;
 	private final List<AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>> mCounterexamples;
-	private final AbstractInterpretationBenchmark<ACTION, LOCATION> mBenchmark;
+	private final AbsIntBenchmark<ACTION, LOCATION> mBenchmark;
 
 	private final Script mScript;
 
@@ -75,7 +75,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 	private Map<LOCATION, STATE> mLoc2SingleStates;
 	private Set<Term> mTerms;
 
-	protected AbstractInterpretationResult(final Script script,
+	protected AbsIntResult(final Script script,
 			final IAbstractDomain<STATE, ACTION, VARDECL> abstractDomain,
 			final ITransitionProvider<ACTION, LOCATION> transProvider,
 			final IVariableProvider<STATE, ACTION, VARDECL> varProvider) {
@@ -84,7 +84,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		mTransProvider = Objects.requireNonNull(transProvider);
 		mVariableProvider = Objects.requireNonNull(varProvider);
 		mCounterexamples = new ArrayList<>();
-		mBenchmark = new AbstractInterpretationBenchmark<>();
+		mBenchmark = new AbsIntBenchmark<>();
 
 	}
 
@@ -213,7 +213,7 @@ public final class AbstractInterpretationResult<STATE extends IAbstractState<STA
 		return !mCounterexamples.isEmpty();
 	}
 
-	public AbstractInterpretationBenchmark<ACTION, LOCATION> getBenchmark() {
+	public AbsIntBenchmark<ACTION, LOCATION> getBenchmark() {
 		return mBenchmark;
 	}
 

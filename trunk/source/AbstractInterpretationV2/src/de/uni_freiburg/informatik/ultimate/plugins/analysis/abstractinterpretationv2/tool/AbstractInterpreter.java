@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocationIterator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbstractInterpretationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.AbsIntResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.BackwardFixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngineParameters;
@@ -103,7 +103,7 @@ public final class AbstractInterpreter {
 				domFac.createParams(timer, transProvider, loopDetector);
 
 		final FixpointEngine<STATE, IcfgEdge, IBoogieVar, IcfgLocation> fxpe = new FixpointEngine<>(params);
-		final AbstractInterpretationResult<STATE, IcfgEdge, IBoogieVar, IcfgLocation> result =
+		final AbsIntResult<STATE, IcfgEdge, IBoogieVar, IcfgLocation> result =
 				fxpe.run(root.getInitialNodes(), script);
 
 		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -133,7 +133,7 @@ public final class AbstractInterpreter {
 					domFac.createParams(timer, transProvider, loopDetector);
 			final FixpointEngine<STATE, IcfgEdge, IBoogieVar, IcfgLocation> fxpe = new FixpointEngine<>(params);
 			final Set<? extends IcfgLocation> initial = root.getInitialNodes();
-			final AbstractInterpretationResult<STATE, IcfgEdge, IBoogieVar, IcfgLocation> result =
+			final AbsIntResult<STATE, IcfgEdge, IBoogieVar, IcfgLocation> result =
 					fxpe.run(initial, script);
 			if (logger.isDebugEnabled()) {
 				logger.debug("Found the following predicates:");
@@ -172,13 +172,13 @@ public final class AbstractInterpreter {
 			// run backwards is hacky if run as stand-alone analysis
 			initialNodes = getSinks(root);
 			fxpe = new BackwardFixpointEngine<>(params.setMaxParallelStates(1));
-			final AbstractInterpretationResult<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> result =
+			final AbsIntResult<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> result =
 					fxpe.run(initialNodes, script);
 			return postProcessResult(services, logger, true, initialNodes.size() > 1, result);
 		}
 		initialNodes = root.getInitialNodes().stream().collect(Collectors.toSet());
 		fxpe = new FixpointEngine<>(params);
-		final AbstractInterpretationResult<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> result =
+		final AbsIntResult<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> result =
 				fxpe.run(initialNodes, script);
 		return postProcessResult(services, logger, isSilent, initialNodes.size() > 1, result);
 	}
@@ -233,7 +233,7 @@ public final class AbstractInterpreter {
 			STATE extends IAbstractState<STATE, VARDECL>, VARDECL, ACTION extends IcfgEdge, LOC extends IcfgLocation>
 			IAbstractInterpretationResult<STATE, ACTION, VARDECL, LOC>
 			postProcessResult(final IUltimateServiceProvider services, final ILogger logger, final boolean isSilent,
-					final boolean isLib, final AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> result) {
+					final boolean isLib, final AbsIntResult<STATE, ACTION, VARDECL, LOC> result) {
 		if (result == null) {
 			logger.error("Could not run because no initial element could be found");
 			return null;
@@ -279,7 +279,7 @@ public final class AbstractInterpreter {
 			initialNodes = root.getInitialNodes().stream().collect(Collectors.toSet());
 		}
 
-		final AbstractInterpretationResult<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> result =
+		final AbsIntResult<STATE, IcfgEdge, IProgramVarOrConst, IcfgLocation> result =
 				fxpe.run(initialNodes, script);
 
 		if (result == null) {

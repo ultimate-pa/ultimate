@@ -43,6 +43,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 @FunctionalInterface
 public interface IFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOC> {
 
-	AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> run(final Collection<? extends LOC> start,
+	AbsIntResult<STATE, ACTION, VARDECL, LOC> run(final Collection<? extends LOC> start,
 			final Script script);
 }
