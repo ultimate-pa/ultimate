@@ -112,7 +112,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	 *            The states.
 	 * @param trace
 	 *            The sequence of statements.
-	 * @return A map containing prestate to corresponding hierarchical prestate.
+	 * @return A map from prestate to corresponding hierarchical prestate.
 	 */
 	private Map<PredicateLetterIdentifier<P, LETTER>, P> generateCallHierarchicalPreStates(final List<P> predicates,
 			final List<LETTER> trace) {
@@ -324,7 +324,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		}
 
 		private final TripleListReverseIterator<P, LETTER> getReverseIterator() {
-			return new TripleListReverseIterator<P, LETTER>(mPredicates, mTrace, mPrecondition, mPostcondition);
+			return new TripleListReverseIterator<>(mPredicates, mTrace, mPrecondition, mPostcondition);
 		}
 
 		/**
