@@ -53,14 +53,14 @@ public class ProcedureSignature {
 		for (int i = 0; i < mInParams.size(); i++) {
 			sb.append(times);
 			final ASTType inParam = mInParams.get(i);
-			sb.append(BoogiePrettyPrinter.printASTType(inParam));
+			sb.append(BoogiePrettyPrinter.print(inParam));
 			times = "~X~";
 		}
 		if (mTakesVarArgs) {
 			sb.append("X~varArgs~");
 		}
 		sb.append("~TO~");
-		sb.append(mReturnType != null ? BoogiePrettyPrinter.printASTType(mReturnType) : "VOID");
+		sb.append(mReturnType != null ? BoogiePrettyPrinter.print(mReturnType) : "VOID");
 		return sb.toString();
 	}
 

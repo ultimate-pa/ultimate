@@ -307,7 +307,7 @@ public class FunctionHandler {
 						final String msg = "Implementation does not match declaration! "
 								+ "Type missmatch on in-parameters! " + in.length + " arguments, "
 								+ proc.getInParams().length + " parameters, " + "first missmatch at position " + i
-								+ ", " + "argument type " + BoogiePrettyPrinter.printASTType(in[i].getType())
+								+ ", " + "argument type " + BoogiePrettyPrinter.print(in[i].getType())
 								+ ", param type " + BoogiePrettyPrinter.print(proc.getInParams()[i]);
 						throw new IncorrectSyntaxException(loc, msg);
 					}
