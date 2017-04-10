@@ -40,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *            Any type.
  */
 public interface IEvaluationResult<VALUE> {
-	
-	public VALUE getValue();
 
-	public BooleanValue getBooleanValue();
+	VALUE getValue();
+
+	BooleanValue getBooleanValue();
 }

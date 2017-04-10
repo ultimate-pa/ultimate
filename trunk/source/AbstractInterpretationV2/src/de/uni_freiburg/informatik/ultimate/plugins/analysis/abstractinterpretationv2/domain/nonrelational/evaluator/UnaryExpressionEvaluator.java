@@ -53,31 +53,31 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, VARDECL>, VARDECL>
 		implements INAryEvaluator<VALUE, STATE, VARDECL> {
-	
+
 	private final EvaluatorLogger mLogger;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
-	
+
 	private IEvaluator<VALUE, STATE, VARDECL> mSubEvaluator;
 	private Operator mOperator;
-	
+
 	public UnaryExpressionEvaluator(final EvaluatorLogger logger,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mLogger = logger;
 		mNonrelationalValueFactory = nonrelationalValueFactory;
 	}
-	
+
 	@Override
 	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
-		
+
 		final List<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
-		
+
 		final List<IEvaluationResult<VALUE>> subResults = mSubEvaluator.evaluate(currentState);
-		
+
 		for (final IEvaluationResult<VALUE> subResult : subResults) {
 			final VALUE returnValue;
 			final BooleanValue returnBool;
-			
+
 			switch (mOperator) {
 			case ARITHNEGATIVE:
 				returnBool = BooleanValue.INVALID;
@@ -93,22 +93,22 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 				returnValue = mNonrelationalValueFactory.createTopValue();
 				break;
 			}
-			
+
 			final NonrelationalEvaluationResult<VALUE> result =
 					new NonrelationalEvaluationResult<>(returnValue, returnBool);
 			mLogger.logEvaluation(mOperator, result, subResult);
 			returnList.add(result);
 		}
-		
+
 		assert !returnList.isEmpty();
 		return NonrelationalUtils.mergeIfNecessary(returnList, 2);
 	}
-	
+
 	@Override
 	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
 		VALUE evalValue = computedValue.getValue();
 		BooleanValue evalBool = computedValue.getBooleanValue();
-		
+
 		switch (mOperator) {
 		case ARITHNEGATIVE:
 			evalValue = computedValue.getValue().negate();
@@ -120,55 +120,55 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 			throw new UnsupportedOperationException(
 					new StringBuilder().append("Operator ").append(mOperator).append(" not supported.").toString());
 		}
-		
+
 		final NonrelationalEvaluationResult<VALUE> evalResult =
 				new NonrelationalEvaluationResult<>(evalValue, evalBool);
 		mLogger.logInverseEvaluation(mOperator, evalResult, computedValue);
 		return mSubEvaluator.inverseEvaluate(evalResult, currentState);
 	}
-	
+
 	@Override
 	public void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator) {
 		assert evaluator != null;
-		
+
 		if (mSubEvaluator == null) {
 			mSubEvaluator = evaluator;
 		} else {
 			throw new UnsupportedOperationException("Cannot add more evaluators to this unary expression evaluator.");
 		}
 	}
-	
+
 	@Override
 	public Set<VARDECL> getVarIdentifiers() {
 		return mSubEvaluator.getVarIdentifiers();
 	}
-	
+
 	@Override
 	public boolean hasFreeOperands() {
 		return mSubEvaluator == null;
 	}
-	
+
 	@Override
 	public boolean containsBool() {
 		return mSubEvaluator.containsBool();
 	}
-	
+
 	@Override
 	public void setOperator(final Object operator) {
 		assert operator != null;
 		assert operator instanceof Operator;
 		mOperator = (Operator) operator;
 	}
-	
+
 	@Override
 	public int getArity() {
 		return 1;
 	}
-	
+
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
-		
+
 		switch (mOperator) {
 		case LOGICNEG:
 			sb.append('!');
@@ -181,16 +181,16 @@ public class UnaryExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 			break;
 		default:
 		}
-		
+
 		sb.append(mSubEvaluator);
-		
+
 		if (mOperator == Operator.OLD) {
 			sb.append(')');
 		}
-		
+
 		return sb.toString();
 	}
-	
+
 	@Override
 	public EvaluatorType getType() {
 		return mSubEvaluator.getType();

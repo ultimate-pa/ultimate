@@ -394,7 +394,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				if (USE_INTERPOLANT_WEAKENER) {
 					weakenedPredicates = weakenPredicates(nonUnifiedPredicates, ppTrace);
 					assert isInductive(mCex.getWord().asList(),
-							weakenedPredicates) : "Sequence of interpolants not inductive!";
+							weakenedPredicates) : "Sequence of interpolants not inductive (after weakening)!";
 				} else {
 					weakenedPredicates = nonUnifiedPredicates;
 				}
