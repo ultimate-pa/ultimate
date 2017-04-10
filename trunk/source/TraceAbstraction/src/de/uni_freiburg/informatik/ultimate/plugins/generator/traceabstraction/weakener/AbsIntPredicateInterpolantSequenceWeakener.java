@@ -98,10 +98,10 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 
 	@Override
 	protected AbsIntPredicate<STATE, VARDECL> refinePreState(final AbsIntPredicate<STATE, VARDECL> preState,
-			final LETTER transition, final AbsIntPredicate<STATE, VARDECL> postState) {
+			final LETTER transition, final AbsIntPredicate<STATE, VARDECL> postState, final int tracePosition) {
 
 		final AbsIntPredicate<STATE, VARDECL> newPreState = removeUnneededVariables(preState, transition);
-		final boolean valid = determineInductivity(newPreState, preState, transition, postState);
+		final boolean valid = determineInductivity(newPreState, preState, transition, postState, tracePosition);
 
 		if (valid) {
 			if (mLogger.isDebugEnabled()) {
@@ -116,8 +116,8 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 	}
 
 	/**
-	 * Dtermines whether two states and one transition are inductive, i.e. whether {s1} tr {s2} is a valid Hoare-triple.
-	 * This is done by using the Hoare-triple checker provided by the base class.
+	 * Determines whether two states and one transition are inductive, i.e. whether {s1} tr {s2} is a valid
+	 * Hoare-triple. This is done by using the Hoare-triple checker provided by the base class.
 	 *
 	 * @param newPreState
 	 *            The new predicate, resulting from weakening <code>oldPreState</code>.
@@ -127,12 +127,14 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 	 *            The transition to be considered.
 	 * @param postState
 	 *            The predicate that should hold after the transition.
+	 * @param tracePosition
+	 *            The position of the LETTER in the current trace.
 	 * @return <code>true</code> iff the Hoare-triple {newPreState} transition {postState} is valid, <code>false</code>
 	 *         otherwise.
 	 */
 	private boolean determineInductivity(final AbsIntPredicate<STATE, VARDECL> newPreState,
 			final AbsIntPredicate<STATE, VARDECL> oldPreState, final LETTER transition,
-			final AbsIntPredicate<STATE, VARDECL> postState) {
+			final AbsIntPredicate<STATE, VARDECL> postState, final int tracePosition) {
 		final Validity result;
 
 		if (transition instanceof IInternalAction) {
@@ -140,9 +142,7 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 		} else if (transition instanceof ICallAction) {
 			result = mHtc.checkCall(newPreState, (ICallAction) transition, postState);
 		} else if (transition instanceof IReturnAction) {
-			final PredicateLetterIdentifier<AbsIntPredicate<STATE, VARDECL>, LETTER> predLetter =
-					new PredicateLetterIdentifier<>(oldPreState, transition);
-			final AbsIntPredicate<STATE, VARDECL> hierarchicalPre = mHierarchicalPreStates.get(predLetter);
+			final AbsIntPredicate<STATE, VARDECL> hierarchicalPre = mHierarchicalPreStates.get(tracePosition);
 			assert hierarchicalPre != null;
 			result = mHtc.checkReturn(newPreState, hierarchicalPre, (IReturnAction) transition, postState);
 		} else {

@@ -9,8 +9,8 @@ procedure ULTIMATE.start(){
         if (i == 1000000) {
             break;
         }
-		call foo(i <= 1000000);
-		i := i +1;
+	call foo(i <= 1000000);
+	i := i +1;
     }
 }
 
