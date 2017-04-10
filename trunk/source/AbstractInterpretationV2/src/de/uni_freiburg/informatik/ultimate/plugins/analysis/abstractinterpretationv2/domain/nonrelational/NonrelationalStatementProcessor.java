@@ -32,6 +32,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -102,6 +103,8 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 	private IBoogieVar mLhsVariable;
 	private Map<LeftHandSide, IBoogieVar> mTemporaryVars;
 
+	private final Map<Expression, Expression> mNormalizedExpressionCache;
+
 	private boolean mOldScope;
 
 	protected NonrelationalStatementProcessor(final ILogger logger, final BoogieSymbolTable boogieSymbolTable,
@@ -111,6 +114,7 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 		mOldScope = false;
 		mLogger = logger;
 		mLhsVariable = null;
+		mNormalizedExpressionCache = new HashMap<>();
 		mEvaluatorFactory = createEvaluatorFactory(maxParallelStates);
 		assert mEvaluatorFactory != null;
 	}
@@ -174,7 +178,16 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 				return rtr;
 			}
 		}
-		Expression oldExpr = expr;
+		final Expression newExpr = createNormalizedExpression(expr);
+		return super.processExpression(newExpr);
+	}
+
+	private Expression createNormalizedExpression(final Expression inputExpr) {
+		final Expression rtrExpr = mNormalizedExpressionCache.get(inputExpr);
+		if (rtrExpr != null) {
+			return rtrExpr;
+		}
+		Expression oldExpr = inputExpr;
 		Expression newExpr = normalizeExpression(oldExpr);
 		while (newExpr != oldExpr) {
 			assert newExpr != null;
@@ -183,12 +196,13 @@ public abstract class NonrelationalStatementProcessor<STATE extends Nonrelationa
 			newExpr = normalizeExpression(oldExpr);
 		}
 
-		if (mLogger.isDebugEnabled() && expr != newExpr) {
-			mLogger.debug(new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Expression ")
-					.append(BoogiePrettyPrinter.print(expr)).append(" rewritten to: ")
-					.append(BoogiePrettyPrinter.print(newExpr)).toString());
+		if (mLogger.isDebugEnabled() && newExpr != inputExpr) {
+			mLogger.debug(String.format("%sRewrote expression %s to %s", AbsIntPrefInitializer.INDENT,
+					BoogiePrettyPrinter.print(inputExpr), BoogiePrettyPrinter.print(newExpr)));
 		}
-		return super.processExpression(newExpr);
+
+		mNormalizedExpressionCache.put(inputExpr, newExpr);
+		return newExpr;
 	}
 
 	protected abstract IEvaluatorFactory<V, STATE, IBoogieVar> createEvaluatorFactory(final int maxParallelStates);
