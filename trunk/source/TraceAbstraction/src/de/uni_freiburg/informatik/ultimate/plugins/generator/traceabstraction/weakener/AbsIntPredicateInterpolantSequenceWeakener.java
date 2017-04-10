@@ -68,6 +68,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractState<STATE, VARDECL>, VARDECL, LETTER extends IIcfgTransition<?>>
 		extends InterpolantSequenceWeakener<IHoareTripleChecker, AbsIntPredicate<STATE, VARDECL>, LETTER> {
 
+	private Set<IProgramVar> mVarsToKeep = null;
+
 	/**
 	 * The default constructor.
 	 *
@@ -101,7 +103,7 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 			final LETTER transition, final AbsIntPredicate<STATE, VARDECL> postState, final int tracePosition) {
 
 		final AbsIntPredicate<STATE, VARDECL> newPreState = removeUnneededVariables(preState, transition);
-		final boolean valid = determineInductivity(newPreState, preState, transition, postState, tracePosition);
+		final boolean valid = determineInductivity(newPreState, transition, postState, tracePosition);
 
 		if (valid) {
 			if (mLogger.isDebugEnabled()) {
@@ -112,7 +114,8 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 		}
 
 		mLogger.debug("Unable to weaken prestate. Returning old prestate.");
-		return preState;
+		throw new UnsupportedOperationException("This case should not happen");
+		// return preState;
 	}
 
 	/**
@@ -121,8 +124,6 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 	 *
 	 * @param newPreState
 	 *            The new predicate, resulting from weakening <code>oldPreState</code>.
-	 * @param oldPreState
-	 *            The original prestate that was weakened.
 	 * @param transition
 	 *            The transition to be considered.
 	 * @param postState
@@ -132,8 +133,7 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 	 * @return <code>true</code> iff the Hoare-triple {newPreState} transition {postState} is valid, <code>false</code>
 	 *         otherwise.
 	 */
-	private boolean determineInductivity(final AbsIntPredicate<STATE, VARDECL> newPreState,
-			final AbsIntPredicate<STATE, VARDECL> oldPreState, final LETTER transition,
+	private boolean determineInductivity(final AbsIntPredicate<STATE, VARDECL> newPreState, final LETTER transition,
 			final AbsIntPredicate<STATE, VARDECL> postState, final int tracePosition) {
 		final Validity result;
 
@@ -168,7 +168,12 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 			final LETTER transition) {
 
 		// Collect all variables occurring in the invars
-		final Set<IProgramVar> varsToKeep = transition.getTransformula().getInVars().keySet();
+		if (mVarsToKeep == null) {
+			mVarsToKeep = new HashSet<>();
+		}
+
+		mVarsToKeep.addAll(transition.getTransformula().getInVars().keySet());
+		mLogger.debug("Keeping variables " + mVarsToKeep + " for transition " + transition);
 
 		final Set<STATE> newMultiState = new HashSet<>();
 
@@ -180,9 +185,12 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 			}
 
 			final Set<VARDECL> varsToRemove =
-					s.getVariables().stream().filter(var -> !varsToKeep.contains(var)).collect(Collectors.toSet());
+					s.getVariables().stream().filter(var -> !mVarsToKeep.contains(var)).collect(Collectors.toSet());
 
-			newMultiState.add(s.removeVariables(varsToRemove));
+			final STATE removedVariablesState = s.removeVariables(varsToRemove);
+			mLogger.debug("State before removing: " + s);
+			mLogger.debug("State after removing : " + removedVariablesState);
+			newMultiState.add(removedVariablesState);
 		}
 
 		final Set<Term> terms = newMultiState.stream().map(s -> s.getTerm(mScript)).collect(Collectors.toSet());
