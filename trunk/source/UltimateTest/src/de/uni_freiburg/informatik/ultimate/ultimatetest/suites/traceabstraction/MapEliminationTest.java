@@ -149,7 +149,7 @@ public class MapEliminationTest extends AbstractTraceAbstractionTestSuite {
 //			"examples/programs/recursive/regression",
 //			"examples/programs/toy",
 //			"examples/programs/20170304-DifficultPathPrograms",
-			"examples/programs/20170329-LinuxPathPrograms",
+			"examples/ultimate-benchmarks/programs/20170329-DifficultLinuxPathPrograms/original",
 		};
 	
 	
@@ -174,7 +174,8 @@ public class MapEliminationTest extends AbstractTraceAbstractionTestSuite {
 	 */
 	private static final String[] SETTINGS = {
 		"automizer/Reach-64bit-Automizer-SingleStatement-Penguin.epf",
-//		"automizer/DumpDifficultPathProgramsFromIcfg_svcomp-Reach-64bit-Automizer.epf",
+//		"automizer/DumpDifficultPathProgramsFromIcfg_svcomp-Reach-64bit-Automizer_MapElimination.epf",
+//		"automizer/DumpDifficultPathProgramsFromIcfg_svcomp-Reach-64bit-Automizer_ModuloNeighbor.epf",
 	};
 	
 
