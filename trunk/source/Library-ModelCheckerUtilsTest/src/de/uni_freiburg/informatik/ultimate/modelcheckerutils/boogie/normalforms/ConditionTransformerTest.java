@@ -32,13 +32,18 @@ import java.util.HashMap;
 import org.junit.Assert;
 import org.junit.Test;
 
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
+import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.BooleanLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 
 public class ConditionTransformerTest {
 
@@ -54,10 +59,10 @@ public class ConditionTransformerTest {
 
 	public ConditionTransformerTest() {
 		mIdentifier = new HashMap<>();
-		mA = var("A");
-		mB = var("B");
-		mC = var("C");
-		mD = var("D");
+		mA = intVar("A");
+		mB = intVar("B");
+		mC = intVar("C");
+		mD = intVar("D");
 		mExp1 = or(mB, mC);
 
 		final Expression aord = or(mA, mD);
@@ -102,10 +107,18 @@ public class ConditionTransformerTest {
 		}
 	}
 
-	private Expression var(final String varname) {
-		Expression exp = mIdentifier.get(varname);
+	private Expression intVar(final String varname) {
+		return var(varname, BoogieType.TYPE_INT);
+	}
+
+	private Expression boolVar(final String varname) {
+		return var(varname, BoogieType.TYPE_BOOL);
+	}
+
+	private Expression var(final String varname, final IBoogieType type) {
+		Expression exp = mIdentifier.get(varname + type);
 		if (exp == null) {
-			exp = new IdentifierExpression(null, varname);
+			exp = new IdentifierExpression(null, type, varname, new DeclarationInformation(StorageClass.GLOBAL, null));
 			mIdentifier.put(varname, exp);
 		}
 		return exp;
@@ -115,18 +128,24 @@ public class ConditionTransformerTest {
 	 * No Typechecking!
 	 */
 	private static Expression term(final Expression var, final int lit, final Operator op) {
-		return new BinaryExpression(null, op, var, new IntegerLiteral(null, String.valueOf(lit)));
+		final IBoogieType type = BoogieType.TYPE_INT;
+		return new BinaryExpression(null, type, op, var, new IntegerLiteral(null, type, String.valueOf(lit)));
+	}
+
+	private static Expression term(final Expression var, final boolean lit, final Operator op) {
+		final IBoogieType type = BoogieType.TYPE_BOOL;
+		return new BinaryExpression(null, type, op, var, new BooleanLiteral(null, type, lit));
 	}
 
 	@Test
-	public void TestRewriteA() {
+	public void testRewriteA() {
 		final Expression input = term(mA, 1, Operator.COMPNEQ);
 		final Expression afterRewrite = or(term(mA, 1, Operator.COMPLT), term(mA, 1, Operator.COMPGT));
 		testRewrite(input, afterRewrite);
 	}
 
 	@Test
-	public void TestRewriteB() {
+	public void testRewriteB() {
 		final Expression input = or(mExp2, term(mA, 1, Operator.COMPNEQ));
 		final Expression afterRewrite = or(or(and(and(or(mA, mD), or(mB, mC)), mA), term(mA, 1, Operator.COMPGT)),
 				term(mA, 1, Operator.COMPLT));
@@ -134,7 +153,7 @@ public class ConditionTransformerTest {
 	}
 
 	@Test
-	public void TestRewriteC() {
+	public void testRewriteC() {
 		final Expression input = and(and(not(term(mA, 0, Operator.COMPNEQ)), not(term(mB, 1, Operator.COMPEQ))),
 				not(term(mC, 1, Operator.COMPEQ)));
 		final Expression afterRewrite =
@@ -144,7 +163,7 @@ public class ConditionTransformerTest {
 	}
 
 	@Test
-	public void TestSimplifyA() {
+	public void testSimplifyA() {
 		final Expression input = and(mA, mA);
 		final Expression afterSimplify = mA;
 		testSimplify(input, afterSimplify);
@@ -157,7 +176,7 @@ public class ConditionTransformerTest {
 	}
 
 	// @Test
-	public void TestSimplifyB() {
+	public void testSimplifyB() {
 		// TODO: Implement this
 		final Expression input = and(mA, or(mA, mB));
 		final Expression afterSimplify = mA;
@@ -165,7 +184,7 @@ public class ConditionTransformerTest {
 	}
 
 	@Test
-	public void TestA() {
+	public void testA() {
 		final Expression input = not(mExp1);
 		final Expression nnf = and(not(mB), not(mC));
 		final Expression dnf = and(not(mC), not(mB));
@@ -173,7 +192,7 @@ public class ConditionTransformerTest {
 	}
 
 	@Test
-	public void TestB() {
+	public void testB() {
 		final Expression input = mExp2;
 		final Expression nnf = and(and(mA, or(mC, mB)), or(mD, mA));
 		final Expression dnf = or(and(mA, mB), and(mA, mC));
@@ -181,7 +200,7 @@ public class ConditionTransformerTest {
 	}
 
 	@Test
-	public void TestC() {
+	public void testC() {
 		final Expression input = mExp3;
 		final Expression nnf = and(and(mA, or(mC, mB)), or(mD, mA));
 		final Expression dnf = or(and(mA, mB), and(mA, mC));
@@ -189,7 +208,7 @@ public class ConditionTransformerTest {
 	}
 
 	@Test
-	public void TestD() {
+	public void testD() {
 		final Expression input = mExp4;
 		final Expression nnf = or(or(not(mA), and(not(mC), not(mB))), and(not(mD), not(mA)));
 		final Expression dnf = or(and(not(mC), not(mB)), not(mA));
@@ -197,23 +216,39 @@ public class ConditionTransformerTest {
 	}
 
 	@Test
-	public void TestE() {
+	public void testE() {
 		// (((A || B) && (C || D)) && (E || F)) && (G || H)
-		final Expression input = and(and(and(or(var("A"), var("B")), or(var("C"), var("D"))), or(var("E"), var("F"))),
-				or(var("G"), var("H")));
-		final Expression nnf = and(and(and(or(var("B"), var("A")), or(var("D"), var("C"))), or(var("F"), var("E"))),
-				or(var("H"), var("G")));
-		final Expression dnf = or(and(var("C"), var("A"), var("G"), var("E")),
-				and(var("C"), var("A"), var("G"), var("E")), and(var("C"), var("A"), var("H"), var("E")),
-				and(var("C"), var("A"), var("G"), var("F")), and(var("C"), var("A"), var("H"), var("F")),
-				and(var("D"), var("A"), var("G"), var("E")), and(var("D"), var("A"), var("H"), var("E")),
-				and(var("D"), var("A"), var("G"), var("F")), and(var("D"), var("A"), var("H"), var("F")),
-				and(var("C"), var("B"), var("G"), var("E")), and(var("C"), var("B"), var("H"), var("E")),
-				and(var("C"), var("B"), var("G"), var("F")), and(var("C"), var("B"), var("H"), var("F")),
-				and(var("D"), var("B"), var("G"), var("E")), and(var("D"), var("B"), var("H"), var("E")),
-				and(var("D"), var("B"), var("G"), var("F")), and(var("D"), var("B"), var("H"), var("F")));
+		final Expression input =
+				and(and(and(or(intVar("A"), intVar("B")), or(intVar("C"), intVar("D"))), or(intVar("E"), intVar("F"))),
+						or(intVar("G"), intVar("H")));
+		final Expression nnf =
+				and(and(and(or(intVar("B"), intVar("A")), or(intVar("D"), intVar("C"))), or(intVar("F"), intVar("E"))),
+						or(intVar("H"), intVar("G")));
+		final Expression dnf = or(and(intVar("C"), intVar("A"), intVar("G"), intVar("E")),
+				and(intVar("C"), intVar("A"), intVar("G"), intVar("E")),
+				and(intVar("C"), intVar("A"), intVar("H"), intVar("E")),
+				and(intVar("C"), intVar("A"), intVar("G"), intVar("F")),
+				and(intVar("C"), intVar("A"), intVar("H"), intVar("F")),
+				and(intVar("D"), intVar("A"), intVar("G"), intVar("E")),
+				and(intVar("D"), intVar("A"), intVar("H"), intVar("E")),
+				and(intVar("D"), intVar("A"), intVar("G"), intVar("F")),
+				and(intVar("D"), intVar("A"), intVar("H"), intVar("F")),
+				and(intVar("C"), intVar("B"), intVar("G"), intVar("E")),
+				and(intVar("C"), intVar("B"), intVar("H"), intVar("E")),
+				and(intVar("C"), intVar("B"), intVar("G"), intVar("F")),
+				and(intVar("C"), intVar("B"), intVar("H"), intVar("F")),
+				and(intVar("D"), intVar("B"), intVar("G"), intVar("E")),
+				and(intVar("D"), intVar("B"), intVar("H"), intVar("E")),
+				and(intVar("D"), intVar("B"), intVar("G"), intVar("F")),
+				and(intVar("D"), intVar("B"), intVar("H"), intVar("F")));
 		// i dont want to order this s.t. it fits :(
 		test(input, nnf, null);
+	}
+
+	@Test
+	public void testNotEquals() {
+		final Expression input = term(boolVar("A"), true, Operator.COMPNEQ);
+		testRewrite(input, input);
 	}
 
 	private static void testRewrite(final Expression input, final Expression afterRewrite) {
