@@ -204,12 +204,7 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, IBoogieVar
 
 		if (!toberemoved.isEmpty()) {
 			// ... and remove them if there are any
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(getLogMessageRemoveLocalsPreCall(preCallState, toberemoved));
-			}
 			preCallState = preCallState.removeVariables(toberemoved);
-		} else if (mLogger.isDebugEnabled()) {
-			mLogger.debug(getLogMessageNoRemoveLocalsPreCall(preCallState));
 		}
 		// now we combine the state after returning from this method with the one from before we entered the method.
 		rtr = rtr.patch(preCallState);
@@ -263,17 +258,8 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, IBoogieVar
 	 */
 	private Set<IBoogieVar> getMaskedGlobalsVariables(final String procedure) {
 		assert procedure != null;
-		final Set<IBoogieVar> globals = new HashSet<>();
-		for (final IProgramNonOldVar global : mSymbolTable.getGlobals()) {
-			globals.add((IBoogieVar) global);
-		}
-		for (final IProgramConst pc : mSymbolTable.getConstants()) {
-			globals.add((IBoogieVar) pc);
-		}
-
-		final Set<IBoogieVar> locals = new HashSet<>();
-		locals.addAll(getLocalVariables(procedure));
-
+		final Set<IBoogieVar> globals = getGlobalScopeVarAndConsts();
+		final Set<IBoogieVar> locals = getLocalVariables(procedure);
 		final Set<IBoogieVar> rtr = new HashSet<>();
 
 		for (final IBoogieVar local : locals) {
