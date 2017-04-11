@@ -53,8 +53,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive.ParrotInteractiveIterationInfo;
 
 public class TAConverter extends Converter<GeneratedMessageV3, Object> {
-	public TAConverter() {
-		super(Object.class);
+	public TAConverter(IUltimateServiceProvider services) {
+		super(services, Object.class);
 	}
 
 	@Override

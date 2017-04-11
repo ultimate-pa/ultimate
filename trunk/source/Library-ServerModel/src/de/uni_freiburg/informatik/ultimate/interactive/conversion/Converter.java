@@ -24,12 +24,18 @@ public abstract class Converter<A, B> {
 	private final ConverterRegistry<A, B> mConverterRegistry;
 	private final Class<B> mTargetClass;
 	private IInteractive<B> mTargetInterface;
+	private final IUltimateServiceProvider mServices;
 
-	protected Converter(Class<B> targetClass) {
+	protected Converter(IUltimateServiceProvider services, Class<B> targetClass) {
+		mServices = services;
 		mTargetClass = targetClass;
 		mConverterRegistry = new ConverterRegistry<>();
 
 		init(mConverterRegistry);
+	}
+	
+	protected final IUltimateServiceProvider getServices() {
+		return mServices;
 	}
 
 	protected abstract void init(final ConverterRegistry<A, B> converterRegistry);

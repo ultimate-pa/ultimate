@@ -7,6 +7,7 @@ import com.google.protobuf.GeneratedMessageV3;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultSummarizer;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.Converter;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.ConverterRegistry;
 import de.uni_freiburg.informatik.ultimate.servercontroller.ServerController.ResultsWrapper;
@@ -18,12 +19,12 @@ import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.ToolchainResults;
 
 public class ControllerConverter extends Converter<GeneratedMessageV3, Object> {
-	public static ControllerConverter get() {
-		return new ControllerConverter();
+	public static ControllerConverter get(IUltimateServiceProvider services) {
+		return new ControllerConverter(services);
 	}
 
-	protected ControllerConverter() {
-		super(Object.class);
+	protected ControllerConverter(IUltimateServiceProvider services) {
+		super(services, Object.class);
 	}
 
 	private static Controller.StackTraceElement convertStackTraceElement(StackTraceElement el) {
@@ -57,7 +58,8 @@ public class ControllerConverter extends Converter<GeneratedMessageV3, Object> {
 		});
 
 		converterRegistry.registerBA(Controller.Exception.class, Throwable.class, e -> {
-			final Controller.Exception.Builder builder = Controller.Exception.newBuilder().setClass_(e.getClass().getName());
+			final Controller.Exception.Builder builder =
+					Controller.Exception.newBuilder().setClass_(e.getClass().getName());
 			Arrays.stream(e.getStackTrace()).map(ControllerConverter::convertStackTraceElement)
 					.forEach(builder::addStackTrace);
 			if (e.getMessage() != null)

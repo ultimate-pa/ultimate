@@ -217,7 +217,7 @@ public class ServerController implements IController<RunDefinition> {
 
 		mConverterInitializer = new Converter.Initializer<>(mProtoInterface, mServer.getTypeRegistry());
 
-		ControllerConverter converter = ControllerConverter.get();
+		ControllerConverter converter = ControllerConverter.get(null); // TODO: register this with service provider
 		mInternalInterface = mConverterInitializer.getConvertedInteractiveInterface(converter);
 
 		// TODO: separate internal interface from common interface
