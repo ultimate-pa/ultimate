@@ -70,7 +70,7 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 	private final IProgressAwareTimer mTimer;
 	private final ILogger mLogger;
 
-	private AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> mResult;
+	private AbsIntResult<STATE, ACTION, VARDECL, LOC> mResult;
 	private final SummaryMap<STATE, ACTION, VARDECL, LOC> mSummaryMap;
 
 	public BackwardFixpointEngine(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params) {
@@ -91,11 +91,11 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 	}
 
 	@Override
-	public AbstractInterpretationResult<STATE, ACTION, VARDECL, LOC> run(final Collection<? extends LOC> start,
+	public AbsIntResult<STATE, ACTION, VARDECL, LOC> run(final Collection<? extends LOC> start,
 			final Script script) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
-		mResult = new AbstractInterpretationResult<>(script, mDomain, mTransitionProvider, mVarProvider);
+		mResult = new AbsIntResult<>(script, mDomain, mTransitionProvider, mVarProvider);
 		calculateFixpoint(start);
 		mResult.saveRootStorage(mStateStorage);
 		mResult.saveSummaryStorage(mSummaryMap);

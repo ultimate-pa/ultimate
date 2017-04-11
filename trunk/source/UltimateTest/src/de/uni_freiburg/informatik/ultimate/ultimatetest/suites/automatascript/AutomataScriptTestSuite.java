@@ -35,7 +35,6 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.AutomataScriptTestResultDecider;
@@ -105,12 +104,7 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 		for (final File inputFile : inputFiles) {
 			final File settingsFile = null;
 			final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, mToolchainFile);
-			final UltimateStarter starter = new UltimateStarter(urd, mTimeout);
-			final UltimateTestCase utc = new UltimateTestCase(urd.generateShortStringRepresentation(),
-					new AutomataScriptTestResultDecider(), starter,
-					// mDescription + "_" + inputFile.getAbsolutePath(),
-					urd, super.getSummaries(), null);
-			testCases.add(utc);
+			testCases.add(buildTestCase(urd, mTimeout, new AutomataScriptTestResultDecider()));
 		}
 		testCases.sort(null);
 		return testCases;

@@ -66,6 +66,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -222,6 +223,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 
 		final List<Backbone> incompleteBackbones = new ArrayList<>();
 		final List<Backbone> completeBackbones = new ArrayList<>();
+		checkTransition(entryTransition);
 		incompleteBackbones.add(new Backbone(entryTransition));
 
 		while (!incompleteBackbones.isEmpty()) {
@@ -246,6 +248,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 				final List<IcfgEdge> outgoingEdges = location.getOutgoingEdges();
 				for (int j = 0; j < outgoingEdges.size(); j++) {
 					final IcfgEdge edge = outgoingEdges.get(j);
+					checkTransition(edge);
 					if (j == outgoingEdges.size() - 1) {
 						backbone.addTransition(edge);
 					} else {
@@ -258,6 +261,15 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		}
 
 		return completeBackbones;
+	}
+
+	private void checkTransition(final IcfgEdge transition) {
+
+		final TermClassifier tclassifier = new TermClassifier();
+		tclassifier.checkTerm(transition.getTransformula().getFormula());
+		if (tclassifier.hasArrays()) {
+			throw new UnsupportedOperationException("Cannot handle arrays");
+		}
 	}
 
 	private Term getTransformulaForBackboneHelper(final TransFormula tf, final Term term,
@@ -433,6 +445,9 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 	 * @return A merged TransFormula.
 	 */
 	private UnmodifiableTransFormula mergeTransFormulas(final TransFormula first, final TransFormula second) {
+		// perhaps replace with TransFormulaUtils.sequentialComposition(logger, services, mgdScript, simplify, extPqe,
+		// tranformToCNF, xnfConversionTechnique, simplificationTechnique, transFormula)
+
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<>(first.getInVars());
 		final Map<IProgramVar, TermVariable> outVars = new HashMap<>(second.getOutVars());
 		final Set<TermVariable> auxVars = new HashSet<>(first.getAuxVars());

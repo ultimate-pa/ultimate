@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -25,7 +26,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 public final class ExpressionTransformer {
 	private BigInteger mConstant;
 	private HashMap<String, BigInteger> mCoefficients;
-	private final HashMap<String, IdentifierExpression> mIdentifiers;
+	private final HashMap<String, Expression> mIdentifiers;
 	private boolean mIsLinear;
 	private boolean mHasNormalForm;
 
@@ -88,41 +89,41 @@ public final class ExpressionTransformer {
 					break;
 				case LOGICAND:
 					newOp = Operator.LOGICOR;
-					newLeft = new UnaryExpression(loc, BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG,
-					        newLeft);
-					newRight = new UnaryExpression(loc, BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG,
-					        newRight);
+					newLeft =
+							new UnaryExpression(loc, BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, newLeft);
+					newRight =
+							new UnaryExpression(loc, BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, newRight);
 					break;
 				case LOGICOR:
 					newOp = Operator.LOGICAND;
-					newLeft = new UnaryExpression(loc, BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG,
-					        newLeft);
-					newRight = new UnaryExpression(loc, BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG,
-					        newRight);
+					newLeft =
+							new UnaryExpression(loc, BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, newLeft);
+					newRight =
+							new UnaryExpression(loc, BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, newRight);
 					break;
 				case LOGICIMPLIES:
 					newOp = Operator.LOGICAND;
-					newRight = new UnaryExpression(loc, BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG,
-					        newRight);
+					newRight =
+							new UnaryExpression(loc, BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, newRight);
 					break;
 				case LOGICIFF:
 					newOp = Operator.LOGICOR;
 					final Expression leftLeft = newLeft;
-					final Expression leftRight = new UnaryExpression(loc, BoogieType.TYPE_BOOL,
-					        UnaryExpression.Operator.LOGICNEG, newRight);
-					final Expression rightLeft = new UnaryExpression(loc, BoogieType.TYPE_BOOL,
-					        UnaryExpression.Operator.LOGICNEG, newLeft);
+					final Expression leftRight =
+							new UnaryExpression(loc, BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, newRight);
+					final Expression rightLeft =
+							new UnaryExpression(loc, BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, newLeft);
 					final Expression rightRight = newRight;
 					newLeft = new BinaryExpression(loc, BoogieType.TYPE_BOOL, Operator.LOGICAND, leftLeft, leftRight);
-					newRight = new BinaryExpression(loc, BoogieType.TYPE_BOOL, Operator.LOGICAND, rightLeft,
-					        rightRight);
+					newRight =
+							new BinaryExpression(loc, BoogieType.TYPE_BOOL, Operator.LOGICAND, rightLeft, rightRight);
 					break;
 				default:
 					// Other operators can't be handled or are not valid, so just return the old expression
 					return expr;
 				}
-				final BinaryExpression newExp = new BinaryExpression(loc, BoogieType.TYPE_BOOL, newOp, newLeft,
-				        newRight);
+				final BinaryExpression newExp =
+						new BinaryExpression(loc, BoogieType.TYPE_BOOL, newOp, newLeft, newRight);
 				return transform(newExp);
 			} else if (expr.getExpr() instanceof UnaryExpression) {
 				final UnaryExpression unexp = (UnaryExpression) expr.getExpr();
@@ -160,18 +161,18 @@ public final class ExpressionTransformer {
 		case LOGICIMPLIES:
 			newOp = Operator.LOGICOR;
 			newLeft = transform(
-			        new UnaryExpression(loc, BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, expr.getLeft()));
+					new UnaryExpression(loc, BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, expr.getLeft()));
 			newRight = transform(expr.getRight());
 			break;
 		case LOGICIFF:
 			// x <==> y --> (x && y) || (!x && !y)
 			newOp = Operator.LOGICOR;
 			newLeft = transform(new BinaryExpression(loc, BoogieType.TYPE_BOOL, Operator.LOGICAND, expr.getLeft(),
-			        expr.getRight()));
-			final Expression negLeft = new UnaryExpression(loc, BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG,
-			        expr.getLeft());
-			final Expression negRight = new UnaryExpression(loc, BoogieType.TYPE_BOOL,
-			        UnaryExpression.Operator.LOGICNEG, expr.getRight());
+					expr.getRight()));
+			final Expression negLeft =
+					new UnaryExpression(loc, BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, expr.getLeft());
+			final Expression negRight =
+					new UnaryExpression(loc, BoogieType.TYPE_BOOL, UnaryExpression.Operator.LOGICNEG, expr.getRight());
 			newRight = transform(new BinaryExpression(loc, BoogieType.TYPE_BOOL, Operator.LOGICAND, negLeft, negRight));
 			break;
 		case COMPEQ:
@@ -184,11 +185,11 @@ public final class ExpressionTransformer {
 			final Function<IBoogieType, Triple<Expression, Expression, Boolean>> intFunction = type -> {
 				return new Triple<>(atomicTransform(expr), null, false);
 			};
-			final Function<IBoogieType, Triple<Expression, Expression, Boolean>> defaultFunction = type -> new Triple<>(
-			        expr, null, false);
+			final Function<IBoogieType, Triple<Expression, Expression, Boolean>> defaultFunction =
+					type -> new Triple<>(expr, null, false);
 
 			final Triple<Expression, Expression, Boolean> res = TypeUtils.applyTypeFunction(intFunction,
-			        defaultFunction, boolFunction, defaultFunction, expr.getLeft().getType());
+					defaultFunction, boolFunction, defaultFunction, expr.getLeft().getType());
 
 			if (res.getThird()) {
 				newLeft = res.getFirst();
@@ -231,8 +232,8 @@ public final class ExpressionTransformer {
 					newExpr = new BinaryExpression(loc, var.getType(), Operator.ARITHMUL, coeff, var);
 				}
 			} else {
-				final Expression coeff = new IntegerLiteral(loc, BoogieType.TYPE_INT,
-				        entry.getValue().abs().toString());
+				final Expression coeff =
+						new IntegerLiteral(loc, BoogieType.TYPE_INT, entry.getValue().abs().toString());
 				final Expression summand = new BinaryExpression(loc, var.getType(), Operator.ARITHMUL, coeff, var);
 				final Operator operator = entry.getValue().signum() > 0 ? Operator.ARITHPLUS : Operator.ARITHMINUS;
 				if (entry.getValue().abs().equals(BigInteger.ONE)) {
@@ -261,13 +262,13 @@ public final class ExpressionTransformer {
 			case COMPNEQ:
 				if (newExpr instanceof BinaryExpression && mConstant.signum() != 0) {
 					// For comparison operators, the constant is on the right side (better to handle for non-zero)
-					final IntegerLiteral integer = new IntegerLiteral(loc, BoogieType.TYPE_INT,
-					        mConstant.negate().toString());
+					final IntegerLiteral integer =
+							new IntegerLiteral(loc, BoogieType.TYPE_INT, mConstant.negate().toString());
 					newExpr = new BinaryExpression(loc, BoogieType.TYPE_INT, operator,
-					        ((BinaryExpression) newExpr).getLeft(), integer);
+							((BinaryExpression) newExpr).getLeft(), integer);
 				} else {
 					newExpr = new BinaryExpression(loc, BoogieType.TYPE_INT, operator, newExpr,
-					        new IntegerLiteral(loc, BoogieType.TYPE_INT, "0"));
+							new IntegerLiteral(loc, BoogieType.TYPE_INT, "0"));
 				}
 				break;
 			default:
@@ -300,6 +301,16 @@ public final class ExpressionTransformer {
 	}
 
 	private void processUnary(final UnaryExpression expr) {
+		if (expr.getOperator() == UnaryExpression.Operator.OLD) {
+			if (!(expr.getExpr() instanceof IdentifierExpression)) {
+				throw new UnsupportedOperationException("We do not support old expressions atm, only old variables");
+			}
+			final String id = BoogiePrettyPrinter.print(expr);
+			mCoefficients.put(id, BigInteger.ONE);
+			mIdentifiers.put(id, expr);
+			mHasNormalForm = true;
+			return;
+		}
 		if (expr.getOperator() != UnaryExpression.Operator.ARITHNEGATIVE) {
 			return;
 		}
@@ -312,7 +323,7 @@ public final class ExpressionTransformer {
 				mCoefficients.put(entry.getKey(), entry.getValue().negate());
 			}
 			if (sub.mHasNormalForm && (sub.mCoefficients.isEmpty() && sub.mConstant.signum() > 0
-			        || sub.mCoefficients.size() == 1 && sub.mConstant.signum() == 0)) {
+					|| sub.mCoefficients.size() == 1 && sub.mConstant.signum() == 0)) {
 				mHasNormalForm = true;
 			}
 		} else {

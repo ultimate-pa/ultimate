@@ -42,6 +42,9 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.QuantifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.ConstructedType;
+import de.uni_freiburg.informatik.ultimate.boogie.type.PrimitiveType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 
 /**
  *
@@ -273,13 +276,19 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 	public Expression rewritePredNotEquals(final Expression atom) {
 		if (atom instanceof BinaryExpression) {
 			final BinaryExpression binexp = (BinaryExpression) atom;
-			if (binexp.getOperator() == Operator.COMPNEQ) {
-				final Expression left = new BinaryExpression(atom.getLocation(), BoogieType.TYPE_BOOL, Operator.COMPLT,
-						binexp.getLeft(), binexp.getRight());
-				final Expression right = new BinaryExpression(atom.getLocation(), BoogieType.TYPE_BOOL, Operator.COMPGT,
-						binexp.getLeft(), binexp.getRight());
-				return new BinaryExpression(atom.getLocation(), BoogieType.TYPE_BOOL, Operator.LOGICOR, left, right);
+			if (binexp.getOperator() != Operator.COMPNEQ) {
+				return atom;
 			}
+			final IBoogieType lType = binexp.getLeft().getType();
+			if (!isAnyPrimitiveType(lType) || isPrimitiveType(lType, BoogieType.TYPE_BOOL)) {
+				return atom;
+			}
+
+			final Expression left = new BinaryExpression(atom.getLocation(), BoogieType.TYPE_BOOL, Operator.COMPLT,
+					binexp.getLeft(), binexp.getRight());
+			final Expression right = new BinaryExpression(atom.getLocation(), BoogieType.TYPE_BOOL, Operator.COMPGT,
+					binexp.getLeft(), binexp.getRight());
+			return new BinaryExpression(atom.getLocation(), BoogieType.TYPE_BOOL, Operator.LOGICOR, left, right);
 		}
 		return atom;
 	}
@@ -357,6 +366,41 @@ public class BoogieExpressionTransformer implements INormalFormable<Expression> 
 		if (formula instanceof UnaryExpression) {
 			final UnaryExpression uform = (UnaryExpression) formula;
 			return uform.getExpr() instanceof IdentifierExpression;
+		}
+		return false;
+	}
+
+	private static boolean isPrimitiveType(final IBoogieType type, final PrimitiveType desiredType) {
+		if (type instanceof PrimitiveType) {
+			return ((PrimitiveType) type).getTypeCode() == desiredType.getTypeCode();
+		} else if (type instanceof ConstructedType) {
+			final ConstructedType ctype = (ConstructedType) type;
+			if (ctype.getUnderlyingType() instanceof ConstructedType) {
+				return false;
+			}
+			if (ctype.getUnderlyingType() == ctype) {
+				return false;
+			}
+			return isPrimitiveType(ctype.getUnderlyingType(), desiredType);
+		}
+		return false;
+	}
+
+	private static boolean isAnyPrimitiveType(final IBoogieType type) {
+		if (type == null) {
+			throw new IllegalArgumentException("type is null");
+		}
+		if (type instanceof PrimitiveType) {
+			return true;
+		} else if (type instanceof ConstructedType) {
+			final ConstructedType ctype = (ConstructedType) type;
+			if (ctype.getUnderlyingType() instanceof ConstructedType) {
+				return false;
+			}
+			if (ctype.getUnderlyingType() == ctype) {
+				return false;
+			}
+			return isAnyPrimitiveType(ctype.getUnderlyingType());
 		}
 		return false;
 	}

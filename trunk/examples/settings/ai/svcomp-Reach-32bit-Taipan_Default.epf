@@ -44,13 +44,6 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Trace\ refinement\ strategy=TAIPAN
 
 
-#Thu Oct 29 23:01:13 CET 2015
-file_export_version=3.0
-@de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=0.0.1
-\!/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner=
-/instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/to\ procedures,\ called\ more\ than\ once=true
-
-
 #Thu Oct 29 17:01:28 CET 2015
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2=0.0.1

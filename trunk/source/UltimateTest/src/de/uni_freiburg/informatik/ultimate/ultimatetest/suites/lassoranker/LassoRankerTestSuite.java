@@ -35,7 +35,6 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.LassoRankerTestResultDecider;
@@ -110,12 +109,11 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 		final File settingsFile = new File(TestUtil.getPathFromTrunk(SETTINGS_FILE));
 		for (final File inputFile : inputFiles) {
 			final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
-			final UltimateStarter starter = new UltimateStarter(urd, DEADLINE);
 			final LassoRankerTestResultDecider decider = new LassoRankerTestResultDecider(inputFile);
 			if (decider.getExpectedResult() == ExpectedResult.IGNORE) {
 				continue;
 			}
-			rtr.add(new UltimateTestCase(inputFile.getName(), decider, starter, urd, super.getSummaries(), null));
+			rtr.add(buildTestCase(urd, DEADLINE, decider, inputFile.getName()));
 		}
 
 		return rtr;

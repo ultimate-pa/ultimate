@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
 
@@ -39,12 +39,17 @@ import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestR
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
+/**
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ *
+ */
 public class DefaultIncrementalLogfile implements IIncrementalLog {
 
 	private final Class<? extends UltimateTestSuite> mUltimateTestSuite;
 	private File mLogFile;
 
-	public DefaultIncrementalLogfile(Class<? extends UltimateTestSuite> ultimateTestSuite) {
+	public DefaultIncrementalLogfile(final Class<? extends UltimateTestSuite> ultimateTestSuite) {
 		mUltimateTestSuite = ultimateTestSuite;
 	}
 
@@ -64,7 +69,7 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 	}
 
 	@Override
-	public void addEntryPreStart(UltimateRunDefinition urd, ILogger testlogger) {
+	public void addEntryPreStart(final UltimateRunDefinition urd, final ILogger testlogger) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString());
 		sb.append(" Starting test for ");
@@ -74,8 +79,9 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 	}
 
 	@Override
-	public void addEntryPostCompletion(UltimateRunDefinition urd, TestResult result, String resultCategory,
-			String resultMessage, IUltimateServiceProvider services, ILogger testlogger) {
+	public void addEntryPostCompletion(final UltimateRunDefinition urd, final TestResult result,
+			final String resultCategory, final String resultMessage, final IUltimateServiceProvider services,
+			final ILogger testlogger) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append(de.uni_freiburg.informatik.ultimate.util.CoreUtil.getCurrentDateTimeAsString());
 		sb.append(" Finishing test with ");
@@ -90,7 +96,7 @@ public class DefaultIncrementalLogfile implements IIncrementalLog {
 		writeToFile(sb.toString(), testlogger);
 	}
 
-	protected void writeToFile(String logmessage, ILogger log) {
+	protected void writeToFile(final String logmessage, final ILogger log) {
 		if (logmessage == null || logmessage.isEmpty()) {
 			return;
 		}

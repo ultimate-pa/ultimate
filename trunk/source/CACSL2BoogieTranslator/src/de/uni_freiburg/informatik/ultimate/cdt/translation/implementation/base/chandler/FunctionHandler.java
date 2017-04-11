@@ -82,6 +82,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
+import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.CACSLLocation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
@@ -306,8 +307,8 @@ public class FunctionHandler {
 						final String msg = "Implementation does not match declaration! "
 								+ "Type missmatch on in-parameters! " + in.length + " arguments, "
 								+ proc.getInParams().length + " parameters, " + "first missmatch at position " + i
-								+ ", " + "argument type " + in[i].getType().toString() + ", " + "param type "
-								+ proc.getInParams()[i].toString();
+								+ ", " + "argument type " + BoogiePrettyPrinter.print(in[i].getType())
+								+ ", param type " + BoogiePrettyPrinter.print(proc.getInParams()[i]);
 						throw new IncorrectSyntaxException(loc, msg);
 					}
 				}

@@ -119,7 +119,7 @@ public final class BoogiePrettyPrinter {
 		return sb.toString();
 	}
 	
-	public static String printASTType(final ASTType astType) {
+	public static String print(final ASTType astType) {
 		final BoogieOutput output = new BoogieOutput(null);
 		final StringBuilder sb = new StringBuilder();
 		output.appendType(sb, astType, 0);

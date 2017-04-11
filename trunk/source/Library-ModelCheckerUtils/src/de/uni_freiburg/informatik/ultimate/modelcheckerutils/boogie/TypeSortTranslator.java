@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie;
 
 import java.math.BigInteger;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -77,7 +78,21 @@ public class TypeSortTranslator {
 		for (final TypeDeclaration typeDecl : declarations) {
 			declareType(typeDecl);
 		}
-
+	}
+	
+	/**
+	 * Constructor is only used in a workaround for the backtranslation
+	 * while dumping path programs.
+	 */
+	public TypeSortTranslator(final Script script,
+			final IUltimateServiceProvider services) {
+		this(Collections.emptySet(), script, services);
+		{
+			// Add type/sort mapping for Int.
+			final Sort intSort = mScript.sort("Int");
+			final IBoogieType boolType = BoogieType.TYPE_INT;
+			cacheSort(boolType, intSort);
+		}
 	}
 
 	public IBoogieType getType(final Sort sort) {

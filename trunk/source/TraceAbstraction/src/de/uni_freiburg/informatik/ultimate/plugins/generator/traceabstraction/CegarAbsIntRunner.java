@@ -99,6 +99,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.we
  */
 public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
+	private static final boolean USE_INTERPOLANT_WEAKENER = true;
+
 	private final CegarLoopStatisticsGenerator mCegarLoopBenchmark;
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
@@ -317,6 +319,12 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		return transitions;
 	}
 
+	/**
+	 * 
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 * @param <STATE>
+	 */
 	private final class AbsIntCurrentIteration<STATE extends IAbstractState<STATE, IBoogieVar>> {
 		private final IRun<LETTER, IPredicate, ?> mCex;
 		private final IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> mResult;
@@ -381,9 +389,17 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 				final List<LETTER> ppTrace = constructTraceFromWord(word, mPathProgram);
 				final List<AbsIntPredicate<STATE, IBoogieVar>> nonUnifiedPredicates = generateAbsIntPredicates(ppTrace);
-				final List<AbsIntPredicate<STATE, IBoogieVar>> weakenedPredicates =
-						weakenPredicates(nonUnifiedPredicates, ppTrace);
+
+				final List<AbsIntPredicate<STATE, IBoogieVar>> weakenedPredicates;
+				if (USE_INTERPOLANT_WEAKENER) {
+					weakenedPredicates = weakenPredicates(nonUnifiedPredicates, ppTrace);
+					assert isInductive(mCex.getWord().asList(),
+							weakenedPredicates) : "Sequence of interpolants not inductive (after weakening)!";
+				} else {
+					weakenedPredicates = nonUnifiedPredicates;
+				}
 				final List<AbsIntPredicate<STATE, IBoogieVar>> interpolants = unifyPredicates(weakenedPredicates);
+
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Interpolant sequence:");
 					mLogger.debug(interpolants);
@@ -409,9 +425,6 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 		private List<AbsIntPredicate<STATE, IBoogieVar>> weakenPredicates(
 				final List<AbsIntPredicate<STATE, IBoogieVar>> nonUnifiedPredicates, final List<LETTER> ppTrace) {
-			// return new DummyInterpolantSequenceWeakener<>(mLogger, getHoareTripleChecker(), nonUnifiedPredicates,
-			// ppTrace, mTruePredicate, mFalsePredicate, mCsToolkit.getManagedScript().getScript(),
-			// mPredicateUnifierAbsInt.getPredicateFactory()).getResult();
 			return new AbsIntPredicateInterpolantSequenceWeakener<>(mLogger, getHoareTripleChecker(),
 					nonUnifiedPredicates, ppTrace, mTruePredicate, mFalsePredicate,
 					mCsToolkit.getManagedScript().getScript(), mPredicateUnifierAbsInt.getPredicateFactory())

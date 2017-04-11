@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.test.reporting;
@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.test.reporting;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 
 /**
- * Provides methods from which UltimateTest deduces filenames of logs or summaries. 
+ * Provides methods from which UltimateTest deduces filenames of logs or summaries.
  * 
  * @author dietsch@informatik.uni-freiburg.de
  * 
@@ -37,23 +37,21 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 public interface ITestLogfile {
 
 	/**
-	 * Class of the UltimateTestSuite for which this log file will be written.
-	 * Some aspects of the class are part of the filename.
+	 * Class of the UltimateTestSuite for which this log file will be written. Some aspects of the class are part of the
+	 * filename.
 	 */
-	public Class<? extends UltimateTestSuite> getUltimateTestSuiteClass();
+	Class<? extends UltimateTestSuite> getUltimateTestSuiteClass();
 
 	/**
-	 * Description of this type of logfile, e.g., "AutomataScriptSummary",
-	 * "TraceAbstractionBenchmarks". This String is part of the filename to
-	 * which this summary is written.
+	 * Description of this type of logfile, e.g., "AutomataScriptSummary", "TraceAbstractionBenchmarks". This String is
+	 * part of the filename to which this summary is written.
 	 * 
 	 */
-	public String getDescriptiveLogName();
+	String getDescriptiveLogName();
 
 	/**
-	 * Filename extension of the log file that will be written. E.g., ".log", or
-	 * ".csv"
+	 * Filename extension of the log file that will be written. E.g., ".log", or ".csv"
 	 */
-	public String getFilenameExtension();
+	String getFilenameExtension();
 
 }

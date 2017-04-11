@@ -511,7 +511,10 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	@Override
 	public STATE removeVariables(final Collection<VARDECL> variables) {
 		assert variables != null;
-		assert !variables.isEmpty();
+
+		if (isEmpty()) {
+			return getThis();
+		}
 
 		final Set<VARDECL> newVarMap = new HashSet<>(mVariables);
 		final Map<VARDECL, V> newValMap = new HashMap<>(getVar2ValueNonrelational());
@@ -663,6 +666,8 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		}
 		return obj == this;
 	}
+
+	protected abstract STATE getThis();
 
 	protected abstract STATE createCopy();
 

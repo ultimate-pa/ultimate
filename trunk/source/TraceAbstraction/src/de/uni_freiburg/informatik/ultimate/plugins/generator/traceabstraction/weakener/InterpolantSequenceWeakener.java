@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.weakener;
 
+import java.text.DecimalFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,6 +41,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
@@ -67,7 +69,11 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	protected final Script mScript;
 	protected final BasicPredicateFactory mPredicateFactory;
 	private final TripleList<P, LETTER> mTripleList;
-	protected final Map<PredicateLetterIdentifier<P, LETTER>, P> mHierarchicalPreStates;
+	protected final Map<Integer, P> mHierarchicalPreStates;
+
+	// TODO: move statistics in benchmarks class
+	private int mSuccessfulWeakenings;
+	private final List<Rational> mSizeDifferential;
 
 	/**
 	 * Default constructor. Generates result directly.
@@ -84,6 +90,9 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	public InterpolantSequenceWeakener(final ILogger logger, final HTC htc, final List<P> predicates,
 			final List<LETTER> trace, final P precondition, final P postcondition, final Script script,
 			final BasicPredicateFactory predicateFactory) {
+		mSuccessfulWeakenings = 0;
+		mSizeDifferential = new ArrayList<>();
+
 		mLogger = logger;
 		mHtc = Objects.requireNonNull(htc);
 		mPrecondition = precondition;
@@ -103,34 +112,36 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		if (mResult.size() != predicates.size()) {
 			throw new IllegalStateException("The size of the produced result list is invalid.");
 		}
+		reportStatistics();
 	}
 
 	/**
-	 * Generates for the call sequence the hierarchical prestates.
+	 * Generates for the call sequence the hierarchical prestates a map mapping the position of the predicate in the
+	 * trace to the hierarchical prestate.
 	 *
 	 * @param predicates
 	 *            The states.
 	 * @param trace
 	 *            The sequence of statements.
-	 * @return A map containing prestate to corresponding hierarchical prestate.
+	 * @return A map from the position in the trace to corresponding hierarchical prestate.
 	 */
-	private Map<PredicateLetterIdentifier<P, LETTER>, P> generateCallHierarchicalPreStates(final List<P> predicates,
-			final List<LETTER> trace) {
-		final Map<PredicateLetterIdentifier<P, LETTER>, P> returnMap = new HashMap<>();
+	private Map<Integer, P> generateCallHierarchicalPreStates(final List<P> predicates, final List<LETTER> trace) {
+		final Map<Integer, P> returnMap = new HashMap<>();
 		final Deque<P> hierarchicalCallStates = new ArrayDeque<>();
 		final Iterator<StateTriple<P, LETTER>> it = mTripleList.getIterator();
+		int tracePosition = 0;
 
 		while (it.hasNext()) {
 			final StateTriple<P, LETTER> triple = it.next();
 			if (triple.getTransition() instanceof ICallAction) {
 				hierarchicalCallStates.addFirst(triple.getFirstState());
 			} else if (triple.getTransition() instanceof IReturnAction) {
-				final PredicateLetterIdentifier<P, LETTER> predLetter =
-						new PredicateLetterIdentifier<>(triple.getFirstState(), triple.getTransition());
-				assert !returnMap.containsKey(predLetter);
 				final P hierState = hierarchicalCallStates.removeFirst();
-				returnMap.put(predLetter, hierState);
+				assert !returnMap.containsKey(tracePosition);
+				returnMap.put(tracePosition, hierState);
 			}
+
+			tracePosition++;
 		}
 
 		return returnMap;
@@ -139,10 +150,9 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	private List<P> generateResult(final List<P> predicates, final List<LETTER> list) {
 		assert list != null;
 
-		final List<P> returnList = new ArrayList<>();
-
 		final TripleList<P, LETTER> tripleList = new TripleList<>(predicates, list, mPrecondition, mPostcondition);
 		final TripleList.TripleListReverseIterator<P, LETTER> it = tripleList.getReverseIterator();
+		int tracePosition = list.size() - 1;
 
 		if (!it.hasNext()) {
 			throw new IllegalStateException("There is no letter in the list to analyze.");
@@ -152,19 +162,21 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		P currentPostState = currentStateTriple.getSecondState();
 
 		// Reverse iterate over the list.
+		final List<P> returnList = new ArrayList<>();
 		while (true) {
 			final P currentPreState = currentStateTriple.getFirstState();
 			final LETTER transition = currentStateTriple.getTransition();
 
-			assert checkIfInductive(currentPreState, transition, currentPostState,
-					mHtc) : "Prestate and poststate are not inductive under the current transition.";
+			assert checkIfInductive(currentPreState, transition, currentPostState, mHtc,
+					tracePosition) : "Prestate and poststate are not inductive under the current transition.";
 
 			// If the currentPreState corresponds to the precondition, we arrived at the top, therefore break.
 			if (currentPreState == mPrecondition) {
 				break;
 			}
 
-			final P refinedState = refinePreState(currentPreState, transition, currentPostState);
+			final P refinedState = refinePreState(currentPreState, transition, currentPostState, tracePosition);
+			addSizeDifferential(currentPreState, refinedState);
 			returnList.add(refinedState);
 			currentPostState = refinedState;
 
@@ -173,6 +185,8 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 			} else {
 				break;
 			}
+
+			tracePosition--;
 		}
 
 		Collections.reverse(returnList);
@@ -184,6 +198,36 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		}
 		return returnList;
 
+	}
+
+	private void addSizeDifferential(final P preState, final P refinedState) {
+		final int preStateSize = preState.getVars().size();
+		final int refinedStateSize = refinedState.getVars().size();
+
+		if (preStateSize == refinedStateSize) {
+			return;
+		}
+		if (preStateSize < refinedStateSize) {
+			throw new AssertionError("Weakening cannot introduce more variables");
+		}
+
+		mSuccessfulWeakenings++;
+		final Rational currentRatio = Rational.valueOf(refinedStateSize, preStateSize);
+		mSizeDifferential.add(currentRatio);
+	}
+
+	private void reportStatistics() {
+		if (mSuccessfulWeakenings == 0) {
+			mLogger.info("Could never weaken!");
+		} else {
+			final Rational sum = mSizeDifferential.stream().reduce(Rational.ZERO, (a, b) -> a.add(b));
+			final Rational result = sum.div(Rational.valueOf(mSuccessfulWeakenings, 1));
+			final double rounded = result.numerator().doubleValue() / result.denominator().doubleValue() * 100.0;
+			final DecimalFormat df = new DecimalFormat();
+			df.setMaximumFractionDigits(2);
+			mLogger.info(String.format("Weakened %s states. Average reduction was %s%%.", mSuccessfulWeakenings,
+					df.format(rounded)));
+		}
 	}
 
 	/**
@@ -202,7 +246,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	 */
 	@Deprecated
 	protected final boolean checkIfInductive(final P preState, final LETTER transition, final P postState,
-			final IHoareTripleChecker htc) {
+			final IHoareTripleChecker htc, final int tracePosition) {
 		assert preState != null;
 		assert transition != null;
 		assert postState != null;
@@ -215,9 +259,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		} else if (transition instanceof ICallAction) {
 			validity = mHtc.checkCall(preState, (ICallAction) transition, postState);
 		} else if (transition instanceof IReturnAction) {
-			final PredicateLetterIdentifier<P, LETTER> predLetter =
-					new PredicateLetterIdentifier<>(preState, transition);
-			final P hierState = mHierarchicalPreStates.get(predLetter);
+			final P hierState = mHierarchicalPreStates.get(tracePosition);
 			assert hierState != null;
 			final IReturnAction returnTransition = (IReturnAction) transition;
 			validity = mHtc.checkReturn(preState, hierState, returnTransition, postState);
@@ -244,7 +286,8 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	 *            The poststate.
 	 * @return A (hopefully) refined prestate.
 	 */
-	protected abstract P refinePreState(final P preState, final LETTER transition, final P postState);
+	protected abstract P refinePreState(final P preState, final LETTER transition, final P postState,
+			final int tracePosition);
 
 	/**
 	 * @return the (hopefully) weakened sequence of predicates that is still inductive.
@@ -325,7 +368,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		}
 
 		private final TripleListReverseIterator<P, LETTER> getReverseIterator() {
-			return new TripleListReverseIterator<P, LETTER>(mPredicates, mTrace, mPrecondition, mPostcondition);
+			return new TripleListReverseIterator<>(mPredicates, mTrace, mPrecondition, mPostcondition);
 		}
 
 		/**
@@ -444,72 +487,6 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 				mLetterIndex--;
 				return new StateTriple<>(prev, letter, next);
 			}
-		}
-	}
-
-	/**
-	 * Pair constructed from a predicate and a letter for comparison and putting into hashmaps.
-	 *
-	 * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
-	 *
-	 * @param <P>
-	 *            The type of the predicate stored in this class.
-	 * @param <LETTER>
-	 *            The type of the letter stored in this class.
-	 */
-	protected static final class PredicateLetterIdentifier<P extends IPredicate, LETTER extends IAction> {
-		private final P mPredicate;
-		private final LETTER mLetter;
-
-		protected PredicateLetterIdentifier(final P predicate, final LETTER letter) {
-			mPredicate = predicate;
-			mLetter = letter;
-		}
-
-		protected P getPredicate() {
-			return mPredicate;
-		}
-
-		protected LETTER getLetter() {
-			return mLetter;
-		}
-
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((mLetter == null) ? 0 : mLetter.hashCode());
-			result = prime * result + ((mPredicate == null) ? 0 : mPredicate.hashCode());
-			return result;
-		}
-
-		@Override
-		public boolean equals(final Object obj) {
-			if (this == obj) {
-				return true;
-			}
-			if (obj == null) {
-				return false;
-			}
-			if (!(obj instanceof PredicateLetterIdentifier)) {
-				return false;
-			}
-			final PredicateLetterIdentifier<?, ?> other = (PredicateLetterIdentifier<?, ?>) obj;
-			if (mLetter == null) {
-				if (other.mLetter != null) {
-					return false;
-				}
-			} else if (!mLetter.equals(other.mLetter)) {
-				return false;
-			}
-			if (mPredicate == null) {
-				if (other.mPredicate != null) {
-					return false;
-				}
-			} else if (!mPredicate.equals(other.mPredicate)) {
-				return false;
-			}
-			return true;
 		}
 	}
 }

@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -56,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -65,7 +68,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSy
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.ITermProvider;
@@ -95,6 +100,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
 	private final Boogie2SMT mBoogie2Smt;
 	private final BoogieIcfgContainer mRootAnnotation;
+	private final CallInfoCache mCallInfoCache;
 
 	protected NonrelationalPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
 			final Boogie2SmtSymbolTable bpl2smtSymbolTable,
@@ -108,6 +114,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		mParallelStates = parallelStates;
 		mBoogie2Smt = boogie2Smt;
 		mRootAnnotation = rootAnnotation;
+		mCallInfoCache = new CallInfoCache();
 	}
 
 	@Override
@@ -115,121 +122,78 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		assert oldstate != null;
 		assert !oldstate.isBottom() : "You should not need to calculate post of a bottom state";
 		assert transition != null;
+		final IcfgEdge transitionLabel = transition.getLabel();
 
-		// TODO fix WORKAROUND unsoundness for summary code blocks without procedure implementation
-		if (transition instanceof Summary && !((Summary) transition).calledProcedureHasImplementation()) {
-			throw new UnsupportedOperationException("Summary for procedure without implementation: "
-					+ BoogiePrettyPrinter.print(((Summary) transition).getCallStatement()));
-		}
-
-		List<STATE> currentStates = new ArrayList<>();
-		currentStates.add(oldstate);
-		final List<Statement> statements = mStatementExtractor.process(transition.getLabel());
-
-		for (final Statement stmt : statements) {
-			final List<STATE> afterProcessStates = new ArrayList<>();
-			for (final STATE currentState : currentStates) {
-				final List<STATE> processed = mStatementProcessor.process(currentState, stmt);
-				for (final STATE s : processed) {
-					if (!s.isBottom()) {
-						afterProcessStates.add(s);
-					}
-				}
+		if (transitionLabel instanceof Summary) {
+			if (!((Summary) transitionLabel).calledProcedureHasImplementation()) {
+				// TODO fix WORKAROUND unsoundness for summary code blocks without procedure implementation
+				throw new UnsupportedOperationException("Summary for procedure without implementation: "
+						+ BoogiePrettyPrinter.print(((Summary) transitionLabel).getCallStatement()));
 			}
-			currentStates = afterProcessStates;
+			return handleReturnTransition(oldstate, oldstate, transitionLabel);
+		} else if (transitionLabel instanceof IIcfgInternalTransition<?>) {
+			return handleInternalTransition(oldstate, transitionLabel);
+		} else if (transitionLabel instanceof Call) {
+			return handleCallTransition(oldstate, oldstate, (Call) transitionLabel);
+		} else if (transitionLabel instanceof Return) {
+			return handleReturnTransition(oldstate, oldstate, transitionLabel);
+		} else {
+			throw new UnsupportedOperationException("Unknown transition type: " + transitionLabel.getClass());
 		}
-
-		if (currentStates.isEmpty()) {
-			if (!oldstate.getVariables().isEmpty()) {
-				currentStates.add(oldstate.bottomState());
-			}
-			return currentStates;
-		}
-
-		return NonrelationalUtils.mergeStatesIfNecessary(currentStates, mParallelStates);
 	}
 
 	@Override
 	public List<STATE> apply(final STATE stateBeforeLeaving, final STATE stateAfterLeaving, final IcfgEdge transition) {
+		assert stateBeforeLeaving != null;
+		assert !stateBeforeLeaving.isBottom() : "You should not need to calculate post of a bottom state (BL)";
+		assert stateAfterLeaving != null;
+		assert !stateAfterLeaving.isBottom() : "You should not need to calculate post of a bottom state (AL)";
+		assert transition != null;
+
 		final IcfgEdge transitionLabel = transition.getLabel();
 
 		assert transitionLabel instanceof Call || transitionLabel instanceof Return
 				|| transitionLabel instanceof Summary : "Cannot calculate hierachical post for non-hierachical transition";
 
 		if (transitionLabel instanceof Call) {
-			final Call call = (Call) transitionLabel.getLabel();
+			final Call call = (Call) transitionLabel;
 			return handleCallTransition(stateBeforeLeaving, stateAfterLeaving, call);
-		} else if (transitionLabel instanceof Return) {
-			final Return ret = (Return) transitionLabel.getLabel();
-			return handleReturnTransition(stateBeforeLeaving, stateAfterLeaving, ret.getCallStatement());
-		} else if (transitionLabel instanceof Summary) {
-			final Summary summary = (Summary) transitionLabel.getLabel();
-			return handleReturnTransition(stateBeforeLeaving, stateAfterLeaving, summary.getCallStatement());
+		} else if (transitionLabel instanceof Return || transitionLabel instanceof Summary) {
+			return handleReturnTransition(stateBeforeLeaving, stateAfterLeaving, transitionLabel);
 		} else {
 			throw new UnsupportedOperationException(
-					"Nonrelational domains do not support context switches other than IIcfgCallTransition<?> and Return (yet)");
+					"Nonrelational domains do not support context switches other than Call and Return (yet)");
 		}
 	}
 
 	private List<STATE> handleCallTransition(final STATE stateBeforeLeaving, final STATE stateAfterLeaving,
 			final Call call) {
-		final List<STATE> returnList = new ArrayList<>();
+
 		final CallStatement callStatement = call.getCallStatement();
-		final Expression[] args = callStatement.getArguments();
-
+		final CallInfo callInfo = mCallInfoCache.getCallInfo(callStatement, stateBeforeLeaving);
 		// If there are no arguments, we don't need to rewrite states.
-		if (args.length == 0) {
-			returnList.add(stateAfterLeaving);
-			return returnList;
+		if (callInfo.getInParamAssign() == null) {
+			return addOldvars(Collections.singletonList(stateAfterLeaving), callInfo.getOldVarAssign());
 		}
 
-		final Map<Integer, String> tmpParamNames = getArgumentTemporaries(args.length, stateBeforeLeaving);
-		final List<LeftHandSide> idents = new ArrayList<>();
-		final Map<LeftHandSide, IBoogieVar> tmpVarUses = new HashMap<>();
-		final Map<String, IBoogieVar> tmpParamVars = new HashMap<>();
-		final ILocation loc = callStatement.getLocation();
-		for (int i = 0; i < args.length; i++) {
-			final String name = tmpParamNames.get(i);
-			final IBoogieVar boogieVar = AbsIntUtil.createTemporaryIBoogieVar(name, args[i].getType());
-			final VariableLHS lhs = new VariableLHS(loc, name);
-			tmpParamVars.put(name, boogieVar);
-			tmpVarUses.put(lhs, boogieVar);
-			idents.add(lhs);
-		}
-
-		final AssignmentStatement assign = new AssignmentStatement(callStatement.getLocation(),
-				idents.toArray(new LeftHandSide[idents.size()]), args);
-		final STATE interimState = stateBeforeLeaving.addVariables(tmpParamVars.values());
-		final List<STATE> result = mStatementProcessor.process(interimState, assign, tmpVarUses);
+		// process assignment of expressions in old scope to inparams of procedure
+		final STATE interimState = stateBeforeLeaving.addVariables(callInfo.getTempInParams());
+		final List<STATE> result =
+				mStatementProcessor.process(interimState, callInfo.getInParamAssign(), callInfo.getTempInParamUses());
 		if (result.isEmpty()) {
-			throw new UnsupportedOperationException("The assingment operation resulted in 0 states.");
+			throw new AssertionError("The assignment operation resulted in 0 states.");
 		}
 
-		final Procedure procedure = getProcedure(callStatement.getMethodName());
-		assert procedure != null;
-		final VarList[] inParams = procedure.getInParams();
-		final List<IBoogieVar> realParamVars = new ArrayList<>();
+		final List<IBoogieVar> realParamVars = callInfo.getRealInParams();
 
-		for (final VarList varlist : inParams) {
-			for (final String var : varlist.getIdentifiers()) {
-				final IBoogieVar bVar = mBoogie2SmtSymbolTable.getBoogieVar(var, callStatement.getMethodName(), true);
-				assert bVar != null;
-				realParamVars.add(bVar);
-			}
-		}
-
-		if (args.length != realParamVars.size()) {
-			throw new UnsupportedOperationException(
-					"The number of the expressions in the call statement arguments does not correspond to the length of the number of arguments in the symbol table.");
-		}
-
+		// assign values of expression evaluation to actual inparams
+		final List<STATE> returnList = new ArrayList<>();
 		for (final STATE resultState : result) {
-			STATE returnState = stateAfterLeaving.createCopy();
+			STATE returnState = stateAfterLeaving;
 
 			for (int i = 0; i < realParamVars.size(); i++) {
-				final String tempName = tmpParamNames.get(i);
+				final IBoogieVar tempVar = callInfo.getTempInParams().get(i);
 				final IBoogieVar realVar = realParamVars.get(i);
-				final IBoogieVar tempVar = tmpParamVars.get(tempName);
 
 				final STATE finalReturnState = returnState;
 
@@ -244,8 +208,8 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 			returnList.add(returnState);
 		}
-
-		return NonrelationalUtils.mergeStatesIfNecessary(returnList, mParallelStates);
+		return addOldvars(NonrelationalUtils.mergeStatesIfNecessary(returnList, mParallelStates),
+				callInfo.getOldVarAssign());
 	}
 
 	/**
@@ -263,7 +227,8 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	 * @return
 	 */
 	private List<STATE> handleReturnTransition(final STATE stateBeforeLeaving, final STATE stateAfterLeaving,
-			final CallStatement correspondingCall) {
+			final IcfgEdge transition) {
+		final CallStatement correspondingCall = getCorrespondingCall(transition);
 		final List<STATE> returnList = new ArrayList<>();
 
 		final Procedure procedure = getProcedure(correspondingCall.getMethodName());
@@ -390,6 +355,65 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		return NonrelationalUtils.mergeStatesIfNecessary(returnList, mParallelStates);
 	}
 
+	private List<STATE> handleInternalTransition(final STATE oldstate, final IcfgEdge transition) {
+		List<STATE> currentStates = new ArrayList<>();
+		currentStates.add(oldstate);
+		final List<Statement> statements = mStatementExtractor.process(transition.getLabel());
+
+		for (final Statement stmt : statements) {
+			final List<STATE> afterProcessStates = new ArrayList<>();
+			for (final STATE currentState : currentStates) {
+				final List<STATE> processed = mStatementProcessor.process(currentState, stmt);
+				for (final STATE s : processed) {
+					if (!s.isBottom()) {
+						afterProcessStates.add(s);
+					}
+				}
+			}
+			currentStates = afterProcessStates;
+		}
+
+		if (currentStates.isEmpty()) {
+			if (!oldstate.getVariables().isEmpty()) {
+				currentStates.add(oldstate.bottomState());
+			}
+			return currentStates;
+		}
+
+		return NonrelationalUtils.mergeStatesIfNecessary(currentStates, mParallelStates);
+	}
+
+	private static CallStatement getCorrespondingCall(final IcfgEdge transition) {
+		if (transition instanceof Return) {
+			return ((Return) transition).getCallStatement();
+		} else if (transition instanceof Summary) {
+			return ((Summary) transition).getCallStatement();
+		} else {
+			throw new IllegalArgumentException("Transition " + transition.getClass() + " has no corresponding call");
+		}
+	}
+
+	/**
+	 * After all parameters of a call are assigned, we add new oldvar values to all vars which are modified by the new
+	 * procedure.
+	 * 
+	 * @param pendingPostStates
+	 * @param oldVarAssign
+	 * @return
+	 */
+	private List<STATE> addOldvars(final List<STATE> pendingPostStates, final Statement oldVarAssign) {
+		if (oldVarAssign == null) {
+			return pendingPostStates;
+		}
+		final List<STATE> postStates = new ArrayList<>();
+
+		for (final STATE pendingPostState : pendingPostStates) {
+			postStates.addAll(mStatementProcessor.process(pendingPostState, oldVarAssign));
+		}
+
+		return NonrelationalUtils.mergeStatesIfNecessary(postStates, mParallelStates);
+	}
+
 	/**
 	 * Creates a map of Integers -&gt; Identifiers for a given desired number of variables. The created identifiers are
 	 * unique temporary variable identifiers. It is ensured that the created identifiers do not already occur in the
@@ -401,36 +425,30 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	 *            The current state.
 	 * @return A map containing for each index of the call statement's argument
 	 */
-	private Map<Integer, String> getArgumentTemporaries(final int argNum, final STATE state) {
-		final Map<Integer, String> returnMap = new HashMap<>();
+	private static List<String> getArgumentTemporaries(final int argNum, final Set<String> reservedNames) {
+		final List<String> rtr = new ArrayList<>(argNum);
 
-		String paramPrefix = "param_";
-		final Set<String> varNames =
-				state.getVariables().stream().map(a -> a.getGloballyUniqueId()).collect(Collectors.toSet());
+		final StringBuilder paramBuilder = new StringBuilder("param_");
 		boolean uniqueFound = false;
 
 		while (!uniqueFound) {
+			final String currentPrefix = paramBuilder.toString();
 			for (int i = 0; i < argNum; i++) {
-				final StringBuilder sb = new StringBuilder();
-				sb.append(paramPrefix).append(i);
-				final String currentParamName = sb.toString();
-				if (varNames.contains(currentParamName)) {
-					final StringBuilder paramBuilder = new StringBuilder();
-					paramBuilder.append(paramPrefix).append('_');
-					paramPrefix = paramBuilder.toString();
+				final String currentParamName = currentPrefix + String.valueOf(i);
+				if (reservedNames.contains(currentParamName)) {
+					paramBuilder.append('_');
 					break;
 				}
 			}
 			uniqueFound = true;
 		}
 
+		final String finalPrefix = paramBuilder.toString();
 		for (int i = 0; i < argNum; i++) {
-			final StringBuilder sb = new StringBuilder();
-			sb.append(paramPrefix).append(i);
-			returnMap.put(i, sb.toString());
+			rtr.add(finalPrefix + String.valueOf(i));
 		}
 
-		return returnMap;
+		return rtr;
 	}
 
 	private Procedure getProcedure(final String procedureName) {
@@ -492,6 +510,149 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			}
 			assert boogieVar != null : "Unknown symbol: " + id;
 			return boogieVar.getTerm();
+		}
+	}
+
+	private class CallInfoCache {
+		private final Map<CallStatement, CallInfo> mCallInfoCache;
+
+		private CallInfoCache() {
+			mCallInfoCache = new HashMap<>();
+		}
+
+		private CallInfo getCallInfo(final CallStatement callStatement, final STATE stateBeforeLeaving) {
+			final CallInfo callAssignment = mCallInfoCache.get(callStatement);
+			if (callAssignment != null) {
+				return callAssignment;
+			}
+			final CallInfo newCallAssignment = createCallInfo(callStatement, stateBeforeLeaving);
+			mCallInfoCache.put(callStatement, newCallAssignment);
+			return newCallAssignment;
+		}
+
+		private CallInfo createCallInfo(final CallStatement callStatement, final STATE stateBeforeLeaving) {
+			final Expression[] args = callStatement.getArguments();
+			final List<IBoogieVar> realInParams = getInParams(callStatement);
+			final AssignmentStatement oldVarAssign = getOldvarAssign(callStatement);
+
+			// If there are no arguments, we don't need to rewrite states and thus no inparam assign.
+			if (args.length == 0) {
+				return new CallInfo(realInParams, oldVarAssign);
+			}
+
+			// create a multi-assignment statement that assigns each procedure argument (expression) to a temporary
+			// variable
+			final List<String> tmpParamNames = getArgumentTemporaries(args.length, stateBeforeLeaving.getVariables()
+					.stream().map(IBoogieVar::getGloballyUniqueId).collect(Collectors.toSet()));
+			final List<LeftHandSide> idents = new ArrayList<>();
+			final Map<LeftHandSide, IBoogieVar> tmpVarUses = new HashMap<>();
+			final List<IBoogieVar> tmpParamVars = new ArrayList<>();
+			final ILocation loc = callStatement.getLocation();
+			for (int i = 0; i < args.length; i++) {
+				final String name = tmpParamNames.get(i);
+				final IBoogieVar boogieVar = AbsIntUtil.createTemporaryIBoogieVar(name, args[i].getType());
+				final VariableLHS lhs = new VariableLHS(loc, name);
+				tmpParamVars.add(boogieVar);
+				tmpVarUses.put(lhs, boogieVar);
+				idents.add(lhs);
+			}
+
+			final AssignmentStatement inParamTmpAssign =
+					new AssignmentStatement(loc, idents.toArray(new LeftHandSide[idents.size()]), args);
+			return new CallInfo(realInParams, oldVarAssign, inParamTmpAssign, tmpParamVars, tmpVarUses);
+		}
+
+		/**
+		 * Create an assignment for oldvar values at the beginning of a procedure: <code>
+		 * old(x1),...,old(xn) := x1, .... , xn;
+		 * </code>
+		 */
+		private AssignmentStatement getOldvarAssign(final CallStatement callStatement) {
+			final String methodName = callStatement.getMethodName();
+			final Set<IProgramNonOldVar> modifiableGlobals =
+					mRootAnnotation.getCfgSmtToolkit().getModifiableGlobalsTable().getModifiedBoogieVars(methodName);
+			final int modglobsize = modifiableGlobals.size();
+			if (modglobsize == 0) {
+				return null;
+			}
+			final LeftHandSide[] lhs = new LeftHandSide[modglobsize];
+			final Expression[] rhs = new Expression[modglobsize];
+			int i = 0;
+			final ILocation loc = callStatement.getLocation();
+			for (final IProgramNonOldVar modGlob : modifiableGlobals) {
+
+				final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
+				final IBoogieType bType =
+						mSymbolTable.getTypeForVariableSymbol(modGlob.getGloballyUniqueId(), StorageClass.GLOBAL, null);
+				lhs[i] = new VariableLHS(loc, bType, modGlob.getOldVar().getGloballyUniqueId(), declInfo);
+				rhs[i] = new IdentifierExpression(loc, bType, modGlob.getGloballyUniqueId(), declInfo);
+				++i;
+			}
+			return new AssignmentStatement(loc, lhs, rhs);
+		}
+
+		private List<IBoogieVar> getInParams(final CallStatement callStatement) {
+			final Procedure procedure = getProcedure(callStatement.getMethodName());
+			assert procedure != null;
+			final VarList[] inParams = procedure.getInParams();
+			final List<IBoogieVar> realParamVars = new ArrayList<>();
+
+			for (final VarList varlist : inParams) {
+				for (final String var : varlist.getIdentifiers()) {
+					final IBoogieVar bVar =
+							mBoogie2SmtSymbolTable.getBoogieVar(var, callStatement.getMethodName(), true);
+					assert bVar != null;
+					realParamVars.add(bVar);
+				}
+			}
+
+			if (callStatement.getArguments().length != realParamVars.size()) {
+				throw new UnsupportedOperationException(
+						"The number of the expressions in the call statement arguments does not correspond to the length of the number of arguments in the symbol table.");
+			}
+			return realParamVars;
+		}
+	}
+
+	private static class CallInfo {
+		private final AssignmentStatement mInParamAssign;
+		private List<IBoogieVar> mTmpVars;
+		private Map<LeftHandSide, IBoogieVar> mTmpVarUses;
+		private List<IBoogieVar> mRealInParams;
+		private AssignmentStatement mOldVarAssign;
+
+		private CallInfo(final List<IBoogieVar> realInParams, final AssignmentStatement oldVarAssign) {
+			this(realInParams, oldVarAssign, null, Collections.emptyList(), Collections.emptyMap());
+		}
+
+		private CallInfo(final List<IBoogieVar> realInParams, final AssignmentStatement oldVarAssign,
+				final AssignmentStatement inParamAssign, final List<IBoogieVar> tmpVars,
+				final Map<LeftHandSide, IBoogieVar> tmpVarUses) {
+			mOldVarAssign = oldVarAssign;
+			mInParamAssign = inParamAssign;
+			mTmpVars = Collections.unmodifiableList(tmpVars);
+			mTmpVarUses = Collections.unmodifiableMap(tmpVarUses);
+			mRealInParams = Collections.unmodifiableList(realInParams);
+		}
+
+		public List<IBoogieVar> getRealInParams() {
+			return mRealInParams;
+		}
+
+		public List<IBoogieVar> getTempInParams() {
+			return mTmpVars;
+		}
+
+		public Map<LeftHandSide, IBoogieVar> getTempInParamUses() {
+			return mTmpVarUses;
+		}
+
+		public AssignmentStatement getInParamAssign() {
+			return mInParamAssign;
+		}
+
+		public AssignmentStatement getOldVarAssign() {
+			return mOldVarAssign;
 		}
 	}
 }

@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class AbstractInterpretationBenchmark<ACTION, LOCATION> implements ICsvProviderProvider<Object> {
+public class AbsIntBenchmark<ACTION, LOCATION> implements ICsvProviderProvider<Object> {
 
 	private final Map<Integer, Integer> mAction2Visits;
 	private final Map<Integer, Integer> mAction2Merges;
@@ -21,7 +21,7 @@ public class AbstractInterpretationBenchmark<ACTION, LOCATION> implements ICsvPr
 	private int mLastAction;
 	private int mMaxVariables;
 
-	public AbstractInterpretationBenchmark() {
+	public AbsIntBenchmark() {
 		mAction2Visits = new HashMap<>();
 		mAction2Merges = new HashMap<>();
 		mAction2Widen = new HashMap<>();

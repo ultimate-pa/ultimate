@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheck
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
@@ -56,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.logs.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.logs.IncrementalLogWithVMParameters;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.CsvSummary;
@@ -66,7 +66,6 @@ import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.LatexOverviewS
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.SVCOMPTestSummary;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.StandingsSummary;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.TraceAbstractionTestSummary;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.statistics.GraphSizeCsvProvider;
@@ -138,12 +137,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 				final String name = createTestCaseName(svcompRootDir, input, def);
 				final UltimateRunDefinition urd =
 						new UltimateRunDefinition(input, def.getSettings(), def.getToolchain());
-				final UltimateStarter starter = new UltimateStarter(urd, def.getTimeout());
-
-				final UltimateTestCase testCase = new UltimateTestCase(name, getTestResultDecider(urd), starter, urd,
-						super.getSummaries(), super.getIncrementalLogs());
-
-				testcases.add(testCase);
+				testcases.add(buildTestCase(urd, def.getTimeout(), getTestResultDecider(urd), name));
 			} catch (final Throwable ex) {
 				System.err.println("Exception while creating test case, skipping this one: " + input.getAbsolutePath());
 				ex.printStackTrace();

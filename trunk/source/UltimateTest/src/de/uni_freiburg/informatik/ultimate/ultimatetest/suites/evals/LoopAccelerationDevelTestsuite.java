@@ -54,25 +54,30 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 //			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr.epf"),
-			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
-			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
-			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Ahmed_Debug.epf"),
+//			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
+//			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_BB_Debug.epf"),
+//			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Ahmed_Debug.epf"),
+//			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
+			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing_Debug.epf"),
+			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing_SMTInterpol_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing_Debug.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing_SMTInterpol_Debug.epf"),
 	};
 
 	private static final String[] INPUT = new String[] {
 
 			// Normal regressions
-//			"examples/programs/loopAcceleration",
-			"examples/programs/loopAcceleration/loopAccelerationBB/loop1.bpl",
+			"examples/programs/loopAcceleration",
+//			"examples/programs/loopAcceleration/loopAccelerationBB/loop1.bpl",
 	};
 	// @formatter:on
 
 	@Override
 	protected long getTimeout() {
 		// timeout in ms
-		return 60 * 1000;
+		return 10 * 1000;
 	}
 
 	@Override

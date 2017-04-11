@@ -92,4 +92,9 @@ public class SignDomainState<VARDECL> extends NonrelationalState<SignDomainState
 		return new SignDomainValue[size];
 	}
 
+	@Override
+	protected SignDomainState<VARDECL> getThis() {
+		return this;
+	}
+
 }

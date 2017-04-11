@@ -68,6 +68,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractState<STATE, VARDECL>, VARDECL, LETTER extends IIcfgTransition<?>>
 		extends InterpolantSequenceWeakener<IHoareTripleChecker, AbsIntPredicate<STATE, VARDECL>, LETTER> {
 
+	private Set<IProgramVar> mVarsToKeep = null;
+
 	/**
 	 * The default constructor.
 	 *
@@ -98,10 +100,10 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 
 	@Override
 	protected AbsIntPredicate<STATE, VARDECL> refinePreState(final AbsIntPredicate<STATE, VARDECL> preState,
-			final LETTER transition, final AbsIntPredicate<STATE, VARDECL> postState) {
+			final LETTER transition, final AbsIntPredicate<STATE, VARDECL> postState, final int tracePosition) {
 
 		final AbsIntPredicate<STATE, VARDECL> newPreState = removeUnneededVariables(preState, transition);
-		final boolean valid = determineInductivity(newPreState, preState, transition, postState);
+		final boolean valid = determineInductivity(newPreState, transition, postState, tracePosition);
 
 		if (valid) {
 			if (mLogger.isDebugEnabled()) {
@@ -112,27 +114,27 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 		}
 
 		mLogger.debug("Unable to weaken prestate. Returning old prestate.");
-		return preState;
+		throw new UnsupportedOperationException("This case should not happen");
+		// return preState;
 	}
 
 	/**
-	 * Dtermines whether two states and one transition are inductive, i.e. whether {s1} tr {s2} is a valid Hoare-triple.
-	 * This is done by using the Hoare-triple checker provided by the base class.
+	 * Determines whether two states and one transition are inductive, i.e. whether {s1} tr {s2} is a valid
+	 * Hoare-triple. This is done by using the Hoare-triple checker provided by the base class.
 	 *
 	 * @param newPreState
 	 *            The new predicate, resulting from weakening <code>oldPreState</code>.
-	 * @param oldPreState
-	 *            The original prestate that was weakened.
 	 * @param transition
 	 *            The transition to be considered.
 	 * @param postState
 	 *            The predicate that should hold after the transition.
+	 * @param tracePosition
+	 *            The position of the LETTER in the current trace.
 	 * @return <code>true</code> iff the Hoare-triple {newPreState} transition {postState} is valid, <code>false</code>
 	 *         otherwise.
 	 */
-	private boolean determineInductivity(final AbsIntPredicate<STATE, VARDECL> newPreState,
-			final AbsIntPredicate<STATE, VARDECL> oldPreState, final LETTER transition,
-			final AbsIntPredicate<STATE, VARDECL> postState) {
+	private boolean determineInductivity(final AbsIntPredicate<STATE, VARDECL> newPreState, final LETTER transition,
+			final AbsIntPredicate<STATE, VARDECL> postState, final int tracePosition) {
 		final Validity result;
 
 		if (transition instanceof IInternalAction) {
@@ -140,9 +142,7 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 		} else if (transition instanceof ICallAction) {
 			result = mHtc.checkCall(newPreState, (ICallAction) transition, postState);
 		} else if (transition instanceof IReturnAction) {
-			final PredicateLetterIdentifier<AbsIntPredicate<STATE, VARDECL>, LETTER> predLetter =
-					new PredicateLetterIdentifier<>(oldPreState, transition);
-			final AbsIntPredicate<STATE, VARDECL> hierarchicalPre = mHierarchicalPreStates.get(predLetter);
+			final AbsIntPredicate<STATE, VARDECL> hierarchicalPre = mHierarchicalPreStates.get(tracePosition);
 			assert hierarchicalPre != null;
 			result = mHtc.checkReturn(newPreState, hierarchicalPre, (IReturnAction) transition, postState);
 		} else {
@@ -166,16 +166,31 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 	 */
 	private AbsIntPredicate<STATE, VARDECL> removeUnneededVariables(final AbsIntPredicate<STATE, VARDECL> preState,
 			final LETTER transition) {
+
 		// Collect all variables occurring in the invars
-		final Set<IProgramVar> varsToKeep = transition.getTransformula().getInVars().keySet();
+		if (mVarsToKeep == null) {
+			mVarsToKeep = new HashSet<>();
+		}
+
+		mVarsToKeep.addAll(transition.getTransformula().getInVars().keySet());
+		mLogger.debug("Keeping variables " + mVarsToKeep + " for transition " + transition);
 
 		final Set<STATE> newMultiState = new HashSet<>();
 
 		for (final STATE s : preState.getAbstractStates()) {
-			final Set<VARDECL> varsToRemove =
-					s.getVariables().stream().filter(var -> !varsToKeep.contains(var)).collect(Collectors.toSet());
+			if (s.isBottom()) {
+				// Simply add the state to the new multi state if the state is bottom.
+				newMultiState.add(s);
+				continue;
+			}
 
-			newMultiState.add(s.removeVariables(varsToRemove));
+			final Set<VARDECL> varsToRemove =
+					s.getVariables().stream().filter(var -> !mVarsToKeep.contains(var)).collect(Collectors.toSet());
+
+			final STATE removedVariablesState = s.removeVariables(varsToRemove);
+			mLogger.debug("State before removing: " + s);
+			mLogger.debug("State after removing : " + removedVariablesState);
+			newMultiState.add(removedVariablesState);
 		}
 
 		final Set<Term> terms = newMultiState.stream().map(s -> s.getTerm(mScript)).collect(Collectors.toSet());
