@@ -46,6 +46,7 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
@@ -57,6 +58,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IntersectNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty.SearchStrategy;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyInteractive;
@@ -86,6 +88,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Pa
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PreNestedWord;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PredicateQueuePair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PredicateQueueResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
@@ -129,7 +132,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected static final boolean TRACE_HISTOGRAMM_BAILOUT = false;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;
 	private static final boolean NON_EA_INDUCTIVITY_CHECK = false;
-	
+
 	private static final int DUMP_PATH_PROGRAMS_THAT_EXCEED_TRACE_HIST_MAX_THRESHOLD = Integer.MAX_VALUE;
 	private static final boolean DUMP_DIFFICULT_PATH_PROGRAMS = false;
 	private static final boolean STOP_AFTER_FIRST_PATH_PROGRAM_WAS_DUMPED = true;
@@ -275,9 +278,74 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		try {
 			return userChoice.get().mResult;
 		} catch (InterruptedException | ExecutionException e) {
-			//e.printStackTrace();
+			// e.printStackTrace();
 		}
 		return IsEmptyInteractive.bfsDequeue(callQueue, queue);
+	}
+
+	protected NestedRun<LETTER, IPredicate> getUserRun(final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction)
+			throws AutomataOperationCanceledException {
+		NestedRun<LETTER, IPredicate> userRun = null;
+		/*
+		 * INestedWordAutomatonSimple<LETTER, IPredicate> userAutomaton = null;
+		 * 
+		 * while (userRun == null) { try { userAutomaton = mInteractive.request(INestedWordAutomatonSimple.class).get();
+		 * } catch (InterruptedException | ExecutionException e) { mLogger.error("Failed to get user automaton", e);
+		 * mInteractive.common().send(e); }
+		 * 
+		 * // mCounterexample = new IsEmptyInteractive<LETTER, IPredicate>(new AutomataLibraryServices(mServices), //
+		 * abstraction, this::interactiveCounterexampleSearchStrategy).getNestedRun();
+		 * 
+		 * // last arg finalIsTrap could be !mComputeHoareAnnotation; try { final IntersectNwa<LETTER, IPredicate>
+		 * intersect = new IntersectNwa<>(abstraction, userAutomaton, mStateFactoryForRefinement, false); } catch
+		 * (AutomataLibraryException e) { mLogger.error("Intersection with user automaton failed", e);
+		 * mInteractive.common().send(e); }
+		 * 
+		 * userRun = new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy).getNestedRun();
+		 * }
+		 */
+		while (true) {
+			try {
+				PreNestedWord preWord = mInteractive.request(PreNestedWord.class).get();
+				// userRun = mInteractive.request(NestedRun.class).get();
+
+				INestedWordAutomatonSimple<LETTER, IPredicate> userAutomaton = preWord.getAutomaton(mServices,
+						abstraction, mStateFactoryForRefinement, mPredicateFactory, mCsToolkit.getManagedScript());
+				
+				mInteractive.send(userAutomaton);
+
+				try {
+					final IntersectNwa<LETTER, IPredicate> intersect =
+							new IntersectNwa<>(abstraction, userAutomaton, mStateFactoryForRefinement, false);
+					
+					mInteractive.send(intersect);
+
+					userRun = new IsEmpty<>(new AutomataLibraryServices(mServices), intersect, mSearchStrategy)
+							.getNestedRun();
+
+					if (userRun != null)
+						break;
+				} catch (AutomataLibraryException e) {
+					mLogger.error("Intersection with user automaton failed", e);
+					mInteractive.common().send(e);
+				}
+
+				// Accepts<LETTER, IPredicate> accepted = new Accepts<LETTER, IPredicate>(
+				// new AutomataLibraryServices(mServices), abstraction, userRun.getWord());
+				// if (accepted.getResult()) {
+				// break;
+				// }
+			} catch (InterruptedException | ExecutionException e) {
+				mLogger.error("Failed to get user automaton", e);
+				mInteractive.common().send(e);
+				throw new ToolchainCanceledException(BasicCegarLoop.class);
+				// } catch (AutomataLibraryException e) {
+				// mLogger.error("Could not validate User Run", e);
+				// mInteractive.common().send(e);
+			}
+		}
+
+		return userRun;
 	}
 
 	@Override
@@ -285,23 +353,20 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction =
 				(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction;
 
-		if (mPref.getCounterexampleSearchStrategy() == CounterexampleSearchStrategy.Interactive) {
-			if (!mInteractiveMode) {
-				throw new IllegalArgumentException(
-						"Interactive couterexample strategy chosen, but interface available. Please start ultimate in Interactive mode.");
-			}
-			mCounterexample = new IsEmptyInteractive<LETTER, IPredicate>(new AutomataLibraryServices(mServices),
-					abstraction, this::interactiveCounterexampleSearchStrategy).getNestedRun();
-		} else {
-			mCounterexample =
-					new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy).getNestedRun();
-		}
-
+		mCounterexample =
+				new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy).getNestedRun();
 		if (mCounterexample == null) {
 			return true;
 		}
+
 		if (mInteractiveMode) {
+			if (mPref.interactiveCEXS()) {
+				mCounterexample = getUserRun(abstraction);
+			}
 			mInteractive.send(mCounterexample);
+		} else if (mPref.interactiveCEXS()) {
+			throw new IllegalArgumentException(
+					"Interactive couterexample strategy chosen, but interface available. Please start ultimate in Interactive mode.");
 		}
 		
 
@@ -318,31 +383,29 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			mLogger.info("trace histogram " + traceHistogram.toString());
 		}
 		if (traceHistogram.getMax() > DUMP_PATH_PROGRAMS_THAT_EXCEED_TRACE_HIST_MAX_THRESHOLD) {
-			final String filename = mPref.dumpPath() + File.separator + mIcfgContainer.getIdentifier() + "_"
-					+ mIteration + ".bpl";
-			new PathProgramDumper(mIcfgContainer, mServices,
-					(NestedRun<? extends IAction, IPredicate>) mCounterexample, filename,
-					DUMP_PATH_PROGRAMS_INPUT_MODE);
+			final String filename =
+					mPref.dumpPath() + File.separator + mIcfgContainer.getIdentifier() + "_" + mIteration + ".bpl";
+			new PathProgramDumper(mIcfgContainer, mServices, (NestedRun<? extends IAction, IPredicate>) mCounterexample,
+					filename, DUMP_PATH_PROGRAMS_INPUT_MODE);
 			if (STOP_AFTER_FIRST_PATH_PROGRAM_WAS_DUMPED) {
 				final String message = "dumped path program with trace histogram max " + traceHistogram.getMax();
 				final String taskDescription = "trying to verify (iteration " + mIteration + ")";
 				throw new ToolchainCanceledException(message, getClass(), taskDescription);
 			}
 		}
-		if (TRACE_HISTOGRAMM_BAILOUT
-				&& traceHistogram.getMax() > traceHistogram.getVisualizationArray().length) {
+		if (TRACE_HISTOGRAMM_BAILOUT && traceHistogram.getMax() > traceHistogram.getVisualizationArray().length) {
 			final String message = "bailout by trace histogram " + traceHistogram.toString();
 			final String taskDescription = "trying to verify (iteration " + mIteration + ")";
 			throw new ToolchainCanceledException(message, getClass(), taskDescription);
 		}
-		if (mPref.interactive()) {
-			if (traceHistogram.getVisualizationArray()[0] > traceHistogram.getVisualizationArray().length) {
-				/*
-				 * final String message = "bailout by trace histogram " + traceHistogram.toString(); final String
-				 * taskDescription = "trying to verify (iteration " + mIteration + ")"; throw new
-				 * ToolchainCanceledException(message, getClass(), taskDescription);
-				 */
-			}
+		if (mInteractiveMode) {
+			mInteractive.send(traceHistogram);
+			/*
+			 * if (traceHistogram.getVisualizationArray()[0] > traceHistogram.getVisualizationArray().length) { final
+			 * String message = "bailout by trace histogram " + traceHistogram.toString(); final String taskDescription
+			 * = "trying to verify (iteration " + mIteration + ")"; throw new ToolchainCanceledException(message,
+			 * getClass(), taskDescription); }
+			 */
 		}
 		return false;
 	}
@@ -390,13 +453,14 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		} else {
 			if (DUMP_DIFFICULT_PATH_PROGRAMS && !((TraceAbstractionRefinementEngine) mTraceCheckAndRefinementEngine)
 					.somePerfectSequenceFound()) {
-				final String filename = mPref.dumpPath() + File.separator + mIcfgContainer.getIdentifier() + "_"
-						+ mIteration + ".bpl";
+				final String filename =
+						mPref.dumpPath() + File.separator + mIcfgContainer.getIdentifier() + "_" + mIteration + ".bpl";
 				new PathProgramDumper(mIcfgContainer, mServices,
 						(NestedRun<? extends IAction, IPredicate>) mCounterexample, filename,
 						DUMP_PATH_PROGRAMS_INPUT_MODE);
 				if (STOP_AFTER_FIRST_PATH_PROGRAM_WAS_DUMPED) {
-					final String message = "dumped path program for which we did not find perfect sequence of interpolants";
+					final String message =
+							"dumped path program for which we did not find perfect sequence of interpolants";
 					final String taskDescription = "trying to verify (iteration " + mIteration + ")";
 					throw new ToolchainCanceledException(message, getClass(), taskDescription);
 				}
@@ -572,12 +636,10 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (!new Accepts<>(new AutomataLibraryServices(mServices), interpolantAutomaton,
 				(NestedWord<LETTER>) mCounterexample.getWord(), true, false).getResult()) {
 
-			final boolean isOriginalBroken =
-					!new Accepts<>(new AutomataLibraryServices(mServices), inputInterpolantAutomaton,
-							(NestedWord<LETTER>) mCounterexample.getWord(), true, false).getResult();
+			final boolean isOriginalBroken = !new Accepts<>(new AutomataLibraryServices(mServices),
+					inputInterpolantAutomaton, (NestedWord<LETTER>) mCounterexample.getWord(), true, false).getResult();
 			try {
-				debugLogBrokenInterpolantAutomaton(inputInterpolantAutomaton, interpolantAutomaton,
-						mCounterexample);
+				debugLogBrokenInterpolantAutomaton(inputInterpolantAutomaton, interpolantAutomaton, mCounterexample);
 			} catch (final Error e) {
 				// suppress any exception, throw assertion error instead
 			}
@@ -787,7 +849,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	private static SearchStrategy getSearchStrategy(final TAPreferences mPrefs) {
 		switch (mPrefs.getCounterexampleSearchStrategy()) {
-		case Interactive:
 		case BFS:
 			return SearchStrategy.BFS;
 		case DFS:

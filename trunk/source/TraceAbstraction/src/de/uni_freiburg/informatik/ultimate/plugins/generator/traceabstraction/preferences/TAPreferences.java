@@ -301,4 +301,8 @@ public final class TAPreferences {
 	public boolean interactive() {
 		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERACTIVE_VERIFICATION);
 	}
+	
+	public boolean interactiveCEXS() {
+		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERACTIVE_CEXS);
+	}
 }

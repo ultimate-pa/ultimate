@@ -161,11 +161,11 @@ file_export_version=3.0
 #Tue Mar 21 17:43:28 CET 2017
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Compute\ Hoare\ Annotation\ of\ negated\ interpolant\ automaton,\ abstraction\ and\ CFG=true
-/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Counterexample\ search\ strategy=Interactive
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/DifferenceSenwa\ operation\ instead\ classical\ Difference=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ SMT\ script\ to\ file=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Dump\ automata\ to\ files=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Enable\ interactive\ Verification?=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Enable\ interactive\ Counterexample\ Selection?=true
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Fake\ non-incremental\ script=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Flow-sensitive\ error\ trace\ relevance\ analysis=false
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction/Interpolant\ automaton=TWOTRACK

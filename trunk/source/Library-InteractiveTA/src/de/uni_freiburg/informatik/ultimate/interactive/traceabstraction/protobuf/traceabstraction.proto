@@ -213,8 +213,33 @@ message NestedWordAutomaton {
 }
 
 message NestedRun {
-	repeated CodeBlock nestedWord = 1;
+	NestedWord nestedword = 1;
 	repeated Predicate stateSequence = 2;
+}
+
+message NestingRelation {
+	repeated int32 pendingCall = 1;
+	repeated int32 pendingReturn = 2;
+	map < int32, int32 > internalNesting = 3;
+}
+
+message NestedWord {
+	repeated CodeBlock symbol = 1;
+	NestingRelation nestingRelation = 2;
+}
+
+message PreNestedWord {
+	repeated int32 symbol = 1;
+	NestingRelation nestingRelation = 2;
+}
+
+message TraceHistogram {
+	message Record {
+		int32 count = 1;
+		CodeBlock letter = 2;
+	}
+
+	repeated Record record = 1;
 }
 
 message IterationInfo {
@@ -238,7 +263,8 @@ message Alphabet {
 }
 
 message CodeBlock {
-	string code = 1;
+	int32 serial = 1;
+	string code = 2;
 	// the transformulas and lots of other stuff
 	// in CodeBlock is not used for now.
 }
