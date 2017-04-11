@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.weakener;
 
+import java.text.DecimalFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,6 +41,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
@@ -69,6 +71,10 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	private final TripleList<P, LETTER> mTripleList;
 	protected final Map<Integer, P> mHierarchicalPreStates;
 
+	// TODO: move statistics in benchmarks class
+	private int mSuccessfulWeakenings;
+	private final List<Rational> mSizeDifferential;
+
 	/**
 	 * Default constructor. Generates result directly.
 	 *
@@ -84,6 +90,9 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 	public InterpolantSequenceWeakener(final ILogger logger, final HTC htc, final List<P> predicates,
 			final List<LETTER> trace, final P precondition, final P postcondition, final Script script,
 			final BasicPredicateFactory predicateFactory) {
+		mSuccessfulWeakenings = 0;
+		mSizeDifferential = new ArrayList<>();
+
 		mLogger = logger;
 		mHtc = Objects.requireNonNull(htc);
 		mPrecondition = precondition;
@@ -103,6 +112,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		if (mResult.size() != predicates.size()) {
 			throw new IllegalStateException("The size of the produced result list is invalid.");
 		}
+		reportStatistics();
 	}
 
 	/**
@@ -166,6 +176,7 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 			}
 
 			final P refinedState = refinePreState(currentPreState, transition, currentPostState, tracePosition);
+			addSizeDifferential(currentPreState, refinedState);
 			returnList.add(refinedState);
 			currentPostState = refinedState;
 
@@ -187,6 +198,36 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		}
 		return returnList;
 
+	}
+
+	private void addSizeDifferential(final P preState, final P refinedState) {
+		final int preStateSize = preState.getVars().size();
+		final int refinedStateSize = refinedState.getVars().size();
+
+		if (preStateSize == refinedStateSize) {
+			return;
+		}
+		if (preStateSize < refinedStateSize) {
+			throw new AssertionError("Weakening cannot introduce more variables");
+		}
+
+		mSuccessfulWeakenings++;
+		final Rational currentRatio = Rational.valueOf(refinedStateSize, preStateSize);
+		mSizeDifferential.add(currentRatio);
+	}
+
+	private void reportStatistics() {
+		if (mSuccessfulWeakenings == 0) {
+			mLogger.info("Could never weaken!");
+		} else {
+			final Rational sum = mSizeDifferential.stream().reduce(Rational.ZERO, (a, b) -> a.add(b));
+			final Rational result = sum.div(Rational.valueOf(mSuccessfulWeakenings, 1));
+			final double rounded = result.numerator().doubleValue() / result.denominator().doubleValue() * 100.0;
+			final DecimalFormat df = new DecimalFormat();
+			df.setMaximumFractionDigits(2);
+			mLogger.info(String.format("Weakened %s states. Average reduction was %s%%.", mSuccessfulWeakenings,
+					df.format(rounded)));
+		}
 	}
 
 	/**
