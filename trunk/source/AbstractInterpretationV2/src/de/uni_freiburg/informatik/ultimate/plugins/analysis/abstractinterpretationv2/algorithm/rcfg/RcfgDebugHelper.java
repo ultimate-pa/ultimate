@@ -110,8 +110,8 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTIO
 		if (precondHier == null) {
 			mLogger.fatal("Pre: {" + simplePre + "}");
 		} else {
-			mLogger.fatal("PreBefore: {" + simplePre + "}");
-			mLogger.fatal("PreAfter: {"
+			mLogger.fatal("Pre: {" + simplePre + "}");
+			mLogger.fatal("PreHier: {"
 					+ SmtUtils.simplify(mMgdScript, precondHier.getFormula(), mServices, mSimplificationTechnique)
 							.toStringDirect()
 					+ "}");
