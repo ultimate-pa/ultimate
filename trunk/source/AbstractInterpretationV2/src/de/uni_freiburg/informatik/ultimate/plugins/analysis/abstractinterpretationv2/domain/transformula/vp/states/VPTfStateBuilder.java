@@ -556,8 +556,8 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		assert isTopConsistent();
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(mDisEqualitySet, this);
 
-		return new VPTfState(mTransFormula, this, mNodeIdToEqGraphNode,
-				mAllNodeIds, mArrayIdToFunctionNodes, mDisEqualitySet, mIsTop, mVars);
+		return new VPTfState(mTransFormula, this, mNodeIdToEqGraphNode, mAllNodeIds, mArrayIdToFunctionNodes, 
+				mDisEqualitySet, mIsTop, mVars);
 	}
 
 	@Override

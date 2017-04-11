@@ -101,7 +101,7 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 		union(node1, node2);
 		equalityPropagation(node1, node2);
 
-		assert VPDomainHelpers.disEqualityRelationIrreflexive(this.mDisEqualitySet, this);
+//		assert VPDomainHelpers.disEqualityRelationIrreflexive(this.mDisEqualitySet, this);
 	}
 
 	/**
@@ -156,11 +156,12 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 
 			mDisEqualitySet.remove(pair);
 			mDisEqualitySet.add(new VPDomainSymmetricPair<NODEID>(newFirst, newSecond));
-			assert VPDomainHelpers.disEqualityRelationIrreflexive(this.mDisEqualitySet, this);
+//			assert VPDomainHelpers.disEqualityRelationIrreflexive(this.mDisEqualitySet, this); // this may happen if, 
+																						//in fact, we have a conflict
 		}
 
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(mDisEqualitySet, this);
-		assert VPDomainHelpers.disEqualityRelationIrreflexive(this.mDisEqualitySet, this);
+//		assert VPDomainHelpers.disEqualityRelationIrreflexive(this.mDisEqualitySet, this);
 	}
 
 	private void equalityPropagation(final EqGraphNode<NODEID, ARRAYID> node1,
@@ -175,7 +176,7 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 				}
 			}
 		}
-		assert VPDomainHelpers.disEqualityRelationIrreflexive(this.mDisEqualitySet, this);
+//		assert VPDomainHelpers.disEqualityRelationIrreflexive(this.mDisEqualitySet, this);
 	}
 
 	/**

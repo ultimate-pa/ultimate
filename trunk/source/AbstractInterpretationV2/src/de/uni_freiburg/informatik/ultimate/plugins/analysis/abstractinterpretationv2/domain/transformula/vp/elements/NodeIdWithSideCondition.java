@@ -72,6 +72,7 @@ public class NodeIdWithSideCondition implements INodeOrArrayWithSideCondition {
 		sb.append(mNodeId);
 
 		//sb.append("\n");
+		sb.append(", if: ");
 		
 		String sep = "";
 		
