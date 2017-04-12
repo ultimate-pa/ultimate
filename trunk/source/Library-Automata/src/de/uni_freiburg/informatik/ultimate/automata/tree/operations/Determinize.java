@@ -242,7 +242,8 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE, ISt
 			}
 		}
 
-		final Totalize<LETTER, STATE> op = new Totalize<>(mServices, mStateFactoryEmptyStack, constructFromRules(rules));
+		final TreeAutomatonBU<LETTER, STATE> det = constructFromRules(rules);
+		final Totalize<LETTER, STATE> op = new Totalize<>(mServices, mStateFactoryEmptyStack, det);
 		return op.getResult();
 	}
 

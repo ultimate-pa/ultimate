@@ -109,12 +109,14 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE, IStateF
 			boolean validDerivation = true;
 			for (int i = 0, k = 0; i < rule.getArity(); ++i) {
 				final STATE sr = rule.getSource().get(i);
-				if ((!next.isEmpty() || !mTreeAutomaton.isInitialState(sr)) && (k >= next.size() || !next.get(k++).contains(sr))) {
+				if ((!next.isEmpty() || !mTreeAutomaton.isInitialState(sr)) && (k >= next.size() 
+						|| !next.get(k++).contains(sr))) {
 					validDerivation = false;
 					break;
 				}
 			}
 			if (validDerivation) {
+				System.err.println(t + " derived by " + rule);
 				res.add(rule.getDest());
 			}
 		}

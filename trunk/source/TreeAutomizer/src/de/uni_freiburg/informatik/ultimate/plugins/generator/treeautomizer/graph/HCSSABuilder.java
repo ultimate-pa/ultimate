@@ -28,8 +28,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.graph;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -179,13 +181,17 @@ public class HCSSABuilder {
 		/*
 		 * recursively descend into the tree run
 		 */
-		final ArrayList<TreeRun<Term, IPredicate>> childTrees = new ArrayList<>();
+		List<TreeRun<Term, IPredicate>> childTrees = new ArrayList<>();
 		for (int i = 0; i < tree.getChildren().size(); i++) {
 			TreeRun<HornClause, IPredicate> child = tree.getChildren().get(i);
 			mCurrentTree = getOrConstructIndex(tree);
 			if (child.getRootSymbol() != null) {
 				childTrees.add(buildNestedFormulaTree(child, mCurrentTree, i));
 			}
+		}
+		
+		if (childTrees.isEmpty()) {
+			childTrees = Collections.singletonList(new TreeRun<Term, IPredicate>(mPredicateUnifier.getTruePredicate()));
 		}
 
 		return new TreeRun<>(tree.getRoot(), vvRoot.getVersioneeredTerm(), childTrees);

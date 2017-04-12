@@ -160,6 +160,7 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
-		return false;
+		// TODO implement a meaningful check
+		return true;
 	}
 }

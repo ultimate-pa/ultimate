@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
+import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Complement;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Minimize;
@@ -103,6 +104,7 @@ public class TreeAutomizerCEGAR {
 	private final AutomataLibraryServices mAutomataLibraryServices;
 
 	private List<HornClause> mAlphabet;
+	private TreeRun<HornClause, IPredicate> mCounterExample;
 
 	/**
 	 * Constructor for TreeAutomizer CEGAR
@@ -244,6 +246,7 @@ public class TreeAutomizerCEGAR {
 			mLogger.debug("No (further) counterexample found in abstraction.");
 		}
 
+		mCounterExample = counterexample;
 		return counterexample;
 	}
 
@@ -326,6 +329,8 @@ public class TreeAutomizerCEGAR {
 		mLogger.debug("Complemented counter example automaton:");
 		mLogger.debug(cCounterExample);
 
+		assert !(new Accepts<>(mAutomataLibraryServices, cCounterExample, mCounterExample).getResult());
+
 		mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Intersect<HornClause, IPredicate>(
 				mAutomataLibraryServices, mStateFactory, mAbstraction, cCounterExample)).getResult();
 		mLogger.debug(String.format("Size before totalize %d states, %d rules.", mAbstraction.getStates().size(),
@@ -343,6 +348,7 @@ public class TreeAutomizerCEGAR {
 
 		mLogger.debug("Refine ends...");
 
+		assert !(new Accepts<>(mAutomataLibraryServices, mAbstraction, mCounterExample).getResult());
 		++mIteration;
 		return false;
 	}
