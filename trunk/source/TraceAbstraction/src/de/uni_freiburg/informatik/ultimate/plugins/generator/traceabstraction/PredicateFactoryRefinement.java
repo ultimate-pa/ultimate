@@ -68,7 +68,7 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 		} else if (p1 instanceof ISLPredicate) {
 			final IcfgLocation pp = ((ISLPredicate) p1).getProgramPoint();
 			if (mHoareAnnotationProgramPoints.contains(pp)) {
-				Term conjunction = mPredicateFactory.and(p1, p2);
+				Term conjunction = mPredicateFactory.and(p1, p2).getFormula();
 				conjunction = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(conjunction);
 				final IPredicate result;
 				if (DEBUG_COMPUTE_HISTORY) {
@@ -102,7 +102,7 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 		if (someElement instanceof ISLPredicate) {
 			final IcfgLocation pp = ((ISLPredicate) someElement).getProgramPoint();
 			if (mHoareAnnotationProgramPoints.contains(pp)) {
-				Term disjuntion = mPredicateFactory.or(false, states);
+				Term disjuntion = mPredicateFactory.or(false, states).getFormula();
 				disjuntion = new CommuhashNormalForm(mServices, mMgdScript.getScript()).transform(disjuntion);
 				return mPredicateFactory.newSPredicate(pp, disjuntion);
 			}
@@ -113,7 +113,7 @@ public class PredicateFactoryRefinement extends PredicateFactoryForInterpolantAu
 				assert false : "minimize empty set???";
 				return mPredicateFactory.newMLDontCarePredicate(pps);
 			}
-			final Term disjunction = mPredicateFactory.or(false, states);
+			final Term disjunction = mPredicateFactory.or(false, states).getFormula();
 			return mPredicateFactory.newMLPredicate(pps, disjunction);
 		} else {
 			throw new AssertionError("unknown predicate");

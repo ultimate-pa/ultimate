@@ -150,32 +150,33 @@ public class BasicPredicateFactory {
 	}
 
 	public IPredicate newBuchiPredicate(final Set<IPredicate> inputPreds) {
-		final Term conjunction = and(inputPreds);
+		final Term conjunction = andTerm(inputPreds);
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(conjunction, mScript, mSymbolTable);
 		return new BuchiPredicate(constructFreshSerialNumber(), tvp.getProcedures(), tvp.getFormula(), tvp.getVars(),
 				tvp.getClosedFormula(), inputPreds);
 	}
 
-	public Term and(final IPredicate... preds) {
+	public IPredicate and(final IPredicate... preds) {
 		return and(Arrays.asList(preds));
 	}
 
-	public Term and(final Collection<IPredicate> preds) {
-		Term term = mScript.term("true");
-		for (final IPredicate p : preds) {
-			if (isDontCare(p)) {
-				return mDontCareTerm;
-			}
-			term = Util.and(mScript, term, p.getFormula());
-		}
-		return term;
+	public IPredicate and(final Collection<IPredicate> preds) {
+		return newPredicate(andTerm(preds));
 	}
 
-	public Term or(final boolean withSimplifyDDA, final IPredicate... preds) {
-		return or(withSimplifyDDA, Arrays.asList(preds));
+	public IPredicate or(final boolean withSimplifyDDA, final IPredicate... preds) {
+		return newPredicate(orTerm(withSimplifyDDA, Arrays.asList(preds)));
 	}
 
-	public Term or(final boolean withSimplifyDDA, final Collection<IPredicate> preds) {
+	public IPredicate or(final boolean withSimplifyDDA, final Collection<IPredicate> preds) {
+		return newPredicate(orTerm(withSimplifyDDA, preds));
+	}
+
+	public IPredicate not(final IPredicate p) {
+		return newPredicate(notTerm(p));
+	}
+
+	private Term orTerm(final boolean withSimplifyDDA, final Collection<IPredicate> preds) {
 		Term term = mScript.term("false");
 		for (final IPredicate p : preds) {
 			if (isDontCare(p)) {
@@ -189,7 +190,18 @@ public class BasicPredicateFactory {
 		return term;
 	}
 
-	public Term not(final IPredicate p) {
+	private Term andTerm(final Collection<IPredicate> preds) {
+		Term term = mScript.term("true");
+		for (final IPredicate p : preds) {
+			if (isDontCare(p)) {
+				return mDontCareTerm;
+			}
+			term = Util.and(mScript, term, p.getFormula());
+		}
+		return term;
+	}
+
+	private Term notTerm(final IPredicate p) {
 		if (isDontCare(p)) {
 			return mDontCareTerm;
 		}

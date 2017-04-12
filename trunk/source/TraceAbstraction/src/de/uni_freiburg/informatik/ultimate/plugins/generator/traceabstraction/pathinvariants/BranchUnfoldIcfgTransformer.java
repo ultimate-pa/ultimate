@@ -36,7 +36,6 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.core.model.models.Payload;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -52,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * Transform an {@link Icfg} by TODO (Back)transform a proof for the large block
- * encoded {@link Icfg} to a proof for the original {@link Icfg} by TODO
+ * Transform an {@link Icfg} by TODO (Back)transform a proof for the large block encoded {@link Icfg} to a proof for the
+ * original {@link Icfg} by TODO
  *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -64,8 +63,7 @@ public final class BranchUnfoldIcfgTransformer {
 	private final PredicateFactory mPredicateFactory;
 	private final IPredicateUnifier mPredicateUnifier;
 	/**
-	 * Map that assigns to each large block encoded icfg location the
-	 * corresponding location in the orginal icfg
+	 * Map that assigns to each large block encoded icfg location the corresponding location in the orginal icfg
 	 */
 	private IIcfg<IcfgLocation> mInputIcfg;
 
@@ -96,33 +94,34 @@ public final class BranchUnfoldIcfgTransformer {
 
 		final ConstructionCache<IcfgEdge, Integer> edgeNumberConstructor = new ConstructionCache<>(edgeNumberVc);
 
-		final IValueConstruction<Pair<IcfgLocation, Integer>, IcfgLocation> resultLocationVc = new IValueConstruction<Pair<IcfgLocation, Integer>, IcfgLocation>() {
+		final IValueConstruction<Pair<IcfgLocation, Integer>, IcfgLocation> resultLocationVc =
+				new IValueConstruction<Pair<IcfgLocation, Integer>, IcfgLocation>() {
 
-			@Override
-			public IcfgLocation constructValue(final Pair<IcfgLocation, Integer> pair) {
-				final IcfgLocation inputLoc = pair.getFirst();
-				final boolean initial = mInputIcfg.getInitialNodes().contains(inputLoc);
-				final String debugIdentifier = inputLoc.getDebugIdentifier() + this.getClass().getSimpleName()
-						+ pair.getSecond();
-				final IcfgLocation resultLoc = new IcfgLocation(debugIdentifier, inputLoc.getProcedure());
-				final boolean isInitial = initial;
-				final boolean isError = mInputIcfg.getProcedureErrorNodes().get(inputLoc.getProcedure())
-						.contains(inputLoc);
-				final boolean isProcEntry = initial;
-				final boolean isProcExit = false;
-				final boolean isLoopLocation = mInputIcfg.getLoopLocations().contains(inputLoc);
-				mResultIcfg.addLocation(resultLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation);
-				mOldLoc2NewLoc.addPair(inputLoc, resultLoc);
-				// if (!mVisited.contains(pair)) {
-				// mVisited.add(pair);
-				mWorklist.add(pair);
-				// }
-				return resultLoc;
-			}
-		};
+					@Override
+					public IcfgLocation constructValue(final Pair<IcfgLocation, Integer> pair) {
+						final IcfgLocation inputLoc = pair.getFirst();
+						final boolean initial = mInputIcfg.getInitialNodes().contains(inputLoc);
+						final String debugIdentifier =
+								inputLoc.getDebugIdentifier() + this.getClass().getSimpleName() + pair.getSecond();
+						final IcfgLocation resultLoc = new IcfgLocation(debugIdentifier, inputLoc.getProcedure());
+						final boolean isInitial = initial;
+						final boolean isError =
+								mInputIcfg.getProcedureErrorNodes().get(inputLoc.getProcedure()).contains(inputLoc);
+						final boolean isProcEntry = initial;
+						final boolean isProcExit = false;
+						final boolean isLoopLocation = mInputIcfg.getLoopLocations().contains(inputLoc);
+						mResultIcfg.addLocation(resultLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation);
+						mOldLoc2NewLoc.addPair(inputLoc, resultLoc);
+						// if (!mVisited.contains(pair)) {
+						// mVisited.add(pair);
+						mWorklist.add(pair);
+						// }
+						return resultLoc;
+					}
+				};
 
-		final ConstructionCache<Pair<IcfgLocation, Integer>, IcfgLocation> resultLocationConstructor = new ConstructionCache<>(
-				resultLocationVc);
+		final ConstructionCache<Pair<IcfgLocation, Integer>, IcfgLocation> resultLocationConstructor =
+				new ConstructionCache<>(resultLocationVc);
 
 		final String identifier = inputIcfg.getIdentifier() + this.getClass();
 		mResultIcfg = new BasicIcfg<>(identifier, inputIcfg.getCfgSmtToolkit(), IcfgLocation.class);
@@ -138,12 +137,12 @@ public final class BranchUnfoldIcfgTransformer {
 			final IcfgLocation sourceLoc = resultLocationConstructor.getOrConstruct(some);
 			for (final IcfgEdge edge : some.getFirst().getOutgoingEdges()) {
 				final Integer edgeNumber = edgeNumberConstructor.getOrConstruct(edge);
-				final Pair<IcfgLocation, Integer> targetPair = new Pair<IcfgLocation, Integer>(edge.getTarget(),
-						edgeNumber);
+				final Pair<IcfgLocation, Integer> targetPair =
+						new Pair<IcfgLocation, Integer>(edge.getTarget(), edgeNumber);
 				final IcfgLocation targetLoc = resultLocationConstructor.getOrConstruct(targetPair);
 
-				final IcfgInternalTransition newEdge = new IcfgInternalTransition(sourceLoc, targetLoc, new Payload(),
-						edge.getTransformula());
+				final IcfgInternalTransition newEdge =
+						new IcfgInternalTransition(sourceLoc, targetLoc, new Payload(), edge.getTransformula());
 				sourceLoc.addOutgoing(newEdge);
 				newEdge.setSource(sourceLoc);
 				newEdge.setTarget(targetLoc);
@@ -160,8 +159,7 @@ public final class BranchUnfoldIcfgTransformer {
 			for (final IcfgLocation newLoc : mOldLoc2NewLoc.getImage(oldLoc)) {
 				preds.add(hoareAnnotation.get(newLoc));
 			}
-			final Term newPred = mPredicateFactory.or(false, preds);
-			result.put(oldLoc, mPredicateFactory.newPredicate(newPred));
+			result.put(oldLoc, mPredicateFactory.or(false, preds));
 
 		}
 		mInputIcfg = null;

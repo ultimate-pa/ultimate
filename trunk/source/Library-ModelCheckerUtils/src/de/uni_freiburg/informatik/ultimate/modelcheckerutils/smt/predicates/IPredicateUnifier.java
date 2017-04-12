@@ -64,6 +64,11 @@ public interface IPredicateUnifier {
 	 */
 	IPredicate getOrConstructPredicate(Term term);
 
+	/**
+	 * Get a unified version of a predicate.
+	 */
+	IPredicate getOrConstructPredicate(IPredicate predicate);
+
 	String collectPredicateUnifierStatistics();
 
 	/**

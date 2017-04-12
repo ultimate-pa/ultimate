@@ -263,25 +263,21 @@ public class BinaryStatePredicateManager {
 		if (siConjunctionIsTrue) {
 			mStemPostcondition = unseededPredicate;
 		} else {
-			final Term conjunction = mPredicateFactory.and(unseededPredicate, mSiConjunction);
-			mStemPostcondition = mPredicateFactory.newPredicate(conjunction);
+			mStemPostcondition = mPredicateFactory.and(unseededPredicate, mSiConjunction);
 		}
 		if (siConjunctionIsTrue) {
 			mRankEqualityAndSi = mRankEquality;
 		} else {
-			final Term conjunction = mPredicateFactory.and(mRankEquality, mSiConjunction);
-			mRankEqualityAndSi = mPredicateFactory.newPredicate(conjunction);
+			mRankEqualityAndSi = mPredicateFactory.and(mRankEquality, mSiConjunction);
 		}
 		IPredicate unseededOrRankDecrease;
 
-		final Term disjunction = mPredicateFactory.or(false, unseededPredicate, mRankDecreaseAndBound);
-		unseededOrRankDecrease = mPredicateFactory.newPredicate(disjunction);
+		unseededOrRankDecrease = mPredicateFactory.or(false, unseededPredicate, mRankDecreaseAndBound);
 
 		if (siConjunctionIsTrue) {
 			mHonda = unseededOrRankDecrease;
 		} else {
-			final Term conjunction = mPredicateFactory.and(mSiConjunction, unseededOrRankDecrease);
-			mHonda = mPredicateFactory.newPredicate(conjunction);
+			mHonda = mPredicateFactory.and(mSiConjunction, unseededOrRankDecrease);
 		}
 		mProvidesPredicates = true;
 	}
@@ -475,8 +471,7 @@ public class BinaryStatePredicateManager {
 	}
 
 	private IPredicate computeRankEquality() {
-		final Term conjunction = mPredicateFactory.and(mLexEquality);
-		final IPredicate result = mPredicateFactory.newPredicate(conjunction);
+		final IPredicate result = mPredicateFactory.and(mLexEquality);
 		return result;
 	}
 
@@ -486,12 +481,10 @@ public class BinaryStatePredicateManager {
 			final IPredicate[] conjuncts = new IPredicate[i + 1];
 			System.arraycopy(mLexEquality, 0, conjuncts, 0, i);
 			conjuncts[i] = mLexDecrease[i];
-			final Term conjunction = mPredicateFactory.and(conjuncts);
-			disjuncts[i] = mPredicateFactory.newPredicate(conjunction);
+			disjuncts[i] = mPredicateFactory.and(conjuncts);
 		}
 
-		final Term disjunction = mPredicateFactory.or(false, disjuncts);
-		final IPredicate result = mPredicateFactory.newPredicate(disjunction);
+		final IPredicate result = mPredicateFactory.or(false, disjuncts);
 		return result;
 	}
 

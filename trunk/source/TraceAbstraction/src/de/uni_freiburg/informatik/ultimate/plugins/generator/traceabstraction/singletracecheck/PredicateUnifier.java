@@ -32,7 +32,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -99,7 +99,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 	private final ManagedScript mMgnScript;
 	private final BasicPredicateFactory mPredicateFactory;
 	private final Map<Term, IPredicate> mTerm2Predicates;
-	private final List<IPredicate> mKnownPredicates = new ArrayList<>();
+	private final LinkedHashSet<IPredicate> mKnownPredicates = new LinkedHashSet<>();
 	private final Map<IPredicate, IPredicate> mDeprecatedPredicates = new HashMap<>();
 	private final CoverageRelation mCoverageRelation = new CoverageRelation();
 	private final ILogger mLogger;
@@ -142,12 +142,12 @@ public class PredicateUnifier implements IPredicateUnifier {
 			}
 		}
 		if (truePredicate == null) {
-			mTruePredicate = mPredicateFactory.newPredicate(mScript.term("true"));
+			mTruePredicate = newPredicate(mScript.term("true"), null);
 		} else {
 			mTruePredicate = truePredicate;
 		}
 		if (falsePredicate == null) {
-			mFalsePredicate = mPredicateFactory.newPredicate(mScript.term("false"));
+			mFalsePredicate = newPredicate(mScript.term("false"), null);
 		} else {
 			mFalsePredicate = falsePredicate;
 		}
@@ -236,8 +236,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 				expliedPredicates.put(noncoverer, Validity.INVALID);
 			}
 		}
-		final Term term = mPredicateFactory.and(minimalSubset);
-		return getOrConstructPredicate(term, impliedPredicates, expliedPredicates);
+		return getOrConstructPredicateForConjunction(minimalSubset, impliedPredicates, expliedPredicates);
 	}
 
 	/**
@@ -274,8 +273,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 				}
 			}
 		}
-		final Term term = mPredicateFactory.or(false, minimalSubset);
-		return getOrConstructPredicate(term, impliedPredicates, expliedPredicates);
+		return getOrConstructPredicateForDisjunction(minimalSubset, impliedPredicates, expliedPredicates);
 	}
 
 	/**
@@ -296,6 +294,14 @@ public class PredicateUnifier implements IPredicateUnifier {
 		return true;
 	}
 
+	@Override
+	public IPredicate getOrConstructPredicate(final IPredicate predicate) {
+		if (mKnownPredicates.contains(predicate)) {
+			return predicate;
+		}
+		return getOrConstructPredicate(predicate.getFormula(), null, null, predicate);
+	}
+
 	/**
 	 * Get the predicate for term. If there is not yet a predicate for term, construct the predicate using vars.
 	 *
@@ -306,14 +312,14 @@ public class PredicateUnifier implements IPredicateUnifier {
 	 */
 	@Override
 	public IPredicate getOrConstructPredicate(final Term term) {
-		return getOrConstructPredicate(term, null, null);
+		return getOrConstructPredicate(term, null, null, null);
 	}
 
 	/**
 	 * Variant of getOrConstruct methods where we can provide information about implied/explied predicates.
 	 */
 	private IPredicate getOrConstructPredicate(final Term term, final HashMap<IPredicate, Validity> impliedPredicates,
-			final HashMap<IPredicate, Validity> expliedPredicates) {
+			final HashMap<IPredicate, Validity> expliedPredicates, final IPredicate originalPredicate) {
 
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(term, mScript, mSymbolTable);
 		mPredicateUnifierBenchmarkGenerator.continueTime();
@@ -368,7 +374,7 @@ public class PredicateUnifier implements IPredicateUnifier {
 				throw tce;
 			}
 		}
-		result = mPredicateFactory.newPredicate(simplifiedTerm);
+		result = newPredicate(simplifiedTerm, originalPredicate);
 		if (pc.isEquivalentToExistingPredicateWithGtQuantifiers()) {
 			mDeprecatedPredicates.put(pc.getEquivalantGtQuantifiedPredicate(), result);
 			mPredicateUnifierBenchmarkGenerator.incrementDeprecatedPredicates();
@@ -379,6 +385,24 @@ public class PredicateUnifier implements IPredicateUnifier {
 		mPredicateUnifierBenchmarkGenerator.incrementConstructedPredicates();
 		mPredicateUnifierBenchmarkGenerator.stopTime();
 		return result;
+	}
+
+	protected IPredicate newPredicate(final Term term, final IPredicate originalPredicate) {
+		return mPredicateFactory.newPredicate(term);
+	}
+
+	protected IPredicate getOrConstructPredicateForConjunction(final Set<IPredicate> minimalSubset,
+			final HashMap<IPredicate, Validity> impliedPredicates,
+			final HashMap<IPredicate, Validity> expliedPredicates) {
+		final IPredicate and = mPredicateFactory.and(minimalSubset);
+		return getOrConstructPredicate(and.getFormula(), impliedPredicates, expliedPredicates, and);
+	}
+
+	protected IPredicate getOrConstructPredicateForDisjunction(final Set<IPredicate> minimalSubset,
+			final HashMap<IPredicate, Validity> impliedPredicates,
+			final HashMap<IPredicate, Validity> expliedPredicates) {
+		final IPredicate or = mPredicateFactory.or(false, minimalSubset);
+		return getOrConstructPredicate(or.getFormula(), impliedPredicates, expliedPredicates, or);
 	}
 
 	private static Term stripAnnotation(final Term term) {
@@ -564,12 +588,12 @@ public class PredicateUnifier implements IPredicateUnifier {
 
 		@Override
 		public Validity isCovered(final IPredicate lhs, final IPredicate rhs) {
-			if (lhs == rhs) {
+			if (lhs.equals(rhs)) {
 				return Validity.VALID;
 			}
 			final Validity result = mLhs2RhsValidity.get(lhs, rhs);
 			if (result == null) {
-				throw new AssertionError("at least one of both input predicates is unknown");
+				throw new AssertionError("at least one of both input predicates is unknown: " + lhs + " or " + rhs);
 			}
 			return result;
 		}

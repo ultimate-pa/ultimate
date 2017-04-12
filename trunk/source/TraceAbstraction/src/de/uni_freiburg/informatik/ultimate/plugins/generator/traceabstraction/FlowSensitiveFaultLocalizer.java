@@ -141,10 +141,11 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		}
 		mErrorLocalizationStatisticsGenerator.reportSuccesfullyFinished();
 		mErrorLocalizationStatisticsGenerator.stopErrorLocalizationTime();
-		
+
 		final StatisticsData stat = new StatisticsData();
 		stat.aggregateBenchmarkData(mErrorLocalizationStatisticsGenerator);
-		final IResult benchmarkResult =	new BenchmarkResult<>(Activator.PLUGIN_NAME, "ErrorLocalizationStatistics", stat);
+		final IResult benchmarkResult =
+				new BenchmarkResult<>(Activator.PLUGIN_NAME, "ErrorLocalizationStatistics", stat);
 		services.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);
 	}
 
@@ -337,8 +338,8 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		// Calculating the WP-List
 		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(mPredicateFactory,
 				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), mServices, counterexampleWord,
-				null, falsePredicate, null, mPredicateFactory.newPredicate(mPredicateFactory.not(falsePredicate)),
-				mSimplificationTechnique, mXnfConversionTechnique, mSymbolTable);
+				null, falsePredicate, null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique,
+				mXnfConversionTechnique, mSymbolTable);
 
 		final DefaultTransFormulas dtf = new DefaultTransFormulas(counterexampleWord, null, falsePredicate,
 				Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
@@ -365,8 +366,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			final IAction action = counterexampleWord.getSymbolAt(i);
 			// Calculate WP and PRE
 			final IPredicate wp = weakestPreconditionSequence.getInterpolant(i + 1);
-			final IPredicate pre = mPredicateFactory
-					.newPredicate(mPredicateFactory.not(weakestPreconditionSequence.getInterpolant(i)));
+			final IPredicate pre = mPredicateFactory.not(weakestPreconditionSequence.getInterpolant(i));
 
 			// Figure out what is the type of the statement (internal, call or Return)
 			final ERelevanceStatus relevance;
@@ -467,12 +467,12 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			final CfgSmtToolkit csToolkit, final ModifiableGlobalsTable modifiableGlobalsTable) {
 
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(csToolkit);
-		final IPredicate pre = mPredicateFactory.newPredicate(mPredicateFactory.not(weakestPreconditionLeft));
+		final IPredicate pre = mPredicateFactory.not(weakestPreconditionLeft);
 		final String preceeding = counterexampleWord.getSymbolAt(startPosition).getPrecedingProcedure();
 		final String succeeding = counterexampleWord.getSymbolAt(endPosition).getSucceedingProcedure();
 		final BasicInternalAction basic = new BasicInternalAction(preceeding, succeeding, markhor);
-		final ERelevanceStatus relevance = rc.relevanceInternal(pre, basic,
-				mPredicateFactory.newPredicate(mPredicateFactory.not(weakestPreconditionRight)));
+		final ERelevanceStatus relevance =
+				rc.relevanceInternal(pre, basic, mPredicateFactory.not(weakestPreconditionRight));
 
 		return relevance == ERelevanceStatus.InUnsatCore || relevance == ERelevanceStatus.Sat;
 	}
@@ -547,7 +547,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 				final Term wpTerm = computeWp(weakestPreconditionRight, tf, csToolkit.getManagedScript().getScript(),
 						csToolkit.getManagedScript(), pt, mApplyQuantifierElimination);
 				weakestPreconditionLeft = mPredicateFactory.newPredicate(wpTerm);
-				final IPredicate pre = mPredicateFactory.newPredicate(mPredicateFactory.not(weakestPreconditionLeft));
+				final IPredicate pre = mPredicateFactory.not(weakestPreconditionLeft);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug(" ");
 					mLogger.debug("WP -- > " + weakestPreconditionRight);
@@ -584,12 +584,10 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		ERelevanceStatus relevance;
 		if (action instanceof IInternalAction) {
 			final IInternalAction internal = (IInternalAction) counterexampleWord.getSymbolAt(position);
-			relevance = rc.relevanceInternal(pre, internal,
-					mPredicateFactory.newPredicate(mPredicateFactory.not(weakestPreconditionRight)));
+			relevance = rc.relevanceInternal(pre, internal, mPredicateFactory.not(weakestPreconditionRight));
 		} else if (action instanceof ICallAction) {
 			final ICallAction call = (ICallAction) counterexampleWord.getSymbolAt(position);
-			relevance = rc.relevanceCall(pre, call,
-					mPredicateFactory.newPredicate(mPredicateFactory.not(weakestPreconditionRight)));
+			relevance = rc.relevanceCall(pre, call, mPredicateFactory.not(weakestPreconditionRight));
 		} else if (action instanceof IReturnAction) {
 			final IReturnAction ret = (IReturnAction) counterexampleWord.getSymbolAt(position);
 			assert counterexampleWord.isReturnPosition(position);
@@ -604,8 +602,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 				callPredecessor = weakestPreconditionLeft;
 			}
 
-			relevance = rc.relevanceReturn(pre, callPredecessor, ret,
-					mPredicateFactory.newPredicate(mPredicateFactory.not(weakestPreconditionRight)));
+			relevance = rc.relevanceReturn(pre, callPredecessor, ret, mPredicateFactory.not(weakestPreconditionRight));
 		} else {
 			throw new AssertionError("Unknown Action " + action.getClass().getSimpleName());
 		}

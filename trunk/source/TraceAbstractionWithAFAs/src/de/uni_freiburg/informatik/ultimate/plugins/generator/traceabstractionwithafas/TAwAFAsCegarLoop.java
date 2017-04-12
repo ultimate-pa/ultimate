@@ -187,9 +187,8 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 					// + alternatingAutomatonUnion + "\n"
 					// + "################### 2nd AFA: ###################\n"
 					// + alternatingAutomaton + "\n");
-					final AA_MergedUnion<LETTER, IPredicate> mergedUnion =
-							new AA_MergedUnion<>(new AutomataLibraryServices(mServices), alternatingAutomatonUnion,
-									alternatingAutomaton);
+					final AA_MergedUnion<LETTER, IPredicate> mergedUnion = new AA_MergedUnion<>(
+							new AutomataLibraryServices(mServices), alternatingAutomatonUnion, alternatingAutomaton);
 					alternatingAutomatonUnion = mergedUnion.getResult();
 					assert checkRAFA(alternatingAutomatonUnion);
 				}
@@ -200,9 +199,8 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 		}
 		assert alternatingAutomatonUnion.accepts(trace) : "interpolant afa does not accept the trace!";
 
-		final RAFA_Determination<LETTER> determination =
-				new RAFA_Determination<>(new AutomataLibraryServices(mServices), alternatingAutomatonUnion, mCsToolkit,
-						mPredicateUnifier);
+		final RAFA_Determination<LETTER> determination = new RAFA_Determination<>(
+				new AutomataLibraryServices(mServices), alternatingAutomatonUnion, mCsToolkit, mPredicateUnifier);
 		mInterpolAutomaton = determination.getResult();
 		try {
 			assert new Accepts<>(new AutomataLibraryServices(mServices), mInterpolAutomaton, (NestedWord<LETTER>) trace)
@@ -431,8 +429,7 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 						currentDag.getNodeLabel().getInterpolant(), alternatingAutomaton.generateCube(
 								targetStates.toArray(new IPredicate[targetStates.size()]), new IPredicate[0]));
 				assert mhtc.checkInternal(
-						mPredicateFactory.newPredicate(
-								mPredicateFactory.and(targetStates.toArray(new IPredicate[targetStates.size()]))),
+						mPredicateFactory.and(targetStates.toArray(new IPredicate[targetStates.size()])),
 						(IInternalAction) currentDag.getNodeLabel().getBlock(),
 						currentDag.getNodeLabel().getInterpolant()) == Validity.VALID;
 			} else {
@@ -440,8 +437,7 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 						currentDag.getNodeLabel().getInterpolant(),
 						alternatingAutomaton.generateCube(new IPredicate[] { finalState }, new IPredicate[0]));
 				assert mhtc.checkInternal(
-						mPredicateFactory.newPredicate(
-								mPredicateFactory.and(targetStates.toArray(new IPredicate[targetStates.size()]))),
+						mPredicateFactory.and(targetStates.toArray(new IPredicate[targetStates.size()])),
 						(IInternalAction) currentDag.getNodeLabel().getBlock(),
 						currentDag.getNodeLabel().getInterpolant()) == Validity.VALID;
 			}
@@ -496,8 +492,8 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 			diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
 					oldAbstraction, determinized, psd2, false);
 		} else {
-			diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-					oldAbstraction, determinized, psd2,	explointSigmaStarConcatOfIA);
+			diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement, oldAbstraction,
+					determinized, psd2, explointSigmaStarConcatOfIA);
 		}
 		assert !mCsToolkit.getManagedScript().isLocked();
 		assert new InductivityCheck<>(mServices, mInterpolAutomaton, false, true,
@@ -600,13 +596,12 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 		IPredicate pred = mPredicateUnifier.getTruePredicate();
 		for (int i = 0; i < states.size(); i++) {
 			if (bex.getAlpha().get(i)) {
-				pred = mPredicateFactory.newPredicate(mPredicateFactory.and(pred, !bex.getBeta().get(i)
-						? mPredicateFactory.newPredicate(mPredicateFactory.not(states.get(i))) : states.get(i)));
+				pred = mPredicateFactory.and(pred,
+						!bex.getBeta().get(i) ? mPredicateFactory.not(states.get(i)) : states.get(i));
 			}
 		}
 		if (bex.getNextConjunctExpression() != null) {
-			pred = mPredicateFactory.newPredicate(
-					mPredicateFactory.or(false, pred, bexToPredicate(bex.getNextConjunctExpression(), states)));
+			pred = mPredicateFactory.or(false, pred, bexToPredicate(bex.getNextConjunctExpression(), states));
 		}
 		return pred;
 	}

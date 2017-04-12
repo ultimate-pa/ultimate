@@ -93,7 +93,7 @@ public class PredicateFactoryForInterpolantConsolidation extends PredicateFactor
 
 		final IcfgLocation pp = ((ISLPredicate) p1).getProgramPoint();
 
-		final Term conjunction = super.mPredicateFactory.and(p1, p2);
+		final Term conjunction = super.mPredicateFactory.and(p1, p2).getFormula();
 		final IPredicate result = super.mPredicateFactory.newSPredicate(pp, conjunction);
 
 		if (mIntersectedPredicateToArgumentPredicates.containsKey(result)) {
