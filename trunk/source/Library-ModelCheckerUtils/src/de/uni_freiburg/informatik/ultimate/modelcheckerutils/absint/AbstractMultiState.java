@@ -66,6 +66,10 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 		this(maxSize, Collections.singleton(state));
 	}
 
+	public AbstractMultiState(final STATE state) {
+		this(1, Collections.singleton(state));
+	}
+
 	public AbstractMultiState(final Set<STATE> state) {
 		this(state.size(), state);
 	}
@@ -245,7 +249,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 
 	@Override
 	public AbstractMultiState<STATE, VARDECL> intersect(final AbstractMultiState<STATE, VARDECL> other) {
-		throw new UnsupportedOperationException();
+		return crossProduct((a, b) -> a.intersect(b), other, mStates.size() * other.mStates.size());
 	}
 
 	@Override
@@ -343,6 +347,10 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 		return new AbstractMultiState<>(maxSize, getMaximalElements(newSet));
 	}
 
+	/**
+	 * Same as {@link #crossProduct(BiFunction, AbstractMultiState, int)}, but the function creates a collection of
+	 * states.
+	 */
 	private AbstractMultiState<STATE, VARDECL> crossProductCollection(
 			final BiFunction<STATE, STATE, Collection<STATE>> funCreateState,
 			final AbstractMultiState<STATE, VARDECL> otherMultiState, final int maxSize) {
