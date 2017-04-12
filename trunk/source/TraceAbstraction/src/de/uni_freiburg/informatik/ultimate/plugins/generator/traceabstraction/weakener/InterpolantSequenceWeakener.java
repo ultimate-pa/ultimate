@@ -222,7 +222,8 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 		} else {
 			final Rational sum = mSizeDifferential.stream().reduce(Rational.ZERO, (a, b) -> a.add(b));
 			final Rational result = sum.div(Rational.valueOf(mSuccessfulWeakenings, 1));
-			final double rounded = result.numerator().doubleValue() / result.denominator().doubleValue() * 100.0;
+			final double rounded =
+					100.0 - result.numerator().doubleValue() / result.denominator().doubleValue() * 100.0;
 			final DecimalFormat df = new DecimalFormat();
 			df.setMaximumFractionDigits(2);
 			mLogger.info(String.format("Weakened %s states. Average reduction was %s%%.", mSuccessfulWeakenings,
