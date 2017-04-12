@@ -62,8 +62,11 @@ assert(!Accepts(taIntList, list0));
 assert(!Accepts(taEvenIntList, list0));
 assert(!Accepts(taMul3IntList, list0));
 assert(!Accepts(Determinize(taIntList), list0));
-assert(!Accepts(taEvenIntList, list0));
+assert(!Accepts(Determinize(taEvenIntList), list0));
 assert(!Accepts(Determinize(taMul3IntList), list0));
+
+assert(!Accepts(Determinize(taIntList), Tree["0"]));
+assert(!Accepts(taIntList, Tree["0"]));
 
 // taIntList accepts all integer lists
 assert(Accepts(taIntList, listA));
@@ -83,11 +86,11 @@ assert(Accepts(taEvenIntList, listB));
 assert(Accepts(taEvenIntList, listC));
 assert(!Accepts(taEvenIntList, listD));
 assert(Accepts(taEvenIntList, listE));
-assert(!Accepts(taEvenIntList, listA));
-assert(Accepts(taEvenIntList, listB));
-assert(Accepts(taEvenIntList, listC));
-assert(!Accepts(taEvenIntList, listD));
-assert(Accepts(taEvenIntList, listE));
+assert(!Accepts(Determinize(taEvenIntList), listA));
+assert(Accepts(Determinize(taEvenIntList), listB));
+assert(Accepts(Determinize(taEvenIntList), listC));
+assert(!Accepts(Determinize(taEvenIntList), listD));
+assert(Accepts(Determinize(taEvenIntList), listE));
 
 // taMul3IntList accepts only lists of multiples of 3
 assert(!Accepts(taMul3IntList, listA));
