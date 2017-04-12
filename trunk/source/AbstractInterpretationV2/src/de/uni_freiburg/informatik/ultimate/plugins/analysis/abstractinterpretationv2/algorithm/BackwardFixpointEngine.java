@@ -121,7 +121,7 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 				mLogger.debug(getLogMessageCurrentTransition(currentItem));
 			}
 
-			final AbstractMultiState<STATE, ACTION, VARDECL> preState = calculateAbstractPre(currentItem, preOp);
+			final AbstractMultiState<STATE, VARDECL> preState = calculateAbstractPre(currentItem, preOp);
 
 			if (isUnnecessaryPreState(currentItem, preState)) {
 				continue;
@@ -129,7 +129,7 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 
 			checkLoopState(currentItem);
 
-			final AbstractMultiState<STATE, ACTION, VARDECL> preStateAfterWidening =
+			final AbstractMultiState<STATE, VARDECL> preStateAfterWidening =
 					widenIfNecessary(currentItem, preState, wideningOp);
 			if (preStateAfterWidening == null) {
 				// we have reached a fixpoint
@@ -140,7 +140,7 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 				continue;
 			}
 			logDebugPostChanged(preState, preStateAfterWidening, "Widening");
-			final AbstractMultiState<STATE, ACTION, VARDECL> preStateAfterSave =
+			final AbstractMultiState<STATE, VARDECL> preStateAfterSave =
 					savePreState(currentItem, preStateAfterWidening);
 			assert preStateAfterSave != null : "Saving a state is not allowed to return null";
 			logDebugPostChanged(preStateAfterWidening, preStateAfterSave, "Merge");
@@ -151,14 +151,14 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 		}
 	}
 
-	private AbstractMultiState<STATE, ACTION, VARDECL> calculateAbstractPre(
+	private AbstractMultiState<STATE, VARDECL> calculateAbstractPre(
 			final BackwardsWorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
 			final IAbstractTransformer<STATE, ACTION, VARDECL> preOp) {
 
-		final AbstractMultiState<STATE, ACTION, VARDECL> postState = currentItem.getState();
+		final AbstractMultiState<STATE, VARDECL> postState = currentItem.getState();
 		final ACTION currentAction = currentItem.getAction();
 
-		AbstractMultiState<STATE, ACTION, VARDECL> preState = postState.apply(preOp, currentAction);
+		AbstractMultiState<STATE, VARDECL> preState = postState.apply(preOp, currentAction);
 
 		// assert mTransitionProvider.isSummaryWithImplementation(currentAction) || mDebugHelper.isPostSound(postState,
 		// preStateWithFreshVariables, blaState, currentAction) : getLogMessageUnsoundPost(postState,
@@ -181,7 +181,7 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 	 *         and false otherwise.
 	 */
 	private boolean isUnnecessaryPreState(final BackwardsWorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
-			final AbstractMultiState<STATE, ACTION, VARDECL> pendingPreState) {
+			final AbstractMultiState<STATE, VARDECL> pendingPreState) {
 		if (pendingPreState.isBottom()) {
 			// if the new abstract state is bottom, we do not enter loops and we do not add
 			// new actions to the worklist
@@ -214,9 +214,9 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 		}
 	}
 
-	private AbstractMultiState<STATE, ACTION, VARDECL> savePreState(
+	private AbstractMultiState<STATE, VARDECL> savePreState(
 			final BackwardsWorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
-			final AbstractMultiState<STATE, ACTION, VARDECL> preState) {
+			final AbstractMultiState<STATE, VARDECL> preState) {
 		final IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> currentStorage = currentItem.getCurrentStorage();
 		final ACTION currentAction = currentItem.getAction();
 
@@ -229,20 +229,20 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 	}
 
 	private BackwardsWorklistItem<STATE, ACTION, VARDECL, LOC> createInitialWorklistItem(final ACTION elem) {
-		final AbstractMultiState<STATE, ACTION, VARDECL> preMultiState = createFreshPrestateWithVariables(elem);
+		final AbstractMultiState<STATE, VARDECL> preMultiState = createFreshPrestateWithVariables(elem);
 		return new BackwardsWorklistItem<>(preMultiState, elem, mStateStorage, mSummaryMap);
 	}
 
-	private AbstractMultiState<STATE, ACTION, VARDECL> createFreshPrestateWithVariables(final ACTION elem) {
+	private AbstractMultiState<STATE, VARDECL> createFreshPrestateWithVariables(final ACTION elem) {
 		final STATE preState = mVarProvider.defineInitialVariables(elem, mDomain.createFreshState());
-		final AbstractMultiState<STATE, ACTION, VARDECL> preMultiState =
+		final AbstractMultiState<STATE, VARDECL> preMultiState =
 				new AbstractMultiState<>(mMaxParallelStates, preState);
 		return preMultiState;
 	}
 
 	private List<BackwardsWorklistItem<STATE, ACTION, VARDECL, LOC>> createPredecessorItems(
 			final BackwardsWorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
-			final AbstractMultiState<STATE, ACTION, VARDECL> preState) {
+			final AbstractMultiState<STATE, VARDECL> preState) {
 		final ACTION current = currentItem.getAction();
 		final Collection<ACTION> predecessors =
 				mTransitionProvider.getPredecessors(current, currentItem.getCurrentScope());
@@ -265,9 +265,9 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 		return predecessorItems;
 	}
 
-	private AbstractMultiState<STATE, ACTION, VARDECL> widenIfNecessary(
+	private AbstractMultiState<STATE, VARDECL> widenIfNecessary(
 			final BackwardsWorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
-			final AbstractMultiState<STATE, ACTION, VARDECL> preState,
+			final AbstractMultiState<STATE, VARDECL> preState,
 			final IAbstractStateBinaryOperator<STATE> wideningOp) {
 
 		final ACTION currentAction = currentItem.getAction();
@@ -276,8 +276,8 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 		// we should widen if the current item is a transition to a loop head
 		// or if a successor transition enters a scope
 		final LOC source = mTransitionProvider.getSource(currentAction);
-		final Pair<Integer, AbstractMultiState<STATE, ACTION, VARDECL>> loopPair = currentItem.getLoopPair(source);
-		final AbstractMultiState<STATE, ACTION, VARDECL> oldState;
+		final Pair<Integer, AbstractMultiState<STATE, VARDECL>> loopPair = currentItem.getLoopPair(source);
+		final AbstractMultiState<STATE, VARDECL> oldState;
 		boolean scopeWidening = false;
 		if (loopPair != null && loopPair.getFirst() > mMaxUnwindings) {
 			oldState = loopPair.getSecond();
@@ -299,7 +299,7 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Op1: " + LoggingHelper.getStateString(oldState));
 			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Op2: " + LoggingHelper.getStateString(preState));
 		}
-		final AbstractMultiState<STATE, ACTION, VARDECL> preStateAfterWidening = oldState.apply(wideningOp, preState);
+		final AbstractMultiState<STATE, VARDECL> preStateAfterWidening = oldState.apply(wideningOp, preState);
 		if (isFixpoint(oldState, preStateAfterWidening)) {
 			if (scopeWidening) {
 				// if we found a fixpoint during scope widening, it means that we will not continue into this scope but
@@ -316,9 +316,9 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 	 *
 	 * @param preState
 	 */
-	private AbstractMultiState<STATE, ACTION, VARDECL> prepareScope(
+	private AbstractMultiState<STATE, VARDECL> prepareScope(
 			final BackwardsWorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
-			final AbstractMultiState<STATE, ACTION, VARDECL> preState) {
+			final AbstractMultiState<STATE, VARDECL> preState) {
 		final ACTION action = currentItem.getAction();
 
 		if (mTransitionProvider.isEnteringScope(action, currentItem.getCurrentScope())) {
@@ -338,11 +338,11 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 		}
 	}
 
-	private AbstractMultiState<STATE, ACTION, VARDECL>
+	private AbstractMultiState<STATE, VARDECL>
 			getWidenStateAtScopeEntry(final BackwardsWorklistItem<STATE, ACTION, VARDECL, LOC> currentItem) {
 		final ACTION currentAction = currentItem.getAction();
 
-		final Deque<Pair<ACTION, AbstractMultiState<STATE, ACTION, VARDECL>>> scopeStack =
+		final Deque<Pair<ACTION, AbstractMultiState<STATE, VARDECL>>> scopeStack =
 				currentItem.getScopeWideningStack();
 		// count all stack items that are there more than once and the current item
 		final Optional<Long> count = scopeStack.stream().map(a -> a.getFirst()).filter(a -> a != null)
@@ -364,7 +364,7 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 					.map(a3 -> AbsIntPrefInitializer.TINDENT + a3).forEach(mLogger::debug);
 		}
 
-		final List<Pair<ACTION, AbstractMultiState<STATE, ACTION, VARDECL>>> relevantStackItems = scopeStack.stream()
+		final List<Pair<ACTION, AbstractMultiState<STATE, VARDECL>>> relevantStackItems = scopeStack.stream()
 				.sequential().filter(a -> a.getFirst() == currentAction).collect(Collectors.toList());
 		if (relevantStackItems.isEmpty()) {
 			// there is no relevant sequence
@@ -390,7 +390,7 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 			}
 			return null;
 		}
-		final AbstractMultiState<STATE, ACTION, VARDECL> lastState = relevantStackItems.get(idx).getSecond();
+		final AbstractMultiState<STATE, VARDECL> lastState = relevantStackItems.get(idx).getSecond();
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug(AbsIntPrefInitializer.DINDENT + "Selected " + LoggingHelper.getHashCodeString(lastState));
@@ -398,8 +398,8 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 		return lastState;
 	}
 
-	private boolean isFixpoint(final AbstractMultiState<STATE, ACTION, VARDECL> oldState,
-			final AbstractMultiState<STATE, ACTION, VARDECL> newState) {
+	private boolean isFixpoint(final AbstractMultiState<STATE, VARDECL> oldState,
+			final AbstractMultiState<STATE, VARDECL> newState) {
 		if (oldState.isEqualTo(newState)) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessageFixpointFound(oldState, newState));
@@ -411,9 +411,9 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 	}
 
 	private boolean checkSubset(final IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> currentStateStorage,
-			final ACTION currentAction, final AbstractMultiState<STATE, ACTION, VARDECL> pendingPreState) {
+			final ACTION currentAction, final AbstractMultiState<STATE, VARDECL> pendingPreState) {
 		final LOC source = mTransitionProvider.getSource(currentAction);
-		final AbstractMultiState<STATE, ACTION, VARDECL> oldPreState = currentStateStorage.getAbstractState(source);
+		final AbstractMultiState<STATE, VARDECL> oldPreState = currentStateStorage.getAbstractState(source);
 		if (pendingPreState == oldPreState || pendingPreState.isSubsetOf(oldPreState) != SubsetResult.NONE) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessagePostIsSubsumed(pendingPreState, oldPreState));
@@ -430,8 +430,8 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 		}
 	}
 
-	private void logDebugPostChanged(final AbstractMultiState<STATE, ACTION, VARDECL> postState,
-			final AbstractMultiState<STATE, ACTION, VARDECL> postStateAfterChange, final String reason) {
+	private void logDebugPostChanged(final AbstractMultiState<STATE, VARDECL> postState,
+			final AbstractMultiState<STATE, VARDECL> postStateAfterChange, final String reason) {
 		if (!mLogger.isDebugEnabled()) {
 			return;
 		}
@@ -444,9 +444,9 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 		mLogger.debug(prefix + "After: " + LoggingHelper.getStateString(postStateAfterChange));
 	}
 
-	private String getLogMessageUnsoundPost(final AbstractMultiState<STATE, ACTION, VARDECL> preState,
-			final AbstractMultiState<STATE, ACTION, VARDECL> preStateWithFreshVariables,
-			final AbstractMultiState<STATE, ACTION, VARDECL> postState, final ACTION currentAction) {
+	private String getLogMessageUnsoundPost(final AbstractMultiState<STATE, VARDECL> preState,
+			final AbstractMultiState<STATE, VARDECL> preStateWithFreshVariables,
+			final AbstractMultiState<STATE, VARDECL> postState, final ACTION currentAction) {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Post is unsound because the term-transformation of the following triple is not valid: {");
 		sb.append(preState.toLogString());
@@ -466,14 +466,14 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 	}
 
 	private StringBuilder
-			getLogMessagePreIsBottom(final AbstractMultiState<STATE, ACTION, VARDECL> pendingNewPostState) {
+			getLogMessagePreIsBottom(final AbstractMultiState<STATE, VARDECL> pendingNewPostState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT)
 				.append(" Skipping all successors because pre state [").append(pendingNewPostState.hashCode())
 				.append("] is bottom");
 	}
 
-	private StringBuilder getLogMessagePostIsSubsumed(final AbstractMultiState<STATE, ACTION, VARDECL> subState,
-			final AbstractMultiState<STATE, ACTION, VARDECL> superState) {
+	private StringBuilder getLogMessagePostIsSubsumed(final AbstractMultiState<STATE, VARDECL> subState,
+			final AbstractMultiState<STATE, VARDECL> superState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT)
 				.append(" Skipping all successors because post state ").append(LoggingHelper.getStateString(subState))
 				.append(" is subsumed by pre-existing state ").append(LoggingHelper.getStateString(superState));
@@ -497,27 +497,27 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 
 	}
 
-	private StringBuilder getLogMessageFixpointFound(final AbstractMultiState<STATE, ACTION, VARDECL> oldPostState,
-			final AbstractMultiState<STATE, ACTION, VARDECL> newPostState) {
+	private StringBuilder getLogMessageFixpointFound(final AbstractMultiState<STATE, VARDECL> oldPostState,
+			final AbstractMultiState<STATE, VARDECL> newPostState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" State [")
 				.append(oldPostState.hashCode()).append("] ").append(oldPostState.toLogString())
 				.append(" is equal to [").append(newPostState.hashCode()).append("]");
 	}
 
-	private StringBuilder getLogMessageNewState(final AbstractMultiState<STATE, ACTION, VARDECL> newPostState) {
+	private StringBuilder getLogMessageNewState(final AbstractMultiState<STATE, VARDECL> newPostState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Adding pre state [")
 				.append(newPostState.hashCode()).append("] ").append(newPostState.toLogString());
 	}
 
 	private StringBuilder getLogMessageEnterLoop(final int loopCounterValue, final LOC loopHead,
-			final AbstractMultiState<STATE, ACTION, VARDECL> state) {
+			final AbstractMultiState<STATE, VARDECL> state) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" Entering loop ").append(loopHead)
 				.append(" (").append(loopCounterValue).append("), saving ").append(LoggingHelper.getStateString(state));
 	}
 
 	private StringBuilder
 			getLogMessageCurrentTransition(final BackwardsWorklistItem<STATE, ACTION, VARDECL, LOC> currentItem) {
-		final AbstractMultiState<STATE, ACTION, VARDECL> preState = currentItem.getState();
+		final AbstractMultiState<STATE, VARDECL> preState = currentItem.getState();
 		final ACTION current = currentItem.getAction();
 		final int depth = currentItem.getScopeStackDepth();
 		final String preStateString = preState == null ? "NULL" : LoggingHelper.getStateString(preState).toString();

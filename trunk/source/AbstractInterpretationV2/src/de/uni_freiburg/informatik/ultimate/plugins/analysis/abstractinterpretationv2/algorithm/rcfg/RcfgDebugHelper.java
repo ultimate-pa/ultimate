@@ -59,9 +59,9 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTIO
 	}
 
 	@Override
-	public boolean isPostSound(final AbstractMultiState<STATE, ACTION, VARDECL> stateBeforeLeaving,
-			final AbstractMultiState<STATE, ACTION, VARDECL> stateAfterLeaving,
-			final AbstractMultiState<STATE, ACTION, VARDECL> postState, final ACTION transition) {
+	public boolean isPostSound(final AbstractMultiState<STATE, VARDECL> stateBeforeLeaving,
+			final AbstractMultiState<STATE, VARDECL> stateAfterLeaving,
+			final AbstractMultiState<STATE, VARDECL> postState, final ACTION transition) {
 		final IPredicate precond = createPredicateFromState(stateBeforeLeaving);
 		final IPredicate postcond = createPredicateFromState(postState);
 		final IPredicate hierPre = getHierachicalPre(transition, () -> createPredicateFromState(stateAfterLeaving));
@@ -146,7 +146,7 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTIO
 				tvp.getClosedFormula());
 	}
 
-	private IPredicate createPredicateFromState(final AbstractMultiState<STATE, ACTION, VARDECL> state) {
+	private IPredicate createPredicateFromState(final AbstractMultiState<STATE, VARDECL> state) {
 		final Term acc = state.getTerm(mMgdScript.getScript());
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mMgdScript.getScript(), mSymbolTable);
 		return new BasicPredicate(getIllegalPredicateId(), tvp.getProcedures(), acc, tvp.getVars(),

@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE, VARDECL>, ACTION extends IAction, LOC, VARDECL>
 		implements IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> {
 
-	private final Map<LOC, AbstractMultiState<STATE, ACTION, VARDECL>> mStorage;
+	private final Map<LOC, AbstractMultiState<STATE, VARDECL>> mStorage;
 	private final IUltimateServiceProvider mServices;
 	private final Set<IcfgAbstractStateStorageProvider<STATE, ACTION, LOC, VARDECL>> mChildStores;
 	private final ITransitionProvider<ACTION, LOC> mTransProvider;
@@ -89,16 +89,16 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 	}
 
 	@Override
-	public AbstractMultiState<STATE, ACTION, VARDECL> addAbstractState(final LOC loc,
-			final AbstractMultiState<STATE, ACTION, VARDECL> state) {
+	public AbstractMultiState<STATE, VARDECL> addAbstractState(final LOC loc,
+			final AbstractMultiState<STATE, VARDECL> state) {
 		assert loc != null : "Cannot add state to non-existing location";
 		assert state != null : "Cannot add null state";
-		final AbstractMultiState<STATE, ACTION, VARDECL> oldState = mStorage.get(loc);
+		final AbstractMultiState<STATE, VARDECL> oldState = mStorage.get(loc);
 		if (oldState == null) {
 			mStorage.put(loc, state);
 			return state;
 		}
-		final AbstractMultiState<STATE, ACTION, VARDECL> mergedState = oldState.union(state);
+		final AbstractMultiState<STATE, VARDECL> mergedState = oldState.union(state);
 		mStorage.put(loc, mergedState);
 		return mergedState;
 	}
@@ -113,14 +113,14 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 	}
 
 	@Override
-	public final Map<LOC, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> computeLoc2States() {
+	public final Map<LOC, Set<AbstractMultiState<STATE, VARDECL>>> computeLoc2States() {
 		final Set<IcfgAbstractStateStorageProvider<STATE, ACTION, LOC, VARDECL>> stores = getAllStores();
-		final Map<LOC, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> loc2states = new HashMap<>();
+		final Map<LOC, Set<AbstractMultiState<STATE, VARDECL>>> loc2states = new HashMap<>();
 		for (final IcfgAbstractStateStorageProvider<STATE, ACTION, LOC, VARDECL> store : stores) {
-			for (final Entry<LOC, AbstractMultiState<STATE, ACTION, VARDECL>> entry : store.mStorage.entrySet()) {
-				final Set<AbstractMultiState<STATE, ACTION, VARDECL>> set = loc2states.get(entry.getKey());
+			for (final Entry<LOC, AbstractMultiState<STATE, VARDECL>> entry : store.mStorage.entrySet()) {
+				final Set<AbstractMultiState<STATE, VARDECL>> set = loc2states.get(entry.getKey());
 				if (set == null) {
-					final Set<AbstractMultiState<STATE, ACTION, VARDECL>> newSet = new HashSet<>();
+					final Set<AbstractMultiState<STATE, VARDECL>> newSet = new HashSet<>();
 					newSet.add(entry.getValue());
 					loc2states.put(entry.getKey(), newSet);
 				} else {
@@ -132,7 +132,7 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 	}
 
 	@Override
-	public AbstractMultiState<STATE, ACTION, VARDECL> getAbstractState(final LOC loc) {
+	public AbstractMultiState<STATE, VARDECL> getAbstractState(final LOC loc) {
 		return mStorage.get(loc);
 	}
 
@@ -257,7 +257,7 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 
 	@Override
 	public void saveSummarySubstituion(final ACTION action,
-			final AbstractMultiState<STATE, ACTION, VARDECL> summaryPostState, final ACTION summaryAction) {
+			final AbstractMultiState<STATE, VARDECL> summaryPostState, final ACTION summaryAction) {
 		assert action instanceof IIcfgCallTransition<?>;
 		mParent.mUsedSummary.add(action.getSucceedingProcedure());
 	}
@@ -273,10 +273,10 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 			return sb.append("{}").toString();
 		}
 		sb.append('{');
-		final Set<Entry<LOC, AbstractMultiState<STATE, ACTION, VARDECL>>> entries = mStorage.entrySet();
-		for (final Entry<LOC, AbstractMultiState<STATE, ACTION, VARDECL>> entry : entries) {
+		final Set<Entry<LOC, AbstractMultiState<STATE, VARDECL>>> entries = mStorage.entrySet();
+		for (final Entry<LOC, AbstractMultiState<STATE, VARDECL>> entry : entries) {
 			sb.append(entry.getKey().toString()).append("=[");
-			final AbstractMultiState<STATE, ACTION, VARDECL> state = entry.getValue();
+			final AbstractMultiState<STATE, VARDECL> state = entry.getValue();
 			if (!state.isEmpty()) {
 				sb.append(state.toLogString());
 			}

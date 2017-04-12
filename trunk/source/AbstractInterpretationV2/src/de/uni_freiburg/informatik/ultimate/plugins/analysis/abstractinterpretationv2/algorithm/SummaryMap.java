@@ -57,11 +57,11 @@ final class SummaryMap<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VAR
 	}
 
 	@Override
-	public AbstractMultiState<STATE, ACTION, VARDECL> getSummaryPostState(final ACTION summaryAction,
-			final AbstractMultiState<STATE, ACTION, VARDECL> preCallState) {
+	public AbstractMultiState<STATE, VARDECL> getSummaryPostState(final ACTION summaryAction,
+			final AbstractMultiState<STATE, VARDECL> preCallState) {
 		final String procName = mTransProvider.getProcedureName(summaryAction);
 		final Set<Summary> summary = getSummary(procName);
-		final AbstractMultiState<STATE, ACTION, VARDECL> rtr =
+		final AbstractMultiState<STATE, VARDECL> rtr =
 				summary.stream().filter(a -> preCallState.isSubsetOf(a.getCallPostState()) != SubsetResult.NONE)
 						.findAny().map(a -> a.getReturnPreState()).orElse(null);
 		return rtr;
@@ -74,8 +74,8 @@ final class SummaryMap<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VAR
 	 * @param callStatement
 	 *            An action that leaves a scope
 	 */
-	void addSummary(final AbstractMultiState<STATE, ACTION, VARDECL> callPostState,
-			final AbstractMultiState<STATE, ACTION, VARDECL> returnPreState, final ACTION callStatement) {
+	void addSummary(final AbstractMultiState<STATE, VARDECL> callPostState,
+			final AbstractMultiState<STATE, VARDECL> returnPreState, final ACTION callStatement) {
 		// current is a call, but we have to find the summary
 		final String procName = mTransProvider.getProcedureName(callStatement);
 		final Set<Summary> oldSummaries = getSummary(procName);
@@ -91,17 +91,17 @@ final class SummaryMap<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VAR
 	}
 
 	private Summary updateSummaries(final Set<Summary> oldSummaries,
-			final AbstractMultiState<STATE, ACTION, VARDECL> callPostState,
-			final AbstractMultiState<STATE, ACTION, VARDECL> returnPreState, final ACTION callStatement) {
+			final AbstractMultiState<STATE, VARDECL> callPostState,
+			final AbstractMultiState<STATE, VARDECL> returnPreState, final ACTION callStatement) {
 		final Iterator<Summary> iter = oldSummaries.iterator();
 		final Summary rtr;
 		while (iter.hasNext()) {
 			final Summary current = iter.next();
-			final AbstractMultiState<STATE, ACTION, VARDECL> currentPre = current.getCallPostState();
-			final AbstractMultiState<STATE, ACTION, VARDECL> currentPost = current.getReturnPreState();
+			final AbstractMultiState<STATE, VARDECL> currentPre = current.getCallPostState();
+			final AbstractMultiState<STATE, VARDECL> currentPost = current.getReturnPreState();
 			if (callPostState.isSubsetOf(currentPre) != SubsetResult.NONE) {
-				final AbstractMultiState<STATE, ACTION, VARDECL> newCallPost = currentPre.union(callPostState);
-				final AbstractMultiState<STATE, ACTION, VARDECL> newReturnPre = currentPost.union(returnPreState);
+				final AbstractMultiState<STATE, VARDECL> newCallPost = currentPre.union(callPostState);
+				final AbstractMultiState<STATE, VARDECL> newReturnPre = currentPost.union(returnPreState);
 				iter.remove();
 				rtr = new Summary(newCallPost, newReturnPre);
 				logCurrentSummaries("Del summary", callStatement, current);
@@ -145,20 +145,20 @@ final class SummaryMap<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VAR
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 */
 	private final class Summary {
-		private final AbstractMultiState<STATE, ACTION, VARDECL> mCallPostState;
-		private final AbstractMultiState<STATE, ACTION, VARDECL> mReturnPreState;
+		private final AbstractMultiState<STATE, VARDECL> mCallPostState;
+		private final AbstractMultiState<STATE, VARDECL> mReturnPreState;
 
-		private Summary(final AbstractMultiState<STATE, ACTION, VARDECL> callPost,
-				final AbstractMultiState<STATE, ACTION, VARDECL> returnPre) {
+		private Summary(final AbstractMultiState<STATE, VARDECL> callPost,
+				final AbstractMultiState<STATE, VARDECL> returnPre) {
 			mCallPostState = callPost;
 			mReturnPreState = returnPre;
 		}
 
-		AbstractMultiState<STATE, ACTION, VARDECL> getReturnPreState() {
+		AbstractMultiState<STATE, VARDECL> getReturnPreState() {
 			return mReturnPreState;
 		}
 
-		AbstractMultiState<STATE, ACTION, VARDECL> getCallPostState() {
+		AbstractMultiState<STATE, VARDECL> getCallPostState() {
 			return mCallPostState;
 		}
 

@@ -54,7 +54,7 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, VARDE
 	 * @return an {@link AbstractMultiState} that represents multiple abstract states that were saved at the given
 	 *         location.
 	 */
-	AbstractMultiState<STATE, ACTION, VARDECL> getAbstractState(LOC loc);
+	AbstractMultiState<STATE, VARDECL> getAbstractState(LOC loc);
 
 	/**
 	 * Save a new state to some location. If there is already a state, merge the new one with the old one according to
@@ -66,14 +66,14 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, VARDE
 	 *            the state that should be saved.
 	 * @return The new state that is now saved at this location (i.e., either the given state or a merged state).
 	 */
-	AbstractMultiState<STATE, ACTION, VARDECL> addAbstractState(LOC loc,
-			AbstractMultiState<STATE, ACTION, VARDECL> state);
+	AbstractMultiState<STATE, VARDECL> addAbstractState(LOC loc,
+			AbstractMultiState<STATE, VARDECL> state);
 
 	IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> createStorage(ACTION scope);
 
 	void scopeFixpointReached();
 
-	void saveSummarySubstituion(ACTION action, AbstractMultiState<STATE, ACTION, VARDECL> summaryPostState,
+	void saveSummarySubstituion(ACTION action, AbstractMultiState<STATE, VARDECL> summaryPostState,
 			ACTION summaryAction);
 
 	/**
@@ -82,7 +82,7 @@ public interface IAbstractStateStorage<STATE extends IAbstractState<STATE, VARDE
 	 *
 	 * @return a map from location to term.
 	 */
-	Map<LOC, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> computeLoc2States();
+	Map<LOC, Set<AbstractMultiState<STATE, VARDECL>>> computeLoc2States();
 
 	/**
 	 * Get the set of abstract domain states that is saved at the target location of the given symbol in the context

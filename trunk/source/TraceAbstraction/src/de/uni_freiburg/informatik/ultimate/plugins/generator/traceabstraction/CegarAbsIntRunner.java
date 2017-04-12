@@ -322,7 +322,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	}
 
 	/**
-	 * 
+	 *
 	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
 	 *
 	 * @param <STATE>
@@ -348,7 +348,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					mResult.getUsedDomain().createBottomState());
 			mTruePredicate = new AbsIntPredicate<>(mPredicateUnifierSmt.getTruePredicate(),
 					mResult.getUsedDomain().createTopState());
-			mPredicateUnifierAbsInt = new AbsIntPredicateUnifier(mServices, mCsToolkit.getManagedScript(),
+			mPredicateUnifierAbsInt = new AbsIntPredicateUnifier<>(mServices, mCsToolkit.getManagedScript(),
 					mPredicateUnifierSmt.getPredicateFactory(), mCsToolkit.getSymbolTable(),
 					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 					mFalsePredicate, mTruePredicate);

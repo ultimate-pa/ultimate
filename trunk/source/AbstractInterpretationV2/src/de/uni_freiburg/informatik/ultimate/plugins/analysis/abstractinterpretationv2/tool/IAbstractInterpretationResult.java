@@ -75,7 +75,7 @@ public interface IAbstractInterpretationResult<STATE extends IAbstractState<STAT
 	 *         counterexample does not contain the correct number of loop unrollings, but rather the number of loop
 	 *         unrollings until a fixpoint was computed.
 	 */
-	List<AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>>
+	List<AbstractCounterexample<AbstractMultiState<STATE, VARDECL>, ACTION, VARDECL, LOCATION>>
 			getCounterexamples();
 
 	/**
