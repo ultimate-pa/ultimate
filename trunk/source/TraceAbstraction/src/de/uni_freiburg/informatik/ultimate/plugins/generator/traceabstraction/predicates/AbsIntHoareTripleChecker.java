@@ -86,16 +86,18 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	private final AbstractMultiState<STATE, ACTION, VARDECL> mTopState;
 	private final AbstractMultiState<STATE, ACTION, VARDECL> mBottomState;
 	private final IVariableProvider<STATE, ACTION, VARDECL> mVarProvider;
-	private final IncrementalHoareTripleChecker mDebugHtc;
+	private final IncrementalHoareTripleChecker mHtcSmt;
 	private final IUltimateServiceProvider mServices;
 	private final CfgSmtToolkit mCsToolkit;
 	private final SimplificationTechnique mSimplificationTechnique;
 	private final ManagedScript mManagedScript;
+	private final SdHoareTripleChecker mHtcSd;
+	private final boolean mOnlyAbsInt;
 
 	public AbsIntHoareTripleChecker(final ILogger logger, final IUltimateServiceProvider services,
 			final IAbstractDomain<STATE, ACTION, VARDECL> domain,
 			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final IPredicateUnifier predicateUnifer,
-			final CfgSmtToolkit csToolkit) {
+			final CfgSmtToolkit csToolkit, final boolean onlyAbsInt) {
 		mServices = services;
 		mLogger = Objects.requireNonNull(logger);
 		mDomain = Objects.requireNonNull(domain);
@@ -111,7 +113,10 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		mFalsePred = mPredicateUnifier.getFalsePredicate();
 		mTopState = new AbstractMultiState<>(5, mDomain.createTopState());
 		mBottomState = new AbstractMultiState<>(5, mDomain.createBottomState());
-		mDebugHtc = new IncrementalHoareTripleChecker(mCsToolkit);
+		mHtcSmt = new IncrementalHoareTripleChecker(mCsToolkit);
+		mHtcSd = new SdHoareTripleChecker(mCsToolkit, predicateUnifer, mBenchmark);
+		mOnlyAbsInt = onlyAbsInt;
+
 	}
 
 	@Override
@@ -121,6 +126,59 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 
 	@Override
 	public Validity checkInternal(final IPredicate prePred, final IInternalAction act, final IPredicate succPred) {
+		if (mOnlyAbsInt) {
+			return checkInternalAbsInt(prePred, act, succPred);
+		}
+		final Validity sdResult = mHtcSd.checkInternal(prePred, act, succPred);
+		if (isFinalResult(sdResult)) {
+			return sdResult;
+		}
+		final Validity absIntResult = checkInternalAbsInt(prePred, act, succPred);
+		if (isFinalResult(absIntResult)) {
+			return absIntResult;
+		}
+		return mHtcSmt.checkInternal(prePred, act, succPred);
+	}
+
+	@Override
+	public Validity checkCall(final IPredicate prePred, final ICallAction act, final IPredicate succPred) {
+		if (mOnlyAbsInt) {
+			return checkCallAbsInt(prePred, act, succPred);
+		}
+		final Validity sdResult = mHtcSd.checkCall(prePred, act, succPred);
+		if (isFinalResult(sdResult)) {
+			return sdResult;
+		}
+		final Validity absIntResult = checkCallAbsInt(prePred, act, succPred);
+		if (isFinalResult(absIntResult)) {
+			return absIntResult;
+		}
+		return mHtcSmt.checkCall(prePred, act, succPred);
+	}
+
+	@Override
+	public Validity checkReturn(final IPredicate preLinPred, final IPredicate preHierPred, final IReturnAction act,
+			final IPredicate succPred) {
+		if (mOnlyAbsInt) {
+			return checkReturnAbsInt(preLinPred, preHierPred, act, succPred);
+		}
+		final Validity sdResult = mHtcSd.checkReturn(preLinPred, preHierPred, act, succPred);
+		if (isFinalResult(sdResult)) {
+			return sdResult;
+		}
+		final Validity absIntResult = checkReturnAbsInt(preLinPred, preHierPred, act, succPred);
+		if (isFinalResult(absIntResult)) {
+			return absIntResult;
+		}
+		return mHtcSmt.checkReturn(preLinPred, preHierPred, act, succPred);
+	}
+
+	private static boolean isFinalResult(final Validity result) {
+		return result != Validity.UNKNOWN && result != Validity.NOT_CHECKED;
+	}
+
+	private Validity checkInternalAbsInt(final IPredicate prePred, final IInternalAction act,
+			final IPredicate succPred) {
 		mBenchmark.continueEdgeCheckerTime();
 		final AbstractMultiState<STATE, ACTION, VARDECL> pre = getState(prePred);
 		final AbstractMultiState<STATE, ACTION, VARDECL> succ = getState(succPred);
@@ -145,8 +203,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		return rtr;
 	}
 
-	@Override
-	public Validity checkCall(final IPredicate prePred, final ICallAction act, final IPredicate succPred) {
+	private Validity checkCallAbsInt(final IPredicate prePred, final ICallAction act, final IPredicate succPred) {
 		mBenchmark.continueEdgeCheckerTime();
 		final AbstractMultiState<STATE, ACTION, VARDECL> pre = getState(prePred);
 		final AbstractMultiState<STATE, ACTION, VARDECL> succ = getState(succPred);
@@ -177,9 +234,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		return result;
 	}
 
-	@Override
-	public Validity checkReturn(final IPredicate preLinPred, final IPredicate preHierPred, final IReturnAction act,
-			final IPredicate succPred) {
+	private Validity checkReturnAbsInt(final IPredicate preLinPred, final IPredicate preHierPred,
+			final IReturnAction act, final IPredicate succPred) {
 		mBenchmark.continueEdgeCheckerTime();
 
 		final AbstractMultiState<STATE, ACTION, VARDECL> preLin = getState(preLinPred);
@@ -321,7 +377,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		} else if (pred.equals(mFalsePred)) {
 			return mBottomState;
 		} else {
-			throw new UnsupportedOperationException("Cannot handle non-absint predicates: " + pred.getClass());
+			throw new UnsupportedOperationException(
+					"Cannot handle non-absint predicates: " + pred.hashCode() + " (" + pred.getClass() + ")");
 		}
 	}
 
@@ -368,6 +425,13 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 
 	private IPredicate createPredicateFromState(final AbstractMultiState<STATE, ACTION, VARDECL> preState) {
 		return mPredicateUnifier.getPredicateFactory().newPredicate(preState.getTerm(mManagedScript.getScript()));
+	}
+
+	private IPredicate unwrapPredicate(final IPredicate pred) {
+		if (pred instanceof AbsIntPredicate<?, ?>) {
+			return unwrapPredicate(((AbsIntPredicate<?, ?>) pred).getBackingPredicate());
+		}
+		return pred;
 	}
 
 	private boolean assertValidity(final AbstractMultiState<STATE, ACTION, VARDECL> preState,
@@ -418,13 +482,13 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			final IPredicate postcond) {
 		final Validity result;
 		if (transition instanceof ICallAction) {
-			result = mDebugHtc.checkCall(precond, (ICallAction) transition, postcond);
+			result = mHtcSmt.checkCall(precond, (ICallAction) transition, postcond);
 		} else if (transition instanceof IReturnAction) {
-			result = mDebugHtc.checkReturn(precond, precondHier, (IReturnAction) transition, postcond);
+			result = mHtcSmt.checkReturn(precond, precondHier, (IReturnAction) transition, postcond);
 		} else {
-			result = mDebugHtc.checkInternal(precond, (IInternalAction) transition, postcond);
+			result = mHtcSmt.checkInternal(precond, (IInternalAction) transition, postcond);
 		}
-		mDebugHtc.releaseLock();
+		mHtcSmt.releaseLock();
 		return result;
 	}
 

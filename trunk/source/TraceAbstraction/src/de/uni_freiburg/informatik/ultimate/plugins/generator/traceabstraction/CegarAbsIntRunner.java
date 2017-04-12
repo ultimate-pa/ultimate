@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -68,6 +69,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -346,7 +348,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 					mResult.getUsedDomain().createBottomState());
 			mTruePredicate = new AbsIntPredicate<>(mPredicateUnifierSmt.getTruePredicate(),
 					mResult.getUsedDomain().createTopState());
-			mPredicateUnifierAbsInt = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(),
+			mPredicateUnifierAbsInt = new AbsIntPredicateUnifier(mServices, mCsToolkit.getManagedScript(),
 					mPredicateUnifierSmt.getPredicateFactory(), mCsToolkit.getSymbolTable(),
 					SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 					mFalsePredicate, mTruePredicate);
@@ -362,12 +364,15 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 		public CachingHoareTripleChecker getHoareTripleChecker() {
 			if (mHtc == null) {
-				final IHoareTripleChecker htc =
-						new AbsIntHoareTripleChecker<>(mLogger, mServices, mResult.getUsedDomain(),
-								mResult.getUsedVariableProvider(), mPredicateUnifierAbsInt, mCsToolkit);
-				mHtc = new CachingHoareTripleCheckerMap(mServices, htc, mPredicateUnifierAbsInt);
+				mHtc = createHoareTripleChecker(false);
 			}
 			return mHtc;
+		}
+
+		private CachingHoareTripleCheckerMap createHoareTripleChecker(final boolean onlyAbsInt) {
+			final IHoareTripleChecker htc = new AbsIntHoareTripleChecker<>(mLogger, mServices, mResult.getUsedDomain(),
+					mResult.getUsedVariableProvider(), mPredicateUnifierAbsInt, mCsToolkit, onlyAbsInt);
+			return new CachingHoareTripleCheckerMap(mServices, htc, mPredicateUnifierAbsInt);
 		}
 
 		public IInterpolantGenerator getInterpolantGenerator() {
@@ -386,18 +391,20 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			// we were strong enough!
 			final Word<LETTER> word = mCex.getWord();
 			try {
-
+				mLogger.info("Generating AbsInt predicates");
 				final List<LETTER> ppTrace = constructTraceFromWord(word, mPathProgram);
 				final List<AbsIntPredicate<STATE, IBoogieVar>> nonUnifiedPredicates = generateAbsIntPredicates(ppTrace);
 
 				final List<AbsIntPredicate<STATE, IBoogieVar>> weakenedPredicates;
 				if (USE_INTERPOLANT_WEAKENER) {
-					weakenedPredicates = weakenPredicates(nonUnifiedPredicates, ppTrace);
-					assert isInductive(mCex.getWord().asList(),
-							weakenedPredicates) : "Sequence of interpolants not inductive (after weakening)!";
+					final CachingHoareTripleCheckerMap absIntOnlyHtc = createHoareTripleChecker(true);
+					weakenedPredicates = weakenPredicates(nonUnifiedPredicates, ppTrace, absIntOnlyHtc);
+					assert isInductive(mCex.getWord().asList(), weakenedPredicates,
+							absIntOnlyHtc) : "Sequence of interpolants not inductive (after weakening)!";
 				} else {
 					weakenedPredicates = nonUnifiedPredicates;
 				}
+				mLogger.info("Unifying AI predicates");
 				final List<AbsIntPredicate<STATE, IBoogieVar>> interpolants = unifyPredicates(weakenedPredicates);
 
 				if (mLogger.isDebugEnabled()) {
@@ -406,7 +413,9 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				}
 				assert word.length() - 1 == interpolants.size() : "Word has length " + word.length()
 						+ " but interpolant sequence has length " + interpolants.size();
-				assert isInductive(mCex.getWord().asList(), interpolants) : "Sequence of interpolants not inductive!";
+				assert isInductive(mCex.getWord().asList(), interpolants,
+						getHoareTripleChecker()) : "Sequence of interpolants not inductive!";
+				mLogger.info("Finished generation of AbsInt predicates");
 				return new AbsIntInterpolantGenerator(mPredicateUnifierAbsInt, mCex.getWord(),
 						interpolants.toArray(new IPredicate[interpolants.size()]), getHoareTripleChecker(),
 						mTruePredicate, mFalsePredicate);
@@ -424,11 +433,11 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		}
 
 		private List<AbsIntPredicate<STATE, IBoogieVar>> weakenPredicates(
-				final List<AbsIntPredicate<STATE, IBoogieVar>> nonUnifiedPredicates, final List<LETTER> ppTrace) {
-			return new AbsIntPredicateInterpolantSequenceWeakener<>(mLogger, getHoareTripleChecker(),
-					nonUnifiedPredicates, ppTrace, mTruePredicate, mFalsePredicate,
-					mCsToolkit.getManagedScript().getScript(), mPredicateUnifierAbsInt.getPredicateFactory())
-							.getResult();
+				final List<AbsIntPredicate<STATE, IBoogieVar>> nonUnifiedPredicates, final List<LETTER> ppTrace,
+				final IHoareTripleChecker htc) {
+			return new AbsIntPredicateInterpolantSequenceWeakener<>(mLogger, htc, nonUnifiedPredicates, ppTrace,
+					mTruePredicate, mFalsePredicate, mCsToolkit.getManagedScript().getScript(),
+					mPredicateUnifierAbsInt.getPredicateFactory()).getResult();
 		}
 
 		private List<LETTER> constructTraceFromWord(final Word<LETTER> word, final PathProgram pathProgram) {
@@ -449,7 +458,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		}
 
 		private boolean isInductive(final List<LETTER> trace,
-				final List<AbsIntPredicate<STATE, IBoogieVar>> interpolants) {
+				final List<AbsIntPredicate<STATE, IBoogieVar>> interpolants, final IHoareTripleChecker htc) {
 			mLogger.debug("Checking inductivity of AbsInt predicates");
 			if (trace.isEmpty()) {
 				return true;
@@ -461,7 +470,6 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			completeInterpolants.addAll(interpolants);
 			completeInterpolants.add(mFalsePredicate);
 
-			final CachingHoareTripleChecker htc = getHoareTripleChecker();
 			final Iterator<LETTER> traceIter = trace.iterator();
 			final Iterator<AbsIntPredicate<STATE, IBoogieVar>> interpolantsIter = completeInterpolants.iterator();
 
@@ -507,8 +515,6 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		}
 
 		private List<AbsIntPredicate<STATE, IBoogieVar>> generateAbsIntPredicates(final List<LETTER> cexTrace) {
-			mLogger.info("Generating AI predicates...");
-
 			final List<AbsIntPredicate<STATE, IBoogieVar>> rtr = new ArrayList<>();
 			final Deque<LETTER> callstack = new ArrayDeque<>();
 			final Script script = mCsToolkit.getManagedScript().getScript();
@@ -630,5 +636,55 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		public CachingHoareTripleChecker getHoareTripleChecker() {
 			throw new UnsupportedOperationException();
 		}
+	}
+
+	private static final class AbsIntPredicateUnifier<STATE extends IAbstractState<STATE, IBoogieVar>>
+			extends PredicateUnifier {
+
+		public AbsIntPredicateUnifier(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+				final BasicPredicateFactory predicateFactory, final IIcfgSymbolTable symbolTable,
+				final SimplificationTechnique simplificationTechnique,
+				final XnfConversionTechnique xnfConversionTechnique, final IPredicate... initialPredicates) {
+			super(services, mgdScript, predicateFactory, symbolTable, simplificationTechnique, xnfConversionTechnique,
+					initialPredicates);
+		}
+
+		@Override
+		protected IPredicate newPredicate(final Term term, final IPredicate originalPredicate) {
+			final IPredicate unifiedPred = super.newPredicate(term, originalPredicate);
+			if (originalPredicate instanceof AbsIntPredicate<?, ?>) {
+				return new AbsIntPredicate<>(unifiedPred,
+						((AbsIntPredicate<?, ?>) originalPredicate).getAbstractStates());
+			}
+			return unifiedPred;
+		}
+
+		@Override
+		protected IPredicate getOrConstructPredicateForConjunction(final Set<IPredicate> minimalSubset,
+				final HashMap<IPredicate, Validity> impliedPredicates,
+				final HashMap<IPredicate, Validity> expliedPredicates) {
+			final IPredicate unifiedPred =
+					super.getOrConstructPredicateForConjunction(minimalSubset, impliedPredicates, expliedPredicates);
+			// TODO: Conjunction of abstract states is currently unsupported
+			return unifiedPred;
+		}
+
+		@Override
+		protected IPredicate getOrConstructPredicateForDisjunction(final Set<IPredicate> minimalSubset,
+				final HashMap<IPredicate, Validity> impliedPredicates,
+				final HashMap<IPredicate, Validity> expliedPredicates) {
+			final IPredicate unifiedPred =
+					super.getOrConstructPredicateForDisjunction(minimalSubset, impliedPredicates, expliedPredicates);
+			return new AbsIntPredicate<>(unifiedPred, toStates(minimalSubset));
+		}
+
+		private Set<STATE> toStates(final Set<IPredicate> preds) {
+			if (preds == null || preds.isEmpty()) {
+				return Collections.emptySet();
+			}
+			return preds.stream().map(a -> (AbsIntPredicate<STATE, ?>) a).flatMap(a -> a.getAbstractStates().stream())
+					.collect(Collectors.toSet());
+		}
+
 	}
 }
