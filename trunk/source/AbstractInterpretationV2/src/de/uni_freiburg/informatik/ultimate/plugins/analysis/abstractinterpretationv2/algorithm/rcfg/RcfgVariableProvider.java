@@ -114,48 +114,17 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, IBoogieVar
 	}
 
 	@Override
-	public STATE synchronizeVariables(final STATE template, final STATE toSynchronize) {
-		if (toSynchronize == null) {
-			return null;
-		}
-		if (template == null) {
-			return toSynchronize;
-		}
-		final STATE rtr = synchronizeVariables(toSynchronize, template.getVariables());
-		assert !toSynchronize.isBottom() || rtr.isBottom() : "Bottom is lost";
-		return rtr;
-	}
-
-	@Override
 	public STATE createValidPostOpStateAfterLeaving(final IcfgEdge action, final STATE stateLin,
 			final STATE stateHier) {
 		final Set<IBoogieVar> preVars = getPreVariables(action);
-		final STATE synchronizedPreLin = synchronizeVariables(stateLin, preVars);
+		final STATE synchronizedPreLin = AbsIntUtil.synchronizeVariables(stateLin, preVars);
 		return defineVariablesAfter(action, synchronizedPreLin, stateHier);
 	}
 
 	@Override
 	public STATE createValidPostOpStateBeforeLeaving(final IcfgEdge action, final STATE stateHier) {
 		final Set<IBoogieVar> preVars = getPreVariables(action);
-		return synchronizeVariables(stateHier, preVars);
-	}
-
-	private STATE synchronizeVariables(final STATE state, final Set<IBoogieVar> shouldVars) {
-		final Set<IBoogieVar> definedVariables = state.getVariables();
-
-		final Set<IBoogieVar> toRemove = AbsIntUtil.difference(definedVariables, shouldVars);
-		final Set<IBoogieVar> toAdd = AbsIntUtil.difference(shouldVars, definedVariables);
-
-		if (toRemove.isEmpty() && toAdd.isEmpty()) {
-			return state;
-		}
-		if (toRemove.isEmpty()) {
-			return state.addVariables(toAdd);
-		}
-		if (toAdd.isEmpty()) {
-			return state.removeVariables(toRemove);
-		}
-		return state.removeVariables(toRemove).addVariables(toAdd);
+		return AbsIntUtil.synchronizeVariables(stateHier, preVars);
 	}
 
 	private STATE defineVariablesAfterReturn(final STATE localPreState, final STATE hierachicalPreState,

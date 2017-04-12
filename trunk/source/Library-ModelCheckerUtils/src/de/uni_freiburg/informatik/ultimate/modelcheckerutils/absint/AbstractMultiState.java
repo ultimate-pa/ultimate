@@ -292,11 +292,11 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	}
 
 	public <ACTION> AbstractMultiState<STATE, VARDECL> synchronizeVariables(
-			final IVariableProvider<STATE, ACTION, VARDECL> varProvider,
+			final BiFunction<STATE, STATE, STATE> funSynchronize,
 			final AbstractMultiState<STATE, VARDECL> toSynchronize) {
 		// any state will do:
-		return new AbstractMultiState<>(mMaxSize, mStates.iterator().next())
-				.crossProduct(varProvider::synchronizeVariables, toSynchronize, toSynchronize.mStates.size());
+		return new AbstractMultiState<>(mMaxSize, mStates.iterator().next()).crossProduct(funSynchronize, toSynchronize,
+				toSynchronize.mStates.size());
 	}
 
 	public <ACTION> AbstractMultiState<STATE, VARDECL> apply(final IAbstractTransformer<STATE, ACTION, VARDECL> op,

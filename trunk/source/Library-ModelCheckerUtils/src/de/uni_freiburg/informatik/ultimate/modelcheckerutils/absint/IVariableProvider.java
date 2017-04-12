@@ -85,8 +85,6 @@ public interface IVariableProvider<STATE extends IAbstractState<STATE, VARDECL>,
 	 */
 	STATE defineVariablesAfter(final ACTION current, final STATE localPreState, final STATE hierachicalPreState);
 
-	STATE synchronizeVariables(final STATE template, final STATE toSynchronize);
-
 	STATE createValidPostOpStateAfterLeaving(ACTION act, STATE origPreLinState, STATE preHierState);
 
 	STATE createValidPostOpStateBeforeLeaving(final ACTION action, final STATE stateHier);
