@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 
 /**
  * Implementation of a simple widening operator that just returns a new interval of the form (-&infin; ; &infin;).
