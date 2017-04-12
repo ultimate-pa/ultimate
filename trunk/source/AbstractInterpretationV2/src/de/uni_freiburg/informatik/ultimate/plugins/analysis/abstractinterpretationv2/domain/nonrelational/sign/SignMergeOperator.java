@@ -45,12 +45,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *            Any variable declaration.
  */
 public class SignMergeOperator<VARDECL> implements IAbstractStateBinaryOperator<SignDomainState<VARDECL>> {
-	
+
 	private static final int BUFFER_SIZE = 100;
-	
+
 	protected SignMergeOperator() {
 	}
-	
+
 	/**
 	 * Merges two abstract states, first and second, into one new abstract state. All variables that occur in first must
 	 * also occur in second.<br />
@@ -83,26 +83,26 @@ public class SignMergeOperator<VARDECL> implements IAbstractStateBinaryOperator<
 	public SignDomainState<VARDECL> apply(final SignDomainState<VARDECL> first, final SignDomainState<VARDECL> second) {
 		assert first != null;
 		assert second != null;
-		
+
 		if (!first.hasSameVariables(second)) {
 			throw new UnsupportedOperationException("Cannot merge two states with a disjoint set of variables.");
 		}
-		
+
 		final SignDomainState<VARDECL> newState = first.createCopy();
-		
+
 		final Set<VARDECL> variables = first.getVariables();
-		
+
 		for (final VARDECL entry : variables) {
-			
+
 			final SignDomainValue value1 = first.getValue(entry);
 			final SignDomainValue value2 = second.getValue(entry);
-			
+
 			newState.setValue(entry, computeMergedValue(value1, value2));
 		}
-		
+
 		return newState;
 	}
-	
+
 	/**
 	 * Computes the merging of two {@link SignDomainValue}s. {@link SignDomainValue}s.
 	 *
@@ -112,30 +112,30 @@ public class SignMergeOperator<VARDECL> implements IAbstractStateBinaryOperator<
 	 *            The second value.
 	 * @return Returns a new {@link SignDomainValue}.
 	 */
-	private SignDomainValue computeMergedValue(final SignDomainValue value1, final SignDomainValue value2) {
+	private static SignDomainValue computeMergedValue(final SignDomainValue value1, final SignDomainValue value2) {
 		if (value1.getValue() == value2.getValue()) {
 			return new SignDomainValue(value1.getValue());
 		}
-		
+
 		if (value1.getValue() == SignValues.BOTTOM || value2.getValue() == SignValues.BOTTOM) {
 			return new SignDomainValue(SignValues.BOTTOM);
 		}
-		
+
 		if ((value1.getValue() == SignValues.POSITIVE && value2.getValue() == SignValues.NEGATIVE)
 				|| (value1.getValue() == SignValues.NEGATIVE && value2.getValue() == SignValues.POSITIVE)) {
 			return new SignDomainValue(SignValues.TOP);
 		}
-		
+
 		if (value1.getValue() == SignValues.ZERO || value2.getValue() == SignValues.ZERO) {
 			return new SignDomainValue(SignValues.TOP);
 		}
-		
+
 		final StringBuilder stringBuilder = new StringBuilder(BUFFER_SIZE);
-		
+
 		stringBuilder.append("Unable to handle value1 = ").append(value1.getValue()).append(" and value2 = ")
 				.append(value2.getValue()).append('.');
-		
+
 		throw new UnsupportedOperationException(stringBuilder.toString());
 	}
-	
+
 }

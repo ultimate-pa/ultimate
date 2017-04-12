@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
@@ -243,6 +244,19 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		return true;
 	}
 
+	@Override
+	public AbstractMultiState<STATE, ACTION, VARDECL>
+			intersect(final AbstractMultiState<STATE, ACTION, VARDECL> other) {
+		throw new UnsupportedOperationException();
+	}
+
+	@Override
+	public AbstractMultiState<STATE, ACTION, VARDECL> union(final AbstractMultiState<STATE, ACTION, VARDECL> other) {
+		assert other != null && other.getVariables().equals(getVariables()) : "Cannot merge incompatible states";
+		final Set<STATE> set = newSet(mStates, other.mStates);
+		return new AbstractMultiState<>(mMaxSize, reduce(set));
+	}
+
 	/**
 	 * Apply the {@link IVariableProvider#defineVariablesAfter(Object, IAbstractState, IAbstractState)} function to all
 	 * states in this multi-state. This state acts as local pre state, and all states in hierachicalPreState are used as
@@ -311,15 +325,6 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		return mStates.stream().reduce(mergeOp::apply).orElse(null);
 	}
 
-	public AbstractMultiState<STATE, ACTION, VARDECL> merge(final IAbstractStateBinaryOperator<STATE> mergeOp,
-			final AbstractMultiState<STATE, ACTION, VARDECL> other) {
-		assert other != null && other.getVariables().equals(getVariables()) : "Cannot merge incompatible states";
-		final Set<STATE> set = newSet();
-		set.addAll(mStates);
-		set.addAll(other.mStates);
-		return new AbstractMultiState<>(mMaxSize, reduce(mergeOp, set));
-	}
-
 	/**
 	 * Create a new {@link AbstractMultiState} by applying some function to each pair of states from this
 	 * {@link AbstractMultiState} and some other {@link AbstractMultiState} (i.e., the first argument is a state from
@@ -383,16 +388,26 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 		return new LinkedHashSet<>(maxSize, 1.0F);
 	}
 
-	private Set<STATE> reduce(final IAbstractStateBinaryOperator<STATE> mergeOp, final Set<STATE> states) {
+	@SafeVarargs
+	private final Set<STATE> newSet(final Set<STATE>... sets) {
+		if (sets == null || sets.length == 0) {
+			return newSet();
+		}
+		final int elems = Arrays.stream(sets).map(a -> a.size()).reduce((a, b) -> a + b).get();
+		final Set<STATE> set = newSet(elems);
+		Arrays.stream(sets).forEach(set::addAll);
+		return set;
+	}
+
+	private Set<STATE> reduce(final Set<STATE> states) {
 		final Set<STATE> maximalElements = getMaximalElements(states);
 		if (maximalElements.size() <= mMaxSize) {
 			return maximalElements;
 		}
-		return reduceByOrderedMerge(mergeOp, maximalElements);
+		return reduceByOrderedMerge(maximalElements);
 	}
 
-	private Set<STATE> reduceByOrderedMerge(final IAbstractStateBinaryOperator<STATE> mergeOp,
-			final Set<STATE> states) {
+	private Set<STATE> reduceByOrderedMerge(final Set<STATE> states) {
 		final Set<STATE> reducibleSet = new LinkedHashSet<>(states);
 		int numberOfMerges = states.size() - mMaxSize;
 		while (numberOfMerges > 0) {
@@ -401,7 +416,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, AC
 			iter.remove();
 			final STATE second = iter.next();
 			iter.remove();
-			if (reducibleSet.add(mergeOp.apply(first, second))) {
+			if (reducibleSet.add(first.union(second))) {
 				--numberOfMerges;
 			} else {
 				numberOfMerges -= 2;

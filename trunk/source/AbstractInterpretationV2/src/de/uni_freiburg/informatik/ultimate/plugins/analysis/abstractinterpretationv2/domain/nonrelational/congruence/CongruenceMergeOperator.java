@@ -38,6 +38,6 @@ public class CongruenceMergeOperator<VARDECL> implements IAbstractStateBinaryOpe
 		assert first != null;
 		assert second != null;
 
-		return first.merge(second);
+		return first.union(second);
 	}
 }

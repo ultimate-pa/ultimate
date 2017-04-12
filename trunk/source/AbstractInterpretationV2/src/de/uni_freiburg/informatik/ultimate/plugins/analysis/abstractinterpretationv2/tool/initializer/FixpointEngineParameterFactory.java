@@ -71,7 +71,7 @@ public class FixpointEngineParameterFactory {
 		final IAbstractDomain<STATE, IcfgEdge, IBoogieVar> domain =
 				(IAbstractDomain<STATE, IcfgEdge, IBoogieVar>) selectDomain();
 		final IAbstractStateStorage<STATE, IcfgEdge, IBoogieVar, IcfgLocation> storageProvider =
-				new IcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
+				new IcfgAbstractStateStorageProvider<>(mServices, transitionProvider);
 
 		final IVariableProvider<STATE, IcfgEdge, IBoogieVar> variableProvider =
 				new RcfgVariableProvider<>(mRoot.getCfgSmtToolkit().getSymbolTable(), mServices);
@@ -92,7 +92,7 @@ public class FixpointEngineParameterFactory {
 		final IAbstractDomain<STATE, IcfgEdge, IProgramVarOrConst> domain =
 				(IAbstractDomain<STATE, IcfgEdge, IProgramVarOrConst>) selectDomainFutureCfg();
 		final IAbstractStateStorage<STATE, IcfgEdge, IProgramVarOrConst, BoogieIcfgLocation> storageProvider =
-				new IcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
+				new IcfgAbstractStateStorageProvider<>(mServices, transitionProvider);
 		final IVariableProvider<STATE, IcfgEdge, IProgramVarOrConst> variableProvider =
 				new FutureRcfgVariableProvider<>(mRoot.getCfgSmtToolkit().getSymbolTable(), mServices);
 		final IDebugHelper<STATE, IcfgEdge, IProgramVarOrConst, BoogieIcfgLocation> debugHelper =
@@ -125,7 +125,7 @@ public class FixpointEngineParameterFactory {
 				(IAbstractDomain<STATE, IcfgEdge, IProgramVarOrConst>) createEqualityDomain(logger);
 
 		final IAbstractStateStorage<STATE, IcfgEdge, IProgramVarOrConst, BoogieIcfgLocation> storageProvider =
-				new IcfgAbstractStateStorageProvider<>(domain.getMergeOperator(), mServices, transitionProvider);
+				new IcfgAbstractStateStorageProvider<>(mServices, transitionProvider);
 
 		final IVariableProvider<STATE, IcfgEdge, IProgramVarOrConst> variableProvider =
 				new FutureRcfgVariableProvider<>(mRoot.getCfgSmtToolkit().getSymbolTable(), mServices);
@@ -145,7 +145,7 @@ public class FixpointEngineParameterFactory {
 		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		if (EmptyDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new EmptyDomain<>(IProgramVarOrConst.class);
+			return new EmptyDomain<>();
 		} else if (DataflowDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new DataflowDomain<>(logger);
 		} else if (VPDomain.class.getSimpleName().equals(selectedDomain)) {
@@ -169,7 +169,7 @@ public class FixpointEngineParameterFactory {
 		final ILogger logger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 
 		if (EmptyDomain.class.getSimpleName().equals(selectedDomain)) {
-			return new EmptyDomain<>(IBoogieVar.class);
+			return new EmptyDomain<>();
 		} else if (SignDomain.class.getSimpleName().equals(selectedDomain)) {
 			return new SignDomain(mServices, mRoot, mSymbolTable);
 		} else if (IntervalDomain.class.getSimpleName().equals(selectedDomain)) {
@@ -183,7 +183,7 @@ public class FixpointEngineParameterFactory {
 			@SuppressWarnings("rawtypes")
 			final List<IAbstractDomain> domainList = new ArrayList<>();
 			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_EMPTY_DOMAIN)) {
-				domainList.add(new EmptyDomain<>(IBoogieVar.class));
+				domainList.add(new EmptyDomain<>());
 			}
 			if (prefs.getBoolean(CompoundDomainPreferences.LABEL_USE_SIGN_DOMAIN)) {
 				domainList.add(new SignDomain(mServices, mRoot, mSymbolTable));

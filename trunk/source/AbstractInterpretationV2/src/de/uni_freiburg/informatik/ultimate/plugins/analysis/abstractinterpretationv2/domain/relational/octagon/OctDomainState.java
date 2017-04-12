@@ -559,7 +559,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 *            Abstract state with same variables as this one
 	 * @return Over-approximated intersection
 	 */
-	public OctDomainState meet(final OctDomainState other) {
+	@Override
+	public OctDomainState intersect(final OctDomainState other) {
 		final OctMatrix numResult = OctMatrix.min(bestAvailableClosure(), other.bestAvailableClosure());
 		return operation(other, BoolValue::intersect, numResult);
 	}
@@ -573,7 +574,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 *            Abstract state with same variables as this one
 	 * @return Over-approximated union
 	 */
-	public OctDomainState join(final OctDomainState other) {
+	@Override
+	public OctDomainState union(final OctDomainState other) {
 		if (isBottom()) {
 			return other;
 		}

@@ -15,18 +15,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalLiteralWideningOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalMergeOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalSimpleWideningOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 
 public class IntervalDomain
 		implements IAbstractDomain<IntervalDomainState<IProgramVarOrConst>, IcfgEdge, IProgramVarOrConst> {
-	
+
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 	private IAbstractStateBinaryOperator<IntervalDomainState<IProgramVarOrConst>> mWideningOperator;
 	private final LiteralCollection mLiteralCollection;
-	private IAbstractStateBinaryOperator<IntervalDomainState<IProgramVarOrConst>> mMergeOperator;
 	private IAbstractPostOperator<IntervalDomainState<IProgramVarOrConst>, IcfgEdge, IProgramVarOrConst> mPostOperator;
 
 	public IntervalDomain(final ILogger logger, final LiteralCollection literalCollection,
@@ -73,14 +71,6 @@ public class IntervalDomain
 		}
 
 		return mWideningOperator;
-	}
-
-	@Override
-	public IAbstractStateBinaryOperator<IntervalDomainState<IProgramVarOrConst>> getMergeOperator() {
-		if (mMergeOperator == null) {
-			mMergeOperator = new IntervalMergeOperator<>();
-		}
-		return mMergeOperator;
 	}
 
 	@Override

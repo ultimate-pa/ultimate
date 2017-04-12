@@ -64,7 +64,6 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState<IBoog
 	private final BoogieSymbolTable mSymbolTable;
 
 	private IAbstractStateBinaryOperator<IntervalDomainState<IBoogieVar>> mWideningOperator;
-	private IAbstractStateBinaryOperator<IntervalDomainState<IBoogieVar>> mMergeOperator;
 	private IAbstractPostOperator<IntervalDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> mPostOperator;
 
 	public IntervalDomain(final ILogger logger, final BoogieSymbolTable symbolTable,
@@ -113,14 +112,6 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState<IBoog
 		}
 
 		return mWideningOperator;
-	}
-
-	@Override
-	public IAbstractStateBinaryOperator<IntervalDomainState<IBoogieVar>> getMergeOperator() {
-		if (mMergeOperator == null) {
-			mMergeOperator = new IntervalMergeOperator<>();
-		}
-		return mMergeOperator;
 	}
 
 	@Override

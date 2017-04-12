@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -136,7 +135,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 			}
 			IAbstractState state = result.get(0);
 			for (int j = 1; j < result.size(); j++) {
-				state = applyMergeInternally(state, result.get(j), currentDomain.getMergeOperator());
+				state = applyMergeInternally(state, result.get(j));
 			}
 
 			if (state.isBottom()) {
@@ -284,7 +283,7 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 
 			IAbstractState state = result.get(0);
 			for (int j = 1; j < result.size(); j++) {
-				state = applyMergeInternally(state, result.get(j), domainsBefore.get(i).getMergeOperator());
+				state = applyMergeInternally(state, result.get(j));
 			}
 
 			if (state.isBottom()) {
@@ -310,9 +309,8 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		return postOperator.apply(first, second, transition);
 	}
 
-	private static <T extends IAbstractState, M extends IAbstractStateBinaryOperator<T>> T
-			applyMergeInternally(final T first, final T second, final M mergeOperator) {
-		return mergeOperator.apply(first, second);
+	private static <T extends IAbstractState<T, ?>> T applyMergeInternally(final T first, final T second) {
+		return first.union(second);
 	}
 
 }

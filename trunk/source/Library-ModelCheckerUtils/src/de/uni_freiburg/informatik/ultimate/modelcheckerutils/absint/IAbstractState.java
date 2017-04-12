@@ -124,6 +124,24 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	STATE patch(STATE dominator);
 
 	/**
+	 * Intersects <tt>this</tt> with another abstract state.
+	 *
+	 * @param other
+	 *            The other abstract state to intersect with.
+	 * @return A new abstract state which is the result of the intersection of <tt>this</tt> and the other state.
+	 */
+	STATE intersect(final STATE other);
+
+	/**
+	 * Computes the union of <tt>this</tt> state with another abstract state.
+	 *
+	 * @param other
+	 *            The other abstract state.
+	 * @return A new abstract state which is the result of the union of <tt>this</tt> and the other state.
+	 */
+	STATE union(final STATE other);
+
+	/**
 	 * An abstract state is empty when it does not contain any variable.
 	 *
 	 * @return true if this abstract state is empty, false otherwise.

@@ -96,7 +96,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 			if (joinedState == null) {
 				joinedState = result;
 			} else {
-				joinedState = joinedState.join(result);
+				joinedState = joinedState.union(result);
 			}
 		}
 		return joinedState;

@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
  */
 public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		implements IAbstractDomain<VPState<ACTION>, ACTION, IProgramVarOrConst> {
-	
+
 	private final VPPostOperator<ACTION> mPost;
 	private final VPMergeOperator mMerge;
 	private final ILogger mLogger;
@@ -92,11 +92,6 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public IAbstractStateBinaryOperator<VPState<ACTION>> getWideningOperator() {
-		return mMerge;
-	}
-
-	@Override
-	public IAbstractStateBinaryOperator<VPState<ACTION>> getMergeOperator() {
 		return mMerge;
 	}
 

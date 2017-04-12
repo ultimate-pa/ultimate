@@ -92,6 +92,6 @@ public final class NonrelationalUtils {
 
 	private static <STATE extends NonrelationalState<STATE, V, VARDECL>, V extends INonrelationalValue<V>, VARDECL>
 			STATE merge(final STATE a, final STATE b) {
-		return a.merge(b);
+		return a.union(b);
 	}
 }

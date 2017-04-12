@@ -346,8 +346,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			mLogger.debug("    Computing post after return for arguments with statement: "
 					+ BoogiePrettyPrinter.print(assume));
 		}
-		final List<STATE> postResults =
-				handleInternalTransition(stateAfterLeaving, Collections.singletonList(assume));
+		final List<STATE> postResults = handleInternalTransition(stateAfterLeaving, Collections.singletonList(assume));
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("    Resulting post states: "
@@ -385,16 +384,6 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		}
 
 		return NonrelationalUtils.mergeStatesIfNecessary(currentStates, mParallelStates);
-	}
-
-	private static CallStatement getCorrespondingCall(final IcfgEdge transition) {
-		if (transition instanceof Return) {
-			return ((Return) transition).getCallStatement();
-		} else if (transition instanceof Summary) {
-			return ((Summary) transition).getCallStatement();
-		} else {
-			throw new IllegalArgumentException("Transition " + transition.getClass() + " has no corresponding call");
-		}
 	}
 
 	private static CallStatement getCorrespondingCall(final IcfgEdge transition) {

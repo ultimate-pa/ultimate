@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
@@ -75,8 +74,7 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE, VARDECL>, AC
 	private Map<LOCATION, STATE> mLoc2SingleStates;
 	private Set<Term> mTerms;
 
-	protected AbsIntResult(final Script script,
-			final IAbstractDomain<STATE, ACTION, VARDECL> abstractDomain,
+	protected AbsIntResult(final Script script, final IAbstractDomain<STATE, ACTION, VARDECL> abstractDomain,
 			final ITransitionProvider<ACTION, LOCATION> transProvider,
 			final IVariableProvider<STATE, ACTION, VARDECL> varProvider) {
 		mAbstractDomain = Objects.requireNonNull(abstractDomain);
@@ -172,9 +170,8 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE, VARDECL>, AC
 	public Map<LOCATION, STATE> getLoc2SingleStates() {
 		if (mLoc2SingleStates == null) {
 			mLoc2SingleStates = new HashMap<>();
-			final IAbstractStateBinaryOperator<STATE> mergeOp = mAbstractDomain.getMergeOperator();
 			for (final Entry<LOCATION, Set<STATE>> entry : getLoc2States().entrySet()) {
-				final Optional<STATE> singleState = entry.getValue().stream().reduce(mergeOp::apply);
+				final Optional<STATE> singleState = entry.getValue().stream().reduce((a, b) -> a.union(b));
 				if (singleState.isPresent()) {
 					mLoc2SingleStates.put(entry.getKey(), singleState.get());
 				}

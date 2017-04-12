@@ -477,4 +477,14 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		}
 		return areUnEqual(node1, node2);
 	}
+
+	@Override
+	public VPState<ACTION> intersect(final VPState<ACTION> other) {
+		throw new UnsupportedOperationException("Not yet implemented");
+	}
+
+	@Override
+	public VPState<ACTION> union(final VPState<ACTION> other) {
+		throw new UnsupportedOperationException("Not yet implemented");
+	}
 }

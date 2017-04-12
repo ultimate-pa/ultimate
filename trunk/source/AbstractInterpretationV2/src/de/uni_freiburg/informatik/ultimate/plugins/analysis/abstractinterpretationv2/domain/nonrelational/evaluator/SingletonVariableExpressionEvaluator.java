@@ -57,14 +57,14 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends NonrelationalState<STATE, VALUE, VARDECL>, VARDECL>
 		implements IEvaluator<VALUE, STATE, VARDECL> {
-	
+
 	private final Set<VARDECL> mVariableSet;
 	private final VARDECL mVar;
 	private final INonrelationalValueFactory<VALUE> mNonrelationalValueFactory;
-	
+
 	private boolean mContainsBoolean = false;
 	private final EvaluatorType mType;
-	
+
 	public SingletonVariableExpressionEvaluator(final VARDECL var,
 			final INonrelationalValueFactory<VALUE> nonrelationalValueFactory) {
 		mVar = var;
@@ -79,79 +79,79 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 					"Variable type " + mVar.getClass().getSimpleName() + " not implemented.");
 		}
 	}
-	
+
 	@Override
 	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
-		
+
 		final List<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
-		
+
 		VALUE val;
 		BooleanValue returnBool = BooleanValue.TOP;
-		
+
 		// TODO: Add array support.
 		final Function<VARDECL, Triple<VALUE, BooleanValue, Boolean>> varFunction =
 				var -> new Triple<>(currentState.getValue(var), BooleanValue.TOP, false);
 		final Function<VARDECL, Triple<VALUE, BooleanValue, Boolean>> boolFunction =
 				var -> new Triple<>(mNonrelationalValueFactory.createTopValue(), currentState.getBooleanValue(var),
 						true);
-		
+
 		final Triple<VALUE, BooleanValue, Boolean> valueTriple =
 				TypeUtils.applyVariableFunction(varFunction, boolFunction, null, mVar);
-		
+
 		val = valueTriple.getFirst();
 		if (valueTriple.getThird()) {
 			returnBool = valueTriple.getSecond();
 			mContainsBoolean = true;
 		}
-		
+
 		if (val.isBottom() || returnBool.isBottom()) {
 			returnList.add(new NonrelationalEvaluationResult<>(mNonrelationalValueFactory.createBottomValue(),
 					BooleanValue.BOTTOM));
 		} else {
 			returnList.add(new NonrelationalEvaluationResult<>(val, returnBool));
 		}
-		
+
 		return returnList;
 	}
-	
+
 	@Override
 	public List<STATE> inverseEvaluate(final IEvaluationResult<VALUE> computedValue, final STATE currentState) {
 		assert computedValue != null;
 		assert currentState != null;
-		
+
 		final List<STATE> returnList = new ArrayList<>();
-		
+
 		if (mContainsBoolean) {
 			returnList.add(currentState.setBooleanValue(mVar, computedValue.getBooleanValue()));
 		} else {
 			returnList.add(currentState.setValue(mVar, computedValue.getValue()));
 		}
-		
+
 		return returnList;
 	}
-	
+
 	@Override
 	public void addSubEvaluator(final IEvaluator<VALUE, STATE, VARDECL> evaluator) {
 		throw new UnsupportedOperationException(
 				"Cannot add a subevaluator to singleton variable expression evaluators.");
 	}
-	
+
 	@Override
 	public Set<VARDECL> getVarIdentifiers() {
 		return mVariableSet;
 	}
-	
+
 	@Override
 	public boolean hasFreeOperands() {
 		return false;
 	}
-	
+
 	@Override
 	public boolean containsBool() {
 		return mContainsBoolean;
 	}
-	
+
 	@Override
 	public String toString() {
 		if (mVar instanceof IBoogieVar) {
@@ -162,7 +162,7 @@ public class SingletonVariableExpressionEvaluator<VALUE extends INonrelationalVa
 		throw new UnsupportedOperationException(
 				"The variable type " + mVar.getClass().getSimpleName() + " is not implemented.");
 	}
-	
+
 	@Override
 	public EvaluatorType getType() {
 		return mType;

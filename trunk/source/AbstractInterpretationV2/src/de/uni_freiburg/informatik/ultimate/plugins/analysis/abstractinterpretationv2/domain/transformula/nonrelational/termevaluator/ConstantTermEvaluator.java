@@ -32,16 +32,16 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorUtils.EvaluatorType;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 
-public class ConstantTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, VARDECL>, VARDECL>
+public class ConstantTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
 		implements ITermEvaluator<VALUE, STATE, VARDECL> {
-	
+
 	private final VALUE mValue;
 	private final EvaluatorType mType;
 
@@ -49,7 +49,7 @@ public class ConstantTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STA
 		mValue = value;
 		mType = type;
 	}
-	
+
 	@Override
 	public List<IEvaluationResult<VALUE>> evaluate(final STATE currentState) {
 		assert currentState != null;
@@ -82,7 +82,7 @@ public class ConstantTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STA
 	public boolean containsBool() {
 		return false;
 	}
-	
+
 	@Override
 	public String toString() {
 		return mValue.toString();

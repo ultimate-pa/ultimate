@@ -94,7 +94,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge, 
 	 *            Preferences
 	 * @return Factory for creating empty octagons
 	 */
-	private Function<Boolean, OctDomainState> makeDomainStateFactory(final IPreferenceProvider ups) {
+	private static Function<Boolean, OctDomainState> makeDomainStateFactory(final IPreferenceProvider ups) {
 		final String settingLabel = OctPreferences.LOG_STRING_FORMAT;
 		final LogMessageFormatting settingValue = ups.getEnum(settingLabel, LogMessageFormatting.class);
 
@@ -176,7 +176,8 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge, 
 	 *            (Illegal) value of the setting.
 	 * @return Excpetion to be thrown
 	 */
-	private IllegalArgumentException makeIllegalSettingException(final String settingLabel, final Object settingValue) {
+	private static IllegalArgumentException makeIllegalSettingException(final String settingLabel,
+			final Object settingValue) {
 		final String msg = "Illegal value for setting \"" + settingLabel + "\": " + settingValue;
 		return new IllegalArgumentException(msg);
 	}
@@ -199,11 +200,6 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge, 
 	@Override
 	public IAbstractStateBinaryOperator<OctDomainState> getWideningOperator() {
 		return mWideningOperatorFactory.get();
-	}
-
-	@Override
-	public IAbstractStateBinaryOperator<OctDomainState> getMergeOperator() {
-		return (first, second) -> first.join(second);
 	}
 
 	@Override

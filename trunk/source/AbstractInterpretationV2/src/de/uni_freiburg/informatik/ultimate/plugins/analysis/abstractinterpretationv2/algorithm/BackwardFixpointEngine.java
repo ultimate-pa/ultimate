@@ -87,12 +87,11 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 		mDebugHelper = params.getDebugHelper();
 		mMaxUnwindings = params.getMaxUnwindings();
 		mMaxParallelStates = params.getMaxParallelStates();
-		mSummaryMap = new SummaryMap<>(mDomain.getMergeOperator(), mTransitionProvider, mLogger);
+		mSummaryMap = new SummaryMap<>(mTransitionProvider, mLogger);
 	}
 
 	@Override
-	public AbsIntResult<STATE, ACTION, VARDECL, LOC> run(final Collection<? extends LOC> start,
-			final Script script) {
+	public AbsIntResult<STATE, ACTION, VARDECL, LOC> run(final Collection<? extends LOC> start, final Script script) {
 		mLogger.info("Starting fixpoint engine with domain " + mDomain.getClass().getSimpleName() + " (maxUnwinding="
 				+ mMaxUnwindings + ", maxParallelStates=" + mMaxParallelStates + ")");
 		mResult = new AbsIntResult<>(script, mDomain, mTransitionProvider, mVarProvider);

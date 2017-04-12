@@ -43,7 +43,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
@@ -61,7 +60,6 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 		implements IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> {
 
 	private final Map<LOC, AbstractMultiState<STATE, ACTION, VARDECL>> mStorage;
-	private final IAbstractStateBinaryOperator<STATE> mMergeOperator;
 	private final IUltimateServiceProvider mServices;
 	private final Set<IcfgAbstractStateStorageProvider<STATE, ACTION, LOC, VARDECL>> mChildStores;
 	private final ITransitionProvider<ACTION, LOC> mTransProvider;
@@ -70,19 +68,16 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 	private final IcfgAbstractStateStorageProvider<STATE, ACTION, LOC, VARDECL> mParent;
 	private final Set<String> mUsedSummary;
 
-	public IcfgAbstractStateStorageProvider(final IAbstractStateBinaryOperator<STATE> mergeOperator,
-			final IUltimateServiceProvider services, final ITransitionProvider<ACTION, LOC> transprovider) {
-		this(mergeOperator, services, transprovider, null, null, new HashSet<>());
+	public IcfgAbstractStateStorageProvider(final IUltimateServiceProvider services,
+			final ITransitionProvider<ACTION, LOC> transprovider) {
+		this(services, transprovider, null, null, new HashSet<>());
 	}
 
-	private IcfgAbstractStateStorageProvider(final IAbstractStateBinaryOperator<STATE> mergeOperator,
-			final IUltimateServiceProvider services, final ITransitionProvider<ACTION, LOC> transProvider,
-			final ACTION scope, final IcfgAbstractStateStorageProvider<STATE, ACTION, LOC, VARDECL> parent,
-			final Set<String> usedSummary) {
-		assert mergeOperator != null;
+	private IcfgAbstractStateStorageProvider(final IUltimateServiceProvider services,
+			final ITransitionProvider<ACTION, LOC> transProvider, final ACTION scope,
+			final IcfgAbstractStateStorageProvider<STATE, ACTION, LOC, VARDECL> parent, final Set<String> usedSummary) {
 		assert services != null;
 		assert transProvider != null;
-		mMergeOperator = mergeOperator;
 		mServices = services;
 		mTransProvider = transProvider;
 		mScope = scope;
@@ -103,7 +98,7 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 			mStorage.put(loc, state);
 			return state;
 		}
-		final AbstractMultiState<STATE, ACTION, VARDECL> mergedState = oldState.merge(mMergeOperator, state);
+		final AbstractMultiState<STATE, ACTION, VARDECL> mergedState = oldState.union(state);
 		mStorage.put(loc, mergedState);
 		return mergedState;
 	}
@@ -111,8 +106,8 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 	@Override
 	public final IAbstractStateStorage<STATE, ACTION, VARDECL, LOC> createStorage(final ACTION scope) {
 		final IcfgAbstractStateStorageProvider<STATE, ACTION, LOC, VARDECL> rtr =
-				new IcfgAbstractStateStorageProvider<>(getMergeOperator(), getServices(), getTransitionProvider(),
-						scope, this, mUsedSummary);
+				new IcfgAbstractStateStorageProvider<>(getServices(), getTransitionProvider(), scope, this,
+						mUsedSummary);
 		mChildStores.add(rtr);
 		return rtr;
 	}
@@ -316,10 +311,6 @@ public class IcfgAbstractStateStorageProvider<STATE extends IAbstractState<STATE
 
 	private boolean containsScopeFixpoint(final ACTION scope) {
 		return mScopeFixpoints.contains(scope);
-	}
-
-	protected IAbstractStateBinaryOperator<STATE> getMergeOperator() {
-		return mMergeOperator;
 	}
 
 	protected IUltimateServiceProvider getServices() {
