@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTim
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -76,6 +77,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.PathProgram;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.AbsIntNonSmtInterpolantAutomatonBuilder;
@@ -543,7 +545,10 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			if (postStates.isEmpty()) {
 				return mFalsePredicate;
 			}
-			final Set<IPredicate> predicates = postStates.stream().map(s -> s.getTerm(script))
+
+			final Set<IPredicate> predicates = postStates.stream()
+					.map(s -> new AbsIntPredicate<>(
+							mPredicateUnifierSmt.getPredicateFactory().newPredicate(s.getTerm(script)), s))
 					.map(mPredicateUnifierAbsInt::getOrConstructPredicate).collect(Collectors.toSet());
 			final IPredicate disjunction;
 			if (predicates.size() > 1) {
@@ -557,7 +562,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			if (disjunction.equals(mTruePredicate)) {
 				return mTruePredicate;
 			}
-			return new AbsIntPredicate<>(disjunction, postStates);
+			assert disjunction instanceof AbsIntPredicate<?, ?>;
+			return (AbsIntPredicate<STATE, IBoogieVar>) disjunction;
 		}
 
 		private AbsIntPredicate<STATE, IBoogieVar> getNonUnifiedPredicateFromStates(final Set<STATE> postStates,
@@ -665,8 +671,16 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				final HashMap<IPredicate, Validity> expliedPredicates) {
 			final IPredicate unifiedPred =
 					super.getOrConstructPredicateForConjunction(minimalSubset, impliedPredicates, expliedPredicates);
-			// TODO: Conjunction of abstract states is currently unsupported
-			return unifiedPred;
+			final Set<AbstractMultiState<STATE, IBoogieVar>> multistates =
+					minimalSubset.stream().map(a -> ((AbsIntPredicate<STATE, ?>) a).getAbstractStates())
+							.map(a -> new AbstractMultiState<>(a)).collect(Collectors.toSet());
+			final Set<AbstractMultiState<STATE, IBoogieVar>> synchronizedMultiStates =
+					AbsIntUtil.synchronizeVariables(multistates);
+			assert sameVars(synchronizedMultiStates.stream().flatMap(a -> a.getStates().stream())
+					.collect(Collectors.toSet())) : "Synchronize failed";
+			final AbstractMultiState<STATE, IBoogieVar> conjunction = synchronizedMultiStates.stream()
+					.reduce((a, b) -> a.intersect(b)).orElseThrow(() -> new AssertionError("No predicates given"));
+			return new AbsIntPredicate<>(unifiedPred, conjunction.getStates());
 		}
 
 		@Override
@@ -682,8 +696,15 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			if (preds == null || preds.isEmpty()) {
 				return Collections.emptySet();
 			}
-			return preds.stream().map(a -> (AbsIntPredicate<STATE, ?>) a).flatMap(a -> a.getAbstractStates().stream())
-					.collect(Collectors.toSet());
+			final Set<STATE> allStates = preds.stream().map(a -> (AbsIntPredicate<STATE, ?>) a)
+					.flatMap(a -> a.getAbstractStates().stream()).collect(Collectors.toSet());
+			// assert sameVars(allStates) : "variables in disjunction are not compatible (maybe unimportant)";
+			return allStates;
+		}
+
+		private boolean sameVars(final Set<STATE> allStates) {
+			final Set<IBoogieVar> someVars = allStates.iterator().next().getVariables();
+			return allStates.stream().allMatch(a -> a.getVariables().equals(someVars));
 		}
 
 	}
