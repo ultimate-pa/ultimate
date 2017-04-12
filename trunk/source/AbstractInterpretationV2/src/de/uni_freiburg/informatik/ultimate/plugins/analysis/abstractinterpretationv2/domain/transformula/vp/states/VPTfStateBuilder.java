@@ -738,9 +738,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 	 * @return null means the array is not tracked
 	 */
 	public IArrayWrapper getArrayWrapper(final Term term) {
-		final IArrayWrapper result = mTermToArrayWrapper.get(term);
-		// assert result != null;
-		return result;
+		return mTermToArrayWrapper.get(term);
 	}
 
 	/**
@@ -749,9 +747,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 	 * @return null means the array is not tracked
 	 */
 	public IElementWrapper getElementWrapper(final Term term) {
-		final IElementWrapper result = mTermToElementWrapper.get(term);
-		// assert result != null;
-		return result;
+		return  mTermToElementWrapper.get(term);
 	}
 
 	class WrapperFactory {
