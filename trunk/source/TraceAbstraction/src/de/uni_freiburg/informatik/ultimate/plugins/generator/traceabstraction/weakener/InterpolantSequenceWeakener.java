@@ -226,8 +226,9 @@ public abstract class InterpolantSequenceWeakener<HTC extends IHoareTripleChecke
 					100.0 - result.numerator().doubleValue() / result.denominator().doubleValue() * 100.0;
 			final DecimalFormat df = new DecimalFormat();
 			df.setMaximumFractionDigits(2);
-			mLogger.info(String.format("Weakened %s states. Average reduction was %s%%.", mSuccessfulWeakenings,
-					df.format(rounded)));
+			mLogger.info(
+					String.format("Weakened %s states. On average, predicates are now at %s%% of their original sizes.",
+							mSuccessfulWeakenings, df.format(rounded)));
 		}
 	}
 
