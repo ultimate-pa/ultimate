@@ -133,8 +133,16 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 			final String resultMessage = mDecider.getResultMessage();
 			final String resultCategory = mDecider.getResultCategory();
 
-			updateSummaries(result, resultCategory, resultMessage);
-			updateLogsPostCompletion(result, resultCategory, resultMessage);
+			try {
+				updateSummaries(result, resultCategory, resultMessage);
+				updateLogsPostCompletion(result, resultCategory, resultMessage);
+			} catch (final Throwable ex) {
+				final ILogger logger = mStarter.getServices().getLoggingService().getLogger(UltimateStarter.class);
+				logger.fatal(
+						String.format("There was an exception during the writing of summary or log information: %s%n%s",
+								ex, ExceptionUtils.getStackTrace(ex)));
+			}
+
 			mStarter.complete();
 
 			mDecider = null;
@@ -194,6 +202,7 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 
 		for (final ITestSummary summary : mSummaries) {
 			summary.addResult(mUltimateRunDefinition, result, resultCategory, resultMessage, mName, rservice);
+
 		}
 	}
 

@@ -659,6 +659,7 @@ public final class TestUtil {
 
 		final String summaryLog = testSummary.getSummaryLog().trim();
 		if (summaryLog == null || summaryLog.isEmpty()) {
+			logger.warn(testSummary.getClass() + " is empty");
 			return;
 		}
 
