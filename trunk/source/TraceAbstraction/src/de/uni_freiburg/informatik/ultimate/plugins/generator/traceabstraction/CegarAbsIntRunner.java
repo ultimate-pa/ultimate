@@ -658,6 +658,9 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		@Override
 		protected IPredicate newPredicate(final Term term, final IPredicate originalPredicate) {
 			final IPredicate unifiedPred = super.newPredicate(term, originalPredicate);
+			if (unifiedPred instanceof AbsIntPredicate<?, ?>) {
+				return unifiedPred;
+			}
 			if (originalPredicate instanceof AbsIntPredicate<?, ?>) {
 				return new AbsIntPredicate<>(unifiedPred,
 						((AbsIntPredicate<?, ?>) originalPredicate).getAbstractStates());
@@ -671,6 +674,9 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				final HashMap<IPredicate, Validity> expliedPredicates) {
 			final IPredicate unifiedPred =
 					super.getOrConstructPredicateForConjunction(minimalSubset, impliedPredicates, expliedPredicates);
+			if (unifiedPred instanceof AbsIntPredicate<?, ?>) {
+				return unifiedPred;
+			}
 			final Set<AbstractMultiState<STATE, IBoogieVar>> multistates =
 					minimalSubset.stream().map(a -> ((AbsIntPredicate<STATE, ?>) a).getAbstractStates())
 							.map(a -> new AbstractMultiState<>(a)).collect(Collectors.toSet());
@@ -689,6 +695,9 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				final HashMap<IPredicate, Validity> expliedPredicates) {
 			final IPredicate unifiedPred =
 					super.getOrConstructPredicateForDisjunction(minimalSubset, impliedPredicates, expliedPredicates);
+			if (unifiedPred instanceof AbsIntPredicate<?, ?>) {
+				return unifiedPred;
+			}
 			return new AbsIntPredicate<>(unifiedPred, toStates(minimalSubset));
 		}
 
