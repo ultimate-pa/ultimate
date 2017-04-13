@@ -422,12 +422,16 @@ public final class AbsIntUtil {
 		if (toRemove.isEmpty() && toAdd.isEmpty()) {
 			return state;
 		}
+
+		final STATE rtr;
 		if (toRemove.isEmpty()) {
-			return state.addVariables(toAdd);
+			rtr = state.addVariables(toAdd);
+		} else if (toAdd.isEmpty()) {
+			rtr = state.removeVariables(toRemove);
+		} else {
+			rtr = state.removeVariables(toRemove).addVariables(toAdd);
 		}
-		if (toAdd.isEmpty()) {
-			return state.removeVariables(toRemove);
-		}
-		return state.removeVariables(toRemove).addVariables(toAdd);
+		assert !state.isBottom() || rtr.isBottom() : "Bottom lost during synchronization";
+		return rtr;
 	}
 }
