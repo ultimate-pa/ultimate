@@ -208,7 +208,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 
 	@Override
 	public Term getTerm(final Script script) {
-		if (mAbstractStates.isEmpty() || mAbstractStates.stream().allMatch(state -> state.isBottom())) {
+		if (mAbstractStates.isEmpty() || isBottom()) {
 			return script.term("false");
 		}
 
