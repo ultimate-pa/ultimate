@@ -122,16 +122,6 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 *
 	 * @param logStringFunction
 	 *            Function to be used for creating log strings of this abstract state.
-	 */
-	private OctDomainState(final Function<OctDomainState, String> logStringFunction) {
-		this(logStringFunction, false);
-	}
-
-	/**
-	 * Creates a new, un-initialized abstract state. <b>Most attributes are not initialized and must be set by hand.</b>
-	 *
-	 * @param logStringFunction
-	 *            Function to be used for creating log strings of this abstract state.
 	 * @param isBottom
 	 *            If <code>true</code>, the created state corresponds to &bot;, &top; otherwise.
 	 */
@@ -172,7 +162,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 
 	/** @return Deep copy of this state */
 	public OctDomainState deepCopy() {
-		final OctDomainState s = new OctDomainState(mLogStringFunction);
+		final OctDomainState s = new OctDomainState(mLogStringFunction, isBottom());
 		s.mMapVarToBoogieVar = new HashSet<>(mMapVarToBoogieVar);
 		s.mMapNumericVarToIndex = new HashMap<>(mMapNumericVarToIndex);
 		s.mNumericNonIntVars = new HashSet<>(mNumericNonIntVars);
@@ -194,7 +184,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 * @see #unrefOtherBooleanAbstraction(OctDomainState)
 	 */
 	private OctDomainState shallowCopy() {
-		final OctDomainState s = new OctDomainState(mLogStringFunction);
+		final OctDomainState s = new OctDomainState(mLogStringFunction, isBottom());
 		s.mMapVarToBoogieVar = mMapVarToBoogieVar;
 		s.mMapNumericVarToIndex = mMapNumericVarToIndex;
 		s.mNumericNonIntVars = mNumericNonIntVars;
