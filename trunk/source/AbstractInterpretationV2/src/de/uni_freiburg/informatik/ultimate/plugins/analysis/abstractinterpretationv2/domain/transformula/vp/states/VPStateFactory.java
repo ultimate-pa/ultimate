@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
@@ -174,18 +173,17 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 	 * Takes a set of TransitionStates (VPTfState) and a TransFormula. Converts the transition-states to normal states
 	 * (VPState<ACTION>), essentially by projecting the transition state to the outVars of the given TransFormula.
 	 *
-	 * @param resultTfStates
-	 * @param tf
-	 * @param oldState
-	 *            the state that the tfStates should be "patched over"
+	 * @param tfStates
+	 * @param assignedVars
+	 * @param oldState the state that the tfStates should be "patched over"
 	 * @return
 	 */
-	public Set<VPState<ACTION>> convertToStates(final Set<VPTfState> tfStates, final UnmodifiableTransFormula tf,
+	public Set<VPState<ACTION>> convertToStates(final Set<VPTfState> tfStates, final Set<IProgramVar> assignedVars, 
 			final VPState<ACTION> oldState) {
 		final Set<VPState<ACTION>> result = new HashSet<>();
 
 		for (final VPTfState tfState : tfStates) {
-			result.add(convertToState(tfState, tf, oldState));
+			result.add(convertToState(tfState, assignedVars, oldState));
 		}
 
 		return result;
@@ -195,7 +193,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 	 * (first) plan: for every two outVars, query which (dis-)equalities hold for them TODO: naive (quadratic)
 	 * implementation in the future perhaps: work on the graph directly
 	 */
-	private VPState<ACTION> convertToState(final VPTfState tfState, final UnmodifiableTransFormula tf,
+	private VPState<ACTION> convertToState(final VPTfState tfState, final Set<IProgramVar> assignedVars, 
 			final VPState<ACTION> oldState) {
 		if (isDebugMode()) {
 			getLogger().debug("VPStateFactory: convertToState(..) (begin)");
@@ -219,11 +217,17 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 		}
 		final List<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outVarsAndConstantEqNodes =
 				new ArrayList<>(outVarsAndConstantEqNodeSet);
+		
+		Set<VPState<ACTION>> statesWithDisEqualitiesAdded = Collections.singleton(
+				havocVariables(assignedVars, oldState));
 
-		final VPStateBuilder<ACTION> builder = copy(havocVariables(tf.getAssignedVars(), oldState));// TODO
-		builder.addVars(tfState.getVariables());
-		Set<VPState<ACTION>> statesWithDisEqualitiesAdded = new HashSet<>();
-		statesWithDisEqualitiesAdded.add(builder.build());
+		assert oldState.getVariables().containsAll(tfState.getVariables()) : "reactivate below code!";
+//		final VPStateBuilder<ACTION> builder = copy(havocVariables(assignedVars, oldState));
+//		builder.addVars(tfState.getVariables());
+//		Set<VPState<ACTION>> statesWithDisEqualitiesAdded = Collections.singleton(builder.build());
+
+//				new HashSet<>();
+//		statesWithDisEqualitiesAdded.add(builder.build());
 
 		for (int i = 0; i < outVarsAndConstantEqNodes.size(); i++) {
 			for (int j = 0; j < i; j++) {
@@ -242,8 +246,9 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 			}
 		}
 
-		Set<VPState<ACTION>> resultStates = new HashSet<>();
-		resultStates.addAll(statesWithDisEqualitiesAdded);
+		Set<VPState<ACTION>> resultStates = Collections.unmodifiableSet(statesWithDisEqualitiesAdded);
+//				new HashSet<>();
+//		resultStates.addAll(statesWithDisEqualitiesAdded);
 
 		for (int i = 0; i < outVarsAndConstantEqNodes.size(); i++) {
 			for (int j = 0; j < i; j++) {

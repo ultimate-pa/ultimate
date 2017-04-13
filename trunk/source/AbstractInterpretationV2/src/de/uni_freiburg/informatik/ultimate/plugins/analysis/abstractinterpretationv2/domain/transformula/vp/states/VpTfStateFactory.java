@@ -138,8 +138,10 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 	}
 
 	/**
-	 * Given a VPState and a TransFormula, this - aquires the "vanilla" VPTfStateBuilder for the TransFormula - collects
-	 * everything that the state knows about the inVars of the TransFormula and updates the VPTfStateBuidler accordingly
+	 * Given a VPState and a TransFormula, this 
+	 *  <li> acquires the "vanilla" VPTfStateBuilder for the TransFormula 
+	 *  <li> collects everything that the state knows about the inVars of the TransFormula and updates the 
+	 * 	    VPTfStateBuidler accordingly
 	 *
 	 * @param state
 	 * @param tf

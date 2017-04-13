@@ -102,6 +102,18 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		mTfStateFactory = mDomain.getTfStateFactory();
 	}
 	
+	/**
+	 * This specific implementation of apply(..) proceeds as follows
+	 * <list>
+	 *  <li> create a tfState that corresponds to the given transFormula and propagate all we know about its inVars from
+	 *     the oldState into it
+	 *  <li> apply the TransFormula to the tfState, i.e., put it into a state where we have all the knowledge about the 
+	 *       outVars that we can compute from the inVar-information from the step before and the transFormula
+	 *  <li> convert the resulting tfState(s) back to "normal" states, by taking all the information about the outVars,
+	 *     and overwriting the information the oldState has about them -- but leaving the information about other 
+	 *     variables in the oldState intact, as the TransFormula did not touch those
+	 * </list>
+	 */
 	@Override
 	public List<VPState<ACTION>> apply(final VPState<ACTION> oldState, final ACTION transition) {
 		mPreAnalysis.getBenchmark().unpause(VPSFO.applyClock);
@@ -131,7 +143,8 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		
 		mDomain.getLogger().debug("states after transition " + transition + ": " + resultTfStates);
 		
-		final Set<VPState<ACTION>> resultStates = mStateFactory.convertToStates(resultTfStates, tf, oldState);
+		final Set<VPState<ACTION>> resultStates = mStateFactory.convertToStates(resultTfStates, tf.getAssignedVars(), 
+				oldState);
 
 		if (mPreAnalysis.isDebugMode()) {
 			mPreAnalysis.getLogger().debug("VPPostOperator: apply(..) (internal transition) (end)");
