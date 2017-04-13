@@ -139,6 +139,8 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, IBoogieVar
 		if (sourceProc != null) {
 			// we need masked globals from the old scope, so we have to determine which globals are masked
 			varsNeededFromOldScope.addAll(getMaskedGlobalsVariables(sourceProc));
+			// but we need to keep all global variables in the target scope
+			varsNeededFromOldScope.addAll(getOldVars());
 		}
 		if (targetProc != null) {
 			// we also need oldlocals from the old scope; if the old scope also masks global variables, this will
@@ -259,6 +261,14 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, IBoogieVar
 		}
 		for (final IProgramConst pc : mSymbolTable.getConstants()) {
 			vars.add((IBoogieVar) pc);
+		}
+		return vars;
+	}
+
+	private Set<IBoogieVar> getOldVars() {
+		final Set<IBoogieVar> vars = new HashSet<>();
+		for (final IProgramNonOldVar globalNonOld : mSymbolTable.getGlobals()) {
+			vars.add((IBoogieVar) globalNonOld.getOldVar());
 		}
 		return vars;
 	}
