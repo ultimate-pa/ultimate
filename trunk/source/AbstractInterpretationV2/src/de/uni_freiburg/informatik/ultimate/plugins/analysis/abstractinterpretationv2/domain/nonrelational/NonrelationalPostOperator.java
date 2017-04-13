@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -75,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
@@ -169,7 +171,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			final Call call) {
 
 		final CallStatement callStatement = call.getCallStatement();
-		final CallInfo callInfo = mCallInfoCache.getCallInfo(callStatement, stateBeforeLeaving);
+		final CallInfo callInfo = mCallInfoCache.getCallInfo(callStatement, stateBeforeLeaving.getVariables());
 		// If there are no arguments, we don't need to rewrite states.
 		if (callInfo.getInParamAssign() == null) {
 			return addOldvars(Collections.singletonList(stateAfterLeaving), callInfo.getOldVarAssign());
@@ -323,6 +325,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 					updateBoolValsArray, new IBoogieVar[0], stateAfterLeaving.getArray(0)));
 		}
 
+		// add oldvars
 		return NonrelationalUtils.mergeStatesIfNecessary(returnList, mParallelStates);
 	}
 
@@ -407,6 +410,10 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	private List<STATE> addOldvars(final List<STATE> pendingPostStates, final Statement oldVarAssign) {
 		if (oldVarAssign == null) {
 			return pendingPostStates;
+		}
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(
+					AbsIntPrefInitializer.INDENT + "Adding oldvars via " + BoogiePrettyPrinter.print(oldVarAssign));
 		}
 		final List<STATE> postStates = new ArrayList<>();
 
@@ -523,17 +530,17 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			mCall2CallInfo = new HashMap<>();
 		}
 
-		private CallInfo getCallInfo(final CallStatement callStatement, final STATE stateBeforeLeaving) {
+		private CallInfo getCallInfo(final CallStatement callStatement, final Collection<IBoogieVar> callVars) {
 			final CallInfo callAssignment = mCall2CallInfo.get(callStatement);
 			if (callAssignment != null) {
 				return callAssignment;
 			}
-			final CallInfo newCallAssignment = createCallInfo(callStatement, stateBeforeLeaving);
+			final CallInfo newCallAssignment = createCallInfo(callStatement, callVars);
 			mCall2CallInfo.put(callStatement, newCallAssignment);
 			return newCallAssignment;
 		}
 
-		private CallInfo createCallInfo(final CallStatement callStatement, final STATE stateBeforeLeaving) {
+		private CallInfo createCallInfo(final CallStatement callStatement, final Collection<IBoogieVar> callVars) {
 			final Expression[] args = callStatement.getArguments();
 			final List<IBoogieVar> realInParams = getInParams(callStatement);
 			final AssignmentStatement oldVarAssign = getOldvarAssign(callStatement);
@@ -545,8 +552,8 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 			// create a multi-assignment statement that assigns each procedure argument (expression) to a temporary
 			// variable
-			final List<String> tmpParamNames = getArgumentTemporaries(args.length, stateBeforeLeaving.getVariables()
-					.stream().map(IBoogieVar::getGloballyUniqueId).collect(Collectors.toSet()));
+			final List<String> tmpParamNames = getArgumentTemporaries(args.length,
+					callVars.stream().map(IBoogieVar::getGloballyUniqueId).collect(Collectors.toSet()));
 			final List<LeftHandSide> idents = new ArrayList<>();
 			final Map<LeftHandSide, IBoogieVar> tmpVarUses = new HashMap<>();
 			final List<IBoogieVar> tmpParamVars = new ArrayList<>();
