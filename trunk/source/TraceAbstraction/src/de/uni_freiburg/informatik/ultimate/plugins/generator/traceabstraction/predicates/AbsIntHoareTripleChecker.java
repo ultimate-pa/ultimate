@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.util.InCaReCounter;
 public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDECL>, ACTION extends IIcfgTransition<?>, VARDECL>
 		implements IHoareTripleChecker {
 
+	private static final String MSG_BOTTOM_WAS_LOST = "Bottom was lost";
 	private static final String MSG_IS_SUBSET_OF_IS_UNSOUND = "isSubsetOf is unsound";
 	private static final String MSG_TRACKED_VARIABLES_DIFFER = "Tracked variables differ";
 	private static final String MSG_INVALID_HOARE_TRIPLE_CHECK = "Invalid hoare triple check";
@@ -388,7 +389,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			final AbstractMultiState<STATE, VARDECL> toSynchronize) {
 		final AbstractMultiState<STATE, VARDECL> rtr =
 				template.synchronizeVariables(AbsIntUtil::synchronizeVariables, toSynchronize);
-		assert !toSynchronize.isBottom() || rtr.isBottom() : "Bottom was lost";
+		assert assertBottomRetained(toSynchronize, null, rtr, () -> template
+				.synchronizeVariables(AbsIntUtil::synchronizeVariables, toSynchronize)) : MSG_BOTTOM_WAS_LOST;
 		return rtr;
 	}
 
@@ -397,8 +399,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 
 		final AbstractMultiState<STATE, VARDECL> rtr =
 				pre.createValidPostOpStateAfterLeaving(mVarProvider, act, preHierState);
-		assert !pre.isBottom() && (preHierState == null || !preHierState.isBottom())
-				|| rtr.isBottom() : "Bottom was lost";
+
+		assert assertBottomRetained(pre, preHierState, rtr,
+				() -> pre.createValidPostOpStateAfterLeaving(mVarProvider, act, preHierState)) : MSG_BOTTOM_WAS_LOST;
 		return rtr;
 	}
 
@@ -406,7 +409,8 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			final AbstractMultiState<STATE, VARDECL> preLin) {
 
 		final AbstractMultiState<STATE, VARDECL> rtr = preLin.createValidPostOpStateBeforeLeaving(mVarProvider, act);
-		assert !preLin.isBottom() || rtr.isBottom() : "Bottom was lost";
+		assert assertBottomRetained(preLin, null, rtr,
+				() -> preLin.createValidPostOpStateBeforeLeaving(mVarProvider, act)) : MSG_BOTTOM_WAS_LOST;
 		return rtr;
 	}
 
@@ -426,6 +430,17 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			return unwrapPredicate(((AbsIntPredicate<?, ?>) pred).getBackingPredicate());
 		}
 		return pred;
+	}
+
+	private boolean assertBottomRetained(final AbstractMultiState<STATE, VARDECL> pre,
+			final AbstractMultiState<STATE, VARDECL> preHierState,
+			final AbstractMultiState<STATE, VARDECL> synchronizedState, final IFunPointer funReplay) {
+		final boolean rtr =
+				!pre.isBottom() && (preHierState == null || !preHierState.isBottom()) || synchronizedState.isBottom();
+		if (!rtr) {
+			funReplay.run();
+		}
+		return rtr;
 	}
 
 	private boolean assertValidity(final AbstractMultiState<STATE, VARDECL> preState,
@@ -536,6 +551,11 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		final SubsetResult reComputeForDebug = leftState.isSubsetOf(rightState);
 		mLogger.debug(reComputeForDebug);
 		return false;
+	}
+
+	@FunctionalInterface
+	private static interface IFunPointer {
+		void run();
 	}
 
 }
