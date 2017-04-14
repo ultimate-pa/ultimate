@@ -134,6 +134,14 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 */
 	Set<LETTER> lettersCall(STATE state);
 
+//	/**
+//	 * @param state
+//	 *            state
+//	 * @return Superset of all letters <tt>a</tt> such that <tt>state</tt> has an outgoing return transition whose
+//	 * hierarchical predecessor is hier and that is labeled with letter <tt>a</tt> 
+//	 */
+//	Set<LETTER> lettersReturn(STATE state, STATE hier);
+	
 	/**
 	 * @param state
 	 *            state
