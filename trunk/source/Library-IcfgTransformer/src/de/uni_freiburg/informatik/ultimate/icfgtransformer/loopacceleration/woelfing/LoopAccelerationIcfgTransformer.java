@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.woe
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -59,9 +60,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgI
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -189,8 +190,12 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 				final OUTLOC newTarget = lst.createNewLocation(oldTarget);
 				if (mBackbones.containsKey(oldSource)) {
 					final IteratedSymbolicMemory iteratedSymbolicMemory = getIteratedSymbolicMemoryForLoop(oldSource);
-					final TransFormula loopTf = getLoopTransFormula(iteratedSymbolicMemory, mBackbones.get(oldSource));
-					final UnmodifiableTransFormula tf = mergeTransFormulas(loopTf, oldTransition.getTransformula());
+					final UnmodifiableTransFormula loopTf =
+							getLoopTransFormula(iteratedSymbolicMemory, mBackbones.get(oldSource));
+					final UnmodifiableTransFormula tf = TransFormulaUtils.sequentialComposition(mLogger, mServices,
+							mScript, true, true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+							SimplificationTechnique.SIMPLIFY_DDA,
+							Arrays.asList(loopTf, oldTransition.getTransformula()));
 					assert oldTransition instanceof IIcfgInternalTransition;
 					final IcfgInternalTransition newTransition =
 							new IcfgInternalTransition(newSource, newTarget, null, tf);
@@ -272,35 +277,6 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		}
 	}
 
-	private Term getTransformulaForBackboneHelper(final TransFormula tf, final Term term,
-			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars,
-			final Set<TermVariable> auxVars) {
-		Term result = term;
-		auxVars.addAll(tf.getAuxVars());
-
-		for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-			if (!outVars.containsKey(entry.getKey())) {
-				assert !inVars.containsKey(entry.getKey());
-				inVars.put(entry.getKey(), entry.getValue());
-			} else if (outVars.get(entry.getKey()) != entry.getValue()) {
-				result = Util.and(mScript.getScript(), result,
-						mScript.getScript().term("=", entry.getValue(), outVars.get(entry.getKey())));
-				auxVars.add(entry.getValue());
-			}
-		}
-
-		result = Util.and(mScript.getScript(), result, tf.getFormula());
-
-		for (final Map.Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-			if (outVars.containsKey(entry.getKey()) && outVars.get(entry.getKey()) != entry.getValue()
-					&& inVars.get(entry.getKey()) != outVars.get(entry.getKey())) {
-				auxVars.add(outVars.get(entry.getKey()));
-			}
-			outVars.put(entry.getKey(), entry.getValue());
-		}
-		return result;
-	}
-
 	/**
 	 * Calculates an iterated symbolic memory for a given loop entry.
 	 *
@@ -313,33 +289,27 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		final List<SymbolicMemory> symbolicMemories = new ArrayList<>();
 
 		for (final Backbone backbone : backbones) {
-			Term term = mScript.getScript().term("true");
 			boolean overapproximation = false;
-
-			final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
-			final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
-			final Set<TermVariable> auxVars = new HashSet<>();
+			final List<UnmodifiableTransFormula> transFormulas = new ArrayList<>();
 
 			for (final IcfgEdge edge : backbone.getTransitions()) {
-				final TransFormula tf = edge.getTransformula();
-
-				term = getTransformulaForBackboneHelper(tf, term, inVars, outVars, auxVars);
+				final UnmodifiableTransFormula tf = edge.getTransformula();
+				transFormulas.add(tf);
 
 				final INLOC target = (INLOC) edge.getTarget();
 				if (target != backbone.getLastLocation() && mBackbones.containsKey(target)) {
 					final IteratedSymbolicMemory iteratedSymbolicMemory = getIteratedSymbolicMemoryForLoop(target);
 					overapproximation |= iteratedSymbolicMemory.isOverapproximation()
 							|| iteratedSymbolicMemory.getLoopCounters().size() > 1;
-					final TransFormula loopTf = getLoopTransFormula(iteratedSymbolicMemory, mBackbones.get(target));
-					term = getTransformulaForBackboneHelper(loopTf, term, inVars, outVars, auxVars);
+					final UnmodifiableTransFormula loopTf =
+							getLoopTransFormula(iteratedSymbolicMemory, mBackbones.get(target));
+					transFormulas.add(loopTf);
 				}
 			}
 
-			final TransFormulaBuilder builder = new TransFormulaBuilder(inVars, outVars, true, null, true, null, false);
-			builder.setFormula(term);
-			builder.addAuxVarsButRenameToFreshCopies(auxVars, mScript);
-			builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
-			final TransFormula tf = builder.finishConstruction(mScript);
+			final TransFormula tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true, true,
+					false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+					SimplificationTechnique.SIMPLIFY_DDA, transFormulas);
 			mBackboneTransformulas.put(backbone, tf);
 
 			final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, tf, overapproximation);
@@ -357,7 +327,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 	 *            The backbones of the loop.
 	 * @return The loop TransFormula (containing loopCounters).
 	 */
-	private TransFormula getLoopTransFormula(final IteratedSymbolicMemory iteratedSymbolicMemory,
+	private UnmodifiableTransFormula getLoopTransFormula(final IteratedSymbolicMemory iteratedSymbolicMemory,
 			final List<Backbone> backbones) {
 		final int numLoops = backbones.size();
 		final List<TermVariable> loopCounters = iteratedSymbolicMemory.getLoopCounters();
@@ -430,55 +400,6 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		final TransFormulaBuilder builder = new TransFormulaBuilder(iteratedSymbolicMemory.getInVars(),
 				iteratedSymbolicMemory.getOutVars(), true, null, true, null, false);
 		builder.setFormula(resultTerm);
-		builder.addAuxVarsButRenameToFreshCopies(auxVars, mScript);
-		builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		return builder.finishConstruction(mScript);
-	}
-
-	/**
-	 * Merges two TransFormulas.
-	 *
-	 * @param first
-	 *            The first TransFormula.
-	 * @param second
-	 *            The second TransFormula.
-	 * @return A merged TransFormula.
-	 */
-	private UnmodifiableTransFormula mergeTransFormulas(final TransFormula first, final TransFormula second) {
-		// perhaps replace with TransFormulaUtils.sequentialComposition(logger, services, mgdScript, simplify, extPqe,
-		// tranformToCNF, xnfConversionTechnique, simplificationTechnique, transFormula)
-
-		final Map<IProgramVar, TermVariable> inVars = new HashMap<>(first.getInVars());
-		final Map<IProgramVar, TermVariable> outVars = new HashMap<>(second.getOutVars());
-		final Set<TermVariable> auxVars = new HashSet<>(first.getAuxVars());
-		auxVars.addAll(second.getAuxVars());
-
-		Term term = Util.and(mScript.getScript(), first.getFormula(), second.getFormula());
-
-		for (final Map.Entry<IProgramVar, TermVariable> entry : first.getOutVars().entrySet()) {
-			if (outVars.containsKey(entry.getKey())) {
-				auxVars.add(entry.getValue());
-			} else {
-				outVars.put(entry.getKey(), entry.getValue());
-			}
-		}
-
-		for (final IProgramVar var : second.getInVars().keySet()) {
-			if (first.getOutVars().containsKey(var)) {
-				if (first.getOutVars().get(var) != second.getOutVars().get(var)) {
-					term = Util.and(mScript.getScript(), term,
-							mScript.getScript().term("=", second.getInVars().get(var), first.getOutVars().get(var)));
-					if (second.getInVars().get(var) != second.getOutVars().get(var)) {
-						auxVars.add(second.getInVars().get(var));
-					}
-				}
-			} else if (!first.getInVars().containsKey(var)) {
-				inVars.put(var, second.getInVars().get(var));
-			}
-		}
-
-		final TransFormulaBuilder builder = new TransFormulaBuilder(inVars, outVars, true, null, true, null, false);
-		builder.setFormula(term);
 		builder.addAuxVarsButRenameToFreshCopies(auxVars, mScript);
 		builder.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		return builder.finishConstruction(mScript);
