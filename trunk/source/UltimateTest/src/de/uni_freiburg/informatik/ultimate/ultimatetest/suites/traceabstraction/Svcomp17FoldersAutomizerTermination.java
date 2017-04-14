@@ -51,8 +51,8 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs = {
 		/***** Category 5. Termination *****/
 		/*** Subcategory  Termination-MainControlFlow ***/
-//		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", 
-//				new String[]{ ".*_false-termination.*\\.c|.*_true-termination.*\\.c" }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", 
+				new String[]{ ".*_false-termination.*\\.c|.*_true-termination.*\\.c" }, mFilesPerDirectoryLimit) ,
 		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-linkedlists/", 
 				new String[]{ ".*_false-termination.*\\.c.i|.*_true-termination.*\\.c.i" }, mFilesPerDirectoryLimit) ,
 
