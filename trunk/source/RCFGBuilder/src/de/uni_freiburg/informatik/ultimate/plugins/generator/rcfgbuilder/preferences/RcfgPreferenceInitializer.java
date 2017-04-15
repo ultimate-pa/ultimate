@@ -32,6 +32,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePr
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Statements2TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
 
@@ -81,6 +82,12 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 	public static final String LABEL_Path = "To the following directory";
 	public static final String DEF_Path = "";
 	public static final String LABEL_BitvectorWorkaround = "Translate Boogie integers to SMT bitvectors";
+	
+	/**
+	 * @see Statements2TransFormula#mSimplePartialSkolemization
+	 */
+	public static final String LABEL_SIMPLE_PARTIAL_SKOLEMIZATION = "Skolemize terms";
+	public static final boolean DEF_SIMPLE_PARTIAL_SKOLEMIZATION = false;
 
 	public RcfgPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
@@ -101,6 +108,7 @@ public class RcfgPreferenceInitializer extends UltimatePreferenceInitializer {
 				new UltimatePreferenceItem<>(LABEL_RemoveGotoEdges, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_Simplify, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_CNF, true, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_SIMPLE_PARTIAL_SKOLEMIZATION, DEF_SIMPLE_PARTIAL_SKOLEMIZATION, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_DumpToFile, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_DumpUnsatCoreTrackBenchmark, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_DumpMainTrackBenchmark, false, PreferenceType.Boolean),
