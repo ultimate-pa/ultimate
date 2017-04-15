@@ -337,8 +337,8 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 		for (final EqGraphNode<EqNode, IProgramVarOrConst> graphNode : mEqNodeToEqGraphNodeMap.values()) {
 			if (!graphNode.equals(graphNode.getRepresentative())) {
-				equalityFirst = graphNode.nodeIdentifier.getTerm();
-				equalitySecond = graphNode.getRepresentative().nodeIdentifier.getTerm();
+				equalityFirst = graphNode.mNodeIdentifier.getTerm();
+				equalitySecond = graphNode.getRepresentative().mNodeIdentifier.getTerm();
 				equalityTermSet.add(mScript.term(this, "=", equalityFirst, equalitySecond));
 			}
 		}
@@ -362,7 +362,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		final Set<EqNode> result = new HashSet<>();
 		for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : mEqNodeToEqGraphNodeMap.values()) {
 			if (egn.getRepresentative() == egn) {
-				result.add(egn.nodeIdentifier);
+				result.add(egn.mNodeIdentifier);
 			}
 		}
 		return result;
@@ -382,7 +382,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		final Set<EqNode> result = new HashSet<>();
 		for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : mEqNodeToEqGraphNodeMap.values()) {
 			if (egn.find() == nodeGraphNode.find()) {
-				result.add(egn.nodeIdentifier);
+				result.add(egn.mNodeIdentifier);
 			}
 		}
 		return result;
@@ -416,7 +416,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	@Override
 	public EqNode find(final EqNode id) {
-		return mEqNodeToEqGraphNodeMap.get(id).find().nodeIdentifier;
+		return mEqNodeToEqGraphNodeMap.get(id).find().mNodeIdentifier;
 	}
 
 	@Override

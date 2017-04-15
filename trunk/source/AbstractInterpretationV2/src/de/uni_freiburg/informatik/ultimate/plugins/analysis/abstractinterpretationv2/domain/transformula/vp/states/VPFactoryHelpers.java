@@ -81,12 +81,12 @@ public class VPFactoryHelpers {
 					for (int i = 0; i < list1.size(); i++) {
 						final EqGraphNode<NODEID, ARRAYID> c1 = list1.get(i);
 						final EqGraphNode<NODEID, ARRAYID> c2 = list2.get(i);
-						if (originalStateCopy.containsDisEquality(c1.find().nodeIdentifier, c2.find().nodeIdentifier)) {
+						if (originalStateCopy.containsDisEquality(c1.find().mNodeIdentifier, c2.find().mNodeIdentifier)) {
 							continue;
 						}
 						factory.getBenchmark().stop(VPSFO.propagateDisEqualitiesClock);
 						result.addAll(
-								addDisEquality(c1.nodeIdentifier, c2.nodeIdentifier, intermediateResult, factory));
+								addDisEquality(c1.mNodeIdentifier, c2.mNodeIdentifier, intermediateResult, factory));
 						factory.getBenchmark().unpause(VPSFO.propagateDisEqualitiesClock);
 					}
 				}
@@ -142,7 +142,7 @@ public class VPFactoryHelpers {
 		/*
 		 * no contradiction --> introduce disequality
 		 */
-		builder.addDisEquality(gn1.find().nodeIdentifier, gn2.find().nodeIdentifier);
+		builder.addDisEquality(gn1.find().mNodeIdentifier, gn2.find().mNodeIdentifier);
 
 		builder.setIsTop(false);
 
@@ -207,12 +207,12 @@ public class VPFactoryHelpers {
 		 * Propagate disequalites
 		 */
 		final Set<T> resultStates = new HashSet<>();
-		for (final NODEID other : originalState.getDisequalities(gn1.nodeIdentifier)) {
+		for (final NODEID other : originalState.getDisequalities(gn1.mNodeIdentifier)) {
 			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 			resultStates.addAll(propagateDisEqualites(resultState, gn1, resultState.getEqGraphNode(other), factory));
 			factory.getBenchmark().unpause(VPSFO.addEqualityClock);
 		}
-		for (final NODEID other : originalState.getDisequalities(gn2.nodeIdentifier)) {
+		for (final NODEID other : originalState.getDisequalities(gn2.mNodeIdentifier)) {
 			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 			resultStates.addAll(propagateDisEqualites(resultState, gn2, resultState.getEqGraphNode(other), factory));
 			factory.getBenchmark().unpause(VPSFO.addEqualityClock);
@@ -319,13 +319,13 @@ public class VPFactoryHelpers {
 			}
 			
 			final EqGraphNode<NODEID, ARRAYID> firstGraphNodeInSecondState =
-					second.getEqGraphNode(firstGraphNode.nodeIdentifier);
+					second.getEqGraphNode(firstGraphNode.mNodeIdentifier);
 			final EqGraphNode<NODEID, ARRAYID> firstGraphNodeRepresentativeInSecondState =
-					second.getEqGraphNode(firstGraphNode.getRepresentative().nodeIdentifier);
+					second.getEqGraphNode(firstGraphNode.getRepresentative().mNodeIdentifier);
 
 			if (firstGraphNodeInSecondState.find().equals(firstGraphNodeRepresentativeInSecondState)) {
-				final Set<T> eqResultStates = addEquality(firstGraphNodeInSecondState.nodeIdentifier,
-						firstGraphNodeRepresentativeInSecondState.nodeIdentifier, disjoinedState, factory);
+				final Set<T> eqResultStates = addEquality(firstGraphNodeInSecondState.mNodeIdentifier,
+						firstGraphNodeRepresentativeInSecondState.mNodeIdentifier, disjoinedState, factory);
 				assert eqResultStates.size() == 1;
 				disjoinedState = eqResultStates.iterator().next();
 			}
@@ -425,8 +425,8 @@ public class VPFactoryHelpers {
 				// no (outgoing) equality edge here..
 				continue;
 			}
-			final NODEID conStateGraphNode = otherGraphNode.nodeIdentifier;
-			final NODEID conStateGraphNodeRe = otherGraphNode.getRepresentative().nodeIdentifier;
+			final NODEID conStateGraphNode = otherGraphNode.mNodeIdentifier;
+			final NODEID conStateGraphNodeRe = otherGraphNode.getRepresentative().mNodeIdentifier;
 			// resultStates.addAll(
 			// conjoinAll(
 			// addEquality(conStateGraphNode, conStateGraphNodeRe, conjoinedState, factory),
@@ -544,8 +544,8 @@ public class VPFactoryHelpers {
 			final EqGraphNode<NODEID, ARRAYID> fnNode1, final EqGraphNode<NODEID, ARRAYID> fnNode2) {
 		// assert fnNode1.getArgs() != null && fnNode2.getArgs() != null;
 		// assert fnNode1.getArgs().size() == fnNode2.getArgs().size();
-		assert fnNode1.nodeIdentifier.isFunction();
-		assert fnNode2.nodeIdentifier.isFunction();
+		assert fnNode1.mNodeIdentifier.isFunction();
+		assert fnNode2.mNodeIdentifier.isFunction();
 		
 		for (int i = 0; i < fnNode1.getInitCcchild().size(); i++) {
 			final EqGraphNode<NODEID, ARRAYID> fnNode1Arg = fnNode1.getInitCcchild().get(i);

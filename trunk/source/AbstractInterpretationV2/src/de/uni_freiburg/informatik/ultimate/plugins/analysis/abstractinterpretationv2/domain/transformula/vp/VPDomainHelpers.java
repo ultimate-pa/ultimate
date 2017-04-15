@@ -338,10 +338,10 @@ public class VPDomainHelpers {
 			boolean isHavocced(final ARRAYID array, final IVPStateOrTfState<NODEID, ARRAYID> resultState) {
 		// TODO: fix the other isHavocced before using this
 		for (final EqGraphNode<NODEID, ARRAYID> node : resultState.getAllEqGraphNodes()) {
-			if (!node.nodeIdentifier.getAllFunctions().contains(array)) {
+			if (!node.mNodeIdentifier.getAllFunctions().contains(array)) {
 				continue;
 			}
-			if (!isHavocced(node.nodeIdentifier, resultState)) {
+			if (!isHavocced(node.mNodeIdentifier, resultState)) {
 				return false;
 			}
 			
@@ -363,7 +363,7 @@ public class VPDomainHelpers {
 		if (!node.getReverseRepresentative().isEmpty()) {
 			return false;
 		}
-		if (!resultState.getDisequalities(node.nodeIdentifier).isEmpty()) {
+		if (!resultState.getDisequalities(node.mNodeIdentifier).isEmpty()) {
 			return false;
 		}
 		return true;

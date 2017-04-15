@@ -92,7 +92,7 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 		builder.setIsTop(state.isTop());
 
 		for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> egnInOldState : state.getAllEqGraphNodes()) {
-			final VPTfNodeIdentifier nodeId = egnInOldState.nodeIdentifier;
+			final VPTfNodeIdentifier nodeId = egnInOldState.mNodeIdentifier;
 			final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newGraphNode = builder.getEqGraphNode(nodeId);
 			assert newGraphNode != null;
 			EqGraphNode.copyFields(egnInOldState, newGraphNode, builder);
@@ -167,7 +167,7 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 		
 		final Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> inVarsAndConstantEqNodeSet = new HashSet<>();
 		for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> node : builder.getAllEqGraphNodes()) {
-			if (node.nodeIdentifier.isInOrThrough()) {
+			if (node.mNodeIdentifier.isInOrThrough()) {
 				inVarsAndConstantEqNodeSet.add(node);
 			}
 		}
@@ -185,8 +185,8 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 					continue;
 				}
 
-				if (state.areUnEqual(inNode1.nodeIdentifier.getEqNode(), inNode2.nodeIdentifier.getEqNode())) {
-					builder.addDisEquality(inNode1.nodeIdentifier, inNode2.nodeIdentifier);
+				if (state.areUnEqual(inNode1.mNodeIdentifier.getEqNode(), inNode2.mNodeIdentifier.getEqNode())) {
+					builder.addDisEquality(inNode1.mNodeIdentifier, inNode2.mNodeIdentifier);
 				}
 			}
 		}
@@ -206,8 +206,8 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 					continue;
 				}
 
-				if (state.areEqual(inNode1.nodeIdentifier.getEqNode(), inNode2.nodeIdentifier.getEqNode())) {
-					resultStates = VPFactoryHelpers.addEquality(inNode1.nodeIdentifier, inNode2.nodeIdentifier,
+				if (state.areEqual(inNode1.mNodeIdentifier.getEqNode(), inNode2.mNodeIdentifier.getEqNode())) {
+					resultStates = VPFactoryHelpers.addEquality(inNode1.mNodeIdentifier, inNode2.mNodeIdentifier,
 							resultStates, this);
 					assert resultStates.size() == 1 : "??";
 				}

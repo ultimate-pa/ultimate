@@ -318,8 +318,8 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 
 				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newNode =
 						getOrConstructInOrOutOrThroughEqGraphNode(functionNode, true);
-				assert newNode.nodeIdentifier.getEqNode() == functionNode;
-				assert newNode.nodeIdentifier.isInOrThrough();
+				assert newNode.mNodeIdentifier.getEqNode() == functionNode;
+				assert newNode.mNodeIdentifier.isInOrThrough();
 			}
 
 			if (arrayId.isOutOrThrough()) {
@@ -327,8 +327,8 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 
 				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newNode =
 						getOrConstructInOrOutOrThroughEqGraphNode(functionNode, false);
-				assert newNode.nodeIdentifier.getEqNode() == functionNode;
-				assert newNode.nodeIdentifier.isOutOrThrough();
+				assert newNode.mNodeIdentifier.getEqNode() == functionNode;
+				assert newNode.mNodeIdentifier.isOutOrThrough();
 			}
 
 			final ArrayInOutStatus targetInOutStatus = arrayId.getInOutStatus();
@@ -371,8 +371,8 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 			for (final EqNode arg : functionNode.getArgs()) {
 				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> indexVectorElement =
 						getOrConstructInOrOutOrThroughEqGraphNode(arg, inOrThroughOrOutOrThroughChooseIn);
-				newInVars.putAll(indexVectorElement.nodeIdentifier.getInVars());
-				newOutVars.putAll(indexVectorElement.nodeIdentifier.getOutVars());
+				newInVars.putAll(indexVectorElement.mNodeIdentifier.getInVars());
+				newOutVars.putAll(indexVectorElement.mNodeIdentifier.getOutVars());
 				indexVector.add(indexVectorElement);
 			}
 
@@ -770,7 +770,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 							VPDomainHelpers.projectToTermAndVars(getTransFormula().getInVars(), term,
 									eqNode.getVariables()),
 							VPDomainHelpers.projectToTermAndVars(getTransFormula().getOutVars(), term,
-									eqNode.getVariables())).nodeIdentifier;
+									eqNode.getVariables())).mNodeIdentifier;
 
 			if (term instanceof TermVariable || term instanceof ConstantTerm
 					|| ((term instanceof ApplicationTerm) && ((ApplicationTerm) term).getParameters().length == 0)) {

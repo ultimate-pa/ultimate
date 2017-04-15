@@ -88,7 +88,7 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 	
 	@Override
 	public VPTfNodeIdentifier find(final VPTfNodeIdentifier id) {
-		return mNodeIdToEqGraphNode.get(id).find().nodeIdentifier;
+		return mNodeIdToEqGraphNode.get(id).find().mNodeIdentifier;
 	}
 	
 	public Set<VPTfNodeIdentifier> getFunctionNodesForArray(final VPTfArrayIdentifier array) {

@@ -211,7 +211,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 		 */
 		final Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outVarsAndConstantEqNodeSet = new HashSet<>();
 		for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> node : tfState.getAllEqGraphNodes()) {
-			if (node.nodeIdentifier.isOutOrThrough()) {
+			if (node.mNodeIdentifier.isOutOrThrough()) {
 				outVarsAndConstantEqNodeSet.add(node);
 			}
 		}
@@ -239,9 +239,9 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 					continue;
 				}
 
-				if (tfState.areUnEqual(outNode1.nodeIdentifier, outNode2.nodeIdentifier)) {
-					statesWithDisEqualitiesAdded = VPFactoryHelpers.addDisEquality(outNode1.nodeIdentifier.getEqNode(),
-							outNode2.nodeIdentifier.getEqNode(), statesWithDisEqualitiesAdded, this);
+				if (tfState.areUnEqual(outNode1.mNodeIdentifier, outNode2.mNodeIdentifier)) {
+					statesWithDisEqualitiesAdded = VPFactoryHelpers.addDisEquality(outNode1.mNodeIdentifier.getEqNode(),
+							outNode2.mNodeIdentifier.getEqNode(), statesWithDisEqualitiesAdded, this);
 				}
 			}
 		}
@@ -260,9 +260,9 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 					continue;
 				}
 
-				if (tfState.areEqual(outNode1.nodeIdentifier, outNode2.nodeIdentifier)) {
-					resultStates = VPFactoryHelpers.addEquality(outNode1.nodeIdentifier.getEqNode(),
-							outNode2.nodeIdentifier.getEqNode(), resultStates, this);
+				if (tfState.areEqual(outNode1.mNodeIdentifier, outNode2.mNodeIdentifier)) {
+					resultStates = VPFactoryHelpers.addEquality(outNode1.mNodeIdentifier.getEqNode(),
+							outNode2.mNodeIdentifier.getEqNode(), resultStates, this);
 				}
 			}
 		}
@@ -377,12 +377,12 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 				havocNodeIsItsRepresentative = true;
 				if (graphNodeForNodeToBeHavocced.getReverseRepresentative().size() > 1) {
 					assert firstReserveRepresentativeNode != null;
-					resultState = disjoinAll(VPFactoryHelpers.addEquality(reverseNode.nodeIdentifier,
-							firstReserveRepresentativeNode.nodeIdentifier, resultState, this));
+					resultState = disjoinAll(VPFactoryHelpers.addEquality(reverseNode.mNodeIdentifier,
+							firstReserveRepresentativeNode.mNodeIdentifier, resultState, this));
 				}
 			} else { // case y -> x -> z
-				resultState = disjoinAll(VPFactoryHelpers.addEquality(reverseNode.nodeIdentifier,
-						firstRepresentative.nodeIdentifier, resultState, this));
+				resultState = disjoinAll(VPFactoryHelpers.addEquality(reverseNode.mNodeIdentifier,
+						firstRepresentative.mNodeIdentifier, resultState, this));
 			}
 		}
 		
@@ -395,10 +395,10 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 		if (havocNodeIsItsRepresentative) {
 			final Set<VPDomainSymmetricPair<EqNode>> newDisEqualitySet = new HashSet<>();
 			for (final VPDomainSymmetricPair<EqNode> pair : builder2.getDisEqualitySet()) {
-				if (pair.contains(graphNodeForNodeToBeHavocced.nodeIdentifier)) {
+				if (pair.contains(graphNodeForNodeToBeHavocced.mNodeIdentifier)) {
 					newDisEqualitySet.add(new VPDomainSymmetricPair<EqNode>(
-							pair.getOther(graphNodeForNodeToBeHavocced.nodeIdentifier),
-							resultState.find(firstReserveRepresentativeNode.nodeIdentifier)));
+							pair.getOther(graphNodeForNodeToBeHavocced.mNodeIdentifier),
+							resultState.find(firstReserveRepresentativeNode.mNodeIdentifier)));
 				} else {
 					newDisEqualitySet.add(pair);
 				}
@@ -421,7 +421,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 		if (!graphNodeForNodeToBeHavocced.getInitCcpar().isEmpty()) {
 			for (final EqGraphNode<EqNode, IProgramVarOrConst> initCcpar : graphNodeForNodeToBeHavocced
 					.getInitCcpar()) {
-				resultState = havoc(initCcpar.nodeIdentifier, resultState);
+				resultState = havoc(initCcpar.mNodeIdentifier, resultState);
 			}
 		}
 		

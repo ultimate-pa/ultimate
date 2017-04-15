@@ -148,10 +148,10 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 			NODEID newSecond = pair.getSecond();
 			
 			if (firstEqnInDisEquality == oldNode1Representative) {
-				newFirst = node1.find().nodeIdentifier;
+				newFirst = node1.find().mNodeIdentifier;
 			}
 			if (secondEqnInDisEquality == oldNode1Representative) {
-				newSecond = node1.find().nodeIdentifier;
+				newSecond = node1.find().mNodeIdentifier;
 			}
 
 			mDisEqualitySet.remove(pair);
@@ -187,14 +187,14 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 	 * @return true if they are congruent
 	 */
 	protected boolean congruent(final EqGraphNode<NODEID, ARRAYID> node1, final EqGraphNode<NODEID, ARRAYID> node2) {
-		if (!(node1.nodeIdentifier.isFunction()) || !(node2.nodeIdentifier.isFunction())) {
+		if (!(node1.mNodeIdentifier.isFunction()) || !(node2.mNodeIdentifier.isFunction())) {
 			return false;
 		}
 
 		// final EqFunctionNode fnNode1 = (EqFunctionNode) node1.eqNode;
 		// final EqFunctionNode fnNode2 = (EqFunctionNode) node2.eqNode;
 
-		if (!(node1.nodeIdentifier.getFunction().equals(node2.nodeIdentifier.getFunction()))) {
+		if (!(node1.mNodeIdentifier.getFunction().equals(node2.mNodeIdentifier.getFunction()))) {
 			return false;
 		}
 		return VPFactoryHelpers.congruentIgnoreFunctionSymbol(node1, node2);
@@ -225,7 +225,7 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 		final EqGraphNode<NODEID, ARRAYID> egn1 = getEqGraphNode(id1);
 		final EqGraphNode<NODEID, ARRAYID> egn2 = getEqGraphNode(id2);
 		assert !egn1.equals(egn2);
-		mDisEqualitySet.add(new VPDomainSymmetricPair<NODEID>(egn1.find().nodeIdentifier, egn2.find().nodeIdentifier));
+		mDisEqualitySet.add(new VPDomainSymmetricPair<NODEID>(egn1.find().mNodeIdentifier, egn2.find().mNodeIdentifier));
 		// mDisEqualitySet.add(new VPDomainSymmetricPair<NODEID>(id1, id2));
 	}
 
