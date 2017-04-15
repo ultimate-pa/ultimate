@@ -91,6 +91,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 
 	private final Set<IcfgEdge> mLoopEntryTransitions;
 	private final Map<INLOC, List<Backbone>> mBackbones;
+	private final Set<Backbone> mExitBackbones;
 	private final Map<Backbone, TransFormula> mBackboneTransformulas;
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
@@ -125,6 +126,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 
 		mLoopEntryTransitions = new HashSet<>();
 		mBackbones = new HashMap<>();
+		mExitBackbones = new HashSet<>();
 		mBackboneTransformulas = new HashMap<>();
 		mScript = origIcfg.getCfgSmtToolkit().getManagedScript();
 		mServices = services;
@@ -146,22 +148,12 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> origIcfg, final BasicIcfg<OUTLOC> resultIcfg,
 			final TransformedIcfgBuilder<INLOC, OUTLOC> lst, final IBacktranslationTracker backtranslationTracker) {
 
-		// Find all backbones for initial nodes.
-		for (final INLOC initialNode : origIcfg.getInitialNodes()) {
-			for (final IcfgEdge edge : initialNode.getOutgoingEdges()) {
-				findBackbones(edge);
-			}
-		}
-
-		// Find backbones for loop locations.
-		for (final IcfgEdge entryTransition : mLoopEntryTransitions) {
-			final List<Backbone> backbones = findBackbones(entryTransition);
-			mBackbones.put((INLOC) entryTransition.getSource(), backbones);
-		}
+		findAllBackbones(origIcfg.getInitialNodes());
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Found the following backbones:");
 			mLogger.debug(mBackbones);
+			mLogger.debug(mExitBackbones);
 		}
 
 		// Create a new Icfg.
@@ -188,60 +180,110 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 				final INLOC oldTarget = (INLOC) oldTransition.getTarget();
 				open.add(oldTarget);
 				final OUTLOC newTarget = lst.createNewLocation(oldTarget);
+
 				if (mBackbones.containsKey(oldSource)) {
-					final IteratedSymbolicMemory iteratedSymbolicMemory = getIteratedSymbolicMemoryForLoop(oldSource);
-					final UnmodifiableTransFormula loopTf =
-							getLoopTransFormula(iteratedSymbolicMemory, mBackbones.get(oldSource));
-					final UnmodifiableTransFormula tf = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-							mScript, true, true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-							SimplificationTechnique.SIMPLIFY_DDA,
-							Arrays.asList(loopTf, oldTransition.getTransformula()));
-					assert oldTransition instanceof IIcfgInternalTransition;
-					final IcfgInternalTransition newTransition =
-							new IcfgInternalTransition(newSource, newTarget, null, tf);
-					if (iteratedSymbolicMemory.isOverapproximation()
-							|| iteratedSymbolicMemory.getLoopCounters().size() > 1) {
-						// When the iterated symbolic memory cannot represent the values of all variables or when there
-						// are multiple backbones the calculated loop transformula might be an overapproximation.
-						new Overapprox(getClass().getSimpleName(), null).annotate(newTransition);
-					}
-					newSource.addOutgoing(newTransition);
-					newTarget.addIncoming(newTransition);
+					final IcfgEdge newTransition = getAcceleratedTransition(oldTransition, newSource, newTarget);
 					backtranslationTracker.rememberRelation(oldTransition, newTransition);
 				} else {
 					lst.createNewTransition(newSource, newTarget, oldTransition);
 				}
 			}
 		}
+
+		final Set<IcfgEdge> transformedEdges = new HashSet<>();
+
+		for (final Backbone backbone : mExitBackbones) {
+			final List<IcfgEdge> transitions = backbone.getTransitions();
+
+			for (int i = 0; i < transitions.size(); i++) {
+				final IcfgEdge edge = transitions.get(i);
+				final INLOC oldSource = (INLOC) edge.getSource();
+				if (i > 0 && closed.contains(oldSource)) {
+					break;
+				}
+				if (transformedEdges.contains(edge)) {
+					continue;
+				}
+
+				final INLOC oldTarget = (INLOC) edge.getTarget();
+				final OUTLOC newSource = lst.createNewLocation(oldSource);
+				final OUTLOC newTarget = lst.createNewLocation(oldTarget);
+				if (i == 0) {
+					final IcfgEdge newTransition = getAcceleratedTransition(edge, newSource, newTarget);
+					backtranslationTracker.rememberRelation(edge, newTransition);
+				} else {
+					lst.createNewTransition(newSource, newTarget, edge);
+				}
+
+				transformedEdges.add(edge);
+			}
+		}
 		return resultIcfg;
 	}
 
-	/**
-	 * Finds backbones.
-	 *
-	 * @param entryTransition
-	 *            The entry transition of the backbones.
-	 * @return A list of backbones.
-	 */
-	private List<Backbone> findBackbones(final IcfgEdge entryTransition) {
-		// TODO: This also gives backbones that end in assertions inside nested loops.
+	private IcfgEdge getAcceleratedTransition(final IcfgEdge oldTransition, final OUTLOC newSource,
+			final OUTLOC newTarget) {
+		final INLOC oldSource = (INLOC) oldTransition.getSource();
+		final IteratedSymbolicMemory iteratedSymbolicMemory = getIteratedSymbolicMemoryForLoop(oldSource);
+		final UnmodifiableTransFormula loopTf = getLoopTransFormula(iteratedSymbolicMemory, mBackbones.get(oldSource));
+		final UnmodifiableTransFormula tf = TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true,
+				true, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+				SimplificationTechnique.SIMPLIFY_DDA, Arrays.asList(loopTf, oldTransition.getTransformula()));
+		assert oldTransition instanceof IIcfgInternalTransition;
+		final IcfgInternalTransition newTransition = new IcfgInternalTransition(newSource, newTarget, null, tf);
+		if (iteratedSymbolicMemory.isOverapproximation() || iteratedSymbolicMemory.getLoopCounters().size() > 1) {
+			// When the iterated symbolic memory cannot represent the values of all variables or when there
+			// are multiple backbones the calculated loop transformula might be an overapproximation.
+			new Overapprox(getClass().getSimpleName(), null).annotate(newTransition);
+		}
+		newSource.addOutgoing(newTransition);
+		newTarget.addIncoming(newTransition);
+		return newTransition;
+	}
 
+	/**
+	 * Finds all backbones and adds them into mBackbones.
+	 *
+	 * @param initialNodes
+	 *            The initial nodes of the Icfg.
+	 */
+	private void findAllBackbones(final Set<INLOC> initialNodes) {
 		final List<Backbone> incompleteBackbones = new ArrayList<>();
-		final List<Backbone> completeBackbones = new ArrayList<>();
-		checkTransition(entryTransition);
-		incompleteBackbones.add(new Backbone(entryTransition));
+
+		for (final INLOC location : initialNodes) {
+			for (final IcfgEdge edge : location.getOutgoingEdges()) {
+				checkTransition(edge);
+				incompleteBackbones.add(new Backbone(edge));
+			}
+		}
 
 		while (!incompleteBackbones.isEmpty()) {
 			for (int i = incompleteBackbones.size() - 1; i >= 0; i--) {
 				final Backbone backbone = incompleteBackbones.get(i);
-				final INLOC lastLocation = (INLOC) backbone.getLastLocation();
+				final IcfgLocation lastLocation = backbone.getLastLocation();
+				final IcfgLocation entryLocation = backbone.getTransitions().get(0).getSource();
 
-				if (lastLocation != entryTransition.getSource() && backbone.endsInLoop()) {
+				if (lastLocation != entryLocation && backbone.endsInLoop()) {
 					incompleteBackbones.remove(i);
-					mLoopEntryTransitions.add(backbone.getLoopEntryTransition());
-				} else if (lastLocation == entryTransition.getSource() || lastLocation.getOutgoingEdges().isEmpty()) {
+					final IcfgEdge loopEntryTransition = backbone.getLoopEntryTransition();
+					if (mLoopEntryTransitions.contains(loopEntryTransition)) {
+						continue;
+					}
+					mLoopEntryTransitions.add(loopEntryTransition);
+					incompleteBackbones.add(new Backbone(loopEntryTransition));
+					mBackbones.putIfAbsent((INLOC) loopEntryTransition.getSource(), new ArrayList<>());
+				} else if (lastLocation == entryLocation) {
+					assert backbone.endsInLoop();
 					incompleteBackbones.remove(i);
-					completeBackbones.add(backbone);
+					mBackbones.get(entryLocation).add(backbone);
+				} else if (lastLocation.getOutgoingEdges().isEmpty()) {
+					// This backbone leaves the loop
+					assert !backbone.endsInLoop();
+					incompleteBackbones.remove(i);
+					if (initialNodes.contains(entryLocation)) {
+						continue;
+					}
+					mExitBackbones.add(backbone);
 				}
 			}
 
@@ -264,8 +306,6 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 				}
 			}
 		}
-
-		return completeBackbones;
 	}
 
 	private void checkTransition(final IcfgEdge transition) {
