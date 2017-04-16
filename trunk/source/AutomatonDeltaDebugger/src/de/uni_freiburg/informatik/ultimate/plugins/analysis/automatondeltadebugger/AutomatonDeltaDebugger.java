@@ -101,7 +101,7 @@ public class AutomatonDeltaDebugger implements IAnalysis {
 	@Override
 	public void setInputDefinition(final ModelType graphType) {
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Receiving input definition " + graphType.toString());
+			mLogger.info("Receiving input definition " + graphType);
 		}
 		mObservers.clear();
 
