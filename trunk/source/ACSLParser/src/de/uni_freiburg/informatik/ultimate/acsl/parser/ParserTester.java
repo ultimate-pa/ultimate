@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ACSLParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ACSLParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ACSLParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -37,28 +37,34 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
  * 
  * @author Stefan Wissert
  */
-public class ParserTester {
+public final class ParserTester {
+	private static final int STRING_BUILDER_SIZE = 191;
+
+	private ParserTester() {
+		// test class
+	}
 
 	/**
-	 * Main method.
-	 * 
-	 * @param args string arguments.
+	 * @param args
+	 *            string arguments.
 	 */
-	public static void main(String[] args) {
-		final StringBuffer buf = new StringBuffer();
-		buf.append("gstart ");
-		buf.append("requires add[1] >= 0 ;");
-		buf.append("assigns \\nothing;");
-		buf.append("ensures -1 <= \\result <= n -1;");
-		buf.append("behavior success:");
-		buf.append("	ensures \\result >= 0 ;");
-		buf.append("behavior failure:");
-		buf.append("	assumes t_is_sorted : x > 0;");
-		buf.append(" 	ensures \\result == -1; ");
-		
-		System.out.println(buf.toString());
+	public static void main(final String[] args) {
+		final StringBuilder builder = new StringBuilder(STRING_BUILDER_SIZE);
+		// @formatter:off
+		builder.append("gstart ")
+				.append("requires add[1] >= 0 ;")
+				.append("assigns \\nothing;")
+				.append("ensures -1 <= \\result <= n -1;")
+				.append("behavior success:")
+				.append("	ensures \\result >= 0 ;")
+				.append("behavior failure:")
+				.append("	assumes t_is_sorted : x > 0;")
+				.append(" 	ensures \\result == -1; ");
+		// @formatter:on
+
+		System.out.println(builder.toString());
 		try {
-			final ACSLNode node = Parser.parseComment(buf.toString(), 0, 0);
+			final ACSLNode node = Parser.parseComment(builder.toString(), 0, 0);
 			System.out.println(node);
 		} catch (final Exception e) {
 			e.printStackTrace();

@@ -21,9 +21,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ACSLParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ACSLParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ACSLParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -34,7 +34,7 @@ package de.uni_freiburg.informatik.ultimate.acsl.parser;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
 
 /**
- * Exception class which is thrown by the ACSLParser
+ * Exception class which is thrown by the ACSLParser.
  * 
  * @author Markus Lindenmann
  * @author Oleksii Saukh
@@ -42,44 +42,40 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
  * @date 07.04.2012
  */
 public class ACSLSyntaxErrorException extends Exception {
+	private static final long serialVersionUID = 1L;
 
 	/**
 	 * ACSLNode that locates the SyntaxError.
 	 */
-	private final ACSLNode location;
+	private final ACSLNode mLocation;
 
 	/**
 	 * The message of this Exception (is displayed to the user).
 	 */
-	private final String message;
+	private final String mMessage;
 
 	/**
-	 * SerialID
+	 * @param location
+	 *            dummyLocation of the Syntax-Error.
+	 * @param message
+	 *            the message text of this exception.
 	 */
-	private static final long serialVersionUID = 1L;
-
-	/**
-	 * Constructor
-	 * 
-	 * @param location dummyLocation of the Syntax-Error.
-	 * @param message the message text of this exception.
-	 */
-	public ACSLSyntaxErrorException(ACSLNode location, String message) {
-		this.location = location;
-		this.message = message;
+	public ACSLSyntaxErrorException(final ACSLNode location, final String message) {
+		mLocation = location;
+		mMessage = message;
 	}
 
 	/**
 	 * @return the location.
 	 */
 	public ACSLNode getLocation() {
-		return location;
+		return mLocation;
 	}
 
 	/**
 	 * @return given message text.
 	 */
 	public String getMessageText() {
-		return message;
+		return mMessage;
 	}
 }

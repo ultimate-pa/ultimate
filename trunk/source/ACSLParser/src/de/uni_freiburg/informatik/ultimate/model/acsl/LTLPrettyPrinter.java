@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ACSLParser plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ACSLParser plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ACSLParser plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.model.acsl;
@@ -36,142 +36,154 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ast.UnaryExpression;
 
 /**
- * Preliminary ACSL LTL extension pretty printer
+ * Preliminary ACSL LTL extension pretty printer.
  * 
  * @author dietsch@informatik.uni-freiburg.de
  */
 public class LTLPrettyPrinter extends ACSLVisitor {
+	private static final String GET_STRING = "getString(";
+	private static final String NOT_IMPLEMENTED = ") not implemented";
+	
+	private static final String STRING_AND = "&";
+	private static final String STRING_MINUS = "-";
+	private static final String STRING_TIMES = "*";
+	private static final String STRING_PLUS = "+";
+	
+	private static final char BLANK = ' ';
+	private static final char PARENTHESIS_CLOSE = ')';
+	private static final char PARENTHESIS_OPEN = '(';
 
 	protected StringBuilder mBuilder;
 
-	public String print(ACSLNode node) {
+	/**
+	 * @param node
+	 *            Node.
+	 * @return string representation
+	 */
+	public String print(final ACSLNode node) {
 		mBuilder = new StringBuilder();
 		node.accept(this);
 		return mBuilder.toString();
 	}
 
 	@Override
-	public boolean visit(BinaryExpression node) {
-		mBuilder.append("(");
+	public boolean visit(final BinaryExpression node) {
+		mBuilder.append(PARENTHESIS_OPEN);
 		node.getLeft().accept(this);
-		mBuilder.append(" ");
-		mBuilder.append(getString(node.getOperator()));
-		mBuilder.append(" ");
+		mBuilder.append(BLANK).append(getString(node.getOperator())).append(BLANK);
 		node.getRight().accept(this);
-		mBuilder.append(")");
+		mBuilder.append(PARENTHESIS_CLOSE);
 		return false;
 	}
 
 	@Override
-	public boolean visit(UnaryExpression node) {
-		mBuilder.append(getString(node.getOperator()));
-		mBuilder.append("(");
+	public boolean visit(final UnaryExpression node) {
+		mBuilder.append(getString(node.getOperator())).append('(');
 		node.getExpr().accept(this);
-		mBuilder.append(")");
+		mBuilder.append(')');
 		return false;
 	}
 
 	@Override
-	public boolean visit(BooleanLiteral node) {
+	public boolean visit(final BooleanLiteral node) {
 		mBuilder.append(node.getValue());
 		return super.visit(node);
 	}
 
 	@Override
-	public boolean visit(IdentifierExpression node) {
+	public boolean visit(final IdentifierExpression node) {
 		mBuilder.append(node.getIdentifier());
 		return super.visit(node);
 	}
 
 	@Override
-	public boolean visit(IntegerLiteral node) {
+	public boolean visit(final IntegerLiteral node) {
 		mBuilder.append(node.getValue());
 		return super.visit(node);
 	}
 
 	@Override
-	public boolean visit(RealLiteral node) {
+	public boolean visit(final RealLiteral node) {
 		mBuilder.append(node.getValue());
 		return super.visit(node);
 	}
 
-	private String getString(UnaryExpression.Operator operator) {
+	private String getString(final UnaryExpression.Operator operator) {
 		switch (operator) {
-		case ADDROF:
-			return "&";
-		case LOGICNEG:
-			return "!";
-		case LTLFINALLY:
-			return "F";
-		case LTLGLOBALLY:
-			return "G";
-		case LTLNEXT:
-			return "X";
-		case MINUS:
-			return "-";
-		case PLUS:
-			return "+";
-		case POINTER:
-			return "*";
-		case LOGICCOMPLEMENT:
-		default:
-			throw new UnsupportedOperationException("getString(" + operator + ") not implemented");
+			case ADDROF:
+				return STRING_AND;
+			case LOGICNEG:
+				return "!";
+			case LTLFINALLY:
+				return "F";
+			case LTLGLOBALLY:
+				return "G";
+			case LTLNEXT:
+				return "X";
+			case MINUS:
+				return STRING_MINUS;
+			case PLUS:
+				return STRING_PLUS;
+			case POINTER:
+				return STRING_TIMES;
+			case LOGICCOMPLEMENT:
+			default:
+				throw new UnsupportedOperationException(GET_STRING + operator + NOT_IMPLEMENTED);
 		}
 	}
 
-	private String getString(Operator operator) {
+	private String getString(final Operator operator) {
 		switch (operator) {
-		case ARITHDIV:
-			return "/";
-		case ARITHMINUS:
-			return "-";
-		case ARITHMOD:
-			return "%";
-		case ARITHMUL:
-			return "*";
-		case ARITHPLUS:
-			return "+";
-		case BITAND:
-			return "&";
-		case BITIFF:
-			return "<-->";
-		case BITIMPLIES:
-			return "-->";
-		case BITOR:
-			return "|";
-		case COMPEQ:
-			return "==";
-		case COMPGEQ:
-			return ">=";
-		case COMPGT:
-			return ">";
-		case COMPLEQ:
-			return "<=";
-		case COMPLT:
-			return "<";
-		case COMPNEQ:
-			return "!=";
-		case LOGICAND:
-			return "&&";
-		case LOGICIFF:
-			return "<==>";
-		case LOGICIMPLIES:
-			return "==>";
-		case LOGICOR:
-			return "||";
-		case LTLUNTIL:
-			return "U";
-		case LTLRELEASE:
-			return "R";
-		case LTLWEAKUNTIL:
-			return "WU";
-		case LOGICXOR:
-		case COMPPO:
-		case BITXOR:
-		case BITVECCONCAT:
-		default:
-			throw new UnsupportedOperationException("getString(" + operator + ") not implemented");
+			case ARITHDIV:
+				return "/";
+			case ARITHMINUS:
+				return STRING_MINUS;
+			case ARITHMOD:
+				return "%";
+			case ARITHMUL:
+				return STRING_TIMES;
+			case ARITHPLUS:
+				return STRING_PLUS;
+			case BITAND:
+				return STRING_AND;
+			case BITIFF:
+				return "<-->";
+			case BITIMPLIES:
+				return "-->";
+			case BITOR:
+				return "|";
+			case COMPEQ:
+				return "==";
+			case COMPGEQ:
+				return ">=";
+			case COMPGT:
+				return ">";
+			case COMPLEQ:
+				return "<=";
+			case COMPLT:
+				return "<";
+			case COMPNEQ:
+				return "!=";
+			case LOGICAND:
+				return "&&";
+			case LOGICIFF:
+				return "<==>";
+			case LOGICIMPLIES:
+				return "==>";
+			case LOGICOR:
+				return "||";
+			case LTLUNTIL:
+				return "U";
+			case LTLRELEASE:
+				return "R";
+			case LTLWEAKUNTIL:
+				return "WU";
+			case LOGICXOR:
+			case COMPPO:
+			case BITXOR:
+			case BITVECCONCAT:
+			default:
+				throw new UnsupportedOperationException(GET_STRING + operator + NOT_IMPLEMENTED);
 		}
 	}
-
 }
