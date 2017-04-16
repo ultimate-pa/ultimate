@@ -124,9 +124,8 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 	private final Set<STATE> mInitialStates = new HashSet<>();
 	private final Set<STATE> mFinalStates = new HashSet<>();
 
-	// TODO Christian 2016-10-11: Could be Collections.emptySet(), right?
-	private final Set<LETTER> mEmptySetOfLetters = Collections.unmodifiableSet(new HashSet<LETTER>(0));
-	private final Set<STATE> mEmptySetOfStates = Collections.unmodifiableSet(new HashSet<STATE>(0));
+	private final Set<LETTER> mEmptySetOfLetters = Collections.emptySet();
+	private final Set<STATE> mEmptySetOfStates = Collections.emptySet();
 
 	/**
 	 * Constructor.
