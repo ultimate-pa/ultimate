@@ -79,7 +79,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	 * Set of internal transitions PREs x LETTERs x SUCCs stored as map PREs -> LETTERs -> SUCCs. The keySet of this map
 	 * is used to store the set of states of this automaton.
 	 */
-	private final Map<STATE, Map<LETTER, Set<STATE>>> mInternalOut = new HashMap<>();
+	protected final Map<STATE, Map<LETTER, Set<STATE>>> mInternalOut = new HashMap<>();
 
 	/**
 	 * Set of call transitions PREs x LETTERs x SUCCs stored as map PREs -> LETTERs -> SUCCs.
