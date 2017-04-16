@@ -500,6 +500,8 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 			}
 		}
 		mInternalOut.remove(state);
+		final boolean wasContained = mStates.remove(state);
+		assert wasContained : "state " + state + "does not exist";
 
 		// assert checkTransitionsStoredConsistent();
 		assert checkTransitionsReturnedConsistent();

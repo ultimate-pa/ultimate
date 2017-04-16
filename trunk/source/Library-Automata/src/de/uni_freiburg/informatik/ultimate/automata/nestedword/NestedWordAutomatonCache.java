@@ -92,6 +92,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	 */
 	protected final Map<STATE, Map<LETTER, Map<STATE, Set<STATE>>>> mReturnOut = new HashMap<>();
 
+	protected final Set<STATE> mStates = new HashSet<>();
 	protected final Set<STATE> mInitialStates = new HashSet<>();
 	protected final Set<STATE> mFinalStates = new HashSet<>();
 
@@ -142,7 +143,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	}
 
 	public final Set<STATE> getStates() {
-		return mInternalOut.keySet();
+		return mStates;
 	}
 	
 	public final Set<STATE> getFinalStates() {
@@ -165,12 +166,12 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	 * @return {@code true} iff the automaton contains the state
 	 */
 	public final boolean contains(final STATE state) {
-		return mInternalOut.containsKey(state);
+		return mStates.contains(state);
 	}
 
 	@Override
 	public final int size() {
-		return mInternalOut.size();
+		return mStates.size();
 	}
 
 	@Override
@@ -206,10 +207,10 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	@SuppressWarnings("squid:S2301")
 	public final void addState(final boolean isInitial, final boolean isFinal, final STATE state) {
 		assert state != null;
-		if (mInternalOut.containsKey(state)) {
+		if (mStates.contains(state)) {
 			throw new IllegalArgumentException("State already exists");
 		}
-		mInternalOut.put(state, null);
+		mStates.add(state);
 
 		if (isInitial) {
 			mInitialStates.add(state);
@@ -604,7 +605,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	public String sizeInformation() {
 		final boolean verbose = false;
 		if (!verbose) {
-			final int states = mInternalOut.size();
+			final int states = getStates().size();
 			return states + " states.";
 		}
 		int statesWithInternalSuccessors = 0;
