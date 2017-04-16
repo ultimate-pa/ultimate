@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DownStateConsistencyCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
@@ -101,7 +102,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final INwaOutgoingTransitionProvider<LETTER, STATE> mOperand;
 
 	private final Set<LETTER> mInternalAlphabet;
 	private final Set<LETTER> mCallAlphabet;
@@ -176,7 +177,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	 *             if timeout exceeds
 	 */
 	public NestedWordAutomatonReachableStates(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
@@ -1064,7 +1065,10 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 			if (getReturnAlphabet().isEmpty()) {
 				return false;
 			}
-			return !mOperand.lettersReturn(state).isEmpty();
+			if (mOperand instanceof INestedWordAutomatonSimple) {
+				return !((INestedWordAutomatonSimple<LETTER, STATE>) mOperand).lettersReturn(state).isEmpty();
+			}
+			return true;
 		}
 
 		private void addInternalsAndSuccessors(final StateContainer<LETTER, STATE> cont) throws AutomataOperationCanceledException {

@@ -30,7 +30,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
@@ -68,55 +67,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  * @param <STATE>
  *            Type of objects which can be used as states.
  */
-public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
-	/**
-	 * @return Set of all letters that can occur as label of an internal transition.
-	 *         <p>
-	 *         The default definition of nested word automata does not allow separate alphabets for internal, call, and
-	 *         return symbols. The default definition of visibly pushdown automata requires that all three alphabets are
-	 *         disjoint. We deviate from both definitions. We allow separate alphabets but do not require that they are
-	 *         disjoint.
-	 */
-	Set<LETTER> getInternalAlphabet();
-
-	/**
-	 * @return Set of all letters that can occur as label of a call transition.
-	 * @see #getInternalAlphabet()
-	 */
-	Set<LETTER> getCallAlphabet();
-
-	/**
-	 * @return Set of all letters that can occur as label of a return transition.
-	 * @see #getInternalAlphabet()
-	 */
-	Set<LETTER> getReturnAlphabet();
-
-	/**
-	 * @return Auxiliary state used to model the hierarchical predecessor of a pending return in some operations.<br>
-	 *         Recall that we generally do not accept nested words with pending returns. This auxiliary state is
-	 *         <i>never</i> contained in the set of states. Viewing nested word automata as visibly pushdown automata,
-	 *         this state can be seen as a "bottom letter" of the pushdown alphabet.
-	 */
-	STATE getEmptyStackState();
-
-	/**
-	 * @return All initial states of the automaton.
-	 */
-	Iterable<STATE> getInitialStates();
-
-	/**
-	 * @param state
-	 *            state
-	 * @return true iff the state is initial.
-	 */
-	boolean isInitial(STATE state);
-
-	/**
-	 * @param state
-	 *            state
-	 * @return true iff the state is final.
-	 */
-	boolean isFinal(STATE state);
+public interface INestedWordAutomatonSimple<LETTER, STATE> extends INwaOutgoingTransitionProvider<LETTER, STATE> {
 
 	/**
 	 * @param state
@@ -162,15 +113,6 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state, final LETTER letter);
 
 	/**
-	 * All internal successor transitions for a given state.
-	 * 
-	 * @param state
-	 *            state
-	 * @return outgoing internal transitions
-	 */
-	Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state);
-
-	/**
 	 * All call successor transitions for a given state and letter.
 	 * 
 	 * @param state
@@ -180,15 +122,6 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 * @return outgoing call transitions
 	 */
 	Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter);
-
-	/**
-	 * All call successor transitions for a given state.
-	 * 
-	 * @param state
-	 *            state
-	 * @return outgoing call transitions
-	 */
-	Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state);
 
 	/**
 	 * All return successor transitions for a given state, hierarchical predecessor, and letter.
@@ -203,17 +136,6 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends IAutomaton<LE
 	 */
 	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
 			final LETTER letter);
-
-	/**
-	 * All return successor transitions for a given state and hierarchical predecessor.
-	 * 
-	 * @param state
-	 *            state
-	 * @param hier
-	 *            hierarchical predecessor
-	 * @return outgoing return transitions
-	 */
-	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state, final STATE hier);
 
 	@Override
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)
