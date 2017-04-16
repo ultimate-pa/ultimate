@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.astbuilder;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -66,7 +65,7 @@ public class ACSLEmit extends EmitAstWithVisitors {
 	}
 
 	@Override
-	public void emitPreamble(final Node node) throws IOException {
+	public void emitPreamble(final Node node) {
 		super.emitPreamble(node);
 		mWriter.println("import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;");
 	}

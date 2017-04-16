@@ -27,7 +27,6 @@
 
 package de.uni_freiburg.informatik.ultimate.astbuilder;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -36,11 +35,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- *
  */
-@SuppressWarnings("squid:S106")
 public class NewUltimateEmit extends EmitAstWithVisitors {
 
 	private static final String VISITOR_NAME = "GeneratedBoogieAstVisitor";
@@ -51,15 +47,15 @@ public class NewUltimateEmit extends EmitAstWithVisitors {
 			new HashSet<>(Arrays.asList(new String[] { VISITOR_NAME, TRANSFORMER_NAME }));
 
 	@Override
-	public String getRootConstructorParam(final Node node, final boolean optional) {
+	public String getRootConstructorParam(final Node node) {
 		if (OTHERS.contains(node.getName())) {
-			return super.getRootConstructorParam(node, optional);
+			return super.getRootConstructorParam(node);
 		}
 		return "loc";
 	}
 
 	@Override
-	public void emitPreamble(final Node node) throws IOException {
+	public void emitPreamble(final Node node) {
 		super.emitPreamble(node);
 		mWriter.println("import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;");
 		mWriter.println("import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;");
@@ -113,7 +109,7 @@ public class NewUltimateEmit extends EmitAstWithVisitors {
 				.filter(a -> a.getValue().getParent() == null).collect(Collectors.toList());
 		for (final Entry<String, Node> p : parentless) {
 			final Parameter[] oldParams = p.getValue().getParameters();
-			final int newLength = oldParams == null ? 1 : oldParams.length + 1;
+			final int newLength = oldParams == null ? 1 : (oldParams.length + 1);
 			final Parameter[] newParams = new Parameter[newLength];
 			if (newLength > 1) {
 				System.arraycopy(oldParams, 0, newParams, 1, newLength - 1);
