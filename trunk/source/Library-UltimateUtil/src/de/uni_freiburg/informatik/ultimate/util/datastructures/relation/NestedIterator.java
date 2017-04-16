@@ -1,7 +1,6 @@
 /*
- * Copyright (C) 2014-2015 Jan Leike (leike@informatik.uni-freiburg.de)
- * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2012-2015 University of Freiburg
+ * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 University of Freiburg
  * 
  * This file is part of the ULTIMATE Util Library.
  * 
@@ -32,9 +31,10 @@ import java.util.NoSuchElementException;
 import java.util.function.Function;
 
 /**
- * Concatenate a sequence of Iterators. The iterators are provided by a given
- * Function whose range are the iterators and an iterator that iterates over
- * the functions domain.
+ * Iterate over two kinds of iterators in a nested manner. For each element
+ * of the inner iterator we have a function that gives us the next outer
+ * iterator. The resulting element is composed of the inner and the outer
+ * element via a given function. 
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
@@ -42,18 +42,23 @@ import java.util.function.Function;
  *            element of inner iterator
  * @param OE
  *            element of outer iterator
+ * @param RE
+ *            type of resulting elements
  */
-public class NestedIterator<IE, OE> implements Iterator<OE> {
+public class NestedIterator<IE, OE, RE> implements Iterator<RE> {
 
 	private final Iterator<IE> mInnerIterator;
 	private IE mCurrentInnerElement;
 	private Iterator<OE> mOuterIterator;
 	private final Function<IE, Iterator<OE>> mNextOuterIteratorProvider;
+	private final Function<IE, Function<OE, RE>> mResultProvider;
 
 	public NestedIterator(final Iterator<IE> innerIterator,
-			final Function<IE, Iterator<OE>> nextOuterIteratorProvider) {
+			final Function<IE, Iterator<OE>> nextOuterIteratorProvider, 
+			final Function<IE, Function<OE, RE>> resultProvider) {
 		mInnerIterator = innerIterator;
 		mNextOuterIteratorProvider = nextOuterIteratorProvider;
+		mResultProvider = resultProvider;
 		nextLetter();
 	}
 
@@ -79,11 +84,12 @@ public class NestedIterator<IE, OE> implements Iterator<OE> {
 	}
 
 	@Override
-	public OE next() {
+	public RE next() {
 		if (mCurrentInnerElement == null) {
 			throw new NoSuchElementException();
 		}
-		final OE result = mOuterIterator.next();
+		final OE nextOuterElement = mOuterIterator.next();
+		final RE result = mResultProvider.apply(mCurrentInnerElement).apply(nextOuterElement);
 		if (!mOuterIterator.hasNext()) {
 			nextLetter();
 		}

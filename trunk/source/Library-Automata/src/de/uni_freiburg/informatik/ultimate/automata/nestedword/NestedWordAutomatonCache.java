@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedIterator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedIteratorNoopConstruction;
 
 /**
  * undocumented!
@@ -351,7 +351,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 
 	@Override
 	public final Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
-		return () -> new NestedIterator<LETTER, OutgoingInternalTransition<LETTER, STATE>>(
+		return () -> new NestedIteratorNoopConstruction<LETTER, OutgoingInternalTransition<LETTER, STATE>>(
 				lettersInternal(state).iterator(), x -> internalSuccessors(state, x).iterator());
 	}
 
@@ -386,7 +386,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 
 	@Override
 	public final Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
-		return () -> new NestedIterator<LETTER, OutgoingCallTransition<LETTER, STATE>>(
+		return () -> new NestedIteratorNoopConstruction<LETTER, OutgoingCallTransition<LETTER, STATE>>(
 				lettersCall(state).iterator(), x -> callSuccessors(state, x).iterator());
 	}
 
@@ -478,7 +478,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	@Override
 	public final Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
 			final STATE hier) {
-		return () -> new NestedIterator<LETTER, OutgoingReturnTransition<LETTER, STATE>>(
+		return () -> new NestedIteratorNoopConstruction<LETTER, OutgoingReturnTransition<LETTER, STATE>>(
 				lettersReturn(state).iterator(), x -> returnSuccessors(state, hier, x).iterator());
 	}
 
@@ -847,6 +847,62 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 			hier2succs.put(hier, oldSuccs);
 		}
 		oldSuccs.addAll(succs);
+	}
+	
+	
+	protected final void removeInternalOut(final STATE pred, final LETTER letter, final STATE succ) {
+		final Map<LETTER, Set<STATE>> letter2succs = mInternalOut.get(pred);
+		final Set<STATE> succs = letter2succs.get(letter);
+		assert succs.contains(succ);
+		succs.remove(succ);
+		if (succs.isEmpty()) {
+			letter2succs.remove(letter);
+			if (letter2succs.isEmpty()) {
+				mInternalOut.remove(pred);
+			}
+		}
+	}
+	
+	protected final void removeAllInternalOut(final STATE pred) {
+		mInternalOut.remove(pred);
+	}
+	
+	protected final void removeCallOut(final STATE pred, final LETTER letter, final STATE succ) {
+		final Map<LETTER, Set<STATE>> letter2succs = mCallOut.get(pred);
+		final Set<STATE> succs = letter2succs.get(letter);
+		assert succs.contains(succ);
+		succs.remove(succ);
+		if (succs.isEmpty()) {
+			letter2succs.remove(letter);
+			if (letter2succs.isEmpty()) {
+				mCallOut.remove(pred);
+			}
+		}
+	}
+	
+	protected final void removeAllCallOut(final STATE pred) {
+		mCallOut.remove(pred);
+	}
+	
+	protected final void removeReturnOut(final STATE pred, final STATE hier, final LETTER letter, final STATE succ) {
+		final Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2succs = mReturnOut.get(pred);
+		final Map<STATE, Set<STATE>> hier2succs = letter2hier2succs.get(letter);
+		final Set<STATE> succs = hier2succs.get(hier);
+		assert succs.contains(succ);
+		succs.remove(succ);
+		if (succs.isEmpty()) {
+			hier2succs.remove(hier);
+			if (hier2succs.isEmpty()) {
+				letter2hier2succs.remove(letter);
+				if (letter2hier2succs.isEmpty()) {
+					mReturnOut.remove(pred);
+				}
+			}
+		}
+	}
+	
+	protected final void removeAllReturnOut(final STATE pred) {
+		mReturnOut.remove(pred);
 	}
 
 	/**
