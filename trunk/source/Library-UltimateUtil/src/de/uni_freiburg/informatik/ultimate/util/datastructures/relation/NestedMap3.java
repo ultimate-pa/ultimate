@@ -27,8 +27,11 @@
 package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * TODO: comment
@@ -45,7 +48,7 @@ public class NestedMap3<K1, K2, K3, V> {
 	private final Map<K1, NestedMap2<K2, K3, V>> mK1ToK2ToK3V = 
 			new HashMap<>();
 	
-	public V put(K1 key1, K2 key2, K3 key3, V value) {
+	public V put(final K1 key1, final K2 key2, final K3 key3, final V value) {
 		NestedMap2<K2, K3, V> k2tok3toV = mK1ToK2ToK3V.get(key1);
 		if (k2tok3toV == null) {
 			k2tok3toV = new NestedMap2<>();
@@ -54,7 +57,7 @@ public class NestedMap3<K1, K2, K3, V> {
 		return k2tok3toV.put(key2, key3, value);
 	}
 	
-	public V get(K1 key1, K2 key2, K3 key3) {
+	public V get(final K1 key1, final K2 key2, final K3 key3) {
 		final NestedMap2<K2, K3, V> k2tok3toV = mK1ToK2ToK3V.get(key1);
 		if (k2tok3toV == null) {
 			return null;
@@ -63,7 +66,7 @@ public class NestedMap3<K1, K2, K3, V> {
 		}
 	}
 	
-	public Map<K3, V> get(K1 key1, K2 key2) {
+	public Map<K3, V> get(final K1 key1, final K2 key2) {
 		final NestedMap2<K2, K3, V> k2toV = mK1ToK2ToK3V.get(key1);
 		if (k2toV == null) {
 			return null;
@@ -72,7 +75,7 @@ public class NestedMap3<K1, K2, K3, V> {
 		}
 	}
 	
-	public NestedMap2<K2, K3, V> get(K1 key1) {
+	public NestedMap2<K2, K3, V> get(final K1 key1) {
 		return mK1ToK2ToK3V.get(key1);
 	}
 	
@@ -84,14 +87,36 @@ public class NestedMap3<K1, K2, K3, V> {
 		mK1ToK2ToK3V.clear();
 	}
 	
+	public Iterable<Triple<K1, K2, K3>> keys3() {
+		final Iterator<Entry<K1, NestedMap2<K2, K3, V>>> innerIterator = mK1ToK2ToK3V.entrySet().iterator();
+		final Function<Entry<K1, NestedMap2<K2, K3, V>>, Iterator<Pair<K2, K3>>> nextOuterIteratorProvider = (x -> x
+				.getValue().keys2().iterator());
+		final Function<Entry<K1, NestedMap2<K2, K3, V>>, Function<Pair<K2, K3>, Triple<K1, K2, K3>>> resultProvider = (x -> (y -> new Triple<K1, K2, K3>(
+				x.getKey(), y.getFirst(), y.getSecond())));
+		return () -> new NestedIterator<Entry<K1, NestedMap2<K2, K3, V>>, Pair<K2, K3>, Triple<K1, K2, K3>>(
+				innerIterator, nextOuterIteratorProvider, resultProvider);
+	}
+
+	public Iterable<Quad<K1, K2, K3, V>> entrySet() {
+		final Iterator<Entry<K1, NestedMap2<K2, K3, V>>> innerIterator = mK1ToK2ToK3V.entrySet().iterator();
+		final Function<Entry<K1, NestedMap2<K2, K3, V>>, Iterator<Triple<K2, K3, V>>> nextOuterIteratorProvider = (x -> x
+				.getValue().entrySet().iterator());
+		final Function<Entry<K1, NestedMap2<K2, K3, V>>, Function<Triple<K2, K3, V>, Quad<K1, K2, K3, V>>> resultProvider = (x -> (y -> new Quad<K1, K2, K3, V>(
+				x.getKey(), y.getFirst(), y.getSecond(), y.getThird())));
+		return () -> new NestedIterator<Entry<K1, NestedMap2<K2, K3, V>>, Triple<K2, K3, V>, Quad<K1, K2, K3, V>>(
+				innerIterator, nextOuterIteratorProvider, resultProvider);
+	}
+	
 	/**
 	 * Makes a deep copy of this NestedMap3.
 	 * (but not the objects it holds)
 	 * (added by Alexander Nutz)
+	 * @deprecated replace by constructor
 	 */
+	@Deprecated
 	public NestedMap3<K1, K2, K3, V> copy() {
-		NestedMap3<K1, K2, K3, V> result = new NestedMap3<>();
-		for (K1 k1 : this.keySet()) {
+		final NestedMap3<K1, K2, K3, V> result = new NestedMap3<>();
+		for (final K1 k1 : this.keySet()) {
 			result.mK1ToK2ToK3V.put(k1, this.get(k1).copy());
 		}
 		return result;
