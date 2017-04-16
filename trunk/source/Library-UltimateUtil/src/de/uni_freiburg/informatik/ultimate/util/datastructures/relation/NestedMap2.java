@@ -27,6 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -128,6 +129,21 @@ public class NestedMap2<K1, K2, V> {
 				x.getKey(), y.getKey(), y.getValue())));
 		return () -> new NestedIterator<Entry<K1, Map<K2, V>>, Entry<K2, V>, Triple<K1, K2, V>>(innerIterator,
 				nextOuterIteratorProvider, resultProvider);
+	}
+	
+	/**
+	 * @return all entries where first element is k1
+	 */
+	public Iterable<Triple<K1, K2, V>> entries(final K1 k1) {
+		final Map<K2, V> k2ToV = mK1ToK2ToV.get(k1);
+		if (k2ToV == null) {
+			return Collections.emptySet();
+		} else {
+			final Function<Entry<K2, V>, Triple<K1, K2, V>> transformer = (x -> new Triple<K1, K2, V>(k1, x.getKey(),
+					x.getValue()));
+			return () -> new TransformIterator<Entry<K2, V>, Triple<K1, K2, V>>(k2ToV.entrySet().iterator(),
+					transformer);
+		}
 	}
 
 	public void addAll(final NestedMap2<K1, K2, V> nestedMap) {
