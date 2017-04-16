@@ -132,12 +132,12 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 
 	@Override
 	public Set<LETTER> getCallAlphabet() {
-		return mCallAlphabet == null ? new HashSet<>(0) : mCallAlphabet;
+		return mCallAlphabet == null ? Collections.emptySet() : mCallAlphabet;
 	}
 
 	@Override
 	public Set<LETTER> getReturnAlphabet() {
-		return mReturnAlphabet == null ? new HashSet<>(0) : mReturnAlphabet;
+		return mReturnAlphabet == null ? Collections.emptySet() : mReturnAlphabet;
 	}
 
 	private Collection<STATE> getStates() {
