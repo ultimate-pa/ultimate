@@ -165,14 +165,12 @@ public class NestedWordAutomaton<LETTER, STATE> implements INestedWordAutomaton<
 
 	@Override
 	public Set<LETTER> getCallAlphabet() {
-		// TODO Christian 2016-10-11: Could be Collections.emptySet(), right?
-		return mCallAlphabet == null ? new HashSet<>(0) : mCallAlphabet;
+		return mCallAlphabet == null ? Collections.emptySet() : mCallAlphabet;
 	}
 
 	@Override
 	public Set<LETTER> getReturnAlphabet() {
-		// TODO Christian 2016-10-11: Could be Collections.emptySet(), right?
-		return mReturnAlphabet == null ? new HashSet<>(0) : mReturnAlphabet;
+		return mReturnAlphabet == null ? Collections.emptySet() : mReturnAlphabet;
 	}
 
 	@Override
