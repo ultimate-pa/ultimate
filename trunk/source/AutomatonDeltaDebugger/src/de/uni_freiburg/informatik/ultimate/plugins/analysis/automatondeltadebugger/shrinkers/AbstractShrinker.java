@@ -77,7 +77,7 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 	 *            list of objects to be removed
 	 * @return automaton according to (complement of the) list
 	 */
-	public abstract INestedWordAutomaton<LETTER, STATE> createAutomaton(final List<T> list);
+	public abstract INestedWordAutomaton<LETTER, STATE> createAutomaton(List<T> list);
 
 	/**
 	 * Extracts a list of objects containing all respective objects of the current automaton.

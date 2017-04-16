@@ -82,7 +82,7 @@ public abstract class AbstractTester<LETTER, STATE> {
 	 *             any type of throwable
 	 */
 	@SuppressWarnings("squid:S00112")
-	public abstract void execute(final INestedWordAutomaton<LETTER, STATE> automaton) throws Throwable;
+	public abstract void execute(INestedWordAutomaton<LETTER, STATE> automaton) throws Throwable;
 
 	@Override
 	public String toString() {
@@ -92,7 +92,7 @@ public abstract class AbstractTester<LETTER, STATE> {
 			// @formatter:off
 			builder.append(" with exception type '")
 					.append(mThrowable.getClass().getSimpleName())
-					.append("'");
+					.append('\'');
 			// @formatter:on
 		}
 		return builder.toString();

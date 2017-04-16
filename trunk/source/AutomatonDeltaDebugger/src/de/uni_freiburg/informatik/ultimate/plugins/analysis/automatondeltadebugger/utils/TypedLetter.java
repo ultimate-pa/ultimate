@@ -59,12 +59,14 @@ public final class TypedLetter<LETTER> {
 
 	@Override
 	public String toString() {
-		final StringBuilder b = new StringBuilder();
-		b.append(mLetter);
-		b.append("(");
-		b.append(mType);
-		b.append(")");
-		return b.toString();
+		final StringBuilder builder = new StringBuilder();
+		// @formatter:off
+		builder.append(mLetter)
+				.append('(')
+				.append(mType)
+				.append(')');
+		// @formatter:on
+		return builder.toString();
 	}
 
 	@Override

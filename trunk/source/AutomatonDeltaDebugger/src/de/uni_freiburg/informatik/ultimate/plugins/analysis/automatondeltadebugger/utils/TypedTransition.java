@@ -37,6 +37,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
  *            state type
  */
 public final class TypedTransition<LETTER, STATE> {
+	private static final String COMMA = ", ";
+	
 	private final STATE mPred;
 	private final STATE mSucc;
 	private final STATE mHier;
@@ -96,18 +98,20 @@ public final class TypedTransition<LETTER, STATE> {
 
 	@Override
 	public String toString() {
-		final StringBuilder b = new StringBuilder();
-		b.append("<");
-		b.append(mPred);
-		b.append(", ");
-		b.append(mLetter);
+		final StringBuilder builder = new StringBuilder();
+		// @formatter:off
+		builder.append('<')
+				.append(mPred)
+				.append(COMMA)
+				.append(mLetter);
 		if (mHier != null) {
-			b.append(mHier);
-			b.append(", ");
+			builder.append(mHier)
+					.append(COMMA);
 		}
-		b.append(", ");
-		b.append(mSucc);
-		b.append(">");
-		return b.toString();
+		builder.append(COMMA)
+				.append(mSucc)
+				.append('>');
+		// @formatter:on
+		return builder.toString();
 	}
 }

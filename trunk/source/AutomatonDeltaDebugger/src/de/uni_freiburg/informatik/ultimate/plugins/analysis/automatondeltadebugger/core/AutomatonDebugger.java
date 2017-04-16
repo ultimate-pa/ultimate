@@ -64,6 +64,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  *            state type
  */
 public class AutomatonDebugger<LETTER, STATE> {
+	private static final int STRING_BUFFER_MIN_SIZE = 71;
+	
 	private final IUltimateServiceProvider mServices;
 	private INestedWordAutomaton<LETTER, STATE> mAutomaton;
 	private final INestedWordAutomatonFactory<LETTER, STATE> mFactory;
@@ -203,7 +205,7 @@ public class AutomatonDebugger<LETTER, STATE> {
 
 	@Override
 	public String toString() {
-		final StringBuilder builder = new StringBuilder();
+		final StringBuilder builder = new StringBuilder(STRING_BUFFER_MIN_SIZE);
 		// @formatter:off
 		builder.append("<debugger with ")
 				.append(mFactory)

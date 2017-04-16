@@ -166,11 +166,11 @@ public class AutomatonDebuggerTesters {
 			public void execute(final INestedWordAutomaton<String, String> automaton) throws Throwable {
 				final StringFactory factory = new StringFactory();
 
-				final IOperation<String, String, ? super StringFactory> op =
+				final IOperation<String, String, ? super StringFactory> operation =
 						getIOperation(operationType, automaton, factory);
 
 				// throws a fresh exception iff checkResult() fails
-				if (!op.checkResult(factory)) {
+				if (!operation.checkResult(factory)) {
 					throw throwable;
 				}
 			}
