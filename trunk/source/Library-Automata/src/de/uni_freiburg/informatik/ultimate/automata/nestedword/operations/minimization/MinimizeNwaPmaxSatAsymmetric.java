@@ -223,10 +223,14 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 
 	private static <STATE> NestedMap2<STATE, STATE, Pair<STATE, STATE>>
 			removeReflexivePairs(final NestedMap2<STATE, STATE, Pair<STATE, STATE>> initialPairs) {
+		final List<Pair<STATE, STATE>> pairsThatShouldBeRemoved = new ArrayList<>();
 		for (final Triple<STATE, STATE, Pair<STATE, STATE>> entry : initialPairs.entrySet()) {
 			if (entry.getFirst().equals(entry.getSecond())) {
-				initialPairs.remove(entry.getFirst(), entry.getSecond());
+				pairsThatShouldBeRemoved.add(new Pair<STATE, STATE>(entry.getFirst(), entry.getSecond()));
 			}
+		}
+		for (final Pair<STATE, STATE> pair : pairsThatShouldBeRemoved) {
+			initialPairs.remove(pair.getFirst(), pair.getSecond());
 		}
 		return initialPairs;
 	}

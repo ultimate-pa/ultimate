@@ -27,13 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * TODO: comment
@@ -120,15 +120,14 @@ public class NestedMap2<K1, K2, V> {
 
 	}
 
-	// TODO more efficient iterable
 	public Iterable<Triple<K1, K2, V>> entrySet() {
-		final ArrayList<Triple<K1, K2, V>> result = new ArrayList<>();
-		for (final Entry<K1, Map<K2, V>> entryOuter : mK1ToK2ToV.entrySet()) {
-			for (final Entry<K2, V> entryInner : entryOuter.getValue().entrySet()) {
-				result.add(new Triple<>(entryOuter.getKey(), entryInner.getKey(), entryInner.getValue()));
-			}
-		}
-		return result;
+		final Iterator<Entry<K1, Map<K2, V>>> innerIterator = mK1ToK2ToV.entrySet().iterator();
+		final Function<Entry<K1, Map<K2, V>>, Iterator<Entry<K2, V>>> nextOuterIteratorProvider = (x -> x.getValue()
+				.entrySet().iterator());
+		final Function<Entry<K1, Map<K2, V>>, Function<Entry<K2, V>, Triple<K1, K2, V>>> resultProvider = (x -> (y -> new Triple<K1, K2, V>(
+				x.getKey(), y.getKey(), y.getValue())));
+		return () -> new NestedIterator<Entry<K1, Map<K2, V>>, Entry<K2, V>, Triple<K1, K2, V>>(innerIterator,
+				nextOuterIteratorProvider, resultProvider);
 	}
 
 	public void addAll(final NestedMap2<K1, K2, V> nestedMap) {
