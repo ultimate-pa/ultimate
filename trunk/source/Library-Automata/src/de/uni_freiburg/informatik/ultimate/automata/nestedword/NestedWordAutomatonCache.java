@@ -205,7 +205,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	 *            state
 	 */
 	@SuppressWarnings("squid:S2301")
-	public final void addState(final boolean isInitial, final boolean isFinal, final STATE state) {
+	public void addState(final boolean isInitial, final boolean isFinal, final STATE state) {
 		assert state != null;
 		if (mStates.contains(state)) {
 			throw new IllegalArgumentException("State already exists");
@@ -271,7 +271,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	 *            internal letter
 	 * @return all respective internal successors
 	 */
-	public final Collection<STATE> succInternal(final STATE state, final LETTER letter) {
+	public final Set<STATE> succInternal(final STATE state, final LETTER letter) {
 		assert contains(state);
 		final Map<LETTER, Set<STATE>> map = mInternalOut.get(state);
 		if (map == null) {
@@ -287,7 +287,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	 *            call letter
 	 * @return all respective call successors
 	 */
-	public final Collection<STATE> succCall(final STATE state, final LETTER letter) {
+	public final Set<STATE> succCall(final STATE state, final LETTER letter) {
 		assert contains(state);
 		final Map<LETTER, Set<STATE>> map = mCallOut.get(state);
 		if (map == null) {
@@ -305,7 +305,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	 *            return letter
 	 * @return all respective return successors
 	 */
-	public final Collection<STATE> succReturn(final STATE state, final STATE hier, final LETTER letter) {
+	public final Set<STATE> succReturn(final STATE state, final STATE hier, final LETTER letter) {
 		assert contains(state);
 		assert contains(hier);
 		final Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnOut.get(state);
