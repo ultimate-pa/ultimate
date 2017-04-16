@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -71,6 +70,7 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 	private static final String STATE2 = "State ";
 	private static final String UNKNOWN = " unknown";
 
+
 	/**
 	 * Set of internal transitions PREs x LETTERs x SUCCs stored as map SUCCs -> LETTERs -> PREs.
 	 */
@@ -112,15 +112,6 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 		super(services, internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
 	}
 
-	@Override
-	public Set<STATE> getStates() {
-		return Collections.unmodifiableSet(mInternalOut.keySet());
-	}
-
-	@Override
-	public Collection<STATE> getFinalStates() {
-		return Collections.unmodifiableSet(mFinalStates);
-	}
 
 	@Override
 	public Set<LETTER> lettersInternalIncoming(final STATE state) {
@@ -536,9 +527,7 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 		if (succs.isEmpty()) {
 			letter2succs.remove(letter);
 			if (letter2succs.isEmpty()) {
-				// The keySet of mInternalOut is used to store set of states of
-				// this automaton. We don't remove succ, only set image to null.
-				mInternalOut.put(pred, null);
+				mInternalOut.remove(pred);
 			}
 		}
 	}
@@ -796,7 +785,7 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 	public String sizeInformation() {
 		final boolean verbose = false;
 		if (!verbose) {
-			final int states = mInternalOut.size();
+			final int states = getStates().size();
 			return states + " states.";
 		}
 		int statesWithInternalSuccessors = 0;
@@ -895,7 +884,7 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 			}
 		}
 		final StringBuilder sb = new StringBuilder();
-		sb.append(" has ").append(mInternalOut.size()).append(" states, " + statesWithInternalSuccessors)
+		sb.append(" has ").append(getStates().size()).append(" states, " + statesWithInternalSuccessors)
 				.append(" states have internal successors, (").append(internalSuccessors).append("), ")
 				.append(statesWithInternalPredecessors).append(" states have internal predecessors, (")
 				.append(internalPredecessors).append("), ").append(statesWithCallSuccessors)

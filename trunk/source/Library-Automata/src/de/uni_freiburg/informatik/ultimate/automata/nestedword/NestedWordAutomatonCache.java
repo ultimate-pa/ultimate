@@ -141,8 +141,12 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		return mReturnAlphabet == null ? Collections.emptySet() : mReturnAlphabet;
 	}
 
-	private Collection<STATE> getStates() {
+	public final Set<STATE> getStates() {
 		return mInternalOut.keySet();
+	}
+	
+	public final Set<STATE> getFinalStates() {
+		return Collections.unmodifiableSet(mFinalStates);
 	}
 
 	@Override
