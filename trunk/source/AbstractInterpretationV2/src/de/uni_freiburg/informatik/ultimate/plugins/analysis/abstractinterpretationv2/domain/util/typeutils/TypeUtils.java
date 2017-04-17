@@ -26,7 +26,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils;
+package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils;
 
 import java.util.function.Consumer;
 import java.util.function.Function;

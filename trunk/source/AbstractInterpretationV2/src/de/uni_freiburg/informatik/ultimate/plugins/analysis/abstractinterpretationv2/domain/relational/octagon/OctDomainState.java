@@ -50,7 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -122,16 +122,6 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 *
 	 * @param logStringFunction
 	 *            Function to be used for creating log strings of this abstract state.
-	 */
-	private OctDomainState(final Function<OctDomainState, String> logStringFunction) {
-		this(logStringFunction, false);
-	}
-
-	/**
-	 * Creates a new, un-initialized abstract state. <b>Most attributes are not initialized and must be set by hand.</b>
-	 *
-	 * @param logStringFunction
-	 *            Function to be used for creating log strings of this abstract state.
 	 * @param isBottom
 	 *            If <code>true</code>, the created state corresponds to &bot;, &top; otherwise.
 	 */
@@ -172,7 +162,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 
 	/** @return Deep copy of this state */
 	public OctDomainState deepCopy() {
-		final OctDomainState s = new OctDomainState(mLogStringFunction);
+		final OctDomainState s = new OctDomainState(mLogStringFunction, isBottom());
 		s.mMapVarToBoogieVar = new HashSet<>(mMapVarToBoogieVar);
 		s.mMapNumericVarToIndex = new HashMap<>(mMapNumericVarToIndex);
 		s.mNumericNonIntVars = new HashSet<>(mNumericNonIntVars);
@@ -194,7 +184,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 * @see #unrefOtherBooleanAbstraction(OctDomainState)
 	 */
 	private OctDomainState shallowCopy() {
-		final OctDomainState s = new OctDomainState(mLogStringFunction);
+		final OctDomainState s = new OctDomainState(mLogStringFunction, isBottom());
 		s.mMapVarToBoogieVar = mMapVarToBoogieVar;
 		s.mMapNumericVarToIndex = mMapNumericVarToIndex;
 		s.mNumericNonIntVars = mNumericNonIntVars;
@@ -559,7 +549,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 *            Abstract state with same variables as this one
 	 * @return Over-approximated intersection
 	 */
-	public OctDomainState meet(final OctDomainState other) {
+	@Override
+	public OctDomainState intersect(final OctDomainState other) {
 		final OctMatrix numResult = OctMatrix.min(bestAvailableClosure(), other.bestAvailableClosure());
 		return operation(other, BoolValue::intersect, numResult);
 	}
@@ -573,7 +564,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 *            Abstract state with same variables as this one
 	 * @return Over-approximated union
 	 */
-	public OctDomainState join(final OctDomainState other) {
+	@Override
+	public OctDomainState union(final OctDomainState other) {
 		if (isBottom()) {
 			return other;
 		}

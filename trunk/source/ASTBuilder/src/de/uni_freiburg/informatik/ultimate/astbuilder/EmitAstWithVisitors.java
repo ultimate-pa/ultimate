@@ -26,18 +26,23 @@
  */
 package de.uni_freiburg.informatik.ultimate.astbuilder;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * Emitter that automatically generates visiotr and transformer code for ASTs.
+ * Emitter that automatically generates visitor and transformer code for ASTs.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public abstract class EmitAstWithVisitors extends Emit {
+
+	private static final String MORE_SPACES_AND_CLOSED_BRACE = "        }";
+	private static final String SPACES_AND_CLOSED_BRACE = "    }";
+	private static final String SPACES_AND_OR = " || ";
+	private static final int LENGTH_OF_SPACES_AND_OR = 4;
+	private static final String SPACES = "                ";
 
 	protected boolean isNonClassicNode(final Node node) {
 		return getNonClassicNode().contains(node.getName());
@@ -51,23 +56,27 @@ public abstract class EmitAstWithVisitors extends Emit {
 
 	protected abstract String getRootClassName();
 
+	/**
+	 * @return {@code true} iff root is serializable.
+	 */
+	@SuppressWarnings("static-method")
 	protected boolean isRootSerializable() {
 		return false;
 	}
 
 	@Override
-	public void emitPreamble(final Node node) throws IOException {
+	public void emitPreamble(final Node node) {
 		super.emitPreamble(node);
 		mWriter.println("import java.util.List;");
 
-		if (getAllParameters(node).stream().anyMatch(p -> isArrayType(p))) {
+		if (getAllParameters(node).stream().anyMatch(EmitAstWithVisitors::isArrayType)) {
 			mWriter.println("import java.util.Arrays;");
 			mWriter.println("import java.util.ArrayList;");
 		}
 	}
 
 	@Override
-	public void emitClassDeclaration(final Node node) throws IOException {
+	public void emitClassDeclaration(final Node node) {
 		final StringBuilder classDecl = new StringBuilder();
 		classDecl.append("public ");
 		if (node.isAbstract()) {
@@ -103,7 +112,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 	}
 
 	@Override
-	public void emitNodeHook(final Node node) throws IOException {
+	public void emitNodeHook(final Node node) {
 		if (node.name.equals(getVisitorName())) {
 			emitVisitorHook();
 		} else if (node.name.equals(getTransformerName())) {
@@ -130,13 +139,13 @@ public abstract class EmitAstWithVisitors extends Emit {
 				mWriter.println(String.format("        if(%s!=null){", parameters[i].getName()));
 				mWriter.println(
 						String.format("            children.addAll(Arrays.asList(%s));", parameters[i].getName()));
-				mWriter.println("        }");
+				mWriter.println(MORE_SPACES_AND_CLOSED_BRACE);
 			} else {
 				mWriter.println("        children.add(" + parameters[i].getName() + ");");
 			}
 		}
 		mWriter.println("        return children;");
-		mWriter.println("    }");
+		mWriter.println(SPACES_AND_CLOSED_BRACE);
 
 		if (!node.isAbstract()) {
 			final List<Parameter> allParameters = getAllParameters(node);
@@ -160,7 +169,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 			mWriter.println();
 			mWriter.println("    public " + n.name + " transform(" + n.name + " node) {");
 			mWriter.println("        return node;");
-			mWriter.println("    }");
+			mWriter.println(SPACES_AND_CLOSED_BRACE);
 		}
 	}
 
@@ -172,12 +181,12 @@ public abstract class EmitAstWithVisitors extends Emit {
 			mWriter.println();
 			mWriter.println("    public boolean visit(" + n.name + " node) {");
 			mWriter.println("        return true;");
-			mWriter.println("    }");
+			mWriter.println(SPACES_AND_CLOSED_BRACE);
 		}
 	}
 
 	@Override
-	public void emitConstructors(final Node node) throws IOException {
+	public void emitConstructors(final Node node) {
 		int numNotOptionalParams = 1;
 		int numTotalParams = 1;
 
@@ -201,7 +210,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 	}
 
 	@Override
-	public void emitConstructorAfterParamAssign(final Node node, final boolean optional) throws IOException {
+	public void emitConstructorAfterParamAssign(final Node node, final boolean optional) {
 		super.emitConstructorAfterParamAssign(node, optional);
 		if (isNonClassicNode(node)) {
 			return;
@@ -223,28 +232,27 @@ public abstract class EmitAstWithVisitors extends Emit {
 		return !mGrammar.getNodeTable().containsKey(acc);
 	}
 
-	private static boolean isArrayType(final Parameter p) {
-		return p.getType().contains("[]");
+	private static boolean isArrayType(final Parameter param) {
+		return param.getType().contains("[]");
 	}
 
-	private static String getBaseType(final Parameter p) {
-		final String typeStr = p.getType().replaceAll("\\[\\]", "");
-		return typeStr;
+	private static String getBaseType(final Parameter param) {
+		return param.getType().replaceAll("\\[\\]", "");
 	}
 
-	private void writeTransformerAcceptMethod(final Node node, final List<Parameter> allACSLParameters) {
+	private void writeTransformerAcceptMethod(final Node node, final List<Parameter> allAcslParameters) {
 		// accept method for transformer
 		mWriter.println();
 		mWriter.println("    public " + node.name + " accept(" + getTransformerName() + " visitor) {");
 		mWriter.println("        " + node.name + " node = visitor.transform(this);");
 		mWriter.println("        if(node != this){");
 		mWriter.println("            return node;");
-		mWriter.println("        }");
+		mWriter.println(MORE_SPACES_AND_CLOSED_BRACE);
 		mWriter.println();
 
 		boolean isChangedPrinted = false;
 
-		for (final Parameter p : allACSLParameters) {
+		for (final Parameter p : allAcslParameters) {
 			final String newName = "new" + p.getName();
 			final String listName = "tmpList" + newName;
 			// declarations
@@ -261,17 +269,17 @@ public abstract class EmitAstWithVisitors extends Emit {
 			mWriter.println("        if(" + p.getName() + " != null){");
 			if (isArrayType(p)) {
 				mWriter.println("            for(" + getBaseType(p) + " elem : " + p.getName() + "){");
-				mWriter.println("                " + getBaseType(p) + " " + newName + " = elem.accept(visitor);");
+				mWriter.println(SPACES + getBaseType(p) + " " + newName + " = elem.accept(visitor);");
 				mWriter.println("                isChanged = isChanged || " + newName + " != elem;");
-				mWriter.println("                " + listName + ".add(elem.accept(visitor));");
+				mWriter.println(SPACES + listName + ".add(elem.accept(visitor));");
 				mWriter.println("            }");
 			} else {
 				mWriter.println("            " + newName + " = " + p.getName() + ".accept(visitor);");
 			}
-			mWriter.println("        }");
+			mWriter.println(MORE_SPACES_AND_CLOSED_BRACE);
 		}
 
-		if (!allACSLParameters.isEmpty()) {
+		if (!allAcslParameters.isEmpty()) {
 
 			final StringBuilder sb = new StringBuilder();
 			sb.append("        if(");
@@ -280,24 +288,24 @@ public abstract class EmitAstWithVisitors extends Emit {
 				sb.append("isChanged || ");
 			}
 
-			for (final Parameter p : allACSLParameters) {
+			for (final Parameter p : allAcslParameters) {
 				if (isArrayType(p)) {
 					continue;
 				}
 				final String newName = "new" + p.getName();
 				sb.append(p.name + " != " + newName);
-				sb.append(" || ");
+				sb.append(SPACES_AND_OR);
 			}
-			if (sb.substring(sb.length() - 4, sb.length()).equals(" || ")) {
-				sb.delete(sb.length() - 4, sb.length());
+			if (SPACES_AND_OR.equals(sb.substring(sb.length() - LENGTH_OF_SPACES_AND_OR, sb.length()))) {
+				sb.delete(sb.length() - LENGTH_OF_SPACES_AND_OR, sb.length());
 			}
 			sb.append("){");
 			mWriter.println(sb.toString());
 			mWriter.println("            return new " + node.name + "(" + getNewCallParams(node) + ");");
-			mWriter.println("        }");
+			mWriter.println(MORE_SPACES_AND_CLOSED_BRACE);
 		}
 		mWriter.println("        return this;");
-		mWriter.println("    }");
+		mWriter.println(SPACES_AND_CLOSED_BRACE);
 	}
 
 	private String getNewCallParams(final Node node) {
@@ -305,12 +313,12 @@ public abstract class EmitAstWithVisitors extends Emit {
 			return "";
 		}
 
-		final StringBuffer sb = new StringBuffer();
+		final StringBuilder builder = new StringBuilder();
 
-		sb.append(getNewCallParams(node.getParent()));
+		builder.append(getNewCallParams(node.getParent()));
 
 		String comma = "";
-		if (sb.length() > 0) {
+		if (builder.length() > 0) {
 			comma = ", ";
 		}
 
@@ -323,14 +331,14 @@ public abstract class EmitAstWithVisitors extends Emit {
 			} else {
 				pname = "new" + p.getName();
 			}
-			sb.append(comma).append(pname);
+			builder.append(comma).append(pname);
 			comma = ", ";
 		}
-		return sb.toString();
+		return builder.toString();
 
 	}
 
-	private void writeVisitorAcceptMethod(final Node node, final List<Parameter> allACSLParameters) {
+	private void writeVisitorAcceptMethod(final Node node, final List<Parameter> allAcslParameters) {
 		// accept method for visitor
 		mWriter.println();
 		mWriter.println("    public void accept(" + getVisitorName() + " visitor) {");
@@ -339,28 +347,29 @@ public abstract class EmitAstWithVisitors extends Emit {
 
 		Node parent = node.getParent();
 		final String indent = "        ";
-		int i = 0;
+		int index1 = 0;
 		final StringBuilder sb = new StringBuilder();
 		if (parent != null) {
 			while (parent != null) {
-				int j = i + 1;
-				while (j > 0) {
+				int index2 = index1 + 1;
+				while (index2 > 0) {
 					sb.append(indent);
-					j--;
+					index2--;
 				}
 				sb.append("if(visitor.visit((" + parent.name + ")this)){");
 				sb.append(lineSep);
 				parent = parent.getParent();
-				i++;
+				index1++;
 			}
 
-			while (i > 0) {
-				int j = i + 1;
-				String localIndent = "";
-				while (j > 0) {
-					localIndent = localIndent + indent;
-					j--;
+			while (index1 > 0) {
+				int index2 = index1 + 1;
+				final StringBuilder localIndentBuilder = new StringBuilder();
+				while (index2 > 0) {
+					localIndentBuilder.append(indent);
+					index2--;
 				}
+				final String localIndent = localIndentBuilder.toString();
 				sb.append(localIndent);
 				sb.append("} else {");
 				sb.append(lineSep);
@@ -369,7 +378,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 				sb.append("return;");
 				sb.append(lineSep);
 				sb.append(localIndent);
-				i--;
+				index1--;
 			}
 			sb.append(indent);
 			sb.append("}");
@@ -377,7 +386,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 		}
 
 		mWriter.println("        if(visitor.visit(this)){");
-		for (final Parameter p : allACSLParameters) {
+		for (final Parameter p : allAcslParameters) {
 			mWriter.println("            if(" + p.getName() + "!=null){");
 			if (isArrayType(p)) {
 				mWriter.println("                for(" + getBaseType(p) + " elem : " + p.getName() + "){");
@@ -385,12 +394,12 @@ public abstract class EmitAstWithVisitors extends Emit {
 				mWriter.println("                }");
 
 			} else {
-				mWriter.println("                " + p.getName() + ".accept(visitor);");
+				mWriter.println(SPACES + p.getName() + ".accept(visitor);");
 			}
 			mWriter.println("            }");
 		}
-		mWriter.println("        }");
-		mWriter.println("    }");
+		mWriter.println(MORE_SPACES_AND_CLOSED_BRACE);
+		mWriter.println(SPACES_AND_CLOSED_BRACE);
 	}
 
 	protected List<Parameter> getAllParameters(final Node node) {

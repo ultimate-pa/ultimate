@@ -33,9 +33,9 @@ public interface IDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTI
 				postStates, transition);
 	}
 
-	boolean isPostSound(final AbstractMultiState<STATE, ACTION, VARDECL> stateBeforeLeaving,
-			final AbstractMultiState<STATE, ACTION, VARDECL> stateAfterLeaving,
-			final AbstractMultiState<STATE, ACTION, VARDECL> postState, final ACTION transition);
+	boolean isPostSound(final AbstractMultiState<STATE, VARDECL> stateBeforeLeaving,
+			final AbstractMultiState<STATE, VARDECL> stateAfterLeaving,
+			final AbstractMultiState<STATE, VARDECL> postState, final ACTION transition);
 
 	boolean isPostSound(final Set<STATE> statesBeforeLeaving, final Set<STATE> stateAfterLeaving,
 			final Set<STATE> postStates, final ACTION transition);

@@ -52,7 +52,6 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Icfg
 	private final List<IAbstractDomain> mDomainList;
 	private final BoogieIcfgContainer mRootAnnotation;
 
-	private IAbstractStateBinaryOperator<CompoundDomainState> mMergeOperator;
 	private IAbstractStateBinaryOperator<CompoundDomainState> mWideningOperator;
 	private IAbstractPostOperator<CompoundDomainState, IcfgEdge, IBoogieVar> mPostOperator;
 
@@ -84,14 +83,6 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Icfg
 			mWideningOperator = new CompoundDomainWideningOperator(mServices);
 		}
 		return mWideningOperator;
-	}
-
-	@Override
-	public IAbstractStateBinaryOperator<CompoundDomainState> getMergeOperator() {
-		if (mMergeOperator == null) {
-			mMergeOperator = new CompoundDomainMergeOperator(mServices);
-		}
-		return mMergeOperator;
 	}
 
 	@Override

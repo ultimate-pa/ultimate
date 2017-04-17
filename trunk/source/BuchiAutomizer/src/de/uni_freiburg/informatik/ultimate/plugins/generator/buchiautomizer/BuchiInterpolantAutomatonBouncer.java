@@ -408,7 +408,7 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 			final HashRelation<IPredicate, IPredicate> resPred2InputPreds) {
 		IPredicate resSucc = inputPreds2ResultPreds.get(succs);
 		if (resSucc == null) {
-			final Term conjunction = mPredicateFactory.and(succs);
+			final Term conjunction = mPredicateFactory.and(succs).getFormula();
 			resSucc = predicateUnifier.getOrConstructPredicate(conjunction);
 			assert resSucc != mIaFalseState : "false should have been handeled before";
 			inputPreds2ResultPreds.put(succs, resSucc);

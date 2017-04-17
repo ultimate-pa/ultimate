@@ -31,7 +31,7 @@ import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.UnknownSafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SomeVerificationResultTestResultDecider;
 
 /**
  *
@@ -42,9 +42,8 @@ public class Svcomp17FindUndefinedBehaviourTestSuite extends AbstractSVCOMPTestS
 	
 	@Override
 	protected ITestResultDecider getTestResultDecider(final UltimateRunDefinition urd) {
-		return new UnknownSafetyCheckTestResultDecider(urd, false);
-	}
-	
+		return new SomeVerificationResultTestResultDecider(urd);
+	}	
 	@Override
 	protected long getTimeout() {
 		// Timeout for each test case in milliseconds

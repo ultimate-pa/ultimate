@@ -40,6 +40,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
@@ -48,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -381,5 +383,55 @@ public final class AbsIntUtil {
 			return bplIcfg;
 		}
 		throw new IllegalArgumentException("Cannot extract BoogieIcfgContainer from IICFG");
+	}
+
+	public static <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> STATE
+			synchronizeVariables(final STATE template, final STATE toSynchronize) {
+		if (toSynchronize == null) {
+			return null;
+		}
+		if (template == null) {
+			return toSynchronize;
+		}
+		final STATE rtr = synchronizeVariables(toSynchronize, template.getVariables());
+		assert !toSynchronize.isBottom() || rtr.isBottom() : "Bottom is lost";
+		return rtr;
+	}
+
+	public static <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> Set<STATE>
+			synchronizeVariables(final Set<STATE> states) {
+		if (states == null) {
+			return null;
+		}
+		if (states.size() < 2) {
+			return states;
+		}
+		final Set<VARDECL> allVars =
+				states.stream().flatMap(a -> a.getVariables().stream()).collect(Collectors.toSet());
+		return states.stream().map(a -> synchronizeVariables(a, allVars)).collect(Collectors.toSet());
+	}
+
+	public static <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> STATE synchronizeVariables(final STATE state,
+			final Set<VARDECL> shouldVars) {
+
+		final Set<VARDECL> definedVariables = state.getVariables();
+
+		final Set<VARDECL> toRemove = AbsIntUtil.difference(definedVariables, shouldVars);
+		final Set<VARDECL> toAdd = AbsIntUtil.difference(shouldVars, definedVariables);
+
+		if (toRemove.isEmpty() && toAdd.isEmpty()) {
+			return state;
+		}
+
+		final STATE rtr;
+		if (toRemove.isEmpty()) {
+			rtr = state.addVariables(toAdd);
+		} else if (toAdd.isEmpty()) {
+			rtr = state.removeVariables(toRemove);
+		} else {
+			rtr = state.removeVariables(toRemove).addVariables(toAdd);
+		}
+		assert !state.isBottom() || rtr.isBottom() : "Bottom lost during synchronization";
+		return rtr;
 	}
 }

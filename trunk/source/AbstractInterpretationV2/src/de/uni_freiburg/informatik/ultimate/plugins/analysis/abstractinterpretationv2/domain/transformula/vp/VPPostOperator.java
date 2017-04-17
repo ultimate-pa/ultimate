@@ -153,9 +153,9 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		if (term instanceof ApplicationTerm) {
 			
 			final ApplicationTerm appTerm = (ApplicationTerm) term;
-			final String applicationName = appTerm.getFunction().getName();
+			final String functionName = appTerm.getFunction().getName();
 			
-			if (applicationName == "and") {
+			if ("and".equals(functionName)) {
 				assert !negated : "we transformed to nnf before, right?";
 				
 				final List<Set<VPTfState>> andList = new ArrayList<>();
@@ -167,7 +167,7 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				assert !resultStates.isEmpty();
 				// assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
 				return resultStates;
-			} else if (applicationName == "or") {
+			} else if ("or".equals(functionName)) {
 				assert !negated : "we transformed to nnf before, right?";
 				
 				final Set<VPTfState> orList = new HashSet<>();
@@ -177,18 +177,18 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				assert !orList.isEmpty();
 				// assert VPDomainHelpers.allStatesHaveSameVariables(orList);
 				return orList;
-			} else if (applicationName == "=") {
+			} else if ("=".equals(functionName)) {
 				final Set<VPTfState> result = handleEqualitySubterm(tfPreState, tf, negated, appTerm.getParameters()[0],
 						appTerm.getParameters()[1]);
 				assert !result.isEmpty();
 				return result;
-			} else if (applicationName == "not") {
+			} else if ("not".equals(functionName)) {
 				assert !negated : "we transformed to nnf before, right?";
 				final Set<VPTfState> result = handleTransition(tfPreState, appTerm.getParameters()[0], tf, !negated);
 				assert !result.isEmpty();
 				// assert VPDomainHelpers.allStatesHaveSameVariables(result);
 				return result;
-			} else if (applicationName == "distinct") {
+			} else if ("distinct".equals(functionName)) {
 				
 				mScript.lock(this);
 				final Term equality = mScript.term(this, "=", appTerm.getParameters()[0], appTerm.getParameters()[1]);
@@ -198,13 +198,13 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				assert !result.isEmpty();
 				// assert VPDomainHelpers.allStatesHaveSameVariables(result);
 				return result;
-			} else if (applicationName == "true") {
+			} else if ("true".equals(functionName)) {
 				if (!negated) {
 					return Collections.singleton(tfPreState);
 				}
 				final VPTfState result = mTfStateFactory.getBottomState(tfPreState.getVariables());
 				return Collections.singleton(result);
-			} else if (applicationName == "false") {
+			} else if ("false".equals(functionName)) {
 				if (!negated) {
 					final VPTfState result = mTfStateFactory.getBottomState(tfPreState.getVariables());
 					return Collections.singleton(result);
@@ -215,16 +215,11 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				 * we don't handle this function --> what does this mean? guesses: - always safe: return top state -
 				 * finer: if no outVars occur, then the prestate can be returned safely, right?
 				 */
-				// VPState<ACTION> result = mStateFactory.havocVariables(assignedVars, prestate);
-				// assert false : "TODO: implement";
-				// return Collections.singleton(mTfStateFactory.createEmptyStateBuilder(tf).build());
 				return Collections.singleton(tfPreState);
 			}
 			
 		} else if (term instanceof QuantifiedFormula) {
-			// return handleTransition(preState, ((QuantifiedFormula) term).getSubformula(), tvToPvMap);
-			assert false : "we currently cannot deal with quantifiers";
-			return null;
+			throw new UnsupportedOperationException("we cannot deal with quantifiers right now");
 		} else if (term instanceof AnnotatedTerm) {
 			final Set<VPTfState> result =
 					handleTransition(tfPreState, ((AnnotatedTerm) term).getSubterm(), tf, negated);
@@ -256,9 +251,8 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			// two arrays are equated
 
 			final VPTfStateBuilder tfStateBuilder = mTfPreparer.getVPTfStateBuilder(tf);
-			// IArrayWrapper lhsWrapper = WrapperFactory.wrapArray(lhs, tfStateBuilder);
+			
 			final IArrayWrapper lhsWrapper = tfStateBuilder.getArrayWrapper(lhs);
-			// IArrayWrapper rhsWrapper = WrapperFactory.wrapArray(rhs, tfStateBuilder);
 			final IArrayWrapper rhsWrapper = tfStateBuilder.getArrayWrapper(rhs);
 
 			final Set<VPTfState> resultStates = new HashSet<>();
@@ -282,10 +276,7 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 						final VPTfNodeIdentifier rhS = rhsArrayWSc.getIndexToValue().get(en.getKey());
 						
 						resultStatesForCurrentNodePair =
-								// VPFactoryHelpers.conjoinAll(resultStatesForCurrentNodePair,
-								VPFactoryHelpers.addEquality(lhS, rhS, resultStatesForCurrentNodePair, mTfStateFactory)
-						// , mTfStateFactory)
-						;
+								VPFactoryHelpers.addEquality(lhS, rhS, resultStatesForCurrentNodePair, mTfStateFactory);
 					}
 					
 					resultStates.addAll(resultStatesForCurrentNodePair);
@@ -297,9 +288,9 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		} else {
 			// two "normal" terms are equated
 
-			final VPTfStateBuilder tfStateBuilder = mTfPreparer.getVPTfStateBuilder(tf); // only used for array wrapping
-																							// --> vanilla builder
-																							// should suffice
+			// only used for array wrapping --> vanilla builder should suffice
+			final VPTfStateBuilder tfStateBuilder = mTfPreparer.getVPTfStateBuilder(tf); 
+
 			final IElementWrapper lhsWrapper = tfStateBuilder.getElementWrapper(lhs);
 			final IElementWrapper rhsWrapper = tfStateBuilder.getElementWrapper(rhs);
 
@@ -339,6 +330,14 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		}
 	}
 	
+	/**
+	 * Patches the side conditions of the given XwithSideConditions into the given state, returns the resulting state.
+	 * 
+	 * @param tfPreState
+	 * @param lhsNodeWSc
+	 * @param rhsNodeWSc
+	 * @return
+	 */
 	private Set<VPTfState> addSideConditionsToState(final VPTfState tfPreState,
 			final INodeOrArrayWithSideCondition lhsNodeWSc, final INodeOrArrayWithSideCondition rhsNodeWSc) {
 		final VPTfStateBuilder preStateCopy = mTfStateFactory.copy(tfPreState);
@@ -390,8 +389,7 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			assert false : "unexpected..";
 		}
 		
-		assert false : "forgot a case?";
-		return null;
+		throw new AssertionError("forgot a case?");
 	}
 	
 	private List<VPState<ACTION>> applyContextSwitch(final VPState<ACTION> stateBeforeLeaving,

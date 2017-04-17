@@ -43,12 +43,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
  */
 public class EmptyDomain<ACTION, VARDECL> implements IAbstractDomain<EmptyDomainState<VARDECL>, ACTION, VARDECL> {
 
-	private final Class<VARDECL> mVariablesType;
-
-	public EmptyDomain(final Class<VARDECL> variablesType) {
-		mVariablesType = variablesType;
-	}
-
 	@Override
 	public EmptyDomainState<VARDECL> createFreshState() {
 		return new EmptyDomainState<>();
@@ -66,12 +60,7 @@ public class EmptyDomain<ACTION, VARDECL> implements IAbstractDomain<EmptyDomain
 
 	@Override
 	public IAbstractStateBinaryOperator<EmptyDomainState<VARDECL>> getWideningOperator() {
-		return new EmptyOperator<>();
-	}
-
-	@Override
-	public IAbstractStateBinaryOperator<EmptyDomainState<VARDECL>> getMergeOperator() {
-		return new EmptyOperator<>();
+		return (a, b) -> a.union(b);
 	}
 
 	@Override

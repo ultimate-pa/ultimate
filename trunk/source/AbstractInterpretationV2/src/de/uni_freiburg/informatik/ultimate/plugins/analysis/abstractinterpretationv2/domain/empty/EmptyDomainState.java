@@ -240,4 +240,17 @@ public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDoma
 		assert hasSameVariables(other);
 		return isEqualTo(other) ? SubsetResult.EQUAL : SubsetResult.NONE;
 	}
+
+	@Override
+	public EmptyDomainState<VARDECL> intersect(final EmptyDomainState<VARDECL> other) {
+		if (!hasSameVariables(other)) {
+			throw new UnsupportedOperationException("Cannot widen or merge two states with different variables");
+		}
+		return this;
+	}
+
+	@Override
+	public EmptyDomainState<VARDECL> union(final EmptyDomainState<VARDECL> other) {
+		return intersect(other);
+	}
 }

@@ -100,18 +100,24 @@ public class AutomatonDeltaDebugger implements IAnalysis {
 
 	@Override
 	public void setInputDefinition(final ModelType graphType) {
-		mLogger.info("Receiving input definition " + graphType.toString());
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Receiving input definition " + graphType);
+		}
 		mObservers.clear();
 
 		final String creator = graphType.getCreator();
 		if ("de.uni_freiburg.informatik.ultimate.plugins.source.automatascriptparser".equals(creator)) {
-			mLogger.info("Preparing to process automaton...");
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("Preparing to process automaton...");
+			}
 			final AbstractTester<String, String> tester =
 					new AutomatonDebuggerTesters(mServices).getTester(mOperationMode, mOperationType);
 			mObservers.add(new AutomatonDeltaDebuggerObserver<>(mServices, tester, getShrinkersLoop(),
 					getShrinkersBridge(), getShrinkersEnd(), mDebugPolicy));
 		} else {
-			mLogger.warn("Ignoring input definition " + creator);
+			if (mLogger.isWarnEnabled()) {
+				mLogger.warn("Ignoring input definition " + creator);
+			}
 		}
 	}
 

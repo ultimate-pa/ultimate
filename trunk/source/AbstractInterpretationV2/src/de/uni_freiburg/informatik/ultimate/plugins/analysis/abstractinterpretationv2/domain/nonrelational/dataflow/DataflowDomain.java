@@ -51,15 +51,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  */
 public class DataflowDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		implements IAbstractDomain<DataflowState<ACTION>, ACTION, IProgramVarOrConst> {
-	
+
 	private final DataflowPostOperator<ACTION> mPost;
-	private final DataflowMergeOperator mMerge;
-	private final ILogger mLogger;
+	private final IAbstractStateBinaryOperator<DataflowState<ACTION>> mMerge;
 
 	public DataflowDomain(final ILogger logger) {
 		mPost = new DataflowPostOperator<>();
-		mMerge = new DataflowMergeOperator();
-		mLogger = logger;
+		mMerge = (a, b) -> a.union(b);
 	}
 
 	@Override
@@ -83,31 +81,7 @@ public class DataflowDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<DataflowState<ACTION>> getMergeOperator() {
-		return mMerge;
-	}
-
-	@Override
 	public IAbstractPostOperator<DataflowState<ACTION>, ACTION, IProgramVarOrConst> getPostOperator() {
 		return mPost;
-	}
-
-	private final class DataflowMergeOperator implements IAbstractStateBinaryOperator<DataflowState<ACTION>> {
-		
-		@Override
-		public DataflowState<ACTION> apply(final DataflowState<ACTION> first, final DataflowState<ACTION> second) {
-			final DataflowState<ACTION> rtr = first.union(second);
-			if (mLogger.isDebugEnabled()) {
-				final StringBuilder sb = new StringBuilder();
-				sb.append("merge(");
-				sb.append(first.toLogString());
-				sb.append(',');
-				sb.append(second.toLogString());
-				sb.append(") = ");
-				sb.append(rtr.toLogString());
-				mLogger.debug(sb);
-			}
-			return rtr;
-		}
 	}
 }

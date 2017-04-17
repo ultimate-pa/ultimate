@@ -41,6 +41,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 
 /**
@@ -207,7 +208,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 
 	@Override
 	public Term getTerm(final Script script) {
-		if (mAbstractStates.isEmpty() || mAbstractStates.stream().allMatch(state -> state.isBottom())) {
+		if (mAbstractStates.isEmpty() || isBottom()) {
 			return script.term("false");
 		}
 
@@ -278,6 +279,55 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	@Override
 	public String toString() {
 		return toLogString();
+	}
+
+	@Override
+	public CompoundDomainState intersect(final CompoundDomainState other) {
+		final List<IAbstractState<?, IBoogieVar>> thisStates = getAbstractStatesList();
+		final List<IAbstractState<?, IBoogieVar>> otherStates = other.getAbstractStatesList();
+		final List<IAbstractDomain> domains = getDomainList();
+
+		assert thisStates.size() == otherStates.size();
+		assert domains.size() == other.getDomainList().size();
+		assert domains.size() == thisStates.size();
+
+		final List<IAbstractState<?, IBoogieVar>> returnStates = new ArrayList<>();
+
+		for (int i = 0; i < thisStates.size(); i++) {
+			final IAbstractState<?, IBoogieVar> thisState = thisStates.get(i);
+			final IAbstractState<?, IBoogieVar> otherState = otherStates.get(i);
+			returnStates.add(applyCasted(thisState, otherState, (a, b) -> a.intersect(b)));
+		}
+
+		return new CompoundDomainState(mServices, domains, returnStates);
+	}
+
+	@Override
+	public CompoundDomainState union(final CompoundDomainState other) {
+		final List<IAbstractState<?, IBoogieVar>> thisStates = getAbstractStatesList();
+		final List<IAbstractState<?, IBoogieVar>> otherStates = other.getAbstractStatesList();
+		final List<IAbstractDomain> domains = getDomainList();
+
+		assert thisStates.size() == otherStates.size();
+		assert domains.size() == other.getDomainList().size();
+		assert domains.size() == thisStates.size();
+
+		final List<IAbstractState<?, IBoogieVar>> returnStates = new ArrayList<>();
+
+		for (int i = 0; i < thisStates.size(); i++) {
+			final IAbstractState<?, IBoogieVar> thisState = thisStates.get(i);
+			final IAbstractState<?, IBoogieVar> otherState = otherStates.get(i);
+			returnStates.add(applyCasted(thisState, otherState, (a, b) -> a.union(b)));
+		}
+
+		return new CompoundDomainState(mServices, domains, returnStates);
+	}
+
+	private static <T extends IAbstractState<T, IBoogieVar>> T applyCasted(final IAbstractState<?, IBoogieVar> first,
+			final IAbstractState<?, IBoogieVar> second, final IAbstractStateBinaryOperator<T> op) {
+		final T firstT = (T) first;
+		final T secondT = (T) second;
+		return op.apply(firstT, secondT);
 	}
 
 }

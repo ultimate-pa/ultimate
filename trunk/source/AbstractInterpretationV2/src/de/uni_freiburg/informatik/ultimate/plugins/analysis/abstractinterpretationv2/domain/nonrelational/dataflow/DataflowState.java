@@ -269,7 +269,8 @@ public class DataflowState<ACTION extends IAction>
 		return Collections.unmodifiableMap(mNoWrite);
 	}
 
-	DataflowState<ACTION> union(final DataflowState<ACTION> other) {
+	@Override
+	public DataflowState<ACTION> union(final DataflowState<ACTION> other) {
 		if (other == null || other == this || other.isEqualTo(this)) {
 			return this;
 		}
@@ -311,6 +312,11 @@ public class DataflowState<ACTION extends IAction>
 		}
 
 		return new DataflowState<>(vars, def, use, reachdef, noWrite);
+	}
+
+	@Override
+	public DataflowState<ACTION> intersect(final DataflowState<ACTION> other) {
+		throw new UnsupportedOperationException("not yet implemented");
 	}
 
 	private static int getFreshId() {

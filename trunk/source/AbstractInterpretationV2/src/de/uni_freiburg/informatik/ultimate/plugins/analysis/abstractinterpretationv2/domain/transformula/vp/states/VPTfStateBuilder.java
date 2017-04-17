@@ -556,8 +556,8 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		assert isTopConsistent();
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(mDisEqualitySet, this);
 
-		return new VPTfState(mTransFormula, this, mNodeIdToEqGraphNode,
-				mAllNodeIds, mArrayIdToFunctionNodes, mDisEqualitySet, mIsTop, mVars);
+		return new VPTfState(mTransFormula, this, mNodeIdToEqGraphNode, mAllNodeIds, mArrayIdToFunctionNodes, 
+				mDisEqualitySet, mIsTop, mVars);
 	}
 
 	@Override
@@ -738,9 +738,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 	 * @return null means the array is not tracked
 	 */
 	public IArrayWrapper getArrayWrapper(final Term term) {
-		final IArrayWrapper result = mTermToArrayWrapper.get(term);
-		// assert result != null;
-		return result;
+		return mTermToArrayWrapper.get(term);
 	}
 
 	/**
@@ -749,9 +747,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 	 * @return null means the array is not tracked
 	 */
 	public IElementWrapper getElementWrapper(final Term term) {
-		final IElementWrapper result = mTermToElementWrapper.get(term);
-		// assert result != null;
-		return result;
+		return  mTermToElementWrapper.get(term);
 	}
 
 	class WrapperFactory {

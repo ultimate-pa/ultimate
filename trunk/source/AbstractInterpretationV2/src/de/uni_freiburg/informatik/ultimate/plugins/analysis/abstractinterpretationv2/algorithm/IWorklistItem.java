@@ -38,7 +38,7 @@ public interface IWorklistItem<STATE extends IAbstractState<STATE, VARDECL>, ACT
 
 	ACTION getAction();
 
-	AbstractMultiState<STATE, ACTION, VARDECL> getState();
+	AbstractMultiState<STATE, VARDECL> getState();
 
 	IWorklistItem<STATE, ACTION, VARDECL, LOCATION> getPredecessor();
 }

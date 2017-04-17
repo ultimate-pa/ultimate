@@ -74,7 +74,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierSequence.QuantifiedVariables;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifierElimination.XnfDer;
 
 /**
@@ -96,6 +100,16 @@ public class Statements2TransFormula {
 	 */
 	private final static boolean s_ComputeAsserts = false;
 	private final static String s_ComputeAssertsNotAvailable = "computation of asserts not available";
+	/**
+	 * Try to replace existential quantification by auxiliary variables.
+	 * Therefore we bring all terms in prenex normal form (PNF). If the first
+	 * quantifier is ∃ we remove it and add the corresponding variables as
+	 * auxiliary variables.
+	 * Currently our PNF transformation involves a transformation in
+	 * negation normal (NNF), hence this skolemization causes also e.g., the
+	 * transformation of all Boolean ITE terms. 
+	 */
+	private final boolean mSimplePartialSkolemization;
 
 	private final Script mScript;
 	private final ManagedScript mMgdScript;
@@ -116,9 +130,10 @@ public class Statements2TransFormula {
 	private Map<String, ILocation> mOverapproximations = null;
 
 	public Statements2TransFormula(final Boogie2SMT boogie2smt, final IUltimateServiceProvider services,
-			final Expression2Term expression2Term) {
+			final Expression2Term expression2Term, final boolean simplePartialSkolemization) {
 		super();
 		mServices = services;
+		mSimplePartialSkolemization = simplePartialSkolemization;
 		mBoogie2SMT = boogie2smt;
 		mScript = boogie2smt.getScript();
 		mMgdScript = boogie2smt.getManagedScript();
@@ -170,9 +185,13 @@ public class Statements2TransFormula {
 
 	private UnmodifiableTransFormula constructTransFormula(final boolean simplify, final boolean feasibilityKnown,
 			final SimplificationTechnique simplicationTechnique) {
-		final Set<TermVariable> auxVars = mAuxVars;
-		Term formula = mAssumes;
-		formula = eliminateAuxVars(mAssumes, auxVars);
+		Term formula;
+		if (mSimplePartialSkolemization) {
+			formula = skolemize(mAssumes, mAuxVars);
+		} else {
+			formula = mAssumes;
+		}
+		formula = eliminateAuxVars(formula, mAuxVars);
 
 		Infeasibility infeasibility = null;
 		if (simplify) {
@@ -205,7 +224,7 @@ public class Statements2TransFormula {
 				mConstOnlyIdentifierTranslator.getNonTheoryConsts());
 		mTransFormulaBuilder.setFormula(formula);
 		mTransFormulaBuilder.setInfeasibility(infeasibility);
-		mTransFormulaBuilder.addAuxVarsButRenameToFreshCopies(auxVars, mMgdScript);
+		mTransFormulaBuilder.addAuxVarsButRenameToFreshCopies(mAuxVars, mMgdScript);
 		return mTransFormulaBuilder.finishConstruction(mMgdScript);
 	}
 
@@ -636,6 +655,36 @@ public class Statements2TransFormula {
 		final XnfDer xnfDer = new XnfDer(mMgdScript, mServices);
 		final Term result = Util.and(mScript,
 				xnfDer.tryToEliminate(QuantifiedFormula.EXISTS, SmtUtils.getConjuncts(input), auxVars));
+		return result;
+	}
+
+	/**
+	 * Try to replace existential quantification by auxiliary variables.
+	 * Bring input in prenex normal form (PNF). If the first
+	 * quantifier is ∃ we remove it and add the corresponding variables to 
+	 * auxVars.
+	 * 
+	 * @return input in NNF, possibly in a form where the first quantifier
+	 * block is removed.
+	 */
+	private Term skolemize(final Term input, final Set<TermVariable> auxVars) {
+		final Term pnf = new Nnf(mMgdScript, mServices, QuantifierHandling.PULL).transform(input);
+//		2017-04-14 Matthias: I presume that PNF transformer is not needed since NNF transformation
+//		with QuantifierHandling.PULL will also produce PNF.
+//		final Term pnf = new PrenexNormalForm(mMgdScript).transform(nnf);
+		final QuantifierSequence qs = new QuantifierSequence(mMgdScript.getScript(), pnf);
+		final List<QuantifiedVariables> qvs = qs.getQuantifierBlocks();
+		Term result;
+		if (qvs.isEmpty() || (qvs.get(0).getQuantifier() == QuantifiedFormula.FORALL)) {
+			result = pnf;
+		} else {
+			if (qvs.size() > 1) {
+				throw new UnsupportedOperationException("support for alternating quantifiers not yet implemented");
+			} else {
+				auxVars.addAll(qvs.get(0).getVariables());
+				result = qs.getInnerTerm();
+			}
+		}
 		return result;
 	}
 

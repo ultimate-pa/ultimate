@@ -33,13 +33,31 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
+/**
+ * Emits classes etc.
+ * 
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ */
 public class Emit {
+	private static final String BOOLEAN = "boolean";
+	private static final int LENGTH_OF_TRUE_PLUS_SPACE = 5;
+	private static final int MIN_NAME_LENGTH = 3;
+	private static final int MAX_PARAM_LENGTH = 80;
+	private static final String SPACES = "        ";
+	private static final String DEFAULT_ROOT_CONSTRUCTOR_PARAMETER = "";
+	private static final String SPACES_AND_PUBLIC = "    public ";
+	private static final String SPACES_AND_CLOSED_BRACE = "    }";
+	private static final String LINE_BREAK_AT_PARAM = "\n@param ";
+
 	private static final List<String> BOOL_PREFIXES = Arrays.asList("is", "has");
 
 	protected PrintWriter mWriter;
 	protected Grammar mGrammar;
 	protected HashSet<String> mEnumTypes;
 
+	/**
+	 * Constructor.
+	 */
 	public Emit() {
 		mEnumTypes = new HashSet<>();
 	}
@@ -48,47 +66,78 @@ public class Emit {
 		mGrammar = grammar;
 	}
 
+	/**
+	 * @param str
+	 *            String.
+	 * @return capitalized string
+	 */
 	public static String capitalize(final String str) {
 		return Character.toTitleCase(str.charAt(0)) + str.substring(1);
 	}
 
+	/**
+	 * @param str
+	 *            String.
+	 * @return uncapitalized string
+	 */
 	public static String uncapitalize(final String str) {
 		return Character.toLowerCase(str.charAt(0)) + str.substring(1);
 	}
 
+	/**
+	 * @param str
+	 *            String.
+	 * @return string with spaces
+	 */
 	public static String breakWords(final String str) {
-		final StringBuffer sb = new StringBuffer();
+		final StringBuilder builder = new StringBuilder();
 		final int len = str.length();
 		for (int i = 0; i < len; i++) {
 			final char c = str.charAt(i);
 			if (Character.isUpperCase(c) || Character.isTitleCase(c)) {
 				if (i > 0) {
-					sb.append(' ');
+					builder.append(' ');
 				}
-				sb.append(Character.toLowerCase(c));
+				builder.append(Character.toLowerCase(c));
 			} else {
-				sb.append(c);
+				builder.append(c);
 			}
 		}
-		return sb.toString();
+		return builder.toString();
 	}
 
+	/**
+	 * @param className
+	 *            Class name.
+	 * @param name
+	 *            name
+	 * @param type
+	 *            type
+	 * @return field comment
+	 */
 	public static String buildFieldComment(final String className, final String name, final String type) {
-		if (type.equals("boolean") && name.length() >= 3 && name.startsWith("is")
+		if (BOOLEAN.equals(type) && name.length() >= MIN_NAME_LENGTH && name.startsWith("is")
 				&& (Character.isUpperCase(name.charAt(2)) || Character.isTitleCase(name.charAt(2)))) {
 			return "True iff this " + breakWords(className) + " " + breakWords(name) + ".";
 		}
 		return "The " + breakWords(name) + " of this " + breakWords(className) + ".";
 	}
 
+	/**
+	 * @param name
+	 *            name.
+	 * @param parent
+	 *            parent
+	 * @return class comment
+	 */
 	public static String buildClassComment(final String name, final String parent) {
-		final StringBuffer sb = new StringBuffer("Represents a ");
-		sb.append(breakWords(name));
+		final StringBuilder builder = new StringBuilder("Represents a ");
+		builder.append(breakWords(name));
 		if (parent != null) {
-			sb.append(" which is a special form of a ").append(Emit.breakWords(parent));
+			builder.append(" which is a special form of a ").append(Emit.breakWords(parent));
 		}
-		sb.append('.');
-		return sb.toString();
+		builder.append('.');
+		return builder.toString();
 	}
 
 	private static String getShortComment(final String comment) {
@@ -99,18 +148,25 @@ public class Emit {
 		return comment.substring(0, end);
 	}
 
-	protected static void formatComment(final PrintWriter writer, final String indent, String comment) {
+	protected static void formatComment(final PrintWriter writer, final String indent, final String comment) {
 		writer.println(indent + "/**");
-		int nl = comment.indexOf('\n');
-		while (nl >= 0) {
-			writer.println(indent + " * " + comment.substring(0, nl));
-			comment = comment.substring(nl + 1);
-			nl = comment.indexOf('\n');
+		String modifiedComment = comment;
+		int nlIndex = modifiedComment.indexOf('\n');
+		while (nlIndex >= 0) {
+			writer.println(indent + " * " + modifiedComment.substring(0, nlIndex));
+			modifiedComment = modifiedComment.substring(nlIndex + 1);
+			nlIndex = modifiedComment.indexOf('\n');
 		}
-		writer.println(indent + " * " + comment);
+		writer.println(indent + " * " + modifiedComment);
 		writer.println(indent + " */");
 	}
 
+	/**
+	 * Emits classes.
+	 * 
+	 * @throws IOException
+	 *             if class writing fails
+	 */
 	public void emitClasses() throws IOException {
 		for (final Node n : mGrammar.getNodeTable().values()) {
 			final String name = n.getName();
@@ -122,7 +178,11 @@ public class Emit {
 		}
 	}
 
-	public void emitPreamble(final Node node) throws IOException {
+	/**
+	 * @param node
+	 *            node.
+	 */
+	public void emitPreamble(final Node node) {
 		final String name = node.getName();
 		mWriter.println("/* " + name + " -- Automatically generated by TreeBuilder */");
 		mWriter.println();
@@ -152,77 +212,100 @@ public class Emit {
 		mWriter.println();
 	}
 
-	public void emitClassDeclaration(final Node node) throws IOException {
+	/**
+	 * @param node
+	 *            node.
+	 */
+	public void emitClassDeclaration(final Node node) {
 		mWriter.println("public " + (node.isAbstract() ? "abstract " : "") + "class " + node.getName()
-				+ (node.getParent() != null ? " extends " + node.getParent().getName() : "")
-				+ (node.getInterfaces() != null ? " implements " + node.getInterfaces() : "") + " {");
+				+ (node.getParent() != null ? (" extends " + node.getParent().getName()) : "")
+				+ (node.getInterfaces() != null ? (" implements " + node.getInterfaces()) : "") + " {");
 	}
 
+	/**
+	 * @param node
+	 *            node.
+	 * @param optional
+	 *            optional flag for adding parameter
+	 * @return constructor parameter
+	 */
 	public String getConstructorParam(final Node node, final boolean optional) {
 		if (node == null) {
 			return "";
 		}
 
-		final StringBuffer sb = new StringBuffer();
+		final StringBuilder builder = new StringBuilder();
 
-		sb.append(getConstructorParam(node.getParent(), optional));
+		builder.append(getConstructorParam(node.getParent(), optional));
 
 		String comma = "";
-		if (sb.length() > 0) {
+		if (builder.length() > 0) {
 			comma = ", ";
 		}
 
 		for (final Parameter parameter : node.getParameters()) {
 			if (optional || !parameter.isOptional()) {
 				final String pname = parameter.getName();
-				sb.append(comma).append(pname);
+				builder.append(comma).append(pname);
 				comma = ", ";
 			}
 		}
-		return sb.toString();
+		return builder.toString();
 	}
 
-	public String getRootConstructorParam(final Node node, final boolean optional) {
-		return "";
+	/**
+	 * @param node
+	 *            node.
+	 * @return root constructor parameter
+	 */
+	@SuppressWarnings("static-method")
+	public String getRootConstructorParam(final Node node) {
+		return DEFAULT_ROOT_CONSTRUCTOR_PARAMETER;
 	}
 
-	protected void fillConstructorParamComment(final Node node, final StringBuffer param, final StringBuffer comment,
-			final boolean optional) {
+	protected void fillConstructorParamComment(final Node node, final StringBuilder constructorParams,
+			final StringBuilder constructorComment, final boolean optional) {
 		final Node parent = node.getParent();
 		if (parent != null) {
-			fillConstructorParamComment(parent, param, comment, optional);
+			fillConstructorParamComment(parent, constructorParams, constructorComment, optional);
 		}
 		String comma = "";
-		if (param.length() > 0) {
+		if (constructorParams.length() > 0) {
 			comma = ", ";
 		}
 		for (final Parameter parameter : node.getParameters()) {
 			if (optional || !parameter.isOptional()) {
 				final String pname = parameter.getName();
 				final String pcomment = uncapitalize(getShortComment(parameter.getComment()));
-				comment.append("\n@param ").append(pname).append(' ').append(pcomment);
-				param.append(comma);
-				param.append(parameter.getType()).append(' ').append(pname);
+				constructorComment.append(LINE_BREAK_AT_PARAM).append(pname).append(' ').append(pcomment);
+				constructorParams.append(comma);
+				constructorParams.append(parameter.getType()).append(' ').append(pname);
 				comma = ", ";
 			}
 		}
 	}
 
-	public void emitConstructor(final Node node, final boolean optional) throws IOException {
+	/**
+	 * @param node
+	 *            node.
+	 * @param optional
+	 *            optional flag for adding parameter
+	 */
+	public void emitConstructor(final Node node, final boolean optional) {
 		final String name = node.getName();
 		final String parentParams;
 		if (node.getParent() == null) {
-			parentParams = getRootConstructorParam(node, optional);
+			parentParams = getRootConstructorParam(node);
 		} else {
 			parentParams = getConstructorParam(node.getParent(), optional);
 		}
 
-		final StringBuffer constructorParams = new StringBuffer();
-		final StringBuffer constructorComment = new StringBuffer("The constructor taking initial values.");
+		final StringBuilder constructorParams = new StringBuilder();
+		final StringBuilder constructorComment = new StringBuilder("The constructor taking initial values.");
 		fillConstructorParamComment(node, constructorParams, constructorComment, optional);
 		formatComment(mWriter, "    ", constructorComment.toString());
 
-		mWriter.println("    public " + name + "(" + constructorParams.toString() + ") {");
+		mWriter.println(SPACES_AND_PUBLIC + name + "(" + constructorParams.toString() + ") {");
 		if (parentParams != null) {
 			mWriter.println("        super(" + parentParams + ");");
 		}
@@ -233,15 +316,25 @@ public class Emit {
 			}
 		}
 		emitConstructorAfterParamAssign(node, optional);
-		mWriter.println("    }");
+		mWriter.println(SPACES_AND_CLOSED_BRACE);
 		mWriter.println();
 	}
 
-	public void emitConstructorAfterParamAssign(final Node node, final boolean optional) throws IOException {
+	/**
+	 * @param node
+	 *            node.
+	 * @param optional
+	 *            optional flag
+	 */
+	public void emitConstructorAfterParamAssign(final Node node, final boolean optional) {
 		// do nothing per default
 	}
 
-	public void emitConstructors(final Node node) throws IOException {
+	/**
+	 * @param node
+	 *            node.
+	 */
+	public void emitConstructors(final Node node) {
 		if (node == null) {
 			throw new IllegalArgumentException();
 		}
@@ -266,8 +359,8 @@ public class Emit {
 		}
 		if (numNotOptionalParams == 0 || numNotWriteableParams == 0) {
 			formatComment(mWriter, "    ", "The default constructor.");
-			mWriter.println("    public " + node.getName() + "() {");
-			mWriter.println("    }");
+			mWriter.println(SPACES_AND_PUBLIC + node.getName() + "() {");
+			mWriter.println(SPACES_AND_CLOSED_BRACE);
 			mWriter.println();
 		}
 
@@ -279,32 +372,42 @@ public class Emit {
 		}
 	}
 
-	void emitArrayToStringCode(String name, String type, final String indent, final int level) {
+	void emitArrayToStringCode(final String name, final String type, final String indent, final int level) {
 		final String ivar = "i" + level;
-		type = type.substring(0, type.length() - 2);
-		final String newindent = indent + "        ";
-		mWriter.println(indent + "if (" + name + " == null) {");
+		final String modifiedType = type.substring(0, type.length() - 2);
+		final String newindent = indent + SPACES;
+		String modifiedName = name;
+		mWriter.println(indent + "if (" + modifiedName + " == null) {");
 		mWriter.println(indent + "    sb.append(\"null\");");
 		mWriter.println(indent + "} else {");
 		mWriter.println(indent + "    sb.append('[');");
-		mWriter.println(indent + "    for(int " + ivar + " = 0; " + ivar + " < " + name + ".length; " + ivar + "++) {");
+		mWriter.println(
+				indent + "    for(int " + ivar + " = 0; " + ivar + " < " + modifiedName + ".length; " + ivar + "++) {");
 		mWriter.println(newindent + "if (" + ivar + " > 0) sb.append(',');");
-		name += "[" + ivar + "]";
-		if (type.endsWith("[]")) {
-			emitArrayToStringCode(name, type, newindent, level + 1);
+		modifiedName += "[" + ivar + "]";
+		if (modifiedType.endsWith("[]")) {
+			emitArrayToStringCode(modifiedName, modifiedType, newindent, level + 1);
 		} else {
-			mWriter.println(newindent + "    sb.append(" + name + ");");
+			mWriter.println(newindent + "    sb.append(" + modifiedName + ");");
 		}
-		mWriter.println(indent + "    }");
+		mWriter.println(indent + SPACES_AND_CLOSED_BRACE);
 		mWriter.println(indent + "    sb.append(']');");
 		mWriter.println(indent + "}");
 	}
 
-	public void emitNodeHook(final Node node) throws IOException {
-		// can be overriden by subclasses that want to implement a node hook
+	/**
+	 * @param node
+	 *            node.
+	 */
+	public void emitNodeHook(final Node node) {
+		// can be overridden by subclasses that want to implement a node hook
 	}
 
-	public void emitNode(final Node node) throws IOException {
+	/**
+	 * @param node
+	 *            node.
+	 */
+	public void emitNode(final Node node) {
 		final String name = node.getName();
 		final Parameter[] parameters = node.getParameters();
 
@@ -312,64 +415,11 @@ public class Emit {
 
 		formatComment(mWriter, "", node.getComment());
 		emitClassDeclaration(node);
+		
+		final boolean emitParams = parameters != null && parameters.length > 0;
 
-		if (parameters != null && parameters.length > 0) {
-			/* collect enum types */
-			for (int i = 0; i < parameters.length; i++) {
-				String ptype = parameters[i].getType();
-				if (ptype.startsWith("!")) {
-					/* java 1.5 enum types */
-					int nextComma = ptype.indexOf(',', 1);
-					if (nextComma == -1) {
-						nextComma = ptype.length();
-					}
-					final String enumName = ptype.substring(1, nextComma);
-					mWriter.println("    public enum " + enumName + " {");
-					StringBuilder sb = new StringBuilder();
-					sb.append("        ");
-					String comma = "";
-					ptype = ptype.substring(nextComma);
-					while (ptype.length() > 0) {
-						nextComma = ptype.indexOf(',', 1);
-						if (nextComma == -1) {
-							nextComma = ptype.length();
-						}
-						sb.append(comma);
-						if (sb.length() + nextComma > 80) {
-							mWriter.println(sb.toString());
-							sb = new StringBuilder();
-							sb.append("        ");
-						}
-						sb.append(ptype.substring(1, nextComma));
-						comma = ", ";
-						ptype = ptype.substring(nextComma);
-					}
-					mWriter.println(sb.toString());
-					mWriter.println("    }");
-					mWriter.println();
-					parameters[i].setType(enumName);
-					mEnumTypes.add(enumName);
-				} else if (ptype.startsWith(",")) {
-					int idx = 0;
-					while (ptype.length() > 0) {
-						int nextComma = ptype.indexOf(',', 1);
-						if (nextComma == -1) {
-							nextComma = ptype.length();
-						}
-						final String enumeration = ptype.substring(1, nextComma);
-						mWriter.println("    public final static int " + enumeration + " = " + idx++ + ";");
-						ptype = ptype.substring(nextComma);
-					}
-					mWriter.println();
-					parameters[i].setType("int");
-				}
-			}
-
-			for (int i = 0; i < parameters.length; i++) {
-				formatComment(mWriter, "    ", parameters[i].getComment());
-				mWriter.println("    " + parameters[i].getType() + " " + parameters[i].getName() + ";");
-				mWriter.println();
-			}
+		if (emitParams) {
+			emitParams1(parameters);
 		}
 
 		emitConstructors(node);
@@ -377,91 +427,157 @@ public class Emit {
 		final String toStringComment = "Returns a textual description of this object.";
 		formatComment(mWriter, "    ", toStringComment);
 		mWriter.println("    public String toString() {");
-		if (parameters != null && parameters.length > 0) {
-			mWriter.println("        StringBuffer sb = new StringBuffer();");
-			mWriter.println("        sb.append(\"" + name + "\").append('[');");
-			String comma = "";
-			for (int i = 0; i < parameters.length; i++) {
-				final String pname = parameters[i].getName();
-				final String ptype = parameters[i].getType();
-				if (ptype.endsWith("[]")) {
-					if (!"".equals(comma)) {
-						mWriter.println("        sb" + comma + ";");
-					}
-					emitArrayToStringCode(pname, ptype, "        ", 1);
-				} else {
-					mWriter.println("        sb" + comma + ".append(" + pname + ");");
-				}
-				comma = ".append(',')";
-			}
-			mWriter.println("        return sb.append(']').toString();");
+		if (emitParams) {
+			emitParams2(name, parameters);
 		} else {
 			mWriter.println("        return \"" + name + "\";");
 		}
-		mWriter.println("    }");
+		mWriter.println(SPACES_AND_CLOSED_BRACE);
 
-		if (parameters != null && parameters.length > 0) {
-			for (int i = 0; i < parameters.length; i++) {
-				mWriter.println();
-
-				final String pname = parameters[i].getName();
-				final String ptype = parameters[i].getType();
-				final String pcomment = parameters[i].getComment();
-				final String cpname = capitalize(pname);
-				String getName = "get" + cpname;
-				String setName = "set" + cpname;
-				String getComment;
-				String setComment;
-				if (ptype.equals("boolean")) {
-					int j = 0;
-					for (final String prefix : BOOL_PREFIXES) {
-						if (pname.startsWith(prefix)) {
-							j = prefix.length();
-							break;
-						}
-					}
-					if (j > 0) {
-						getName = pname;
-						setName = "set" + pname.substring(j);
-					}
-					String nonTrueComment = pcomment;
-					if (nonTrueComment.startsWith("True ")) {
-						nonTrueComment = nonTrueComment.substring(5);
-					}
-					getComment = "Checks " + uncapitalize(nonTrueComment) + "\n@return "
-							+ uncapitalize(getShortComment(pcomment));
-					setComment = "Sets " + uncapitalize(nonTrueComment) + "\n@param " + pname + " "
-							+ uncapitalize(getShortComment(pcomment));
-				} else {
-					getComment =
-							"Gets " + uncapitalize(pcomment) + "\n@return " + uncapitalize(getShortComment(pcomment));
-					setComment = "Sets " + uncapitalize(pcomment) + "\n@param " + pname + " "
-							+ uncapitalize(getShortComment(pcomment));
-				}
-				formatComment(mWriter, "    ", getComment);
-				mWriter.println("    public " + ptype + " " + getName + "() {");
-				mWriter.println("        return " + pname + ";");
-				mWriter.println("    }");
-
-				if (parameters[i].isWriteable()) {
-					mWriter.println();
-					formatComment(mWriter, "    ", setComment);
-					mWriter.println("    public void " + setName + "(" + ptype + " " + pname + ") {");
-					if (parameters[i].isWriteableOnce) {
-						mWriter.println("        //Writeable only once");
-						mWriter.println(
-								"        if(this." + pname + " != null && " + pname + " != this." + pname + "){");
-						mWriter.println("                throw new AssertionError(\"Value is only writeable once\");");
-						mWriter.println("        }");
-					}
-					mWriter.println("        this." + pname + " = " + pname + ";");
-					mWriter.println("    }");
-				}
-			}
+		if (emitParams) {
+			emitParams3(parameters);
 		}
 		emitNodeHook(node);
 		mWriter.println("}");
 		mWriter.close();
 	}
 
+
+	private void emitParams1(final Parameter[] parameters) {
+		/* collect enum types */
+		for (int i = 0; i < parameters.length; i++) {
+			String ptype = parameters[i].getType();
+			if (ptype.startsWith("!")) {
+				/* java 1.5 enum types */
+				int nextComma = ptype.indexOf(',', 1);
+				if (nextComma == -1) {
+					nextComma = ptype.length();
+				}
+				final String enumName = ptype.substring(1, nextComma);
+				mWriter.println("    public enum " + enumName + " {");
+				StringBuilder builder = new StringBuilder();
+				builder.append(SPACES);
+				String comma = "";
+				ptype = ptype.substring(nextComma);
+				while (ptype.length() > 0) {
+					nextComma = ptype.indexOf(',', 1);
+					if (nextComma == -1) {
+						nextComma = ptype.length();
+					}
+					builder.append(comma);
+					if (builder.length() + nextComma > MAX_PARAM_LENGTH) {
+						mWriter.println(builder.toString());
+						builder = new StringBuilder();
+						builder.append(SPACES);
+					}
+					builder.append(ptype.substring(1, nextComma));
+					comma = ", ";
+					ptype = ptype.substring(nextComma);
+				}
+				mWriter.println(builder.toString());
+				mWriter.println(SPACES_AND_CLOSED_BRACE);
+				mWriter.println();
+				parameters[i].setType(enumName);
+				mEnumTypes.add(enumName);
+			} else if (ptype.startsWith(",")) {
+				int idx = 0;
+				while (ptype.length() > 0) {
+					int nextComma = ptype.indexOf(',', 1);
+					if (nextComma == -1) {
+						nextComma = ptype.length();
+					}
+					final String enumeration = ptype.substring(1, nextComma);
+					mWriter.println("    public final static int " + enumeration + " = " + idx + ";");
+					idx++;
+					ptype = ptype.substring(nextComma);
+				}
+				mWriter.println();
+				parameters[i].setType("int");
+			}
+		}
+
+		for (int i = 0; i < parameters.length; i++) {
+			formatComment(mWriter, "    ", parameters[i].getComment());
+			mWriter.println("    " + parameters[i].getType() + " " + parameters[i].getName() + ";");
+			mWriter.println();
+		}
+	}
+
+	private void emitParams2(final String name, final Parameter[] parameters) {
+		mWriter.println("        StringBuffer sb = new StringBuffer();");
+		mWriter.println("        sb.append(\"" + name + "\").append('[');");
+		String comma = "";
+		for (int i = 0; i < parameters.length; i++) {
+			final String pname = parameters[i].getName();
+			final String ptype = parameters[i].getType();
+			if (ptype.endsWith("[]")) {
+				if (!"".equals(comma)) {
+					mWriter.println("        sb" + comma + ";");
+				}
+				emitArrayToStringCode(pname, ptype, SPACES, 1);
+			} else {
+				mWriter.println("        sb" + comma + ".append(" + pname + ");");
+			}
+			comma = ".append(',')";
+		}
+		mWriter.println("        return sb.append(']').toString();");
+	}
+
+	private void emitParams3(final Parameter[] parameters) {
+		for (int i = 0; i < parameters.length; i++) {
+			mWriter.println();
+
+			final String pname = parameters[i].getName();
+			final String ptype = parameters[i].getType();
+			final String pcomment = parameters[i].getComment();
+			final String cpname = capitalize(pname);
+			String getName = "get" + cpname;
+			String setName = "set" + cpname;
+			String getComment;
+			String setComment;
+			if (BOOLEAN.equals(ptype)) {
+				int index = 0;
+				for (final String prefix : BOOL_PREFIXES) {
+					if (pname.startsWith(prefix)) {
+						index = prefix.length();
+						break;
+					}
+				}
+				if (index > 0) {
+					getName = pname;
+					setName = "set" + pname.substring(index);
+				}
+				String nonTrueComment = pcomment;
+				if (nonTrueComment.startsWith("True ")) {
+					nonTrueComment = nonTrueComment.substring(LENGTH_OF_TRUE_PLUS_SPACE);
+				}
+				getComment = "Checks " + uncapitalize(nonTrueComment) + "\n@return "
+						+ uncapitalize(getShortComment(pcomment));
+				setComment = "Sets " + uncapitalize(nonTrueComment) + LINE_BREAK_AT_PARAM + pname + " "
+						+ uncapitalize(getShortComment(pcomment));
+			} else {
+				getComment = "Gets " + uncapitalize(pcomment) + "\n@return " + uncapitalize(getShortComment(pcomment));
+				setComment = "Sets " + uncapitalize(pcomment) + LINE_BREAK_AT_PARAM + pname + " "
+						+ uncapitalize(getShortComment(pcomment));
+			}
+			formatComment(mWriter, "    ", getComment);
+			mWriter.println(SPACES_AND_PUBLIC + ptype + " " + getName + "() {");
+			mWriter.println("        return " + pname + ";");
+			mWriter.println(SPACES_AND_CLOSED_BRACE);
+
+			if (parameters[i].isWriteable()) {
+				mWriter.println();
+				formatComment(mWriter, "    ", setComment);
+				mWriter.println("    public void " + setName + "(" + ptype + " " + pname + ") {");
+				if (parameters[i].isWriteableOnce) {
+					mWriter.println("        //Writeable only once");
+					mWriter.println("        if(this." + pname + " != null && " + pname + " != this." + pname + "){");
+					mWriter.println("                throw new AssertionError(\"Value is only writeable once\");");
+					mWriter.println("        }");
+				}
+				mWriter.println("        this." + pname + " = " + pname + ";");
+				mWriter.println(SPACES_AND_CLOSED_BRACE);
+			}
+		}
+	}
 }

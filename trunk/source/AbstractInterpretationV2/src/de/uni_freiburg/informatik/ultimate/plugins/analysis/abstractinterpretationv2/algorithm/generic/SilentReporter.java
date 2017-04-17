@@ -26,7 +26,7 @@ public final class SilentReporter<STATE extends IAbstractState<STATE, VARDECL>, 
 
 	@Override
 	public void reportPossibleError(
-			final AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, ?, LOCATION> cex) {
+			final AbstractCounterexample<AbstractMultiState<STATE, VARDECL>, ACTION, ?, LOCATION> cex) {
 		// do nothing to stay silent
 	}
 }

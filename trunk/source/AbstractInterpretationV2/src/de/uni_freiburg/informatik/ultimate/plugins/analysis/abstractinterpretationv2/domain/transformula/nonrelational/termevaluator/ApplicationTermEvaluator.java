@@ -37,8 +37,8 @@ import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalAbstractState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.INonrelationalValueFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalEvaluationResult;
@@ -46,9 +46,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.EvaluatorLogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.evaluator.IEvaluationResult;
 
-public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends INonrelationalAbstractState<STATE, VARDECL>, VARDECL>
+public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, STATE extends IAbstractState<STATE, VARDECL>, VARDECL>
 		implements INaryTermEvaluator<VALUE, STATE, VARDECL> {
-	
+
 	private final int mArity;
 	private final List<ITermEvaluator<VALUE, STATE, VARDECL>> mSubEvaluators;
 	private final String mOperator;
@@ -65,7 +65,7 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 	private static final String FALSE = "false";
 	private static final String COMPEQ = "=";
 	private static final String LOGICNEG = "not";
-	
+
 	protected ApplicationTermEvaluator(final EvaluatorLogger logger, final int arity, final String operator,
 			final int maxParallelStates, final INonrelationalValueFactory<VALUE> nonrelationalValueFactory,
 			final Supplier<STATE> bottomStateSupplier) {
@@ -93,35 +93,35 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		final List<List<IEvaluationResult<VALUE>>> permuts = evaluateAndPermutate(currentState);
 
 		mSubEvaluators.forEach(sub -> mVarIdentifiers.addAll(sub.getVarIdentifiers()));
-		
+
 		final List<IEvaluationResult<VALUE>> returnList = new ArrayList<>();
 
 		// Operator must be applied to all lists in permuts.
 		for (final List<IEvaluationResult<VALUE>> permutList : permuts) {
-			
+
 			final List<IEvaluationResult<VALUE>> result = evaluate(permutList);
 			mLogger.logEvaluation(mOperator, result, permutList);
 			returnList.addAll(result);
 		}
-		
+
 		assert !returnList.isEmpty();
 		return mergeResult(returnList);
 	}
-	
+
 	private List<IEvaluationResult<VALUE>> mergeResult(final List<IEvaluationResult<VALUE>> returnList) {
 		if (mOperator == LOGICNEG) {
 			return NonrelationalUtils.mergeIfNecessary(returnList, 2);
 		}
 		return NonrelationalUtils.mergeIfNecessary(returnList, mMaxParallelStates);
 	}
-	
+
 	private List<IEvaluationResult<VALUE>> evaluate(final List<IEvaluationResult<VALUE>> permutList) {
 		if (mOperator == COMPEQ) {
 			return evaluateEquality(permutList);
 		} else if (mOperator == LOGICNEG) {
 			return evaluateLogicNegation(permutList);
 		}
-		
+
 		throw new UnsupportedOperationException("Unsupported operator: " + mOperator);
 	}
 
@@ -132,9 +132,9 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		if (mLastEvaluatedState != null && mLastEvaluatedState == currentState) {
 			return mLastEvaluatedResult;
 		}
-		
+
 		mLastEvaluatedState = currentState;
-		
+
 		final List<List<IEvaluationResult<VALUE>>> subResults = new ArrayList<>();
 		mSubEvaluators.forEach(sub -> subResults.add(sub.evaluate(currentState)));
 		final List<List<IEvaluationResult<VALUE>>> permutations =
@@ -175,16 +175,15 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 				valueList.add(tmpTrace);
 			}
 			return valueList;
-		} else {
-			final List<List<VALUE>> returnList = new ArrayList<>();
-			for (final VALUE elem : input.get(depth)) {
-				final List<VALUE> tmpTrace = new ArrayList<>();
-				trace.forEach(str -> tmpTrace.add(str));
-				tmpTrace.add(elem);
-				returnList.addAll(generatePermutations(input, depth + 1, tmpTrace));
-			}
-			return returnList;
 		}
+		final List<List<VALUE>> returnList = new ArrayList<>();
+		for (final VALUE elem : input.get(depth)) {
+			final List<VALUE> tmpTrace = new ArrayList<>();
+			trace.forEach(str -> tmpTrace.add(str));
+			tmpTrace.add(elem);
+			returnList.addAll(generatePermutations(input, depth + 1, tmpTrace));
+		}
+		return returnList;
 	}
 
 	private List<IEvaluationResult<VALUE>> onlyBooleanValue(final BooleanValue value) {
@@ -192,7 +191,7 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		assert value != BooleanValue.INVALID;
 		return Collections.singletonList(new NonrelationalEvaluationResult<>(mTopValue, value));
 	}
-	
+
 	private List<IEvaluationResult<VALUE>> evaluateEquality(final List<IEvaluationResult<VALUE>> arguments) {
 		assert arguments != null;
 		assert !arguments.isEmpty();
@@ -210,10 +209,10 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 			returnBool = arguments.stream().map(elem -> elem.getBooleanValue()).reduce(BooleanValue.TOP,
 					(a, b) -> (a.intersect(b))) != BooleanValue.BOTTOM ? BooleanValue.TRUE : BooleanValue.BOTTOM;
 		}
-		
+
 		final VALUE returnValue = arguments.stream().map(elem -> elem.getValue())
 				.reduce(mNonrelationalValueFactory.createTopValue(), (a, b) -> a.intersect(b));
-		
+
 		if (returnBool.isBottom() || returnValue.isBottom()) {
 			returnBool = BooleanValue.FALSE;
 		} else if (!mSubEvaluators.stream().anyMatch(sub -> sub.containsBool())) {
@@ -230,19 +229,19 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 	private List<IEvaluationResult<VALUE>> evaluateLogicNegation(final List<IEvaluationResult<VALUE>> arguments) {
 		assert arguments != null;
 		assert !arguments.isEmpty();
-		
+
 		if (arguments.size() > 1) {
 			throw new UnsupportedOperationException(
 					"Term for logical negation has more than one argument (" + arguments.size() + ").");
 		}
-		
+
 		final IEvaluationResult<VALUE> arg = arguments.get(0);
 		final BooleanValue returnBool = arg.getBooleanValue().neg();
 		final VALUE returnValue = mNonrelationalValueFactory.createTopValue();
-		
+
 		final NonrelationalEvaluationResult<VALUE> result =
 				new NonrelationalEvaluationResult<>(returnValue, returnBool);
-		
+
 		return Collections.singletonList(result);
 	}
 
@@ -260,7 +259,7 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		BooleanValue evalResultBool = evaluationResult.getBooleanValue();
 
 		final List<List<IEvaluationResult<VALUE>>> permuts = evaluateAndPermutate(oldState);
-		
+
 		for (final List<IEvaluationResult<VALUE>> resultList : permuts) {
 			final List<STATE> returnStates = new ArrayList<>();
 
@@ -277,7 +276,7 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 				final List<IEvaluationResult<VALUE>> tmpList = new ArrayList<>();
 				resultList.stream().forEach(elem -> tmpList.add(elem));
 				final List<List<STATE>> lastResult = new ArrayList<>();
-				
+
 				for (int i = 1; i < tmpList.size(); i++) {
 					final IEvaluationResult<VALUE> left = tmpList.get(i - 1);
 					final IEvaluationResult<VALUE> right = tmpList.get(i);
@@ -296,7 +295,7 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 
 					final List<STATE> leftEq = mSubEvaluators.get(i - 1).inverseEvaluate(leftEvalResult, oldState);
 					final List<STATE> rightEq = mSubEvaluators.get(i).inverseEvaluate(rightEvalResult, oldState);
-					
+
 					lastResult.add(crossIntersect(leftEq, rightEq));
 				}
 
@@ -310,18 +309,18 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 			} else if (mOperator == LOGICNEG) {
 				evalResultBool = evaluationResult.getBooleanValue().neg();
 			}
-			
+
 			if (returnStates.isEmpty()) {
 				returnStates.add(oldState);
 			}
 			mLogger.logEvaluation(mOperator, returnStates, evaluationResult, oldState);
 			returnList.addAll(returnStates);
 		}
-		
+
 		assert !returnList.isEmpty();
 		return returnList;
 	}
-	
+
 	private List<STATE> crossIntersect(final List<STATE> left, final List<STATE> right) {
 		final List<STATE> returnList = new ArrayList<>(left.size() * right.size());
 		for (final STATE le : left) {
@@ -334,17 +333,17 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 
 	private VALUE inverseEvaluate(final VALUE referenceValue, final VALUE oldValue, final VALUE otherValue,
 			final boolean isLeft) {
-		
+
 		VALUE newValue = null;
-		
+
 		if (mOperator.equals(COMPEQ)) {
 			newValue = otherValue.inverseEquality(oldValue, referenceValue);
 		}
-		
+
 		assert newValue != null;
 		return newValue;
 	}
-	
+
 	@Override
 	public void addSubEvaluator(final ITermEvaluator<VALUE, STATE, VARDECL> evaluator) {
 		if (mSubEvaluators.size() >= mArity) {
@@ -353,12 +352,12 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		}
 		mSubEvaluators.add(evaluator);
 	}
-	
+
 	@Override
 	public boolean hasFreeOperands() {
 		return mSubEvaluators.size() < mArity;
 	}
-	
+
 	@Override
 	public boolean containsBool() {
 		if (mArity == 0) {
@@ -372,7 +371,7 @@ public class ApplicationTermEvaluator<VALUE extends INonrelationalValue<VALUE>, 
 		return mSubEvaluators.stream().anyMatch(eval -> eval.containsBool());
 
 	}
-	
+
 	@Override
 	public Set<String> getVarIdentifiers() {
 		return mVarIdentifiers;

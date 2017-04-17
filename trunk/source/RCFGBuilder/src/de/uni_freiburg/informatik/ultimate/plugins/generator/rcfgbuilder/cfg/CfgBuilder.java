@@ -68,6 +68,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ModelUtils;
+import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -141,11 +142,10 @@ public class CfgBuilder {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mBacktranslator = backtranslator;
-		mAddAssumeForEachAssert = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(RcfgPreferenceInitializer.LABEL_ASSUME_FOR_ASSERT);
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		mAddAssumeForEachAssert = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_ASSUME_FOR_ASSERT);
 
-		mCodeBlockSize = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getEnum(RcfgPreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
+		mCodeBlockSize = prefs.getEnum(RcfgPreferenceInitializer.LABEL_CodeBlockSize, CodeBlockSize.class);
 
 		final String pathAndFilename = ILocation.getAnnotation(unit).getFileName();
 		final String filename = new File(pathAndFilename).getName();
@@ -153,9 +153,9 @@ public class CfgBuilder {
 		final ManagedScript maScript = new ManagedScript(mServices, script);
 
 		mBoogieDeclarations = new BoogieDeclarations(unit, mLogger);
-		final boolean bitvectorInsteadInt = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
-				.getBoolean(RcfgPreferenceInitializer.LABEL_BitvectorWorkaround);
-		mBoogie2smt = new Boogie2SMT(maScript, mBoogieDeclarations, bitvectorInsteadInt, mServices);
+		final boolean bitvectorInsteadInt = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_BitvectorWorkaround);
+		final boolean simplePartialSkolemization = prefs.getBoolean(RcfgPreferenceInitializer.LABEL_SIMPLE_PARTIAL_SKOLEMIZATION);
+		mBoogie2smt = new Boogie2SMT(maScript, mBoogieDeclarations, bitvectorInsteadInt, mServices, simplePartialSkolemization);
 		mIcfg = new BoogieIcfgContainer(mServices, mBoogieDeclarations, mBoogie2smt);
 		mCbf = mIcfg.getCodeBlockFactory();
 		mCbf.storeFactory(storage);
@@ -168,27 +168,30 @@ public class CfgBuilder {
 	 */
 	private Script constructAndInitializeSolver(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final String filename) {
-		final SolverMode solverMode = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+		
+		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
+		
+		final SolverMode solverMode = prefs
 				.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
 
-		final boolean fakeNonIncrementalScript = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+		final boolean fakeNonIncrementalScript = prefs
 				.getBoolean(RcfgPreferenceInitializer.LABEL_FakeNonIncrementalScript);
 
-		final boolean dumpSmtScriptToFile = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+		final boolean dumpSmtScriptToFile = prefs
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
 		final String pathOfDumpedScript =
-				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(RcfgPreferenceInitializer.LABEL_Path);
+				prefs.getString(RcfgPreferenceInitializer.LABEL_Path);
 
-		final String commandExternalSolver = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+		final String commandExternalSolver = prefs
 				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
 
-		final boolean dumpUsatCoreTrackBenchmark = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+		final boolean dumpUsatCoreTrackBenchmark = prefs
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpUnsatCoreTrackBenchmark);
 
-		final boolean dumpMainTrackBenchmark = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+		final boolean dumpMainTrackBenchmark = prefs
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpMainTrackBenchmark);
 
-		final String logicForExternalSolver = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+		final String logicForExternalSolver = prefs
 				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
 		final Settings solverSettings = SolverBuilder.constructSolverSettings(filename, solverMode,
 				fakeNonIncrementalScript, commandExternalSolver, dumpSmtScriptToFile, pathOfDumpedScript);

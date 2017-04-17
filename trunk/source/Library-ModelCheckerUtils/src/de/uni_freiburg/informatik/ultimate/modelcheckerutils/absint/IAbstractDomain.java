@@ -57,11 +57,6 @@ public interface IAbstractDomain<STATE extends IAbstractState<STATE, VARDECL>, A
 	IAbstractStateBinaryOperator<STATE> getWideningOperator();
 
 	/**
-	 * @return The merge operator appropriate for the current abstract domain.
-	 */
-	IAbstractStateBinaryOperator<STATE> getMergeOperator();
-
-	/**
 	 * @return The post operator for the current abstract domain.
 	 */
 	default IAbstractPostOperator<STATE, ACTION, VARDECL> getPostOperator() {

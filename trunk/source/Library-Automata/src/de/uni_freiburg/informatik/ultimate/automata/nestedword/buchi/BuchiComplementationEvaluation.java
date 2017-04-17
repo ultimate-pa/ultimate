@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveNonLiveStates;
@@ -74,7 +75,7 @@ public final class BuchiComplementationEvaluation<LETTER, STATE>
 	 */
 	public <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE> & IDeterminizeStateFactory<STATE>> BuchiComplementationEvaluation(
 			final AutomataLibraryServices services, final SF stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataOperationCanceledException {
+			final INwaOutgoingTransitionProvider<LETTER, STATE> nwa) throws AutomataOperationCanceledException {
 		super(services);
 		// TODO Christian 2016-09-18: This conversion is not necessary for receiving the required type. Use operand?
 		mOperand = new NestedWordAutomatonReachableStates<>(mServices, nwa);

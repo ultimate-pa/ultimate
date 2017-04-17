@@ -40,33 +40,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.Activ
  */
 public class TreeAutomizerPreferenceInitializer extends UltimatePreferenceInitializer {
 
-	public TreeAutomizerPreferenceInitializer() {
-		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
-	}
-
-	@Override
-	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem<?>[] {
-				new UltimatePreferenceItem<SolverMode>(LABEL_Solver,
-						DEF_Solver, PreferenceType.Combo, SolverMode.values()),
-				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand,
-						DEF_ExtSolverCommand, PreferenceType.String),
-				new UltimatePreferenceItem<String>(LABEL_ExtSolverLogic,
-						DEF_ExtSolverLogic, PreferenceType.String),
-		};
-	}
-
 	// some solver commands
-	public static final String Z3_NO_EXTENSIONAL_ARRAYS = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.array.extensional=false";
-	public static final String Z3_NO_MBQI = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.mbqi=false";
+	public static final String Z3_NO_EXTENSIONAL_ARRAYS = 
+			"z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.array.extensional=false";
+	public static final String Z3_NO_MBQI = 
+			"z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.mbqi=false";
 	public static final String Z3_DEFAULT = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
 	public static final String Z3_LOW_TIMEOUT = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:2000";
 	public static final String CVC4 = "cvc4 --tear-down-incremental --print-success --lang smt --tlimit-per=12000";
-	public static final String Princess = "princess +incremental +stdin -timeout=12000";
-	
-	
+	public static final String PRINCESS = "princess +incremental +stdin -timeout=12000";
+
 	/*
-	 * new preferences that belong to the RCFG Builder 
+	 * new preferences that belong to the RCFG Builder
 	 */
 	public static final String LABEL_Solver = "SMT solver";
 	public static final SolverMode DEF_Solver = SolverMode.External_ModelsAndUnsatCoreMode;
@@ -75,36 +60,52 @@ public class TreeAutomizerPreferenceInitializer extends UltimatePreferenceInitia
 
 	public static final String LABEL_ExtSolverLogic = "Logic for external solver";
 	public static final String DEF_ExtSolverLogic = "AUFNIRA";
+	public TreeAutomizerPreferenceInitializer() {
+		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
+	}
+	@Override
+	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
+		return new UltimatePreferenceItem<?>[] {
+				new UltimatePreferenceItem<SolverMode>(LABEL_Solver, DEF_Solver, PreferenceType.Combo,
+						SolverMode.values()),
+				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand, DEF_ExtSolverCommand, PreferenceType.String),
+				new UltimatePreferenceItem<String>(LABEL_ExtSolverLogic, DEF_ExtSolverLogic, PreferenceType.String), };
+	}
 
-	
-//				new UltimatePreferenceItem<SolverMode>(LABEL_Solver,
-//						DEF_Solver, PreferenceType.Combo, SolverMode.values()),
-//				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand,
-//						DEF_ExtSolverCommand, PreferenceType.String),
-//				new UltimatePreferenceItem<String>(LABEL_ExtSolverLogic,
-//						DEF_ExtSolverLogic, PreferenceType.String),
-
+	// new UltimatePreferenceItem<SolverMode>(LABEL_Solver,
+	// DEF_Solver, PreferenceType.Combo, SolverMode.values()),
+	// new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand,
+	// DEF_ExtSolverCommand, PreferenceType.String),
+	// new UltimatePreferenceItem<String>(LABEL_ExtSolverLogic,
+	// DEF_ExtSolverLogic, PreferenceType.String),
 
 	// some solver commands
-//	public static final String Z3_NO_EXTENSIONAL_ARRAYS = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.array.extensional=false";
-//	public static final String Z3_NO_MBQI = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false smt.mbqi=false";
-//	public static final String Z3_DEFAULT = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000";
-//	public static final String Z3_LOW_TIMEOUT = "z3 SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:2000";
-//	public static final String CVC4 = "cvc4 --tear-down-incremental --print-success --lang smt --tlimit-per=12000";
-//	public static final String Princess = "princess +incremental +stdin -timeout=12000";
-	
-	
-	/*
-	 * new preferences that belong to the RCFG Builder 
-	 */
-//	public static final String LABEL_Solver = "SMT solver";
-//	public static final SolverMode DEF_Solver = SolverMode.External_ModelsAndUnsatCoreMode;
-//	public static final String LABEL_ExtSolverCommand = "Command for external solver";
-//	public static final String DEF_ExtSolverCommand = Z3_DEFAULT;
-//
-//	public static final String LABEL_ExtSolverLogic = "Logic for external solver";
-//	public static final String DEF_ExtSolverLogic = "AUFNIRA";
+	// public static final String Z3_NO_EXTENSIONAL_ARRAYS = "z3
+	// SMTLIB2_COMPLIANT=true -memory:1024 -smt2 -in -t:12000 auto_config=false
+	// smt.array.extensional=false";
+	// public static final String Z3_NO_MBQI = "z3 SMTLIB2_COMPLIANT=true
+	// -memory:1024 -smt2 -in -t:12000 auto_config=false smt.mbqi=false";
+	// public static final String Z3_DEFAULT = "z3 SMTLIB2_COMPLIANT=true
+	// -memory:1024 -smt2 -in -t:12000";
+	// public static final String Z3_LOW_TIMEOUT = "z3 SMTLIB2_COMPLIANT=true
+	// -memory:1024 -smt2 -in -t:2000";
+	// public static final String CVC4 = "cvc4 --tear-down-incremental
+	// --print-success --lang smt --tlimit-per=12000";
+	// public static final String Princess = "princess +incremental +stdin
+	// -timeout=12000";
 
-	
-	
+	/*
+	 * new preferences that belong to the RCFG Builder
+	 */
+	// public static final String LABEL_Solver = "SMT solver";
+	// public static final SolverMode DEF_Solver =
+	// SolverMode.External_ModelsAndUnsatCoreMode;
+	// public static final String LABEL_ExtSolverCommand = "Command for external
+	// solver";
+	// public static final String DEF_ExtSolverCommand = Z3_DEFAULT;
+	//
+	// public static final String LABEL_ExtSolverLogic = "Logic for external
+	// solver";
+	// public static final String DEF_ExtSolverLogic = "AUFNIRA";
+
 }

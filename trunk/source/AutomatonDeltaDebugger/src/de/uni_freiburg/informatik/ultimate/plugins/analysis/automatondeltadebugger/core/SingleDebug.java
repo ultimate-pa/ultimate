@@ -49,8 +49,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  *            state type
  */
 public class SingleDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STATE> {
-	private ListIterator<T> mIterator;
-
 	/**
 	 * @param tester
 	 *            Tester.
@@ -59,7 +57,6 @@ public class SingleDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STAT
 	 */
 	public SingleDebug(final AbstractTester<LETTER, STATE> tester, final AbstractShrinker<T, LETTER, STATE> shrinker) {
 		super(tester, shrinker);
-		mIterator = null;
 	}
 
 	@Override
@@ -69,14 +66,14 @@ public class SingleDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STAT
 		if (list.isEmpty()) {
 			return result;
 		}
-		mIterator = list.listIterator();
-		while (mIterator.hasNext()) {
+		final ListIterator<T> iterator = list.listIterator();
+		while (iterator.hasNext()) {
 			if (mShrinker.isTimeoutRequested()) {
 				return result;
 			}
 
 			// extract next element from the list
-			final List<T> sublist = Collections.singletonList(mIterator.next());
+			final List<T> sublist = Collections.singletonList(iterator.next());
 
 			// run test
 			result |= super.test(sublist);

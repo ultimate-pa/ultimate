@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IPreTestLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
 
 /**
  * 
@@ -120,11 +121,17 @@ public abstract class UltimateTestSuite {
 			return;
 		}
 
+		log.info("Writing summaries");
 		for (final ITestSummary summary : mSummaries) {
+			if (summary == null) {
+				log.error("Summary is null");
+				continue;
+			}
 			try {
 				TestUtil.writeSummary(summary, log);
-			} catch (final Exception ex) {
-				ex.printStackTrace();
+			} catch (final Throwable ex) {
+				log.fatal(String.format("There was an exception during the writing of a summary: %s%n%s%n%s",
+						summary.getClass(), ex, ExceptionUtils.getStackTrace(ex)));
 			}
 		}
 		mSummaries = null;

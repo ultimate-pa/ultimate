@@ -49,24 +49,24 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  */
 public class DataflowPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		implements IAbstractPostOperator<DataflowState<ACTION>, ACTION, IProgramVarOrConst> {
-	
+
 	@Override
 	public List<DataflowState<ACTION>> apply(final DataflowState<ACTION> oldstate, final ACTION transition) {
 		final UnmodifiableTransFormula tf = getTransformula(transition);
 		if (tf.getOutVars().isEmpty()) {
 			return Collections.singletonList(oldstate);
 		}
-		
+
 		final Map<IProgramVarOrConst, Set<ACTION>> reach = new HashMap<>(oldstate.getReachingDefinitions());
 		final Map<IProgramVarOrConst, Set<IcfgLocation>> noWrite = new HashMap<>(oldstate.getNoWrite());
-		
+
 		// for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
 		// reach.put(entry.getKey(), Collections.singleton(transition));
 		// }
 		final Set<IProgramVarOrConst> defSet = computeDefSetFromTransFormula(tf, oldstate.getVariables());
 		final Set<IProgramVarOrConst> nonDefSet = new HashSet<>(oldstate.getVariables());
 		nonDefSet.removeAll(defSet);
-		
+
 		for (final IProgramVarOrConst pv : defSet) {
 			reach.put(pv, Collections.singleton(transition));
 			noWrite.put(pv, new HashSet<>());
@@ -79,11 +79,11 @@ public class DataflowPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			}
 			programPoints.add(transition.getSource());
 		}
-		
+
 		return Collections.singletonList(
 				new DataflowState<>(oldstate.getVariables(), oldstate.getDef(), oldstate.getUse(), reach, noWrite));
 	}
-	
+
 	private UnmodifiableTransFormula getTransformula(final ACTION transition) {
 		if (transition instanceof IInternalAction) {
 			return ((IInternalAction) transition).getTransformula();
@@ -94,19 +94,19 @@ public class DataflowPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		}
 		throw new UnsupportedOperationException("Unknown transition type " + transition.getClass().getSimpleName());
 	}
-	
+
 	@Override
 	public List<DataflowState<ACTION>> apply(final DataflowState<ACTION> stateBeforeLeaving,
 			final DataflowState<ACTION> stateAfterLeaving, final ACTION transition) {
 		return null;
 	}
-	
-	private Set<IProgramVarOrConst> computeDefSetFromTransFormula(final UnmodifiableTransFormula tf,
+
+	private static Set<IProgramVarOrConst> computeDefSetFromTransFormula(final UnmodifiableTransFormula tf,
 			final Set<IProgramVarOrConst> allVariables) {
 		// TODO I think we will need something like "constrained vars"
 		// i.e. the set of IProgramVars x where invar(x) = outVar(x) and where
 		// x is constrained by the formula (i.e. like from an assume statement)
-		
+
 		// for now: rudimentary test if it is an assume -- then return all outvars
 		// otherwise return the AssignedVars
 		if (tf.getInVars().keySet().equals(tf.getOutVars().keySet())) { // TODO: don't use keySet()

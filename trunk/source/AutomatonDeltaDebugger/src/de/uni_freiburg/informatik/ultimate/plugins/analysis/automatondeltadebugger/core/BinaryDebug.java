@@ -48,6 +48,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebugg
  *            state type
  */
 public class BinaryDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STATE> {
+	private static final int MINIMUM_INTERVAL_SIZE = 1;
+	
 	private final ArrayDeque<SublistBounds> mStack;
 	private SublistBounds mSublistBounds;
 
@@ -74,7 +76,7 @@ public class BinaryDebug<T, LETTER, STATE> extends AbstractDebug<T, LETTER, STAT
 		final int right = bounds.mRight;
 
 		// do not split intervals of size <= 1 (useless and would run forever)
-		if (right - left <= 1) {
+		if (right - left <= MINIMUM_INTERVAL_SIZE) {
 			return;
 		}
 

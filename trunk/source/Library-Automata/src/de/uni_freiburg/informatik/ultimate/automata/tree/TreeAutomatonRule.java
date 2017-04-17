@@ -49,6 +49,7 @@ public class TreeAutomatonRule<LETTER, STATE> {
 	 * @param dest
 	 */
 	public TreeAutomatonRule(LETTER letter, List<STATE> src, STATE dest) {
+		assert !src.isEmpty();
 		this.mLetter = letter;
 		this.mSrc = src;
 		this.mDest = dest;

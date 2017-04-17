@@ -47,18 +47,18 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class LiveVariablePreOperator<ACTION extends IAction>
 		implements IAbstractTransformer<LiveVariableState<ACTION>, ACTION, IProgramVarOrConst> {
-	
+
 	@Override
 	public List<LiveVariableState<ACTION>> apply(final LiveVariableState<ACTION> oldstate, final ACTION transition) {
 		final UnmodifiableTransFormula tf = getTransformula(transition);
-		final Set<IProgramVarOrConst> gen = new HashSet<IProgramVarOrConst>(tf.getInVars().keySet());
-		final Set<IProgramVarOrConst> kill = new HashSet<IProgramVarOrConst>(tf.getOutVars().keySet());
-		
+		final Set<IProgramVarOrConst> gen = new HashSet<>(tf.getInVars().keySet());
+		final Set<IProgramVarOrConst> kill = new HashSet<>(tf.getOutVars().keySet());
+
 		final Set<IProgramVarOrConst> newLive =
 				AbsIntUtil.union(gen, AbsIntUtil.difference(oldstate.getLiveVariables(), kill));
 		return Collections.singletonList(new LiveVariableState<>(newLive));
 	}
-	
+
 	private UnmodifiableTransFormula getTransformula(final ACTION transition) {
 		if (transition instanceof IInternalAction) {
 			return ((IInternalAction) transition).getTransformula();

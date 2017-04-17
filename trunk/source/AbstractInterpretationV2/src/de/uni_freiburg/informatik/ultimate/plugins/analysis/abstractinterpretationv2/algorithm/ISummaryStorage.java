@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
  */
 public interface ISummaryStorage<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION> {
 	
-	AbstractMultiState<STATE, ACTION, VARDECL> getSummaryPostState(final ACTION summaryAction,
-			final AbstractMultiState<STATE, ACTION, VARDECL> preCallState);
+	AbstractMultiState<STATE, VARDECL> getSummaryPostState(final ACTION summaryAction,
+			final AbstractMultiState<STATE, VARDECL> preCallState);
 
 }

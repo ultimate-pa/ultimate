@@ -51,7 +51,11 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs = {
 		/***** Category 5. Termination *****/
 		/*** Subcategory  Termination-MainControlFlow ***/
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ ".*_false-termination.*\\.c", ".*_true-termination.*\\.c" }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", 
+				new String[]{ ".*_false-termination.*\\.c|.*_true-termination.*\\.c" }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-linkedlists/", 
+				new String[]{ ".*_false-termination.*\\.c.i|.*_true-termination.*\\.c.i" }, mFilesPerDirectoryLimit) ,
+
 //		
 //		new DirectoryFileEndingsPair("examples/svcomp/termination-15/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
 //		
@@ -72,7 +76,7 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 	 */
 	@Override
 	public long getTimeout() {
-		return 180 * 1000;
+		return 60 * 1000;
 	}
 
 	/**
@@ -83,7 +87,7 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 	 * 
 	 */
 	private static final String[] mSettings = {
-		"svcomp2016/svcomp-Termination-64bit-Automizer_Default.epf",
+		"svcomp2017/automizer/svcomp-Termination-32bit-Automizer_Default.epf",
 //		"buchiAutomizer/gnta/svcomp-Termination-64bit-Automizer_GntaZero.epf",
 //		"buchiAutomizer/gnta/svcomp-Termination-64bit-Automizer_DefaultBarcelogic.epf",
 //		"buchiAutomizer/gnta/svcomp-Termination-64bit-Automizer_Default.epf",
@@ -91,7 +95,8 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 	
 	
 	private static final String[] mCToolchains = {
-		"BuchiAutomizerCInlineWithBlockEncoding.xml",
+//		"BuchiAutomizerCInlineWithBlockEncoding.xml",
+		"BuchiAutomizerCInline.xml",
 	};
 
 	

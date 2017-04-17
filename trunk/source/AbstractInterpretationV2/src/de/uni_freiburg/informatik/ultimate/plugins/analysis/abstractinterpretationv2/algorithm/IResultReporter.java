@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public interface IResultReporter<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL, LOCATION> {
 	
 	void reportPossibleError(
-			AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, ?, LOCATION> cex);
+			AbstractCounterexample<AbstractMultiState<STATE, VARDECL>, ACTION, ?, LOCATION> cex);
 
 	void reportSafe(ACTION elem);
 

@@ -43,10 +43,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  */
 public class LiveVariableDomain<ACTION extends IAction>
 		implements IAbstractDomain<LiveVariableState<ACTION>, ACTION, IProgramVarOrConst> {
-	
+
 	private final LiveVariablePreOperator<ACTION> mPre;
-	private final LiveVariableMergeOperator mMerge;
-	private final ILogger mLogger;
+	private final IAbstractStateBinaryOperator<LiveVariableState<ACTION>> mMerge;
 
 	/**
 	 * Create the live variable domain.
@@ -56,8 +55,7 @@ public class LiveVariableDomain<ACTION extends IAction>
 	 */
 	public LiveVariableDomain(final ILogger logger) {
 		mPre = new LiveVariablePreOperator<>();
-		mMerge = new LiveVariableMergeOperator();
-		mLogger = logger;
+		mMerge = (a, b) -> a.union(b);
 	}
 
 	@Override
@@ -81,32 +79,7 @@ public class LiveVariableDomain<ACTION extends IAction>
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<LiveVariableState<ACTION>> getMergeOperator() {
-		return mMerge;
-	}
-
-	@Override
 	public IAbstractTransformer<LiveVariableState<ACTION>, ACTION, IProgramVarOrConst> getPreOperator() {
 		return mPre;
-	}
-
-	private final class LiveVariableMergeOperator implements IAbstractStateBinaryOperator<LiveVariableState<ACTION>> {
-		
-		@Override
-		public LiveVariableState<ACTION> apply(final LiveVariableState<ACTION> first,
-				final LiveVariableState<ACTION> second) {
-			final LiveVariableState<ACTION> rtr = first.union(second);
-			if (mLogger.isDebugEnabled()) {
-				final StringBuilder sb = new StringBuilder();
-				sb.append("merge(");
-				sb.append(first.toLogString());
-				sb.append(',');
-				sb.append(second.toLogString());
-				sb.append(") = ");
-				sb.append(rtr.toLogString());
-				mLogger.debug(sb);
-			}
-			return rtr;
-		}
 	}
 }

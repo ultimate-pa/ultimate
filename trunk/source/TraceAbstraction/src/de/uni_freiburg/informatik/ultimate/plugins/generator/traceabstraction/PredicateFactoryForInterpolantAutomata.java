@@ -90,8 +90,7 @@ public class PredicateFactoryForInterpolantAutomata
 					upPredicates.add(current);
 				}
 			}
-			final Term conjunction = mPredicateFactory.and(upPredicates);
-			final IPredicate result = mPredicateFactory.newPredicate(conjunction);
+			final IPredicate result = mPredicateFactory.and(upPredicates);
 			return result;
 		}
 		return mPredicateFactory.newDontCarePredicate(null);
@@ -109,9 +108,7 @@ public class PredicateFactoryForInterpolantAutomata
 
 	@Override
 	public IPredicate merge(final Collection<IPredicate> states) {
-		final Term disjunction = mPredicateFactory.or(false, states);
-		final IPredicate result = mPredicateFactory.newPredicate(disjunction);
-		return result;
+		return mPredicateFactory.or(false, states);
 	}
 
 	@Override
@@ -154,7 +151,7 @@ public class PredicateFactoryForInterpolantAutomata
 		}
 		final IcfgLocation c2PP = ((ISLPredicate) c2).getProgramPoint();
 		programPoints[programPoints.length - 1] = c2PP;
-		final Term conjunction = mPredicateFactory.and(c1, c2);
+		final Term conjunction = mPredicateFactory.and(c1, c2).getFormula();
 		final IMLPredicate result = mPredicateFactory.newMLPredicate(programPoints, conjunction);
 		return result;
 	}
@@ -163,7 +160,7 @@ public class PredicateFactoryForInterpolantAutomata
 	public IPredicate getContentOnPetriNet2FiniteAutomaton(final Marking<?, IPredicate> marking) {
 		/*
 		 * TODO Christian 2017-02-15 This method was not implemented although it was used by class CegarLoopJulian in
-		 *      method acceptsPetriViaFA().
+		 * method acceptsPetriViaFA().
 		 */
 		throw new UnsupportedOperationException("State factory operation not implemented!");
 	}

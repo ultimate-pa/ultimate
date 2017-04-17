@@ -172,7 +172,17 @@ public class AbsIntPredicateInterpolantSequenceWeakener<STATE extends IAbstractS
 			mVarsToKeep = new HashSet<>();
 		}
 
-		mVarsToKeep.addAll(transition.getTransformula().getInVars().keySet());
+		final Set<IProgramVar> inVars = transition.getTransformula().getInVars().keySet();
+		final Set<IProgramVar> outVars = transition.getTransformula().getOutVars().keySet();
+
+		mVarsToKeep.addAll(inVars);
+
+		// OutVars that do not occur in the InVars may be removed from the prestate as they are overwritten anyways.
+		final Set<IProgramVar> removableOutVars =
+				outVars.stream().filter(var -> !inVars.contains(var)).collect(Collectors.toSet());
+
+		mVarsToKeep.removeAll(removableOutVars);
+
 		mLogger.debug("Keeping variables " + mVarsToKeep + " for transition " + transition);
 
 		final Set<STATE> newMultiState = new HashSet<>();

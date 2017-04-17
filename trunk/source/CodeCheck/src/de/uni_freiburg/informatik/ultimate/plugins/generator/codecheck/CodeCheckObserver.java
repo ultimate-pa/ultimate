@@ -368,7 +368,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				break;
 			}
 		}
-		if (procRootsToCheck.isEmpty()) { 
+		if (procRootsToCheck.isEmpty()) {
 			// -> no Ultimate.start present
 			procRootsToCheck.addAll(mGraphRoot.getOutgoingNodes());
 		}
@@ -652,8 +652,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			return new TraceCheckerSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
 					new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
 					AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
-					mPredicateFactory, mPredicateUnifier, InterpolationTechnique.ForwardPredicates, mCsToolkit.getManagedScript(),
-					XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE,
+					mPredicateFactory, mPredicateUnifier, InterpolationTechnique.ForwardPredicates,
+					mCsToolkit.getManagedScript(), XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE,
 					TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())));
 		case ForwardPredicates:
 		case BackwardPredicates:
@@ -676,8 +676,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				return new TraceCheckerSpWp(mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate(),
 						new TreeMap<Integer, IPredicate>(), errorRun.getWord(), mCsToolkit,
 						AssertCodeBlockOrder.NOT_INCREMENTALLY, UnsatCores.CONJUNCT_LEVEL, true, mServices, true,
-						mPredicateFactory, mPredicateUnifier, mGlobalSettings.getInterpolationMode(), mCsToolkit.getManagedScript(),
-						XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE,
+						mPredicateFactory, mPredicateUnifier, mGlobalSettings.getInterpolationMode(),
+						mCsToolkit.getManagedScript(), XNF_CONVERSION_TECHNIQUE, SIMPLIFICATION_TECHNIQUE,
 						TraceCheckerUtils.getSequenceOfProgramPoints(NestedWord.nestedWord(errorRun.getWord())));
 			}
 		default:
@@ -710,7 +710,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		for (final Entry<IcfgLocation, Set<AnnotatedProgramPoint>> kvp : pp2app.entrySet()) {
 			IPredicate annot = falsePred;
 			for (final AnnotatedProgramPoint app : kvp.getValue()) {
-				final Term tvp = mPredicateFactory.or(false, annot, app.getPredicate());
+				final Term tvp = mPredicateFactory.or(false, annot, app.getPredicate()).getFormula();
 				annot = mPredicateFactory.newSPredicate(kvp.getKey(), tvp);
 			}
 			pp2HoareAnnotation.put(kvp.getKey(), annot.getFormula());

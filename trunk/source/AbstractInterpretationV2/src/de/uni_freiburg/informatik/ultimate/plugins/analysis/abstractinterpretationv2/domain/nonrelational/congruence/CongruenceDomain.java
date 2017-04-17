@@ -32,7 +32,6 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState<I
 	private final BoogieIcfgContainer mRootAnnotation;
 
 	private IAbstractStateBinaryOperator<CongruenceDomainState<IBoogieVar>> mWideningOperator;
-	private IAbstractStateBinaryOperator<CongruenceDomainState<IBoogieVar>> mMergeOperator;
 	private IAbstractPostOperator<CongruenceDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> mPostOperator;
 
 	public CongruenceDomain(final ILogger logger, final IUltimateServiceProvider services,
@@ -65,14 +64,6 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState<I
 			mWideningOperator = new CongruenceMergeOperator<>();
 		}
 		return mWideningOperator;
-	}
-
-	@Override
-	public IAbstractStateBinaryOperator<CongruenceDomainState<IBoogieVar>> getMergeOperator() {
-		if (mMergeOperator == null) {
-			mMergeOperator = new CongruenceMergeOperator<>();
-		}
-		return mMergeOperator;
 	}
 
 	@Override

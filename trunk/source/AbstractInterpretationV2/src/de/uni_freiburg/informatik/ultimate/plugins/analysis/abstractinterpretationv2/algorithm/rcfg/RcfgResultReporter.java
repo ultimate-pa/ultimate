@@ -65,14 +65,14 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE, VARDECL>, AC
 
 	@Override
 	public void reportPossibleError(
-			final AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, ?, LOC> cex) {
+			final AbstractCounterexample<AbstractMultiState<STATE, VARDECL>, ACTION, ?, LOC> cex) {
 		final Map<Integer, ProgramState<Term>> programStates = new HashMap<>();
 		final List<IcfgEdge> trace = new ArrayList<>();
 
 		programStates.put(-1, computeProgramState(cex.getInitialState()));
 
 		int i = 0;
-		for (final Triple<AbstractMultiState<STATE, ACTION, VARDECL>, LOC, ACTION> elem : cex.getAbstractExecution()) {
+		for (final Triple<AbstractMultiState<STATE, VARDECL>, LOC, ACTION> elem : cex.getAbstractExecution()) {
 			trace.add(elem.getThird().getLabel());
 			programStates.put(i, computeProgramState(elem.getFirst()));
 			++i;
@@ -86,12 +86,12 @@ public class RcfgResultReporter<STATE extends IAbstractState<STATE, VARDECL>, AC
 	}
 
 	private ProgramState<Term>
-			computeProgramState(final AbstractMultiState<STATE, ACTION, VARDECL> abstractMultiState) {
+			computeProgramState(final AbstractMultiState<STATE, VARDECL> abstractMultiState) {
 		// TODO: Compute program state
 		return new ProgramState<>(Collections.emptyMap());
 	}
 
-	private LOC getLast(final AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, ?, LOC> cex) {
+	private LOC getLast(final AbstractCounterexample<AbstractMultiState<STATE, VARDECL>, ACTION, ?, LOC> cex) {
 		final int size = cex.getAbstractExecution().size();
 		return cex.getAbstractExecution().get(size - 1).getSecond();
 	}

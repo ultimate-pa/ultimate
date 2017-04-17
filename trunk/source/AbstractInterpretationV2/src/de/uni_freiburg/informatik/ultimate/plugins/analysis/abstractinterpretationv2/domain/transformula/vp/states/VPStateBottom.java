@@ -28,6 +28,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -60,5 +63,30 @@ public class VPStateBottom<ACTION extends IIcfgTransition<IcfgLocation>> extends
 	@Override
 	public boolean isTop() {
 		return false;
+	}
+	
+	@Override
+	public VPState<ACTION> removeVariables(final Collection<IProgramVarOrConst> variables) {
+		final Set<IProgramVarOrConst> newVariables = new HashSet<>(mVars);
+		newVariables.removeAll(variables);
+		return mFactory.getBottomState(newVariables);
+	}
+
+	@Override
+	public VPState<ACTION> removeVariable(final IProgramVarOrConst variable) {
+		return removeVariables(Collections.singleton(variable));
+	}
+	
+	
+	@Override
+	public VPState<ACTION> addVariables(final Collection<IProgramVarOrConst> variables) {
+		final Set<IProgramVarOrConst> newVariables = new HashSet<>(mVars);
+		newVariables.addAll(variables);
+		return mFactory.getBottomState(newVariables);
+	}
+
+	@Override
+	public VPState<ACTION> addVariable(final IProgramVarOrConst variable) {
+		return addVariables(Collections.singleton(variable));
 	}
 }

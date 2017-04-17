@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
@@ -74,12 +75,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.ITermProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.StatementSequence.Origin;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -170,7 +171,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			final Call call) {
 
 		final CallStatement callStatement = call.getCallStatement();
-		final CallInfo callInfo = mCallInfoCache.getCallInfo(callStatement, stateBeforeLeaving);
+		final CallInfo callInfo = mCallInfoCache.getCallInfo(callStatement, stateBeforeLeaving.getVariables());
 		// If there are no arguments, we don't need to rewrite states.
 		if (callInfo.getInParamAssign() == null) {
 			return addOldvars(Collections.singletonList(stateAfterLeaving), callInfo.getOldVarAssign());
@@ -298,41 +299,13 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		final List<STATE> rets = new ArrayList<>();
 
 		// Construct conjunction of input parameter expressions
-		if (inputParameterExpressionTerms.size() > 0) {
-			Expression current = inputParameterExpressionTerms.get(0);
-
-			for (int i = 1; i < inputParameterExpressionTerms.size(); i++) {
-				current = new BinaryExpression(correspondingCall.getLocation(), Operator.LOGICAND, current,
-						inputParameterExpressionTerms.get(i));
-
-				if (current.getType() == null) {
-					current.setType(BoogieType.TYPE_BOOL);
-				}
-			}
-
-			// Construct an assume statement
-			final AssumeStatement assume = new AssumeStatement(correspondingCall.getLocation(), current);
-			final List<Statement> stmtList = new ArrayList<>();
-			stmtList.add(assume);
-
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("    Computing post after return for arguments with statement: "
-						+ BoogiePrettyPrinter.print(assume));
-			}
-
-			final IcfgEdge newPostBlock = mRootAnnotation.getCodeBlockFactory().constructStatementSequence(null, null,
-					stmtList, Origin.IMPLEMENTATION);
-
-			final List<STATE> postResults = apply(stateAfterLeaving, newPostBlock);
-
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("    Resulting post states: "
-						+ postResults.stream().map(r -> r.toLogString()).collect(Collectors.toList()));
-			}
+		if (!inputParameterExpressionTerms.isEmpty()) {
+			final List<STATE> postResults =
+					applyInputParamExpressions(stateAfterLeaving, correspondingCall, inputParameterExpressionTerms);
 			rets.addAll(postResults);
 		}
 
-		if (rets.size() == 0) {
+		if (rets.isEmpty()) {
 			rets.add(stateAfterLeaving);
 		}
 
@@ -352,14 +325,47 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 					updateBoolValsArray, new IBoogieVar[0], stateAfterLeaving.getArray(0)));
 		}
 
+		// add oldvars
 		return NonrelationalUtils.mergeStatesIfNecessary(returnList, mParallelStates);
 	}
 
+	private List<STATE> applyInputParamExpressions(final STATE stateAfterLeaving, final CallStatement correspondingCall,
+			final List<Expression> inputParameterExpressionTerms) {
+		Expression current = inputParameterExpressionTerms.get(0);
+
+		for (int i = 1; i < inputParameterExpressionTerms.size(); i++) {
+			current = new BinaryExpression(correspondingCall.getLocation(), Operator.LOGICAND, current,
+					inputParameterExpressionTerms.get(i));
+
+			if (current.getType() == null) {
+				current.setType(BoogieType.TYPE_BOOL);
+			}
+		}
+
+		// Construct an assume statement
+		final AssumeStatement assume = new AssumeStatement(correspondingCall.getLocation(), current);
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("    Computing post after return for arguments with statement: "
+					+ BoogiePrettyPrinter.print(assume));
+		}
+		final List<STATE> postResults = handleInternalTransition(stateAfterLeaving, Collections.singletonList(assume));
+
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug("    Resulting post states: "
+					+ postResults.stream().map(r -> r.toLogString()).collect(Collectors.toList()));
+		}
+		return postResults;
+	}
+
 	private List<STATE> handleInternalTransition(final STATE oldstate, final IcfgEdge transition) {
+		final List<Statement> statements = mStatementExtractor.process(transition.getLabel());
+		return handleInternalTransition(oldstate, statements);
+	}
+
+	private List<STATE> handleInternalTransition(final STATE oldstate, final List<Statement> statements) {
 		List<STATE> currentStates = new ArrayList<>();
 		currentStates.add(oldstate);
-		final List<Statement> statements = mStatementExtractor.process(transition.getLabel());
-
 		for (final Statement stmt : statements) {
 			final List<STATE> afterProcessStates = new ArrayList<>();
 			for (final STATE currentState : currentStates) {
@@ -396,7 +402,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	/**
 	 * After all parameters of a call are assigned, we add new oldvar values to all vars which are modified by the new
 	 * procedure.
-	 * 
+	 *
 	 * @param pendingPostStates
 	 * @param oldVarAssign
 	 * @return
@@ -404,6 +410,10 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	private List<STATE> addOldvars(final List<STATE> pendingPostStates, final Statement oldVarAssign) {
 		if (oldVarAssign == null) {
 			return pendingPostStates;
+		}
+		if (mLogger.isDebugEnabled()) {
+			mLogger.debug(
+					AbsIntPrefInitializer.INDENT + "Adding oldvars via " + BoogiePrettyPrinter.print(oldVarAssign));
 		}
 		final List<STATE> postStates = new ArrayList<>();
 
@@ -514,23 +524,23 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	}
 
 	private class CallInfoCache {
-		private final Map<CallStatement, CallInfo> mCallInfoCache;
+		private final Map<CallStatement, CallInfo> mCall2CallInfo;
 
 		private CallInfoCache() {
-			mCallInfoCache = new HashMap<>();
+			mCall2CallInfo = new HashMap<>();
 		}
 
-		private CallInfo getCallInfo(final CallStatement callStatement, final STATE stateBeforeLeaving) {
-			final CallInfo callAssignment = mCallInfoCache.get(callStatement);
+		private CallInfo getCallInfo(final CallStatement callStatement, final Collection<IBoogieVar> callVars) {
+			final CallInfo callAssignment = mCall2CallInfo.get(callStatement);
 			if (callAssignment != null) {
 				return callAssignment;
 			}
-			final CallInfo newCallAssignment = createCallInfo(callStatement, stateBeforeLeaving);
-			mCallInfoCache.put(callStatement, newCallAssignment);
+			final CallInfo newCallAssignment = createCallInfo(callStatement, callVars);
+			mCall2CallInfo.put(callStatement, newCallAssignment);
 			return newCallAssignment;
 		}
 
-		private CallInfo createCallInfo(final CallStatement callStatement, final STATE stateBeforeLeaving) {
+		private CallInfo createCallInfo(final CallStatement callStatement, final Collection<IBoogieVar> callVars) {
 			final Expression[] args = callStatement.getArguments();
 			final List<IBoogieVar> realInParams = getInParams(callStatement);
 			final AssignmentStatement oldVarAssign = getOldvarAssign(callStatement);
@@ -542,8 +552,8 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 			// create a multi-assignment statement that assigns each procedure argument (expression) to a temporary
 			// variable
-			final List<String> tmpParamNames = getArgumentTemporaries(args.length, stateBeforeLeaving.getVariables()
-					.stream().map(IBoogieVar::getGloballyUniqueId).collect(Collectors.toSet()));
+			final List<String> tmpParamNames = getArgumentTemporaries(args.length,
+					callVars.stream().map(IBoogieVar::getGloballyUniqueId).collect(Collectors.toSet()));
 			final List<LeftHandSide> idents = new ArrayList<>();
 			final Map<LeftHandSide, IBoogieVar> tmpVarUses = new HashMap<>();
 			final List<IBoogieVar> tmpParamVars = new ArrayList<>();

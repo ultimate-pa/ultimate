@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.ultimatetest.summaries;
@@ -44,13 +44,13 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
  */
 public abstract class LatexSummary extends BaseCsvProviderSummary {
 
-	public LatexSummary(Class<? extends UltimateTestSuite> ultimateTestSuite,
-			Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks,
-			ColumnDefinition[] columnDefinitions) {
+	public LatexSummary(final Class<? extends UltimateTestSuite> ultimateTestSuite,
+			final Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks,
+			final ColumnDefinition[] columnDefinitions) {
 		super(ultimateTestSuite, benchmarks, columnDefinitions);
 	}
 
-	protected Set<String> getDistinctFolderSuffixes(PartitionedResults results) {
+	protected Set<String> getDistinctFolderSuffixes(final PartitionedResults results) {
 		final Set<File> folders = results.All.stream().flatMap(c -> Arrays.stream(c.getKey().getInput()))
 				.map(a -> a.getParentFile()).collect(Collectors.toSet());
 
@@ -93,16 +93,15 @@ public abstract class LatexSummary extends BaseCsvProviderSummary {
 			suffix = suffix.substring(0, suffix.length() - File.separator.length());
 			rtr.add(suffix);
 		}
-		assert rtr.size() == folders.size();
 
 		return rtr;
 	}
 
-	protected boolean isInvalidForLatex(String cell) {
+	protected boolean isInvalidForLatex(final String cell) {
 		return cell == null || cell.contains("[");
 	}
 
-	protected String removeInvalidCharsForLatex(String cell) {
+	protected String removeInvalidCharsForLatex(final String cell) {
 		return cell.replace("\\", "{\\textbackslash}").replace("_", "\\_");
 	}
 

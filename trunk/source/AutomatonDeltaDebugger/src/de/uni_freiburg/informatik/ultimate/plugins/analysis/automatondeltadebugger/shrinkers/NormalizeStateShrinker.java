@@ -29,10 +29,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.automatondeltadebug
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
@@ -76,7 +78,7 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create(mAutomaton);
 
 		// rename states
-		final HashMap<STATE, STATE> old2new = renameStates(automaton, list);
+		final Map<STATE, STATE> old2new = renameStates(automaton, list);
 
 		// add transitions
 		addTransitions(automaton, old2new);
@@ -93,7 +95,7 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 	 *            list of states
 	 * @return map old state -> new state
 	 */
-	private HashMap<STATE, STATE> renameStates(final INestedWordAutomaton<LETTER, STATE> automaton,
+	private Map<STATE, STATE> renameStates(final INestedWordAutomaton<LETTER, STATE> automaton,
 			final List<STATE> list) {
 		/*
 		 * true: try to reuse old names if they fit the pattern<br>
@@ -103,13 +105,13 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 		 */
 		final boolean reuseOldNames = mAutomaton.size() != list.size();
 
-		final HashSet<STATE> noninitialStates = new HashSet<>();
-		final ArrayDeque<STATE> stack = new ArrayDeque<>();
-		final HashSet<STATE> remaining = filterStates(list, noninitialStates, stack);
+		final Set<STATE> noninitialStates = new HashSet<>();
+		final Deque<STATE> stack = new ArrayDeque<>();
+		final Set<STATE> remaining = filterStates(list, noninitialStates, stack);
 		final Set<STATE> oldStates = mAutomaton.getStates();
 
-		final HashMap<STATE, STATE> old2new = new HashMap<>();
-		final HashSet<STATE> onStackOrVisited = new HashSet<>(stack);
+		final Map<STATE, STATE> old2new = new HashMap<>();
+		final Set<STATE> onStackOrVisited = new HashSet<>(stack);
 		int initials = 0;
 		int finals = 0;
 		int normals = 0;
@@ -138,7 +140,7 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 			// create new state if not already present
 			final STATE newState;
 			// NOTE: order matters, state must be removed in any case!
-			if (remaining.remove(oldState) && reuseOldNames) {
+			if (reuseOldNames && remaining.remove(oldState)) {
 				// do not reassign this state name (was not in the list)
 				newState = oldState;
 			} else {
@@ -202,8 +204,8 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 	 *            stack of initial states
 	 * @return remaining original states not visited
 	 */
-	private HashSet<STATE> filterStates(final List<STATE> list, final HashSet<STATE> noninitialStates,
-			final ArrayDeque<STATE> initialStates) {
+	private HashSet<STATE> filterStates(final List<STATE> list, final Set<STATE> noninitialStates,
+			final Deque<STATE> initialStates) {
 		final HashSet<STATE> remaining = new HashSet<>(mAutomaton.getStates());
 
 		for (final STATE state : list) {
@@ -231,8 +233,8 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 	 * @param onStackOrVisited
 	 *            states on stack or visited
 	 */
-	private void addMissingStates(final HashSet<STATE> noninitialStates, final ArrayDeque<STATE> stack,
-			final HashSet<STATE> remaining, final HashSet<STATE> onStackOrVisited) {
+	private void addMissingStates(final Set<STATE> noninitialStates, final Deque<STATE> stack,
+			final Set<STATE> remaining, final Set<STATE> onStackOrVisited) {
 		for (final STATE state : noninitialStates) {
 			if (onStackOrVisited.add(state)) {
 				stack.push(state);
@@ -255,8 +257,7 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 	 * @param oldState
 	 *            state in the old automaton
 	 */
-	private void considerSuccessors(final ArrayDeque<STATE> stack, final HashSet<STATE> onStackOrVisited,
-			final STATE oldState) {
+	private void considerSuccessors(final Deque<STATE> stack, final Set<STATE> onStackOrVisited, final STATE oldState) {
 		for (final OutgoingInternalTransition<LETTER, STATE> trans : mAutomaton.internalSuccessors(oldState)) {
 			final STATE succ = trans.getSucc();
 			checkAndAddSuccessor(stack, onStackOrVisited, succ);
@@ -281,8 +282,7 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 	 * @param succ
 	 *            successor
 	 */
-	private void checkAndAddSuccessor(final ArrayDeque<STATE> stack, final HashSet<STATE> onStackOrVisited,
-			final STATE succ) {
+	private void checkAndAddSuccessor(final Deque<STATE> stack, final Set<STATE> onStackOrVisited, final STATE succ) {
 		if (onStackOrVisited.add(succ)) {
 			stack.push(succ);
 		}
@@ -296,8 +296,7 @@ public class NormalizeStateShrinker<LETTER, STATE> extends AbstractShrinker<STAT
 	 * @param old2new
 	 *            map old state -> new state
 	 */
-	private void addTransitions(final INestedWordAutomaton<LETTER, STATE> automaton,
-			final HashMap<STATE, STATE> old2new) {
+	private void addTransitions(final INestedWordAutomaton<LETTER, STATE> automaton, final Map<STATE, STATE> old2new) {
 		// add transitions
 		for (final Entry<STATE, STATE> entry : old2new.entrySet()) {
 			final STATE oldState = entry.getKey();

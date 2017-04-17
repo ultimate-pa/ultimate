@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 
 /**
  *
@@ -125,6 +126,28 @@ public class LiveVariableState<ACTION extends IAction>
 	}
 
 	@Override
+	public LiveVariableState<ACTION> intersect(final LiveVariableState<ACTION> other) {
+		final Set<IProgramVarOrConst> intersection = AbsIntUtil.intersect(mLive, other.mLive);
+		if (intersection.equals(mLive)) {
+			return this;
+		} else if (intersection.equals(other.mLive)) {
+			return other;
+		}
+		return new LiveVariableState<>(intersection);
+	}
+
+	@Override
+	public LiveVariableState<ACTION> union(final LiveVariableState<ACTION> other) {
+		final Set<IProgramVarOrConst> union = AbsIntUtil.union(mLive, other.mLive);
+		if (union.equals(mLive)) {
+			return this;
+		} else if (union.equals(other.mLive)) {
+			return other;
+		}
+		return new LiveVariableState<>(union);
+	}
+
+	@Override
 	public Term getTerm(final Script script) {
 		return script.term("true");
 	}
@@ -170,18 +193,6 @@ public class LiveVariableState<ACTION extends IAction>
 		return other.mId == mId;
 	}
 
-	LiveVariableState<ACTION> union(final LiveVariableState<ACTION> other) {
-		final Set<IProgramVarOrConst> newLive = new HashSet<>();
-		newLive.addAll(other.mLive);
-		newLive.addAll(mLive);
-		if (newLive.equals(mLive)) {
-			return this;
-		} else if (newLive.equals(other.mLive)) {
-			return other;
-		}
-		return new LiveVariableState<>(newLive);
-	}
-
 	public Set<IProgramVarOrConst> getLiveVariables() {
 		return Collections.unmodifiableSet(mLive);
 	}
@@ -201,4 +212,5 @@ public class LiveVariableState<ACTION extends IAction>
 	public Set<IProgramVarOrConst> getVariables() {
 		return Collections.emptySet();
 	}
+
 }

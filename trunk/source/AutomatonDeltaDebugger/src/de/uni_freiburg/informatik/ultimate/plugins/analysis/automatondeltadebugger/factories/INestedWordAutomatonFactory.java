@@ -106,8 +106,8 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	 *            return alphabet
 	 * @return new {@link INestedWordAutomaton} object with specified alphabets
 	 */
-	protected abstract INestedWordAutomaton<LETTER, STATE> createWithAlphabets(final Set<LETTER> internalAlphabet,
-			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet);
+	protected abstract INestedWordAutomaton<LETTER, STATE> createWithAlphabets(Set<LETTER> internalAlphabet,
+			Set<LETTER> callAlphabet, Set<LETTER> returnAlphabet);
 
 	/**
 	 * This method assumes that the passed state is present of the original automaton.
@@ -133,8 +133,8 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	 * @param isFinal
 	 *            true iff state is final
 	 */
-	public abstract void addState(final INestedWordAutomaton<LETTER, STATE> automaton, final STATE state,
-			final boolean isInitial, final boolean isFinal);
+	public abstract void addState(INestedWordAutomaton<LETTER, STATE> automaton, STATE state, boolean isInitial,
+			boolean isFinal);
 
 	/**
 	 * Adds an internal transition.
@@ -148,8 +148,8 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	 * @param succ
 	 *            successor state
 	 */
-	public abstract void addInternalTransition(final INestedWordAutomaton<LETTER, STATE> automaton, final STATE pred,
-			final LETTER letter, final STATE succ);
+	public abstract void addInternalTransition(INestedWordAutomaton<LETTER, STATE> automaton, STATE pred, LETTER letter,
+			STATE succ);
 
 	/**
 	 * Adds call transition.
@@ -163,8 +163,8 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	 * @param succ
 	 *            successor state
 	 */
-	public abstract void addCallTransition(final INestedWordAutomaton<LETTER, STATE> automaton, final STATE pred,
-			final LETTER letter, final STATE succ);
+	public abstract void addCallTransition(INestedWordAutomaton<LETTER, STATE> automaton, STATE pred, LETTER letter,
+			STATE succ);
 
 	/**
 	 * Adds a return transition.
@@ -180,8 +180,8 @@ public abstract class INestedWordAutomatonFactory<LETTER, STATE> {
 	 * @param succ
 	 *            successor state
 	 */
-	public abstract void addReturnTransition(final INestedWordAutomaton<LETTER, STATE> automaton, final STATE pred,
-			final STATE hier, final LETTER letter, final STATE succ);
+	public abstract void addReturnTransition(INestedWordAutomaton<LETTER, STATE> automaton, STATE pred, STATE hier,
+			LETTER letter, STATE succ);
 
 	/**
 	 * Adds a collection of states.

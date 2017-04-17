@@ -92,12 +92,12 @@ public class CommonSingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Se
 	public List<Set<Pair<STATE, STATE>>> extractList() {
 		final Map<LETTER, Set<STATE>> internalLetter2statesWithSingleTransition = new HashMap<>();
 		for (final STATE state : mAutomaton.getStates()) {
-			final Iterator<LETTER> it = mAutomaton.lettersInternal(state).iterator();
-			if (!it.hasNext()) {
+			final Iterator<LETTER> iterator = mAutomaton.lettersInternal(state).iterator();
+			if (!iterator.hasNext()) {
 				continue;
 			}
-			final LETTER letter = it.next();
-			if (it.hasNext()) {
+			final LETTER letter = iterator.next();
+			if (iterator.hasNext()) {
 				continue;
 			}
 			addToMapIfDeterministic(letter, state, internalLetter2statesWithSingleTransition,
@@ -119,10 +119,10 @@ public class CommonSingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Se
 
 	private void addToMapIfDeterministic(final LETTER letter, final STATE state, final Map<LETTER, Set<STATE>> map,
 			final BiFunction<STATE, LETTER, Iterable<? extends IOutgoingTransitionlet<LETTER, STATE>>> succProvider) {
-		final Iterator<? extends IOutgoingTransitionlet<LETTER, STATE>> it =
+		final Iterator<? extends IOutgoingTransitionlet<LETTER, STATE>> iterator =
 				succProvider.apply(state, letter).iterator();
-		it.next();
-		if (it.hasNext()) {
+		iterator.next();
+		if (iterator.hasNext()) {
 			// nondeterministic
 			return;
 		}

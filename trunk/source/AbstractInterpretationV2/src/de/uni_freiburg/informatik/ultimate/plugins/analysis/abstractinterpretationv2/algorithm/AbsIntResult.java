@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractDomain;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractCounterexample;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
@@ -62,7 +61,7 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE, VARDECL>, AC
 	private final IAbstractDomain<STATE, ACTION, VARDECL> mAbstractDomain;
 	private final IVariableProvider<STATE, ACTION, VARDECL> mVariableProvider;
 	private final ITransitionProvider<ACTION, LOCATION> mTransProvider;
-	private final List<AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>> mCounterexamples;
+	private final List<AbstractCounterexample<AbstractMultiState<STATE, VARDECL>, ACTION, VARDECL, LOCATION>> mCounterexamples;
 	private final AbsIntBenchmark<ACTION, LOCATION> mBenchmark;
 
 	private final Script mScript;
@@ -75,8 +74,7 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE, VARDECL>, AC
 	private Map<LOCATION, STATE> mLoc2SingleStates;
 	private Set<Term> mTerms;
 
-	protected AbsIntResult(final Script script,
-			final IAbstractDomain<STATE, ACTION, VARDECL> abstractDomain,
+	protected AbsIntResult(final Script script, final IAbstractDomain<STATE, ACTION, VARDECL> abstractDomain,
 			final ITransitionProvider<ACTION, LOCATION> transProvider,
 			final IVariableProvider<STATE, ACTION, VARDECL> varProvider) {
 		mAbstractDomain = Objects.requireNonNull(abstractDomain);
@@ -90,15 +88,15 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE, VARDECL>, AC
 
 	void reachedError(final ITransitionProvider<ACTION, LOCATION> transitionProvider,
 			final IWorklistItem<STATE, ACTION, VARDECL, LOCATION> currentItem,
-			final AbstractMultiState<STATE, ACTION, VARDECL> postState) {
+			final AbstractMultiState<STATE, VARDECL> postState) {
 
-		final List<Triple<AbstractMultiState<STATE, ACTION, VARDECL>, LOCATION, ACTION>> abstractExecution =
+		final List<Triple<AbstractMultiState<STATE, VARDECL>, LOCATION, ACTION>> abstractExecution =
 				new ArrayList<>();
 
 		ACTION transition = currentItem.getAction();
 		abstractExecution.add(getCexTriple(transitionProvider, postState, transition));
 
-		AbstractMultiState<STATE, ACTION, VARDECL> post = currentItem.getState();
+		AbstractMultiState<STATE, VARDECL> post = currentItem.getState();
 		IWorklistItem<STATE, ACTION, VARDECL, LOCATION> current = currentItem.getPredecessor();
 		while (current != null) {
 			transition = current.getAction();
@@ -112,9 +110,9 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE, VARDECL>, AC
 				.add(new AbstractCounterexample<>(post, transitionProvider.getSource(transition), abstractExecution));
 	}
 
-	private Triple<AbstractMultiState<STATE, ACTION, VARDECL>, LOCATION, ACTION> getCexTriple(
+	private Triple<AbstractMultiState<STATE, VARDECL>, LOCATION, ACTION> getCexTriple(
 			final ITransitionProvider<ACTION, LOCATION> transitionProvider,
-			final AbstractMultiState<STATE, ACTION, VARDECL> postState, final ACTION transition) {
+			final AbstractMultiState<STATE, VARDECL> postState, final ACTION transition) {
 		return new Triple<>(postState, transitionProvider.getTarget(transition), transition);
 	}
 
@@ -132,7 +130,7 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE, VARDECL>, AC
 		if (states.isEmpty() && mTransProvider.isEnteringScope(symbol)) {
 			// TODO: this has to be disabled until summary calculation works correctly
 			// because this is a call, it could also be somewhere in the summary map
-			// final AbstractMultiState<STATE, ACTION, VARDECL> summaryState =
+			// final AbstractMultiState<STATE, VARDECL> summaryState =
 			// mSummaryMap.getSummaryPostState(symbol, new AbstractMultiState<>(preStates));
 			// if (summaryState != null) {
 			// states.addAll(summaryState.getStates());
@@ -156,9 +154,9 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE, VARDECL>, AC
 	public Map<LOCATION, Set<STATE>> getLoc2States() {
 		if (mLoc2States == null) {
 			mLoc2States = new HashMap<>();
-			final Map<LOCATION, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> loc2multistates =
+			final Map<LOCATION, Set<AbstractMultiState<STATE, VARDECL>>> loc2multistates =
 					mRootStorage.computeLoc2States();
-			for (final Entry<LOCATION, Set<AbstractMultiState<STATE, ACTION, VARDECL>>> entry : loc2multistates
+			for (final Entry<LOCATION, Set<AbstractMultiState<STATE, VARDECL>>> entry : loc2multistates
 					.entrySet()) {
 				final Set<STATE> states =
 						entry.getValue().stream().flatMap(a -> a.getStates().stream()).collect(Collectors.toSet());
@@ -172,9 +170,8 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE, VARDECL>, AC
 	public Map<LOCATION, STATE> getLoc2SingleStates() {
 		if (mLoc2SingleStates == null) {
 			mLoc2SingleStates = new HashMap<>();
-			final IAbstractStateBinaryOperator<STATE> mergeOp = mAbstractDomain.getMergeOperator();
 			for (final Entry<LOCATION, Set<STATE>> entry : getLoc2States().entrySet()) {
-				final Optional<STATE> singleState = entry.getValue().stream().reduce(mergeOp::apply);
+				final Optional<STATE> singleState = entry.getValue().stream().reduce((a, b) -> a.union(b));
 				if (singleState.isPresent()) {
 					mLoc2SingleStates.put(entry.getKey(), singleState.get());
 				}
@@ -203,7 +200,7 @@ public final class AbsIntResult<STATE extends IAbstractState<STATE, VARDECL>, AC
 	}
 
 	@Override
-	public List<AbstractCounterexample<AbstractMultiState<STATE, ACTION, VARDECL>, ACTION, VARDECL, LOCATION>>
+	public List<AbstractCounterexample<AbstractMultiState<STATE, VARDECL>, ACTION, VARDECL, LOCATION>>
 			getCounterexamples() {
 		return mCounterexamples;
 	}

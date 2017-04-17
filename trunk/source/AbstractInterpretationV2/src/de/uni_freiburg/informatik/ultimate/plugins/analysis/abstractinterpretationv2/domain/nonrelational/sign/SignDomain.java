@@ -86,11 +86,6 @@ public class SignDomain implements IAbstractDomain<SignDomainState<IBoogieVar>, 
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<SignDomainState<IBoogieVar>> getMergeOperator() {
-		return new SignMergeOperator<>();
-	}
-
-	@Override
 	public IAbstractPostOperator<SignDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> getPostOperator() {
 		if (mPostOperator == null) {
 			final int maxParallelStates = 2;

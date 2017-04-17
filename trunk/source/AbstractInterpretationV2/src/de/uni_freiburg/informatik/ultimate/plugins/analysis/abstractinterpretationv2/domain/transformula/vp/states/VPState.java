@@ -67,11 +67,11 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	private final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> mEqNodeToEqGraphNodeMap;
 
-	private final VPDomain<ACTION> mDomain;
+	protected final VPDomain<ACTION> mDomain;
 	private final ManagedScript mScript;
 	private final Term mTerm;
 	private final VPDomainPreanalysis mPreAnalysis;
-	private final VPStateFactory<ACTION> mFactory;
+	protected final VPStateFactory<ACTION> mFactory;
 
 	/**
 	 * Constructor for bottom state only.
@@ -476,5 +476,15 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 			return false;
 		}
 		return areUnEqual(node1, node2);
+	}
+
+	@Override
+	public VPState<ACTION> intersect(final VPState<ACTION> other) {
+		throw new UnsupportedOperationException("Not yet implemented");
+	}
+
+	@Override
+	public VPState<ACTION> union(final VPState<ACTION> other) {
+		throw new UnsupportedOperationException("Not yet implemented");
 	}
 }

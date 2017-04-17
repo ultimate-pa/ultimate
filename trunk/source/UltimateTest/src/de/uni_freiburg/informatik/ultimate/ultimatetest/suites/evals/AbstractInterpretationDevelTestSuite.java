@@ -95,6 +95,7 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 //			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
 //			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Taipan_Default.epf"),
+			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Taipan_Default_Debug.epf"),
 //			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-RubberTaipan_Default.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "ai/svcomp-Reach-32bit-RubberTaipan_Default.epf"),
 //			new Triple<>("AbstractInterpretationInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
@@ -141,10 +142,10 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			//### C Inline
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default.epf"),
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT.epf"),
-//			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 
-			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Taipan_Default.epf"),
-			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-RubberTaipan_Default.epf"),
+//			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Taipan_Default.epf"),
+//			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-RubberTaipan_Default.epf"),
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Taipan_Default_Debug.epf"),
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-RubberTaipan_Default_Debug.epf"),
 	};
@@ -155,18 +156,30 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/programs/abstractInterpretation/bug-old-stmt-1.bpl",
 //			"examples/programs/abstractInterpretation/bug-old-stmt-2.bpl",
 			
+			// ultimate benchmark path programs (.bpl)
+//			"examples/ultbench-programs/20170412-SvcompReachPathPrograms/afterMapElimination",
+//			"examples/ultbench-programs/20170329-DifficultLinuxPathPrograms/difficultAfterMapElimination",
+			
 			// Normal regressions
-//			"examples/programs/abstractInterpretation/regression",
+			"examples/programs/abstractInterpretation/regression",
 //			"examples/programs/abstractInterpretation/regression/open/int/stmt-bool-true-assign-top.bpl",
 //			"examples/programs/abstractInterpretation/regression/non_con/loop-literal-widening-predicate-weakening.bpl",
 
+			
+			//current fails
+//			"examples/programs/abstractInterpretation/regression/all/bug-nonrelationalpost-smtidentifier.bpl",
+//			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
+//			"examples/programs/abstractInterpretation/regression/non_con/proc-procedure-without-impl.bpl",
+//			"examples/programs/abstractInterpretation/regression/non_con/loop-procedure.bpl",
+//			"examples/programs/abstractInterpretation/regression/non_con/proc-looping-call.bpl",
+			
 			
 			// Assertion Error: null
 //			"examples/svcomp/eca-rers2012/Problem02_label06_true-unreach-call.c",
 			
 			//difference rubber vs non-rubber
 //			"examples/svcomp/eca-rers2012/Problem16_label47_true-unreach-call.c"
-			"examples/svcomp/eca-rers2012/Problem01_label03_true-unreach-call.c"
+//			"examples/svcomp/eca-rers2012/Problem01_label03_true-unreach-call.c"
 
 	};
 	// @formatter:on
@@ -174,8 +187,9 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	@Override
 	protected long getTimeout() {
 		// return 90 * 1000 * 1000;
-		// return 15 * 1000;
-		return 90 * 1000;
+		return 15 * 1000;
+		// return 90 * 1000;
+		// return 180 * 1000;
 		// return 15 * 60 * 1000;
 	}
 

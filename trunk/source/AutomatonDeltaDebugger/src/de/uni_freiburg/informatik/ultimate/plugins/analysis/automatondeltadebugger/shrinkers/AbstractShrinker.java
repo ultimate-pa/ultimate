@@ -77,7 +77,7 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 	 *            list of objects to be removed
 	 * @return automaton according to (complement of the) list
 	 */
-	public abstract INestedWordAutomaton<LETTER, STATE> createAutomaton(final List<T> list);
+	public abstract INestedWordAutomaton<LETTER, STATE> createAutomaton(List<T> list);
 
 	/**
 	 * Extracts a list of objects containing all respective objects of the current automaton.
@@ -103,6 +103,7 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 	 * @param newAutomaton
 	 *            new automaton
 	 */
+	@SuppressWarnings("fb-contrib:ACEM_ABSTRACT_CLASS_EMPTY_METHODS")
 	public void noError(final INestedWordAutomaton<LETTER, STATE> newAutomaton) {
 		// no action for standard shrinker
 	}

@@ -31,7 +31,9 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
@@ -81,8 +83,8 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 		final INestedWordAutomaton<LETTER, STATE> automaton = mFactory.create(mAutomaton);
 
 		// data structures to contain all transitive chains (forward & backward)
-		final HashMap<STATE, STATE> left2right = new HashMap<>();
-		final HashMap<STATE, STATE> right2left = new HashMap<>();
+		final Map<STATE, STATE> left2right = new HashMap<>();
+		final Map<STATE, STATE> right2left = new HashMap<>();
 
 		/*
 		 * add states which are not a left-hand side in the list; also set up
@@ -97,7 +99,7 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 	}
 
 	protected static <LETTER, STATE> void constructResuLt(final INestedWordAutomaton<LETTER, STATE> oldAutomaton,
-			final HashMap<STATE, STATE> left2right, final HashSet<STATE> states,
+			final Map<STATE, STATE> left2right, final Set<STATE> states,
 			final INestedWordAutomaton<LETTER, STATE> newAutomaton,
 			final INestedWordAutomatonFactory<LETTER, STATE> factory) {
 		factory.addStates(oldAutomaton, states);
@@ -137,9 +139,8 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 		}
 	}
 
-	protected static <STATE> void fillTransitivityMaps(final HashMap<STATE, STATE> left2right,
-			final HashMap<STATE, STATE> right2left, final HashSet<STATE> states,
-			final Iterable<Pair<STATE, STATE>> pairs) {
+	protected static <STATE> void fillTransitivityMaps(final Map<STATE, STATE> left2right,
+			final Map<STATE, STATE> right2left, final Set<STATE> states, final Iterable<Pair<STATE, STATE>> pairs) {
 		for (final Pair<STATE, STATE> pair : pairs) {
 			final STATE source = pair.getFirst();
 			final STATE target = pair.getSecond();
@@ -166,7 +167,7 @@ public class SingleExitShrinker<LETTER, STATE> extends AbstractShrinker<Pair<STA
 
 	@Override
 	public List<Pair<STATE, STATE>> extractList() {
-		final ArrayList<Pair<STATE, STATE>> list = new ArrayList<>();
+		final List<Pair<STATE, STATE>> list = new ArrayList<>();
 		/*
 		 * check that there is exactly one internal/call/return successor which
 		 * is not a self-loop

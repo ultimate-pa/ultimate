@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ast.ACSLVisitor;
  */
 public abstract class ACSLNode {
 	/**
-	 * The default location value used until it is explicitly set
+	 * The default location value used until it is explicitly set.
 	 */
 	public static final ACSLSourceLocation INVALID_LOCATION = new ACSLSourceLocation(-1, -1, -1, -1);
 
@@ -135,53 +135,79 @@ public abstract class ACSLNode {
 	}
 
 	/**
-	 * Accepts a visitor and starts a dfs traversal of the AST.
+	 * Accepts a visitor and starts a DFS traversal of the AST.
 	 * 
 	 * @param visitor
+	 *            visitor
 	 */
 	public abstract void accept(ACSLVisitor visitor);
 
+	/**
+	 * @param visitor
+	 *            visitor.
+	 * @return ACSL node
+	 */
 	public abstract ACSLNode accept(ACSLTransformer visitor);
 
 	/**
 	 * Source location of a node.
 	 */
 	public static class ACSLSourceLocation {
-		final int startLine;
-		final int startColumn;
-		final int endLine;
-		final int endColumn;
+		private static final char SLASH = '/';
 
+		private final int mStartLine;
+		private final int mStartColumn;
+		private final int mEndLine;
+		private final int mEndColumn;
+
+		/**
+		 * @param startLine
+		 *            Start line.
+		 * @param startColumn
+		 *            start column
+		 * @param endLine
+		 *            end line
+		 * @param endColumn
+		 *            end column
+		 */
 		public ACSLSourceLocation(final int startLine, final int startColumn, final int endLine, final int endColumn) {
-			super();
-			this.startLine = startLine;
-			this.startColumn = startColumn;
-			this.endLine = endLine;
-			this.endColumn = endColumn;
+			mStartLine = startLine;
+			mStartColumn = startColumn;
+			mEndLine = endLine;
+			mEndColumn = endColumn;
 		}
 
 		public int getStartLine() {
-			return startLine;
+			return mStartLine;
 		}
 
 		public int getStartColumn() {
-			return startColumn;
+			return mStartColumn;
 		}
 
 		public int getEndLine() {
-			return endLine;
+			return mEndLine;
 		}
 
 		public int getEndColumn() {
-			return endColumn;
+			return mEndColumn;
 		}
 
 		@Override
 		public String toString() {
-			final StringBuilder sb = new StringBuilder();
-			sb.append("[").append(startLine).append("/").append(startColumn).append("-").append(endLine).append("/")
-					.append(endColumn).append("]");
-			return sb.toString();
+			final StringBuilder builder = new StringBuilder();
+			// @formatter:off
+			builder.append('[')
+					.append(mStartLine)
+					.append(SLASH)
+					.append(mStartColumn)
+					.append('-')
+					.append(mEndLine)
+					.append(SLASH)
+					.append(mEndColumn)
+					.append(']');
+			// @formatter:on
+			return builder.toString();
 		}
 	}
 }

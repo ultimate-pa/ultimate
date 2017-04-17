@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.LoggingHelper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.TypeUtils.TypeUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 
 /**
  * Abstract implementation of an abstract state for non-relational domains.
@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  *
  */
 public abstract class NonrelationalState<STATE extends NonrelationalState<STATE, V, VARDECL>, V extends INonrelationalValue<V>, VARDECL>
-		implements INonrelationalAbstractState<STATE, VARDECL> {
+		implements IAbstractState<STATE, VARDECL> {
 
 	private static final String MSG_NULL = "NULL";
 	private static final String MSG_BOT = "BOT";
@@ -874,7 +874,8 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * @return A new {@link NonrelationalState} which is the result of the merger of <code>this</code> and
 	 *         <code>other</code>.
 	 */
-	public STATE merge(final STATE other) {
+	@Override
+	public STATE union(final STATE other) {
 		assert other != null;
 
 		if (!hasSameVariables(other)) {

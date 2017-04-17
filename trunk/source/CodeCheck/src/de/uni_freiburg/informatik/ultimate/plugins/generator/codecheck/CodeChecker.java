@@ -34,7 +34,6 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -118,8 +117,10 @@ public abstract class CodeChecker {
 	 *            : The second Predicate.
 	 */
 	protected IPredicate conjugatePredicates(final IPredicate a, final IPredicate b) {
-		final Term tvp = mPredicateUnifier.getPredicateFactory().and(a, b);
-		return mPredicateUnifier.getOrConstructPredicate(tvp);
+		final Set<IPredicate> preds = new HashSet<>(2, 1.0f);
+		preds.add(a);
+		preds.add(b);
+		return mPredicateUnifier.getOrConstructPredicateForConjunction(preds);
 	}
 
 	/**
@@ -129,7 +130,7 @@ public abstract class CodeChecker {
 	 *            : The Predicate.
 	 */
 	protected IPredicate negatePredicate(final IPredicate a) {
-		final Term tvp = mPredicateUnifier.getPredicateFactory().not(a);
+		final IPredicate tvp = mPredicateUnifier.getPredicateFactory().not(a);
 		return mPredicateUnifier.getOrConstructPredicate(tvp);
 	}
 
@@ -140,8 +141,7 @@ public abstract class CodeChecker {
 	 *            : The Predicate.
 	 */
 	protected IPredicate negatePredicateNoPU(final IPredicate a) {
-		final Term negation = mPredicateUnifier.getPredicateFactory().not(a);
-		return mPredicateUnifier.getPredicateFactory().newPredicate(negation);
+		return mPredicateUnifier.getPredicateFactory().not(a);
 	}
 
 	public static String objectReference(final Object o) {
