@@ -45,9 +45,13 @@ public final class ParserTester {
 	}
 
 	/**
+	 * Tests the parser.
+	 * 
 	 * @param args
-	 *            string arguments.
+	 *            string arguments
 	 */
+	@SuppressWarnings({ "squid:S106", "squid:S1148", "fb-contrib:IMC_IMMATURE_CLASS_PRINTSTACKTRACE",
+			"checkstyle:com.puppycrawl.tools.checkstyle.checks.coding.IllegalCatchCheck" })
 	public static void main(final String[] args) {
 		final StringBuilder builder = new StringBuilder(STRING_BUILDER_SIZE);
 		// @formatter:off
