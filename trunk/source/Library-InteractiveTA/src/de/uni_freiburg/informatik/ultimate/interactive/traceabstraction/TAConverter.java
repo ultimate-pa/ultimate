@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType.SizeIterationPair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PreNestedWord;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PreNestedWord.Loop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PredicateQueuePair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PredicateQueueResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
@@ -120,11 +121,17 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 				TAConverter::fromHistogram);
 	}
 
+	private static Loop toLoop(TraceAbstractionProtos.PreNestedWord.Loop loop) {
+		return new Loop(loop.getStartPosition(), loop.getEndPosition(), loop.getRepetitions());
+	}
+
 	private PreNestedWord toPreNestedWord(TraceAbstractionProtos.PreNestedWord preNestedWord) {
 		NestingRelation nr = preNestedWord.getNestingRelation();
+		List<Loop> loops = new ArrayList<>();
+		preNestedWord.getLoopList().stream().map(TAConverter::toLoop).forEach(l -> Loop.addLoop(loops, l));
 		return new PreNestedWord(getServices().getLoggingService().getLogger(PreNestedWord.class),
 				preNestedWord.getSymbolList(), nr.getPendingCallList(), nr.getPendingReturnList(),
-				nr.getInternalNestingMap());
+				nr.getInternalNestingMap(), loops);
 	}
 
 	private static TraceAbstractionProtos.TraceHistogram fromHistogram(HistogramOfIterable<CodeBlock> histogram) {

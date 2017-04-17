@@ -231,6 +231,12 @@ message NestedWord {
 message PreNestedWord {
 	repeated int32 symbol = 1;
 	NestingRelation nestingRelation = 2;
+	repeated Loop loop = 3; // loops must not cross
+	message Loop {
+		int32 startPosition = 1; // 0 refers to the first state before the first symbol.
+		int32 endPosition = 2;
+		int32 repetitions = 3;
+	}
 }
 
 message TraceHistogram {

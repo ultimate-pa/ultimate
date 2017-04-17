@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,8 +28,58 @@ public class PreNestedWord {
 	final Map<Integer, Integer> mInternal;
 	final ILogger mLogger;
 
-	public PreNestedWord(ILogger logger, List<Integer> symbols, List<Integer> pendingCalls, List<Integer> pendingReturns,
-			Map<Integer, Integer> internal) {
+	public static class Loop {
+		public Loop(int start, int end, int reps) {
+			mStart = start;
+			mEnd = end;
+			mReps = reps;
+			if (end <= start)
+				throw new IllegalStateException("Invalid loop: " + this);
+		}
+
+		private String thisAndOther(String prefix, Loop other) {
+			return prefix + this + " and " + other;
+		}
+
+		public boolean isNestedChildOf(Loop other) {
+			assert !equalBounds(other) : thisAndOther("Equal loops: ", other);
+			if (mStart >= other.mEnd)
+				return false;
+			if (mStart >= other.mStart) {
+				assert mEnd <= other.mEnd : thisAndOther("Crossing Loops: ", other);
+				return true;
+			}
+			assert mEnd <= other.mStart : thisAndOther("Crossing Loops: ", other);
+			return false;
+		}
+
+		public static Loop addLoop(List<Loop> loops, Loop child) {
+			for (Loop nested : loops) {
+				if (child.isNestedChildOf(nested)) {
+					return addLoop(nested.mNested, child);
+				}
+			}
+			loops.add(child);
+			return null;
+		}
+
+		public boolean equalBounds(Loop other) {
+			return mStart == other.mStart && mEnd == other.mEnd;
+		}
+
+		@Override
+		public String toString() {
+			return "Loop [" + mStart + "-" + mEnd + "]x" + mReps + (mNested.isEmpty() ? "" : " nested:" + mNested);
+		}
+
+		public final int mStart;
+		public final int mEnd;
+		public final int mReps;
+		public final ArrayList<Loop> mNested = new ArrayList<>();
+	}
+
+	public PreNestedWord(ILogger logger, List<Integer> symbols, List<Integer> pendingCalls,
+			List<Integer> pendingReturns, Map<Integer, Integer> internal, List<Loop> loops) {
 		mLogger = logger;
 		mPendingCalls = pendingCalls;
 		mPendingReturns = pendingReturns;
