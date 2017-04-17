@@ -38,7 +38,8 @@ import java.util.stream.Collectors;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public class NewUltimateEmit extends EmitAstWithVisitors {
-
+	private static final int ONE = 1;
+	private static final String LOC = "loc";
 	private static final String VISITOR_NAME = "GeneratedBoogieAstVisitor";
 	private static final String TRANSFORMER_NAME = "GeneratedBoogieAstTransformer";
 	private static final String ROOT_NAME = "BoogieASTNode";
@@ -51,7 +52,7 @@ public class NewUltimateEmit extends EmitAstWithVisitors {
 		if (OTHERS.contains(node.getName())) {
 			return super.getRootConstructorParam(node);
 		}
-		return "loc";
+		return LOC;
 	}
 
 	@Override
@@ -106,15 +107,15 @@ public class NewUltimateEmit extends EmitAstWithVisitors {
 	@Override
 	public void setGrammar(final Grammar grammar) {
 		final List<Entry<String, Node>> parentless = grammar.nodeTable.entrySet().stream()
-				.filter(a -> a.getValue().getParent() == null).collect(Collectors.toList());
+				.filter(entry -> entry.getValue().getParent() == null).collect(Collectors.toList());
 		for (final Entry<String, Node> p : parentless) {
 			final Parameter[] oldParams = p.getValue().getParameters();
 			final int newLength = oldParams == null ? 1 : (oldParams.length + 1);
 			final Parameter[] newParams = new Parameter[newLength];
-			if (newLength > 1) {
+			if (newLength > ONE) {
 				System.arraycopy(oldParams, 0, newParams, 1, newLength - 1);
 			}
-			newParams[0] = new Parameter("loc", "ILocation", "the location of this node", true, true, false);
+			newParams[0] = new Parameter(LOC, "ILocation", "the location of this node", true, true, false);
 			p.getValue().setParameters(newParams);
 		}
 		super.setGrammar(grammar);

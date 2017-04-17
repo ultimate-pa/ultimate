@@ -29,13 +29,25 @@ package de.uni_freiburg.informatik.ultimate.astbuilder;
 
 import java.io.FileReader;
 
+/**
+ * Runs the AST builder.
+ */
 @SuppressWarnings("squid:S106")
 public final class Main {
+
+	private static final String PARSE_ERROR_IN_FILE = "Parse Error in file: ";
 
 	private Main() {
 		// prevent instantiation of the main class
 	}
 
+	/**
+	 * Main method.
+	 * 
+	 * @param param
+	 *            parameters
+	 */
+	@SuppressWarnings("checkstyle:com.puppycrawl.tools.checkstyle.checks.coding.IllegalCatchCheck")
 	public static void main(final String[] param) {
 		if (param.length == 0) {
 			usage();
@@ -44,16 +56,16 @@ public final class Main {
 		}
 		Emit emitter = null;
 		boolean debug = false;
-		int i = 0;
-		while (i < param.length) {
-			if ("-debug".equals(param[i])) {
-				i++;
+		int idx = 0;
+		while (idx < param.length) {
+			if ("-debug".equals(param[idx])) {
+				idx++;
 				debug = true;
-			} else if ("-ultimatenew".equals(param[i])) {
-				i++;
+			} else if ("-ultimatenew".equals(param[idx])) {
+				idx++;
 				emitter = new NewUltimateEmit();
-			} else if ("-acsl".equals(param[i])) {
-				i++;
+			} else if ("-acsl".equals(param[idx])) {
+				idx++;
 				emitter = new ACSLEmit();
 			} else {
 				break;
@@ -64,18 +76,18 @@ public final class Main {
 			emitter = new Emit();
 		}
 
-		for (; i < param.length; i++) {
+		for (; idx < param.length; idx++) {
 			final Grammar grammar;
 			try {
-				grammar = parseParam(param, debug, i);
+				grammar = parseParam(param[idx], debug);
 				if (grammar == null) {
-					System.err.println("Parse Error in file: " + param[i]);
+					System.err.println(PARSE_ERROR_IN_FILE + param[idx]);
 					System.exit(1);
 				}
 				emitter.setGrammar(grammar);
 				emitter.emitClasses();
 			} catch (final Exception e) {
-				System.err.println("Parse Error in file: " + param[i] + ": " + e.getMessage());
+				System.err.println(PARSE_ERROR_IN_FILE + param[idx] + ": " + e.getMessage());
 				if (debug) {
 					System.err.println(e);
 				}
@@ -85,14 +97,14 @@ public final class Main {
 		}
 	}
 
-	private static Grammar parseParam(final String[] param, final boolean debug, final int i) throws Exception {
-		final Lexer lexer = new Lexer(new FileReader(param[i]));
-		final parser p = new parser(lexer);
-		p.setFileName(param[i]);
+	private static Grammar parseParam(final String param, final boolean debug) throws Exception {
+		final Lexer lexer = new Lexer(new FileReader(param));
+		final parser parser = new parser(lexer);
+		parser.setFileName(param);
 		if (debug) {
-			return (Grammar) p.debug_parse().value;
+			return (Grammar) parser.debug_parse().value;
 		} else {
-			return (Grammar) p.parse().value;
+			return (Grammar) parser.parse().value;
 		}
 	}
 
