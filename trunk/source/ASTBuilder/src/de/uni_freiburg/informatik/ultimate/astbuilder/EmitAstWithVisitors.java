@@ -369,7 +369,7 @@ public abstract class EmitAstWithVisitors extends Emit {
 					localIndentBuilder.append(indent);
 					index2--;
 				}
-				final String localIndent = "";
+				final String localIndent = localIndentBuilder.toString();
 				sb.append(localIndent);
 				sb.append("} else {");
 				sb.append(lineSep);
