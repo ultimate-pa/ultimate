@@ -68,9 +68,6 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 
 	protected final STATE mEmptyStackState;
 
-	protected Set<LETTER> mEmptySetOfLetters = Collections.unmodifiableSet(new HashSet<LETTER>(0));
-	protected Set<STATE> mEmptySetOfStates = Collections.unmodifiableSet(new HashSet<STATE>(0));
-
 	protected final AutomataLibraryServices mServices;
 	protected final ILogger mLogger;
 
@@ -228,7 +225,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 			throw new IllegalArgumentException(STATE + state + UNKNOWN);
 		}
 		final NestedMap2<LETTER, STATE, IsContained> map = mInternalOut.get(state);
-		return map == null ? mEmptySetOfLetters : map.keySet();
+		return map == null ? Collections.emptySet() : map.keySet();
 	}
 
 	@Override
@@ -237,7 +234,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 			throw new IllegalArgumentException(STATE + state + UNKNOWN);
 		}
 		final NestedMap2<LETTER, STATE, IsContained> map = mCallOut.get(state);
-		return map == null ? mEmptySetOfLetters : map.keySet();
+		return map == null ? Collections.emptySet() : map.keySet();
 	}
 
 	@Override
@@ -247,7 +244,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		final NestedMap3<STATE, LETTER, STATE, IsContained> map = mReturnOut.get(state);
 		if (map == null) {
-			return mEmptySetOfLetters;
+			return Collections.emptySet();
 		} else {
 			final Set<LETTER> result = new HashSet<>();
 			for (final Quad<STATE, LETTER, STATE, IsContained> entry : map.entrySet()) {
@@ -263,7 +260,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		final NestedMap2<LETTER, STATE, IsContained> map = mReturnOut.get(state, hier);
 		if (map == null) {
-			return mEmptySetOfLetters;
+			return Collections.emptySet();
 		} else {
 			return map.keySet();
 		}
@@ -278,7 +275,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		assert contains(state);
 		final NestedMap3<STATE, LETTER, STATE, IsContained> map = mReturnOut.get(state);
 		if (map == null) {
-			return mEmptySetOfStates;
+			return Collections.emptySet();
 		} else {
 			return map.keySet();
 		}

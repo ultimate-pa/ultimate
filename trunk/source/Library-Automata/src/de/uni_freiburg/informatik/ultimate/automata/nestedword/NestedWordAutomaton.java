@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -121,7 +122,7 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 			throw new IllegalArgumentException(STATE2 + state + UNKNOWN);
 		}
 		final Map<LETTER, Set<STATE>> map = mInternalIn.get(state);
-		return map == null ? mEmptySetOfLetters : map.keySet();
+		return map == null ? Collections.emptySet() : map.keySet();
 	}
 
 	@Override
@@ -130,7 +131,7 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 			throw new IllegalArgumentException(STATE2 + state + UNKNOWN);
 		}
 		final Map<LETTER, Set<STATE>> map = mCallIn.get(state);
-		return map == null ? mEmptySetOfLetters : map.keySet();
+		return map == null ? Collections.emptySet() : map.keySet();
 	}
 
 	@Override
@@ -139,7 +140,7 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 			throw new IllegalArgumentException(STATE2 + state + UNKNOWN);
 		}
 		final Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnIn.get(state);
-		return map == null ? mEmptySetOfLetters : map.keySet();
+		return map == null ? Collections.emptySet() : map.keySet();
 	}
 
 	@Override
@@ -148,27 +149,27 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 			throw new IllegalArgumentException(STATE2 + state + UNKNOWN);
 		}
 		final Map<LETTER, Map<STATE, Set<STATE>>> map = mReturnSummary.get(state);
-		return map == null ? mEmptySetOfLetters : map.keySet();
+		return map == null ? Collections.emptySet() : map.keySet();
 	}
 
 	private Set<STATE> predInternal(final STATE state, final LETTER letter) {
 		assert contains(state);
 		final Map<LETTER, Set<STATE>> map = mInternalIn.get(state);
 		if (map == null) {
-			return mEmptySetOfStates;
+			return Collections.emptySet();
 		}
 		final Set<STATE> result = map.get(letter);
-		return result == null ? mEmptySetOfStates : result;
+		return result == null ? Collections.emptySet() : result;
 	}
 
 	private Set<STATE> predCall(final STATE state, final LETTER letter) {
 		assert contains(state);
 		final Map<LETTER, Set<STATE>> map = mCallIn.get(state);
 		if (map == null) {
-			return mEmptySetOfStates;
+			return Collections.emptySet();
 		}
 		final Set<STATE> result = map.get(letter);
-		return result == null ? mEmptySetOfStates : result;
+		return result == null ? Collections.emptySet() : result;
 	}
 
 	@Override
@@ -188,25 +189,25 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 		assert contains(hier);
 		final Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2preds = mReturnIn.get(state);
 		if (letter2hier2preds == null) {
-			return mEmptySetOfStates;
+			return Collections.emptySet();
 		}
 		final Map<STATE, Set<STATE>> hier2preds = letter2hier2preds.get(letter);
 		if (hier2preds == null) {
-			return mEmptySetOfStates;
+			return Collections.emptySet();
 		}
 		final Set<STATE> result = hier2preds.get(hier);
-		return result == null ? mEmptySetOfStates : result;
+		return result == null ? Collections.emptySet() : result;
 	}
 
 	private Set<STATE> predReturnHier(final STATE state, final LETTER letter) {
 		assert contains(state);
 		final Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2preds = mReturnIn.get(state);
 		if (letter2hier2preds == null) {
-			return mEmptySetOfStates;
+			return Collections.emptySet();
 		}
 		final Map<STATE, Set<STATE>> hier2preds = letter2hier2preds.get(letter);
 		if (hier2preds == null) {
-			return mEmptySetOfStates;
+			return Collections.emptySet();
 		}
 		return hier2preds.keySet();
 	}
