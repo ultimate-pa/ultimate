@@ -60,7 +60,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-@SuppressWarnings({ "squid:S00112", "squid:S1452" })
+@SuppressWarnings({ "squid:S00112", "squid:S1452",
+		"checkstyle:com.puppycrawl.tools.checkstyle.checks.metrics.ClassDataAbstractionCouplingCheck" })
 public class AutomatonDebuggerExamples {
 	private final AutomataLibraryServices mServices;
 
@@ -165,7 +166,8 @@ public class AutomatonDebuggerExamples {
 	 * @throws Throwable
 	 *             when operation fails
 	 */
-	@SuppressWarnings("squid:MethodCyclomaticComplexity")
+	@SuppressWarnings({ "squid:MethodCyclomaticComplexity",
+			"checkstyle:com.puppycrawl.tools.checkstyle.checks.metrics.JavaNCSSCheck" })
 	public IOperation<String, String, ? super StringFactory> getOperation(final EOperationType type,
 			final INestedWordAutomaton<String, String> automaton, final StringFactory factory) throws Throwable {
 		final IOperation<String, String, ? super StringFactory> operation;

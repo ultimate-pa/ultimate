@@ -61,6 +61,8 @@ public abstract class AbstractTester<LETTER, STATE> {
 	 *            input automaton
 	 * @return true iff an error of the original error type (exact) occurred
 	 */
+	@SuppressWarnings({ "fb-contrib:EXS_EXCEPTION_SOFTENING_RETURN_FALSE",
+			"checkstyle:com.puppycrawl.tools.checkstyle.checks.coding.IllegalCatchCheck" })
 	public boolean test(final INestedWordAutomaton<LETTER, STATE> automaton) {
 		try {
 			execute(automaton);

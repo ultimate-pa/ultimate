@@ -109,7 +109,7 @@ public class UnusedLetterShrinker<LETTER, STATE> extends AbstractShrinker<TypedL
 		return unused;
 	}
 
-	private void addComplementLetters(final HashSet<LETTER> lettersUsed, final ArrayList<TypedLetter<LETTER>> unused,
+	private void addComplementLetters(final Set<LETTER> lettersUsed, final List<TypedLetter<LETTER>> unused,
 			final LetterType letterType, final Iterable<LETTER> letters) {
 		for (final LETTER letter : letters) {
 			if (!lettersUsed.contains(letter)) {

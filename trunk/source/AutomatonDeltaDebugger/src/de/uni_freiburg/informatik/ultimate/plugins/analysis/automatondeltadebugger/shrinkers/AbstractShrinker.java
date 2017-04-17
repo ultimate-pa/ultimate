@@ -103,6 +103,7 @@ public abstract class AbstractShrinker<T, LETTER, STATE> {
 	 * @param newAutomaton
 	 *            new automaton
 	 */
+	@SuppressWarnings("fb-contrib:ACEM_ABSTRACT_CLASS_EMPTY_METHODS")
 	public void noError(final INestedWordAutomaton<LETTER, STATE> newAutomaton) {
 		// no action for standard shrinker
 	}
