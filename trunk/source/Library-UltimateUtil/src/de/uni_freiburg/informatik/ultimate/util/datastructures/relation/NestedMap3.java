@@ -155,11 +155,16 @@ public class NestedMap3<K1, K2, K3, V> {
 		if (k1Tok2ToV == null) {
 			return null;
 		}
-		final Map<K3, V> k2Tok3ToV = k1Tok2ToV.get(k2);
-		if (k2Tok3ToV == null) {
-			return null;
+		return k1Tok2ToV.remove(k2, k3);
+	}
+	
+	
+	public int size() {
+		int result = 0;
+		for (final Entry<K1, NestedMap2<K2, K3, V>> entry : mK1ToK2ToK3V.entrySet()) {
+			result += entry.getValue().size();
 		}
-		return k2Tok3ToV.remove(k3);
+		return result;
 	}
 	
 	/**
