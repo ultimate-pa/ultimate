@@ -38,9 +38,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
@@ -293,6 +297,29 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, IBoogieVar
 	@Override
 	public IVariableProvider<STATE, IcfgEdge, IBoogieVar> createNewVariableProvider(final IIcfgSymbolTable table) {
 		return new RcfgVariableProvider<>(table, mLogger);
+	}
+
+	@Override
+	public Set<IBoogieVar> getRequiredVars(final IcfgEdge act) {
+		final Set<IBoogieVar> vars = new HashSet<>();
+		if (act instanceof IInternalAction) {
+			addTfVars(act.getTransformula(), vars);
+		} else if (act instanceof ICallAction) {
+			final ICallAction callAct = (ICallAction) act;
+			addTfVars(callAct.getLocalVarsAssignment(), vars);
+		} else if (act instanceof IReturnAction) {
+			final IReturnAction retAct = (IReturnAction) act;
+			addTfVars(retAct.getAssignmentOfReturn(), vars);
+		} else {
+			throw new UnsupportedOperationException();
+		}
+		return vars;
+	}
+
+	private static void addTfVars(final UnmodifiableTransFormula tf, final Set<IBoogieVar> vars) {
+		tf.getNonTheoryConsts().forEach(a -> vars.add((IBoogieVar) a));
+		tf.getInVars().entrySet().stream().forEach(a -> vars.add((IBoogieVar) a.getKey()));
+		tf.getOutVars().entrySet().stream().forEach(a -> vars.add((IBoogieVar) a.getKey()));
 	}
 
 }

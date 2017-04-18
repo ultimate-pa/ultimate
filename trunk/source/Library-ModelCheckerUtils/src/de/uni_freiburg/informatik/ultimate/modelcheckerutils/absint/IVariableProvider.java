@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 
 /**
@@ -90,5 +92,7 @@ public interface IVariableProvider<STATE extends IAbstractState<STATE, VARDECL>,
 	STATE createValidPostOpStateBeforeLeaving(final ACTION action, final STATE stateHier);
 
 	IVariableProvider<STATE, ACTION, VARDECL> createNewVariableProvider(IIcfgSymbolTable table);
+
+	Set<VARDECL> getRequiredVars(ACTION act);
 
 }
