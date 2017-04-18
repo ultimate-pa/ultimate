@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -74,6 +75,12 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 	private final IUltimateServiceProvider mServices;
 
 	private final boolean mUseNeibors;
+	private static final boolean APPLY_ONLY_TO_TYPICAL_WRAPAROUD_CONSTANTS = true;
+	private static final BigInteger BITLENGTH8_VALUE = BigInteger.valueOf(256);
+	private static final BigInteger BITLENGTH16_VALUE = BigInteger.valueOf(65536);
+	private static final BigInteger BITLENGTH32_VALUE = BigInteger.valueOf(4294967296L);
+	private static final BigInteger BITLENGTH64_VALUE = new BigInteger("9223372036854775808");
+	private static final BigInteger BITLENGTH128_VALUE = new BigInteger("340282366920938463463374607431768211456");
 
 	public ModuloNeighborTransformation(final IUltimateServiceProvider services, final boolean useNeibors) {
 		super();
@@ -184,7 +191,8 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 				assert modTerm.getParameters().length == 2;
 				dividend = modTerm.getParameters()[0];
 				divisor = modTerm.getParameters()[1];
-				if (divisor instanceof ConstantTerm) {
+				if ((divisor instanceof ConstantTerm) && (!APPLY_ONLY_TO_TYPICAL_WRAPAROUD_CONSTANTS
+						|| isWraparoundConstant((ConstantTerm) divisor))) {
 					someModuloTermWithConstantDivisor = modTerm;
 					break;
 				} else {
@@ -252,6 +260,22 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 		mgdScript.unlock(this);
 		return term;
 
+	}
+
+	private boolean isWraparoundConstant(final ConstantTerm constant) {
+		final Object value = constant.getValue();
+		if (value instanceof Rational) {
+			return isWraparoudBigInteger(((Rational) value).numerator()); 
+		} else if (value instanceof BigInteger) {
+			return isWraparoudBigInteger((BigInteger) value); 
+		} else {
+			throw new UnsupportedOperationException("value has type " + value.getClass().getSimpleName());
+		}
+	}
+
+	private boolean isWraparoudBigInteger(final BigInteger bigInt) {
+		return bigInt.equals(BITLENGTH8_VALUE) || bigInt.equals(BITLENGTH16_VALUE) || bigInt.equals(BITLENGTH32_VALUE)
+				|| bigInt.equals(BITLENGTH64_VALUE) || bigInt.equals(BITLENGTH128_VALUE);
 	}
 
 }
