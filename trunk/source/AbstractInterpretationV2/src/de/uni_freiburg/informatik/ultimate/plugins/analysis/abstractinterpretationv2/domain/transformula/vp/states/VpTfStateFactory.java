@@ -28,10 +28,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -46,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfArrayIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfNodeIdentifier;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 /**
@@ -58,7 +57,8 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 	private final VPTransFormulaStateBuilderPreparer mTfStatePreparer;
 	private final VPDomainPreanalysis mPreAnalysis;
 
-	private final Map<Set<IProgramVarOrConst>, VPTfBottomState> mVarsToBottomState = new HashMap<>();
+	private final NestedMap2<Set<IProgramVarOrConst>, Set<IProgramVarOrConst>, VPTfBottomState> mVarsToBottomState = 
+			new NestedMap2<>();
 
 	public VpTfStateFactory(final VPTransFormulaStateBuilderPreparer tfStatePreparer,
 			final VPDomainPreanalysis preAnalysis) {
@@ -116,11 +116,15 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 	}
 
 	@Override
-	public VPTfState getBottomState(final Set<IProgramVarOrConst> set) {
-		VPTfBottomState result = mVarsToBottomState.get(set);
+	public VPTfState getBottomState(final VPTfState originalState) {
+		return getBottomState(originalState.getInVariables(), originalState.getOutVariables());
+	}
+
+	VPTfState getBottomState(final Set<IProgramVarOrConst> inVars, final Set<IProgramVarOrConst> outVars) {
+		VPTfBottomState result = mVarsToBottomState.get(inVars, outVars);
 		if (result == null) {
-			result = new VPTfBottomState(set);
-			mVarsToBottomState.put(set, result);
+			result = new VPTfBottomState(inVars, outVars);
+			mVarsToBottomState.put(inVars, outVars, result);
 		}
 		return result;
 	}
@@ -154,7 +158,8 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 		}
 
 		if (state.isBottom()) {
-			return getBottomState(state.getVariables());
+			// FIXME extra builder for var signature: a bit hacky..
+			return getBottomState(mTfStatePreparer.getVPTfStateBuilder(tf).build()); 
 		}
 
 		if (state.isTop()) {

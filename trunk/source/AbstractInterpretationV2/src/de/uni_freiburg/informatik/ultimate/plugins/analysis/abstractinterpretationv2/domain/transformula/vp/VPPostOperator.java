@@ -124,7 +124,7 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		
 //		final Set<VPTfState> resultTfStates = handleTransition(tfPreState, nnfTerm, tf, false);
 		
-		tfState.computeOutStates();
+		tfState.computeOutStates(mTfStateFactory);
 		
 //		if (mPreAnalysis.isDebugMode()) {
 //			mDomain.getLogger().debug("states after transition " + transition + ": " + resultTfStates);
@@ -155,7 +155,7 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		if (transition instanceof Call
 				|| transition instanceof Return) {
 			final VPTfState tfState = mTfStateFactory.createTfState(stateBeforeLeaving, transition.getTransformula());
-			tfState.computeOutStates();
+			tfState.computeOutStates(mTfStateFactory);
 			final Set<VPState<ACTION>> result = tfState.patchOut(stateAfterLeaving);
 
 			assert VPDomainHelpers.containsNoNullElement(result);

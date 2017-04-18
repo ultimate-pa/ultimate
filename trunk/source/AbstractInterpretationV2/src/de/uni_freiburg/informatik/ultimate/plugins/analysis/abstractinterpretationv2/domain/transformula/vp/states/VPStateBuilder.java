@@ -62,12 +62,22 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	private Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> mEqNodeToEqGraphNodeMap;
 
-	public VPStateBuilder(final VPDomain<ACTION> domain) {
+	public VPStateBuilder(final VPDomain<ACTION> domain, Set<VPDomainSymmetricPair<EqNode>> initialDisequalities) {
+		super(initialDisequalities);
 		mDomain = domain;
 		createEqGraphNodes();
+
+		/*
+		 * When all EqGraphNodes for the VPState<ACTION> have been created, we can set their initCcpar and initCcchild
+		 * fields
+		 */
+		for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : getAllEqGraphNodes()) {
+			egn.setupNode();
+		}
 	}
 
 	protected VPStateBuilder(final VPDomain<ACTION> domain, final boolean dontCreateEqGraphNodes) {
+		super(Collections.emptySet());
 		assert dontCreateEqGraphNodes;
 		mDomain = domain;
 	}

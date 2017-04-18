@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.CreateVanillaTfStateBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPTfState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPTfStateBuilder;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -109,7 +109,8 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 	public VPTfNodeIdentifier(EqNode eqNode, 
 			Map<IProgramVar, TermVariable> inVars,
 			Map<IProgramVar, TermVariable> outVars,
-			VPTfStateBuilder tfStateBuilder) {
+//			VPTfStateBuilder tfStateBuilder) {
+			CreateVanillaTfStateBuilder tfStateBuilder) {
 		this.mEqNode = eqNode;
 		this.mIsFunction = eqNode instanceof EqFunctionNode;
 

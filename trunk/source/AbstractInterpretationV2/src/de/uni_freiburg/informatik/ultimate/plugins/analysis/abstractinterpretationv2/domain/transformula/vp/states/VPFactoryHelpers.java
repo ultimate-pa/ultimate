@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
@@ -136,7 +135,7 @@ public class VPFactoryHelpers {
 		 * check if the disequality introduces a contradiction, return bottom in that case
 		 */
 		if (gn1.find().equals(gn2.find())) {
-			return Collections.singleton(factory.getBottomState(originalState.getVariables()));
+			return Collections.singleton(factory.getBottomState(originalState));
 		}
 
 		/*
@@ -195,7 +194,7 @@ public class VPFactoryHelpers {
 		final boolean contradiction = builder.checkContradiction();
 		assert contradiction || VPDomainHelpers.disEqualityRelationIrreflexive(builder.getDisEqualitySet(), builder);
 		if (contradiction) {
-			final Set<T> result = Collections.singleton(factory.getBottomState(originalState.getVariables()));
+			final Set<T> result = Collections.singleton(factory.getBottomState(originalState));
 			assert result.stream().filter(element -> element == null).count() == 0;
 			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 			return result;
@@ -280,8 +279,9 @@ public class VPFactoryHelpers {
 			return first;
 		}
 		
-		final IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder = factory
-				.createFreshVanillaStateBuilder(first instanceof VPTfState ? ((VPTfState) first).getTransFormula() : null);
+		final IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder = 
+				factory.createFreshVanillaStateBuilder(
+						first instanceof VPTfState ? ((VPTfState) first).getTransFormula() : null);
 
 		/**
 		 * the disjoined state contains the disequalities that both first and second contain. (i.e. intersection) TODO:
@@ -296,12 +296,29 @@ public class VPFactoryHelpers {
 			builder.setIsTop(false);
 		}
 
-		/**
-		 * the disjoined state has the intersection of the prior state's variables
+//		/**
+//		 * the disjoined state has the intersection of the prior state's variables
+//		 */
+//		final Set<IProgramVarOrConst> newVars = new HashSet<>(first.getVariables());
+//		newVars.retainAll(second.getVariables());
+//		builder.addVars(newVars);
+		
+		/*
+		 * deal with variables
+		 * TODO: hacky
 		 */
-		final Set<IProgramVarOrConst> newVars = new HashSet<>(first.getVariables());
-		newVars.retainAll(second.getVariables());
-		builder.addVars(newVars);
+		if (first instanceof VPState) {
+			final VPState vpState1 = (VPState) first;
+			final VPState vpState2 = (VPState) second;
+			assert vpState1.getVariables().equals(vpState2.getVariables());
+			((VPStateBuilder) builder).addVars(vpState1.getVariables());
+		} else {
+			assert first instanceof VPTfState;
+			assert ((VPTfState) first).getInVariables().equals(((VPTfStateBuilder) builder).getInVariables());
+			assert ((VPTfState) second).getInVariables().equals(((VPTfStateBuilder) builder).getInVariables());
+			assert ((VPTfState) first).getOutVariables().equals(((VPTfStateBuilder) builder).getOutVariables());
+			assert ((VPTfState) second).getOutVariables().equals(((VPTfStateBuilder) builder).getOutVariables());
+		}
 
 		/**
 		 * the disjoined state contains exactly the equalities that both and second contain.(i.e. intersection)

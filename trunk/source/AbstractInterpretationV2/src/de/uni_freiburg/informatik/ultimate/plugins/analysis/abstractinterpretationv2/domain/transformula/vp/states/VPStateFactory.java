@@ -27,7 +27,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -53,8 +52,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNonAtomicBaseNode;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfArrayIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
@@ -86,16 +83,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	public VPStateBuilder<ACTION> createEmptyStateBuilder() {
 		
-		final VPStateBuilder<ACTION> builder = new VPStateBuilder<>(mDomain);
-
-		/*
-		 * When all EqGraphNodes for the VPState<ACTION> have been created, we can set their initCcpar and initCcchild
-		 * fields
-		 */
-		for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : builder.getAllEqGraphNodes()) {
-			egn.setupNode();
-		}
-
+		
 		/*
 		 * Generate disequality set for constants
 		 */
@@ -108,7 +96,11 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 				}
 			}
 		}
-		builder.addDisEqualites(disEqualitySet);
+//		builder.addDisEqualites(disEqualitySet);
+		
+		final VPStateBuilder<ACTION> builder = new VPStateBuilder<>(mDomain, disEqualitySet);
+
+
 
 		/*
 		 * The set of tracked variables (as exposed to the fixpointengine) is empty, initially.
@@ -121,14 +113,20 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 		return builder;
 	}
 
-	@Override
-	public VPStateBottom<ACTION> getBottomState(final Set<IProgramVarOrConst> newVars) {
-		VPStateBottom<ACTION> result = mBottomStates.get(newVars);
+	public VPStateBottom<ACTION> getBottomState(final Set<IProgramVarOrConst> vars) {
+		VPStateBottom<ACTION> result = mBottomStates.get(vars);
 		if (result == null) {
-			result = new VPStateBottom<>(mDomain, newVars);
-			mBottomStates.put(newVars, result);
+			result = new VPStateBottom<>(mDomain, vars);
+			mBottomStates.put(vars, result);
 		}
 		return result;
+
+	}
+
+	@Override
+//	public VPStateBottom<ACTION> getBottomState(final Set<IProgramVarOrConst> vars) {
+	public VPStateBottom<ACTION> getBottomState(final VPState<ACTION> state) {
+		return getBottomState(state.getVariables());
 	}
 
 	public VPState<ACTION> getTopState(final Set<IProgramVarOrConst> vars) {
@@ -169,109 +167,109 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 		return builder;
 	}
 
-	/**
-	 * Takes a set of TransitionStates (VPTfState) and a TransFormula. Converts the transition-states to normal states
-	 * (VPState<ACTION>), essentially by projecting the transition state to the outVars of the given TransFormula.
-	 *
-	 * @param tfStates
-	 * @param assignedVars
-	 * @param oldState the state that the tfStates should be "patched over"
-	 * @return
-	 */
-	public Set<VPState<ACTION>> convertToStates(final Set<VPTfState> tfStates, final Set<IProgramVar> assignedVars, 
-			final VPState<ACTION> oldState) {
-		final Set<VPState<ACTION>> result = new HashSet<>();
-
-		for (final VPTfState tfState : tfStates) {
-			result.add(convertToState(tfState, assignedVars, oldState));
-		}
-
-		return result;
-	}
+//	/**
+//	 * Takes a set of TransitionStates (VPTfState) and a TransFormula. Converts the transition-states to normal states
+//	 * (VPState<ACTION>), essentially by projecting the transition state to the outVars of the given TransFormula.
+//	 *
+//	 * @param tfStates
+//	 * @param assignedVars
+//	 * @param oldState the state that the tfStates should be "patched over"
+//	 * @return
+//	 */
+//	public Set<VPState<ACTION>> convertToStates(final Set<VPTfState> tfStates, final Set<IProgramVar> assignedVars, 
+//			final VPState<ACTION> oldState) {
+//		final Set<VPState<ACTION>> result = new HashSet<>();
+//
+//		for (final VPTfState tfState : tfStates) {
+//			result.add(convertToState(tfState, assignedVars, oldState));
+//		}
+//
+//		return result;
+//	}
 
 	/*
 	 * (first) plan: for every two outVars, query which (dis-)equalities hold for them TODO: naive (quadratic)
 	 * implementation in the future perhaps: work on the graph directly
 	 */
-	private VPState<ACTION> convertToState(final VPTfState tfState, final Set<IProgramVar> assignedVars, 
-			final VPState<ACTION> oldState) {
-		if (isDebugMode()) {
-			getLogger().debug("VPStateFactory: convertToState(..) (begin)");
-		}
-		if (tfState.isBottom()) {
-			return getBottomState(tfState.getVariables());
-		}
-
-		if (tfState.isTop()) {
-			return oldState;
-		}
-
-		/*
-		 * We are projecting the state to what it says about - outVars of the given TransFormula tf - constants
-		 */
-		final Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outVarsAndConstantEqNodeSet = new HashSet<>();
-		for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> node : tfState.getAllEqGraphNodes()) {
-			if (node.mNodeIdentifier.isOutOrThrough()) {
-				outVarsAndConstantEqNodeSet.add(node);
-			}
-		}
-		final List<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outVarsAndConstantEqNodes =
-				new ArrayList<>(outVarsAndConstantEqNodeSet);
-		
-		Set<VPState<ACTION>> statesWithDisEqualitiesAdded = Collections.singleton(
-				havocVariables(assignedVars, oldState));
-
-		assert oldState.getVariables().containsAll(tfState.getVariables()) : "reactivate below code!";
-//		final VPStateBuilder<ACTION> builder = copy(havocVariables(assignedVars, oldState));
-//		builder.addVars(tfState.getVariables());
-//		Set<VPState<ACTION>> statesWithDisEqualitiesAdded = Collections.singleton(builder.build());
-
-//				new HashSet<>();
-//		statesWithDisEqualitiesAdded.add(builder.build());
-
-		for (int i = 0; i < outVarsAndConstantEqNodes.size(); i++) {
-			for (int j = 0; j < i; j++) {
-				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> outNode1 = outVarsAndConstantEqNodes.get(i);
-				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> outNode2 = outVarsAndConstantEqNodes.get(j);
-
-				if (outNode1 == outNode2) {
-					assert false;
-					continue;
-				}
-
-				if (tfState.areUnEqual(outNode1.mNodeIdentifier, outNode2.mNodeIdentifier)) {
-					statesWithDisEqualitiesAdded = VPFactoryHelpers.addDisEquality(outNode1.mNodeIdentifier.getEqNode(),
-							outNode2.mNodeIdentifier.getEqNode(), statesWithDisEqualitiesAdded, this);
-				}
-			}
-		}
-
-		Set<VPState<ACTION>> resultStates = Collections.unmodifiableSet(statesWithDisEqualitiesAdded);
-//				new HashSet<>();
-//		resultStates.addAll(statesWithDisEqualitiesAdded);
-
-		for (int i = 0; i < outVarsAndConstantEqNodes.size(); i++) {
-			for (int j = 0; j < i; j++) {
-				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> outNode1 = outVarsAndConstantEqNodes.get(i);
-				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> outNode2 = outVarsAndConstantEqNodes.get(j);
-
-				if (outNode1 == outNode2) {
-					// no need to equate two identical nodes
-					continue;
-				}
-
-				if (tfState.areEqual(outNode1.mNodeIdentifier, outNode2.mNodeIdentifier)) {
-					resultStates = VPFactoryHelpers.addEquality(outNode1.mNodeIdentifier.getEqNode(),
-							outNode2.mNodeIdentifier.getEqNode(), resultStates, this);
-				}
-			}
-		}
-		if (isDebugMode()) {
-			getLogger().debug("VPStateFactory: convertToState(..) (end)");
-		}
-		assert resultStates.size() == 1 : "??";
-		return resultStates.iterator().next();
-	}
+//	private VPState<ACTION> convertToState(final VPTfState tfState, final Set<IProgramVar> assignedVars, 
+//			final VPState<ACTION> oldState) {
+//		if (isDebugMode()) {
+//			getLogger().debug("VPStateFactory: convertToState(..) (begin)");
+//		}
+//		if (tfState.isBottom()) {
+//			return getBottomState(tfState.getInVariables());
+//		}
+//
+//		if (tfState.isTop()) {
+//			return oldState;
+//		}
+//
+//		/*
+//		 * We are projecting the state to what it says about - outVars of the given TransFormula tf - constants
+//		 */
+//		final Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outVarsAndConstantEqNodeSet = new HashSet<>();
+//		for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> node : tfState.getAllEqGraphNodes()) {
+//			if (node.mNodeIdentifier.isOutOrThrough()) {
+//				outVarsAndConstantEqNodeSet.add(node);
+//			}
+//		}
+//		final List<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outVarsAndConstantEqNodes =
+//				new ArrayList<>(outVarsAndConstantEqNodeSet);
+//		
+//		Set<VPState<ACTION>> statesWithDisEqualitiesAdded = Collections.singleton(
+//				havocVariables(assignedVars, oldState));
+//
+//		assert oldState.getVariables().containsAll(tfState.getOutVariables()) : "reactivate below code!";
+////		final VPStateBuilder<ACTION> builder = copy(havocVariables(assignedVars, oldState));
+////		builder.addVars(tfState.getVariables());
+////		Set<VPState<ACTION>> statesWithDisEqualitiesAdded = Collections.singleton(builder.build());
+//
+////				new HashSet<>();
+////		statesWithDisEqualitiesAdded.add(builder.build());
+//
+//		for (int i = 0; i < outVarsAndConstantEqNodes.size(); i++) {
+//			for (int j = 0; j < i; j++) {
+//				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> outNode1 = outVarsAndConstantEqNodes.get(i);
+//				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> outNode2 = outVarsAndConstantEqNodes.get(j);
+//
+//				if (outNode1 == outNode2) {
+//					assert false;
+//					continue;
+//				}
+//
+//				if (tfState.areUnEqual(outNode1.mNodeIdentifier, outNode2.mNodeIdentifier)) {
+//					statesWithDisEqualitiesAdded = VPFactoryHelpers.addDisEquality(outNode1.mNodeIdentifier.getEqNode(),
+//							outNode2.mNodeIdentifier.getEqNode(), statesWithDisEqualitiesAdded, this);
+//				}
+//			}
+//		}
+//
+//		Set<VPState<ACTION>> resultStates = Collections.unmodifiableSet(statesWithDisEqualitiesAdded);
+////				new HashSet<>();
+////		resultStates.addAll(statesWithDisEqualitiesAdded);
+//
+//		for (int i = 0; i < outVarsAndConstantEqNodes.size(); i++) {
+//			for (int j = 0; j < i; j++) {
+//				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> outNode1 = outVarsAndConstantEqNodes.get(i);
+//				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> outNode2 = outVarsAndConstantEqNodes.get(j);
+//
+//				if (outNode1 == outNode2) {
+//					// no need to equate two identical nodes
+//					continue;
+//				}
+//
+//				if (tfState.areEqual(outNode1.mNodeIdentifier, outNode2.mNodeIdentifier)) {
+//					resultStates = VPFactoryHelpers.addEquality(outNode1.mNodeIdentifier.getEqNode(),
+//							outNode2.mNodeIdentifier.getEqNode(), resultStates, this);
+//				}
+//			}
+//		}
+//		if (isDebugMode()) {
+//			getLogger().debug("VPStateFactory: convertToState(..) (end)");
+//		}
+//		assert resultStates.size() == 1 : "??";
+//		return resultStates.iterator().next();
+//	}
 
 	@Override
 	public Set<EqNode> getFunctionNodesForArray(final VPState<ACTION> state, final IProgramVarOrConst firstArray) {

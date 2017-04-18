@@ -38,6 +38,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 
 /**
+ * VPStateBuilder and VPTfStateBuilder are structurally similar, they both manage equalities through congruence closure 
+ * and disequalities through a set, and allow updating on those.
+ * This abstract class captures this overlap.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -64,9 +67,10 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 	
 	/**
 	 * constructor for empty builder
+	 * @param initialDisequalities 
 	 */
-	public IVPStateOrTfStateBuilder() {
-		mDisEqualitySet = new HashSet<>();
+	public IVPStateOrTfStateBuilder(Set<VPDomainSymmetricPair<NODEID>> initialDisequalities) {
+		mDisEqualitySet = new HashSet<>(initialDisequalities);
 //		mVars = new HashSet<>();
 	}
 

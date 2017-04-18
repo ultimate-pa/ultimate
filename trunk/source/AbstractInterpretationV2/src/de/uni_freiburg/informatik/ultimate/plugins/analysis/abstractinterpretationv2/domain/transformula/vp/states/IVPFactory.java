@@ -31,7 +31,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
@@ -47,11 +46,13 @@ public interface IVPFactory<STATE extends IVPStateOrTfState<NODEID, ARRAYID>, NO
 	
 	IVPStateOrTfStateBuilder<STATE, NODEID, ARRAYID> copy(STATE state);
 	
-	STATE getBottomState(Set<IProgramVarOrConst> variables);
+//	STATE getBottomState(Set<IProgramVarOrConst> variables);
+	STATE getBottomState(STATE stateForVariableInfo);
 	
 	Set<NODEID> getFunctionNodesForArray(STATE resultState, ARRAYID firstArray);
 	
-	IVPStateOrTfStateBuilder<STATE, NODEID, ARRAYID> createFreshVanillaStateBuilder(TransFormula tf); // TODO not so nice..
+	// TODO it's not so nice that we have the TransFormula parameter here, because that is only used in the tfState case
+	IVPStateOrTfStateBuilder<STATE, NODEID, ARRAYID> createFreshVanillaStateBuilder(TransFormula tf); 
 
 	ILogger getLogger();
 

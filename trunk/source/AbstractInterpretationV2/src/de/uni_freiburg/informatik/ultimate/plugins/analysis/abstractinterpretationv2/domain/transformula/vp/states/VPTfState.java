@@ -68,11 +68,13 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 	private final HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> mArrayIdToFunctionNodes;
 	private final Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mNodeIdToEqGraphNode;
 	private final Set<VPTfNodeIdentifier> mAllNodeIds;
-	private final VpTfStateFactory mTfStateFactory;
 	private final ManagedScript mScript;
+	
+	
+	private VpTfStateFactory mTfStateFactory;
 
-	private final Set<IProgramVarOrConst> mInVars;
-	private final Set<IProgramVarOrConst> mOutVars;
+	protected final Set<IProgramVarOrConst> mInVars;
+	protected final Set<IProgramVarOrConst> mOutVars;
 	
 	public VPTfState(final TransFormula tf, final VPTfStateBuilder builder,
 			final Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> nodeIdToEqGraphNode,
@@ -80,15 +82,13 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 			final HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> arrayIdToFunctionNodes,
 			final Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> disEqs, final boolean isTop,
 			final Set<IProgramVarOrConst> inVars, 
-			final Set<IProgramVarOrConst> outVars, 
-			VpTfStateFactory tfStateFactory) {
+			final Set<IProgramVarOrConst> outVars) {
 		super(disEqs, isTop);
 		mTransFormula = tf;
 		mBuilder = builder;
 		mAllNodeIds = allNodeIds;
 		mNodeIdToEqGraphNode = Collections.unmodifiableMap(nodeIdToEqGraphNode);
 		mArrayIdToFunctionNodes = new HashRelation<>(arrayIdToFunctionNodes); // TODO is copy needed here?
-		mTfStateFactory = tfStateFactory;
 		
 		mInVars = inVars;
 		mOutVars = outVars;
@@ -159,8 +159,9 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 		return mBuilder.getOrConstructArrayIdentifier(newArray);
 	}
 
-	public void computeOutStates() {
-		// TODO Auto-generated method stub
+	public void computeOutStates(final VpTfStateFactory tfStateFactory) {
+		mTfStateFactory = tfStateFactory;
+		
 		
 	}
 
@@ -224,11 +225,11 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 				if (!negated) {
 					return Collections.singleton(this);
 				}
-				final VPTfState result = mTfStateFactory.getBottomState(this.getOutVariables());
+				final VPTfState result = mTfStateFactory.getBottomState(getInVariables(), getOutVariables());
 				return Collections.singleton(result);
 			} else if ("false".equals(functionName)) {
 				if (!negated) {
-					final VPTfState result = mTfStateFactory.getBottomState(this.getOutVariables());
+					final VPTfState result = mTfStateFactory.getBottomState(getInVariables(), getOutVariables());
 					return Collections.singleton(result);
 				}
 				return Collections.singleton(this);
@@ -280,7 +281,7 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 				for (final ArrayWithSideCondition rhsArrayWSc : rhsWrapper.getArrayWithSideConditions(this, null)) {
 					
 					Set<VPTfState> resultStatesForCurrentNodePair =
-							addSideConditionsToState(this, lhsArrayWSc, rhsArrayWSc);
+							addSideConditionsToState(lhsArrayWSc, rhsArrayWSc);
 
 					// add equalities for all the indices we track for both arrays
 					for (final Entry<List<VPTfNodeIdentifier>, VPTfNodeIdentifier> en : lhsArrayWSc.getIndexToValue()
@@ -319,7 +320,7 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 			for (final NodeIdWithSideCondition lhsNodeWSc : lhsWrapper.getNodeIdWithSideConditions(this)) {
 				for (final NodeIdWithSideCondition rhsNodeWSc : rhsWrapper.getNodeIdWithSideConditions(this)) {
 					Set<VPTfState> resultStatesForCurrentNodePair =
-							addSideConditionsToState(this, lhsNodeWSc, rhsNodeWSc);
+							addSideConditionsToState(lhsNodeWSc, rhsNodeWSc);
 					if (lhsNodeWSc instanceof UndeterminedNodeWithSideCondition
 							|| rhsNodeWSc instanceof UndeterminedNodeWithSideCondition) {
 						// we don't have both nodes --> we cannot add a (dis)equality, but we can still add the
@@ -354,9 +355,9 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 	 * @param rhsNodeWSc
 	 * @return
 	 */
-	private Set<VPTfState> addSideConditionsToState(final VPTfState tfPreState,
+	private Set<VPTfState> addSideConditionsToState(//final VPTfState tfPreState,
 			final INodeOrArrayWithSideCondition lhsNodeWSc, final INodeOrArrayWithSideCondition rhsNodeWSc) {
-		final VPTfStateBuilder preStateCopy = mTfStateFactory.copy(tfPreState);
+		final VPTfStateBuilder preStateCopy = mTfStateFactory.copy(this);
 		// add side conditions
 		for (final VPDomainSymmetricPair<VPTfNodeIdentifier> de : lhsNodeWSc.getDisEqualities()) {
 			preStateCopy.addDisEquality(de);
