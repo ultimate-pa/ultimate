@@ -263,8 +263,8 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 	 *            the subterm of the current transformula that this method should apply to the preState
 	 * @return
 	 */
-	private Set<VPTfState> handleEqualitySubterm(final TransFormula tf,
-			final boolean negated, final Term lhs, final Term rhs) {
+	private Set<VPTfState> handleEqualitySubterm(final TransFormula tf, final boolean negated, final Term lhs, 
+			final Term rhs) {
 		if (lhs.getSort().isArraySort()) {
 			if (negated) {
 				// we have a disequality between arrays

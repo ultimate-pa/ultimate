@@ -323,9 +323,11 @@ public class VPFactoryHelpers {
 		/**
 		 * the disjoined state contains exactly the equalities that both and second contain.(i.e. intersection)
 		 *
-		 * algorithmic plan: - go through the edges in the equality graph of the "first" state (by asking each node for
-		 * its representative) - when the second state agrees that the nodes on the two ends of the edge are equal, add
-		 * the equality to the result state
+		 * algorithmic plan: 
+		 *  <li> go through the edges in the equality graph of the "first" state (by asking each node for its 
+		 *       representative) 
+		 *  <li> when the second state agrees that the nodes on the two ends of the edge are equal, add the equality to 
+		 *       the result state
 		 */
 		T disjoinedState = builder.build();
 		for (final EqGraphNode<NODEID, ARRAYID> firstGraphNode : first.getAllEqGraphNodes()) {

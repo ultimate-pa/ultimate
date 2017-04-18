@@ -44,8 +44,6 @@ public class CreateVanillaTfStateBuilder {
 	private VPTransFormulaStateBuilderPreparer mTfStatePreparer;
 	private VPDomainPreanalysis mPreAnalysis;
 	private TransFormula mTransFormula;
-//	private VpTfStateFactory mTfStateFactory;
-	
 	
 	private Set<VPTfNodeIdentifier> mAllNodeIds = new HashSet<>();
 	private Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mNodeIdToEqGraphNode =
@@ -631,7 +629,8 @@ public class CreateVanillaTfStateBuilder {
 			}
 		}
 		VPTfStateBuilder result = new VPTfStateBuilder(mPreAnalysis, mTfStatePreparer, mTransFormula, 
-				null, null, mAllNodeIds, mNodeIdToEqGraphNode, disEqualitySet);
+				null, null, mAllNodeIds, mNodeIdToEqGraphNode, mTermToArrayWrapper, mTermToElementWrapper, 
+				disEqualitySet);
 
 		assert result.isTopConsistent();
 		return result;
