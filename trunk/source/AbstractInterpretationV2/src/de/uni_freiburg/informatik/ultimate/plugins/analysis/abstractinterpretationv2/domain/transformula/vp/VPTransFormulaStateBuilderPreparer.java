@@ -133,7 +133,9 @@ public class VPTransFormulaStateBuilderPreparer {
 	}
 
 	private void handleTransFormula(TransFormula tf) {
-		VPTfStateBuilder vptsb = new VPTfStateBuilder(mPreAnalysis, this, tf, mAllConstantEqNodes);
+//		VPTfStateBuilder vptsb = new VPTfStateBuilder(mPreAnalysis, this, tf, mAllConstantEqNodes);
+		final VPTfStateBuilder vptsb = 
+				new CreateVanillaTfStateBuilder(mPreAnalysis, this, tf, mAllConstantEqNodes).create();
 		
 		mTransFormulaToVPTfStateBuilder.put(tf, vptsb);
 	}

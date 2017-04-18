@@ -67,6 +67,8 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	private final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> mEqNodeToEqGraphNodeMap;
 
+	protected final Set<IProgramVarOrConst> mVars;
+
 	protected final VPDomain<ACTION> mDomain;
 	private final ManagedScript mScript;
 	private final Term mTerm;
@@ -88,18 +90,20 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	VPState(final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> eqNodeToEqGraphNodeMap,
 			final Set<VPDomainSymmetricPair<EqNode>> disEqualitySet, final Set<IProgramVarOrConst> vars,
 			final VPDomain<ACTION> domain, final boolean isTop) {
-		super(disEqualitySet, isTop, vars);
+		super(disEqualitySet, isTop);
 		mEqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);
 		mDomain = domain;
 		mScript = mDomain.getManagedScript();
 		mPreAnalysis = mDomain.getPreAnalysis();
 		mFactory = mDomain.getVpStateFactory();
+		mVars = Collections.unmodifiableSet(vars);
 
 		mTerm = constructTerm();
 
 		assert sanityCheck();
 		assert isTopConsistent();
 	}
+
 
 	private boolean sanityCheck() {
 		for (final VPDomainSymmetricPair<EqNode> pair : getDisEqualities()) {

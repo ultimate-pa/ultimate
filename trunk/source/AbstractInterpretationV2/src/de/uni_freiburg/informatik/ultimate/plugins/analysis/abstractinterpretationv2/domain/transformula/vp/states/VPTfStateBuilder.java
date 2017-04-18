@@ -50,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDim
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPTransFormulaStateBuilderPreparer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.ArrayInOutStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
@@ -76,6 +75,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *
  */
 public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNodeIdentifier, VPTfArrayIdentifier> {
+	
+	
+	private final Set<IProgramVarOrConst> mInVars;
+	private final Set<IProgramVarOrConst> mOutVars;
 
 	private Set<VPTfNodeIdentifier> mAllNodeIds = new HashSet<>();
 	private Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mNodeIdToEqGraphNode =
@@ -90,10 +93,13 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 
 	VPTransFormulaStateBuilderPreparer mTfStatePreparer;
 
-	NestedMap3<IProgramVarOrConst, Pair<IProgramVar, TermVariable>, Pair<IProgramVar, TermVariable>, VPTfArrayIdentifier> mPvocToInVarToOutVarToArrayIdentifier =
+	NestedMap3<IProgramVarOrConst, 
+		Pair<IProgramVar, TermVariable>, 
+		Pair<IProgramVar, TermVariable>, VPTfArrayIdentifier> mPvocToInVarToOutVarToArrayIdentifier =
 			new NestedMap3<>();
 
 	private final VPDomainPreanalysis mPreAnalysis;
+
 	private final Map<Term, IArrayWrapper> mTermToArrayWrapper = new HashMap<>();
 	private final Map<Term, IElementWrapper> mTermToElementWrapper = new HashMap<>();
 
@@ -105,46 +111,50 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 	private final Map<IProgramVar, VPTfArrayIdentifier> mProgramVarToInOrThroughArrayId = new HashMap<>();
 	private final Map<IProgramVar, VPTfArrayIdentifier> mProgramVarToOutOrThroughArrayId = new HashMap<>();
 
-	/**
-	 * Create the template VPTfStateBuilder for a given TransFormula. These templates are created for all TransFormulas
-	 * in the program before the fixpoint computation starts. During analysis copies of the templates are maded and
-	 * manipulated.
-	 *
-	 * @param preAnalysis
-	 * @param tfStatePreparer
-	 * @param tf
-	 * @param allConstantEqNodes
-	 */
-	public VPTfStateBuilder(final VPDomainPreanalysis preAnalysis,
-			final VPTransFormulaStateBuilderPreparer tfStatePreparer, final TransFormula tf,
-			final Set<EqNode> allConstantEqNodes) {
-		mTfStatePreparer = tfStatePreparer;
-		mPreAnalysis = preAnalysis;
-		mTransFormula = tf;
-		createEqGraphNodes(preAnalysis, allConstantEqNodes);
+	private final VpTfStateFactory mTfStateFactory;
 
-		for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> tfegn : getAllEqGraphNodes()) {
-			tfegn.setupNode();
-		}
-
-		/*
-		 * Generate disequality set for constants TODO: do this more efficiently
-		 */
-		final Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> disEqualitySet = new HashSet<>();
-		for (final VPTfNodeIdentifier node1 : mAllNodeIds) {
-			for (final VPTfNodeIdentifier node2 : mAllNodeIds) {
-				if (!node1.isLiteral() || !node2.isLiteral()) {
-					continue;
-				}
-				if (!node1.equals(node2)) {
-					disEqualitySet.add(new VPDomainSymmetricPair<>(node1, node2));
-				}
-			}
-		}
-		addDisEqualites(disEqualitySet);
-
-		assert isTopConsistent();
-	}
+//	/**
+//	 * Create the template VPTfStateBuilder for a given TransFormula. These templates are created for all TransFormulas
+//	 * in the program before the fixpoint computation starts. During analysis copies of the templates are maded and
+//	 * manipulated.
+//	 *
+//	 * @param preAnalysis
+//	 * @param tfStatePreparer
+//	 * @param tf
+//	 * @param allConstantEqNodes
+//	 * @param tfStateFactory 
+//	 */
+//	public VPTfStateBuilder(final VPDomainPreanalysis preAnalysis,
+//			final VPTransFormulaStateBuilderPreparer tfStatePreparer, final TransFormula tf,
+//			final Set<EqNode> allConstantEqNodes, VpTfStateFactory tfStateFactory) {
+//		mTfStatePreparer = tfStatePreparer;
+//		mPreAnalysis = preAnalysis;
+//		mTransFormula = tf;
+//		mTfStateFactory = tfStateFactory;
+//		createEqGraphNodes(preAnalysis, allConstantEqNodes);
+//
+//		for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> tfegn : getAllEqGraphNodes()) {
+//			tfegn.setupNode();
+//		}
+//
+//		/*
+//		 * Generate disequality set for constants TODO: do this more efficiently
+//		 */
+//		final Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> disEqualitySet = new HashSet<>();
+//		for (final VPTfNodeIdentifier node1 : mAllNodeIds) {
+//			for (final VPTfNodeIdentifier node2 : mAllNodeIds) {
+//				if (!node1.isLiteral() || !node2.isLiteral()) {
+//					continue;
+//				}
+//				if (!node1.equals(node2)) {
+//					disEqualitySet.add(new VPDomainSymmetricPair<>(node1, node2));
+//				}
+//			}
+//		}
+//		addDisEqualites(disEqualitySet);
+//
+//		assert isTopConsistent();
+//	}
 
 	/**
 	 * Copy constructor.
@@ -158,6 +168,9 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		mPreAnalysis = builder.mPreAnalysis;
 		mTfStatePreparer = builder.mTfStatePreparer;
 		mTransFormula = builder.mTransFormula;
+		mTfStateFactory = builder.mTfStateFactory;
+		mInVars = builder.mInVars;
+		mOutVars = builder.mOutVars;
 		
 		// the arrayIdentifiers are shared between all "sibling" builders (i.e. builders for the same TransFormula)
 		mPvocToInVarToOutVarToArrayIdentifier = builder.mPvocToInVarToOutVarToArrayIdentifier;
@@ -552,12 +565,13 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		assert mNodeIdToEqGraphNode != null;
 		assert mArrayIdToFunctionNodes != null;
 		assert mDisEqualitySet != null;
-		assert mVars != null;
+		assert mInVars != null;
+		assert mOutVars != null;
 		assert isTopConsistent();
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(mDisEqualitySet, this);
 
 		return new VPTfState(mTransFormula, this, mNodeIdToEqGraphNode, mAllNodeIds, mArrayIdToFunctionNodes, 
-				mDisEqualitySet, mIsTop, mVars);
+				mDisEqualitySet, mIsTop, mInVars, mOutVars, mTfStateFactory);
 	}
 
 	@Override
@@ -565,7 +579,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		return mNodeIdToEqGraphNode.get(i);
 	}
 
-	public VPTfNodeIdentifier getNodeIdentifier(final EqNode eqNode, final Map<IProgramVar, TermVariable> inVars,
+	private VPTfNodeIdentifier getNodeIdentifier(final EqNode eqNode, final Map<IProgramVar, TermVariable> inVars,
 			final Map<IProgramVar, TermVariable> outVars) {
 		VPTfNodeIdentifier result = mNonAuxVarNodeIds.get(eqNode, inVars, outVars);
 
@@ -583,7 +597,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		return result;
 	}
 
-	public VPAuxVarNodeIdentifier getAuxVarNodeIdentifier(final TermVariable tv) {
+	private VPAuxVarNodeIdentifier getAuxVarNodeIdentifier(final TermVariable tv) {
 		VPAuxVarNodeIdentifier result = mAuxVarNodeIds.get(tv);
 		if (result == null) {
 			result = new VPAuxVarNodeIdentifier(tv);
@@ -838,4 +852,10 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		}
 
 	}
+
+//	public <ACTION extends IIcfgTransition<IcfgLocation>> void patchIn(VPState<ACTION> oldState) {
+//		// TODO Auto-generated method stub
+//		assert false;
+//		
+//	}
 }

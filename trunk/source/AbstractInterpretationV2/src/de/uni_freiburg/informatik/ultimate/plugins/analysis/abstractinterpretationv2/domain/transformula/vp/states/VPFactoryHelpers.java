@@ -281,7 +281,7 @@ public class VPFactoryHelpers {
 		}
 		
 		final IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder = factory
-				.createEmptyStateBuilder(first instanceof VPTfState ? ((VPTfState) first).getTransFormula() : null);
+				.createFreshVanillaStateBuilder(first instanceof VPTfState ? ((VPTfState) first).getTransFormula() : null);
 
 		/**
 		 * the disjoined state contains the disequalities that both first and second contain. (i.e. intersection) TODO:

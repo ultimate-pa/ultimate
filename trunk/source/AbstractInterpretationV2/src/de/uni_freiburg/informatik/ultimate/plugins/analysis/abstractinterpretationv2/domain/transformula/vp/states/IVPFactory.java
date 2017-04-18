@@ -51,7 +51,7 @@ public interface IVPFactory<STATE extends IVPStateOrTfState<NODEID, ARRAYID>, NO
 	
 	Set<NODEID> getFunctionNodesForArray(STATE resultState, ARRAYID firstArray);
 	
-	IVPStateOrTfStateBuilder<STATE, NODEID, ARRAYID> createEmptyStateBuilder(TransFormula tf); // TODO not so nice..
+	IVPStateOrTfStateBuilder<STATE, NODEID, ARRAYID> createFreshVanillaStateBuilder(TransFormula tf); // TODO not so nice..
 
 	ILogger getLogger();
 

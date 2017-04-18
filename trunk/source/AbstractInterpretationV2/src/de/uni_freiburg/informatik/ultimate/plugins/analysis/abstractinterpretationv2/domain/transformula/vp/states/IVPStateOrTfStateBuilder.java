@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
@@ -50,8 +49,6 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 	
 	protected final Set<VPDomainSymmetricPair<NODEID>> mDisEqualitySet;
 
-	protected final Set<IProgramVarOrConst> mVars;
-	
 	protected boolean mIsTop = true;
 	
 	/**
@@ -61,7 +58,7 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 	 */
 	public IVPStateOrTfStateBuilder(final IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder) {
 		mDisEqualitySet = new HashSet<>(builder.mDisEqualitySet);
-		mVars = new HashSet<>(builder.mVars);
+//		mVars = new HashSet<>(builder.mVars);
 		mIsTop = builder.mIsTop;
 	}
 	
@@ -70,7 +67,7 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 	 */
 	public IVPStateOrTfStateBuilder() {
 		mDisEqualitySet = new HashSet<>();
-		mVars = new HashSet<>();
+//		mVars = new HashSet<>();
 	}
 
 	public abstract EqGraphNode<NODEID, ARRAYID> getEqGraphNode(NODEID i2);
@@ -254,15 +251,7 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 		// mDisEqualitySet.addAll(newDisequalities);
 	}
 
-	public IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> addVars(final Collection<IProgramVarOrConst> variables) {
-		mVars.addAll(variables);
-		return this;
-	}
 
-	public IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> removeVars(final Collection<IProgramVarOrConst> variables) {
-		mVars.removeAll(variables);
-		return this;
-	}
 	
 	/**
 	 * Use disEqualitySet to check if there exist contradiction in the graph.

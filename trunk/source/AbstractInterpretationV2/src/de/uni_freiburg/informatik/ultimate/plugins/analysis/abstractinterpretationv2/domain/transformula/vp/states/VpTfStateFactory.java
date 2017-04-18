@@ -87,7 +87,7 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 	public VPTfStateBuilder copy(final VPTfState state) {
 		assert !state.isBottom();
 
-		final VPTfStateBuilder builder = createEmptyStateBuilder(state.getTransFormula());
+		final VPTfStateBuilder builder = createFreshVanillaStateBuilder(state.getTransFormula());
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(builder.mDisEqualitySet, builder);
 		builder.setIsTop(state.isTop());
 
@@ -105,7 +105,8 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 			// && pair.mSnd.isLiteral() : "The only disequalites in a top state are between constants";
 		}
 
-		builder.addVars(new HashSet<>(state.getVariables()));
+//		builder.addInVars(new HashSet<>(state.getInVariables()));
+//		builder.addOutVars(new HashSet<>(state.getOutVariables()));
 
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(builder.mDisEqualitySet, builder);
 		assert VPDomainHelpers.disEqualityRelationIrreflexive(builder.mDisEqualitySet, builder);
@@ -128,7 +129,7 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 	 * Obtain the vanilla builder for the given TransFormula, make a (deep) copy of it and return it.
 	 */
 	@Override
-	public VPTfStateBuilder createEmptyStateBuilder(final TransFormula tf) {
+	public VPTfStateBuilder createFreshVanillaStateBuilder(final TransFormula tf) {
 		final VPTfStateBuilder vanillaBuilder = mTfStatePreparer.getVPTfStateBuilder(tf);
 		assert vanillaBuilder.isTopConsistent();
 
@@ -140,8 +141,8 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 	/**
 	 * Given a VPState and a TransFormula, this 
 	 *  <li> acquires the "vanilla" VPTfStateBuilder for the TransFormula 
-	 *  <li> collects everything that the state knows about the inVars of the TransFormula and updates the 
-	 * 	    VPTfStateBuidler accordingly
+	 *  <li> "patches in" the given state, i.e., collects everything that the state knows about the inVars of the 
+	 * 	     TransFormula and updates the VPTfStateBuidler accordingly
 	 *
 	 * @param state
 	 * @param tf
@@ -157,13 +158,13 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 		}
 
 		if (state.isTop()) {
-			final VPTfStateBuilder builder = createEmptyStateBuilder(tf);
-			builder.addVars(state.getVariables());
+			final VPTfStateBuilder builder = createFreshVanillaStateBuilder(tf);
+//			builder.addVars(state.getVariables());
 			return builder.build();
 		}
 
-		final VPTfStateBuilder builder = createEmptyStateBuilder(tf);
-		builder.addVars(state.getVariables());
+		final VPTfStateBuilder builder = createFreshVanillaStateBuilder(tf);
+//		builder.addVars(state.getVariables());
 		
 		final Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> inVarsAndConstantEqNodeSet = new HashSet<>();
 		for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> node : builder.getAllEqGraphNodes()) {

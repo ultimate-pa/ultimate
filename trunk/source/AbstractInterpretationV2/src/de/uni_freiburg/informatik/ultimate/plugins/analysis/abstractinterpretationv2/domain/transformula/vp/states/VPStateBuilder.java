@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,6 +56,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 		extends IVPStateOrTfStateBuilder<VPState<ACTION>, EqNode, IProgramVarOrConst> {
 
+	protected final Set<IProgramVarOrConst> mVars = new HashSet<>();
+	
 	protected final VPDomain<ACTION> mDomain;
 
 	private Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> mEqNodeToEqGraphNodeMap;
@@ -169,5 +172,15 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	public Set<VPDomainSymmetricPair<EqNode>> getDisEqualitySet() {
 		return Collections.unmodifiableSet(mDisEqualitySet);
+	}
+
+	public VPStateBuilder<ACTION> addVars(final Collection<IProgramVarOrConst> variables) {
+		mVars.addAll(variables);
+		return this;
+	}
+
+	public VPStateBuilder<ACTION> removeVars(final Collection<IProgramVarOrConst> variables) {
+		mVars.removeAll(variables);
+		return this;
 	}
 }

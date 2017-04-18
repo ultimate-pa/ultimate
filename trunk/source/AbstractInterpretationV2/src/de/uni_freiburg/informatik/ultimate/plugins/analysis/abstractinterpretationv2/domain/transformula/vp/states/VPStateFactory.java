@@ -80,7 +80,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public IVPStateOrTfStateBuilder<VPState<ACTION>, EqNode, IProgramVarOrConst>
-			createEmptyStateBuilder(final TransFormula tf) {
+			createFreshVanillaStateBuilder(final TransFormula tf) {
 		return createEmptyStateBuilder();
 	}
 
