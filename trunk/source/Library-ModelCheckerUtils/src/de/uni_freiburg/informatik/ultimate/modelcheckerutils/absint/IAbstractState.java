@@ -230,29 +230,28 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VA
 		NONE;
 
 		/**
-		 * Update this (the current result) with another one. Useful to determine the combined {@link SubsetResult} of a
-		 * collection.
+		 * Calculate the "minimum" between this and another {@link SubsetResult} (min(this,other)). The total order is
+		 * {@link SubsetResult#EQUAL} > {@link SubsetResult#NON_STRICT} > {@link SubsetResult#STRICT} >
+		 * {@link SubsetResult#NONE}.
 		 *
-		 * @param accumulated
-		 *            The so far accumulated result of an operation.
-		 * @param current
-		 *            The current intermediate result.
-		 * @return The current overall result.
+		 * @param other
+		 *            The other {@link SubsetResult}.
+		 * @return The result of min(this,other).
 		 */
-		public SubsetResult update(final SubsetResult current) {
+		public SubsetResult min(final SubsetResult other) {
 			switch (this) {
 			case EQUAL:
-				if (current == SubsetResult.EQUAL) {
-					return this;
-				}
-				break;
-			case STRICT:
-				if (current == SubsetResult.STRICT || current == SubsetResult.EQUAL) {
+				if (other == SubsetResult.EQUAL) {
 					return this;
 				}
 				break;
 			case NON_STRICT:
-				if (current != SubsetResult.NONE) {
+				if (other == SubsetResult.NON_STRICT || other == SubsetResult.EQUAL) {
+					return this;
+				}
+				break;
+			case STRICT:
+				if (other != NONE) {
 					return this;
 				}
 				break;
@@ -261,7 +260,32 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VA
 			default:
 				throw new UnsupportedOperationException("Unhandled case " + this);
 			}
-			return current;
+			return other;
+		}
+
+		public SubsetResult max(final SubsetResult other) {
+			switch (this) {
+			case EQUAL:
+				return this;
+			case NON_STRICT:
+				if (other != SubsetResult.EQUAL) {
+					return this;
+				}
+				break;
+			case STRICT:
+				if (other == NONE || other == STRICT) {
+					return this;
+				}
+				break;
+			case NONE:
+				if (other == SubsetResult.NONE) {
+					return this;
+				}
+				break;
+			default:
+				throw new UnsupportedOperationException("Unhandled case " + this);
+			}
+			return other;
 		}
 	}
 }

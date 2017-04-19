@@ -273,7 +273,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	private static SubsetResult isStrictSubsetOf(final SubsetResult current, final IAbstractState<?, IBoogieVar> aState,
 			final IAbstractState<?, IBoogieVar> bState) {
 		final SubsetResult result = isSubsetOfInternally(aState, bState);
-		return current.update(result);
+		return current.min(result);
 	}
 
 	@Override
