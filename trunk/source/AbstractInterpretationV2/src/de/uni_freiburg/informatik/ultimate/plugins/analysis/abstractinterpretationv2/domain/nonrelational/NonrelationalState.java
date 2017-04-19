@@ -332,6 +332,9 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		state.resetBottomPreserving();
 		state.mVariables.add(var);
 		state.getVar2ValueNonrelational().put(var, value);
+		if (value.isBottom()) {
+			state.mIsBottom = TVBool.FIXED;
+		}
 	}
 
 	/**
@@ -352,6 +355,9 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		assert state.getVar2ValueBoolean().get(variable) != null : "Boolean variable not in boolean values map";
 		state.resetBottomPreserving();
 		state.getVar2ValueBoolean().put(variable, value);
+		if (value.isBottom()) {
+			state.mIsBottom = TVBool.FIXED;
+		}
 	}
 
 	/**
