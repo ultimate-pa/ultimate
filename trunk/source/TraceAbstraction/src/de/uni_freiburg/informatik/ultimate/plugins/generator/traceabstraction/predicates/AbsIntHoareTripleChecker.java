@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -107,7 +108,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		mDomain = Objects.requireNonNull(domain);
 		mPostOp = Objects.requireNonNull(mDomain.getPostOperator());
 		mPredicateUnifier = Objects.requireNonNull(predicateUnifer);
-		mVarProvider = Objects.requireNonNull(varProvider.createNewVariableProvider(csToolkit.getSymbolTable()));
+		mVarProvider = Objects.requireNonNull(varProvider.createNewVariableProvider(csToolkit));
 		mCsToolkit = Objects.requireNonNull(csToolkit);
 		mManagedScript = Objects.requireNonNull(mCsToolkit.getManagedScript());
 
@@ -376,7 +377,15 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	@SuppressWarnings("unchecked")
 	private AbstractMultiState<STATE, VARDECL> getState(final IPredicate pred) {
 		if (pred instanceof AbsIntPredicate<?, ?>) {
-			return new AbstractMultiState<>(((AbsIntPredicate<STATE, ?>) pred).getAbstractStates());
+			final Set<STATE> states = ((AbsIntPredicate<STATE, ?>) pred).getAbstractStates();
+			if (states.size() <= 1) {
+				return new AbstractMultiState<>(states);
+			}
+			final Set<VARDECL> vars = new HashSet<>();
+			states.stream().forEach(a -> vars.addAll(a.getVariables()));
+			final Set<STATE> synchronizedStates =
+					states.stream().map(a -> AbsIntUtil.synchronizeVariables(a, vars)).collect(Collectors.toSet());
+			return new AbstractMultiState<>(synchronizedStates);
 		} else if (pred.equals(mTruePred)) {
 			return mTopState;
 		} else if (pred.equals(mFalsePred)) {
@@ -394,10 +403,11 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 
 	private AbstractMultiState<STATE, VARDECL> synchronizeState(final AbstractMultiState<STATE, VARDECL> template,
 			final AbstractMultiState<STATE, VARDECL> toSynchronize) {
+
 		final AbstractMultiState<STATE, VARDECL> rtr =
-				template.synchronizeVariables(AbsIntUtil::synchronizeVariables, toSynchronize);
-		assert assertBottomRetained(unifyBottom(toSynchronize), null, rtr, () -> template
-				.synchronizeVariables(AbsIntUtil::synchronizeVariables, toSynchronize)) : MSG_BOTTOM_WAS_LOST;
+				AbsIntUtil.synchronizeVariables(template, unifyBottom(toSynchronize));
+		assert assertBottomRetained(unifyBottom(toSynchronize), null, rtr,
+				() -> AbsIntUtil.synchronizeVariables(template, toSynchronize)) : MSG_BOTTOM_WAS_LOST;
 		return rtr;
 	}
 
