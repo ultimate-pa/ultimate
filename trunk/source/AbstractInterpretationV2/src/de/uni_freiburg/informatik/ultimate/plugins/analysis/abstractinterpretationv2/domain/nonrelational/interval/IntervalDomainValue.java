@@ -297,6 +297,9 @@ public class IntervalDomainValue implements INonrelationalValue<IntervalDomainVa
 		if (isBottom()) {
 			return true;
 		}
+		if (other.isBottom()) {
+			return false;
+		}
 
 		if (other.isInfinity()) {
 			return true;

@@ -329,7 +329,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		assert state != null;
 		assert var != null;
 		assert value != null;
-		resetBottomPreserving();
+		state.resetBottomPreserving();
 		state.mVariables.add(var);
 		state.getVar2ValueNonrelational().put(var, value);
 	}
@@ -350,7 +350,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		assert variable != null;
 		assert state.mVariables.contains(variable) : "Variable unknown";
 		assert state.getVar2ValueBoolean().get(variable) != null : "Boolean variable not in boolean values map";
-		resetBottomPreserving();
+		state.resetBottomPreserving();
 		state.getVar2ValueBoolean().put(variable, value);
 	}
 
@@ -395,7 +395,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			throw new UnsupportedOperationException(
 					"Variable names must be disjoint. Variable " + variable + " is already present.");
 		}
-		resetBottomPreserving();
+		state.resetBottomPreserving();
 		// TODO: Add array support.
 		final Consumer<VARDECL> varConsumer = var -> state.getVar2ValueNonrelational().put(var, createTopValue());
 		final Consumer<VARDECL> boolConsumer = var -> state.getVar2ValueBoolean().put(var, BooleanValue.TOP);
@@ -572,7 +572,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	/**
 	 * Resets the bottom state flag to unchecked if the state was not bottom before.
 	 */
-	private void resetBottomPreserving() {
+	protected void resetBottomPreserving() {
 		if (mIsBottom == TVBool.FIXED) {
 			return;
 		}
@@ -616,6 +616,9 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		final StringBuilder sbBot = new StringBuilder();
 		if (isBottom()) {
 			sbAll.append("BOTTOM ");
+			if (getBottomFlag() == TVBool.FIXED) {
+				sbAll.append("(FIXED) ");
+			}
 		}
 		for (final VARDECL entry : mVariables) {
 			final String varName;
@@ -820,6 +823,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 */
 	public STATE bottomState() {
 		final STATE ret = createCopy();
+		ret.resetBottomPreserving();
 		for (final Entry<VARDECL, V> entry : ret.getVar2ValueNonrelational().entrySet()) {
 			entry.setValue(createBottomValue());
 		}
