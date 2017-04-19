@@ -45,7 +45,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
@@ -62,7 +61,8 @@ public class VPTransFormulaStateBuilderPreparer {
 	VPDomainPreanalysis mPreAnalysis;
 
 	private final Set<EqNode> mAllConstantEqNodes;
-	private final Map<TransFormula, VPTfStateBuilder> mTransFormulaToVPTfStateBuilder = 
+//	private final Map<TransFormula, VPTfStateBuilder> mTransFormulaToVPTfStateBuilder = 
+	private final Map<IAction, VPTfStateBuilder> mActionToVPTfStateBuilder = 
 			new HashMap<>();
 	private final ILogger mLogger;
 
@@ -123,7 +123,7 @@ public class VPTransFormulaStateBuilderPreparer {
 	}
 	
 	protected void visit(ICallAction c) {
-		TransFormula tf = c.getLocalVarsAssignment();
+//		TransFormula tf = c.getLocalVarsAssignment();
 
 		final Set<IProgramVarOrConst> inVars = new HashSet<>();
 		inVars.addAll(mSymbolTable.getGlobals());
@@ -133,13 +133,12 @@ public class VPTransFormulaStateBuilderPreparer {
 		final Set<IProgramVarOrConst> outVars = new HashSet<>();
 		outVars.addAll(mSymbolTable.getGlobals());
 		outVars.addAll(mSymbolTable.getConstants());
-		outVars.addAll(tf.getAssignedVars());
+		outVars.addAll(c.getTransformula().getAssignedVars());
 		
-		handleTransFormula(tf, Collections.unmodifiableSet(inVars), Collections.unmodifiableSet(outVars));
+		handleTransFormula(c, Collections.unmodifiableSet(inVars), Collections.unmodifiableSet(outVars));
 	}
 
 	protected void visit(IReturnAction c) {
-		TransFormula tf = c.getAssignmentOfReturn();
 		
 		final Set<IProgramVarOrConst> inVars = new HashSet<>();
 		inVars.addAll(mSymbolTable.getGlobals());
@@ -149,16 +148,13 @@ public class VPTransFormulaStateBuilderPreparer {
 		final Set<IProgramVarOrConst> outVars = new HashSet<>();
 		outVars.addAll(mSymbolTable.getGlobals());
 		outVars.addAll(mSymbolTable.getConstants());
-		outVars.addAll(tf.getAssignedVars());
+		outVars.addAll(c.getTransformula().getAssignedVars());
 		
-		handleTransFormula(tf, Collections.unmodifiableSet(inVars), Collections.unmodifiableSet(outVars));
+		handleTransFormula(c, Collections.unmodifiableSet(inVars), Collections.unmodifiableSet(outVars));
 	}
 
 	protected void visit(IInternalAction c) {
 		assert c.getPrecedingProcedure().equals(c.getSucceedingProcedure()) : "have I understood this wrong?";
-		
-
-		TransFormula tf = c.getTransformula();
 
 		final String proc = c.getPrecedingProcedure();
 		Set<IProgramVarOrConst> varsInScope = new HashSet<>();
@@ -167,20 +163,20 @@ public class VPTransFormulaStateBuilderPreparer {
 		varsInScope.addAll(mSymbolTable.getLocals(proc));
 		varsInScope = Collections.unmodifiableSet(varsInScope);
 		
-		handleTransFormula(tf, varsInScope, varsInScope);
+		handleTransFormula(c, varsInScope, varsInScope);
 	}
 
-	private void handleTransFormula(final TransFormula tf, final Set<IProgramVarOrConst> inVars, 
+	private void handleTransFormula(final IAction tf, final Set<IProgramVarOrConst> inVars, 
 			final Set<IProgramVarOrConst> outVars) {
 //		VPTfStateBuilder vptsb = new VPTfStateBuilder(mPreAnalysis, this, tf, mAllConstantEqNodes);
 		final VPTfStateBuilder vptsb = 
 				new CreateVanillaTfStateBuilder(mPreAnalysis, this, tf, mAllConstantEqNodes, inVars, outVars).create();
 		
-		mTransFormulaToVPTfStateBuilder.put(tf, vptsb);
+		mActionToVPTfStateBuilder.put(tf, vptsb);
 	}
 	
-	public VPTfStateBuilder getVPTfStateBuilder(TransFormula tf) {
-		VPTfStateBuilder result = mTransFormulaToVPTfStateBuilder.get(tf);
+	public VPTfStateBuilder getVPTfStateBuilder(IAction a) {
+		VPTfStateBuilder result = mActionToVPTfStateBuilder.get(a);
 		assert result != null : "we should have a VPTransitionStateBuidler for every Transformula in the program";
 		assert result.isTopConsistent();
 		return result;

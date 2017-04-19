@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
@@ -52,7 +52,7 @@ public interface IVPFactory<STATE extends IVPStateOrTfState<NODEID, ARRAYID>, NO
 	Set<NODEID> getFunctionNodesForArray(STATE resultState, ARRAYID firstArray);
 	
 	// TODO it's not so nice that we have the TransFormula parameter here, because that is only used in the tfState case
-	IVPStateOrTfStateBuilder<STATE, NODEID, ARRAYID> createFreshVanillaStateBuilder(TransFormula tf); 
+	IVPStateOrTfStateBuilder<STATE, NODEID, ARRAYID> createFreshVanillaStateBuilder(IAction action); 
 
 	ILogger getLogger();
 

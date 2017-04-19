@@ -37,9 +37,9 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
@@ -77,7 +77,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public IVPStateOrTfStateBuilder<VPState<ACTION>, EqNode, IProgramVarOrConst>
-			createFreshVanillaStateBuilder(final TransFormula tf) {
+			createFreshVanillaStateBuilder(final IAction a) {
 		return createEmptyStateBuilder();
 	}
 

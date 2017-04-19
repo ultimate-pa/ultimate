@@ -113,7 +113,7 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		
 //		final VPTfState tfPreState = mTfStateFactory.createTfState(oldState, tf);
 		
-		final VPTfState tfState = mTfStateFactory.createTfState(oldState, tf);
+		final VPTfState tfState = mTfStateFactory.createTfState(oldState, transition);
 		
 //		final Term nnfTerm = new Nnf(mScript, mServices, QuantifierHandling.CRASH).transform(tf.getFormula());
 
@@ -154,7 +154,7 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 		if (transition instanceof Call
 				|| transition instanceof Return) {
-			final VPTfState tfState = mTfStateFactory.createTfState(stateBeforeLeaving, transition.getTransformula());
+			final VPTfState tfState = mTfStateFactory.createTfState(stateBeforeLeaving, transition);
 			tfState.computeOutStates(mTfStateFactory);
 			final Set<VPState<ACTION>> result = tfState.patchOut(stateAfterLeaving);
 

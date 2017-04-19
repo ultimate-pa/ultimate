@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
@@ -65,6 +66,7 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 	
 	private final VPTfStateBuilder mBuilder;
 	private final TransFormula mTransFormula;
+	private final IAction mAction;
 	private final HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> mArrayIdToFunctionNodes;
 	private final Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mNodeIdToEqGraphNode;
 	private final Set<VPTfNodeIdentifier> mAllNodeIds;
@@ -76,7 +78,7 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 	protected final Set<IProgramVarOrConst> mInVars;
 	protected final Set<IProgramVarOrConst> mOutVars;
 	
-	public VPTfState(final TransFormula tf, final VPTfStateBuilder builder,
+	public VPTfState(final IAction action, final VPTfStateBuilder builder,
 			final Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> nodeIdToEqGraphNode,
 			final Set<VPTfNodeIdentifier> allNodeIds,
 			final HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> arrayIdToFunctionNodes,
@@ -84,7 +86,8 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 			final Set<IProgramVarOrConst> inVars, 
 			final Set<IProgramVarOrConst> outVars) {
 		super(disEqs, isTop);
-		mTransFormula = tf;
+		mAction = action;
+		mTransFormula = action.getTransformula();
 		mBuilder = builder;
 		mAllNodeIds = allNodeIds;
 		mNodeIdToEqGraphNode = Collections.unmodifiableMap(nodeIdToEqGraphNode);
@@ -328,7 +331,7 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 						resultStates.addAll(resultStatesForCurrentNodePair);
 						continue;
 					}
-					
+
 					// add (dis)equality
 					if (!negated) {
 						resultStatesForCurrentNodePair = VPFactoryHelpers.addEquality(lhsNodeWSc.getNodeId(),
@@ -336,7 +339,7 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 					} else {
 						resultStatesForCurrentNodePair = VPFactoryHelpers.addDisEquality(lhsNodeWSc.getNodeId(),
 								rhsNodeWSc.getNodeId(), resultStatesForCurrentNodePair, mTfStateFactory);
-						
+
 					}
 					resultStates.addAll(resultStatesForCurrentNodePair);
 				}
@@ -346,8 +349,8 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 			return resultStates;
 		}
 	}
-	
-		/**
+
+	/**
 	 * Patches the side conditions of the given XwithSideConditions into the given state, returns the resulting state.
 	 * 
 	 * @param tfPreState
@@ -378,5 +381,9 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 		}
 		// TODO: filter bottom states?
 		return resultStatesForCurrentNodePair;
+	}
+
+	public IAction getAction() {
+		return mAction;
 	}
 }

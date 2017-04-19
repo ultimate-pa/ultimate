@@ -36,6 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -82,10 +83,12 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 
 	private final Map<Term, IArrayWrapper> mTermToArrayWrapper;
 	private final Map<Term, IElementWrapper> mTermToElementWrapper;
+	private final IAction mAction;
 
 	
 	public VPTfStateBuilder(VPDomainPreanalysis preAnalysis, VPTransFormulaStateBuilderPreparer tfStatePreparer, 
-			TransFormula transFormula, 
+//			TransFormula transFormula, 
+			IAction action, 
 			Set<IProgramVarOrConst> inVars, Set<IProgramVarOrConst> outVars, 
 			Set<VPTfNodeIdentifier> allNodeIds, 
 			Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> nodeIdToEqGraphNode, 
@@ -95,7 +98,8 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		super(initialDisequalities);
 		mPreAnalysis = preAnalysis;
 		mTfStatePreparer = tfStatePreparer;
-		mTransFormula = transFormula;
+		mAction = action;
+		mTransFormula = action.getTransformula();
 
 		mInVars = Collections.unmodifiableSet(inVars);
 		mOutVars = Collections.unmodifiableSet(outVars);
@@ -117,6 +121,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		assert builder.isTopConsistent();
 		mPreAnalysis = builder.mPreAnalysis;
 		mTfStatePreparer = builder.mTfStatePreparer;
+		mAction = builder.mAction;
 		mTransFormula = builder.mTransFormula;
 		mInVars = builder.mInVars;
 		mOutVars = builder.mOutVars;
@@ -164,7 +169,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		assert isTopConsistent();
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(mDisEqualitySet, this);
 
-		return new VPTfState(mTransFormula, this, mNodeIdToEqGraphNode, mAllNodeIds, mArrayIdToFunctionNodes, 
+		return new VPTfState(mAction, this, mNodeIdToEqGraphNode, mAllNodeIds, mArrayIdToFunctionNodes, 
 				mDisEqualitySet, mIsTop, mInVars, mOutVars);
 	}
 

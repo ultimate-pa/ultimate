@@ -34,8 +34,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
@@ -87,7 +86,7 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 	public VPTfStateBuilder copy(final VPTfState state) {
 		assert !state.isBottom();
 
-		final VPTfStateBuilder builder = createFreshVanillaStateBuilder(state.getTransFormula());
+		final VPTfStateBuilder builder = createFreshVanillaStateBuilder(state.getAction());
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(builder.mDisEqualitySet, builder);
 		builder.setIsTop(state.isTop());
 
@@ -133,8 +132,9 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 	 * Obtain the vanilla builder for the given TransFormula, make a (deep) copy of it and return it.
 	 */
 	@Override
-	public VPTfStateBuilder createFreshVanillaStateBuilder(final TransFormula tf) {
-		final VPTfStateBuilder vanillaBuilder = mTfStatePreparer.getVPTfStateBuilder(tf);
+//	public VPTfStateBuilder createFreshVanillaStateBuilder(final TransFormula tf) {
+	public VPTfStateBuilder createFreshVanillaStateBuilder(final IAction action) {
+		final VPTfStateBuilder vanillaBuilder = mTfStatePreparer.getVPTfStateBuilder(action);
 		assert vanillaBuilder.isTopConsistent();
 
 		final VPTfStateBuilder result = new VPTfStateBuilder(vanillaBuilder);
@@ -152,23 +152,24 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 	 * @param tf
 	 * @return
 	 */
-	public VPTfState createTfState(final VPState<?> state, final UnmodifiableTransFormula tf) {
+//	public VPTfState createTfState(final VPState<?> state, final UnmodifiableTransFormula tf) {
+	public VPTfState createTfState(final VPState<?> state, final IAction action) {
 		if (isDebugMode()) {
 			getLogger().debug("VPTfStateFactory: createTfState(..) (begin)");
 		}
 
 		if (state.isBottom()) {
 			// FIXME extra builder for var signature: a bit hacky..
-			return getBottomState(mTfStatePreparer.getVPTfStateBuilder(tf).build()); 
+			return getBottomState(mTfStatePreparer.getVPTfStateBuilder(action).build()); 
 		}
 
 		if (state.isTop()) {
-			final VPTfStateBuilder builder = createFreshVanillaStateBuilder(tf);
+			final VPTfStateBuilder builder = createFreshVanillaStateBuilder(action);
 //			builder.addVars(state.getVariables());
 			return builder.build();
 		}
 
-		final VPTfStateBuilder builder = createFreshVanillaStateBuilder(tf);
+		final VPTfStateBuilder builder = createFreshVanillaStateBuilder(action);
 //		builder.addVars(state.getVariables());
 		
 		final Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> inVarsAndConstantEqNodeSet = new HashSet<>();

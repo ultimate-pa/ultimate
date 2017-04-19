@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -77,6 +78,7 @@ public class CreateVanillaTfStateBuilder {
 	private final WrapperFactory mWrapperFactory = new WrapperFactory();
 	private final Set<IProgramVarOrConst> mInVars;
 	private final Set<IProgramVarOrConst> mOutVars;
+	private final IAction mAction;
 
 
 
@@ -94,12 +96,13 @@ public class CreateVanillaTfStateBuilder {
 	 * @param outVars
 	 */
 	public CreateVanillaTfStateBuilder(final VPDomainPreanalysis preAnalysis,
-			final VPTransFormulaStateBuilderPreparer tfStatePreparer, final TransFormula tf,
+			final VPTransFormulaStateBuilderPreparer tfStatePreparer, final IAction action,//final TransFormula tf,
 			final Set<EqNode> allConstantEqNodes, final Set<IProgramVarOrConst> inVars, 
 			final Set<IProgramVarOrConst> outVars) {
 		mTfStatePreparer = tfStatePreparer;
 		mPreAnalysis = preAnalysis;
-		mTransFormula = tf;
+		mAction = action;
+		mTransFormula = action.getTransformula();
 		mInVars = inVars;
 		mOutVars = outVars;
 //		mTfStateFactory = tfStateFactory;
@@ -115,6 +118,7 @@ public class CreateVanillaTfStateBuilder {
 	/**
 	 * The EqGraphNodes we need for the given TransFormula can come from the following sources: (Paradigm: whenever
 	 * the TransFormula can introduce a (dis-)equality about something, we need EqGraphNodes to track that.) 
+	 * FIXME: the below listing is slightly outdated..
 	 * <ol>
 	 *  <li> equalities in the TransFormula a) between elements b) between arrays (normal or store terms) 
 	 *    --> we obtain the EqGraphNodes during construction of the Element/ArrayWrappers 
@@ -197,6 +201,15 @@ public class CreateVanillaTfStateBuilder {
 			 */
 			getOrConstructElementWrapper(constantEqNode.getTerm());
 		}
+		
+//		/*
+//		 * 3b. variables that are not mentioned in the TransFormula but are visible in the current scope need to get 
+//		 *   "through"-nodes.
+//		 */
+//		for (IProgramVarOrConst pvoc : mInVars) {
+//			if (pvoc)
+//		}
+
 
 		/*
 		 * 4. the auxVars of the TransFormula
@@ -207,15 +220,22 @@ public class CreateVanillaTfStateBuilder {
 	}
 
 	/**
-	 * Plan: - as input we get an IArrayWrapper, right now we just take its base array (e.g. for (store a i x) we take
-	 * a) --> this might be optimized further perhaps - we look up which indices we track for that array (from
-	 * preAnalysis), i.e., which indices of that array our states talk about - for each of these EqFunctionNodes we
-	 * build an EqGraphNode, which has an in/out/through status compatible with the array - there may be some
-	 * EqGraphNodes constructed in an earlier step (for a Term that occurs in the TransFormula) that we can use for
-	 * this, however we usually will have to introduce special EqGraphNodes for this. - if the array is "in" in the
-	 * given TransFormula, its corresponding EqGraphNode including all its descendants needs to be inOrThrough
-	 * analogously if the array is "out" if the array is "through", then we need both versions for each functionNode:
-	 * inOrThrough and outOrThrough .. the array could also be an auxVar --> TODO
+	 * Plan: 
+	 * <ul>
+	 *  <li> as input we get an IArrayWrapper, right now we just take its base array (e.g. for (store a i x) we take
+	 * a) --> this might be optimized further perhaps 
+	 *  <li> we look up which indices we track for that array (from
+	 * preAnalysis), i.e., which indices of that array our states talk about 
+	 *  <li> for each of these EqFunctionNodes we
+	 * build an EqGraphNode, which has an in/out/through status compatible with the array 
+	 *  <li> there may be some EqGraphNodes constructed in an earlier step (for a Term that occurs in the TransFormula) 
+	 *    that we can use for this, however we usually will have to introduce special EqGraphNodes for this. 
+	 *  <li> if the array is "in" in the given TransFormula, its corresponding EqGraphNode including all its descendants 
+	 *    needs to be inOrThrough analogously if the array is "out" if the array is "through", then we need both 
+	 *    versions for each functionNode:
+	 * 	    inOrThrough and outOrThrough 
+	 *  <li> .. the array could also be an auxVar --> TODO
+	 * </ul>
 	 *
 	 *
 	 *
@@ -646,7 +666,7 @@ public class CreateVanillaTfStateBuilder {
 				}
 			}
 		}
-		final VPTfStateBuilder result = new VPTfStateBuilder(mPreAnalysis, mTfStatePreparer, mTransFormula, 
+		final VPTfStateBuilder result = new VPTfStateBuilder(mPreAnalysis, mTfStatePreparer, mAction, 
 				mInVars, mOutVars, mAllNodeIds, mNodeIdToEqGraphNode, mTermToArrayWrapper, mTermToElementWrapper, 
 				disEqualitySet);
 
