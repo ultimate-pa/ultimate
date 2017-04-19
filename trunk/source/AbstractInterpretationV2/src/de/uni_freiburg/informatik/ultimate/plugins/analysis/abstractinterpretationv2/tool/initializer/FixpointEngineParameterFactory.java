@@ -74,7 +74,7 @@ public class FixpointEngineParameterFactory {
 				new IcfgAbstractStateStorageProvider<>(mServices, transitionProvider);
 
 		final IVariableProvider<STATE, IcfgEdge, IBoogieVar> variableProvider =
-				new RcfgVariableProvider<>(mRoot.getCfgSmtToolkit().getSymbolTable(), mServices);
+				new RcfgVariableProvider<>(mRoot.getCfgSmtToolkit(), mServices);
 		final IDebugHelper<STATE, IcfgEdge, IBoogieVar, IcfgLocation> debugHelper =
 				new RcfgDebugHelper<>(mRoot.getCfgSmtToolkit(), mServices, mRoot.getCfgSmtToolkit().getSymbolTable());
 		return new FixpointEngineParameters<STATE, IcfgEdge, IBoogieVar, IcfgLocation>(mServices, IBoogieVar.class)

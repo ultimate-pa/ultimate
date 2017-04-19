@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
@@ -248,9 +249,8 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 	}
 
 	@Override
-	public IVariableProvider<STATE, ACTION, IProgramVarOrConst>
-			createNewVariableProvider(final IIcfgSymbolTable table) {
-		return new FutureRcfgVariableProvider<>(table, mLogger);
+	public IVariableProvider<STATE, ACTION, IProgramVarOrConst> createNewVariableProvider(final CfgSmtToolkit toolkit) {
+		return new FutureRcfgVariableProvider<>(toolkit.getSymbolTable(), mLogger);
 	}
 
 	@Override
