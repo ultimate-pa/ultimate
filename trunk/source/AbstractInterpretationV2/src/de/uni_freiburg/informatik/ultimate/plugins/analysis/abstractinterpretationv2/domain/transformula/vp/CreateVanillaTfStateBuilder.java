@@ -206,9 +206,12 @@ public class CreateVanillaTfStateBuilder {
 //		 * 3b. variables that are not mentioned in the TransFormula but are visible in the current scope need to get 
 //		 *   "through"-nodes.
 //		 */
-//		for (IProgramVarOrConst pvoc : mInVars) {
-//			if (pvoc)
+//		if (mAction instanceof IInternalAction) {
+//			for (IProgramVarOrConst pvoc : mInVars) {
+//				if (pvoc.)
+//			}
 //		}
+		
 
 
 		/*

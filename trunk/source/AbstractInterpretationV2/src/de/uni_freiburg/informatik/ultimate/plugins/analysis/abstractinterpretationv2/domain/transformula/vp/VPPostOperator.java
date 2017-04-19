@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -124,7 +125,7 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		
 //		final Set<VPTfState> resultTfStates = handleTransition(tfPreState, nnfTerm, tf, false);
 		
-		tfState.computeOutStates(mTfStateFactory);
+		final Set<VPTfState> tfStatesAfterTransition = tfState.applyTransition(mTfStateFactory, mServices);
 		
 //		if (mPreAnalysis.isDebugMode()) {
 //			mDomain.getLogger().debug("states after transition " + transition + ": " + resultTfStates);
@@ -132,7 +133,9 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		
 //		final Set<VPState<ACTION>> resultStates = mStateFactory.convertToStates(resultTfStates, tf.getAssignedVars(), 
 //				oldState);
-		final Set<VPState<ACTION>> resultStates = tfState.patchOut(mStateFactory.getTopState(oldState.getVariables()));
+//		final Set<VPState<ACTION>> resultStates = tfState.patchOut(mStateFactory.getTopState(oldState.getVariables()));
+//		final Set<VPTfState> tfStatesAfterTransition = tfState.getStatesAfterTransition();
+		final Set<VPState<ACTION>> resultStates = mStateFactory.projectToOutVars(tfStatesAfterTransition, null, null);
 
 		if (mPreAnalysis.isDebugMode()) {
 			mPreAnalysis.getLogger().debug("VPPostOperator: apply(..) (internal transition) (end)");
@@ -155,8 +158,13 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		if (transition instanceof Call
 				|| transition instanceof Return) {
 			final VPTfState tfState = mTfStateFactory.createTfState(stateBeforeLeaving, transition);
-			tfState.computeOutStates(mTfStateFactory);
-			final Set<VPState<ACTION>> result = tfState.patchOut(stateAfterLeaving);
+			final Set<VPTfState> tfStatesAfterTransition = tfState.applyTransition(mTfStateFactory, mServices);
+			final Set<VPState<ACTION>> patchStates = mStateFactory.projectToOutVars(tfStatesAfterTransition, null, null);
+			
+			final Set<VPState<ACTION>> result = new HashSet<>();
+			for (VPState<ACTION> patchState : patchStates) {
+				result.add(stateAfterLeaving.patch(patchState));
+			}
 
 			assert VPDomainHelpers.containsNoNullElement(result);
 			assert VPDomainHelpers.allStatesHaveSameVariables(result);

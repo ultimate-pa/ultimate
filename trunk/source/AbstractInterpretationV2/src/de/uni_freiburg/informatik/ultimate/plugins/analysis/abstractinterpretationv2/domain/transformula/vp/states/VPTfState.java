@@ -35,16 +35,17 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.ArrayWithSideCondition;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
@@ -77,6 +78,8 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 
 	protected final Set<IProgramVarOrConst> mInVars;
 	protected final Set<IProgramVarOrConst> mOutVars;
+	private Set<VPTfState> mOutStates;
+//	private VPStateFactory mStateFactory;
 	
 	public VPTfState(final IAction action, final VPTfStateBuilder builder,
 			final Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> nodeIdToEqGraphNode,
@@ -162,16 +165,63 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 		return mBuilder.getOrConstructArrayIdentifier(newArray);
 	}
 
-	public void computeOutStates(final VpTfStateFactory tfStateFactory) {
+	public Set<VPTfState>  applyTransition(final VpTfStateFactory tfStateFactory, //final VpTfStateFactory stateFactory, 
+			final IUltimateServiceProvider services) {
 		mTfStateFactory = tfStateFactory;
+//		mStateFactory = stateFactory;
 		
-		
+		final Term nnfTerm = new Nnf(mScript, services, QuantifierHandling.CRASH)
+				.transform(mTransFormula.getFormula());
+//		Set<VPTfState> tfStatesWithOutComputed = handleTransition(nnfTerm, mTransFormula, false);
+		Set<VPTfState> outStates = handleTransition(nnfTerm, mTransFormula, false);
+		return outStates;
+//		mOutStates = projectToOutVars(tfStatesWithOutComputed);
 	}
 
-	public <ACTION extends IIcfgTransition<IcfgLocation>> Set<VPState<ACTION>> patchOut(VPState<ACTION> topState) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	public <ACTION extends IIcfgTransition<IcfgLocation>> Set<VPState<ACTION>> patchOut(VPState<ACTION> state) {
+//		assert mOutStates != null : "call computeOutStates first!";
+//
+//		final Set<VPState<ACTION>> result = new HashSet<>();
+//		for (VPTfState outState : mOutStates) {
+//			result.addAll(mStateFactory.patchOut(state, outState));
+//		}
+//		return result;
+//	}
+	
+//	/**
+//	 * Patch the (dis)equality information from the given tfState into the given state, return the resulting states.
+//	 */
+//	public <ACTION extends IIcfgTransition<IcfgLocation>> Set<VPState<ACTION>> patchOut(VPState<ACTION> state, 
+//			VPTfState outState) {
+//		
+//		Set<VPStateBuilder<ACTION>> result = Collections.singleton(mStateFactory.copy(state));
+//		
+//		
+//		for (EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> on1 : outState.getOutNodes()) {
+//			for (EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> on2 : outState.getOutNodes()) {
+//				for (VPStateBuilder<ACTION> res : result) {
+//					res.
+//				}
+//				result = 
+//			}
+//		}
+//		
+//		return result;
+//	}
+
+//	private Set<VPState> projectToOutVars(Set<VPTfState> tfStatesWithOutComputed) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+	
+//	public Set<VPTfState> getStatesAfterTransition() {
+//		return mOutStates;
+//	}
+
+//	private Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> getOutNodes() {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
 	private Set<VPTfState> handleTransition(final Term term, final TransFormula tf,
 			final boolean negated) {
