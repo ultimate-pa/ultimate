@@ -148,8 +148,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		}
 		final VPStateBuilder<ACTION> copy = mFactory.copy(this);
 		copy.removeVars(Collections.singleton(variable));
-		final VPState<ACTION> result = copy.build();
-		return result;
+		return copy.build();
 	}
 
 	@Override
@@ -159,8 +158,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		}
 		final VPStateBuilder<ACTION> copy = mFactory.copy(this);
 		copy.removeVars(variables);
-		final VPState<ACTION> result = copy.build();
-		return result;
+		return copy.build();
 	}
 
 	@Override

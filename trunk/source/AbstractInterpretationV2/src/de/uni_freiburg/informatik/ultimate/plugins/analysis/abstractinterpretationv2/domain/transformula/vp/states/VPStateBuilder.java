@@ -159,7 +159,8 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 		 }
 	 }
 
-	public HashRelation<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> ccchild(final EqGraphNode<EqNode, IProgramVarOrConst> representative1) {
+	public HashRelation<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> ccchild(
+			final EqGraphNode<EqNode, IProgramVarOrConst> representative1) {
 		return representative1.find().getCcchild();
 	}
 
@@ -184,13 +185,11 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 		return Collections.unmodifiableSet(mDisEqualitySet);
 	}
 
-	public VPStateBuilder<ACTION> addVars(final Collection<IProgramVarOrConst> variables) {
+	public void addVars(final Collection<IProgramVarOrConst> variables) {
 		mVars.addAll(variables);
-		return this;
 	}
 
-	public VPStateBuilder<ACTION> removeVars(final Collection<IProgramVarOrConst> variables) {
+	public void removeVars(final Collection<IProgramVarOrConst> variables) {
 		mVars.removeAll(variables);
-		return this;
 	}
 }

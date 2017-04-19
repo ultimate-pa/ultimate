@@ -84,6 +84,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 	private final Map<Term, IArrayWrapper> mTermToArrayWrapper;
 	private final Map<Term, IElementWrapper> mTermToElementWrapper;
 	private final IAction mAction;
+	private final Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mOutNodes;
 
 	
 	public VPTfStateBuilder(VPDomainPreanalysis preAnalysis, VPTransFormulaStateBuilderPreparer tfStatePreparer, 
@@ -94,12 +95,14 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 			Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> nodeIdToEqGraphNode, 
 			Map<Term, IArrayWrapper> termToArrayWrapper, 
 			Map<Term, IElementWrapper> termToElementWrapper, 
-			Set<VPDomainSymmetricPair<VPTfNodeIdentifier>>  initialDisequalities) {
+			Set<VPDomainSymmetricPair<VPTfNodeIdentifier>>  initialDisequalities, 
+			Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outNodes) {
 		super(initialDisequalities);
 		mPreAnalysis = preAnalysis;
 		mTfStatePreparer = tfStatePreparer;
 		mAction = action;
 		mTransFormula = action.getTransformula();
+		mOutNodes = outNodes;
 
 		mInVars = Collections.unmodifiableSet(inVars);
 		mOutVars = Collections.unmodifiableSet(outVars);
@@ -125,6 +128,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		mTransFormula = builder.mTransFormula;
 		mInVars = builder.mInVars;
 		mOutVars = builder.mOutVars;
+		mOutNodes = builder.mOutNodes;
 		
 		mTermToElementWrapper = builder.mTermToElementWrapper;
 		mTermToArrayWrapper = builder.mTermToArrayWrapper;
@@ -170,7 +174,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(mDisEqualitySet, this);
 
 		return new VPTfState(mAction, this, mNodeIdToEqGraphNode, mAllNodeIds, mArrayIdToFunctionNodes, 
-				mDisEqualitySet, mIsTop, mInVars, mOutVars);
+				mDisEqualitySet, mIsTop, mInVars, mOutVars, mOutNodes);
 	}
 
 	@Override

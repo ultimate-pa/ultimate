@@ -43,7 +43,7 @@ public class VPTfBottomState extends VPTfState {
 	
 	public VPTfBottomState(final Set<IProgramVarOrConst> inVars, final Set<IProgramVarOrConst> outVars) {
 		super(null, null, null, null, null, null,
-				false, inVars, outVars);
+				false, inVars, outVars, null);
 	}
 	
 	@Override

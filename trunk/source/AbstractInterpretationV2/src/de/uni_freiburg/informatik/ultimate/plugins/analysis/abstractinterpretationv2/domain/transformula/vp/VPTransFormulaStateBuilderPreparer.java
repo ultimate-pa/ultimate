@@ -181,8 +181,8 @@ public class VPTransFormulaStateBuilderPreparer {
 		assert result.isTopConsistent();
 		return result;
 	}
-
-	public Set<EqNode> getAllConstantEqNodes() {
-		return mAllConstantEqNodes;
-	}
+//
+//	public Set<EqNode> getAllConstantEqNodes() {
+//		return mAllConstantEqNodes;
+//	}
 }

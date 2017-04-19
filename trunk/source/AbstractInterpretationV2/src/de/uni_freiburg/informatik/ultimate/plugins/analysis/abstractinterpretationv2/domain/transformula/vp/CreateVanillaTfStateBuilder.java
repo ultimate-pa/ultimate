@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -79,6 +80,7 @@ public class CreateVanillaTfStateBuilder {
 	private final Set<IProgramVarOrConst> mInVars;
 	private final Set<IProgramVarOrConst> mOutVars;
 	private final IAction mAction;
+//	private Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mOutNodes = new HashSet<>();
 
 
 
@@ -115,6 +117,27 @@ public class CreateVanillaTfStateBuilder {
 
 	}
 	
+	
+	/**
+	 * Creates all the EqGraphNodes that are needed for instances of this TfStateBuilder.
+	 * 
+	 * (new) plan for this method:
+	 * <ul>
+	 *  <li> For all EqNodes e in the in/out scopes of this method
+	 *   <ul>
+	 *    <li> if e contains an assignedVar, then create _all_ in- and out-versions of it (?..)
+	 *    <li> else create a through-version of it
+	 *   </ul>
+	 *  <li> create a node for each auxVar in the transFormula
+	 * </ul> 
+	 * 
+	 * @param preAnalysis
+	 * @param allConstantEqNodes
+	 */
+	private void createEqGraphNodes(final VPDomainPreanalysis preAnalysis, final Set<EqNode> allConstantEqNodes) {
+
+	}
+	
 	/**
 	 * The EqGraphNodes we need for the given TransFormula can come from the following sources: (Paradigm: whenever
 	 * the TransFormula can introduce a (dis-)equality about something, we need EqGraphNodes to track that.) 
@@ -132,7 +155,7 @@ public class CreateVanillaTfStateBuilder {
 	 *     --> this also includes ArrayUpdates, which are array equalities with store terms
 	 * </ol>  
 	 */ 
-	private void createEqGraphNodes(final VPDomainPreanalysis preAnalysis, final Set<EqNode> allConstantEqNodes) {
+	private void createEqGraphNodesOld(final VPDomainPreanalysis preAnalysis, final Set<EqNode> allConstantEqNodes) {
 
 		/*
 		 * Step 1a. construct element wrappers, for non-array equations (in this order because the array equations
@@ -339,9 +362,14 @@ public class CreateVanillaTfStateBuilder {
 				itn.addToCcpar(newFunctionEqGraphNode);
 			}
 
-			// update store maps
+			/*
+			 * register fresh node
+			 */
 			mNodeIdToEqGraphNode.put(newNodeId, newFunctionEqGraphNode);
 			mArrayIdToFunctionNodes.addPair(arrayId, newNodeId);
+//			if (newNodeId.isOutOrThrough()) {
+//				mOutNodes.add(newFunctionEqGraphNode);
+//			}
 
 			assert newFunctionEqGraphNode != null;
 			return newFunctionEqGraphNode;
@@ -390,7 +418,14 @@ public class CreateVanillaTfStateBuilder {
 			}
 		}
 		final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newEqGraphNode = new EqGraphNode<>(newNodeId);
+
+		/*
+		 * register fresh node
+		 */
 		mNodeIdToEqGraphNode.put(newNodeId, newEqGraphNode);
+//		if (newNodeId.isOutOrThrough()) {
+//			mOutNodes.add(newEqGraphNode);
+//		}
 
 		assert newEqGraphNode != null;
 		return newEqGraphNode;
@@ -464,8 +499,9 @@ public class CreateVanillaTfStateBuilder {
 
 		result = new EqGraphNode<>(nodeIdentifier);
 
-		mNodeIdToEqGraphNode.put(nodeIdentifier, result);
-
+		/*
+		 * set ccchild/ccpar fields
+		 */
 		if (nodeIdentifier.isFunction()) {
 			final EqFunctionNode eqFunctionNode = (EqFunctionNode) nodeIdentifier.getEqNode();
 
@@ -491,6 +527,14 @@ public class CreateVanillaTfStateBuilder {
 
 			mArrayIdToFunctionNodes.addPair(arrayId, nodeIdentifier);
 		}
+
+		/*
+		 * register new node
+		 */
+		mNodeIdToEqGraphNode.put(nodeIdentifier, result);
+//		if (nodeIdentifier.isOutOrThrough()) {
+//			mOutNodes.add(result);
+//		}
 
 		return result;
 	}
@@ -654,7 +698,19 @@ public class CreateVanillaTfStateBuilder {
 	}
 
 	public VPTfStateBuilder create() {
-
+//		/*
+//		 * the out nodes should be exactly all nodes that are "outOrThrough"
+//		 */
+//		assert mNodeIdToEqGraphNode.values().containsAll(mOutNodes);
+//		assert mOutNodes.containsAll(mNodeIdToEqGraphNode.values().stream()
+//				.filter(node -> node.mNodeIdentifier.isOutOrThrough())
+//				.collect(Collectors.toSet()));
+		
+		final Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outNodes = mNodeIdToEqGraphNode.values()
+				.stream()
+				.filter(node -> node.mNodeIdentifier.isOutOrThrough())
+				.collect(Collectors.toSet());
+		
 		/*
 		 * Generate disequality set for constants 
 		 */
@@ -669,9 +725,9 @@ public class CreateVanillaTfStateBuilder {
 				}
 			}
 		}
-		final VPTfStateBuilder result = new VPTfStateBuilder(mPreAnalysis, mTfStatePreparer, mAction, 
-				mInVars, mOutVars, mAllNodeIds, mNodeIdToEqGraphNode, mTermToArrayWrapper, mTermToElementWrapper, 
-				disEqualitySet);
+		final VPTfStateBuilder result = new VPTfStateBuilder(mPreAnalysis, mTfStatePreparer, mAction, mInVars, mOutVars, 
+				mAllNodeIds, mNodeIdToEqGraphNode, mTermToArrayWrapper, mTermToElementWrapper, disEqualitySet, 
+				outNodes);
 
 		assert result.isTopConsistent();
 		return result;

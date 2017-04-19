@@ -116,7 +116,7 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 		
 		final Set<VPTfState> tfStatesAfterTransition = tfState.applyTransition(mTfStateFactory, mServices);
 		
-		final Set<VPState<ACTION>> resultStates = mStateFactory.projectToOutVars(tfStatesAfterTransition, null, null);
+		final Set<VPState<ACTION>> resultStates = mStateFactory.projectToOutVars(tfStatesAfterTransition);
 
 		if (mPreAnalysis.isDebugMode()) {
 			mPreAnalysis.getLogger().debug("VPPostOperator: apply(..) (internal transition) (end)");
@@ -140,7 +140,7 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 				|| transition instanceof Return) {
 			final VPTfState tfState = mTfStateFactory.createTfState(stateBeforeLeaving, transition);
 			final Set<VPTfState> tfStatesAfterTransition = tfState.applyTransition(mTfStateFactory, mServices);
-			final Set<VPState<ACTION>> patchStates = mStateFactory.projectToOutVars(tfStatesAfterTransition, null, null);
+			final Set<VPState<ACTION>> patchStates = mStateFactory.projectToOutVars(tfStatesAfterTransition);
 			
 			final Set<VPState<ACTION>> result = new HashSet<>();
 			for (VPState<ACTION> patchState : patchStates) {

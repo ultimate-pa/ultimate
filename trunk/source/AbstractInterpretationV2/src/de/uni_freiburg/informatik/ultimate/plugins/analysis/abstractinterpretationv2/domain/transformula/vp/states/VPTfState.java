@@ -78,6 +78,7 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 
 	protected final Set<IProgramVarOrConst> mInVars;
 	protected final Set<IProgramVarOrConst> mOutVars;
+	private final Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mOutNodes;
 	
 	public VPTfState(final IAction action, final VPTfStateBuilder builder,
 			final Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> nodeIdToEqGraphNode,
@@ -85,7 +86,8 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 			final HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> arrayIdToFunctionNodes,
 			final Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> disEqs, final boolean isTop,
 			final Set<IProgramVarOrConst> inVars, 
-			final Set<IProgramVarOrConst> outVars) {
+			final Set<IProgramVarOrConst> outVars, 
+			final Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outNodes) {
 		super(disEqs, isTop);
 		mAction = action;
 		mTransFormula = action.getTransformula();
@@ -96,6 +98,7 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 		
 		mInVars = inVars;
 		mOutVars = outVars;
+		mOutNodes = outNodes;
 		
 		assert false : "TODO: obtain script somehow";
 		mScript = null;
@@ -358,8 +361,8 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 	 * @param rhsNodeWSc
 	 * @return
 	 */
-	private Set<VPTfState> addSideConditionsToState(//final VPTfState tfPreState,
-			final INodeOrArrayWithSideCondition lhsNodeWSc, final INodeOrArrayWithSideCondition rhsNodeWSc) {
+	private Set<VPTfState> addSideConditionsToState(final INodeOrArrayWithSideCondition lhsNodeWSc, 
+			final INodeOrArrayWithSideCondition rhsNodeWSc) {
 		final VPTfStateBuilder preStateCopy = mTfStateFactory.copy(this);
 		// add side conditions
 		for (final VPDomainSymmetricPair<VPTfNodeIdentifier> de : lhsNodeWSc.getDisEqualities()) {
@@ -385,5 +388,9 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 
 	public IAction getAction() {
 		return mAction;
+	}
+
+	public Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> getOutNodes() {
+		return mOutNodes;
 	}
 }
