@@ -28,13 +28,13 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.congruence;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.TVBool;
 
 /**
  * Implementation of an abstract state of the {@link CongruenceDomain}.
@@ -79,10 +79,16 @@ public class CongruenceDomainState<VARDECL>
 		super(logger, variablesMap, valuesMap, booleanValuesMap, isBottom);
 	}
 
+	protected CongruenceDomainState(final ILogger logger, final Set<VARDECL> variablesMap,
+			final Map<VARDECL, CongruenceDomainValue> valuesMap, final Map<VARDECL, BooleanValue> booleanValuesMap,
+			final TVBool isBottom) {
+		super(logger, variablesMap, valuesMap, booleanValuesMap, isBottom);
+	}
+
 	@Override
 	protected CongruenceDomainState<VARDECL> createCopy() {
-		return new CongruenceDomainState<>(getLogger(), getVariables(), new HashMap<>(getVar2ValueNonrelational()),
-				new HashMap<>(getVar2ValueBoolean()), isBottom());
+		return new CongruenceDomainState<>(getLogger(), getVariables(), getVar2ValueNonrelational(),
+				getVar2ValueBoolean(), getBottomFlag());
 	}
 
 	@Override

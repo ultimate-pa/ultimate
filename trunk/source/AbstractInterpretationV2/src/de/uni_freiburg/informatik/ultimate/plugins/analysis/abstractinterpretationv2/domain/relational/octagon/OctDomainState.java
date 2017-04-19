@@ -52,6 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.TVBool;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -82,7 +83,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	/**
 	 * Indicates whether the state is bottom. This field is only used to determine whether a bottom state was created.
 	 */
-	private LBool mIsBottom;
+	private TVBool mIsBottom;
 
 	/** Map of variable names to their {@link IBoogieVar}. */
 	private Set<IBoogieVar> mMapVarToBoogieVar;
@@ -113,10 +114,10 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 * @param isBottom
 	 *            If <code>true</code>, the created state corresponds to &bot;, &top; otherwise.
 	 */
-	private OctDomainState(final Function<OctDomainState, String> logStringFunction, final LBool isBottom) {
+	private OctDomainState(final Function<OctDomainState, String> logStringFunction, final TVBool isBottom) {
 		mLogStringFunction = logStringFunction;
 		mId = sId++;
-		mIsBottom = isBottom == LBool.TRUE ? LBool.TRUE : LBool.UNCHECKED;
+		mIsBottom = isBottom;
 	}
 
 	/**
@@ -139,7 +140,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 */
 	public static OctDomainState createFreshState(final Function<OctDomainState, String> logStringFunction,
 			final boolean isBottom) {
-		final OctDomainState s = new OctDomainState(logStringFunction, isBottom ? LBool.TRUE : LBool.UNCHECKED);
+		final OctDomainState s = new OctDomainState(logStringFunction, isBottom ? TVBool.FIXED : TVBool.UNCHECKED);
 		s.mMapVarToBoogieVar = new HashSet<>();
 		s.mMapNumericVarToIndex = new HashMap<>();
 		s.mNumericNonIntVars = new HashSet<>();
@@ -371,18 +372,15 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		case FALSE:
 			return false;
 		case TRUE:
+		case FIXED:
 			return true;
 		case UNCHECKED:
-			updateBottom();
+			final boolean isBottom = isBooleanAbstractionBottom() || isNumericAbstractionBottom();
+			mIsBottom = isBottom ? TVBool.TRUE : TVBool.FALSE;
 			return isBottom();
 		default:
 			throw new UnsupportedOperationException("Unknown LBool " + mIsBottom);
 		}
-	}
-
-	private void updateBottom() {
-		final boolean isBottom = isBooleanAbstractionBottom() || isNumericAbstractionBottom();
-		mIsBottom = isBottom ? LBool.TRUE : LBool.FALSE;
 	}
 
 	/** @return The numeric abstraction represents no concrete states */
@@ -685,7 +683,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	@Override
 	public OctDomainState patch(final OctDomainState dominator) {
 		assertNotBottomBeforeAssign();
-		mIsBottom = LBool.UNCHECKED;
+		mIsBottom = TVBool.UNCHECKED;
 		final OctDomainState patchedState = shallowCopy();
 		final BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar = new BidirectionalMap<>();
 		final SortedMap<Integer, IBoogieVar> mapDominatorIndicesOfNewNumericVars = new TreeMap<>();
@@ -743,7 +741,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 			final List<Pair<IBoogieVar, IBoogieVar>> mapTargetToSource) {
 
 		assert assertNotBottomBeforeAssign();
-		mIsBottom = LBool.UNCHECKED;
+		mIsBottom = TVBool.UNCHECKED;
 		// TODO closure in advance to reduce information loss
 
 		final BidirectionalMap<Integer, Integer> mapNumericTargetToSource = new BidirectionalMap<>();
@@ -834,7 +832,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	protected void havocVars(final Collection<IBoogieVar> vars) {
 		// TODO Only calculate closure if necessary. Some vars may have no constraints to other vars => no closure
 		assert assertNotBottomBeforeAssign();
-		mIsBottom = LBool.UNCHECKED;
+		mIsBottom = TVBool.UNCHECKED;
 		final Set<Integer> numVarIndices = new HashSet<>();
 		for (final IBoogieVar var : vars) {
 			final Integer numVarIndex = mMapNumericVarToIndex.get(var);
@@ -865,7 +863,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 */
 	protected void incrementNumericVar(final IBoogieVar targetVar, final OctValue addConstant) {
 		assert assertNotBottomBeforeAssign();
-		mIsBottom = LBool.UNCHECKED;
+		mIsBottom = TVBool.UNCHECKED;
 		mNumericAbstraction.incrementVar(numVarIndex(targetVar), addConstant);
 	}
 
@@ -879,7 +877,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 */
 	protected void negateNumericVar(final IBoogieVar targetVar) {
 		assert assertNotBottomBeforeAssign();
-		mIsBottom = LBool.UNCHECKED;
+		mIsBottom = TVBool.UNCHECKED;
 		mNumericAbstraction.negateVar(numVarIndex(targetVar));
 	}
 
@@ -896,7 +894,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 */
 	protected void assignNumericVarConstant(final IBoogieVar targetVar, final OctValue constant) {
 		assert assertNotBottomBeforeAssign();
-		mIsBottom = LBool.UNCHECKED;
+		mIsBottom = TVBool.UNCHECKED;
 		mNumericAbstraction = cachedSelectiveClosure().copy();
 		mNumericAbstraction.assignVarConstant(numVarIndex(targetVar), constant);
 	}
@@ -914,7 +912,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 */
 	protected void assignNumericVarInterval(final IBoogieVar targetVar, final OctInterval interval) {
 		assert assertNotBottomBeforeAssign();
-		mIsBottom = LBool.UNCHECKED;
+		mIsBottom = TVBool.UNCHECKED;
 		mNumericAbstraction = cachedSelectiveClosure().copy();
 		mNumericAbstraction.assignVarInterval(numVarIndex(targetVar), interval.getMin(), interval.getMax());
 	}
@@ -932,7 +930,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 */
 	protected void assumeNumericVarConstant(final IBoogieVar targetVar, final OctValue constant) {
 		assert assertNotBottomBeforeAssign();
-		mIsBottom = LBool.UNCHECKED;
+		mIsBottom = TVBool.UNCHECKED;
 		mNumericAbstraction.assumeVarConstant(numVarIndex(targetVar), constant);
 	}
 
@@ -949,7 +947,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 */
 	protected void assumeNumericVarInterval(final IBoogieVar targetVar, final OctValue min, final OctValue max) {
 		assert assertNotBottomBeforeAssign();
-		mIsBottom = LBool.UNCHECKED;
+		mIsBottom = TVBool.UNCHECKED;
 		mNumericAbstraction.assumeVarInterval(numVarIndex(targetVar), min, max);
 	}
 
@@ -973,7 +971,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	protected void assumeNumericVarRelationLeConstant(final IBoogieVar var1, final boolean var1Negate,
 			final IBoogieVar var2, final boolean var2Negate, final OctValue constant) {
 		assert assertNotBottomBeforeAssign();
-		mIsBottom = LBool.UNCHECKED;
+		mIsBottom = TVBool.UNCHECKED;
 		mNumericAbstraction.assumeVarRelationLeConstant(numVarIndex(var1), var1Negate, numVarIndex(var2), var2Negate,
 				constant);
 	}
@@ -1044,7 +1042,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 */
 	protected void copyVars(final List<Pair<IBoogieVar, IBoogieVar>> mapTargetVarToSourceVar) {
 		assert assertNotBottomBeforeAssign();
-		mIsBottom = LBool.UNCHECKED;
+		mIsBottom = TVBool.UNCHECKED;
 		boolean usedClosure = false;
 
 		for (final Pair<IBoogieVar, IBoogieVar> entry : mapTargetVarToSourceVar) {
@@ -1100,7 +1098,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	protected void assignBooleanVar(final IBoogieVar var, final BoolValue value) {
 		assert mBooleanAbstraction.containsKey(var) : "unknown variable in boolean assignment: " + var;
 		assert assertNotBottomBeforeAssign();
-		mIsBottom = LBool.UNCHECKED;
+		mIsBottom = TVBool.UNCHECKED;
 		mBooleanAbstraction.put(var, value);
 	}
 
@@ -1115,7 +1113,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 */
 	protected void assumeBooleanVar(final IBoogieVar var, final BoolValue value) {
 		assert assertNotBottomBeforeAssign();
-		mIsBottom = LBool.UNCHECKED;
+		mIsBottom = TVBool.UNCHECKED;
 		mBooleanAbstraction.put(var, mBooleanAbstraction.get(var).intersect(value));
 	}
 
@@ -1128,7 +1126,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 * @return This abstract state was not bottom
 	 */
 	private boolean assertNotBottomBeforeAssign() {
-		return mIsBottom != LBool.TRUE;
+		return mIsBottom != TVBool.TRUE && mIsBottom != TVBool.FIXED;
 	}
 
 	@Override
@@ -1297,9 +1295,5 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		log.append("}");
 
 		return log.toString();
-	}
-
-	private enum LBool {
-		TRUE, FALSE, UNCHECKED
 	}
 }
