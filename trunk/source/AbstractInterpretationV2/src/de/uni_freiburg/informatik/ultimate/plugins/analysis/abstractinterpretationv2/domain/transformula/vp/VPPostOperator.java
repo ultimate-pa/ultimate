@@ -112,29 +112,10 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			return Collections.singletonList(oldState);
 		}
 		
-//		final VPTfState tfPreState = mTfStateFactory.createTfState(oldState, tf);
-		
 		final VPTfState tfState = mTfStateFactory.createTfState(oldState, transition);
-		
-//		final Term nnfTerm = new Nnf(mScript, mServices, QuantifierHandling.CRASH).transform(tf.getFormula());
-
-//		if (mPreAnalysis.isDebugMode()) {
-//			mDomain.getLogger().debug("Original term: " + tf.getFormula());
-//			mDomain.getLogger().debug("Nnf term:      " + nnfTerm);
-//		}
-		
-//		final Set<VPTfState> resultTfStates = handleTransition(tfPreState, nnfTerm, tf, false);
 		
 		final Set<VPTfState> tfStatesAfterTransition = tfState.applyTransition(mTfStateFactory, mServices);
 		
-//		if (mPreAnalysis.isDebugMode()) {
-//			mDomain.getLogger().debug("states after transition " + transition + ": " + resultTfStates);
-//		}
-		
-//		final Set<VPState<ACTION>> resultStates = mStateFactory.convertToStates(resultTfStates, tf.getAssignedVars(), 
-//				oldState);
-//		final Set<VPState<ACTION>> resultStates = tfState.patchOut(mStateFactory.getTopState(oldState.getVariables()));
-//		final Set<VPTfState> tfStatesAfterTransition = tfState.getStatesAfterTransition();
 		final Set<VPState<ACTION>> resultStates = mStateFactory.projectToOutVars(tfStatesAfterTransition, null, null);
 
 		if (mPreAnalysis.isDebugMode()) {
