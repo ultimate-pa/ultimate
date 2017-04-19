@@ -102,7 +102,7 @@ public class VPDomainPreanalysis {
 	public VPDomainPreanalysis(final IIcfg<?> root, final ILogger logger) {
 		mManagedScript = root.getCfgSmtToolkit().getManagedScript();
 		mLogger = logger;
-		mSymboltable = root.getSymboltable();
+		mSymboltable = root.getCfgSmtToolkit().getSymbolTable();
 		mSettings = new VPDomainPreanalysisSettings();
 		mBenchmark = new Benchmark();
 		mBenchmark.start(VPSFO.overallFromPreAnalysis);
@@ -597,6 +597,10 @@ public class VPDomainPreanalysis {
 	public Benchmark getBenchmark() {
 		return mBenchmark;
 	}
+	
+	public IIcfgSymbolTable getSymbolTable() {
+		return mSymboltable;
+	}
 }
 
 class VPDomainPreanalysisSettings {
@@ -627,6 +631,7 @@ class VPDomainPreanalysisSettings {
 	public Set<String> getArraysToTrack() {
 			return mArrayNames;
 	}
+
 }
 
 class SFO { //copied from translation TODO: perhaps move it to utils or so..

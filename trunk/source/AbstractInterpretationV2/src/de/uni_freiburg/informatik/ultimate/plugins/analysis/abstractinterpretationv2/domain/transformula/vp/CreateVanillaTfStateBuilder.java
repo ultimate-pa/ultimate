@@ -39,6 +39,13 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
+/**
+ * Sets up a VpTfStateBuilder without any (dis)equality information ("vanilla"). Creates all the necessary 
+ * EqGraphNodes according to the given transition.
+ * 
+ * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ *
+ */
 public class CreateVanillaTfStateBuilder {
 
 	private VPTransFormulaStateBuilderPreparer mTfStatePreparer;
@@ -68,12 +75,14 @@ public class CreateVanillaTfStateBuilder {
 	private final Map<Term, IElementWrapper> mTermToElementWrapper = new HashMap<>();
 
 	private final WrapperFactory mWrapperFactory = new WrapperFactory();
+	private final Set<IProgramVarOrConst> mInVars;
+	private final Set<IProgramVarOrConst> mOutVars;
 
 
 
 	/**
 	 * Create the template VPTfStateBuilder for a given TransFormula. These templates are created for all TransFormulas
-	 * in the program before the fixpoint computation starts. During analysis copies of the templates are maded and
+	 * in the program before the fixpoint computation starts. During analysis copies of the templates are made and
 	 * manipulated.
 	 *
 	 * @param preAnalysis
@@ -81,13 +90,18 @@ public class CreateVanillaTfStateBuilder {
 	 * @param tf
 	 * @param allConstantEqNodes
 	 * @param tfStateFactory 
+	 * @param inVars
+	 * @param outVars
 	 */
 	public CreateVanillaTfStateBuilder(final VPDomainPreanalysis preAnalysis,
 			final VPTransFormulaStateBuilderPreparer tfStatePreparer, final TransFormula tf,
-			final Set<EqNode> allConstantEqNodes) {
+			final Set<EqNode> allConstantEqNodes, final Set<IProgramVarOrConst> inVars, 
+			final Set<IProgramVarOrConst> outVars) {
 		mTfStatePreparer = tfStatePreparer;
 		mPreAnalysis = preAnalysis;
 		mTransFormula = tf;
+		mInVars = inVars;
+		mOutVars = outVars;
 //		mTfStateFactory = tfStateFactory;
 
 		createEqGraphNodes(preAnalysis, allConstantEqNodes);
@@ -98,19 +112,23 @@ public class CreateVanillaTfStateBuilder {
 
 	}
 	
+	/**
+	 * The EqGraphNodes we need for the given TransFormula can come from the following sources: (Paradigm: whenever
+	 * the TransFormula can introduce a (dis-)equality about something, we need EqGraphNodes to track that.) 
+	 * <ol>
+	 *  <li> equalities in the TransFormula a) between elements b) between arrays (normal or store terms) 
+	 *    --> we obtain the EqGraphNodes during construction of the Element/ArrayWrappers 
+	 *  <li> variables in the TransFormula (outside of array accesses) that we have an EqNode for 
+	 *    --> we can see them in the invars and outvars of the TransFormula 
+	 *  <li> constants in the TransFormula that we have an EqNode for 
+	 *     --> we can just take the constant EqNodes from the preanalysis 
+	 *  <li> the auxVars of the TransFormula 
+	 *  <li> Array equalities in the TransFormula
+	 *     --> for both arrays we need all the EqFunctionNodes that have the array as function 
+	 *     --> this also includes ArrayUpdates, which are array equalities with store terms
+	 * </ol>  
+	 */ 
 	private void createEqGraphNodes(final VPDomainPreanalysis preAnalysis, final Set<EqNode> allConstantEqNodes) {
-		/*
-		 * The EqGraphNodes we need for the given TransFormula can come from the following sources: (Paradigm: whenever
-		 * the TransFormula can introduce a (dis-)equality about something, we need EqGraphNodes to track that.) 1.
-		 * equalities in the TransFormula a) between elements b) between arrays (normal or store terms) --> we obtain
-		 * the EqGraphNodes during construction of the Element/ArrayWrappers 2. variables in the TransFormula (outside
-		 * of array accesses) that we have an EqNode for --> we can see them in the invars and outvars of the
-		 * TransFormula 3. constants in the TransFormula that we have an EqNode for --> we can just take the constant
-		 * EqNodes from the preanalysis 4. the auxVars of the TransFormula // * 5. Array equalities in the TransFormula
-		 * // * --> for both arrays we need all the EqFunctionNodes that have the array as function // * --> this also
-		 * includes ArrayUpdates, which are array equalities with store terms
-		 *
-		 */
 
 		/*
 		 * Step 1a. construct element wrappers, for non-array equations (in this order because the array equations
@@ -628,8 +646,8 @@ public class CreateVanillaTfStateBuilder {
 				}
 			}
 		}
-		VPTfStateBuilder result = new VPTfStateBuilder(mPreAnalysis, mTfStatePreparer, mTransFormula, 
-				null, null, mAllNodeIds, mNodeIdToEqGraphNode, mTermToArrayWrapper, mTermToElementWrapper, 
+		final VPTfStateBuilder result = new VPTfStateBuilder(mPreAnalysis, mTfStatePreparer, mTransFormula, 
+				mInVars, mOutVars, mAllNodeIds, mNodeIdToEqGraphNode, mTermToArrayWrapper, mTermToElementWrapper, 
 				disEqualitySet);
 
 		assert result.isTopConsistent();
