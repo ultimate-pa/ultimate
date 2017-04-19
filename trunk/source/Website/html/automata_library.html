@@ -1,0 +1,83 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<body>
+<h1>Automata Library</h1>
+
+<p>The <span style="font-variant:small-caps">Ultimate</span> Automata library provides implementations of the following automaton models, together with many operations (listed further below).
+<ul>
+<li>Nested word automata, aka visibly pushdown automata (we consider the weakly-hierarchical variant)</li>
+<li>Finite automata (a special case of nested word automata)</li>
+<li><a href="?ui=int&amp;tool=automata_script_interpreter&amp;task=automataScript&amp;sample=1954831617">B&uuml;chi nested word automata</a> (we consider the weakly-hierarchical variant)</li>
+<li>B&uuml;chi automata (a special case of B&uuml;chi nested word automata)</li>
+<li><a href="?ui=int&amp;tool=automata_script_interpreter&amp;task=automataScript&amp;sample=151597609">Petri net automata</a> (i.e., Petri nets used as language acceptors)</li>
+<li>Alternating finite automata</li>
+<li>Tree automata</li>
+</ul>
+</p>
+<p>The Automata library is maintained by <a href="https://swt.informatik.uni-freiburg.de/staff/heizmann/">Matthias Heizmann</a> and <a href="https://swt.informatik.uni-freiburg.de/staff/christian_schilling/">Christian Schilling</a>.</p>
+
+
+
+<h2>Web Interface</h2>
+<p>In addition to the Java interface the Automata library also offers a text interface called <i>Automata Script</i>.<br>
+<span style="font-variant:small-caps">Ultimate</span> provides an interpreter for <i>Automata Script</i> that is also available via a web interface.</p>
+
+
+
+<h2>News</h2>
+
+<h3>Minimization based on partial Max-SAT for nested word automata available <span style="font-size:70%">(2017-02-09)</span></h3>
+<p>The new operation <span style="font-family:monospace">minimizeNwaPmaxSat</span> reduces the size of a nondeterministic nested word automaton.
+It uses a domain-specific partial Max-SAT solver in the background.
+An example automata script file will soon be available in our web interface.
+</p>
+<p>The underlying theory is presented here: <a href="https://arxiv.org/abs/1701.05160">extended version</a>.</p>
+
+<h3>Optimized complementation for semi-deterministic B&uuml;chi automata available <span style="font-size:70%">(2015-10-18)</span></h3>
+<p>The operation <span style="font-family:monospace">buchiComplementNCSB</span> implements the algorithm of the <a href="https://link.springer.com/chapter/10.1007%2F978-3-662-49674-9_49">Complementing Semi-deterministic B&uuml;chi Automata</a> paper which was published at TACAS 2016.
+(Additional material: <a href="http://www.fi.muni.cz/~xstrejc/publications/tacas2016coSDBA_preprint.pdf">preprint</a>, <a href="https://github.com/xblahoud/NCSB-Complementation">files to reproduce evaluation</a>, <a href="http://highlights-conference.org/wp-content/uploads/2016/08/highlights-5.pdf">slides</a>) 
+The operation <span style="font-family:monospace">isSemiDeterministic</span> can be used to check if an automaton is semi-deterministic.
+An <a href="?ui=int&amp;tool=automata_library&amp;task=automataScript&amp;sample=458108836"> example automata script file</a> is available in our web interface.
+</p>
+
+<h3>Computation of loop complexity available <span style="font-size:70%">(2015-09-15)</span></h3>
+<p>
+The new operation <span style="font-family:monospace">loopComplexity</span> computes the loop complexity of finite automata. 
+An <a href="?ui=int&amp;tool=automata_library&amp;task=automataScript&amp;sample=739678217"> example automata script file</a> is available in our web interface.
+</p>
+
+
+
+<h2>Details</h2>
+&#128295; This section is currently under construction &#128295;
+
+<h3>Nested word automata</h3>
+Tests:
+<ul>
+<li>Acceptance, Emptiness, Equivalence, Inclusion</li>
+</ul>
+
+Operations:
+<ul>
+<li>Complementation, Determinization, Difference, Intersection, Loop complexity computation, Minimization (unreachable states, dead ends, Hopcroft-based, direct simulation-based, partial MaxSAT-based), Totalization</li>
+</ul>
+
+<h3>B&uuml;chi nested word automata</h3>
+Tests:
+<ul>
+<li>Acceptance, Emptiness, Equivalence, Inclusion</li>
+</ul>
+
+Operations:
+<ul>
+<li>Complementation, Difference, Intersection, Minimization (non-live states, delayed/fair simulation-based)</li>
+</ul>
+
+<h3>Petri net automata</h3>
+Tests:
+<ul>
+<li>Acceptance, Emptiness</li>
+</ul>
+
+
+</body>
+</html>

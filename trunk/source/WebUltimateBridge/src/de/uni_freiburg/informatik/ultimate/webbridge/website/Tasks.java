@@ -200,7 +200,7 @@ public class Tasks {
 		addWorker(NameStrings.TOOL_LASSO_RANKER, NameStrings.TASK_SYNTHESIZE, NameStrings.DESCRIPTION_LASSO_RANKER);
 
 		final Worker automataScriptInterpreter = addWorker(NameStrings.TOOL_AUTOMATA_LIBRARY,
-				NameStrings.TASK_RUN, NameStrings.DESCRIPTION_AUTOMATA_SCRIPT_INTERPRETER);
+				NameStrings.TASK_RUN, NameStrings.DESCRIPTION_AUTOMATA_LIBRARY);
 		automataScriptInterpreter.setUserInfo("");
 
 		addWorker(NameStrings.TOOL_AUTOMIZER_CONCURRENT, NameStrings.TASK_VERIFY,

@@ -14,7 +14,7 @@ public class NameStrings {
 	public static final String DESCRIPTION_AUTOMIZER_BUCHI = "Termination analysis based on Büchi automata";
 	public static final String DESCRIPTION_LASSO_RANKER = "Synthesis of ranking functions and nontermination arguments";
 	public static final String DESCRIPTION_AUTOMIZER_CONCURRENT = "Experimental version of an analysis for concurrent programs";
-	public static final String DESCRIPTION_AUTOMATA_SCRIPT_INTERPRETER = "Nested Word Automta, Büchi Nested Word Automta, Petri Net, and Alternating Finite Automata";
+	public static final String DESCRIPTION_AUTOMATA_LIBRARY = "Nested Word Automta, Büchi Nested Word Automta, Petri Net, Alternating Finite Automata, Tree Automata";
 	public static final String DESCRIPTION_TAIPAN = "Verification of safety properties using trace abstraction and abstract interpretation on path programs";
 
 	public static final String TASK_SYNTHESIZE = "synthesize";
