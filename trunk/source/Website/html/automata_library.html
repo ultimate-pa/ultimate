@@ -2,23 +2,25 @@
 <body>
 <h1>Automata Library</h1>
 
-<p>The <span style="font-variant:small-caps">Ultimate</span> Automata library provides implementations of the following automaton models, together with many operations (listed further below).
+<p>The <span style="font-variant:small-caps">Ultimate</span> Automata Library supports the following kinds of automata.
 <ul>
-<li>Nested word automata, aka visibly pushdown automata (we consider the weakly-hierarchical variant)</li>
-<li>Finite automata (a special case of nested word automata)</li>
-<li><a href="?ui=int&amp;tool=automata_script_interpreter&amp;task=automataScript&amp;sample=1954831617">B&uuml;chi nested word automata</a> (we consider the weakly-hierarchical variant)</li>
-<li>B&uuml;chi automata (a special case of B&uuml;chi nested word automata)</li>
-<li><a href="?ui=int&amp;tool=automata_script_interpreter&amp;task=automataScript&amp;sample=151597609">Petri net automata</a> (i.e., Petri nets used as language acceptors)</li>
+<li>Nested word automata, aka visibly pushdown automata</li>
+<li>Finite automata</li>
+<li>B&uuml;chi nested word automata (see <a href="?ui=int&amp;tool=automata_library&amp;task=automataScript&amp;sample=1954831617">example</a>)</li>
+<li>B&uuml;chi automata</li>
+<li>Petri net automata, i.e., Petri nets used as language acceptors (see <a href="?ui=int&amp;tool=automata_library&amp;task=automataScript&amp;sample=151597609">example</a>)</li>
 <li>Alternating finite automata</li>
 <li>Tree automata</li>
 </ul>
 </p>
-<p>The Automata library is maintained by <a href="https://swt.informatik.uni-freiburg.de/staff/heizmann/">Matthias Heizmann</a> and <a href="https://swt.informatik.uni-freiburg.de/staff/christian_schilling/">Christian Schilling</a>.</p>
+<p>The library is maintained by <a href="https://swt.informatik.uni-freiburg.de/staff/heizmann/">Matthias Heizmann</a>, <a href="https://swt.informatik.uni-freiburg.de/staff/nutz/">Alexander Nutz</a> and <a href="https://swt.informatik.uni-freiburg.de/staff/christian_schilling/">Christian Schilling</a>.</p>
 
 
 
 <h2>Web Interface</h2>
-<p>In addition to the Java interface the Automata library also offers a text interface called <i>Automata Script</i>.<br>
+<p>The <span style="font-variant:small-caps">Ultimate</span> Automata Library is available via a web interface. 
+kasldfkh
+<i>Automata Script</i>.<br>
 <span style="font-variant:small-caps">Ultimate</span> provides an interpreter for <i>Automata Script</i> that is also available via a web interface.</p>
 
 
@@ -26,17 +28,16 @@
 <h2>News</h2>
 
 <h3>Minimization based on partial Max-SAT for nested word automata available <span style="font-size:70%">(2017-02-09)</span></h3>
-<p>The new operation <span style="font-family:monospace">minimizeNwaPmaxSat</span> reduces the size of a nondeterministic nested word automaton.
-It uses a domain-specific partial Max-SAT solver in the background.
-An example automata script file will soon be available in our web interface.
+<p>The operation <span style="font-family:monospace">minimizeNwaPmaxSat</span>  (see <a href="?ui=int&amp;tool=automata_library&amp;task=automataScript&amp;sample=458108836"> example</a>) implements the algorithm of the <a href="https://link.springer.com/chapter/10.1007%2F978-3-662-54577-5_27">Minimization of Visibly Pushdown Automata Using Partial Max-SAT</a> paper which was published at TACAS 2017.
+It uses a domain-specific partial Max-SAT solver for reducing the size of nondeterministic nested word automata.
+<br /> 
+Additional material: <a href="https://arxiv.org/abs/1701.05160">extended version</a>, <a href="the slides">slides</a>
 </p>
-<p>The underlying theory is presented here: <a href="https://arxiv.org/abs/1701.05160">extended version</a>.</p>
 
 <h3>Optimized complementation for semi-deterministic B&uuml;chi automata available <span style="font-size:70%">(2015-10-18)</span></h3>
-<p>The operation <span style="font-family:monospace">buchiComplementNCSB</span> implements the algorithm of the <a href="https://link.springer.com/chapter/10.1007%2F978-3-662-49674-9_49">Complementing Semi-deterministic B&uuml;chi Automata</a> paper which was published at TACAS 2016.
-(Additional material: <a href="http://www.fi.muni.cz/~xstrejc/publications/tacas2016coSDBA_preprint.pdf">preprint</a>, <a href="https://github.com/xblahoud/NCSB-Complementation">files to reproduce evaluation</a>, <a href="http://highlights-conference.org/wp-content/uploads/2016/08/highlights-5.pdf">slides</a>) 
-The operation <span style="font-family:monospace">isSemiDeterministic</span> can be used to check if an automaton is semi-deterministic.
-An <a href="?ui=int&amp;tool=automata_library&amp;task=automataScript&amp;sample=458108836"> example automata script file</a> is available in our web interface.
+<p>The operation <span style="font-family:monospace">buchiComplementNCSB</span> (see <a href="?ui=int&amp;tool=automata_library&amp;task=automataScript&amp;sample=458108836"> example</a>) implements the algorithm of the <a href="https://link.springer.com/chapter/10.1007%2F978-3-662-49674-9_49">Complementing Semi-deterministic B&uuml;chi Automata</a> paper which was published at TACAS 2016.
+<br /> 
+Additional material: <a href="http://www.fi.muni.cz/~xstrejc/publications/tacas2016coSDBA_preprint.pdf">preprint</a>, <a href="https://github.com/xblahoud/NCSB-Complementation">files to reproduce evaluation</a>, <a href="http://highlights-conference.org/wp-content/uploads/2016/08/highlights-5.pdf">slides</a>
 </p>
 
 <h3>Computation of loop complexity available <span style="font-size:70%">(2015-09-15)</span></h3>
