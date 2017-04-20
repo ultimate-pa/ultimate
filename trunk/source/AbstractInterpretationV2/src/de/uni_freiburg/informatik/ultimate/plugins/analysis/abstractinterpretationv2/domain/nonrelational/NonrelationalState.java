@@ -494,13 +494,12 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		return returnState;
 	}
 
-	@SuppressWarnings("unchecked")
 	@Override
 	public STATE addVariables(final Collection<VARDECL> variables) {
 		assert variables != null;
 		if (variables.isEmpty()) {
 			// nothing to add, nothing changes
-			return (STATE) this;
+			return getThis();
 		}
 
 		final Set<VARDECL> newVars = new HashSet<>(mVariables);
