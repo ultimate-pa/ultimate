@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  */
 public class EqNonAtomicBaseNode extends EqNode {
 	
-	public EqNonAtomicBaseNode(Term t, boolean isGlobal) {
-		super(isGlobal, t.getFreeVars().length == 0);
+	public EqNonAtomicBaseNode(Term t, boolean isGlobal, String procedure) {
+		super(isGlobal, t.getFreeVars().length == 0, procedure);
 		mTerm = t;
 	}
 

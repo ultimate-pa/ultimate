@@ -99,6 +99,9 @@ public class VPDomainPreanalysis {
 
 	private final boolean mIsDebugMode = true;
 
+	private Set<EqNode> mGlobalEqNodes = new HashSet<>();
+	private HashRelation<String, EqNode> mProcToLocalEqNodes = new HashRelation<>();
+
 	public VPDomainPreanalysis(final IIcfg<?> root, final ILogger logger) {
 		mManagedScript = root.getCfgSmtToolkit().getManagedScript();
 		mLogger = logger;
@@ -328,12 +331,14 @@ public class VPDomainPreanalysis {
 
 		Set<EqAtomicBaseNode> constituentNodes = new HashSet<>();
 		boolean global = true;
+		String procedure = null;
 		for (TermVariable fv : t.getFreeVars()) {
 			EqAtomicBaseNode node = getOrConstructEqBaseNode(fv);
 			global &= node.isGlobal();
 			constituentNodes.add(node);
+			procedure = node.getProcedure() != null ? node.getProcedure() : procedure;
 		}
-		EqNonAtomicBaseNode result = new EqNonAtomicBaseNode(t, global);
+		EqNonAtomicBaseNode result = new EqNonAtomicBaseNode(t, global, procedure);
 		for (EqAtomicBaseNode node : constituentNodes) {
 			node.addDependentNonAtomicBaseNode(result);
 		}
@@ -388,6 +393,16 @@ public class VPDomainPreanalysis {
 		if (result == null) {
 			result = new EqAtomicBaseNode(bv);
 			mEqBaseNodeStore.put(bv, result);
+
+			if (result.isGlobal()) {
+				mGlobalEqNodes.add(result);
+			} else {
+//				// only IProgramVars can be local, right?..
+//				final String proc = ((IProgramVar) bv).getProcedure();
+//				assert proc != null : "should be in global case! what's wrong?";
+//				mProcToLocalEqNodes.addPair(proc, result);
+				mProcToLocalEqNodes.addPair(result.getProcedure(), result);
+			}
 		}
 		mTermToEqNode.put(t, result);
 		return result;
@@ -406,6 +421,13 @@ public class VPDomainPreanalysis {
 			mArrayIdToFnNodes.addPair(function, result);
 
 			mEqFunctionNodeStore.put(function, indices, result);
+			
+			if (result.isGlobal()) {
+				mGlobalEqNodes.add(result);
+			} else {
+				mProcToLocalEqNodes.addPair(result.getProcedure(), result);
+			}
+
 		}
 
 		for (final EqNode child : indices) {
@@ -600,6 +622,16 @@ public class VPDomainPreanalysis {
 	
 	public IIcfgSymbolTable getSymbolTable() {
 		return mSymboltable;
+	}
+
+	/**
+	 * @param proc
+	 * @return all the EqNodes that only use symbols that are visible in the scope of the given proc.
+	 */
+	public Set<EqNode> getEqNodesForScope(String proc) {
+		final Set<EqNode> result = new HashSet<>();
+		
+		return result;
 	}
 }
 

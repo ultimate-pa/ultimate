@@ -54,7 +54,12 @@ public class EqFunctionNode extends EqNode {
 		super(function.isGlobal() 
 				&& args.stream().map(arg -> arg.mIsGlobal).reduce((b1, b2) -> b1 && b2).get(),
 			!(function instanceof IProgramVar)
-				&& args.stream().map(arg -> arg.mIsConstant).reduce((b1, b2) -> b1 && b2).get());
+				&& args.stream().map(arg -> arg.mIsConstant).reduce((b1, b2) -> b1 && b2).get(),
+				function instanceof IProgramVar ? 
+						((IProgramVar) function).getProcedure() : 
+							args.stream()
+								.map(arg -> arg.getProcedure())
+								.reduce((proc1, proc2) -> proc1 != null ? proc1 : proc2).get());
 
 //		super(function.isGlobal(), !(function instanceof IProgramVar)); // new paradigm: the "topmost function symbol determines isGobal and isConstant.
 		 // update: reverted to the old paradigm: a node is constant if all its components are
