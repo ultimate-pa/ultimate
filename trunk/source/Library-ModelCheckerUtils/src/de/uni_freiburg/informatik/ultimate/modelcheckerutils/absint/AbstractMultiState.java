@@ -299,6 +299,11 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 				mStates.size() * hierachicalPreState.mStates.size());
 	}
 
+	@Override
+	public AbstractMultiState<STATE, VARDECL> compact() {
+		return map(STATE::compact);
+	}
+
 	public <ACTION> AbstractMultiState<STATE, VARDECL> createValidPostOpStateBeforeLeaving(
 			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final ACTION act) {
 		return map(a -> varProvider.createValidPostOpStateBeforeLeaving(act, a));

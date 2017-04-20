@@ -331,4 +331,10 @@ public class DataflowState<ACTION extends IAction>
 	public Set<ACTION> getReachingDefinitions(final IProgramVar var) {
 		return mReachDef.get(var);
 	}
+
+	@Override
+	public DataflowState<ACTION> compact() {
+		// dataflow states are always compact
+		return this;
+	}
 }

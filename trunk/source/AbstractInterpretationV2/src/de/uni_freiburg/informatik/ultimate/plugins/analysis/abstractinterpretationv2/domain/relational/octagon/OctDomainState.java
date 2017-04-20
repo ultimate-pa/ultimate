@@ -1296,4 +1296,9 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 
 		return log.toString();
 	}
+
+	@Override
+	public OctDomainState compact() {
+		throw new UnsupportedOperationException("Not yet implemented");
+	}
 }

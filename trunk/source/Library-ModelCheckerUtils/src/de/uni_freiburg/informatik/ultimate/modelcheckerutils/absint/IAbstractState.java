@@ -178,6 +178,14 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	SubsetResult isSubsetOf(final STATE other);
 
 	/**
+	 * Return a compacted representation of the current {@link IAbstractState} where all variables are removed for which
+	 * no information is present (i.e., remove all "top" variables).
+	 * 
+	 * @return A compacted {@link IAbstractState} that is equivalent to this state except for the tracked variables.
+	 */
+	STATE compact();
+
+	/**
 	 * Create an SMT constraint that represents this abstract state. If you do not want to implement this right away,
 	 * just return <code>script.term("true")</code>.
 	 *

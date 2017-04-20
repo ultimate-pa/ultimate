@@ -104,7 +104,6 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		assert isTopConsistent();
 	}
 
-
 	private boolean sanityCheck() {
 		for (final VPDomainSymmetricPair<EqNode> pair : getDisEqualities()) {
 			if (!mEqNodeToEqGraphNodeMap.containsKey(pair.getFirst())) {
@@ -487,6 +486,11 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	@Override
 	public VPState<ACTION> union(final VPState<ACTION> other) {
+		throw new UnsupportedOperationException("Not yet implemented");
+	}
+
+	@Override
+	public VPState<ACTION> compact() {
 		throw new UnsupportedOperationException("Not yet implemented");
 	}
 }

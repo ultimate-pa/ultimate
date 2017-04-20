@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -775,6 +776,70 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		return returnState;
 	}
 
+	/**
+	 * Merges <code>this</code> with another {@link NonrelationalState}. All variables that occur in <code>this</code>
+	 * must also occur in the other state.
+	 *
+	 * @param other
+	 *            The other state to merge with.
+	 * @return A new {@link NonrelationalState} which is the result of the merger of <code>this</code> and
+	 *         <code>other</code>.
+	 */
+	@Override
+	public STATE union(final STATE other) {
+		assert other != null;
+
+		if (!hasSameVariables(other)) {
+			throw new UnsupportedOperationException(
+					"Cannot merge the two states as their sets of variables in the states are disjoint.");
+		}
+
+		final STATE returnState = createCopy();
+
+		// TODO: Add array support.
+		final Consumer<VARDECL> varConsumer = var -> setValueInternally(returnState, var,
+				getVar2ValueNonrelational().get(var).merge(other.getVar2ValueNonrelational().get(var)));
+		final Consumer<VARDECL> boolConsumer = var -> setValueInternally(returnState, var,
+				getVar2ValueBoolean().get(var).merge(other.getVar2ValueBoolean().get(var)));
+
+		for (final VARDECL var : mVariables) {
+			TypeUtils.consumeVariable(varConsumer, boolConsumer, null, var);
+		}
+		return returnState;
+	}
+
+	@Override
+	public STATE compact() {
+		if (isBottom()) {
+			return createState(mLogger, Collections.emptySet(), Collections.emptyMap(), Collections.emptyMap(), true);
+		}
+
+		final Set<VARDECL> toRemove = new HashSet<>();
+		final Iterator<Entry<VARDECL, V>> valueIter = getVar2ValueNonrelational().entrySet().iterator();
+		while (valueIter.hasNext()) {
+			final Entry<VARDECL, V> current = valueIter.next();
+			if (!current.getValue().isTop()) {
+				continue;
+			}
+			toRemove.add(current.getKey());
+		}
+
+		final Iterator<Entry<VARDECL, BooleanValue>> boolIter = getVar2ValueBoolean().entrySet().iterator();
+		while (boolIter.hasNext()) {
+			final Entry<VARDECL, BooleanValue> current = boolIter.next();
+			if (current.getValue() != BooleanValue.TOP) {
+				continue;
+			}
+			toRemove.add(current.getKey());
+		}
+		if (toRemove.isEmpty()) {
+			return (STATE) this;
+		}
+
+		final STATE returnState = createCopy();
+		return returnState.removeVariables(toRemove);
+	}
+
 	@Override
 	public Term getTerm(final Script script) {
 		if (isBottom()) {
@@ -896,38 +961,6 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			setValueInternally(returnState, array, createBottomValue());
 		}
 
-		return returnState;
-	}
-
-	/**
-	 * Merges <code>this</code> with another {@link NonrelationalState}. All variables that occur in <code>this</code>
-	 * must also occur in the other state.
-	 *
-	 * @param other
-	 *            The other state to merge with.
-	 * @return A new {@link NonrelationalState} which is the result of the merger of <code>this</code> and
-	 *         <code>other</code>.
-	 */
-	@Override
-	public STATE union(final STATE other) {
-		assert other != null;
-
-		if (!hasSameVariables(other)) {
-			throw new UnsupportedOperationException(
-					"Cannot merge the two states as their sets of variables in the states are disjoint.");
-		}
-
-		final STATE returnState = createCopy();
-
-		// TODO: Add array support.
-		final Consumer<VARDECL> varConsumer = var -> setValueInternally(returnState, var,
-				getVar2ValueNonrelational().get(var).merge(other.getVar2ValueNonrelational().get(var)));
-		final Consumer<VARDECL> boolConsumer = var -> setValueInternally(returnState, var,
-				getVar2ValueBoolean().get(var).merge(other.getVar2ValueBoolean().get(var)));
-
-		for (final VARDECL var : mVariables) {
-			TypeUtils.consumeVariable(varConsumer, boolConsumer, null, var);
-		}
 		return returnState;
 	}
 
