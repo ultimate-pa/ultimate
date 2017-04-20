@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class VPTransFormulaStateBuilderPreparer {
 	
-	VPDomainPreanalysis mPreAnalysis;
+	private final VPDomainPreanalysis mPreAnalysis;
 
 	private final Set<EqNode> mAllConstantEqNodes;
 //	private final Map<TransFormula, VPTfStateBuilder> mTransFormulaToVPTfStateBuilder = 

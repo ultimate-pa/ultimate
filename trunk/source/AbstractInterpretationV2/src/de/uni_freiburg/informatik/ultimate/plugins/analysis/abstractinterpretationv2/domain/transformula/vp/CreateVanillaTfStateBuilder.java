@@ -719,7 +719,7 @@ public class CreateVanillaTfStateBuilder {
 		}
 		final VPTfStateBuilder result = new VPTfStateBuilder(mPreAnalysis, mTfStatePreparer, mAction, mInVars, mOutVars, 
 				mAllNodeIds, mNodeIdToEqGraphNode, mTermToArrayWrapper, mTermToElementWrapper, disEqualitySet, 
-				outNodes);
+				outNodes, mArrayIdToFunctionNodes);
 
 		assert result.isTopConsistent();
 		return result;

@@ -55,14 +55,14 @@ public class SelectTermWrapper implements IElementWrapper {
 	public Set<NodeIdWithSideCondition> getNodeIdWithSideConditions(VPTfState tfState) {
 		
 
-		List<Set<NodeIdWithSideCondition>> indexNiwscs = mIndices.stream()
+		final List<Set<NodeIdWithSideCondition>> indexNiwscs = mIndices.stream()
 				.map(elWr -> elWr.getNodeIdWithSideConditions(tfState))
 				.collect(Collectors.toList());
-		Set<List<NodeIdWithSideCondition>> combinedIndices = VPDomainHelpers.computeCrossProduct(indexNiwscs);
+		final Set<List<NodeIdWithSideCondition>> combinedIndices = VPDomainHelpers.computeCrossProduct(indexNiwscs);
 
-		Set<ArrayWithSideCondition> arrayWscs = mArray.getArrayWithSideConditions(tfState, combinedIndices);	
+		final Set<ArrayWithSideCondition> arrayWscs = mArray.getArrayWithSideConditions(tfState, combinedIndices);	
 
-		Set<NodeIdWithSideCondition> result = new HashSet<>();
+		final Set<NodeIdWithSideCondition> result = new HashSet<>();
 
 		for (ArrayWithSideCondition arrayWsc : arrayWscs) {
 			for (List<NodeIdWithSideCondition> indexVector : combinedIndices) {

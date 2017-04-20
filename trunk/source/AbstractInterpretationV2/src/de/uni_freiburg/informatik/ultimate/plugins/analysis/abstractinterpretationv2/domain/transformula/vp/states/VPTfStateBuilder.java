@@ -68,7 +68,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 
 	private final Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mNodeIdToEqGraphNode;
 
-	private final HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> mArrayIdToFunctionNodes = new HashRelation<>();
+	private final HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> mArrayIdToFunctionNodes;
 
 	private final TransFormula mTransFormula;
 
@@ -96,7 +96,8 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 			Map<Term, IArrayWrapper> termToArrayWrapper, 
 			Map<Term, IElementWrapper> termToElementWrapper, 
 			Set<VPDomainSymmetricPair<VPTfNodeIdentifier>>  initialDisequalities, 
-			Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outNodes) {
+			Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outNodes, 
+			HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> arrayIdToFunctionNodes) {
 		super(initialDisequalities);
 		mPreAnalysis = preAnalysis;
 		mTfStatePreparer = tfStatePreparer;
@@ -112,6 +113,8 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		
 		mTermToArrayWrapper = Collections.unmodifiableMap(termToArrayWrapper);
 		mTermToElementWrapper = Collections.unmodifiableMap(termToElementWrapper);
+		
+		mArrayIdToFunctionNodes = arrayIdToFunctionNodes;
 	}
 
 	/**
@@ -132,6 +135,8 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 		
 		mTermToElementWrapper = builder.mTermToElementWrapper;
 		mTermToArrayWrapper = builder.mTermToArrayWrapper;
+		
+		mArrayIdToFunctionNodes = builder.mArrayIdToFunctionNodes;
 
 //		// the nodeIdentifiers are shared between all "sibling" builders (i.e. builders for the same TransFormula)
 		mAllNodeIds = builder.mAllNodeIds;
