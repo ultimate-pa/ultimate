@@ -629,8 +629,10 @@ public class VPDomainPreanalysis {
 	 * @return all the EqNodes that only use symbols that are visible in the scope of the given proc.
 	 */
 	public Set<EqNode> getEqNodesForScope(String proc) {
+		assert proc != null;
 		final Set<EqNode> result = new HashSet<>();
-		
+		result.addAll(mGlobalEqNodes);
+		result.addAll(mProcToLocalEqNodes.getImage(proc));
 		return result;
 	}
 }

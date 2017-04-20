@@ -54,7 +54,6 @@ public class EqNonAtomicBaseNode extends EqNode {
 		return mTerm.toString();
 	}
 	
-	
 	@Override
 	public boolean isFunction() {
 		return false;

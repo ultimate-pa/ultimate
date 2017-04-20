@@ -16,6 +16,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -140,42 +141,27 @@ public class CreateVanillaTfStateBuilder {
 	 * </ul> 
 	 * 
 	 * Algorithmically, we start by creating the nodes with terms in the TransFormula, then we create those for array
-	 * equations, then we fill up with through-nodes. Last we create nodes for auxVars (it does not matter when we do 
+	 * equations. Afterwards we fill up with through-nodes. Last we create nodes for auxVars (it does not matter when we do 
 	 * that).
+	 * 
+	 * Steps 1-3 are concerned with terms in the TransFormula.
 	 * 
 	 * @param preAnalysis
 	 * @param allConstantEqNodes
 	 */
 	private void createEqGraphNodes(final VPDomainPreanalysis preAnalysis, final Set<EqNode> allConstantEqNodes) {
-
-	}
-	
-	/**
-	 * The EqGraphNodes we need for the given TransFormula can come from the following sources: (Paradigm: whenever
-	 * the TransFormula can introduce a (dis-)equality about something, we need EqGraphNodes to track that.) 
-	 * FIXME: the below listing is slightly outdated..
-	 * <ol>
-	 *  <li> equalities in the TransFormula a) between elements b) between arrays (normal or store terms) 
-	 *    --> we obtain the EqGraphNodes during construction of the Element/ArrayWrappers 
-	 *  <li> variables in the TransFormula (outside of array accesses) that we have an EqNode for 
-	 *    --> we can see them in the invars and outvars of the TransFormula 
-	 *  <li> constants in the TransFormula that we have an EqNode for 
-	 *     --> we can just take the constant EqNodes from the preanalysis 
-	 *  <li> the auxVars of the TransFormula 
-	 *  <li> Array equalities in the TransFormula
-	 *     --> for both arrays we need all the EqFunctionNodes that have the array as function 
-	 *     --> this also includes ArrayUpdates, which are array equalities with store terms
-	 * </ol>  
-	 */ 
-	private void createEqGraphNodesOld(final VPDomainPreanalysis preAnalysis, final Set<EqNode> allConstantEqNodes) {
-
+		
 		/*
-		 * Step 1a. construct element wrappers, for non-array equations (in this order because the array equations
-		 * should only create EqGraphNodes that are not created anyway..)
+		 * collect (dis)equality subterms
 		 */
 		final Set<ApplicationTerm> xQualities =
 				new ApplicationTermFinder(new HashSet<>(Arrays.asList(new String[] { "=", "distinct" })), false)
 						.findMatchingSubterms(mTransFormula.getFormula());
+
+		/*
+		 * Step 1a. construct element wrappers, for non-array equations 
+		 * (do this first because the array equations should only create EqGraphNodes that are not created anyway..)
+		 */
 		for (final ApplicationTerm xQuality : xQualities) {
 			final Term lhs = xQuality.getParameters()[0];
 			final Term rhs = xQuality.getParameters()[1];
@@ -212,51 +198,41 @@ public class CreateVanillaTfStateBuilder {
 		 */
 		for (final Entry<TermVariable, IProgramVar> en : VPDomainHelpers
 				.computeProgramVarMappingFromTransFormula(mTransFormula).entrySet()) {
-			final EqNode varEqNode = preAnalysis.getEqNode(en.getValue().getTerm(), Collections.emptyMap());
 
-			if (varEqNode == null) {
+			// note: we can use .getEqNode(..) with an empty map here, because we are using the normalized 
+			// TermVariable/ApplicationTerm from the ProgramVarOrConst
+			if (preAnalysis.getEqNode(en.getValue().getTerm(), Collections.emptyMap()) == null) {
 				// we don't track that variable
 				continue;
 			}
-
 			getOrConstructElementWrapper(en.getKey());
 		}
-
-		/*
-		 * 3. constants in the TransFormula
-		 */
-		for (final EqNode constantEqNode : allConstantEqNodes) {
-			assert constantEqNode.isConstant();
-
-			/* 
-			 *  technical note: the constant select/store terms that occur in mTransFormula have been treated by
-			 *  step 1. already. -- therefore it should be ok to use EqNode.getTerm for the term argument of the
-			 *  getOrConstruct method; because say we have a constant store in this formula, it has
-			 * already been put into the map.
-			 */
-			getOrConstructElementWrapper(constantEqNode.getTerm());
-		}
 		
-//		/*
-//		 * 3b. variables that are not mentioned in the TransFormula but are visible in the current scope need to get 
-//		 *   "through"-nodes.
-//		 */
-//		if (mAction instanceof IInternalAction) {
-//			for (IProgramVarOrConst pvoc : mInVars) {
-//				if (pvoc.)
-//			}
-//		}
-		
-
-
 		/*
-		 * 4. the auxVars of the TransFormula
+		 * 3. the auxVars of the TransFormula
 		 */
 		for (final TermVariable auxVar : mTransFormula.getAuxVars()) {
 			getOrConstructElementWrapper(auxVar);
 		}
+		
+		/*
+		 * 4. Now we have finished with the terms in the TransFormula and fill up with EqGraphNodes for everything that
+		 * is tracked, and in scope.
+		 * (TODO: context switches)
+		 */
+		if (mAction instanceof IInternalAction) {
+			final String proc = mAction.getPrecedingProcedure();
+			
+			for (EqNode eqNode : mPreAnalysis.getEqNodesForScope(proc)) {
+				/*
+				 * the boolean argument should not matter here.. right?..., i.e. if the node is freshly constructed, it
+				 * is THROUGH no matter what the flag is set to 
+				 */
+				getOrConstructInOrOutOrThroughEqGraphNode(eqNode, true);
+			}
+		}
 	}
-
+	
 	/**
 	 * Plan: 
 	 * <ul>
@@ -711,13 +687,7 @@ public class CreateVanillaTfStateBuilder {
 		return result;
 	}
 	
-	private TransFormula getTransFormula() {
-		return mTransFormula;
-	}
 
-	private VPDomainPreanalysis getPreAnalysis() {
-		return mPreAnalysis;
-	}
 
 	public VPTfStateBuilder create() {
 //		/*
@@ -838,6 +808,14 @@ public class CreateVanillaTfStateBuilder {
 			}
 
 			return null;
+		}
+		
+		private TransFormula getTransFormula() {
+			return mTransFormula;
+		}
+
+		private VPDomainPreanalysis getPreAnalysis() {
+			return mPreAnalysis;
 		}
 	}
 	
