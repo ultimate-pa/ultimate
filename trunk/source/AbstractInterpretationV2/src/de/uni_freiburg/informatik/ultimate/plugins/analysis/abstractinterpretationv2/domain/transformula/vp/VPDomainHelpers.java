@@ -368,4 +368,11 @@ public class VPDomainHelpers {
 		}
 		return true;
 	}
+	
+	public static <T> Set<T> intersect(Set<T> s1, Set<T> s2) {
+		final Set<T> result = new HashSet<>(s1);
+		result.retainAll(s2);
+		return Collections.unmodifiableSet(result);
+	}
+
 }

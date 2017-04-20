@@ -202,23 +202,6 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 			return getBottomState(tfState.getInVariables());
 		}
 
-//		if (tfState.isTop()) {
-//			return oldState;
-//		}
-
-		/*
-		 * We are projecting the state to what it says about - outVars of the given TransFormula tf - constants
-		 */
-//		final Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outVarsAndConstantEqNodeSet = new HashSet<>();
-//		for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> node : tfState.getAllEqGraphNodes()) {
-//			if (node.mNodeIdentifier.isOutOrThrough()) {
-//				outVarsAndConstantEqNodeSet.add(node);
-//			}
-//		}
-		
-		
-//		final List<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outVarsAndConstantEqNodes =
-//				new ArrayList<>(outVarsAndConstantEqNodeSet);
 		final List<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outVarsAndConstantEqNodes = 
 				new ArrayList<>(tfState.getOutNodes());
 		
