@@ -1,7 +1,7 @@
 // Example that demonstates how we can use Büchi (nested word) automata in
 // this automata library.
 // Author: heizmann@informatik.uni-freiburg.de
-// Date: 28.4.2013
+// Date: 2013-04-28
 
 
 // Büchi automata accept infinite words. We do not support arbitrary infinite

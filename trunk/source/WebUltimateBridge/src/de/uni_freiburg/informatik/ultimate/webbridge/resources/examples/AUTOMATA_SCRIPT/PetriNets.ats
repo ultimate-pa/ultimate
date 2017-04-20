@@ -1,7 +1,7 @@
 // Example that demonstates how we can use PetriNet in
 // this automata library.
 // Author: heizmann@informatik.uni-freiburg.de
-// Date: 28.4.2013
+// Date: 2013-04-28
 
 // We use 1-bounded Petri nets as acceptors for languages. Some regular 
 // languages can be represented more succinct by petri net than by finite
