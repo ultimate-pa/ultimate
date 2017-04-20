@@ -190,15 +190,17 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		final ACTION action = getAction(act);
 
 		final AbstractMultiState<STATE, VARDECL> validPreState = createValidPostOpStateAfterLeaving(action, pre, null);
-		final AbstractMultiState<STATE, VARDECL> reducedPreState = reducePreState(validPreState, succ, action);
+		final AbstractMultiState<STATE, VARDECL> reducedPostState = succ.compact();
+		final AbstractMultiState<STATE, VARDECL> reducedPreState =
+				reducePreState(validPreState, reducedPostState, action);
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Pre : " + reducedPreState.toLogString());
 			mLogger.debug("Act : " + action);
-			mLogger.debug("Post: " + succ.toLogString());
+			mLogger.debug("Post: " + reducedPostState.toLogString());
 		}
 
-		final Validity result = checkInternalTransitionWithValidState(reducedPreState, action, succ);
+		final Validity result = checkInternalTransitionWithValidState(reducedPreState, action, reducedPostState);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Result: " + result);
 		}

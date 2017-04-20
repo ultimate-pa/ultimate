@@ -1301,6 +1301,6 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 
 	@Override
 	public OctDomainState compact() {
-		throw new UnsupportedOperationException("Not yet implemented");
+		return this;
 	}
 }
