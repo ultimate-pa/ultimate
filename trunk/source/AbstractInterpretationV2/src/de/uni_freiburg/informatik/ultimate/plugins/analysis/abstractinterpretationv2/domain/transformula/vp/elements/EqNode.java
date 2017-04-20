@@ -43,12 +43,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public abstract class EqNode implements IEqNodeIdentifier<IProgramVarOrConst> {
 
-	EqNode(boolean isGlobal, boolean isConstant) {
-		mIsGlobal = isGlobal;
-		mIsConstant = isConstant;
-//		mVariables = Collections.unmodifiableSet(new HashSet<>(variables));
-	}
-
 	protected Set<IProgramVar> mVariables;
 	
 	/**
@@ -57,15 +51,24 @@ public abstract class EqNode implements IEqNodeIdentifier<IProgramVarOrConst> {
 	protected final boolean mIsGlobal;
 	
 	protected final boolean mIsConstant;
+
+	private final String mProcedure;
 	
 
-	Set<EqNode> mParents = new HashSet<>();
+	private Set<EqNode> mParents = new HashSet<>();
 
 	protected Term mTerm;
 
+
+	EqNode(boolean isGlobal, boolean isConstant, String procedure) {
+			mIsGlobal = isGlobal;
+			mIsConstant = isConstant;
+			mProcedure = procedure;
+		}
+
 	/**
-	 * Yields the parents of this node in the EqNode graph (where the edges mean "is applied to"/"is a function argument of").
-	 * Can be used to obtain initial ccParents for the corresponding EqGraphNode.
+	 * Yields the parents of this node in the EqNode graph (where the edges mean "is applied to"/"is a function argument
+	 *  of"). Can be used to obtain initial ccParents for the corresponding EqGraphNode.
 	 */
 	Set<EqNode> getParents() {
 		return mParents;
@@ -95,5 +98,12 @@ public abstract class EqNode implements IEqNodeIdentifier<IProgramVarOrConst> {
 
 	public Term getTerm() {
 		return mTerm;
+	}
+	
+	/**
+	 * Returns procedure that this EqNode is local to. null if it is global.
+	 */
+	public String getProcedure() {
+		return mProcedure;
 	}
 }

@@ -165,7 +165,7 @@ public class VPTfArrayIdentifier implements IArrayWrapper {
 			// obtain the indices via initCcchild
 			List<VPTfNodeIdentifier> index = 
 					tfState.getEqGraphNode(fnid).getInitCcchild().stream()
-						.map(egn -> egn.nodeIdentifier).collect(Collectors.toList());
+						.map(egn -> egn.mNodeIdentifier).collect(Collectors.toList());
 			
 			indexToValue.put(index, fnid);
 		}

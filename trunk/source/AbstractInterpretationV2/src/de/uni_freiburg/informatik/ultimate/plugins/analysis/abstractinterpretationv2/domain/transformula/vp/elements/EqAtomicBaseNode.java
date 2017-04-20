@@ -50,13 +50,15 @@ public class EqAtomicBaseNode extends EqNode {
 
 	public EqAtomicBaseNode(IProgramVarOrConst bv) {
 		super(bv.isGlobal(), 
-				!(bv instanceof IProgramVar));
+				!(bv instanceof IProgramVar),
+				bv instanceof IProgramVar ? ((IProgramVar) bv).getProcedure() : null);
 		mVarOrConst = bv;
 		mIsLiteral = bv.getTerm() instanceof ConstantTerm;
 		mVariables = bv instanceof IProgramVar ? Collections.singleton((IProgramVar) bv) : Collections.emptySet();
 		mTerm = bv.getTerm();
 	}
 	
+	@Override
 	public String toString() {
 		return mVarOrConst.toString();
 	}
@@ -66,10 +68,10 @@ public class EqAtomicBaseNode extends EqNode {
 		return mIsLiteral;
 	}
 
-	@Override
-	public boolean equals(Object other) {
-		return other == this;
-	}
+//	@Override
+//	public boolean equals(Object other) {
+//		return other == this;
+//	}
 
 	public void addDependentNonAtomicBaseNode(EqNonAtomicBaseNode node) {
 		mDependentNonAtomicNodes.add(node);

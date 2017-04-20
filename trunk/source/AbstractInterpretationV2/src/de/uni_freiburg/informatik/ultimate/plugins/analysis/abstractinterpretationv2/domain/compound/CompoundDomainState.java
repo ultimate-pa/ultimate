@@ -323,6 +323,23 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		return new CompoundDomainState(mServices, domains, returnStates);
 	}
 
+	@Override
+	public CompoundDomainState compact() {
+		final List<IAbstractState<?, IBoogieVar>> thisStates = getAbstractStatesList();
+		final List<IAbstractDomain> domains = getDomainList();
+
+		assert domains.size() == thisStates.size();
+
+		final List<IAbstractState<?, IBoogieVar>> returnStates = new ArrayList<>();
+
+		for (int i = 0; i < thisStates.size(); i++) {
+			final IAbstractState<?, IBoogieVar> thisState = thisStates.get(i);
+			returnStates.add(thisState.compact());
+		}
+
+		return new CompoundDomainState(mServices, domains, returnStates);
+	}
+
 	private static <T extends IAbstractState<T, IBoogieVar>> T applyCasted(final IAbstractState<?, IBoogieVar> first,
 			final IAbstractState<?, IBoogieVar> second, final IAbstractStateBinaryOperator<T> op) {
 		final T firstT = (T) first;

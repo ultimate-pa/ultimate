@@ -32,13 +32,15 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 
 /**
+ * VPStateBuilder and VPTfStateBuilder are structurally similar, they both manage equalities through congruence closure 
+ * and disequalities through a set, and allow updating on those.
+ * This abstract class captures this overlap.
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
@@ -50,8 +52,6 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 	
 	protected final Set<VPDomainSymmetricPair<NODEID>> mDisEqualitySet;
 
-	protected final Set<IProgramVarOrConst> mVars;
-	
 	protected boolean mIsTop = true;
 	
 	/**
@@ -61,16 +61,17 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 	 */
 	public IVPStateOrTfStateBuilder(final IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder) {
 		mDisEqualitySet = new HashSet<>(builder.mDisEqualitySet);
-		mVars = new HashSet<>(builder.mVars);
+//		mVars = new HashSet<>(builder.mVars);
 		mIsTop = builder.mIsTop;
 	}
 	
 	/**
 	 * constructor for empty builder
+	 * @param initialDisequalities 
 	 */
-	public IVPStateOrTfStateBuilder() {
-		mDisEqualitySet = new HashSet<>();
-		mVars = new HashSet<>();
+	public IVPStateOrTfStateBuilder(Set<VPDomainSymmetricPair<NODEID>> initialDisequalities) {
+		mDisEqualitySet = new HashSet<>(initialDisequalities);
+//		mVars = new HashSet<>();
 	}
 
 	public abstract EqGraphNode<NODEID, ARRAYID> getEqGraphNode(NODEID i2);
@@ -148,10 +149,10 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 			NODEID newSecond = pair.getSecond();
 			
 			if (firstEqnInDisEquality == oldNode1Representative) {
-				newFirst = node1.find().nodeIdentifier;
+				newFirst = node1.find().mNodeIdentifier;
 			}
 			if (secondEqnInDisEquality == oldNode1Representative) {
-				newSecond = node1.find().nodeIdentifier;
+				newSecond = node1.find().mNodeIdentifier;
 			}
 
 			mDisEqualitySet.remove(pair);
@@ -187,14 +188,14 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 	 * @return true if they are congruent
 	 */
 	protected boolean congruent(final EqGraphNode<NODEID, ARRAYID> node1, final EqGraphNode<NODEID, ARRAYID> node2) {
-		if (!(node1.nodeIdentifier.isFunction()) || !(node2.nodeIdentifier.isFunction())) {
+		if (!(node1.mNodeIdentifier.isFunction()) || !(node2.mNodeIdentifier.isFunction())) {
 			return false;
 		}
 
 		// final EqFunctionNode fnNode1 = (EqFunctionNode) node1.eqNode;
 		// final EqFunctionNode fnNode2 = (EqFunctionNode) node2.eqNode;
 
-		if (!(node1.nodeIdentifier.getFunction().equals(node2.nodeIdentifier.getFunction()))) {
+		if (!(node1.mNodeIdentifier.getFunction().equals(node2.mNodeIdentifier.getFunction()))) {
 			return false;
 		}
 		return VPFactoryHelpers.congruentIgnoreFunctionSymbol(node1, node2);
@@ -225,7 +226,7 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 		final EqGraphNode<NODEID, ARRAYID> egn1 = getEqGraphNode(id1);
 		final EqGraphNode<NODEID, ARRAYID> egn2 = getEqGraphNode(id2);
 		assert !egn1.equals(egn2);
-		mDisEqualitySet.add(new VPDomainSymmetricPair<NODEID>(egn1.find().nodeIdentifier, egn2.find().nodeIdentifier));
+		mDisEqualitySet.add(new VPDomainSymmetricPair<NODEID>(egn1.find().mNodeIdentifier, egn2.find().mNodeIdentifier));
 		// mDisEqualitySet.add(new VPDomainSymmetricPair<NODEID>(id1, id2));
 	}
 
@@ -254,15 +255,7 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 		// mDisEqualitySet.addAll(newDisequalities);
 	}
 
-	public IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> addVars(final Collection<IProgramVarOrConst> variables) {
-		mVars.addAll(variables);
-		return this;
-	}
 
-	public IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> removeVars(final Collection<IProgramVarOrConst> variables) {
-		mVars.removeAll(variables);
-		return this;
-	}
 	
 	/**
 	 * Use disEqualitySet to check if there exist contradiction in the graph.

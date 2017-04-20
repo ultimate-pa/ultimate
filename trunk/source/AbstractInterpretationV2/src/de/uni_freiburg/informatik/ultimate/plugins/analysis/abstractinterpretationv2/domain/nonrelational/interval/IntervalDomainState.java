@@ -35,6 +35,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.BooleanValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.TVBool;
 
 /**
  * Implementation of an abstract state of the {@link IntervalDomain}.
@@ -63,10 +64,16 @@ public class IntervalDomainState<VARDECL>
 		super(logger, variables, valuesMap, booleanValuesMap, isBottom);
 	}
 
+	public IntervalDomainState(final ILogger logger, final Set<VARDECL> variables,
+			final Map<VARDECL, IntervalDomainValue> valuesMap, final Map<VARDECL, BooleanValue> booleanValuesMap,
+			final TVBool isBottom) {
+		super(logger, variables, valuesMap, booleanValuesMap, isBottom);
+	}
+
 	@Override
 	protected IntervalDomainState<VARDECL> createCopy() {
 		return new IntervalDomainState<>(getLogger(), getVariables(), new HashMap<>(getVar2ValueNonrelational()),
-				new HashMap<>(getVar2ValueBoolean()), isBottom());
+				new HashMap<>(getVar2ValueBoolean()), getBottomFlag());
 	}
 
 	@Override

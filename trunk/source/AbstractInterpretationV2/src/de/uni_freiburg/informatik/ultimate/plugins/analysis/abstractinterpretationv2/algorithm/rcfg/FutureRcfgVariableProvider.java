@@ -36,8 +36,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
@@ -244,9 +249,31 @@ public class FutureRcfgVariableProvider<STATE extends IAbstractState<STATE, IPro
 	}
 
 	@Override
-	public IVariableProvider<STATE, ACTION, IProgramVarOrConst>
-			createNewVariableProvider(final IIcfgSymbolTable table) {
-		return new FutureRcfgVariableProvider<>(table, mLogger);
+	public IVariableProvider<STATE, ACTION, IProgramVarOrConst> createNewVariableProvider(final CfgSmtToolkit toolkit) {
+		return new FutureRcfgVariableProvider<>(toolkit.getSymbolTable(), mLogger);
+	}
+
+	@Override
+	public Set<IProgramVarOrConst> getRequiredVars(final ACTION act) {
+		final Set<IProgramVarOrConst> vars = new HashSet<>();
+		if (act instanceof IInternalAction) {
+			addTfVars(act.getTransformula(), vars);
+		} else if (act instanceof ICallAction) {
+			final ICallAction callAct = (ICallAction) act;
+			addTfVars(callAct.getLocalVarsAssignment(), vars);
+		} else if (act instanceof IReturnAction) {
+			final IReturnAction retAct = (IReturnAction) act;
+			addTfVars(retAct.getAssignmentOfReturn(), vars);
+		} else {
+			throw new UnsupportedOperationException();
+		}
+		return vars;
+	}
+
+	private static void addTfVars(final UnmodifiableTransFormula tf, final Set<IProgramVarOrConst> vars) {
+		vars.addAll(tf.getNonTheoryConsts());
+		tf.getInVars().entrySet().stream().forEach(a -> vars.add(a.getKey()));
+		tf.getOutVars().entrySet().stream().forEach(a -> vars.add(a.getKey()));
 	}
 
 }

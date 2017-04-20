@@ -27,14 +27,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
-import java.util.Collections;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfArrayIdentifier;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  *
@@ -43,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  */
 public class VPTfBottomState extends VPTfState {
 	
-	public VPTfBottomState(final Set<IProgramVarOrConst> vars) {
-		super(null, null, Collections.emptyMap(), Collections.emptySet(), new HashRelation<>(), Collections.emptySet(),
-				false, vars);
+	public VPTfBottomState(final Set<IProgramVarOrConst> inVars, final Set<IProgramVarOrConst> outVars) {
+		super(null, null, null, null, null, null, null,
+				false, inVars, outVars, null);
 	}
 	
 	@Override
@@ -72,6 +70,6 @@ public class VPTfBottomState extends VPTfState {
 
 	@Override
 	public String toString() {
-		return "VPTfStateBottom " + mVars;
+		return "VPTfStateBottom, in: " + mInVars + " out: " + mOutVars;
 	}
 }

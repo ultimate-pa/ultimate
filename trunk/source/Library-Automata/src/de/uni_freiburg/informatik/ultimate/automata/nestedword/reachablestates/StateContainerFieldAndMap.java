@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
@@ -42,6 +44,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Incom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Contains STATES and information of transitions.
@@ -75,11 +81,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	}
 
 	boolean mapModeOutgoing() {
-		return (mOut1 instanceof Map) || (mOut2 instanceof Map) || (mOut3 instanceof Map);
+		return (mOut1 instanceof NestedMap2) || (mOut2 instanceof NestedMap2) || (mOut3 instanceof Map);
 	}
 
 	boolean mapModeIncoming() {
-		return (mIn1 instanceof Map) || (mIn2 instanceof Map) || (mIn3 instanceof Map);
+		return (mIn1 instanceof NestedMap2) || (mIn2 instanceof NestedMap2) || (mIn3 instanceof Map);
 	}
 
 	private void switchOutgoingToMapMode() {
@@ -236,56 +242,36 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		final LETTER letter = internalOutgoing.getLetter();
 		final STATE succ = internalOutgoing.getSucc();
 		if (mOut1 == null) {
-			mOut1 = new HashMap<LETTER, Set<STATE>>();
+			mOut1 = new NestedMap2<LETTER, STATE, IsContained>();
 		}
-		Set<STATE> succs = ((Map<LETTER, Set<STATE>>) mOut1).get(letter);
-		if (succs == null) {
-			succs = new HashSet<>();
-			((Map<LETTER, Set<STATE>>) mOut1).put(letter, succs);
-		}
-		succs.add(succ);
+		((NestedMap2<LETTER, STATE, IsContained>) mOut1).put(letter, succ, IsContained.IsContained);
 	}
 
 	void addInternalIncomingMap(final IncomingInternalTransition<LETTER, STATE> internalIncoming) {
 		final LETTER letter = internalIncoming.getLetter();
 		final STATE pred = internalIncoming.getPred();
 		if (mIn1 == null) {
-			mIn1 = new HashMap<LETTER, Set<STATE>>();
+			mIn1 = new NestedMap2<LETTER, STATE, IsContained>();
 		}
-		Set<STATE> preds = ((Map<LETTER, Set<STATE>>) mIn1).get(letter);
-		if (preds == null) {
-			preds = new HashSet<>();
-			((Map<LETTER, Set<STATE>>) mIn1).put(letter, preds);
-		}
-		preds.add(pred);
+		((NestedMap2<LETTER, STATE, IsContained>) mIn1).put(letter, pred, IsContained.IsContained);
 	}
 
 	void addCallOutgoingMap(final OutgoingCallTransition<LETTER, STATE> callOutgoing) {
 		final LETTER letter = callOutgoing.getLetter();
 		final STATE succ = callOutgoing.getSucc();
 		if (mOut2 == null) {
-			mOut2 = new HashMap<LETTER, Set<STATE>>();
+			mOut2 = new NestedMap2<LETTER, STATE, IsContained>();
 		}
-		Set<STATE> succs = ((Map<LETTER, Set<STATE>>) mOut2).get(letter);
-		if (succs == null) {
-			succs = new HashSet<>();
-			((Map<LETTER, Set<STATE>>) mOut2).put(letter, succs);
-		}
-		succs.add(succ);
+		((NestedMap2<LETTER, STATE, IsContained>) mOut2).put(letter, succ, IsContained.IsContained);
 	}
 
 	void addCallIncomingMap(final IncomingCallTransition<LETTER, STATE> callIncoming) {
 		final LETTER letter = callIncoming.getLetter();
 		final STATE pred = callIncoming.getPred();
 		if (mIn2 == null) {
-			mIn2 = new HashMap<LETTER, Set<STATE>>();
+			mIn2 = new NestedMap2<LETTER, STATE, IsContained>();
 		}
-		Set<STATE> preds = ((Map<LETTER, Set<STATE>>) mIn2).get(letter);
-		if (preds == null) {
-			preds = new HashSet<>();
-			((Map<LETTER, Set<STATE>>) mIn2).put(letter, preds);
-		}
-		preds.add(pred);
+		((NestedMap2<LETTER, STATE, IsContained>) mIn2).put(letter, pred, IsContained.IsContained);
 	}
 
 	void addReturnOutgoingMap(final OutgoingReturnTransition<LETTER, STATE> returnOutgoing) {
@@ -331,7 +317,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	@Override
 	public Set<LETTER> lettersInternal() {
 		if (mapModeOutgoing()) {
-			final Map<LETTER, Set<STATE>> map = (Map<LETTER, Set<STATE>>) mOut1;
+			final NestedMap2<LETTER, STATE, IsContained> map = (NestedMap2<LETTER, STATE, IsContained>) mOut1;
 			return map == null ? mEmptySetOfLetters : map.keySet();
 		}
 		final Set<LETTER> result = new HashSet<>(THREE);
@@ -357,7 +343,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	@Override
 	public Set<LETTER> lettersInternalIncoming() {
 		if (mapModeIncoming()) {
-			final Map<LETTER, Set<STATE>> map = (Map<LETTER, Set<STATE>>) mIn1;
+			final NestedMap2<LETTER, STATE, IsContained> map = (NestedMap2<LETTER, STATE, IsContained>) mIn1;
 			return map == null ? mEmptySetOfLetters : map.keySet();
 		}
 		final Set<LETTER> result = new HashSet<>(THREE);
@@ -383,7 +369,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	@Override
 	public Set<LETTER> lettersCall() {
 		if (mapModeOutgoing()) {
-			final Map<LETTER, Set<STATE>> map = (Map<LETTER, Set<STATE>>) mOut2;
+			final NestedMap2<LETTER, STATE, IsContained> map = (NestedMap2<LETTER, STATE, IsContained>) mOut2;
 			return map == null ? mEmptySetOfLetters : map.keySet();
 		}
 		final Set<LETTER> result = new HashSet<>(1);
@@ -397,7 +383,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	@Override
 	public Set<LETTER> lettersCallIncoming() {
 		if (mapModeIncoming()) {
-			final Map<LETTER, Set<STATE>> map = (Map<LETTER, Set<STATE>>) mIn2;
+			final NestedMap2<LETTER, STATE, IsContained> map = (NestedMap2<LETTER, STATE, IsContained>) mIn2;
 			return map == null ? mEmptySetOfLetters : map.keySet();
 		}
 		final Set<LETTER> result = new HashSet<>(1);
@@ -439,12 +425,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	@Override
 	public Collection<STATE> succInternal(final LETTER letter) {
 		if (mapModeOutgoing()) {
-			final Map<LETTER, Set<STATE>> map = (Map<LETTER, Set<STATE>>) mOut1;
+			final NestedMap2<LETTER, STATE, IsContained> map = (NestedMap2<LETTER, STATE, IsContained>) mOut1;
 			if (map == null) {
 				return mEmptySetOfStates;
 			}
-			final Set<STATE> result = map.get(letter);
-			return result == null ? mEmptySetOfStates : result;
+			final Map<STATE, IsContained> result = map.get(letter);
+			return result == null ? mEmptySetOfStates : result.keySet();
 		}
 		final Collection<STATE> result = new ArrayList<>(THREE);
 		if (properOutgoingInternalTransitionAtPosition1(letter)) {
@@ -469,12 +455,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	@Override
 	public Collection<STATE> predInternal(final LETTER letter) {
 		if (mapModeIncoming()) {
-			final Map<LETTER, Set<STATE>> map = (Map<LETTER, Set<STATE>>) mIn1;
+			final NestedMap2<LETTER, STATE, IsContained> map = (NestedMap2<LETTER, STATE, IsContained>) mIn1;
 			if (map == null) {
 				return mEmptySetOfStates;
 			}
-			final Set<STATE> result = map.get(letter);
-			return result == null ? mEmptySetOfStates : result;
+			final Map<STATE, IsContained> result = map.get(letter);
+			return result == null ? mEmptySetOfStates : result.keySet();
 		}
 		final Collection<STATE> result = new ArrayList<>(THREE);
 		if (properIncomingInternalTransitionAtPosition1(letter)) {
@@ -499,12 +485,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	@Override
 	public Collection<STATE> succCall(final LETTER letter) {
 		if (mapModeOutgoing()) {
-			final Map<LETTER, Set<STATE>> map = (Map<LETTER, Set<STATE>>) mOut2;
+			final NestedMap2<LETTER, STATE, IsContained> map = (NestedMap2<LETTER, STATE, IsContained>) mOut2;
 			if (map == null) {
 				return mEmptySetOfStates;
 			}
-			final Set<STATE> result = map.get(letter);
-			return result == null ? mEmptySetOfStates : result;
+			final Map<STATE, IsContained> result = map.get(letter);
+			return result == null ? mEmptySetOfStates : result.keySet();
 		}
 		final Collection<STATE> result = new ArrayList<>(1);
 		if (properOutgoingCallTransitionAtPosition2(letter)) {
@@ -517,12 +503,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	@Override
 	public Collection<STATE> predCall(final LETTER letter) {
 		if (mapModeIncoming()) {
-			final Map<LETTER, Set<STATE>> map = (Map<LETTER, Set<STATE>>) mIn2;
+			final NestedMap2<LETTER, STATE, IsContained> map = (NestedMap2<LETTER, STATE, IsContained>) mIn2;
 			if (map == null) {
 				return mEmptySetOfStates;
 			}
-			final Set<STATE> result = map.get(letter);
-			return result == null ? mEmptySetOfStates : result;
+			final Map<STATE, IsContained> result = map.get(letter);
+			return result == null ? mEmptySetOfStates : result.keySet();
 		}
 		final Collection<STATE> result = new ArrayList<>(1);
 		if (properIncomingCallTransitionAtPosition2(letter)) {
@@ -617,162 +603,48 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 
 	private Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessorsMap(final LETTER letter) {
 		assert mapModeIncoming();
-		return () -> new Iterator<IncomingInternalTransition<LETTER, STATE>>() {
-			private final Iterator<STATE> mIterator = initialize();
-
-			private Iterator<STATE> initialize() {
-				final Map<LETTER, Set<STATE>> letter2pred = (Map<LETTER, Set<STATE>>) mIn1;
-				if (letter2pred != null && letter2pred.get(letter) != null) {
-					return letter2pred.get(letter).iterator();
-				}
-				return null;
-			}
-
-			@Override
-			public boolean hasNext() {
-				return mIterator != null && mIterator.hasNext();
-			}
-
-			@Override
-			public IncomingInternalTransition<LETTER, STATE> next() {
-				if (mIterator == null) {
-					throw new NoSuchElementException();
-				}
-				final STATE pred = mIterator.next();
-				return new IncomingInternalTransition<>(pred, letter);
-			}
-		};
+		if (mIn1 == null) {
+			return Collections.emptySet();
+		} else {
+			final Function<STATE, IncomingInternalTransition<LETTER, STATE>> transformer = x -> new IncomingInternalTransition<LETTER, STATE>(
+					x, letter);
+			return () -> new TransformIterator<STATE, IncomingInternalTransition<LETTER, STATE>>(
+					keySetOrEmpty(((NestedMap2<LETTER, STATE, IsContained>) mIn1).get(letter)).iterator(), transformer);
+		}
 	}
 
 	private Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessorsMap() {
 		assert mapModeIncoming();
-		/**
-		 * Iterates over all IncomingInternalTransition of succ. Iterates over all incoming internal letters and uses
-		 * the iterators returned by internalPredecessorsMap(letter, succ)
-		 */
-		return () -> new Iterator<IncomingInternalTransition<LETTER, STATE>>() {
-			private Iterator<LETTER> mLetterIterator;
-			private LETTER mCurrentLetter;
-			private Iterator<IncomingInternalTransition<LETTER, STATE>> mCurrentIterator;
-
-			{
-				mLetterIterator = lettersInternalIncoming().iterator();
-				nextLetter();
-			}
-
-			private void nextLetter() {
-				if (mLetterIterator.hasNext()) {
-					do {
-						mCurrentLetter = mLetterIterator.next();
-						mCurrentIterator = internalPredecessorsMap(mCurrentLetter).iterator();
-					} while (!mCurrentIterator.hasNext() && mLetterIterator.hasNext());
-					if (!mCurrentIterator.hasNext()) {
-						mCurrentLetter = null;
-						mCurrentIterator = null;
-					}
-				} else {
-					mCurrentLetter = null;
-					mCurrentIterator = null;
-				}
-			}
-
-			@Override
-			public boolean hasNext() {
-				return mCurrentLetter != null;
-			}
-
-			@Override
-			public IncomingInternalTransition<LETTER, STATE> next() {
-				if (mCurrentLetter == null) {
-					throw new NoSuchElementException();
-				}
-				final IncomingInternalTransition<LETTER, STATE> result = mCurrentIterator.next();
-				if (!mCurrentIterator.hasNext()) {
-					nextLetter();
-				}
-				return result;
-			}
-		};
+		if (mIn1 == null) {
+			return Collections.emptySet();
+		} else {
+			return () -> new TransformIterator<Triple<LETTER, STATE, IsContained>, IncomingInternalTransition<LETTER, STATE>>(
+					((NestedMap2<LETTER, STATE, IsContained>) mIn1).entrySet().iterator(),
+					x -> new IncomingInternalTransition<LETTER, STATE>(x.getSecond(), x.getFirst()));
+		}
 	}
 
 	private Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessorsMap(final LETTER letter) {
 		assert mapModeIncoming();
-		return () -> new Iterator<IncomingCallTransition<LETTER, STATE>>() {
-			private final Iterator<STATE> mIterator = initialize();
-
-			private Iterator<STATE> initialize() {
-				final Map<LETTER, Set<STATE>> letter2pred = (Map<LETTER, Set<STATE>>) mIn2;
-				if (letter2pred != null && letter2pred.get(letter) != null) {
-					return letter2pred.get(letter).iterator();
-				}
-				return null;
-			}
-
-			@Override
-			public boolean hasNext() {
-				return mIterator != null && mIterator.hasNext();
-			}
-
-			@Override
-			public IncomingCallTransition<LETTER, STATE> next() {
-				if (mIterator == null) {
-					throw new NoSuchElementException();
-				}
-				final STATE pred = mIterator.next();
-				return new IncomingCallTransition<>(pred, letter);
-			}
-		};
+		if (mIn2 == null) {
+			return Collections.emptySet();
+		} else {
+			final Function<STATE, IncomingCallTransition<LETTER, STATE>> transformer = x -> new IncomingCallTransition<LETTER, STATE>(
+					x, letter);
+			return () -> new TransformIterator<STATE, IncomingCallTransition<LETTER, STATE>>(
+					keySetOrEmpty(((NestedMap2<LETTER, STATE, IsContained>) mIn2).get(letter)).iterator(), transformer);
+		}
 	}
 
 	private Iterable<IncomingCallTransition<LETTER, STATE>> callPredecessorsMap() {
 		assert mapModeIncoming();
-		/**
-		 * Iterates over all IncomingCallTransition of succ. Iterates over all incoming call letters and uses the
-		 * iterators returned by callPredecessorsMap(letter, succ)
-		 */
-		return () -> new Iterator<IncomingCallTransition<LETTER, STATE>>() {
-			private Iterator<LETTER> mLetterIterator;
-			private LETTER mCurrentLetter;
-			private Iterator<IncomingCallTransition<LETTER, STATE>> mCurrentIterator;
-
-			{
-				mLetterIterator = lettersCallIncoming().iterator();
-				nextLetter();
-			}
-
-			private void nextLetter() {
-				if (mLetterIterator.hasNext()) {
-					do {
-						mCurrentLetter = mLetterIterator.next();
-						mCurrentIterator = callPredecessorsMap(mCurrentLetter).iterator();
-					} while (!mCurrentIterator.hasNext() && mLetterIterator.hasNext());
-					if (!mCurrentIterator.hasNext()) {
-						mCurrentLetter = null;
-						mCurrentIterator = null;
-					}
-				} else {
-					mCurrentLetter = null;
-					mCurrentIterator = null;
-				}
-			}
-
-			@Override
-			public boolean hasNext() {
-				return mCurrentLetter != null;
-			}
-
-			@Override
-			public IncomingCallTransition<LETTER, STATE> next() {
-				if (mCurrentLetter == null) {
-					throw new NoSuchElementException();
-				}
-				final IncomingCallTransition<LETTER, STATE> result = mCurrentIterator.next();
-				if (!mCurrentIterator.hasNext()) {
-					nextLetter();
-				}
-				return result;
-			}
-		};
+		if (mIn2 == null) {
+			return Collections.emptySet();
+		} else {
+			return () -> new TransformIterator<Triple<LETTER, STATE, IsContained>, IncomingCallTransition<LETTER, STATE>>(
+					((NestedMap2<LETTER, STATE, IsContained>) mIn2).entrySet().iterator(),
+					x -> new IncomingCallTransition<LETTER, STATE>(x.getSecond(), x.getFirst()));
+		}
 	}
 
 	private Iterable<IncomingReturnTransition<LETTER, STATE>> returnPredecessorsMap(final STATE hier,
@@ -912,162 +784,50 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 
 	private Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessorsMap(final LETTER letter) {
 		assert mapModeOutgoing();
-		return () -> new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
-			private final Iterator<STATE> mIterator = initialize();
-
-			private Iterator<STATE> initialize() {
-				final Map<LETTER, Set<STATE>> letter2succ = (Map<LETTER, Set<STATE>>) mOut1;
-				if (letter2succ != null && letter2succ.get(letter) != null) {
-					return letter2succ.get(letter).iterator();
-				}
-				return null;
-			}
-
-			@Override
-			public boolean hasNext() {
-				return mIterator != null && mIterator.hasNext();
-			}
-
-			@Override
-			public OutgoingInternalTransition<LETTER, STATE> next() {
-				if (mIterator == null) {
-					throw new NoSuchElementException();
-				}
-				final STATE succ = mIterator.next();
-				return new OutgoingInternalTransition<>(letter, succ);
-			}
-		};
+		if (mOut1 == null) {
+			return Collections.emptySet();
+		} else {
+			final Function<STATE, OutgoingInternalTransition<LETTER, STATE>> transformer = x -> new OutgoingInternalTransition<>(
+					letter, x);
+			return () -> new TransformIterator<STATE, OutgoingInternalTransition<LETTER, STATE>>(
+					keySetOrEmpty(((NestedMap2<LETTER, STATE, IsContained>) mOut1).get(letter)).iterator(),
+					transformer);
+		}
 	}
 
 	private Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessorsMap() {
 		assert mapModeOutgoing();
-		/**
-		 * Iterates over all OutgoingInternalTransition of state. Iterates over all outgoing internal letters and uses
-		 * the iterators returned by internalSuccessorsMap(state, letter)
-		 */
-		return () -> new Iterator<OutgoingInternalTransition<LETTER, STATE>>() {
-			private Iterator<LETTER> mLetterIterator;
-			private LETTER mCurrentLetter;
-			private Iterator<OutgoingInternalTransition<LETTER, STATE>> mCurrentIterator;
-
-			{
-				mLetterIterator = lettersInternal().iterator();
-				nextLetter();
-			}
-
-			private void nextLetter() {
-				if (mLetterIterator.hasNext()) {
-					do {
-						mCurrentLetter = mLetterIterator.next();
-						mCurrentIterator = internalSuccessorsMap(mCurrentLetter).iterator();
-					} while (!mCurrentIterator.hasNext() && mLetterIterator.hasNext());
-					if (!mCurrentIterator.hasNext()) {
-						mCurrentLetter = null;
-						mCurrentIterator = null;
-					}
-				} else {
-					mCurrentLetter = null;
-					mCurrentIterator = null;
-				}
-			}
-
-			@Override
-			public boolean hasNext() {
-				return mCurrentLetter != null;
-			}
-
-			@Override
-			public OutgoingInternalTransition<LETTER, STATE> next() {
-				if (mCurrentLetter == null) {
-					throw new NoSuchElementException();
-				}
-				final OutgoingInternalTransition<LETTER, STATE> result = mCurrentIterator.next();
-				if (!mCurrentIterator.hasNext()) {
-					nextLetter();
-				}
-				return result;
-			}
-		};
+		if (mOut1 == null) {
+			return Collections.emptySet();
+		} else {
+			return () -> new TransformIterator<Triple<LETTER, STATE, IsContained>, OutgoingInternalTransition<LETTER, STATE>>(
+					((NestedMap2<LETTER, STATE, IsContained>) mOut1).entrySet().iterator(),
+					x -> new OutgoingInternalTransition<LETTER, STATE>(x.getFirst(), x.getSecond()));
+		}
 	}
 
 	private Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessorsMap(final LETTER letter) {
 		assert mapModeOutgoing();
-		return () -> new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
-			private final Iterator<STATE> mIterator = initialize();
-
-			private Iterator<STATE> initialize() {
-				final Map<LETTER, Set<STATE>> letter2succ = (Map<LETTER, Set<STATE>>) mOut2;
-				if (letter2succ != null && letter2succ.get(letter) != null) {
-					return letter2succ.get(letter).iterator();
-				}
-				return null;
-			}
-
-			@Override
-			public boolean hasNext() {
-				return mIterator != null && mIterator.hasNext();
-			}
-
-			@Override
-			public OutgoingCallTransition<LETTER, STATE> next() {
-				if (mIterator == null) {
-					throw new NoSuchElementException();
-				}
-				final STATE succ = mIterator.next();
-				return new OutgoingCallTransition<>(letter, succ);
-			}
-		};
+		if (mOut2 == null) {
+			return Collections.emptySet();
+		} else {
+			final Function<STATE, OutgoingCallTransition<LETTER, STATE>> transformer = x -> new OutgoingCallTransition<>(
+					letter, x);
+			return () -> new TransformIterator<STATE, OutgoingCallTransition<LETTER, STATE>>(
+					keySetOrEmpty(((NestedMap2<LETTER, STATE, IsContained>) mOut2).get(letter)).iterator(),
+					transformer);
+		}
 	}
 
 	private Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessorsMap() {
 		assert mapModeOutgoing();
-		/**
-		 * Iterates over all OutgoingCallTransition of state. Iterates over all outgoing call letters and uses the
-		 * iterators returned by callSuccessorsMap(state, letter)
-		 */
-		return () -> new Iterator<OutgoingCallTransition<LETTER, STATE>>() {
-			private Iterator<LETTER> mLetterIterator;
-			private LETTER mCurrentLetter;
-			private Iterator<OutgoingCallTransition<LETTER, STATE>> mCurrentIterator;
-
-			{
-				mLetterIterator = lettersCall().iterator();
-				nextLetter();
-			}
-
-			private void nextLetter() {
-				if (mLetterIterator.hasNext()) {
-					do {
-						mCurrentLetter = mLetterIterator.next();
-						mCurrentIterator = callSuccessorsMap(mCurrentLetter).iterator();
-					} while (!mCurrentIterator.hasNext() && mLetterIterator.hasNext());
-					if (!mCurrentIterator.hasNext()) {
-						mCurrentLetter = null;
-						mCurrentIterator = null;
-					}
-				} else {
-					mCurrentLetter = null;
-					mCurrentIterator = null;
-				}
-			}
-
-			@Override
-			public boolean hasNext() {
-				return mCurrentLetter != null;
-			}
-
-			@Override
-			public OutgoingCallTransition<LETTER, STATE> next() {
-				if (mCurrentLetter == null) {
-					throw new NoSuchElementException();
-				}
-				final OutgoingCallTransition<LETTER, STATE> result = mCurrentIterator.next();
-				if (!mCurrentIterator.hasNext()) {
-					nextLetter();
-				}
-				return result;
-			}
-		};
+		if (mOut2 == null) {
+			return Collections.emptySet();
+		} else {
+			return () -> new TransformIterator<Triple<LETTER, STATE, IsContained>, OutgoingCallTransition<LETTER, STATE>>(
+					((NestedMap2<LETTER, STATE, IsContained>) mOut2).entrySet().iterator(),
+					x -> new OutgoingCallTransition<LETTER, STATE>(x.getFirst(), x.getSecond()));
+		}
 	}
 
 	private Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsMap(final STATE hier,
@@ -1565,5 +1325,13 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			return internalPredecessorsMap();
 		}
 		return internalPredecessorsField(null);
+	}
+	
+	private Iterable<STATE> keySetOrEmpty(final Map<STATE, IsContained> map) {
+		if (map == null) {
+			return Collections.emptySet();
+		} else {
+			return map.keySet();
+		}
 	}
 }

@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -55,16 +56,28 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 		extends IVPStateOrTfStateBuilder<VPState<ACTION>, EqNode, IProgramVarOrConst> {
 
+	protected final Set<IProgramVarOrConst> mVars = new HashSet<>();
+	
 	protected final VPDomain<ACTION> mDomain;
 
 	private Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> mEqNodeToEqGraphNodeMap;
 
-	public VPStateBuilder(final VPDomain<ACTION> domain) {
+	public VPStateBuilder(final VPDomain<ACTION> domain, Set<VPDomainSymmetricPair<EqNode>> initialDisequalities) {
+		super(initialDisequalities);
 		mDomain = domain;
 		createEqGraphNodes();
+
+		/*
+		 * When all EqGraphNodes for the VPState<ACTION> have been created, we can set their initCcpar and initCcchild
+		 * fields
+		 */
+		for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : getAllEqGraphNodes()) {
+			egn.setupNode();
+		}
 	}
 
 	protected VPStateBuilder(final VPDomain<ACTION> domain, final boolean dontCreateEqGraphNodes) {
+		super(Collections.emptySet());
 		assert dontCreateEqGraphNodes;
 		mDomain = domain;
 	}
@@ -146,7 +159,8 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 		 }
 	 }
 
-	public HashRelation<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> ccchild(final EqGraphNode<EqNode, IProgramVarOrConst> representative1) {
+	public HashRelation<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> ccchild(
+			final EqGraphNode<EqNode, IProgramVarOrConst> representative1) {
 		return representative1.find().getCcchild();
 	}
 
@@ -169,5 +183,13 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	public Set<VPDomainSymmetricPair<EqNode>> getDisEqualitySet() {
 		return Collections.unmodifiableSet(mDisEqualitySet);
+	}
+
+	public void addVars(final Collection<IProgramVarOrConst> variables) {
+		mVars.addAll(variables);
+	}
+
+	public void removeVars(final Collection<IProgramVarOrConst> variables) {
+		mVars.removeAll(variables);
 	}
 }

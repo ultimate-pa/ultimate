@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
@@ -46,15 +45,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public abstract class IVPStateOrTfState<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 	
-	protected final Set<IProgramVarOrConst> mVars;
 	private final Set<VPDomainSymmetricPair<NODEID>> mDisEqualitySet;
 	private final boolean mIsTop;
 
-	public IVPStateOrTfState(final Set<VPDomainSymmetricPair<NODEID>> disEqs, final boolean isTop,
-			final Set<IProgramVarOrConst> vars) {
+	public IVPStateOrTfState(final Set<VPDomainSymmetricPair<NODEID>> disEqs, final boolean isTop) {
 		mDisEqualitySet = Collections.unmodifiableSet(disEqs);
 		mIsTop = isTop;
-		mVars = Collections.unmodifiableSet(vars);
 	}
 
 	public Set<NODEID> getDisequalities(final NODEID nodeIdentifer) {
@@ -72,16 +68,13 @@ public abstract class IVPStateOrTfState<NODEID extends IEqNodeIdentifier<ARRAYID
 		return mDisEqualitySet;
 	}
 	
-	abstract public boolean isBottom();
+	public abstract boolean isBottom();
 	
 	public boolean isTop() {
 		return mIsTop;
 	}
 
-	public Set<IProgramVarOrConst> getVariables() {
-		return mVars;
-	}
-	
+
 	/**
 	 * just a convenient interface for the disequality set --> difference to areUnEqual: does not do a find(..) on the
 	 * given nodes

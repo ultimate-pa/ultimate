@@ -58,7 +58,7 @@ public class MapBackedSetOfPairs<E> implements ISetOfPairs<E, Map<E, Set<E>>> {
 
 	@Override
 	public void addPair(final E lhs, final E rhs) {
-		throw new UnsupportedOperationException("The partition must be specified at construction time.");
+		throw new UnsupportedOperationException("The pairs must be specified at construction time.");
 	}
 
 	@Override

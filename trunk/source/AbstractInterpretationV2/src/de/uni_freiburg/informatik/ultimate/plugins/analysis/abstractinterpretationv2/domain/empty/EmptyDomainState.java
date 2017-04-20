@@ -253,4 +253,10 @@ public final class EmptyDomainState<VARDECL> implements IAbstractState<EmptyDoma
 	public EmptyDomainState<VARDECL> union(final EmptyDomainState<VARDECL> other) {
 		return intersect(other);
 	}
+
+	@Override
+	public EmptyDomainState<VARDECL> compact() {
+		// empty states are always compact
+		return this;
+	}
 }

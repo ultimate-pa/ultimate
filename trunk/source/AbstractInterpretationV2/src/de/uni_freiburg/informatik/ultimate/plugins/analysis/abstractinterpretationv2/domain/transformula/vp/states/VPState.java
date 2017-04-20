@@ -28,11 +28,14 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -41,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -67,11 +71,13 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	private final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> mEqNodeToEqGraphNodeMap;
 
+	protected final Set<IProgramVarOrConst> mVars;
+
 	protected final VPDomain<ACTION> mDomain;
 	private final ManagedScript mScript;
 	private final Term mTerm;
 	private final VPDomainPreanalysis mPreAnalysis;
-	protected final VPStateFactory<ACTION> mFactory;
+	protected final VPStateFactory<ACTION> mStateFactory;
 
 	/**
 	 * Constructor for bottom state only.
@@ -88,12 +94,13 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	VPState(final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> eqNodeToEqGraphNodeMap,
 			final Set<VPDomainSymmetricPair<EqNode>> disEqualitySet, final Set<IProgramVarOrConst> vars,
 			final VPDomain<ACTION> domain, final boolean isTop) {
-		super(disEqualitySet, isTop, vars);
+		super(disEqualitySet, isTop);
 		mEqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);
 		mDomain = domain;
 		mScript = mDomain.getManagedScript();
 		mPreAnalysis = mDomain.getPreAnalysis();
-		mFactory = mDomain.getVpStateFactory();
+		mStateFactory = mDomain.getVpStateFactory();
+		mVars = Collections.unmodifiableSet(vars);
 
 		mTerm = constructTerm();
 
@@ -122,7 +129,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		if (mVars.contains(variable)) {
 			return this;
 		}
-		final VPStateBuilder<ACTION> copy = mFactory.copy(this);
+		final VPStateBuilder<ACTION> copy = mStateFactory.copy(this);
 		copy.addVars(Collections.singleton(variable));
 		return copy.build();
 	}
@@ -132,7 +139,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		if (variables == null || variables.isEmpty()) {
 			return this;
 		}
-		final VPStateBuilder<ACTION> copy = mFactory.copy(this);
+		final VPStateBuilder<ACTION> copy = mStateFactory.copy(this);
 		copy.addVars(variables);
 		return copy.build();
 	}
@@ -142,10 +149,9 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		if (!mVars.contains(variable)) {
 			return this;
 		}
-		final VPStateBuilder<ACTION> copy = mFactory.copy(this);
+		final VPStateBuilder<ACTION> copy = mStateFactory.copy(this);
 		copy.removeVars(Collections.singleton(variable));
-		final VPState<ACTION> result = copy.build();
-		return result;
+		return copy.build();
 	}
 
 	@Override
@@ -153,10 +159,9 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		if (variables == null || variables.isEmpty()) {
 			return this;
 		}
-		final VPStateBuilder<ACTION> copy = mFactory.copy(this);
+		final VPStateBuilder<ACTION> copy = mStateFactory.copy(this);
 		copy.removeVars(variables);
-		final VPState<ACTION> result = copy.build();
-		return result;
+		return copy.build();
 	}
 
 	@Override
@@ -171,59 +176,60 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	@Override
 	public VPState<ACTION> patch(final VPState<ACTION> dominator) {
-		/*
-		 * plan: - copy dominator - add variables from this - add the following relations from this: where at least one
-		 * of the related variables does not occur in dominator's variables TODO: is this correct??
-		 */
 
-		if (this.isBottom() || dominator.isBottom()) {
-			final Set<IProgramVarOrConst> newVars = new HashSet<>(mVars);
-			newVars.addAll(dominator.mVars);
-			final VPState<ACTION> resultState = mFactory.getBottomState(newVars);
-			return resultState;
-		}
+		final Set<IProgramVar> dominatorVars = dominator.getVariables().stream()
+				.filter(pvoc -> pvoc instanceof IProgramVar)
+				.map(pvoc -> (IProgramVar) pvoc)
+				.collect(Collectors.toSet());
+		final VPState<ACTION> thisHavocced = mStateFactory.havocVariables(dominatorVars, this);
+		
+		
+		final List<EqGraphNode<EqNode, IProgramVarOrConst>> thisHavoccedEqGraphNodesAsList = 
+				new ArrayList<>(thisHavocced.getAllEqGraphNodes());
 
-		final VPStateBuilder<ACTION> builder = mFactory.copy(dominator);
+		Set<VPState<ACTION>> resultStates = Collections.singleton(thisHavocced);
+		
+		for (int i = 0; i < thisHavoccedEqGraphNodesAsList.size(); i++) {
+			for (int j = 0; j < i; j++) {
+				final EqGraphNode<EqNode, IProgramVarOrConst> eqgn1 = thisHavoccedEqGraphNodesAsList.get(i);
+				final EqGraphNode<EqNode, IProgramVarOrConst> eqgn2 = thisHavoccedEqGraphNodesAsList.get(j);
 
-		builder.addVars(mVars);
-
-		builder.setIsTop(isTop() && dominator.isTop());
-
-		VPState<ACTION> resultState = builder.build();
-
-		/*
-		 * for each variable that is in this.mVars, but not in dominator.mVars: obtain all relations with something that
-		 * is in this or in dominator, and add them.
-		 */
-		for (final IProgramVarOrConst var : mVars) {
-			if (dominator.getVariables().contains(var)) {
-				continue;
-			}
-
-			final EqNode nodeFromVar = mPreAnalysis.getEqNode(var.getTerm(), Collections.emptyMap());
-
-			// TODO inefficient.. (we only need edges from the tree but add the clique..)
-			final Set<EqNode> equalEqNodes = this.getEquivalentEqNodes(nodeFromVar);
-			for (final EqNode equalEqNode : equalEqNodes) {
-				// TODO: this disjoinAll-strategy is a fallback essentially --> is there something better??
-				final Set<VPState<ACTION>> states =
-						VPFactoryHelpers.addEquality(nodeFromVar, equalEqNode, resultState, mFactory);
-				resultState = VPFactoryHelpers.disjoinAll(states, mFactory);
-			}
-
-			// TODO: inefficient, again, but we have to do this also for the otherwise implicit disequalites with
-			// other members of the equivalence class, right?
-			final Set<EqNode> unEqualEqNodes = this.getUnequalNodes(nodeFromVar);
-			for (final EqNode unequalRepresentative : unEqualEqNodes) {
-				for (final EqNode unEqualNode : this.getEquivalentEqNodes(unequalRepresentative)) {
-					final Set<VPState<ACTION>> states =
-							VPFactoryHelpers.addDisEquality(nodeFromVar, unEqualNode, resultState, mFactory);
-					resultState = VPFactoryHelpers.disjoinAll(states, mFactory);
+				if (eqgn1 == eqgn2) {
+					continue;
 				}
+				
+				if (!dominator.getAllEqGraphNodes().contains(eqgn1)
+						|| !dominator.getAllEqGraphNodes().contains(eqgn2)) {
+					/*
+					 *  if the dominator does not know either of the nodes, than he definitely won't have a constraint
+					 *  on them
+					 */
+					continue;
+				}
+	
+				final EqNode eqn1 = eqgn1.mNodeIdentifier;
+				final EqNode eqn2 = eqgn2.mNodeIdentifier;
+				
+				if (!dominator.getVariables().containsAll(eqn1.getVariables())
+						|| !dominator.getVariables().containsAll(eqn2.getVariables())) {
+					/*
+					 * We don't want to update constraints on expressions that the dominator does not "officially know".
+					 */
+					continue;
+				}
+				
+				if (dominator.areEqual(eqn1, eqn2)) {
+					assert !dominator.areUnEqual(eqn1, eqn2);
+					resultStates = VPFactoryHelpers.addEquality(eqn1, eqn2, resultStates, mStateFactory);
+				}  else	if (dominator.areUnEqual(eqn1, eqn2)) {
+					resultStates = VPFactoryHelpers.addDisEquality(eqn1, eqn2, resultStates, mStateFactory);
+				}
+				assert resultStates.size() == 1;
 			}
 		}
-
-		return resultState;
+		
+		assert resultStates.size() == 1;
+		return resultStates.iterator().next();
 	}
 
 	@Override
@@ -337,8 +343,8 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 		for (final EqGraphNode<EqNode, IProgramVarOrConst> graphNode : mEqNodeToEqGraphNodeMap.values()) {
 			if (!graphNode.equals(graphNode.getRepresentative())) {
-				equalityFirst = graphNode.nodeIdentifier.getTerm();
-				equalitySecond = graphNode.getRepresentative().nodeIdentifier.getTerm();
+				equalityFirst = graphNode.mNodeIdentifier.getTerm();
+				equalitySecond = graphNode.getRepresentative().mNodeIdentifier.getTerm();
 				equalityTermSet.add(mScript.term(this, "=", equalityFirst, equalitySecond));
 			}
 		}
@@ -362,7 +368,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		final Set<EqNode> result = new HashSet<>();
 		for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : mEqNodeToEqGraphNodeMap.values()) {
 			if (egn.getRepresentative() == egn) {
-				result.add(egn.nodeIdentifier);
+				result.add(egn.mNodeIdentifier);
 			}
 		}
 		return result;
@@ -382,7 +388,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		final Set<EqNode> result = new HashSet<>();
 		for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : mEqNodeToEqGraphNodeMap.values()) {
 			if (egn.find() == nodeGraphNode.find()) {
-				result.add(egn.nodeIdentifier);
+				result.add(egn.mNodeIdentifier);
 			}
 		}
 		return result;
@@ -416,7 +422,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	@Override
 	public EqNode find(final EqNode id) {
-		return mEqNodeToEqGraphNodeMap.get(id).find().nodeIdentifier;
+		return mEqNodeToEqGraphNodeMap.get(id).find().mNodeIdentifier;
 	}
 
 	@Override
@@ -485,6 +491,11 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	@Override
 	public VPState<ACTION> union(final VPState<ACTION> other) {
+		throw new UnsupportedOperationException("Not yet implemented");
+	}
+
+	@Override
+	public VPState<ACTION> compact() {
 		throw new UnsupportedOperationException("Not yet implemented");
 	}
 }

@@ -33,6 +33,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -50,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.LoggingHelper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.interval.IntervalDomainValue;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.TVBool;
 
 /**
  * Abstract implementation of an abstract state for non-relational domains.
@@ -75,7 +77,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	private final Set<VARDECL> mVariables;
 	private final Map<VARDECL, V> mValueMap;
 	private final Map<VARDECL, BooleanValue> mBooleanValuesMap;
-	private final boolean mIsBottom;
+	private TVBool mIsBottom;
 
 	private final ILogger mLogger;
 
@@ -90,7 +92,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 *            The type of the variables stored by this state.
 	 */
 	protected NonrelationalState(final ILogger logger, final boolean isBottom) {
-		this(logger, new HashSet<>(), new HashMap<>(), new HashMap<>(), isBottom);
+		this(logger, Collections.emptySet(), Collections.emptyMap(), Collections.emptyMap(), isBottom);
 	}
 
 	/**
@@ -112,6 +114,11 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 */
 	protected NonrelationalState(final ILogger logger, final Set<VARDECL> variables, final Map<VARDECL, V> valuesMap,
 			final Map<VARDECL, BooleanValue> booleanValuesMap, final boolean isBottom) {
+		this(logger, variables, valuesMap, booleanValuesMap, isBottom ? TVBool.FIXED : TVBool.UNCHECKED);
+	}
+
+	protected NonrelationalState(final ILogger logger, final Set<VARDECL> variables, final Map<VARDECL, V> valuesMap,
+			final Map<VARDECL, BooleanValue> booleanValuesMap, final TVBool isBottom) {
 		mVariables = new HashSet<>(variables);
 		mValueMap = new HashMap<>(valuesMap);
 		mBooleanValuesMap = new HashMap<>(booleanValuesMap);
@@ -323,8 +330,12 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		assert state != null;
 		assert var != null;
 		assert value != null;
+		state.resetBottomPreserving();
 		state.mVariables.add(var);
 		state.getVar2ValueNonrelational().put(var, value);
+		if (value.isBottom()) {
+			state.mIsBottom = TVBool.FIXED;
+		}
 	}
 
 	/**
@@ -343,7 +354,11 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		assert variable != null;
 		assert state.mVariables.contains(variable) : "Variable unknown";
 		assert state.getVar2ValueBoolean().get(variable) != null : "Boolean variable not in boolean values map";
+		state.resetBottomPreserving();
 		state.getVar2ValueBoolean().put(variable, value);
+		if (value.isBottom()) {
+			state.mIsBottom = TVBool.FIXED;
+		}
 	}
 
 	/**
@@ -387,7 +402,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			throw new UnsupportedOperationException(
 					"Variable names must be disjoint. Variable " + variable + " is already present.");
 		}
-
+		state.resetBottomPreserving();
 		// TODO: Add array support.
 		final Consumer<VARDECL> varConsumer = var -> state.getVar2ValueNonrelational().put(var, createTopValue());
 		final Consumer<VARDECL> boolConsumer = var -> state.getVar2ValueBoolean().put(var, BooleanValue.TOP);
@@ -467,7 +482,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		final Map<VARDECL, BooleanValue> newBooleanValMap = new HashMap<>(getVar2ValueBoolean());
 		newBooleanValMap.remove(variable);
 
-		return createState(mLogger, newVarMap, newValMap, newBooleanValMap, isBottom());
+		return createState(mLogger, newVarMap, newValMap, newBooleanValMap, mIsBottom == TVBool.FIXED);
 	}
 
 	@Override
@@ -505,7 +520,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			TypeUtils.consumeVariable(varConsumer, boolConsumer, null, var);
 		}
 
-		return createState(mLogger, newVars, newValMap, newBooleanValMap, isBottom());
+		return createState(mLogger, newVars, newValMap, newBooleanValMap, mIsBottom == TVBool.FIXED);
 	}
 
 	@Override
@@ -525,7 +540,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			newBooleanValMap.remove(entry);
 		}
 
-		return createState(mLogger, newVarMap, newValMap, newBooleanValMap, isBottom());
+		return createState(mLogger, newVarMap, newValMap, newBooleanValMap, mIsBottom == TVBool.FIXED);
 	}
 
 	@Override
@@ -540,19 +555,35 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 
 	@Override
 	public boolean isBottom() {
-		if (mIsBottom) {
+		switch (mIsBottom) {
+		case FALSE:
+			return false;
+		case TRUE:
+		case FIXED:
 			return true;
+		case UNCHECKED:
+			final boolean isBottom =
+					getVar2ValueNonrelational().entrySet().stream().anyMatch(a -> a.getValue().isBottom())
+							|| getVar2ValueBoolean().entrySet().stream().anyMatch(a -> a.getValue().isBottom());
+			mIsBottom = isBottom ? TVBool.TRUE : TVBool.FALSE;
+			return isBottom();
+		default:
+			throw new UnsupportedOperationException("Unknown LBool " + mIsBottom);
 		}
+	}
 
-		if (getVar2ValueNonrelational().entrySet().stream().anyMatch(a -> a.getValue().isBottom())) {
-			return true;
+	protected TVBool getBottomFlag() {
+		return mIsBottom;
+	}
+
+	/**
+	 * Resets the bottom state flag to unchecked if the state was not bottom before.
+	 */
+	protected void resetBottomPreserving() {
+		if (mIsBottom == TVBool.FIXED) {
+			return;
 		}
-
-		if (getVar2ValueBoolean().entrySet().stream().anyMatch(a -> a.getValue().isBottom())) {
-			return true;
-		}
-
-		return false;
+		mIsBottom = TVBool.UNCHECKED;
 	}
 
 	@Override
@@ -592,6 +623,9 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		final StringBuilder sbBot = new StringBuilder();
 		if (isBottom()) {
 			sbAll.append("BOTTOM ");
+			if (getBottomFlag() == TVBool.FIXED) {
+				sbAll.append("(FIXED) ");
+			}
 		}
 		for (final VARDECL entry : mVariables) {
 			final String varName;
@@ -742,6 +776,70 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 		return returnState;
 	}
 
+	/**
+	 * Merges <code>this</code> with another {@link NonrelationalState}. All variables that occur in <code>this</code>
+	 * must also occur in the other state.
+	 *
+	 * @param other
+	 *            The other state to merge with.
+	 * @return A new {@link NonrelationalState} which is the result of the merger of <code>this</code> and
+	 *         <code>other</code>.
+	 */
+	@Override
+	public STATE union(final STATE other) {
+		assert other != null;
+
+		if (!hasSameVariables(other)) {
+			throw new UnsupportedOperationException(
+					"Cannot merge the two states as their sets of variables in the states are disjoint.");
+		}
+
+		final STATE returnState = createCopy();
+
+		// TODO: Add array support.
+		final Consumer<VARDECL> varConsumer = var -> setValueInternally(returnState, var,
+				getVar2ValueNonrelational().get(var).merge(other.getVar2ValueNonrelational().get(var)));
+		final Consumer<VARDECL> boolConsumer = var -> setValueInternally(returnState, var,
+				getVar2ValueBoolean().get(var).merge(other.getVar2ValueBoolean().get(var)));
+
+		for (final VARDECL var : mVariables) {
+			TypeUtils.consumeVariable(varConsumer, boolConsumer, null, var);
+		}
+		return returnState;
+	}
+
+	@Override
+	public STATE compact() {
+		if (isBottom()) {
+			return createState(mLogger, Collections.emptySet(), Collections.emptyMap(), Collections.emptyMap(), true);
+		}
+
+		final Set<VARDECL> toRemove = new HashSet<>();
+		final Iterator<Entry<VARDECL, V>> valueIter = getVar2ValueNonrelational().entrySet().iterator();
+		while (valueIter.hasNext()) {
+			final Entry<VARDECL, V> current = valueIter.next();
+			if (!current.getValue().isTop()) {
+				continue;
+			}
+			toRemove.add(current.getKey());
+		}
+
+		final Iterator<Entry<VARDECL, BooleanValue>> boolIter = getVar2ValueBoolean().entrySet().iterator();
+		while (boolIter.hasNext()) {
+			final Entry<VARDECL, BooleanValue> current = boolIter.next();
+			if (current.getValue() != BooleanValue.TOP) {
+				continue;
+			}
+			toRemove.add(current.getKey());
+		}
+		if (toRemove.isEmpty()) {
+			return getThis();
+		}
+
+		final STATE returnState = createCopy();
+		return returnState.removeVariables(toRemove);
+	}
+
 	@Override
 	public Term getTerm(final Script script) {
 		if (isBottom()) {
@@ -796,6 +894,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 */
 	public STATE bottomState() {
 		final STATE ret = createCopy();
+		ret.resetBottomPreserving();
 		for (final Entry<VARDECL, V> entry : ret.getVar2ValueNonrelational().entrySet()) {
 			entry.setValue(createBottomValue());
 		}
@@ -862,38 +961,6 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			setValueInternally(returnState, array, createBottomValue());
 		}
 
-		return returnState;
-	}
-
-	/**
-	 * Merges <code>this</code> with another {@link NonrelationalState}. All variables that occur in <code>this</code>
-	 * must also occur in the other state.
-	 *
-	 * @param other
-	 *            The other state to merge with.
-	 * @return A new {@link NonrelationalState} which is the result of the merger of <code>this</code> and
-	 *         <code>other</code>.
-	 */
-	@Override
-	public STATE union(final STATE other) {
-		assert other != null;
-
-		if (!hasSameVariables(other)) {
-			throw new UnsupportedOperationException(
-					"Cannot merge the two states as their sets of variables in the states are disjoint.");
-		}
-
-		final STATE returnState = createCopy();
-
-		// TODO: Add array support.
-		final Consumer<VARDECL> varConsumer = var -> setValueInternally(returnState, var,
-				getVar2ValueNonrelational().get(var).merge(other.getVar2ValueNonrelational().get(var)));
-		final Consumer<VARDECL> boolConsumer = var -> setValueInternally(returnState, var,
-				getVar2ValueBoolean().get(var).merge(other.getVar2ValueBoolean().get(var)));
-
-		for (final VARDECL var : mVariables) {
-			TypeUtils.consumeVariable(varConsumer, boolConsumer, null, var);
-		}
 		return returnState;
 	}
 

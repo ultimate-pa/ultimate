@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
@@ -81,12 +80,12 @@ public class VPFactoryHelpers {
 					for (int i = 0; i < list1.size(); i++) {
 						final EqGraphNode<NODEID, ARRAYID> c1 = list1.get(i);
 						final EqGraphNode<NODEID, ARRAYID> c2 = list2.get(i);
-						if (originalStateCopy.containsDisEquality(c1.find().nodeIdentifier, c2.find().nodeIdentifier)) {
+						if (originalStateCopy.containsDisEquality(c1.find().mNodeIdentifier, c2.find().mNodeIdentifier)) {
 							continue;
 						}
 						factory.getBenchmark().stop(VPSFO.propagateDisEqualitiesClock);
 						result.addAll(
-								addDisEquality(c1.nodeIdentifier, c2.nodeIdentifier, intermediateResult, factory));
+								addDisEquality(c1.mNodeIdentifier, c2.mNodeIdentifier, intermediateResult, factory));
 						factory.getBenchmark().unpause(VPSFO.propagateDisEqualitiesClock);
 					}
 				}
@@ -136,13 +135,13 @@ public class VPFactoryHelpers {
 		 * check if the disequality introduces a contradiction, return bottom in that case
 		 */
 		if (gn1.find().equals(gn2.find())) {
-			return Collections.singleton(factory.getBottomState(originalState.getVariables()));
+			return Collections.singleton(factory.getBottomState(originalState));
 		}
 
 		/*
 		 * no contradiction --> introduce disequality
 		 */
-		builder.addDisEquality(gn1.find().nodeIdentifier, gn2.find().nodeIdentifier);
+		builder.addDisEquality(gn1.find().mNodeIdentifier, gn2.find().mNodeIdentifier);
 
 		builder.setIsTop(false);
 
@@ -195,7 +194,7 @@ public class VPFactoryHelpers {
 		final boolean contradiction = builder.checkContradiction();
 		assert contradiction || VPDomainHelpers.disEqualityRelationIrreflexive(builder.getDisEqualitySet(), builder);
 		if (contradiction) {
-			final Set<T> result = Collections.singleton(factory.getBottomState(originalState.getVariables()));
+			final Set<T> result = Collections.singleton(factory.getBottomState(originalState));
 			assert result.stream().filter(element -> element == null).count() == 0;
 			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 			return result;
@@ -207,12 +206,12 @@ public class VPFactoryHelpers {
 		 * Propagate disequalites
 		 */
 		final Set<T> resultStates = new HashSet<>();
-		for (final NODEID other : originalState.getDisequalities(gn1.nodeIdentifier)) {
+		for (final NODEID other : originalState.getDisequalities(gn1.mNodeIdentifier)) {
 			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 			resultStates.addAll(propagateDisEqualites(resultState, gn1, resultState.getEqGraphNode(other), factory));
 			factory.getBenchmark().unpause(VPSFO.addEqualityClock);
 		}
-		for (final NODEID other : originalState.getDisequalities(gn2.nodeIdentifier)) {
+		for (final NODEID other : originalState.getDisequalities(gn2.mNodeIdentifier)) {
 			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 			resultStates.addAll(propagateDisEqualites(resultState, gn2, resultState.getEqGraphNode(other), factory));
 			factory.getBenchmark().unpause(VPSFO.addEqualityClock);
@@ -280,8 +279,9 @@ public class VPFactoryHelpers {
 			return first;
 		}
 		
-		final IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder = factory
-				.createEmptyStateBuilder(first instanceof VPTfState ? ((VPTfState) first).getTransFormula() : null);
+		final IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder = 
+				factory.createFreshVanillaStateBuilder(
+						first instanceof VPTfState ? ((VPTfState) first).getAction() : null);
 
 		/**
 		 * the disjoined state contains the disequalities that both first and second contain. (i.e. intersection) TODO:
@@ -296,19 +296,38 @@ public class VPFactoryHelpers {
 			builder.setIsTop(false);
 		}
 
-		/**
-		 * the disjoined state has the intersection of the prior state's variables
+//		/**
+//		 * the disjoined state has the intersection of the prior state's variables
+//		 */
+//		final Set<IProgramVarOrConst> newVars = new HashSet<>(first.getVariables());
+//		newVars.retainAll(second.getVariables());
+//		builder.addVars(newVars);
+		
+		/*
+		 * deal with variables
+		 * TODO: hacky
 		 */
-		final Set<IProgramVarOrConst> newVars = new HashSet<>(first.getVariables());
-		newVars.retainAll(second.getVariables());
-		builder.addVars(newVars);
+		if (first instanceof VPState) {
+			final VPState vpState1 = (VPState) first;
+			final VPState vpState2 = (VPState) second;
+			assert vpState1.getVariables().equals(vpState2.getVariables());
+			((VPStateBuilder) builder).addVars(vpState1.getVariables());
+		} else {
+			assert first instanceof VPTfState;
+			assert ((VPTfState) first).getInVariables().equals(((VPTfStateBuilder) builder).getInVariables());
+			assert ((VPTfState) second).getInVariables().equals(((VPTfStateBuilder) builder).getInVariables());
+			assert ((VPTfState) first).getOutVariables().equals(((VPTfStateBuilder) builder).getOutVariables());
+			assert ((VPTfState) second).getOutVariables().equals(((VPTfStateBuilder) builder).getOutVariables());
+		}
 
 		/**
 		 * the disjoined state contains exactly the equalities that both and second contain.(i.e. intersection)
 		 *
-		 * algorithmic plan: - go through the edges in the equality graph of the "first" state (by asking each node for
-		 * its representative) - when the second state agrees that the nodes on the two ends of the edge are equal, add
-		 * the equality to the result state
+		 * algorithmic plan: 
+		 *  <li> go through the edges in the equality graph of the "first" state (by asking each node for its 
+		 *       representative) 
+		 *  <li> when the second state agrees that the nodes on the two ends of the edge are equal, add the equality to 
+		 *       the result state
 		 */
 		T disjoinedState = builder.build();
 		for (final EqGraphNode<NODEID, ARRAYID> firstGraphNode : first.getAllEqGraphNodes()) {
@@ -319,13 +338,13 @@ public class VPFactoryHelpers {
 			}
 			
 			final EqGraphNode<NODEID, ARRAYID> firstGraphNodeInSecondState =
-					second.getEqGraphNode(firstGraphNode.nodeIdentifier);
+					second.getEqGraphNode(firstGraphNode.mNodeIdentifier);
 			final EqGraphNode<NODEID, ARRAYID> firstGraphNodeRepresentativeInSecondState =
-					second.getEqGraphNode(firstGraphNode.getRepresentative().nodeIdentifier);
+					second.getEqGraphNode(firstGraphNode.getRepresentative().mNodeIdentifier);
 
 			if (firstGraphNodeInSecondState.find().equals(firstGraphNodeRepresentativeInSecondState)) {
-				final Set<T> eqResultStates = addEquality(firstGraphNodeInSecondState.nodeIdentifier,
-						firstGraphNodeRepresentativeInSecondState.nodeIdentifier, disjoinedState, factory);
+				final Set<T> eqResultStates = addEquality(firstGraphNodeInSecondState.mNodeIdentifier,
+						firstGraphNodeRepresentativeInSecondState.mNodeIdentifier, disjoinedState, factory);
 				assert eqResultStates.size() == 1;
 				disjoinedState = eqResultStates.iterator().next();
 			}
@@ -425,8 +444,8 @@ public class VPFactoryHelpers {
 				// no (outgoing) equality edge here..
 				continue;
 			}
-			final NODEID conStateGraphNode = otherGraphNode.nodeIdentifier;
-			final NODEID conStateGraphNodeRe = otherGraphNode.getRepresentative().nodeIdentifier;
+			final NODEID conStateGraphNode = otherGraphNode.mNodeIdentifier;
+			final NODEID conStateGraphNodeRe = otherGraphNode.getRepresentative().mNodeIdentifier;
 			// resultStates.addAll(
 			// conjoinAll(
 			// addEquality(conStateGraphNode, conStateGraphNodeRe, conjoinedState, factory),
@@ -544,8 +563,8 @@ public class VPFactoryHelpers {
 			final EqGraphNode<NODEID, ARRAYID> fnNode1, final EqGraphNode<NODEID, ARRAYID> fnNode2) {
 		// assert fnNode1.getArgs() != null && fnNode2.getArgs() != null;
 		// assert fnNode1.getArgs().size() == fnNode2.getArgs().size();
-		assert fnNode1.nodeIdentifier.isFunction();
-		assert fnNode2.nodeIdentifier.isFunction();
+		assert fnNode1.mNodeIdentifier.isFunction();
+		assert fnNode2.mNodeIdentifier.isFunction();
 		
 		for (int i = 0; i < fnNode1.getInitCcchild().size(); i++) {
 			final EqGraphNode<NODEID, ARRAYID> fnNode1Arg = fnNode1.getInitCcchild().get(i);

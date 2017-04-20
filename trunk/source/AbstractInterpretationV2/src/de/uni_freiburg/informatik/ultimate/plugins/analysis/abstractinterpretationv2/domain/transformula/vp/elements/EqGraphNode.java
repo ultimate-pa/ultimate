@@ -57,26 +57,26 @@ public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 	/**
 	 * identifies an EqGraphNode uniquely _within one state or transitionstate_
 	 */
-	public final NODEID nodeIdentifier;
+	public final NODEID mNodeIdentifier;
 
-	private EqGraphNode<NODEID, ARRAYID> representative;
-	private Set<EqGraphNode<NODEID, ARRAYID>> reverseRepresentative;
-	private Set<EqGraphNode<NODEID, ARRAYID>> ccpar;
-	private HashRelation<ARRAYID, List<EqGraphNode<NODEID, ARRAYID>>> ccchild;
+	private EqGraphNode<NODEID, ARRAYID> mRepresentative;
+	private Set<EqGraphNode<NODEID, ARRAYID>> mReverseRepresentative;
+	private Set<EqGraphNode<NODEID, ARRAYID>> mCcpar;
+	private HashRelation<ARRAYID, List<EqGraphNode<NODEID, ARRAYID>>> mCcchild;
 
-	private Set<EqGraphNode<NODEID, ARRAYID>> initCcpar;
-	private List<EqGraphNode<NODEID, ARRAYID>> initCcchild;
+	private Set<EqGraphNode<NODEID, ARRAYID>> mInitCcpar;
+	private List<EqGraphNode<NODEID, ARRAYID>> mInitCcchild;
 
 	public EqGraphNode(NODEID id) {
 		assert id != null;
 		
-		this.nodeIdentifier = id;
-		this.representative = this;
-		this.reverseRepresentative = new HashSet<>();
-		this.ccpar = new HashSet<>();
-		this.ccchild = new HashRelation<>();
-		this.initCcpar = null;
-		this.initCcchild = null;
+		this.mNodeIdentifier = id;
+		this.mRepresentative = this;
+		this.mReverseRepresentative = new HashSet<>();
+		this.mCcpar = new HashSet<>();
+		this.mCcchild = new HashRelation<>();
+		this.mInitCcpar = null;
+		this.mInitCcchild = null;
 	}
 	
 	/**
@@ -87,29 +87,29 @@ public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 	 * @param eqNodeToEqGraphNode
 	 */
 	public void setupNode() {
-		initCcpar = new HashSet<>(this.ccpar);
-		initCcpar = Collections.unmodifiableSet(initCcpar);
+		mInitCcpar = new HashSet<>(this.mCcpar);
+		mInitCcpar = Collections.unmodifiableSet(mInitCcpar);
 		
-		if (nodeIdentifier.isFunction()) {
-			ARRAYID arrayId = nodeIdentifier.getFunction();
-			assert this.ccchild.getImage(arrayId).size() == 1;
-			initCcchild = new ArrayList<>(this.ccchild.getImage(arrayId).iterator().next());
-			initCcchild = Collections.unmodifiableList(initCcchild);
+		if (mNodeIdentifier.isFunction()) {
+			ARRAYID arrayId = mNodeIdentifier.getFunction();
+			assert this.mCcchild.getImage(arrayId).size() == 1;
+			mInitCcchild = new ArrayList<>(this.mCcchild.getImage(arrayId).iterator().next());
+			mInitCcchild = Collections.unmodifiableList(mInitCcchild);
 		}
 	}
 
 	public void setNodeToInitial() {
-		this.representative = this;
-		this.reverseRepresentative.clear();
-		this.ccpar.clear();
-		this.ccpar.addAll(initCcpar);
+		this.mRepresentative = this;
+		this.mReverseRepresentative.clear();
+		this.mCcpar.clear();
+		this.mCcpar.addAll(mInitCcpar);
 
-		this.ccchild = new HashRelation<>();
+		this.mCcchild = new HashRelation<>();
 		/*
 		 * Only function node have initCcchild.
 		 */
-		if (nodeIdentifier.isFunction()) {
-			this.ccchild.addPair(nodeIdentifier.getFunction(), initCcchild);
+		if (mNodeIdentifier.isFunction()) {
+			this.mCcchild.addPair(mNodeIdentifier.getFunction(), mInitCcchild);
 		}
 	}	
 	
@@ -122,36 +122,36 @@ public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 
 	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> void copyFields(
 			EqGraphNode<NODEID, ARRAYID> source, EqGraphNode<NODEID, ARRAYID> target, IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder) {
-		assert target.nodeIdentifier.equals(source.nodeIdentifier);
+		assert target.mNodeIdentifier.equals(source.mNodeIdentifier);
 		
-		EqGraphNode<NODEID, ARRAYID> targetRepresentative = builder.getEqGraphNode(source.getRepresentative().nodeIdentifier);
+		EqGraphNode<NODEID, ARRAYID> targetRepresentative = builder.getEqGraphNode(source.getRepresentative().mNodeIdentifier);
 		target.setRepresentative(targetRepresentative);
 		if (target != targetRepresentative) {
 			// we may have to update a disequality such that it talks about the representative
 			HashSet<VPDomainSymmetricPair<NODEID>> diseqsetcopy = new HashSet<>(builder.getDisEqualitySet());
 			for (VPDomainSymmetricPair<NODEID> diseq : diseqsetcopy) {
-				if (diseq.contains(target.nodeIdentifier)) {
+				if (diseq.contains(target.mNodeIdentifier)) {
 					builder.removeDisEquality(diseq);
-					builder.addDisEquality(targetRepresentative.nodeIdentifier, 
-									diseq.getOther(target.nodeIdentifier));
+					builder.addDisEquality(targetRepresentative.mNodeIdentifier, 
+									diseq.getOther(target.mNodeIdentifier));
 				}
 			}
 		}
 		
 		target.getReverseRepresentative().clear();
 		for (EqGraphNode<NODEID, ARRAYID> reverseRe : source.getReverseRepresentative()) {
-			target.getReverseRepresentative().add(builder.getEqGraphNode(reverseRe.nodeIdentifier));
+			target.getReverseRepresentative().add(builder.getEqGraphNode(reverseRe.mNodeIdentifier));
 		}
 		target.getCcpar().clear();
 		for (EqGraphNode<NODEID, ARRAYID> ccpar : source.getCcpar()) {
-			target.getCcpar().add(builder.getEqGraphNode(ccpar.nodeIdentifier));
+			target.getCcpar().add(builder.getEqGraphNode(ccpar.mNodeIdentifier));
 		}
 		
-		target.ccchild = new HashRelation<>();
+		target.mCcchild = new HashRelation<>();
 		for (ARRAYID arrayId : source.getCcchild().getDomain()) {
 			for (List<EqGraphNode<NODEID, ARRAYID>> nodes : source.getCcchild().getImage(arrayId)) {
 				List<EqGraphNode<NODEID, ARRAYID>> newList = nodes.stream()
-						.map(otherNode -> builder.getEqGraphNode(otherNode.nodeIdentifier))
+						.map(otherNode -> builder.getEqGraphNode(otherNode.mNodeIdentifier))
 						.collect(Collectors.toList());
 				target.getCcchild().addPair(arrayId, newList);
 			}
@@ -162,50 +162,50 @@ public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 	}
 
 	public EqGraphNode<NODEID, ARRAYID> getRepresentative() {
-		return representative;
+		return mRepresentative;
 	}
 
 	public void setRepresentative(EqGraphNode<NODEID, ARRAYID> representative) {
-		this.representative = representative;
+		this.mRepresentative = representative;
 		//TODO check
         // if (eqNodes are identical) then (graphnodes must be identical)
-        assert this.representative.nodeIdentifier != this.nodeIdentifier || this.representative == this;
+        assert this.mRepresentative.mNodeIdentifier != this.mNodeIdentifier || this.mRepresentative == this;
 	}
 
 	public Set<EqGraphNode<NODEID, ARRAYID>> getReverseRepresentative() {
-		return reverseRepresentative;
+		return mReverseRepresentative;
 	}
 
 	public void setReverseRepresentative(Set<EqGraphNode<NODEID, ARRAYID>> reverseRepresentative) {
-		this.reverseRepresentative = reverseRepresentative;
+		this.mReverseRepresentative = reverseRepresentative;
 	}
 
 	public void addToReverseRepresentative(EqGraphNode<NODEID, ARRAYID> reverseRepresentative) {
-		this.reverseRepresentative.add(reverseRepresentative);
+		this.mReverseRepresentative.add(reverseRepresentative);
 	}
 
 	public Set<EqGraphNode<NODEID, ARRAYID>> getCcpar() {
-		return ccpar;
+		return mCcpar;
 	}
 
 	public void setCcpar(Set<EqGraphNode<NODEID, ARRAYID>> ccpar) {
-		this.ccpar = ccpar;
+		this.mCcpar = ccpar;
 	}
 
 	public void addToCcpar(EqGraphNode<NODEID, ARRAYID> ccpar) {
-		this.ccpar.add(ccpar);
+		this.mCcpar.add(ccpar);
 	}
 	
 	public void addToCcpar(Set<EqGraphNode<NODEID, ARRAYID>> ccpar) {
-		this.ccpar.addAll(ccpar);
+		this.mCcpar.addAll(ccpar);
 	}
 
 	public HashRelation<ARRAYID, List<EqGraphNode<NODEID, ARRAYID>>> getCcchild() {
-		return ccchild;
+		return mCcchild;
 	}
 	
 	public void addToCcchild(ARRAYID pVorC, List<EqGraphNode<NODEID, ARRAYID>> ccchild) {
-		this.ccchild.addPair(pVorC, ccchild);
+		this.mCcchild.addPair(pVorC, ccchild);
 	}
 	
 	public void addToCcchild(HashRelation<ARRAYID, List<EqGraphNode<NODEID, ARRAYID>>> ccchild2) {
@@ -215,25 +215,25 @@ public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 	}
 
 	public Set<EqGraphNode<NODEID, ARRAYID>> getInitCcpar() {
-		return initCcpar;
+		return mInitCcpar;
 	}
 
 	public List<EqGraphNode<NODEID, ARRAYID>> getInitCcchild() {
-		return initCcchild;
+		return mInitCcchild;
 	}
 
 	public void setInitCcchild(List<EqGraphNode<NODEID, ARRAYID>> initCcchild) {
-		this.initCcchild = initCcchild;
+		this.mInitCcchild = initCcchild;
 	}
 
 	public String toString() {
 
 		final StringBuilder sb = new StringBuilder();
 
-		sb.append(nodeIdentifier.toString());
-		if (representative != this) {
+		sb.append(mNodeIdentifier.toString());
+		if (mRepresentative != this) {
 			sb.append(" ||| representative: ");
-			sb.append(representative.nodeIdentifier.toString());
+			sb.append(mRepresentative.mNodeIdentifier.toString());
 		}
 		
 //		sb.append(" ||| reverseRepresentative: ");

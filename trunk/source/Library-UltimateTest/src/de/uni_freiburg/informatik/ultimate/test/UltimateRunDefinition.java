@@ -34,6 +34,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
  * A run of ultimate is defined by three things:
@@ -181,6 +182,9 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 		}
 		sb.append(" Toolchain:");
 		sb.append(removeTrunkExamplesPrefix(toolchain.getAbsolutePath()));
+		if (CoreUtil.OS_IS_WINDOWS) {
+			return sb.toString().replaceAll("\\\\", "/");
+		}
 		return sb.toString();
 	}
 

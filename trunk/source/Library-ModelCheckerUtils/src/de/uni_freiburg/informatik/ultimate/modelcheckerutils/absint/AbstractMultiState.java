@@ -42,8 +42,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
- * An {@link AbstractMultiState} is an abstract state that consists of many abstract states of the same type.
- *
+ * An {@link AbstractMultiState} is an abstract state that consists of many abstract states of the same type. It
+ * represents a disjunction of all these states.
+ * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  * @param <STATE>
@@ -75,10 +76,21 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	}
 
 	private AbstractMultiState(final int maxSize, final Set<STATE> states) {
+		assert states != null;
+		assert haveSameVars(states);
+		assert states.stream().allMatch(a -> !(a instanceof AbstractMultiState<?, ?>));
 		mMaxSize = maxSize;
 		mStates = states;
 		sNextFreeId++;
 		mId = sNextFreeId;
+	}
+
+	private boolean haveSameVars(final Set<STATE> states) {
+		if (states.size() <= 1) {
+			return true;
+		}
+		final Set<VARDECL> firstVars = states.iterator().next().getVariables();
+		return states.stream().allMatch(a -> firstVars.equals(a.getVariables()));
 	}
 
 	@Override
@@ -249,6 +261,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 
 	@Override
 	public AbstractMultiState<STATE, VARDECL> intersect(final AbstractMultiState<STATE, VARDECL> other) {
+		assert other != null && other.getVariables().equals(getVariables()) : "Cannot intersect incompatible states";
 		return crossProduct((a, b) -> a.intersect(b), other, mStates.size() * other.mStates.size());
 	}
 
@@ -286,17 +299,14 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 				mStates.size() * hierachicalPreState.mStates.size());
 	}
 
+	@Override
+	public AbstractMultiState<STATE, VARDECL> compact() {
+		return map(STATE::compact);
+	}
+
 	public <ACTION> AbstractMultiState<STATE, VARDECL> createValidPostOpStateBeforeLeaving(
 			final IVariableProvider<STATE, ACTION, VARDECL> varProvider, final ACTION act) {
 		return map(a -> varProvider.createValidPostOpStateBeforeLeaving(act, a));
-	}
-
-	public <ACTION> AbstractMultiState<STATE, VARDECL> synchronizeVariables(
-			final BiFunction<STATE, STATE, STATE> funSynchronize,
-			final AbstractMultiState<STATE, VARDECL> toSynchronize) {
-		// any state will do:
-		return new AbstractMultiState<>(mMaxSize, mStates.iterator().next()).crossProduct(funSynchronize, toSynchronize,
-				toSynchronize.mStates.size());
 	}
 
 	public <ACTION> AbstractMultiState<STATE, VARDECL> apply(final IAbstractTransformer<STATE, ACTION, VARDECL> op,

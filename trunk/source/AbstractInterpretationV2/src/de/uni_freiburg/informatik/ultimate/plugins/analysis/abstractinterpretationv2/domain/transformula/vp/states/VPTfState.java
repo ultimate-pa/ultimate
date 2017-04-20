@@ -27,16 +27,33 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.ArrayWithSideCondition;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IArrayWrapper;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IElementWrapper;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.INodeOrArrayWithSideCondition;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.NodeIdWithSideCondition;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.UndeterminedNodeWithSideCondition;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfArrayIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -50,22 +67,41 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 	
 	private final VPTfStateBuilder mBuilder;
 	private final TransFormula mTransFormula;
+	private final IAction mAction;
 	private final HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> mArrayIdToFunctionNodes;
 	private final Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mNodeIdToEqGraphNode;
 	private final Set<VPTfNodeIdentifier> mAllNodeIds;
+	private final ManagedScript mScript;
 	
-	public VPTfState(final TransFormula tf, final VPTfStateBuilder builder,
+	
+	private VpTfStateFactory mTfStateFactory;
+
+	protected final Set<IProgramVarOrConst> mInVars;
+	protected final Set<IProgramVarOrConst> mOutVars;
+	private final Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mOutNodes;
+	
+	public VPTfState(ManagedScript managedScript, final IAction action, final VPTfStateBuilder builder,
 			final Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> nodeIdToEqGraphNode,
 			final Set<VPTfNodeIdentifier> allNodeIds,
 			final HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> arrayIdToFunctionNodes,
 			final Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> disEqs, final boolean isTop,
-			final Set<IProgramVarOrConst> vars) {
-		super(disEqs, isTop, vars);
-		mTransFormula = tf;
+			final Set<IProgramVarOrConst> inVars, 
+			final Set<IProgramVarOrConst> outVars, 
+			final Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outNodes) {
+		super(disEqs, isTop);
+		mAction = action;
+		mTransFormula = action.getTransformula();
 		mBuilder = builder;
 		mAllNodeIds = allNodeIds;
 		mNodeIdToEqGraphNode = Collections.unmodifiableMap(nodeIdToEqGraphNode);
 		mArrayIdToFunctionNodes = new HashRelation<>(arrayIdToFunctionNodes); // TODO is copy needed here?
+		
+		mInVars = inVars;
+		mOutVars = outVars;
+		mOutNodes = outNodes;
+		
+		mScript = managedScript;
+		
 
 		assert isTopConsistent();
 	}
@@ -88,7 +124,7 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 	
 	@Override
 	public VPTfNodeIdentifier find(final VPTfNodeIdentifier id) {
-		return mNodeIdToEqGraphNode.get(id).find().nodeIdentifier;
+		return mNodeIdToEqGraphNode.get(id).find().mNodeIdentifier;
 	}
 	
 	public Set<VPTfNodeIdentifier> getFunctionNodesForArray(final VPTfArrayIdentifier array) {
@@ -103,7 +139,8 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("VPTfState\n");
-		sb.append("vars: " + mVars.toString() + "\n");
+		sb.append("InVars: " + getInVariables().toString() + "\n");
+		sb.append("OutVars: " + getOutVariables().toString() + "\n");
 		// sb.append("eqGraphNodes: " + getAllEqGraphNodes().toString() +"\n");
 		sb.append("Graph:\n");
 		for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> egn : getAllEqGraphNodes()) {
@@ -115,8 +152,244 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 		return sb.toString();
 	}
 	
+	public Set<IProgramVarOrConst> getInVariables() {
+		return mInVars;
+	}
+
+	public Set<IProgramVarOrConst> getOutVariables() {
+		return mOutVars;
+	}
+
 	public VPTfArrayIdentifier getArrayIdentifier(final Term newArray) {
 		assert mBuilder.getTransFormula() == mTransFormula;
 		return mBuilder.getOrConstructArrayIdentifier(newArray);
+	}
+
+	public Set<VPTfState>  applyTransition(final VpTfStateFactory tfStateFactory, 
+			final IUltimateServiceProvider services) {
+		mTfStateFactory = tfStateFactory;
+		
+		final Term nnfTerm = new Nnf(mScript, services, QuantifierHandling.CRASH)
+				.transform(mTransFormula.getFormula());
+		
+		return handleTransition(nnfTerm, mTransFormula, false);
+	}
+
+	private Set<VPTfState> handleTransition(final Term term, final TransFormula tf,
+			final boolean negated) {
+		
+		if (term instanceof ApplicationTerm) {
+			
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
+			final String functionName = appTerm.getFunction().getName();
+			
+			if ("and".equals(functionName)) {
+				assert !negated : "we transformed to nnf before, right?";
+				
+				final List<Set<VPTfState>> andList = new ArrayList<>();
+				for (final Term conjunct : appTerm.getParameters()) {
+					andList.add(handleTransition(conjunct, tf, false));
+				}
+				
+				final Set<VPTfState> resultStates = mTfStateFactory.conjoinAll(andList);
+				assert !resultStates.isEmpty();
+				// assert VPDomainHelpers.allStatesHaveSameVariables(resultStates);
+				return resultStates;
+			} else if ("or".equals(functionName)) {
+				assert !negated : "we transformed to nnf before, right?";
+				
+				final Set<VPTfState> orList = new HashSet<>();
+				for (final Term t : appTerm.getParameters()) {
+					orList.addAll(handleTransition(t, tf, false));
+				}
+				assert !orList.isEmpty();
+				// assert VPDomainHelpers.allStatesHaveSameVariables(orList);
+				return orList;
+			} else if ("=".equals(functionName)) {
+				final Set<VPTfState> result = handleEqualitySubterm(tf, negated, appTerm.getParameters()[0],
+						appTerm.getParameters()[1]);
+				assert !result.isEmpty();
+				return result;
+			} else if ("not".equals(functionName)) {
+				assert !negated : "we transformed to nnf before, right?";
+				final Set<VPTfState> result = handleTransition(appTerm.getParameters()[0], tf, !negated);
+				assert !result.isEmpty();
+				// assert VPDomainHelpers.allStatesHaveSameVariables(result);
+				return result;
+			} else if ("distinct".equals(functionName)) {
+				
+				mScript.lock(this);
+				final Term equality = mScript.term(this, "=", appTerm.getParameters()[0], appTerm.getParameters()[1]);
+				mScript.unlock(this);
+				
+				final Set<VPTfState> result = handleTransition(equality, tf, !negated);
+				assert !result.isEmpty();
+				// assert VPDomainHelpers.allStatesHaveSameVariables(result);
+				return result;
+			} else if ("true".equals(functionName)) {
+				if (!negated) {
+					return Collections.singleton(this);
+				}
+				final VPTfState result = mTfStateFactory.getBottomState(getInVariables(), getOutVariables());
+				return Collections.singleton(result);
+			} else if ("false".equals(functionName)) {
+				if (!negated) {
+					final VPTfState result = mTfStateFactory.getBottomState(getInVariables(), getOutVariables());
+					return Collections.singleton(result);
+				}
+				return Collections.singleton(this);
+			} else {
+				/*
+				 * we don't handle this function --> what does this mean? guesses: - always safe: return top state -
+				 * finer: if no outVars occur, then the prestate can be returned safely, right?
+				 */
+				return Collections.singleton(this);
+			}
+			
+		} else if (term instanceof QuantifiedFormula) {
+			throw new UnsupportedOperationException("we cannot deal with quantifiers right now");
+		} else if (term instanceof AnnotatedTerm) {
+			final Set<VPTfState> result =
+					handleTransition(((AnnotatedTerm) term).getSubterm(), tf, negated);
+			assert !result.isEmpty();
+			return result;
+		}
+		
+		assert false : "missed a case?";
+		return Collections.singleton(this);
+	}
+	
+	/**
+	 *
+	 * @param tfPreState
+	 * @param tf
+	 * @param negated
+	 * @param appTerm
+	 *            the subterm of the current transformula that this method should apply to the preState
+	 * @return
+	 */
+	private Set<VPTfState> handleEqualitySubterm(final TransFormula tf, final boolean negated, final Term lhs, 
+			final Term rhs) {
+		if (lhs.getSort().isArraySort()) {
+			if (negated) {
+				// we have a disequality between arrays
+				// we cannot conclude anything from this as we never track all array indices
+				return Collections.singleton(this);
+			}
+			// two arrays are equated
+
+			final IArrayWrapper lhsWrapper = mBuilder.getArrayWrapper(lhs);
+			final IArrayWrapper rhsWrapper = mBuilder.getArrayWrapper(rhs);
+
+			final Set<VPTfState> resultStates = new HashSet<>();
+			for (final ArrayWithSideCondition lhsArrayWSc : lhsWrapper.getArrayWithSideConditions(this, null)) {
+				for (final ArrayWithSideCondition rhsArrayWSc : rhsWrapper.getArrayWithSideConditions(this, null)) {
+					
+					Set<VPTfState> resultStatesForCurrentNodePair =
+							addSideConditionsToState(lhsArrayWSc, rhsArrayWSc);
+
+					// add equalities for all the indices we track for both arrays
+					for (final Entry<List<VPTfNodeIdentifier>, VPTfNodeIdentifier> en : lhsArrayWSc.getIndexToValue()
+							.entrySet()) {
+						if (!rhsArrayWSc.getIndexToValue().containsKey(en.getKey())) {
+							// the other array does not have a value for the current index
+							// --> do nothing
+							continue;
+						}
+
+						final VPTfNodeIdentifier lhS = en.getValue();
+						final VPTfNodeIdentifier rhS = rhsArrayWSc.getIndexToValue().get(en.getKey());
+						
+						resultStatesForCurrentNodePair =
+								VPFactoryHelpers.addEquality(lhS, rhS, resultStatesForCurrentNodePair, mTfStateFactory);
+					}
+					
+					resultStates.addAll(resultStatesForCurrentNodePair);
+				}
+			}
+
+			assert !resultStates.isEmpty();
+			return resultStates;
+		} else {
+			// two "normal" terms are equated
+
+			final IElementWrapper lhsWrapper = mBuilder.getElementWrapper(lhs);
+			final IElementWrapper rhsWrapper = mBuilder.getElementWrapper(rhs);
+
+			if (lhsWrapper == null || rhsWrapper == null) {
+				return Collections.singleton(this);
+			}
+
+			final Set<VPTfState> resultStates = new HashSet<>();
+			//
+			for (final NodeIdWithSideCondition lhsNodeWSc : lhsWrapper.getNodeIdWithSideConditions(this)) {
+				for (final NodeIdWithSideCondition rhsNodeWSc : rhsWrapper.getNodeIdWithSideConditions(this)) {
+					Set<VPTfState> resultStatesForCurrentNodePair =
+							addSideConditionsToState(lhsNodeWSc, rhsNodeWSc);
+					if (lhsNodeWSc instanceof UndeterminedNodeWithSideCondition
+							|| rhsNodeWSc instanceof UndeterminedNodeWithSideCondition) {
+						// we don't have both nodes --> we cannot add a (dis)equality, but we can still add the
+						// sideconditions
+						resultStates.addAll(resultStatesForCurrentNodePair);
+						continue;
+					}
+
+					// add (dis)equality
+					if (!negated) {
+						resultStatesForCurrentNodePair = VPFactoryHelpers.addEquality(lhsNodeWSc.getNodeId(),
+								rhsNodeWSc.getNodeId(), resultStatesForCurrentNodePair, mTfStateFactory);
+					} else {
+						resultStatesForCurrentNodePair = VPFactoryHelpers.addDisEquality(lhsNodeWSc.getNodeId(),
+								rhsNodeWSc.getNodeId(), resultStatesForCurrentNodePair, mTfStateFactory);
+
+					}
+					resultStates.addAll(resultStatesForCurrentNodePair);
+				}
+			}
+
+			assert !resultStates.isEmpty();
+			return resultStates;
+		}
+	}
+
+	/**
+	 * Patches the side conditions of the given XwithSideConditions into the given state, returns the resulting state.
+	 * 
+	 * @param tfPreState
+	 * @param lhsNodeWSc
+	 * @param rhsNodeWSc
+	 * @return
+	 */
+	private Set<VPTfState> addSideConditionsToState(final INodeOrArrayWithSideCondition lhsNodeWSc, 
+			final INodeOrArrayWithSideCondition rhsNodeWSc) {
+		final VPTfStateBuilder preStateCopy = mTfStateFactory.copy(this);
+		// add side conditions
+		for (final VPDomainSymmetricPair<VPTfNodeIdentifier> de : lhsNodeWSc.getDisEqualities()) {
+			preStateCopy.addDisEquality(de);
+		}
+		for (final VPDomainSymmetricPair<VPTfNodeIdentifier> de : rhsNodeWSc.getDisEqualities()) {
+			preStateCopy.addDisEquality(de);
+		}
+
+		Set<VPTfState> resultStatesForCurrentNodePair = new HashSet<>();
+		resultStatesForCurrentNodePair.add(preStateCopy.build());
+		for (final VPDomainSymmetricPair<VPTfNodeIdentifier> eq : lhsNodeWSc.getEqualities()) {
+			resultStatesForCurrentNodePair = VPFactoryHelpers.addEquality(eq.getFirst(), eq.getSecond(),
+					resultStatesForCurrentNodePair, mTfStateFactory);
+		}
+		for (final VPDomainSymmetricPair<VPTfNodeIdentifier> eq : rhsNodeWSc.getEqualities()) {
+			resultStatesForCurrentNodePair = VPFactoryHelpers.addEquality(eq.getFirst(), eq.getSecond(),
+					resultStatesForCurrentNodePair, mTfStateFactory);
+		}
+		// TODO: filter bottom states?
+		return resultStatesForCurrentNodePair;
+	}
+
+	public IAction getAction() {
+		return mAction;
+	}
+
+	public Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> getOutNodes() {
+		return mOutNodes;
 	}
 }

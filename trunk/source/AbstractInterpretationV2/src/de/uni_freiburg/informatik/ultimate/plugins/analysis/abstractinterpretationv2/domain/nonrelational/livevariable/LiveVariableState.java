@@ -213,4 +213,10 @@ public class LiveVariableState<ACTION extends IAction>
 		return Collections.emptySet();
 	}
 
+	@Override
+	public LiveVariableState<ACTION> compact() {
+		// live variable states are always compact
+		return this;
+	}
+
 }

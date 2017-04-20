@@ -37,10 +37,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IVariableProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
@@ -57,17 +62,19 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 public class RcfgVariableProvider<STATE extends IAbstractState<STATE, IBoogieVar>>
 		implements IVariableProvider<STATE, IcfgEdge, IBoogieVar> {
 
+	private final CfgSmtToolkit mCfgSmt;
 	private final IIcfgSymbolTable mSymbolTable;
 	private final ILogger mLogger;
 
-	public RcfgVariableProvider(final IIcfgSymbolTable symbolTable, final IUltimateServiceProvider services) {
-		this(symbolTable, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
+	public RcfgVariableProvider(final CfgSmtToolkit toolkit, final IUltimateServiceProvider services) {
+		this(toolkit, services.getLoggingService().getLogger(Activator.PLUGIN_ID));
 	}
 
-	public RcfgVariableProvider(final IIcfgSymbolTable symbolTable, final ILogger logger) {
-		assert symbolTable != null;
+	public RcfgVariableProvider(final CfgSmtToolkit toolkit, final ILogger logger) {
+		assert toolkit != null;
 		assert logger != null;
-		mSymbolTable = symbolTable;
+		mCfgSmt = toolkit;
+		mSymbolTable = toolkit.getSymbolTable();
 		mLogger = logger;
 	}
 
@@ -291,8 +298,32 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, IBoogieVar
 	}
 
 	@Override
-	public IVariableProvider<STATE, IcfgEdge, IBoogieVar> createNewVariableProvider(final IIcfgSymbolTable table) {
-		return new RcfgVariableProvider<>(table, mLogger);
+	public IVariableProvider<STATE, IcfgEdge, IBoogieVar> createNewVariableProvider(final CfgSmtToolkit toolkit) {
+		return new RcfgVariableProvider<>(toolkit, mLogger);
+	}
+
+	@Override
+	public Set<IBoogieVar> getRequiredVars(final IcfgEdge act) {
+		final Set<IBoogieVar> vars = new HashSet<>();
+		if (act instanceof IInternalAction) {
+			addTfVars(act.getTransformula(), vars);
+		} else if (act instanceof ICallAction) {
+			final ICallAction callAct = (ICallAction) act;
+			addTfVars(callAct.getLocalVarsAssignment(), vars);
+			addTfVars(mCfgSmt.getOldVarsAssignmentCache().getOldVarsAssignment(callAct.getSucceedingProcedure()), vars);
+		} else if (act instanceof IReturnAction) {
+			final IReturnAction retAct = (IReturnAction) act;
+			addTfVars(retAct.getAssignmentOfReturn(), vars);
+		} else {
+			throw new UnsupportedOperationException();
+		}
+		return vars;
+	}
+
+	private static void addTfVars(final UnmodifiableTransFormula tf, final Set<IBoogieVar> vars) {
+		tf.getNonTheoryConsts().forEach(a -> vars.add((IBoogieVar) a));
+		tf.getInVars().entrySet().stream().forEach(a -> vars.add((IBoogieVar) a.getKey()));
+		tf.getOutVars().entrySet().stream().forEach(a -> vars.add((IBoogieVar) a.getKey()));
 	}
 
 }

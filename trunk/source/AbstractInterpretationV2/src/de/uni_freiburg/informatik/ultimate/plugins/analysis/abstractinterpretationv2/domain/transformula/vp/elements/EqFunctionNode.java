@@ -46,21 +46,23 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  */
 public class EqFunctionNode extends EqNode {
 	
-	private final IProgramVarOrConst function;
-	private final List<EqNode> args;
+	private final IProgramVarOrConst mFunction;
+	private final List<EqNode> mArgs;
 	private final Set<IProgramVarOrConst> mAllFunctionSymbols;
 
 	public EqFunctionNode(IProgramVarOrConst function, List<EqNode> args, ManagedScript script) {
 		super(function.isGlobal() 
 				&& args.stream().map(arg -> arg.mIsGlobal).reduce((b1, b2) -> b1 && b2).get(),
 			!(function instanceof IProgramVar)
-				&& args.stream().map(arg -> arg.mIsConstant).reduce((b1, b2) -> b1 && b2).get());
+				&& args.stream().map(arg -> arg.mIsConstant).reduce((b1, b2) -> b1 && b2).get(),
+				function instanceof IProgramVar ? 
+						((IProgramVar) function).getProcedure() : 
+							args.stream()
+								.map(arg -> arg.getProcedure())
+								.reduce((proc1, proc2) -> proc1 != null ? proc1 : proc2).get());
 
-//		super(function.isGlobal(), !(function instanceof IProgramVar)); // new paradigm: the "topmost function symbol determines isGobal and isConstant.
-		 // update: reverted to the old paradigm: a node is constant if all its components are
-
-		this.function = function;
-		this.args = args;
+		this.mFunction = function;
+		this.mArgs = args;
 		Set<IProgramVar> vars = new HashSet<>();
 		if (function instanceof IProgramVar) {
 			vars.add((IProgramVar) function);
@@ -82,27 +84,27 @@ public class EqFunctionNode extends EqNode {
 	
 	@Override
 	public IProgramVarOrConst getFunction() {
-		return function;
+		return mFunction;
 	}
 
 	public List<EqNode> getArgs() {
-		return args;
+		return mArgs;
 	}
 
 	public String toString() {
-		return function.toString() + args.toString();
+		return mFunction.toString() + mArgs.toString();
 	}
 	
-	@Override
-	public boolean equals(Object other) {
-		return other == this;
-//		if (!(other instanceof EqFunctionNode)) {
-//			return false;
-//		}
-//		EqFunctionNode efn = (EqFunctionNode) other;
-//		return function.equals(efn.function)
-//				&& this.args.equals(efn.args);
-	}
+//	@Override
+//	public boolean equals(Object other) {
+//		return other == this;
+////		if (!(other instanceof EqFunctionNode)) {
+////			return false;
+////		}
+////		EqFunctionNode efn = (EqFunctionNode) other;
+////		return function.equals(efn.function)
+////				&& this.args.equals(efn.args);
+//	}
 
 //	@Override
 //	public Term getTerm(ManagedScript script) {

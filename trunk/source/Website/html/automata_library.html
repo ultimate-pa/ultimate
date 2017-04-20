@@ -1,0 +1,56 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<body>
+<h1>Automata Library</h1>
+
+<p>The <span style="font-variant:small-caps">Ultimate</span> Automata Library supports the following kinds of automata.
+<ul>
+<li>Finite automata (see <a href="?ui=int&amp;tool=automata_library&amp;task=automataScript&amp;sample=606706886">example</a>)</li>
+<li><a href="https://en.wikipedia.org/wiki/Nested_word">Nested word automata</a>, aka visibly pushdown automata</li>
+<li><a href="https://en.wikipedia.org/wiki/B%C3%BCchi_automaton">B&uuml;chi automata</a> (see <a href="?ui=int&amp;tool=automata_library&amp;task=automataScript&amp;sample=766546622">example</a>)</li>
+<li>B&uuml;chi nested word automata (see <a href="?ui=int&amp;tool=automata_library&amp;task=automataScript&amp;sample=1954831617">example</a>)</li>
+<li>Petri net automata, i.e., Petri nets used as language acceptors (see <a href="?ui=int&amp;tool=automata_library&amp;task=automataScript&amp;sample=151597609">example</a>)</li>
+<li><a href="https://en.wikipedia.org/wiki/Alternating_finite_automaton">Alternating finite automata</a></li>
+<li><a href="https://en.wikipedia.org/wiki/Tree_automaton">Tree automata</a></li>
+</ul>
+</p>
+<p>The library is maintained by <a href="https://swt.informatik.uni-freiburg.de/staff/heizmann/">Matthias Heizmann</a>, <a href="https://swt.informatik.uni-freiburg.de/staff/nutz/">Alexander Nutz</a>, and <a href="https://swt.informatik.uni-freiburg.de/staff/christian_schilling/">Christian Schilling</a>.</p>
+
+
+
+<h2>Web Interface</h2>
+<p>The library is available via a web interface.
+We devised a small script language called <i>Automata Script</i> that allows to define automata and specify operations that should be performed. 
+You can find several sample files in the web interface.</p>
+
+
+
+<h2>News</h2>
+
+<h3>Minimization based on partial Max-SAT for nested word automata available <span style="font-size:70%">(2017-02-09)</span></h3>
+<p>The operation <span style="font-family:monospace">minimizeNwaPmaxSat</span>  (see <a href="?ui=int&amp;tool=automata_library&amp;task=automataScript&amp;sample=1227447937"> example</a>) implements the algorithm of the <a href="https://link.springer.com/chapter/10.1007%2F978-3-662-54577-5_27">Minimization of Visibly Pushdown Automata Using Partial Max-SAT</a> paper which was published at TACAS 2017.
+It uses a domain-specific partial Max-SAT solver for reducing the size of nondeterministic nested word automata.
+<br /> 
+Additional material: <a href="https://arxiv.org/abs/1701.05160">extended version</a>, 
+<a href="http://swt.informatik.uni-freiburg.de/staff/christian_schilling/resources/slides_tacas2017.pdf">slides</a>
+</p>
+
+<h3>Optimized complementation for semi-deterministic B&uuml;chi automata available <span style="font-size:70%">(2016-04-12)</span></h3>
+<p>The operation <span style="font-family:monospace">buchiComplementNCSB</span> (see <a href="?ui=int&amp;tool=automata_library&amp;task=automataScript&amp;sample=458108836"> example</a>) implements the algorithm of the <a href="https://link.springer.com/chapter/10.1007%2F978-3-662-49674-9_49">Complementing Semi-deterministic B&uuml;chi Automata</a> paper which was published at TACAS 2016.
+<br /> 
+Additional material: <a href="http://www.fi.muni.cz/~xstrejc/publications/tacas2016coSDBA_preprint.pdf">preprint</a>, <a href="https://github.com/xblahoud/NCSB-Complementation">files to reproduce evaluation</a>, <a href="http://highlights-conference.org/wp-content/uploads/2016/08/highlights-5.pdf">slides</a>
+</p>
+
+<h3>Computation of loop complexity available <span style="font-size:70%">(2015-09-15)</span></h3>
+<p>
+The operation <span style="font-family:monospace">loopComplexity</span> computes the loop complexity of finite automata. 
+An <a href="?ui=int&amp;tool=automata_library&amp;task=automataScript&amp;sample=739678217"> example automata script file</a> is available in our web interface.
+</p>
+
+<h2>Source Code</h2>
+<p>
+The source code is <a href="https://github.com/ultimate-pa/ultimate/tree/dev/trunk/source/Library-Automata">available on GitHub</a>.
+</p>
+
+
+</body>
+</html>

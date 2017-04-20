@@ -1,0 +1,55 @@
+// Author: Matthias Heizmann, Christian Schilling
+// Date: 2017-04-20
+//
+// This is the example from Figure 1a of the paper "Minimization of Visibly 
+//   Pushdown Automata Using Partial Max-SAT" (TACAS 2017) An extended 
+//   version of the paper is available at https://arxiv.org/abs/1701.05160.
+//
+// In automata minimization one can usually merge two states if they have the
+//   same behavior under all words. In this example the states q1 and q2 have
+//   the same behavior for the internal symbol a but different behaviors for the
+//   return symbol r with stack symbol q0: Namely, state q1 leads to the
+//   accepting state while q2 has no respective return transition. However, in
+//   q2 it is generally impossible to take a return transition with stack symbol
+//   q0 since q2 can only be reached with an empty stack. Thus the behavior for
+//   the stack symbol q0 is ``undefined'' and we can merge q1 and q2 without
+//   changing the language.
+// Using the same argument as above, we can also merge the states q2 and q3. For
+//   finite automata, mergeability of states is transitive. However, here we
+//   cannot merge all three states q1, q2, and q3 without changing the language
+//   because q1 and q3 have different behaviors for stack symbol q0.
+
+// Calling the operation 'removeUnreachable' has no obvious effect here, but it
+//   is necessary for computing reachability information that is used by the
+//   minimization operation later on.
+NestedWordAutomaton nwaWithReachabilityInformation = removeUnreachable(nwa);
+
+// run minimization operation
+NestedWordAutomaton reduced = minimizeNwaPmaxSat(nwaWithReachabilityInformation);
+
+// print the result
+print(reduced);
+
+NestedWordAutomaton nwa = (
+	callAlphabet = { c },
+	internalAlphabet = { a },
+	returnAlphabet = { r },
+	states = { q0 q1 q2 q3 qf },
+	initialStates = { q0 },
+	finalStates = { qf },
+	callTransitions = {
+		(q0 c q1)
+		(q0 c q3)
+	},
+	internalTransitions = {
+		(q0 a q2)
+		(q1 a qf)
+		(q2 a qf)
+		(q3 a qf)
+		(qf a qf)
+	},
+	returnTransitions = {
+		(q1 q0 r qf)
+		(q3 q0 r q3)
+	}
+);

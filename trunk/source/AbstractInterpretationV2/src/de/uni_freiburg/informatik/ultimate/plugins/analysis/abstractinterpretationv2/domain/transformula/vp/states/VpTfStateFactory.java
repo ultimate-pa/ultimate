@@ -28,16 +28,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
@@ -46,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfArrayIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfNodeIdentifier;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 /**
@@ -58,7 +56,8 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 	private final VPTransFormulaStateBuilderPreparer mTfStatePreparer;
 	private final VPDomainPreanalysis mPreAnalysis;
 
-	private final Map<Set<IProgramVarOrConst>, VPTfBottomState> mVarsToBottomState = new HashMap<>();
+	private final NestedMap2<Set<IProgramVarOrConst>, Set<IProgramVarOrConst>, VPTfBottomState> mVarsToBottomState = 
+			new NestedMap2<>();
 
 	public VpTfStateFactory(final VPTransFormulaStateBuilderPreparer tfStatePreparer,
 			final VPDomainPreanalysis preAnalysis) {
@@ -87,12 +86,12 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 	public VPTfStateBuilder copy(final VPTfState state) {
 		assert !state.isBottom();
 
-		final VPTfStateBuilder builder = createEmptyStateBuilder(state.getTransFormula());
+		final VPTfStateBuilder builder = createFreshVanillaStateBuilder(state.getAction());
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(builder.mDisEqualitySet, builder);
 		builder.setIsTop(state.isTop());
 
 		for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> egnInOldState : state.getAllEqGraphNodes()) {
-			final VPTfNodeIdentifier nodeId = egnInOldState.nodeIdentifier;
+			final VPTfNodeIdentifier nodeId = egnInOldState.mNodeIdentifier;
 			final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newGraphNode = builder.getEqGraphNode(nodeId);
 			assert newGraphNode != null;
 			EqGraphNode.copyFields(egnInOldState, newGraphNode, builder);
@@ -105,7 +104,8 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 			// && pair.mSnd.isLiteral() : "The only disequalites in a top state are between constants";
 		}
 
-		builder.addVars(new HashSet<>(state.getVariables()));
+//		builder.addInVars(new HashSet<>(state.getInVariables()));
+//		builder.addOutVars(new HashSet<>(state.getOutVariables()));
 
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(builder.mDisEqualitySet, builder);
 		assert VPDomainHelpers.disEqualityRelationIrreflexive(builder.mDisEqualitySet, builder);
@@ -115,11 +115,15 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 	}
 
 	@Override
-	public VPTfState getBottomState(final Set<IProgramVarOrConst> set) {
-		VPTfBottomState result = mVarsToBottomState.get(set);
+	public VPTfState getBottomState(final VPTfState originalState) {
+		return getBottomState(originalState.getInVariables(), originalState.getOutVariables());
+	}
+
+	VPTfState getBottomState(final Set<IProgramVarOrConst> inVars, final Set<IProgramVarOrConst> outVars) {
+		VPTfBottomState result = mVarsToBottomState.get(inVars, outVars);
 		if (result == null) {
-			result = new VPTfBottomState(set);
-			mVarsToBottomState.put(set, result);
+			result = new VPTfBottomState(inVars, outVars);
+			mVarsToBottomState.put(inVars, outVars, result);
 		}
 		return result;
 	}
@@ -128,8 +132,9 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 	 * Obtain the vanilla builder for the given TransFormula, make a (deep) copy of it and return it.
 	 */
 	@Override
-	public VPTfStateBuilder createEmptyStateBuilder(final TransFormula tf) {
-		final VPTfStateBuilder vanillaBuilder = mTfStatePreparer.getVPTfStateBuilder(tf);
+//	public VPTfStateBuilder createFreshVanillaStateBuilder(final TransFormula tf) {
+	public VPTfStateBuilder createFreshVanillaStateBuilder(final IAction action) {
+		final VPTfStateBuilder vanillaBuilder = mTfStatePreparer.getVPTfStateBuilder(action);
 		assert vanillaBuilder.isTopConsistent();
 
 		final VPTfStateBuilder result = new VPTfStateBuilder(vanillaBuilder);
@@ -138,34 +143,38 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 	}
 
 	/**
-	 * Given a VPState and a TransFormula, this - aquires the "vanilla" VPTfStateBuilder for the TransFormula - collects
-	 * everything that the state knows about the inVars of the TransFormula and updates the VPTfStateBuidler accordingly
+	 * Given a VPState and a TransFormula, this 
+	 *  <li> acquires the "vanilla" VPTfStateBuilder for the TransFormula 
+	 *  <li> "patches in" the given state, i.e., collects everything that the state knows about the inVars of the 
+	 * 	     TransFormula and updates the VPTfStateBuidler accordingly
 	 *
 	 * @param state
 	 * @param tf
 	 * @return
 	 */
-	public VPTfState createTfState(final VPState<?> state, final UnmodifiableTransFormula tf) {
+//	public VPTfState createTfState(final VPState<?> state, final UnmodifiableTransFormula tf) {
+	public VPTfState createTfState(final VPState<?> state, final IAction action) {
 		if (isDebugMode()) {
 			getLogger().debug("VPTfStateFactory: createTfState(..) (begin)");
 		}
 
 		if (state.isBottom()) {
-			return getBottomState(state.getVariables());
+			// FIXME extra builder for var signature: a bit hacky..
+			return getBottomState(mTfStatePreparer.getVPTfStateBuilder(action).build()); 
 		}
 
 		if (state.isTop()) {
-			final VPTfStateBuilder builder = createEmptyStateBuilder(tf);
-			builder.addVars(state.getVariables());
+			final VPTfStateBuilder builder = createFreshVanillaStateBuilder(action);
+//			builder.addVars(state.getVariables());
 			return builder.build();
 		}
 
-		final VPTfStateBuilder builder = createEmptyStateBuilder(tf);
-		builder.addVars(state.getVariables());
+		final VPTfStateBuilder builder = createFreshVanillaStateBuilder(action);
+//		builder.addVars(state.getVariables());
 		
 		final Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> inVarsAndConstantEqNodeSet = new HashSet<>();
 		for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> node : builder.getAllEqGraphNodes()) {
-			if (node.nodeIdentifier.isInOrThrough()) {
+			if (node.mNodeIdentifier.isInOrThrough()) {
 				inVarsAndConstantEqNodeSet.add(node);
 			}
 		}
@@ -183,8 +192,8 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 					continue;
 				}
 
-				if (state.areUnEqual(inNode1.nodeIdentifier.getEqNode(), inNode2.nodeIdentifier.getEqNode())) {
-					builder.addDisEquality(inNode1.nodeIdentifier, inNode2.nodeIdentifier);
+				if (state.areUnEqual(inNode1.mNodeIdentifier.getEqNode(), inNode2.mNodeIdentifier.getEqNode())) {
+					builder.addDisEquality(inNode1.mNodeIdentifier, inNode2.mNodeIdentifier);
 				}
 			}
 		}
@@ -204,8 +213,8 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 					continue;
 				}
 
-				if (state.areEqual(inNode1.nodeIdentifier.getEqNode(), inNode2.nodeIdentifier.getEqNode())) {
-					resultStates = VPFactoryHelpers.addEquality(inNode1.nodeIdentifier, inNode2.nodeIdentifier,
+				if (state.areEqual(inNode1.mNodeIdentifier.getEqNode(), inNode2.mNodeIdentifier.getEqNode())) {
+					resultStates = VPFactoryHelpers.addEquality(inNode1.mNodeIdentifier, inNode2.mNodeIdentifier,
 							resultStates, this);
 					assert resultStates.size() == 1 : "??";
 				}

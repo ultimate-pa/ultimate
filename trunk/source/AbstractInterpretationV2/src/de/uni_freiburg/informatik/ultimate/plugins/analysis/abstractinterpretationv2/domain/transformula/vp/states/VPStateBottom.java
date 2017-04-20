@@ -69,7 +69,7 @@ public class VPStateBottom<ACTION extends IIcfgTransition<IcfgLocation>> extends
 	public VPState<ACTION> removeVariables(final Collection<IProgramVarOrConst> variables) {
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>(mVars);
 		newVariables.removeAll(variables);
-		return mFactory.getBottomState(newVariables);
+		return mStateFactory.getBottomState(newVariables);
 	}
 
 	@Override
@@ -82,7 +82,7 @@ public class VPStateBottom<ACTION extends IIcfgTransition<IcfgLocation>> extends
 	public VPState<ACTION> addVariables(final Collection<IProgramVarOrConst> variables) {
 		final Set<IProgramVarOrConst> newVariables = new HashSet<>(mVars);
 		newVariables.addAll(variables);
-		return mFactory.getBottomState(newVariables);
+		return mStateFactory.getBottomState(newVariables);
 	}
 
 	@Override

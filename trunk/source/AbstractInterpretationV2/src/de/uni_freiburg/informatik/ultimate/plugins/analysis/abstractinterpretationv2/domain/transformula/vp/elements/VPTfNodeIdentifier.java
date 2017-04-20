@@ -36,16 +36,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
-import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.ArrayIndex;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.CreateVanillaTfStateBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPTfState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPTfStateBuilder;
 import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 
 /**
@@ -60,14 +58,12 @@ import de.uni_freiburg.informatik.ultimate.util.HashUtils;
 public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier>, IElementWrapper {
 	
 	private final EqNode mEqNode;
-//	private final Term mTerm;
 	private final Map<IProgramVar, TermVariable> mInVars;
 	private final Map<IProgramVar, TermVariable> mOutVars;
 	private final boolean mIsFunction;
 	private final boolean mIsLiteral;
 	private final VPTfArrayIdentifier mFunction;
-	private final Set<VPTfArrayIdentifier> mAllFunctions;// TODO: perhaps this field is unnecessary --> one could move it from the interface to Eqnode..
-//	private final boolean mIsInOrThrough;
+	private final Set<VPTfArrayIdentifier> mAllFunctions;
 	protected final TfNodeInOutStatus mInOutStatus;
 
 	private final NodeIdWithSideCondition mNodeIdWithSideCondition;
@@ -113,7 +109,8 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 	public VPTfNodeIdentifier(EqNode eqNode, 
 			Map<IProgramVar, TermVariable> inVars,
 			Map<IProgramVar, TermVariable> outVars,
-			VPTfStateBuilder tfStateBuilder) {
+//			VPTfStateBuilder tfStateBuilder) {
+			CreateVanillaTfStateBuilder tfStateBuilder) {
 		this.mEqNode = eqNode;
 		this.mIsFunction = eqNode instanceof EqFunctionNode;
 
@@ -124,7 +121,7 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 		} else {
 			mFunction = null;
 		}
-		// compute all function symbols in this node and its descendants (used only for debugging, if at all, see TODO at the field..)
+		// compute all function symbols in this node and its descendants (used only for debugging, if at all)
 		if (mIsFunction) {
 			Set<VPTfArrayIdentifier> allFunctions = new HashSet<>();
 			for (EqNode argEqn : ((EqFunctionNode) eqNode).getArgs()) {
@@ -172,7 +169,6 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 
 				}
 				// we have an invar 
-//				hasIn = true;
 				if (mOutVars.containsKey(en.getKey())) {
 					// en.getKey is both in and out
 					assert en.getValue() == mOutVars.get(en.getKey()) : 
@@ -183,10 +179,6 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 				}
 			}
 			for (Entry<IProgramVar, TermVariable> en : mOutVars.entrySet()) {
-//				if (!mInVars.containsKey(en.getKey())) {
-					// we have an outVar that is no inVar
-//				hasOut = true;
-//				} else {
 				if (mInVars.containsKey(en.getKey())) {
 					// en.getKey is both in and out
 					assert en.getValue() == mInVars.get(en.getKey()) : 
@@ -200,17 +192,9 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 			if (hasExclusiveIn && hasExclusiveOut) {
 				mInOutStatus = TfNodeInOutStatus.MIXED;
 			} else if (hasExclusiveIn && !hasExclusiveOut) {
-//				if (hasThrough) {
-//					mInOutStatus = TfNodeInOutStatus.THROUGH;
-//				} else {
-					mInOutStatus = TfNodeInOutStatus.IN;
-//				}
+				mInOutStatus = TfNodeInOutStatus.IN;
 			} else if (!hasExclusiveIn && hasExclusiveOut) {
-//				if (hasThrough) {
-//					mInOutStatus = TfNodeInOutStatus.THROUGH;
-//				} else {
-					mInOutStatus = TfNodeInOutStatus.OUT;
-//				}
+				mInOutStatus = TfNodeInOutStatus.OUT;
 			} else {
 				if (hasThrough) {
 					mInOutStatus = TfNodeInOutStatus.THROUGH;
@@ -222,13 +206,7 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 		}
 		
 		assert sanityCheck();
-		
-		
 	}
-	
-	
-	
-
 
 	private boolean sanityCheck() {
 		/*
@@ -241,49 +219,13 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 				return false;
 			}
 		}
-		
 
 		return true;
 	}
 
-
-//	private VPArrayIdentifier getArrayIdentifier(EqFunctionNode eqNode, 
-//			Map<IProgramVar, TermVariable> inVars,
-//			Map<IProgramVar, TermVariable> outVars) {
-//		IProgramVarOrConst pvoc = eqNode.getFunction();
-//		// TODO: --> perhaps write a management for array identifiers, so they are unique..
-//		return new VPArrayIdentifier(pvoc, inVars, outVars);
-////		if (pvoc.getTerm() instanceof ConstantTerm || 
-////				((pvoc.getTerm() instanceof ApplicationTerm) 
-////						&& ((ApplicationTerm) pvoc.getTerm()).getParameters().length == 0)) {
-////			return new VPArrayIdentifier(pvoc.getTerm());
-////		}
-////		if (inVars.containsKey(pvoc)) {
-////			return new VPArrayIdentifier(inVars.get(pvoc));
-////		}
-////		if (outVars.containsKey(pvoc)) {
-////			return new VPArrayIdentifier(outVars.get(pvoc));
-////		}
-////		assert false;
-////		return null;
-//	}
-
-
 	public EqNode getEqNode() {
 		return mEqNode;
 	}
-
-//	public Term getTerm(ManagedScript script) {
-//		return mTerm;
-////		if (mIdentifyingTerm != null) {
-////			return mIdentifyingTerm;
-////		}
-////		return mEqNode.getTerm(script);
-//	}
-
-//	public Term getIdTerm() {
-//		return mIdentifyingTerm;
-//	}
 
 	public boolean isFunction() {
 		return mIsFunction;
@@ -317,15 +259,7 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 	
 	@Override
 	public String toString() {
-//		if (mEqNode != null) {
-//			return "NodeId(#" + Integer.toString(this.hashCode()).substring(0, 3) + "): " + mEqNode;
-			return "NodeId(" + mInOutStatus + "): " + mEqNode;
-//		} else if (mIdentifyingTerm != null) {
-//			return "NodeId: " + mTerm;
-//		} else {
-//			assert false;
-//			return null;
-//		}
+		return "NodeId(" + mInOutStatus + "): " + mEqNode;
 	}
 	
 	
@@ -378,12 +312,5 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 	public Collection<VPTfArrayIdentifier> getAllFunctions() {
 		return mAllFunctions;
 	}
-
-	
-	
-//	@Override
-//	public Set<ISingleElementWrapper> getElements() {
-//		return Collections.singleton(this);
-//	}
 }
 
