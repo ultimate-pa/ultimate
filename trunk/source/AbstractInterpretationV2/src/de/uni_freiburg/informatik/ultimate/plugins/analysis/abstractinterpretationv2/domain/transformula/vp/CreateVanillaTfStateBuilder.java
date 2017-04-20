@@ -123,13 +123,25 @@ public class CreateVanillaTfStateBuilder {
 	 * 
 	 * (new) plan for this method:
 	 * <ul>
-	 *  <li> For all EqNodes e in the in/out scopes of this method
+	 *  <li> every EqNode that is visible in the current scope gets at least one node
+	 *      (special case context switch: ..?)
+	 *  <li> if an EqNode does not have a corresponding term in an equation in the TransFormula then we create a 
+	 *       through-node for it.
+	 *  <li> if an EqNode does have a corresponding term in the TransFormula,
 	 *   <ul>
-	 *    <li> if e contains an assignedVar, then create _all_ in- and out-versions of it (?..)
-	 *    <li> else create a through-version of it
+	 *    <li> create the according EqGraphNode
+	 *    <li> if the term is involved in an array assignment, also create potentially missing in/out nodes 
+	 *         (difficult case: composite node with mixed in/out status. The topmost symbol, i.e. the array, is 
+	 *          important. The rest keeps its in/out status. E.g if in a[i], a is in, i is out, and we encounter the 
+	 *          equality "a = a'" where a' is a's out-version, then we create a'[i] with i unchanged..
+	 *          reason: for an array equality we need to equate the same index-values)
 	 *   </ul>
-	 *  <li> create a node for each auxVar in the transFormula
+	 *  <li> create a node for each auxVar in the TransFormula
 	 * </ul> 
+	 * 
+	 * Algorithmically, we start by creating the nodes with terms in the TransFormula, then we create those for array
+	 * equations, then we fill up with through-nodes. Last we create nodes for auxVars (it does not matter when we do 
+	 * that).
 	 * 
 	 * @param preAnalysis
 	 * @param allConstantEqNodes
@@ -308,6 +320,16 @@ public class CreateVanillaTfStateBuilder {
 		}
 	}
 
+	/**
+	 * Method for creating the nodes that are only introduced for an array equality. Their creation has to dynamically
+	 * adapt to which in/out/through version of a node is already present and complement that. 
+	 * (i.e. if no version of the node is present, then create through, otherwise create in or out according to the 
+	 *  given parameter)
+	 * 
+	 * @param eqNode
+	 * @param inOrThroughOrOutOrThroughChooseIn
+	 * @return
+	 */
 	private EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> getOrConstructInOrOutOrThroughEqGraphNode(
 			final EqNode eqNode, final boolean inOrThroughOrOutOrThroughChooseIn) {
 
