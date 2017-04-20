@@ -610,6 +610,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	private OctDomainState operation(final OctDomainState other,
 			final BiFunction<BoolValue, BoolValue, BoolValue> booleanOperation,
 			final OctMatrix numericAbstractionResult) {
+		assertNotBottomBeforeAssign();
+		other.assertNotBottomBeforeAssign();
 		final OctDomainState result = shallowCopy();
 		for (final Entry<IBoogieVar, BoolValue> entry : mBooleanAbstraction.entrySet()) {
 			final IBoogieVar name = entry.getKey();
@@ -621,6 +623,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 			}
 		}
 		result.mNumericAbstraction = numericAbstractionResult;
+		result.mIsBottom = TVBool.UNCHECKED;
 		return result;
 	}
 
