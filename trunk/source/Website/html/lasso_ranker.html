@@ -27,11 +27,13 @@ by a loop. The figure below shows an example of a lasso program.
 <span style="font-variant:small-caps">Ultimate LassoRanker</span> can synthesize termination and nontermination arguments.
 Termination arguments generated consist of a ranking function and a set of linear inductive supporting invariants.
 For all states satisfying the invariants, the ranking function decreases after one loop execution.
-Different ranking functions can be synthesized on the basis on <em>ranking templates</em>. Currently affine-linear, nested, multiphase, lexicographic and piecewise ranking templates are implemented. Please see our TACAS submission in the next section for more details.
+Different ranking functions can be synthesized on the basis on <em>ranking templates</em>. Currently affine-linear, nested, multiphase, lexicographic and piecewise ranking templates are implemented.
 </p>
 
 <p>
-<span style="font-variant:small-caps">Ultimate LassoRanker</span> is a central component to <a href="https://ultimate.informatik.uni-freiburg.de/BuchiAutomizer"><span style="font-variant:small-caps">Ultimate BuchiAutomizer</span></a>, which extracts lassos from larger programs and generalizes the synthesized termination arguments.
+<span style="font-variant:small-caps">Ultimate LassoRanker</span> is a central component of <a href="https://ultimate.informatik.uni-freiburg.de/BuchiAutomizer"><span style="font-variant:small-caps">Ultimate BuchiAutomizer</span></a>, which extracts lassos from larger programs and generalizes the synthesized termination arguments.
+Furthermore, <span style="font-variant:small-caps">Ultimate LassoRanker</span> has <a href="https://www.sosy-lab.org/research/msc/2016.Ott.Implementing_a_Termination_Analysis_using_Configurable_Program_Analysis.pdf">been integrated</a> into
+<a href="https://cpachecker.sosy-lab.org/">CPAchecker</a>.
 </p>
 
 
@@ -40,12 +42,20 @@ Different ranking functions can be synthesized on the basis on <em>ranking templ
 <p>
 The theoretical foundations of <span style="font-variant:small-caps">Ultimate LassoRanker</span> are described in the following publications.
 </p>
-
 <ul>
 	<li>
 		Jan Leike and Matthias Heizmann.
+		Preprint of <a href="https://arxiv.org/abs/1609.05207">Geometric Series as Nontermination Arguments for Linear Lasso Programs</a>. (2016)
+	</li>
+	<li>
+		Jan Leike and Matthias Heizmann.
+		<a href="http://arxiv.org/pdf/1503.00193">Ranking Templates for Linear Loops</a>.
+		In <a href="http://www.lmcs-online.org/ojs/regularIssues.php?id=44">LMCS 11(1) (2015)</a>.
+	</li>
+	<li>
+		Jan Leike and Matthias Heizmann.
 		<a href="https://users.cecs.anu.edu.au/~leike/Geometric%20Series%20as%20Nontermination%20Arguments%20for%20Linear%20Lasso%20Programs%20-%20Leike%2C%20Heizmann%202014.pdf">Geometric Series as Nontermination Arguments for Linear Lasso Programs</a>.
-		<a href="http://vsl2014.at/meetings/WST-index.html">International Workshop on Termination</a>, 2014.
+		<a href="http://vsl2014.at/meetings/WST-index.html">International Workshop on Termination, 2014</a>.
 	</li>
 	<li>
 		Jan Leike and Matthias Heizmann.
@@ -64,20 +74,13 @@ The theoretical foundations of <span style="font-variant:small-caps">Ultimate La
 
 <p>
 <span style="font-variant:small-caps">Ultimate LassoRanker</span> is available via a 
-web interface. This web interface allows `playing around' with lasso programs written C or the <a href="http://research.microsoft.com/en-us/projects/boogie/">Boogie</a> intermediate verification language. The version of <span style="font-variant:small-caps">Ultimate LassoRanker</span> called by this interface uses the SMT solver <a href="https://ultimate.informatik.uni-freiburg.de/smtinterpol">SMTInterpol</a>.
+web interface. This web interface allows `playing around' with lasso programs written C or the <a href="http://research.microsoft.com/en-us/projects/boogie/">Boogie</a> intermediate verification language.
 </p>
 
-<p>
-In case our webserver does not respond you can use <span style="font-variant:small-caps">Ultimate LassoRanker</span> on our (very slow) <a href="
-http://xayn.heizmann.name:14550/Website/?task=RANK_SYNTHESIS_BOOGIE">backup web server</a>.
-</p>
 
-<h2>Downloads</h2>
+<h2>Source Code</h2>
 <p>
-We provide <span style="font-variant:small-caps">Ultimate LassoRanker</span> under the LGPL with a linking exception to Eclipse RCP. We are planing to make our repository publicly available. At the moment a copy of the current source code is available on request.
-<!--It depends on the <a href="http://ultimate.informatik.uni-freiburg.de"><span style="font-variant:small-caps">Ultimate</span> software analysis framework</a>, which has not been publicly released yet.-->
-If you are interested in obtaining the source code or a binary,
-please do not hesitate to <a href="mailto:Jan%20Leike%20&lt;jan.leike@anu.edu.au&gt;">contact us</a>.
+The source code of <span style="font-variant:small-caps">Ultimate LassoRanker</span> is <a href="https://github.com/ultimate-pa/ultimate/tree/dev/trunk/source/Library-LassoRanker">available on GitHub</a>.
 </p>
 
 
@@ -98,7 +101,9 @@ If the variables have integer domain, the completeness property of our method (i
 
 <p>
 <span style="font-variant:small-caps">Ultimate LassoRanker</span> is built to interface with any SMT solver which implements the <a href="https://ultimate.informatik.uni-freiburg.de/smtinterpol">SMT-LIBv2 standard</a> and is able to produce models of satisfiable formulas.
-However, it is only tested on <a href="https://ultimate.informatik.uni-freiburg.de/smtinterpol">SMTInterpol</a> and <a href="http://z3.codeplex.com/">Z3</a>.
+<!-- However, it is only tested on <a href="https://ultimate.informatik.uni-freiburg.de/smtinterpol">SMTInterpol</a> and <a href="http://z3.codeplex.com/">Z3</a>. -->
+Depending on the settings, our termination analysis uses the QF_NRA logic or the QF_LRA logic and our nontermination analysis uses the QF_NIA logic or the QF_LIA logic.
+Sample scripts are available in the <a href="http://smtlib.cs.uiowa.edu/benchmarks.shtml">SMT-LIB benchmark repository.</a>
 </p>
 
 </body>
