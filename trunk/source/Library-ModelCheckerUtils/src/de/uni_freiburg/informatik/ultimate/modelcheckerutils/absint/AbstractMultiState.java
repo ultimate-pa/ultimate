@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Optional;
@@ -301,7 +302,30 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 
 	@Override
 	public AbstractMultiState<STATE, VARDECL> compact() {
-		return map(STATE::compact);
+		final Set<STATE> compactedStates = newSet(mStates.size());
+		final Set<VARDECL> vars = new HashSet<>();
+		for (final STATE state : mStates) {
+			final STATE compacted = state.compact();
+			compactedStates.add(compacted);
+			vars.addAll(compacted.getVariables());
+		}
+		if (mStates.equals(compactedStates)) {
+			return this;
+		}
+
+		final Set<STATE> compactedSynchronizedStates = newSet(mStates.size());
+		for (final STATE state : compactedStates) {
+
+			final Set<VARDECL> missing = new HashSet<>(vars);
+			missing.removeAll(state.getVariables());
+			if (missing.isEmpty()) {
+				compactedSynchronizedStates.add(state);
+			} else {
+				compactedSynchronizedStates.add(state.addVariables(missing));
+			}
+		}
+
+		return new AbstractMultiState<>(mMaxSize, compactedSynchronizedStates);
 	}
 
 	public <ACTION> AbstractMultiState<STATE, VARDECL> createValidPostOpStateBeforeLeaving(
