@@ -183,10 +183,11 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 				.collect(Collectors.toSet());
 		final VPState<ACTION> thisHavocced = mStateFactory.havocVariables(dominatorVars, this);
 		
-		Set<VPState<ACTION>> resultStates = Collections.singleton(thisHavocced);
 		
 		final List<EqGraphNode<EqNode, IProgramVarOrConst>> thisHavoccedEqGraphNodesAsList = 
 				new ArrayList<>(thisHavocced.getAllEqGraphNodes());
+
+		Set<VPState<ACTION>> resultStates = Collections.singleton(thisHavocced);
 		
 		for (int i = 0; i < thisHavoccedEqGraphNodesAsList.size(); i++) {
 			for (int j = 0; j < i; j++) {
@@ -208,6 +209,14 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	
 				final EqNode eqn1 = eqgn1.mNodeIdentifier;
 				final EqNode eqn2 = eqgn2.mNodeIdentifier;
+				
+				if (!dominator.getVariables().containsAll(eqn1.getVariables())
+						|| !dominator.getVariables().containsAll(eqn2.getVariables())) {
+					/*
+					 * We don't want to update constraints on expressions that the dominator does not "officially know".
+					 */
+					continue;
+				}
 				
 				if (dominator.areEqual(eqn1, eqn2)) {
 					assert !dominator.areUnEqual(eqn1, eqn2);

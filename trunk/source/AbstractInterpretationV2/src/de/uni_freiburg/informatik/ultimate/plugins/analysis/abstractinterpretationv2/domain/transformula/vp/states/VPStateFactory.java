@@ -139,9 +139,6 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public VPStateBuilder<ACTION> copy(final VPState<ACTION> originalState) {
-		// if (originalState.isBottom()) {
-		// return new VPStateBottomBuilder<>(mDomain).setVars(originalState.getVariables());
-		// }
 		assert !originalState.isBottom() : "no need to copy a bottom state, right?..";
 
 		final VPStateBuilder<ACTION> builder = createEmptyStateBuilder();
@@ -196,48 +193,44 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 	 */
 	private VPState<ACTION> projectToOutVars(final VPTfState tfState) {
 		if (isDebugMode()) {
-			getLogger().debug("VPStateFactory: convertToState(..) (begin)");
+			getLogger().debug("VPStateFactory: projectToOutVars(..) (begin)");
 		}
 		if (tfState.isBottom()) {
-			return getBottomState(tfState.getInVariables());
+			return getBottomState(tfState.getOutVariables());
 		}
 
 		final List<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outVarsAndConstantEqNodes = 
 				new ArrayList<>(tfState.getOutNodes());
 		
-		Set<VPState<ACTION>> statesWithDisEqualitiesAdded = 
+		Set<VPState<ACTION>> intermediateResultStates = 
 				Collections.singleton(getTopState(tfState.getOutVariables()));
-//				Collections.singleton(havocVariables(assignedVars, oldState));
-
 
 		for (int i = 0; i < outVarsAndConstantEqNodes.size(); i++) {
 			for (int j = 0; j < i; j++) {
 				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> outNode1 = outVarsAndConstantEqNodes.get(i);
 				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> outNode2 = outVarsAndConstantEqNodes.get(j);
-
-				if (outNode1 == outNode2) {
-					assert false;
-					continue;
-				}
+				
+				assert !outNode1.equals(outNode2);
+				assert tfState.getOutVariables().containsAll(outNode1.mNodeIdentifier.getEqNode().getVariables());
+				assert tfState.getOutVariables().containsAll(outNode2.mNodeIdentifier.getEqNode().getVariables());
 
 				if (tfState.areUnEqual(outNode1.mNodeIdentifier, outNode2.mNodeIdentifier)) {
-					statesWithDisEqualitiesAdded = VPFactoryHelpers.addDisEquality(outNode1.mNodeIdentifier.getEqNode(),
-							outNode2.mNodeIdentifier.getEqNode(), statesWithDisEqualitiesAdded, this);
+					intermediateResultStates = VPFactoryHelpers.addDisEquality(outNode1.mNodeIdentifier.getEqNode(),
+							outNode2.mNodeIdentifier.getEqNode(), intermediateResultStates, this);
 				}
 			}
 		}
 
-		Set<VPState<ACTION>> resultStates = Collections.unmodifiableSet(statesWithDisEqualitiesAdded);
+		Set<VPState<ACTION>> resultStates = Collections.unmodifiableSet(intermediateResultStates);
 
 		for (int i = 0; i < outVarsAndConstantEqNodes.size(); i++) {
 			for (int j = 0; j < i; j++) {
 				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> outNode1 = outVarsAndConstantEqNodes.get(i);
 				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> outNode2 = outVarsAndConstantEqNodes.get(j);
 
-				if (outNode1 == outNode2) {
-					// no need to equate two identical nodes
-					continue;
-				}
+				assert !outNode1.equals(outNode2);
+				assert tfState.getOutVariables().containsAll(outNode1.mNodeIdentifier.getEqNode().getVariables());
+				assert tfState.getOutVariables().containsAll(outNode2.mNodeIdentifier.getEqNode().getVariables());
 
 				if (tfState.areEqual(outNode1.mNodeIdentifier, outNode2.mNodeIdentifier)) {
 					resultStates = VPFactoryHelpers.addEquality(outNode1.mNodeIdentifier.getEqNode(),
@@ -245,9 +238,11 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 				}
 			}
 		}
+
 		if (isDebugMode()) {
-			getLogger().debug("VPStateFactory: convertToState(..) (end)");
+			getLogger().debug("VPStateFactory: projectToOutVars(..) (end)");
 		}
+
 		assert resultStates.size() == 1 : "??";
 		return resultStates.iterator().next();
 	}
