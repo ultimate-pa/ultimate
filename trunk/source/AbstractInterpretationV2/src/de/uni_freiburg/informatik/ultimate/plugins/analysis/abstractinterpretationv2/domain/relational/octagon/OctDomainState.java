@@ -44,11 +44,11 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
@@ -636,7 +636,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		final List<Term> terms = new ArrayList<>();
 		terms.addAll(getTermNumericAbstraction(script));
 		terms.addAll(getTermBooleanAbstraction(script));
-		return Util.and(script, terms.toArray(new Term[terms.size()]));
+		return SmtUtils.and(script, terms);
 	}
 
 	/** For internal use in {@link #getTerm(Script))}. */
