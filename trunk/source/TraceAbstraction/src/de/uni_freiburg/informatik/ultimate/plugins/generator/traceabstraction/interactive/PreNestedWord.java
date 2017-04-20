@@ -49,7 +49,8 @@ public class PreNestedWord {
 				assert mEnd <= other.mEnd : thisAndOther("Crossing Loops: ", other);
 				return true;
 			}
-			assert mEnd <= other.mStart : thisAndOther("Crossing Loops: ", other);
+			assert mEnd <= other.mStart : thisAndOther(
+					mEnd >= other.mEnd ? "checked parent loop late" : "Crossing Loops: ", other);
 			return false;
 		}
 

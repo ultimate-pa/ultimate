@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
@@ -128,11 +129,29 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 	private PreNestedWord toPreNestedWord(TraceAbstractionProtos.PreNestedWord preNestedWord) {
 		NestingRelation nr = preNestedWord.getNestingRelation();
 		List<Loop> loops = new ArrayList<>();
-		preNestedWord.getLoopList().stream().map(TAConverter::toLoop).forEach(l -> Loop.addLoop(loops, l));
+		TraceAbstractionProtos.PreNestedWord.Loop[] protoloops =
+				new TraceAbstractionProtos.PreNestedWord.Loop[preNestedWord.getLoopList().size()];
+		preNestedWord.getLoopList().toArray(protoloops);
+		Arrays.sort(protoloops, LoopComparator);
+		Arrays.stream(protoloops).map(TAConverter::toLoop).forEach(l -> Loop.addLoop(loops, l));
 		return new PreNestedWord(getServices().getLoggingService().getLogger(PreNestedWord.class),
 				preNestedWord.getSymbolList(), nr.getPendingCallList(), nr.getPendingReturnList(),
 				nr.getInternalNestingMap(), loops);
 	}
+
+	private static Comparator<TraceAbstractionProtos.PreNestedWord.Loop> LoopComparator =
+			new Comparator<TraceAbstractionProtos.PreNestedWord.Loop>() {
+				@Override
+				public int compare(TraceAbstractionProtos.PreNestedWord.Loop o1,
+						TraceAbstractionProtos.PreNestedWord.Loop o2) {
+					final int cmp = Integer.compare(o1.getStartPosition(), o2.getStartPosition());
+					if (cmp != 0)
+						return cmp;
+					// We want outer loops first - thus if the starting point matches
+					// we want loops with bigger endpoints first
+					return Integer.compare(o2.getEndPosition(), o1.getEndPosition());
+				}
+			};
 
 	private static TraceAbstractionProtos.TraceHistogram fromHistogram(HistogramOfIterable<CodeBlock> histogram) {
 		TraceAbstractionProtos.TraceHistogram.Builder builder = TraceAbstractionProtos.TraceHistogram.newBuilder();
