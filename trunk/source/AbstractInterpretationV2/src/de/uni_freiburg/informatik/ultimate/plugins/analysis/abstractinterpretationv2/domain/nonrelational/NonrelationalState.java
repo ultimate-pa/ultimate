@@ -833,7 +833,7 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 			toRemove.add(current.getKey());
 		}
 		if (toRemove.isEmpty()) {
-			return (STATE) this;
+			return getThis();
 		}
 
 		final STATE returnState = createCopy();
