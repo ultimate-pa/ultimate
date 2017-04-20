@@ -1,10 +1,9 @@
-// author: Matthias Heizmann, Christian Schilling
-// date: 2017-04-20
+// Author: Matthias Heizmann, Christian Schilling
+// Date: 2017-04-20
 //
-// This is an example from the paper "Minimization of Visibly Pushdown Automata
-//   Using Partial Max-SAT" (TACAS 2017) (Figure 1a) that shows merging of
-//   states for nested word automata. An extended version of the paper is
-//   available at https://arxiv.org/abs/1701.05160.
+// This is the example from Figure 1a of the paper "Minimization of Visibly 
+//   Pushdown Automata Using Partial Max-SAT" (TACAS 2017) An extended 
+//   version of the paper is available at https://arxiv.org/abs/1701.05160.
 //
 // In automata minimization one can usually merge two states if they have the
 //   same behavior under all words. In this example the states q1 and q2 have
