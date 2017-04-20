@@ -8,12 +8,12 @@ var x : int;
 procedure ULTIMATE.start()
 modifies x;
 {
+	x:=1;
 	call foo();
-	assert old(x) == x - 1;
 }
 
 procedure foo()
 modifies x;
 {
-	x := x + 1;
+	assert old(x) == x ;
 }
