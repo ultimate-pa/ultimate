@@ -329,12 +329,12 @@ public class OctMatrixTest {
 				+ " 10  11  10  11  10  11 ");
 		assertIsEqualTo(expected, a.rearrange(new int[]{1, 1, 1}));
 		expected = OctMatrix.parseBlockLowerTriangular(
-				"inf inf "
-						+ "inf inf "
-						+ "inf inf inf inf "
-						+ "inf inf inf inf "
-						+ "inf inf inf inf inf inf "
-						+ "inf inf inf inf inf inf ");
+				  "inf inf "
+				+ "inf inf "
+				+ "inf inf inf inf "
+				+ "inf inf inf inf "
+				+ "inf inf inf inf inf inf "
+				+ "inf inf inf inf inf inf ");
 		assertIsEqualTo(expected, a.rearrange(new int[]{-1, -1, -1}));
 		expected = OctMatrix.parseBlockLowerTriangular(
 				  "  0   1 "
