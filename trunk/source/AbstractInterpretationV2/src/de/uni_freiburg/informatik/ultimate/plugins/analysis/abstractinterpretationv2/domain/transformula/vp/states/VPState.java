@@ -28,9 +28,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -47,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPSFO;
@@ -176,38 +177,45 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	@Override
 	public VPState<ACTION> patch(final VPState<ACTION> dominator) {
 
-		Set<IProgramVar> dominatorVars = dominator.getVariables().stream()
+		final Set<IProgramVar> dominatorVars = dominator.getVariables().stream()
 				.filter(pvoc -> pvoc instanceof IProgramVar)
 				.map(pvoc -> (IProgramVar) pvoc)
 				.collect(Collectors.toSet());
-		VPState<ACTION> thisHavocced = mStateFactory.havocVariables(dominatorVars, this);
+		final VPState<ACTION> thisHavocced = mStateFactory.havocVariables(dominatorVars, this);
 		
 		Set<VPState<ACTION>> resultStates = Collections.singleton(thisHavocced);
 		
-		for (EqGraphNode<EqNode, IProgramVarOrConst> eqgn1 : thisHavocced.getAllEqGraphNodes()) {
-			for (EqGraphNode<EqNode, IProgramVarOrConst> eqgn2 : thisHavocced.getAllEqGraphNodes()) {
+		final List<EqGraphNode<EqNode, IProgramVarOrConst>> thisHavoccedEqGraphNodesAsList = 
+				new ArrayList<>(thisHavocced.getAllEqGraphNodes());
+		
+		for (int i = 0; i < thisHavoccedEqGraphNodesAsList.size(); i++) {
+			for (int j = 0; j < i; j++) {
+				final EqGraphNode<EqNode, IProgramVarOrConst> eqgn1 = thisHavoccedEqGraphNodesAsList.get(i);
+				final EqGraphNode<EqNode, IProgramVarOrConst> eqgn2 = thisHavoccedEqGraphNodesAsList.get(j);
 
 				if (eqgn1 == eqgn2) {
 					continue;
 				}
 				
+				if (!dominator.getAllEqGraphNodes().contains(eqgn1)
+						|| !dominator.getAllEqGraphNodes().contains(eqgn2)) {
+					/*
+					 *  if the dominator does not know either of the nodes, than he definitely won't have a constraint
+					 *  on them
+					 */
+					continue;
+				}
+	
 				final EqNode eqn1 = eqgn1.mNodeIdentifier;
 				final EqNode eqn2 = eqgn2.mNodeIdentifier;
 				
-				final Set<IProgramVar> eqn1DominatorSharedVars = 
-						VPDomainHelpers.intersect(eqn1.getVariables(), dominatorVars);
-				final Set<IProgramVar> eqn2DominatorSharedVars = 
-						VPDomainHelpers.intersect(eqn2.getVariables(), dominatorVars);
-				
-				if (!eqn1DominatorSharedVars.isEmpty() || !eqn2DominatorSharedVars.isEmpty()) {
-					if (dominator.areEqual(eqn1, eqn2)) {
-						assert !dominator.areUnEqual(eqn1, eqn2);
-						resultStates = VPFactoryHelpers.addEquality(eqn1, eqn2, resultStates, mStateFactory);
-					}  else	if (dominator.areUnEqual(eqn1, eqn2)) {
-						resultStates = VPFactoryHelpers.addDisEquality(eqn1, eqn2, resultStates, mStateFactory);
-					}
-					assert resultStates.size() == 1;
+				if (dominator.areEqual(eqn1, eqn2)) {
+					assert !dominator.areUnEqual(eqn1, eqn2);
+					resultStates = VPFactoryHelpers.addEquality(eqn1, eqn2, resultStates, mStateFactory);
+				}  else	if (dominator.areUnEqual(eqn1, eqn2)) {
+					resultStates = VPFactoryHelpers.addDisEquality(eqn1, eqn2, resultStates, mStateFactory);
 				}
+				assert resultStates.size() == 1;
 			}
 		}
 		

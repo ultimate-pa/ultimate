@@ -80,7 +80,7 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 	protected final Set<IProgramVarOrConst> mOutVars;
 	private final Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mOutNodes;
 	
-	public VPTfState(final IAction action, final VPTfStateBuilder builder,
+	public VPTfState(ManagedScript managedScript, final IAction action, final VPTfStateBuilder builder,
 			final Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> nodeIdToEqGraphNode,
 			final Set<VPTfNodeIdentifier> allNodeIds,
 			final HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> arrayIdToFunctionNodes,
@@ -100,8 +100,7 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 		mOutVars = outVars;
 		mOutNodes = outNodes;
 		
-		assert false : "TODO: obtain script somehow";
-		mScript = null;
+		mScript = managedScript;
 		
 
 		assert isTopConsistent();
