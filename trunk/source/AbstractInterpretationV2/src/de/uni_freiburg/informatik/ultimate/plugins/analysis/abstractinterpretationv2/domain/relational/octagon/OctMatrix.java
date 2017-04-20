@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015-2016 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
- * Copyright (C) 2015-2016 University of Freiburg
+ * Copyright (C) 2015-2017 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
  *
@@ -126,37 +126,6 @@ public class OctMatrix {
 	private static final Consumer<OctMatrix> sDefaultShortestPathClosure =
 			OctMatrix::shortestPathClosurePrimitiveSparse;
 
-	// // Code to generate closure benchmark.
-	// // Writes a string representation of this matrix to a file, each time a closure is computed.
-	// private final static Consumer<OctMatrix> sDefaultShortestPathClosure = m -> {
-	// if (m.mSize <= 0) {
-	// return;
-	// }
-	// String s = m.toStringLower();
-	// BufferedWriter bw;
-	// try {
-	// bw = new BufferedWriter(new FileWriter(makeFilename()), s.length() * 2);
-	// try {
-	// bw.write(s);
-	// } finally {
-	// bw.close();
-	// }
-	// } catch (IOException e) {
-	// throw new AssertionError("Could not write benchmark file.", e);
-	// }
-	// m.shortestPathClosurePrimitiveSparse();
-	// };
-	//
-	// private static String makeFilename() {
-	// int i;
-	// synchronized (OctMatrix.class) {
-	// i = ++sFileNameCounter;
-	// }
-	// return "/tmp/closureBenchmark/" + String.format("%08d", i);
-	// }
-	//
-	// private static volatile int sFileNameCounter = 0;
-
 	/**
 	 * Size of this matrix (size = #rows = #columns). Size is always an even number.
 	 *
@@ -205,7 +174,7 @@ public class OctMatrix {
 	 * @return Copy of this matrix
 	 */
 	public OctMatrix copy() {
-		final OctMatrix copy = new OctMatrix(mSize);
+		final OctMatrix copy = new OctMatrix(variables());
 		System.arraycopy(mEntries, 0, copy.mEntries, 0, mEntries.length);
 		copy.mStrongClosure = (mStrongClosure == this) ? copy : mStrongClosure;
 		copy.mTightClosure = (mTightClosure == this) ? copy : mTightClosure;
@@ -236,12 +205,12 @@ public class OctMatrix {
 	public static OctMatrix parseBlockLowerTriangular(String m) {
 		m = m.trim();
 		final String[] entries = m.length() > 0 ? m.split("\\s+") : new String[0];
-		final int size = (int) (Math.sqrt(2 * entries.length + 1) - 1);
-		if (size % 2 != 0) {
+		final int matrixRows = (int) Math.sqrt(1 + 2 * entries.length) - 1;
+		if (matrixRows % 2 != 0) {
 			throw new IllegalArgumentException(
 					"Number of entries does not match any 2x2 block lower triangular matrix.");
 		}
-		final OctMatrix oct = new OctMatrix(size);
+		final OctMatrix oct = new OctMatrix(matrixRows / 2);
 		for (int i = 0; i < entries.length; ++i) {
 			oct.mEntries[i] = OctValue.parse(entries[i]);
 		}
@@ -271,7 +240,7 @@ public class OctMatrix {
 	 *            Probability that an entry will be infinity (0 = never, 1 = always)
 	 */
 	public static OctMatrix random(final int variables, final double infProbability) {
-		final OctMatrix m = new OctMatrix(variables * 2);
+		final OctMatrix m = new OctMatrix(variables);
 		for (int i = 0; i < m.mSize; ++i) {
 			final int maxCol = i | 1;
 			for (int j = 0; j <= maxCol; ++j) {
@@ -292,14 +261,18 @@ public class OctMatrix {
 	/**
 	 * Creates a new matrix of the given size. Initially, the matrix entries are {@code null}.
 	 *
-	 * @param size
-	 *            Size (= #rows = #columns) of the matrix
+	 * @param variables
+	 *            Number of variables (= 2 * #rows = 2 * #columns) of the matrix
 	 */
-	protected OctMatrix(final int size) {
-		mSize = size;
-		mEntries = new OctValue[size * size / 2 + size];
+	protected OctMatrix(final int variables) {
+		mSize = variables * 2;
+		mEntries = new OctValue[entriesInBlockLowerMatrix(variables)];
 	}
 
+	private int entriesInBlockLowerMatrix(final int variables) {
+		return  2 * (variables * variables + variables);
+	}
+	
 	/**
 	 * Fill this matrix with a given value.
 	 *
@@ -463,7 +436,7 @@ public class OctMatrix {
 	public OctMatrix elementwiseOperation(final OctMatrix other,
 			final BiFunction<OctValue, OctValue, OctValue> operator) {
 		checkCompatibility(other);
-		final OctMatrix result = new OctMatrix(mSize);
+		final OctMatrix result = new OctMatrix(variables());
 		for (int i = 0; i < mEntries.length; ++i) {
 			result.mEntries[i] = operator.apply(mEntries[i], other.mEntries[i]);
 		}
@@ -544,7 +517,6 @@ public class OctMatrix {
 		return true;
 	}
 	
-
 	/**
 	 * Checks whether this and another matrix are compatible for a element-wise operation or relation. An exception is
 	 * thrown for incompatible matrices. Matrixes are compatible if they have the same size.
@@ -570,7 +542,7 @@ public class OctMatrix {
 	public OctMatrix add(final OctMatrix other) {
 		return elementwiseOperation(other, OctValue::add);
 	}
-
+	
 	/**
 	 * Computes the element-wise minimum of two matrices with the same size. The element-wise minimum is a meet operator
 	 * for octagons (over-approximates the intersection of octagons).
@@ -1136,7 +1108,7 @@ public class OctMatrix {
 		} else if (count == 0) {
 			return this;
 		}
-		final OctMatrix n = new OctMatrix(mSize + (2 * count));
+		final OctMatrix n = new OctMatrix(variables() + count);
 		System.arraycopy(mEntries, 0, n.mEntries, 0, mEntries.length);
 		Arrays.fill(n.mEntries, mEntries.length, n.mEntries.length, OctValue.INFINITY);
 		// cached closures are of different size and cannot be (directly) reused
@@ -1215,7 +1187,7 @@ public class OctMatrix {
 		if (count > variables()) {
 			throw new IllegalArgumentException("Cannot remove more variables than exist.");
 		}
-		final OctMatrix n = new OctMatrix(mSize - (2 * count));
+		final OctMatrix n = new OctMatrix(variables() - count);
 		System.arraycopy(mEntries, 0, n.mEntries, 0, n.mEntries.length);
 		// cached closures are of different size and cannot be (directly) reused
 		return n;
@@ -1232,7 +1204,7 @@ public class OctMatrix {
 	 * @return New matrix without the specified block rows/columns
 	 */
 	private OctMatrix removeArbitraryVariables(final Set<Integer> vars) {
-		final OctMatrix n = new OctMatrix(mSize - (2 * vars.size())); // note: sets cannot contain duplicates
+		final OctMatrix n = new OctMatrix(variables() - vars.size()); // note: sets cannot contain duplicates
 		int in = 0;
 		for (int i = 0; i < mSize; ++i) {
 			if (vars.contains(i / 2)) {
