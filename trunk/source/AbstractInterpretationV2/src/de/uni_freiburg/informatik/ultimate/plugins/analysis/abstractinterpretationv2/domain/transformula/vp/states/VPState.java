@@ -159,9 +159,19 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		if (variables == null || variables.isEmpty()) {
 			return this;
 		}
+		
 		final VPStateBuilder<ACTION> copy = mStateFactory.copy(this);
 		copy.removeVars(variables);
-		return copy.build();
+		
+		
+		final Set<IProgramVar> removedVars = variables.stream()
+				.filter(var -> var instanceof IProgramVar)
+				.map(var -> (IProgramVar) var).collect(Collectors.toSet());
+		final VPState<ACTION> havocced = mStateFactory.havocVariables(removedVars, copy.build());
+//		final VPStateBuilder<ACTION> copy = mStateFactory.copy(this);
+//		copy.removeVars(variables);
+//		return copy.build();
+		return havocced;
 	}
 
 	@Override
