@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -142,7 +143,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		if (isFinalResult(absIntResult)) {
 			return absIntResult;
 		}
-		return mHtcSmt.checkInternal(prePred, act, succPred);
+		final Validity result = mHtcSmt.checkInternal(prePred, act, succPred);
+		mHtcSmt.releaseLock();
+		return result;
 	}
 
 	@Override
@@ -151,6 +154,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			return checkCallAbsInt(prePred, act, succPred);
 		}
 		final Validity sdResult = mHtcSd.checkCall(prePred, act, succPred);
+		mHtcSd.releaseLock();
 		if (isFinalResult(sdResult)) {
 			return sdResult;
 		}
@@ -158,7 +162,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		if (isFinalResult(absIntResult)) {
 			return absIntResult;
 		}
-		return mHtcSmt.checkCall(prePred, act, succPred);
+		final Validity result = mHtcSmt.checkCall(prePred, act, succPred);
+		mHtcSmt.releaseLock();
+		return result;
 	}
 
 	@Override
@@ -175,7 +181,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		if (isFinalResult(absIntResult)) {
 			return absIntResult;
 		}
-		return mHtcSmt.checkReturn(preLinPred, preHierPred, act, succPred);
+		final Validity result = mHtcSmt.checkReturn(preLinPred, preHierPred, act, succPred);
+		mHtcSmt.releaseLock();
+		return result;
 	}
 
 	private static boolean isFinalResult(final Validity result) {
@@ -536,6 +544,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	private boolean assertIsSubsetOf(final AbstractMultiState<STATE, VARDECL> leftState,
 			final AbstractMultiState<STATE, VARDECL> rightState, final SubsetResult subResult) {
 		final Script script = mManagedScript.getScript();
+		mHtcSmt.releaseLock();
+
+		script.echo(new QuotedObject("Start isSubsetOf assertion"));
 		final Term left = leftState.getTerm(script);
 		final Term right = rightState.getTerm(script);
 
@@ -557,6 +568,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		result = SmtUtils.checkSatTerm(script, checkedTerm);
 
 		if (result == LBool.UNKNOWN || result == expected) {
+			script.echo(new QuotedObject("End isSubsetOf assertion"));
 			return true;
 		}
 
@@ -578,10 +590,13 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			mLogger.debug("checking   : " + checkedTerm.toStringDirect());
 			mLogger.debug("checkingSim: " + checkSimpl.toStringDirect());
 			mLogger.debug("Result is " + result + " and should be " + expected);
+			mLogger.debug("Solver was " + script.getInfo(":name") + " in version " + script.getInfo(":version"));
+
 		}
 
 		final SubsetResult reComputeForDebug = leftState.isSubsetOf(rightState);
 		mLogger.debug(reComputeForDebug);
+		script.echo(new QuotedObject("End isSubsetOf assertion"));
 		return false;
 	}
 
