@@ -492,8 +492,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 			}
 		}
 
-		if (!cachedSelectiveClosure().elementwiseRelation(other.mNumericAbstraction, OctMatrix.sRelationLessThanOrEqual,
-				matrixPermutationMap(other))) {
+		if (!cachedSelectiveClosure().elementwiseRelation(other.mNumericAbstraction,
+				OctMatrix.sRelationLessThanOrEqual)) {
 			// no need to use other.closure
 			return SubsetResult.NONE;
 		}
@@ -527,7 +527,9 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 *            State with same numeric variables, possibly in another order.
 	 * @return {@code array[index of numeric variable from this state] = index of numeric variable from other state} if
 	 *         permuted, {@code null} otherwise.
+	 * @deprecated  As of release 2017-04-21, a constant order of variables is enforced for al octagons.
 	 */
+	@Deprecated
 	private int[] matrixPermutationMap(final OctDomainState other) {
 		assert mMapNumericVarToIndex.keySet().equals(other.mMapNumericVarToIndex.keySet());
 		boolean permuted = false;
@@ -556,7 +558,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		} else if (thisIsBottom) {
 			return true;
 		}
-		return thisClosure.isEqualTo(otherClosure, matrixPermutationMap(other));
+		return thisClosure.isEqualTo(otherClosure);
 	}
 
 	/**
