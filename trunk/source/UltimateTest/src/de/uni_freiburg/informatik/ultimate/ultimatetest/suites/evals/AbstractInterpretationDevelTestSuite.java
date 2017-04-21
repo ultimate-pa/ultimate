@@ -169,11 +169,22 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 			//current fails
 			"examples/programs/abstractInterpretation/regression/all/bug-nonrelationalpost-smtidentifier.bpl",
 			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
+			
 			"examples/programs/abstractInterpretation/regression/non_con/proc-procedure-without-impl.bpl",
 			"examples/programs/abstractInterpretation/regression/non_con/loop-procedure.bpl",
 			"examples/programs/abstractInterpretation/regression/non_con/proc-looping-call.bpl",
 			"examples/programs/abstractInterpretation/regression/open/int/recursive-CallABAB_count.bpl",
 			"examples/programs/abstractInterpretation/regression/open/comp/recursive-CallABAB_count_incorrect.bpl",
+			
+			"examples/programs/abstractInterpretation/regression/all/proc-local-var-overload.bpl",
+			"examples/programs/abstractInterpretation/regression/non_con/recursive-easy-4.bpl",
+			"examples/programs/abstractInterpretation/regression/open/int/recursive-CallABAB.bpl",
+			"examples/programs/abstractInterpretation/regression/all/bug-AbsIntHTC-noninductive.bpl",
+			"examples/programs/abstractInterpretation/regression/all/proc-globals-easy-1-safe.bpl",
+			"examples/programs/abstractInterpretation/regression/all/bug-AbsIntHTC-subsetunsound.bpl",
+			"examples/programs/abstractInterpretation/regression/non_con/loop-Goto.bpl",
+			"examples/programs/abstractInterpretation/regression/oct/loop-nested.bpl",
+			
 
 			// Assertion Error: null
 //			"examples/svcomp/eca-rers2012/Problem02_label06_true-unreach-call.c",
