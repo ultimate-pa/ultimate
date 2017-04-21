@@ -282,6 +282,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	protected NestedRun<LETTER, IPredicate> getUserRun(final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction)
 			throws AutomataOperationCanceledException {
+		mLogger.info("Asking the user for a trace...");
 		NestedRun<LETTER, IPredicate> userRun = null;
 		/*
 		 * INestedWordAutomatonSimple<LETTER, IPredicate> userAutomaton = null;
@@ -322,6 +323,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 					if (userRun != null)
 						break;
+					mLogger.info("intersection of the automaton that accepts the user-trace with abstraction is empty. "
+							+ "Asking for another user run.");
 				} catch (AutomataLibraryException e) {
 					mLogger.error("Intersection with user automaton failed", e);
 					mInteractive.common().send(e);

@@ -22,9 +22,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class PreNestedWord {
 	final int[] mSymbols;
-	final int[] mNestingRelation;
+	//final int[] mNestingRelation;
 	final List<Integer> mPendingCalls;
 	final List<Integer> mPendingReturns;
+	final List<Loop> mLoops;
 	final Map<Integer, Integer> mInternal;
 	final ILogger mLogger;
 
@@ -64,6 +65,10 @@ public class PreNestedWord {
 			return null;
 		}
 
+		public int ExpandedWordLength() {
+			return mReps * (mEnd - mStart);
+		}
+
 		public boolean equalBounds(Loop other) {
 			return mStart == other.mStart && mEnd == other.mEnd;
 		}
@@ -84,9 +89,12 @@ public class PreNestedWord {
 		mLogger = logger;
 		mPendingCalls = pendingCalls;
 		mPendingReturns = pendingReturns;
+		mLoops = loops;
 		mInternal = internal;
 		// Java still sucks because you have to do this.
 		mSymbols = new int[symbols.size()];
+		IntStream.range(0, mSymbols.length).forEach(i -> mSymbols[i] = symbols.get(i));
+		/*
 		mNestingRelation = new int[mSymbols.length];
 		IntStream.range(0, mSymbols.length).forEach(i -> {
 			mSymbols[i] = symbols.get(i);
@@ -101,6 +109,7 @@ public class PreNestedWord {
 				mNestingRelation[i] = NestedWord.INTERNAL_POSITION;
 			}
 		});
+		*/
 	}
 
 	/*
@@ -108,6 +117,25 @@ public class PreNestedWord {
 	 * 
 	 * }
 	 */
+	private List<Integer> expand(final List<Loop> loops) {
+		final List<Integer> result = new ArrayList<>();
+		expand(loops, result, 0, mSymbols.length);
+		return result;
+	}
+
+	private void expand(final List<Loop> loops, List<Integer> result, int start, final int end) {
+		for (Loop loop : loops) {
+			for (int i = start; i < loop.mStart; i++)
+				result.add(mSymbols[i]);
+			final List<Integer> intermediate = new ArrayList<>();
+			expand(loop.mNested, intermediate, loop.mStart, loop.mEnd);
+			for (int j = 0; j < loop.mReps; j++)
+				result.addAll(intermediate);
+			start = loop.mEnd;
+		}
+		for (int i = start; i < end; i++)
+			result.add(mSymbols[i]);
+	}
 
 	private IPredicate newTruePredicate(PredicateFactory predicateFactory, ManagedScript script) {
 		return predicateFactory.newPredicate(script.getScript().term("true"));
@@ -116,19 +144,52 @@ public class PreNestedWord {
 	public <LETTER> INestedWordAutomatonSimple<LETTER, IPredicate> getAutomaton(final IUltimateServiceProvider services,
 			final INestedWordAutomatonSimple<LETTER, IPredicate> automaton,
 			final IStateFactory<IPredicate> taContentFactory, PredicateFactory predicateFactory, ManagedScript script) {
-		// allAlphabetMap.get(key)
-		// SmtUtils.
 
+		final Set<LETTER> internalAlphabet = automaton.getAlphabet();
+		final Set<LETTER> callAlphabet = automaton.getCallAlphabet();
+		final Set<LETTER> returnAlphabet = automaton.getReturnAlphabet();
+		final Map<Integer, LETTER> internalAlphabetMap =
+				internalAlphabet.stream().collect(Collectors.toMap(Object::hashCode, x -> x));
+		final Map<Integer, LETTER> callAlphabetMap =
+				callAlphabet.stream().collect(Collectors.toMap(Object::hashCode, x -> x));
+		final Map<Integer, LETTER> returnAlphabetMap =
+				returnAlphabet.stream().collect(Collectors.toMap(Object::hashCode, x -> x));
+		//final Map<Integer, LETTER> allAlphabetMap = new HashMap<>();
+		//allAlphabetMap.putAll(internalAlphabetMap);
+		//allAlphabetMap.putAll(callAlphabetMap);
+		//allAlphabetMap.putAll(returnAlphabetMap);
 		final NestedWordAutomaton<LETTER, IPredicate> nwa =
 				new NestedWordAutomaton<>(new AutomataLibraryServices(services), automaton.getAlphabet(),
 						automaton.getCallAlphabet(), automaton.getReturnAlphabet(), taContentFactory);
 
-		// IPredicate previousState = predicateUnifier.getTruePredicate();
 		IPredicate previousState = newTruePredicate(predicateFactory, script);
 		IPredicate previousHierarchyState = null;
 		nwa.addState(true, false, previousState);
 
-		NestedWord<LETTER> word = getNestedWord(automaton);
+		final List<Integer> symbols = expand(mLoops);
+		for (int i = 0; i < symbols.size(); i++) {
+			final boolean isFinal = i >= symbols.size() - 1;
+			final Integer symbolRef = symbols.get(i);
+			final LETTER symbol;
+			IPredicate target = newTruePredicate(predicateFactory, script);
+			nwa.addState(false, isFinal, target);
+			
+			if (callAlphabetMap.containsKey(symbolRef)) {
+				symbol = callAlphabetMap.get(symbolRef);
+				nwa.addCallTransition(previousState, symbol, target);
+				previousHierarchyState = previousState;
+			} else if (returnAlphabetMap.containsKey(symbolRef)) {
+				symbol = returnAlphabetMap.get(symbolRef);
+				nwa.addReturnTransition(previousState, previousHierarchyState, symbol, target);
+			} else if (internalAlphabetMap.containsKey(symbolRef)) {
+				symbol = internalAlphabetMap.get(symbolRef);
+				nwa.addInternalTransition(previousState, symbol, target);
+			}
+
+			previousState = target;
+		}
+		
+		/*NestedWord<LETTER> word = getNestedWord(automaton);
 		mLogger.info("Client has chosen the word: " + word.toString());
 		for (int i = 0; i < mSymbols.length; i++) {
 			final boolean isFinal = i >= mSymbols.length - 1;
@@ -147,7 +208,7 @@ public class PreNestedWord {
 			}
 
 			previousState = target;
-		}
+		}*/
 
 		return nwa;
 	}
@@ -175,7 +236,8 @@ public class PreNestedWord {
 		return word;
 	}
 
+	/*
 	public <LETTER> NestedWord<LETTER> getNestedWord(final INestedWordAutomatonSimple<LETTER, ?> automaton) {
 		return new NestedWord<>(getWord(automaton), mNestingRelation);
-	}
+	}*/
 }
