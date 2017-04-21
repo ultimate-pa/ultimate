@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015-2016 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
- * Copyright (C) 2015-2016 University of Freiburg
+ * Copyright (C) 2015-2017 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
  *
@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -43,7 +44,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 
 /**
  * Matrix representation of octagons, based on A. Miné's "The octagon abstract domain"
@@ -126,37 +126,6 @@ public class OctMatrix {
 	private static final Consumer<OctMatrix> sDefaultShortestPathClosure =
 			OctMatrix::shortestPathClosurePrimitiveSparse;
 
-	// // Code to generate closure benchmark.
-	// // Writes a string representation of this matrix to a file, each time a closure is computed.
-	// private final static Consumer<OctMatrix> sDefaultShortestPathClosure = m -> {
-	// if (m.mSize <= 0) {
-	// return;
-	// }
-	// String s = m.toStringLower();
-	// BufferedWriter bw;
-	// try {
-	// bw = new BufferedWriter(new FileWriter(makeFilename()), s.length() * 2);
-	// try {
-	// bw.write(s);
-	// } finally {
-	// bw.close();
-	// }
-	// } catch (IOException e) {
-	// throw new AssertionError("Could not write benchmark file.", e);
-	// }
-	// m.shortestPathClosurePrimitiveSparse();
-	// };
-	//
-	// private static String makeFilename() {
-	// int i;
-	// synchronized (OctMatrix.class) {
-	// i = ++sFileNameCounter;
-	// }
-	// return "/tmp/closureBenchmark/" + String.format("%08d", i);
-	// }
-	//
-	// private static volatile int sFileNameCounter = 0;
-
 	/**
 	 * Size of this matrix (size = #rows = #columns). Size is always an even number.
 	 *
@@ -205,7 +174,7 @@ public class OctMatrix {
 	 * @return Copy of this matrix
 	 */
 	public OctMatrix copy() {
-		final OctMatrix copy = new OctMatrix(mSize);
+		final OctMatrix copy = new OctMatrix(variables());
 		System.arraycopy(mEntries, 0, copy.mEntries, 0, mEntries.length);
 		copy.mStrongClosure = (mStrongClosure == this) ? copy : mStrongClosure;
 		copy.mTightClosure = (mTightClosure == this) ? copy : mTightClosure;
@@ -236,12 +205,12 @@ public class OctMatrix {
 	public static OctMatrix parseBlockLowerTriangular(String m) {
 		m = m.trim();
 		final String[] entries = m.length() > 0 ? m.split("\\s+") : new String[0];
-		final int size = (int) (Math.sqrt(2 * entries.length + 1) - 1);
-		if (size % 2 != 0) {
+		final int matrixRows = (int) Math.sqrt(1 + 2 * entries.length) - 1;
+		if (matrixRows % 2 != 0) {
 			throw new IllegalArgumentException(
 					"Number of entries does not match any 2x2 block lower triangular matrix.");
 		}
-		final OctMatrix oct = new OctMatrix(size);
+		final OctMatrix oct = new OctMatrix(matrixRows / 2);
 		for (int i = 0; i < entries.length; ++i) {
 			oct.mEntries[i] = OctValue.parse(entries[i]);
 		}
@@ -271,7 +240,7 @@ public class OctMatrix {
 	 *            Probability that an entry will be infinity (0 = never, 1 = always)
 	 */
 	public static OctMatrix random(final int variables, final double infProbability) {
-		final OctMatrix m = new OctMatrix(variables * 2);
+		final OctMatrix m = new OctMatrix(variables);
 		for (int i = 0; i < m.mSize; ++i) {
 			final int maxCol = i | 1;
 			for (int j = 0; j <= maxCol; ++j) {
@@ -292,14 +261,18 @@ public class OctMatrix {
 	/**
 	 * Creates a new matrix of the given size. Initially, the matrix entries are {@code null}.
 	 *
-	 * @param size
-	 *            Size (= #rows = #columns) of the matrix
+	 * @param variables
+	 *            Number of variables (= 2 * #rows = 2 * #columns) of the matrix
 	 */
-	protected OctMatrix(final int size) {
-		mSize = size;
-		mEntries = new OctValue[size * size / 2 + size];
+	protected OctMatrix(final int variables) {
+		mSize = variables * 2;
+		mEntries = new OctValue[entriesInBlockLowerTriangular(variables)];
 	}
 
+	private static int entriesInBlockLowerTriangular(final int variables) {
+		return  2 * (variables * variables + variables);
+	}
+	
 	/**
 	 * Fill this matrix with a given value.
 	 *
@@ -463,7 +436,7 @@ public class OctMatrix {
 	public OctMatrix elementwiseOperation(final OctMatrix other,
 			final BiFunction<OctValue, OctValue, OctValue> operator) {
 		checkCompatibility(other);
-		final OctMatrix result = new OctMatrix(mSize);
+		final OctMatrix result = new OctMatrix(variables());
 		for (int i = 0; i < mEntries.length; ++i) {
 			result.mEntries[i] = operator.apply(mEntries[i], other.mEntries[i]);
 		}
@@ -544,7 +517,6 @@ public class OctMatrix {
 		return true;
 	}
 	
-
 	/**
 	 * Checks whether this and another matrix are compatible for a element-wise operation or relation. An exception is
 	 * thrown for incompatible matrices. Matrixes are compatible if they have the same size.
@@ -569,6 +541,46 @@ public class OctMatrix {
 	 */
 	public OctMatrix add(final OctMatrix other) {
 		return elementwiseOperation(other, OctValue::add);
+	}
+
+	/**
+	 * Create a rearranged version of this matrix. Variables can be swapped, added, or removed.
+	 * 
+	 * @param mapNewToOldVar
+	 *            Array of length {@code n}, where {@code n} is the number of variables inside the rearranged matrix.
+	 *            For variable {@code i} of the rearranged matrix, {@code mapNewToOldVar[i]} is the variable of
+	 *            the source (this) matrix or a negative number if {@code i} is a fresh variable.
+	 * 
+	 * @return Rearranged matrix.
+	 * 
+	 * @see #copySelection(OctMatrix, Map)
+	 */
+	public OctMatrix rearrange(final int[] mapNewToOldVar) {
+		final OctMatrix n = new OctMatrix(mapNewToOldVar.length);
+
+		Map<Integer, Integer> copyTargetFromSourceVar = new HashMap<>();
+		int unchangedPrefixVars = 0;
+		int freshSuffixVars = 0;
+		for(int newVar = 0; newVar < mapNewToOldVar.length; ++newVar) {
+			final int oldVar = mapNewToOldVar[newVar];
+			final boolean addNewVar = oldVar < 0;
+			copyTargetFromSourceVar.put(newVar, addNewVar ? null : oldVar);
+			if (newVar == oldVar && unchangedPrefixVars == newVar) {
+				++unchangedPrefixVars;
+			}
+			if (addNewVar) {
+				++freshSuffixVars;
+			} else {
+				freshSuffixVars = 0;
+			}
+		}
+		final int freshSuffixStartVar = n.variables() - freshSuffixVars;
+		final int unchangedPrefixEntries = entriesInBlockLowerTriangular(unchangedPrefixVars);
+		System.arraycopy(mEntries, 0, n.mEntries, 0, unchangedPrefixEntries);
+		n.copySelection(this, copyTargetFromSourceVar, unchangedPrefixVars, freshSuffixStartVar);
+		final int freshSuffixStart = entriesInBlockLowerTriangular(freshSuffixStartVar);
+		Arrays.fill(n.mEntries, freshSuffixStart, n.mEntries.length, OctValue.INFINITY);
+		return n;
 	}
 
 	/**
@@ -1136,7 +1148,7 @@ public class OctMatrix {
 		} else if (count == 0) {
 			return this;
 		}
-		final OctMatrix n = new OctMatrix(mSize + (2 * count));
+		final OctMatrix n = new OctMatrix(variables() + count);
 		System.arraycopy(mEntries, 0, n.mEntries, 0, mEntries.length);
 		Arrays.fill(n.mEntries, mEntries.length, n.mEntries.length, OctValue.INFINITY);
 		// cached closures are of different size and cannot be (directly) reused
@@ -1215,7 +1227,7 @@ public class OctMatrix {
 		if (count > variables()) {
 			throw new IllegalArgumentException("Cannot remove more variables than exist.");
 		}
-		final OctMatrix n = new OctMatrix(mSize - (2 * count));
+		final OctMatrix n = new OctMatrix(variables() - count);
 		System.arraycopy(mEntries, 0, n.mEntries, 0, n.mEntries.length);
 		// cached closures are of different size and cannot be (directly) reused
 		return n;
@@ -1232,7 +1244,7 @@ public class OctMatrix {
 	 * @return New matrix without the specified block rows/columns
 	 */
 	private OctMatrix removeArbitraryVariables(final Set<Integer> vars) {
-		final OctMatrix n = new OctMatrix(mSize - (2 * vars.size())); // note: sets cannot contain duplicates
+		final OctMatrix n = new OctMatrix(variables() - vars.size()); // note: sets cannot contain duplicates
 		int in = 0;
 		for (int i = 0; i < mSize; ++i) {
 			if (vars.contains(i / 2)) {
@@ -1280,50 +1292,65 @@ public class OctMatrix {
 	 *
 	 * @param source
 	 *            Matrix to copy values from. Must be a different object than this matrix.
-	 * @param mapTargetVarToSourceVar
-	 *            Indices of block rows/columns to be copied. The keys are indices in the source matrix. The values are
-	 *            indices in the target (this) matrix.
+	 * @param mapTargetToSourceVar
+	 *            Indices of block rows/columns to be copied. The keys are indices in the target (this) matrix.
+	 *            The values are indices in the source (a different!) matrix.
+	 *            Values may be {@code null} for new variables. Keys must not be {@code null}.
 	 */
 	protected void copySelection(final OctMatrix source,
-			final BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar) {
+			final Map<Integer, Integer> mapTargetToSourceVar, int skipVarsLessThan, int skipVarsBiggerEqualThan) {
 
-		final BidirectionalMap<Integer, Integer> mapSourceVarToTargetVar = mapTargetVarToSourceVar.inverse();
+		skipVarsLessThan = Math.min(0, skipVarsLessThan);
+		skipVarsBiggerEqualThan = Math.min(variables(), skipVarsBiggerEqualThan);
 
-		if (source.mEntries == mEntries) {
-			for (final Map.Entry<Integer, Integer> entry : mapSourceVarToTargetVar.entrySet()) {
-				if (!entry.getKey().equals(entry.getValue())) {
-					throw new UnsupportedOperationException("Cannot overwrite in place");
-				}
+		assert !containsTautology(source, mapTargetToSourceVar, skipVarsLessThan, skipVarsBiggerEqualThan)
+				: "Overwrite in place with same target and source is not necessary and may cause problems.";
+
+		for (final Map.Entry<Integer, Integer> entry : mapTargetToSourceVar.entrySet()) {
+			final int targetVar = entry.getKey();
+			if (targetVar < skipVarsLessThan || skipVarsBiggerEqualThan <= targetVar) {
+				continue;
 			}
-			return;
-		}
-		for (final Map.Entry<Integer, Integer> entry : mapSourceVarToTargetVar.entrySet()) {
-			final int sourceVar = entry.getKey();
-			final int targetVar = entry.getValue();
+			final Integer sourceVar = entry.getValue();
 			// Copy columns. Rows are copied by coherence.
-			for (int targetOther = 0; targetOther < variables(); ++targetOther) {
-				final Integer row = mapTargetVarToSourceVar.get(targetOther);
-				if (row == null) {
+			for (int targetOther = skipVarsLessThan; targetOther < skipVarsBiggerEqualThan; ++targetOther) {
+				if (targetOther < targetVar  && mapTargetToSourceVar.containsKey(targetOther)) {
+					continue; // coherent block was already copied
+				}
+				final Integer sourceOther = mapTargetToSourceVar.get(targetOther);
+				if (sourceOther == null || sourceVar == null) {
 					setBlock(targetOther, targetVar, OctValue.INFINITY);
 				} else {
-					copyBlock(targetOther, targetVar, /* := */ source, row, sourceVar);
+					copyBlock(targetOther, targetVar, /* := */ source, sourceOther, sourceVar);
 				}
 			}
 		}
 	}
 
+	private boolean containsTautology(final OctMatrix source, final Map<Integer, Integer> mapTargetToSourceVar,
+			final int skipVarsLessThan, final int skipVarsBiggerEqualThan) {
+		return source.mEntries == mEntries && mapTargetToSourceVar.entrySet().stream().anyMatch(entry ->
+				skipVarsLessThan <= entry.getKey() && entry.getKey() < skipVarsBiggerEqualThan
+				&& entry.getKey().equals(entry.getValue()));
+	}
+	
+	/** @see #copySelection(OctMatrix, Map, int) */
+	protected void copySelection(final OctMatrix source, final Map<Integer, Integer> mapTargetToSourceVar) {
+		copySelection(source, mapTargetToSourceVar, 0, Integer.MAX_VALUE);
+	}
+	
 	// TODO document
 	// - selectedSourceVars should not contain duplicates
 	// - iteration order matters
 	public OctMatrix appendSelection(final OctMatrix source, final Collection<Integer> selectedSourceVars) {
 		final OctMatrix m = addVariables(selectedSourceVars.size());
-		final BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar = new BidirectionalMap<>();
+		final Map<Integer, Integer> mapTargetVarToSourceVar = new HashMap<>();
 		for (final Integer sourceVar : selectedSourceVars) {
 			final int targetVar = mapTargetVarToSourceVar.size() + variables();
 			final Integer prevValue = mapTargetVarToSourceVar.put(targetVar, sourceVar);
 			assert prevValue == null : "Selection contained duplicate: " + sourceVar;
 		}
-		m.copySelection(source, mapTargetVarToSourceVar);
+		m.copySelection(source, mapTargetVarToSourceVar); // TODO use skipVarsLessThan parameter
 		return m;
 	}
 
@@ -1332,9 +1359,9 @@ public class OctMatrix {
 		targetBCol *= 2;
 		sourceBRow *= 2;
 		sourceBCol *= 2;
-		for (int j = 0; j < 2; ++j) {
-			for (int i = 0; i < 2; ++i) {
-				set(targetBRow + i, targetBCol + j, source.get(sourceBRow + i, sourceBCol + j));
+		for (int col = 0; col < 2; ++col) {
+			for (int row = 0; row < 2; ++row) {
+				set(targetBRow + row, targetBCol + col, source.get(sourceBRow + row, sourceBCol + col));
 			}
 		}
 	}
@@ -1342,9 +1369,9 @@ public class OctMatrix {
 	protected void setBlock(int bRow, int bCol, final OctValue v) {
 		bRow *= 2;
 		bCol *= 2;
-		for (int j = 0; j < 2; ++j) {
-			for (int i = 0; i < 2; ++i) {
-				set(bRow + i, bCol + j, v);
+		for (int col = 0; col < 2; ++col) {
+			for (int row = 0; row < 2; ++row) {
+				set(bRow + row, bCol + col, v);
 			}
 		}
 	}

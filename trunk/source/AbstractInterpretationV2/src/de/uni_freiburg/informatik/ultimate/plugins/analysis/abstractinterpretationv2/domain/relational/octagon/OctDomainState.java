@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2015-2016 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
- * Copyright (C) 2015-2016 University of Freiburg
+ * Copyright (C) 2015-2017 Claus Schaetzle (schaetzc@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
  *
@@ -53,7 +53,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.TVBool;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
@@ -685,7 +684,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		assertNotBottomBeforeAssign();
 		mIsBottom = TVBool.UNCHECKED;
 		final OctDomainState patchedState = shallowCopy();
-		final BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar = new BidirectionalMap<>();
+		final Map<Integer, Integer> mapTargetVarToSourceVar = new HashMap<>();
 		final SortedMap<Integer, IBoogieVar> mapDominatorIndicesOfNewNumericVars = new TreeMap<>();
 
 		for (final IBoogieVar entry : dominator.mMapVarToBoogieVar) {
@@ -744,7 +743,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		mIsBottom = TVBool.UNCHECKED;
 		// TODO closure in advance to reduce information loss
 
-		final BidirectionalMap<Integer, Integer> mapNumericTargetToSource = new BidirectionalMap<>();
+		final Map<Integer, Integer> mapNumericTargetToSource = new HashMap<>();
 		final List<Pair<IBoogieVar, IBoogieVar>> mapBooleanTargetToSource = new ArrayList<>(mapTargetToSource.size());
 
 		// shared (=global) numeric variables (copy to keep relations between globals and in/out-parameters)

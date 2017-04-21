@@ -1,8 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -10,7 +12,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctMatrix.WideningStepSupplier;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.BidirectionalMap;
 
 public class OctMatrixTest {
 
@@ -129,7 +130,7 @@ public class OctMatrixTest {
 
 	@Test
 	public void testClosureByComparingRandom() {
-		for (int i = 0; i < 2000; ++i) {
+		for (int testcase = 0; testcase < 2000; ++testcase) {
 			final int variables = (int) (Math.random() * 10) + 1;
 			final OctMatrix m = OctMatrix.random(variables);
 			final OctMatrix cNaiv = m.strongClosure(OctMatrix::shortestPathClosureNaiv);
@@ -304,6 +305,76 @@ public class OctMatrixTest {
 	}
 
 	@Test
+	public void testRearrange() {
+		final OctMatrix a = OctMatrix.parseBlockLowerTriangular(
+				  " 0  1 "
+				+ " 2  3 "
+				+ " 4  5  6  7 "
+				+ " 8  9 10 11 ");
+		assertIsEqualTo(a, a.rearrange(new int[]{0, 1}));
+		OctMatrix expected = OctMatrix.NEW;
+		assertIsEqualTo(expected, a.rearrange(new int[]{}));
+		expected = OctMatrix.parseBlockLowerTriangular(
+				  " 6  7 "
+				+ "10 11 "
+				+ " 9  5  0  1 "
+				+ " 8  4  2  3 ");
+		assertIsEqualTo(expected, a.rearrange(new int[]{1, 0}));
+		expected = OctMatrix.parseBlockLowerTriangular(
+				  "  6   7 "
+				+ " 10  11 "
+				+ "  6   7   6   7 "
+				+ " 10  11  10  11 "
+				+ "  6   7   6   7   6   7 "
+				+ " 10  11  10  11  10  11 ");
+		assertIsEqualTo(expected, a.rearrange(new int[]{1, 1, 1}));
+		expected = OctMatrix.parseBlockLowerTriangular(
+				  "inf inf "
+				+ "inf inf "
+				+ "inf inf inf inf "
+				+ "inf inf inf inf "
+				+ "inf inf inf inf inf inf "
+				+ "inf inf inf inf inf inf ");
+		assertIsEqualTo(expected, a.rearrange(new int[]{-1, -1, -1}));
+		expected = OctMatrix.parseBlockLowerTriangular(
+				  "  0   1 "
+				+ "  2   3 "
+				+ "inf inf inf inf "
+				+ "inf inf inf inf "
+				+ "  4   5 inf inf   6   7 "
+				+ "  8   9 inf inf  10  11 "
+				+ "inf inf inf inf inf inf inf inf "
+				+ "inf inf inf inf inf inf inf inf ");
+		assertIsEqualTo(expected, a.rearrange(new int[]{0, -1, 1, -1}));
+		expected = OctMatrix.parseBlockLowerTriangular(
+				  "  6   7 "
+				+ " 10  11 "
+				+ "inf inf inf inf "
+				+ "inf inf inf inf "
+				+ "  9   5 inf inf   0   1 "
+				+ "  8   4 inf inf   2   3 "
+				+ "inf inf inf inf inf inf inf inf "
+				+ "inf inf inf inf inf inf inf inf ");
+		assertIsEqualTo(expected, a.rearrange(new int[]{1, -1, 0, -1}));
+		expected = OctMatrix.parseBlockLowerTriangular(
+				  "  6   7 "
+				+ " 10  11 "
+				+ "  6   7   6   7 "
+				+ " 10  11  10  11 "
+				+ "  9   5   9   5   0   1 "
+				+ "  8   4   8   4   2   3 "
+				+ "  9   5   9   5   0   1   0   1 "
+				+ "  8   4   8   4   2   3   2   3 ");
+		assertIsEqualTo(expected, a.rearrange(new int[]{1, 1, 0, 0}));
+		expected = OctMatrix.parseBlockLowerTriangular(
+				  "inf inf "
+				+ "inf inf "
+				+ "inf inf 0  1 "
+				+ "inf inf 2  3 ");
+		assertIsEqualTo(expected, a.rearrange(new int[]{-1, 0}));
+	}
+
+	@Test
 	public void testCopySelection() {
 		final OctMatrix a = OctMatrix.parseBlockLowerTriangular(
 				  "  1   9 "
@@ -328,10 +399,10 @@ public class OctMatrixTest {
 				+ "inf inf  20  28 "
 				+ ".32 .31 inf inf .19 .27 "
 				+ ".24 .23 inf inf .20 .28 ");
-		final BidirectionalMap<Integer, Integer> mapTargetVarToSourceVar = new BidirectionalMap<>();
-		mapTargetVarToSourceVar.put(2, 1);
-		mapTargetVarToSourceVar.put(0, 3);
-		a.copySelection(b, mapTargetVarToSourceVar);
+		final Map<Integer, Integer> mapTargetToSourceVar = new HashMap<>();
+		mapTargetToSourceVar.put(2, 1);
+		mapTargetToSourceVar.put(0, 3);
+		a.copySelection(b, mapTargetToSourceVar);
 		assertIsEqualTo(expected, a);
 	}
 
