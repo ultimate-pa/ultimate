@@ -6,12 +6,15 @@ import java.util.List;
 import com.google.protobuf.GeneratedMessageV3;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultSummarizer;
+import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResultWithLocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.Converter;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.ConverterRegistry;
 import de.uni_freiburg.informatik.ultimate.servercontroller.ServerController.ResultsWrapper;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller;
+import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Location;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Result;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.ResultSummary;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Results;
@@ -34,8 +37,22 @@ public class ControllerConverter extends Converter<GeneratedMessageV3, Object> {
 	}
 
 	private static Result convertResult(IResult result) {
-		return Result.newBuilder().setPlugin(result.getPlugin()).setShortDescription(result.getShortDescription())
-				.setLongDescription(result.getLongDescription()).build();
+		Result.Builder builder = Result.newBuilder();
+		builder.setPlugin(result.getPlugin()).setShortDescription(result.getShortDescription())
+				.setLongDescription(result.getLongDescription());
+		if (result instanceof IResultWithLocation) {
+			final ILocation loc = ((IResultWithLocation) result).getLocation();
+			builder.setLocation(convertLocation(loc));
+		}
+		return builder.build();
+	}
+
+	private static Location convertLocation(ILocation location) {
+		final Location.Builder builder = Location.newBuilder();
+		builder.setFileName(location.getFileName()).setStartCol(location.getStartColumn())
+				.setEndCol(location.getEndColumn()).setStartLine(location.getStartLine())
+				.setEndLine(location.getEndLine());
+		return builder.build();
 	}
 
 	private static Results convertResults(List<IResult> results) {

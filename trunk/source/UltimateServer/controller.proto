@@ -20,6 +20,7 @@ message Choice {
 		string subtitle = 2;
 		repeated string choice = 3;
 	}
+
 }
 
 message Exception {
@@ -50,8 +51,17 @@ message Results {
 
 message Result {
 	string plugin = 1;
-	string shortDescription = 2;
-	string longDescription = 3;
+	Location location = 2;
+	string shortDescription = 3;
+	string longDescription = 4;
+}
+
+message Location {
+	string fileName = 1;
+	int32 startLine = 2;
+	int32 endLine = 3;
+	int32 startCol = 4;
+	int32 endCol = 5;
 }
 
 enum ToolChainResult {
