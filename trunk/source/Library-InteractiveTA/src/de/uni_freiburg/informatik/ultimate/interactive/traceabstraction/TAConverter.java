@@ -459,9 +459,12 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 			IMLPredicate imlPred = (IMLPredicate) predicate;
 			Arrays.stream(imlPred.getProgramPoints()).map(TAConverter::fromLocation).forEach(builder::addLocation);
 		}
-		builder.setFormulaString(predicate.getFormula().toString())
-				.setFormulaHashCode(predicate.getFormula().hashCode());
-		Arrays.stream(predicate.getProcedures()).forEach(builder::addProcedures);
+		builder.setFormulaString(predicate.getFormula().toString());
+		try {
+			builder.setFormulaHashCode(predicate.getFormula().hashCode());
+			Arrays.stream(predicate.getProcedures()).forEach(builder::addProcedures);
+		} catch (UnsupportedOperationException e) {
+		}
 		return builder.build();
 	}
 
