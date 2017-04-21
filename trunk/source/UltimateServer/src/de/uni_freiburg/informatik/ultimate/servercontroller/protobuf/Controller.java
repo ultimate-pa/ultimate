@@ -6463,6 +6463,16 @@ public final class Controller {
      */
     com.google.protobuf.ByteString
         getLongDescriptionBytes();
+
+    /**
+     * <code>optional string resultClassName = 5;</code>
+     */
+    java.lang.String getResultClassName();
+    /**
+     * <code>optional string resultClassName = 5;</code>
+     */
+    com.google.protobuf.ByteString
+        getResultClassNameBytes();
   }
   /**
    * Protobuf type {@code de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Result}
@@ -6479,6 +6489,7 @@ public final class Controller {
       plugin_ = "";
       shortDescription_ = "";
       longDescription_ = "";
+      resultClassName_ = "";
     }
 
     @java.lang.Override
@@ -6535,6 +6546,12 @@ public final class Controller {
               java.lang.String s = input.readStringRequireUtf8();
 
               longDescription_ = s;
+              break;
+            }
+            case 42: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              resultClassName_ = s;
               break;
             }
           }
@@ -6683,6 +6700,40 @@ public final class Controller {
       }
     }
 
+    public static final int RESULTCLASSNAME_FIELD_NUMBER = 5;
+    private volatile java.lang.Object resultClassName_;
+    /**
+     * <code>optional string resultClassName = 5;</code>
+     */
+    public java.lang.String getResultClassName() {
+      java.lang.Object ref = resultClassName_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        resultClassName_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>optional string resultClassName = 5;</code>
+     */
+    public com.google.protobuf.ByteString
+        getResultClassNameBytes() {
+      java.lang.Object ref = resultClassName_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        resultClassName_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
@@ -6707,6 +6758,9 @@ public final class Controller {
       if (!getLongDescriptionBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 4, longDescription_);
       }
+      if (!getResultClassNameBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 5, resultClassName_);
+      }
     }
 
     public int getSerializedSize() {
@@ -6726,6 +6780,9 @@ public final class Controller {
       }
       if (!getLongDescriptionBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(4, longDescription_);
+      }
+      if (!getResultClassNameBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(5, resultClassName_);
       }
       memoizedSize = size;
       return size;
@@ -6754,6 +6811,8 @@ public final class Controller {
           .equals(other.getShortDescription());
       result = result && getLongDescription()
           .equals(other.getLongDescription());
+      result = result && getResultClassName()
+          .equals(other.getResultClassName());
       return result;
     }
 
@@ -6774,6 +6833,8 @@ public final class Controller {
       hash = (53 * hash) + getShortDescription().hashCode();
       hash = (37 * hash) + LONGDESCRIPTION_FIELD_NUMBER;
       hash = (53 * hash) + getLongDescription().hashCode();
+      hash = (37 * hash) + RESULTCLASSNAME_FIELD_NUMBER;
+      hash = (53 * hash) + getResultClassName().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -6904,6 +6965,8 @@ public final class Controller {
 
         longDescription_ = "";
 
+        resultClassName_ = "";
+
         return this;
       }
 
@@ -6934,6 +6997,7 @@ public final class Controller {
         }
         result.shortDescription_ = shortDescription_;
         result.longDescription_ = longDescription_;
+        result.resultClassName_ = resultClassName_;
         onBuilt();
         return result;
       }
@@ -6988,6 +7052,10 @@ public final class Controller {
         }
         if (!other.getLongDescription().isEmpty()) {
           longDescription_ = other.longDescription_;
+          onChanged();
+        }
+        if (!other.getResultClassName().isEmpty()) {
+          resultClassName_ = other.resultClassName_;
           onChanged();
         }
         onChanged();
@@ -7336,6 +7404,75 @@ public final class Controller {
   checkByteStringIsUtf8(value);
         
         longDescription_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object resultClassName_ = "";
+      /**
+       * <code>optional string resultClassName = 5;</code>
+       */
+      public java.lang.String getResultClassName() {
+        java.lang.Object ref = resultClassName_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          resultClassName_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string resultClassName = 5;</code>
+       */
+      public com.google.protobuf.ByteString
+          getResultClassNameBytes() {
+        java.lang.Object ref = resultClassName_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          resultClassName_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string resultClassName = 5;</code>
+       */
+      public Builder setResultClassName(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        resultClassName_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string resultClassName = 5;</code>
+       */
+      public Builder clearResultClassName() {
+        
+        resultClassName_ = getDefaultInstance().getResultClassName();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string resultClassName = 5;</code>
+       */
+      public Builder setResultClassNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        resultClassName_ = value;
         onChanged();
         return this;
       }
@@ -8236,18 +8373,18 @@ public final class Controller {
       "servercontroller.protobuf.Results:\0028\001\"a\n" +
       "\007Results\022V\n\007results\030\001 \003(\0132E.de.uni_freib" +
       "urg.informatik.ultimate.servercontroller" +
-      ".protobuf.Result\"\246\001\n\006Result\022\016\n\006plugin\030\001 " +
+      ".protobuf.Result\"\277\001\n\006Result\022\016\n\006plugin\030\001 " +
       "\001(\t\022Y\n\010location\030\002 \001(\0132G.de.uni_freiburg." +
       "informatik.ultimate.servercontroller.pro" +
       "tobuf.Location\022\030\n\020shortDescription\030\003 \001(\t" +
-      "\022\027\n\017longDescription\030\004 \001(\t\"b\n\010Location\022\020\n" +
-      "\010fileName\030\001 \001(\t\022\021\n\tstartLine\030\002 \001(\005\022\017\n\007en",
-      "dLine\030\003 \001(\005\022\020\n\010startCol\030\004 \001(\005\022\016\n\006endCol\030" +
-      "\005 \001(\005*\205\001\n\017ToolChainResult\022\021\n\rGENERICRESU" +
-      "LT\020\000\022\025\n\010NORESULT\020\377\377\377\377\377\377\377\377\377\001\022\013\n\007CORRECT\020\001" +
-      "\022\016\n\nUNPROVABLE\020\002\022\013\n\007TIMEOUT\020\003\022\r\n\tINCORRE" +
-      "CT\020\004\022\017\n\013SYNTAXERROR\020\005B\014B\nControllerb\006pro" +
-      "to3"
+      "\022\027\n\017longDescription\030\004 \001(\t\022\027\n\017resultClass" +
+      "Name\030\005 \001(\t\"b\n\010Location\022\020\n\010fileName\030\001 \001(\t",
+      "\022\021\n\tstartLine\030\002 \001(\005\022\017\n\007endLine\030\003 \001(\005\022\020\n\010" +
+      "startCol\030\004 \001(\005\022\016\n\006endCol\030\005 \001(\005*\205\001\n\017ToolC" +
+      "hainResult\022\021\n\rGENERICRESULT\020\000\022\025\n\010NORESUL" +
+      "T\020\377\377\377\377\377\377\377\377\377\001\022\013\n\007CORRECT\020\001\022\016\n\nUNPROVABLE\020" +
+      "\002\022\013\n\007TIMEOUT\020\003\022\r\n\tINCORRECT\020\004\022\017\n\013SYNTAXE" +
+      "RROR\020\005B\014B\nControllerb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -8326,7 +8463,7 @@ public final class Controller {
     internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Result_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Result_descriptor,
-        new java.lang.String[] { "Plugin", "Location", "ShortDescription", "LongDescription", });
+        new java.lang.String[] { "Plugin", "Location", "ShortDescription", "LongDescription", "ResultClassName", });
     internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Location_descriptor =
       getDescriptor().getMessageTypes().get(8);
     internal_static_de_uni_freiburg_informatik_ultimate_servercontroller_protobuf_Location_fieldAccessorTable = new

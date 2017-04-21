@@ -54,6 +54,7 @@ message Result {
 	Location location = 2;
 	string shortDescription = 3;
 	string longDescription = 4;
+	string resultClassName = 5;
 }
 
 message Location {

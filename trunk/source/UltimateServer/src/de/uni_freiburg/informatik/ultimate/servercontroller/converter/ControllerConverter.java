@@ -39,7 +39,7 @@ public class ControllerConverter extends Converter<GeneratedMessageV3, Object> {
 	private static Result convertResult(IResult result) {
 		Result.Builder builder = Result.newBuilder();
 		builder.setPlugin(result.getPlugin()).setShortDescription(result.getShortDescription())
-				.setLongDescription(result.getLongDescription());
+				.setResultClassName(result.getClass().getSimpleName()).setLongDescription(result.getLongDescription());
 		if (result instanceof IResultWithLocation) {
 			final ILocation loc = ((IResultWithLocation) result).getLocation();
 			builder.setLocation(convertLocation(loc));
