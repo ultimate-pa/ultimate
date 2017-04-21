@@ -96,14 +96,14 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
  */
 public class PredicateUnifier implements IPredicateUnifier {
 
-	private final ManagedScript mMgnScript;
+	protected final ManagedScript mMgnScript;
 	private final BasicPredicateFactory mPredicateFactory;
 	private final Map<Term, IPredicate> mTerm2Predicates;
 	private final LinkedHashSet<IPredicate> mKnownPredicates = new LinkedHashSet<>();
 	private final Map<IPredicate, IPredicate> mDeprecatedPredicates = new HashMap<>();
 	private final CoverageRelation mCoverageRelation = new CoverageRelation();
-	private final ILogger mLogger;
-	private final IUltimateServiceProvider mServices;
+	protected final ILogger mLogger;
+	protected final IUltimateServiceProvider mServices;
 	private final Script mScript;
 	private final MonolithicImplicationChecker mImplicationChecker;
 	private final IIcfgSymbolTable mSymbolTable;
