@@ -185,6 +185,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 		}
 
 		if (!other.getVariables().equals(getVariables())) {
+			assert false;
 			return SubsetResult.NONE;
 		}
 		if (other.mStates.isEmpty() && !mStates.isEmpty()) {
@@ -194,7 +195,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 		SubsetResult result = SubsetResult.EQUAL;
 		for (final STATE state : mStates) {
 			final Optional<SubsetResult> min =
-					other.mStates.stream().map(state::isSubsetOf).min((a, b) -> a.compareTo(b));
+					other.mStates.stream().map(state::isSubsetOf).max((a, b) -> a.compareTo(b));
 			if (min.isPresent()) {
 				result = result.min(min.get());
 			}
