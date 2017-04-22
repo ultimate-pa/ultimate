@@ -1351,7 +1351,25 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 
 	@Override
 	public OctDomainState compact() {
-		// TODO implement
-		return this;
+		return removeVariables(topVariables());
 	}
+
+	private Collection<IBoogieVar> topVariables() {
+		ArrayList<IBoogieVar> topVariables = new ArrayList<>();
+		// find boolean top variables
+		for (Map.Entry<IBoogieVar, BoolValue> boolVarToValue : mBooleanAbstraction.entrySet()) {
+			if (boolVarToValue.getValue() == BoolValue.TOP) {
+				topVariables.add(boolVarToValue.getKey());
+			}
+		}
+		// find numeric top variables
+		Set<Integer> varIndicesWithConstraints = mNumericAbstraction.variablesWithConstraints();
+		for (Map.Entry<IBoogieVar, Integer> numVarToIndex : mMapNumericVarToIndex.entrySet()) {
+			if (!varIndicesWithConstraints.contains(numVarToIndex.getValue())) {
+				topVariables.add(numVarToIndex.getKey());
+			}
+		}
+		return topVariables();
+	}
+
 }
