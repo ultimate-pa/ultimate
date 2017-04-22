@@ -139,6 +139,12 @@ message Predicate {
 	int32 formulaHashCode = 4;
 }
 
+message Message {
+	string title = 1;
+	string subtitle = 2;
+	string text = 3;
+}
+
 message IcfgLocation {
 	string procedure = 2;
 	string debugIdentifier = 1;
