@@ -188,8 +188,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	}
 
 	/**
-	 * Deep-copy {@link #mVariables} to {@code other} state iff this and {@code other} share the same object.
-	 * This state remains unchanged.
+	 * Deep-copy {@link #mVariables} to {@code other} state iff this and {@code other} share the same object. This state
+	 * remains unchanged.
 	 *
 	 * @param other
 	 *            State to be unreferenced from this state.
@@ -1119,9 +1119,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 
 			}
 			// else: variables of unsupported types are assumed to be \top all the time
-			assert mVariables.contains(targetVar)
-					&& mVariables.contains(sourceVar) : "unknown variable in assignment: " + targetVar + " := "
-							+ sourceVar;
+			assert mVariables.contains(targetVar) && mVariables.contains(sourceVar) : "unknown variable in assignment: "
+					+ targetVar + " := " + sourceVar;
 		}
 	}
 
@@ -1355,21 +1354,21 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	}
 
 	private Collection<IBoogieVar> topVariables() {
-		ArrayList<IBoogieVar> topVariables = new ArrayList<>();
+		final ArrayList<IBoogieVar> topVariables = new ArrayList<>();
 		// find boolean top variables
-		for (Map.Entry<IBoogieVar, BoolValue> boolVarToValue : mBooleanAbstraction.entrySet()) {
+		for (final Map.Entry<IBoogieVar, BoolValue> boolVarToValue : mBooleanAbstraction.entrySet()) {
 			if (boolVarToValue.getValue() == BoolValue.TOP) {
 				topVariables.add(boolVarToValue.getKey());
 			}
 		}
 		// find numeric top variables
-		Set<Integer> varIndicesWithConstraints = mNumericAbstraction.variablesWithConstraints();
-		for (Map.Entry<IBoogieVar, Integer> numVarToIndex : mMapNumericVarToIndex.entrySet()) {
+		final Set<Integer> varIndicesWithConstraints = mNumericAbstraction.variablesWithConstraints();
+		for (final Map.Entry<IBoogieVar, Integer> numVarToIndex : mMapNumericVarToIndex.entrySet()) {
 			if (!varIndicesWithConstraints.contains(numVarToIndex.getValue())) {
 				topVariables.add(numVarToIndex.getKey());
 			}
 		}
-		return topVariables();
+		return topVariables;
 	}
 
 }
