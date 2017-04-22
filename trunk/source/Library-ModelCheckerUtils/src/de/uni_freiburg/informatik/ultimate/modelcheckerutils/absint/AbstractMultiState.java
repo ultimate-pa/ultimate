@@ -496,4 +496,23 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 		return maximalElements;
 	}
 
+	/**
+	 * Creates one {@link AbstractMultiState} from a Collection of states, even if these states are already
+	 * {@link AbstractMultiState}s, essentially flattening the disjunction.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> AbstractMultiState<STATE, VARDECL>
+			flatten(final Collection<STATE> states) {
+
+		final Set<STATE> disjuncts = new HashSet<>();
+		for (final STATE state : states) {
+			if (state instanceof AbstractMultiState<?, ?>) {
+				disjuncts.addAll(((AbstractMultiState<STATE, VARDECL>) state).getStates());
+			} else {
+				disjuncts.add(state);
+			}
+		}
+		return new AbstractMultiState<>(disjuncts);
+	}
+
 }
