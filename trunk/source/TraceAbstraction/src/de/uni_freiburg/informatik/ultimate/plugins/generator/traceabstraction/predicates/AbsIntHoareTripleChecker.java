@@ -414,21 +414,30 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	private AbstractMultiState<STATE, VARDECL> synchronizeState(final AbstractMultiState<STATE, VARDECL> template,
 			final AbstractMultiState<STATE, VARDECL> toSynchronize) {
 
-		final AbstractMultiState<STATE, VARDECL> rtr =
-				AbsIntUtil.synchronizeVariables(template, unifyBottom(toSynchronize));
-		assert assertBottomRetained(unifyBottom(toSynchronize), null, rtr,
-				() -> AbsIntUtil.synchronizeVariables(template, toSynchronize)) : MSG_BOTTOM_WAS_LOST;
+		final AbstractMultiState<STATE, VARDECL> unifiedToSynchronize = unifyBottom(toSynchronize);
+		if (unifiedToSynchronize == mBottomState) {
+			return unifiedToSynchronize;
+		}
+		final AbstractMultiState<STATE, VARDECL> rtr = AbsIntUtil.synchronizeVariables(template, unifiedToSynchronize);
+		assert assertBottomRetained(unifiedToSynchronize, null, rtr,
+				() -> AbsIntUtil.synchronizeVariables(template, unifiedToSynchronize)) : MSG_BOTTOM_WAS_LOST;
 		return rtr;
 	}
 
 	private AbstractMultiState<STATE, VARDECL> createValidPostOpStateAfterLeaving(final ACTION act,
 			final AbstractMultiState<STATE, VARDECL> preState, final AbstractMultiState<STATE, VARDECL> preHierState) {
 
-		final AbstractMultiState<STATE, VARDECL> rtr =
-				unifyBottom(preState).createValidPostOpStateAfterLeaving(mVarProvider, act, unifyBottom(preHierState));
+		final AbstractMultiState<STATE, VARDECL> unifiedPreState = unifyBottom(preState);
+		if (unifiedPreState == mBottomState) {
+			return unifiedPreState;
+		}
+		final AbstractMultiState<STATE, VARDECL> unifiedPreHierState = unifyBottom(preHierState);
 
-		assert assertBottomRetained(preState, preHierState, rtr, () -> preState
-				.createValidPostOpStateAfterLeaving(mVarProvider, act, preHierState)) : MSG_BOTTOM_WAS_LOST;
+		final AbstractMultiState<STATE, VARDECL> rtr =
+				unifiedPreState.createValidPostOpStateAfterLeaving(mVarProvider, act, unifiedPreHierState);
+
+		assert assertBottomRetained(preState, preHierState, rtr, () -> unifiedPreState
+				.createValidPostOpStateAfterLeaving(mVarProvider, act, unifiedPreHierState)) : MSG_BOTTOM_WAS_LOST;
 		return rtr;
 	}
 
@@ -449,12 +458,17 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	}
 
 	private AbstractMultiState<STATE, VARDECL> createValidPostOpStateBeforeLeaving(final ACTION act,
-			final AbstractMultiState<STATE, VARDECL> preLin) {
+			final AbstractMultiState<STATE, VARDECL> preState) {
 
+		final AbstractMultiState<STATE, VARDECL> unifiedPreState = unifyBottom(preState);
+		if (unifiedPreState == mBottomState) {
+			return unifiedPreState;
+		}
 		final AbstractMultiState<STATE, VARDECL> rtr =
-				unifyBottom(preLin).createValidPostOpStateBeforeLeaving(mVarProvider, act);
-		assert assertBottomRetained(preLin, null, rtr,
-				() -> preLin.createValidPostOpStateBeforeLeaving(mVarProvider, act)) : MSG_BOTTOM_WAS_LOST;
+				unifiedPreState.createValidPostOpStateBeforeLeaving(mVarProvider, act);
+
+		assert assertBottomRetained(preState, null, rtr,
+				() -> unifiedPreState.createValidPostOpStateBeforeLeaving(mVarProvider, act)) : MSG_BOTTOM_WAS_LOST;
 		return rtr;
 	}
 
