@@ -711,9 +711,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		final OctDomainState patchedState = shallowCopy();
 		patchedState.mIsBottom = TVBool.UNCHECKED;
 		final SortedMap<IBoogieVar, Integer> mapNumVarsToDominatorIndices = new TreeMap<>(sLexicalVarComparator);
-		mMapNumericVarToIndex.entrySet().forEach(varToOldIndex ->
-				mapNumVarsToDominatorIndices.put(varToOldIndex.getKey(), null));
-		mapNumVarsToDominatorIndices.putAll(mMapNumericVarToIndex); // patched variables will be overwritten later
+		mMapNumericVarToIndex.entrySet().forEach(varToOldIndex -> mapNumVarsToDominatorIndices.put(
+				varToOldIndex.getKey(), null)); // patched variables will be overwritten later
 
 		for (final IBoogieVar newBoogieVar : dominator.mMapVarToBoogieVar) {
 			unrefOtherMapVarToBoogieVar(patchedState);
@@ -1176,7 +1175,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 
 	@Override
 	public String toLogString() {
-		return mLogStringFunction.apply(this);
+		return logStringHalfMatrix();
+		//return mLogStringFunction.apply(this);
 	}
 
 	/**
@@ -1339,6 +1339,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 
 	@Override
 	public OctDomainState compact() {
+		// TODO implement
 		return this;
 	}
 }
