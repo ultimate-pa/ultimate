@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -60,8 +59,8 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	private final int mMaxSize;
 	private final int mId;
 
-	public AbstractMultiState(final int maxSize) {
-		this(maxSize, newSet(maxSize));
+	public AbstractMultiState() {
+		this(Collections.emptySet());
 	}
 
 	public AbstractMultiState(final int maxSize, final STATE state) {
@@ -72,7 +71,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 		this(1, Collections.singleton(state));
 	}
 
-	public AbstractMultiState(final Set<STATE> state) {
+	private AbstractMultiState(final Set<STATE> state) {
 		this(state.size(), state);
 	}
 
@@ -194,11 +193,11 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 
 		SubsetResult result = SubsetResult.EQUAL;
 		for (final STATE state : mStates) {
-			final Optional<SubsetResult> min =
-					other.mStates.stream().map(state::isSubsetOf).max((a, b) -> a.compareTo(b));
-			if (min.isPresent()) {
-				result = result.min(min.get());
+			SubsetResult max = SubsetResult.NONE;
+			for (final STATE otherState : other.mStates) {
+				max = state.isSubsetOf(otherState).max(max);
 			}
+			result = result.min(max);
 			if (result == SubsetResult.NONE) {
 				break;
 			}
@@ -467,7 +466,56 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 		return reducibleSet;
 	}
 
-	private Set<STATE> getMaximalElements(final Set<STATE> states) {
+	/**
+	 * Creates one {@link AbstractMultiState} from a Collection of states, even if these states are already
+	 * {@link AbstractMultiState}s, essentially flattening the disjunction.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> AbstractMultiState<STATE, VARDECL>
+			createDisjunction(final Collection<STATE> states) {
+
+		final Set<STATE> disjuncts = new HashSet<>();
+		for (final STATE state : states) {
+			if (state instanceof AbstractMultiState<?, ?>) {
+				disjuncts.addAll(((AbstractMultiState<STATE, VARDECL>) state).getStates());
+			} else {
+				disjuncts.add(state);
+			}
+		}
+		return new AbstractMultiState<>(reduce(disjuncts, disjuncts.size()));
+	}
+
+	private static <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> Set<STATE> reduce(final Set<STATE> states,
+			final int maxsize) {
+		final Set<STATE> maximalElements = getMaximalElements(states);
+		if (maximalElements.size() <= maxsize) {
+			return maximalElements;
+		}
+		return reduceByOrderedMerge(maximalElements, maxsize);
+	}
+
+	private static <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> Set<STATE>
+			reduceByOrderedMerge(final Set<STATE> states, final int maxsize) {
+		final Set<STATE> reducibleSet = new LinkedHashSet<>(states);
+		int numberOfMerges = states.size() - maxsize;
+		while (numberOfMerges > 0) {
+			final Iterator<STATE> iter = reducibleSet.iterator();
+			final STATE first = iter.next();
+			iter.remove();
+			final STATE second = iter.next();
+			iter.remove();
+			if (reducibleSet.add(first.union(second))) {
+				--numberOfMerges;
+			} else {
+				numberOfMerges -= 2;
+			}
+		}
+		assert reducibleSet.size() <= maxsize;
+		return reducibleSet;
+	}
+
+	private static <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> Set<STATE>
+			getMaximalElements(final Set<STATE> states) {
 		if (states.isEmpty() || states.size() == 1) {
 			return states;
 		}
@@ -496,25 +544,6 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 		}
 		assert maximalElements.stream().filter(STATE::isBottom).count() <= 1 : "There can be only one bottom element";
 		return maximalElements;
-	}
-
-	/**
-	 * Creates one {@link AbstractMultiState} from a Collection of states, even if these states are already
-	 * {@link AbstractMultiState}s, essentially flattening the disjunction.
-	 */
-	@SuppressWarnings("unchecked")
-	public static <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> AbstractMultiState<STATE, VARDECL>
-			flatten(final Collection<STATE> states) {
-
-		final Set<STATE> disjuncts = new HashSet<>();
-		for (final STATE state : states) {
-			if (state instanceof AbstractMultiState<?, ?>) {
-				disjuncts.addAll(((AbstractMultiState<STATE, VARDECL>) state).getStates());
-			} else {
-				disjuncts.add(state);
-			}
-		}
-		return new AbstractMultiState<>(disjuncts);
 	}
 
 }

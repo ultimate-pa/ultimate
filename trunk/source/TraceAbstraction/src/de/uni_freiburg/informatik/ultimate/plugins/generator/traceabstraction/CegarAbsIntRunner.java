@@ -684,7 +684,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			}
 			final Set<AbstractMultiState<STATE, IBoogieVar>> multistates =
 					minimalSubset.stream().map(a -> ((AbsIntPredicate<STATE, ?>) a).getAbstractStates())
-							.map(a -> AbstractMultiState.flatten(a)).collect(Collectors.toSet());
+							.map(a -> AbstractMultiState.createDisjunction(a)).collect(Collectors.toSet());
 			final Set<AbstractMultiState<STATE, IBoogieVar>> synchronizedMultiStates =
 					AbsIntUtil.synchronizeVariables(multistates);
 			assert sameVars(synchronizedMultiStates.stream().flatMap(a -> a.getStates().stream())
@@ -712,7 +712,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 
 		private AbstractMultiState<STATE, IBoogieVar> toDisjunctiveState(final Set<IPredicate> preds) {
 			if (preds == null || preds.isEmpty()) {
-				return new AbstractMultiState<>(Collections.emptySet());
+				return new AbstractMultiState<>();
 			}
 			final Set<STATE> allStates = new HashSet<>();
 			for (final IPredicate pred : preds) {
@@ -726,7 +726,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				}
 
 			}
-			return new AbstractMultiState<>(AbsIntUtil.synchronizeVariables(allStates));
+			return AbstractMultiState.createDisjunction(AbsIntUtil.synchronizeVariables(allStates));
 		}
 
 		private boolean sameVars(final Set<STATE> allStates) {

@@ -389,13 +389,13 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		if (pred instanceof AbsIntPredicate<?, ?>) {
 			final Set<STATE> states = ((AbsIntPredicate<STATE, ?>) pred).getAbstractStates();
 			if (states.size() <= 1) {
-				return AbstractMultiState.flatten(states);
+				return AbstractMultiState.createDisjunction(states);
 			}
 			final Set<VARDECL> vars = new HashSet<>();
 			states.stream().forEach(a -> vars.addAll(a.getVariables()));
 			final Set<STATE> synchronizedStates =
 					states.stream().map(a -> AbsIntUtil.synchronizeVariables(a, vars)).collect(Collectors.toSet());
-			return new AbstractMultiState<>(synchronizedStates);
+			return AbstractMultiState.createDisjunction(synchronizedStates);
 		} else if (pred.equals(mTruePred)) {
 			return mTopState;
 		} else if (pred.equals(mFalsePred)) {
