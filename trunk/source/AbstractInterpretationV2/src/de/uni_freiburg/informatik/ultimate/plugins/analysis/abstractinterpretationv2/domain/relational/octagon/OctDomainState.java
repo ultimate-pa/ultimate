@@ -1175,8 +1175,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 
 	@Override
 	public String toLogString() {
-		return logStringHalfMatrix();
-		//return mLogStringFunction.apply(this);
+		return mLogStringFunction.apply(this);
 	}
 
 	/**
