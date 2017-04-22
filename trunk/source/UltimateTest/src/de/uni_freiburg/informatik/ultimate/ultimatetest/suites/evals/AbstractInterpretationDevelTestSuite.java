@@ -133,10 +133,10 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AbstractInterpretationInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP.epf"),
 //			new Triple<>("AbstractInterpretationInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT.epf"),
 //			new Triple<>("AbstractInterpretationInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON.epf"),
-			new Triple<>("AbstractInterpretationInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_DEBUG.epf"),
-			new Triple<>("AbstractInterpretationInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_DEBUG.epf"),
-			new Triple<>("AbstractInterpretationInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_DEBUG.epf"),
-			new Triple<>("AbstractInterpretationInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_DEBUG.epf"),
+			new Triple<>("AbstractInterpretationInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_INT_Debug.epf"),
+			new Triple<>("AbstractInterpretationInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_COMP_Debug.epf"),
+			new Triple<>("AbstractInterpretationInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
+			new Triple<>("AbstractInterpretationInline.xml", BPL, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_CON_Debug.epf"),
 
 
 			//### C Inline
@@ -145,16 +145,11 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Automizer_Default+AIv2_OCT_Debug.epf"),
 
 			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Taipan_Default.epf"),
-			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-RubberTaipan_Default.epf"),
+//			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-RubberTaipan_Default.epf"),
 //			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-Taipan_Default_Debug.epf"),
-//			new Triple<>("AutomizerCInline.xml", C, "ai/svcomp-Reach-32bit-RubberTaipan_Default_Debug.epf"),
 	};
 
 	private static final String[] INPUT = new String[] {
-
-//			"examples/programs/abstractInterpretation/stmt-old.bpl",
-//			"examples/programs/abstractInterpretation/bug-old-stmt-1.bpl",
-//			"examples/programs/abstractInterpretation/bug-old-stmt-2.bpl",
 
 			// ultimate benchmark path programs (.bpl)
 //			"examples/ultbench-programs/20170412-SvcompReachPathPrograms/afterMapElimination",
@@ -165,13 +160,15 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 //			"examples/programs/abstractInterpretation/regression/open/int/stmt-bool-true-assign-top.bpl",
 //			"examples/programs/abstractInterpretation/regression/non_con/loop-literal-widening-predicate-weakening.bpl",
 
+			//old vars support
+			"examples/programs/abstractInterpretation/stmt-old-1.bpl",
+			"examples/programs/abstractInterpretation/stmt-old-2.bpl",
+//			"examples/programs/abstractInterpretation/bug-old-stmt-1.bpl",
+//			"examples/programs/abstractInterpretation/bug-old-stmt-2.bpl",
 
 			//current fails
-			"examples/programs/abstractInterpretation/regression/all/bug-nonrelationalpost-smtidentifier.bpl",
-			"examples/programs/abstractInterpretation/regression/all/recursive-easy-3.bpl",
-			"examples/programs/abstractInterpretation/regression/non_con/proc-procedure-without-impl.bpl",
-			"examples/programs/abstractInterpretation/regression/non_con/loop-procedure.bpl",
-			"examples/programs/abstractInterpretation/regression/non_con/proc-looping-call.bpl",
+			"examples/programs/abstractInterpretation/regression/open/comp/recursive-CallABAB_count_incorrect.bpl",
+			"examples/programs/abstractInterpretation/regression/open/int/recursive-CallABAB_count.bpl",
 
 			// Assertion Error: null
 //			"examples/svcomp/eca-rers2012/Problem02_label06_true-unreach-call.c",
@@ -190,7 +187,8 @@ public class AbstractInterpretationDevelTestSuite extends AbstractEvalTestSuite 
 	@Override
 	protected long getTimeout() {
 		// return 90 * 1000 * 1000;
-		return 15 * 1000;
+		// return 15 * 1000;
+		return 30 * 1000;
 		// return 90 * 1000;
 		// return 180 * 1000;
 		// return 15 * 60 * 1000;

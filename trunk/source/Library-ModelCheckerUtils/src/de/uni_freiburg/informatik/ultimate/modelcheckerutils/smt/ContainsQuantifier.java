@@ -26,6 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -44,9 +47,24 @@ public class ContainsQuantifier extends NonRecursive {
 	
 	private boolean mQuantifierFound;
 	private int mFirstQuantifierFound = -1;
+	private Set<Term> mTermsInWhichWeAlreadyDescended;
 	
 	class QuantifierFinder extends TermWalker {
 		QuantifierFinder(final Term term) { super(term); }
+		
+		
+		@Override
+		public void walk(final NonRecursive walker) {
+			if (mQuantifierFound) {
+				// do nothing
+			} else {
+				if (mTermsInWhichWeAlreadyDescended.contains(getTerm())) {
+					// do nothing
+				} else {
+					super.walk(walker);
+				}
+			}
+		}
 		
 		@Override
 		public void walk(final NonRecursive walker, final ConstantTerm term) {
@@ -58,6 +76,7 @@ public class ContainsQuantifier extends NonRecursive {
 		}
 		@Override
 		public void walk(final NonRecursive walker, final ApplicationTerm term) {
+			mTermsInWhichWeAlreadyDescended.add(term);
 			for (final Term t : term.getParameters()) {
 				walker.enqueueWalker(new QuantifierFinder(t));
 			}
@@ -85,7 +104,10 @@ public class ContainsQuantifier extends NonRecursive {
 	public boolean containsQuantifier(final Term term) {
 		mFirstQuantifierFound = -1;
 		mQuantifierFound = false;
+		assert mTermsInWhichWeAlreadyDescended == null;
+		mTermsInWhichWeAlreadyDescended = new HashSet<>();
 		run(new QuantifierFinder(term));
+		mTermsInWhichWeAlreadyDescended = null;
 		return mQuantifierFound;
 	}
 	

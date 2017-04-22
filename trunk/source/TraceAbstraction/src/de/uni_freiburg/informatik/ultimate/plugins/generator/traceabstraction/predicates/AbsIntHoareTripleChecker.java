@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
+import de.uni_freiburg.informatik.ultimate.logic.QuotedObject;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -142,7 +143,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		if (isFinalResult(absIntResult)) {
 			return absIntResult;
 		}
-		return mHtcSmt.checkInternal(prePred, act, succPred);
+		final Validity result = mHtcSmt.checkInternal(prePred, act, succPred);
+		mHtcSmt.releaseLock();
+		return result;
 	}
 
 	@Override
@@ -151,6 +154,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			return checkCallAbsInt(prePred, act, succPred);
 		}
 		final Validity sdResult = mHtcSd.checkCall(prePred, act, succPred);
+		mHtcSd.releaseLock();
 		if (isFinalResult(sdResult)) {
 			return sdResult;
 		}
@@ -158,7 +162,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		if (isFinalResult(absIntResult)) {
 			return absIntResult;
 		}
-		return mHtcSmt.checkCall(prePred, act, succPred);
+		final Validity result = mHtcSmt.checkCall(prePred, act, succPred);
+		mHtcSmt.releaseLock();
+		return result;
 	}
 
 	@Override
@@ -175,7 +181,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		if (isFinalResult(absIntResult)) {
 			return absIntResult;
 		}
-		return mHtcSmt.checkReturn(preLinPred, preHierPred, act, succPred);
+		final Validity result = mHtcSmt.checkReturn(preLinPred, preHierPred, act, succPred);
+		mHtcSmt.releaseLock();
+		return result;
 	}
 
 	private static boolean isFinalResult(final Validity result) {
@@ -190,15 +198,17 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		final ACTION action = getAction(act);
 
 		final AbstractMultiState<STATE, VARDECL> validPreState = createValidPostOpStateAfterLeaving(action, pre, null);
-		final AbstractMultiState<STATE, VARDECL> reducedPreState = reducePreState(validPreState, succ, action);
+		final AbstractMultiState<STATE, VARDECL> reducedPostState = succ.compact();
+		final AbstractMultiState<STATE, VARDECL> reducedPreState =
+				reducePreState(validPreState, reducedPostState, action);
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Pre : " + reducedPreState.toLogString());
 			mLogger.debug("Act : " + action);
-			mLogger.debug("Post: " + succ.toLogString());
+			mLogger.debug("Post: " + reducedPostState.toLogString());
 		}
 
-		final Validity result = checkInternalTransitionWithValidState(reducedPreState, action, succ);
+		final Validity result = checkInternalTransitionWithValidState(reducedPreState, action, reducedPostState);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Result: " + result);
 		}
@@ -379,7 +389,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		if (pred instanceof AbsIntPredicate<?, ?>) {
 			final Set<STATE> states = ((AbsIntPredicate<STATE, ?>) pred).getAbstractStates();
 			if (states.size() <= 1) {
-				return new AbstractMultiState<>(states);
+				return AbstractMultiState.flatten(states);
 			}
 			final Set<VARDECL> vars = new HashSet<>();
 			states.stream().forEach(a -> vars.addAll(a.getVariables()));
@@ -404,21 +414,30 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	private AbstractMultiState<STATE, VARDECL> synchronizeState(final AbstractMultiState<STATE, VARDECL> template,
 			final AbstractMultiState<STATE, VARDECL> toSynchronize) {
 
-		final AbstractMultiState<STATE, VARDECL> rtr =
-				AbsIntUtil.synchronizeVariables(template, unifyBottom(toSynchronize));
-		assert assertBottomRetained(unifyBottom(toSynchronize), null, rtr,
-				() -> AbsIntUtil.synchronizeVariables(template, toSynchronize)) : MSG_BOTTOM_WAS_LOST;
+		final AbstractMultiState<STATE, VARDECL> unifiedToSynchronize = unifyBottom(toSynchronize);
+		if (unifiedToSynchronize == mBottomState) {
+			return unifiedToSynchronize;
+		}
+		final AbstractMultiState<STATE, VARDECL> rtr = AbsIntUtil.synchronizeVariables(template, unifiedToSynchronize);
+		assert assertBottomRetained(unifiedToSynchronize, null, rtr,
+				() -> AbsIntUtil.synchronizeVariables(template, unifiedToSynchronize)) : MSG_BOTTOM_WAS_LOST;
 		return rtr;
 	}
 
 	private AbstractMultiState<STATE, VARDECL> createValidPostOpStateAfterLeaving(final ACTION act,
 			final AbstractMultiState<STATE, VARDECL> preState, final AbstractMultiState<STATE, VARDECL> preHierState) {
 
-		final AbstractMultiState<STATE, VARDECL> rtr =
-				unifyBottom(preState).createValidPostOpStateAfterLeaving(mVarProvider, act, unifyBottom(preHierState));
+		final AbstractMultiState<STATE, VARDECL> unifiedPreState = unifyBottom(preState);
+		if (unifiedPreState == mBottomState) {
+			return unifiedPreState;
+		}
+		final AbstractMultiState<STATE, VARDECL> unifiedPreHierState = unifyBottom(preHierState);
 
-		assert assertBottomRetained(preState, preHierState, rtr, () -> preState
-				.createValidPostOpStateAfterLeaving(mVarProvider, act, preHierState)) : MSG_BOTTOM_WAS_LOST;
+		final AbstractMultiState<STATE, VARDECL> rtr =
+				unifiedPreState.createValidPostOpStateAfterLeaving(mVarProvider, act, unifiedPreHierState);
+
+		assert assertBottomRetained(preState, preHierState, rtr, () -> unifiedPreState
+				.createValidPostOpStateAfterLeaving(mVarProvider, act, unifiedPreHierState)) : MSG_BOTTOM_WAS_LOST;
 		return rtr;
 	}
 
@@ -439,12 +458,17 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	}
 
 	private AbstractMultiState<STATE, VARDECL> createValidPostOpStateBeforeLeaving(final ACTION act,
-			final AbstractMultiState<STATE, VARDECL> preLin) {
+			final AbstractMultiState<STATE, VARDECL> preState) {
 
+		final AbstractMultiState<STATE, VARDECL> unifiedPreState = unifyBottom(preState);
+		if (unifiedPreState == mBottomState) {
+			return unifiedPreState;
+		}
 		final AbstractMultiState<STATE, VARDECL> rtr =
-				unifyBottom(preLin).createValidPostOpStateBeforeLeaving(mVarProvider, act);
-		assert assertBottomRetained(preLin, null, rtr,
-				() -> preLin.createValidPostOpStateBeforeLeaving(mVarProvider, act)) : MSG_BOTTOM_WAS_LOST;
+				unifiedPreState.createValidPostOpStateBeforeLeaving(mVarProvider, act);
+
+		assert assertBottomRetained(preState, null, rtr,
+				() -> unifiedPreState.createValidPostOpStateBeforeLeaving(mVarProvider, act)) : MSG_BOTTOM_WAS_LOST;
 		return rtr;
 	}
 
@@ -534,6 +558,9 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 	private boolean assertIsSubsetOf(final AbstractMultiState<STATE, VARDECL> leftState,
 			final AbstractMultiState<STATE, VARDECL> rightState, final SubsetResult subResult) {
 		final Script script = mManagedScript.getScript();
+		mHtcSmt.releaseLock();
+
+		script.echo(new QuotedObject("Start isSubsetOf assertion"));
 		final Term left = leftState.getTerm(script);
 		final Term right = rightState.getTerm(script);
 
@@ -555,6 +582,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		result = SmtUtils.checkSatTerm(script, checkedTerm);
 
 		if (result == LBool.UNKNOWN || result == expected) {
+			script.echo(new QuotedObject("End isSubsetOf assertion"));
 			return true;
 		}
 
@@ -576,10 +604,13 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			mLogger.debug("checking   : " + checkedTerm.toStringDirect());
 			mLogger.debug("checkingSim: " + checkSimpl.toStringDirect());
 			mLogger.debug("Result is " + result + " and should be " + expected);
+			mLogger.debug("Solver was " + script.getInfo(":name") + " in version " + script.getInfo(":version"));
+
 		}
 
 		final SubsetResult reComputeForDebug = leftState.isSubsetOf(rightState);
 		mLogger.debug(reComputeForDebug);
+		script.echo(new QuotedObject("End isSubsetOf assertion"));
 		return false;
 	}
 

@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.Optional;
@@ -78,7 +79,8 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	private AbstractMultiState(final int maxSize, final Set<STATE> states) {
 		assert states != null;
 		assert haveSameVars(states);
-		assert states.stream().allMatch(a -> !(a instanceof AbstractMultiState<?, ?>));
+		assert states.stream().allMatch(
+				a -> !(a instanceof AbstractMultiState<?, ?>)) : "Cannot nest AbstractMultiStates, use flatten() instead";
 		mMaxSize = maxSize;
 		mStates = states;
 		sNextFreeId++;
@@ -194,7 +196,7 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 			final Optional<SubsetResult> min =
 					other.mStates.stream().map(state::isSubsetOf).min((a, b) -> a.compareTo(b));
 			if (min.isPresent()) {
-				result = result.update(min.get());
+				result = result.min(min.get());
 			}
 			if (result == SubsetResult.NONE) {
 				break;
@@ -301,7 +303,30 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 
 	@Override
 	public AbstractMultiState<STATE, VARDECL> compact() {
-		return map(STATE::compact);
+		final Set<STATE> compactedStates = newSet(mStates.size());
+		final Set<VARDECL> vars = new HashSet<>();
+		for (final STATE state : mStates) {
+			final STATE compacted = state.compact();
+			compactedStates.add(compacted);
+			vars.addAll(compacted.getVariables());
+		}
+		if (mStates.equals(compactedStates)) {
+			return this;
+		}
+
+		final Set<STATE> compactedSynchronizedStates = newSet(mStates.size());
+		for (final STATE state : compactedStates) {
+
+			final Set<VARDECL> missing = new HashSet<>(vars);
+			missing.removeAll(state.getVariables());
+			if (missing.isEmpty()) {
+				compactedSynchronizedStates.add(state);
+			} else {
+				compactedSynchronizedStates.add(state.addVariables(missing));
+			}
+		}
+
+		return new AbstractMultiState<>(mMaxSize, compactedSynchronizedStates);
 	}
 
 	public <ACTION> AbstractMultiState<STATE, VARDECL> createValidPostOpStateBeforeLeaving(
@@ -470,6 +495,25 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 		}
 		assert maximalElements.stream().filter(STATE::isBottom).count() <= 1 : "There can be only one bottom element";
 		return maximalElements;
+	}
+
+	/**
+	 * Creates one {@link AbstractMultiState} from a Collection of states, even if these states are already
+	 * {@link AbstractMultiState}s, essentially flattening the disjunction.
+	 */
+	@SuppressWarnings("unchecked")
+	public static <STATE extends IAbstractState<STATE, VARDECL>, VARDECL> AbstractMultiState<STATE, VARDECL>
+			flatten(final Collection<STATE> states) {
+
+		final Set<STATE> disjuncts = new HashSet<>();
+		for (final STATE state : states) {
+			if (state instanceof AbstractMultiState<?, ?>) {
+				disjuncts.addAll(((AbstractMultiState<STATE, VARDECL>) state).getStates());
+			} else {
+				disjuncts.add(state);
+			}
+		}
+		return new AbstractMultiState<>(disjuncts);
 	}
 
 }

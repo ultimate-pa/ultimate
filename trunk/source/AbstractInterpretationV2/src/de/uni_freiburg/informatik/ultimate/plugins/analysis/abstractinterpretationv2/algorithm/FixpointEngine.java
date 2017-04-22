@@ -240,14 +240,34 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 			isHierachicalPostResultBottom(postState, currentItem);
 		}
 
-		assert mTransitionProvider.isSummaryWithImplementation(currentAction) || mDebugHelper.isPostSound(preState,
-				preStateWithFreshVariables, postState, currentAction) : getLogMessageUnsoundPost(preState,
-						preStateWithFreshVariables, postState, currentAction);
+		assert assertIsPostSound(preState, currentAction, preStateWithFreshVariables, postState) : "Post is unsound";
 
 		// check if we enter or leave a scope and act accordingly (saving summaries, creating new scope storages, etc.)
 		postState = prepareScope(currentItem, postState);
 
 		return postState;
+	}
+
+	private boolean assertIsPostSound(final AbstractMultiState<STATE, VARDECL> preState, final ACTION currentAction,
+			final AbstractMultiState<STATE, VARDECL> preStateWithFreshVariables,
+			final AbstractMultiState<STATE, VARDECL> postState) {
+		final boolean rtr = mTransitionProvider.isSummaryWithImplementation(currentAction)
+				|| mDebugHelper.isPostSound(preState, preStateWithFreshVariables, postState, currentAction);
+		if (rtr) {
+			return true;
+		}
+		mLogger.fatal("Post is unsound because the term-transformation of the following triple is not valid: {");
+		mLogger.fatal("PreBL : " + preState.toLogString());
+		if (preState != preStateWithFreshVariables) {
+			mLogger.fatal("PreAL : " + preStateWithFreshVariables.toLogString());
+		}
+		mLogger.fatal("Action: " + mTransitionProvider.toLogString(currentAction) + " (to "
+				+ mTransitionProvider.getProcedureName(currentAction) + ")");
+
+		if (postState != null) {
+			mLogger.fatal("Post  :  " + postState.toLogString());
+		}
+		return false;
 	}
 
 	/**
@@ -341,8 +361,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 
 	private WorklistItem<STATE, ACTION, VARDECL, LOC> createInitialWorklistItem(final ACTION elem) {
 		final STATE preState = mVarProvider.defineInitialVariables(elem, mDomain.createFreshState());
-		final AbstractMultiState<STATE, VARDECL> preMultiState =
-				new AbstractMultiState<>(mMaxParallelStates, preState);
+		final AbstractMultiState<STATE, VARDECL> preMultiState = new AbstractMultiState<>(mMaxParallelStates, preState);
 		return new WorklistItem<>(preMultiState, elem, mStateStorage, mSummaryMap);
 	}
 
@@ -374,8 +393,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 
 	private AbstractMultiState<STATE, VARDECL> widenIfNecessary(
 			final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
-			final AbstractMultiState<STATE, VARDECL> postState,
-			final IAbstractStateBinaryOperator<STATE> wideningOp) {
+			final AbstractMultiState<STATE, VARDECL> postState, final IAbstractStateBinaryOperator<STATE> wideningOp) {
 
 		final ACTION currentAction = currentItem.getAction();
 
@@ -424,8 +442,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 	 *
 	 * @param postState
 	 */
-	private AbstractMultiState<STATE, VARDECL> prepareScope(
-			final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
+	private AbstractMultiState<STATE, VARDECL> prepareScope(final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
 			final AbstractMultiState<STATE, VARDECL> postState) {
 		final ACTION action = currentItem.getAction();
 		if (mTransitionProvider.isEnteringScope(action)) {
@@ -453,8 +470,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 			getWidenStateAtScopeEntry(final WorklistItem<STATE, ACTION, VARDECL, LOC> currentItem) {
 		final ACTION currentAction = currentItem.getAction();
 
-		final Deque<Pair<ACTION, AbstractMultiState<STATE, VARDECL>>> scopeStack =
-				currentItem.getScopeWideningStack();
+		final Deque<Pair<ACTION, AbstractMultiState<STATE, VARDECL>>> scopeStack = currentItem.getScopeWideningStack();
 		// count all stack items that are there more than once and the current item
 		final Optional<Long> count = scopeStack.stream().map(a -> a.getFirst()).filter(a -> a != null)
 				.collect(Collectors.groupingBy(a -> a, Collectors.counting())).entrySet().stream()
@@ -555,29 +571,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		mLogger.debug(prefix + "After: " + LoggingHelper.getStateString(postStateAfterChange));
 	}
 
-	private String getLogMessageUnsoundPost(final AbstractMultiState<STATE, VARDECL> preState,
-			final AbstractMultiState<STATE, VARDECL> preStateWithFreshVariables,
-			final AbstractMultiState<STATE, VARDECL> postState, final ACTION currentAction) {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("Post is unsound because the term-transformation of the following triple is not valid: {");
-		sb.append(preState.toLogString());
-		sb.append("} ");
-		if (preState != preStateWithFreshVariables) {
-			sb.append("{");
-			sb.append(preStateWithFreshVariables.toLogString());
-			sb.append("} ");
-		}
-		sb.append(mTransitionProvider.toLogString(currentAction));
-		sb.append(" {");
-		if (postState != null) {
-			sb.append(postState.toLogString());
-		}
-		sb.append("}");
-		return sb.toString();
-	}
-
-	private StringBuilder
-			getLogMessagePostIsBottom(final AbstractMultiState<STATE, VARDECL> pendingNewPostState) {
+	private StringBuilder getLogMessagePostIsBottom(final AbstractMultiState<STATE, VARDECL> pendingNewPostState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT)
 				.append(" Skipping all successors because post state [").append(pendingNewPostState.hashCode())
 				.append("] is bottom");

@@ -2,8 +2,8 @@
 // Date: 2017-04-20
 //
 // This is the example from Figure 1a of the paper "Minimization of Visibly 
-//   Pushdown Automata Using Partial Max-SAT" (TACAS 2017) An extended 
-//   version of the paper is available at https://arxiv.org/abs/1701.05160.
+//   Pushdown Automata Using Partial Max-SAT" (TACAS 2017). An extended version
+//   of the paper is available at https://arxiv.org/abs/1701.05160.
 //
 // In automata minimization one can usually merge two states if they have the
 //   same behavior under all words. In this example the states q1 and q2 have
@@ -18,6 +18,11 @@
 //   finite automata, mergeability of states is transitive. However, here we
 //   cannot merge all three states q1, q2, and q3 without changing the language
 //   because q1 and q3 have different behaviors for stack symbol q0.
+// In this approach we encode the constraints of a relation for merging states
+//   while preserving the language in a Boolean formula in the 'partial maximum
+//   satisfiability' framework. Solving this formula is then equivalent to the
+//   synthesis of such a relation with the maximal number of mergings.
+// -----------------------------------------------------------------------------
 
 // Calling the operation 'removeUnreachable' has no obvious effect here, but it
 //   is necessary for computing reachability information that is used by the

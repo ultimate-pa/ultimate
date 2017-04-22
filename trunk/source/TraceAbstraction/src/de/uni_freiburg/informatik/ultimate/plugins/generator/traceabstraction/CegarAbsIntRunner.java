@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
@@ -659,11 +660,14 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 		protected IPredicate newPredicate(final Term term, final IPredicate originalPredicate) {
 			final IPredicate unifiedPred = super.newPredicate(term, originalPredicate);
 			if (unifiedPred instanceof AbsIntPredicate<?, ?>) {
+				assert assertValidPredicate((AbsIntPredicate<?, ?>) unifiedPred) : "Created invalid predicate";
 				return unifiedPred;
 			}
 			if (originalPredicate instanceof AbsIntPredicate<?, ?>) {
-				return new AbsIntPredicate<>(unifiedPred,
+				final AbsIntPredicate<?, ?> rtr = new AbsIntPredicate<>(unifiedPred,
 						((AbsIntPredicate<?, ?>) originalPredicate).getAbstractStates());
+				assert assertValidPredicate(rtr) : "Created invalid predicate";
+				return rtr;
 			}
 			return unifiedPred;
 		}
@@ -675,18 +679,21 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			final IPredicate unifiedPred =
 					super.getOrConstructPredicateForConjunction(minimalSubset, impliedPredicates, expliedPredicates);
 			if (unifiedPred instanceof AbsIntPredicate<?, ?>) {
+				assert assertValidPredicate((AbsIntPredicate<?, ?>) unifiedPred) : "Created invalid predicate";
 				return unifiedPred;
 			}
 			final Set<AbstractMultiState<STATE, IBoogieVar>> multistates =
 					minimalSubset.stream().map(a -> ((AbsIntPredicate<STATE, ?>) a).getAbstractStates())
-							.map(a -> new AbstractMultiState<>(a)).collect(Collectors.toSet());
+							.map(a -> AbstractMultiState.flatten(a)).collect(Collectors.toSet());
 			final Set<AbstractMultiState<STATE, IBoogieVar>> synchronizedMultiStates =
 					AbsIntUtil.synchronizeVariables(multistates);
 			assert sameVars(synchronizedMultiStates.stream().flatMap(a -> a.getStates().stream())
 					.collect(Collectors.toSet())) : "Synchronize failed";
 			final AbstractMultiState<STATE, IBoogieVar> conjunction = synchronizedMultiStates.stream()
 					.reduce((a, b) -> a.intersect(b)).orElseThrow(() -> new AssertionError("No predicates given"));
-			return new AbsIntPredicate<>(unifiedPred, conjunction.getStates());
+			final AbsIntPredicate<?, ?> rtr = new AbsIntPredicate<>(unifiedPred, conjunction);
+			assert assertValidPredicate(rtr) : "Created invalid predicate";
+			return rtr;
 		}
 
 		@Override
@@ -698,22 +705,59 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			if (unifiedPred instanceof AbsIntPredicate<?, ?>) {
 				return unifiedPred;
 			}
-			return new AbsIntPredicate<>(unifiedPred, toStates(minimalSubset));
+			final AbsIntPredicate<?, ?> rtr = new AbsIntPredicate<>(unifiedPred, toDisjunctiveState(minimalSubset));
+			assert assertValidPredicate(rtr) : "Created invalid predicate";
+			return rtr;
 		}
 
-		private Set<STATE> toStates(final Set<IPredicate> preds) {
+		private AbstractMultiState<STATE, IBoogieVar> toDisjunctiveState(final Set<IPredicate> preds) {
 			if (preds == null || preds.isEmpty()) {
-				return Collections.emptySet();
+				return new AbstractMultiState<>(Collections.emptySet());
 			}
-			final Set<STATE> allStates = preds.stream().map(a -> (AbsIntPredicate<STATE, ?>) a)
-					.flatMap(a -> a.getAbstractStates().stream()).collect(Collectors.toSet());
-			// assert sameVars(allStates) : "variables in disjunction are not compatible (maybe unimportant)";
-			return allStates;
+			final Set<STATE> allStates = new HashSet<>();
+			for (final IPredicate pred : preds) {
+				final Set<STATE> states = ((AbsIntPredicate<STATE, ?>) pred).getAbstractStates();
+				for (final STATE state : states) {
+					if (state instanceof AbstractMultiState<?, ?>) {
+						allStates.addAll(((AbstractMultiState) state).getStates());
+					} else {
+						allStates.add(state);
+					}
+				}
+
+			}
+			return new AbstractMultiState<>(allStates);
 		}
 
 		private boolean sameVars(final Set<STATE> allStates) {
 			final Set<IBoogieVar> someVars = allStates.iterator().next().getVariables();
 			return allStates.stream().allMatch(a -> a.getVariables().equals(someVars));
+		}
+
+		private boolean assertValidPredicate(final AbsIntPredicate<?, ?> pred) {
+			final Script script = mMgnScript.getScript();
+			final List<Term> terms =
+					pred.getAbstractStates().stream().map(a -> a.getTerm(script)).collect(Collectors.toList());
+			final Term stateTerm = SmtUtils.and(script, terms);
+			final Term checkTerm = script.term("distinct", pred.getFormula(), stateTerm);
+			final LBool result = SmtUtils.checkSatTerm(script, checkTerm);
+			if (result == LBool.UNSAT || result == LBool.UNKNOWN) {
+				return true;
+			}
+			mLogger.fatal("Invalid predicate! Predicate and state conjunction should be equal, but it is not.");
+			mLogger.fatal("Pred: "
+					+ SmtUtils.simplify(mMgnScript, pred.getFormula(), mServices, SimplificationTechnique.SIMPLIFY_DDA)
+							.toStringDirect());
+			mLogger.fatal("States: " + SmtUtils
+					.simplify(mMgnScript, stateTerm, mServices, SimplificationTechnique.SIMPLIFY_DDA).toStringDirect());
+			mLogger.fatal("Conjunctive states: ");
+			for (final IAbstractState<?, ?> state : pred.getAbstractStates()) {
+				mLogger.fatal(state.toLogString());
+				mLogger.fatal(SmtUtils
+						.simplify(mMgnScript, state.getTerm(script), mServices, SimplificationTechnique.SIMPLIFY_DDA)
+						.toStringDirect());
+			}
+			return false;
 		}
 
 	}

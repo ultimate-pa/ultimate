@@ -30,8 +30,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -40,15 +42,16 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
@@ -69,6 +72,9 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * @author schaetzc@informatik.uni-freiburg.de
  */
 public final class OctDomainState implements IAbstractState<OctDomainState, IBoogieVar> {
+
+	private final static Comparator<IBoogieVar> sLexicalVarComparator =
+			(varA, varB) -> varA.getGloballyUniqueId().compareTo(varB.getGloballyUniqueId());
 
 	/** Counter for created objects. Used to set {@link #mId}. */
 	private static int sId;
@@ -269,20 +275,18 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 */
 	@Override
 	public OctDomainState addVariables(final Collection<IBoogieVar> variables) {
-		// variables = new TreeMap<>(variables); // fixed iteration order -- essential for fast isEqualTo
-		// ... probably no speedup. HashSets should iterate in the same order when adding the very same variables.
-
 		final OctDomainState newState = shallowCopy();
+		final Set<IBoogieVar> addedNumVars = new HashSet<>();
 		newState.mIsBottom = mIsBottom;
-		for (final IBoogieVar entry : variables) {
+		if (variables.size() > 0) {
 			unrefOtherMapVarToBoogieVar(newState);
-			final IBoogieVar newBoogieVar = entry;
+		}
+		for (final IBoogieVar newBoogieVar : variables) {
 			if (!newState.mMapVarToBoogieVar.add(newBoogieVar)) {
 				throw new IllegalArgumentException("Variable already present: " + newBoogieVar);
 			}
 			if (TypeUtils.isNumeric(newBoogieVar)) {
-				unrefOtherMapNumericVarToIndex(newState);
-				newState.mMapNumericVarToIndex.put(newBoogieVar, newState.mMapNumericVarToIndex.size());
+				addedNumVars.add(newBoogieVar);
 				if (TypeUtils.isNumericNonInt(newBoogieVar)) {
 					unrefOtherNumericNonIntVars(newState);
 					newState.mNumericNonIntVars.add(newBoogieVar);
@@ -293,9 +297,27 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 			}
 			// else: variable has unsupported type and is assumed to be \top at all times
 		}
-		newState.mNumericAbstraction =
-				mNumericAbstraction.addVariables(newState.mMapNumericVarToIndex.size() - mMapNumericVarToIndex.size());
+		addNumericVariables(newState, addedNumVars);
 		return newState;
+	}
+
+	private void addNumericVariables(final OctDomainState newState, final Set<IBoogieVar> addedNumVars) {
+		if (addedNumVars.isEmpty()) {
+			return;
+		}
+		final SortedMap<IBoogieVar, Integer> varsSortedByName = new TreeMap<>(sLexicalVarComparator);
+		varsSortedByName.putAll(mMapNumericVarToIndex);
+		addedNumVars.forEach(addedVar -> varsSortedByName.put(addedVar, -1));
+		newState.mMapNumericVarToIndex = new HashMap<>();
+		int index = 0;
+		final int[] copyInstructions = new int[mMapNumericVarToIndex.size() + addedNumVars.size()];
+		for (final Map.Entry<IBoogieVar, Integer> varFromSourceIndex : varsSortedByName.entrySet()) {
+			copyInstructions[index] = varFromSourceIndex.getValue();
+			varFromSourceIndex.setValue(index);
+			newState.mMapNumericVarToIndex.put(varFromSourceIndex.getKey(), index);
+			++index;
+		}
+		newState.mNumericAbstraction = mNumericAbstraction.rearrange(copyInstructions);
 	}
 
 	/**
@@ -471,8 +493,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 			}
 		}
 
-		if (!cachedSelectiveClosure().elementwiseRelation(other.mNumericAbstraction, OctMatrix.sRelationLessThanOrEqual,
-				matrixPermutationMap(other))) {
+		if (!cachedSelectiveClosure().elementwiseRelation(other.mNumericAbstraction,
+				OctMatrix.sRelationLessThanOrEqual)) {
 			// no need to use other.closure
 			return SubsetResult.NONE;
 		}
@@ -506,7 +528,9 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 *            State with same numeric variables, possibly in another order.
 	 * @return {@code array[index of numeric variable from this state] = index of numeric variable from other state} if
 	 *         permuted, {@code null} otherwise.
+	 * @deprecated As of release 2017-04-21, a constant order of variables is enforced for al octagons.
 	 */
+	@Deprecated
 	private int[] matrixPermutationMap(final OctDomainState other) {
 		assert mMapNumericVarToIndex.keySet().equals(other.mMapNumericVarToIndex.keySet());
 		boolean permuted = false;
@@ -535,7 +559,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		} else if (thisIsBottom) {
 			return true;
 		}
-		return thisClosure.isEqualTo(otherClosure, matrixPermutationMap(other));
+		return thisClosure.isEqualTo(otherClosure);
 	}
 
 	/**
@@ -610,6 +634,8 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	private OctDomainState operation(final OctDomainState other,
 			final BiFunction<BoolValue, BoolValue, BoolValue> booleanOperation,
 			final OctMatrix numericAbstractionResult) {
+		assert assertNotBottomBeforeAssign();
+		assert other.assertNotBottomBeforeAssign();
 		final OctDomainState result = shallowCopy();
 		for (final Entry<IBoogieVar, BoolValue> entry : mBooleanAbstraction.entrySet()) {
 			final IBoogieVar name = entry.getKey();
@@ -621,6 +647,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 			}
 		}
 		result.mNumericAbstraction = numericAbstractionResult;
+		result.mIsBottom = TVBool.UNCHECKED;
 		return result;
 	}
 
@@ -633,7 +660,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		final List<Term> terms = new ArrayList<>();
 		terms.addAll(getTermNumericAbstraction(script));
 		terms.addAll(getTermBooleanAbstraction(script));
-		return Util.and(script, terms.toArray(new Term[terms.size()]));
+		return SmtUtils.and(script, terms);
 	}
 
 	/** For internal use in {@link #getTerm(Script))}. */
@@ -681,28 +708,29 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 */
 	@Override
 	public OctDomainState patch(final OctDomainState dominator) {
-		assertNotBottomBeforeAssign();
-		mIsBottom = TVBool.UNCHECKED;
+		assert assertNotBottomBeforeAssign();
 		final OctDomainState patchedState = shallowCopy();
-		final Map<Integer, Integer> mapTargetVarToSourceVar = new HashMap<>();
-		final SortedMap<Integer, IBoogieVar> mapDominatorIndicesOfNewNumericVars = new TreeMap<>();
+		patchedState.mIsBottom = TVBool.UNCHECKED;
+		final SortedMap<IBoogieVar, Integer> mapNumVarsToDominatorIndices = new TreeMap<>(sLexicalVarComparator);
+		mMapNumericVarToIndex.entrySet()
+				.forEach(varToOldIndex -> mapNumVarsToDominatorIndices.put(varToOldIndex.getKey(), null)); // patched
+																											// variables
+																											// will be
+																											// overwritten
+																											// later
 
-		for (final IBoogieVar entry : dominator.mMapVarToBoogieVar) {
-			final IBoogieVar newBoogieVar = entry;
+		for (final IBoogieVar newBoogieVar : dominator.mMapVarToBoogieVar) {
 			unrefOtherMapVarToBoogieVar(patchedState);
 			final boolean varIsNew = patchedState.mMapVarToBoogieVar.add(newBoogieVar);
 			assert varIsNew || mMapVarToBoogieVar.contains(newBoogieVar);
 			if (TypeUtils.isNumeric(newBoogieVar)) {
 				final int sourceVar = dominator.mMapNumericVarToIndex.get(newBoogieVar);
+				mapNumVarsToDominatorIndices.put(newBoogieVar, sourceVar);
 				if (varIsNew) {
-					mapDominatorIndicesOfNewNumericVars.put(sourceVar, newBoogieVar);
 					if (TypeUtils.isNumericNonInt(newBoogieVar)) {
 						unrefOtherNumericNonIntVars(patchedState);
 						patchedState.mNumericNonIntVars.add(newBoogieVar);
 					}
-				} else {
-					final int targetVar = patchedState.mMapNumericVarToIndex.get(newBoogieVar);
-					mapTargetVarToSourceVar.put(targetVar, sourceVar);
 				}
 			} else if (TypeUtils.isBoolean(newBoogieVar)) {
 				unrefOtherBooleanAbstraction(patchedState);
@@ -710,13 +738,30 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 			}
 			// else: variable has unsupported type and is assumed to be \top
 		}
-		for (final IBoogieVar var : mapDominatorIndicesOfNewNumericVars.values()) {
-			unrefOtherMapNumericVarToIndex(patchedState);
-			patchedState.mMapNumericVarToIndex.put(var, patchedState.mMapNumericVarToIndex.size());
+		final int[] mapNumVarsToOldIndices = new int[mapNumVarsToDominatorIndices.size()];
+		final Map<Integer, Integer> mapNumVarIndicesToDominatorIndices = new HashMap<>();
+		final Iterator<Map.Entry<IBoogieVar, Integer>> iter = mapNumVarsToDominatorIndices.entrySet().iterator();
+		patchedState.mMapNumericVarToIndex = new HashMap<>();
+		int index = 0;
+		while (iter.hasNext()) {
+			final Map.Entry<IBoogieVar, Integer> entry = iter.next();
+			final IBoogieVar var = entry.getKey();
+			final Integer indexInDominator = entry.getValue();
+			if (indexInDominator == null) {
+				// variable is old (from this octagon only)
+				mapNumVarsToOldIndices[index] = mMapNumericVarToIndex.get(var);
+			} else {
+				// variable is fresh or will be patched (from the dominator)
+				mapNumVarsToOldIndices[index] = -1;
+				mapNumVarIndicesToDominatorIndices.put(index, indexInDominator);
+			}
+			patchedState.mMapNumericVarToIndex.put(var, index);
+			++index;
 		}
-		patchedState.mNumericAbstraction = cachedSelectiveClosure().appendSelection(dominator.mNumericAbstraction,
-				mapDominatorIndicesOfNewNumericVars.keySet());
-		patchedState.mNumericAbstraction.copySelection(dominator.mNumericAbstraction, mapTargetVarToSourceVar);
+		// TODO rearrange() writes INF values which get overwritten by copy selection() --> optimize
+		patchedState.mNumericAbstraction = cachedSelectiveClosure().rearrange(mapNumVarsToOldIndices);
+		patchedState.mNumericAbstraction.copySelection(dominator.bestAvailableClosure(),
+				mapNumVarIndicesToDominatorIndices);
 		return patchedState;
 	}
 
@@ -737,17 +782,24 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 *         values from {@code source} abstract state.
 	 */
 	public OctDomainState copyValuesOnScopeChange(final OctDomainState source,
-			final List<Pair<IBoogieVar, IBoogieVar>> mapTargetToSource) {
+			final List<Pair<IBoogieVar, IBoogieVar>> mapTargetToSource, final boolean alsoCopyOldVars) {
 
 		assert assertNotBottomBeforeAssign();
-		mIsBottom = TVBool.UNCHECKED;
 		// TODO closure in advance to reduce information loss
 
 		final Map<Integer, Integer> mapNumericTargetToSource = new HashMap<>();
 		final List<Pair<IBoogieVar, IBoogieVar>> mapBooleanTargetToSource = new ArrayList<>(mapTargetToSource.size());
 
 		// shared (=global) numeric variables (copy to keep relations between globals and in/out-parameters)
-		for (final IBoogieVar var : sharedGlobalVars(source)) {
+		Set<IBoogieVar> sharedVars;
+		if (alsoCopyOldVars) {
+			sharedVars = sharedGlobalVars(source);
+		} else {
+			sharedVars =
+					sharedGlobalVars(source).stream().filter(a -> !AbsIntUtil.isOldVar(a)).collect(Collectors.toSet());
+		}
+
+		for (final IBoogieVar var : sharedVars) {
 			final Integer targetIndex = mMapNumericVarToIndex.get(var);
 			if (targetIndex != null) {
 				final Integer sourceIndex = source.mMapNumericVarToIndex.get(var);
@@ -774,9 +826,10 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 
 		// create new state
 		final OctDomainState newState = shallowCopy();
+		newState.mIsBottom = TVBool.UNCHECKED;
 		if (!mapNumericTargetToSource.isEmpty()) {
 			newState.mNumericAbstraction = cachedSelectiveClosure().copy();
-			newState.mNumericAbstraction.copySelection(source.mNumericAbstraction, mapNumericTargetToSource);
+			newState.mNumericAbstraction.copySelection(source.bestAvailableClosure(), mapNumericTargetToSource);
 		}
 		if (!mapBooleanTargetToSource.isEmpty()) {
 			unrefOtherBooleanAbstraction(newState);
@@ -1298,6 +1351,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 
 	@Override
 	public OctDomainState compact() {
-		throw new UnsupportedOperationException("Not yet implemented");
+		// TODO implement
+		return this;
 	}
 }

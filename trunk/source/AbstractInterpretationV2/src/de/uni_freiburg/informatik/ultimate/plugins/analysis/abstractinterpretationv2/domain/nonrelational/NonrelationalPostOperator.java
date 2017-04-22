@@ -30,28 +30,21 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
 import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
@@ -59,8 +52,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
@@ -71,13 +62,13 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2T
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgStatementExtractor;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.ITermProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.CallInfoCache;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.CallInfoCache.CallInfo;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
@@ -100,7 +91,6 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	private final int mParallelStates;
 	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
 	private final Boogie2SMT mBoogie2Smt;
-	private final BoogieIcfgContainer mRootAnnotation;
 	private final CallInfoCache mCallInfoCache;
 
 	protected NonrelationalPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
@@ -114,8 +104,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		mSymbolTable = symbolTable;
 		mParallelStates = parallelStates;
 		mBoogie2Smt = boogie2Smt;
-		mRootAnnotation = rootAnnotation;
-		mCallInfoCache = new CallInfoCache();
+		mCallInfoCache = new CallInfoCache(rootAnnotation.getCfgSmtToolkit(), symbolTable, bpl2smtSymbolTable);
 	}
 
 	@Override
@@ -171,7 +160,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 			final Call call) {
 
 		final CallStatement callStatement = call.getCallStatement();
-		final CallInfo callInfo = mCallInfoCache.getCallInfo(callStatement, stateBeforeLeaving.getVariables());
+		final CallInfo callInfo = mCallInfoCache.getCallInfo(callStatement);
 		// If there are no arguments, we don't need to rewrite states.
 		if (callInfo.getInParamAssign() == null) {
 			return addOldvars(Collections.singletonList(stateAfterLeaving), callInfo.getOldVarAssign());
@@ -180,7 +169,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		// process assignment of expressions in old scope to inparams of procedure
 		final STATE interimState = stateBeforeLeaving.addVariables(callInfo.getTempInParams());
 		final List<STATE> result =
-				mStatementProcessor.process(interimState, callInfo.getInParamAssign(), callInfo.getTempInParamUses());
+				mStatementProcessor.process(interimState, callInfo.getInParamAssign(), callInfo.getLhs2TmpVar());
 		if (result.isEmpty()) {
 			throw new AssertionError("The assignment operation resulted in 0 states.");
 		}
@@ -424,43 +413,6 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		return NonrelationalUtils.mergeStatesIfNecessary(postStates, mParallelStates);
 	}
 
-	/**
-	 * Creates a map of Integers -&gt; Identifiers for a given desired number of variables. The created identifiers are
-	 * unique temporary variable identifiers. It is ensured that the created identifiers do not already occur in the
-	 * current state.
-	 *
-	 * @param argNum
-	 *            The number of temporary variables to create.
-	 * @param state
-	 *            The current state.
-	 * @return A map containing for each index of the call statement's argument
-	 */
-	private static List<String> getArgumentTemporaries(final int argNum, final Set<String> reservedNames) {
-		final List<String> rtr = new ArrayList<>(argNum);
-
-		final StringBuilder paramBuilder = new StringBuilder("param_");
-		boolean uniqueFound = false;
-
-		while (!uniqueFound) {
-			final String currentPrefix = paramBuilder.toString();
-			for (int i = 0; i < argNum; i++) {
-				final String currentParamName = currentPrefix + String.valueOf(i);
-				if (reservedNames.contains(currentParamName)) {
-					paramBuilder.append('_');
-					break;
-				}
-			}
-			uniqueFound = true;
-		}
-
-		final String finalPrefix = paramBuilder.toString();
-		for (int i = 0; i < argNum; i++) {
-			rtr.add(finalPrefix + String.valueOf(i));
-		}
-
-		return rtr;
-	}
-
 	private Procedure getProcedure(final String procedureName) {
 
 		return mSymbolTable.getFunctionOrProcedureDeclaration(procedureName).stream()
@@ -523,146 +475,4 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		}
 	}
 
-	private class CallInfoCache {
-		private final Map<CallStatement, CallInfo> mCall2CallInfo;
-
-		private CallInfoCache() {
-			mCall2CallInfo = new HashMap<>();
-		}
-
-		private CallInfo getCallInfo(final CallStatement callStatement, final Collection<IBoogieVar> callVars) {
-			final CallInfo callAssignment = mCall2CallInfo.get(callStatement);
-			if (callAssignment != null) {
-				return callAssignment;
-			}
-			final CallInfo newCallAssignment = createCallInfo(callStatement, callVars);
-			mCall2CallInfo.put(callStatement, newCallAssignment);
-			return newCallAssignment;
-		}
-
-		private CallInfo createCallInfo(final CallStatement callStatement, final Collection<IBoogieVar> callVars) {
-			final Expression[] args = callStatement.getArguments();
-			final List<IBoogieVar> realInParams = getInParams(callStatement);
-			final AssignmentStatement oldVarAssign = getOldvarAssign(callStatement);
-
-			// If there are no arguments, we don't need to rewrite states and thus no inparam assign.
-			if (args.length == 0) {
-				return new CallInfo(realInParams, oldVarAssign);
-			}
-
-			// create a multi-assignment statement that assigns each procedure argument (expression) to a temporary
-			// variable
-			final List<String> tmpParamNames = getArgumentTemporaries(args.length,
-					callVars.stream().map(IBoogieVar::getGloballyUniqueId).collect(Collectors.toSet()));
-			final List<LeftHandSide> idents = new ArrayList<>();
-			final Map<LeftHandSide, IBoogieVar> tmpVarUses = new HashMap<>();
-			final List<IBoogieVar> tmpParamVars = new ArrayList<>();
-			final ILocation loc = callStatement.getLocation();
-			for (int i = 0; i < args.length; i++) {
-				final String name = tmpParamNames.get(i);
-				final IBoogieVar boogieVar = AbsIntUtil.createTemporaryIBoogieVar(name, args[i].getType());
-				final VariableLHS lhs = new VariableLHS(loc, name);
-				tmpParamVars.add(boogieVar);
-				tmpVarUses.put(lhs, boogieVar);
-				idents.add(lhs);
-			}
-
-			final AssignmentStatement inParamTmpAssign =
-					new AssignmentStatement(loc, idents.toArray(new LeftHandSide[idents.size()]), args);
-			return new CallInfo(realInParams, oldVarAssign, inParamTmpAssign, tmpParamVars, tmpVarUses);
-		}
-
-		/**
-		 * Create an assignment for oldvar values at the beginning of a procedure: <code>
-		 * old(x1),...,old(xn) := x1, .... , xn;
-		 * </code>
-		 */
-		private AssignmentStatement getOldvarAssign(final CallStatement callStatement) {
-			final String methodName = callStatement.getMethodName();
-			final Set<IProgramNonOldVar> modifiableGlobals =
-					mRootAnnotation.getCfgSmtToolkit().getModifiableGlobalsTable().getModifiedBoogieVars(methodName);
-			final int modglobsize = modifiableGlobals.size();
-			if (modglobsize == 0) {
-				return null;
-			}
-			final LeftHandSide[] lhs = new LeftHandSide[modglobsize];
-			final Expression[] rhs = new Expression[modglobsize];
-			int i = 0;
-			final ILocation loc = callStatement.getLocation();
-			for (final IProgramNonOldVar modGlob : modifiableGlobals) {
-
-				final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
-				final IBoogieType bType =
-						mSymbolTable.getTypeForVariableSymbol(modGlob.getGloballyUniqueId(), StorageClass.GLOBAL, null);
-				lhs[i] = new VariableLHS(loc, bType, modGlob.getOldVar().getGloballyUniqueId(), declInfo);
-				rhs[i] = new IdentifierExpression(loc, bType, modGlob.getGloballyUniqueId(), declInfo);
-				++i;
-			}
-			return new AssignmentStatement(loc, lhs, rhs);
-		}
-
-		private List<IBoogieVar> getInParams(final CallStatement callStatement) {
-			final Procedure procedure = getProcedure(callStatement.getMethodName());
-			assert procedure != null;
-			final VarList[] inParams = procedure.getInParams();
-			final List<IBoogieVar> realParamVars = new ArrayList<>();
-
-			for (final VarList varlist : inParams) {
-				for (final String var : varlist.getIdentifiers()) {
-					final IBoogieVar bVar =
-							mBoogie2SmtSymbolTable.getBoogieVar(var, callStatement.getMethodName(), true);
-					assert bVar != null;
-					realParamVars.add(bVar);
-				}
-			}
-
-			if (callStatement.getArguments().length != realParamVars.size()) {
-				throw new UnsupportedOperationException(
-						"The number of the expressions in the call statement arguments does not correspond to the length of the number of arguments in the symbol table.");
-			}
-			return realParamVars;
-		}
-	}
-
-	private static class CallInfo {
-		private final AssignmentStatement mInParamAssign;
-		private List<IBoogieVar> mTmpVars;
-		private Map<LeftHandSide, IBoogieVar> mTmpVarUses;
-		private List<IBoogieVar> mRealInParams;
-		private AssignmentStatement mOldVarAssign;
-
-		private CallInfo(final List<IBoogieVar> realInParams, final AssignmentStatement oldVarAssign) {
-			this(realInParams, oldVarAssign, null, Collections.emptyList(), Collections.emptyMap());
-		}
-
-		private CallInfo(final List<IBoogieVar> realInParams, final AssignmentStatement oldVarAssign,
-				final AssignmentStatement inParamAssign, final List<IBoogieVar> tmpVars,
-				final Map<LeftHandSide, IBoogieVar> tmpVarUses) {
-			mOldVarAssign = oldVarAssign;
-			mInParamAssign = inParamAssign;
-			mTmpVars = Collections.unmodifiableList(tmpVars);
-			mTmpVarUses = Collections.unmodifiableMap(tmpVarUses);
-			mRealInParams = Collections.unmodifiableList(realInParams);
-		}
-
-		public List<IBoogieVar> getRealInParams() {
-			return mRealInParams;
-		}
-
-		public List<IBoogieVar> getTempInParams() {
-			return mTmpVars;
-		}
-
-		public Map<LeftHandSide, IBoogieVar> getTempInParamUses() {
-			return mTmpVarUses;
-		}
-
-		public AssignmentStatement getInParamAssign() {
-			return mInParamAssign;
-		}
-
-		public AssignmentStatement getOldVarAssign() {
-			return mOldVarAssign;
-		}
-	}
 }

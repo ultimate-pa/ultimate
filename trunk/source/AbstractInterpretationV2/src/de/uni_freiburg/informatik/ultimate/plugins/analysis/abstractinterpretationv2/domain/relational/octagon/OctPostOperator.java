@@ -29,30 +29,30 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPostOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.AbsIntUtil;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.CallInfoCache;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.CallInfoCache.CallInfo;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
@@ -70,10 +70,11 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 	private final OctStatementProcessor mStatementProcessor;
 	private final OctAssumeProcessor mAssumeProcessor;
 	private final Boogie2SmtSymbolTable mBpl2SmtTable;
+	private final CallInfoCache mCallInfoCache;
 
-	public OctPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable, final int maxParallelStates,
-			final boolean fallbackAssignIntervalProjection, final Boogie2SmtSymbolTable bpl2smtTable) {
-
+	public OctPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable, final CfgSmtToolkit cfgSmtToolkit,
+			final int maxParallelStates, final boolean fallbackAssignIntervalProjection,
+			final Boogie2SmtSymbolTable bpl2smtTable) {
 		if (maxParallelStates < 1) {
 			throw new IllegalArgumentException("MaxParallelStates needs to be > 0, was " + maxParallelStates);
 		}
@@ -88,6 +89,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 		mExprTransformer = new ExpressionTransformer(bpl2smtTable);
 		mStatementProcessor = new OctStatementProcessor(this);
 		mAssumeProcessor = new OctAssumeProcessor(this);
+		mCallInfoCache = new CallInfoCache(cfgSmtToolkit, symbolTable, bpl2smtTable);
 	}
 
 	public static OctDomainState join(final List<OctDomainState> states) {
@@ -178,13 +180,19 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 
 	@Override
 	public List<OctDomainState> apply(final OctDomainState oldState, final IcfgEdge edge) {
+		final IcfgEdge transitionLabel = edge.getLabel();
+
 		// TODO fix WORKAROUND unsoundness for summary code blocks without procedure implementation
-		if (edge instanceof Summary && !((Summary) edge).calledProcedureHasImplementation()) {
+		if (transitionLabel instanceof Summary && !((Summary) edge).calledProcedureHasImplementation()) {
 			throw new UnsupportedOperationException("Summary for procedure without implementation");
+		} else if (transitionLabel instanceof Call) {
+			return applyCall(oldState, oldState, (Call) transitionLabel);
+		} else if (transitionLabel instanceof Return) {
+			return applyReturn(oldState, oldState, ((Return) transitionLabel).getCallStatement());
 		}
 
 		List<OctDomainState> currentState = deepCopy(Collections.singletonList(oldState));
-		final List<Statement> statements = mHavocBundler.bundleHavocsCached(edge);
+		final List<Statement> statements = mHavocBundler.bundleHavocsCached(transitionLabel);
 		for (final Statement statement : statements) {
 			currentState = mStatementProcessor.processStatement(statement, currentState);
 		}
@@ -219,47 +227,31 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 		}
 
 		final CallStatement call = callTransition.getCallStatement();
-		final Procedure procedure = calledProcedure(call);
+		final CallInfo callInfo = mCallInfoCache.getCallInfo(call);
 
-		final Map<String, IBoogieVar> tmpVars = new HashMap<>();
-		final List<Pair<IBoogieVar, IBoogieVar>> mapInParamToTmpVar = new ArrayList<>();
-		final List<Pair<IBoogieVar, Expression>> mapTmpVarToArg = new ArrayList<>();
-		int paramNumber = 0;
-		for (final VarList inParamList : procedure.getInParams()) {
-			final IBoogieType type = inParamList.getType().getBoogieType();
-			if (!TypeUtils.isBoolean(type) && !TypeUtils.isNumeric(type)) {
-				paramNumber += inParamList.getIdentifiers().length;
-				continue;
-				// results in "var := \top" for these variables, which is always assumed for unsupported types
-			}
-			for (final String inParam : inParamList.getIdentifiers()) {
-				// unique (inParams are all unique + brackets are forbidden)
-				final String tmpVarName = "octTmp(" + inParam + ")";
-				final BoogieVar realBoogieVar = mBpl2SmtTable.getBoogieVar(inParam, call.getMethodName(), true);
-				assert realBoogieVar != null;
-				final IBoogieVar tmpBoogieVar = AbsIntUtil.createTemporaryIBoogieVar(tmpVarName, type);
-				final Expression arg = call.getArguments()[paramNumber];
-				++paramNumber;
+		List<OctDomainState> tmpStates = new ArrayList<>();
+		tmpStates.add(stateBeforeCall.addVariables(callInfo.getTempInParams()));
 
-				tmpVars.put(tmpVarName, tmpBoogieVar);
-				mapInParamToTmpVar.add(new Pair<>(realBoogieVar, tmpBoogieVar));
-				mapTmpVarToArg.add(new Pair<>(tmpBoogieVar, arg));
+		tmpStates = deepCopy(tmpStates);
+		final AssignmentStatement invarAssign = callInfo.getInParamAssign();
+		final AssignmentStatement oldvarAssign = callInfo.getOldVarAssign();
+		if (invarAssign != null) {
+			for (int i = 0; i < invarAssign.getRhs().length; ++i) {
+				tmpStates = mStatementProcessor.processSingleAssignment(callInfo.getTempInParams().get(i),
+						invarAssign.getRhs()[i], tmpStates);
 			}
 		}
-		// add temporary variables
-		List<OctDomainState> tmpStates = new ArrayList<>();
-		tmpStates.add(stateBeforeCall.addVariables(tmpVars.values()));
 
-		// assign tmp := args
-		tmpStates = deepCopy(tmpStates);
-		for (final Pair<IBoogieVar, Expression> assign : mapTmpVarToArg) {
-			tmpStates = mStatementProcessor.processSingleAssignment(assign.getFirst(), assign.getSecond(), tmpStates);
+		if (oldvarAssign != null) {
+			tmpStates = mStatementProcessor.processStatement(oldvarAssign, tmpStates);
 		}
 
 		// inParam := tmp (copy to scope opened by call)
 		// note: bottom-states are not overwritten (see top of this method)
 		final List<OctDomainState> result = new ArrayList<>();
-		tmpStates.forEach(s -> result.add(stateAfterCall.copyValuesOnScopeChange(s, mapInParamToTmpVar)));
+
+		tmpStates.forEach(
+				s -> result.add(stateAfterCall.copyValuesOnScopeChange(s, callInfo.getInParam2TmpVars(), true)));
 		return result;
 		// No need to remove the temporary variables.
 		// The states with temporary variables are only local variables of this method.
@@ -273,7 +265,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 			final Procedure procedure = calledProcedure(correspondingCall);
 			final List<Pair<IBoogieVar, IBoogieVar>> mapLhsToOut =
 					generateMapCallLhsToOutParams(correspondingCall.getLhs(), procedure);
-			stateAfterReturn = stateAfterReturn.copyValuesOnScopeChange(stateBeforeReturn, mapLhsToOut);
+			stateAfterReturn = stateAfterReturn.copyValuesOnScopeChange(stateBeforeReturn, mapLhsToOut, false);
 			result.add(stateAfterReturn);
 		}
 		return result;
@@ -322,10 +314,16 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 	}
 
 	IBoogieVar getBoogieVar(final VariableLHS vLhs) {
-		final IBoogieVar returnVar =
+		IBoogieVar rtr =
 				getBoogie2SmtSymbolTable().getBoogieVar(vLhs.getIdentifier(), vLhs.getDeclarationInformation(), false);
-		assert returnVar != null;
-		return returnVar;
+		if (rtr == null) {
+			// hack for oldvars
+			final String newIdent = vLhs.getIdentifier().replaceAll("old\\((.*)\\)", "$1");
+			rtr = getBoogie2SmtSymbolTable().getBoogieVar(newIdent, vLhs.getDeclarationInformation(), false);
+			rtr = ((BoogieNonOldVar) rtr).getOldVar();
+		}
+		assert rtr != null : "Unknown Boogie var: " + vLhs.getIdentifier();
+		return rtr;
 	}
 
 	IBoogieVar getBoogieVar(final IdentifierExpression ie) {

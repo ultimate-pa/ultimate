@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IfThenElseExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.RealLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
@@ -160,7 +161,7 @@ public class ExpressionTransformer {
 			final String value = ((RealLiteral) expr).getValue();
 			return new AffineExpression(new BigDecimal(value));
 		} else if (expr instanceof IdentifierExpression) {
-			final IdentifierExpression ie = ((IdentifierExpression) expr);
+			final IdentifierExpression ie = (IdentifierExpression) expr;
 			IBoogieVar var =
 					mBpl2SmtSymbolTable.getBoogieVar(ie.getIdentifier(), ie.getDeclarationInformation(), false);
 			if (var == null) {
@@ -170,7 +171,22 @@ public class ExpressionTransformer {
 			final Map<IBoogieVar, BigDecimal> coefficients = Collections.singletonMap(var, BigDecimal.ONE);
 			return new AffineExpression(coefficients, BigDecimal.ZERO);
 		} else if (expr instanceof UnaryExpression) {
-			return unaryExprToAffineExpr((UnaryExpression) expr);
+			final UnaryExpression uexpr = (UnaryExpression) expr;
+			if (uexpr.getOperator() == Operator.OLD) {
+				if (!(uexpr.getExpr() instanceof IdentifierExpression)) {
+					throw new UnsupportedOperationException("No support for old expressions yet");
+				}
+				final IdentifierExpression oldIe = (IdentifierExpression) uexpr.getExpr();
+				IBoogieVar var = mBpl2SmtSymbolTable.getBoogieVar(oldIe.getIdentifier(),
+						oldIe.getDeclarationInformation(), true);
+				if (var == null) {
+					var = mBpl2SmtSymbolTable.getBoogieConst(oldIe.getIdentifier());
+				}
+				assert var != null;
+				final Map<IBoogieVar, BigDecimal> coefficients = Collections.singletonMap(var, BigDecimal.ONE);
+				return new AffineExpression(coefficients, BigDecimal.ZERO);
+			}
+			return unaryExprToAffineExpr(uexpr);
 		} else if (expr instanceof BinaryExpression) {
 			return binaryExprToAffineExpr((BinaryExpression) expr);
 		}
@@ -183,6 +199,8 @@ public class ExpressionTransformer {
 		case ARITHNEGATIVE:
 			final AffineExpression sub = affineExprCached(expr.getExpr());
 			return sub == null ? null : sub.negate();
+		case OLD:
+			return affineExprCached(expr);
 		default:
 			return null;
 		}
