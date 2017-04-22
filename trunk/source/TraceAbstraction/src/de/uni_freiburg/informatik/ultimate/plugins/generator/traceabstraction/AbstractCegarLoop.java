@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo.SizeInfo;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo.Info;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.TAConverterFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
@@ -328,7 +328,10 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mLogger.info("======== Iteration " + mIteration + "==of CEGAR loop == " + mName + "========");
 
 		if (mInteractiveMode) {
-			mInteractive.send(mCegarLoopBenchmark);
+			final IterationInfo.Info info = IterationInfo.newInstance();
+			info.mBenchmark = mCegarLoopBenchmark;
+			info.mIteration = mIteration;
+			mInteractive.send(info);
 		}
 
 		// initialize dump of debugging output to files if necessary
@@ -374,7 +377,10 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			mLogger.info("=== Iteration " + mIteration + " === " + errorLocs() + "===");
 			if (mInteractiveMode) {
-				mInteractive.send(mCegarLoopBenchmark);
+				final IterationInfo.Info info = IterationInfo.newInstance();
+				info.mBenchmark = mCegarLoopBenchmark;
+				info.mIteration = mIteration;
+				mInteractive.send(info);
 			}
 			mCegarLoopBenchmark.announceNextIteration();
 			if (mPref.dumpAutomata()) {

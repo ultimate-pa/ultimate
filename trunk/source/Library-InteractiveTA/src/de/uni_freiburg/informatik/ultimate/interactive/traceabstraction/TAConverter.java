@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ce
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType.SizeIterationPair;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo.Info;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PreNestedWord;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PreNestedWord.Loop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PredicateQueuePair;
@@ -109,14 +110,8 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 				TAConverter::fromQueuePair);
 		converterRegistry.registerRConv(PredicateDoubleDecker.QueueResponse.class, PredicateQueuePair.class,
 				PredicateQueueResult.class, TAConverter::toDoubleDecker);
-
-		// converterRegistry.registerBA(TraceAbstractionProtos.IterationInfo.class, IterationInfo.Iteration.class,
-		// i -> TraceAbstractionProtos.IterationInfo.newBuilder().setIteration(i.mIteration).build());
-		converterRegistry.registerBA(TraceAbstractionProtos.IterationInfo.class, CegarLoopStatisticsGenerator.class,
-				TAConverter::fromCegarLoopStatisticsGenerator);
-		converterRegistry.registerBA(TraceAbstractionProtos.IterationInfo.class, IterationInfo.SizeInfo.class,
-				i -> TraceAbstractionProtos.IterationInfo.newBuilder().setAbstractionSizeInfo(i.mAbstraction)
-						.setInterpolantAutomatonSizeInfo(i.mInterpolantAutomaton).build());
+		converterRegistry.registerBA(TraceAbstractionProtos.IterationInfo.class, IterationInfo.Info.class,
+				TAConverter::fromIterationInfo);
 
 		converterRegistry.registerBA(TraceAbstractionProtos.TraceHistogram.class, HistogramOfIterable.class,
 				TAConverter::fromHistogram);
@@ -175,7 +170,23 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 		return builder.build();
 	}
 
-	private static TraceAbstractionProtos.IterationInfo
+	private static TraceAbstractionProtos.IterationInfo fromIterationInfo(Info info) {
+		TraceAbstractionProtos.IterationInfo.Builder builder;
+		if (info.mBenchmark != null) {
+			builder = fromCegarLoopStatisticsGenerator(info.mBenchmark);
+		} else {
+			builder = TraceAbstractionProtos.IterationInfo.newBuilder();
+		}
+		if (info.mAbstraction != null)
+			builder.setAbstractionSizeInfo(info.mAbstraction);
+		if (info.mInterpolantAutomaton != null)
+			builder.setInterpolantAutomatonSizeInfo(info.mInterpolantAutomaton);
+		if (info.mIteration != null)
+			builder.setIteration(info.mIteration);
+		return builder.build();
+	}
+
+	private static TraceAbstractionProtos.IterationInfo.Builder
 			fromCegarLoopStatisticsGenerator(CegarLoopStatisticsGenerator benchmark) {
 		final TraceAbstractionProtos.IterationInfo.Builder builder = TraceAbstractionProtos.IterationInfo.newBuilder();
 		builder.setIteration((int) benchmark.getValue(CegarLoopStatisticsDefinitions.OverallIterations.toString()));
@@ -183,7 +194,7 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 				(SizeIterationPair) benchmark.getValue(CegarLoopStatisticsDefinitions.BiggestAbstraction.toString());
 		builder.setBiggestAbstraction(TraceAbstractionProtos.IterationInfo.Biggest.newBuilder()
 				.setIteration(biggestAbstraction.getIteration()).setSize(biggestAbstraction.getSize()));
-		return builder.build();
+		return builder;
 	}
 
 	private static PredicateDoubleDecker.QueuePair fromQueuePair(PredicateQueuePair qPair) {
