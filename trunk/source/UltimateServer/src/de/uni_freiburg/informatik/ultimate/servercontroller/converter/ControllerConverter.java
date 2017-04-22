@@ -1,5 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.servercontroller.converter;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 
@@ -14,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.interactive.conversion.Converter;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.ConverterRegistry;
 import de.uni_freiburg.informatik.ultimate.servercontroller.ServerController.ResultsWrapper;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller;
+import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.File;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Location;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Result;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.ResultSummary;
@@ -60,6 +65,20 @@ public class ControllerConverter extends Converter<GeneratedMessageV3, Object> {
 		results.stream().map(ControllerConverter::convertResult).forEach(builder::addResults);
 		return builder.build();
 	}
+	
+	private static File convertFile(final java.io.File file) {
+		final File.Builder builder = File.newBuilder();
+		builder.setFileName(file.getName());
+		
+		Path path = Paths.get(file.getAbsolutePath());
+		try {
+			final String content  = new String(Files.readAllBytes(path));
+			builder.setContent(content);
+		} catch (IOException e) {
+		}
+
+		return builder.build();
+	}
 
 	@Override
 	protected void init(ConverterRegistry<GeneratedMessageV3, Object> converterRegistry) {
@@ -83,5 +102,7 @@ public class ControllerConverter extends Converter<GeneratedMessageV3, Object> {
 				builder.setMessage(e.getMessage());
 			return builder.build();
 		});
+		
+		converterRegistry.registerBA(File.class, java.io.File.class, ControllerConverter::convertFile);
 	}
 }

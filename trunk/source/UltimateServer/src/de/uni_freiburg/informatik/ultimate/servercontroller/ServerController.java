@@ -267,6 +267,8 @@ public class ServerController implements IController<RunDefinition> {
 	private File[] requestInput(final ICore<RunDefinition> core, final File[] availableInputFiles)
 			throws InterruptedException, ExecutionException {
 		final File inputFile = requestChoice(availableInputFiles, File::getName, "Pick an Input File");
+		
+		mInternalInterface.send(inputFile);
 
 		return new File[] { inputFile };
 	}
