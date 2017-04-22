@@ -586,30 +586,27 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			return true;
 		}
 
-		if (mLogger.isDebugEnabled()) {
-			final Term leftSimpl =
-					SmtUtils.simplify(mManagedScript, left, mServices, SimplificationTechnique.SIMPLIFY_DDA);
-			final Term rightSimpl =
-					SmtUtils.simplify(mManagedScript, right, mServices, SimplificationTechnique.SIMPLIFY_DDA);
-			final Term checkSimpl =
-					SmtUtils.simplify(mManagedScript, checkedTerm, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+		final Term leftSimpl = SmtUtils.simplify(mManagedScript, left, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+		final Term rightSimpl =
+				SmtUtils.simplify(mManagedScript, right, mServices, SimplificationTechnique.SIMPLIFY_DDA);
+		final Term checkSimpl =
+				SmtUtils.simplify(mManagedScript, checkedTerm, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 
-			mLogger.debug("Checking left isSubsetOrEqual right = " + subResult);
-			mLogger.debug("leftState  : " + leftState.toLogString());
-			mLogger.debug("rightState : " + rightState.toLogString());
-			mLogger.debug("left       : " + left.toStringDirect());
-			mLogger.debug("right      : " + right.toStringDirect());
-			mLogger.debug("leftSim    : " + leftSimpl.toStringDirect());
-			mLogger.debug("rightSim   : " + rightSimpl.toStringDirect());
-			mLogger.debug("checking   : " + checkedTerm.toStringDirect());
-			mLogger.debug("checkingSim: " + checkSimpl.toStringDirect());
-			mLogger.debug("Result is " + result + " and should be " + expected);
-			mLogger.debug("Solver was " + script.getInfo(":name") + " in version " + script.getInfo(":version"));
-
-		}
+		mLogger.fatal("isSubsetOf assertion failed");
+		mLogger.fatal("Checking left isSubsetOrEqual right = " + subResult);
+		mLogger.fatal("leftState  : " + leftState.toLogString());
+		mLogger.fatal("rightState : " + rightState.toLogString());
+		mLogger.fatal("left       : " + left.toStringDirect());
+		mLogger.fatal("right      : " + right.toStringDirect());
+		mLogger.fatal("leftSim    : " + leftSimpl.toStringDirect());
+		mLogger.fatal("rightSim   : " + rightSimpl.toStringDirect());
+		mLogger.fatal("checking   : " + checkedTerm.toStringDirect());
+		mLogger.fatal("checkingSim: " + checkSimpl.toStringDirect());
+		mLogger.fatal("Result is " + result + " and should be " + expected);
+		mLogger.fatal("Solver was " + script.getInfo(":name") + " in version " + script.getInfo(":version"));
 
 		final SubsetResult reComputeForDebug = leftState.isSubsetOf(rightState);
-		mLogger.debug(reComputeForDebug);
+		mLogger.fatal(reComputeForDebug);
 		script.echo(new QuotedObject("End isSubsetOf assertion"));
 		return false;
 	}
