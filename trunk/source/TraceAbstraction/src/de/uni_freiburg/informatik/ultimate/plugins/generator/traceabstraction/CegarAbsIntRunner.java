@@ -726,7 +726,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				}
 
 			}
-			return new AbstractMultiState<>(allStates);
+			return new AbstractMultiState<>(AbsIntUtil.synchronizeVariables(allStates));
 		}
 
 		private boolean sameVars(final Set<STATE> allStates) {
