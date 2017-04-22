@@ -79,7 +79,8 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	private AbstractMultiState(final int maxSize, final Set<STATE> states) {
 		assert states != null;
 		assert haveSameVars(states);
-		assert states.stream().allMatch(a -> !(a instanceof AbstractMultiState<?, ?>));
+		assert states.stream().allMatch(
+				a -> !(a instanceof AbstractMultiState<?, ?>)) : "Cannot nest AbstractMultiStates, use flatten() instead";
 		mMaxSize = maxSize;
 		mStates = states;
 		sNextFreeId++;

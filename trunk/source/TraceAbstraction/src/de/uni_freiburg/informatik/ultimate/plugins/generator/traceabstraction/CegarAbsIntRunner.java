@@ -684,14 +684,14 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			}
 			final Set<AbstractMultiState<STATE, IBoogieVar>> multistates =
 					minimalSubset.stream().map(a -> ((AbsIntPredicate<STATE, ?>) a).getAbstractStates())
-							.map(a -> new AbstractMultiState<>(a)).collect(Collectors.toSet());
+							.map(a -> AbstractMultiState.flatten(a)).collect(Collectors.toSet());
 			final Set<AbstractMultiState<STATE, IBoogieVar>> synchronizedMultiStates =
 					AbsIntUtil.synchronizeVariables(multistates);
 			assert sameVars(synchronizedMultiStates.stream().flatMap(a -> a.getStates().stream())
 					.collect(Collectors.toSet())) : "Synchronize failed";
 			final AbstractMultiState<STATE, IBoogieVar> conjunction = synchronizedMultiStates.stream()
 					.reduce((a, b) -> a.intersect(b)).orElseThrow(() -> new AssertionError("No predicates given"));
-			final AbsIntPredicate<?, ?> rtr = new AbsIntPredicate<>(unifiedPred, conjunction.getStates());
+			final AbsIntPredicate<?, ?> rtr = new AbsIntPredicate<>(unifiedPred, conjunction);
 			assert assertValidPredicate(rtr) : "Created invalid predicate";
 			return rtr;
 		}
