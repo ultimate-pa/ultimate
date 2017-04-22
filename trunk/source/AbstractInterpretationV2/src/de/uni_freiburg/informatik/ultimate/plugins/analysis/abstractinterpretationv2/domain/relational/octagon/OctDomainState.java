@@ -42,6 +42,7 @@ import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
@@ -72,8 +73,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  */
 public final class OctDomainState implements IAbstractState<OctDomainState, IBoogieVar> {
 
-	private final static Comparator<IBoogieVar> sLexicalVarComparator = (varA, varB) ->
-			varA.getGloballyUniqueId().compareTo(varB.getGloballyUniqueId());
+	private final static Comparator<IBoogieVar> sLexicalVarComparator =
+			(varA, varB) -> varA.getGloballyUniqueId().compareTo(varB.getGloballyUniqueId());
 
 	/** Counter for created objects. Used to set {@link #mId}. */
 	private static int sId;
@@ -299,7 +300,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		addNumericVariables(newState, addedNumVars);
 		return newState;
 	}
-	
+
 	private void addNumericVariables(final OctDomainState newState, final Set<IBoogieVar> addedNumVars) {
 		if (addedNumVars.isEmpty()) {
 			return;
@@ -527,7 +528,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 *            State with same numeric variables, possibly in another order.
 	 * @return {@code array[index of numeric variable from this state] = index of numeric variable from other state} if
 	 *         permuted, {@code null} otherwise.
-	 * @deprecated  As of release 2017-04-21, a constant order of variables is enforced for al octagons.
+	 * @deprecated As of release 2017-04-21, a constant order of variables is enforced for al octagons.
 	 */
 	@Deprecated
 	private int[] matrixPermutationMap(final OctDomainState other) {
@@ -711,8 +712,12 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		final OctDomainState patchedState = shallowCopy();
 		patchedState.mIsBottom = TVBool.UNCHECKED;
 		final SortedMap<IBoogieVar, Integer> mapNumVarsToDominatorIndices = new TreeMap<>(sLexicalVarComparator);
-		mMapNumericVarToIndex.entrySet().forEach(varToOldIndex -> mapNumVarsToDominatorIndices.put(
-				varToOldIndex.getKey(), null)); // patched variables will be overwritten later
+		mMapNumericVarToIndex.entrySet()
+				.forEach(varToOldIndex -> mapNumVarsToDominatorIndices.put(varToOldIndex.getKey(), null)); // patched
+																											// variables
+																											// will be
+																											// overwritten
+																											// later
 
 		for (final IBoogieVar newBoogieVar : dominator.mMapVarToBoogieVar) {
 			unrefOtherMapVarToBoogieVar(patchedState);
@@ -739,7 +744,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		patchedState.mMapNumericVarToIndex = new HashMap<>();
 		int index = 0;
 		while (iter.hasNext()) {
-			Map.Entry<IBoogieVar, Integer> entry = iter.next();
+			final Map.Entry<IBoogieVar, Integer> entry = iter.next();
 			final IBoogieVar var = entry.getKey();
 			final Integer indexInDominator = entry.getValue();
 			if (indexInDominator == null) {
@@ -777,7 +782,7 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 	 *         values from {@code source} abstract state.
 	 */
 	public OctDomainState copyValuesOnScopeChange(final OctDomainState source,
-			final List<Pair<IBoogieVar, IBoogieVar>> mapTargetToSource) {
+			final List<Pair<IBoogieVar, IBoogieVar>> mapTargetToSource, final boolean alsoCopyOldVars) {
 
 		assert assertNotBottomBeforeAssign();
 		// TODO closure in advance to reduce information loss
@@ -786,7 +791,15 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 		final List<Pair<IBoogieVar, IBoogieVar>> mapBooleanTargetToSource = new ArrayList<>(mapTargetToSource.size());
 
 		// shared (=global) numeric variables (copy to keep relations between globals and in/out-parameters)
-		for (final IBoogieVar var : sharedGlobalVars(source)) {
+		Set<IBoogieVar> sharedVars;
+		if (alsoCopyOldVars) {
+			sharedVars = sharedGlobalVars(source);
+		} else {
+			sharedVars =
+					sharedGlobalVars(source).stream().filter(a -> !AbsIntUtil.isOldVar(a)).collect(Collectors.toSet());
+		}
+
+		for (final IBoogieVar var : sharedVars) {
 			final Integer targetIndex = mMapNumericVarToIndex.get(var);
 			if (targetIndex != null) {
 				final Integer sourceIndex = source.mMapNumericVarToIndex.get(var);

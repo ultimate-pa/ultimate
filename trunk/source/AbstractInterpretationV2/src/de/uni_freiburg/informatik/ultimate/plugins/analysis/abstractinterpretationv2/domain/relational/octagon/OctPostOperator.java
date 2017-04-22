@@ -250,7 +250,8 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 		// note: bottom-states are not overwritten (see top of this method)
 		final List<OctDomainState> result = new ArrayList<>();
 
-		tmpStates.forEach(s -> result.add(stateAfterCall.copyValuesOnScopeChange(s, callInfo.getInParam2TmpVars())));
+		tmpStates.forEach(
+				s -> result.add(stateAfterCall.copyValuesOnScopeChange(s, callInfo.getInParam2TmpVars(), true)));
 		return result;
 		// No need to remove the temporary variables.
 		// The states with temporary variables are only local variables of this method.
@@ -264,7 +265,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 			final Procedure procedure = calledProcedure(correspondingCall);
 			final List<Pair<IBoogieVar, IBoogieVar>> mapLhsToOut =
 					generateMapCallLhsToOutParams(correspondingCall.getLhs(), procedure);
-			stateAfterReturn = stateAfterReturn.copyValuesOnScopeChange(stateBeforeReturn, mapLhsToOut);
+			stateAfterReturn = stateAfterReturn.copyValuesOnScopeChange(stateBeforeReturn, mapLhsToOut, false);
 			result.add(stateAfterReturn);
 		}
 		return result;
