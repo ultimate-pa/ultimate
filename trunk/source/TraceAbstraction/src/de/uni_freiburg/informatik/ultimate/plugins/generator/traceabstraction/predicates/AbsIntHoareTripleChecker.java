@@ -389,7 +389,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		if (pred instanceof AbsIntPredicate<?, ?>) {
 			final Set<STATE> states = ((AbsIntPredicate<STATE, ?>) pred).getAbstractStates();
 			if (states.size() <= 1) {
-				return new AbstractMultiState<>(states);
+				return AbstractMultiState.flatten(states);
 			}
 			final Set<VARDECL> vars = new HashSet<>();
 			states.stream().forEach(a -> vars.addAll(a.getVariables()));

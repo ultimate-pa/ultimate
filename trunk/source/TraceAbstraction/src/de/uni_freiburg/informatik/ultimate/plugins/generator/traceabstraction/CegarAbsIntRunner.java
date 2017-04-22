@@ -705,19 +705,28 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			if (unifiedPred instanceof AbsIntPredicate<?, ?>) {
 				return unifiedPred;
 			}
-			final AbsIntPredicate<?, ?> rtr = new AbsIntPredicate<>(unifiedPred, toStates(minimalSubset));
+			final AbsIntPredicate<?, ?> rtr = new AbsIntPredicate<>(unifiedPred, toDisjunctiveState(minimalSubset));
 			assert assertValidPredicate(rtr) : "Created invalid predicate";
 			return rtr;
 		}
 
-		private Set<STATE> toStates(final Set<IPredicate> preds) {
+		private AbstractMultiState<STATE, IBoogieVar> toDisjunctiveState(final Set<IPredicate> preds) {
 			if (preds == null || preds.isEmpty()) {
-				return Collections.emptySet();
+				return new AbstractMultiState<>(Collections.emptySet());
 			}
-			final Set<STATE> allStates = preds.stream().map(a -> (AbsIntPredicate<STATE, ?>) a)
-					.flatMap(a -> a.getAbstractStates().stream()).collect(Collectors.toSet());
-			// assert sameVars(allStates) : "variables in disjunction are not compatible (maybe unimportant)";
-			return allStates;
+			final Set<STATE> allStates = new HashSet<>();
+			for (final IPredicate pred : preds) {
+				final Set<STATE> states = ((AbsIntPredicate<STATE, ?>) pred).getAbstractStates();
+				for (final STATE state : states) {
+					if (state instanceof AbstractMultiState<?, ?>) {
+						allStates.addAll(((AbstractMultiState) state).getStates());
+					} else {
+						allStates.add(state);
+					}
+				}
+
+			}
+			return new AbstractMultiState<>(allStates);
 		}
 
 		private boolean sameVars(final Set<STATE> allStates) {
