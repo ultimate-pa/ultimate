@@ -14,6 +14,9 @@ import java.util.function.Supplier;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage;
+import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage.Action;
+import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage.Message;
+import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage.Message.Level;
 
 /**
  * represents possible Future-Client. <br>
@@ -35,15 +38,18 @@ public class FutureClient<T> implements Future<Client<T>> {
 	private final CompletableFuture<Supplier<IWrappedMessage<T>>> mMessageFactory = new CompletableFuture<>();
 	private final CompletableFuture<ITypeRegistry<T>> mTypeRegistry = new CompletableFuture<>();
 	private final CompletableFuture<ExecutorService> mExecutor = new CompletableFuture<>();
+	private final CompletableFuture<Message> mHelloMessage = new CompletableFuture<IWrappedMessage.Message>();
 
 	private final CompletableFuture<Client<T>> mClientFuture;
 	private final Future<Client<T>> mClientWithHelloFuture;
 
 	public FutureClient(ILogger logger) {
 		mLogger = logger;
-		mClientFuture = CompletableFuture.allOf(mSocket, mMessageFactory, mTypeRegistry).thenApply(n -> {
+		mClientFuture = CompletableFuture.allOf(mSocket, mMessageFactory, mTypeRegistry, mHelloMessage).thenApply(n -> {
 			final Supplier<IWrappedMessage<T>> factory = mMessageFactory.join();
-			return new Client<T>(mSocket.join(), logger, mTypeRegistry.join()) {
+			final IWrappedMessage<T> hello = factory.get();
+			hello.writer().setAction(Action.HELLO).setMessage(mHelloMessage.join()).write();
+			return new Client<T>(mSocket.join(), logger, mTypeRegistry.join(), hello) {
 				@Override
 				protected IWrappedMessage<T> construct() {
 					return factory.get();
@@ -74,6 +80,12 @@ public class FutureClient<T> implements Future<Client<T>> {
 	public void setRegistry(ITypeRegistry<T> registry) {
 		if (!mTypeRegistry.complete(registry))
 			throw new IllegalStateException("Type registry had already been set");
+	}
+	
+	public void setHelloMessage(String source, String text, Level level) {
+		Message message = new Message(source, text, level);
+		if (!mHelloMessage.complete(message))
+			throw new IllegalStateException("Hello Message had already been set");
 	}
 
 	public void setExecutor(ExecutorService executor) {

@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -154,12 +155,13 @@ public class ServerController implements IController<RunDefinition> {
 		registerTypes();
 
 		int result = IApplication.EXIT_OK;
+		int connectionNumber = 0;
 
 		try {
 			while (true) {
 				try {
+					mServer.setHelloMessage("Connection " + connectionNumber++);
 					initWrapper(core, availableToolchains, availableSettingsFiles, availableInputFiles);
-					Thread.sleep(200); // wait a little bit before handling the next client.
 
 					if (false)
 						break; // TODO: add settings that limit the server to a single (or fixed numer or time) run
@@ -167,11 +169,9 @@ public class ServerController implements IController<RunDefinition> {
 					// throw e.getCause()
 					if (e.getCause() instanceof IOException) {
 						mLogger.error("It seems like the Connection has been Lost. Reinitializing controller.", e);
-						Thread.sleep(200);
 						result = IApplication.EXIT_RELAUNCH; // What does/should that do?
 					} else if (e.getCause() instanceof ClientQuittedException) {
 						mLogger.error("Client quitted. Reinitializing controller.", e);
-						Thread.sleep(200);
 						result = IApplication.EXIT_RELAUNCH; // What does/should that do?
 					} else {
 						mLogger.fatal(e);
@@ -179,6 +179,8 @@ public class ServerController implements IController<RunDefinition> {
 						result = -1;
 						break;
 					}
+				} finally {
+					Thread.sleep(200); // wait a little bit before handling the next client.
 				}
 			}
 		} catch (InterruptedException | TimeoutException e) {

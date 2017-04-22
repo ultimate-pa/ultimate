@@ -13,6 +13,8 @@ public interface IInteractiveServer<T> extends IServer {
 	 * @throws InterruptedException
 	 */
 	Client<T> waitForConnection(final long timeout, final TimeUnit timeunit) throws InterruptedException, ExecutionException, TimeoutException;
+	
+	void setHelloMessage(final String helloMessage);
 
 	ITypeRegistry<T> getTypeRegistry();
 }

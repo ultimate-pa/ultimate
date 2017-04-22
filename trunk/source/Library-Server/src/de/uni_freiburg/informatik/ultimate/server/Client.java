@@ -56,11 +56,12 @@ public abstract class Client<T> {
 
 	private boolean mIOExceptionOccurred = false;
 
-	Client(Socket connectionSocket, ILogger logger, ITypeRegistry<T> typeRegistry) {
+	Client(Socket connectionSocket, ILogger logger, ITypeRegistry<T> typeRegistry, IWrappedMessage<T> helloMessage) {
 		mLogger = logger;
 
 		mTypeRegistry = typeRegistry;
 		mQueue = new MessageQueue<T>(logger, this::construct);
+		mQueue.put(helloMessage);
 		mHandlerRegistry = new HandlerRegistry<>(mTypeRegistry);
 		mSocket = connectionSocket;
 	}

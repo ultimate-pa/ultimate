@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage;
+import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage.Message.Level;
 import util.Event;
 
 public abstract class TCPServer<T> implements IInteractiveServer<T> {
@@ -31,6 +32,8 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 	protected ExecutorService mExecutor;
 	protected Future<?> mServerFuture;
 	protected Supplier<ExecutorService> mGetExecutorService;
+
+	protected String mHelloMessage;
 
 	protected boolean mCancelled;
 	protected final Event mConnectionEvent;
@@ -78,6 +81,11 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 		}
 	}
 
+	@Override
+	public void setHelloMessage(final String helloMessage) {
+		mHelloMessage = helloMessage;
+	}
+
 	private void run() {
 		try {
 			mSocket = new ServerSocket(mPort);
@@ -110,7 +118,9 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 
 			mLogger.info("accepted connection: " + clientSocket);
 			mClient.setSocket(clientSocket);
-
+			mLogger.info("setting hello message: " + mHelloMessage);
+			mClient.setHelloMessage(getClass().getSimpleName(), mHelloMessage, Level.INFO);
+			mLogger.info("setting executor");
 			mClient.setExecutor(mExecutor);
 
 			// send(Action.HELLO, null);
