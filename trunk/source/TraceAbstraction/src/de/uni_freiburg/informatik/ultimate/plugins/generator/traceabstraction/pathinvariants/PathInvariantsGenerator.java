@@ -28,12 +28,8 @@
 
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants;
 
-import java.util.HashSet;
 import java.util.LinkedHashSet;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -161,112 +157,7 @@ public final class PathInvariantsGenerator implements IInterpolantGenerator {
 					new InterpolantComputationStatus(false, ItpErrorStatus.ALGORITHM_FAILED, null);
 		}
 	}
-
-	// /**
-	// * Compute weakest precondition for those locations which are predecessors of the error locations and successors
-	// of
-	// * any loop locations. If there are no loop locations, then we compute it only for the last two locations. TODO:
-	// If
-	// * assertion is inside of a loop, then compute WP only for the last transition (i.e. the transition that reaches
-	// the
-	// * error location).
-	// *
-	// * @param pathProgram
-	// * @return
-	// */
-	// private Map<IcfgLocation, UnmodifiableTransFormula> computeWPForPathProgram(final IIcfg<IcfgLocation>
-	// pathProgram,
-	// final ManagedScript managedScript) {
-	// final Set<IcfgLocation> loopLocations = pathProgram.getLoopLocations();
-	// final Set<IcfgLocation> locsOfNonEmptyLoops = extractLocationsOfNonEmptyLoops(pathProgram);
-	// final IcfgLocation errorloc = null;
-	//// extractErrorLocationFromPathProgram(pathProgram);
-	// final Map<IcfgLocation, IPredicate> locs2WP = new HashMap<>();
-	// locs2WP.put(errorloc, mPostcondition);
-	// List<IcfgEdge> edges2visit = errorloc.getIncomingEdges();
-	// int levelCounter = 0;
-	// while (true) {
-	// final List<IcfgEdge> newEdges = new ArrayList<>();
-	// for (final IcfgEdge e : edges2visit) {
-	// if (!(e instanceof IInternalAction)) {
-	// throw new UnsupportedOperationException("interprocedural traces are not supported (yet)");
-	// }
-	// // Compute wp only if the source node is not an initial node
-	// if (!e.getSource().getIncomingEdges().isEmpty()) {
-	// // Compute WP for the formula of the current transition and the predicate at the target location.
-	// final Term wpTerm = mPredicateTransformer.weakestPrecondition(locs2WP.get(e.getTarget()),
-	// ((IInternalAction) e).getTransformula());
-	// final Term wpTermWithoutQuantifiers = PartialQuantifierElimination.tryToEliminate(mServices,
-	// mLogger, managedScript, wpTerm, SimplificationTechnique.SIMPLIFY_DDA,
-	// XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-	// if (new PrenexNormalForm(managedScript)
-	// .transform(wpTermWithoutQuantifiers) instanceof QuantifiedFormula) {
-	// throw new UnsupportedOperationException("Quantifier elimination failed.");
-	// }
-	// final IPredicate wp = mPredicateUnifier.getOrConstructPredicate(wpTermWithoutQuantifiers);
-	// locs2WP.put(e.getSource(), wp);
-	// if (!locsOfNonEmptyLoops.contains(e.getSource()) || loopLocations.isEmpty() && levelCounter < 2) {
-	// newEdges.addAll(e.getSource().getIncomingEdges());
-	// }
-	// }
-	// }
-	// if (loopLocations.isEmpty()) {
-	// levelCounter++;
-	// }
-	//
-	// if (newEdges.isEmpty() || levelCounter >= 2) {
-	// break;
-	// }
-	// edges2visit = newEdges;
-	//
-	// }
-	// // remove the mapping (error-location -> false) from result
-	// locs2WP.remove(errorloc);
-	//
-	// return convertMapToPredsToMapToUnmodTrans(locs2WP, managedScript);
-	// }
-
-	/**
-	 * Check for each loop location of the path program if it contains some inner statements.
-	 *
-	 * @param pathProgram
-	 * @return
-	 */
-	private static Set<IcfgLocation> extractLocationsOfNonEmptyLoops(final IIcfg<IcfgLocation> pathProgram) {
-		final Set<IcfgLocation> loopLocations = pathProgram.getLoopLocations();
-		final Set<IcfgLocation> locationsOfNonEmptyLoops = new HashSet<>(loopLocations.size());
-		for (final IcfgLocation currLoc : loopLocations) {
-			final List<IcfgEdge> outEdges = currLoc.getOutgoingEdges();
-			// if (outEdges.isEmpty()) {
-			// break;
-			// }
-			for (final IcfgEdge e : outEdges) {
-				if (nodeIsReachable(currLoc, e)) {
-					locationsOfNonEmptyLoops.add(currLoc);
-					break;
-				}
-			}
-		}
-		return locationsOfNonEmptyLoops;
-	}
-
-	private static boolean nodeIsReachable(final IcfgLocation currLoc, final IcfgEdge e) {
-		final Set<IcfgLocation> visitedNodes = new HashSet<>();
-		final List<IcfgEdge> edgesToProcess = new LinkedList<>();
-		edgesToProcess.add(e);
-		while (!edgesToProcess.isEmpty()) {
-			final IcfgEdge currEdge = edgesToProcess.remove(edgesToProcess.size() - 1);
-			final IcfgLocation targ = currEdge.getTarget();
-			if (Objects.equals(targ, currLoc)) {
-				return true;
-			} else if (!visitedNodes.contains(targ)) {
-				visitedNodes.add(targ);
-				edgesToProcess.addAll(targ.getOutgoingEdges());
-			}
-		}
-		return false;
-	}
-
+	
 	private static Set<? extends IcfgEdge>
 			extractTransitionsFromRun(final NestedRun<? extends IAction, IPredicate> run) {
 		final int len = run.getLength();
