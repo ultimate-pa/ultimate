@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.interactive.conversion.Converter;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.ConverterRegistry;
 import de.uni_freiburg.informatik.ultimate.servercontroller.ServerController.ResultsWrapper;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller;
+import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Confirm;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.File;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Location;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Result;
@@ -65,19 +66,23 @@ public class ControllerConverter extends Converter<GeneratedMessageV3, Object> {
 		results.stream().map(ControllerConverter::convertResult).forEach(builder::addResults);
 		return builder.build();
 	}
-	
+
 	private static File convertFile(final java.io.File file) {
 		final File.Builder builder = File.newBuilder();
 		builder.setFileName(file.getName());
-		
+
 		Path path = Paths.get(file.getAbsolutePath());
 		try {
-			final String content  = new String(Files.readAllBytes(path));
+			final String content = new String(Files.readAllBytes(path));
 			builder.setContent(content);
 		} catch (IOException e) {
 		}
 
 		return builder.build();
+	}
+
+	private static Boolean toBoolean(final Confirm confirm) {
+		return confirm.getOk();
 	}
 
 	@Override
@@ -102,7 +107,9 @@ public class ControllerConverter extends Converter<GeneratedMessageV3, Object> {
 				builder.setMessage(e.getMessage());
 			return builder.build();
 		});
-		
+
 		converterRegistry.registerBA(File.class, java.io.File.class, ControllerConverter::convertFile);
+
+		converterRegistry.registerAB(Confirm.class, Boolean.class, ControllerConverter::toBoolean);
 	}
 }

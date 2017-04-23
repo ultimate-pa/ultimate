@@ -36,6 +36,10 @@ message StackTraceElement {
 	int32 line_number = 4;
 }
 
+message Confirm {
+	bool ok = 1;
+}
+
 message ResultSummary {
 	string description = 1;
 	ToolChainResult result = 2;

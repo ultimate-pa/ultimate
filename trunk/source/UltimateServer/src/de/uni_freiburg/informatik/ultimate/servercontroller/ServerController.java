@@ -165,6 +165,8 @@ public class ServerController implements IController<RunDefinition> {
 
 					if (false)
 						break; // TODO: add settings that limit the server to a single (or fixed numer or time) run
+				} catch (CancellationException e) {
+					mLogger.error("Cancelled some Future", e);
 				} catch (ExecutionException e) {
 					// throw e.getCause()
 					if (e.getCause() instanceof IOException) {
@@ -227,14 +229,22 @@ public class ServerController implements IController<RunDefinition> {
 
 		final List<File> tcFiles = new ArrayList<>(availableToolchains.keySet());
 
-		requestAndLoadSettings(core, availableSettingsFiles);
-		requestAndLoadToolchain(core, tcFiles);
+		while (true) {
+			requestAndLoadSettings(core, availableSettingsFiles);
+			requestAndLoadToolchain(core, tcFiles);
 
-		final File[] inputFiles = requestInput(core, availableInputFiles);
+			final File[] inputFiles = requestInput(core, availableInputFiles);
 
-		execToolchain(core, inputFiles);
+			if (!mInternalInterface.request(Boolean.class).get())
+				continue;
 
-		mLogger.info("Toolchain finished - waiting for Client to Quit.");
+			execToolchain(core, inputFiles);
+			mLogger.info("Toolchain finished");
+			if (!mInternalInterface.request(Boolean.class).get())
+				break;
+		}
+
+		mLogger.info("waiting for Client to Quit.");
 		client.waitForQuit().get();
 	}
 
@@ -267,7 +277,7 @@ public class ServerController implements IController<RunDefinition> {
 	private File[] requestInput(final ICore<RunDefinition> core, final File[] availableInputFiles)
 			throws InterruptedException, ExecutionException {
 		final File inputFile = requestChoice(availableInputFiles, File::getName, "Pick an Input File");
-		
+
 		mInternalInterface.send(inputFile);
 
 		return new File[] { inputFile };
