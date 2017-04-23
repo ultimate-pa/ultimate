@@ -87,7 +87,7 @@ public class Svcomp17FoldersAutomizerReachFloatDump extends AbstractTraceAbstrac
 	 */
 	@Override
 	public long getTimeout() {
-		return 120 * 1000;
+		return 300 * 1000;
 	}
 
 	/**
@@ -96,6 +96,7 @@ public class Svcomp17FoldersAutomizerReachFloatDump extends AbstractTraceAbstrac
 	 */
 	private static final String[] SETTINGS_32BIT = {
 		"automizer/smtBenchmarkProduction/Reach-64bit-Automizer_Bitvector_SmtFloatDump.epf",
+		"automizer/smtBenchmarkProduction/Reach-64bit-Automizer_Bitvector_SmtFloatDumpApplicationTrack.epf",
 	};
 	
 	private static final String[] SETTINGS_64BIT = {
