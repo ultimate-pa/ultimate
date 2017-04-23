@@ -210,20 +210,23 @@ public interface IAbstractState<STATE extends IAbstractState<STATE, VARDECL>, VA
 	 */
 	public enum SubsetResult {
 		/**
-		 * The set of program states represented by this abstract state is a strict subset of the set of program states
-		 * represented by the other abstract state.
-		 */
-		STRICT,
-		/**
 		 * The set of program states represented by this abstract state is equal to the set of program states
 		 * represented by the other abstract state.
 		 */
 		EQUAL,
+
 		/**
 		 * The set of program states represented by this abstract state is either a strict subset of or equal to the set
 		 * of program states represented by the other abstract state.
 		 */
 		NON_STRICT,
+
+		/**
+		 * The set of program states represented by this abstract state is a strict subset of the set of program states
+		 * represented by the other abstract state.
+		 */
+		STRICT,
+
 		/**
 		 * If none of the other results apply.
 		 */

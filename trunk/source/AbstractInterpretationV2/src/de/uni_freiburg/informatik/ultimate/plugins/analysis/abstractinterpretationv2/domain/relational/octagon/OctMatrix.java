@@ -34,6 +34,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -241,18 +242,18 @@ public class OctMatrix {
 	 */
 	public static OctMatrix random(final int variables, final double infProbability) {
 		final OctMatrix m = new OctMatrix(variables);
-		for (int i = 0; i < m.mSize; ++i) {
-			final int maxCol = i | 1;
-			for (int j = 0; j <= maxCol; ++j) {
+		for (int row = 0; row < m.mSize; ++row) {
+			final int maxCol = row | 1;
+			for (int col = 0; col <= maxCol; ++col) {
 				OctValue v;
-				if (i == j) {
+				if (row == col) {
 					v = OctValue.ZERO;
 				} else if (Math.random() < infProbability) {
 					v = OctValue.INFINITY;
 				} else {
 					v = new OctValue((int) (Math.random() * 20 - 10));
 				}
-				m.set(i, j, v);
+				m.set(row, col, v);
 			}
 		}
 		return m;
@@ -1676,5 +1677,22 @@ public class OctMatrix {
 			}
 		}
 		return sb.toString();
+	}
+	
+	/** @return Indices of variables which have constraints (that is, at least on entry < infinity). */
+	public Set<Integer> variablesWithConstraints() {
+		Set<Integer> varsWithConstraints = new HashSet<Integer>();
+		for (int row = 0; row < mSize; ++row) {
+			final int maxCol = row | 1;
+			for (int col = 0; col <= maxCol; ++col) {
+				final OctValue entry = get(row, col);
+				final boolean hasConstraint =  !entry.isInfinity() || (row == col && entry.signum() < 0);
+				if (hasConstraint) {
+					varsWithConstraints.add(row / 2);
+					varsWithConstraints.add(col / 2);
+				}
+			}
+		}
+		return varsWithConstraints;
 	}
 }
