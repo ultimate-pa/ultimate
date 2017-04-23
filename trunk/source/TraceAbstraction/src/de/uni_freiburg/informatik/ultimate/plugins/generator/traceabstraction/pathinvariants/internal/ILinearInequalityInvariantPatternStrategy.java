@@ -1,6 +1,5 @@
-/*
+/* Copyright (C) 2017 Betim Musa
  * Copyright (C) 2015 Dirk Steinmetz
- * Copyright (C) 2016 Betim Musa
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
@@ -35,9 +34,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
- * A strategy to generate invariant patterns composed of each a disjunction of a
- * increasing number of conjunctions of a increasing number of inequalities over
- * all program variables.
+ * An interface for getting invariant patterns (templates) needed to generate constraints.
+ * An invariant pattern or template over the program variables x_1, ..., x_n is a formula 
+ * in disjunctive normal form (D_1 \/ D_2 \/ ... \/ D_d) where each disjunct D_i consists of a conjunction
+ * of inequalities ((c_1 * x_1 + c_2*x_2 + ... c_n*x_n <= 0) /\ ...). The variables c_1, ..., c_n are called
+ * the parameters or coefficients of the invariant template.
  * 
  * @see LinearInequalityInvariantPatternProcessor
  */
@@ -54,66 +55,78 @@ public interface ILinearInequalityInvariantPatternStrategy<IPT> {
 	 * 
 	 * @return Array with exactly two fields, the first one containing the
 	 *         number of elements in the outer disjunction and the second one
-	 *         containing the number of elements within each inner conjunction,
-	 *         where each element means
-	 *         "one strict inequality and one non-strict one".
+	 *         containing the number of elements within each inner conjunction.
 	 */
 	public int[] getDimensions(final IcfgLocation location, final int round);
 	
+
 	/**
-	 * Returns an invariant pattern for the given location.
-	 * 
+	 * Construct an invariant pattern for the given location and round.
 	 * @param location
-	 *            the location to generate an invariant pattern for
 	 * @param round
-	 *            attempt number, initialized with 0 and increased on each
-	 *            attempt; see {@link #getMaxRounds()}
-	 * @return invariant pattern for location
+	 * @param solver
+	 * @param prefix - is prepended to each coefficient used in the invariant pattern
+	 * @return
 	 */
 	public IPT getInvariantPatternForLocation(final IcfgLocation location,
 			final int round, final Script solver, final String prefix);
 	
-	public Set<Term> getPatternCoefficientsForLocation(final IcfgLocation location);
 	
+	/**
+	 * Construct an invariant pattern for the given location and round, but restrict the program variables used to the given
+	 * set, i.e. use at most the given variables in the invariant pattern.
+	 * @param location
+	 * @param round
+	 * @param solver
+	 * @param prefix - is prepended to each coefficient used in the invariant pattern
+	 * @param vars - the set of variables that should be used in the invariant pattern
+	 * @return
+	 */
 	public IPT getInvariantPatternForLocation(final IcfgLocation location,
 			final int round, final Script solver, final String prefix, Set<IProgramVar> vars);
 	
+	/**
+	 * Get the set of coefficients/parameters used in the invariant pattern for the given
+	 * location.
+	 */
+	public Set<Term> getPatternCoefficientsForLocation(final IcfgLocation location);
 	
 	public void setNumOfConjunctsForLocation(final IcfgLocation location, int numOfConjuncts);
 	
 	public void setNumOfDisjunctsForLocation(final IcfgLocation location, int numOfDisjuncts);
 	
 
-
 	/**
-	 * Returns the maximal number of attempts to re-generate the invariant
-	 * pattern map.
-	 * 
-	 * The round parameter will get for each integer between 0 and
-	 * <code>getMaxRounds() - 1</code>.
-	 * 
-	 * @return maximal number of attempts to re-generate the invariant map
+	 * Returns the maximal number of attempts that should be respected while trying to find a solution for the constraints.
 	 */
 	public int getMaxRounds();
 	
+	
+	/**
+	 * Get the program variables contained in the invariant pattern that is used at the given location.
+	 * @param location
+	 * @param round
+	 * @return
+	 */
 	public Set<IProgramVar> getPatternVariablesForLocation(final IcfgLocation location,
 			final int round);
 	
 	/**
-	 * It is used to individually change the pattern setting (i.e. adding conjuncts/disjuncts) for the given location.
+	 * Change the setting (i.e. increase num. of conjuncts/disjuncts and/or add/remove program variables) that is used to construct
+	 * the invariant pattern for the given location.
 	 * @param location
 	 */
 	public void changePatternSettingForLocation(final IcfgLocation location, final int round);
 	
 	
 	/**
-	 * 
+	 * TODO
 	 * @param location
 	 * @param locationsInUnsatCore
 	 */
 	public void changePatternSettingForLocation(final IcfgLocation location, final int round, 
 			final Set<IcfgLocation> locationsInUnsatCore);
-
+	
 	public void resetSettings();
 
 }

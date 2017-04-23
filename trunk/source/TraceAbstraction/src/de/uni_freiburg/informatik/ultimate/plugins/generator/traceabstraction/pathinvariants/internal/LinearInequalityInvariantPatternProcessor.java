@@ -83,7 +83,7 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
  * program.
  *
  * The outer collection within the invariant pattern type represents a disjunction, the inner one a conjunction. Within
- * the inner conjunction, there are strict and non-strict inequalities. These collections are generated according to a
+ * the inner conjunction, there may be strict and non-strict inequalities. These collections are generated according to a
  * {@link ILinearInequalityInvariantPatternStrategy}.
  *
  * @author David Zschocke, Dirk Steinmetz, Matthias Heizmann, Betim Musa
@@ -111,7 +111,10 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	private Map<String, LinearInequality> mMotzkinCoefficients2LinearInequalities;
 
 	/**
-	 * TODO:
+	 * Maps the invariant patterns (the set of inequalities) to the locations on which they're used.
+	 * E.g. Let IT_1 be an invariant pattern that is used for location loc_1, IT_2 is used for loc_2, and let stmt be the 
+	 * statement between loc_1 and loc_2, then the map stores the following:
+	 * IT_1 -> [loc_1], IT_2 -> [loc_2], stmt -> [loc_1, loc_2].
 	 */
 	private Map<Set<LinearInequality>, List<IcfgLocation>> mLinearInequalities2Locations;
 
@@ -133,6 +136,9 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	private int mCurrentRound;
 	private final int mMaxRounds;
 	private final boolean mUseNonlinearConstraints;
+	/**
+	 * The simplification type that is used to simplify the values of templates coefficients/parameters.
+	 */
 	private final SimplificationType mSimplifySatisfyingAssignment = SimplificationType.TWO_MODE;
 
 	private Collection<TermVariable> mVarsFromUnsatCore;
@@ -201,7 +207,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 
 
 	/**
-	 * Creates a pattern processor using linear inequalities as patterns.
+	 * TODO
 	 *
 	 * @param services
 	 *            Service provider to use, for example for logging and timeouts

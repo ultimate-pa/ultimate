@@ -96,16 +96,16 @@ public interface IInvariantPatternProcessor<IPT> {
 	public IPT getEmptyInvariantPattern();
 
 	/**
-	 * Attempts to find a valid configuration for all pattern variables,
-	 * satisfying any of the given {@link InvariantTransitionPredicate}s.
+	 * Attempts to find a valid configuration (a satisfying assignment) for all pattern variables,
+	 * satisfying any of the given {@link InvariantTransitionPredicate}s (i.e. the constraints).
 	 * 
 	 * @param predicates
-	 *            the predicates to satisfy
+	 *            the set of constraints for which a satisfying assignment is needed
 	 * @param round
 	 *            attempt number, initialized with 0 and increased on each
-	 *            attempt; see {@link #getMaxRounds()}
-	 * @return true if a valid configuration pattern has been found, false
-	 *         otherwise.
+	 *            attempt; @see {@link #getMaxRounds()}
+	 * @return LBool.SAT if a valid configuration pattern (a satisfying assignment) has been found for the constraints,
+	 * LBool.UNSAT if the constraints are unsatisfiable, or LBool.UNKNOWN if the time out.
 	 */
 	public LBool checkForValidConfiguration(
 			final Collection<InvariantTransitionPredicate<IPT>> predicates,
@@ -117,8 +117,8 @@ public interface IInvariantPatternProcessor<IPT> {
 	 * pattern.
 	 * 
 	 * The behaviour of this method is undefined, when the last call to
-	 * {@link #checkForValidConfiguration(Collection, int)} returned false or if
-	 * {@link #checkForValidConfiguration(Collection, int)} has not yet been called
+	 * {@link #checkForValidConfiguration(Collection, int)} returned false or if it
+	 * has not yet been called
 	 * at all.
 	 * 
 	 * @param pattern the pattern to apply the configuration to
@@ -147,25 +147,34 @@ public interface IInvariantPatternProcessor<IPT> {
 
 	public IPT getExitInvariantPattern();
 	
+	/**
+	 * If the current constraints are satisfiable (i.e. {@link checkForValidConfiguration} has returned LBool.SAT),
+	 * this method extracts the values for the parameters (coefficients) of the templates.
+	 */
 	public void extractValuesForPatternCoefficients();
 
 	/**
-	 *
+	 * Add UnmodifiableTransFormula to each disjunct in pattern.
 	 * @param pattern
-	 * @param p
-	 * @return the pattern, where the formula represented by the given TransFormula has been added to each disjunct as an additional conjunct.
+	 * @param tf
+	 * @return the pattern, where the formula tf has been added to each disjunct.
 	 */
 	public IPT addTransFormulaToEachConjunctInPattern(IPT pattern, UnmodifiableTransFormula tf);
 	
 	
 	/**
-	 *
+	 * Add UnmodifiableTransFormula to pattern.
 	 * @param pattern
 	 * @param p
-	 * @return the pattern, where the formula represented by the given TransFormula has been added as an additional disjunct.
+	 * @return the pattern, where the formula tf has been added as an additional disjunct.
 	 */
 	public IPT addTransFormulaAsAdditionalDisjunctToPattern(IPT pattern, UnmodifiableTransFormula tf);
 	
-	public Set<IProgramVar> getVariablesForInvariantPattern(IcfgLocation l, int round);
+	/**
+	 * Get the set of variables which should be used in the invariant template at the given location.
+	 * @param loc - a location of the CFG or path program
+	 * @param round - the current round
+	 */
+	public Set<IProgramVar> getVariablesForInvariantPattern(IcfgLocation loc, int round);
 
 }

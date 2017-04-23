@@ -546,7 +546,7 @@ public final class CFGInvariantsGenerator {
 			// Build pattern map
 			locs2Patterns.clear();
 			locs2PatternVariables.clear();
-			// Init the entry pattern with 'true' and the exit pattern with 'false'
+			// Initialize the entry pattern with 'true' and the exit pattern with 'false'
 			processor.initializeEntryAndExitPattern();
 			for (final IcfgLocation location : locationsAsList) {
 				if(useUnsatCore && USE_VARS_FROM_UNSAT_CORE_FOR_EACH_LOC && round > 0) {
