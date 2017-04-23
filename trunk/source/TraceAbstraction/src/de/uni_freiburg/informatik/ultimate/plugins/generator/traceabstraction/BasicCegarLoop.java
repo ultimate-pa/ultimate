@@ -310,13 +310,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				INestedWordAutomatonSimple<LETTER, IPredicate> userAutomaton = preWord.getAutomaton(mServices,
 						abstraction, mStateFactoryForRefinement, mPredicateFactory, mCsToolkit.getManagedScript());
 				
-				mInteractive.send(userAutomaton);
+				//mInteractive.send(userAutomaton);
 
 				try {
 					final IntersectNwa<LETTER, IPredicate> intersect =
 							new IntersectNwa<>(abstraction, userAutomaton, mStateFactoryForRefinement, false);
 					
-					mInteractive.send(intersect);
+					//mInteractive.send(intersect);
 
 					userRun = new IsEmpty<>(new AutomataLibraryServices(mServices), intersect, mSearchStrategy)
 							.getNestedRun();
