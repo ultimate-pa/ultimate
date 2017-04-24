@@ -24,7 +24,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTerm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsSubterm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.ArrayInOutStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
@@ -32,11 +31,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IElementWrapper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.SelectTermWrapper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.StoreTermWrapper;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.TfNodeInOutStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPAuxVarNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfArrayIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfNodeIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VpTfExtraNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPTfStateBuilder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
@@ -113,12 +110,50 @@ public class CreateVanillaTfStateBuilder {
 		mOutVars = outVars;
 //		mTfStateFactory = tfStateFactory;
 
-		createEqGraphNodes(preAnalysis, allConstantEqNodes);
+//		createEqGraphNodes(preAnalysis, allConstantEqNodes);
+		createEqGraphNodes(preAnalysis);
+
+		createWrappers(preAnalysis);
 
 		for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> tfegn : mNodeIdToEqGraphNode.values()) {
 			tfegn.setupNode();
 		}
 
+	}
+	
+	
+	private void createWrappers(VPDomainPreanalysis preAnalysis) {
+	// TODO Auto-generated method stub
+	
+	}
+
+
+	/**
+	 * Constructs all EqGraphNodes (and the corresponding VPTfNodeIdentifiers and VPTfArrayIdentifiers) that are needed
+	 * for the tfStateBuilder we will create (eventually, in the create() method).
+	 * 
+	 * Does this by looking at the EqNodes in the scope and the InVars and OutVars of the given TransFormula.
+	 * 
+	 * @param preAnalysis
+	 */
+	private void createEqGraphNodes(final VPDomainPreanalysis preAnalysis) {
+//		if (mAction instanceof IInternalAction) {
+//			
+//			for (EqNode eqNode : mPreAnalysis.getEqNodesForScope(mAction.getPrecedingProcedure())) {
+//
+//			}
+//		} else {
+//			assert mAction instanceof ICallAction || mAction instanceof IReturnAction;
+//			
+//			assert false : "TODO";
+//		}
+	
+		for (EqNode eqNode : mPreAnalysis.getEqNodesForScope(mAction.getPrecedingProcedure())) {
+
+		}
+		for (EqNode eqNode : mPreAnalysis.getEqNodesForScope(mAction.getSucceedingProcedure())) {
+
+		}
 	}
 	
 	
@@ -152,7 +187,7 @@ public class CreateVanillaTfStateBuilder {
 	 * @param preAnalysis
 	 * @param allConstantEqNodes
 	 */
-	private void createEqGraphNodes(final VPDomainPreanalysis preAnalysis, final Set<EqNode> allConstantEqNodes) {
+	private void createEqGraphNodesOld2(final VPDomainPreanalysis preAnalysis, final Set<EqNode> allConstantEqNodes) {
 		
 		/*
 		 * collect (dis)equality subterms
@@ -179,25 +214,31 @@ public class CreateVanillaTfStateBuilder {
 		}
 
 		/*
-		 * Step 1b. construct element wrappers, for array equations
+		 * new: Handling array equalities separately is not necessary, because we will create EqGraphNodes for every 
+		 *  EqNode that is in scope anyway such that both in and out are covered (either through an in- and an out-node
+		 *  or through a through-node)
 		 */
-		for (final ApplicationTerm xQuality : xQualities) {
-			final Term lhs = xQuality.getParameters()[0];
-			final Term rhs = xQuality.getParameters()[1];
-
-			/*
-			 * construct the additional "through nodes" for array indices that are not in the formula
-			 */
-			if (lhs.getSort().isArraySort()) {
-				final IArrayWrapper lhsWrapper = getOrConstructArrayWrapper(lhs);
-				constructEqGraphNodesForEquatedArrayWrapper(lhsWrapper);
-				final IArrayWrapper rhsWrapper = getOrConstructArrayWrapper(rhs);
-				constructEqGraphNodesForEquatedArrayWrapper(rhsWrapper);
-			}
-		}
+		
+//		/*
+//		 * Step 1b. construct element wrappers, for array equations
+//		 */
+//		for (final ApplicationTerm xQuality : xQualities) {
+//			final Term lhs = xQuality.getParameters()[0];
+//			final Term rhs = xQuality.getParameters()[1];
+//
+//			/*
+//			 * construct the additional "through nodes" for array indices that are not in the formula
+//			 */
+//			if (lhs.getSort().isArraySort()) {
+//				final IArrayWrapper lhsWrapper = getOrConstructArrayWrapper(lhs);
+//				constructEqGraphNodesForEquatedArrayWrapper(lhsWrapper);
+//				final IArrayWrapper rhsWrapper = getOrConstructArrayWrapper(rhs);
+//				constructEqGraphNodesForEquatedArrayWrapper(rhsWrapper);
+//			}
+//		}
 
 		/*
-		 * 2. variables in the TransFormula (outside of array accesses)
+		 * 2. variables in the TransFormula that we have an EqNode for (outside of array accesses)
 		 */
 		for (final Entry<TermVariable, IProgramVar> en : VPDomainHelpers
 				.computeProgramVarMappingFromTransFormula(mTransFormula).entrySet()) {
@@ -231,7 +272,7 @@ public class CreateVanillaTfStateBuilder {
 				 * the boolean argument should not matter here.. right?..., i.e. if the node is freshly constructed, it
 				 * is THROUGH no matter what the flag is set to 
 				 */
-				getOrConstructInOrOutOrThroughEqGraphNode(eqNode, true);
+//				getOrConstructMissingEqGraphNodes(eqNode);
 			}
 		}
 	}
@@ -239,8 +280,8 @@ public class CreateVanillaTfStateBuilder {
 	/**
 	 * Plan: 
 	 * <ul>
-	 *  <li> as input we get an IArrayWrapper, right now we just take its base array (e.g. for (store a i x) we take
-	 * a) --> this might be optimized further perhaps 
+	 *  <li> as input we get an IArrayWrapper, right now we just take its base array (e.g. for (store a i x) we take a) 
+	 *    --> this might be optimized further perhaps 
 	 *  <li> we look up which indices we track for that array (from
 	 * preAnalysis), i.e., which indices of that array our states talk about 
 	 *  <li> for each of these EqFunctionNodes we
@@ -251,7 +292,7 @@ public class CreateVanillaTfStateBuilder {
 	 *    needs to be inOrThrough analogously if the array is "out" if the array is "through", then we need both 
 	 *    versions for each functionNode:
 	 * 	    inOrThrough and outOrThrough 
-	 *  <li> .. the array could also be an auxVar --> TODO
+	 *  <li> .. the array could also be an auxVar --> TODO --> there might be other strategies to choose the nodes..
 	 * </ul>
 	 *
 	 *
@@ -260,185 +301,185 @@ public class CreateVanillaTfStateBuilder {
 	 *
 	 * @param arrayWrapper
 	 */
-	private void constructEqGraphNodesForEquatedArrayWrapper(final IArrayWrapper arrayWrapper) {
-		final VPTfArrayIdentifier arrayId = arrayWrapper.getBaseArray();
-
-		final IProgramVarOrConst arrayPvoc = arrayId.getProgramVarOrConst();
-		final Set<EqFunctionNode> functionNodesForArray = mPreAnalysis.getFunctionNodesForArray(arrayPvoc);
-
-		// // TODO (efficiency): these first steps could all be computed once, outside of this method..
-
-		for (final EqFunctionNode functionNode : functionNodesForArray) {
-			/*
-			 * (this is a reason why the EqGraphNodes for array equalities should be constructed after those for
-			 * "normal" terms)
-			 */
-
-			if (arrayId.isInOrThrough()) {
-				// ensure that we have an inOrThrough node for functionNode
-
-				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newNode =
-						getOrConstructInOrOutOrThroughEqGraphNode(functionNode, true);
-				assert newNode.mNodeIdentifier.getEqNode() == functionNode;
-				assert newNode.mNodeIdentifier.isInOrThrough();
-			}
-
-			if (arrayId.isOutOrThrough()) {
-				// ensure that we have an outOrThrough node for functionNode
-
-				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newNode =
-						getOrConstructInOrOutOrThroughEqGraphNode(functionNode, false);
-				assert newNode.mNodeIdentifier.getEqNode() == functionNode;
-				assert newNode.mNodeIdentifier.isOutOrThrough();
-			}
-
-			final ArrayInOutStatus targetInOutStatus = arrayId.getInOutStatus();
-			if (targetInOutStatus == ArrayInOutStatus.AUX) {
-				assert false : "TODO: treat this case";
-			}
-		}
-	}
-
-	/**
-	 * Method for creating the nodes that are only introduced for an array equality. Their creation has to dynamically
-	 * adapt to which in/out/through version of a node is already present and complement that. 
-	 * (i.e. if no version of the node is present, then create through, otherwise create in or out according to the 
-	 *  given parameter)
-	 * 
-	 * @param eqNode
-	 * @param inOrThroughOrOutOrThroughChooseIn
-	 * @return
-	 */
-	private EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> getOrConstructInOrOutOrThroughEqGraphNode(
-			final EqNode eqNode, final boolean inOrThroughOrOutOrThroughChooseIn) {
-
-		final VPTfNodeIdentifier resultNodeId = inOrThroughOrOutOrThroughChooseIn
-				? mEqNodeToInOrThroughTfNodeId.get(eqNode) : mEqNodeToOutOrThroughTfNodeId.get(eqNode);
-
-		if (resultNodeId != null) {
-			// we already have an EqGraphNode for EqFunctionNode
-			assert inOrThroughOrOutOrThroughChooseIn ? resultNodeId.isInOrThrough() : resultNodeId.isOutOrThrough();
-			final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> result = mNodeIdToEqGraphNode.get(resultNodeId);
-			assert result != null;
-			return result;
-		}
-		
-		if (eqNode.isConstant()) {
-			VPTfNodeIdentifier newNodeId = getNodeIdentifier(eqNode, Collections.emptyMap(), Collections.emptyMap());
-			assert newNodeId != null;
-			final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newEqGraphNode = new EqGraphNode<>(newNodeId);
-
-			/*
-			 * register fresh node
-			 */
-			mNodeIdToEqGraphNode.put(newNodeId, newEqGraphNode);
-			return newEqGraphNode;
-		}
-
-		if (eqNode instanceof EqFunctionNode) {
-			final EqFunctionNode functionNode = (EqFunctionNode) eqNode;
-
-			final VPTfArrayIdentifier arrayId =
-					getOrConstructArrayIdentifier(functionNode.getFunction(), inOrThroughOrOutOrThroughChooseIn);
-
-			/*
-			 * the new EqGraphNode must be a function node with - function "arrayId" - arguments with inOutStatus In or
-			 * Through (those need to be getOrConstructed recursively, as any descendant may already be present or
-			 * not..)
-			 */
-
-			// obtain index vector for the new EqGraphNode
-			final List<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> indexVector = new ArrayList<>();
-			final Map<IProgramVar, TermVariable> newInVars = new HashMap<>();
-			final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>();
-			for (final EqNode arg : functionNode.getArgs()) {
-				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> indexVectorElement =
-						getOrConstructInOrOutOrThroughEqGraphNode(arg, inOrThroughOrOutOrThroughChooseIn);
-				newInVars.putAll(indexVectorElement.mNodeIdentifier.getInVars());
-				newOutVars.putAll(indexVectorElement.mNodeIdentifier.getOutVars());
-				indexVector.add(indexVectorElement);
-			}
-
-			// obtain new EqGraphNode
-			newInVars.putAll(arrayId.getInVars());
-			newOutVars.putAll(arrayId.getOutVars());
-			final VPTfNodeIdentifier newNodeId = getNodeIdentifier(functionNode, newInVars, newOutVars);
-
-			final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newFunctionEqGraphNode =
-					new EqGraphNode<>(newNodeId);
-			// getOrConstructEqGraphNode(newNodeId);
-
-			// update ccchild/parent fields
-			newFunctionEqGraphNode.addToCcchild(arrayId, indexVector);
-
-			for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> itn : indexVector) {
-				itn.addToCcpar(newFunctionEqGraphNode);
-			}
-
-			/*
-			 * register fresh node
-			 */
-			mNodeIdToEqGraphNode.put(newNodeId, newFunctionEqGraphNode);
-			mArrayIdToFunctionNodes.addPair(arrayId, newNodeId);
-//			if (newNodeId.isOutOrThrough()) {
-//				mOutNodes.add(newFunctionEqGraphNode);
+//	private void constructEqGraphNodesForEquatedArrayWrapper(final IArrayWrapper arrayWrapper) {
+//		final VPTfArrayIdentifier arrayId = arrayWrapper.getBaseArray();
+//
+//		final IProgramVarOrConst arrayPvoc = arrayId.getProgramVarOrConst();
+//		final Set<EqFunctionNode> functionNodesForArray = mPreAnalysis.getFunctionNodesForArray(arrayPvoc);
+//
+//		// // TODO (efficiency): these first steps could all be computed once, outside of this method..
+//
+//		for (final EqFunctionNode functionNode : functionNodesForArray) {
+//			/*
+//			 * (this is a reason why the EqGraphNodes for array equalities should be constructed after those for
+//			 * "normal" terms)
+//			 */
+//
+//			if (arrayId.isInOrThrough()) {
+//				// ensure that we have an inOrThrough node for functionNode
+//
+//				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newNode =
+//						getOrConstructInOrOutOrThroughEqGraphNode(functionNode, true);
+//				assert newNode.mNodeIdentifier.getEqNode() == functionNode;
+//				assert newNode.mNodeIdentifier.isInOrThrough();
 //			}
+//
+//			if (arrayId.isOutOrThrough()) {
+//				// ensure that we have an outOrThrough node for functionNode
+//
+//				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newNode =
+//						getOrConstructInOrOutOrThroughEqGraphNode(functionNode, false);
+//				assert newNode.mNodeIdentifier.getEqNode() == functionNode;
+//				assert newNode.mNodeIdentifier.isOutOrThrough();
+//			}
+//
+//			final ArrayInOutStatus targetInOutStatus = arrayId.getInOutStatus();
+//			if (targetInOutStatus == ArrayInOutStatus.AUX) {
+//				assert false : "TODO: treat this case";
+//			}
+//		}
+//	}
 
-			assert newFunctionEqGraphNode != null;
-			return newFunctionEqGraphNode;
-		}
-		
-		// we are looking for a non-function node
-		
-		VPTfNodeIdentifier newNodeId;
-
-		boolean hasIn = false;
-		boolean hasOut = false;
-
-		for (final IProgramVar eqNodeVar : eqNode.getVariables()) {
-			if (mTransFormula.getInVars().containsKey(eqNodeVar)) {
-				hasIn = true;
-			}
-			if (mTransFormula.getOutVars().containsKey(eqNodeVar)) {
-				hasOut = true;
-			}
-		}
-
-		if (inOrThroughOrOutOrThroughChooseIn) {
-			// we need to create an inOrThrough node
-			if (!hasOut) {
-				// we create a through id
-				newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.THROUGH);
-				mEqNodeToInOrThroughTfNodeId.put(eqNode, newNodeId);
-				mEqNodeToOutOrThroughTfNodeId.put(eqNode, newNodeId);
-			} else {
-				// we create an in id
-				newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.IN);
-				mEqNodeToInOrThroughTfNodeId.put(eqNode, newNodeId);
-			}
-		} else {
-			// we need to create an outOrThrough node
-			if (!hasIn) {
-				// we create a through id
-				newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.THROUGH);
-				mEqNodeToInOrThroughTfNodeId.put(eqNode, newNodeId);
-				mEqNodeToOutOrThroughTfNodeId.put(eqNode, newNodeId);
-			} else {
-				// we create an out id
-				newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.OUT);
-				mEqNodeToOutOrThroughTfNodeId.put(eqNode, newNodeId);
-			}
-		}
-		final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newEqGraphNode = new EqGraphNode<>(newNodeId);
-
-		/*
-		 * register fresh node
-		 */
-		mNodeIdToEqGraphNode.put(newNodeId, newEqGraphNode);
-
-		assert newEqGraphNode != null;
-		return newEqGraphNode;
-	}
+//	/**
+//	 * Method for creating the nodes that are only introduced for an array equality. Their creation has to dynamically
+//	 * adapt to which in/out/through version of a node is already present and complement that. 
+//	 * (i.e. if no version of the node is present, then create through, otherwise create in or out according to the 
+//	 *  given parameter)
+//	 * 
+//	 * @param eqNode
+//	 * @param inOrThroughOrOutOrThroughChooseIn
+//	 * @return
+//	 */
+//	private EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> getOrConstructInOrOutOrThroughEqGraphNode(
+//			final EqNode eqNode, final boolean inOrThroughOrOutOrThroughChooseIn) {
+//
+//		final VPTfNodeIdentifier resultNodeId = inOrThroughOrOutOrThroughChooseIn
+//				? mEqNodeToInOrThroughTfNodeId.get(eqNode) : mEqNodeToOutOrThroughTfNodeId.get(eqNode);
+//
+//		if (resultNodeId != null) {
+//			// we already have an EqGraphNode for EqFunctionNode
+//			assert inOrThroughOrOutOrThroughChooseIn ? resultNodeId.isInOrThrough() : resultNodeId.isOutOrThrough();
+//			final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> result = mNodeIdToEqGraphNode.get(resultNodeId);
+//			assert result != null;
+//			return result;
+//		}
+//		
+//		if (eqNode.isConstant()) {
+//			VPTfNodeIdentifier newNodeId = getNodeIdentifier(eqNode, Collections.emptyMap(), Collections.emptyMap());
+//			assert newNodeId != null;
+//			final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newEqGraphNode = new EqGraphNode<>(newNodeId);
+//
+//			/*
+//			 * register fresh node
+//			 */
+//			mNodeIdToEqGraphNode.put(newNodeId, newEqGraphNode);
+//			return newEqGraphNode;
+//		}
+//
+//		if (eqNode instanceof EqFunctionNode) {
+//			final EqFunctionNode functionNode = (EqFunctionNode) eqNode;
+//
+//			final VPTfArrayIdentifier arrayId =
+//					getOrConstructArrayIdentifier(functionNode.getFunction(), inOrThroughOrOutOrThroughChooseIn);
+//
+//			/*
+//			 * the new EqGraphNode must be a function node with - function "arrayId" - arguments with inOutStatus In or
+//			 * Through (those need to be getOrConstructed recursively, as any descendant may already be present or
+//			 * not..)
+//			 */
+//
+//			// obtain index vector for the new EqGraphNode
+//			final List<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> indexVector = new ArrayList<>();
+//			final Map<IProgramVar, TermVariable> newInVars = new HashMap<>();
+//			final Map<IProgramVar, TermVariable> newOutVars = new HashMap<>();
+//			for (final EqNode arg : functionNode.getArgs()) {
+//				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> indexVectorElement =
+//						getOrConstructInOrOutOrThroughEqGraphNode(arg, inOrThroughOrOutOrThroughChooseIn);
+//				newInVars.putAll(indexVectorElement.mNodeIdentifier.getInVars());
+//				newOutVars.putAll(indexVectorElement.mNodeIdentifier.getOutVars());
+//				indexVector.add(indexVectorElement);
+//			}
+//
+//			// obtain new EqGraphNode
+//			newInVars.putAll(arrayId.getInVars());
+//			newOutVars.putAll(arrayId.getOutVars());
+//			final VPTfNodeIdentifier newNodeId = getNodeIdentifier(functionNode, newInVars, newOutVars);
+//
+//			final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newFunctionEqGraphNode =
+//					new EqGraphNode<>(newNodeId);
+//			// getOrConstructEqGraphNode(newNodeId);
+//
+//			// update ccchild/parent fields
+//			newFunctionEqGraphNode.addToCcchild(arrayId, indexVector);
+//
+//			for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> itn : indexVector) {
+//				itn.addToCcpar(newFunctionEqGraphNode);
+//			}
+//
+//			/*
+//			 * register fresh node
+//			 */
+//			mNodeIdToEqGraphNode.put(newNodeId, newFunctionEqGraphNode);
+//			mArrayIdToFunctionNodes.addPair(arrayId, newNodeId);
+////			if (newNodeId.isOutOrThrough()) {
+////				mOutNodes.add(newFunctionEqGraphNode);
+////			}
+//
+//			assert newFunctionEqGraphNode != null;
+//			return newFunctionEqGraphNode;
+//		}
+//		
+//		// we are looking for a non-function node
+//		
+//		VPTfNodeIdentifier newNodeId;
+//
+//		boolean hasIn = false;
+//		boolean hasOut = false;
+//
+//		for (final IProgramVar eqNodeVar : eqNode.getVariables()) {
+//			if (mTransFormula.getInVars().containsKey(eqNodeVar)) {
+//				hasIn = true;
+//			}
+//			if (mTransFormula.getOutVars().containsKey(eqNodeVar)) {
+//				hasOut = true;
+//			}
+//		}
+//
+//		if (inOrThroughOrOutOrThroughChooseIn) {
+//			// we need to create an inOrThrough node
+//			if (!hasOut) {
+//				// we create a through id
+//				newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.THROUGH);
+//				mEqNodeToInOrThroughTfNodeId.put(eqNode, newNodeId);
+//				mEqNodeToOutOrThroughTfNodeId.put(eqNode, newNodeId);
+//			} else {
+//				// we create an in id
+//				newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.IN);
+//				mEqNodeToInOrThroughTfNodeId.put(eqNode, newNodeId);
+//			}
+//		} else {
+//			// we need to create an outOrThrough node
+//			if (!hasIn) {
+//				// we create a through id
+//				newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.THROUGH);
+//				mEqNodeToInOrThroughTfNodeId.put(eqNode, newNodeId);
+//				mEqNodeToOutOrThroughTfNodeId.put(eqNode, newNodeId);
+//			} else {
+//				// we create an out id
+//				newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.OUT);
+//				mEqNodeToOutOrThroughTfNodeId.put(eqNode, newNodeId);
+//			}
+//		}
+//		final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newEqGraphNode = new EqGraphNode<>(newNodeId);
+//
+//		/*
+//		 * register fresh node
+//		 */
+//		mNodeIdToEqGraphNode.put(newNodeId, newEqGraphNode);
+//
+//		assert newEqGraphNode != null;
+//		return newEqGraphNode;
+//	}
 
 	private IElementWrapper getOrConstructElementWrapper(final Term term) {
 		IElementWrapper result = mTermToElementWrapper.get(term);
@@ -473,7 +514,12 @@ public class CreateVanillaTfStateBuilder {
 	}
 
 	/**
-	 * construct a "normal" (i.e. non-AuxVar-) EqGraphNode
+	 * Construct a "normal" (i.e. non-AuxVar-) EqGraphNode.
+	 * 
+	 * An EqGraphNode is given by an EqNode and an inVar/outVar signature (see also: VPTfNodeIdentifier).
+	 * 
+	 * If the EqNode is a EqFunctionNode, this method also creates EqGraphNodes for all sub-nodes with the corresponding
+	 * projected signature.
 	 *
 	 * @param eqNode
 	 * @param inVars
@@ -556,12 +602,12 @@ public class CreateVanillaTfStateBuilder {
 			result = new VPTfNodeIdentifier(eqNode, inVars, outVars, this);
 			mNonAuxVarNodeIds.put(eqNode, inVars, outVars, result);
 			mAllNodeIds.add(result);
-			if (result.isInOrThrough()) {
-				mEqNodeToInOrThroughTfNodeId.put(eqNode, result);
-			}
-			if (result.isOutOrThrough()) {
-				mEqNodeToOutOrThroughTfNodeId.put(eqNode, result);
-			}
+//			if (result.isInOrThrough()) {
+//				mEqNodeToInOrThroughTfNodeId.put(eqNode, result);
+//			}
+//			if (result.isOutOrThrough()) {
+//				mEqNodeToOutOrThroughTfNodeId.put(eqNode, result);
+//			}
 		}
 		return result;
 	}
