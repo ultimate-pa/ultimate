@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
@@ -33,12 +34,14 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState<I
 
 	private IAbstractStateBinaryOperator<CongruenceDomainState<IBoogieVar>> mWideningOperator;
 	private IAbstractPostOperator<CongruenceDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> mPostOperator;
+	private final CfgSmtToolkit mCfgSmtToolkit;
 
 	public CongruenceDomain(final ILogger logger, final IUltimateServiceProvider services,
 			final BoogieSymbolTable symbolTable, final IIcfg<?> icfg) {
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		mServices = services;
+		mCfgSmtToolkit = icfg.getCfgSmtToolkit();
 		mRootAnnotation = AbsIntUtil.getBoogieIcfgContainer(icfg);
 	}
 
@@ -76,7 +79,7 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState<I
 			final CongruenceDomainStatementProcessor stmtProcessor = new CongruenceDomainStatementProcessor(mLogger,
 					mSymbolTable, bpl2SmtSymbolTable, maxParallelStates);
 			mPostOperator = new CongruencePostOperator(mLogger, mSymbolTable, stmtProcessor, bpl2SmtSymbolTable,
-					maxParallelStates, boogie2smt, mRootAnnotation);
+					maxParallelStates, boogie2smt, mCfgSmtToolkit);
 		}
 		return mPostOperator;
 	}

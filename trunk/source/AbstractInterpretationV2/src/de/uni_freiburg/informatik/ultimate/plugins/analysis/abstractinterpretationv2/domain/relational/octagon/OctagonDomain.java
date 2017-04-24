@@ -69,7 +69,8 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge, 
 	private final Function<Boolean, OctDomainState> mOctDomainStateFactory;
 	private final Supplier<IAbstractStateBinaryOperator<OctDomainState>> mWideningOperatorFactory;
 	private final Supplier<IAbstractPostOperator<OctDomainState, IcfgEdge, IBoogieVar>> mPostOperatorFactory;
-	private final BoogieIcfgContainer mIcfg;
+	private final BoogieIcfgContainer mBoogieIcfg;
+	private final IIcfg<?> mIcfg;
 
 	public OctagonDomain(final ILogger logger, final BoogieSymbolTable symbolTable,
 			final LiteralCollectorFactory literalCollectorFactory, final IUltimateServiceProvider services,
@@ -77,7 +78,8 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge, 
 		mLogger = logger;
 		mSymbolTable = symbolTable;
 		mLiteralCollectorFactory = literalCollectorFactory;
-		mIcfg = AbsIntUtil.getBoogieIcfgContainer(icfg);
+		mIcfg = icfg;
+		mBoogieIcfg = AbsIntUtil.getBoogieIcfgContainer(icfg);
 
 		final IPreferenceProvider ups = services.getPreferenceProvider(Activator.PLUGIN_ID);
 		mOctDomainStateFactory = makeDomainStateFactory(ups);
@@ -159,7 +161,7 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge, 
 	 */
 	private Supplier<IAbstractPostOperator<OctDomainState, IcfgEdge, IBoogieVar>>
 			makePostOperatorFactory(final IPreferenceProvider ups) {
-		final Boogie2SmtSymbolTable bpl2smtSymbolTable = mIcfg.getBoogie2SMT().getBoogie2SmtSymbolTable();
+		final Boogie2SmtSymbolTable bpl2smtSymbolTable = mBoogieIcfg.getBoogie2SMT().getBoogie2SmtSymbolTable();
 		final int maxParallelStates = ups.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 		final boolean fallbackAssignIntervalProjection =
 				ups.getBoolean(OctPreferences.FALLBACK_ASSIGN_INTERVAL_PROJECTION);

@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSy
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Expression2Term.IIdentifierTranslator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -69,7 +70,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.CallInfoCache;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.CallInfoCache.CallInfo;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Call;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Return;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
@@ -96,7 +96,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	protected NonrelationalPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
 			final Boogie2SmtSymbolTable bpl2smtSymbolTable,
 			final NonrelationalStatementProcessor<STATE, V> statementProcessor, final int parallelStates,
-			final Boogie2SMT boogie2Smt, final BoogieIcfgContainer rootAnnotation) {
+			final Boogie2SMT boogie2Smt, final CfgSmtToolkit cfgSmtToolki) {
 		mLogger = logger;
 		mStatementExtractor = new RcfgStatementExtractor();
 		mBoogie2SmtSymbolTable = bpl2smtSymbolTable;
@@ -104,7 +104,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		mSymbolTable = symbolTable;
 		mParallelStates = parallelStates;
 		mBoogie2Smt = boogie2Smt;
-		mCallInfoCache = new CallInfoCache(rootAnnotation.getCfgSmtToolkit(), symbolTable, bpl2smtSymbolTable);
+		mCallInfoCache = new CallInfoCache(cfgSmtToolki, symbolTable);
 	}
 
 	@Override

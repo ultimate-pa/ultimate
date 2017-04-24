@@ -142,27 +142,29 @@ public abstract class NonrelationalState<STATE extends NonrelationalState<STATE,
 	 * @return A new {@link IntervalDomainValue} containing the {@link IntervalDomainValue} of the given variable.
 	 */
 	public V getValue(final VARDECL variableName) {
-		if (!getVar2ValueNonrelational().containsKey(variableName)) {
-			throw new UnsupportedOperationException("There is no value of variable " + variableName + ".");
+		final V val = getVar2ValueNonrelational().get(variableName);
+		if (val == null) {
+			throw new AssertionError("There is no value of variable " + variableName + ".");
 		}
 
-		return getVar2ValueNonrelational().get(variableName).copy();
+		return val;
 	}
 
 	/**
 	 * Returns the {@link BooleanValue} of the given variable. If the variable is not a boolean variable, an
 	 * {@link UnsupportedOperationException} is thrown.
 	 *
-	 * @param booleanVariableName
+	 * @param variableName
 	 *            The name of the boolean variable to get the {@link BooleanValue} for.
 	 * @return A new {@link BooleanValue} containing the {@link BooleanValue} of the given variable.
 	 */
-	public BooleanValue getBooleanValue(final VARDECL booleanVariableName) {
-		if (!getVar2ValueBoolean().containsKey(booleanVariableName)) {
-			throw new UnsupportedOperationException(
-					"There is no boolean variable with name " + booleanVariableName + ".");
+	public BooleanValue getBooleanValue(final VARDECL variableName) {
+		final BooleanValue val = getVar2ValueBoolean().get(variableName);
+		if (val == null) {
+			throw new AssertionError("There is no value of variable " + variableName + ".");
 		}
-		return getVar2ValueBoolean().get(booleanVariableName);
+
+		return val;
 	}
 
 	/**

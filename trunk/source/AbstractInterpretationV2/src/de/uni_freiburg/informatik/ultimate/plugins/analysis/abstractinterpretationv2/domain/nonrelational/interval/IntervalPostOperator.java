@@ -33,8 +33,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.NonrelationalPostOperator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgContainer;
 
 /**
  * The post operator of the interval domain for {@link IBoogieVar}s.
@@ -43,13 +43,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Boo
  */
 public class IntervalPostOperator
 		extends NonrelationalPostOperator<IntervalDomainState<IBoogieVar>, IntervalDomainValue> {
-	
+
 	public IntervalPostOperator(final ILogger logger, final BoogieSymbolTable symbolTable,
 			final Boogie2SmtSymbolTable bpl2smtSymbolTable, final int maxParallelStates, final Boogie2SMT boogie2Smt,
-			final BoogieIcfgContainer rootAnnotation) {
+			final CfgSmtToolkit cfgSmtToolkit) {
 		super(logger, symbolTable, bpl2smtSymbolTable,
 				new IntervalDomainStatementProcessor(logger, symbolTable, bpl2smtSymbolTable, maxParallelStates),
-				maxParallelStates, boogie2Smt, rootAnnotation);
+				maxParallelStates, boogie2Smt, cfgSmtToolkit);
 	}
 
 }

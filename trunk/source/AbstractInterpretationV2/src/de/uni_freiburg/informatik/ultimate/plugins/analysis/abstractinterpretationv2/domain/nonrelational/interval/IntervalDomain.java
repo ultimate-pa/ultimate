@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractPos
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractStateBinaryOperator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.Activator;
@@ -65,12 +66,14 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState<IBoog
 
 	private IAbstractStateBinaryOperator<IntervalDomainState<IBoogieVar>> mWideningOperator;
 	private IAbstractPostOperator<IntervalDomainState<IBoogieVar>, IcfgEdge, IBoogieVar> mPostOperator;
+	private final CfgSmtToolkit mCfgSmtToolkit;
 
 	public IntervalDomain(final ILogger logger, final BoogieSymbolTable symbolTable,
 			final LiteralCollection literalCollector, final IUltimateServiceProvider services, final IIcfg<?> icfg) {
 		mLogger = logger;
 		mLiteralCollection = literalCollector;
 		mServices = services;
+		mCfgSmtToolkit = icfg.getCfgSmtToolkit();
 		mRootAnnotation = AbsIntUtil.getBoogieIcfgContainer(icfg);
 		mSymbolTable = symbolTable;
 	}
@@ -121,7 +124,7 @@ public class IntervalDomain implements IAbstractDomain<IntervalDomainState<IBoog
 			final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 			final int maxParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
 			mPostOperator = new IntervalPostOperator(mLogger, mSymbolTable, bpl2SmtSymbolTable, maxParallelStates,
-					mRootAnnotation.getBoogie2SMT(), mRootAnnotation);
+					mRootAnnotation.getBoogie2SMT(), mCfgSmtToolkit);
 		}
 		return mPostOperator;
 	}

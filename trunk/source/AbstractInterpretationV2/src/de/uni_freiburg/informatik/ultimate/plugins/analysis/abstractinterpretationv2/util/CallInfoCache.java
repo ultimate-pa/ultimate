@@ -48,9 +48,10 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.symboltable.BoogieSymbolTable;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SmtSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -65,19 +66,18 @@ public final class CallInfoCache {
 	private final Map<CallStatement, CallInfo> mCall2CallInfo;
 	private final CfgSmtToolkit mCfgSmtToolkit;
 	private final BoogieSymbolTable mSymbolTable;
-	private final Boogie2SmtSymbolTable mBoogie2SmtSymbolTable;
+	private final IIcfgSymbolTable mIcfgSymbolTable;
 
-	public CallInfoCache(final CfgSmtToolkit cfgSmtToolkit, final BoogieSymbolTable boogieSymbolTable,
-			final Boogie2SmtSymbolTable boogieSmtSymbolTable) {
+	public CallInfoCache(final CfgSmtToolkit cfgSmtToolkit, final BoogieSymbolTable boogieSymbolTable) {
 		mCall2CallInfo = new HashMap<>();
 		mCfgSmtToolkit = cfgSmtToolkit;
 		mSymbolTable = boogieSymbolTable;
-		mBoogie2SmtSymbolTable = boogieSmtSymbolTable;
+		mIcfgSymbolTable = cfgSmtToolkit.getSymbolTable();
 	}
 
 	/**
 	 * Get a {@link CallInfo} instance for the specified call statement.
-	 * 
+	 *
 	 * @param callStatement
 	 *            The call statement.
 	 * @return A {@link CallInfo} instance.
@@ -169,8 +169,7 @@ public final class CallInfoCache {
 	 */
 	private AssignmentStatement getOldvarAssign(final CallStatement callStatement) {
 		final String methodName = callStatement.getMethodName();
-		final Set<IProgramNonOldVar> modifiableGlobals =
-				mCfgSmtToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(methodName);
+		final Set<IProgramNonOldVar> modifiableGlobals = getModifiableGlobals(methodName);
 		final int modglobsize = modifiableGlobals.size();
 		if (modglobsize == 0) {
 			return null;
@@ -180,7 +179,6 @@ public final class CallInfoCache {
 		int i = 0;
 		final ILocation loc = callStatement.getLocation();
 		for (final IProgramNonOldVar modGlob : modifiableGlobals) {
-
 			final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
 			final IBoogieType bType =
 					mSymbolTable.getTypeForVariableSymbol(modGlob.getGloballyUniqueId(), StorageClass.GLOBAL, null);
@@ -191,15 +189,23 @@ public final class CallInfoCache {
 		return new AssignmentStatement(loc, lhs, rhs);
 	}
 
+	private Set<IProgramNonOldVar> getModifiableGlobals(final String methodName) {
+		final Set<IProgramNonOldVar> modGlobs =
+				mCfgSmtToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(methodName);
+		return AbsIntUtil.intersect(modGlobs, mCfgSmtToolkit.getSymbolTable().getGlobals());
+	}
+
 	private List<IBoogieVar> getInParams(final CallStatement callStatement) {
 		final Procedure procedure = getProcedure(callStatement.getMethodName());
 		assert procedure != null;
 		final VarList[] inParams = procedure.getInParams();
 		final List<IBoogieVar> realParamVars = new ArrayList<>();
 
+		final Map<String, ILocalProgramVar> name2locals = getName2Locals(callStatement.getMethodName());
+
 		for (final VarList varlist : inParams) {
 			for (final String var : varlist.getIdentifiers()) {
-				final IBoogieVar bVar = mBoogie2SmtSymbolTable.getBoogieVar(var, callStatement.getMethodName(), true);
+				final IBoogieVar bVar = (IBoogieVar) name2locals.get(var);
 				assert bVar != null;
 				realParamVars.add(bVar);
 			}
@@ -212,6 +218,15 @@ public final class CallInfoCache {
 		return realParamVars;
 	}
 
+	private Map<String, ILocalProgramVar> getName2Locals(final String methodName) {
+		final Set<ILocalProgramVar> locals = mIcfgSymbolTable.getLocals(methodName);
+		final Map<String, ILocalProgramVar> rtr = new HashMap<>();
+		for (final ILocalProgramVar local : locals) {
+			rtr.put(local.getIdentifier(), local);
+		}
+		return rtr;
+	}
+
 	private Procedure getProcedure(final String procedureName) {
 		return mSymbolTable.getFunctionOrProcedureDeclaration(procedureName).stream()
 				.filter(decl -> decl instanceof Procedure).map(decl -> (Procedure) decl)
@@ -221,9 +236,9 @@ public final class CallInfoCache {
 
 	private Set<String> getForbiddenNames(final String methodName) {
 		final Set<String> rtr = new HashSet<>();
-		mBoogie2SmtSymbolTable.getLocals(methodName).forEach(a -> rtr.add(a.getGloballyUniqueId()));
-		mBoogie2SmtSymbolTable.getGlobals().forEach(a -> rtr.add(a.getGloballyUniqueId()));
-		mBoogie2SmtSymbolTable.getConstants().forEach(a -> rtr.add(a.getGloballyUniqueId()));
+		mIcfgSymbolTable.getLocals(methodName).forEach(a -> rtr.add(a.getGloballyUniqueId()));
+		mIcfgSymbolTable.getGlobals().forEach(a -> rtr.add(a.getGloballyUniqueId()));
+		mIcfgSymbolTable.getConstants().forEach(a -> rtr.add(a.getGloballyUniqueId()));
 		return rtr;
 	}
 
