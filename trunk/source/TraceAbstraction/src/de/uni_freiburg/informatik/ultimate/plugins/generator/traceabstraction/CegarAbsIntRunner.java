@@ -547,16 +547,12 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				return mFalsePredicate;
 			}
 
-			final Set<IPredicate> predicates = postStates.stream()
-					.map(s -> new AbsIntPredicate<>(
-							mPredicateUnifierSmt.getPredicateFactory().newPredicate(s.getTerm(script)), s))
-					.map(mPredicateUnifierAbsInt::getOrConstructPredicate).collect(Collectors.toSet());
-			final IPredicate disjunction;
-			if (predicates.size() > 1) {
-				disjunction = mPredicateUnifierAbsInt.getOrConstructPredicateForDisjunction(predicates);
-			} else {
-				disjunction = predicates.iterator().next();
-			}
+			final AbstractMultiState<STATE, IBoogieVar> disjunctiveState =
+					AbstractMultiState.createDisjunction(postStates);
+			final IPredicate unUnifiedPredicate =
+					mPredicateUnifierSmt.getPredicateFactory().newPredicate(disjunctiveState.getTerm(script));
+			final IPredicate disjunction = mPredicateUnifierAbsInt
+					.getOrConstructPredicate(new AbsIntPredicate<>(unUnifiedPredicate, disjunctiveState));
 			if (disjunction.equals(mFalsePredicate)) {
 				return mFalsePredicate;
 			}
@@ -573,9 +569,10 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				return mFalsePredicate;
 			}
 			final BasicPredicateFactory predFac = mPredicateUnifierAbsInt.getPredicateFactory();
-			final Set<Term> terms = postStates.stream().map(s -> s.getTerm(script)).collect(Collectors.toSet());
-			final IPredicate disjunction = predFac.newPredicate(SmtUtils.or(script, terms));
-			return new AbsIntPredicate<>(disjunction, postStates);
+			final AbstractMultiState<STATE, IBoogieVar> disjunctiveState =
+					AbstractMultiState.createDisjunction(postStates).compact();
+			final IPredicate disjunction = predFac.newPredicate(disjunctiveState.getTerm(script));
+			return new AbsIntPredicate<>(disjunction, (STATE) disjunctiveState);
 		}
 	}
 
