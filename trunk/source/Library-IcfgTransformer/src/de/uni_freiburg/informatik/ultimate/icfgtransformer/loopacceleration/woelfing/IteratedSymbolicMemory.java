@@ -36,9 +36,11 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -79,12 +81,11 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 			for (final IProgramVar var : symbolicMemory.mInVars.keySet()) {
 				final TermVariable termVar = symbolicMemory.mInVars.get(var);
 
-				if (mRenamedVars.containsKey(termVar)) {
-					continue;
-				}
-
 				if (mInVars.containsKey(var)) {
+					assert !mInVars.get(var).equals(termVar);
 					mRenamedVars.put(termVar, mInVars.get(var));
+				} else if (mRenamedVars.containsKey(termVar)) {
+					mInVars.put(var, mRenamedVars.get(termVar));
 				} else {
 					final TermVariable newTermVar = mScript.constructFreshCopy(termVar);
 					mRenamedVars.put(termVar, newTermVar);
@@ -95,14 +96,15 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 			for (final IProgramVar var : symbolicMemory.mOutVars.keySet()) {
 				final TermVariable termVar = symbolicMemory.mOutVars.get(var);
 
-				if (mRenamedVars.containsKey(termVar)) {
-					continue;
-				}
-
 				if (mOutVars.containsKey(var)) {
+					assert !mOutVars.get(var).equals(termVar);
 					mRenamedVars.put(termVar, mOutVars.get(var));
+				} else if (mRenamedVars.containsKey(termVar)) {
+					mOutVars.put(var, mRenamedVars.get(termVar));
 				} else {
-					mOutVars.put(var, termVar);
+					final TermVariable newTermVar = mScript.constructFreshCopy(termVar);
+					mRenamedVars.put(termVar, newTermVar);
+					mOutVars.put(var, newTermVar);
 				}
 			}
 		}
@@ -135,6 +137,9 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 		}
 
 		Term result = mInVars.get(var);
+		ConstantTerm constantTerm = null;
+		final List<TermVariable> constantLoopCounters = new ArrayList<>();
+
 		for (int i = 0; i < terms.length; i++) {
 			final Term term = simplifyTerm(mSymbolicMemories.get(i), terms[i]);
 
@@ -155,7 +160,9 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 				newParams[0] = result;
 
 				for (int j = 1; j < params.length; j++) {
-					assert params[j] instanceof ConstantTerm;
+					if (!(params[j] instanceof ConstantTerm)) {
+						return null;
+					}
 					newParams[j] = mScript.getScript().term("*", mLoopCounters.get(i), params[j]);
 				}
 
@@ -165,10 +172,38 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 					return null;
 				}
 			} else if (term instanceof ConstantTerm) {
-				return null;
+				if (constantTerm != null && constantTerm != term) {
+					return null;
+				}
+				constantTerm = (ConstantTerm) term;
+				constantLoopCounters.add(mLoopCounters.get(i));
 			} else {
 				throw new AssertionError("Unexpected term type.");
 			}
+		}
+
+		if (constantTerm != null) {
+			if (result != mInVars.get(var)) {
+				return null;
+			}
+
+			final Term zeroTerm = Rational.ZERO.toTerm(mScript.getScript().sort("Int"));
+			Term condition = mScript.getScript().term("false");
+
+			for (final TermVariable loopCounter : constantLoopCounters) {
+				final Term term = mScript.getScript().term(">", loopCounter, zeroTerm);
+				condition = Util.or(mScript.getScript(), condition, term);
+			}
+
+			if (result == null) {
+				// This can happen when no backbone that assigns to this variable does use the old value of that
+				// variable. In this case just create a new TermVariable for it.
+				final TermVariable newTermVar = mScript.constructFreshCopy(var.getTermVariable());
+				mInVars.put(var, newTermVar);
+				result = newTermVar;
+			}
+
+			return mScript.getScript().term("ite", condition, constantTerm, result);
 		}
 
 		return result;
@@ -236,6 +271,27 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 		}
 
 		return null;
+	}
+
+	@Override
+	public Term replaceTermVars(final Term term, final Map<IProgramVar, TermVariable> termInVars) {
+		if (mRenamedVars.containsKey(term) && (termInVars == null || !termInVars.containsValue(term))) {
+			if (mOutVars.containsValue(mRenamedVars.get(term))) {
+				return replaceTermVars(mRenamedVars.get(term), termInVars);
+			} else {
+				assert false;
+			}
+		}
+
+		if (mRenamedVars.containsKey(term) && termInVars != null && termInVars.containsValue(term)) {
+			for (final Map.Entry<IProgramVar, TermVariable> entry : termInVars.entrySet()) {
+				if (entry.getValue().equals(term) && !mOutVars.containsKey(entry.getKey())) {
+					return mRenamedVars.get(term);
+				}
+			}
+		}
+
+		return super.replaceTermVars(term, termInVars);
 	}
 
 	public List<TermVariable> getLoopCounters() {
