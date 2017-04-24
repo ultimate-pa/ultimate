@@ -60,7 +60,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Differ
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IntersectNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty.SearchStrategy;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmptyInteractive;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
@@ -87,8 +86,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.au
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PreNestedWord;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PredicateQueuePair;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PredicateQueueResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
@@ -268,23 +265,19 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 	}
 
-	protected DoubleDecker<IPredicate> interactiveCounterexampleSearchStrategy(
-			Deque<DoubleDecker<IPredicate>> callQueue, Deque<DoubleDecker<IPredicate>> queue) {
-		PredicateQueuePair data = new PredicateQueuePair(callQueue, queue);
-		Future<PredicateQueueResult> userChoice = mInteractive.request(PredicateQueueResult.class, data);
-		try {
-			return userChoice.get().mResult;
-		} catch (InterruptedException | ExecutionException e) {
-			// e.printStackTrace();
-		}
-		return IsEmptyInteractive.bfsDequeue(callQueue, queue);
-	}
-
 	protected NestedRun<LETTER, IPredicate> getUserRun(final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction)
 			throws AutomataOperationCanceledException {
 		mLogger.info("Asking the user for a trace...");
 		NestedRun<LETTER, IPredicate> userRun = null;
 		/*
+		 * protected DoubleDecker<IPredicate> interactiveCounterexampleSearchStrategy( Deque<DoubleDecker<IPredicate>>
+		 * callQueue, Deque<DoubleDecker<IPredicate>> queue) { PredicateQueuePair data = new
+		 * PredicateQueuePair(callQueue, queue); Future<PredicateQueueResult> userChoice =
+		 * mInteractive.request(PredicateQueueResult.class, data); try { return userChoice.get().mResult; } catch
+		 * (InterruptedException | ExecutionException e) { // e.printStackTrace(); } return
+		 * IsEmptyInteractive.bfsDequeue(callQueue, queue); }
+		 * 
+		 * 
 		 * INestedWordAutomatonSimple<LETTER, IPredicate> userAutomaton = null;
 		 * 
 		 * while (userRun == null) { try { userAutomaton = mInteractive.request(INestedWordAutomatonSimple.class).get();

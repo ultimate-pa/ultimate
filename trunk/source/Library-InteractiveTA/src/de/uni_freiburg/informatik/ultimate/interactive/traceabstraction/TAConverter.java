@@ -53,8 +53,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo.Info;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PreNestedWord;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PreNestedWord.Loop;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PredicateQueuePair;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PredicateQueueResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
@@ -106,10 +104,13 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 		converterRegistry.registerBA(InteractiveIterationInfo.class, ParrotInteractiveIterationInfo.class,
 				TAConverter::fromIterationInfo);
 
+		/*
 		converterRegistry.registerBA(PredicateDoubleDecker.QueuePair.class, PredicateQueuePair.class,
 				TAConverter::fromQueuePair);
 		converterRegistry.registerRConv(PredicateDoubleDecker.QueueResponse.class, PredicateQueuePair.class,
 				PredicateQueueResult.class, TAConverter::toDoubleDecker);
+		*/
+		
 		converterRegistry.registerBA(TraceAbstractionProtos.IterationInfo.class, IterationInfo.Info.class,
 				TAConverter::fromIterationInfo);
 
@@ -197,12 +198,14 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 		return builder;
 	}
 
+	/*
 	private static PredicateDoubleDecker.QueuePair fromQueuePair(PredicateQueuePair qPair) {
 		PredicateDoubleDecker.QueuePair.Builder builder = PredicateDoubleDecker.QueuePair.newBuilder();
 		qPair.mCallQueue.stream().map(TAConverter::fromDoubleDecker).forEach(builder::addCallQueue);
 		qPair.mQueue.stream().map(TAConverter::fromDoubleDecker).forEach(builder::addQueue);
 		return builder.build();
 	}
+	*/
 
 	private static PredicateDoubleDecker fromDoubleDecker(DoubleDecker<IPredicate> pdd) {
 		final TraceAbstractionProtos.Predicate up = fromPredicate(pdd.getUp());
@@ -210,6 +213,7 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 		return PredicateDoubleDecker.newBuilder().setUp(up).setDown(down).build();
 	}
 
+	/*
 	private static PredicateQueueResult toDoubleDecker(PredicateDoubleDecker.QueueResponse response,
 			PredicateQueuePair data) {
 		final Deque<DoubleDecker<IPredicate>> queue;
@@ -225,6 +229,7 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 		assert queue.remove(result);
 		return new PredicateQueueResult(result);
 	}
+	*/
 
 	private static InteractiveIterationInfo fromIterationInfo(ParrotInteractiveIterationInfo itInfo) {
 		return InteractiveIterationInfo.newBuilder().setNextInteractiveIteration(itInfo.getNextInteractiveIteration())
