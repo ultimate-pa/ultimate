@@ -1,4 +1,4 @@
-/*
+/* Copyright (C) 2017 Betim Musa
  * Copyright (C) 2015 Dirk Steinmetz
  * Copyright (C) 2015 University of Freiburg
  * 
@@ -41,9 +41,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 
 /**
  * A simple {@link ILinearInequalityInvariantPatternStrategy}, generating
- * location-independent invariant patterns, each a disjunction composed of a
- * increasing number of conjunctions of a increasing number of inequalities over
- * all program variables.
+ * location-independent invariant patterns (templates), i.e. it computes for each location
+ * the same invariant pattern.
+ * @author Betim Musa <musab@informatik.uni-freiburg.de>
  */
 public abstract class LocationIndependentLinearInequalityInvariantPatternStrategy
 		implements ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> {

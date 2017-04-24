@@ -86,20 +86,23 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTIO
 
 	private boolean isPostSound(final IPredicate precondHier, final ACTION transition, final IPredicate precond,
 			final IPredicate postcond) {
-		final Validity result;
-		if (transition instanceof ICallAction) {
-			result = mHTC.checkCall(precond, (ICallAction) transition, postcond);
-		} else if (transition instanceof IReturnAction) {
-			result = mHTC.checkReturn(precond, precondHier, (IReturnAction) transition, postcond);
-		} else {
-			result = mHTC.checkInternal(precond, (IInternalAction) transition, postcond);
-		}
-		mHTC.releaseLock();
+		try {
+			final Validity result;
+			if (transition instanceof ICallAction) {
+				result = mHTC.checkCall(precond, (ICallAction) transition, postcond);
+			} else if (transition instanceof IReturnAction) {
+				result = mHTC.checkReturn(precond, precondHier, (IReturnAction) transition, postcond);
+			} else {
+				result = mHTC.checkInternal(precond, (IInternalAction) transition, postcond);
+			}
 
-		if (result != Validity.VALID) {
-			logUnsoundness(transition, precond, postcond, precondHier);
+			if (result != Validity.VALID) {
+				logUnsoundness(transition, precond, postcond, precondHier);
+			}
+			return result != Validity.INVALID;
+		} finally {
+			mHTC.releaseLock();
 		}
-		return result != Validity.INVALID;
 	}
 
 	private void logUnsoundness(final ACTION transition, final IPredicate precond, final IPredicate postcond,

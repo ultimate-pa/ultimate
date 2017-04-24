@@ -89,7 +89,7 @@ public class OctPostOperator implements IAbstractPostOperator<OctDomainState, Ic
 		mExprTransformer = new ExpressionTransformer(bpl2smtTable);
 		mStatementProcessor = new OctStatementProcessor(this);
 		mAssumeProcessor = new OctAssumeProcessor(this);
-		mCallInfoCache = new CallInfoCache(cfgSmtToolkit, symbolTable, bpl2smtTable);
+		mCallInfoCache = new CallInfoCache(cfgSmtToolkit, symbolTable);
 	}
 
 	public static OctDomainState join(final List<OctDomainState> states) {

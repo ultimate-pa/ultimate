@@ -15,7 +15,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
- * 
+ * This strategy computes invariant patterns (templates) depending on the location
+ * (node of the graph), the current round and dimensions strategy (see {@link AbstractTemplateIncreasingDimensionsStrategy}).
  * @author Betim Musa <musab@informatik.uni-freiburg.de>
  *
  */
