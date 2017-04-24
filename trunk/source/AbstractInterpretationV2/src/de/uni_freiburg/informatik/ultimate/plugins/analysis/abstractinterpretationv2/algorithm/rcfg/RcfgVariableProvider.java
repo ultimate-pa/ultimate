@@ -287,16 +287,6 @@ public class RcfgVariableProvider<STATE extends IAbstractState<STATE, IBoogieVar
 		return rtr;
 	}
 
-	private StringBuilder getLogMessageRemoveLocalsPreCall(final STATE state, final Set<IBoogieVar> toberemoved) {
-		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" removing vars from pre-call state [")
-				.append(state.hashCode()).append("] ").append(state.toLogString()).append(": ").append(toberemoved);
-	}
-
-	private StringBuilder getLogMessageNoRemoveLocalsPreCall(final STATE state) {
-		return new StringBuilder().append(AbsIntPrefInitializer.INDENT).append(" using unchanged pre-call state [")
-				.append(state.hashCode()).append("] ").append(state.toLogString());
-	}
-
 	@Override
 	public IVariableProvider<STATE, IcfgEdge, IBoogieVar> createNewVariableProvider(final CfgSmtToolkit toolkit) {
 		return new RcfgVariableProvider<>(toolkit, mLogger);
