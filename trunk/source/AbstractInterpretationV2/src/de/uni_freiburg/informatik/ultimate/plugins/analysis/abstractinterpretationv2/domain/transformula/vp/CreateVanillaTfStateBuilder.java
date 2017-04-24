@@ -24,6 +24,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTerm
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsSubterm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.ArrayInOutStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
@@ -110,50 +111,13 @@ public class CreateVanillaTfStateBuilder {
 		mOutVars = outVars;
 //		mTfStateFactory = tfStateFactory;
 
-//		createEqGraphNodes(preAnalysis, allConstantEqNodes);
-		createEqGraphNodes(preAnalysis);
-
-		createWrappers(preAnalysis);
+		createEqGraphNodes(preAnalysis, allConstantEqNodes);
+//		createEqGraphNodes(preAnalysis);
 
 		for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> tfegn : mNodeIdToEqGraphNode.values()) {
 			tfegn.setupNode();
 		}
 
-	}
-	
-	
-	private void createWrappers(VPDomainPreanalysis preAnalysis) {
-	// TODO Auto-generated method stub
-	
-	}
-
-
-	/**
-	 * Constructs all EqGraphNodes (and the corresponding VPTfNodeIdentifiers and VPTfArrayIdentifiers) that are needed
-	 * for the tfStateBuilder we will create (eventually, in the create() method).
-	 * 
-	 * Does this by looking at the EqNodes in the scope and the InVars and OutVars of the given TransFormula.
-	 * 
-	 * @param preAnalysis
-	 */
-	private void createEqGraphNodes(final VPDomainPreanalysis preAnalysis) {
-//		if (mAction instanceof IInternalAction) {
-//			
-//			for (EqNode eqNode : mPreAnalysis.getEqNodesForScope(mAction.getPrecedingProcedure())) {
-//
-//			}
-//		} else {
-//			assert mAction instanceof ICallAction || mAction instanceof IReturnAction;
-//			
-//			assert false : "TODO";
-//		}
-	
-		for (EqNode eqNode : mPreAnalysis.getEqNodesForScope(mAction.getPrecedingProcedure())) {
-
-		}
-		for (EqNode eqNode : mPreAnalysis.getEqNodesForScope(mAction.getSucceedingProcedure())) {
-
-		}
 	}
 	
 	
@@ -187,7 +151,7 @@ public class CreateVanillaTfStateBuilder {
 	 * @param preAnalysis
 	 * @param allConstantEqNodes
 	 */
-	private void createEqGraphNodesOld2(final VPDomainPreanalysis preAnalysis, final Set<EqNode> allConstantEqNodes) {
+	private void createEqGraphNodes(final VPDomainPreanalysis preAnalysis, final Set<EqNode> allConstantEqNodes) {
 		
 		/*
 		 * collect (dis)equality subterms
@@ -219,23 +183,23 @@ public class CreateVanillaTfStateBuilder {
 		 *  or through a through-node)
 		 */
 		
-//		/*
-//		 * Step 1b. construct element wrappers, for array equations
-//		 */
-//		for (final ApplicationTerm xQuality : xQualities) {
-//			final Term lhs = xQuality.getParameters()[0];
-//			final Term rhs = xQuality.getParameters()[1];
-//
-//			/*
-//			 * construct the additional "through nodes" for array indices that are not in the formula
-//			 */
-//			if (lhs.getSort().isArraySort()) {
-//				final IArrayWrapper lhsWrapper = getOrConstructArrayWrapper(lhs);
-//				constructEqGraphNodesForEquatedArrayWrapper(lhsWrapper);
-//				final IArrayWrapper rhsWrapper = getOrConstructArrayWrapper(rhs);
-//				constructEqGraphNodesForEquatedArrayWrapper(rhsWrapper);
-//			}
-//		}
+		/*
+		 * Step 1b. construct element wrappers, for array equations
+		 */
+		for (final ApplicationTerm xQuality : xQualities) {
+			final Term lhs = xQuality.getParameters()[0];
+			final Term rhs = xQuality.getParameters()[1];
+
+			/*
+			 * construct the additional "through nodes" for array indices that are not in the formula
+			 */
+			if (lhs.getSort().isArraySort()) {
+				final IArrayWrapper lhsWrapper = getOrConstructArrayWrapper(lhs);
+				constructEqGraphNodesForEquatedArrayWrapper(lhsWrapper);
+				final IArrayWrapper rhsWrapper = getOrConstructArrayWrapper(rhs);
+				constructEqGraphNodesForEquatedArrayWrapper(rhsWrapper);
+			}
+		}
 
 		/*
 		 * 2. variables in the TransFormula that we have an EqNode for (outside of array accesses)
@@ -301,58 +265,59 @@ public class CreateVanillaTfStateBuilder {
 	 *
 	 * @param arrayWrapper
 	 */
-//	private void constructEqGraphNodesForEquatedArrayWrapper(final IArrayWrapper arrayWrapper) {
-//		final VPTfArrayIdentifier arrayId = arrayWrapper.getBaseArray();
-//
-//		final IProgramVarOrConst arrayPvoc = arrayId.getProgramVarOrConst();
-//		final Set<EqFunctionNode> functionNodesForArray = mPreAnalysis.getFunctionNodesForArray(arrayPvoc);
-//
-//		// // TODO (efficiency): these first steps could all be computed once, outside of this method..
-//
-//		for (final EqFunctionNode functionNode : functionNodesForArray) {
-//			/*
-//			 * (this is a reason why the EqGraphNodes for array equalities should be constructed after those for
-//			 * "normal" terms)
-//			 */
-//
-//			if (arrayId.isInOrThrough()) {
-//				// ensure that we have an inOrThrough node for functionNode
-//
-//				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newNode =
-//						getOrConstructInOrOutOrThroughEqGraphNode(functionNode, true);
-//				assert newNode.mNodeIdentifier.getEqNode() == functionNode;
-//				assert newNode.mNodeIdentifier.isInOrThrough();
-//			}
-//
-//			if (arrayId.isOutOrThrough()) {
-//				// ensure that we have an outOrThrough node for functionNode
-//
-//				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newNode =
-//						getOrConstructInOrOutOrThroughEqGraphNode(functionNode, false);
-//				assert newNode.mNodeIdentifier.getEqNode() == functionNode;
-//				assert newNode.mNodeIdentifier.isOutOrThrough();
-//			}
-//
-//			final ArrayInOutStatus targetInOutStatus = arrayId.getInOutStatus();
-//			if (targetInOutStatus == ArrayInOutStatus.AUX) {
-//				assert false : "TODO: treat this case";
-//			}
-//		}
-//	}
+	private void constructEqGraphNodesForEquatedArrayWrapper(final IArrayWrapper arrayWrapper) {
+		final VPTfArrayIdentifier arrayId = arrayWrapper.getBaseArray();
 
-//	/**
-//	 * Method for creating the nodes that are only introduced for an array equality. Their creation has to dynamically
-//	 * adapt to which in/out/through version of a node is already present and complement that. 
-//	 * (i.e. if no version of the node is present, then create through, otherwise create in or out according to the 
-//	 *  given parameter)
-//	 * 
-//	 * @param eqNode
-//	 * @param inOrThroughOrOutOrThroughChooseIn
-//	 * @return
-//	 */
-//	private EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> getOrConstructInOrOutOrThroughEqGraphNode(
-//			final EqNode eqNode, final boolean inOrThroughOrOutOrThroughChooseIn) {
-//
+		final IProgramVarOrConst arrayPvoc = arrayId.getProgramVarOrConst();
+		final Set<EqFunctionNode> functionNodesForArray = mPreAnalysis.getFunctionNodesForArray(arrayPvoc);
+
+		// // TODO (efficiency): these first steps could all be computed once, outside of this method..
+
+		for (final EqFunctionNode functionNode : functionNodesForArray) {
+			/*
+			 * (this is a reason why the EqGraphNodes for array equalities should be constructed after those for
+			 * "normal" terms)
+			 */
+
+			if (arrayId.isInOrThrough()) {
+				// ensure that we have an inOrThrough node for functionNode
+
+				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newNode =
+						getOrConstructInOrOutOrThroughEqGraphNode(functionNode, true);
+				assert newNode.mNodeIdentifier.getEqNode() == functionNode;
+				assert newNode.mNodeIdentifier.isInOrThrough();
+			}
+
+			if (arrayId.isOutOrThrough()) {
+				// ensure that we have an outOrThrough node for functionNode
+
+				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newNode =
+						getOrConstructInOrOutOrThroughEqGraphNode(functionNode, false);
+				assert newNode.mNodeIdentifier.getEqNode() == functionNode;
+				assert newNode.mNodeIdentifier.isOutOrThrough();
+			}
+
+			final ArrayInOutStatus targetInOutStatus = arrayId.getInOutStatus();
+			if (targetInOutStatus == ArrayInOutStatus.AUX) {
+				assert false : "TODO: treat this case";
+			}
+		}
+	}
+
+	/**
+	 * Method for creating the nodes that are only introduced for an array equality. Their creation has to dynamically
+	 * adapt to which in/out/through version of a node is already present and complement that. 
+	 * (i.e. if no version of the node is present, then create through, otherwise create in or out according to the 
+	 *  given parameter)
+	 * 
+	 * @param eqNode
+	 * @param inOrThroughOrOutOrThroughChooseIn
+	 * @return
+	 */
+	private EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> getOrConstructInOrOutOrThroughEqGraphNode(
+			final EqNode eqNode, final boolean inOrThroughOrOutOrThroughChooseIn) {
+
+		return null;
 //		final VPTfNodeIdentifier resultNodeId = inOrThroughOrOutOrThroughChooseIn
 //				? mEqNodeToInOrThroughTfNodeId.get(eqNode) : mEqNodeToOutOrThroughTfNodeId.get(eqNode);
 //
@@ -479,7 +444,7 @@ public class CreateVanillaTfStateBuilder {
 //
 //		assert newEqGraphNode != null;
 //		return newEqGraphNode;
-//	}
+	}
 
 	private IElementWrapper getOrConstructElementWrapper(final Term term) {
 		IElementWrapper result = mTermToElementWrapper.get(term);
