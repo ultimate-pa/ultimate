@@ -21,6 +21,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ContainsSubterm;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.ArrayInOutStatus;
@@ -34,13 +35,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.TfNodeInOutStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPAuxVarNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfArrayIdentifier;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfExtraArrayIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VpTfExtraNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPTfStateBuilder;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * Sets up a VpTfStateBuilder without any (dis)equality information ("vanilla"). Creates all the necessary 
@@ -58,16 +59,18 @@ public class CreateVanillaTfStateBuilder {
 	private Set<VPTfNodeIdentifier> mAllNodeIds = new HashSet<>();
 	private Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mNodeIdToEqGraphNode =
 			new HashMap<>();
-	private NestedMap3<EqNode, Map<IProgramVar, TermVariable>, Map<IProgramVar, TermVariable>, VPTfNodeIdentifier> 
-		mNonAuxVarNodeIds = new NestedMap3<>();
 	private Map<TermVariable, VPAuxVarNodeIdentifier> mAuxVarNodeIds = new HashMap<>();
 	private HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> mArrayIdToFunctionNodes = new HashRelation<>();
 	
-	private final Map<EqNode, VPTfNodeIdentifier> mEqNodeToInOrThroughTfNodeId = new HashMap<>();
-	private final Map<EqNode, VPTfNodeIdentifier> mEqNodeToOutOrThroughTfNodeId = new HashMap<>();
+	
+	private NestedMap3<EqNode, Map<IProgramVar, TermVariable>, Map<IProgramVar, TermVariable>, VPTfNodeIdentifier> 
+		mNonAuxVarNodeIds = new NestedMap3<>();
+	
+//	private final Map<EqNode, VPTfNodeIdentifier> mEqNodeToInOrThroughTfNodeId = new HashMap<>();
+//	private final Map<EqNode, VPTfNodeIdentifier> mEqNodeToOutOrThroughTfNodeId = new HashMap<>();
 
-	private final Map<IProgramVar, VPTfArrayIdentifier> mProgramVarToInOrThroughArrayId = new HashMap<>();
-	private final Map<IProgramVar, VPTfArrayIdentifier> mProgramVarToOutOrThroughArrayId = new HashMap<>();
+//	private final Map<IProgramVar, VPTfArrayIdentifier> mProgramVarToInOrThroughArrayId = new HashMap<>();
+//	private final Map<IProgramVar, VPTfArrayIdentifier> mProgramVarToOutOrThroughArrayId = new HashMap<>();
 
 	private final NestedMap3<IProgramVarOrConst, 
 		Pair<IProgramVar, TermVariable>, 
@@ -141,8 +144,8 @@ public class CreateVanillaTfStateBuilder {
 	 * </ul> 
 	 * 
 	 * Algorithmically, we start by creating the nodes with terms in the TransFormula, then we create those for array
-	 * equations. Afterwards we fill up with through-nodes. Last we create nodes for auxVars (it does not matter when we do 
-	 * that).
+	 * equations. Afterwards we fill up with through-nodes. Last we create nodes for auxVars (it does not matter when we
+	 *  do that).
 	 * 
 	 * Steps 1-3 are concerned with terms in the TransFormula.
 	 * 
@@ -319,6 +322,18 @@ public class CreateVanillaTfStateBuilder {
 			assert result != null;
 			return result;
 		}
+		
+		if (eqNode.isConstant()) {
+			VPTfNodeIdentifier newNodeId = getNodeIdentifier(eqNode, Collections.emptyMap(), Collections.emptyMap());
+			assert newNodeId != null;
+			final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newEqGraphNode = new EqGraphNode<>(newNodeId);
+
+			/*
+			 * register fresh node
+			 */
+			mNodeIdToEqGraphNode.put(newNodeId, newEqGraphNode);
+			return newEqGraphNode;
+		}
 
 		if (eqNode instanceof EqFunctionNode) {
 			final EqFunctionNode functionNode = (EqFunctionNode) eqNode;
@@ -372,47 +387,46 @@ public class CreateVanillaTfStateBuilder {
 			assert newFunctionEqGraphNode != null;
 			return newFunctionEqGraphNode;
 		}
+		
+		// we are looking for a non-function node
+		
 		VPTfNodeIdentifier newNodeId;
-		if (eqNode.isConstant()) {
-			newNodeId = getNodeIdentifier(eqNode, Collections.emptyMap(), Collections.emptyMap());
-			assert newNodeId != null;
-		} else {
-			boolean hasIn = false;
-			boolean hasOut = false;
 
-			for (final IProgramVar eqNodeVar : eqNode.getVariables()) {
-				if (mTransFormula.getInVars().containsKey(eqNodeVar)) {
-					hasIn = true;
-				}
-				if (mTransFormula.getOutVars().containsKey(eqNodeVar)) {
-					hasOut = true;
-				}
+		boolean hasIn = false;
+		boolean hasOut = false;
+
+		for (final IProgramVar eqNodeVar : eqNode.getVariables()) {
+			if (mTransFormula.getInVars().containsKey(eqNodeVar)) {
+				hasIn = true;
 			}
+			if (mTransFormula.getOutVars().containsKey(eqNodeVar)) {
+				hasOut = true;
+			}
+		}
 
-			if (inOrThroughOrOutOrThroughChooseIn) {
-				// we need to create an inOrThrough node
-				if (!hasOut) {
-					// we create a through id
-					newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.THROUGH);
-					mEqNodeToInOrThroughTfNodeId.put(eqNode, newNodeId);
-					mEqNodeToOutOrThroughTfNodeId.put(eqNode, newNodeId);
-				} else {
-					// we create an in id
-					newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.IN);
-					mEqNodeToInOrThroughTfNodeId.put(eqNode, newNodeId);
-				}
+		if (inOrThroughOrOutOrThroughChooseIn) {
+			// we need to create an inOrThrough node
+			if (!hasOut) {
+				// we create a through id
+				newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.THROUGH);
+				mEqNodeToInOrThroughTfNodeId.put(eqNode, newNodeId);
+				mEqNodeToOutOrThroughTfNodeId.put(eqNode, newNodeId);
 			} else {
-				// we need to create an outOrThrough node
-				if (!hasIn) {
-					// we create a through id
-					newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.THROUGH);
-					mEqNodeToInOrThroughTfNodeId.put(eqNode, newNodeId);
-					mEqNodeToOutOrThroughTfNodeId.put(eqNode, newNodeId);
-				} else {
-					// we create an out id
-					newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.OUT);
-					mEqNodeToOutOrThroughTfNodeId.put(eqNode, newNodeId);
-				}
+				// we create an in id
+				newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.IN);
+				mEqNodeToInOrThroughTfNodeId.put(eqNode, newNodeId);
+			}
+		} else {
+			// we need to create an outOrThrough node
+			if (!hasIn) {
+				// we create a through id
+				newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.THROUGH);
+				mEqNodeToInOrThroughTfNodeId.put(eqNode, newNodeId);
+				mEqNodeToOutOrThroughTfNodeId.put(eqNode, newNodeId);
+			} else {
+				// we create an out id
+				newNodeId = new VpTfExtraNodeIdentifier(eqNode, TfNodeInOutStatus.OUT);
+				mEqNodeToOutOrThroughTfNodeId.put(eqNode, newNodeId);
 			}
 		}
 		final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> newEqGraphNode = new EqGraphNode<>(newNodeId);
@@ -421,9 +435,6 @@ public class CreateVanillaTfStateBuilder {
 		 * register fresh node
 		 */
 		mNodeIdToEqGraphNode.put(newNodeId, newEqGraphNode);
-//		if (newNodeId.isOutOrThrough()) {
-//			mOutNodes.add(newEqGraphNode);
-//		}
 
 		assert newEqGraphNode != null;
 		return newEqGraphNode;
@@ -565,91 +576,207 @@ public class CreateVanillaTfStateBuilder {
 		return result;
 	}
 	
-	private VPTfArrayIdentifier getOrConstructArrayIdentifier(final IProgramVarOrConst array,
-			final boolean inOrThroughOrOutOrThroughChooseIn) {
-
-		if (array instanceof IProgramVar) {
-			final VPTfArrayIdentifier earlyResult = inOrThroughOrOutOrThroughChooseIn
-					? mProgramVarToInOrThroughArrayId.get(array) : mProgramVarToOutOrThroughArrayId.get(array);
-			if (earlyResult != null) {
-				assert inOrThroughOrOutOrThroughChooseIn ? earlyResult.isInOrThrough() : earlyResult.isOutOrThrough();
-				assert earlyResult.getProgramVarOrConst() == array;
-				return earlyResult;
-			}
-
-			// tvIn != null means that array is an inVar in mTransFormula, analogously for tvOut
-			final TermVariable tvIn = mTransFormula.getInVars().get(array);
-			final TermVariable tvOut = mTransFormula.getOutVars().get(array);
-
-			if (tvIn != null && inOrThroughOrOutOrThroughChooseIn) {
-				/*
-				 * the TransFormula has an inVar for array and we want inOrThrough --> retrieve the corresponding
-				 * arrayId
-				 */
-				final VPTfArrayIdentifier result = getOrConstructArrayIdentifier(tvIn);
-				assert inOrThroughOrOutOrThroughChooseIn ? result.isInOrThrough() : result.isOutOrThrough();
-				assert result.getProgramVarOrConst() == array;
-				return result;
-			} else if (tvOut != null && !inOrThroughOrOutOrThroughChooseIn) {
-				/*
-				 * the TransFormula has an outVar for array and we want outOrThrough --> retrieve the corresponding
-				 * arrayId
-				 */
-				final VPTfArrayIdentifier result = getOrConstructArrayIdentifier(tvOut);
-				assert inOrThroughOrOutOrThroughChooseIn ? result.isInOrThrough() : result.isOutOrThrough();
-				assert result.getProgramVarOrConst() == array;
-				return result;
+	
+	/**
+	 * Looks up which array identifiers we already have constructed for the given array (given as pvoc).
+	 *  <li> If we have a through, does nothing, 
+	 *  <li> if we have in and out, does nothing,
+	 *  <li> if we have only in/out, construct the other
+	 *  <li> if we have neither, constructs a through array id
+	 * 
+	 * @param array
+	 * @return
+	 */
+	private void constructMissingArrayIdentifier(final IProgramVarOrConst array) {
+		boolean foundOut = false;
+		boolean foundIn = false;
+		for (Triple<Pair<IProgramVar, TermVariable>, Pair<IProgramVar, TermVariable>, VPTfArrayIdentifier> en : 
+			mPvocToInVarToOutVarToArrayIdentifier.get(array).entrySet()) {
+			assert en.getThird() != null;
+			if (en.getFirst() != null && en.getSecond() != null) {
+				// found a through array id --> do nothing, done
+				return;
+			} else if (en.getFirst() == null && en.getSecond() != null) {
+				// found an out array id
+				foundOut = true;
+			} else if (en.getFirst() != null && en.getSecond() == null) {
+				// found an in array id
+				foundIn = true;
 			} else {
-				/*
-				 * there is no TermVariable in the TransFormula with the inOrThrough-status we are looking for --> we
-				 * need an ArrayId especially for this purpose --> whether the new ArrayId we create is in/out or
-				 * through depends on inVars/outVars, too: if we need an inOrThrough id, and there is an
-				 * out-TermVariable for the array, we create an in-Id, otherwise we create a through-Id (and vice versa
-				 * for outOrThrough)
-				 */
-				if (inOrThroughOrOutOrThroughChooseIn) {
-					if (tvOut == null) {
-						// we create a through id
-						final VPTfArrayIdentifier newId = new VPTfExtraArrayIdentifier(array, ArrayInOutStatus.THROUGH);
-						mProgramVarToInOrThroughArrayId.put((IProgramVar) array, newId);
-						mProgramVarToOutOrThroughArrayId.put((IProgramVar) array, newId);
-
-						assert inOrThroughOrOutOrThroughChooseIn ? newId.isInOrThrough() : newId.isOutOrThrough();
-						assert newId.getProgramVarOrConst() == array;
-						return newId;
-					}
-					// we create an in id
-					final VPTfArrayIdentifier newId = new VPTfExtraArrayIdentifier(array, ArrayInOutStatus.IN);
-					mProgramVarToOutOrThroughArrayId.put((IProgramVar) array, newId);
-					assert inOrThroughOrOutOrThroughChooseIn ? newId.isInOrThrough() : newId.isOutOrThrough();
-					assert newId.getProgramVarOrConst() == array;
-					return newId;
-				}
-				if (tvIn == null) {
-					// we create a through id
-					final VPTfArrayIdentifier newId = new VPTfExtraArrayIdentifier(array, ArrayInOutStatus.THROUGH);
-					mProgramVarToInOrThroughArrayId.put((IProgramVar) array, newId);
-					mProgramVarToOutOrThroughArrayId.put((IProgramVar) array, newId);
-					assert inOrThroughOrOutOrThroughChooseIn ? newId.isInOrThrough() : newId.isOutOrThrough();
-					assert newId.getProgramVarOrConst() == array;
-					return newId;
-				}
-				// we create an out id
-				final VPTfArrayIdentifier newId = new VPTfExtraArrayIdentifier(array, ArrayInOutStatus.OUT);
-				mProgramVarToInOrThroughArrayId.put((IProgramVar) array, newId);
-				assert inOrThroughOrOutOrThroughChooseIn ? newId.isInOrThrough() : newId.isOutOrThrough();
-				assert newId.getProgramVarOrConst() == array;
-				return newId;
-			}
+				assert en.getFirst() == null && en.getSecond() == null;
+				assert false : "we have stored an array id that is neither in nor out nor through??";
+			}	
 		}
-		final VPTfArrayIdentifier result =
-				getOrConstructArrayIdentifier(array, Collections.emptyMap(), Collections.emptyMap());
-		assert inOrThroughOrOutOrThroughChooseIn ? result.isInOrThrough() : result.isOutOrThrough();
-		assert result.getProgramVarOrConst() == array;
-		return result;
+		
+	
+		final Pair<IProgramVar, TermVariable> ivOvPair = new Pair<>((IProgramVar) array, null);
+		
+		// have not found a through node, checking if in/out is missing
+		if (foundOut && foundIn) {
+			return;
+		} else if (!foundOut) {
+			getOrConstructArrayIdentifier(array, null, ivOvPair);
+		} else if (!foundIn) {
+			getOrConstructArrayIdentifier(array, ivOvPair, null);
+	 	} else {
+	 		assert !foundOut && !foundIn;
+			getOrConstructArrayIdentifier(array, ivOvPair, ivOvPair);
+	 	}
+		
+//		Map<IProgramVar, TermVariable> inVars = null;
+//		Map<IProgramVar, TermVariable> outVars = null;
+//		return getOrConstructArrayIdentifier(array, inVars, outVars);
 	}
 
+	
+	/**
+	 * Looks up which array identifiers we already have constructed for the given array (given as pvoc).
+	 * Then
+	 *  <li> if inOrThroughOrOutOrThroughChooseIn: if we have a through array id, return it, if we have an in arrayid, 
+	 *    return it, if we only have an out array id, return a fresh in array id, if we have no array id, return a fresh
+	 *     through array id
+	 *  <li> if !inOrThroughOrOutOrThroughChooseIn: analogous
+	 * 
+	 * @param array
+	 * @param inOrThroughOrOutOrThroughChooseIn
+	 * @return
+	 */
+	private VPTfArrayIdentifier getOrConstructArrayIdentifier(final IProgramVarOrConst array,
+			final boolean inOrThroughOrOutOrThroughChooseIn) {
+		
+		Pair<IProgramVar, TermVariable> inVars = null;
+		Pair<IProgramVar, TermVariable> outVars = null;
+		
+		for (Triple<Pair<IProgramVar, TermVariable>, Pair<IProgramVar, TermVariable>, VPTfArrayIdentifier> en : 
+			mPvocToInVarToOutVarToArrayIdentifier.get(array).entrySet()) {
+			assert en.getThird() != null;
+			if (en.getFirst() != null && en.getSecond() != null) {
+				// found a through array id
+				return en.getThird();
+			} else if (en.getFirst() == null && en.getSecond() != null) {
+				// found an out array id
+				if (inOrThroughOrOutOrThroughChooseIn) {
+					inVars = new Pair<>((IProgramVar) array, null);
+				} else {
+					return en.getThird();
+				}
+			} else if (en.getFirst() != null && en.getSecond() == null) {
+				// found an in array id
+				if (inOrThroughOrOutOrThroughChooseIn) {
+					return en.getThird();
+				} else {
+					outVars = new Pair<>((IProgramVar) array, null);
+				}
+			} else {
+				assert en.getFirst() == null && en.getSecond() == null;
+				assert false : "we have stored an array id that is neither in nor out nor through??";
+			}
+			
+		}
+		
+		return getOrConstructArrayIdentifier(array, inVars, outVars);
+
+//		if (array instanceof IProgramVar) {
+//			final VPTfArrayIdentifier earlyResult = inOrThroughOrOutOrThroughChooseIn
+//					? mProgramVarToInOrThroughArrayId.get(array) : mProgramVarToOutOrThroughArrayId.get(array);
+//			if (earlyResult != null) {
+//				assert inOrThroughOrOutOrThroughChooseIn ? earlyResult.isInOrThrough() : earlyResult.isOutOrThrough();
+//				assert earlyResult.getProgramVarOrConst() == array;
+//				return earlyResult;
+//			}
+//
+//			// tvIn != null means that array is an inVar in mTransFormula, analogously for tvOut
+//			final TermVariable tvIn = mTransFormula.getInVars().get(array);
+//			final TermVariable tvOut = mTransFormula.getOutVars().get(array);
+//
+//			if (tvIn != null && inOrThroughOrOutOrThroughChooseIn) {
+//				/*
+//				 * the TransFormula has an inVar for array and we want inOrThrough --> retrieve the corresponding
+//				 * arrayId
+//				 */
+//				final VPTfArrayIdentifier result = getOrConstructArrayIdentifier(tvIn);
+//				assert inOrThroughOrOutOrThroughChooseIn ? result.isInOrThrough() : result.isOutOrThrough();
+//				assert result.getProgramVarOrConst() == array;
+//				return result;
+//			} else if (tvOut != null && !inOrThroughOrOutOrThroughChooseIn) {
+//				/*
+//				 * the TransFormula has an outVar for array and we want outOrThrough --> retrieve the corresponding
+//				 * arrayId
+//				 */
+//				final VPTfArrayIdentifier result = getOrConstructArrayIdentifier(tvOut);
+//				assert inOrThroughOrOutOrThroughChooseIn ? result.isInOrThrough() : result.isOutOrThrough();
+//				assert result.getProgramVarOrConst() == array;
+//				return result;
+//			} else {
+//				/*
+//				 * there is no TermVariable in the TransFormula with the inOrThrough-status we are looking for --> we
+//				 * need an ArrayId especially for this purpose --> whether the new ArrayId we create is in/out or
+//				 * through depends on inVars/outVars, too: if we need an inOrThrough id, and there is an
+//				 * out-TermVariable for the array, we create an in-Id, otherwise we create a through-Id (and vice versa
+//				 * for outOrThrough)
+//				 */
+//				if (inOrThroughOrOutOrThroughChooseIn) {
+//					if (tvOut == null) {
+//						// we create a through id
+//						final VPTfArrayIdentifier newId = new VPTfExtraArrayIdentifier(array, ArrayInOutStatus.THROUGH);
+//						mProgramVarToInOrThroughArrayId.put((IProgramVar) array, newId);
+//						mProgramVarToOutOrThroughArrayId.put((IProgramVar) array, newId);
+//
+//						assert inOrThroughOrOutOrThroughChooseIn ? newId.isInOrThrough() : newId.isOutOrThrough();
+//						assert newId.getProgramVarOrConst() == array;
+//						return newId;
+//					}
+//					// we create an in id
+//					final VPTfArrayIdentifier newId = new VPTfExtraArrayIdentifier(array, ArrayInOutStatus.IN);
+//					mProgramVarToOutOrThroughArrayId.put((IProgramVar) array, newId);
+//					assert inOrThroughOrOutOrThroughChooseIn ? newId.isInOrThrough() : newId.isOutOrThrough();
+//					assert newId.getProgramVarOrConst() == array;
+//					return newId;
+//				}
+//				if (tvIn == null) {
+//					// we create a through id
+//					final VPTfArrayIdentifier newId = new VPTfExtraArrayIdentifier(array, ArrayInOutStatus.THROUGH);
+//					mProgramVarToInOrThroughArrayId.put((IProgramVar) array, newId);
+//					mProgramVarToOutOrThroughArrayId.put((IProgramVar) array, newId);
+//					assert inOrThroughOrOutOrThroughChooseIn ? newId.isInOrThrough() : newId.isOutOrThrough();
+//					assert newId.getProgramVarOrConst() == array;
+//					return newId;
+//				}
+//				// we create an out id
+//				final VPTfArrayIdentifier newId = new VPTfExtraArrayIdentifier(array, ArrayInOutStatus.OUT);
+//				mProgramVarToInOrThroughArrayId.put((IProgramVar) array, newId);
+//				assert inOrThroughOrOutOrThroughChooseIn ? newId.isInOrThrough() : newId.isOutOrThrough();
+//				assert newId.getProgramVarOrConst() == array;
+//				return newId;
+//			}
+//		}
+//		// array is not a variable
+//		final VPTfArrayIdentifier result =
+//				getOrConstructArrayIdentifier(array, Collections.emptyMap(), Collections.emptyMap());
+//		assert inOrThroughOrOutOrThroughChooseIn ? result.isInOrThrough() : result.isOutOrThrough();
+//		assert result.getProgramVarOrConst() == array;
+//		return result;
+	}
+
+	/**
+	 * Obtains the VPTfArrayIdentifier for the given term.
+	 * The term is a subterm of the transition formula of the current TfStateBuilder.
+	 * 
+	 * Details:
+	 *  We are looking for an array id based on a Term in the transition formula, thus we don't need to look for an
+	 *  array id that was created "extra", i.e., for handling an array equality or for passing through information
+	 *  about something that is just skipped by the TransFormula.
+	 *  
+	 *  @param term the subterm of mTransformula that we are looking for an arrayIdentifier for
+	 *  @return 
+	 */
 	public VPTfArrayIdentifier getOrConstructArrayIdentifier(final Term term) {
+		assert new ContainsSubterm(term).containsSubterm(mTransFormula.getFormula()) : "(see comments)";
+		/*
+		 * an array id is identified by a IProgramVarOrConst and inVar/outVar information
+		 * Note: We don't need to take this stateBuilder's inVars/outVars here, because we assume that the argument 
+		 *  term is a subterm of the current transition formula.
+		 */
 		return getOrConstructArrayIdentifier(
 				mPreAnalysis.getIProgramVarOrConstOrLiteral(term,
 						VPDomainHelpers.computeProgramVarMappingFromTransFormula(mTransFormula)),
@@ -658,7 +785,9 @@ public class CreateVanillaTfStateBuilder {
 	}
 
 	/**
-	 *
+	 * A VPTfArrayIdentifier (and thus an array term inside a transition formula) is identified by a IProgramVarOrConst 
+	 * together with inVar/outVar information.
+	 * 
 	 * @param function
 	 * @param inVars
 	 * @param outVars
@@ -670,14 +799,30 @@ public class CreateVanillaTfStateBuilder {
 		Pair<IProgramVar, TermVariable> inVar = null;
 		Pair<IProgramVar, TermVariable> outVar = null;
 
-		final TermVariable iTv = inVars.get(function);
-		if (iTv != null) {
-			inVar = new Pair<>((IProgramVar) function, iTv);
+		/*
+		 *  Note: need to use containsKey, because we allow null-values (and could not distinguish between "not
+		 *   in the map" and "has a null value", by using .get(function) as usual.
+		 */
+		if (inVars.containsKey(function)) {
+			inVar = new Pair<>((IProgramVar) function, inVars.get(function));
 		}
-		final TermVariable oTv = outVars.get(function);
-		if (oTv != null) {
-			outVar = new Pair<>((IProgramVar) function, oTv);
+		if (outVars.containsKey(function)) {
+			outVar = new Pair<>((IProgramVar) function, outVars.get(function));
 		}
+		return getOrConstructArrayIdentifier(function, inVar, outVar);
+	}
+
+
+	/**
+	 * Standard map-lookup/update method used by the other getOrConstructArrayIdentifier methods.
+	 * 
+	 * @param function
+	 * @param inVar
+	 * @param outVar
+	 * @return
+	 */
+	private VPTfArrayIdentifier getOrConstructArrayIdentifier(final IProgramVarOrConst function,
+			Pair<IProgramVar, TermVariable> inVar, Pair<IProgramVar, TermVariable> outVar) {
 		VPTfArrayIdentifier result = mPvocToInVarToOutVarToArrayIdentifier.get(function, inVar, outVar);
 
 		if (result == null) {

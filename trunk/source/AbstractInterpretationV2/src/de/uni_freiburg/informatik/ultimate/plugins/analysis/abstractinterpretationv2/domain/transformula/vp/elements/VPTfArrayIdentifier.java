@@ -34,7 +34,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -46,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  * The VPArrayIdentifier identifies an array occurence inside a TransFormula.
  * Analogously to the VPNodeIdentifier it consists of
  *  - what identifies an array in a VPState --> an IProgramVarOrConst (an EqNode in case of the VPNodeIdentifier)
- *  - inVar and outVar mappings --> here, pairs suffice
+ *  - inVar and outVar mappings --> here, pairs suffice, they may be null, if the array id is not in/ not out
  *  
  *  in principle it is possible to reconstruct a term from these, which occurs in the TransFormula we
  *  created this identifier for.
@@ -59,36 +58,50 @@ public class VPTfArrayIdentifier implements IArrayWrapper {
 	private final IProgramVarOrConst mPvoc;
 	private final Pair<IProgramVar, TermVariable> mInVar;
 	private final Pair<IProgramVar, TermVariable> mOutVar;
-	private Term mTerm;
+//	private Term mTerm;
 	private final ArrayInOutStatus mInOutStatus;
 	
 	protected VPTfArrayIdentifier(IProgramVarOrConst pvoc, ArrayInOutStatus inOutStatus) {
+		assert pvoc != null : "investigate this case";
 		mPvoc = pvoc;
-		mTerm = null; //TODO: makes sense?
-		mInVar = null;
-		mOutVar = null;
+//		mTerm = null; //TODO: makes sense?
+		if (pvoc instanceof IProgramVar 
+				&& (inOutStatus == ArrayInOutStatus.IN || inOutStatus == ArrayInOutStatus.THROUGH)) {
+			mInVar = new Pair<>((IProgramVar) pvoc, null);
+//			mTerm = pvoc.getTerm();
+		} else {
+			mInVar = null;
+		}
+		if (pvoc instanceof IProgramVar 
+				&& (inOutStatus == ArrayInOutStatus.OUT || inOutStatus == ArrayInOutStatus.THROUGH)) {
+			mOutVar = new Pair<>((IProgramVar) pvoc, null);
+//			mTerm = mTerm == null ? pvoc.getTerm() : mTerm;
+		} else {
+			mOutVar = null;
+		}
 		mInOutStatus = inOutStatus;
 	}
 
 	public VPTfArrayIdentifier(IProgramVarOrConst pvoc, 
 			Pair<IProgramVar, TermVariable> inVar, 
 			Pair<IProgramVar, TermVariable> outVar) {
+		assert pvoc != null : "investigate this case";
 		mPvoc = pvoc;
 		
-		if (inVar != null) {
-			mTerm = inVar.getSecond();
-		}
+//		if (inVar != null) {
+//			mTerm = inVar.getSecond();
+//		}
 		mInVar = inVar;
 		
 		mOutVar = outVar;
-		if (outVar != null) {
-			mTerm = outVar.getSecond();
-		}
+//		if (outVar != null) {
+//			mTerm = outVar.getSecond();
+//		}
 	
-		if (mTerm == null) {
-			assert pvoc instanceof ConstOrLiteral;
-			mTerm = pvoc.getTerm();
-		}
+//		if (mTerm == null) {
+//			assert pvoc instanceof ConstOrLiteral;
+//			mTerm = pvoc.getTerm();
+//		}
 		
 		if (inVar == null && outVar != null) {
 			mInOutStatus = ArrayInOutStatus.OUT;
@@ -115,8 +128,8 @@ public class VPTfArrayIdentifier implements IArrayWrapper {
 			return true;
 		}
 		VPTfArrayIdentifier otherArrayId = (VPTfArrayIdentifier) other;
-		boolean result = this.mTerm == otherArrayId.mTerm 
-				&& this.mPvoc == otherArrayId.mPvoc
+		boolean result = //this.mTerm == otherArrayId.mTerm &&
+				this.mPvoc == otherArrayId.mPvoc
 				&& this.mInOutStatus == otherArrayId.mInOutStatus
 				&& ((this.mInVar == null && otherArrayId.mInVar == null) || this.mInVar.equals(otherArrayId.mInVar))
 				&& ((this.mOutVar == null && otherArrayId.mOutVar == null) || this.mOutVar.equals(otherArrayId.mOutVar));
@@ -129,9 +142,9 @@ public class VPTfArrayIdentifier implements IArrayWrapper {
 		if (mPvoc != null) {
 			return "ArrayId: " + mPvoc.toString();
 		}
-		if (mTerm != null) {
-			return "ArrayId: " + mTerm.toString();
-		}
+//		if (mTerm != null) {
+//			return "ArrayId: " + mTerm.toString();
+//		}
 		assert false;
 		return null;
 	}
@@ -179,6 +192,7 @@ public class VPTfArrayIdentifier implements IArrayWrapper {
 		if (mInVar == null) {
 			return Collections.emptyMap();
 		} else {
+			assert mInVar.getSecond() != null;
 			return Collections.singletonMap(mInVar.getFirst(), mInVar.getSecond());
 		}
 	}
@@ -187,6 +201,7 @@ public class VPTfArrayIdentifier implements IArrayWrapper {
 		if (mOutVar == null) {
 			return Collections.emptyMap();
 		} else {
+			assert mOutVar.getSecond() != null;
 			return Collections.singletonMap(mOutVar.getFirst(), mOutVar.getSecond());
 		}
 	}
