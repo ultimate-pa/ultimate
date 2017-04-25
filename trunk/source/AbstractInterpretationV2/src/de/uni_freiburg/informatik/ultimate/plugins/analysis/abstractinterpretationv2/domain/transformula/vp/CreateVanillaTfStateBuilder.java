@@ -195,7 +195,6 @@ public class CreateVanillaTfStateBuilder {
 		/*
 		 * 4. Now we have finished with the terms in the TransFormula and fill up with EqGraphNodes for everything that
 		 * is tracked, and in scope.
-		 * (TODO: context switches)
 		 */
 		if (mAction instanceof IInternalAction) {
 			final String proc = mAction.getPrecedingProcedure();
@@ -520,8 +519,22 @@ public class CreateVanillaTfStateBuilder {
 	private VPTfArrayIdentifier getArrayIdentifierConstructThroughIfMissing(final IProgramVarOrConst array,
 			final boolean inOrThroughOrOutOrThroughChooseIn) {
 		
+		final NestedMap2<Pair<IProgramVar, TermVariable>, 
+			Pair<IProgramVar, TermVariable>, 
+			VPTfArrayIdentifier> inToOutToArrayId = mPvocToInVarToOutVarToArrayIdentifier.get(array);
+		
+		if (inToOutToArrayId == null) {
+			/*
+			 * We don't have an arrayId for the given array yet --> construct a through version!
+			 */
+			Pair<IProgramVar, TermVariable> pair = array instanceof IProgramVar ? 
+					new Pair<>((IProgramVar) array, null) :
+						null;
+			return getOrConstructArrayIdentifier(array, pair, pair);
+		}
+		
 		for (Triple<Pair<IProgramVar, TermVariable>, Pair<IProgramVar, TermVariable>, VPTfArrayIdentifier> en : 
-			mPvocToInVarToOutVarToArrayIdentifier.get(array).entrySet()) {
+			inToOutToArrayId.entrySet()) {
 			assert en.getThird() != null;
 			if (en.getFirst() != null && en.getSecond() != null) {
 				// found a through array id

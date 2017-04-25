@@ -192,7 +192,7 @@ public class VPTfArrayIdentifier implements IArrayWrapper {
 		if (mInVar == null) {
 			return Collections.emptyMap();
 		} else {
-			assert mInVar.getSecond() != null;
+//			assert mInVar.getSecond() != null;
 			return Collections.singletonMap(mInVar.getFirst(), mInVar.getSecond());
 		}
 	}
@@ -201,7 +201,7 @@ public class VPTfArrayIdentifier implements IArrayWrapper {
 		if (mOutVar == null) {
 			return Collections.emptyMap();
 		} else {
-			assert mOutVar.getSecond() != null;
+//			assert mOutVar.getSecond() != null;
 			return Collections.singletonMap(mOutVar.getFirst(), mOutVar.getSecond());
 		}
 	}
