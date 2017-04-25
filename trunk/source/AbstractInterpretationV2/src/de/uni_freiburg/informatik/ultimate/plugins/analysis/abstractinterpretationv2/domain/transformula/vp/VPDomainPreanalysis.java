@@ -635,6 +635,23 @@ public class VPDomainPreanalysis {
 		result.addAll(mProcToLocalEqNodes.getImage(proc));
 		return result;
 	}
+	
+	
+	/**
+	 * @param proc
+	 * @return all the EqNodes that only use symbols that are visible in the intersection of the scopes of the given 
+	 *  procedures.
+	 */
+	public Set<EqNode> getEqNodesForScope(String proc1, String proc2) {
+		assert proc1 != null;
+		assert proc2 != null;
+		final Set<EqNode> result = new HashSet<>();
+		result.addAll(mGlobalEqNodes);
+		final Set<EqNode> locals = new HashSet<>(mProcToLocalEqNodes.getImage(proc1));
+		locals.retainAll(mProcToLocalEqNodes.getImage(proc2));
+		result.addAll(locals);
+		return result;
+	}
 }
 
 class VPDomainPreanalysisSettings {
