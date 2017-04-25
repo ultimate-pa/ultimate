@@ -164,14 +164,14 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		copy.removeVars(variables);
 		
 		
-		final Set<IProgramVar> removedVars = variables.stream()
-				.filter(var -> var instanceof IProgramVar)
-				.map(var -> (IProgramVar) var).collect(Collectors.toSet());
-		final VPState<ACTION> havocced = mStateFactory.havocVariables(removedVars, copy.build());
+//		final Set<IProgramVar> removedVars = variables.stream()
+//				.filter(var -> var instanceof IProgramVar)
+//				.map(var -> (IProgramVar) var).collect(Collectors.toSet());
+//		final VPState<ACTION> havocced = mStateFactory.havocVariables(removedVars, copy.build());
+//		return havocced;
 //		final VPStateBuilder<ACTION> copy = mStateFactory.copy(this);
 //		copy.removeVars(variables);
-//		return copy.build();
-		return havocced;
+		return copy.build();
 	}
 
 	@Override
@@ -332,6 +332,14 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		Term disEquality;
 
 		for (final VPDomainSymmetricPair<EqNode> pair : getDisEqualities()) {
+			if (!mVars.containsAll(pair.getFirst().getVariables()) 
+					|| !mVars.containsAll(pair.getSecond().getVariables())) {
+				/*
+				 * don't add disequalities that talk about variables that the current state does not officially know 
+				 * about
+				 */
+				continue;
+			}
 			disEqualityFirst = pair.getFirst().getTerm();
 			disEqualitySecond = pair.getSecond().getTerm();
 			distinctTermSet.add(mScript.term(this, TERM_FUNC_NAME_DISTINCT, disEqualityFirst, disEqualitySecond));
@@ -353,6 +361,14 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 		for (final EqGraphNode<EqNode, IProgramVarOrConst> graphNode : mEqNodeToEqGraphNodeMap.values()) {
 			if (!graphNode.equals(graphNode.getRepresentative())) {
+				if (!mVars.containsAll(graphNode.mNodeIdentifier.getVariables()) 
+						|| !mVars.containsAll(graphNode.getRepresentative().mNodeIdentifier.getVariables())) {
+					/*
+					 * don't add equalities that talk about variables that the current state does not officially know 
+					 * about
+					 */
+					continue;
+				}
 				equalityFirst = graphNode.mNodeIdentifier.getTerm();
 				equalitySecond = graphNode.getRepresentative().mNodeIdentifier.getTerm();
 				equalityTermSet.add(mScript.term(this, "=", equalityFirst, equalitySecond));
