@@ -85,6 +85,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PreNestedWord;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
@@ -297,7 +298,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		 */
 		while (true) {
 			try {
-				PreNestedWord preWord = mInteractive.request(PreNestedWord.class).get();
+				PreNestedWord preWord = mInteractive
+						.request(PreNestedWord.class, IterationInfo.instance.setIteration(mIteration)).get();
 				// userRun = mInteractive.request(NestedRun.class).get();
 
 				INestedWordAutomatonSimple<LETTER, IPredicate> userAutomaton = preWord.getAutomaton(mServices,
@@ -316,8 +318,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 					if (userRun != null)
 						break;
-					mInteractive.send("Infeasible Trace: The Trace you have selected is not accepted by the "
-							+ "current abstraction (iteration " + mIteration + ").");
+					mInteractive.send("Infeasible Trace: Iteration " + mIteration + ": The Trace you have selected is not accepted by the "
+							+ "current abstraction. Please select anther trace.");
 					mLogger.info("intersection of the automaton that accepts the user-trace with abstraction is empty. "
 							+ "Asking for another user run.");
 				} catch (AutomataLibraryException e) {
@@ -440,8 +442,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 					((TraceAbstractionRefinementEngine) mTraceCheckAndRefinementEngine).somePerfectSequenceFound(),
 					mIteration);
 		}
-		
-		if (mInteractiveMode && feasibility==LBool.SAT) {
+
+		if (mInteractiveMode && feasibility == LBool.SAT) {
 			mInteractive.send("Feasiblke Counterexample Found:The Counterexample trace analyzed in iteration "
 					+ mIteration + " was feasible.");
 		}
