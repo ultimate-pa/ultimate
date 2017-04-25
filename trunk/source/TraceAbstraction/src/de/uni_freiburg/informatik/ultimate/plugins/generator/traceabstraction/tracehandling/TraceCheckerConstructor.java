@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pathinvariants.InvariantSynthesisSettings;
@@ -61,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supplier<TraceChecker> {
-	private final TaCheckAndRefinementPreferences mPrefs;
+	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
 	private final ManagedScript mManagedScript;
 	private final IUltimateServiceProvider mServices;
 	private final PredicateFactory mPredicateFactory;
@@ -90,7 +89,7 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 	 * @param cegarLoopBenchmark
 	 *            CEGAR loop benchmark
 	 */
-	public TraceCheckerConstructor(final TaCheckAndRefinementPreferences prefs, final ManagedScript managedScript,
+	public TraceCheckerConstructor(final TaCheckAndRefinementPreferences<LETTER> prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
 			final PredicateUnifier predicateUnifier, final IRun<LETTER, IPredicate, ?> counterexample,
 			final InterpolationTechnique interpolationTechnique, final int cegarIteration,
@@ -159,7 +158,7 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 	 * @param cegarLoopBenchmark
 	 *            CEGAR loop benchmark
 	 */
-	public TraceCheckerConstructor(final TaCheckAndRefinementPreferences prefs, final ManagedScript managedScript,
+	public TraceCheckerConstructor(final TaCheckAndRefinementPreferences<LETTER> prefs, final ManagedScript managedScript,
 			final IUltimateServiceProvider services,final PredicateFactory predicateFactory,  final PredicateUnifier predicateUnifier,
 			final IRun<LETTER, IPredicate, ?> counterexample, final AssertCodeBlockOrder assertOrder,
 			final InterpolationTechnique interpolationTechnique, final int cegarIteration,
@@ -261,7 +260,7 @@ class TraceCheckerConstructor<LETTER extends IIcfgTransition<?>> implements Supp
 		final XnfConversionTechnique xnfConversionTechnique = mPrefs.getXnfConversionTechnique();
 		final SimplificationTechnique simplificationTechnique = mPrefs.getSimplificationTechnique();
 
-		final IIcfg<BoogieIcfgLocation> icfgContainer = mPrefs.getIcfgContainer();
+		final IIcfg<?> icfgContainer = mPrefs.getIcfgContainer();
 		final boolean useNonlinearConstraints = mPrefs.getUseNonlinearConstraints();
 		final boolean useUnsatCores = mPrefs.getUseVarsFromUnsatCore();
 		final boolean useAbstractInterpretationPredicates = mPrefs.getUseAbstractInterpretation();

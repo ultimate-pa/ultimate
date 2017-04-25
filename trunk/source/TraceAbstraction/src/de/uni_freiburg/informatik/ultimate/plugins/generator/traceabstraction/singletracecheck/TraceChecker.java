@@ -55,10 +55,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.AnnotateAndAsserter.AbnormalSolverTerminationDuringFeasibilityCheck;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.AnnotateAndAsserter.AbnormalUnknownSolverTerminationDuringFeasibilityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckReasonUnknown.Reason;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ExceptionHandlingCategory;
 
 /**
  * Check if a trace fulfills a specification. Provides an execution (that violates the specification) if the check was
@@ -131,7 +128,6 @@ public class TraceChecker implements ITraceChecker {
 	 */
 	protected final SortedMap<Integer, IPredicate> mPendingContexts;
 	protected AnnotateAndAsserter mAAA;
-	protected final LBool mIsSafe;
 	protected final boolean mProvidesIcfgProgramExecution;
 	protected final IcfgProgramExecution mRcfgProgramExecution;
 	protected final NestedFormulas<UnmodifiableTransFormula, IPredicate> mNestedFormulas;
@@ -141,7 +137,7 @@ public class TraceChecker implements ITraceChecker {
 	protected final AssertCodeBlockOrder mAssertCodeBlocksIncrementally;
 	protected ToolchainCanceledException mToolchainCanceledException;
 	protected final IIcfgSymbolTable mBoogie2SmtSymbolTable;
-	private final TraceCheckReasonUnknown mTraceCheckReasonUnknown;
+	protected final FeasibilityCheckResult mFeasibilityResult;
 
 	/**
 	 * Check if trace fulfills specification given by precondition, postcondition and pending contexts. The
@@ -203,81 +199,37 @@ public class TraceChecker implements ITraceChecker {
 		mPendingContexts = pendingContexts;
 		mNestedFormulas = rv;
 		mAssertCodeBlocksIncrementally = assertCodeBlocksIncrementally;
-		LBool isSafe = null;
 		boolean providesIcfgProgramExecution = false;
 		IcfgProgramExecution icfgProgramExecution = null;
-		TraceCheckReasonUnknown traceCheckReasonUnknown = null;
-		try {
-			isSafe = checkTrace();
-			if (isSafe == LBool.UNSAT) {
+		FeasibilityCheckResult feasibilityResult = null;
+		try { 
+			feasibilityResult = checkTrace();
+			if (feasibilityResult.getLBool() == LBool.UNSAT) {
 				if (unlockSmtSolverAlsoIfUnsat) {
 					mTraceCheckFinished = true;
-					unlockSmtManager();
+					cleanupAndUnlockSolver();
 				}
 			} else {
-				if (LBool.UNKNOWN == isSafe) {
-					// solver response was 'unknown' and no Exception was thrown.
-					traceCheckReasonUnknown = new TraceCheckReasonUnknown(Reason.SOLVER_RESPONSE_OTHER, null, null);
-				}
-				if (computeRcfgProgramExecution && isSafe == LBool.SAT) {
+				if (computeRcfgProgramExecution && feasibilityResult.getLBool() == LBool.SAT) {
 					icfgProgramExecution = computeRcfgProgramExecutionAndDecodeBranches();
 					if (icfgProgramExecution != null) {
 						providesIcfgProgramExecution = true;
 					}
 					mTraceCheckFinished = true;
 				} else {
-					mTraceCheckFinished = true;
-					unlockSmtManager();
+					if (!feasibilityResult.isSolverCrashed()) {
+						mTraceCheckFinished = true;
+						cleanupAndUnlockSolver();
+					}
 				}
 			}
 		} catch (final ToolchainCanceledException tce) {
 			mToolchainCanceledException = tce;
-		} catch (final SMTLIBException e) {
-			isSafe = LBool.UNKNOWN;
-			final String message = e.getMessage();
-			final Reason reason;
-			final ExceptionHandlingCategory exceptionCategory;
-			if (message == null) {
-				reason = Reason.SOLVER_CRASH_OTHER;
-				exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
-			} else if ("Unsupported non-linear arithmetic".equals(message)) {
-				// SMTInterpol does not support non-linear arithmetic
-				reason = Reason.UNSUPPORTED_NON_LINEAR_ARITHMETIC;
-				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
-			} else if (message.endsWith("Connection to SMT solver broken")) {
-				// broken SMT solver connection can have various reasons such as misconfiguration or solver crashes
-				reason = Reason.SOLVER_CRASH_OTHER;
-				exceptionCategory = ExceptionHandlingCategory.KNOWN_DEPENDING;
-			} else if (message.endsWith("Received EOF on stdin. No stderr output.")) {
-				// problem with Z3
-				reason = Reason.SOLVER_CRASH_OTHER;
-				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
-			} else if (message.contains("Received EOF on stdin. stderr output:")) {
-				// problem with CVC4
-				reason = Reason.SOLVER_CRASH_OTHER;
-				exceptionCategory = ExceptionHandlingCategory.KNOWN_THROW;
-			} else if (message.startsWith("Logic does not allow numerals")) {
-				// wrong usage of external solver, tell the user
-				reason = Reason.SOLVER_CRASH_WRONG_USAGE;
-				exceptionCategory = ExceptionHandlingCategory.KNOWN_THROW;
-			} else if (message.startsWith("Timeout exceeded")) {
-				// timeout
-				reason = Reason.SOLVER_RESPONSE_TIMEOUT;
-				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
-			} else if (message.startsWith("A non-linear fact")) {
-				// CVC4 complains about non-linear arithmetic although logic was set to linear arithmetic
-				reason = Reason.UNSUPPORTED_NON_LINEAR_ARITHMETIC;
-				exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
-			} else {
-				reason = Reason.SOLVER_CRASH_OTHER;
-				exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
-			}
-			traceCheckReasonUnknown = new TraceCheckReasonUnknown(reason, e, exceptionCategory);
+			feasibilityResult = null;
 		} finally {
-			mIsSafe = isSafe;
+			mFeasibilityResult = feasibilityResult;
 			mProvidesIcfgProgramExecution = providesIcfgProgramExecution;
 			mRcfgProgramExecution = icfgProgramExecution;
-			mTraceCheckReasonUnknown = traceCheckReasonUnknown;
 		}
 	}
 
@@ -287,12 +239,12 @@ public class TraceChecker implements ITraceChecker {
 
 	@Override
 	public LBool isCorrect() {
-		return mIsSafe;
+		return mFeasibilityResult.getLBool();
 	}
 
 	public TraceCheckReasonUnknown getTraceCheckReasonUnknown() {
 		if (isCorrect() == LBool.UNKNOWN) {
-			return mTraceCheckReasonUnknown;
+			return mFeasibilityResult.getReasonUnknown();
 		}
 		throw new IllegalStateException("only available trace feasibility result is unknown.");
 	}
@@ -302,9 +254,8 @@ public class TraceChecker implements ITraceChecker {
 	 * the positions of pending returns to predicates which define possible variable valuations in the context to which
 	 * the return leads the trace.
 	 */
-	protected LBool checkTrace() {
-		LBool isSafe;
-		startTraceCheck();
+	protected FeasibilityCheckResult checkTrace() {
+		lockAndPrepareSolverForTraceCheck();
 		final boolean transferToDifferentScript = mTcSmtManager != mCfgManagedScript;
 		mTraceCheckerBenchmarkGenerator.start(TraceCheckerStatisticsDefinitions.SsaConstructionTime.toString());
 		mNsb = new NestedSsaBuilder(mTrace, mTcSmtManager, mNestedFormulas, mCsToolkit.getModifiableGlobalsTable(),
@@ -323,24 +274,26 @@ public class TraceChecker implements ITraceChecker {
 			// Report the asserted code blocks
 			// mTraceCheckerBenchmarkGenerator.reportnewAssertedCodeBlocks(mTrace.length());
 		}
+		FeasibilityCheckResult result = null;
 		try {
 			mAAA.buildAnnotatedSsaAndAssertTerms();
-			isSafe = mAAA.isInputSatisfiable();
-		} catch (final AbnormalSolverTerminationDuringFeasibilityCheck e) {
-			mLogger.warn("Trace check result unknown due to an abnormal solver termination.");
-			isSafe = LBool.UNKNOWN;
-		} catch (final AbnormalUnknownSolverTerminationDuringFeasibilityCheck e) {
-			mLogger.warn("Trace check result unknown due to an abnormal and unknown solver termination.");
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug(e.getMessage());
+			final LBool isSafe = mAAA.isInputSatisfiable();
+			TraceCheckReasonUnknown tcru;
+			if (isSafe == LBool.UNKNOWN) {
+				tcru = new TraceCheckReasonUnknown(Reason.SOLVER_RESPONSE_OTHER, null, null);
+			} else {
+				tcru = null;
 			}
-			isSafe = LBool.UNKNOWN;
+			result = new FeasibilityCheckResult(isSafe, tcru, false);
+		} catch (final SMTLIBException e) {
+			result = new FeasibilityCheckResult(LBool.UNKNOWN, TraceCheckerUtils.constructReasonUnknown(e), true);
 		} finally {
 			mTraceCheckerBenchmarkGenerator
 					.stop(TraceCheckerStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
 		}
-		return isSafe;
+		return result;
 	}
+
 
 	/**
 	 * Compute a program execution for the checked trace. If the checked trace violates its specification (result of
@@ -356,7 +309,7 @@ public class TraceChecker implements ITraceChecker {
 					"program execution only computable if " + "mNestedFormulas instanceof DefaultTransFormulas");
 		}
 		if (!((DefaultTransFormulas) mNestedFormulas).hasBranchEncoders()) {
-			unlockSmtManager();
+			cleanupAndUnlockSolver();
 			final DefaultTransFormulas withBE = new DefaultTransFormulas(mNestedFormulas.getTrace(),
 					mNestedFormulas.getPrecondition(), mNestedFormulas.getPostcondition(), mPendingContexts,
 					mCsToolkit.getOldVarsAssignmentCache(), true);
@@ -409,7 +362,7 @@ public class TraceChecker implements ITraceChecker {
 				}
 			}
 		}
-		unlockSmtManager();
+		cleanupAndUnlockSolver();
 		return rpeb.getIcfgProgramExecution();
 	}
 
@@ -470,10 +423,6 @@ public class TraceChecker implements ITraceChecker {
 		return mRcfgProgramExecution;
 	}
 
-	protected final void unlockSmtManager() {
-		endTraceCheck();
-	}
-
 	@Override
 	public TraceCheckerStatisticsGenerator getTraceCheckerBenchmark() {
 		if (mTraceCheckFinished || mToolchainCanceledException != null) {
@@ -487,13 +436,13 @@ public class TraceChecker implements ITraceChecker {
 		return mToolchainCanceledException;
 	}
 
-	private void startTraceCheck() {
+	private void lockAndPrepareSolverForTraceCheck() {
 		mTcSmtManager.lock(mTraceCheckerLock);
 		mTcSmtManager.echo(mTraceCheckerLock, new QuotedObject("starting trace check"));
 		mTcSmtManager.push(mTraceCheckerLock, 1);
 	}
 
-	private void endTraceCheck() {
+	protected void cleanupAndUnlockSolver() {
 		mTcSmtManager.echo(mTraceCheckerLock, new QuotedObject("finished trace check"));
 		mTcSmtManager.pop(mTraceCheckerLock, 1);
 		mTcSmtManager.unlock(mTraceCheckerLock);
@@ -506,7 +455,45 @@ public class TraceChecker implements ITraceChecker {
 		// this abomination helps Matthias debug
 	}
 
+	/**
+	 * @return true iff trace check was successfully finished.
+	 * Examples for a not successfully finished trace check are:
+	 * Crash of solver, Toolchain cancelled,
+	 */
 	public boolean wasTracecheckFinished() {
 		return mTraceCheckFinished;
+	}
+	
+	
+	class FeasibilityCheckResult {
+		private final LBool mLBool;
+		private final TraceCheckReasonUnknown mReasonUnknown;
+		private final boolean mSolverCrashed;
+
+		public FeasibilityCheckResult(final LBool lBool, final TraceCheckReasonUnknown reasonUnknown,
+				final boolean solverCrashed) {
+			super();
+			assert (lBool != LBool.UNKNOWN
+					|| reasonUnknown != null) : "if result is unknown you have to specify a reason";
+			assert (lBool == LBool.UNKNOWN
+					|| reasonUnknown == null) : "if result sat/unsat you cannot specify reason for unknown";
+			mLBool = lBool;
+			mReasonUnknown = reasonUnknown;
+			mSolverCrashed = solverCrashed;
+		}
+
+		public LBool getLBool() {
+			return mLBool;
+		}
+
+		public TraceCheckReasonUnknown getReasonUnknown() {
+			return mReasonUnknown;
+		}
+
+		public boolean isSolverCrashed() {
+			return mSolverCrashed;
+		}
+		
+		
 	}
 }

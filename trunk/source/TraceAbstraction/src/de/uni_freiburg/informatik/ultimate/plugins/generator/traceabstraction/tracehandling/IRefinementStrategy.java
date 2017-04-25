@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public interface IRefinementStrategy<LETTER> {
 	String COMMAND_Z3_NO_TIMEOUT = "z3 -smt2 -in SMTLIB2_COMPLIANT=true";
 	String COMMAND_Z3_TIMEOUT = COMMAND_Z3_NO_TIMEOUT + " -t:12000";
+	// TODO add argument --rewrite-divk but check if it causes problems with BV logics
 	String COMMAND_CVC4_NO_TIMEOUT = "cvc4 --tear-down-incremental --print-success --lang smt";
 	String COMMAND_CVC4_TIMEOUT = COMMAND_CVC4_NO_TIMEOUT + " --tlimit-per=12000";
 	// 20161214 Matthias: MathSAT does not support timeouts

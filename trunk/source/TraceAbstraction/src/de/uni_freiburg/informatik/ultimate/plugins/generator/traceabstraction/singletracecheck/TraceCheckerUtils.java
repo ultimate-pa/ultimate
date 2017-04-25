@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -57,6 +58,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Cod
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis.BackwardCoveringInformation;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckReasonUnknown.Reason;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ExceptionHandlingCategory;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 
 /**
@@ -277,6 +280,53 @@ public final class TraceCheckerUtils {
 		}
 		return cs;
 	}
+	
+	public static final String SMTINTERPOL_NONLINEAR_ARITHMETIC_MESSAGE = "Unsupported non-linear arithmetic";
+	public static final String CVC4_NONLINEAR_ARITHMETIC_MESSAGE_PREFIX = "A non-linear fact";
+	
+	
+	public static TraceCheckReasonUnknown constructReasonUnknown(final SMTLIBException e) {
+		final String message = e.getMessage();
+		final Reason reason;
+		final ExceptionHandlingCategory exceptionCategory;
+		if (message == null) {
+			reason = Reason.SOLVER_CRASH_OTHER;
+			exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
+		} else if (message.equals(SMTINTERPOL_NONLINEAR_ARITHMETIC_MESSAGE)) {
+			// SMTInterpol does not support non-linear arithmetic
+			reason = Reason.UNSUPPORTED_NON_LINEAR_ARITHMETIC;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+		} else if (message.startsWith(CVC4_NONLINEAR_ARITHMETIC_MESSAGE_PREFIX)) {
+			// CVC4 does not support nonlinear arithmetic if some LIA or LRA logic is used.
+			reason = Reason.UNSUPPORTED_NON_LINEAR_ARITHMETIC;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+		} else if (message.endsWith("Connection to SMT solver broken")) {
+			// broken SMT solver connection can have various reasons such as misconfiguration or solver crashes
+			reason = Reason.SOLVER_CRASH_OTHER;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_DEPENDING;
+		} else if (message.endsWith("Received EOF on stdin. No stderr output.")) {
+			// problem with Z3
+			reason = Reason.SOLVER_CRASH_OTHER;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_DEPENDING;
+		} else if (message.contains("Received EOF on stdin. stderr output:")) {
+			// problem with CVC4
+			reason = Reason.SOLVER_CRASH_OTHER;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_THROW;
+		} else if (message.startsWith("Logic does not allow numerals")) {
+			// wrong usage of external solver, tell the user
+			reason = Reason.SOLVER_CRASH_WRONG_USAGE;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+		} else if (message.startsWith("Timeout exceeded")) {
+			// timeout
+			reason = Reason.SOLVER_RESPONSE_TIMEOUT;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+		} else {
+			reason = Reason.SOLVER_CRASH_OTHER;
+			exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
+		}
+		return new TraceCheckReasonUnknown(reason, e, exceptionCategory);
+	}
+	
 
 	/**
 	 * The sequence of interpolants returned by a TraceChecker contains neither the precondition nor the postcondition
