@@ -55,18 +55,20 @@ public class AbstractInterpretationPathProgramTestSuite extends AbstractEvalTest
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
 			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-Taipan_Default.epf"),
 			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-RubberTaipan_Default.epf"),
+			new Triple<>("AutomizerBplInline.xml", BPL, "ai/svcomp-Reach-32bit-LazyTaipan_Default.epf"),
 
 	};
 
 	private static final String[] INPUT = new String[] {
-			"examples/ultbench-programs/20170412-SvcompReachPathPrograms/afterMapElimination",
-			"examples/ultbench-programs/20170329-DifficultLinuxPathPrograms/difficultAfterMapElimination",
+			"examples/ultbench-programs/pathprograms/20170417-DifficultReach/MapElim",
+			"examples/ultbench-programs/pathprograms/20170417-DifficultReach/MapElim-ModNeigh",
+			"examples/ultbench-programs/pathprograms/20170417-DifficultReach/ModNeigh-MapElim",
 	};
 	// @formatter:on
 
 	@Override
 	protected long getTimeout() {
-		return 180 * 1000;
+		return 30 * 1000;
 	}
 
 	@Override
