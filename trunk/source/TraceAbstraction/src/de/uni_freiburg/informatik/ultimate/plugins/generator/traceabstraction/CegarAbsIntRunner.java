@@ -186,7 +186,9 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 			final int currentAbsIntIter = mCegarLoopBenchmark.announceNextAbsIntIteration();
 
 			// allow for 20% of the remaining time
-			final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
+			// final IProgressAwareTimer timer = mServices.getProgressMonitorService().getChildTimer(0.2);
+			// allow for all the remaining time
+			final IProgressAwareTimer timer = mServices.getProgressMonitorService();
 			mLogger.info("Running AI on error trace of length " + currentCex.getLength()
 					+ " with the following transitions: ");
 			mLogger.info(String.join(", ", pathProgramSet.stream().map(LETTER::hashCode).sorted()
@@ -649,8 +651,8 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 				final BasicPredicateFactory predicateFactory, final IIcfgSymbolTable symbolTable,
 				final SimplificationTechnique simplificationTechnique,
 				final XnfConversionTechnique xnfConversionTechnique, final IPredicate... initialPredicates) {
-			super(services, mgdScript, predicateFactory, symbolTable, simplificationTechnique, xnfConversionTechnique,
-					initialPredicates);
+			super(services, mgdScript, predicateFactory, symbolTable, SimplificationTechnique.NONE,
+					xnfConversionTechnique, initialPredicates);
 		}
 
 		@Override
