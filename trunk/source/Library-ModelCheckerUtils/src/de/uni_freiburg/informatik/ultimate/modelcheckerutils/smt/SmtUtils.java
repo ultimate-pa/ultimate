@@ -80,9 +80,9 @@ public final class SmtUtils {
 	 * Avoid the construction of "bvadd" with more than two arguments and use nested "bvadd" terms instead.
 	 */
 	private static final boolean BINARY_BITVECTOR_SUM_WORKAROUND = false;
-	
+
 	/**
-	 * Name of a non-standard FloatingPoint extension that is supported by Z3. 
+	 * Name of a non-standard FloatingPoint extension that is supported by Z3.
 	 */
 	public static final String FP_TO_IEEE_BV_EXTENSION = "fp.to_ieee_bv";
 
@@ -91,7 +91,7 @@ public final class SmtUtils {
 	}
 
 	public enum SimplificationTechnique {
-		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA
+		SIMPLIFY_BDD_PROP, SIMPLIFY_BDD_FIRST_ORDER, SIMPLIFY_QUICK, SIMPLIFY_DDA, NONE
 	}
 
 	private SmtUtils() {
@@ -118,6 +118,8 @@ public final class SmtUtils {
 		case SIMPLIFY_QUICK:
 			simplified = new SimplifyQuick(script.getScript(), services).getSimplifiedTerm(formula);
 			break;
+		case NONE:
+			return formula;
 		default:
 			throw new AssertionError(ERROR_MESSAGE_UNKNOWN_ENUM_CONSTANT + simplificationTechnique);
 		}
@@ -983,7 +985,7 @@ public final class SmtUtils {
 	/**
 	 * Check if a divident of an modulo operation with constant divisor is itself a modulo operation. If this is the
 	 * case we might be able to apply some simplifications.
-	 * 
+	 *
 	 * @param divident
 	 *            Divident of an outer modulo operation
 	 * @param bigIntDivisor

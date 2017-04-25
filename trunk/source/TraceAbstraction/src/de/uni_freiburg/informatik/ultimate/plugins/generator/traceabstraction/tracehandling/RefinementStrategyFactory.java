@@ -162,6 +162,10 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			return new TaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample,
 					abstraction, iteration, benchmark);
+		case LAZY_TAIPAN:
+			return new LazyTaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
+					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample,
+					abstraction, iteration, benchmark);
 		case PARROT:
 			if (mInteractive == null) {
 				throw new IllegalArgumentException(

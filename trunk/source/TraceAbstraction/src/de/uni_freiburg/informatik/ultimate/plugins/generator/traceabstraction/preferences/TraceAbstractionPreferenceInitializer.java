@@ -362,6 +362,10 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 		 */
 		RUBBER_TAIPAN,
 		/**
+		 * Taipan with abstract interpretation last
+		 */
+		LAZY_TAIPAN,
+		/**
 		 * Multi track strategy that tries 1. Craig interpolation with SMTInterpol, and 2. Sp/Wp interpolation with Z3.
 		 */
 		PENGUIN,

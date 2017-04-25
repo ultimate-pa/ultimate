@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 public class AssertionOrderModulation<LETTER> {
 
 	private static final AssertCodeBlockOrder[] ASSERTION_ORDERS =
-			{ AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST1, AssertCodeBlockOrder.INSIDE_LOOP_FIRST1,
-					AssertCodeBlockOrder.MIX_INSIDE_OUTSIDE, AssertCodeBlockOrder.NOT_INCREMENTALLY,
+			{ AssertCodeBlockOrder.NOT_INCREMENTALLY, AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST1,
+					AssertCodeBlockOrder.INSIDE_LOOP_FIRST1, AssertCodeBlockOrder.MIX_INSIDE_OUTSIDE,
 					AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST2, AssertCodeBlockOrder.TERMS_WITH_SMALL_CONSTANTS_FIRST };
 
 	private final List<HistogramOfIterable<LETTER>> mHistogramHistory;
