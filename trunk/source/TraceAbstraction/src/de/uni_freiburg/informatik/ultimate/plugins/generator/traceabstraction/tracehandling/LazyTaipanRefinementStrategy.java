@@ -58,11 +58,12 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
-public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends BaseTaipanRefinementStrategy<LETTER> {
+public class LazyTaipanRefinementStrategy<LETTER extends IIcfgTransition<?>>
+		extends BaseTaipanRefinementStrategy<LETTER> {
 
 	protected boolean mZ3TraceCheckUnsuccessful;
 
-	public TaipanRefinementStrategy(final ILogger logger, final IUltimateServiceProvider services,
+	public LazyTaipanRefinementStrategy(final ILogger logger, final IUltimateServiceProvider services,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final CfgSmtToolkit cfgSmtToolkit,
 			final PredicateFactory predicateFactory, final PredicateUnifier predicateUnifier,
 			final CegarAbsIntRunner<LETTER> absIntRunner,
@@ -74,38 +75,6 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 	}
 
 	@Override
-	public boolean hasNextTraceChecker() {
-		switch (getCurrentMode()) {
-		case SMTINTERPOL:
-		case Z3_NO_IG:
-			return true;
-		case CVC4_NO_IG:
-		case ABSTRACT_INTERPRETATION:
-		case Z3_IG:
-		case CVC4_IG:
-			return false;
-		default:
-			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
-		}
-	}
-
-	@Override
-	protected boolean hasNextInterpolantGeneratorAvailable() {
-		switch (getCurrentMode()) {
-		case SMTINTERPOL:
-		case ABSTRACT_INTERPRETATION:
-		case Z3_IG:
-			return true;
-		case CVC4_IG:
-		case Z3_NO_IG:
-		case CVC4_NO_IG:
-			return false;
-		default:
-			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
-		}
-	}
-
-	@Override
 	protected Mode getInitialMode() {
 		return Mode.SMTINTERPOL;
 	}
@@ -113,13 +82,14 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 	@Override
 	protected Mode getNextTraceCheckerMode() {
 		switch (getCurrentMode()) {
+		case ABSTRACT_INTERPRETATION:
+			return Mode.SMTINTERPOL;
 		case SMTINTERPOL:
 			return Mode.Z3_NO_IG;
 		case Z3_NO_IG:
 			mZ3TraceCheckUnsuccessful = true;
 			return Mode.CVC4_NO_IG;
 		case CVC4_NO_IG:
-		case ABSTRACT_INTERPRETATION:
 		case Z3_IG:
 		case CVC4_IG:
 			assert !hasNextTraceChecker();
@@ -131,22 +101,18 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 
 	@Override
 	protected Mode getNextInterpolantGenerator() {
-		final boolean resetTraceChecker;
 		Mode nextMode;
 		switch (getCurrentMode()) {
 		case SMTINTERPOL:
-			nextMode = Mode.ABSTRACT_INTERPRETATION;
-			resetTraceChecker = false;
-			break;
-		case ABSTRACT_INTERPRETATION:
-			nextMode = mZ3TraceCheckUnsuccessful ? Mode.CVC4_IG : Mode.Z3_IG;
-			resetTraceChecker = true;
+			nextMode = Mode.Z3_IG;
 			break;
 		case Z3_IG:
 			nextMode = Mode.CVC4_IG;
-			resetTraceChecker = true;
 			break;
 		case CVC4_IG:
+			nextMode = Mode.ABSTRACT_INTERPRETATION;
+			break;
+		case ABSTRACT_INTERPRETATION:
 		case Z3_NO_IG:
 		case CVC4_NO_IG:
 			assert !hasNextInterpolantGeneratorAvailable();
@@ -154,10 +120,7 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
 		}
-
-		if (resetTraceChecker) {
-			resetTraceChecker();
-		}
+		resetTraceChecker();
 		return nextMode;
 	}
 
@@ -191,5 +154,37 @@ public class TaipanRefinementStrategy<LETTER extends IIcfgTransition<?>> extends
 			throw new IllegalArgumentException(UNKNOWN_MODE + mode);
 		}
 		return interpolationTechnique;
+	}
+
+	@Override
+	public boolean hasNextTraceChecker() {
+		switch (getCurrentMode()) {
+		case SMTINTERPOL:
+		case Z3_NO_IG:
+			return true;
+		case CVC4_NO_IG:
+		case ABSTRACT_INTERPRETATION:
+		case Z3_IG:
+		case CVC4_IG:
+			return false;
+		default:
+			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
+		}
+	}
+
+	@Override
+	protected boolean hasNextInterpolantGeneratorAvailable() {
+		switch (getCurrentMode()) {
+		case SMTINTERPOL:
+		case CVC4_IG:
+		case Z3_IG:
+			return true;
+		case ABSTRACT_INTERPRETATION:
+		case Z3_NO_IG:
+		case CVC4_NO_IG:
+			return false;
+		default:
+			throw new IllegalArgumentException(UNKNOWN_MODE + getCurrentMode());
+		}
 	}
 }
