@@ -328,10 +328,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mLogger.info("======== Iteration " + mIteration + "==of CEGAR loop == " + mName + "========");
 
 		if (mInteractiveMode) {
-			final IterationInfo.Info info = IterationInfo.newInstance();
-			info.mBenchmark = mCegarLoopBenchmark;
-			info.mIteration = mIteration;
-			mInteractive.send(info);
+			mInteractive.send(IterationInfo.newInstance().setIteration(mIteration).setBenchmark(mCegarLoopBenchmark));
 		}
 
 		// initialize dump of debugging output to files if necessary
@@ -438,9 +435,9 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 			mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 			mLogger.info("Interpolant automaton has " + mInterpolAutomaton.sizeInformation());
 			if (mInteractiveMode) {
-				IterationInfo.sizeInfo.mAbstraction = mAbstraction.sizeInformation();
-				IterationInfo.sizeInfo.mInterpolantAutomaton = mInterpolAutomaton.sizeInformation();
-				mInteractive.send(IterationInfo.sizeInfo);
+				IterationInfo.instance.mAbstraction = mAbstraction.sizeInformation();
+				IterationInfo.instance.mInterpolantAutomaton = mInterpolAutomaton.sizeInformation();
+				mInteractive.send(IterationInfo.instance);
 			}
 
 			if (mPref.computeHoareAnnotation() && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {

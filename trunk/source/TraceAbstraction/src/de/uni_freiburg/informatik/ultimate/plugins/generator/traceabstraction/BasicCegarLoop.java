@@ -302,20 +302,22 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 				INestedWordAutomatonSimple<LETTER, IPredicate> userAutomaton = preWord.getAutomaton(mServices,
 						abstraction, mStateFactoryForRefinement, mPredicateFactory, mCsToolkit.getManagedScript());
-				
-				//mInteractive.send(userAutomaton);
+
+				// mInteractive.send(userAutomaton);
 
 				try {
 					final IntersectNwa<LETTER, IPredicate> intersect =
 							new IntersectNwa<>(abstraction, userAutomaton, mStateFactoryForRefinement, false);
-					
-					//mInteractive.send(intersect);
+
+					// mInteractive.send(intersect);
 
 					userRun = new IsEmpty<>(new AutomataLibraryServices(mServices), intersect, mSearchStrategy)
 							.getNestedRun();
 
 					if (userRun != null)
 						break;
+					mInteractive.send("Infeasible Trace: The Trace you have selected is not accepted by the "
+							+ "current abstraction (iteration " + mIteration + ").");
 					mLogger.info("intersection of the automaton that accepts the user-trace with abstraction is empty. "
 							+ "Asking for another user run.");
 				} catch (AutomataLibraryException e) {
@@ -354,6 +356,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 		if (mInteractiveMode) {
 			if (mPref.interactiveCEXS()) {
+				mInteractive.send("Select a Trace: Please select the trace you want Ultimate to analyze next.");
 				mCounterexample = getUserRun(abstraction);
 			}
 			mInteractive.send(mCounterexample);
@@ -398,7 +401,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final IRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(
 				mPref.getRefinementStrategy(), mCounterexample, mAbstraction, getIteration(), getCegarLoopBenchmark());
 		try {
-			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy);
+			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy, mInteractive);
 		} catch (final ToolchainCanceledException tce) {
 			final int traceHistogramMax = new HistogramOfIterable<>(mCounterexample.getWord()).getMax();
 			final String taskDescription = "analyzing trace of length " + mCounterexample.getLength()
@@ -433,8 +436,14 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
 			}
 		} else {
-			mPathProgramDumpController.reportPathProgram((NestedRun<? extends IAction, IPredicate>) mCounterexample, 
-					((TraceAbstractionRefinementEngine) mTraceCheckAndRefinementEngine).somePerfectSequenceFound(), mIteration);
+			mPathProgramDumpController.reportPathProgram((NestedRun<? extends IAction, IPredicate>) mCounterexample,
+					((TraceAbstractionRefinementEngine) mTraceCheckAndRefinementEngine).somePerfectSequenceFound(),
+					mIteration);
+		}
+		
+		if (mInteractiveMode && feasibility==LBool.SAT) {
+			mInteractive.send("Feasiblke Counterexample Found:The Counterexample trace analyzed in iteration "
+					+ mIteration + " was feasible.");
 		}
 
 		return feasibility;

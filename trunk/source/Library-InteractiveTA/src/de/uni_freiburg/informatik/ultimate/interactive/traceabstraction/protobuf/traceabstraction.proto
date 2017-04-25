@@ -105,6 +105,17 @@ message Tracks {
 	repeated Track track = 1;
 }
 
+message InterpolantSequences {
+	repeated InterpolantsPrePost perfect = 1;
+	repeated InterpolantsPrePost imperfect = 2;
+}
+
+message InterpolantsPrePost {
+	Predicate preCondition = 1;
+	Predicate postCondition = 2;
+	repeated Predicate interpolants = 3;
+}
+
 message InteractiveIterationInfo {
 	Strategy fallback = 1;
 	int32 nextInteractiveIteration = 2;
@@ -243,6 +254,7 @@ message PreNestedWord {
 		int32 endPosition = 2;
 		int32 repetitions = 3;
 	}
+
 }
 
 message TraceHistogram {
@@ -277,6 +289,5 @@ message Alphabet {
 message CodeBlock {
 	int32 serial = 1;
 	string code = 2;
-	// the transformulas and lots of other stuff
-	// in CodeBlock is not used for now.
+	// TODO: a mapping to source lines
 }

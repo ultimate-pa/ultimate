@@ -9,7 +9,6 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Queue;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -29,6 +28,8 @@ import de.uni_freiburg.informatik.ultimate.interactive.conversion.Converter;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.ConverterRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo;
+import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InterpolantsPrePost;
+import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Message;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.NestingRelation;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.PredicateDoubleDecker;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Result;
@@ -49,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType.SizeIterationPair;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InterpolantSequences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo.Info;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.PreNestedWord;
@@ -57,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.MultiTrackTraceAbstractionRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.MultiTrackTraceAbstractionRefinementStrategy.Track;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive.ParrotInteractiveIterationInfo;
@@ -94,6 +97,7 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 
 		converterRegistry.registerAB(TraceAbstractionProtos.Question.class, Boolean.class,
 				TraceAbstractionProtos.Question::getAnswer);
+		converterRegistry.registerBA(TraceAbstractionProtos.Message.class, String.class, TAConverter::fromMessage);
 
 		converterRegistry.registerAB(TraceAbstractionProtos.Tracks.class,
 				MultiTrackTraceAbstractionRefinementStrategy.Track[].class, TAConverter::toTracks);
@@ -104,18 +108,42 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 		converterRegistry.registerBA(InteractiveIterationInfo.class, ParrotInteractiveIterationInfo.class,
 				TAConverter::fromIterationInfo);
 
-		/*
-		converterRegistry.registerBA(PredicateDoubleDecker.QueuePair.class, PredicateQueuePair.class,
-				TAConverter::fromQueuePair);
-		converterRegistry.registerRConv(PredicateDoubleDecker.QueueResponse.class, PredicateQueuePair.class,
-				PredicateQueueResult.class, TAConverter::toDoubleDecker);
-		*/
-		
 		converterRegistry.registerBA(TraceAbstractionProtos.IterationInfo.class, IterationInfo.Info.class,
 				TAConverter::fromIterationInfo);
-
 		converterRegistry.registerBA(TraceAbstractionProtos.TraceHistogram.class, HistogramOfIterable.class,
 				TAConverter::fromHistogram);
+
+		converterRegistry.registerBA(TraceAbstractionProtos.InterpolantSequences.class, InterpolantSequences.class,
+				TAConverter::fromInterpolants);
+	}
+
+	private static TraceAbstractionProtos.InterpolantSequences
+			fromInterpolants(final InterpolantSequences interpolants) {
+		final TraceAbstractionProtos.InterpolantSequences.Builder builder =
+				TraceAbstractionProtos.InterpolantSequences.newBuilder();
+
+		interpolants.mPerfectIpps.stream().map(TAConverter::fromIPP).forEach(builder::addPerfect);
+		interpolants.mImperfectIpps.stream().map(TAConverter::fromIPP).forEach(builder::addImperfect);
+
+		return builder.build();
+	}
+
+	private static TraceAbstractionProtos.InterpolantsPrePost fromIPP(final InterpolantsPreconditionPostcondition ipp) {
+		final InterpolantsPrePost.Builder builder = InterpolantsPrePost.newBuilder();
+		builder.setPreCondition(fromPredicate(ipp.getPrecondition()))
+				.setPostCondition(fromPredicate(ipp.getPostcondition()));
+		ipp.getInterpolants().stream().map(TAConverter::fromPredicate).forEach(builder::addInterpolants);
+		return builder.build();
+	}
+
+	private static Message fromMessage(final String message) {
+		final String[] msgs = message.split(":");
+		final String title, subtitle, text;
+		text = msgs.length > 0 ? msgs[msgs.length - 1] : "Empty Message";
+		title = msgs.length > 1 ? msgs[0] : "Message";
+		subtitle = msgs.length > 2 ? msgs[1] : "";
+
+		return Message.newBuilder().setTitle(title).setSubtitle(subtitle).setText(text).build();
 	}
 
 	private static Loop toLoop(TraceAbstractionProtos.PreNestedWord.Loop loop) {
@@ -199,13 +227,11 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 	}
 
 	/*
-	private static PredicateDoubleDecker.QueuePair fromQueuePair(PredicateQueuePair qPair) {
-		PredicateDoubleDecker.QueuePair.Builder builder = PredicateDoubleDecker.QueuePair.newBuilder();
-		qPair.mCallQueue.stream().map(TAConverter::fromDoubleDecker).forEach(builder::addCallQueue);
-		qPair.mQueue.stream().map(TAConverter::fromDoubleDecker).forEach(builder::addQueue);
-		return builder.build();
-	}
-	*/
+	 * private static PredicateDoubleDecker.QueuePair fromQueuePair(PredicateQueuePair qPair) {
+	 * PredicateDoubleDecker.QueuePair.Builder builder = PredicateDoubleDecker.QueuePair.newBuilder();
+	 * qPair.mCallQueue.stream().map(TAConverter::fromDoubleDecker).forEach(builder::addCallQueue);
+	 * qPair.mQueue.stream().map(TAConverter::fromDoubleDecker).forEach(builder::addQueue); return builder.build(); }
+	 */
 
 	private static PredicateDoubleDecker fromDoubleDecker(DoubleDecker<IPredicate> pdd) {
 		final TraceAbstractionProtos.Predicate up = fromPredicate(pdd.getUp());
@@ -214,22 +240,12 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 	}
 
 	/*
-	private static PredicateQueueResult toDoubleDecker(PredicateDoubleDecker.QueueResponse response,
-			PredicateQueuePair data) {
-		final Deque<DoubleDecker<IPredicate>> queue;
-		switch (response.getQueueType()) {
-		case CALL:
-			queue = data.mCallQueue;
-			break;
-		default:
-			queue = data.mQueue;
-		}
-		final DoubleDecker<IPredicate>[] arr = new DoubleDecker[queue.size()];
-		DoubleDecker<IPredicate> result = queue.toArray(arr)[response.getIndex()];
-		assert queue.remove(result);
-		return new PredicateQueueResult(result);
-	}
-	*/
+	 * private static PredicateQueueResult toDoubleDecker(PredicateDoubleDecker.QueueResponse response,
+	 * PredicateQueuePair data) { final Deque<DoubleDecker<IPredicate>> queue; switch (response.getQueueType()) { case
+	 * CALL: queue = data.mCallQueue; break; default: queue = data.mQueue; } final DoubleDecker<IPredicate>[] arr = new
+	 * DoubleDecker[queue.size()]; DoubleDecker<IPredicate> result = queue.toArray(arr)[response.getIndex()]; assert
+	 * queue.remove(result); return new PredicateQueueResult(result); }
+	 */
 
 	private static InteractiveIterationInfo fromIterationInfo(ParrotInteractiveIterationInfo itInfo) {
 		return InteractiveIterationInfo.newBuilder().setNextInteractiveIteration(itInfo.getNextInteractiveIteration())

@@ -36,12 +36,15 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbsIntBaseInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InteractiveLivePreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InterpolantSequences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
@@ -70,17 +73,21 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	private CachingHoareTripleChecker mHoareTripleChecker;
 	private boolean mSomePerfectSequenceFound = false;
 
+	private final IInteractive<Object> mInteractive;
+
 	/**
 	 * @param logger
 	 *            Logger.
 	 * @param strategy
 	 *            strategy
 	 */
-	public TraceAbstractionRefinementEngine(final ILogger logger, final IRefinementStrategy<LETTER> strategy) {
+	public TraceAbstractionRefinementEngine(final ILogger logger, final IRefinementStrategy<LETTER> strategy,
+			final IInteractive<Object> interactive) {
 		// initialize fields
 		mLogger = logger;
 		mStrategy = Objects.requireNonNull(strategy);
 		mLogger.info("Using refinement strategy " + mStrategy.getClass().getSimpleName());
+		mInteractive = interactive;
 		mFeasibility = executeStrategy();
 	}
 
@@ -374,6 +381,9 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 			}
 			mLogger.info("Number of different interpolants: perfect sequences " + numberInterpolantsPerfect
 					+ " imperfect sequences " + numberInterpolantsImperfect + " total " + allInterpolants.size());
+		}
+		if (mInteractive != null) {
+			mInteractive.send(InterpolantSequences.instance.set(perfectIpps, imperfectIpps));
 		}
 		mInterpolantAutomaton = mStrategy.getInterpolantAutomatonBuilder(perfectIpps, imperfectIpps).getResult();
 		if (!perfectIpps.isEmpty()) {
