@@ -292,7 +292,8 @@ public final class CallInfoCache {
 		}
 
 		public AssignmentStatement getOldVarAssign() {
-			return mOldVarAssign;
+			// return mOldVarAssign;
+			return null;
 		}
 	}
 }
