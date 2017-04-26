@@ -73,7 +73,7 @@ public class VPTransFormulaStateBuilderPreparer {
 		mLogger = logger;
 		mSymbolTable = preAnalysis.getSymbolTable();
 		
-		Collection<EqNode> allEqNodes = preAnalysis.getTermToEqNodeMap().values();
+		Collection<EqNode> allEqNodes = preAnalysis.getAllEqNodes();
 		Set<EqFunctionNode> allEqFunctionNodes = 
 				allEqNodes.stream()
 				.filter(node -> node instanceof EqFunctionNode)

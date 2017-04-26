@@ -145,7 +145,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 		builder.setIsTop(originalState.isTop());
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(builder.mDisEqualitySet, builder);
 
-		for (final EqNode eqNode : mPreAnalysis.getTermToEqNodeMap().values()) {
+		for (final EqNode eqNode : mPreAnalysis.getAllEqNodes()) {
 			final EqGraphNode<EqNode, IProgramVarOrConst> newGraphNode = builder.getEqGraphNode(eqNode);
 			final EqGraphNode<EqNode, IProgramVarOrConst> oldGraphNode =
 					originalState.getEqNodeToEqGraphNodeMap().get(eqNode);

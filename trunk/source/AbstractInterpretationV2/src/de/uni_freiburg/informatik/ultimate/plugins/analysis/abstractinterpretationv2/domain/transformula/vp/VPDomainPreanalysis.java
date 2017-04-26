@@ -80,7 +80,6 @@ public class VPDomainPreanalysis {
 	
 	private final Benchmark mBenchmark;
 
-	private final HashRelation<IProgramVarOrConst, EqFunctionNode> mArrayIdToFnNodes = new HashRelation<>();
 	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
 	private final Map<Term, IProgramVarOrConst> mTermToProgramVarOrConst = new HashMap<>();
 	private final ManagedScript mManagedScript;
@@ -95,12 +94,25 @@ public class VPDomainPreanalysis {
 	 * Stores for each array, which Terms(EqNodes) are used to access it.
 	 */
 	private final HashRelation<IProgramVarOrConst, EqNode> mArrayToAccessingEqNodes = new HashRelation<>();
+
+	/**
+	 * Stores for each array, which EqFunctionNodes have it as their topmost function symbol.
+	 */
+	private final HashRelation<IProgramVarOrConst, EqFunctionNode> mArrayIdToFnNodes = new HashRelation<>();
+
 	private final ILogger mLogger;
 
 	private final boolean mIsDebugMode = true;
 
 	private Set<EqNode> mGlobalEqNodes = new HashSet<>();
 	private HashRelation<String, EqNode> mProcToLocalEqNodes = new HashRelation<>();
+
+	/**
+	 * As a consequence of recent changes (April 2017), it is no longer the case that every EqNode is associated to
+	 *  a Term in the program (see .postprocess() method of this class, step 2). Before whenever we wanted to obtain
+	 *  all EqNodes, we used the mTermToEquNode map. Now we need an extra set for that task.
+	 */
+	private final Set<EqNode> mAllEqNodes = new HashSet<>();
 
 	public VPDomainPreanalysis(final IIcfg<?> root, final ILogger logger) {
 		mManagedScript = root.getCfgSmtToolkit().getManagedScript();
@@ -323,11 +335,15 @@ public class VPDomainPreanalysis {
 			/*
 			 * We have a non-atomic array index (like i + 5).
 			 */
-			return getOrConstructNonAtomicEqBaseNode(t);
+			return constructNonAtomicEqBaseNode(t);
 		}
 	}
 
-	private EqNode getOrConstructNonAtomicEqBaseNode(Term t) {
+	private EqNode constructNonAtomicEqBaseNode(Term t) {
+		/*
+		 *  (we don't need to lookup in our store here, like in a getOrConstruct method, because the calling method 
+		 *   does it..)
+		 */
 
 		Set<EqAtomicBaseNode> constituentNodes = new HashSet<>();
 		boolean global = true;
@@ -342,6 +358,7 @@ public class VPDomainPreanalysis {
 		for (EqAtomicBaseNode node : constituentNodes) {
 			node.addDependentNonAtomicBaseNode(result);
 		}
+		mAllEqNodes.add(result);
 		mTermToEqNode.put(t, result);
 		return result;
 	}
@@ -392,6 +409,9 @@ public class VPDomainPreanalysis {
 
 		if (result == null) {
 			result = new EqAtomicBaseNode(bv);
+			
+			mAllEqNodes.add(result);
+			
 			mEqBaseNodeStore.put(bv, result);
 
 			if (result.isGlobal()) {
@@ -417,6 +437,8 @@ public class VPDomainPreanalysis {
 		EqFunctionNode result = mEqFunctionNodeStore.get(function, indices);
 		if (result == null) {
 			result = new EqFunctionNode(function, indices, mManagedScript);
+			
+			mAllEqNodes.add(result);
 
 			mArrayIdToFnNodes.addPair(function, result);
 
@@ -449,6 +471,10 @@ public class VPDomainPreanalysis {
 	public Map<Term, EqNode> getTermToEqNodeMap() {
 		return mTermToEqNode;
 	}
+	
+	public Set<EqNode> getAllEqNodes() {
+		return Collections.unmodifiableSet(mAllEqNodes);
+	}
 
 	public IProgramVarOrConst getIProgramVarOrConstOrLiteral(final Term term,
 			final Map<TermVariable, IProgramVar> tvToPvMap) {
@@ -460,14 +486,15 @@ public class VPDomainPreanalysis {
 		return mTermToProgramVarOrConst.get(term);
 	}
 
-	/**
-	 * @param array
-	 * @param index
-	 * @return true iff the given array is ever accessed using the given index in the program.
-	 */
-	public boolean isArrayAccessedAt(final IProgramVarOrConst array, final EqNode index) {
-		return mArrayToAccessingEqNodes.containsPair(array, index);
-	}
+//	/**
+//	 * @param array
+//	 * @param index
+//	 * @return true iff the given array is ever accessed using the given index in the program.
+//	 */
+//	public boolean isArrayAccessedAt(final IProgramVarOrConst array, final EqNode index) {
+//		return mArrayToAccessingEqNodes.containsPair(array, index);
+//	}
+
 	public Set<EqNode> getAccessingIndicesForArrays(final Set<IProgramVarOrConst> arrays) {
 		Set<EqNode> result = new HashSet<>();
 		for (IProgramVarOrConst a : arrays) {
@@ -476,19 +503,22 @@ public class VPDomainPreanalysis {
 		return result;
 	}
 	
-	public Set<EqNode> getAccessingIndicesForArray(IProgramVarOrConst array) {
+	private Set<EqNode> getAccessingIndicesForArray(IProgramVarOrConst array) {
 		return Collections.unmodifiableSet(mArrayToAccessingEqNodes.getImage(array));
 	}
 	
-	public Set<EqFunctionNode> getFunctionNodesForArray(IProgramVarOrConst array) {
-		return Collections.unmodifiableSet(mArrayIdToFnNodes.getImage(array));
-	}
+//	public Set<EqFunctionNode> getFunctionNodesForArray(IProgramVarOrConst array) {
+//		return Collections.unmodifiableSet(mArrayIdToFnNodes.getImage(array));
+//	}
 
 	/**
 	 * Called after the main run (which is initiated by the constructor)
 	 *
-	 * We have collected all (multi-dimensional) select-terms in the program and all equations. Plan: construct EqNodes
-	 * for everything that is equated to a select-term, and then build the transitive closure.
+	 * We have collected all (multi-dimensional) select-terms in the program and all equations. 
+	 *  Step 1: construct EqNodes for everything that is equated to a select-term, and then build the transitive 
+	 *    closure.
+	 *  Step 2: build nodes necessary for array equations (i.e., when a and b are equated they should have analogous  
+	 *   node sets)
 	 */
 	public void postProcess() {
 		/*
@@ -539,6 +569,48 @@ public class VPDomainPreanalysis {
 		 */
 		for (final Term t : closure) {
 			getOrConstructEqNode(t);
+		}
+		
+		
+		/*
+		 * Say the program equates two arrays, with or without stores in between. Then we want to have the same 
+		 * EqFunctionNodes for these symbols. 
+		 * 
+		 * E.g.
+		 *  We have (= a b), or (= a (store b i x)). Then for every node a[t] we also want to have the node b[t], and
+		 *  vice versa. Note that this introduces EqNode that do not correspond to any term in the formula.
+		 *  Why do we want those extra nodes?
+		 *  
+		 *  say we have a state where
+		 *   valid[p] == 1
+		 *  then we say
+		 *   valid' := valid
+		 *   assume valid'[m] == 0
+		 *  and we want to conclude 
+		 *   m != p
+		 *   Then we can conclude this from valid'[m] != valid'[p], but that we know from the fact that 
+		 *    valid'[p] == valid[p] (and valid[p] == 1 and 1 != 0 and valid'[m] == 0)
+		 *   However our program contains no term that triggers tracking of valid'[p] 
+		 */
+		final Set<ApplicationTerm> arrayEquations = mEquations.stream()
+				.filter(eq -> eq.getFunction().getParameterSorts()[0].isArraySort())
+				.collect(Collectors.toSet());
+		for (ApplicationTerm arrayEquation : arrayEquations) {
+			final Term arg1 = arrayEquation.getParameters()[0];
+			final Term arg2 = arrayEquation.getParameters()[1];
+
+			final IProgramVarOrConst array1 = getOrConstructBoogieVarOrConst(VPDomainHelpers.getArrayTerm(arg1));
+			final IProgramVarOrConst array2 = getOrConstructBoogieVarOrConst(VPDomainHelpers.getArrayTerm(arg2));
+			
+			/*
+			 * for each EqFunctionNode of the form array1[i1 .. in] create the node array2[i1 .. in] and vice versa
+			 */
+			for (EqFunctionNode eqfn : mArrayIdToFnNodes.getImage(array1)) {
+				getOrConstructEqFnNode(array2, eqfn.getArgs());
+			}
+			for (EqFunctionNode eqfn : mArrayIdToFnNodes.getImage(array2)) {
+				getOrConstructEqFnNode(array1, eqfn.getArgs());
+			}
 		}
 		
 		mLogger.info("VPDomainPreanalysis finished.");
