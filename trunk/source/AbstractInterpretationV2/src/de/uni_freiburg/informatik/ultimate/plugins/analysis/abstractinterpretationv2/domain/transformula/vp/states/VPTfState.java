@@ -280,6 +280,11 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 
 			final IArrayWrapper lhsWrapper = mBuilder.getArrayWrapper(lhs);
 			final IArrayWrapper rhsWrapper = mBuilder.getArrayWrapper(rhs);
+			
+			if (lhsWrapper == null || rhsWrapper == null) {
+				// we don't track at least one of the given terms
+				return Collections.singleton(this);
+			}
 
 			final Set<VPTfState> resultStates = new HashSet<>();
 			for (final ArrayWithSideCondition lhsArrayWSc : lhsWrapper.getArrayWithSideConditions(this, null)) {
@@ -317,6 +322,7 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 			final IElementWrapper rhsWrapper = mBuilder.getElementWrapper(rhs);
 
 			if (lhsWrapper == null || rhsWrapper == null) {
+				// we don't track at least one of the given terms
 				return Collections.singleton(this);
 			}
 

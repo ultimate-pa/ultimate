@@ -78,6 +78,9 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	private final Term mTerm;
 	private final VPDomainPreanalysis mPreAnalysis;
 	protected final VPStateFactory<ACTION> mStateFactory;
+	
+	// debug setting
+	private boolean mLogAsGraph = false;
 
 	/**
 	 * Constructor for bottom state only.
@@ -89,7 +92,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	}
 
 	/**
-	 * Constructor to be used by VPStateFactory.createTopState() only.
+	 * 
 	 */
 	VPState(final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> eqNodeToEqGraphNodeMap,
 			final Set<VPDomainSymmetricPair<EqNode>> disEqualitySet, final Set<IProgramVarOrConst> vars,
@@ -293,18 +296,34 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	@Override
 	public String toLogString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("VPState\n");
-		sb.append("vars: " + mVars.toString() + "\n");
-		// sb.append("eqGraphNodes: " + getAllEqGraphNodes().toString() + "\n");
-		sb.append("Graph:\n");
-		for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : getAllEqGraphNodes()) {
-			if (egn.getRepresentative() != egn) {
-				sb.append(egn.toString() + "\n");
+		if (mLogAsGraph) {
+			// log in the format "<node> ||| <representative>"
+			final StringBuilder sb = new StringBuilder();
+			sb.append("VPState\n");
+			sb.append("vars: " + mVars.toString() + "\n");
+			// sb.append("eqGraphNodes: " + getAllEqGraphNodes().toString() + "\n");
+			sb.append("Graph:\n");
+			for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : getAllEqGraphNodes()) {
+				if (egn.getRepresentative() != egn) {
+					sb.append(egn.toString() + "\n");
+				}
 			}
+			sb.append("DisEqualities:" + getDisEqualities() + "\n");
+			return sb.toString();
+		} else { 
+			// we log the equivalence classes instead of who has which representative
+			final StringBuilder sb = new StringBuilder();
+
+			sb.append("VPState\n");
+			sb.append("vars: " + mVars.toString() + "\n");
+			sb.append("Equivalence classes:\n");
+			for (EqNode rep : getEquivalenceRepresentatives()) {
+				sb.append(String.format("{%s}\n", getEquivalentEqNodes(rep)));
+			}
+			sb.append("DisEqualities:" + getDisEqualities() + "\n");
+
+			return sb.toString();
 		}
-		sb.append("DisEqualities:" + getDisEqualities() + "\n");
-		return sb.toString();
 	}
 
 	@Override

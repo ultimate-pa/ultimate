@@ -595,7 +595,14 @@ public class VPDomainPreanalysis {
 //			normalizedName = tvToPvMap.get(arrayid).toString();
 //		}
 //		return mSettings.getArraysToTrack().contains(normalizedName);
-		return mSettings.getArraysToTrack().contains(pvoc.toString());
+//		return mSettings.getArraysToTrack().contains(pvoc.toString());
+		
+		for (String arrayName : mSettings.getArraysToTrack()) {
+			if (pvoc.toString().contains(arrayName)) {
+				return true;
+			}
+		}
+		return false;
 	}
 	
 	public ManagedScript getManagedScript() {

@@ -749,10 +749,8 @@ public class CreateVanillaTfStateBuilder {
 
 				return new StoreTermWrapper(array, indices, value);
 			} else {
-				assert false : "missed case?";
+				throw new AssertionError("missed case?");
 			}
-
-			return null;
 		}
 		
 		private TransFormula getTransFormula() {

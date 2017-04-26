@@ -186,11 +186,13 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 			for (int j = 0; j < i; j++) {
 				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> inNode1 = inVarsAndConstantEqNodes.get(i);
 				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> inNode2 = inVarsAndConstantEqNodes.get(j);
+				
+				assert !inNode1.equals(inNode2);
 
-				if (inNode1 == inNode2) {
-					// no need to disequate two identical nodes
-					continue;
-				}
+//				if (inNode1 == inNode2) {
+//					// no need to disequate two identical nodes
+//					continue;
+//				}
 
 				if (state.areUnEqual(inNode1.mNodeIdentifier.getEqNode(), inNode2.mNodeIdentifier.getEqNode())) {
 					builder.addDisEquality(inNode1.mNodeIdentifier, inNode2.mNodeIdentifier);
