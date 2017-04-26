@@ -592,6 +592,11 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			script.echo(new QuotedObject("End isSubsetOf assertion"));
 			return true;
 		}
+		if (subResult == SubsetResult.NONE) {
+			script.echo(new QuotedObject("End isSubsetOf assertion"));
+			mLogger.warn("isSubsetOf was not precise enough (may lost precision through disjunctions)");
+			return true;
+		}
 
 		final Term leftSimpl = SmtUtils.simplify(mManagedScript, left, mServices, SimplificationTechnique.SIMPLIFY_DDA);
 		final Term rightSimpl =
