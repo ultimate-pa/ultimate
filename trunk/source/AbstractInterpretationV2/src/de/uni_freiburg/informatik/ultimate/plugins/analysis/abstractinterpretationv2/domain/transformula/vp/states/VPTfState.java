@@ -69,7 +69,7 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 	private final TransFormula mTransFormula;
 	private final IAction mAction;
 	private final HashRelation<VPTfArrayIdentifier, VPTfNodeIdentifier> mArrayIdToFunctionNodes;
-	private final Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mNodeIdToEqGraphNode;
+//	private final Map<VPTfNodeIdentifier, EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mNodeIdToEqGraphNode;
 	private final Set<VPTfNodeIdentifier> mAllNodeIds;
 	private final ManagedScript mScript;
 	
@@ -88,12 +88,12 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 			final Set<IProgramVarOrConst> inVars, 
 			final Set<IProgramVarOrConst> outVars, 
 			final Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outNodes) {
-		super(disEqs, isTop);
+		super(disEqs, isTop, nodeIdToEqGraphNode);
 		mAction = action;
 		mTransFormula = action.getTransformula();
 		mBuilder = builder;
 		mAllNodeIds = allNodeIds;
-		mNodeIdToEqGraphNode = Collections.unmodifiableMap(nodeIdToEqGraphNode);
+//		mNodeIdToEqGraphNode = Collections.unmodifiableMap(nodeIdToEqGraphNode);
 		mArrayIdToFunctionNodes = new HashRelation<>(arrayIdToFunctionNodes); // TODO is copy needed here?
 		
 		mInVars = inVars;
@@ -111,21 +111,21 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 		return false;
 	}
 	
-	@Override
-	public EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>
-			getEqGraphNode(final VPTfNodeIdentifier nodeIdentifier) {
-		return mNodeIdToEqGraphNode.get(nodeIdentifier);
-	}
+//	@Override
+//	public EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>
+//			getEqGraphNode(final VPTfNodeIdentifier nodeIdentifier) {
+//		return mNodeIdToEqGraphNode.get(nodeIdentifier);
+//	}
 	
-	@Override
-	public Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> getAllEqGraphNodes() {
-		return new HashSet<>(mNodeIdToEqGraphNode.values());
-	}
+//	@Override
+//	public Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> getAllEqGraphNodes() {
+//		return new HashSet<>(mNodeIdToEqGraphNode.values());
+//	}
 	
-	@Override
-	public VPTfNodeIdentifier find(final VPTfNodeIdentifier id) {
-		return mNodeIdToEqGraphNode.get(id).find().mNodeIdentifier;
-	}
+//	@Override
+//	public VPTfNodeIdentifier find(final VPTfNodeIdentifier id) {
+//		return mNodeIdToEqGraphNode.get(id).find().mNodeIdentifier;
+//	}
 	
 	public Set<VPTfNodeIdentifier> getFunctionNodesForArray(final VPTfArrayIdentifier array) {
 		return mArrayIdToFunctionNodes.getImage(array);
@@ -137,19 +137,37 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 
 	@Override
 	public String toString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("VPTfState\n");
-		sb.append("InVars: " + getInVariables().toString() + "\n");
-		sb.append("OutVars: " + getOutVariables().toString() + "\n");
-		// sb.append("eqGraphNodes: " + getAllEqGraphNodes().toString() +"\n");
-		sb.append("Graph:\n");
-		for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> egn : getAllEqGraphNodes()) {
-			if (egn.getRepresentative() != egn) {
-				sb.append(egn.toString() + "\n");
+		if (mLogAsGraph) {
+			final StringBuilder sb = new StringBuilder();
+			sb.append("VPTfState\n");
+			sb.append("InVars: " + getInVariables().toString() + "\n");
+			sb.append("OutVars: " + getOutVariables().toString() + "\n");
+			// sb.append("eqGraphNodes: " + getAllEqGraphNodes().toString() +"\n");
+			sb.append("Graph:\n");
+			for (final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> egn : getAllEqGraphNodes()) {
+				if (egn.getRepresentative() != egn) {
+					sb.append(egn.toString() + "\n");
+				}
 			}
+			sb.append("DisEqualities:" + getDisEqualities() + "\n");
+			return sb.toString();
+		} else { 
+			// we log the equivalence classes instead of who has which representative
+			final StringBuilder sb = new StringBuilder();
+			sb.append("VPTfState\n");
+			sb.append("InVars: " + getInVariables().toString() + "\n");
+			sb.append("OutVars: " + getOutVariables().toString() + "\n");
+			sb.append("Equivalence classes:\n");
+			for (VPTfNodeIdentifier rep : getEquivalenceRepresentatives()) {
+				// we only log equivalence classes with more than 1 element
+				if (getEquivalentEqNodes(rep).size() > 1) {
+					sb.append(String.format("{%s}\n", getEquivalentEqNodes(rep)));
+				}
+			}
+			sb.append("DisEqualities:" + getDisEqualities() + "\n");
+
+			return sb.toString();
 		}
-		sb.append("DisEqualities:" + getDisEqualities() + "\n");
-		return sb.toString();
 	}
 	
 	public Set<IProgramVarOrConst> getInVariables() {

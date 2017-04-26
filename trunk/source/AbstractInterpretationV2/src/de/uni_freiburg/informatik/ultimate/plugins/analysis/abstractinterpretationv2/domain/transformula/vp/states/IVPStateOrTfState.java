@@ -27,8 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
@@ -47,8 +49,17 @@ public abstract class IVPStateOrTfState<NODEID extends IEqNodeIdentifier<ARRAYID
 	
 	private final Set<VPDomainSymmetricPair<NODEID>> mDisEqualitySet;
 	private final boolean mIsTop;
+	
+	
+	private final Map<NODEID, EqGraphNode<NODEID, ARRAYID>> mNodeIdToEqGraphNode;
+	
+	
+	// debug setting
+	protected boolean mLogAsGraph = false;
 
-	public IVPStateOrTfState(final Set<VPDomainSymmetricPair<NODEID>> disEqs, final boolean isTop) {
+	public IVPStateOrTfState(final Set<VPDomainSymmetricPair<NODEID>> disEqs, final boolean isTop, 
+			Map<NODEID, EqGraphNode<NODEID, ARRAYID>> nodeIdToEqGraphNode) {
+		mNodeIdToEqGraphNode = Collections.unmodifiableMap(nodeIdToEqGraphNode);
 		mDisEqualitySet = Collections.unmodifiableSet(disEqs);
 		mIsTop = isTop;
 	}
@@ -107,11 +118,17 @@ public abstract class IVPStateOrTfState<NODEID extends IEqNodeIdentifier<ARRAYID
 		return find1.equals(find2);
 	}
 	
-	abstract public EqGraphNode<NODEID, ARRAYID> getEqGraphNode(NODEID nodeIdentifier);
+	final public EqGraphNode<NODEID, ARRAYID> getEqGraphNode(NODEID nodeIdentifier) {
+		return mNodeIdToEqGraphNode.get(nodeIdentifier);
+	}
 
-	abstract public Set<EqGraphNode<NODEID, ARRAYID>> getAllEqGraphNodes();
+	final public Collection<EqGraphNode<NODEID, ARRAYID>> getAllEqGraphNodes() {
+		return mNodeIdToEqGraphNode.values();
+	}
 
-	abstract public NODEID find(NODEID id);
+	final public NODEID find(NODEID id) {
+		return mNodeIdToEqGraphNode.get(id).find().mNodeIdentifier;
+	}
 
 	protected boolean isTopConsistent() {
 		if (!mIsTop) {
@@ -129,5 +146,39 @@ public abstract class IVPStateOrTfState<NODEID extends IEqNodeIdentifier<ARRAYID
 			}
 		}
 		return true;
+	}
+	
+	public Set<NODEID> getEquivalenceRepresentatives() {
+		final Set<NODEID> result = new HashSet<>();
+		for (final EqGraphNode<NODEID, ARRAYID> egn : mNodeIdToEqGraphNode.values()) {
+			if (egn.getRepresentative() == egn) {
+				result.add(egn.mNodeIdentifier);
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * TODO: more efficient implementation? (of the methods using this method?)
+	 *
+	 * @param node
+	 * @return All the eqNodes that are in the same equivalence class as node in this state.
+	 */
+	public Set<NODEID> getEquivalentEqNodes(final NODEID node) {
+		if (node == null) {
+			return Collections.emptySet();
+		}
+		final EqGraphNode<NODEID, ARRAYID> nodeGraphNode = mNodeIdToEqGraphNode.get(node);
+		final Set<NODEID> result = new HashSet<>();
+		for (final EqGraphNode<NODEID, ARRAYID> egn : mNodeIdToEqGraphNode.values()) {
+			if (egn.find() == nodeGraphNode.find()) {
+				result.add(egn.mNodeIdentifier);
+			}
+		}
+		return result;
+	}
+
+	public Map<NODEID, EqGraphNode<NODEID, ARRAYID>> getNodeIdToEqGraphNode() {
+		return mNodeIdToEqGraphNode;
 	}
 }
