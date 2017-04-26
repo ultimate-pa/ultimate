@@ -279,29 +279,6 @@ public class TraceAbstractionStarter {
 				constructCegarLoop(name, root, taPrefs, csToolkit, predicateFactory, taBenchmark, errorLocs);
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);
 
-		/*
-		final IProtoServer server = Server.get();
-		if (taPrefs.interactive()) {
-			mLogger.info("Interactive Verification enabled. Serializing initial abstraction"
-					+ " and wait for confirmation from client...");
-
-			server.start();
-			try {
-				server.waitForConnection();
-				mLogger.info("client connected.");
-			} catch (InterruptedException e) {
-				mLogger.error(e);
-			}
-
-			final TraceAbstractionProtos.TAPreferences pmsg = Converter.fromTAPreferences(taPrefs);
-			server.send(pmsg);
-			// final TraceAbstractionProtos.IterationInfo.Builder info =
-			// TraceAbstractionProtos.IterationInfo.newBuilder();
-			// info.setIteration(0).setRun(Converter.fromNestedRun(mCounterexample));
-			// mServer.send(info.build());
-		}
-		*/
-
 		final Result result = basicCegarLoop.iterate();
 		basicCegarLoop.finish();
 
