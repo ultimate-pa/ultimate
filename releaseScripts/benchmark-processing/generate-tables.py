@@ -84,6 +84,9 @@ mLatexSettingsMappings = {
 'Z3-NestedInterpolation-Bitvector-Kojak.epf'        : '\\zzzip',
 'Z3-FP-Bitvector-Kojak.epf'                         : '\\sponly',
 'Z3-BP-Bitvector-Kojak.epf'                         : '\\wponly',
+'Taipan_Default.epf'                                : '\\staipan',
+'RubberTaipan_Default.epf'                          : '\\rstaipan',
+'LazyTaipan_Default.epf'                            : '\\lstaipan',
  }
 
 # Those are the dvips colors of xcolor 
@@ -111,10 +114,12 @@ mNecessaryHeaders = ['Settings', 'Toolchain', 'Result', 'File']
 mPlotdefinitions = [ 
     ('Time' , lambda r : timeInNanosToSeconds(r, 'OverallTime'), 'semilogyaxis', 'Samples', 'log(s)'),
     ('Iter' , lambda r : toInt(r, 'OverallIterations'), 'axis', 'Samples', 'Iterations'),
-    ('InterTime' , lambda r : timeInNanosToSeconds(r, 'TraceCheckerStatistics_InterpolantComputationTime'), 'semilogyaxis', 'Samples', 'log(s)'),
-    ('UnsatSize' , lambda r : toPercent(r, 'TraceCheckerStatistics_ConjunctsInUnsatCore', 'TraceCheckerStatistics_ConjunctsInSsa'), 'semilogyaxis', 'Samples', 'log(\\%)'),
-    ('QuantPreds' , lambda r : toPercent(r, 'TraceCheckerStatistics_QuantifiedInterpolants', 'TraceCheckerStatistics_ConstructedInterpolants'), 'axis', 'Samples', '\\% quantified interpolants'),
+#    ('InterTime' , lambda r : timeInNanosToSeconds(r, 'TraceCheckerStatistics_InterpolantComputationTime'), 'semilogyaxis', 'Samples', 'log(s)'),
+#    ('UnsatSize' , lambda r : toPercent(r, 'TraceCheckerStatistics_ConjunctsInUnsatCore', 'TraceCheckerStatistics_ConjunctsInSsa'), 'semilogyaxis', 'Samples', 'log(\\%)'),
+#    ('QuantPreds' , lambda r : toPercent(r, 'TraceCheckerStatistics_QuantifiedInterpolants', 'TraceCheckerStatistics_ConstructedInterpolants'), 'axis', 'Samples', '\\% quantified interpolants'),
     ('PerfInter' , lambda r : toPercent(r, 'TraceCheckerStatistics_PerfectInterpolantSequences', 'TraceCheckerStatistics_InterpolantComputations'), 'axis', 'Samples', '\\% perfect interpolants'),
+    ('AbsIntIter' , lambda r : toInt(r, 'AbstIntIterations'), 'axis', 'Samples', 'Iterations with AbsInt'),
+    ('AbsIntStrong' , lambda r : toInt(r, 'AbstIntStrong'), 'axis', 'Samples', 'Iterations wit useful AbsInt'),
 ]
 # # row funs for tacas taipan 
 # mPlotdefinitions = { 
@@ -591,7 +596,7 @@ def checkCsv(rows):
 def main():
     file, output, name = getArgs()
     
-    successResults = ['SAFE', 'UNSAFE', 'CORRECT', 'INCORRECT']
+    successResults = ['SUCCESS']
     timeoutResults = ['TIMEOUT']
     failResults = ['FAIL']
 
