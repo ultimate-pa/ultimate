@@ -7,7 +7,6 @@ import java.util.function.Supplier;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -20,9 +19,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IRetu
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker.Validity;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.AbsIntPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermVarsProc;
@@ -44,7 +42,6 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTIO
 	private final IHoareTripleChecker mHTC;
 	private final ManagedScript mMgdScript;
 	private final IIcfgSymbolTable mSymbolTable;
-	private final SimplificationTechnique mSimplificationTechnique;
 
 	private static int sIllegalPredicates = Integer.MAX_VALUE;
 
@@ -54,7 +51,6 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTIO
 		mSymbolTable = symbolTable;
 		mMgdScript = csToolkit.getManagedScript();
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mSimplificationTechnique = SimplificationTechnique.SIMPLIFY_DDA;
 		mHTC = new IncrementalHoareTripleChecker(csToolkit);
 	}
 
@@ -108,21 +104,15 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTIO
 	private void logUnsoundness(final ACTION transition, final IPredicate precond, final IPredicate postcond,
 			final IPredicate precondHier) {
 		mLogger.fatal("Soundness check failed for the following triple:");
-		final String simplePre = SmtUtils
-				.simplify(mMgdScript, precond.getFormula(), mServices, mSimplificationTechnique).toStringDirect();
+
 		if (precondHier == null) {
-			mLogger.fatal("Pre: {" + simplePre + "}");
+			mLogger.fatal("Pre: {" + precond + "}");
 		} else {
-			mLogger.fatal("Pre: {" + simplePre + "}");
-			mLogger.fatal("PreHier: {"
-					+ SmtUtils.simplify(mMgdScript, precondHier.getFormula(), mServices, mSimplificationTechnique)
-							.toStringDirect()
-					+ "}");
+			mLogger.fatal("Pre: {" + precond + "}");
+			mLogger.fatal("PreHier: {" + precondHier + "}");
 		}
 		mLogger.fatal(getTransformulaDebugString(transition) + " (" + transition + ")");
-		mLogger.fatal(
-				"Post: {" + SmtUtils.simplify(mMgdScript, postcond.getFormula(), mServices, mSimplificationTechnique)
-						.toStringDirect() + "}");
+		mLogger.fatal("Post: {" + postcond + "}");
 	}
 
 	private String getTransformulaDebugString(final ACTION action) {
@@ -138,22 +128,14 @@ public class RcfgDebugHelper<STATE extends IAbstractState<STATE, VARDECL>, ACTIO
 	}
 
 	private IPredicate createPredicateFromState(final Collection<STATE> states) {
-		Term acc = mMgdScript.getScript().term("false");
-
-		for (final STATE state : states) {
-			acc = Util.or(mMgdScript.getScript(), acc, state.getTerm(mMgdScript.getScript()));
-		}
-
-		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mMgdScript.getScript(), mSymbolTable);
-		return new BasicPredicate(getIllegalPredicateId(), tvp.getProcedures(), acc, tvp.getVars(),
-				tvp.getClosedFormula());
+		return createPredicateFromState(AbstractMultiState.createDisjunction(states));
 	}
 
 	private IPredicate createPredicateFromState(final AbstractMultiState<STATE, VARDECL> state) {
 		final Term acc = state.getTerm(mMgdScript.getScript());
 		final TermVarsProc tvp = TermVarsProc.computeTermVarsProc(acc, mMgdScript.getScript(), mSymbolTable);
-		return new BasicPredicate(getIllegalPredicateId(), tvp.getProcedures(), acc, tvp.getVars(),
-				tvp.getClosedFormula());
+		return new AbsIntPredicate<>(new BasicPredicate(getIllegalPredicateId(), tvp.getProcedures(), acc,
+				tvp.getVars(), tvp.getClosedFormula()), state);
 	}
 
 	private static int getIllegalPredicateId() {

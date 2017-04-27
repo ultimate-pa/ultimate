@@ -375,4 +375,14 @@ public class VPDomainHelpers {
 		return Collections.unmodifiableSet(result);
 	}
 
+	public static <K, V> boolean imageIsNeverNull(Map<K, V> map) {
+		for (Entry<K, V> en : map.entrySet()) {
+			
+			if (en.getValue() == null) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 }

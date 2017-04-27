@@ -152,7 +152,7 @@ public class NestedInterpolantsBuilder {
 		}
 
 		computeCraigInterpolants();
-		traceChecker.unlockSmtManager();
+		traceChecker.cleanupAndUnlockSolver();
 		for (int i = 0; i < mCraigInterpolants.length; i++) {
 			mLogger.debug(new DebugMessage("NestedInterpolant {0}: {1}", i, mCraigInterpolants[i]));
 		}

@@ -145,10 +145,10 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 		builder.setIsTop(originalState.isTop());
 		assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(builder.mDisEqualitySet, builder);
 
-		for (final EqNode eqNode : mPreAnalysis.getTermToEqNodeMap().values()) {
+		for (final EqNode eqNode : mPreAnalysis.getAllEqNodes()) {
 			final EqGraphNode<EqNode, IProgramVarOrConst> newGraphNode = builder.getEqGraphNode(eqNode);
 			final EqGraphNode<EqNode, IProgramVarOrConst> oldGraphNode =
-					originalState.getEqNodeToEqGraphNodeMap().get(eqNode);
+					originalState.getNodeIdToEqGraphNode().get(eqNode);
 			EqGraphNode.copyFields(oldGraphNode, newGraphNode, builder);
 			// assert VPDomainHelpers.disEqualitySetContainsOnlyRepresentatives(builder.mDisEqualitySet, builder);
 			assert !originalState.isTop() || newGraphNode.getRepresentative() == newGraphNode;
@@ -422,7 +422,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 	public VPState<ACTION> havocArray(final IProgramVarOrConst array, final VPState<ACTION> originalState) {
 		VPState<ACTION> resultState = copy(originalState).build();
 		
-		for (final EqNode eqNode : originalState.getEqNodeToEqGraphNodeMap().keySet()) {
+		for (final EqNode eqNode : originalState.getNodeIdToEqGraphNode().keySet()) {
 			if (eqNode.getAllFunctions().contains(array)) {
 				resultState = this.havoc(eqNode, resultState);
 			}

@@ -248,7 +248,7 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 	 * Use tree interpolants to compute nested interpolants.
 	 */
 	private void computeInterpolants_Tree(final Set<Integer> interpolatedPositions) {
-		if (mIsSafe != LBool.UNSAT) {
+		if (mFeasibilityResult.getLBool() != LBool.UNSAT) {
 			throw new IllegalArgumentException("Interpolants only available if trace fulfills specification");
 		}
 		if (mInterpolants != null) {
@@ -271,8 +271,8 @@ public class InterpolatingTraceCheckerCraig extends InterpolatingTraceChecker {
 	 */
 	private void computeInterpolants_Recursive(final Set<Integer> interpolatedPositions) {
 		assert interpolatedPositions != null : "no interpolatedPositions";
-		if (mIsSafe != LBool.UNSAT) {
-			if (mIsSafe == null) {
+		if (mFeasibilityResult.getLBool() != LBool.UNSAT) {
+			if (mFeasibilityResult.getLBool() == null) {
 				throw new AssertionError("No trace check at the moment - no interpolants!");
 			}
 			throw new AssertionError("Interpolants only available if trace fulfills specification");

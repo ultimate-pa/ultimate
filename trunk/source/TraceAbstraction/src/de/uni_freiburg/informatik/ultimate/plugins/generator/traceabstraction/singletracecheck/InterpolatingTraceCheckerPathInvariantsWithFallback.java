@@ -84,7 +84,7 @@ public class InterpolatingTraceCheckerPathInvariantsWithFallback extends Interpo
 		mIcfg = icfgContainer;
 		if (super.isCorrect() == LBool.UNSAT) {
 			mTraceCheckFinished = true;
-			super.unlockSmtManager();
+			cleanupAndUnlockSolver();
 			computeInterpolants(new AllIntegers(), InterpolationTechnique.PathInvariants);
 			// Add benchmarks from PathInvariants
 			cegarLoopBenchmark.addPathInvariantsData(mPathInvariantsStats);

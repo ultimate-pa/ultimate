@@ -521,22 +521,29 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		}
 		mLogger.fatal("Check was " + result + " but should have been " + checkedResult);
 		mLogger.fatal("Failing Hoare triple:");
-		final String simplePre = SmtUtils
-				.simplify(mManagedScript, precond.getFormula(), mServices, mSimplificationTechnique).toStringDirect();
+		if (precondHier == null) {
+			mLogger.fatal("Pre: {" + precond.getFormula() + "}");
+		} else {
+			mLogger.fatal("PreBefore: {" + precond.getFormula() + "}");
+			mLogger.fatal("PreAfter: {" + precondHier.getFormula() + "}");
+		}
+		mLogger.fatal(IcfgUtils.getTransformula(transition).getClosedFormula() + " (" + transition + ")");
+		mLogger.fatal("Post: {" + postcond.getFormula() + "}");
+
+		final String simplePre =
+				SmtUtils.simplify(mManagedScript, precond.getFormula(), mServices, mSimplificationTechnique).toString();
 		if (precondHier == null) {
 			mLogger.fatal("Pre: {" + simplePre + "}");
 		} else {
 			mLogger.fatal("PreBefore: {" + simplePre + "}");
-			mLogger.fatal("PreAfter: {"
-					+ SmtUtils.simplify(mManagedScript, precondHier.getFormula(), mServices, mSimplificationTechnique)
-							.toStringDirect()
+			mLogger.fatal("PreAfter: {" + SmtUtils
+					.simplify(mManagedScript, precondHier.getFormula(), mServices, mSimplificationTechnique).toString()
 					+ "}");
 		}
 		mLogger.fatal(
 				IcfgUtils.getTransformula(transition).getClosedFormula().toStringDirect() + " (" + transition + ")");
 		mLogger.fatal("Post: {" + SmtUtils
-				.simplify(mManagedScript, postcond.getFormula(), mServices, mSimplificationTechnique).toStringDirect()
-				+ "}");
+				.simplify(mManagedScript, postcond.getFormula(), mServices, mSimplificationTechnique).toString() + "}");
 		return false;
 
 	}
@@ -583,6 +590,11 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 
 		if (result == LBool.UNKNOWN || result == expected) {
 			script.echo(new QuotedObject("End isSubsetOf assertion"));
+			return true;
+		}
+		if (subResult == SubsetResult.NONE) {
+			script.echo(new QuotedObject("End isSubsetOf assertion"));
+			mLogger.warn("isSubsetOf was not precise enough (may lost precision through disjunctions)");
 			return true;
 		}
 

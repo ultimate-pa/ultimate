@@ -87,7 +87,7 @@ public class VPStateBuilder<ACTION extends IIcfgTransition<IcfgLocation>>
 		 * Create fresh EqGraphNodes from EqNodes.
 		 */
 		final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> eqNodeToEqGraphNodeMap = new HashMap<>();
-		for (final EqNode eqNode : mDomain.getPreAnalysis().getTermToEqNodeMap().values()) {
+		for (final EqNode eqNode : mDomain.getPreAnalysis().getAllEqNodes()) {
 			getOrConstructEqGraphNode(eqNode, eqNodeToEqGraphNodeMap);
 		}
 		mEqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);

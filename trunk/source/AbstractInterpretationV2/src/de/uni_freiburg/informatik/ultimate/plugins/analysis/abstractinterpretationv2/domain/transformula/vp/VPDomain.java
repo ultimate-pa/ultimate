@@ -130,7 +130,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	public Set<EqNode> getLiteralEqNodes() {
 		// TODO only compute this once!
 		final Set<EqNode> literalSet = new HashSet<>();
-		for (final EqNode eqNode : mPreAnalysis.getTermToEqNodeMap().values()) {
+		for (final EqNode eqNode : mPreAnalysis.getAllEqNodes()) {
 			if (eqNode.isLiteral()) {
 				literalSet.add(eqNode);
 			}

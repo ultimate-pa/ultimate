@@ -69,7 +69,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	private static final String TERM_TRUE = "true";
 	private static final String TERM_FUNC_NAME_DISTINCT = "distinct";
 
-	private final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> mEqNodeToEqGraphNodeMap;
+//	private final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> mEqNodeToEqGraphNodeMap;
 
 	protected final Set<IProgramVarOrConst> mVars;
 
@@ -78,6 +78,7 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	private final Term mTerm;
 	private final VPDomainPreanalysis mPreAnalysis;
 	protected final VPStateFactory<ACTION> mStateFactory;
+	
 
 	/**
 	 * Constructor for bottom state only.
@@ -89,13 +90,13 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 	}
 
 	/**
-	 * Constructor to be used by VPStateFactory.createTopState() only.
+	 * 
 	 */
 	VPState(final Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> eqNodeToEqGraphNodeMap,
 			final Set<VPDomainSymmetricPair<EqNode>> disEqualitySet, final Set<IProgramVarOrConst> vars,
 			final VPDomain<ACTION> domain, final boolean isTop) {
-		super(disEqualitySet, isTop);
-		mEqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);
+		super(disEqualitySet, isTop, eqNodeToEqGraphNodeMap);
+//		mEqNodeToEqGraphNodeMap = Collections.unmodifiableMap(eqNodeToEqGraphNodeMap);
 		mDomain = domain;
 		mScript = mDomain.getManagedScript();
 		mPreAnalysis = mDomain.getPreAnalysis();
@@ -110,19 +111,19 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	private boolean sanityCheck() {
 		for (final VPDomainSymmetricPair<EqNode> pair : getDisEqualities()) {
-			if (!mEqNodeToEqGraphNodeMap.containsKey(pair.getFirst())) {
+			if (!getNodeIdToEqGraphNode().containsKey(pair.getFirst())) {
 				return false;
 			}
-			if (!mEqNodeToEqGraphNodeMap.containsKey(pair.getSecond())) {
+			if (!getNodeIdToEqGraphNode().containsKey(pair.getSecond())) {
 				return false;
 			}
 		}
 		return true;
 	}
 
-	public Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> getEqNodeToEqGraphNodeMap() {
-		return mEqNodeToEqGraphNodeMap;
-	}
+//	public Map<EqNode, EqGraphNode<EqNode, IProgramVarOrConst>> getEqNodeToEqGraphNodeMap() {
+//		return mEqNodeToEqGraphNodeMap;
+//	}
 
 	@Override
 	public VPState<ACTION> addVariable(final IProgramVarOrConst variable) {
@@ -164,14 +165,14 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		copy.removeVars(variables);
 		
 		
-		final Set<IProgramVar> removedVars = variables.stream()
-				.filter(var -> var instanceof IProgramVar)
-				.map(var -> (IProgramVar) var).collect(Collectors.toSet());
-		final VPState<ACTION> havocced = mStateFactory.havocVariables(removedVars, copy.build());
+//		final Set<IProgramVar> removedVars = variables.stream()
+//				.filter(var -> var instanceof IProgramVar)
+//				.map(var -> (IProgramVar) var).collect(Collectors.toSet());
+//		final VPState<ACTION> havocced = mStateFactory.havocVariables(removedVars, copy.build());
+//		return havocced;
 //		final VPStateBuilder<ACTION> copy = mStateFactory.copy(this);
 //		copy.removeVars(variables);
-//		return copy.build();
-		return havocced;
+		return copy.build();
 	}
 
 	@Override
@@ -293,18 +294,37 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	@Override
 	public String toLogString() {
-		final StringBuilder sb = new StringBuilder();
-		sb.append("VPState\n");
-		sb.append("vars: " + mVars.toString() + "\n");
-		// sb.append("eqGraphNodes: " + getAllEqGraphNodes().toString() + "\n");
-		sb.append("Graph:\n");
-		for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : getAllEqGraphNodes()) {
-			if (egn.getRepresentative() != egn) {
-				sb.append(egn.toString() + "\n");
+		if (mLogAsGraph) {
+			// log in the format "<node> ||| <representative>"
+			final StringBuilder sb = new StringBuilder();
+			sb.append("VPState\n");
+			sb.append("vars: " + mVars.toString() + "\n");
+			// sb.append("eqGraphNodes: " + getAllEqGraphNodes().toString() + "\n");
+			sb.append("Graph:\n");
+			for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : getAllEqGraphNodes()) {
+				if (egn.getRepresentative() != egn) {
+					sb.append(egn.toString() + "\n");
+				}
 			}
+			sb.append("DisEqualities:" + getDisEqualities() + "\n");
+			return sb.toString();
+		} else { 
+			// we log the equivalence classes instead of who has which representative
+			final StringBuilder sb = new StringBuilder();
+
+			sb.append("VPState\n");
+			sb.append("vars: " + mVars.toString() + "\n");
+			sb.append("Equivalence classes:\n");
+			for (EqNode rep : getEquivalenceRepresentatives()) {
+				// we only log equivalence classes with more than 1 element
+				if (getEquivalentEqNodes(rep).size() > 1) {
+					sb.append(String.format("{%s}\n", getEquivalentEqNodes(rep)));
+				}
+			}
+			sb.append("DisEqualities:" + getDisEqualities() + "\n");
+
+			return sb.toString();
 		}
-		sb.append("DisEqualities:" + getDisEqualities() + "\n");
-		return sb.toString();
 	}
 
 	@Override
@@ -332,6 +352,14 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		Term disEquality;
 
 		for (final VPDomainSymmetricPair<EqNode> pair : getDisEqualities()) {
+			if (!mVars.containsAll(pair.getFirst().getVariables()) 
+					|| !mVars.containsAll(pair.getSecond().getVariables())) {
+				/*
+				 * don't add disequalities that talk about variables that the current state does not officially know 
+				 * about
+				 */
+				continue;
+			}
 			disEqualityFirst = pair.getFirst().getTerm();
 			disEqualitySecond = pair.getSecond().getTerm();
 			distinctTermSet.add(mScript.term(this, TERM_FUNC_NAME_DISTINCT, disEqualityFirst, disEqualitySecond));
@@ -351,8 +379,16 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		final Set<Term> equalityTermSet = new HashSet<>();
 		Term equality;
 
-		for (final EqGraphNode<EqNode, IProgramVarOrConst> graphNode : mEqNodeToEqGraphNodeMap.values()) {
+		for (final EqGraphNode<EqNode, IProgramVarOrConst> graphNode : getNodeIdToEqGraphNode().values()) {
 			if (!graphNode.equals(graphNode.getRepresentative())) {
+				if (!mVars.containsAll(graphNode.mNodeIdentifier.getVariables()) 
+						|| !mVars.containsAll(graphNode.getRepresentative().mNodeIdentifier.getVariables())) {
+					/*
+					 * don't add equalities that talk about variables that the current state does not officially know 
+					 * about
+					 */
+					continue;
+				}
 				equalityFirst = graphNode.mNodeIdentifier.getTerm();
 				equalitySecond = graphNode.getRepresentative().mNodeIdentifier.getTerm();
 				equalityTermSet.add(mScript.term(this, "=", equalityFirst, equalitySecond));
@@ -374,35 +410,35 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		return result;
 	}
 
-	public Set<EqNode> getEquivalenceRepresentatives() {
-		final Set<EqNode> result = new HashSet<>();
-		for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : mEqNodeToEqGraphNodeMap.values()) {
-			if (egn.getRepresentative() == egn) {
-				result.add(egn.mNodeIdentifier);
-			}
-		}
-		return result;
-	}
-
-	/**
-	 * TODO: more efficient implementation? (of the methods using this method?)
-	 *
-	 * @param node
-	 * @return All the eqNodes that are in the same equivalence class as node in this state.
-	 */
-	public Set<EqNode> getEquivalentEqNodes(final EqNode node) {
-		if (node == null) {
-			return Collections.emptySet();
-		}
-		final EqGraphNode<EqNode, IProgramVarOrConst> nodeGraphNode = mEqNodeToEqGraphNodeMap.get(node);
-		final Set<EqNode> result = new HashSet<>();
-		for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : mEqNodeToEqGraphNodeMap.values()) {
-			if (egn.find() == nodeGraphNode.find()) {
-				result.add(egn.mNodeIdentifier);
-			}
-		}
-		return result;
-	}
+//	public Set<EqNode> getEquivalenceRepresentatives() {
+//		final Set<EqNode> result = new HashSet<>();
+//		for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : mEqNodeToEqGraphNodeMap.values()) {
+//			if (egn.getRepresentative() == egn) {
+//				result.add(egn.mNodeIdentifier);
+//			}
+//		}
+//		return result;
+//	}
+//
+//	/**
+//	 * TODO: more efficient implementation? (of the methods using this method?)
+//	 *
+//	 * @param node
+//	 * @return All the eqNodes that are in the same equivalence class as node in this state.
+//	 */
+//	public Set<EqNode> getEquivalentEqNodes(final EqNode node) {
+//		if (node == null) {
+//			return Collections.emptySet();
+//		}
+//		final EqGraphNode<EqNode, IProgramVarOrConst> nodeGraphNode = mEqNodeToEqGraphNodeMap.get(node);
+//		final Set<EqNode> result = new HashSet<>();
+//		for (final EqGraphNode<EqNode, IProgramVarOrConst> egn : mEqNodeToEqGraphNodeMap.values()) {
+//			if (egn.find() == nodeGraphNode.find()) {
+//				result.add(egn.mNodeIdentifier);
+//			}
+//		}
+//		return result;
+//	}
 
 	public boolean mayEqual(final EqNode accessingNode1, final EqNode accessingNode2) {
 		return accessingNode1 == accessingNode2 || !getDisEqualities()
@@ -420,20 +456,20 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 		return result;
 	}
 
-	@Override
-	public EqGraphNode<EqNode, IProgramVarOrConst> getEqGraphNode(final EqNode nodeIdentifier) {
-		return mEqNodeToEqGraphNodeMap.get(nodeIdentifier);
-	}
+//	@Override
+//	public EqGraphNode<EqNode, IProgramVarOrConst> getEqGraphNode(final EqNode nodeIdentifier) {
+//		return mEqNodeToEqGraphNodeMap.get(nodeIdentifier);
+//	}
+//
+//	@Override
+//	public Set<EqGraphNode<EqNode, IProgramVarOrConst>> getAllEqGraphNodes() {
+//		return new HashSet<>(mEqNodeToEqGraphNodeMap.values());
+//	}
 
-	@Override
-	public Set<EqGraphNode<EqNode, IProgramVarOrConst>> getAllEqGraphNodes() {
-		return new HashSet<>(mEqNodeToEqGraphNodeMap.values());
-	}
-
-	@Override
-	public EqNode find(final EqNode id) {
-		return mEqNodeToEqGraphNodeMap.get(id).find().mNodeIdentifier;
-	}
+//	@Override
+//	public EqNode find(final EqNode id) {
+//		return mEqNodeToEqGraphNodeMap.get(id).find().mNodeIdentifier;
+//	}
 
 	@Override
 	public int hashCode() {

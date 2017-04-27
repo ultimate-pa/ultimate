@@ -237,7 +237,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		final Set<Term> unsatCore = new HashSet<>(Arrays.asList(mTcSmtManager.getScript().getUnsatCore()));
 		// unsat core obtained. We now pop assertion stack of solver. This
 		// allows us to use solver e.g. for simplifications
-		unlockSmtManager();
+		cleanupAndUnlockSolver();
 
 		{
 			final int numberOfConjunctsInTrace = mAnnotateAndAsserterConjuncts.getAnnotated2Original().keySet().size();

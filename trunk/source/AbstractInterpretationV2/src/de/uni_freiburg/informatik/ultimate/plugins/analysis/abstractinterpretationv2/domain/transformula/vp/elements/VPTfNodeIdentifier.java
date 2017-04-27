@@ -69,7 +69,7 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 	private final NodeIdWithSideCondition mNodeIdWithSideCondition;
 
 	/**
-	 * super constructor exclusively for VpTfThroughNodeIdentifier
+	 * super constructor exclusively for VpTfExtraNodeIdentifier
 	 * @param eqNode
 	 * @param inOutStatus 
 	 */
@@ -87,14 +87,15 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 		mInOutStatus = inOutStatus;
 
 		Map<IProgramVar, TermVariable> inVars = new HashMap<>();
-		if (isInOrThrough()) {
+		if (inOutStatus == TfNodeInOutStatus.IN || inOutStatus == TfNodeInOutStatus.THROUGH) {
 			for (IProgramVar var : eqNode.getVariables()) {
 				inVars.put(var, null);
 			}
 		}
 		mInVars = inVars;
+
 		Map<IProgramVar, TermVariable> outVars = new HashMap<>();
-		if (isOutOrThrough()) {
+		if (inOutStatus == TfNodeInOutStatus.OUT || inOutStatus == TfNodeInOutStatus.THROUGH) {
 			for (IProgramVar var : eqNode.getVariables()) {
 				outVars.put(var, null);
 			}

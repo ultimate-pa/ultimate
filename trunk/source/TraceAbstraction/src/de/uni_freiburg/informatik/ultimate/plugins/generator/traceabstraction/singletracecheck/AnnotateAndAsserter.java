@@ -33,7 +33,6 @@ import java.util.TreeMap;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -73,8 +72,7 @@ public class AnnotateAndAsserter {
 		mTcbg = tcbg;
 	}
 
-	public void buildAnnotatedSsaAndAssertTerms() throws AbnormalSolverTerminationDuringFeasibilityCheck,
-			AbnormalUnknownSolverTerminationDuringFeasibilityCheck {
+	public void buildAnnotatedSsaAndAssertTerms() {
 		if (mAnnotSSA != null) {
 			throw new AssertionError("already build");
 		}
@@ -129,30 +127,13 @@ public class AnnotateAndAsserter {
 			}
 			pendingContextCode++;
 		}
-		try {
-			mSatisfiable = mMgdScriptTc.getScript().checkSat();
-		} catch (final SMTLIBException e) {
-			if (isKnownException(e)) {
-				throw new AbnormalSolverTerminationDuringFeasibilityCheck();
-			}
-			throw new AbnormalUnknownSolverTerminationDuringFeasibilityCheck(e);
-		}
+		mSatisfiable = mMgdScriptTc.getScript().checkSat();
+
 		// Report benchmarks
 		mTcbg.reportnewCheckSat();
 		mTcbg.reportnewCodeBlocks(mTrace.length());
 		mTcbg.reportnewAssertedCodeBlocks(mTrace.length());
 		mLogger.info("Conjunction of SSA is " + mSatisfiable);
-	}
-
-	private static boolean isKnownException(final SMTLIBException e) {
-		final String message = e.getMessage();
-		if (message.contains(AbnormalSolverTerminationDuringFeasibilityCheck.TYPICAL_ERROR_MESSAGE)) {
-			return true;
-		}
-		if (message.equals(AbnormalSolverTerminationDuringFeasibilityCheck.NONLINEAR_ARITHMETIC_MESSAGE)) {
-			return true;
-		}
-		return false;
 	}
 
 	public LBool isInputSatisfiable() {
@@ -163,40 +144,4 @@ public class AnnotateAndAsserter {
 		return mAnnotSSA;
 	}
 
-	public static class AbnormalSolverTerminationDuringFeasibilityCheck extends Exception {
-		private static final long serialVersionUID = 1605915090440572006L;
-
-		public static final String TYPICAL_ERROR_MESSAGE = "Received EOF on stdin. No stderr output.";
-		public static final String NONLINEAR_ARITHMETIC_MESSAGE = "Unsupported non-linear arithmetic";
-	}
-
-	/**
-	 * Exception thrown in case of an abnormal solver termination which is unknown and thus should be reported to the
-	 * developer.
-	 * 
-	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
-	 */
-	public static class AbnormalUnknownSolverTerminationDuringFeasibilityCheck extends Exception {
-		private static final long serialVersionUID = 6055606988186582091L;
-
-		private final SMTLIBException mException;
-
-		/**
-		 * @param exception
-		 *            Exception.
-		 */
-		public AbnormalUnknownSolverTerminationDuringFeasibilityCheck(final SMTLIBException exception) {
-			mException = exception;
-		}
-
-		@Override
-		public String getMessage() {
-			return mException.getMessage();
-		}
-
-		@Override
-		public void printStackTrace() {
-			mException.printStackTrace();
-		}
-	}
 }
