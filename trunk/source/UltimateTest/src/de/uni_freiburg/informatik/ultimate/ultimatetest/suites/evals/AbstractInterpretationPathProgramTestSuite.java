@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
-import de.uni_freiburg.informatik.ultimate.test.decider.NoErrorTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.NoErrorAndTimeoutTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition.Aggregate;
@@ -104,7 +104,7 @@ public class AbstractInterpretationPathProgramTestSuite extends AbstractEvalTest
 
 	@Override
 	public ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
-		return new NoErrorTestResultDecider(urd);
+		return new NoErrorAndTimeoutTestResultDecider(urd);
 	}
 
 	@Override

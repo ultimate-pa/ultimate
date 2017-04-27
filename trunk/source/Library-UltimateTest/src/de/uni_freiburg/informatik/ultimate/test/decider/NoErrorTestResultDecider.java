@@ -109,7 +109,7 @@ public class NoErrorTestResultDecider extends TestResultDecider {
 		return TestResult.FAIL;
 	}
 
-	private static boolean checkFailure(final IResult result) {
+	protected boolean checkFailure(final IResult result) {
 		if (result instanceof IFailedAnalysisResult) {
 			return true;
 		}
