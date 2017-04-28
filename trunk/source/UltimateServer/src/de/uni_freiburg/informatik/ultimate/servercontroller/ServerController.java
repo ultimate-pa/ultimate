@@ -239,6 +239,14 @@ public class ServerController implements IController<RunDefinition> {
 				continue;
 
 			execToolchain(core, inputFiles);
+			if (client.hasIOExceptionOccurred()) {
+				mLogger.info("Lost client connection before Toolchain was completed. Reinitializing.");
+				return;
+			}
+			if (client.waitForQuit().isDone()) {
+				mLogger.info("Client has quitted before Toolchain was completed. Reinitializing.");
+				return;				
+			}
 			mLogger.info("Toolchain finished");
 			if (!mInternalInterface.request(Boolean.class).get())
 				break;
