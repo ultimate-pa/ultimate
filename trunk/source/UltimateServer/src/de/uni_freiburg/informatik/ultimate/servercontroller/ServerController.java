@@ -94,6 +94,8 @@ public class ServerController implements IController<RunDefinition> {
 	private IInteractive<Object> mInternalInterface;
 	private IInteractive<GeneratedMessageV3> mProtoInterface;
 
+	private CommandLineArgs mCla;
+
 	private Converter.Initializer<GeneratedMessageV3> mConverterInitializer;
 	private int mListenTimeout;
 
@@ -115,9 +117,8 @@ public class ServerController implements IController<RunDefinition> {
 
 		final String[] args = Platform.getCommandLineArgs();
 
-		final CommandLineArgs cla;
 		try {
-			cla = CommandLineArgs.parse(args);
+			mCla = CommandLineArgs.parse(args);
 		} catch (org.apache.commons.cli.ParseException e) {
 			mLogger.error(e.getMessage());
 			mLogger.error("Arguments were \"" + String.join(" ", args) + "\"");
@@ -125,31 +126,23 @@ public class ServerController implements IController<RunDefinition> {
 			return -1;
 		}
 
-		mServer = new ProtoServer(mLogger, cla.getPort());
+		mServer = new ProtoServer(mLogger, mCla.getPort());
 
 		// final File workingDir = RcpUtils.getWorkingDirectory();
 		final Map<File, IToolchainData<RunDefinition>> availableToolchains =
-				getAvailableToolchains(core, cla.getToolchainDirPath());
-		if (availableToolchains.isEmpty()) {
+				getAvailableToolchains(core, mCla.getToolchainDirPath());
+
+		final File[] availableSettingsFiles = getAvailableSettingsFiles();
+
+		final File[] availableInputFiles = getAvailableInputFiles();
+
+		if (availableSettingsFiles == null || availableInputFiles == null || availableToolchains.isEmpty()) {
 			return -1;
 		}
 
-		final File[] availableSettingsFiles =
-				cla.getSettingsFilePath().listFiles((file, name) -> name.endsWith(".epf"));
-		if (availableSettingsFiles.length == 0) {
-			mLogger.error("No Settings files found in " + cla.getSettingsFilePath().getAbsolutePath());
-			return -1;
-		}
+		mListenTimeout = mCla.getTimeout();
 
-		final File[] availableInputFiles = cla.getInputDirPath().listFiles(f -> f.isFile());
-		if (availableInputFiles.length == 0) {
-			mLogger.error("No Input files found in " + cla.getInputDirPath().getAbsolutePath());
-			return -1;
-		}
-
-		mListenTimeout = cla.getTimeout();
-
-		mLogger.debug("Starting Server on Port " + cla.getPort());
+		mLogger.debug("Starting Server on Port " + mCla.getPort());
 		mServer.start();
 
 		registerTypes();
@@ -161,7 +154,7 @@ public class ServerController implements IController<RunDefinition> {
 			while (true) {
 				try {
 					mServer.setHelloMessage("Connection " + connectionNumber++);
-					initWrapper(core, availableToolchains, availableSettingsFiles, availableInputFiles);
+					initWrapper(core, availableToolchains);
 
 					if (false)
 						break; // TODO: add settings that limit the server to a single (or fixed numer or time) run
@@ -200,6 +193,24 @@ public class ServerController implements IController<RunDefinition> {
 		return result;
 	}
 
+	private File[] getAvailableSettingsFiles() {
+		final File[] result = mCla.getSettingsFilePath().listFiles((file, name) -> name.endsWith(".epf"));
+		if (result.length == 0) {
+			mLogger.error("No Settings files found in " + mCla.getSettingsFilePath().getAbsolutePath());
+			return null;
+		}
+		return result;
+	}
+
+	private File[] getAvailableInputFiles() {
+		final File[] result = mCla.getInputDirPath().listFiles(f -> f.isFile());
+		if (result.length == 0) {
+			mLogger.error("No Input files found in " + mCla.getInputDirPath().getAbsolutePath());
+			return null;
+		}
+		return result;
+	}
+
 	private void registerTypes() {
 		mServer.getTypeRegistry().register(Controller.Choice.Request.class);
 		mServer.getTypeRegistry().register(Controller.Choice.class);
@@ -210,8 +221,8 @@ public class ServerController implements IController<RunDefinition> {
 	}
 
 	private void initWrapper(final ICore<RunDefinition> core,
-			Map<File, IToolchainData<RunDefinition>> availableToolchains, final File[] availableSettingsFiles,
-			final File[] availableInputFiles) throws InterruptedException, ExecutionException, TimeoutException {
+			Map<File, IToolchainData<RunDefinition>> availableToolchains)
+			throws InterruptedException, ExecutionException, TimeoutException {
 		mLogger.info("Waiting for connection...");
 
 		final Client<GeneratedMessageV3> client = mServer.waitForConnection(mListenTimeout, TimeUnit.SECONDS);
@@ -230,10 +241,10 @@ public class ServerController implements IController<RunDefinition> {
 		final List<File> tcFiles = new ArrayList<>(availableToolchains.keySet());
 
 		while (true) {
-			requestAndLoadSettings(core, availableSettingsFiles);
+			requestAndLoadSettings(core);
 			requestAndLoadToolchain(core, tcFiles);
 
-			final File[] inputFiles = requestInput(core, availableInputFiles);
+			final File[] inputFiles = requestInput(core);
 
 			if (!mInternalInterface.request(Boolean.class).get())
 				continue;
@@ -245,7 +256,7 @@ public class ServerController implements IController<RunDefinition> {
 			}
 			if (client.waitForQuit().isDone()) {
 				mLogger.info("Client has quitted before Toolchain was completed. Reinitializing.");
-				return;				
+				return;
 			}
 			mLogger.info("Toolchain finished");
 			if (!mInternalInterface.request(Boolean.class).get())
@@ -269,11 +280,10 @@ public class ServerController implements IController<RunDefinition> {
 		}
 	}
 
-	private void requestAndLoadSettings(final ICore<RunDefinition> core, final File[] availableSettingsFiles)
+	private void requestAndLoadSettings(final ICore<RunDefinition> core)
 			throws InterruptedException, ExecutionException {
-		// TODO: allow custom settings for plugins chosen from toolchain (see
-		// cli controller)
-		final File settingsFile = requestChoice(availableSettingsFiles, File::getName, "Pick a Setting File");
+		// TODO: allow custom settings for plugins chosen from toolchain (see cli controller)
+		final File settingsFile = requestChoice(getAvailableSettingsFiles(), File::getName, "Pick a Setting File");
 		try {
 			core.resetPreferences();
 			core.loadPreferences(settingsFile.getAbsolutePath());
@@ -282,9 +292,8 @@ public class ServerController implements IController<RunDefinition> {
 		}
 	}
 
-	private File[] requestInput(final ICore<RunDefinition> core, final File[] availableInputFiles)
-			throws InterruptedException, ExecutionException {
-		final File inputFile = requestChoice(availableInputFiles, File::getName, "Pick an Input File");
+	private File[] requestInput(final ICore<RunDefinition> core) throws InterruptedException, ExecutionException {
+		final File inputFile = requestChoice(getAvailableInputFiles(), File::getName, "Pick an Input File");
 
 		mInternalInterface.send(inputFile);
 
