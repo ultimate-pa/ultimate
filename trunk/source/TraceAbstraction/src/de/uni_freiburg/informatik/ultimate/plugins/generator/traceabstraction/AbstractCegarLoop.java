@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo.Info;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InteractiveLive;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.TAConverterFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
@@ -185,11 +186,8 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 * is unknown.
 	 */
 	private UnprovabilityReason mReasonUnknown = null;
-	protected final IInteractive<Object> mInteractive;
-	/**
-	 * This variable was merely introduced to avoid frequent null checks on mInteractive for better readability.
-	 */
-	protected final boolean mInteractiveMode;
+	protected final InteractiveLive mInteractive;
+	
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 
 	public AbstractCegarLoop(final IUltimateServiceProvider services, final IToolchainStorage storage,
@@ -209,8 +207,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mErrorLocs = errorLocs;
 		mToolchainStorage = storage;
 
-		mInteractive = services.getServiceInstance(TAConverterFactory.class);
-		mInteractiveMode = mInteractive != null;
+		mInteractive = new InteractiveLive(services, logger);
 	}
 
 	public IRunningTaskStackProvider getRunningTaskStackProvider() {
@@ -318,7 +315,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mLogger.info("Difference is " + mPref.differenceSenwa());
 		mLogger.info("Minimize is " + mPref.getMinimization());
 
-		if (mInteractiveMode) {
+		if (mInteractive.isInteractiveMode()) {
 			mLogger.info("Interactive Client connected.");
 
 			mInteractive.send(mPref);
@@ -327,7 +324,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mIteration = 0;
 		mLogger.info("======== Iteration " + mIteration + "==of CEGAR loop == " + mName + "========");
 
-		if (mInteractiveMode) {
+		if (mInteractive.isInteractiveMode()) {
 			mInteractive.send(IterationInfo.newInstance().setIteration(mIteration).setBenchmark(mCegarLoopBenchmark));
 		}
 
@@ -335,6 +332,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		if (mPref.dumpAutomata()) {
 			mDumper = new Dumper(mLogger, mPref, mName, mIteration);
 		}
+		mInteractive.waitIfPaused();
 		try {
 			getInitialAbstraction();
 		} catch (final AutomataOperationCanceledException e1) {
@@ -357,6 +355,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
 		mNumberOfErrorLocations = mErrorLocs.size();
 
+		mInteractive.waitIfPaused();
 		boolean initalAbstractionCorrect;
 		try {
 			initalAbstractionCorrect = isAbstractionCorrect();
@@ -373,7 +372,8 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			mLogger.info("=== Iteration " + mIteration + " === " + errorLocs() + "===");
-			if (mInteractiveMode) {
+			mInteractive.waitIfPaused();
+			if (mInteractive.isInteractiveMode()) {
 				final IterationInfo.Info info = IterationInfo.newInstance();
 				info.mBenchmark = mCegarLoopBenchmark;
 				info.mIteration = mIteration;
@@ -395,6 +395,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 					mReasonUnknown = new UnprovabilityReason("unable to decide satisfiability of path constraint");
 					return Result.UNKNOWN;
 				}
+				mInteractive.waitIfPaused();
 				constructInterpolantAutomaton();
 			} catch (final AutomataOperationCanceledException e1) {
 				mLogger.warn("Verification cancelled");
@@ -416,6 +417,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				writeAutomatonToFile(mInterpolAutomaton, "InterpolantAutomaton_Iteration" + mIteration);
 			}
 
+			mInteractive.waitIfPaused();
 			try {
 				final boolean progress = refineAbstraction();
 				if (!progress) {
@@ -434,7 +436,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 
 			mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 			mLogger.info("Interpolant automaton has " + mInterpolAutomaton.sizeInformation());
-			if (mInteractiveMode) {
+			if (mInteractive.isInteractiveMode()) {
 				IterationInfo.instance.mAbstraction = mAbstraction.sizeInformation();
 				IterationInfo.instance.mInterpolantAutomaton = mInterpolAutomaton.sizeInformation();
 				mInteractive.send(IterationInfo.instance);
@@ -461,6 +463,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				writeAutomatonToFile(mAbstraction, filename);
 			}
 
+			mInteractive.waitIfPaused();
 			boolean isAbstractionCorrect;
 			try {
 				isAbstractionCorrect = isAbstractionCorrect();

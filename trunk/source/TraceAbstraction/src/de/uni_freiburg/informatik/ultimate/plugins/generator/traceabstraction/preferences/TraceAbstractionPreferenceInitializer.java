@@ -161,11 +161,6 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 
 	private static final Boolean DEF_ABSINT_ALWAYS_REFINE = Boolean.FALSE;
 	
-	public static final String LABEL_INTERACTIVE_VERIFICATION = "Enable interactive Verification?";
-	private static final Boolean DEF_INTERACTIVE_VERIFICATION = false;
-	public static final String LABEL_INTERACTIVE_CEXS = "Enable interactive Counterexample Selection?";
-	private static final Boolean DEF_INTERACTIVE_CEXS = false;
-	
 	/**
 	 * Constructor.
 	 */
@@ -257,11 +252,7 @@ public class TraceAbstractionPreferenceInitializer extends UltimatePreferenceIni
 						RefinementStrategy.values()),
 				new UltimatePreferenceItem<>(LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
 						DEF_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST, PreferenceType.Combo,
-						RefinementStrategyExceptionBlacklist.values()),
-				new UltimatePreferenceItem<Boolean>(LABEL_INTERACTIVE_VERIFICATION, DEF_INTERACTIVE_VERIFICATION,
-						PreferenceType.Boolean),
-				new UltimatePreferenceItem<Boolean>(LABEL_INTERACTIVE_CEXS, DEF_INTERACTIVE_CEXS,
-						PreferenceType.Boolean), };
+						RefinementStrategyExceptionBlacklist.values()), };
 	}
 
 	/**

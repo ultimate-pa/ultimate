@@ -38,13 +38,13 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientSorryException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InteractiveLive;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.IInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.MultiTrackInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -89,7 +89,7 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 		mInitialized = true;
 	}
 
-	protected abstract IInteractive<Object> getInteractive();
+	protected abstract InteractiveLive getInteractive();
 
 	protected abstract IRefinementStrategy<LETTER> createFallbackStrategy(RefinementStrategy strategy);
 
@@ -108,7 +108,7 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 			mNextTrack = null;
 			return;
 		}
-		Future<Track[]> answer = getInteractive().request(Track[].class, mLeft.stream().toArray(Track[]::new));
+		Future<Track[]> answer = getInteractive().getInterface().request(Track[].class, mLeft.stream().toArray(Track[]::new));
 		Track[] results;
 		try {
 			results = answer.get();
@@ -156,7 +156,7 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 		if (mIteration >= itInfo.getNextInteractiveIteration()) {
 			try {
 				ParrotInteractiveIterationInfo other =
-						getInteractive().request(ParrotInteractiveIterationInfo.class).get();
+						getInteractive().getInterface().request(ParrotInteractiveIterationInfo.class).get();
 				itInfo.setFrom(other);
 			} catch (InterruptedException | ExecutionException e) {
 				mLogger.error("no client answer.");

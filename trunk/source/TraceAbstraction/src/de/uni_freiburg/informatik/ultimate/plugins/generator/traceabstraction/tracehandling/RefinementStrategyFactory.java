@@ -31,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -44,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InteractiveLive;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
@@ -67,7 +67,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	private final IToolchainStorage mStorage;
 	private final PredicateFactory mPredicateFactory;
 	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
-	private final IInteractive<Object> mInteractive;
+	private final InteractiveLive mInteractive;
 	private final ParrotInteractiveIterationInfo mParrotInteractiveIterationInfo;
 
 	/**
@@ -89,7 +89,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	 *            predicate factory
 	 */
 	public RefinementStrategyFactory(final ILogger logger, final IUltimateServiceProvider services,
-			final IInteractive<Object> interactive,
+			final InteractiveLive interactive,
 			final IToolchainStorage storage, final TAPreferences taPrefsForInterpolantConsolidation,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final CegarAbsIntRunner<LETTER> absIntRunner,
 			final IIcfg<?> initialIcfg, final PredicateFactory predicateFactory) {
@@ -175,7 +175,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
 					mPrefsConsolidation, iteration, benchmark) {
 				@Override
-				protected IInteractive<Object> getInteractive() {
+				protected InteractiveLive getInteractive() {
 					// instead of passing the interactive interface via
 					// constructor, it is necessary to have a getter
 					// because .next() is called in the constructor of the

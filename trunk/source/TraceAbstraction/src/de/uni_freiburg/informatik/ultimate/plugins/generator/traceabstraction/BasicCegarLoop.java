@@ -261,7 +261,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			mAbstraction = new RemoveDeadEnds<>(new AutomataLibraryServices(mServices), wpa).getResult();
 			new LineCoverageCalculator<>(mServices, mAbstraction, origCoverage).reportCoverage("Witness product");
 		}
-		if (mInteractiveMode) {
+		if (mInteractive.isInteractiveMode()) {
 			mInteractive.send(mAbstraction);
 		}
 	}
@@ -298,7 +298,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		 */
 		while (true) {
 			try {
-				PreNestedWord preWord = mInteractive
+				PreNestedWord preWord = mInteractive.getInterface()
 						.request(PreNestedWord.class, IterationInfo.instance.setIteration(mIteration)).get();
 				// userRun = mInteractive.request(NestedRun.class).get();
 
@@ -324,7 +324,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 							+ "Asking for another user run.");
 				} catch (AutomataLibraryException e) {
 					mLogger.error("Intersection with user automaton failed", e);
-					mInteractive.common().send(e);
+					mInteractive.getInterface().common().send(e);
 				}
 
 				// Accepts<LETTER, IPredicate> accepted = new Accepts<LETTER, IPredicate>(
@@ -334,7 +334,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				// }
 			} catch (InterruptedException | ExecutionException e) {
 				mLogger.error("Failed to get user automaton", e);
-				mInteractive.common().send(e);
+				mInteractive.getInterface().common().send(e);
 				throw new ToolchainCanceledException(BasicCegarLoop.class);
 				// } catch (AutomataLibraryException e) {
 				// mLogger.error("Could not validate User Run", e);
@@ -356,17 +356,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			return true;
 		}
 
-		if (mInteractiveMode) {
-			if (mPref.interactiveCEXS()) {
+		if (mInteractive.isInteractiveMode()) {
+			if (mInteractive.getPreferences().ismCEXS()) {
 				mInteractive.send("Select a Trace: Please select the trace you want Ultimate to analyze next.");
 				mCounterexample = getUserRun(abstraction);
 			}
 			mInteractive.send(mCounterexample);
-		} else if (mPref.interactiveCEXS()) {
-			throw new IllegalArgumentException(
-					"Interactive couterexample strategy chosen, but interface available. Please start ultimate in Interactive mode.");
 		}
-		
 
 		if (mPref.dumpAutomata()) {
 			mDumper.dumpNestedRun(mCounterexample);
@@ -385,7 +381,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			final String taskDescription = "trying to verify (iteration " + mIteration + ")";
 			throw new ToolchainCanceledException(message, getClass(), taskDescription);
 		}
-		if (mInteractiveMode) {
+		if (mInteractive.isInteractiveMode()) {
 			mInteractive.send(traceHistogram);
 			/*
 			 * if (traceHistogram.getVisualizationArray()[0] > traceHistogram.getVisualizationArray().length) { final
@@ -403,7 +399,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final IRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(
 				mPref.getRefinementStrategy(), mCounterexample, mAbstraction, getIteration(), getCegarLoopBenchmark());
 		try {
-			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy, mInteractive);
+			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy, mInteractive.getInterface());
 		} catch (final ToolchainCanceledException tce) {
 			final int traceHistogramMax = new HistogramOfIterable<>(mCounterexample.getWord()).getMax();
 			final String taskDescription = "analyzing trace of length " + mCounterexample.getLength()
@@ -443,7 +439,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 					mIteration);
 		}
 
-		if (mInteractiveMode && feasibility == LBool.SAT) {
+		if (mInteractive.isInteractiveMode() && feasibility == LBool.SAT) {
 			mInteractive.send("Feasiblke Counterexample Found:The Counterexample trace analyzed in iteration "
 					+ mIteration + " was feasible.");
 		}

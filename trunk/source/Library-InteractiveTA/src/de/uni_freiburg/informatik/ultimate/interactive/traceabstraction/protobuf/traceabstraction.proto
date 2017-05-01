@@ -101,6 +101,13 @@ message TAPreferences {
 
 }
 
+message LivePreferences {
+	bool paused = 1;
+	bool CEXS = 2;
+	bool IPS = 3;
+	bool RSS = 4;
+}
+
 message Tracks {
 	repeated Track track = 1;
 }

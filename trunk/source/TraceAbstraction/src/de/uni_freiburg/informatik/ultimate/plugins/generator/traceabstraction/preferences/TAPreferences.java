@@ -296,13 +296,4 @@ public final class TAPreferences {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY,
 				CounterexampleSearchStrategy.class);
 	}
-
-	
-	public boolean interactive() {
-		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERACTIVE_VERIFICATION);
-	}
-	
-	public boolean interactiveCEXS() {
-		return mPrefs.getBoolean(TraceAbstractionPreferenceInitializer.LABEL_INTERACTIVE_CEXS);
-	}
 }

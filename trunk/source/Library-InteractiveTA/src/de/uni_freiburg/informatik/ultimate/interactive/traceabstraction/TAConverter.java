@@ -29,6 +29,7 @@ import de.uni_freiburg.informatik.ultimate.interactive.conversion.ConverterRegis
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InterpolantsPrePost;
+import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.LivePreferences;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Message;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.NestingRelation;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.PredicateDoubleDecker;
@@ -50,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType.SizeIterationPair;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InteractiveLive;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InterpolantSequences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo.Info;
@@ -115,6 +117,13 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 
 		converterRegistry.registerBA(TraceAbstractionProtos.InterpolantSequences.class, InterpolantSequences.class,
 				TAConverter::fromInterpolants);
+
+		converterRegistry.registerAB(TraceAbstractionProtos.LivePreferences.class, InteractiveLive.Preferences.class,
+				TAConverter::toLivePreferences);
+	}
+
+	private static InteractiveLive.Preferences toLivePreferences(LivePreferences prefs) {
+		return new InteractiveLive.Preferences(prefs.getCEXS(), prefs.getIPS(), prefs.getRSS(), prefs.getPaused());
 	}
 
 	private static TraceAbstractionProtos.InterpolantSequences
