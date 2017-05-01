@@ -51,6 +51,8 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 						DEF_Directory, PreferenceType.Directory),
 				new UltimatePreferenceItem<Boolean>(LABEL_HornSolverMode,
 						DEF_HornSolverMode, PreferenceType.Boolean),
+				new UltimatePreferenceItem<Boolean>(LABEL_FilterUnusedDeclarationsMode,
+						DEF_FilterUnusedDeclarationsMode, PreferenceType.Boolean),
 		};
 	}
 	
@@ -71,4 +73,13 @@ public class PreferenceInitializer extends UltimatePreferenceInitializer {
 	
 	public static final String LABEL_HornSolverMode = "Use TreeAutomizer as solver for the given file (assumes the file contains Horn clauses only).";
 	public static final boolean DEF_HornSolverMode = false;
+	
+	
+	/**
+	 * Special mode in which we only read the input file. 
+	 * And write a similar file in which all declarations that never occurred
+	 * in any term are removed.
+	 */
+	public static final String LABEL_FilterUnusedDeclarationsMode = "Remove only unused declarations from SMT file (experimental)";
+	public static final boolean DEF_FilterUnusedDeclarationsMode = false;
 }

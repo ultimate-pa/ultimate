@@ -27,9 +27,13 @@
 package de.uni_freiburg.informatik.ultimate.source.smtparser;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
@@ -40,8 +44,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.LoggingScript;
+import de.uni_freiburg.informatik.ultimate.logic.NoopScript;
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HCGBuilderHelper;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.treeautomizer.parsing.HornClauseParserScript;
@@ -187,16 +195,23 @@ public class SmtParser implements ISource {
 				.getBoolean(PreferenceInitializer.LABEL_UseExtSolver);
 		final String commandExternalSolver = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getString(PreferenceInitializer.LABEL_ExtSolverCommand);
-		
 		final boolean writeCommandsToFile = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.LABEL_WriteToFile);
 		final String filename =
 				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferenceInitializer.LABEL_Filename);
-
+		final String directory =
+				mServices.getPreferenceProvider(Activator.PLUGIN_ID).getString(PreferenceInitializer.LABEL_Directory);
 		final boolean inHornSolverMode = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.LABEL_HornSolverMode);
+		final boolean filterUnusedDeclarationsMode = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getBoolean(PreferenceInitializer.LABEL_FilterUnusedDeclarationsMode);
 		
 		final LogProxy logProxy = new SmtInterpolLogProxyWrapper(mLogger);
+		
+		if (filterUnusedDeclarationsMode) {
+			runFilterUnusedDeclarationsMode(file, directory, logProxy);
+			return;
+		}
 		Script script;
 		if (inHornSolverMode) {
 			mLogger.info("Parsing .smt2 file as a set of Horn Clauses");
@@ -239,4 +254,85 @@ public class SmtParser implements ISource {
 			script.exit();
 		}
 	}
+
+	
+	private void runFilterUnusedDeclarationsMode(final File file, final String directory, final LogProxy logProxy)
+			throws FileNotFoundException {
+		final CollectNamesScript cns = new CollectNamesScript();
+		
+		final OptionMap optionMap = new OptionMap(logProxy, true);
+		final ParseEnvironment parseEnv1 = new ParseEnvironment(cns, optionMap);
+		try {
+			parseEnv1.parseScript(file.getAbsolutePath());
+			mLogger.info("Succesfully read SMT file " + file.getAbsolutePath());
+		} catch (final SMTLIBException exc) {
+			mLogger.info("Failed while reading SMT file " + file.getAbsolutePath());
+			mLogger.info("SMTLIBException " + exc.getMessage());
+			parseEnv1.printError(exc.getMessage());
+		}
+		
+		final String outputFilename = directory + File.separator + file.getName();
+		final ParseEnvironment parseEnv2 = new ParseEnvironment(new FilteredLoggingScript(outputFilename, true, cns.getNames()), optionMap);
+		try {
+			parseEnv2.parseScript(file.getAbsolutePath());
+			mLogger.info("Succesfully wrote SMT file " + outputFilename);
+		} catch (final SMTLIBException exc) {
+			mLogger.info("Failed while writing SMT file " + outputFilename);
+			mLogger.info("SMTLIBException " + exc.getMessage());
+			parseEnv2.printError(exc.getMessage());
+		}
+	}
+	
+	
+	private class CollectNamesScript extends NoopScript {
+		
+		Set<String> mNames = new HashSet<>();
+
+		@Override
+		public Term term(final String funcname, final BigInteger[] indices, final Sort returnSort, final Term... params)
+				throws SMTLIBException {
+			mNames.add(funcname);
+			return super.term(funcname, indices, returnSort, params);
+		}
+
+		public Set<String> getNames() {
+			return mNames;
+		}
+	}
+	
+	private class FilteredLoggingScript extends LoggingScript {
+		
+		private final Set<String> mAllowedNames;
+
+		public FilteredLoggingScript(final String file, final boolean autoFlush, final Set<String> allowedNames) throws FileNotFoundException {
+			super(file, autoFlush);
+			mAllowedNames = allowedNames;
+		}
+
+		@Override
+		public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort) throws SMTLIBException {
+			if (mAllowedNames.contains(fun)) {
+				super.declareFun(fun, paramSorts, resultSort);
+			} else {
+				// do nothing
+			}
+		}
+
+		@Override
+		public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
+				throws SMTLIBException {
+			if (mAllowedNames.contains(fun)) {
+				super.defineFun(fun, params, resultSort, definition);
+			} else {
+				// do nothing
+			}
+		}
+		
+		
+		
+		
+		
+	}
+	
+	
 }
