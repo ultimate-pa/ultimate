@@ -29,26 +29,28 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fas
 
 import java.math.BigDecimal;
 
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Theory;
-import de.uni_freiburg.informatik.ultimate.logic.Theory.SolverSetup;
-
 
 /**
-*
-* @author Jill Enke (enkei@informatik.uni-freiburg.de)
-*
-*/
+ *
+ * @author Jill Enke (enkei@informatik.uni-freiburg.de)
+ *
+ */
 public class ParametricOctValue {
-	
+
 	private final BigDecimal mA;
 	private final BigDecimal mB;
 	private final TermVariable mK;
-	
+
 	ParametricOctValue() {
 		mA = new BigDecimal("0");
 		mB = new BigDecimal("0");
 		mK = null;
+	}
+
+	ParametricOctValue(BigDecimal coefficient, BigDecimal summant, TermVariable parametricVar) {
+		mA = coefficient;
+		mB = summant;
+		mK = parametricVar;
 	}
 }

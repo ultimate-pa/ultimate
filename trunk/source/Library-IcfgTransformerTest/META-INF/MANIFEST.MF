@@ -8,8 +8,12 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.test,
  org.junit,
- de.uni_freiburg.informatik.ultimate.lib.smtlib
-Import-Package: junit.framework,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.smtsolver.external,
+ de.uni_freiburg.informatik.ultimate.core
+Import-Package: de.uni_freiburg.informatik.ultimate.core.coreplugin.services,
+ de.uni_freiburg.informatik.ultimate.smtsolver.external,
+ junit.framework,
  org.junit,
  org.junit.runner,
  org.junit.runner.notification,

@@ -30,44 +30,56 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fas
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
-*
-* @author Jill Enke (enkei@informatik.uni-freiburg.de)
-*
-*/
+ *
+ * @author Jill Enke (enkei@informatik.uni-freiburg.de)
+ *
+ */
 public class OneVarOctTerm extends OctagonTerm {
-	
-	private TermVariable mFirstVar;
-	private boolean mFirstNegative;
-	
+
+	private final TermVariable mFirstVar;
+	private final boolean mFirstNegative;
+
 	public OneVarOctTerm(BigDecimal constant, TermVariable var, boolean negative) {
 		super(constant);
 		mFirstVar = var;
 		mFirstNegative = negative;
 	}
-	
+
 	@Override
 	public String toString() {
 		return ((mFirstNegative ? "- " : "") + "2 * " + mFirstVar.toString() + super.toString());
 	}
-	
+
 	@Override
 	public TermVariable getFirstVar() {
 		return mFirstVar;
 	}
-	
+
 	@Override
 	public TermVariable getSecondVar() {
-		// 
-		return null;
+		//
+		return mFirstVar;
 	}
-	
+
+	@Override
 	protected Term leftTerm(Script script) {
-		return (mFirstNegative ? script.term("-", mFirstVar) : mFirstVar);
+		final Term two = script.numeral(new BigInteger("2"));
+		final Term varTerm = script.term("*", two, mFirstVar);
+		return (mFirstNegative ? script.term("-", varTerm) : varTerm);
+	}
+
+	@Override
+	public boolean isFirstNegative() {
+		return mFirstNegative;
+	}
+
+	@Override
+	public boolean isSecondNegative() {
+		return mFirstNegative;
 	}
 }

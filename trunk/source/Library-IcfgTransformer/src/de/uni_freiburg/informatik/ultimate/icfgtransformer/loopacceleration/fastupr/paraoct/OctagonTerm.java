@@ -36,35 +36,42 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
-*
-* @author Jill Enke (enkei@informatik.uni-freiburg.de)
-*
-*/
+ *
+ * @author Jill Enke (enkei@informatik.uni-freiburg.de)
+ *
+ */
 public abstract class OctagonTerm {
-	
+
 	protected BigDecimal mConstant;
-	
-	public OctagonTerm(BigDecimal constant){
+
+	public OctagonTerm(BigDecimal constant) {
 		mConstant = constant;
 	}
-	
+
+	public abstract TermVariable getFirstVar();
+
+	public abstract TermVariable getSecondVar();
+
+	public Object getValue() {
+		return mConstant;
+	}
+
+	public abstract boolean isFirstNegative();
+
+	public abstract boolean isSecondNegative();
+
+	protected abstract Term leftTerm(Script script);
+
+	protected Term rightTerm(Script script) {
+		return (Rational.valueOf(mConstant.toBigInteger(), BigInteger.ONE)).toTerm(script.sort("Int"));
+	}
+
+	@Override
 	public String toString() {
 		return " <= " + mConstant.toString();
 	}
-	
-	public abstract TermVariable getFirstVar();
-	
-	public abstract TermVariable getSecondVar();
-	
+
 	public Term toTerm(Script script) {
 		return script.term("<=", leftTerm(script), rightTerm(script));
-	}
-	
-	protected abstract Term leftTerm(Script script);
-	
-	protected Term rightTerm(Script script) {
-		return (Rational.valueOf(
-				mConstant.toBigInteger(),
-				BigInteger.ONE)).toTerm(script.sort("Int"));
 	}
 }

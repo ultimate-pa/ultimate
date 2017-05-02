@@ -27,58 +27,54 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct;
 
-
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonTerm;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OneVarOctTerm;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.TwoVarOctTerm;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRUtils;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-
 /**
-*
-* @author Jill Enke (enkei@informatik.uni-freiburg.de)
-*
-*/
-public class OctagonConcatination {
+ *
+ * @author Jill Enke (enkei@informatik.uni-freiburg.de)
+ *
+ */
+public class OctagonConjunction {
 
-	
 	private final ArrayList<OctagonTerm> mTerms;
 	private HashSet<TermVariable> mCachedVariables;
-	
-	public OctagonConcatination() {
+
+	public OctagonConjunction() {
 		mTerms = new ArrayList<>();
-		mCachedVariables = new HashSet<TermVariable>();
+		mCachedVariables = new HashSet<>();
 	}
-	
-	public String toString() {
-		if (mTerms.size() == 0) return "";
-		String result = "(" + mTerms.get(0).toString() + ")";
-		for (int i = 1; i < mTerms.size(); i++) {
-			result = result + " and (" + mTerms.get(i).toString() + ")";
-		}
-		return result;
-	}
-	
+
 	public void addTerm(OctagonTerm octagonTerm) {
+		if (octagonTerm.equals(null))
+			return;
 		mTerms.add(octagonTerm);
 		mCachedVariables = null;
 	}
-	
+
+	public void removeTerm(OctagonTerm octagonTerm) {
+		mTerms.remove(octagonTerm);
+		mCachedVariables = null;
+	}
+
 	public ArrayList<OctagonTerm> getTerms() {
 		return mTerms;
 	}
-	
+
 	public int getVariableCount() {
 		return getVariables().size();
 	}
-	
+
 	private HashSet<TermVariable> getVariables() {
-		HashSet<TermVariable> variables = new HashSet<>();
-		for(OctagonTerm t : mTerms) {
+		if (mCachedVariables != null)
+			return mCachedVariables;
+		final HashSet<TermVariable> variables = new HashSet<>();
+		for (final OctagonTerm t : mTerms) {
 			if (t instanceof OneVarOctTerm) {
 				variables.add(t.getFirstVar());
 			} else if (t instanceof TwoVarOctTerm) {
@@ -88,5 +84,40 @@ public class OctagonConcatination {
 		}
 		mCachedVariables = variables;
 		return variables;
+	}
+
+	@Override
+	public String toString() {
+		if (mTerms.size() == 0)
+			return "";
+		String result = "(" + mTerms.get(0).toString() + ")";
+		for (int i = 1; i < mTerms.size(); i++) {
+			result = result + " and (" + mTerms.get(i).toString() + ")";
+		}
+		return result;
+	}
+
+	public Term toTerm(Script script, FastUPRUtils utils) {
+		final ArrayList<Term> terms = new ArrayList<>();
+		for (final OctagonTerm t : mTerms) {
+			utils.debug("OctagonTerm: " + t.toString());
+			terms.add(t.toTerm(script));
+			utils.debug("Term: " + t.toTerm(script).toString());
+		}
+		Term[] termArray = new Term[terms.size()];
+		termArray = terms.toArray(termArray);
+		final Term result = script.term("and", termArray);
+		utils.debug(result.toString());
+		return result;
+	}
+
+	public Term toTerm(Script script) {
+		final ArrayList<Term> terms = new ArrayList<>();
+		for (final OctagonTerm t : mTerms) {
+			terms.add(t.toTerm(script));
+		}
+		Term[] termArray = new Term[terms.size()];
+		termArray = terms.toArray(termArray);
+		return script.term("and", termArray);
 	}
 }

@@ -33,40 +33,47 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-
 /**
-*
-* @author Jill Enke (enkei@informatik.uni-freiburg.de)
-*
-*/
+ *
+ * @author Jill Enke (enkei@informatik.uni-freiburg.de)
+ *
+ */
 public class TwoVarParaOctTerm extends ParametricOctagonTerm {
-	
 
-	private TermVariable mFirstVar;
-	private TermVariable mSecondVar;
-	private boolean mFirstNegative;
-	private boolean mSecondNegative;
-	
-	public TwoVarParaOctTerm(BigDecimal constant, TermVariable firstVar, boolean firstNegative,
-			TermVariable secondVar, boolean secondNegative, TermVariable parametricVar, BigDecimal summant) {
-		super(constant, parametricVar, summant);
+	private final TermVariable mFirstVar;
+	private final TermVariable mSecondVar;
+	private final boolean mFirstNegative;
+	private final boolean mSecondNegative;
+
+	public TwoVarParaOctTerm(BigDecimal constant, TermVariable firstVar, boolean firstNegative, TermVariable secondVar,
+			boolean secondNegative, TermVariable parametricVar, BigDecimal summand) {
+		super(constant, parametricVar, summand);
 		mFirstVar = firstVar;
 		mFirstNegative = firstNegative;
 		mSecondVar = secondVar;
 		mSecondNegative = secondNegative;
 	}
-	
+
+	public TwoVarParaOctTerm(BigDecimal constant, TermVariable firstVar, boolean firstNegative, TermVariable secondVar,
+			boolean secondNegative, TermVariable parametricVar, BigDecimal summand, BigDecimal inc) {
+		super(constant, parametricVar, summand, inc);
+		mFirstVar = firstVar;
+		mFirstNegative = firstNegative;
+		mSecondVar = secondVar;
+		mSecondNegative = secondNegative;
+	}
+
 	@Override
 	public String toString() {
-		return ((mFirstNegative ? "- " : "") + mFirstVar.toString() +
-				(mSecondNegative ? " - " : " + ") + mSecondVar.toString() + super.toString());
+		return ((mFirstNegative ? "- " : "") + mFirstVar.toString() + (mSecondNegative ? " - " : " + ")
+				+ mSecondVar.toString() + super.toString());
 	}
-	
+
 	@Override
 	public TermVariable getFirstVar() {
 		return mFirstVar;
 	}
-	
+
 	@Override
 	public TermVariable getSecondVar() {
 		return mSecondVar;
@@ -74,8 +81,18 @@ public class TwoVarParaOctTerm extends ParametricOctagonTerm {
 
 	@Override
 	protected Term leftTerm(Script script) {
-		final Term firstSummant =  (mFirstNegative ? script.term("-", mFirstVar) : mFirstVar);
+		final Term firstSummant = (mFirstNegative ? script.term("-", mFirstVar) : mFirstVar);
 		final String funcSymbol = (mSecondNegative ? "-" : "+");
 		return script.term(funcSymbol, firstSummant, mSecondVar);
+	}
+
+	@Override
+	public boolean isFirstNegative() {
+		return mFirstNegative;
+	}
+
+	@Override
+	public boolean isSecondNegative() {
+		return mSecondNegative;
 	}
 }

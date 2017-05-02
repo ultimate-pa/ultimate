@@ -36,42 +36,43 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
-*
-* @author Jill Enke (enkei@informatik.uni-freiburg.de)
-*
-*/
+ *
+ * @author Jill Enke (enkei@informatik.uni-freiburg.de)
+ *
+ */
 public abstract class ParametricOctagonTerm extends OctagonTerm {
-	
+
 	protected final TermVariable mParametricVar;
-	protected final BigDecimal mSummant;
-		
-	public ParametricOctagonTerm(BigDecimal constant, TermVariable parametricVar, BigDecimal summant){
+	protected final BigDecimal mSummand;
+	protected final BigDecimal mIncrement;
+
+	public ParametricOctagonTerm(BigDecimal constant, TermVariable parametricVar, BigDecimal summant) {
+		this(constant, parametricVar, summant, BigDecimal.ZERO);
+	}
+
+	public ParametricOctagonTerm(BigDecimal constant, TermVariable parametricVar, BigDecimal summant, BigDecimal inc) {
 		super(constant);
 		mParametricVar = parametricVar;
-		mSummant = summant;
+		mSummand = summant;
+		mIncrement = inc;
 	}
-	
-	public String toString() {
-		return " <= " + mConstant.toString();
-	}
-	
-	public TermVariable getFirstVar() {
-		return null;
-	}
-	
-	public TermVariable getSecondVar() {
-		return null;
-	}
-	
+
 	@Override
 	protected Term rightTerm(Script script) {
-		final Term constTerm = (Rational.valueOf(
-				mConstant.toBigInteger(),
-				BigInteger.ONE)).toTerm(script.sort("Int"));
-		final Term summantTerm = (Rational.valueOf(
-				mSummant.toBigInteger(),
-				BigInteger.ONE)).toTerm(script.sort("Int"));
-		return script.term("+", script.term("*", constTerm, mParametricVar), summantTerm);
+		final Term constTerm = (Rational.valueOf(mConstant.toBigInteger(), BigInteger.ONE)).toTerm(script.sort("Int"));
+		Term varTerm = mParametricVar;
+		if (!mIncrement.equals(BigDecimal.ZERO)) {
+			varTerm = script.term("+", mParametricVar,
+					Rational.valueOf(mIncrement.toBigInteger(), BigInteger.ONE).toTerm(script.sort("Int")));
+		}
+		final Term summandTerm = (Rational.valueOf(mSummand.toBigInteger(), BigInteger.ONE)).toTerm(script.sort("Int"));
+		return script.term("+", script.term("*", constTerm, varTerm), summandTerm);
 	}
-	
+
+	@Override
+	public String toString() {
+		return " <= " + mConstant + " * " + (mIncrement.equals(BigDecimal.ZERO) ? mParametricVar.toString()
+				: "(" + mParametricVar + " + " + mIncrement.toString() + ")") + " + " + mSummand.toString();
+	}
+
 }

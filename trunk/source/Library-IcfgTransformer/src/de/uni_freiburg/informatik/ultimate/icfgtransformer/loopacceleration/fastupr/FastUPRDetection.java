@@ -83,6 +83,7 @@ public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLoc
 
 	@SuppressWarnings("unchecked")
 	private HashSet<INLOC> getLoopHeads(final IIcfg<INLOC> originalIcfg) {
+
 		final HashSet<INLOC> loopHeads = new HashSet<>();
 		final Set<INLOC> init = originalIcfg.getInitialNodes();
 		final Set<INLOC> closed = new HashSet<>();

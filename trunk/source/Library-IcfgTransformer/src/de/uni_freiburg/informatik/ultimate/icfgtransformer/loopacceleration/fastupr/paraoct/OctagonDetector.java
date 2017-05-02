@@ -25,144 +25,152 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr;
+package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct;
 
 import java.util.HashSet;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRUtils;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
-import de.uni_freiburg.informatik.ultimate.logic.LetTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
-import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
-*
-* @author Jill Enke (enkei@informatik.uni-freiburg.de)
-*
-*/
+ *
+ * @author Jill Enke (enkei@informatik.uni-freiburg.de)
+ *
+ */
 public class OctagonDetector extends NonRecursive {
-	
+
 	private final HashSet<Term> mCheckedTerms;
 	private final HashSet<Term> mSubTerms;
 	private final HashSet<TermVariable> mCurrentVars;
-	private boolean mOctagon;
-	private final ILogger mLogger;
+	private final boolean mOctagon;
 	private boolean mIsOctTerm;
-	
-	public OctagonDetector(ILogger logger) {
+	private final ManagedScript mManagedScript;
+	private final IUltimateServiceProvider mServices;
+	private final FastUPRUtils mUtils;
+
+	public OctagonDetector(FastUPRUtils utils, ManagedScript managedScript, IUltimateServiceProvider services) {
 		super();
+		mUtils = utils;
 		mCheckedTerms = new HashSet<>();
 		mSubTerms = new HashSet<>();
 		mCurrentVars = new HashSet<>();
 		mOctagon = true;
-		mLogger = logger;
+		mManagedScript = managedScript;
+		mServices = services;
 	}
-	
-	private static class ConcatinationWalker implements NonRecursive.Walker {
+
+	private static class ConjunctionWalker implements NonRecursive.Walker {
 
 		final Term mTerm;
-		final ILogger mLogger;
-		
-		public ConcatinationWalker(Term t, ILogger logger) {
+		final FastUPRUtils mUtils;
+
+		public ConjunctionWalker(Term t, FastUPRUtils utils) {
 			mTerm = t;
-			mLogger = logger;
-			mLogger.debug("New Concatination Walker for term:" + t.toString());
+			mUtils = utils;
+			mUtils.debug("New Concatination Walker for term:" + t.toString());
 		}
-		
+
 		@Override
 		public void walk(NonRecursive engine) {
 			// TODO Auto-generated method stub
-			mLogger.debug("walk called");
-			((OctagonDetector) engine).addConcatTerms(mTerm);
+			mUtils.debug("walk called");
+			((OctagonDetector) engine).addConjunctTerms(mTerm);
 		}
-		
+
 	}
-	
+
 	private static class OctagonDetectionWalker implements NonRecursive.Walker {
 
 		private final Term mTerm;
-		
+
 		OctagonDetectionWalker(Term t) {
 			mTerm = t;
 		}
-		
+
 		@Override
 		public void walk(NonRecursive engine) {
 			// TODO Auto-generated method stub
 			((OctagonDetector) engine).check(mTerm);
-			
+
 		}
-		
+
 	}
-	
-	public HashSet<Term> getConcatSubTerms(Term t) {
+
+	public HashSet<Term> getConjunctSubTerms(Term t) {
+		final Term cnfRelation = SmtUtils.toCnf(mServices, mManagedScript, t,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		mCheckedTerms.clear();
-		run(new ConcatinationWalker(t, mLogger));
+		run(new ConjunctionWalker(cnfRelation, mUtils));
 		return mSubTerms;
 	}
-	
-	private void addConcatTerms(Term t) {
-		
-		mLogger.debug("Current Term:" + t.toString());
-		
+
+	private void addConjunctTerms(Term t) {
+
+		mUtils.debug("Current Term:" + t.toString());
+
 		if (mCheckedTerms.contains(t)) {
-			mLogger.debug("Already checked");
+			mUtils.debug("Already checked");
 			return;
 		}
-		
+
 		if (t instanceof ApplicationTerm) {
-			mLogger.debug("ApplicationTerm");
-			ApplicationTerm aT = (ApplicationTerm) t;
+			mUtils.debug("ApplicationTerm");
+			final ApplicationTerm aT = (ApplicationTerm) t;
 			if ((aT).getFunction().getName().compareTo("and") == 0) {
 				mCheckedTerms.add(t);
-				mLogger.debug("> with function name = " + aT.getFunction().getName());
-				
+				mUtils.debug("> with function name = " + aT.getFunction().getName());
+
 				for (final Term arg : (aT).getParameters()) {
-					enqueueWalker(new ConcatinationWalker(arg, mLogger));
+					enqueueWalker(new ConjunctionWalker(arg, mUtils));
 				}
 				return;
 			}
 		}
-		
 
-		mLogger.debug("Other Term");
-		
+		mUtils.debug("Other Term or other Application Term");
+
 		mSubTerms.add(t);
 		mCheckedTerms.add(t);
-		
+
 	}
-	
+
 	public boolean isOctagonTerm(Term t) {
 		mCheckedTerms.clear();
 		mIsOctTerm = true;
 		mCurrentVars.clear();
 		run(new OctagonDetectionWalker(t));
-		mLogger.debug(((mIsOctTerm) ? "Term is Oct" : "Term is NOT Oct"));
+		mUtils.debug(((mIsOctTerm) ? "Term is Oct" : "Term is NOT Oct"));
 		return mIsOctTerm;
 	}
-	
+
 	private void check(Term t) {
-		mLogger.debug("Checking Term:" + t.toString());
-		
-		if(!mIsOctTerm) {
+
+		if (!mIsOctTerm) {
 			return;
 		}
-		
-		if(t instanceof TermVariable) {
+
+		mUtils.debug("Checking Term:" + t.toString());
+
+		if (t instanceof TermVariable) {
 			mCurrentVars.add((TermVariable) t);
-			if (mCurrentVars.size() > 2) mIsOctTerm = false;
+			if (mCurrentVars.size() > 2)
+				mIsOctTerm = false;
 		} else if (t instanceof ApplicationTerm) {
-			ApplicationTerm aT = (ApplicationTerm) t;
-			String functionName = aT.getFunction().getName();
-			if (functionName.compareTo("<=") == 0
-					|| functionName.compareTo("<") == 0
-					|| functionName.compareTo(">") == 0
-					|| functionName.compareTo(">=") == 0) {
-				for(Term arg : aT.getParameters()) {
+			final ApplicationTerm aT = (ApplicationTerm) t;
+			final String functionName = aT.getFunction().getName();
+			if (functionName.compareTo("<=") == 0 || functionName.compareTo("<") == 0
+					|| functionName.compareTo(">") == 0 || functionName.compareTo(">=") == 0
+					|| functionName.compareTo("=") == 0 || functionName.compareTo("+") == 0) {
+				for (final Term arg : aT.getParameters()) {
 					enqueueWalker(new OctagonDetectionWalker(arg));
 				}
 			} else {
@@ -172,23 +180,21 @@ public class OctagonDetector extends NonRecursive {
 		} else if (t instanceof ConstantTerm) {
 			return;
 		} else if (t instanceof AnnotatedTerm) {
-			enqueueWalker(new OctagonDetectionWalker(((AnnotatedTerm)t).getSubterm()));
+			enqueueWalker(new OctagonDetectionWalker(((AnnotatedTerm) t).getSubterm()));
 		} else {
 			mIsOctTerm = false;
 			return;
 		}
-		
-		
+
 	}
-	
+
 	public void clearChecked() {
 		mCheckedTerms.clear();
 	}
-	
-	public HashSet<Term> getSubTerms(){
+
+	public HashSet<Term> getSubTerms() {
 		return mSubTerms;
 	}
-
 
 	public boolean isOctagon() {
 		return mOctagon;
