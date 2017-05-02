@@ -8,7 +8,8 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
  de.uni_freiburg.informatik.ultimate.lib.ultimatemodel,
  de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.smtlib,
- de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder
+ de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
+ de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2
 Export-Package: de.uni_freiburg.informatik.ultimate.icfgtransformer,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ahmed,
@@ -17,4 +18,3 @@ Export-Package: de.uni_freiburg.informatik.ultimate.icfgtransformer,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.woelfing,
  de.uni_freiburg.informatik.ultimate.icfgtransformer.transformulatransformers
-Import-Package: de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon

@@ -15,7 +15,9 @@ Export-Package: de.uni_freiburg.informatik.ultimate.test,
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.core,
  de.uni_freiburg.informatik.ultimate.lib.util,
- org.junit
+ org.junit,
+ de.uni_freiburg.informatik.ultimate.lib.smtlib,
+ de.uni_freiburg.informatik.ultimate.smtsolver.external
 Import-Package: org.junit,
  org.junit.experimental.categories,
  org.junit.runner,
