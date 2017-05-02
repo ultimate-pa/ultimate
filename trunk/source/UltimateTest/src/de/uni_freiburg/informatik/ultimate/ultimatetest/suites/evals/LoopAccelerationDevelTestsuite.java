@@ -64,6 +64,9 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 //			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing_Debug.epf"),
 			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing_SMTInterpol_Debug.epf"),
+
+			new Triple<>("AutomizerCInline.xml", C, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
+			new Triple<>("AutomizerCInlineTransformed.xml", C, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
 	};
 
 	private static final String[] INPUT = new String[] {
