@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fast
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonDetector;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.ParametricOctMatrix;
+import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -79,8 +80,9 @@ public class FastUPRCore<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation
 	private final TermChecker mTermChecker;
 	private final FastUPRFormulaBuilder mFormulaBuilder;
 
-	public FastUPRCore(UnmodifiableTransFormula formula, ILocationFactory<INLOC, OUTLOC> factory,
-			ManagedScript managedScript, ILogger logger, IUltimateServiceProvider services) throws Exception {
+	public FastUPRCore(final UnmodifiableTransFormula formula, final ILocationFactory<INLOC, OUTLOC> factory,
+			final ManagedScript managedScript, final ILogger logger, final IUltimateServiceProvider services)
+			throws Exception {
 		mLogger = logger;
 		mServices = services;
 		mManagedScript = managedScript;
@@ -141,12 +143,13 @@ public class FastUPRCore<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation
 		int b = 0;
 		while (!periodLoop(b++)) {
 			// TODO remove
-			if (b > 100)
+			if (b > 100) {
 				return;
+			}
 		}
 	}
 
-	private boolean periodLoop(int b) {
+	private boolean periodLoop(final int b) {
 		for (int c = 1; c <= b; c++) {
 			mUtils.output(">> Checking Consistency for b=" + b + ", c=" + c);
 			mUtils.setDetailed(true);
@@ -181,7 +184,7 @@ public class FastUPRCore<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation
 		return null;
 	}
 
-	private ParametricOctMatrix periodCheck(int b, int c) {
+	private ParametricOctMatrix periodCheck(final int b, final int c) {
 		// Check if difference between R^(c+b) and R^(b) is equal to difference
 		// between R^(2c+b) and R^(c+b)
 
@@ -227,7 +230,7 @@ public class FastUPRCore<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation
 		return null;
 	}
 
-	private boolean checkForAll(ParametricOctMatrix difference, int b, int c) {
+	private boolean checkForAll(final ParametricOctMatrix difference, final int b, final int c) {
 		// if for all n>=0 : rho( n * difference + sigma(R^b))∘R^c
 		// <=> rho((n+1) * difference + sigma(R^b))∘R^c <=/=> false
 
@@ -265,8 +268,8 @@ public class FastUPRCore<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation
 
 		// QuantifiedTerm (for all n >= 0)
 
-		final Term quantTerm = script.quantifier(1, new TermVariable[] { differenceN.getParametricVar() }, eqTerm,
-				null);
+		final Term quantTerm = script.quantifier(QuantifiedFormula.FORALL,
+				new TermVariable[] { differenceN.getParametricVar() }, eqTerm);
 		mUtils.debug("quantTerm: " + eqTerm.toString());
 
 		mTermChecker.checkTerm(quantTerm);
@@ -274,7 +277,7 @@ public class FastUPRCore<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation
 		return false;
 	}
 
-	private boolean isOctagon(Term relation, Script script) throws NotAffineException {
+	private boolean isOctagon(final Term relation, final Script script) throws NotAffineException {
 
 		// Convert Term to CNF
 
@@ -302,8 +305,9 @@ public class FastUPRCore<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation
 			// Check if Term is a possible OctagonTerm
 			// (is equal to a Term of the form: +-x +-y <= c)
 
-			if (!mOctagonDetector.isOctagonTerm(t))
+			if (!mOctagonDetector.isOctagonTerm(t)) {
 				return false;
+			}
 
 		}
 		return true;
