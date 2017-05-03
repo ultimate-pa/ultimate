@@ -14,52 +14,85 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  */
 
 public class Loop {
-	
+
 	private final Deque<IcfgEdge> mPath;
 	private Deque<Backbone> mBackbones;
 	private final IcfgLocation mLoopHead;
-	private final Term mCondition;
-	
+	private Term mCondition;
+	private IteratedSymbolicMemory mIteratedMemory;
+
+	/**
+	 * Construct a new loop.
+	 * 
+	 * @param path
+	 *            The loop's path in the ICFG.
+	 * 
+	 * @param loopHead
+	 *            The loop entry node.
+	 */
 	public Loop(final Deque<IcfgEdge> path, final IcfgLocation loopHead) {
 		mPath = path;
 		mLoopHead = loopHead;
 		mBackbones = new ArrayDeque<>();
 		mCondition = null;
+		mIteratedMemory = null;
 	}
-	
+
 	/**
 	 * Add a new backbone to the loop.
+	 * 
+	 * @param backbone
+	 *            The backbone to be assigned to the loop.
 	 */
 	public void addBackbone(final Backbone backbone) {
 		mBackbones.addLast(backbone);
 	}
-	
+
 	/**
 	 * Get loop path as IcfgEdges
 	 */
 	public Deque<IcfgEdge> getPath() {
 		return mPath;
 	}
-	
+
 	/**
 	 * Get the loops backbones as IcfgEdges
 	 */
 	public Deque<Backbone> getBackbones() {
 		return mBackbones;
 	}
-	
+
+	/**
+	 * Get the loops looping condition.
+	 */
+	public Term getCondition() {
+		return mCondition;
+	}
+
+	public IteratedSymbolicMemory getIteratedMemory() {
+		return mIteratedMemory;
+	}
+
 	/**
 	 * Get the loophead as IcfgLocation
 	 */
 	public IcfgLocation getLoophead() {
 		return mLoopHead;
 	}
-	
+
+	public void setCondition(Term condition) {
+		mCondition = condition;
+	}
+
+	public void setIteratedSymbolicMemory(IteratedSymbolicMemory memory) {
+		mIteratedMemory = memory;
+	}
+
 	@Override
 	public String toString() {
 		return mPath.toString();
 	}
-	
+
 	public String backbonesToString() {
 		StringBuilder str = new StringBuilder();
 		for (Backbone backbone : mBackbones) {
