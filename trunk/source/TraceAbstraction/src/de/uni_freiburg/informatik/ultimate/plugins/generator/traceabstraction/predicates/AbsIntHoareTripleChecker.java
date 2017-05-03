@@ -520,6 +520,16 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			return true;
 		}
 		mLogger.fatal("Check was " + result + " but should have been " + checkedResult);
+
+		if (precondHier == null) {
+			mLogger.fatal("PreS: {" + preState + "}");
+		} else {
+			mLogger.fatal("PreBefore: {" + preState + "}");
+			mLogger.fatal("PreAfter: {" + validPreLinState + "}");
+		}
+		mLogger.fatal(IcfgUtils.getTransformula(transition).getClosedFormula() + " (" + transition + ")");
+		mLogger.fatal("Post: {" + succ + "}");
+
 		mLogger.fatal("Failing Hoare triple:");
 		if (precondHier == null) {
 			mLogger.fatal("Pre: {" + precond.getFormula() + "}");
@@ -530,20 +540,23 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		mLogger.fatal(IcfgUtils.getTransformula(transition).getClosedFormula() + " (" + transition + ")");
 		mLogger.fatal("Post: {" + postcond.getFormula() + "}");
 
-		final String simplePre =
-				SmtUtils.simplify(mManagedScript, precond.getFormula(), mServices, mSimplificationTechnique).toString();
+		mLogger.fatal("Simplified:");
+		final String simplePre = SmtUtils
+				.simplify(mManagedScript, precond.getFormula(), mServices, mSimplificationTechnique).toStringDirect();
 		if (precondHier == null) {
 			mLogger.fatal("Pre: {" + simplePre + "}");
 		} else {
 			mLogger.fatal("PreBefore: {" + simplePre + "}");
-			mLogger.fatal("PreAfter: {" + SmtUtils
-					.simplify(mManagedScript, precondHier.getFormula(), mServices, mSimplificationTechnique).toString()
+			mLogger.fatal("PreAfter: {"
+					+ SmtUtils.simplify(mManagedScript, precondHier.getFormula(), mServices, mSimplificationTechnique)
+							.toStringDirect()
 					+ "}");
 		}
 		mLogger.fatal(
 				IcfgUtils.getTransformula(transition).getClosedFormula().toStringDirect() + " (" + transition + ")");
 		mLogger.fatal("Post: {" + SmtUtils
-				.simplify(mManagedScript, postcond.getFormula(), mServices, mSimplificationTechnique).toString() + "}");
+				.simplify(mManagedScript, postcond.getFormula(), mServices, mSimplificationTechnique).toStringDirect()
+				+ "}");
 		return false;
 
 	}

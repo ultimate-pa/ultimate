@@ -27,63 +27,51 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr;
 
-import java.util.ArrayList;
-
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
-*
-* @author Jill Enke (enkei@informatik.uni-freiburg.de)
-*
-*/
+ *
+ * @author Jill Enke (enkei@informatik.uni-freiburg.de)
+ *
+ */
 public class FastUPRUtils {
-	
-	private UnmodifiableTransFormula mCachedFormula;
-	private int mCachedCount;
+
 	private final ILogger mLogger;
-	
-	public FastUPRUtils(ILogger logger) {
+	private boolean mDetailed;
+
+	/**
+	 *
+	 * @param logger
+	 *            the ILogger to be used
+	 * @param detailed
+	 *            Detailed output on or off
+	 */
+	public FastUPRUtils(ILogger logger, boolean detailed) {
 		mLogger = logger;
-		// Prevent instantiation of this utility class
+		mDetailed = detailed;
 	}
-	
-	public UnmodifiableTransFormula composition(ILogger logger, IUltimateServiceProvider services, ManagedScript managedScript, UnmodifiableTransFormula formula, int count) {
-		ArrayList<UnmodifiableTransFormula> formulas = new ArrayList<>();
-		
-		
-		if (mCachedCount <= count) {
-			formulas.add(mCachedFormula);
-			for (int i = mCachedCount + 1; i <= count; i++) {
-				formulas.add(formula);
-			}
-		} else {
-			for (int i = 1; i <= count; i++) {
-				formulas.add(formula);
-			}
-		}
-		
-		
-		
-		mCachedCount = count;
-		mCachedFormula = TransFormulaUtils.sequentialComposition(logger,
-				services,
-				managedScript,
-				false,
-				false,
-				false,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-				SimplificationTechnique.SIMPLIFY_DDA,
-				formulas);
-		
-		mLogger.debug(mCachedFormula.toString());
-		
-		return mCachedFormula;
-		
+
+	/**
+	 * Always outputs the msg as mLogger.debug(msg)
+	 *
+	 * @param msg
+	 */
+	public void output(Object msg) {
+		mLogger.debug(msg);
 	}
+
+	/**
+	 * Only outputs the msg if detailed mode is active.
+	 *
+	 * @param msg
+	 */
+	public void debug(Object msg) {
+		if (mDetailed)
+			mLogger.debug(msg);
+	}
+
+	public void setDetailed(boolean detailed) {
+		mDetailed = detailed;
+	}
+
 }

@@ -33,48 +33,57 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-
 /**
-*
-* @author Jill Enke (enkei@informatik.uni-freiburg.de)
-*
-*/
+ *
+ * @author Jill Enke (enkei@informatik.uni-freiburg.de)
+ *
+ */
 public class TwoVarOctTerm extends OctagonTerm {
-	
 
-	private TermVariable mFirstVar;
-	private TermVariable mSecondVar;
-	private boolean mFirstNegative;
-	private boolean mSecondNegative;
-	
-	public TwoVarOctTerm(BigDecimal constant, TermVariable firstVar, boolean firstNegative,
-			TermVariable secondVar, boolean secondNegative) {
+	private final TermVariable mFirstVar;
+	private final TermVariable mSecondVar;
+	private final boolean mFirstNegative;
+	private final boolean mSecondNegative;
+
+	public TwoVarOctTerm(BigDecimal constant, TermVariable firstVar, boolean firstNegative, TermVariable secondVar,
+			boolean secondNegative) {
 		super(constant);
 		mFirstVar = firstVar;
 		mFirstNegative = firstNegative;
 		mSecondVar = secondVar;
 		mSecondNegative = secondNegative;
 	}
-	
+
 	@Override
 	public String toString() {
-		return ((mFirstNegative ? "- " : "") + mFirstVar.toString() +
-				(mSecondNegative ? " - " : " + ") + mSecondVar.toString() + super.toString());
+		return ((mFirstNegative ? "- " : "") + mFirstVar.toString() + (mSecondNegative ? " - " : " + ")
+				+ mSecondVar.toString() + super.toString());
 	}
-	
+
 	@Override
 	public TermVariable getFirstVar() {
 		return mFirstVar;
 	}
-	
+
 	@Override
 	public TermVariable getSecondVar() {
 		return mSecondVar;
 	}
-	
+
+	@Override
 	protected Term leftTerm(Script script) {
-		final Term firstSummant =  (mFirstNegative ? script.term("-", mFirstVar) : mFirstVar);
+		final Term firstSummant = (mFirstNegative ? script.term("-", mFirstVar) : mFirstVar);
 		final String funcSymbol = (mSecondNegative ? "-" : "+");
 		return script.term(funcSymbol, firstSummant, mSecondVar);
+	}
+
+	@Override
+	public boolean isFirstNegative() {
+		return mFirstNegative;
+	}
+
+	@Override
+	public boolean isSecondNegative() {
+		return mSecondNegative;
 	}
 }

@@ -26,6 +26,8 @@
  */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
+import java.io.IOException;
+
 import org.hamcrest.core.Is;
 import org.junit.After;
 import org.junit.Assert;
@@ -34,40 +36,57 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Logics;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
 /**
  *
  * This is a basic example for a unit test.
- *
- * You may need some mock classes. Have a look at QuantifierEliminationTest in Library-ModelCheckerUtilsTest to see
- * examples for creating {@link IUltimateServiceProvider}, {@link ILogger} and {@link Script} mocks.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public class ExampleTest {
 
+	private IUltimateServiceProvider mServices;
+	private Script mScript;
+	private ManagedScript mMgdScript;
+	private ILogger mLogger;
+
 	@Before
-	public void executeBeforeEachTest() {
-		System.out.println("Before");
+	public void setUp() {
+		mServices = UltimateMocks.createUltimateServiceProviderMock();
+		mLogger = mServices.getLoggingService().getLogger("lol");
+		try {
+			mScript = UltimateMocks.createZ3Script();
+		} catch (final IOException e) {
+			throw new AssertionError(e);
+		}
+		// script = new SMTInterpol();
+		mMgdScript = new ManagedScript(mServices, mScript);
+
+		mScript.setLogic(Logics.ALL);
+		mLogger.info("Before finished");
 	}
 
 	@Test
 	public void Sometest() {
-		System.out.println("Sometest");
+		mLogger.info("Sometest");
 		Assert.assertThat(true, Is.is(true));
 	}
 
 	@Test
 	public void SomeOtherTest() {
-		System.out.println("SomeOtherTest");
+		mLogger.info("SomeOtherTest");
 		Assert.assertThat(true, Is.is(true));
 	}
 
 	@After
 	public void executeAfterEachTest() {
-		System.out.println("After");
+		mScript.exit();
+		mLogger.info("After finished");
 	}
 
 }

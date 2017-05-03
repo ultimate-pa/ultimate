@@ -34,33 +34,56 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
-*
-* @author Jill Enke (enkei@informatik.uni-freiburg.de)
-*
-*/
+ *
+ * @author Jill Enke (enkei@informatik.uni-freiburg.de)
+ *
+ */
 public class OneVarParaOctTerm extends ParametricOctagonTerm {
-	
-	private TermVariable mFirstVar;
-	private boolean mFirstNegative;
-	
-	public OneVarParaOctTerm(BigDecimal constant, TermVariable var, boolean negative, TermVariable parametricVar, BigDecimal summant) {
+
+	private final TermVariable mFirstVar;
+	private final boolean mFirstNegative;
+
+	public OneVarParaOctTerm(BigDecimal constant, TermVariable var, boolean negative, TermVariable parametricVar,
+			BigDecimal summant) {
 		super(constant, parametricVar, summant);
 		mFirstVar = var;
 		mFirstNegative = negative;
 	}
-	
+
+	public OneVarParaOctTerm(BigDecimal constant, TermVariable var, boolean negative, TermVariable parametricVar,
+			BigDecimal summant, BigDecimal inc) {
+		super(constant, parametricVar, summant, inc);
+		mFirstVar = var;
+		mFirstNegative = negative;
+	}
+
 	@Override
 	public String toString() {
 		return ((mFirstNegative ? "- " : "") + "2 * " + mFirstVar.toString() + super.toString());
 	}
-	
+
 	@Override
 	public TermVariable getFirstVar() {
 		return mFirstVar;
 	}
 
 	@Override
+	public TermVariable getSecondVar() {
+		return mFirstVar;
+	}
+
+	@Override
 	protected Term leftTerm(Script script) {
 		return (mFirstNegative ? script.term("-", mFirstVar) : mFirstVar);
+	}
+
+	@Override
+	public boolean isFirstNegative() {
+		return mFirstNegative;
+	}
+
+	@Override
+	public boolean isSecondNegative() {
+		return mFirstNegative;
 	}
 }

@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2017 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Automata Library.
- * 
+ *
  * The ULTIMATE Automata Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Automata Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Automata Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Automata Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -44,11 +44,12 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeRun;
 import de.uni_freiburg.informatik.ultimate.automata.tree.operations.Minimize.DisjointSet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateServiceProviderMock;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
 /**
  * Operation of a treeAutomaton accepts a given Run.
- * 
+ *
  * @author mostafa (mostafa.amin93@gmail.com)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
@@ -75,7 +76,7 @@ public class TreeAutomizerTests {
 
 	@Before
 	public void setUp() {
-		final UltimateServiceProviderMock services = new UltimateServiceProviderMock();
+		final IUltimateServiceProvider services = UltimateMocks.createUltimateServiceProviderMock();
 		mServices = new AutomataLibraryServices(services);
 		mLogger = services.getLoggingService().getLogger(getClass());
 	}
@@ -86,12 +87,13 @@ public class TreeAutomizerTests {
 
 		treeA.addInitialState(SYM_INIT_A);
 		treeA.addFinalState(SYM_NAT_LIST);
-		treeA.addRule(new TreeAutomatonRule<>("0", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_NAT));
-		treeA.addRule(new TreeAutomatonRule<>("s", new ArrayList<>(Arrays.asList(new String[] { SYM_NAT })), SYM_NAT));
 		treeA.addRule(
-				new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_NAT_LIST));
-		treeA.addRule(new TreeAutomatonRule<>("cons", new ArrayList<>(Arrays.asList(new String[] { SYM_NAT, SYM_NAT_LIST })),
+				new TreeAutomatonRule<>("0", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_NAT));
+		treeA.addRule(new TreeAutomatonRule<>("s", new ArrayList<>(Arrays.asList(new String[] { SYM_NAT })), SYM_NAT));
+		treeA.addRule(new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })),
 				SYM_NAT_LIST));
+		treeA.addRule(new TreeAutomatonRule<>("cons",
+				new ArrayList<>(Arrays.asList(new String[] { SYM_NAT, SYM_NAT_LIST })), SYM_NAT_LIST));
 
 		// cons(0, cons(s(0), nil))
 		final Tree<String> nil = new Tree<>("nil");
@@ -111,7 +113,7 @@ public class TreeAutomizerTests {
 		e1.add(elm2);
 		final Tree<String> run = new Tree<>("f", e1);
 
-		final UltimateServiceProviderMock usp = new UltimateServiceProviderMock();
+		final IUltimateServiceProvider usp = UltimateMocks.createUltimateServiceProviderMock();
 		final AutomataLibraryServices services = new AutomataLibraryServices(usp);
 
 		final Accepts<String, String> op = new Accepts<>(services, treeA, run);
@@ -127,23 +129,26 @@ public class TreeAutomizerTests {
 
 		treeA.addInitialState(SYM_INIT_A);
 		treeA.addFinalState(SYM_NAT_LIST);
-		treeA.addRule(new TreeAutomatonRule<>("0", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_NAT));
-		treeA.addRule(new TreeAutomatonRule<>("s", new ArrayList<>(Arrays.asList(new String[] { SYM_NAT })), SYM_NAT));
 		treeA.addRule(
-				new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_NAT_LIST));
-		treeA.addRule(new TreeAutomatonRule<>("cons", new ArrayList<>(Arrays.asList(new String[] { SYM_NAT, SYM_NAT_LIST })),
+				new TreeAutomatonRule<>("0", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_NAT));
+		treeA.addRule(new TreeAutomatonRule<>("s", new ArrayList<>(Arrays.asList(new String[] { SYM_NAT })), SYM_NAT));
+		treeA.addRule(new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })),
 				SYM_NAT_LIST));
+		treeA.addRule(new TreeAutomatonRule<>("cons",
+				new ArrayList<>(Arrays.asList(new String[] { SYM_NAT, SYM_NAT_LIST })), SYM_NAT_LIST));
 
 		treeB.addInitialState(SYM_INIT_A);
 		treeB.addFinalState(SYM_BOOL_LIST);
-		treeB.addRule(new TreeAutomatonRule<>("0", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_BOOL));
-		treeB.addRule(new TreeAutomatonRule<>("1", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_BOOL));
 		treeB.addRule(
-				new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_BOOL_LIST));
+				new TreeAutomatonRule<>("0", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_BOOL));
+		treeB.addRule(
+				new TreeAutomatonRule<>("1", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_BOOL));
+		treeB.addRule(new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })),
+				SYM_BOOL_LIST));
 		treeB.addRule(new TreeAutomatonRule<>("cons",
 				new ArrayList<>(Arrays.asList(new String[] { SYM_BOOL, SYM_BOOL_LIST })), SYM_BOOL_LIST));
 
-		final UltimateServiceProviderMock usp = new UltimateServiceProviderMock();
+		final IUltimateServiceProvider usp = UltimateMocks.createUltimateServiceProviderMock();
 		final AutomataLibraryServices services = new AutomataLibraryServices(usp);
 
 		final StringFactory fac = new StringFactory();
@@ -165,14 +170,18 @@ public class TreeAutomizerTests {
 
 		treeA.addInitialState(SYM_Q0);
 		treeA.addFinalState(SYM_Q3);
-		treeA.addRule(new TreeAutomatonRule<>(SYM_F, new ArrayList<>(Arrays.asList(new String[] { SYM_Q0, SYM_Q1 })), SYM_Q2));
-		treeA.addRule(new TreeAutomatonRule<>(SYM_F, new ArrayList<>(Arrays.asList(new String[] { SYM_Q0, SYM_Q1 })), SYM_Q3));
+		treeA.addRule(new TreeAutomatonRule<>(SYM_F, new ArrayList<>(Arrays.asList(new String[] { SYM_Q0, SYM_Q1 })),
+				SYM_Q2));
+		treeA.addRule(new TreeAutomatonRule<>(SYM_F, new ArrayList<>(Arrays.asList(new String[] { SYM_Q0, SYM_Q1 })),
+				SYM_Q3));
 		treeA.addRule(new TreeAutomatonRule<>("G", new ArrayList<>(Arrays.asList(new String[] { SYM_Q2 })), SYM_Q3));
 		treeA.addRule(new TreeAutomatonRule<>("G", new ArrayList<>(Arrays.asList(new String[] { SYM_Q3 })), SYM_Q3));
-		treeA.addRule(new TreeAutomatonRule<>("H", new ArrayList<>(Arrays.asList(new String[] { SYM_Q0, SYM_Q2 })), SYM_Q1));
-		treeA.addRule(new TreeAutomatonRule<>("H", new ArrayList<>(Arrays.asList(new String[] { SYM_Q0, SYM_Q3 })), SYM_Q1));
+		treeA.addRule(
+				new TreeAutomatonRule<>("H", new ArrayList<>(Arrays.asList(new String[] { SYM_Q0, SYM_Q2 })), SYM_Q1));
+		treeA.addRule(
+				new TreeAutomatonRule<>("H", new ArrayList<>(Arrays.asList(new String[] { SYM_Q0, SYM_Q3 })), SYM_Q1));
 
-		final UltimateServiceProviderMock usp = new UltimateServiceProviderMock();
+		final IUltimateServiceProvider usp = UltimateMocks.createUltimateServiceProviderMock();
 		final AutomataLibraryServices services = new AutomataLibraryServices(usp);
 
 		final StringFactory fac = new StringFactory();
@@ -186,12 +195,13 @@ public class TreeAutomizerTests {
 
 		treeB.addInitialState(SYM_INIT_A);
 		treeB.addFinalState(SYM_NAT_LIST);
-		treeB.addRule(new TreeAutomatonRule<>("0", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_NAT));
-		treeB.addRule(new TreeAutomatonRule<>("s", new ArrayList<>(Arrays.asList(new String[] { SYM_NAT })), SYM_NAT));
 		treeB.addRule(
-				new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_NAT_LIST));
-		treeB.addRule(new TreeAutomatonRule<>("cons", new ArrayList<>(Arrays.asList(new String[] { SYM_NAT, SYM_NAT_LIST })),
+				new TreeAutomatonRule<>("0", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_NAT));
+		treeB.addRule(new TreeAutomatonRule<>("s", new ArrayList<>(Arrays.asList(new String[] { SYM_NAT })), SYM_NAT));
+		treeB.addRule(new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })),
 				SYM_NAT_LIST));
+		treeB.addRule(new TreeAutomatonRule<>("cons",
+				new ArrayList<>(Arrays.asList(new String[] { SYM_NAT, SYM_NAT_LIST })), SYM_NAT_LIST));
 
 		final Determinize<String, String> opB = new Determinize<>(services, fac, treeB);
 		final ITreeAutomatonBU<String, String> resB = opB.getResult();
@@ -208,23 +218,26 @@ public class TreeAutomizerTests {
 
 		treeA.addInitialState(SYM_INIT_A);
 		treeA.addFinalState(SYM_NAT_LIST);
-		treeA.addRule(new TreeAutomatonRule<>("0", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_NAT));
-		treeA.addRule(new TreeAutomatonRule<>("s", new ArrayList<>(Arrays.asList(new String[] { SYM_NAT })), SYM_NAT));
 		treeA.addRule(
-				new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_NAT_LIST));
-		treeA.addRule(new TreeAutomatonRule<>("cons", new ArrayList<>(Arrays.asList(new String[] { SYM_NAT, SYM_NAT_LIST })),
+				new TreeAutomatonRule<>("0", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_NAT));
+		treeA.addRule(new TreeAutomatonRule<>("s", new ArrayList<>(Arrays.asList(new String[] { SYM_NAT })), SYM_NAT));
+		treeA.addRule(new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })),
 				SYM_NAT_LIST));
+		treeA.addRule(new TreeAutomatonRule<>("cons",
+				new ArrayList<>(Arrays.asList(new String[] { SYM_NAT, SYM_NAT_LIST })), SYM_NAT_LIST));
 
 		treeB.addInitialState(SYM_INIT_A);
 		treeB.addFinalState(SYM_BOOL_LIST);
-		treeB.addRule(new TreeAutomatonRule<>("0", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_BOOL));
-		treeB.addRule(new TreeAutomatonRule<>("1", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_BOOL));
 		treeB.addRule(
-				new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_BOOL_LIST));
+				new TreeAutomatonRule<>("0", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_BOOL));
+		treeB.addRule(
+				new TreeAutomatonRule<>("1", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_BOOL));
+		treeB.addRule(new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })),
+				SYM_BOOL_LIST));
 		treeB.addRule(new TreeAutomatonRule<>("cons",
 				new ArrayList<>(Arrays.asList(new String[] { SYM_BOOL, SYM_BOOL_LIST })), SYM_BOOL_LIST));
 
-		final UltimateServiceProviderMock usp = new UltimateServiceProviderMock();
+		final IUltimateServiceProvider usp = UltimateMocks.createUltimateServiceProviderMock();
 		final AutomataLibraryServices services = new AutomataLibraryServices(usp);
 
 		final StringFactory fac = new StringFactory();
@@ -297,13 +310,15 @@ public class TreeAutomizerTests {
 		final TreeAutomatonBU<String, String> treeA = new TreeAutomatonBU<>();
 		treeA.addInitialState(SYM_INIT_A);
 		treeA.addFinalState(SYM_Y);
-		treeA.addRule(new TreeAutomatonRule<>(SYM_I, new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_X));
-		treeA.addRule(new TreeAutomatonRule<>(SYM_I, new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_Y));
+		treeA.addRule(
+				new TreeAutomatonRule<>(SYM_I, new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_X));
+		treeA.addRule(
+				new TreeAutomatonRule<>(SYM_I, new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_Y));
 		treeA.addRule(new TreeAutomatonRule<>(SYM_F, new ArrayList<>(Arrays.asList(new String[] { SYM_X })), SYM_X));
 		treeA.addRule(new TreeAutomatonRule<>(SYM_F, new ArrayList<>(Arrays.asList(new String[] { SYM_X })), SYM_Y));
 		treeA.addRule(new TreeAutomatonRule<>(SYM_F, new ArrayList<>(Arrays.asList(new String[] { SYM_Y })), SYM_Y));
 
-		final UltimateServiceProviderMock usp = new UltimateServiceProviderMock();
+		final IUltimateServiceProvider usp = UltimateMocks.createUltimateServiceProviderMock();
 		final AutomataLibraryServices services = new AutomataLibraryServices(usp);
 
 		mLogger.info(treeA.toString() + "\n");
@@ -319,30 +334,31 @@ public class TreeAutomizerTests {
 		/*
 		 * TreeAutomatonBU<Character, String> tree = new TreeAutomatonBU<>(); tree.addFinalState("F");
 		 * tree.addInitialState("T");
-		 * 
+		 *
 		 * ArrayList<String> src1 = new ArrayList<>();
-		 * 
+		 *
 		 * src1.add("T"); tree.addRule(new TreeAutomatonRule<Character, String>('a', src1, "I"));
-		 * 
+		 *
 		 * ArrayList<String> src2 = new ArrayList<>(); src2.add("I"); tree.addRule(new TreeAutomatonRule<Character,
 		 * String>('x', src2, "F"));
-		 * 
+		 *
 		 * Totalize<Character, String> op = new Totalize<>(tree, new StringFactory()); mLogger.info(tree);
 		 * mLogger.info(op.getResult());
-		 * 
+		 *
 		 */
 		final TreeAutomatonBU<String, String> treeA = new TreeAutomatonBU<>();
 
 		treeA.addInitialState(SYM_INIT_A);
 		treeA.addFinalState(SYM_NAT_LIST);
-		treeA.addRule(new TreeAutomatonRule<>("0", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_NAT));
-		treeA.addRule(new TreeAutomatonRule<>("s", new ArrayList<>(Arrays.asList(new String[] { SYM_NAT })), SYM_NAT));
 		treeA.addRule(
-				new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_NAT_LIST));
-		treeA.addRule(new TreeAutomatonRule<>("cons", new ArrayList<>(Arrays.asList(new String[] { SYM_NAT, SYM_NAT_LIST })),
+				new TreeAutomatonRule<>("0", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })), SYM_NAT));
+		treeA.addRule(new TreeAutomatonRule<>("s", new ArrayList<>(Arrays.asList(new String[] { SYM_NAT })), SYM_NAT));
+		treeA.addRule(new TreeAutomatonRule<>("nil", new ArrayList<>(Arrays.asList(new String[] { SYM_INIT_A })),
 				SYM_NAT_LIST));
+		treeA.addRule(new TreeAutomatonRule<>("cons",
+				new ArrayList<>(Arrays.asList(new String[] { SYM_NAT, SYM_NAT_LIST })), SYM_NAT_LIST));
 
-		final UltimateServiceProviderMock usp = new UltimateServiceProviderMock();
+		final IUltimateServiceProvider usp = UltimateMocks.createUltimateServiceProviderMock();
 		final AutomataLibraryServices services = new AutomataLibraryServices(usp);
 
 		final Totalize<String, String> op2 = new Totalize<>(services, new StringFactory(), treeA);
@@ -368,7 +384,7 @@ public class TreeAutomizerTests {
 		treeA.addRule(new TreeAutomatonRule<>("cons", new ArrayList<>(Arrays.asList(new String[] { NAT, NatList })),
 				NatList));
 
-		final UltimateServiceProviderMock usp = new UltimateServiceProviderMock();
+		final IUltimateServiceProvider usp = UltimateMocks.createUltimateServiceProviderMock();
 		final AutomataLibraryServices services = new AutomataLibraryServices(usp);
 
 		final TreeEmptinessCheck<String, String> op = new TreeEmptinessCheck<>(services, treeA);

@@ -48,13 +48,40 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 //	private static int mFilesPerDirectoryLimit = 5;
 	
 	// @formatter:off
+	private static final String STANDARD_DOT_C_PATTERN = ".*_false-termination.*\\.c|.*_true-termination.*\\.c";
+	private static final String STANDARD_DOT_I_PATTERN = ".*_false-termination.*\\.c.i|.*_true-termination.*\\.c.i";
+	
+	
 	private static final DirectoryFileEndingsPair[] mDirectoryFileEndingsPairs = {
 		/***** Category 5. Termination *****/
 		/*** Subcategory  Termination-MainControlFlow ***/
-		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", 
-				new String[]{ ".*_false-termination.*\\.c|.*_true-termination.*\\.c" }, mFilesPerDirectoryLimit) ,
-		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-linkedlists/", 
-				new String[]{ ".*_false-termination.*\\.c.i|.*_true-termination.*\\.c.i" }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit) ,
+		
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-numeric-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit) ,
+		new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15-todo/", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit) ,
+		
+		
+//		/*** Subcategory  Termination-MainHeap ***/
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-libowfat/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-linkedlists/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-15/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-recursive-malloc/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit) ,
+//		
+//		/*** Subcategory  Termination-Other ***/
+		
+//		new DirectoryFileEndingsPair("examples/svcomp//", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp//", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp//", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit) ,
+//		new DirectoryFileEndingsPair("examples/svcomp//", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit) ,
+//		
+//		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-linkedlists/",	new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit) ,
+		
 
 //		
 //		new DirectoryFileEndingsPair("examples/svcomp/termination-15/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
