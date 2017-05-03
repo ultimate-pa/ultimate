@@ -144,12 +144,15 @@ public class MapEliminationTest extends AbstractTraceAbstractionTestSuite {
 	
 	
 	private static final String[] ULTIMATE_REPO = {
-//			"examples/programs/regression",
+			"examples/programs/regression",
 //			"examples/programs/quantifier",
 //			"examples/programs/recursive/regression",
 //			"examples/programs/toy",
 //			"examples/programs/20170304-DifficultPathPrograms",
-			"examples/ultimate-benchmarks/programs/20170329-DifficultLinuxPathPrograms/original",
+//			"examples/ultimate-benchmarks/programs/20170329-DifficultLinuxPathPrograms/original",
+//			"examples/ultimate-benchmarks/programs/20170412-SvcompReachPathPrograms/original",
+//			"examples/ultimate-benchmarks/pathprograms/20170417-DifficultOverflow/",
+//			"examples/ultimate-benchmarks/pathprograms/20170417-DifficultReach/",
 		};
 	
 	
