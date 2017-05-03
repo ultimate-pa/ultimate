@@ -67,8 +67,15 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtCommandUtils.Se
 public class NonIncrementalScriptor extends NoopScript {
 
 	private static final String PRINT_SUCCESS = ":print-success";
-	
-	private final boolean mNewScriptAfterEachReset = false;
+	/**
+	 * In case we write SMT files we write a new file after each reset command
+	 * if this flag is set (to true).
+	 * This is needed for the production of SMT files that can be used in the
+	 * Main Track of the SMT-COMP.
+	 * 
+	 * 2017-05-01 Matthias: If used more often this should become a parameter.  
+	 */
+	private static final boolean mNewScriptAfterEachReset = false;
 	private int mNewScriptCounter = 0;
 	protected final LinkedList<ArrayList<ISmtCommand<?>>> mCommandStack;
 	
