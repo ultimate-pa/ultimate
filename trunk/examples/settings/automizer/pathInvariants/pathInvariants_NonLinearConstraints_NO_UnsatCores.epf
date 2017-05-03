@@ -11,3 +11,11 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/SMT\ solver=Internal_SMTInterpol
 /instance/de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder/Size\ of\ a\ code\ block=SequenceOfStatements
 @de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder=0.0.1
+
+
+#Sat Feb 25 03:18:09 CET 2017
+file_export_version=3.0
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Use\ unsat\ cores=false
+/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis/Nonlinear\ constraints=true
+@de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis=0.1.8
+\!/instance/de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis=
