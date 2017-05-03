@@ -27,9 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
@@ -48,13 +51,20 @@ public class AssertionOrderModulation<LETTER> {
 					AssertCodeBlockOrder.OUTSIDE_LOOP_FIRST2, AssertCodeBlockOrder.TERMS_WITH_SMALL_CONSTANTS_FIRST };
 
 	private final List<HistogramOfIterable<LETTER>> mHistogramHistory;
+	private final Set<HistogramOfIterable<LETTER>> mAlreadySeen;
 	private int mCurrentIndex;
+
+	private final ILogger mLogger;
 
 	/**
 	 * Constructor.
+	 *
+	 * @param logger
 	 */
-	public AssertionOrderModulation() {
+	public AssertionOrderModulation(final ILogger logger) {
 		mHistogramHistory = new ArrayList<>();
+		mAlreadySeen = new HashSet<>();
+		mLogger = logger;
 	}
 
 	/**
@@ -69,18 +79,14 @@ public class AssertionOrderModulation<LETTER> {
 	public AssertCodeBlockOrder reportAndGet(final IRun<LETTER, IPredicate, ?> counterexample,
 			final InterpolationTechnique interpolationTechnique) {
 		final HistogramOfIterable<LETTER> traceHistogram = new HistogramOfIterable<>(counterexample.getWord());
-		final AssertCodeBlockOrder result =
-				getOrderAndUpdateIndex(interpolationTechnique, traceHistogram, mHistogramHistory);
-		mHistogramHistory.add(traceHistogram);
-		return result;
+		return getOrderAndUpdateIndex(interpolationTechnique, traceHistogram);
 	}
 
 	/**
 	 * Get order for current histogram history.
 	 */
 	private AssertCodeBlockOrder getOrderAndUpdateIndex(final InterpolationTechnique interpolationTechnique,
-			final HistogramOfIterable<LETTER> traceHistogram,
-			final List<HistogramOfIterable<LETTER>> histogramHistory) {
+			final HistogramOfIterable<LETTER> traceHistogram) {
 
 		if (interpolationTechnique == null) {
 			// if we do not compute interpolants, there is no need to assert incrementally
@@ -97,15 +103,25 @@ public class AssertionOrderModulation<LETTER> {
 		case FPandBP:
 		case FPandBPonlyIfFpWasNotPerfect:
 		case PathInvariants:
-			return ASSERTION_ORDERS[getNewIndex(traceHistogram, histogramHistory)];
+			final int oldIdx = mCurrentIndex;
+			final int newIdx = getNewIndex(traceHistogram);
+			final AssertCodeBlockOrder rtr = ASSERTION_ORDERS[newIdx];
+			if (oldIdx != newIdx) {
+				mLogger.info("Changing assertion order to " + rtr);
+			} else {
+				mLogger.info("Histogram is not repeating, keeping assertion order " + rtr);
+			}
+			if (mAlreadySeen.add(traceHistogram)) {
+				mHistogramHistory.add(traceHistogram);
+			}
+			return rtr;
 		default:
 			throw new IllegalArgumentException("Unknown interpolation technique: " + interpolationTechnique);
 		}
 	}
 
-	private int getNewIndex(final HistogramOfIterable<LETTER> traceHistogram,
-			final List<HistogramOfIterable<LETTER>> histogramHistory) {
-		if (histogramHistory.isEmpty()) {
+	private int getNewIndex(final HistogramOfIterable<LETTER> traceHistogram) {
+		if (mHistogramHistory.isEmpty()) {
 			mCurrentIndex = getInitialAssertionOrderIndex(traceHistogram);
 		} else if (histogramRepeats(traceHistogram)) {
 			mCurrentIndex = getNextAssertionOrderIndex();

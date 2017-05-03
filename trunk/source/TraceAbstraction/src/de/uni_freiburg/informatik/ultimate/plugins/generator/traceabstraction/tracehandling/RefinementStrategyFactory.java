@@ -95,7 +95,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 		mLogger = logger;
 		mInitialIcfg = initialIcfg;
 		mPredicateFactory = predicateFactory;
-		mAssertionOrderModulation = new AssertionOrderModulation<>();
+		mAssertionOrderModulation = new AssertionOrderModulation<>(logger);
 	}
 
 	/**
