@@ -170,6 +170,14 @@ public abstract class Client<T> {
 		mHelloFuture.completeExceptionally(e);
 		mQueue.completeAllFuturesExceptionally(e);
 	}
+	
+	private Void forwardThrowable(final Throwable e) {
+		mQuitFuture.completeExceptionally(e);
+		mFinishedFuture.completeExceptionally(e);
+		mHelloFuture.completeExceptionally(e);
+		mQueue.completeAllFuturesExceptionally(e);
+		return null;
+	}
 
 	public boolean hasIOExceptionOccurred() {
 		return mIOExceptionOccurred;
@@ -181,6 +189,9 @@ public abstract class Client<T> {
 
 		mInputFuture = CompletableFuture.runAsync(() -> runOutput(output), executor);
 		mOutputFuture = CompletableFuture.runAsync(() -> runInput(input, mTypeRegistry), executor);
+		
+		mInputFuture.exceptionally(this::forwardThrowable);
+		mOutputFuture.exceptionally(this::forwardThrowable);
 
 		mFinishedFuture = CompletableFuture.allOf(mInputFuture, mOutputFuture).thenRun(this::quit);
 	}

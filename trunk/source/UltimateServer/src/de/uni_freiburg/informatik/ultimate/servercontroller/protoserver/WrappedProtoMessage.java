@@ -86,7 +86,8 @@ public class WrappedProtoMessage implements IWrappedMessage<GeneratedMessageV3> 
 		} else if (typeRegistry.registered(type)) {
 			data = typeRegistry.get(type).getDefaultInstance().getParserForType().parseDelimitedFrom(input);
 		} else {
-			throw new IllegalAccessError(String.format("received unregistered message type: %s", type));
+			final String errMsg = String.format("received unregistered message type: %s", type);
+			throw new IllegalAccessError(errMsg);
 		}
 
 	}
