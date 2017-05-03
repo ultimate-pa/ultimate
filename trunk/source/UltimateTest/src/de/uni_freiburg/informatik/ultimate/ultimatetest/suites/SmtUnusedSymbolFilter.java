@@ -43,17 +43,23 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 /**
+ * Testsuite that can be used to remove unused symbols from SMT scripts.
+ * Takes all .smt2 files from given directory (and subdirectories)
+ * Writes files with the same name to folder specified in preference file.
+ * (Using testsuites for this task is a hack!)
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
 public class SmtUnusedSymbolFilter extends UltimateTestSuite {
 
 	// @formatter:off
-	public static final String TEST_FILES_DIR = 
-			"../../tmp/smtBenchmarks/invariantSynthesis/InvariantSynthesisBenchmarks/reallyFNI/clean/difficult/";
+	public static final String INPUT_FILES = "examples/YOUR_TEMPORARY_FOLDER_HERE";
+	// Any toolchain would work everything is done by the parser, 
+	// I just don't know how to specify an emtpy toolchain.
 	public static final String TOOLCHAIN = "examples/toolchains/LassoRanker.xml";
-	public static final String SETTINGS_FILE = "examples/settings/FilterUnusedDeclarationsFromSmtFile.epf";
+	public static final String PREFERENCE_FILE = "examples/settings/FilterUnusedDeclarationsFromSmtFile.epf";
 
-	public static final long DEADLINE = 500 * 1000; // in ms
+	public static final long DEADLINE = 300 * 1000; // in ms
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
@@ -73,7 +79,7 @@ public class SmtUnusedSymbolFilter extends UltimateTestSuite {
 		Collections.sort(inputFiles);
 
 		final File toolchainFile = new File(TestUtil.getPathFromTrunk(TOOLCHAIN));
-		final File settingsFile = new File(TestUtil.getPathFromTrunk(SETTINGS_FILE));
+		final File settingsFile = new File(TestUtil.getPathFromTrunk(PREFERENCE_FILE));
 		for (final File inputFile : inputFiles) {
 			final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
 			final ITestResultDecider decider = new NoErrorTestResultDecider(urd);
@@ -84,7 +90,7 @@ public class SmtUnusedSymbolFilter extends UltimateTestSuite {
 	}
 
 	public Collection<File> getInputFiles() {
-		return TestUtil.getFiles(new File(TestUtil.getPathFromTrunk(TEST_FILES_DIR)), new String[] { ".smt2" });
+		return TestUtil.getFiles(new File(TestUtil.getPathFromTrunk(INPUT_FILES)), new String[] { ".smt2" });
 	}
 	
 	// @formatter:on
