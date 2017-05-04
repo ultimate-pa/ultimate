@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -78,7 +78,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		private final IResult mIResult;
 		private final ActualResultType mactualResultType;
 
-		public ActualResult(ActualResultType automizerResultType, IResult iResult) {
+		public ActualResult(final ActualResultType automizerResultType, final IResult iResult) {
 			mIResult = iResult;
 			mactualResultType = automizerResultType;
 		}
@@ -111,7 +111,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	 * @param toolIdentifier
 	 *            Used to identify which tool the result belongs to.
 	 */
-	public AbstractInterpretationTestResultDecider(File inputFile, String toolIdentifier) {
+	public AbstractInterpretationTestResultDecider(final File inputFile, final String toolIdentifier) {
 		super();
 		mInputFile = inputFile.getAbsolutePath();
 		mtoolIdentifier = toolIdentifier;
@@ -119,13 +119,13 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(IUltimateServiceProvider services) {
+	public TestResult getTestResult(final IUltimateServiceProvider services) {
 		final IResultService resultService = services.getResultService();
 		final ILogger log = services.getLoggingService().getLogger(AbstractInterpretationTestResultDecider.class);
-		final Collection<String> customMessages = new LinkedList<String>();
+		final Collection<String> customMessages = new LinkedList<>();
 		final TestResult testoutcome;
-		mResults = new ArrayList<IResult>();
-		
+		mResults = new ArrayList<>();
+
 		for (final Entry<String, List<IResult>> entry : resultService.getResults().entrySet()) {
 			mResults.addAll(entry.getValue());
 		}
@@ -143,14 +143,15 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 					double time = 0; // in milliseconds
 
 					for (final String title : benchmark.getTitles()) {
-						final long watchMem = benchmark.getStartHeapSize(title) + benchmark.getPeakMemoryConsumed(title);
+						final long watchMem =
+								benchmark.getStartHeapSize(title) + benchmark.getPeakMemoryConsumed(title);
 						if (watchMem > memory) {
 							memory = watchMem;
 						}
 						time += benchmark.getElapsedTime(title, TimeUnit.MILLISECONDS);
 					}
 
-					mResultMemory = String.format("%d", (memory / 1024 / 1024)); // -> MiB
+					mResultMemory = String.format("%d", memory / 1024 / 1024); // -> MiB
 					mResultTime = String.format("%.0f", time);
 				}
 			}
@@ -232,7 +233,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(IUltimateServiceProvider service, Throwable e) {
+	public TestResult getTestResult(final IUltimateServiceProvider service, final Throwable e) {
 		generateResultMessageAndCategory(
 				new ActualResult(ActualResultType.EXCEPTION_OR_ERROR, new ExceptionOrErrorResult("Ultimate", e)));
 		TestUtil.logResults(AbstractInterpretationTestResultDecider.class, mInputFile, true, new LinkedList<String>(),
@@ -240,13 +241,13 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		return TestResult.FAIL;
 	}
 
-	protected void generateExpectedResult(File inputFile) {
+	protected void generateExpectedResult(final File inputFile) {
 		if (getExpectedResult() == null) {
 			setExpectedResult(getExpectedResult(inputFile));
 		}
 	}
 
-	public static ExpectedResultType getExpectedResult(File inputFile) {
+	public static ExpectedResultType getExpectedResult(final File inputFile) {
 		final String line = TestUtil.extractFirstLine(inputFile);
 		if (line != null) {
 			if (line.contains("#Safe") || line.contains("iSafe")) {
@@ -272,14 +273,14 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		return mexpectedResult;
 	}
 
-	protected void setExpectedResult(ExpectedResultType expectedResult) {
+	protected void setExpectedResult(final ExpectedResultType expectedResult) {
 		mexpectedResult = expectedResult;
 	}
 
 	/**
 	 * Message: Symbol for the LaTeX table denoting the expected result.
 	 */
-	protected void generateResultMessageAndCategory(ActualResult safetyCheckerResult) {
+	protected void generateResultMessageAndCategory(final ActualResult safetyCheckerResult) {
 		if (safetyCheckerResult == null) {
 			setResultMessage("NULL ## NULL ## NULL ## NULL ## NULL OH NO");
 			setResultCategory("NULL ## NULL ## NULL OH NO");
@@ -312,9 +313,9 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 						mResultTime, mResultMemory, getResultMessage().replace("\n", "\n\t\t\t")));
 	}
 
-	private ActualResult getActualResult(Collection<IResult> results) {
+	private ActualResult getActualResult(final Collection<IResult> results) {
 		final ActualResult returnValue;
-		final Map<ActualResultType, ActualResult> resultSet = new HashMap<ActualResultType, ActualResult>();
+		final Map<ActualResultType, ActualResult> resultSet = new HashMap<>();
 		BenchmarkResult<?> benchmark = null;
 		for (final IResult result : results) {
 			if (result instanceof BenchmarkResult) {
@@ -327,7 +328,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		}
 
 		// only benchmark result: assume timeout~
-		if ((benchmark != null) && results.size() == 1) {
+		if (benchmark != null && results.size() == 1) {
 			return new ActualResult(ActualResultType.TIMEOUT, benchmark);
 		}
 
@@ -351,7 +352,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 		return returnValue;
 	}
 
-	private ActualResult extractResult(IResult result) {
+	private ActualResult extractResult(final IResult result) {
 		if (result instanceof AllSpecificationsHoldResult) {
 			return new ActualResult(ActualResultType.SAFE, result);
 		}
@@ -392,7 +393,7 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public boolean getJUnitSuccess(TestResult actualResult) {
+	public boolean getJUnitSuccess(final TestResult actualResult) {
 		// Matthias wants to see Unknown results as success, and so does Christopher
 		switch (actualResult) {
 		case FAIL:
