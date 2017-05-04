@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -46,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs.PartitionSizeInformation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.FilteredIterable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
@@ -420,4 +422,18 @@ public final class NestedWordAutomataUtils {
 		}
 		return result;
 	}
+	
+	
+	
+	/**
+	 * @return Iterable over all {@link OutgoingReturnTransition}s of state
+	 *         whose LETTER is the letter given as input to this procedure.
+	 */
+	public static <LETTER, STATE> Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state,
+			final LETTER letter, final INestedWordAutomaton<LETTER, STATE> nwa) {
+		final Iterable<OutgoingReturnTransition<LETTER, STATE>> iterable = nwa.returnSuccessors(state);
+		final Predicate<OutgoingReturnTransition<LETTER, STATE>> remainingElements = x -> x.getLetter().equals(letter);
+		return new FilteredIterable<>(iterable, remainingElements);
+	}
+	
 }
