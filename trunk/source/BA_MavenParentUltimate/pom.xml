@@ -37,6 +37,7 @@
 		<boogieparserDir>${workspaceDir}/BoogiePLParser/src/de/uni_freiburg/informatik/ultimate/boogie/parser</boogieparserDir>
 		<boogieastDir>${workspaceDir}/Library-BoogieAST/src/de/uni_freiburg/informatik/ultimate/boogie/ast</boogieastDir>
 		<toolchainDir>${workspaceDir}/Library-UltimateCore/src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain</toolchainDir>
+		<benchexecDir>${workspaceDir}/Library-UltimateTest/src/de/uni_freiburg/informatik/ultimate/test/benchexec/benchmark</benchexecDir>
 		<spaceexDir>${workspaceDir}/SpaceExParser/src/de/uni_freiburg/informatik/ultimate/plugins/spaceex/parser</spaceexDir>
 		<interactiveconsoledir>${workspaceDir}/InteractiveConsole/src/de/uni_freiburg/informatik/ultimate/interactiveconsole</interactiveconsoledir>
 		<smtlibDir>${workspaceDir}/SMTInterpol/src/de/uni_freiburg/informatik/ultimate/smtinterpol/smtlib</smtlibDir>
