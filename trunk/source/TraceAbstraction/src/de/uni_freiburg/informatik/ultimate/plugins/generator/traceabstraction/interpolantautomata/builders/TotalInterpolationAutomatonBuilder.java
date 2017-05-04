@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.ITransitionlet;
@@ -357,7 +358,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		for (final int pendingReturnPos : run.getWord().getPendingReturns().keySet()) {
 			final IPredicate linPred = run.getStateAtPosition(pendingReturnPos);
 			final Iterable<IPredicate> hierPreds =
-					mAbstraction.hierarchicalPredecessorsOutgoing(linPred, run.getSymbol(pendingReturnPos));
+					NestedWordAutomataUtils.hierarchicalPredecessorsOutgoing(linPred, run.getSymbol(pendingReturnPos), mAbstraction);
 			final IPredicate hierPred = getSomeAnnotatedState(hierPreds);
 			if (hierPred == null) {
 				throw new AssertionError("found nothing");
