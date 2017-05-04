@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -324,5 +325,81 @@ public final class NestedWordAutomataUtils {
 		final NestedWord<LETTER> stem = (new GetRandomNestedWord<>(null, nwa, size, seed)).getResult();
 		final NestedWord<LETTER> loop = (new GetRandomNestedWord<>(null, nwa, size, seed)).getResult();
 		return new NestedLassoWord<>(stem, loop);
+	}
+	
+	
+
+	/**
+	 * @return true iff state has two or more outgoing internal edges that are 
+	 * labeled with the same letter.
+	 */
+	private static <LETTER, STATE> boolean isNondeterministicInternal(final STATE state,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+		for (final LETTER letter : nwa.lettersInternal(state)) {
+			int numberOfSuccs = 0;
+			for (final Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator =
+					nwa.internalSuccessors(state, letter).iterator(); iterator.hasNext(); iterator.next()) {
+				numberOfSuccs++;
+			}
+			if (numberOfSuccs > 1) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * @return true iff state has two or more outgoing call edges that are 
+	 * labeled with the same letter.
+	 */
+	private static <LETTER, STATE> boolean isNondeterministicCall(final STATE state,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+		for (final LETTER letter : nwa.lettersCall(state)) {
+			int numberOfSuccs = 0;
+			for (final Iterator<OutgoingCallTransition<LETTER, STATE>> iterator =
+					nwa.callSuccessors(state, letter).iterator(); iterator.hasNext(); iterator.next()) {
+				numberOfSuccs++;
+				if (numberOfSuccs > 1) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * @return true iff state has two or more outgoing return edges that have the
+	 * are the same hierarchical predecessors. 
+	 */
+	private static <LETTER, STATE> boolean isNondeterministicReturn(final STATE state, final STATE hier,
+			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+		for (final LETTER letter : nwa.lettersReturn(state)) {
+			int numberOfSuccs = 0;
+			for (final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator =
+					nwa.returnSuccessors(state, hier, letter).iterator(); iterator.hasNext(); iterator.next()) {
+				numberOfSuccs++;
+				if (numberOfSuccs > 1) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	public static <LETTER, STATE> boolean isNondeterministic(final STATE up, final STATE down,
+			final IDoubleDeckerAutomaton<LETTER, STATE> nwa) {
+		final boolean isNondeterministicInternal = isNondeterministicInternal(up, nwa);
+		if (isNondeterministicInternal) {
+			return true;
+		}
+		final boolean isNondeterministicCall = isNondeterministicCall(up, nwa);
+		if (isNondeterministicCall) {
+			return true;
+		}
+		final boolean isNondeterministicReturn = isNondeterministicReturn(up, down, nwa);
+		if (isNondeterministicReturn) {
+			return true;
+		}
+		return false;
 	}
 }
