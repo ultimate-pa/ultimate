@@ -43,10 +43,9 @@ import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 /**
- * Testsuite that can be used to remove unused symbols from SMT scripts.
- * Takes all .smt2 files from given directory (and subdirectories)
- * Writes files with the same name to folder specified in preference file.
- * (Using testsuites for this task is a hack!)
+ * Testsuite that can be used to remove unused symbols from SMT scripts. Takes all .smt2 files from given directory (and
+ * subdirectories) Writes files with the same name to folder specified in preference file. (Using testsuites for this
+ * task is a hack!)
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  */
@@ -54,7 +53,7 @@ public class SmtUnusedSymbolFilter extends UltimateTestSuite {
 
 	// @formatter:off
 	public static final String INPUT_FILES = "examples/YOUR_TEMPORARY_FOLDER_HERE";
-	// Any toolchain would work everything is done by the parser, 
+	// Any toolchain would work everything is done by the parser,
 	// I just don't know how to specify an emtpy toolchain.
 	public static final String TOOLCHAIN = "examples/toolchains/LassoRanker.xml";
 	public static final String PREFERENCE_FILE = "examples/settings/FilterUnusedDeclarationsFromSmtFile.epf";
@@ -81,9 +80,9 @@ public class SmtUnusedSymbolFilter extends UltimateTestSuite {
 		final File toolchainFile = new File(TestUtil.getPathFromTrunk(TOOLCHAIN));
 		final File settingsFile = new File(TestUtil.getPathFromTrunk(PREFERENCE_FILE));
 		for (final File inputFile : inputFiles) {
-			final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
+			final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile,DEADLINE);
 			final ITestResultDecider decider = new NoErrorTestResultDecider(urd);
-			rtr.add(buildTestCase(urd, DEADLINE, decider, inputFile.getName()));
+			rtr.add(buildTestCase(urd,  decider, inputFile.getName()));
 		}
 
 		return rtr;

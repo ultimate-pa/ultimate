@@ -86,11 +86,14 @@ public final class UltimateRunDefinitionGenerator {
 	 *            A relative path to a settings file. May be null.
 	 * @param toolchain
 	 *            A relative path to a toolchain file.
+	 * @param timelimit
+	 *            A timelimit in ms.
 	 */
 	public static UltimateRunDefinition getRunDefinitionFromTrunk(final String input, final String settings,
-			final String toolchain) {
+			final String toolchain, final long timelimit) {
 		return new UltimateRunDefinition(getFileFromTrunkDir(input),
-				settings == null ? null : getFileFromSettingsDir(settings), getFileFromToolchainDir(toolchain));
+				settings == null ? null : getFileFromSettingsDir(settings), getFileFromToolchainDir(toolchain),
+				timelimit);
 	}
 
 	/**
@@ -98,10 +101,12 @@ public final class UltimateRunDefinitionGenerator {
 	 * all files with a file ending from <code>fileEndings</code> define a run definition with the settings file
 	 * <code>settings</code> and the toolchain file <code>toolchain</code>. All files are defined by their paths
 	 * relative to the Ultimate trunk directory.
+	 * 
+	 * @param timeout
 	 */
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunk(final String[] directories,
-			final String[] fileEndings, final String settings, final String toolchain) {
-		return getRunDefinitionFromTrunk(directories, fileEndings, settings, toolchain, 0, -1);
+			final String[] fileEndings, final String settings, final String toolchain, final long timeout) {
+		return getRunDefinitionFromTrunk(directories, fileEndings, settings, toolchain, timeout, 0, -1);
 	}
 
 	/**
@@ -117,25 +122,26 @@ public final class UltimateRunDefinitionGenerator {
 	 * </ul>
 	 */
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunk(final String[] directories,
-			final String[] fileEndings, final String settings, final String toolchain, final int offset,
-			final int limit) {
+			final String[] fileEndings, final String settings, final String toolchain, final long timeout,
+			final int offset, final int limit) {
 		final File toolchainFile = getFileFromToolchainDir(toolchain);
 		final File settingsFile = settings == null ? null : getFileFromSettingsDir(settings);
 		return Arrays.stream(directories).map(a -> getFileFromTrunkDir(a))
 				.map(a -> getInputFiles(a, fileEndings, offset, limit)).flatMap(a -> a.stream()).distinct()
-				.map(a -> new UltimateRunDefinition(a, settingsFile, toolchainFile)).collect(Collectors.toList());
+				.map(a -> new UltimateRunDefinition(a, settingsFile, toolchainFile, timeout))
+				.collect(Collectors.toList());
 	}
 
 	public static Collection<UltimateRunDefinition> getRunDefinitionsFromTrunkRegex(final String[] directories,
-			final String[] regexes, final String settings[], final String toolchain, final int offset,
-			final int limit) {
+			final String[] regexes, final String settings[], final String toolchain, final long timeout,
+			final int offset, final int limit) {
 		final List<UltimateRunDefinition> result = new ArrayList<>();
 		for (final String directory : directories) {
 			final File toolchainFile = getFileFromToolchainDir(toolchain);
 			for (final File dirFile : getInputFilesRegex(getFileFromTrunkDir(directory), regexes, offset, limit)) {
 				for (final String setting : settings) {
 					final File settingsFile = settings == null ? null : getFileFromSettingsDir(setting);
-					result.add(new UltimateRunDefinition(dirFile, settingsFile, toolchainFile));
+					result.add(new UltimateRunDefinition(dirFile, settingsFile, toolchainFile, timeout));
 				}
 			}
 		}
@@ -143,10 +149,10 @@ public final class UltimateRunDefinitionGenerator {
 	}
 
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunk(final String toolchain,
-			final String settings, final DirectoryFileEndingsPair[] directoryFileEndingsPairs) {
+			final String settings, final DirectoryFileEndingsPair[] directoryFileEndingsPairs, final long timeout) {
 		return Arrays.stream(directoryFileEndingsPairs)
 				.map(a -> UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(new String[] { a.getDirectory() },
-						a.getFileEndings(), settings, toolchain, a.getOffset(), a.getLimit()))
+						a.getFileEndings(), settings, toolchain, timeout, a.getOffset(), a.getLimit()))
 				.flatMap(a -> a.stream()).collect(Collectors.toList());
 	}
 
@@ -162,8 +168,8 @@ public final class UltimateRunDefinitionGenerator {
 	 * </ul>
 	 */
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnesses(final String[] directories,
-			final String[] fileEndings, final String settings, final String toolchain) {
-		return getRunDefinitionFromTrunkWithWitnesses(directories, fileEndings, settings, toolchain, 0, -1);
+			final String[] fileEndings, final String settings, final String toolchain, final long timeout) {
+		return getRunDefinitionFromTrunkWithWitnesses(directories, fileEndings, settings, toolchain, timeout, 0, -1);
 	}
 
 	/**
@@ -180,15 +186,16 @@ public final class UltimateRunDefinitionGenerator {
 	 * </ul>
 	 */
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnesses(final String[] directories,
-			final String[] fileEndings, final String settings, final String toolchain, final int offset,
-			final int limit) {
+			final String[] fileEndings, final String settings, final String toolchain, final long timeout,
+			final int offset, final int limit) {
 		return getRunDefinitionFromTrunkWithWitnesses(toolchain, settings,
 				Arrays.stream(directories).map(a -> new DirectoryFileEndingsPair(a, fileEndings, offset, limit))
-						.toArray(size -> new DirectoryFileEndingsPair[size]));
+						.toArray(size -> new DirectoryFileEndingsPair[size]),
+				timeout);
 	}
 
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnesses(final String toolchain,
-			final String settings, final DirectoryFileEndingsPair[] directoryFileEndingsPairs) {
+			final String settings, final DirectoryFileEndingsPair[] directoryFileEndingsPairs, final long timelimit) {
 		final Collection<UltimateRunDefinition> rtr = new ArrayList<>();
 		final File toolchainFile = getFileFromToolchainDir(toolchain);
 		final File settingsFile = settings == null ? null : getFileFromSettingsDir(settings);
@@ -208,7 +215,8 @@ public final class UltimateRunDefinitionGenerator {
 				final List<File> witnesses = witnessCandidates.stream()
 						.filter(a -> a.getName().startsWith(inputFile.getName())).collect(Collectors.toList());
 				for (final File witness : witnesses) {
-					rtr.add(new UltimateRunDefinition(new File[] { inputFile, witness }, settingsFile, toolchainFile));
+					rtr.add(new UltimateRunDefinition(new File[] { inputFile, witness }, settingsFile, toolchainFile,
+							timelimit));
 				}
 			}
 		}
@@ -229,10 +237,12 @@ public final class UltimateRunDefinitionGenerator {
 	 * <li>For each directory, at most <code>limit</code> files are used. They are selected pseudo-randomly but
 	 * deterministic (i.e., multiple runs with the same parameter generate the same result).
 	 * </ul>
+	 * 
+	 * @param timelimit
 	 */
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(
 			final String toolchain, final String settings, final DirectoryFileEndingsPair[] input,
-			final String witnessFolder) {
+			final String witnessFolder, final long timelimit) {
 		final Collection<UltimateRunDefinition> rtr = new ArrayList<>();
 		final File toolchainFile = getFileFromToolchainDir(toolchain);
 		final File settingsFile = settings == null ? null : getFileFromSettingsDir(settings);
@@ -258,7 +268,8 @@ public final class UltimateRunDefinitionGenerator {
 				final List<File> witnesses = witnessCandidates.stream()
 						.filter(a -> a.getName().startsWith(inputFile.getName())).collect(Collectors.toList());
 				for (final File witness : witnesses) {
-					rtr.add(new UltimateRunDefinition(new File[] { inputFile, witness }, settingsFile, toolchainFile));
+					rtr.add(new UltimateRunDefinition(new File[] { inputFile, witness }, settingsFile, toolchainFile,
+							timelimit));
 				}
 			}
 		}
@@ -267,17 +278,17 @@ public final class UltimateRunDefinitionGenerator {
 
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(
 			final String[] directories, final String[] fileEndings, final String settings, final String toolchain,
-			final String witnessFolder, final int offset, final int limit) {
+			final String witnessFolder, final long timeout, final int offset, final int limit) {
 		return getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(toolchain, settings,
 				Arrays.stream(directories).map(a -> new DirectoryFileEndingsPair(a, fileEndings, offset, limit))
 						.toArray(size -> new DirectoryFileEndingsPair[size]),
-				witnessFolder);
+				witnessFolder, timeout);
 	}
 
 	public static Collection<UltimateRunDefinition> getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(
 			final String[] directories, final String[] fileEndings, final String settings, final String toolchain,
-			final String witnessFolder) {
+			final String witnessFolder, final long timeout) {
 		return getRunDefinitionFromTrunkWithWitnessesFromSomeFolder(directories, fileEndings, settings, toolchain,
-				witnessFolder, 0, -1);
+				witnessFolder, timeout, 0, -1);
 	}
 }

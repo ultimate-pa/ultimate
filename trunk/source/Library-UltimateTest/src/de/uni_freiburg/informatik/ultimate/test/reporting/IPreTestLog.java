@@ -40,9 +40,10 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 public interface IPreTestLog extends INonIncrementalLog {
 
 	/**
-	 * Is called before any test is executed.
+	 * Is called before the testsuite is executed.
 	 * 
 	 * @param runs
+	 *            All the {@link UltimateRunDefinition}s of the testsuite.
 	 */
 	void addAllTests(final List<UltimateRunDefinition> runs);
 }

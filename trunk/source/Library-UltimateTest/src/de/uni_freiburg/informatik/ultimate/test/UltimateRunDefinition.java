@@ -37,11 +37,12 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**
- * A run of ultimate is defined by three things:
+ * A run of ultimate is defined by four things:
  * <ul>
  * <li>a list of input files (e.g. an ANSI C file that is verified),
- * <li>a settings file, and
- * <li>a toolchain file.
+ * <li>a settings file,
+ * <li>a toolchain file, and
+ * <li>a timeout in milliseconds.
  * </ul>
  *
  * @author heizmann@informatik.uni-freiburg.de
@@ -56,21 +57,25 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 	private final File[] mInput;
 	private final File mSettings;
 	private final File mToolchain;
+	private final long mTimeout;
 
 	private String mInputFilenames;
 
-	public UltimateRunDefinition(final File input, final File settings, final File toolchain) {
-		this(new File[] { input }, settings, toolchain);
+	public UltimateRunDefinition(final File input, final File settings, final File toolchain, final long timeout) {
+		this(new File[] { input }, settings, toolchain, timeout);
 	}
 
-	public UltimateRunDefinition(final File[] input, final File settings, final File toolchain) {
-		super();
+	public UltimateRunDefinition(final File[] input, final File settings, final File toolchain, final long timeout) {
 		if (input == null || toolchain == null) {
 			throw new IllegalArgumentException("Toolchain and Input may not be null");
+		}
+		if (timeout < 0) {
+			throw new IllegalArgumentException("Timeout must be larger or equal to 0");
 		}
 		mInput = input;
 		mSettings = settings;
 		mToolchain = toolchain;
+		mTimeout = timeout;
 	}
 
 	public File[] getInput() {
@@ -83,6 +88,10 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 
 	public File getToolchain() {
 		return mToolchain;
+	}
+
+	public long getTimeout() {
+		return mTimeout;
 	}
 
 	public String getSettingsName() {
@@ -203,9 +212,9 @@ public final class UltimateRunDefinition implements Comparable<UltimateRunDefini
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((mInput == null) ? 0 : Arrays.hashCode(mInput));
-		result = prime * result + ((mSettings == null) ? 0 : mSettings.hashCode());
-		result = prime * result + ((mToolchain == null) ? 0 : mToolchain.hashCode());
+		result = prime * result + (mInput == null ? 0 : Arrays.hashCode(mInput));
+		result = prime * result + (mSettings == null ? 0 : mSettings.hashCode());
+		result = prime * result + (mToolchain == null ? 0 : mToolchain.hashCode());
 		return result;
 	}
 

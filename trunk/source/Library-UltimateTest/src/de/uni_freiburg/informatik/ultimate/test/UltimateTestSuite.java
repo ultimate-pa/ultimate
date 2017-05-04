@@ -99,14 +99,13 @@ public abstract class UltimateTestSuite {
 		return new IPreTestLog[0];
 	}
 
-	protected UltimateTestCase buildTestCase(final UltimateRunDefinition urd, final long timeout,
-			final ITestResultDecider decider) {
-		return buildTestCase(urd, timeout, decider, urd.generateShortStringRepresentation());
+	protected UltimateTestCase buildTestCase(final UltimateRunDefinition urd, final ITestResultDecider decider) {
+		return buildTestCase(urd, decider, urd.generateShortStringRepresentation());
 	}
 
-	protected UltimateTestCase buildTestCase(final UltimateRunDefinition urd, final long timeout,
-			final ITestResultDecider decider, final String name) {
-		final UltimateStarter starter = new UltimateStarter(urd, timeout);
+	protected UltimateTestCase buildTestCase(final UltimateRunDefinition urd, final ITestResultDecider decider,
+			final String name) {
+		final UltimateStarter starter = new UltimateStarter(urd);
 		return new UltimateTestCase(name, decider, starter, urd, mLogs);
 	}
 

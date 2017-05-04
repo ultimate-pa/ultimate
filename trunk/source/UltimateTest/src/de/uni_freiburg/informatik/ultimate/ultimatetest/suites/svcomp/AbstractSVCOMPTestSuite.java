@@ -136,8 +136,8 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 				// SVCOMP15TestSummary
 				final String name = createTestCaseName(svcompRootDir, input, def);
 				final UltimateRunDefinition urd =
-						new UltimateRunDefinition(input, def.getSettings(), def.getToolchain());
-				testcases.add(buildTestCase(urd, def.getTimeout(), getTestResultDecider(urd), name));
+						new UltimateRunDefinition(input, def.getSettings(), def.getToolchain(), def.getTimeout());
+				testcases.add(buildTestCase(urd, getTestResultDecider(urd), name));
 			} catch (final Throwable ex) {
 				System.err.println("Exception while creating test case, skipping this one: " + input.getAbsolutePath());
 				ex.printStackTrace();

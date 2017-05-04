@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -45,8 +45,8 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 
 	/** Limit the number of files per directory. */
 	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
-//	private static int mFilesPerDirectoryLimit = 5;
-	
+	// private static int mFilesPerDirectoryLimit = 5;
+
 	// @formatter:off
 	private static final String STANDARD_DOT_C_PATTERN = ".*_false-termination.*\\.c|.*_true-termination.*\\.c";
 	private static final String STANDARD_DOT_I_PATTERN = ".*_false-termination.*\\.c.i|.*_true-termination.*\\.c.i";
@@ -72,20 +72,20 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 //		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-linkedlists/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/termination-15/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/termination-recursive-malloc/", new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit) ,
-//		
+//
 //		/*** Subcategory  Termination-Other ***/
 		
 //		new DirectoryFileEndingsPair("examples/svcomp//", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp//", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp//", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp//", new String[]{ STANDARD_DOT_C_PATTERN }, mFilesPerDirectoryLimit) ,
-//		
+//
 //		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-linkedlists/",	new String[]{ STANDARD_DOT_I_PATTERN }, mFilesPerDirectoryLimit) ,
 		
 
-//		
+//
 //		new DirectoryFileEndingsPair("examples/svcomp/termination-15/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
-//		
+//
 //		new DirectoryFileEndingsPair("examples/svcomp/termination-crafted-lit/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/termination-libowfat/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
 //		new DirectoryFileEndingsPair("examples/svcomp/termination-memory-alloca/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
@@ -93,10 +93,8 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 //		new DirectoryFileEndingsPair("examples/svcomp/termination-restricted-15/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
 	};
 	// @formatter:on
-	
-	
-	private static final String[] mCurrentBugs = {
-	};
+
+	private static final String[] mCurrentBugs = {};
 
 	/**
 	 * {@inheritDoc}
@@ -107,40 +105,31 @@ public class Svcomp17FoldersAutomizerTermination extends AbstractBuchiAutomizerT
 	}
 
 	/**
-	 * List of path to setting files. 
-	 * Ultimate will run on each program with each setting that is defined here.
-	 * The path are defined relative to the folder "trunk/examples/settings/",
-	 * because we assume that all settings files are in this folder.
+	 * List of path to setting files. Ultimate will run on each program with each setting that is defined here. The path
+	 * are defined relative to the folder "trunk/examples/settings/", because we assume that all settings files are in
+	 * this folder.
 	 * 
 	 */
-	private static final String[] mSettings = {
-		"svcomp2017/automizer/svcomp-Termination-32bit-Automizer_Default.epf",
-//		"buchiAutomizer/gnta/svcomp-Termination-64bit-Automizer_GntaZero.epf",
-//		"buchiAutomizer/gnta/svcomp-Termination-64bit-Automizer_DefaultBarcelogic.epf",
-//		"buchiAutomizer/gnta/svcomp-Termination-64bit-Automizer_Default.epf",
-	};
-	
-	
-	private static final String[] mCToolchains = {
-//		"BuchiAutomizerCInlineWithBlockEncoding.xml",
-		"BuchiAutomizerCInline.xml",
+	private static final String[] mSettings = { "svcomp2017/automizer/svcomp-Termination-32bit-Automizer_Default.epf",
+			// "buchiAutomizer/gnta/svcomp-Termination-64bit-Automizer_GntaZero.epf",
+			// "buchiAutomizer/gnta/svcomp-Termination-64bit-Automizer_DefaultBarcelogic.epf",
+			// "buchiAutomizer/gnta/svcomp-Termination-64bit-Automizer_Default.epf",
 	};
 
-	
-	
-	
+	private static final String[] mCToolchains = {
+			// "BuchiAutomizerCInlineWithBlockEncoding.xml",
+			"BuchiAutomizerCInline.xml", };
 
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (final DirectoryFileEndingsPair dfep : mDirectoryFileEndingsPairs) {
 			for (final String toolchain : mCToolchains) {
 				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
-						new String[]{dfep.getDirectory()}, dfep.getFileEndings(), mSettings, 
-						toolchain, dfep.getOffset(), dfep.getLimit()));
+						new String[] { dfep.getDirectory() }, dfep.getFileEndings(), mSettings, toolchain, getTimeout(),
+						dfep.getOffset(), dfep.getLimit()));
 			}
 		}
 		return super.createTestCases();
 	}
 
-	
 }

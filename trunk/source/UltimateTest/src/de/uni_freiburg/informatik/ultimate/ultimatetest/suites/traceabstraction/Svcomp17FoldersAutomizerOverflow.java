@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -47,14 +47,12 @@ public class Svcomp17FoldersAutomizerOverflow extends AbstractTraceAbstractionTe
 
 	/** Limit the number of files per directory. */
 	private static final int FILES_PER_DIR_LIMIT = Integer.MAX_VALUE;
-//	private static final int FILES_PER_DIR_LIMIT = 4;
+	// private static final int FILES_PER_DIR_LIMIT = 4;
 	private static final int FILE_OFFSET = 0;
-	
+
 	private static final String STANDARD_DOT_C_PATTERN = ".*_false-no-overflow.*\\.c|.*_true-no-overflow.*\\.c";
 	private static final String STANDARD_DOT_I_PATTERN = ".*_false-no-overflow.*\\.i|.*_true-no-overflow.*\\.i";
-	
 
-	
 	// @formatter:off
 	private static final DirectoryFileEndingsPair[] BENCHMARKS_32BIT = {
 		/***** Category 4. Overflows *****/
@@ -63,8 +61,7 @@ public class Svcomp17FoldersAutomizerOverflow extends AbstractTraceAbstractionTe
 		new DirectoryFileEndingsPair("examples/svcomp/bitvector/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT) ,
 	};
 	// @formatter:on
-	
-	
+
 	// @formatter:off
 	private static final DirectoryFileEndingsPair[] BENCHMARKS_64BIT = {
 		/***** Category 4. Overflows *****/
@@ -79,14 +76,12 @@ public class Svcomp17FoldersAutomizerOverflow extends AbstractTraceAbstractionTe
 		new DirectoryFileEndingsPair("examples/svcomp/busybox-1.22.0/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT) ,
 	};
 	// @formatter:on
-	
-	
+
 	@Override
 	protected ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
 		return new SvcompOverflowTestResultDecider(urd, false);
 	}
-	
-	
+
 	/**
 	 * {@inheritDoc}
 	 */
@@ -96,50 +91,45 @@ public class Svcomp17FoldersAutomizerOverflow extends AbstractTraceAbstractionTe
 	}
 
 	/**
-	 * List of path to setting files. 
-	 * Ultimate will run on each program with each setting that is defined here.
-	 * The path are defined relative to the folder "trunk/examples/settings/",
-	 * because we assume that all settings files are in this folder.
+	 * List of path to setting files. Ultimate will run on each program with each setting that is defined here. The path
+	 * are defined relative to the folder "trunk/examples/settings/", because we assume that all settings files are in
+	 * this folder.
 	 */
 	private static final String[] SETTINGS_32BIT = {
 		// @formatter:off
 		"svcomp2017/automizer/svcomp-Overflow-32bit-Automizer_Default.epf",
 		// @formatter:on
 	};
-	
+
 	private static final String[] SETTINGS_64BIT = {
 		// @formatter:off
 		"svcomp2017/automizer/svcomp-Overflow-64bit-Automizer_Default.epf",
 		// @formatter:on
 	};
-	
-	
+
 	private static final String[] TOOLCHAINS = {
 		// @formatter:off
 		"AutomizerC.xml",
 		// @formatter:on
 	};
 
-	
-
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_32BIT) {
 			for (final String toolchain : TOOLCHAINS) {
 				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
-						new String[]{dfep.getDirectory()}, dfep.getFileEndings(), SETTINGS_32BIT, 
-						toolchain, dfep.getOffset(), dfep.getLimit()));
+						new String[] { dfep.getDirectory() }, dfep.getFileEndings(), SETTINGS_32BIT, toolchain,
+						getTimeout(), dfep.getOffset(), dfep.getLimit()));
 			}
 		}
 		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_64BIT) {
 			for (final String toolchain : TOOLCHAINS) {
 				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
-						new String[]{dfep.getDirectory()}, dfep.getFileEndings(), SETTINGS_64BIT, 
-						toolchain, dfep.getOffset(), dfep.getLimit()));
+						new String[] { dfep.getDirectory() }, dfep.getFileEndings(), SETTINGS_64BIT, toolchain,
+						getTimeout(), dfep.getOffset(), dfep.getLimit()));
 			}
 		}
 		return super.createTestCases();
 	}
 
-	
 }

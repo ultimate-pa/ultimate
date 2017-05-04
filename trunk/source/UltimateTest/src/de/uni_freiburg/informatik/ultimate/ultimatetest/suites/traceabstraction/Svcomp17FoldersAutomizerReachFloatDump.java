@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -47,19 +47,18 @@ public class Svcomp17FoldersAutomizerReachFloatDump extends AbstractTraceAbstrac
 
 	/** Limit the number of files per directory. */
 	private static final int FILES_PER_DIR_LIMIT = Integer.MAX_VALUE;
-//	private static final int FILES_PER_DIR_LIMIT = 100;
+	// private static final int FILES_PER_DIR_LIMIT = 100;
 	private static final int FILE_OFFSET = 0;
-	
+
 	private static final String STANDARD_DOT_C_PATTERN = ".*_false-unreach-call.*\\.c|.*_true-unreach-call.*\\.c";
 	private static final String STANDARD_DOT_I_PATTERN = ".*_false-unreach-call.*\\.i|.*_true-unreach-call.*\\.i";
-	
-	private static final String BITVECTOR_FOLDER_DOT_C_PATTERN = ".*_false-unreach-call.*\\.c|.*_true-unreach-call.*\\.c.cil.c";
-	
-//	private static final String STANDARD_DOT_C_PATTERN = ".*_false-unreach-call.*\\.c";
-//	private static final String STANDARD_DOT_I_PATTERN = ".*_false-unreach-call.*\\.i";
 
-	
-	
+	private static final String BITVECTOR_FOLDER_DOT_C_PATTERN =
+			".*_false-unreach-call.*\\.c|.*_true-unreach-call.*\\.c.cil.c";
+
+	// private static final String STANDARD_DOT_C_PATTERN = ".*_false-unreach-call.*\\.c";
+	// private static final String STANDARD_DOT_I_PATTERN = ".*_false-unreach-call.*\\.i";
+
 	// @formatter:off
 	private static final DirectoryFileEndingsPair[] BENCHMARKS_32BIT = {
 		/***** Category 1. ReachSafety *****/
@@ -91,7 +90,7 @@ public class Svcomp17FoldersAutomizerReachFloatDump extends AbstractTraceAbstrac
 	}
 
 	/**
-	 * List of setting files, path defined relative to the folder 
+	 * List of setting files, path defined relative to the folder
 	 * "trunk/examples/settings/",
 	 */
 	private static final String[] SETTINGS_32BIT = {
@@ -113,26 +112,23 @@ public class Svcomp17FoldersAutomizerReachFloatDump extends AbstractTraceAbstrac
 	};
 	// @formatter:on
 
-	
-
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_32BIT) {
 			for (final String toolchain : TOOLCHAINS) {
 				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
-						new String[]{dfep.getDirectory()}, dfep.getFileEndings(), SETTINGS_32BIT, 
-						toolchain, dfep.getOffset(), dfep.getLimit()));
+						new String[] { dfep.getDirectory() }, dfep.getFileEndings(), SETTINGS_32BIT, toolchain,
+						getTimeout(), dfep.getOffset(), dfep.getLimit()));
 			}
 		}
 		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_64BIT) {
 			for (final String toolchain : TOOLCHAINS) {
 				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
-						new String[]{dfep.getDirectory()}, dfep.getFileEndings(), SETTINGS_64BIT, 
-						toolchain, dfep.getOffset(), dfep.getLimit()));
+						new String[] { dfep.getDirectory() }, dfep.getFileEndings(), SETTINGS_64BIT, toolchain,
+						getTimeout(), dfep.getOffset(), dfep.getLimit()));
 			}
 		}
 		return super.createTestCases();
 	}
 
-	
 }

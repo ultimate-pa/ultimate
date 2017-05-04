@@ -133,8 +133,9 @@ public class CompareToDimacsTestSuite extends UltimateTestSuite {
 		for (final File inputFile : inputFiles) {
 			for (final String settingFileName : SETTINGS) {
 				final File settingsFile = new File(TestUtil.getPathFromTrunk("/examples/settings/" + settingFileName));
-				final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, mToolchainFile);
-				testCases.add(buildTestCase(urd, mTimeout, new AutomataScriptTestResultDecider()));
+				final UltimateRunDefinition urd =
+						new UltimateRunDefinition(inputFile, settingsFile, mToolchainFile, mTimeout);
+				testCases.add(buildTestCase(urd, new AutomataScriptTestResultDecider()));
 			}
 		}
 		testCases.sort(null);

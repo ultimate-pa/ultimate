@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDec
 import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition.Aggregate;
+import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ConversionContext;
 
 /**
  *
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefiniti
 public class WitnessBugs extends AbstractEvalTestSuite {
 	private static final String[] ALL_C = new String[] { ".c", ".i" };
 
-	private static Collection<UltimateRunDefinition> createDefs() {
+	private Collection<UltimateRunDefinition> createDefs() {
 		final Collection<UltimateRunDefinition> rtr = new ArrayList<>();
 		// rtr.addAll(produceWitnessSV("locks"));
 		// rtr.addAll(produceWitnessSV("loops/veris.c_NetBSD-libc__loop_true-unreach-call.c"));
@@ -120,28 +120,29 @@ public class WitnessBugs extends AbstractEvalTestSuite {
 		return "examples/svcomp/" + path;
 	}
 
-	private static Collection<UltimateRunDefinition> produceAndVerifyWitnessSV(final String example) {
+	private Collection<UltimateRunDefinition> produceAndVerifyWitnessSV(final String example) {
 		final List<UltimateRunDefinition> rtr = new ArrayList<>();
 		rtr.addAll(produceWitnessSV(example));
 		rtr.addAll(verifyWitnessSV(example));
 		return rtr;
 	}
 
-	private static Collection<UltimateRunDefinition> produceWitnessSV(final String example) {
+	private Collection<UltimateRunDefinition> produceWitnessSV(final String example) {
 		return produceWitness(sv(example));
 	}
 
-	private static Collection<UltimateRunDefinition> produceWitness(final String example) {
+	private Collection<UltimateRunDefinition> produceWitness(final String example) {
 		return UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(new String[] { example }, ALL_C,
-				"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "AutomizerC_WitnessPrinter.xml");
+				"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "AutomizerC_WitnessPrinter.xml",
+				getTimeout());
 	}
 
-	private static Collection<UltimateRunDefinition> verifyWitnessSV(final String example) {
+	private Collection<UltimateRunDefinition> verifyWitnessSV(final String example) {
 		return verifyWitness(sv(example));
 	}
 
-	private static Collection<UltimateRunDefinition> verifyWitness(final String example) {
+	private Collection<UltimateRunDefinition> verifyWitness(final String example) {
 		return UltimateRunDefinitionGenerator.getRunDefinitionFromTrunkWithWitnesses(new String[] { example }, ALL_C,
-				"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "AutomizerC.xml");
+				"svcomp2017/automizer/svcomp-Reach-64bit-Automizer_Default.epf", "AutomizerC.xml", getTimeout());
 	}
 }

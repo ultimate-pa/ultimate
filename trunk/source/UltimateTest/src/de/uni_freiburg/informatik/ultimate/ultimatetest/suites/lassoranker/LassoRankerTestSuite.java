@@ -108,12 +108,13 @@ public class LassoRankerTestSuite extends UltimateTestSuite {
 		final File toolchainFile = new File(TestUtil.getPathFromTrunk(TOOLCHAIN));
 		final File settingsFile = new File(TestUtil.getPathFromTrunk(SETTINGS_FILE));
 		for (final File inputFile : inputFiles) {
-			final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, toolchainFile);
+			final UltimateRunDefinition urd =
+					new UltimateRunDefinition(inputFile, settingsFile, toolchainFile, DEADLINE);
 			final LassoRankerTestResultDecider decider = new LassoRankerTestResultDecider(inputFile);
 			if (decider.getExpectedResult() == ExpectedResult.IGNORE) {
 				continue;
 			}
-			rtr.add(buildTestCase(urd, DEADLINE, decider, inputFile.getName()));
+			rtr.add(buildTestCase(urd, decider, inputFile.getName()));
 		}
 
 		return rtr;
