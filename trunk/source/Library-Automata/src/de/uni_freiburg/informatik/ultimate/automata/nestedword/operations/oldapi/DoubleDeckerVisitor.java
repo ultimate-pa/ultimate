@@ -822,22 +822,14 @@ public abstract class DoubleDeckerVisitor<LETTER, STATE> {
 	 * @return true iff state has successors.
 	 */
 	private boolean hasSuccessors(final STATE state) {
-		for (final LETTER symbol : mTraversedNwa.lettersInternal(state)) {
-			if (mTraversedNwa.internalSuccessors(state, symbol).iterator().hasNext()) {
-				return true;
-			}
+		if (mTraversedNwa.internalSuccessors(state).iterator().hasNext()) {
+			return true;
 		}
-		for (final LETTER symbol : mTraversedNwa.lettersCall(state)) {
-			if (mTraversedNwa.callSuccessors(state, symbol).iterator().hasNext()) {
-				return true;
-			}
+		if (mTraversedNwa.callSuccessors(state).iterator().hasNext()) {
+			return true;
 		}
-		for (final LETTER symbol : mTraversedNwa.lettersReturn(state)) {
-			for (final STATE hier : mTraversedNwa.hierarchicalPredecessorsOutgoing(state, symbol)) {
-				if (mTraversedNwa.returnSuccessors(state, hier, symbol).iterator().hasNext()) {
-					return true;
-				}
-			}
+		if (mTraversedNwa.returnSuccessors(state).iterator().hasNext()) {
+			return true;
 		}
 		return false;
 	}
