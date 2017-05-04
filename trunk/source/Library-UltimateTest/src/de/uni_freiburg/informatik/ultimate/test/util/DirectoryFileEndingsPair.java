@@ -1,4 +1,4 @@
-package de.uni_freiburg.informatik.ultimate.test;
+package de.uni_freiburg.informatik.ultimate.test.util;
 
 public class DirectoryFileEndingsPair {
 	private final String mDirectory;

@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.type.BoogieType;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.SubsetResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.util.TemporaryBoogieVar;
-import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
+import de.uni_freiburg.informatik.ultimate.test.mocks.ConsoleLogger;
 
 public class IntervalDomainSubsetTest {
 

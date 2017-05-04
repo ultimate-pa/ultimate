@@ -38,7 +38,7 @@ import org.junit.Test;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.lpsolver.ojalgo.OjAlgoSolver;
-import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
+import de.uni_freiburg.informatik.ultimate.test.mocks.ConsoleLogger;
 
 /**
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)

@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.test;
+package de.uni_freiburg.informatik.ultimate.test.util;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -33,7 +33,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 
 /**
  *
