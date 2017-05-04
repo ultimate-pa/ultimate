@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimate.test.reporting.BaseTestLogfile;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
@@ -44,23 +45,12 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
-public class DefaultIncrementalLogfile implements IIncrementalLog {
+public class DefaultIncrementalLogfile extends BaseTestLogfile implements IIncrementalLog {
 
-	private final Class<? extends UltimateTestSuite> mUltimateTestSuite;
 	private File mLogFile;
 
 	public DefaultIncrementalLogfile(final Class<? extends UltimateTestSuite> ultimateTestSuite) {
-		mUltimateTestSuite = ultimateTestSuite;
-	}
-
-	@Override
-	public Class<? extends UltimateTestSuite> getUltimateTestSuiteClass() {
-		return mUltimateTestSuite;
-	}
-
-	@Override
-	public String getDescriptiveLogName() {
-		return getClass().getSimpleName();
+		super(ultimateTestSuite);
 	}
 
 	@Override

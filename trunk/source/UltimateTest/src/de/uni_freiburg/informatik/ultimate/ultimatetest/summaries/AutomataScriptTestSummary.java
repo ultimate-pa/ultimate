@@ -37,39 +37,24 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimate.test.reporting.BaseTestLogfile;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
-public class AutomataScriptTestSummary implements ITestSummary {
+public class AutomataScriptTestSummary extends BaseTestLogfile implements ITestSummary {
 
-	private final Class<? extends UltimateTestSuite> mUltimateTestSuite;
 	private final List<SummaryEntry> mResults;
 
 	public AutomataScriptTestSummary(final Class<? extends UltimateTestSuite> ultimateTestSuite) {
-		mUltimateTestSuite = ultimateTestSuite;
+		super(ultimateTestSuite);
 		mResults = new ArrayList<>();
-	}
-
-	@Override
-	public Class<? extends UltimateTestSuite> getUltimateTestSuiteClass() {
-		return mUltimateTestSuite;
-	}
-
-	@Override
-	public String getDescriptiveLogName() {
-		return this.getClass().getSimpleName();
-	}
-
-	@Override
-	public String getFilenameExtension() {
-		return ".log";
 	}
 
 	@Override
 	public String getLog() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("################# ");
-		sb.append(mUltimateTestSuite);
+		sb.append(getUltimateTestSuiteClass());
 		sb.append(" #################");
 		sb.append("\n");
 		for (final SummaryEntry summaryEntry : mResults) {
