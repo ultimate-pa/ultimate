@@ -406,13 +406,6 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final LETTER letter) {
-		final Predicate<OutgoingReturnTransition<LETTER, STATE>> predicate =
-				mTransitionFilter.getReturnSuccessorPredicate();
-		return new FilteredIterable<>(mNwa.returnSuccessors(state, letter), predicate);
-	}
-
-	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
 		final Predicate<OutgoingReturnTransition<LETTER, STATE>> predicate =
 				mTransitionFilter.getReturnSuccessorPredicate();

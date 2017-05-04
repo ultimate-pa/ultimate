@@ -561,11 +561,6 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final LETTER letter) {
-		return Collections.emptyList();
-	}
-
-	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
 		return Collections.emptyList();
 	}
