@@ -87,7 +87,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 				rtr.add(new UltimateTestCase(
 						String.format("%s+%s: %s", runConfiguration.getToolchainFile().getName(),
 								runConfiguration.getSettingsFile().getName(), inputFile.getAbsolutePath()),
-						getTestResultDecider(urd), starter, urd, null, null));
+						getTestResultDecider(urd), starter, urd, null));
 			}
 		}
 		return rtr;

@@ -48,15 +48,7 @@ import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestR
  * @author dietsch@informatik.uni-freiburg.de
  * 
  */
-public interface ITestSummary extends ITestLogfile {
-
-	/**
-	 * Produces the actual content of the summary.
-	 * 
-	 * @return A (multi-line) String that will be written to the surefire-reports directory of your local Ultimate
-	 *         installation with a name specified by {@link #getSummaryLogFileName()}
-	 */
-	String getSummaryLog();
+public interface ITestSummary extends INonIncrementalLog {
 
 	/**
 	 * This method is called after the execution of each {@link UltimateTestCase} and reports the result to the

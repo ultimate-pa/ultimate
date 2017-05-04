@@ -73,7 +73,6 @@ public class BenchmarkSerializer {
 	 * @throws MalformedURLException
 	 */
 	public static Benchmark loadValidatedBenchmark(final String xmlfile)
-
 			throws JAXBException, FileNotFoundException, SAXException {
 		final JAXBContext jc = JAXBContext.newInstance(BENCHMARK_PACKAGE);
 		final Unmarshaller unmarshaller = jc.createUnmarshaller();

@@ -71,7 +71,7 @@ public class CsvConcatenator implements ITestSummary {
 	private ICsvProvider<Object> mCsvProvider;
 
 	/**
-	 * Constructor with a transformer which is automatically applied to the result in {@link #getSummaryLog()}.
+	 * Constructor with a transformer which is automatically applied to the result in {@link #getLog()}.
 	 *
 	 * @param ultimateTestSuite
 	 *            Ultimate test suite
@@ -102,7 +102,7 @@ public class CsvConcatenator implements ITestSummary {
 	}
 
 	@Override
-	public String getSummaryLog() {
+	public String getLog() {
 		final ICsvProvider<Object> csvProvider =
 				(mTransformer == null) ? mCsvProvider : mTransformer.transform(mCsvProvider);
 		return csvProvider.toCsv(null, null, true).toString();

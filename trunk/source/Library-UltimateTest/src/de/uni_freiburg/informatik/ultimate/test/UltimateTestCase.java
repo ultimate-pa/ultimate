@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestR
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestMethod;
 import de.uni_freiburg.informatik.ultimate.test.mocks.ConsoleLogger;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ITestLogfile;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
 
@@ -49,29 +50,35 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 
 	private final String mName;
 	private final UltimateRunDefinition mUltimateRunDefinition;
-	private UltimateStarter mStarter;
-	private ITestResultDecider mDecider;
-	private final List<ITestSummary> mSummaries;
-	private final List<IIncrementalLog> mLogs;
 	private final ConsoleLogger mTestLogger;
 
+	private boolean mHasStarted;
+	private List<ITestLogfile> mLogs;
+	private UltimateStarter mStarter;
+	private ITestResultDecider mDecider;
+
 	public UltimateTestCase(final String name, final ITestResultDecider decider, final UltimateStarter starter,
-			final UltimateRunDefinition ultimateRunDefinition, final List<ITestSummary> summaries,
-			final List<IIncrementalLog> incrementalLogs) {
+			final UltimateRunDefinition ultimateRunDefinition, final List<ITestLogfile> logs) {
 		if (ultimateRunDefinition == null) {
 			throw new IllegalArgumentException("ultimateRunDefinition");
 		}
 		mStarter = starter;
-		mName = name;
 		mDecider = decider;
-		mSummaries = summaries;
+		mLogs = logs;
+
+		mName = name;
 		mUltimateRunDefinition = ultimateRunDefinition;
-		mLogs = incrementalLogs;
 		mTestLogger = new ConsoleLogger();
+		mHasStarted = false;
 	}
 
 	@FactoryTestMethod
 	public void test() {
+		if (mHasStarted) {
+			throw new UltimateTestFailureException("Can run a test only once");
+		}
+		mHasStarted = true;
+
 		// call the garbage collector before starting a new test
 		System.gc();
 		System.runFinalization();
@@ -84,14 +91,14 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 		// } catch (final InterruptedException e1) {
 		// }
 		// HeapDumper.dumpHeap("F:\\tmp\\ultimate benchmarks\\heapdump", false);
-		// end debug ode
+		// end debug code
 
 		Throwable th = null;
 		TestResult result = TestResult.FAIL;
 		boolean livecycleFailure = false;
 
 		try {
-			updateLogsPreStart();
+			updateLogsPre();
 			final String deciderName = mDecider.getClass().getSimpleName();
 			final IStatus returnCode = mStarter.runUltimate();
 			// logging service is only available after runUltimate() has been called
@@ -135,8 +142,7 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 			final String resultCategory = mDecider.getResultCategory();
 
 			try {
-				updateSummaries(result, resultCategory, resultMessage);
-				updateLogsPostCompletion(result, resultCategory, resultMessage);
+				updateLogsPost(result, resultCategory, resultMessage);
 			} catch (final Throwable ex) {
 				final ILogger logger = mStarter.getServices().getLoggingService().getLogger(UltimateStarter.class);
 				logger.fatal(
@@ -148,6 +154,7 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 
 			mDecider = null;
 			mStarter = null;
+			mLogs = null;
 
 			if (!success) {
 				String message = null;
@@ -169,29 +176,16 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 		}
 	}
 
-	private void updateLogsPreStart() {
+	private void updateLogsPre() {
 		if (mLogs == null) {
 			return;
 		}
-		for (final IIncrementalLog log : mLogs) {
-			log.addEntryPreStart(mUltimateRunDefinition, mTestLogger);
-		}
-
+		mLogs.stream().filter(a -> a instanceof IIncrementalLog).map(a -> (IIncrementalLog) a)
+				.forEach(a -> a.addEntryPreStart(mUltimateRunDefinition, mTestLogger));
 	}
 
-	private void updateLogsPostCompletion(final TestResult result, final String resultCategory,
-			final String resultMessage) {
+	private void updateLogsPost(final TestResult result, final String resultCategory, final String resultMessage) {
 		if (mLogs == null) {
-			return;
-		}
-		for (final IIncrementalLog log : mLogs) {
-			log.addEntryPostCompletion(mUltimateRunDefinition, result, resultCategory, resultMessage,
-					mStarter.getServices(), mTestLogger);
-		}
-	}
-
-	private void updateSummaries(final TestResult result, final String resultCategory, final String resultMessage) {
-		if (mSummaries == null) {
 			return;
 		}
 
@@ -201,9 +195,15 @@ public final class UltimateTestCase implements Comparable<UltimateTestCase> {
 			assert rservice != null : "Could not retrieve ResultService";
 		}
 
-		for (final ITestSummary summary : mSummaries) {
-			summary.addResult(mUltimateRunDefinition, result, resultCategory, resultMessage, mName, rservice);
-
+		for (final ITestLogfile log : mLogs) {
+			if (log instanceof IIncrementalLog) {
+				((IIncrementalLog) log).addEntryPostCompletion(mUltimateRunDefinition, result, resultCategory,
+						resultMessage, mStarter.getServices(), mTestLogger);
+			}
+			if (log instanceof ITestSummary) {
+				((ITestSummary) log).addResult(mUltimateRunDefinition, result, resultCategory, resultMessage, mName,
+						rservice);
+			}
 		}
 	}
 

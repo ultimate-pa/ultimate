@@ -26,23 +26,20 @@
  */
 package de.uni_freiburg.informatik.ultimate.test.reporting;
 
-import java.util.List;
-
-import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
-
 /**
- * A {@link IPreTestLog} is a logfile that is written before any test is executed. This can be useful for generating
- * input to other test frameworks, e.g., benchexec.
+ * A {@link INonIncrementalLog} is a logfile that is written at once, e.g. after or before executing a test suite.
  * 
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public interface IPreTestLog extends INonIncrementalLog {
+public interface INonIncrementalLog extends ITestLogfile {
 
 	/**
-	 * Is called before any test is executed.
+	 * Produces the actual content of the {@link INonIncrementalLog}.
 	 * 
-	 * @param runs
+	 * @return A (multi-line) String that will be written to the surefire-reports directory of your local Ultimate
+	 *         installation with a name specified by {@link #getSummaryLogFileName()}
 	 */
-	void addAllTests(final List<UltimateRunDefinition> runs);
+	String getLog();
+
 }

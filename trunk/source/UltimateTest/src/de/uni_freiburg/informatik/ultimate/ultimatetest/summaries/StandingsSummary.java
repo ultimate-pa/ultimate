@@ -52,7 +52,7 @@ public class StandingsSummary extends BaseTestSummary {
 	}
 	
 	@Override
-	public String getSummaryLog() {
+	public String getLog() {
 		final PartitionedResults pr = getAllResultsPartitioned();
 		final StringBuilder sb = new StringBuilder();
 

@@ -66,7 +66,7 @@ public class AutomataScriptTestSummary implements ITestSummary {
 	}
 
 	@Override
-	public String getSummaryLog() {
+	public String getLog() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("################# ");
 		sb.append(mUltimateTestSuite);
