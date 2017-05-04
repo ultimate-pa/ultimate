@@ -251,11 +251,6 @@ public final class BuchiClosureNwa<LETTER, STATE> implements IDoubleDeckerAutoma
 	}
 
 	@Override
-	public Iterable<STATE> hierarchicalPredecessorsOutgoing(final STATE state, final LETTER letter) {
-		return mOperand.hierarchicalPredecessorsOutgoing(state, letter);
-	}
-
-	@Override
 	public Collection<STATE> getFinalStates() {
 		return mAcceptingStates;
 	}

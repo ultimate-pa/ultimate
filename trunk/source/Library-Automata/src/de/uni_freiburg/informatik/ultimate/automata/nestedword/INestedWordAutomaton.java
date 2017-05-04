@@ -122,8 +122,12 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomato
 	 * @param letter
 	 *            letter
 	 * @return hierarchical predecessor states for the given return letter
+	 * @deprecated Inefficient, has to iterate over all outgoing transitions.
 	 */
-	Iterable<STATE> hierarchicalPredecessorsOutgoing(STATE state, LETTER letter);
+	@Deprecated
+	default Iterable<STATE> hierarchicalPredecessorsOutgoing(final STATE state, final LETTER letter) {
+		return NestedWordAutomataUtils.hierarchicalPredecessorsOutgoing(state, letter, this);
+	}
 
 	/**
 	 * Incoming internal transitions for a given letter.

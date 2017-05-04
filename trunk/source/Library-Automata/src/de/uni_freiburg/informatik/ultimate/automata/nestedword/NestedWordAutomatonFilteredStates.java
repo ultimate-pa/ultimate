@@ -281,17 +281,6 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 		return result;
 	}
 
-	@Override
-	public Iterable<STATE> hierarchicalPredecessorsOutgoing(final STATE state, final LETTER letter) {
-		final Set<STATE> result = new HashSet<>();
-		for (final OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessors(state, letter)) {
-			if (mRemainingStates.contains(outTrans.getHierPred()) && mRemainingStates.contains(outTrans.getSucc())) {
-				result.add(outTrans.getHierPred());
-			}
-		}
-		return result;
-	}
-
 	private Iterable<STATE> succReturn(final STATE state, final STATE hier, final LETTER letter) {
 		final Set<STATE> result = new HashSet<>();
 		for (final OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessors(state, hier, letter)) {

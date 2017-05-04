@@ -402,4 +402,22 @@ public final class NestedWordAutomataUtils {
 		}
 		return false;
 	}
+	
+	
+	
+	/**
+	 * @return Set of all states <tt>hier</tt> such that <tt>state</tt> has an 
+	 * outgoing return transition
+	 * <tt>(state, hier, letter, succ)</tt> for some state <tt>succ</tt>.
+	 */
+	public static <LETTER, STATE> Set<STATE> hierarchicalPredecessorsOutgoing(final STATE state, final LETTER letter,
+			final INestedWordAutomaton<LETTER, STATE> nwa) {
+		final Set<STATE> result = new HashSet<>();
+		for (final OutgoingReturnTransition<LETTER, STATE> outRet : nwa.returnSuccessors(state)) {
+			if (letter.equals(outRet.getLetter())) {
+				result.add(outRet.getHierPred());
+			}
+		}
+		return result;
+	}
 }
