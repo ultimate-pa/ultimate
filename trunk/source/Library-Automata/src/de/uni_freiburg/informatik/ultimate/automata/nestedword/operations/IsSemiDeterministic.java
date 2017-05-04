@@ -35,7 +35,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
@@ -202,7 +201,7 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		if (isNondeterministicCall) {
 			return true;
 		}
-		final boolean isNondeterministicReturn = isNondeterministicReturnGivenHier(up, down, nwa);
+		final boolean isNondeterministicReturn = isNondeterministicReturn(up, down, nwa);
 		if (isNondeterministicReturn) {
 			return true;
 		}
@@ -217,7 +216,7 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		final boolean isNondeterministicInternal = isNondeterministicInternal(doubleDecker.getUp(), traversedNwa);
 		final boolean isNondeterministicCall = isNondeterministicCall(doubleDecker.getUp(), traversedNwa);
 		final boolean isNondeterministicReturn =
-				isNondeterministicReturnGivenHier(doubleDecker.getUp(), doubleDecker.getDown(), traversedNwa);
+				isNondeterministicReturn(doubleDecker.getUp(), doubleDecker.getDown(), traversedNwa);
 		return isNondeterministicInternal || isNondeterministicCall || isNondeterministicReturn;
 	}
 
@@ -260,7 +259,7 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 	/*
 	 * TODO Christian 2016-09-04: This method is not used outside this class. Should it be private?
 	 */
-	public static <LETTER, STATE> boolean isNondeterministicReturnGivenHier(final STATE state, final STATE hier,
+	public static <LETTER, STATE> boolean isNondeterministicReturn(final STATE state, final STATE hier,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
 		for (final LETTER letter : nwa.lettersReturn(state)) {
 			int numberOfSuccs = 0;
@@ -269,26 +268,6 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 				numberOfSuccs++;
 				if (numberOfSuccs > 1) {
 					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	/*
-	 * TODO Christian 2016-09-04: This method is not used anywhere.
-	 */
-	public static <LETTER, STATE> boolean isNondeterministicReturn(final STATE state,
-			final INestedWordAutomaton<LETTER, STATE> nwa) {
-		for (final LETTER letter : nwa.lettersReturn(state)) {
-			for (final STATE hier : nwa.hierarchicalPredecessorsOutgoing(state, letter)) {
-				int numberOfSuccs = 0;
-				for (final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator =
-						nwa.returnSuccessors(state, hier, letter).iterator(); iterator.hasNext(); iterator.next()) {
-					numberOfSuccs++;
-					if (numberOfSuccs > 1) {
-						return true;
-					}
 				}
 			}
 		}
