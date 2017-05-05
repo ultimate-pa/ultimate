@@ -332,7 +332,6 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		if (mPref.dumpAutomata()) {
 			mDumper = new Dumper(mLogger, mPref, mName, mIteration);
 		}
-		mInteractive.waitIfPaused();
 		try {
 			getInitialAbstraction();
 		} catch (final AutomataOperationCanceledException e1) {

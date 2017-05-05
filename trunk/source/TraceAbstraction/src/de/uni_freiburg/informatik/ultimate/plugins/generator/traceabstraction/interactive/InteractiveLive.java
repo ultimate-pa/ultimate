@@ -54,7 +54,7 @@ public class InteractiveLive {
 	}
 
 	public InteractiveLive(final IUltimateServiceProvider services, final ILogger logger) {
-		mPreferences = new Preferences(false, false, false, false);
+		mPreferences = new Preferences(false, false, false, true);
 		mInteractiveInterface = services.getServiceInstance(TAConverterFactory.class);
 		mLogger = logger;
 
