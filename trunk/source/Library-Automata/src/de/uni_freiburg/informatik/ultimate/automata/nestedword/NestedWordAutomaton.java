@@ -435,10 +435,8 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 		mFinalStates.remove(state);
 		mInitialStates.remove(state);
 
-		for (final LETTER letter : lettersCall(state)) {
-			for (final STATE succ : succCall(state, letter)) {
-				removeCallIn(state, letter, succ);
-			}
+		for (final OutgoingCallTransition<LETTER, STATE> outTrans : callSuccessors(state)) {
+			removeCallIn(state, outTrans.getLetter(), outTrans.getSucc());
 		}
 		removeAllCallOut(state);
 
@@ -448,14 +446,11 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 			}
 		}
 		mCallIn.remove(state);
-
-		for (final LETTER letter : lettersReturn(state)) {
-			for (final STATE hier : hierarchicalPredecessorsOutgoing(state, letter)) {
-				for (final STATE succ : succReturn(state, hier, letter)) {
-					removeReturnIn(state, hier, letter, succ);
-					removeReturnSummary(state, hier, letter, succ);
-				}
-			}
+		
+		for (final OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessors(state)) {
+			removeReturnIn(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
+			removeReturnSummary(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
+			
 		}
 		removeAllReturnOut(state);
 
@@ -498,10 +493,8 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 		}
 		mInternalIn.remove(state);
 
-		for (final LETTER letter : lettersInternal(state)) {
-			for (final STATE succ : succInternal(state, letter)) {
-				removeInternalIn(state, letter, succ);
-			}
+		for (final OutgoingInternalTransition<LETTER, STATE> outTrans : internalSuccessors(state)) {
+			removeInternalIn(state, outTrans.getLetter(), outTrans.getSucc());
 		}
 		removeAllInternalOut(state);
 		final boolean wasContained = mStates.remove(state);
