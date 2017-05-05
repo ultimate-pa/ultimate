@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  * @param <STATE>
  *            Type of objects which can be used as states.
  */
-public interface INestedWordAutomatonSimple<LETTER, STATE> extends INwaOutgoingTransitionProvider<LETTER, STATE> {
+public interface INestedWordAutomatonSimple<LETTER, STATE> extends INwaSuccessorProvider<LETTER, STATE> {
 
 	/**
 	 * @param state
