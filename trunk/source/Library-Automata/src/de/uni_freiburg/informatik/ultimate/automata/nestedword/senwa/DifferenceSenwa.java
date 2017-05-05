@@ -253,18 +253,15 @@ public final class DifferenceSenwa<LETTER, STATE>
 		final STATE resHierEntry = mSenwa.getEntry(resHier);
 		final DifferenceState<LETTER, STATE> diffHierEntry = getOperandState(resHierEntry);
 
-		for (final LETTER letter : mMinuend.lettersReturn(minuState)) {
-			for (final OutgoingReturnTransition<LETTER, STATE> trans : mMinuend.returnSuccessors(minuState, minuHier,
-					letter)) {
-				final STATE minuSucc = trans.getSucc();
-				final DeterminizedState<LETTER, STATE> subtrSucc =
-						mStateDeterminizer.returnSuccessor(subtrState, subtrHier, letter);
-				final boolean isFinal = mMinuend.isFinal(minuSucc) && !subtrSucc.containsFinal();
-				final DifferenceState<LETTER, STATE> diffSucc = new DifferenceState<>(minuSucc, subtrSucc, isFinal);
-				final STATE resSucc = getOrConstructResultState(diffHierEntry, diffSucc, false);
-				resSuccs.add(resSucc);
-				mSenwa.addReturnTransition(resState, resHier, letter, resSucc);
-			}
+		for (final OutgoingReturnTransition<LETTER, STATE> trans : mMinuend.returnSuccessorsGivenHier(minuState, minuHier)) {
+			final STATE minuSucc = trans.getSucc();
+			final DeterminizedState<LETTER, STATE> subtrSucc =
+					mStateDeterminizer.returnSuccessor(subtrState, subtrHier, trans.getLetter());
+			final boolean isFinal = mMinuend.isFinal(minuSucc) && !subtrSucc.containsFinal();
+			final DifferenceState<LETTER, STATE> diffSucc = new DifferenceState<>(minuSucc, subtrSucc, isFinal);
+			final STATE resSucc = getOrConstructResultState(diffHierEntry, diffSucc, false);
+			resSuccs.add(resSucc);
+			mSenwa.addReturnTransition(resState, resHier, trans.getLetter(), resSucc);
 		}
 		return resSuccs;
 	}

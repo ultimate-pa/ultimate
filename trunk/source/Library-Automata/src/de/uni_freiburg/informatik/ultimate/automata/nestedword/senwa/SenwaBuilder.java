@@ -176,13 +176,11 @@ public final class SenwaBuilder<LETTER, STATE> extends
 		final STATE resHierEntry = mSenwa.getEntry(resHier);
 		final STATE opHierEntry = getOperandState(resHierEntry);
 		final Set<STATE> resSuccs = new HashSet<>();
-		for (final LETTER letter : mNwa.lettersReturn(opState)) {
-			for (final OutgoingReturnTransition<LETTER, STATE> trans : mNwa.returnSuccessors(opState, opHier, letter)) {
-				final STATE opSucc = trans.getSucc();
-				final STATE resSucc = getOrConstructResultState(opHierEntry, opSucc, false);
-				resSuccs.add(resSucc);
-				mSenwa.addReturnTransition(resState, resHier, letter, resSucc);
-			}
+		for (final OutgoingReturnTransition<LETTER, STATE> trans : mNwa.returnSuccessorsGivenHier(opState, opHier)) {
+			final STATE opSucc = trans.getSucc();
+			final STATE resSucc = getOrConstructResultState(opHierEntry, opSucc, false);
+			resSuccs.add(resSucc);
+			mSenwa.addReturnTransition(resState, resHier, trans.getLetter(), resSucc);
 		}
 		return resSuccs;
 	}

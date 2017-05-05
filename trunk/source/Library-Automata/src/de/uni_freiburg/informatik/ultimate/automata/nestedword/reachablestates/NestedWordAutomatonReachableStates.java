@@ -621,11 +621,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final LETTER letter) {
-		return mStates.get(state).returnSuccessors(letter);
-	}
-
-	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
 		return mStates.get(state).returnSuccessors();
 	}

@@ -227,22 +227,20 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 		final STATE newState = doubleDecker.getUp();
 		final boolean isFinal = mTraversedNwa.isFinal(newState);
 		final STATE oldState = mNew2Old.get(newState);
-		for (final LETTER symbol : mTotalizedOperand.lettersReturn(oldState)) {
-			for (final OutgoingReturnTransition<LETTER, STATE> trans : mTotalizedOperand.returnSuccessors(oldState,
-					oldHier, symbol)) {
-				final STATE succ = trans.getSucc();
-				if (!isFinal) {
-					final STATE newSuccNonFinal = getOrConstructNewState(succ, false, false);
-					((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addReturnTransition(newState, newHier, symbol,
-							newSuccNonFinal);
-					newSuccs.add(newSuccNonFinal);
-				}
-				if (!mTotalizedOperand.isFinal(succ)) {
-					final STATE newSuccFinal = getOrConstructNewState(succ, false, true);
-					((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addReturnTransition(newState, newHier, symbol,
-							newSuccFinal);
-					newSuccs.add(newSuccFinal);
-				}
+		for (final OutgoingReturnTransition<LETTER, STATE> trans : mTotalizedOperand.returnSuccessorsGivenHier(oldState,
+				oldHier)) {
+			final STATE succ = trans.getSucc();
+			if (!isFinal) {
+				final STATE newSuccNonFinal = getOrConstructNewState(succ, false, false);
+				((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addReturnTransition(newState, newHier, trans.getLetter(),
+						newSuccNonFinal);
+				newSuccs.add(newSuccNonFinal);
+			}
+			if (!mTotalizedOperand.isFinal(succ)) {
+				final STATE newSuccFinal = getOrConstructNewState(succ, false, true);
+				((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addReturnTransition(newState, newHier, trans.getLetter(),
+						newSuccFinal);
+				newSuccs.add(newSuccFinal);
 			}
 		}
 		return newSuccs;
