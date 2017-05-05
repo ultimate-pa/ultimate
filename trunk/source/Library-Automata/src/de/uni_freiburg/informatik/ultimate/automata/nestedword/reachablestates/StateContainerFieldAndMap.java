@@ -67,8 +67,8 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	private static final int THREE = 3;
 	private static final int FOUR = 4;
 
-	private final Set<LETTER> mEmptySetOfLetters = new HashSet<>(0);
-	private final Collection<STATE> mEmptySetOfStates = new HashSet<>(0);
+	private final Set<LETTER> mEmptySetOfLetters = Collections.emptySet();
+	private final Collection<STATE> mEmptySetOfStates = Collections.emptySet();
 
 	private Object mOut1;
 	private Object mOut2;
@@ -364,12 +364,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			final NestedMap2<LETTER, STATE, IsContained> map = (NestedMap2<LETTER, STATE, IsContained>) mOut2;
 			return map == null ? mEmptySetOfLetters : map.keySet();
 		}
-		final Set<LETTER> result = new HashSet<>(1);
 		if (mOut2 instanceof OutgoingCallTransition) {
 			final LETTER letter = ((OutgoingCallTransition<LETTER, STATE>) mOut2).getLetter();
-			result.add(letter);
+			return Collections.singleton(letter);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -378,12 +378,37 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			final NestedMap2<LETTER, STATE, IsContained> map = (NestedMap2<LETTER, STATE, IsContained>) mIn2;
 			return map == null ? mEmptySetOfLetters : map.keySet();
 		}
-		final Set<LETTER> result = new HashSet<>(1);
 		if (mIn2 instanceof IncomingCallTransition) {
 			final LETTER letter = ((IncomingCallTransition<LETTER, STATE>) mIn2).getLetter();
-			result.add(letter);
+			return Collections.singleton(letter);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
+	}
+	
+	public Set<LETTER> lettersReturn(final STATE hier) {
+		if (mapModeOutgoing()) {
+			final NestedMap3<STATE, LETTER, STATE, IsContained> map = (NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3;
+			if (map == null) {
+				return Collections.emptySet();
+			} else {
+				final NestedMap2<LETTER, STATE, IsContained> inner = map.get(hier);
+				if (inner == null) {
+					return Collections.emptySet();
+				} else {
+					return inner.keySet();
+				}
+			}
+		}
+		if (mOut3 instanceof OutgoingReturnTransition) {
+			final OutgoingReturnTransition<LETTER, STATE> outTrans = ((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+			if (hier.equals(outTrans.getHierPred())) {
+				return Collections.singleton(outTrans.getLetter());
+			} else {
+				return Collections.emptySet();
+			}
+		}
+		return Collections.emptySet();
 	}
 
 	@Override
@@ -393,12 +418,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			final NestedMap3<STATE, LETTER, STATE, IsContained> map = (NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3;
 			return map == null ? mEmptySetOfLetters : map.projektTo2();
 		}
-		final Set<LETTER> result = new HashSet<>(1);
 		if (mOut3 instanceof OutgoingReturnTransition) {
 			final LETTER letter = ((OutgoingReturnTransition<LETTER, STATE>) mOut3).getLetter();
-			result.add(letter);
+			return Collections.singleton(letter);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -407,12 +432,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			final Map<LETTER, Map<STATE, Set<STATE>>> map = (Map<LETTER, Map<STATE, Set<STATE>>>) mIn3;
 			return map == null ? mEmptySetOfLetters : map.keySet();
 		}
-		final Set<LETTER> result = new HashSet<>(1);
 		if (mIn3 instanceof IncomingReturnTransition) {
 			final LETTER letter = ((IncomingReturnTransition<LETTER, STATE>) mIn3).getLetter();
-			result.add(letter);
+			return Collections.singleton(letter);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -485,12 +510,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			final Map<STATE, IsContained> result = map.get(letter);
 			return result == null ? mEmptySetOfStates : result.keySet();
 		}
-		final Collection<STATE> result = new ArrayList<>(1);
 		if (properOutgoingCallTransitionAtPosition2(letter)) {
 			final STATE state = ((OutgoingCallTransition<LETTER, STATE>) mOut2).getSucc();
-			result.add(state);
+			return Collections.singleton(state);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -503,12 +528,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			final Map<STATE, IsContained> result = map.get(letter);
 			return result == null ? mEmptySetOfStates : result.keySet();
 		}
-		final Collection<STATE> result = new ArrayList<>(1);
 		if (properIncomingCallTransitionAtPosition2(letter)) {
 			final STATE state = ((IncomingCallTransition<LETTER, STATE>) mIn2).getPred();
-			result.add(state);
+			return Collections.singleton(state);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -526,12 +551,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			}
 			return result;
 		}
-		final Collection<STATE> result = new ArrayList<>(1);
 		if (properOutgoingReturnTransitionAtPosition3(null, letter)) {
 			final STATE state = ((OutgoingReturnTransition<LETTER, STATE>) mOut3).getHierPred();
-			result.add(state);
+			return Collections.singleton(state);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -544,12 +569,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			final Map<STATE, IsContained> result = map.get(hier, letter);
 			return result == null ? mEmptySetOfStates : result.keySet();
 		}
-		final Collection<STATE> result = new ArrayList<>(1);
 		if (properOutgoingReturnTransitionAtPosition3(hier, letter)) {
 			final STATE state = ((OutgoingReturnTransition<LETTER, STATE>) mOut3).getSucc();
-			result.add(state);
+			return Collections.singleton(state);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -566,12 +591,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			final Set<STATE> result = hier2preds.get(hier);
 			return result == null ? mEmptySetOfStates : result;
 		}
-		final Collection<STATE> result = new ArrayList<>(1);
 		if (properIncomingReturnTransitionAtPosition3(hier, letter)) {
 			final STATE state = ((IncomingReturnTransition<LETTER, STATE>) mIn3).getLinPred();
-			result.add(state);
+			return Collections.singleton(state);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -587,12 +612,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			}
 			return hier2preds.keySet();
 		}
-		final Collection<STATE> result = new ArrayList<>(1);
 		if (properIncomingReturnTransitionAtPosition3(null, letter)) {
 			final STATE state = ((IncomingReturnTransition<LETTER, STATE>) mIn3).getHierPred();
-			result.add(state);
+			return Collections.singleton(state);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	private Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessorsMap(final LETTER letter) {
@@ -1064,11 +1089,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeOutgoing()) {
 			return callSuccessorsMap(letter);
 		}
-		final ArrayList<OutgoingCallTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properOutgoingCallTransitionAtPosition2(letter)) {
-			result.add((OutgoingCallTransition<LETTER, STATE>) mOut2);
+			return Collections.singleton((OutgoingCallTransition<LETTER, STATE>) mOut2);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1076,11 +1101,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeOutgoing()) {
 			return callSuccessorsMap();
 		}
-		final ArrayList<OutgoingCallTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properOutgoingCallTransitionAtPosition2(null)) {
-			result.add((OutgoingCallTransition<LETTER, STATE>) mOut2);
+			return Collections.singleton((OutgoingCallTransition<LETTER, STATE>) mOut2);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1088,11 +1113,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeIncoming()) {
 			return callPredecessorsMap(letter);
 		}
-		final ArrayList<IncomingCallTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properIncomingCallTransitionAtPosition2(letter)) {
-			result.add((IncomingCallTransition<LETTER, STATE>) mIn2);
+			return Collections.singleton((IncomingCallTransition<LETTER, STATE>) mIn2);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1100,11 +1125,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeIncoming()) {
 			return callPredecessorsMap();
 		}
-		final ArrayList<IncomingCallTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properIncomingCallTransitionAtPosition2(null)) {
-			result.add((IncomingCallTransition<LETTER, STATE>) mIn2);
+			return Collections.singleton((IncomingCallTransition<LETTER, STATE>) mIn2);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1112,11 +1137,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeOutgoing()) {
 			return returnSuccessorsMap(hier, letter);
 		}
-		final ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properOutgoingReturnTransitionAtPosition3(hier, letter)) {
-			result.add((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+			return Collections.singleton((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1124,11 +1149,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeOutgoing()) {
 			return returnSuccessorsMap(letter);
 		}
-		final ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properOutgoingReturnTransitionAtPosition3(null, letter)) {
-			result.add((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+			return Collections.singleton((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1136,11 +1161,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeOutgoing()) {
 			return returnSuccessorsMap();
 		}
-		final ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properOutgoingReturnTransitionAtPosition3(null, null)) {
-			result.add((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+			return Collections.singleton((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1148,11 +1173,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeOutgoing()) {
 			return returnSuccessorsGivenHierMap(hier);
 		}
-		final ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properOutgoingReturnTransitionAtPosition3(hier, null)) {
-			result.add((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+			return Collections.singleton((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1160,11 +1185,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeIncoming()) {
 			return returnPredecessorsMap(hier, letter);
 		}
-		final ArrayList<IncomingReturnTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properIncomingReturnTransitionAtPosition3(hier, letter)) {
-			result.add((IncomingReturnTransition<LETTER, STATE>) mIn3);
+			return Collections.singleton((IncomingReturnTransition<LETTER, STATE>) mIn3);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1172,11 +1197,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeIncoming()) {
 			return returnPredecessorsMap(letter);
 		}
-		final ArrayList<IncomingReturnTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properIncomingReturnTransitionAtPosition3(null, letter)) {
-			result.add((IncomingReturnTransition<LETTER, STATE>) mIn3);
+			return Collections.singleton((IncomingReturnTransition<LETTER, STATE>) mIn3);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1184,11 +1209,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeIncoming()) {
 			return returnPredecessorsMap();
 		}
-		final ArrayList<IncomingReturnTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properIncomingReturnTransitionAtPosition3(null, null)) {
-			result.add((IncomingReturnTransition<LETTER, STATE>) mIn3);
+			return Collections.singleton((IncomingReturnTransition<LETTER, STATE>) mIn3);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
