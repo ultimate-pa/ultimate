@@ -223,6 +223,15 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 		}
 		return letters;
 	}
+	
+	@Override
+	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
+		final Set<LETTER> letters = new HashSet<>();
+		for (final OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessorsGivenHier(state, hier)) {
+			letters.add(outTrans.getLetter());
+		}
+		return letters;
+	}
 
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {

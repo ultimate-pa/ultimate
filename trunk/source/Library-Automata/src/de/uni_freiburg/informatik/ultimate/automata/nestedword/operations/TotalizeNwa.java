@@ -199,6 +199,11 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	public Set<LETTER> lettersCall(final STATE state) {
 		return mOperand.getCallAlphabet();
 	}
+	
+	@Override
+	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
+		return mOperand.getReturnAlphabet();
+	}
 
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {

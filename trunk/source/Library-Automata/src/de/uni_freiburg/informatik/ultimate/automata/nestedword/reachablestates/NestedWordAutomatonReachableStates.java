@@ -401,6 +401,11 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	public Set<LETTER> lettersCall(final STATE state) {
 		return mStates.get(state).lettersCall();
 	}
+	
+	@Override
+	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
+		return mStates.get(state).lettersReturn(hier);
+	}
 
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {

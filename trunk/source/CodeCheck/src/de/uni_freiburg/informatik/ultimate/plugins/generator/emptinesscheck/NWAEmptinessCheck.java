@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.DummyStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
@@ -295,6 +296,13 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 
 			return mStateToLetterToOutgoingCallTransitions.get(state).keySet();
 		}
+		
+		@Override
+		public Set<IIcfgTransition<?>> lettersReturn(final AnnotatedProgramPoint state, final AnnotatedProgramPoint hier) {
+			//TODO: 20170505 Matthias: Due to some API change I had to introduce this 
+			// method but I don't know implement it here. 
+			throw new UnsupportedOperationException();
+		}
 
 		@Override
 		public Set<IIcfgTransition<?>> lettersReturn(final AnnotatedProgramPoint state) {
@@ -409,6 +417,15 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 			}
 			return a;
 		}
+
+		@Override
+		public IElement transformToUltimateModel(final AutomataLibraryServices services)
+				throws AutomataOperationCanceledException {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+
 
 	}
 }

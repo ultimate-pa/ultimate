@@ -237,6 +237,13 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		final ProductState ps = mResult2Product.get(state);
 		return mControlFlowAutomaton.lettersCall(ps.getCfgAutomatonState());
 	}
+	
+	@Override
+	public Set<LETTER> lettersReturn(final IPredicate state, final IPredicate hier) {
+		final ProductState ps = mResult2Product.get(state);
+		final ProductState psHier = mResult2Product.get(hier);
+		return mControlFlowAutomaton.lettersReturn(ps.getCfgAutomatonState(), psHier.getCfgAutomatonState());
+	}
 
 	@Override
 	public Set<LETTER> lettersReturn(final IPredicate state) {

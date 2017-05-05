@@ -172,6 +172,11 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE>
 	public Set<LETTER> lettersCall(final STATE state) {
 		throw new UnsupportedOperationException();
 	}
+	
+	@Override
+	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
+		throw new UnsupportedOperationException();
+	}
 
 	/**
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#lettersReturn(

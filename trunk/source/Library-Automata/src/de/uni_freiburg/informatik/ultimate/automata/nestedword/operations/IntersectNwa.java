@@ -186,6 +186,13 @@ public class IntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<L
 		final STATE fst = mRes2prod.get(state).getFst();
 		return mFstOperand.lettersCall(fst);
 	}
+	
+	@Override
+	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
+		final STATE fst = mRes2prod.get(state).getFst();
+		final STATE fstHier = mRes2prod.get(hier).getFst();
+		return mFstOperand.lettersReturn(fst, fstHier);
+	}
 
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {
