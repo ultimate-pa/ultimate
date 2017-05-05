@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProd
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedIteratorNoopConstruction;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Quin;
 
 /**
@@ -170,6 +171,16 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 		}
 		final Set<STATE> result = map.get(letter);
 		return result == null ? Collections.emptySet() : result;
+	}
+	
+	public Set<STATE> hierarchicalPredecessorsOutgoing(final STATE state) {
+		assert contains(state);
+		final NestedMap3<STATE, LETTER, STATE, IsContained> tmp = mReturnOut.get(state);
+		if (tmp == null) {
+			return Collections.emptySet();
+		} else {
+			return tmp.keySet();
+		}
 	}
 
 	@Override
@@ -371,8 +382,8 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
-		return () -> new NestedIteratorNoopConstruction<LETTER, OutgoingReturnTransition<LETTER, STATE>>(
-				lettersReturn(state).iterator(), x -> returnSuccessors(state, x).iterator());
+		return () -> new NestedIteratorNoopConstruction<STATE, OutgoingReturnTransition<LETTER, STATE>>(
+				hierarchicalPredecessorsOutgoing(state).iterator(), x -> returnSuccessorsGivenHier(state, x).iterator());
 	}
 
 

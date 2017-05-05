@@ -74,7 +74,7 @@ public abstract class NestedWordAutomatonForLetterBasedOnDemandConstruction<LETT
 	public final Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
 			final STATE hier) {
 		final List<OutgoingReturnTransition<LETTER, STATE>> result = new ArrayList<>();
-		for (final LETTER letter : lettersReturn(state)) {
+		for (final LETTER letter : lettersReturn(state, hier)) {
 			for (final OutgoingReturnTransition<LETTER, STATE> trans : returnSuccessors(state, hier, letter)) {
 				result.add(trans);
 			}

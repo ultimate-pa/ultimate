@@ -375,7 +375,7 @@ public final class NestedWordAutomataUtils {
 	 */
 	private static <LETTER, STATE> boolean isNondeterministicReturn(final STATE state, final STATE hier,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
-		for (final LETTER letter : nwa.lettersReturn(state)) {
+		for (final LETTER letter : nwa.lettersReturn(state, hier)) {
 			int numberOfSuccs = 0;
 			for (final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator =
 					nwa.returnSuccessors(state, hier, letter).iterator(); iterator.hasNext(); iterator.next()) {

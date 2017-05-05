@@ -49,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.F
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DownStateConsistencyCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
@@ -1064,9 +1063,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 			}
 			if (getReturnAlphabet().isEmpty()) {
 				return false;
-			}
-			if (mOperand instanceof INestedWordAutomatonSimple) {
-				return !((INestedWordAutomatonSimple<LETTER, STATE>) mOperand).lettersReturn(state).isEmpty();
 			}
 			return true;
 		}
