@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.test.benchexec;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -101,7 +102,19 @@ public class BenchmarkSerializer {
 				new JAXBElement<>(QNAME_BENCHMARK, Benchmark.class, null, benchmarkInstance);
 		final JAXBContext jc = JAXBContext.newInstance(BENCHMARK_PACKAGE);
 		final Marshaller marshaller = jc.createMarshaller();
+		marshaller.setProperty("jaxb.formatted.output", true);
 		marshaller.marshal(jaxbelem, new FileOutputStream(xmlfile));
+	}
+
+	public static String toString(final Benchmark benchmarkInstance) throws JAXBException {
+		final JAXBElement<Benchmark> jaxbelem =
+				new JAXBElement<>(QNAME_BENCHMARK, Benchmark.class, null, benchmarkInstance);
+		final JAXBContext jc = JAXBContext.newInstance(BENCHMARK_PACKAGE);
+		final Marshaller marshaller = jc.createMarshaller();
+		marshaller.setProperty("jaxb.formatted.output", true);
+		final StringWriter sw = new StringWriter();
+		marshaller.marshal(jaxbelem, sw);
+		return sw.toString();
 	}
 
 }

@@ -148,6 +148,7 @@ public abstract class UltimateTestSuite {
 			writeNonIncrementalLog(preLog);
 		}
 		mLogs.removeAll(prelogs);
+		mLogger.info("Finished writing Prelogs");
 	}
 
 	public ILogger getLogger() {
