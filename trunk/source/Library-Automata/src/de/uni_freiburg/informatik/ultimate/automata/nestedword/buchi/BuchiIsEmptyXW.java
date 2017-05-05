@@ -397,12 +397,10 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	 * returnSucc)" is contained in the return transitions.
 	 */
 	LETTER getFirstReturnSymbol(final STATE returnPredHierarc, final STATE returnPredLinear, final STATE returnSucc) {
-		for (final LETTER returnSymbol : mOperand.lettersReturn(returnPredHierarc)) {
-			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(returnPredHierarc,
-					returnPredLinear, returnSymbol)) {
-				if (trans.getSucc().equals(returnSucc)) {
-					return returnSymbol;
-				}
+		for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessorsGivenHier(returnPredHierarc,
+				returnPredLinear)) {
+			if (trans.getSucc().equals(returnSucc)) {
+				return trans.getLetter();
 			}
 		}
 		return null;
