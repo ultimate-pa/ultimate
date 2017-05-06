@@ -198,11 +198,6 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 		return mOperand.getReturnAlphabet();
 	}
 
-	@Override
-	public Set<LETTER> lettersReturn(final STATE state) {
-		return mOperand.getReturnAlphabet();
-	}
-
 	private LevelRankingConstraintDrdCheck<LETTER, STATE> computeSuccLevelRankingConstraint_Internal(final STATE state,
 			final LETTER letter) {
 		final LevelRankingState<LETTER, STATE> lvlrkState = mRes2det.get(state);

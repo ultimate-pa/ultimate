@@ -245,12 +245,6 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 		return mControlFlowAutomaton.lettersReturn(ps.getCfgAutomatonState(), psHier.getCfgAutomatonState());
 	}
 
-	@Override
-	public Set<LETTER> lettersReturn(final IPredicate state) {
-		final ProductState ps = mResult2Product.get(state);
-		return mControlFlowAutomaton.lettersReturn(ps.getCfgAutomatonState());
-	}
-
 	public Collection<OutgoingInternalTransition<LETTER, IPredicate>>
 			constructInternalSuccessors(final IPredicate state, final LETTER letter) {
 		final ProductState ps = mResult2Product.get(state);
@@ -319,7 +313,7 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	public Iterable<OutgoingReturnTransition<LETTER, IPredicate>> returnSuccessorsGivenHier(final IPredicate state,
 			final IPredicate hier) {
 		final Collection<OutgoingReturnTransition<LETTER, IPredicate>> result = new ArrayList<>();
-		for (final LETTER cb : lettersReturn(state)) {
+		for (final LETTER cb : lettersReturn(state, hier)) {
 			result.addAll(constructReturnSuccessors(state, hier, cb));
 		}
 		return result;

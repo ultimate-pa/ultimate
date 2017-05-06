@@ -94,14 +94,6 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends INwaSuccessor
 	Set<LETTER> lettersReturn(STATE state, STATE hier);
 	
 	/**
-	 * @param state
-	 *            state
-	 * @return Superset of all letters <tt>a</tt> such that <tt>state</tt> has an outgoing return transition labeled
-	 *         with letter <tt>a</tt>.
-	 */
-	Set<LETTER> lettersReturn(STATE state);
-
-	/**
 	 * All internal successor transitions for a given state and letter.
 	 * 
 	 * @param state

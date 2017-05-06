@@ -137,14 +137,6 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE>
 	}
 
 	/**
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#getAlphabet()
-	 */
-	@Override
-	public Set<LETTER> getAlphabet() {
-		return mCache.getAlphabet();
-	}
-
-	/**
 	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#getInitialStates()
 	 */
 	@Override
@@ -175,15 +167,6 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE>
 	
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
-		throw new UnsupportedOperationException();
-	}
-
-	/**
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#lettersReturn(
-	 *      java.lang.Object)
-	 */
-	@Override
-	public Set<LETTER> lettersReturn(final STATE state) {
 		throw new UnsupportedOperationException();
 	}
 

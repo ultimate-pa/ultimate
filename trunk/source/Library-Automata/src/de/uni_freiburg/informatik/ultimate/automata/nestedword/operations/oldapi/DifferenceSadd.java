@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
  */
 public final class DifferenceSadd<LETTER, STATE>
 		extends BinaryNwaOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>> {
-	private final INestedWordAutomatonSimple<LETTER, STATE> mMinuend;
+	private final INestedWordAutomaton<LETTER, STATE> mMinuend;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mSubtrahend;
 	private final NestedWordAutomaton<LETTER, STATE> mDifference;
 
@@ -119,7 +119,7 @@ public final class DifferenceSadd<LETTER, STATE>
 	 */
 	public <SF extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> DifferenceSadd(
 			final AutomataLibraryServices services, final SF stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
+			final INestedWordAutomaton<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend) throws AutomataLibraryException {
 		this(services, stateFactory, minuend, subtrahend, new PowersetDeterminizer<>(subtrahend, true, stateFactory));
 	}
@@ -141,7 +141,7 @@ public final class DifferenceSadd<LETTER, STATE>
 	 *             if alphabets differ
 	 */
 	public DifferenceSadd(final AutomataLibraryServices services, final IIntersectionStateFactory<STATE> contentFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> minuend,
+			final INestedWordAutomaton<LETTER, STATE> minuend,
 			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataLibraryException {
 		super(services);

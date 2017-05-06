@@ -125,11 +125,6 @@ public final class ComplementDeterministicNwa<LETTER, STATE> implements INestedW
 	}
 
 	@Override
-	public Set<LETTER> lettersReturn(final STATE state) {
-		return mOperand.getReturnAlphabet();
-	}
-
-	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
 			final LETTER letter) {
 		return mOperand.internalSuccessors(state, letter);

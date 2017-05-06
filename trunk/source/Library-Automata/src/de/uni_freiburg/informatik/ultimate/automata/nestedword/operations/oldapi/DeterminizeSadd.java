@@ -63,7 +63,7 @@ public final class DeterminizeSadd<LETTER, STATE>
 	private final Map<STATE, Macrostate> mDetState2macrostate = new HashMap<>();
 	private final Map<STATE, Set<STATE>> mSummary = new HashMap<>();
 	private final STATE mAuxiliaryEmptyStackState;
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final NestedWordAutomaton<LETTER, STATE> mResult;
 	private final IDeterminizeStateFactory<STATE> mStateFactory;
 
@@ -82,7 +82,7 @@ public final class DeterminizeSadd<LETTER, STATE>
 	 *            operand
 	 */
 	public DeterminizeSadd(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mStateFactory = stateFactory;

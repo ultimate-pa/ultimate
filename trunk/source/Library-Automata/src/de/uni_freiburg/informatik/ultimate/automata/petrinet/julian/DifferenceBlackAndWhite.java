@@ -389,7 +389,7 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 			mLogger.info("Testing correctness of " + operationName());
 		}
 
-		final INestedWordAutomatonSimple<S, C> op1AsNwa =
+		final INestedWordAutomaton<S, C> op1AsNwa =
 				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult();
 		final INestedWordAutomatonSimple<S, C> rcResult =
 				(new DifferenceDD<>(mServices, stateFactory, op1AsNwa, mNwa)).getResult();

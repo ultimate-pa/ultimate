@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -227,7 +228,7 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Testing correctness of determinization");
-			final INestedWordAutomatonSimple<LETTER, STATE> operandOld =
+			final INestedWordAutomaton<LETTER, STATE> operandOld =
 					(new RemoveUnreachable<>(mServices, mOperand)).getResult();
 			final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
 					(new DeterminizeSadd<>(mServices, stateFactory, operandOld)).getResult();

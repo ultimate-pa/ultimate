@@ -243,21 +243,6 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	}
 
 	@Override
-	public Set<LETTER> lettersReturn(final STATE state) {
-		if (mMakeAutomatonTotal) {
-			return getReturnAlphabet();
-		}
-		final Set<LETTER> result = new HashSet<>();
-		final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
-		for (final STATE downState : detState.getDownStates()) {
-			for (final STATE upState : detState.getUpStates(downState)) {
-				result.addAll(mOperand.lettersReturn(upState));
-			}
-		}
-		return result;
-	}
-
-	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
 			final LETTER letter) {
 		final Iterator<OutgoingInternalTransition<LETTER, STATE>> succs =

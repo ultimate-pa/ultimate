@@ -206,11 +206,6 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	}
 
 	@Override
-	public Set<LETTER> lettersReturn(final STATE state) {
-		return mOperand.getReturnAlphabet();
-	}
-
-	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
 			final LETTER letter) {
 		if (mNondeterministicTransitionsDetected) {
