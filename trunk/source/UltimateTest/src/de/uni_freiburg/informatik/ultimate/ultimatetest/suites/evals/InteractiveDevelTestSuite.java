@@ -30,11 +30,11 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.evals;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.OverapproximatingSafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition.Aggregate;
@@ -45,7 +45,7 @@ public class InteractiveDevelTestSuite extends AbstractEvalTestSuite {
 	private static final String[] C = new String[] { ".i", ".c" };
 	private static final String[] BPL = new String[] { ".bpl" };
 	private static final int DEFAULT_LIMIT = Integer.MAX_VALUE;
-	
+
 	// @formatter:off
 	@SuppressWarnings("unchecked")
 	private static final Triple<String, String[], String>[] TOOLCHAINS = new Triple[] {
@@ -108,7 +108,7 @@ public class InteractiveDevelTestSuite extends AbstractEvalTestSuite {
 
 	};
 	// @formatter:on
-	
+
 	@Override
 	protected long getTimeout() {
 		// return 90 * 1000 * 1000;
@@ -116,7 +116,7 @@ public class InteractiveDevelTestSuite extends AbstractEvalTestSuite {
 		return 30 * 1000;
 		// return 15 * 60 * 1000;
 	}
-	
+
 	@Override
 	protected ColumnDefinition[] getColumnDefinitions() {
 		return new ColumnDefinition[] {
@@ -147,12 +147,12 @@ public class InteractiveDevelTestSuite extends AbstractEvalTestSuite {
 				new ColumnDefinition("InterpolantCoveringCapability", "ICC", ConversionContext.Percent(true, 2),
 						Aggregate.Ignore, Aggregate.Average), };
 	}
-	
+
 	@Override
 	public ITestResultDecider constructITestResultDecider(final UltimateRunDefinition urd) {
 		return new OverapproximatingSafetyCheckTestResultDecider(urd, false);
 	}
-	
+
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (final Triple<String, String[], String> triple : TOOLCHAINS) {
