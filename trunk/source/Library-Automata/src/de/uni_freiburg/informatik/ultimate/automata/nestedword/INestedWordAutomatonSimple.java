@@ -70,7 +70,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedIt
  * @param <STATE>
  *            Type of objects which can be used as states.
  */
-public interface INestedWordAutomatonSimple<LETTER, STATE> extends INwaSuccessorProvider<LETTER, STATE> {
+public interface INestedWordAutomatonSimple<LETTER, STATE> extends INwaOutgoingTransitionProvider<LETTER, STATE> {
 
 	/**
 	 * @param state

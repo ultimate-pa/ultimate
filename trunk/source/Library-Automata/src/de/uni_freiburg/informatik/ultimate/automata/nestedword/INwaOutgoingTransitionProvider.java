@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * @param <STATE>
  *            Type of objects which can be used as states.
  */
-public interface INwaSuccessorProvider<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
+public interface INwaOutgoingTransitionProvider<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
 	/**
 	 * @return Set of all letters that can occur as label of an internal transition.
 	 *         <p>
