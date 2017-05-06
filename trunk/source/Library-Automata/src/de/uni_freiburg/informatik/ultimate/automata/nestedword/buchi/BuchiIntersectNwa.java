@@ -217,12 +217,6 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 	}
 
 	@Override
-	public Set<LETTER> lettersReturn(final STATE state) {
-		final STATE fst = mRes2prod.get(state).getFst();
-		return mFstOperand.lettersReturn(fst);
-	}
-
-	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
 			final LETTER letter) {
 		final ProductState prod = mRes2prod.get(state);

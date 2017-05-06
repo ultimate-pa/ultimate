@@ -235,11 +235,6 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INestedWor
 	}
 
 	@Override
-	public final Set<LETTER> lettersReturn(final IPredicate state) {
-		return getReturnAlphabet();
-	}
-
-	@Override
 	public final Iterable<OutgoingInternalTransition<LETTER, IPredicate>> internalSuccessors(final IPredicate state,
 			final LETTER letter) {
 		if (mMode == Mode.ON_DEMAND_CONSTRUCTION) {
@@ -300,7 +295,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INestedWor
 	public final Iterable<OutgoingReturnTransition<LETTER, IPredicate>>
 			returnSuccessorsGivenHier(final IPredicate state, final IPredicate hier) {
 		if (mMode == Mode.ON_DEMAND_CONSTRUCTION) {
-			for (final LETTER letter : lettersReturn(state)) {
+			for (final LETTER letter : lettersReturn(state, hier)) {
 				if (!mAlreadyConstrucedAutomaton.returnSuccessors(state, hier, letter).iterator().hasNext()) {
 					computeSuccs(state, hier, letter, mReSucComp);
 				}

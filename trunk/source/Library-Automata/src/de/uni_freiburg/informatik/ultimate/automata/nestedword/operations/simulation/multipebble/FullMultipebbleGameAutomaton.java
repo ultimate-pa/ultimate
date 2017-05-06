@@ -195,14 +195,6 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 
 
 	@Override
-	public Set<LETTER> lettersReturn(final GS state) {
-		if (IFullMultipebbleAuxiliaryGameState.isSpoilerWinningSink(state)) {
-			return Collections.emptySet();
-		}
-		return mOperand.lettersReturn(state.getSpoilerDoubleDecker().getUp());
-	}
-
-	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, GS>> internalSuccessors(final GS state, final LETTER letter) {
 		final List<OutgoingInternalTransition<LETTER, GS>> result = new ArrayList<>();
 		for (final GS succ : mStateFactory.computeSuccessorsInternal(state, letter, mOperand)) {

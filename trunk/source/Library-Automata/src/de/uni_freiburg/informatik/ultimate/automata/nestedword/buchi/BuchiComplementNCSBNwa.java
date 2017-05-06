@@ -183,25 +183,6 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 		return mCache.getEmptyStackState();
 	}
 
-	@Override
-	public Set<LETTER> lettersInternal(final STATE state) {
-		return mOperand.getInternalAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> lettersCall(final STATE state) {
-		return mOperand.getCallAlphabet();
-	}
-	
-	@Override
-	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
-		return mOperand.getReturnAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> lettersReturn(final STATE state) {
-		return mOperand.getReturnAlphabet();
-	}
 
 	private LevelRankingConstraintDrdCheck<LETTER, STATE> computeSuccLevelRankingConstraint_Internal(final STATE state,
 			final LETTER letter) {
@@ -355,14 +336,6 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 	}
 
 	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
-		for (final LETTER letter : getInternalAlphabet()) {
-			internalSuccessors(state, letter);
-		}
-		return mCache.internalSuccessors(state);
-	}
-
-	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
 		final Collection<STATE> succs = mCache.succCall(state, letter);
 		if (succs == null) {
@@ -372,14 +345,6 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 			mCache.addCallTransitions(state, letter, computedSuccs);
 		}
 		return mCache.callSuccessors(state, letter);
-	}
-
-	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
-		for (final LETTER letter : getCallAlphabet()) {
-			callSuccessors(state, letter);
-		}
-		return mCache.callSuccessors(state);
 	}
 
 	@Override
@@ -395,24 +360,12 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 		return mCache.returnSuccessors(state, hier, letter);
 	}
 
-	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
-			final STATE hier) {
-		for (final LETTER letter : getReturnAlphabet()) {
-			returnSuccessors(state, hier, letter);
-		}
-		return mCache.returnSuccessorsGivenHier(state, hier);
-	}
 
 	@Override
 	public int size() {
 		return mCache.size();
 	}
 
-	@Override
-	public Set<LETTER> getAlphabet() {
-		return mOperand.getAlphabet();
-	}
 
 	@Override
 	public String sizeInformation() {

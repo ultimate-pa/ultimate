@@ -61,20 +61,20 @@ print(numberOfStates(fkvMaxrank5));
 
 
 // all three complement automata have only live states, no non-live states can be removed
-print(numberOfStates(removeNonLiveStates(bs)));
-print(numberOfStates(removeNonLiveStates(fkvMaxrank3)));
-print(numberOfStates(removeNonLiveStates(fkvMaxrank5)));
+assert(numberOfStates(removeNonLiveStates(bs)) == 10);
+assert(numberOfStates(removeNonLiveStates(fkvMaxrank3)) == 22);
+assert(numberOfStates(removeNonLiveStates(fkvMaxrank5)) == 24);
 
 
 // surprisingly, after a Hopcroft-based size reduction the maxrank5 algorithm has
 // the smallest number of states
-print(numberOfStates(minimizeSevpa(removeNonLiveStates(bs))));
-print(numberOfStates(minimizeSevpa(removeNonLiveStates(fkvMaxrank3))));
-print(numberOfStates(minimizeSevpa(removeNonLiveStates(fkvMaxrank5))));
+assert(numberOfStates(minimizeSevpa(removeNonLiveStates(bs))) == 2);
+assert(numberOfStates(minimizeSevpa(removeNonLiveStates(fkvMaxrank3))) == 8);
+assert(numberOfStates(minimizeSevpa(removeNonLiveStates(fkvMaxrank5))) == 8);
 
 
 // after a Buchi size reduction based on delayed simulation the result of
 // the bs algorithm has the smallest number of states
-print(numberOfStates(buchiReduce(removeNonLiveStates(bs))));
-print(numberOfStates(buchiReduce(removeNonLiveStates(fkvMaxrank3))));
-print(numberOfStates(buchiReduce(removeNonLiveStates(fkvMaxrank5))));
+assert(numberOfStates(buchiReduce(removeNonLiveStates(bs))) == 1);
+assert(numberOfStates(buchiReduce(removeNonLiveStates(fkvMaxrank3))) == 8);
+assert(numberOfStates(buchiReduce(removeNonLiveStates(fkvMaxrank5))) == 8);

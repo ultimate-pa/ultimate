@@ -237,7 +237,6 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		return map == null ? Collections.emptySet() : map.keySet();
 	}
 
-	@Override
 	public final Set<LETTER> lettersReturn(final STATE state) {
 		if (!contains(state)) {
 			throw new IllegalArgumentException(STATE + state + UNKNOWN);
@@ -254,6 +253,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 	}
 	
+	@Override
 	public final Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
 		if (!contains(state)) {
 			throw new IllegalArgumentException(STATE + state + UNKNOWN);

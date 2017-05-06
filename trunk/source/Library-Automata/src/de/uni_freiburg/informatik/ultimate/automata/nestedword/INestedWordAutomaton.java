@@ -81,6 +81,14 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomato
 	 *         isFinal(Object)} method to check if a specific state is final is preferred.
 	 */
 	Collection<STATE> getFinalStates();
+	
+	/**
+	 * @param state
+	 *            state
+	 * @return Superset of all letters <tt>a</tt> such that <tt>state</tt> has an outgoing return transition labeled
+	 *         with letter <tt>a</tt>.
+	 */
+	Set<LETTER> lettersReturn(STATE state);
 
 	/**
 	 * @param state

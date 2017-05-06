@@ -271,11 +271,6 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 	}
 
 	@Override
-	public Set<LETTER> lettersReturn(final STATE state) {
-		return mOperand.getReturnAlphabet();
-	}
-
-	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
 			final LETTER letter) {
 		final Collection<STATE> succs = mCache.succInternal(state, letter);

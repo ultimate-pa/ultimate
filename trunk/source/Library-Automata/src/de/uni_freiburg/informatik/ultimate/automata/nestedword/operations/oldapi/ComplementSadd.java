@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
  */
 public final class ComplementSadd<LETTER, STATE>
 		extends UnaryNwaOperation<LETTER, STATE, IIntersectionStateFactory<STATE>> {
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final INestedWordAutomatonSimple<LETTER, STATE> mDeterminizedOperand;
 	private final INestedWordAutomaton<LETTER, STATE> mResult;
 
@@ -63,7 +63,7 @@ public final class ComplementSadd<LETTER, STATE>
 	 *             if operation was canceled.
 	 */
 	public ComplementSadd(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INestedWordAutomaton<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 

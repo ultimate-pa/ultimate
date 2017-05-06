@@ -299,25 +299,13 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		
 		@Override
 		public Set<IIcfgTransition<?>> lettersReturn(final AnnotatedProgramPoint state, final AnnotatedProgramPoint hier) {
-			//TODO: 20170505 Matthias: Due to some API change I had to introduce this 
-			// method but I don't know implement it here. 
-			throw new UnsupportedOperationException();
-		}
-
-		@Override
-		public Set<IIcfgTransition<?>> lettersReturn(final AnnotatedProgramPoint state) {
 			final Map<AnnotatedProgramPoint, Map<IIcfgTransition<?>, List<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>>> hier2 =
 					mStateToHierToLetterToOutgoingReturnTransitions.get(state);
 			if (hier2 == null) {
 				return Collections.emptySet();
 			}
-
-			final HashSet<IIcfgTransition<?>> hs = new HashSet<>();
-			for (final Map<IIcfgTransition<?>, List<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>> hm : hier2
-					.values()) {
-				hs.addAll(hm.keySet());
-			}
-			return hs;
+			final Map<IIcfgTransition<?>, List<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>> letter2succ = hier2.get(hier2);
+			return letter2succ.keySet();
 		}
 
 		@Override

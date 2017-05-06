@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
@@ -180,8 +181,9 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Start testing correctness of " + operationName());
 		}
+		final INestedWordAutomaton<LETTER, STATE> fstUnreach = new RemoveUnreachable<>(mServices, mFstOperand).getResult();
 		final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
-				(new DifferenceDD<>(mServices, stateFactory, mFstOperand, mSndOperand,
+				(new DifferenceDD<>(mServices, stateFactory, fstUnreach, mSndOperand,
 						new PowersetDeterminizer<>(mSndOperand, true, stateFactory), false, false)).getResult();
 		boolean correct = true;
 		/*
