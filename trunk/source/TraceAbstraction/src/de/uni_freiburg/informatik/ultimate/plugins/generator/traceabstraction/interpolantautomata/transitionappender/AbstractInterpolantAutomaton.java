@@ -228,6 +228,11 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INestedWor
 	public final Set<LETTER> lettersCall(final IPredicate state) {
 		return getCallAlphabet();
 	}
+	
+	@Override
+	public final Set<LETTER> lettersReturn(final IPredicate state, final IPredicate hier) {
+		return getReturnAlphabet();
+	}
 
 	@Override
 	public final Set<LETTER> lettersReturn(final IPredicate state) {

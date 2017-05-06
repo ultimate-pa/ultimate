@@ -970,4 +970,9 @@ class StateContainerMapOnly<LETTER, STATE> extends StateContainer<LETTER, STATE>
 			}
 		};
 	}
+
+	@Override
+	public Set<LETTER> lettersReturn(final STATE hier) {
+		throw new UnsupportedOperationException("not implemented");
+	}
 }

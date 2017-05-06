@@ -73,9 +73,8 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 	public String getResultMessage() {
 		if (mCategory == OverallResult.EXCEPTION_OR_ERROR || mCategory == OverallResult.TIMEOUT) {
 			return mCategory.toString() + " " + mErrorMessage;
-		} else {
-			return mCategory.toString();
 		}
+		return mCategory.toString();
 	}
 
 	@Override
@@ -96,7 +95,7 @@ public class AutomataScriptTestResultDecider implements ITestResultDecider {
 		}
 	}
 
-	private TestResult getTestResultFromCategory(final OverallResult category) {
+	private static TestResult getTestResultFromCategory(final OverallResult category) {
 		switch (category) {
 		case ALL_ASSERTIONS_HOLD:
 		case NO_ASSERTION:

@@ -182,7 +182,7 @@ public class SafetyCheckerOverallResultEvaluator implements IOverallResultEvalua
 		return mMostSignificantResults;
 	}
 
-	private String concatenateShortDescriptions(final Set<IResult> iresults) {
+	private static String concatenateShortDescriptions(final Set<IResult> iresults) {
 		final StringBuilder sb = new StringBuilder();
 		for (final IResult iResult : iresults) {
 			sb.append(iResult.getShortDescription());

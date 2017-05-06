@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ObjectFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
-import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
+import de.uni_freiburg.informatik.ultimate.test.mocks.ConsoleLogger;
 
 /**
  * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)

@@ -103,8 +103,8 @@ public class AutomataScriptTestSuite extends UltimateTestSuite {
 
 		for (final File inputFile : inputFiles) {
 			final File settingsFile = null;
-			final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, mToolchainFile);
-			testCases.add(buildTestCase(urd, mTimeout, new AutomataScriptTestResultDecider()));
+			final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, mToolchainFile,mTimeout);
+			testCases.add(buildTestCase(urd, new AutomataScriptTestResultDecider()));
 		}
 		testCases.sort(null);
 		return testCases;

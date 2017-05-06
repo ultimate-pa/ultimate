@@ -31,12 +31,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinitionGenerator;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
+import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
 
 /**
  * 
@@ -68,34 +68,35 @@ public abstract class AbstractModelCheckerTestSuite extends UltimateTestSuite {
 	}
 
 	protected void addTestCases(final File toolchainFile, final File settingsFile, final Collection<File> inputFiles) {
+		final long timeout = getTimeout();
 		for (final File inputFile : inputFiles) {
-			addTestCase(new UltimateRunDefinition(inputFile, settingsFile, toolchainFile));
+			addTestCase(new UltimateRunDefinition(inputFile, settingsFile, toolchainFile, timeout));
 		}
 	}
 
 	protected void addTestCase(final Collection<UltimateRunDefinition> urds) {
 		for (final UltimateRunDefinition urd : urds) {
-			mTestCases.add(buildTestCase(urd, getTimeout(), constructITestResultDecider(urd)));
+			mTestCases.add(buildTestCase(urd, constructITestResultDecider(urd)));
 		}
 	}
 
 	protected void addTestCase(final UltimateRunDefinition urd) {
-		mTestCases.add(buildTestCase(urd, getTimeout(), constructITestResultDecider(urd)));
+		mTestCases.add(buildTestCase(urd, constructITestResultDecider(urd)));
 	}
 
 	protected void addTestCase(final String toolchain, final String settings, final String input) {
-		addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(input, settings, toolchain));
+		addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(input, settings, toolchain, getTimeout()));
 	}
 
 	protected void addTestCase(final String toolchain, final String settings, final String[] directories,
 			final String[] fileEndings) {
 		addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(directories, fileEndings, settings,
-				toolchain));
+				toolchain, getTimeout()));
 	}
 
 	protected void addTestCase(final String toolchain, final String settings,
 			final DirectoryFileEndingsPair[] directoryFileEndingsPairs) {
 		addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionFromTrunk(toolchain, settings,
-				directoryFileEndingsPairs));
+				directoryFileEndingsPairs, getTimeout()));
 	}
 }

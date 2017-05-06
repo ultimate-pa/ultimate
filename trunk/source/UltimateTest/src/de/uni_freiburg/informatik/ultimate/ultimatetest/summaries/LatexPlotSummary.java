@@ -29,12 +29,9 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.summaries;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
-import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
@@ -57,7 +54,7 @@ public class LatexPlotSummary extends LatexSummary {
 	}
 
 	@Override
-	public String getSummaryLog() {
+	public String getLog() {
 		final StringBuilder sb = new StringBuilder();
 		final PartitionedResults results = partitionResults(mResults.entrySet());
 		makeTables(sb, results);
@@ -71,12 +68,8 @@ public class LatexPlotSummary extends LatexSummary {
 
 	private void makeTables(final StringBuilder sb, final PartitionedResults results) {
 
-		final Set<String> tools = CoreUtil.selectDistinct(results.All, new IMyReduce<String>() {
-			@Override
-			public String reduce(final Entry<UltimateRunDefinition, ExtendedResult> entry) {
-				return entry.getKey().getToolchain().getName();
-			}
-		});
+		final Set<String> tools =
+				CoreUtil.selectDistinct(results.All, entry -> entry.getKey().getToolchain().getName());
 
 		final String br = CoreUtil.getPlatformLineSeparator();
 
@@ -124,13 +117,8 @@ public class LatexPlotSummary extends LatexSummary {
 			sb.append("}").append(br);
 
 			// make table body
-			final PartitionedResults resultsPerTool =
-					partitionResults(CoreUtil.where(results.All, new ITestSummaryResultPredicate() {
-						@Override
-						public boolean test(final Entry<UltimateRunDefinition, ExtendedResult> entry) {
-							return entry.getKey().getToolchain().getName().equals(tool);
-						}
-					}));
+			final PartitionedResults resultsPerTool = partitionResults(
+					CoreUtil.where(results.All, entry -> entry.getKey().getToolchain().getName().equals(tool)));
 
 			// end table
 			sb.append("\\caption{Results for ").append(removeInvalidCharsForLatex(tool)).append(".}").append(br);
@@ -244,7 +232,7 @@ public class LatexPlotSummary extends LatexSummary {
 		// acc.append('draw=' + color + ',solid')
 		// return acc
 
-		final List<String> rtr = new ArrayList<String>();
+		final List<String> rtr = new ArrayList<>();
 
 		return rtr;
 	}

@@ -220,6 +220,27 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 		}
 		return result;
 	}
+	
+	@Override
+	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
+		if (mMakeAutomatonTotal) {
+			return getReturnAlphabet();
+		}
+		final Set<LETTER> result = new HashSet<>();
+		final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
+		final DeterminizedState<LETTER, STATE> detHier = mRes2det.get(hier);
+		for (final STATE hierDown : detHier.getDownStates()) {
+			for (final STATE downState : detHier.getUpStates(hierDown)) {
+				final Set<STATE> ups = detState.getUpStates(downState);
+				if (ups != null) {
+					for (final STATE upState : ups) {
+						result.addAll(mOperand.lettersReturn(upState, downState));
+					}
+				}
+			}
+		}
+		return result;
+	}
 
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {
@@ -301,7 +322,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
 			final STATE hier) {
-		for (final LETTER letter : lettersReturn(state)) {
+		for (final LETTER letter : lettersReturn(state, hier)) {
 			returnSuccessors(state, hier, letter);
 		}
 		return mCache.returnSuccessorsGivenHier(state, hier);

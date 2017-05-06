@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.ultimatetest.summaries;
@@ -40,15 +40,15 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
  */
 public class CsvSummary extends BaseCsvProviderSummary {
 
-	public CsvSummary(Class<? extends UltimateTestSuite> ultimateTestSuite,
-			Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks,
-			ColumnDefinition[] columnDefinitions) {
+	public CsvSummary(final Class<? extends UltimateTestSuite> ultimateTestSuite,
+			final Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks,
+			final ColumnDefinition[] columnDefinitions) {
 		super(ultimateTestSuite, benchmarks, columnDefinitions);
 
 	}
 
 	@Override
-	public String getSummaryLog() {
+	public String getLog() {
 		final StringBuilder sb = new StringBuilder();
 		final PartitionedResults results = partitionResults(mResults.entrySet());
 		final ICsvProvider<String> csvTotal = makePrintCsvProviderFromResults(results.All, mColumnDefinitions);
@@ -56,7 +56,7 @@ public class CsvSummary extends BaseCsvProviderSummary {
 		sb.append(CoreUtil.getPlatformLineSeparator());
 		return sb.toString();
 	}
-	
+
 	@Override
 	public String getFilenameExtension() {
 		return ".csv";

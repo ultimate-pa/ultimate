@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE UnitTest Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE UnitTest Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
 
@@ -48,8 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 
 /**
- * Read the predefined expected result from the input file and compare it to
- * ULTIMATE's output
+ * Read the predefined expected result from the input file and compare it to ULTIMATE's output
  * 
  * @author Jan Leike
  */
@@ -67,7 +66,7 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 	private final String minput_file_name;
 	private final ExpectedResult mexpected_result;
 
-	public LassoRankerTestResultDecider(File inputFile) {
+	public LassoRankerTestResultDecider(final File inputFile) {
 		minput_file_name = inputFile.getName();
 		mexpected_result = checkExpectedResult(inputFile);
 	}
@@ -82,10 +81,9 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 	/**
 	 * Read the expected result from an input file
 	 * 
-	 * Expected results are expected to be specified in an input file's first
-	 * line and start with '//#r'.
+	 * Expected results are expected to be specified in an input file's first line and start with '//#r'.
 	 */
-	private static ExpectedResult checkExpectedResult(File inputFile) {
+	private static ExpectedResult checkExpectedResult(final File inputFile) {
 		BufferedReader br;
 		String line = null;
 		try {
@@ -122,10 +120,10 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(IUltimateServiceProvider services) {
+	public TestResult getTestResult(final IUltimateServiceProvider services) {
 		final ILogger logger = services.getLoggingService().getLogger(LassoRankerTestResultDecider.class);
 		final IResultService resultService = services.getResultService();
-		final Collection<String> customMessages = new LinkedList<String>();
+		final Collection<String> customMessages = new LinkedList<>();
 		boolean fail = false;
 
 		String result = "";
@@ -136,7 +134,8 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 			customMessages.add("No expected results defined in the input file");
 		} else {
 			final Map<String, List<IResult>> resultMap = resultService.getResults();
-			final List<IResult> results = resultMap.get("de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker");
+			final List<IResult> results =
+					resultMap.get("de.uni_freiburg.informatik.ultimate.plugins.analysis.lassoranker");
 			if (results != null) {
 				final IResult lastResult = results.get(results.size() - 1);
 				customMessages.add("Expected Result: " + mexpected_result.toString());
@@ -178,7 +177,7 @@ public class LassoRankerTestResultDecider extends TestResultDecider {
 	}
 
 	@Override
-	public TestResult getTestResult(IUltimateServiceProvider service, Throwable e) {
+	public TestResult getTestResult(final IUltimateServiceProvider service, final Throwable e) {
 		return TestResult.FAIL;
 	}
 

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.util.datastructures.relation;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -178,6 +179,14 @@ public class NestedMap3<K1, K2, K3, V> {
 		final NestedMap3<K1, K2, K3, V> result = new NestedMap3<>();
 		for (final K1 k1 : this.keySet()) {
 			result.mK1ToK2ToK3V.put(k1, this.get(k1).copy());
+		}
+		return result;
+	}
+
+	public Set<K2> projektTo2() {
+		final Set<K2> result = new HashSet<>();
+		for (final Entry<K1, NestedMap2<K2, K3, V>> entry : mK1ToK2ToK3V.entrySet()) {
+			result.addAll(entry.getValue().keySet());
 		}
 		return result;
 	}

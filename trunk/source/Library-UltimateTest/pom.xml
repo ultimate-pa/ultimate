@@ -40,4 +40,51 @@
 		<version>0.1.11</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
+	
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.7</version>
+				<executions>
+					<execution>
+						<id>generate parser sources</id>
+						<phase>generate-sources</phase>
+						<configuration>
+							<tasks>
+								<echo>Library-UltimateCore: workspaceDir is ${workspaceDir}</echo>
+								<echo>Library-UltimateCore: rundefDir is ${benchexecDir}</echo>
+								<exec executable="xjc" failonerror="true" dir="${project.basedir}">
+									<arg value="-d" />
+									<arg value="${workspaceDir}/Library-UltimateTest/src" />
+									<arg value="-p" />
+									<arg value="de.uni_freiburg.informatik.ultimate.test.benchexec.benchmark" />
+									<arg
+										value="${benchexecDir}/benchmark-1.9.xsd" />
+								</exec>
+							</tasks>
+						</configuration>
+						<goals>
+							<goal>run</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<artifactId>maven-clean-plugin</artifactId>
+				<version>2.4.1</version>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>${benchexecDir}</directory>
+							<excludes>
+							<exclude>*.xml</exclude>
+							<exclude>*.xsd</exclude>
+							</excludes>
+						</fileset>
+					</filesets>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>

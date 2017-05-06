@@ -45,7 +45,7 @@ public class ComparativeSummary extends BaseTestSummary {
 	}
 
 	@Override
-	public String getSummaryLog() {
+	public String getLog() {
 		final PartitionedResults partitionedResults = getAllResultsPartitioned();
 
 		final HashMap<String, HashSet<Entry<UltimateRunDefinition, ExtendedResult>>> tool2entry = new HashMap<>();

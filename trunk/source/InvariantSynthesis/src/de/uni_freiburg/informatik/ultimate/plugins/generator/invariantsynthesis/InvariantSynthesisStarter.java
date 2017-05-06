@@ -112,7 +112,7 @@ public class InvariantSynthesisStarter {
 		final IPredicateUnifier predicateUnifier = new PredicateUnifier(mServices, mgdScript, predicateFactory,
 				icfg.getCfgSmtToolkit().getSymbolTable(), simplificationTechnique, xnfConversionTechnique);
 
-		final InvariantSynthesisSettings invSynthSettings = constructSettings();
+		final InvariantSynthesisSettings invSynthSettings = constructSettings(icfg.getIdentifier());
 		final CFGInvariantsGenerator cfgInvGenerator = new CFGInvariantsGenerator(icfg, services, storage,
 				predicateUnifier.getTruePredicate(), predicateUnifier.getFalsePredicate(), predicateFactory, predicateUnifier,
 				invSynthSettings, icfg.getCfgSmtToolkit());
@@ -184,11 +184,10 @@ public class InvariantSynthesisStarter {
 	}
 
 
-	private InvariantSynthesisSettings constructSettings() {
+	private InvariantSynthesisSettings constructSettings(final String cfgIdentifier) {
 		final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 		
 		final boolean useNonlinearConstraints = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_NONLINEAR_CONSTRAINTS);
-		final boolean fakeNonIncrementalScript = false;
 		final boolean useExternalSolver = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_EXTERNAL_SMT_SOLVER);
 		final long timeoutSmtInterpol = prefs.getInt(InvariantSynthesisPreferenceInitializer.LABEL_SOLVER_TIMEOUT);
 		final String externalSolverTimeout = timeoutSmtInterpol + "000"; // z3 expects the timeout in msec
@@ -203,10 +202,14 @@ public class InvariantSynthesisStarter {
 			commandExternalSolver = "z3 -smt2 -in SMTLIB2_COMPLIANT=true -t:" + externalSolverTimeout;
 		}
 		
+		// TODO 2017-05-01 Matthias: Add settings if used more often.
+		final boolean fakeNonIncrementalScript = false;
 		final boolean dumpSmtScriptToFile = false;
-		final String pathOfDumpedScript = null;
-		final String baseNameOfDumpedScript = null;
-		final Settings solverSettings = new Settings(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver, timeoutSmtInterpol, null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
+		final String pathOfDumpedScript = "YOUR/FOLDER/HERE";
+		final String baseNameOfDumpedScript = useNonlinearConstraints ? "Nonlinear" + "_" + cfgIdentifier
+				: "Linear" + "_" + cfgIdentifier;
+		final Settings solverSettings = new Settings(fakeNonIncrementalScript, useExternalSolver, commandExternalSolver,
+				timeoutSmtInterpol, null, dumpSmtScriptToFile, pathOfDumpedScript, baseNameOfDumpedScript);
 
 		final boolean useUnsatCores = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_UNSAT_CORES);
 		final boolean useLBE = prefs.getBoolean(InvariantSynthesisPreferenceInitializer.LABEL_LARGE_BLOCK_ENCODING);

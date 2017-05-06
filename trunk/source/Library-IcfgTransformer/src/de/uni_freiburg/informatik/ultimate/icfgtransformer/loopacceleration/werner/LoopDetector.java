@@ -1,17 +1,34 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Extracts the loops from an {@link IIcfg}. And calculates its backbones, which are acyclic paths in the loop.
+ * Extracts the loops from an {@link IIcfg}. And calculates its backbones, which
+ * are acyclic paths in the loop.
  *
  * @param <INLOC>
  *
@@ -20,6 +37,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 
 public class LoopDetector<INLOC extends IcfgLocation> {
 	private final ILogger mLogger;
+	private final IUltimateServiceProvider mServices;
+	private final ManagedScript mScript;
 	private final Deque<Loop> mLoopBodies;
 
 	/**
@@ -28,8 +47,11 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	 * @param logger
 	 * @param originalIcfg
 	 */
-	public LoopDetector(final ILogger logger, final IIcfg<INLOC> originalIcfg) {
+	public LoopDetector(final ILogger logger, final IIcfg<INLOC> originalIcfg, IUltimateServiceProvider services,
+			ManagedScript script) {
 		mLogger = Objects.requireNonNull(logger);
+		mScript = script;
+		mServices = services;
 		mLogger.debug("Loop detector constructed.");
 		mLoopBodies = getLoop(originalIcfg);
 		for (final Loop loop : mLoopBodies) {
@@ -77,7 +99,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 
 			if (findLoopHeader(newPath, loopHead)) {
 				loopPath = newPath;
-				if (edge.getTarget() != loopHead) {
+				if (!edge.getTarget().equals(loopHead)) {
 
 					// TODO something for nested loops and more than one loop.
 
@@ -91,7 +113,8 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	}
 
 	/**
-	 * Try to find a path back to the loopheader. If there is one return true, else false.
+	 * Try to find a path back to the loopheader. If there is one return true,
+	 * else false.
 	 *
 	 * @param path
 	 *            path to check
@@ -108,7 +131,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 			final IcfgLocation node = stack.pop().getTarget();
 
 			for (final IcfgLocation successor : node.getOutgoingNodes()) {
-				if (successor == loopHead || node == loopHead) {
+				if (successor.equals(loopHead) || node.equals(loopHead)) {
 					return true;
 				}
 				if (!visited.contains(successor)) {
@@ -137,24 +160,57 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 			final Deque<IcfgLocation> visited = new ArrayDeque<>();
 			final Deque<IcfgEdge> backbone = possibleBackbones.pop();
 
-			while (backbone.getLast().getTarget() != loopHead && !visited.contains(backbone.getLast().getTarget())) {
+			while (!backbone.getLast().getTarget().equals(loopHead)
+					&& !visited.contains(backbone.getLast().getTarget())) {
 
 				final IcfgLocation target = backbone.getLast().getTarget();
 				visited.addLast(target);
 
-				// in case of multiple outgoing edges create more possible backbones.
+				// in case of multiple outgoing edges create more possible
+				// backbones.
 				if (target.getOutgoingEdges().size() > 1) {
-					mLogger.debug("Branching node found: " + target.toString());
 					for (int i = 1; i < target.getOutgoingEdges().size(); i++) {
 						final Deque<IcfgEdge> newPossibleBackbone = new ArrayDeque<>(backbone);
 						newPossibleBackbone.addLast(target.getOutgoingEdges().get(i));
-						mLogger.debug("New Possible Backbone: " + newPossibleBackbone.toString());
 						possibleBackbones.addLast(newPossibleBackbone);
 					}
 				}
 				backbone.add(target.getOutgoingEdges().get(0));
 			}
-			final Backbone newBackbone = new Backbone(backbone);
+
+			Term term = mScript.getScript().term("true");
+			final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
+			final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
+
+			List<UnmodifiableTransFormula> transformula = new ArrayList<>();
+
+			for (IcfgEdge edge : backbone) {
+				term = Util.and(mScript.getScript(), term, edge.getTransformula().getFormula());
+
+				for (final Entry<IProgramVar, TermVariable> entry : edge.getTransformula().getInVars().entrySet()) {
+					inVars.put(entry.getKey(), entry.getValue());
+				}
+
+				for (final Entry<IProgramVar, TermVariable> entry : edge.getTransformula().getOutVars().entrySet()) {
+					outVars.put(entry.getKey(), entry.getValue());
+				}
+
+				transformula.add(edge.getTransformula());
+			}
+
+			final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, false,
+					backbone.getFirst().getTransformula().getNonTheoryConsts(), true, Collections.emptySet(), false);
+
+			tfb.setFormula(term);
+			tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+			final UnmodifiableTransFormula tf = tfb.finishConstruction(mScript);
+
+			mLogger.debug("New Trafo: " + tf);
+
+			mLogger.debug("In Sequential: " + TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript,
+					false, false, false, null, null, transformula));
+
+			final Backbone newBackbone = new Backbone(backbone, tf);
 			backbones.addLast(newBackbone);
 		}
 		mLogger.debug("Found Backbones: " + backbones.toString());

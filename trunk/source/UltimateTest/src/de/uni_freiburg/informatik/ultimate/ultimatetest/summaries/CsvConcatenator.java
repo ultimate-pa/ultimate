@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
+import de.uni_freiburg.informatik.ultimate.test.reporting.BaseTestLogfile;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderTransformerCombinator;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
@@ -64,14 +65,13 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
-public class CsvConcatenator implements ITestSummary {
-	private final Class<? extends UltimateTestSuite> mUltimateTestSuite;
+public class CsvConcatenator extends BaseTestLogfile implements ITestSummary {
 	private final Class<? extends ICsvProviderProvider<?>> mBenchmark;
 	private final ICsvProviderTransformer<Object> mTransformer;
 	private ICsvProvider<Object> mCsvProvider;
 
 	/**
-	 * Constructor with a transformer which is automatically applied to the result in {@link #getSummaryLog()}.
+	 * Constructor with a transformer which is automatically applied to the result in {@link #getLog()}.
 	 *
 	 * @param ultimateTestSuite
 	 *            Ultimate test suite
@@ -94,7 +94,7 @@ public class CsvConcatenator implements ITestSummary {
 	public CsvConcatenator(final Class<? extends UltimateTestSuite> ultimateTestSuite,
 			final Class<? extends ICsvProviderProvider<?>> benchmark,
 			final List<ICsvProviderTransformer<Object>> transformers) {
-		mUltimateTestSuite = ultimateTestSuite;
+		super(ultimateTestSuite);
 		mBenchmark = benchmark;
 		mTransformer = new CsvProviderTransformerCombinator<>(transformers);
 		final List<String> emtpyList = Collections.emptyList();
@@ -102,15 +102,10 @@ public class CsvConcatenator implements ITestSummary {
 	}
 
 	@Override
-	public String getSummaryLog() {
+	public String getLog() {
 		final ICsvProvider<Object> csvProvider =
-				(mTransformer == null) ? mCsvProvider : mTransformer.transform(mCsvProvider);
+				mTransformer == null ? mCsvProvider : mTransformer.transform(mCsvProvider);
 		return csvProvider.toCsv(null, null, true).toString();
-	}
-
-	@Override
-	public Class<? extends UltimateTestSuite> getUltimateTestSuiteClass() {
-		return mUltimateTestSuite;
 	}
 
 	@Override

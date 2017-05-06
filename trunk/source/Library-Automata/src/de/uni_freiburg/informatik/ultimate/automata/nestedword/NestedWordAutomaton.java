@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProd
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedIteratorNoopConstruction;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Quin;
 
 /**
@@ -170,6 +171,16 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 		}
 		final Set<STATE> result = map.get(letter);
 		return result == null ? Collections.emptySet() : result;
+	}
+	
+	public Set<STATE> hierarchicalPredecessorsOutgoing(final STATE state) {
+		assert contains(state);
+		final NestedMap3<STATE, LETTER, STATE, IsContained> tmp = mReturnOut.get(state);
+		if (tmp == null) {
+			return Collections.emptySet();
+		} else {
+			return tmp.keySet();
+		}
 	}
 
 	@Override
@@ -371,8 +382,8 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state) {
-		return () -> new NestedIteratorNoopConstruction<LETTER, OutgoingReturnTransition<LETTER, STATE>>(
-				lettersReturn(state).iterator(), x -> returnSuccessors(state, x).iterator());
+		return () -> new NestedIteratorNoopConstruction<STATE, OutgoingReturnTransition<LETTER, STATE>>(
+				hierarchicalPredecessorsOutgoing(state).iterator(), x -> returnSuccessorsGivenHier(state, x).iterator());
 	}
 
 
@@ -435,10 +446,8 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 		mFinalStates.remove(state);
 		mInitialStates.remove(state);
 
-		for (final LETTER letter : lettersCall(state)) {
-			for (final STATE succ : succCall(state, letter)) {
-				removeCallIn(state, letter, succ);
-			}
+		for (final OutgoingCallTransition<LETTER, STATE> outTrans : callSuccessors(state)) {
+			removeCallIn(state, outTrans.getLetter(), outTrans.getSucc());
 		}
 		removeAllCallOut(state);
 
@@ -448,14 +457,11 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 			}
 		}
 		mCallIn.remove(state);
-
-		for (final LETTER letter : lettersReturn(state)) {
-			for (final STATE hier : hierarchicalPredecessorsOutgoing(state, letter)) {
-				for (final STATE succ : succReturn(state, hier, letter)) {
-					removeReturnIn(state, hier, letter, succ);
-					removeReturnSummary(state, hier, letter, succ);
-				}
-			}
+		
+		for (final OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessors(state)) {
+			removeReturnIn(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
+			removeReturnSummary(state, outTrans.getHierPred(), outTrans.getLetter(), outTrans.getSucc());
+			
 		}
 		removeAllReturnOut(state);
 
@@ -498,10 +504,8 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 		}
 		mInternalIn.remove(state);
 
-		for (final LETTER letter : lettersInternal(state)) {
-			for (final STATE succ : succInternal(state, letter)) {
-				removeInternalIn(state, letter, succ);
-			}
+		for (final OutgoingInternalTransition<LETTER, STATE> outTrans : internalSuccessors(state)) {
+			removeInternalIn(state, outTrans.getLetter(), outTrans.getSucc());
 		}
 		removeAllInternalOut(state);
 		final boolean wasContained = mStates.remove(state);
@@ -959,92 +963,6 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 		return (new IsEmpty<>(mServices, this)).getNestedRun();
 	}
 
-	/**
-	 * Maximize set of accepting states.
-	 */
-	public void buchiClosure() {
-		mLogger.info("Accepting states before buchiClosure: " + getFinalStates().size());
-		final Set<STATE> worklist = new HashSet<>();
-		worklist.addAll(getFinalStates());
-		while (!worklist.isEmpty()) {
-			final STATE state = worklist.iterator().next();
-			worklist.remove(state);
-			if (!getFinalStates().contains(state)) {
-				if (allSuccessorsAccepting(state)) {
-					makeStateAccepting(state);
-				} else {
-					continue;
-				}
-			}
-			for (final LETTER symbol : lettersInternalIncoming(state)) {
-				for (final STATE succ : predInternal(state, symbol)) {
-					if (!getFinalStates().contains(succ)) {
-						worklist.add(succ);
-					}
-				}
-			}
-			for (final LETTER symbol : lettersCall(state)) {
-				for (final STATE succ : succCall(state, symbol)) {
-					if (!getFinalStates().contains(succ)) {
-						worklist.add(succ);
-					}
-				}
-			}
-			for (final LETTER symbol : lettersReturn(state)) {
-				for (final STATE hier : hierarchicalPredecessorsOutgoing(state, symbol)) {
-					for (final STATE succ : succReturn(state, hier, symbol)) {
-						if (!getFinalStates().contains(succ)) {
-							worklist.add(succ);
-						}
-					}
-				}
-			}
-		}
-		mLogger.info("Accepting states after buchiClosure: " + getFinalStates().size());
-	}
-
-	/**
-	 * Return true iff all successors of state state are accepting states.
-	 */
-	private boolean allSuccessorsAccepting(final STATE state) {
-		for (final LETTER symbol : lettersInternal(state)) {
-			for (final STATE succ : succInternal(state, symbol)) {
-				if (!getFinalStates().contains(succ)) {
-					return false;
-				}
-			}
-		}
-		for (final LETTER symbol : lettersCall(state)) {
-			for (final STATE succ : succCall(state, symbol)) {
-				if (!getFinalStates().contains(succ)) {
-					return false;
-				}
-			}
-		}
-		for (final LETTER symbol : lettersReturn(state)) {
-			for (final STATE hier : hierarchicalPredecessorsOutgoing(state, symbol)) {
-				for (final STATE succ : succReturn(state, hier, symbol)) {
-					if (!getFinalStates().contains(succ)) {
-						return false;
-					}
-				}
-			}
-		}
-		return true;
-	}
-
-	/**
-	 * Change status of state from non-accepting to accepting.
-	 */
-	private void makeStateAccepting(final STATE state) {
-		if (!contains(state)) {
-			throw new IllegalArgumentException(STATE2 + state + UNKNOWN);
-		}
-		if (isFinal(state)) {
-			throw new IllegalArgumentException("state " + state + " already final");
-		}
-		mFinalStates.add(state);
-	}
 
 	/**
 	 * @param nwa

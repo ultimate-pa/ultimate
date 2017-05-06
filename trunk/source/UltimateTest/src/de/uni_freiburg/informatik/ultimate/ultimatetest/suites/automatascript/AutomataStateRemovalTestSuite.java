@@ -150,8 +150,8 @@ public class AutomataStateRemovalTestSuite extends UltimateTestSuite {
 		for (final File inputFile : inputFiles) {
 			for (final String settingFileName : SETTINGS) {
 				final File settingsFile = new File(TestUtil.getPathFromTrunk("/examples/settings/" + settingFileName));
-				final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, TOOLCHAIN_FILE);
-				testCases.add(buildTestCase(urd, sTimeout, new AutomataScriptTestResultDecider()));
+				final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile, settingsFile, TOOLCHAIN_FILE,sTimeout);
+				testCases.add(buildTestCase(urd, new AutomataScriptTestResultDecider()));
 			}
 		}
 		testCases.sort(null);

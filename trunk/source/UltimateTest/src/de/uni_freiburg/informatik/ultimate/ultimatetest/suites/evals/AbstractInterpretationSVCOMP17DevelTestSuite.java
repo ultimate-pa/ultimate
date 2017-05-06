@@ -33,11 +33,11 @@ import java.util.Collection;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.OverapproximatingSafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ConversionContext;

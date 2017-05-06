@@ -28,15 +28,13 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import java.util.ArrayDeque;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -118,7 +116,7 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		worklist.addAll(finalDoubleDeckers);
 		while (!worklist.isEmpty()) {
 			final DoubleDecker<STATE> dd = worklist.remove();
-			if (isNondeterministic(dd, mOperand)) {
+			if (NestedWordAutomataUtils.isNondeterministic(dd.getUp(), dd.getDown(), mOperand)) {
 				mNondeterministicSuccessorOfAccepting.add(dd.getUp());
 			}
 			final Set<DoubleDecker<STATE>> succs = getNonCallSuccessors(dd, mOperand);
@@ -135,7 +133,7 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		worklist.addAll(visited);
 		while (!worklist.isEmpty()) {
 			final DoubleDecker<STATE> dd = worklist.remove();
-			if (isNondeterministic(dd, mOperand)) {
+			if (NestedWordAutomataUtils.isNondeterministic(dd.getUp(), dd.getDown(), mOperand)) {
 				mNondeterministicSuccessorOfAccepting.add(dd.getUp());
 			}
 			final Set<DoubleDecker<STATE>> succs = getNonReturnSuccessors(dd, mOperand);
@@ -192,108 +190,7 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 		return succs;
 	}
 
-	public static <LETTER, STATE> boolean isNondeterministic(final STATE up, final STATE down,
-			final IDoubleDeckerAutomaton<LETTER, STATE> nwa) {
-		final boolean isNondeterministicInternal = isNondeterministicInternal(up, nwa);
-		if (isNondeterministicInternal) {
-			return true;
-		}
-		final boolean isNondeterministicCall = isNondeterministicCall(up, nwa);
-		if (isNondeterministicCall) {
-			return true;
-		}
-		final boolean isNondeterministicReturn = isNondeterministicReturnGivenHier(up, down, nwa);
-		if (isNondeterministicReturn) {
-			return true;
-		}
-		return false;
-	}
 
-	/*
-	 * TODO Christian 2016-09-04: This method is not used outside this class. Should it be private?
-	 */
-	public static <LETTER, STATE> boolean isNondeterministic(final DoubleDecker<STATE> doubleDecker,
-			final NestedWordAutomatonReachableStates<LETTER, STATE> traversedNwa) {
-		final boolean isNondeterministicInternal = isNondeterministicInternal(doubleDecker.getUp(), traversedNwa);
-		final boolean isNondeterministicCall = isNondeterministicCall(doubleDecker.getUp(), traversedNwa);
-		final boolean isNondeterministicReturn =
-				isNondeterministicReturnGivenHier(doubleDecker.getUp(), doubleDecker.getDown(), traversedNwa);
-		return isNondeterministicInternal || isNondeterministicCall || isNondeterministicReturn;
-	}
-
-	/*
-	 * TODO Christian 2016-09-04: This method is not used outside this class. Should it be private?
-	 */
-	public static <LETTER, STATE> boolean isNondeterministicInternal(final STATE state,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
-		for (final LETTER letter : nwa.lettersInternal(state)) {
-			int numberOfSuccs = 0;
-			for (final Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator =
-					nwa.internalSuccessors(state, letter).iterator(); iterator.hasNext(); iterator.next()) {
-				numberOfSuccs++;
-			}
-			if (numberOfSuccs > 1) {
-				return true;
-			}
-		}
-		return false;
-	}
-
-	/*
-	 * TODO Christian 2016-09-04: This method is not used outside this class. Should it be private?
-	 */
-	public static <LETTER, STATE> boolean isNondeterministicCall(final STATE state,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
-		for (final LETTER letter : nwa.lettersCall(state)) {
-			int numberOfSuccs = 0;
-			for (final Iterator<OutgoingCallTransition<LETTER, STATE>> iterator =
-					nwa.callSuccessors(state, letter).iterator(); iterator.hasNext(); iterator.next()) {
-				numberOfSuccs++;
-				if (numberOfSuccs > 1) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	/*
-	 * TODO Christian 2016-09-04: This method is not used outside this class. Should it be private?
-	 */
-	public static <LETTER, STATE> boolean isNondeterministicReturnGivenHier(final STATE state, final STATE hier,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
-		for (final LETTER letter : nwa.lettersReturn(state)) {
-			int numberOfSuccs = 0;
-			for (final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator =
-					nwa.returnSuccessors(state, hier, letter).iterator(); iterator.hasNext(); iterator.next()) {
-				numberOfSuccs++;
-				if (numberOfSuccs > 1) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	/*
-	 * TODO Christian 2016-09-04: This method is not used anywhere.
-	 */
-	public static <LETTER, STATE> boolean isNondeterministicReturn(final STATE state,
-			final INestedWordAutomaton<LETTER, STATE> nwa) {
-		for (final LETTER letter : nwa.lettersReturn(state)) {
-			for (final STATE hier : nwa.hierarchicalPredecessorsOutgoing(state, letter)) {
-				int numberOfSuccs = 0;
-				for (final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator =
-						nwa.returnSuccessors(state, hier, letter).iterator(); iterator.hasNext(); iterator.next()) {
-					numberOfSuccs++;
-					if (numberOfSuccs > 1) {
-						return true;
-					}
-				}
-			}
-		}
-		return false;
-	}
 
 	@Override
 	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {

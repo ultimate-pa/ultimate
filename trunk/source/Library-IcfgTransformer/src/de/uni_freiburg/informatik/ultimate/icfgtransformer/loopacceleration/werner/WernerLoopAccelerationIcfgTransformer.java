@@ -34,20 +34,27 @@ import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ExampleLoopAccelerationTransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * A basic IcfgTransformer that applies the {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
- * transformulas of an {@link IIcfg} with a new instance. + First tries for loop acceleration.
+ * A basic IcfgTransformer that applies the
+ * {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
+ * transformulas of an {@link IIcfg} with a new instance. + First tries for loop
+ * acceleration.
  *
  * @param <INLOC>
  *            The type of the locations of the old IIcfg.
@@ -65,16 +72,20 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	private final LoopDetector<INLOC> mLoopDetector;
 	private final IIcfg<OUTLOC> mResult;
 	private final ManagedScript mScript;
+	private final IUltimateServiceProvider mServices;
+	private final IIcfgSymbolTable mOldSymbolTable;
 
 	public WernerLoopAccelerationIcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
 			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,
-			final ITransformulaTransformer transformer) {
+			final ITransformulaTransformer transformer, final IUltimateServiceProvider services) {
 
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
 		mScript = origIcfg.getCfgSmtToolkit().getManagedScript();
 		mLogger = Objects.requireNonNull(logger);
-		mLoopDetector = new LoopDetector<>(mLogger, origIcfg);
+		mServices = services;
+		mLoopDetector = new LoopDetector<>(mLogger, origIcfg, mServices, mScript);
+		mOldSymbolTable = originalIcfg.getCfgSmtToolkit().getSymbolTable();
 
 		mLoopBodies = mLoopDetector.getLoopBodies();
 
@@ -90,42 +101,25 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 		for (final Loop loop : mLoopBodies) {
 			for (final Backbone backbone : loop.getBackbones()) {
-				for (final IcfgEdge edge : backbone.getPath()) {
 
-					// use these two to separate assume (guard) and assign (update) in transformulas
-					// TransFormulaUtils.computeGuard(tf, mgdScript, services, logger)
-					// new SimultaneousUpdate()
-					if (edge.toString().contains("assume")) {
-						mLogger.debug("assume: " + edge.getTransformula().toString());
-					}
-					// final Script script = mScript.getScript();
-					// final Term t = script.term("true");
-					// final TermVariable freshvar =
-					// mScript.constructFreshTermVariable("x", script.sort(SmtSortUtils.INT_SORT));
-					// script.quantifier(QuantifiedFormula.FORALL, vars, body);
-					// with rather cheap simplification
-					// SmtUtils.and(script, t, freshvar);
-					// just plain (syntactical) and
-					// script.term("and", t, freshvar);
+				final UnmodifiableTransFormula tf = (UnmodifiableTransFormula) backbone.getFormula();
+				final SimultaneousUpdate update = new SimultaneousUpdate(tf, mScript);
 
-					// create TF
-					// final UnmodifiableTransFormula someTf = backbone.getPath().getFirst().getTransformula();
-					// final TransFormulaBuilder tfb = new TransFormulaBuilder(someTf.getInVars(), someTf.getOutVars(),
-					// false, someTf.getNonTheoryConsts(), true, Collections.emptySet(), false);
-					// final Term formula = null;
-					// tfb.setFormula(formula);
-					// tfb.finishConstruction(mScript);
+				final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mLogger, tf, mOldSymbolTable);
+				symbolicMemory.updateVars(update.getUpdatedVars());
 
-					// final Substitution sub = new Substitution(mScript, Collections.emptyMap());
-					// final Term transformedFrmula = sub.transform(formula);
-				}
+				final UnmodifiableTransFormula condition = TransFormulaUtils.computeGuard(tf, mScript, mServices,
+						mLogger);
+				backbone.setCondition(condition);
+				backbone.setSymbolicMemory(symbolicMemory);
 			}
+
 		}
 
-		final BasicIcfg<OUTLOC> resultIcfg =
-				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
-		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
-				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg);
+		final BasicIcfg<OUTLOC> resultIcfg = new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(),
+				outLocationClass);
+		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(funLocFac,
+				backtranslationTracker, transformer, originalIcfg, resultIcfg);
 		processLocations(originalIcfg.getInitialNodes(), lst);
 		lst.finish();
 

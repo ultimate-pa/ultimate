@@ -45,29 +45,13 @@ import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestR
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public abstract class BaseTestSummary implements ITestSummary {
+public abstract class BaseTestSummary extends BaseTestLogfile implements ITestSummary {
 
 	protected LinkedHashMap<UltimateRunDefinition, ExtendedResult> mResults;
-	private final Class<? extends UltimateTestSuite> mUltimateTestSuite;
 
 	public BaseTestSummary(final Class<? extends UltimateTestSuite> ultimateTestSuite) {
+		super(ultimateTestSuite);
 		mResults = new LinkedHashMap<>();
-		mUltimateTestSuite = ultimateTestSuite;
-	}
-
-	@Override
-	public Class<? extends UltimateTestSuite> getUltimateTestSuiteClass() {
-		return mUltimateTestSuite;
-	}
-
-	@Override
-	public String getDescriptiveLogName() {
-		return this.getClass().getSimpleName();
-	}
-
-	@Override
-	public String getFilenameExtension() {
-		return ".log";
 	}
 
 	@Override
@@ -153,8 +137,8 @@ public abstract class BaseTestSummary implements ITestSummary {
 			final int prime = 31;
 			int result = 1;
 			result = prime * result + getOuterType().hashCode();
-			result = prime * result + ((Setting == null) ? 0 : Setting.hashCode());
-			result = prime * result + ((Toolchain == null) ? 0 : Toolchain.hashCode());
+			result = prime * result + (Setting == null ? 0 : Setting.hashCode());
+			result = prime * result + (Toolchain == null ? 0 : Toolchain.hashCode());
 			return result;
 		}
 

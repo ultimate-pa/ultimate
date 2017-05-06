@@ -203,6 +203,11 @@ public final class BuchiClosureNwa<LETTER, STATE> implements IDoubleDeckerAutoma
 	public Set<LETTER> lettersCall(final STATE state) {
 		return mOperand.lettersCall(state);
 	}
+	
+	@Override
+	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
+		return mOperand.getReturnAlphabet();
+	}
 
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {
@@ -248,11 +253,6 @@ public final class BuchiClosureNwa<LETTER, STATE> implements IDoubleDeckerAutoma
 	@Override
 	public Set<STATE> getStates() {
 		return mOperand.getStates();
-	}
-
-	@Override
-	public Iterable<STATE> hierarchicalPredecessorsOutgoing(final STATE state, final LETTER letter) {
-		return mOperand.hierarchicalPredecessorsOutgoing(state, letter);
 	}
 
 	@Override
@@ -326,11 +326,6 @@ public final class BuchiClosureNwa<LETTER, STATE> implements IDoubleDeckerAutoma
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
 			final LETTER letter) {
 		return mOperand.returnSuccessors(state, hier, letter);
-	}
-
-	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final LETTER letter) {
-		return mOperand.returnSuccessors(state, letter);
 	}
 
 	@Override

@@ -118,6 +118,11 @@ public final class ComplementDeterministicNwa<LETTER, STATE> implements INestedW
 	public Set<LETTER> lettersCall(final STATE state) {
 		return mOperand.getCallAlphabet();
 	}
+	
+	@Override
+	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
+		return mOperand.getReturnAlphabet();
+	}
 
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {

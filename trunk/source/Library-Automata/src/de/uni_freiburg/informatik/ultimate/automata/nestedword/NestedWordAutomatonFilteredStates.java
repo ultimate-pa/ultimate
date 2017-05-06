@@ -223,6 +223,15 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 		}
 		return letters;
 	}
+	
+	@Override
+	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
+		final Set<LETTER> letters = new HashSet<>();
+		for (final OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessorsGivenHier(state, hier)) {
+			letters.add(outTrans.getLetter());
+		}
+		return letters;
+	}
 
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {
@@ -277,17 +286,6 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 		final Set<STATE> result = new HashSet<>();
 		for (final OutgoingCallTransition<LETTER, STATE> outTrans : callSuccessors(state, letter)) {
 			result.add(outTrans.getSucc());
-		}
-		return result;
-	}
-
-	@Override
-	public Iterable<STATE> hierarchicalPredecessorsOutgoing(final STATE state, final LETTER letter) {
-		final Set<STATE> result = new HashSet<>();
-		for (final OutgoingReturnTransition<LETTER, STATE> outTrans : returnSuccessors(state, letter)) {
-			if (mRemainingStates.contains(outTrans.getHierPred()) && mRemainingStates.contains(outTrans.getSucc())) {
-				result.add(outTrans.getHierPred());
-			}
 		}
 		return result;
 	}
@@ -414,13 +412,6 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 		final Predicate<OutgoingReturnTransition<LETTER, STATE>> predicate =
 				mTransitionFilter.getReturnSuccessorPredicate();
 		return new FilteredIterable<>(mNwa.returnSuccessors(state, hier, letter), predicate);
-	}
-
-	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final LETTER letter) {
-		final Predicate<OutgoingReturnTransition<LETTER, STATE>> predicate =
-				mTransitionFilter.getReturnSuccessorPredicate();
-		return new FilteredIterable<>(mNwa.returnSuccessors(state, letter), predicate);
 	}
 
 	@Override

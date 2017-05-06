@@ -54,7 +54,7 @@ public class KingOfTheHillSummary extends BaseTestSummary {
 	}
 	
 	@Override
-	public String getSummaryLog() {
+	public String getLog() {
 		final PartitionedResults pr = getAllResultsPartitioned();
 		final StringBuilder builder = new StringBuilder();
 		

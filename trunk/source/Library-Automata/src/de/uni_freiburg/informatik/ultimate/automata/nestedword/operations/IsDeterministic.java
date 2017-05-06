@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -83,7 +84,7 @@ public final class IsDeterministic<LETTER, STATE> extends UnaryNwaOperation<LETT
 	private boolean checkIfOperandhasNondeterministicTransitions() {
 		for (final STATE upState : mOperand.getStates()) {
 			for (final STATE downState : mOperand.getDownStates(upState)) {
-				final boolean isNondeterministic = IsSemiDeterministic.isNondeterministic(upState, downState, mOperand);
+				final boolean isNondeterministic = NestedWordAutomataUtils.isNondeterministic(upState, downState, mOperand);
 				if (isNondeterministic) {
 					return true;
 				}

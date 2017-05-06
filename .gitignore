@@ -173,6 +173,9 @@ hs_err_pid*
 /trunk/source/Library-UltimateCore/src/de/uni_freiburg/informatik/ultimate/core/lib/toolchain/RunDefinition.java
 
 
+/trunk/source/Library-UltimateTest/src/de/uni_freiburg/informatik/ultimate/test/benchexec/benchmark/*.java
+
+
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/acsl/parser/Parser.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/acsl/parser/Scanner.java
 /trunk/source/ACSLParser/src/de/uni_freiburg/informatik/ultimate/acsl/parser/Scanner.java~

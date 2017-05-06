@@ -49,8 +49,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.F
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DownStateConsistencyCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaSuccessorProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
@@ -102,7 +101,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	private final AutomataLibraryServices mServices;
 	private final ILogger mLogger;
 
-	private final INwaOutgoingTransitionProvider<LETTER, STATE> mOperand;
+	private final INwaSuccessorProvider<LETTER, STATE> mOperand;
 
 	private final Set<LETTER> mInternalAlphabet;
 	private final Set<LETTER> mCallAlphabet;
@@ -177,7 +176,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	 *             if timeout exceeds
 	 */
 	public NestedWordAutomatonReachableStates(final AutomataLibraryServices services,
-			final INwaOutgoingTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaSuccessorProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
@@ -401,6 +400,11 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	public Set<LETTER> lettersCall(final STATE state) {
 		return mStates.get(state).lettersCall();
 	}
+	
+	@Override
+	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
+		return mStates.get(state).lettersReturn(hier);
+	}
 
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {
@@ -618,11 +622,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
 			final LETTER letter) {
 		return mStates.get(state).returnSuccessors(hier, letter);
-	}
-
-	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final LETTER letter) {
-		return mStates.get(state).returnSuccessors(letter);
 	}
 
 	@Override
@@ -1064,9 +1063,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 			}
 			if (getReturnAlphabet().isEmpty()) {
 				return false;
-			}
-			if (mOperand instanceof INestedWordAutomatonSimple) {
-				return !((INestedWordAutomatonSimple<LETTER, STATE>) mOperand).lettersReturn(state).isEmpty();
 			}
 			return true;
 		}

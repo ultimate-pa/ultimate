@@ -72,11 +72,10 @@ public class UltimateStarter implements IController<RunDefinition> {
 
 	private ICore<RunDefinition> mCurrentCore;
 
-	public UltimateStarter(final UltimateRunDefinition ultimateRunDefinition, final long deadline) {
-		assert deadline >= 0 : "Deadline has to be positive or zero";
+	public UltimateStarter(final UltimateRunDefinition ultimateRunDefinition) {
 		mUltimateRunDefinition = ultimateRunDefinition;
 		mExternalUltimateCore = new ExternalUltimateCore(this);
-		mDeadline = deadline;
+		mDeadline = ultimateRunDefinition.getTimeout();
 	}
 
 	public IStatus runUltimate() throws Throwable {

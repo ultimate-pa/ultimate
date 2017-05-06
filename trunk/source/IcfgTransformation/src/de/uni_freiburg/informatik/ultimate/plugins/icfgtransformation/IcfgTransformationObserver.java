@@ -218,7 +218,7 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
 				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
 		return new WernerLoopAccelerationIcfgTransformer<>(mLogger, icfg, locFac, backtranslationTracker, outlocClass,
-				icfg.getIdentifier() + "IcfgDuplicate", transformer).getResult();
+				icfg.getIdentifier() + "IcfgDuplicate", transformer, mServices).getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationEx(

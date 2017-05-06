@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  * @param <STATE>
  *            Type of objects which can be used as states.
  */
-public interface INestedWordAutomatonSimple<LETTER, STATE> extends INwaOutgoingTransitionProvider<LETTER, STATE> {
+public interface INestedWordAutomatonSimple<LETTER, STATE> extends INwaSuccessorProvider<LETTER, STATE> {
 
 	/**
 	 * @param state
@@ -85,13 +85,13 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends INwaOutgoingT
 	 */
 	Set<LETTER> lettersCall(STATE state);
 
-//	/**
-//	 * @param state
-//	 *            state
-//	 * @return Superset of all letters <tt>a</tt> such that <tt>state</tt> has an outgoing return transition whose
-//	 * hierarchical predecessor is hier and that is labeled with letter <tt>a</tt> 
-//	 */
-//	Set<LETTER> lettersReturn(STATE state, STATE hier);
+	/**
+	 * @param state
+	 *            state
+	 * @return Superset of all letters <tt>a</tt> such that <tt>state</tt> has an outgoing return transition whose
+	 * hierarchical predecessor is hier and that is labeled with letter <tt>a</tt> 
+	 */
+	Set<LETTER> lettersReturn(STATE state, STATE hier);
 	
 	/**
 	 * @param state

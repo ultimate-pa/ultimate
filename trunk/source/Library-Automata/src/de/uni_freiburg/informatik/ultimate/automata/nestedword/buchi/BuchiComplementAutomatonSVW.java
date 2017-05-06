@@ -449,6 +449,12 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		// mLogger.warn("No nwa. Has no call alphabet.");
 		return Collections.emptySet();
 	}
+	
+	@Override
+	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
+		// mLogger.warn("No nwa. Has no return alphabet.");
+		return Collections.emptySet();
+	}
 
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state) {
@@ -557,11 +563,6 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
 			final LETTER letter) {
-		return Collections.emptyList();
-	}
-
-	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final LETTER letter) {
 		return Collections.emptyList();
 	}
 

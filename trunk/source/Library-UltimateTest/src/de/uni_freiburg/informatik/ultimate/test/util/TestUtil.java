@@ -52,8 +52,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.SafetyCheckerOverallResult;
 import de.uni_freiburg.informatik.ultimate.test.decider.overallresult.TerminationAnalysisOverallResult;
+import de.uni_freiburg.informatik.ultimate.test.reporting.INonIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestLogfile;
-import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.util.Utils;
 
 /**
@@ -647,8 +647,8 @@ public final class TestUtil {
 		return null;
 	}
 
-	public static void writeSummary(final ITestSummary testSummary, final ILogger logger) {
-		final File logFile = new File(TestUtil.generateAbsolutePathForLogfile(testSummary));
+	public static void writeNonIncrementalLog(final INonIncrementalLog nonIncrementalLog, final ILogger logger) {
+		final File logFile = new File(TestUtil.generateAbsolutePathForLogfile(nonIncrementalLog));
 		if (!logFile.isDirectory()) {
 			if (!logFile.getParentFile().mkdirs()) {
 				if (!logFile.getParentFile().isDirectory()) {
@@ -657,16 +657,17 @@ public final class TestUtil {
 			}
 		}
 
-		final String summaryLog = testSummary.getSummaryLog().trim();
+		final String summaryLog = nonIncrementalLog.getLog().trim();
 		if (summaryLog == null || summaryLog.isEmpty()) {
-			logger.warn(testSummary.getClass() + " is empty");
+			logger.warn(nonIncrementalLog.getClass() + " is empty");
 			return;
 		}
 
 		try {
 			final FileWriter writer = new FileWriter(logFile);
-			logger.info("Writing " + testSummary.getDescriptiveLogName() + " for "
-					+ testSummary.getUltimateTestSuiteClass().getCanonicalName() + " to " + logFile.getAbsolutePath());
+			logger.info("Writing " + nonIncrementalLog.getDescriptiveLogName() + " for "
+					+ nonIncrementalLog.getUltimateTestSuiteClass().getCanonicalName() + " to "
+					+ logFile.getAbsolutePath());
 			writer.write(summaryLog);
 			writer.close();
 		} catch (final IOException e) {

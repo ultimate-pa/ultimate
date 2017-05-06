@@ -58,7 +58,7 @@ public class SVCOMPTestSummary extends BaseTestSummary {
 	}
 
 	@Override
-	public String getSummaryLog() {
+	public String getLog() {
 
 		final Set<TCS> tcs = CoreUtil.selectDistinct(mResults.entrySet(), new IMyReduce<TCS>() {
 			@Override

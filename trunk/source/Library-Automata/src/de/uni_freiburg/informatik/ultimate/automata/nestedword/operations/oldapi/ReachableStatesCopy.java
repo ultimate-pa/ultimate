@@ -245,14 +245,12 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 		final STATE oldUpState = mNew2old.get(newUpState);
 		final STATE oldDownState = mNew2old.get(newDownState);
 
-		for (final LETTER symbol : mOperand.lettersReturn(oldUpState)) {
-			for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessors(oldUpState,
-					oldDownState, symbol)) {
-				final STATE newSucc = constructOrGetResState(trans.getSucc(), false);
-				((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addReturnTransition(newUpState, newDownState,
-						symbol, newSucc);
-				succs.add(newSucc);
-			}
+		for (final OutgoingReturnTransition<LETTER, STATE> trans : mOperand.returnSuccessorsGivenHier(oldUpState,
+				oldDownState)) {
+			final STATE newSucc = constructOrGetResState(trans.getSucc(), false);
+			((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addReturnTransition(newUpState, newDownState,
+					trans.getLetter(), newSucc);
+			succs.add(newSucc);
 		}
 		return succs;
 	}

@@ -20,9 +20,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Test Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Test Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -32,12 +32,12 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinitionGenerator;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SomeVerificationResultTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
+import de.uni_freiburg.informatik.ultimate.test.util.UltimateRunDefinitionGenerator;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
@@ -47,29 +47,28 @@ public class FindOverflowsTestsuite extends AbstractTraceAbstractionTestSuite {
 
 	/** Limit the number of files per directory. */
 	private static final int FILES_PER_DIR_LIMIT = Integer.MAX_VALUE;
-//	private static final int FILES_PER_DIR_LIMIT = 10;
+	// private static final int FILES_PER_DIR_LIMIT = 10;
 	private static final int FILE_OFFSET = 0;
-	
+
 	private static final String STANDARD_DOT_C_PATTERN = ".*_false-unreach-call.*\\.c|.*_true-unreach-call.*\\.c";
 	private static final String STANDARD_DOT_I_PATTERN = ".*_false-unreach-call.*\\.i|.*_true-unreach-call.*\\.i";
-	
-	private static final String BITVECTOR_FOLDER_DOT_C_PATTERN = ".*_false-unreach-call.*\\.c|.*_true-unreach-call.*\\.c.cil.c";
-	
-//	private static final String STANDARD_DOT_C_PATTERN = ".*_false-unreach-call.*\\.c";
-//	private static final String STANDARD_DOT_I_PATTERN = ".*_false-unreach-call.*\\.i";
 
-	
-	
+	private static final String BITVECTOR_FOLDER_DOT_C_PATTERN =
+			".*_false-unreach-call.*\\.c|.*_true-unreach-call.*\\.c.cil.c";
+
+	// private static final String STANDARD_DOT_C_PATTERN = ".*_false-unreach-call.*\\.c";
+	// private static final String STANDARD_DOT_I_PATTERN = ".*_false-unreach-call.*\\.i";
+
 	// @formatter:off
 	private static final DirectoryFileEndingsPair[] BENCHMARKS_32BIT = {
 		/***** Category 1. ReachSafety *****/
 		/*** Subcategory    ReachSafety-Arrays ***/
 		new DirectoryFileEndingsPair("examples/svcomp/array-examples/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
-		new DirectoryFileEndingsPair("examples/svcomp/array-industry-pattern/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),	
-		new DirectoryFileEndingsPair("examples/svcomp/reducercommutativity/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),	
+		new DirectoryFileEndingsPair("examples/svcomp/array-industry-pattern/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
+		new DirectoryFileEndingsPair("examples/svcomp/reducercommutativity/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 
 		/*** Subcategory   ReachSafety-BitVectors ***/
-		new DirectoryFileEndingsPair("examples/svcomp/bitvector/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),			
+		new DirectoryFileEndingsPair("examples/svcomp/bitvector/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/bitvector/", new String[]{ BITVECTOR_FOLDER_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/bitvector-regression/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/bitvector-loops/", new String[]{ STANDARD_DOT_I_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
@@ -82,7 +81,7 @@ public class FindOverflowsTestsuite extends AbstractTraceAbstractionTestSuite {
 		new DirectoryFileEndingsPair("examples/svcomp/ssh/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		
 		/*** Subcategory   ReachSafety-ReachSafety-ECA ***/
-		new DirectoryFileEndingsPair("examples/svcomp/eca-rers2012/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),			
+		new DirectoryFileEndingsPair("examples/svcomp/eca-rers2012/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		new DirectoryFileEndingsPair("examples/svcomp/psyco/", new String[]{ STANDARD_DOT_C_PATTERN }, FILE_OFFSET,  FILES_PER_DIR_LIMIT),
 		
 		/*** Subcategory   ReachSafety-Heap ***/
@@ -160,7 +159,7 @@ public class FindOverflowsTestsuite extends AbstractTraceAbstractionTestSuite {
 	}
 
 	/**
-	 * List of setting files, path defined relative to the folder 
+	 * List of setting files, path defined relative to the folder
 	 * "trunk/examples/settings/",
 	 */
 	private static final String[] SETTINGS_32BIT = {
@@ -184,26 +183,23 @@ public class FindOverflowsTestsuite extends AbstractTraceAbstractionTestSuite {
 	};
 	// @formatter:on
 
-	
-
 	@Override
 	public Collection<UltimateTestCase> createTestCases() {
 		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_32BIT) {
 			for (final String toolchain : TOOLCHAINS) {
 				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
-						new String[]{dfep.getDirectory()}, dfep.getFileEndings(), SETTINGS_32BIT, 
-						toolchain, dfep.getOffset(), dfep.getLimit()));
+						new String[] { dfep.getDirectory() }, dfep.getFileEndings(), SETTINGS_32BIT, toolchain,
+						getTimeout(), dfep.getOffset(), dfep.getLimit()));
 			}
 		}
 		for (final DirectoryFileEndingsPair dfep : BENCHMARKS_64BIT) {
 			for (final String toolchain : TOOLCHAINS) {
 				addTestCase(UltimateRunDefinitionGenerator.getRunDefinitionsFromTrunkRegex(
-						new String[]{dfep.getDirectory()}, dfep.getFileEndings(), SETTINGS_64BIT, 
-						toolchain, dfep.getOffset(), dfep.getLimit()));
+						new String[] { dfep.getDirectory() }, dfep.getFileEndings(), SETTINGS_64BIT, toolchain,
+						getTimeout(), dfep.getOffset(), dfep.getLimit()));
 			}
 		}
 		return super.createTestCases();
 	}
 
-	
 }

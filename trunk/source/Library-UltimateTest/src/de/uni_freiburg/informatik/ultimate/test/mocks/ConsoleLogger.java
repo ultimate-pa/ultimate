@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.test;
+package de.uni_freiburg.informatik.ultimate.test.mocks;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 

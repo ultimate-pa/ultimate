@@ -32,20 +32,28 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
+import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.decider.SvcompMemsafetyTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 
 /**
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public class PathInvariantsTest extends
-		AbstractTraceAbstractionTestSuite {
+public class PathInvariantsTest extends	AbstractTraceAbstractionTestSuite {
+	
+	@Override
+	public ITestResultDecider constructITestResultDecider(final UltimateRunDefinition ultimateRunDefinition) {
+//		return new SomeVerificationResultTestResultDecider(ultimateRunDefinition);
+		return new SvcompMemsafetyTestResultDecider(ultimateRunDefinition, true);
+	}
 	
 	/**
 	 * Limit the number of files per directory.
 	 */
-	private static int mFilesPerDirectoryLimit = 10;
+	private static int mFilesPerDirectoryLimit = Integer.MAX_VALUE;
 	
 	private static final DirectoryFileEndingsPair[] mSVCOMP_Examples = {
 //		/*** Category 1. Arrays ***/
@@ -102,6 +110,12 @@ public class PathInvariantsTest extends
 //		"examples/programs/scalable",
 //		"examples/programs/toy",
 //		"examples/programs/20170304-DifficultPathPrograms",
+//		"examples/programs/20170319-ConjunctivePathPrograms",
+//		"examples/ultimate-benchmarks/programs/20170329-DifficultLinuxPathPrograms/difficultAfterMapElimination",
+//		"examples/ultimate-benchmarks/programs/20170412-SvcompReachPathPrograms/afterMapElimination",
+//		"examples/ultimate-benchmarks/programs/20170412-SvcompReachPathPrograms/MapElim",
+//		"examples/ultimate-benchmarks/pathprograms/20170417-DifficultOverflow/ModNeigh-MapElim",
+//		"examples/ultimate-benchmarks/pathprograms/20170417-DifficultReach/ModNeigh-MapElim",
 	};
 	
 	
@@ -113,8 +127,8 @@ public class PathInvariantsTest extends
 	 * 
 	 */
 	private static final String[] mSettings = {
-//		"automizer/pathInvariants/pathInvariants_LinearConstraints_NO_UnsatCores.epf",
-//		"automizer/pathInvariants/pathInvariants_LinearConstraints_AND_UnsatCores.epf",
+		"automizer/pathInvariants/pathInvariants_LinearConstraints_NO_UnsatCores.epf",
+		"automizer/pathInvariants/pathInvariants_LinearConstraints_AND_UnsatCores.epf",
 //		"automizer/pathInvariants/pathInvariants_NonLinearConstraints_NO_UnsatCores.epf",
 //		"automizer/pathInvariants/pathInvariants_NonLinearConstraints_AND_UnsatCores.epf",
 //		"automizer/pathInvariants/InvariantSynthesis_Conservative.epf",
@@ -133,15 +147,15 @@ public class PathInvariantsTest extends
 	}
 	
 	private static final String[] mBoogieToolchains = {
-		"AutomizerBplInline.xml",
-		"AutomizerBplInlineWithBlockEncoding.xml",
-//		"InvariantSynthesisBplInline.xml",
+//		"AutomizerBplInline.xml",
+//		"AutomizerBplInlineWithBlockEncoding.xml",
+		"InvariantSynthesisBplInline.xml",
 	};
 		
 	private static final String[] mCToolchains = {
-		"AutomizerCInline.xml",
-		"AutomizerCInlineWithBlockEncoding.xml",
-//		"InvariantSynthesisCInline.xml",
+//		"AutomizerCInline.xml",
+//		"AutomizerCInlineWithBlockEncoding.xml",
+		"InvariantSynthesisCInline.xml",
 	};
 	
 

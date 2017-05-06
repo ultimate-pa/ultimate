@@ -97,30 +97,20 @@ public class InductivityCheck<LETTER extends IAction> {
 		// neither proven nor refuted because there were no interpolants
 
 		for (final IPredicate state : nwa.getStates()) {
-			for (final LETTER cb : nwa.lettersInternal(state)) {
-				for (final OutgoingInternalTransition<LETTER, IPredicate> outTrans : nwa.internalSuccessors(state,
-						cb)) {
-					final Validity inductivity =
-							mHoareTripleChecker.checkInternal(state, (IInternalAction) cb, outTrans.getSucc());
-					evaluateResult(inductivity, state, outTrans);
-				}
+			for (final OutgoingInternalTransition<LETTER, IPredicate> outTrans : nwa.internalSuccessors(state)) {
+				final Validity inductivity = mHoareTripleChecker.checkInternal(state,
+						(IInternalAction) outTrans.getLetter(), outTrans.getSucc());
+				evaluateResult(inductivity, state, outTrans);
 			}
-			for (final LETTER cb : nwa.lettersCall(state)) {
-				for (final OutgoingCallTransition<LETTER, IPredicate> outTrans : nwa.callSuccessors(state, cb)) {
-					final Validity inductivity =
-							mHoareTripleChecker.checkCall(state, (ICallAction) cb, outTrans.getSucc());
-					evaluateResult(inductivity, state, outTrans);
-				}
+			for (final OutgoingCallTransition<LETTER, IPredicate> outTrans : nwa.callSuccessors(state)) {
+				final Validity inductivity = mHoareTripleChecker.checkCall(state, (ICallAction) outTrans.getLetter(),
+						outTrans.getSucc());
+				evaluateResult(inductivity, state, outTrans);
 			}
-			for (final LETTER cb : nwa.lettersReturn(state)) {
-				for (final IPredicate hier : nwa.hierarchicalPredecessorsOutgoing(state, cb)) {
-					for (final OutgoingReturnTransition<LETTER, IPredicate> outTrans : nwa.returnSuccessors(state, hier,
-							cb)) {
-						final Validity inductivity =
-								mHoareTripleChecker.checkReturn(state, hier, (IReturnAction) cb, outTrans.getSucc());
-						evaluateResult(inductivity, state, outTrans);
-					}
-				}
+			for (final OutgoingReturnTransition<LETTER, IPredicate> outTrans : nwa.returnSuccessors(state)) {
+				final Validity inductivity = mHoareTripleChecker.checkReturn(state, outTrans.getHierPred(),
+						(IReturnAction) outTrans.getLetter(), outTrans.getSucc());
+				evaluateResult(inductivity, state, outTrans);
 			}
 		}
 		if (mHoareTripleChecker instanceof IncrementalHoareTripleChecker) {

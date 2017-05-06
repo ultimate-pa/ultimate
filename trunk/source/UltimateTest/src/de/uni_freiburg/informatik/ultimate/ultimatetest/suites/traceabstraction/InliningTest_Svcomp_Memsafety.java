@@ -32,8 +32,8 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.traceabstraction
 
 import java.util.Collection;
 
-import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 
 /**
  * Test for inlining with all SV-COMP from the Memsafety category.

@@ -30,8 +30,8 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.evals;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
-import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractEvalTestSuite;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ConversionContext;

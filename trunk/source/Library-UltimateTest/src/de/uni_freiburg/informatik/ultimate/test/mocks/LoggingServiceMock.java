@@ -32,7 +32,6 @@ import java.io.Writer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILoggingService;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
-import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
 
 /**
  *

@@ -184,6 +184,15 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 		}
 		return mOperand.lettersCall(state.getSpoilerDoubleDecker().getUp());
 	}
+	
+	@Override
+	public Set<LETTER> lettersReturn(final GS state, final GS hier) {
+		if (IFullMultipebbleAuxiliaryGameState.isSpoilerWinningSink(state)) {
+			return Collections.emptySet();
+		}
+		return mOperand.lettersReturn(state.getSpoilerDoubleDecker().getUp(), hier.getSpoilerDoubleDecker().getUp());
+	}
+
 
 	@Override
 	public Set<LETTER> lettersReturn(final GS state) {

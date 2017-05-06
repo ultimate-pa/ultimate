@@ -46,6 +46,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Quad;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
@@ -65,8 +67,8 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	private static final int THREE = 3;
 	private static final int FOUR = 4;
 
-	private final Set<LETTER> mEmptySetOfLetters = new HashSet<>(0);
-	private final Collection<STATE> mEmptySetOfStates = new HashSet<>(0);
+	private final Set<LETTER> mEmptySetOfLetters = Collections.emptySet();
+	private final Collection<STATE> mEmptySetOfStates = Collections.emptySet();
 
 	private Object mOut1;
 	private Object mOut2;
@@ -81,7 +83,7 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	}
 
 	boolean mapModeOutgoing() {
-		return (mOut1 instanceof NestedMap2) || (mOut2 instanceof NestedMap2) || (mOut3 instanceof Map);
+		return (mOut1 instanceof NestedMap2) || (mOut2 instanceof NestedMap2) || (mOut3 instanceof NestedMap3);
 	}
 
 	boolean mapModeIncoming() {
@@ -279,19 +281,9 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		final STATE hier = returnOutgoing.getHierPred();
 		final STATE succ = returnOutgoing.getSucc();
 		if (mOut3 == null) {
-			mOut3 = new HashMap<LETTER, Map<STATE, Set<STATE>>>();
+			mOut3 = new NestedMap3<STATE, LETTER, STATE, IsContained>();
 		}
-		Map<STATE, Set<STATE>> hier2succs = ((Map<LETTER, Map<STATE, Set<STATE>>>) mOut3).get(letter);
-		if (hier2succs == null) {
-			hier2succs = new HashMap<>();
-			((Map<LETTER, Map<STATE, Set<STATE>>>) mOut3).put(letter, hier2succs);
-		}
-		Set<STATE> succs = hier2succs.get(hier);
-		if (succs == null) {
-			succs = new HashSet<>();
-			hier2succs.put(hier, succs);
-		}
-		succs.add(succ);
+		((NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3).put(hier, letter, succ, IsContained.IsContained);
 	}
 
 	void addReturnIncomingMap(final IncomingReturnTransition<LETTER, STATE> returnIncoming) {
@@ -372,12 +364,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			final NestedMap2<LETTER, STATE, IsContained> map = (NestedMap2<LETTER, STATE, IsContained>) mOut2;
 			return map == null ? mEmptySetOfLetters : map.keySet();
 		}
-		final Set<LETTER> result = new HashSet<>(1);
 		if (mOut2 instanceof OutgoingCallTransition) {
 			final LETTER letter = ((OutgoingCallTransition<LETTER, STATE>) mOut2).getLetter();
-			result.add(letter);
+			return Collections.singleton(letter);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -386,26 +378,52 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			final NestedMap2<LETTER, STATE, IsContained> map = (NestedMap2<LETTER, STATE, IsContained>) mIn2;
 			return map == null ? mEmptySetOfLetters : map.keySet();
 		}
-		final Set<LETTER> result = new HashSet<>(1);
 		if (mIn2 instanceof IncomingCallTransition) {
 			final LETTER letter = ((IncomingCallTransition<LETTER, STATE>) mIn2).getLetter();
-			result.add(letter);
+			return Collections.singleton(letter);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
+	}
+	
+	public Set<LETTER> lettersReturn(final STATE hier) {
+		if (mapModeOutgoing()) {
+			final NestedMap3<STATE, LETTER, STATE, IsContained> map = (NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3;
+			if (map == null) {
+				return Collections.emptySet();
+			} else {
+				final NestedMap2<LETTER, STATE, IsContained> inner = map.get(hier);
+				if (inner == null) {
+					return Collections.emptySet();
+				} else {
+					return inner.keySet();
+				}
+			}
+		}
+		if (mOut3 instanceof OutgoingReturnTransition) {
+			final OutgoingReturnTransition<LETTER, STATE> outTrans = ((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+			if (hier.equals(outTrans.getHierPred())) {
+				return Collections.singleton(outTrans.getLetter());
+			} else {
+				return Collections.emptySet();
+			}
+		}
+		return Collections.emptySet();
 	}
 
 	@Override
+	@Deprecated
 	public Set<LETTER> lettersReturn() {
 		if (mapModeOutgoing()) {
-			final Map<LETTER, Map<STATE, Set<STATE>>> map = (Map<LETTER, Map<STATE, Set<STATE>>>) mOut3;
-			return map == null ? mEmptySetOfLetters : map.keySet();
+			final NestedMap3<STATE, LETTER, STATE, IsContained> map = (NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3;
+			return map == null ? mEmptySetOfLetters : map.projektTo2();
 		}
-		final Set<LETTER> result = new HashSet<>(1);
 		if (mOut3 instanceof OutgoingReturnTransition) {
 			final LETTER letter = ((OutgoingReturnTransition<LETTER, STATE>) mOut3).getLetter();
-			result.add(letter);
+			return Collections.singleton(letter);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -414,12 +432,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			final Map<LETTER, Map<STATE, Set<STATE>>> map = (Map<LETTER, Map<STATE, Set<STATE>>>) mIn3;
 			return map == null ? mEmptySetOfLetters : map.keySet();
 		}
-		final Set<LETTER> result = new HashSet<>(1);
 		if (mIn3 instanceof IncomingReturnTransition) {
 			final LETTER letter = ((IncomingReturnTransition<LETTER, STATE>) mIn3).getLetter();
-			result.add(letter);
+			return Collections.singleton(letter);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -492,12 +510,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			final Map<STATE, IsContained> result = map.get(letter);
 			return result == null ? mEmptySetOfStates : result.keySet();
 		}
-		final Collection<STATE> result = new ArrayList<>(1);
 		if (properOutgoingCallTransitionAtPosition2(letter)) {
 			final STATE state = ((OutgoingCallTransition<LETTER, STATE>) mOut2).getSucc();
-			result.add(state);
+			return Collections.singleton(state);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -510,52 +528,53 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			final Map<STATE, IsContained> result = map.get(letter);
 			return result == null ? mEmptySetOfStates : result.keySet();
 		}
-		final Collection<STATE> result = new ArrayList<>(1);
 		if (properIncomingCallTransitionAtPosition2(letter)) {
 			final STATE state = ((IncomingCallTransition<LETTER, STATE>) mIn2).getPred();
-			result.add(state);
+			return Collections.singleton(state);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
 	public Collection<STATE> hierPred(final LETTER letter) {
 		if (mapModeOutgoing()) {
-			final Map<LETTER, Map<STATE, Set<STATE>>> map = (Map<LETTER, Map<STATE, Set<STATE>>>) mOut3;
+			final NestedMap3<STATE, LETTER, STATE, IsContained> map = (NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3;
 			if (map == null) {
 				return mEmptySetOfStates;
 			}
-			final Map<STATE, Set<STATE>> hier2succs = map.get(letter);
-			return hier2succs == null ? mEmptySetOfStates : hier2succs.keySet();
+			final Set<STATE> result = new HashSet<>();
+			for (final Quad<STATE, LETTER, STATE, IsContained> entry : map.entrySet()) {
+				if (letter.equals(entry.getSecond())) {
+					result.add(entry.getFirst());
+				}
+			}
+			return result;
 		}
-		final Collection<STATE> result = new ArrayList<>(1);
 		if (properOutgoingReturnTransitionAtPosition3(null, letter)) {
 			final STATE state = ((OutgoingReturnTransition<LETTER, STATE>) mOut3).getHierPred();
-			result.add(state);
+			return Collections.singleton(state);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
 	public Collection<STATE> succReturn(final STATE hier, final LETTER letter) {
 		if (mapModeOutgoing()) {
-			final Map<LETTER, Map<STATE, Set<STATE>>> map = (Map<LETTER, Map<STATE, Set<STATE>>>) mOut3;
+			final NestedMap3<STATE, LETTER, STATE, IsContained> map = (NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3;
 			if (map == null) {
 				return mEmptySetOfStates;
 			}
-			final Map<STATE, Set<STATE>> hier2succs = map.get(letter);
-			if (hier2succs == null) {
-				return mEmptySetOfStates;
-			}
-			final Set<STATE> result = hier2succs.get(hier);
-			return result == null ? mEmptySetOfStates : result;
+			final Map<STATE, IsContained> result = map.get(hier, letter);
+			return result == null ? mEmptySetOfStates : result.keySet();
 		}
-		final Collection<STATE> result = new ArrayList<>(1);
 		if (properOutgoingReturnTransitionAtPosition3(hier, letter)) {
 			final STATE state = ((OutgoingReturnTransition<LETTER, STATE>) mOut3).getSucc();
-			result.add(state);
+			return Collections.singleton(state);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -572,12 +591,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			final Set<STATE> result = hier2preds.get(hier);
 			return result == null ? mEmptySetOfStates : result;
 		}
-		final Collection<STATE> result = new ArrayList<>(1);
 		if (properIncomingReturnTransitionAtPosition3(hier, letter)) {
 			final STATE state = ((IncomingReturnTransition<LETTER, STATE>) mIn3).getLinPred();
-			result.add(state);
+			return Collections.singleton(state);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -593,12 +612,12 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 			}
 			return hier2preds.keySet();
 		}
-		final Collection<STATE> result = new ArrayList<>(1);
 		if (properIncomingReturnTransitionAtPosition3(null, letter)) {
 			final STATE state = ((IncomingReturnTransition<LETTER, STATE>) mIn3).getHierPred();
-			result.add(state);
+			return Collections.singleton(state);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	private Iterable<IncomingInternalTransition<LETTER, STATE>> internalPredecessorsMap(final LETTER letter) {
@@ -833,37 +852,17 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 	private Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsMap(final STATE hier,
 			final LETTER letter) {
 		assert mapModeOutgoing();
-		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
-			private final Iterator<STATE> mIterator = initialize();
-
-			private Iterator<STATE> initialize() {
-				final Map<LETTER, Map<STATE, Set<STATE>>> letter2hier2succ =
-						(Map<LETTER, Map<STATE, Set<STATE>>>) mOut3;
-				if (letter2hier2succ != null) {
-					final Map<STATE, Set<STATE>> hier2succ = letter2hier2succ.get(letter);
-					if (hier2succ != null && hier2succ.get(hier) != null) {
-						return hier2succ.get(hier).iterator();
-					}
-				}
-				return null;
-			}
-
-			@Override
-			public boolean hasNext() {
-				return mIterator != null && mIterator.hasNext();
-			}
-
-			@Override
-			public OutgoingReturnTransition<LETTER, STATE> next() {
-				if (mIterator == null) {
-					throw new NoSuchElementException();
-				}
-				final STATE succ = mIterator.next();
-				return new OutgoingReturnTransition<>(hier, letter, succ);
-			}
-		};
+		if (mOut3 == null) {
+			return Collections.emptySet();
+		} else {
+			final Function<Quad<STATE, LETTER, STATE, IsContained>, OutgoingReturnTransition<LETTER, STATE>> transformer = 
+					x -> new OutgoingReturnTransition<>(x.getFirst(), x.getSecond(), x.getThird());
+					return () -> new TransformIterator<Quad<STATE, LETTER, STATE, IsContained>, OutgoingReturnTransition<LETTER, STATE>>(
+							((NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3).entries(hier, letter).iterator(), transformer);
+		}
 	}
 
+	@Deprecated
 	private Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsMap(final LETTER letter) {
 		assert mapModeOutgoing();
 		/**
@@ -917,104 +916,26 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 
 	private Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsMap() {
 		assert mapModeOutgoing();
-		/**
-		 * Iterates over all OutgoingReturnTransition of state. Iterates over all outgoing return letters and uses the
-		 * iterators returned by returnSuccessorsMap(state, letter)
-		 */
-		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
-			private Iterator<LETTER> mLetterIterator;
-			private LETTER mCurrentLetter;
-			private Iterator<OutgoingReturnTransition<LETTER, STATE>> mCurrentIterator;
-
-			{
-				mLetterIterator = lettersReturn().iterator();
-				nextLetter();
-			}
-
-			private void nextLetter() {
-				if (mLetterIterator.hasNext()) {
-					do {
-						mCurrentLetter = mLetterIterator.next();
-						mCurrentIterator = returnSuccessorsMap(mCurrentLetter).iterator();
-					} while (!mCurrentIterator.hasNext() && mLetterIterator.hasNext());
-					if (!mCurrentIterator.hasNext()) {
-						mCurrentLetter = null;
-						mCurrentIterator = null;
-					}
-				} else {
-					mCurrentLetter = null;
-					mCurrentIterator = null;
-				}
-			}
-
-			@Override
-			public boolean hasNext() {
-				return mCurrentLetter != null;
-			}
-
-			@Override
-			public OutgoingReturnTransition<LETTER, STATE> next() {
-				if (mCurrentLetter == null) {
-					throw new NoSuchElementException();
-				}
-				final OutgoingReturnTransition<LETTER, STATE> result = mCurrentIterator.next();
-				if (!mCurrentIterator.hasNext()) {
-					nextLetter();
-				}
-				return result;
-			}
-		};
+		if (mOut3 == null) {
+			return Collections.emptySet();
+		} else {
+			final Function<Quad<STATE, LETTER, STATE, IsContained>, OutgoingReturnTransition<LETTER, STATE>> transformer = 
+					x -> new OutgoingReturnTransition<>(x.getFirst(), x.getSecond(), x.getThird());
+					return () -> new TransformIterator<Quad<STATE, LETTER, STATE, IsContained>, OutgoingReturnTransition<LETTER, STATE>>(
+							((NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3).entrySet().iterator(), transformer);
+		}
 	}
 
 	private Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHierMap(final STATE hier) {
 		assert mapModeOutgoing();
-		/**
-		 * Iterates over all OutgoingReturnTransition of state with hierarchical successor hier. Iterates over all
-		 * outgoing return letters and uses the iterators returned by returnSuccecessorsMap(state, hier, letter)
-		 */
-		return () -> new Iterator<OutgoingReturnTransition<LETTER, STATE>>() {
-			private Iterator<LETTER> mLetterIterator;
-			private LETTER mCurrentLetter;
-			private Iterator<OutgoingReturnTransition<LETTER, STATE>> mCurrentIterator;
-
-			{
-				mLetterIterator = lettersReturn().iterator();
-				nextLetter();
-			}
-
-			private void nextLetter() {
-				if (mLetterIterator.hasNext()) {
-					do {
-						mCurrentLetter = mLetterIterator.next();
-						mCurrentIterator = returnSuccessorsMap(hier, mCurrentLetter).iterator();
-					} while (!mCurrentIterator.hasNext() && mLetterIterator.hasNext());
-					if (!mCurrentIterator.hasNext()) {
-						mCurrentLetter = null;
-						mCurrentIterator = null;
-					}
-				} else {
-					mCurrentLetter = null;
-					mCurrentIterator = null;
-				}
-			}
-
-			@Override
-			public boolean hasNext() {
-				return mCurrentLetter != null;
-			}
-
-			@Override
-			public OutgoingReturnTransition<LETTER, STATE> next() {
-				if (mCurrentLetter == null) {
-					throw new NoSuchElementException();
-				}
-				final OutgoingReturnTransition<LETTER, STATE> result = mCurrentIterator.next();
-				if (!mCurrentIterator.hasNext()) {
-					nextLetter();
-				}
-				return result;
-			}
-		};
+		if (mOut3 == null) {
+			return Collections.emptySet();
+		} else {
+			final Function<Quad<STATE, LETTER, STATE, IsContained>, OutgoingReturnTransition<LETTER, STATE>> transformer = 
+					x -> new OutgoingReturnTransition<>(x.getFirst(), x.getSecond(), x.getThird());
+					return () -> new TransformIterator<Quad<STATE, LETTER, STATE, IsContained>, OutgoingReturnTransition<LETTER, STATE>>(
+							((NestedMap3<STATE, LETTER, STATE, IsContained>) mOut3).entries(hier).iterator(), transformer);
+		}
 	}
 
 	boolean properOutgoingInternalTransitionAtPosition1(final LETTER letter) {
@@ -1168,11 +1089,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeOutgoing()) {
 			return callSuccessorsMap(letter);
 		}
-		final ArrayList<OutgoingCallTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properOutgoingCallTransitionAtPosition2(letter)) {
-			result.add((OutgoingCallTransition<LETTER, STATE>) mOut2);
+			return Collections.singleton((OutgoingCallTransition<LETTER, STATE>) mOut2);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1180,11 +1101,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeOutgoing()) {
 			return callSuccessorsMap();
 		}
-		final ArrayList<OutgoingCallTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properOutgoingCallTransitionAtPosition2(null)) {
-			result.add((OutgoingCallTransition<LETTER, STATE>) mOut2);
+			return Collections.singleton((OutgoingCallTransition<LETTER, STATE>) mOut2);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1192,11 +1113,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeIncoming()) {
 			return callPredecessorsMap(letter);
 		}
-		final ArrayList<IncomingCallTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properIncomingCallTransitionAtPosition2(letter)) {
-			result.add((IncomingCallTransition<LETTER, STATE>) mIn2);
+			return Collections.singleton((IncomingCallTransition<LETTER, STATE>) mIn2);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1204,11 +1125,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeIncoming()) {
 			return callPredecessorsMap();
 		}
-		final ArrayList<IncomingCallTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properIncomingCallTransitionAtPosition2(null)) {
-			result.add((IncomingCallTransition<LETTER, STATE>) mIn2);
+			return Collections.singleton((IncomingCallTransition<LETTER, STATE>) mIn2);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1216,11 +1137,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeOutgoing()) {
 			return returnSuccessorsMap(hier, letter);
 		}
-		final ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properOutgoingReturnTransitionAtPosition3(hier, letter)) {
-			result.add((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+			return Collections.singleton((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1228,11 +1149,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeOutgoing()) {
 			return returnSuccessorsMap(letter);
 		}
-		final ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properOutgoingReturnTransitionAtPosition3(null, letter)) {
-			result.add((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+			return Collections.singleton((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1240,11 +1161,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeOutgoing()) {
 			return returnSuccessorsMap();
 		}
-		final ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properOutgoingReturnTransitionAtPosition3(null, null)) {
-			result.add((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+			return Collections.singleton((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1252,11 +1173,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeOutgoing()) {
 			return returnSuccessorsGivenHierMap(hier);
 		}
-		final ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properOutgoingReturnTransitionAtPosition3(hier, null)) {
-			result.add((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+			return Collections.singleton((OutgoingReturnTransition<LETTER, STATE>) mOut3);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1264,11 +1185,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeIncoming()) {
 			return returnPredecessorsMap(hier, letter);
 		}
-		final ArrayList<IncomingReturnTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properIncomingReturnTransitionAtPosition3(hier, letter)) {
-			result.add((IncomingReturnTransition<LETTER, STATE>) mIn3);
+			return Collections.singleton((IncomingReturnTransition<LETTER, STATE>) mIn3);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1276,11 +1197,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeIncoming()) {
 			return returnPredecessorsMap(letter);
 		}
-		final ArrayList<IncomingReturnTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properIncomingReturnTransitionAtPosition3(null, letter)) {
-			result.add((IncomingReturnTransition<LETTER, STATE>) mIn3);
+			return Collections.singleton((IncomingReturnTransition<LETTER, STATE>) mIn3);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override
@@ -1288,11 +1209,11 @@ class StateContainerFieldAndMap<LETTER, STATE> extends StateContainer<LETTER, ST
 		if (mapModeIncoming()) {
 			return returnPredecessorsMap();
 		}
-		final ArrayList<IncomingReturnTransition<LETTER, STATE>> result = new ArrayList<>(1);
 		if (properIncomingReturnTransitionAtPosition3(null, null)) {
-			result.add((IncomingReturnTransition<LETTER, STATE>) mIn3);
+			return Collections.singleton((IncomingReturnTransition<LETTER, STATE>) mIn3);
+		} else {
+			return Collections.emptySet();
 		}
-		return result;
 	}
 
 	@Override

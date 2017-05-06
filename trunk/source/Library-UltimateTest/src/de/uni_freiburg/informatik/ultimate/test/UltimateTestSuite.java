@@ -28,6 +28,7 @@
 
 package de.uni_freiburg.informatik.ultimate.test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -43,8 +44,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.FactoryTestRunner;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.TestFactory;
+import de.uni_freiburg.informatik.ultimate.test.mocks.ConsoleLogger;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
+import de.uni_freiburg.informatik.ultimate.test.reporting.INonIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IPreTestLog;
+import de.uni_freiburg.informatik.ultimate.test.reporting.ITestLogfile;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
 import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
@@ -57,8 +61,7 @@ import de.uni_freiburg.informatik.ultimate.util.ExceptionUtils;
 @RunWith(FactoryTestRunner.class)
 public abstract class UltimateTestSuite {
 
-	private List<ITestSummary> mSummaries;
-	private List<IIncrementalLog> mIncrementalLogs;
+	private List<ITestLogfile> mLogs;
 	private ILogger mLogger;
 
 	private Collection<UltimateTestCase> mTestCases;
@@ -68,8 +71,10 @@ public abstract class UltimateTestSuite {
 	 */
 	public UltimateTestSuite() {
 		mLogger = new ConsoleLogger();
-		mSummaries = sanitizeList(this::constructTestSummaries);
-		mIncrementalLogs = sanitizeList(this::constructIncrementalLog);
+		mLogs = new ArrayList<>();
+		mLogs.addAll(sanitizeList(this::constructIncrementalLog));
+		mLogs.addAll(sanitizeList(this::constructTestSummaries));
+		mLogs.addAll(sanitizeList(this::constructPreTestLogs));
 	}
 
 	private static <T> List<T> sanitizeList(final Supplier<T[]> funSup) {
@@ -78,14 +83,6 @@ public abstract class UltimateTestSuite {
 			return Collections.emptyList();
 		}
 		return Arrays.asList(elems).stream().filter(Objects::nonNull).collect(Collectors.toList());
-	}
-
-	@TestFactory
-	public Collection<UltimateTestCase> getTestCases() {
-		if (mTestCases == null) {
-			mTestCases = createTestCases();
-		}
-		return mTestCases;
 	}
 
 	protected abstract Collection<UltimateTestCase> createTestCases();
@@ -102,42 +99,56 @@ public abstract class UltimateTestSuite {
 		return new IPreTestLog[0];
 	}
 
-	protected UltimateTestCase buildTestCase(final UltimateRunDefinition urd, final long timeout,
-			final ITestResultDecider decider) {
-		return buildTestCase(urd, timeout, decider, urd.generateShortStringRepresentation());
+	protected UltimateTestCase buildTestCase(final UltimateRunDefinition urd, final ITestResultDecider decider) {
+		return buildTestCase(urd, decider, urd.generateShortStringRepresentation());
 	}
 
-	protected UltimateTestCase buildTestCase(final UltimateRunDefinition urd, final long timeout,
-			final ITestResultDecider decider, final String name) {
-		final UltimateStarter starter = new UltimateStarter(urd, timeout);
-		return new UltimateTestCase(name, decider, starter, urd, mSummaries, mIncrementalLogs);
+	protected UltimateTestCase buildTestCase(final UltimateRunDefinition urd, final ITestResultDecider decider,
+			final String name) {
+		final UltimateStarter starter = new UltimateStarter(urd);
+		return new UltimateTestCase(name, decider, starter, urd, mLogs);
+	}
+
+	@TestFactory
+	public Collection<UltimateTestCase> getTestCases() {
+		if (mTestCases == null) {
+			mTestCases = createTestCases();
+			writePrelogs();
+		}
+		return mTestCases;
 	}
 
 	@AfterClass
-	public final void writeSummaries() {
-		final ILogger log = new ConsoleLogger();
-		if (mSummaries == null || mSummaries.isEmpty()) {
-			log.info("No test summaries available");
-			return;
-		}
-
-		log.info("Writing summaries");
-		for (final ITestSummary summary : mSummaries) {
-			if (summary == null) {
-				log.error("Summary is null");
-				continue;
-			}
-			try {
-				TestUtil.writeSummary(summary, log);
-			} catch (final Throwable ex) {
-				log.fatal(String.format("There was an exception during the writing of a summary: %s%n%s%n%s",
-						summary.getClass(), ex, ExceptionUtils.getStackTrace(ex)));
-			}
-		}
-		mSummaries = null;
+	public final void afterTestSuite() {
+		mLogger.info("Writing summaries");
+		mLogs.stream().filter(a -> a instanceof ITestSummary).map(a -> (ITestSummary) a)
+				.forEach(this::writeNonIncrementalLog);
+		mLogs = null;
 		mTestCases = null;
 		mLogger = null;
-		mIncrementalLogs = null;
+	}
+
+	private final void writeNonIncrementalLog(final INonIncrementalLog nonIncrementalLog) {
+		try {
+			TestUtil.writeNonIncrementalLog(nonIncrementalLog, mLogger);
+		} catch (final Throwable ex) {
+			mLogger.fatal(String.format("There was an exception during the writing of a summary: %s%n%s%n%s",
+					nonIncrementalLog.getClass(), ex, ExceptionUtils.getStackTrace(ex)));
+		}
+	}
+
+	private void writePrelogs() {
+		mLogger.info("Writing Prelogs");
+		final List<IPreTestLog> prelogs = mLogs.stream().filter(a -> a instanceof IPreTestLog).map(a -> (IPreTestLog) a)
+				.collect(Collectors.toList());
+		final List<UltimateRunDefinition> urds =
+				mTestCases.stream().map(UltimateTestCase::getUltimateRunDefinition).collect(Collectors.toList());
+		for (final IPreTestLog preLog : prelogs) {
+			preLog.addAllTests(urds);
+			writeNonIncrementalLog(preLog);
+		}
+		mLogs.removeAll(prelogs);
+		mLogger.info("Finished writing Prelogs");
 	}
 
 	public ILogger getLogger() {

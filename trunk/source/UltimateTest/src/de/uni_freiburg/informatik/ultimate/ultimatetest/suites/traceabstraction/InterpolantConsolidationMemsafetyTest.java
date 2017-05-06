@@ -4,9 +4,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
-import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
+import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.CsvConcatenator;

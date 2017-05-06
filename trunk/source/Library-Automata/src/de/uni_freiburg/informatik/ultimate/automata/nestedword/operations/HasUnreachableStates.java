@@ -131,11 +131,8 @@ public final class HasUnreachableStates<LETTER, STATE> extends DoubleDeckerVisit
 		final STATE state = doubleDecker.getUp();
 		final STATE hier = doubleDecker.getDown();
 		final Set<STATE> succs = new HashSet<>();
-		for (final LETTER letter : mTraversedNwa.lettersReturn(state)) {
-			for (final OutgoingReturnTransition<LETTER, STATE> trans : mTraversedNwa.returnSuccessors(state, hier,
-					letter)) {
-				succs.add(trans.getSucc());
-			}
+		for (final OutgoingReturnTransition<LETTER, STATE> trans : mTraversedNwa.returnSuccessorsGivenHier(state, hier)) {
+			succs.add(trans.getSucc());
 		}
 		mVisitedStates.addAll(succs);
 		return succs;

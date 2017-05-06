@@ -31,8 +31,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.test.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 public class InterpolationTestSuiteInteger extends InterpolationTestSuite {

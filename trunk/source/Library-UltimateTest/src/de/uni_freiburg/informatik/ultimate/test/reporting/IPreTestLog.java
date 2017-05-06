@@ -37,19 +37,13 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * 
  */
-public interface IPreTestLog extends ITestLogfile {
+public interface IPreTestLog extends INonIncrementalLog {
 
 	/**
-	 * Is called before any test is executed.
+	 * Is called before the testsuite is executed.
 	 * 
 	 * @param runs
+	 *            All the {@link UltimateRunDefinition}s of the testsuite.
 	 */
 	void addAllTests(final List<UltimateRunDefinition> runs);
-
-	/**
-	 * 
-	 * @return the actual content of the log.
-	 */
-	String getLog();
-
 }

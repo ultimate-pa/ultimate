@@ -82,12 +82,12 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 			for (final File inputFile : inputFiles) {
 				final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile,
-						runConfiguration.getSettingsFile(), runConfiguration.getToolchainFile());
-				final UltimateStarter starter = new UltimateStarter(urd, mTimeout);
+						runConfiguration.getSettingsFile(), runConfiguration.getToolchainFile(), mTimeout);
+				final UltimateStarter starter = new UltimateStarter(urd);
 				rtr.add(new UltimateTestCase(
 						String.format("%s+%s: %s", runConfiguration.getToolchainFile().getName(),
 								runConfiguration.getSettingsFile().getName(), inputFile.getAbsolutePath()),
-						getTestResultDecider(urd), starter, urd, null, null));
+						getTestResultDecider(urd), starter, urd, null));
 			}
 		}
 		return rtr;

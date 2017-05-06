@@ -74,7 +74,7 @@ public class LatexOverviewSummary extends LatexSummary {
 	}
 
 	@Override
-	public String getSummaryLog() {
+	public String getLog() {
 		final StringBuilder sb = new StringBuilder();
 		final PartitionedResults results = partitionResults(mResults.entrySet());
 		makeTables(sb, results);
@@ -314,7 +314,7 @@ public class LatexOverviewSummary extends LatexSummary {
 			final String currentHeader = csv.getColumnTitles().get(i);
 			for (final ColumnDefinition cd : mColumnDefinitions) {
 				if (cd.getCsvColumnTitle().equals(currentHeader)) {
-					idx[i] = (cd.getLatexColumnTitle() != null);
+					idx[i] = cd.getLatexColumnTitle() != null;
 					break;
 				}
 			}

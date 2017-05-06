@@ -28,15 +28,11 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaToUltimateModel;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
  * Interface for a Nested Word Automaton that is defined by its outgoing 
@@ -49,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
  * @param <STATE>
  *            Type of objects which can be used as states.
  */
-public interface INwaOutgoingTransitionProvider<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
+public interface INwaSuccessorProvider<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
 	/**
 	 * @return Set of all letters that can occur as label of an internal transition.
 	 *         <p>
@@ -59,6 +55,11 @@ public interface INwaOutgoingTransitionProvider<LETTER, STATE> extends IAutomato
 	 *         disjoint.
 	 */
 	Set<LETTER> getInternalAlphabet();
+	
+	@Override
+	default Set<LETTER> getAlphabet() {
+		return getInternalAlphabet();
+	}
 
 	/**
 	 * @return Set of all letters that can occur as label of a call transition.

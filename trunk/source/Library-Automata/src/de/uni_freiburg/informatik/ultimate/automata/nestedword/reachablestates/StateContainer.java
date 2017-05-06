@@ -282,6 +282,11 @@ public abstract class StateContainer<LETTER, STATE> {
 	 * @return Incoming call letters of this state.
 	 */
 	public abstract Set<LETTER> lettersCallIncoming();
+	
+	/**
+	 * @return Outgoing return letters of this state for hierarchical predecessor hier.
+	 */
+	public abstract Set<LETTER> lettersReturn(STATE hier);
 
 	/**
 	 * @return Outgoing return letters of this state.

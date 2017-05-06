@@ -122,8 +122,12 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomato
 	 * @param letter
 	 *            letter
 	 * @return hierarchical predecessor states for the given return letter
+	 * @deprecated Inefficient, has to iterate over all outgoing transitions.
 	 */
-	Iterable<STATE> hierarchicalPredecessorsOutgoing(STATE state, LETTER letter);
+	@Deprecated
+	default Iterable<STATE> hierarchicalPredecessorsOutgoing(final STATE state, final LETTER letter) {
+		return NestedWordAutomataUtils.hierarchicalPredecessorsOutgoing(state, letter, this);
+	}
 
 	/**
 	 * Incoming internal transitions for a given letter.
@@ -207,8 +211,13 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomato
 	 * @param letter
 	 *            letter
 	 * @return outgoing return transitions
+	 * @deprecated Inefficient! try to iterate over all outgoing transitions
+	 * or over all outgoing transitions that have a specific down state.
 	 */
-	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final LETTER letter);
+	@Deprecated
+	default Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final LETTER letter) {
+		return NestedWordAutomataUtils.returnSuccessors(state, letter, this);
+	}
 
 	/**
 	 * Outgoing return transitions for all letters and hierarchical predecessor states.

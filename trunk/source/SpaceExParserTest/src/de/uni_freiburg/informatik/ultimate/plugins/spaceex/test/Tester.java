@@ -40,7 +40,7 @@ import javax.xml.bind.Unmarshaller;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ObjectFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
-import de.uni_freiburg.informatik.ultimate.test.ConsoleLogger;
+import de.uni_freiburg.informatik.ultimate.test.mocks.ConsoleLogger;
 
 /**
  * Parser test and construction test class.

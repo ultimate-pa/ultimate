@@ -105,7 +105,7 @@ public class TraceAbstractionTestSummary extends BaseTestSummary {
 	}
 
 	@Override
-	public String getSummaryLog() {
+	public String getLog() {
 
 		final StringBuilder sb = new StringBuilder();
 		int total = 0;
