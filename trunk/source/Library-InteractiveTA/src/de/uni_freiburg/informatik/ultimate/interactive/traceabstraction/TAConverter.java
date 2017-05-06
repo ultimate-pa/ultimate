@@ -14,6 +14,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import java.util.stream.Collectors;
 
 import com.google.protobuf.GeneratedMessageV3;
 
@@ -120,6 +121,18 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 
 		converterRegistry.registerAB(TraceAbstractionProtos.LivePreferences.class, InteractiveLive.Preferences.class,
 				TAConverter::toLivePreferences);
+
+		converterRegistry.registerRConv(TraceAbstractionProtos.InterpolantSequences.Choices.class,
+				InterpolantSequences.class, InterpolantSequences.class, TAConverter::getInterpolantSequences);
+	}
+
+	private static InterpolantSequences getInterpolantSequences(
+			TraceAbstractionProtos.InterpolantSequences.Choices choices, InterpolantSequences originalSequences) {
+		final List<InterpolantsPreconditionPostcondition> newPerfectIpps =
+				choices.getPerfectList().stream().map(originalSequences.mPerfectIpps::get).collect(Collectors.toList());
+		final List<InterpolantsPreconditionPostcondition> newImperfectIpps = choices.getImperfectList().stream()
+				.map(originalSequences.mImperfectIpps::get).collect(Collectors.toList());
+		return new InterpolantSequences().set(newPerfectIpps, newImperfectIpps);
 	}
 
 	private static InteractiveLive.Preferences toLivePreferences(LivePreferences prefs) {

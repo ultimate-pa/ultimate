@@ -113,6 +113,11 @@ message Tracks {
 }
 
 message InterpolantSequences {
+	message Choices {
+		repeated int32 perfect = 1;
+		repeated int32 imperfect = 2;
+	}
+
 	repeated InterpolantsPrePost perfect = 1;
 	repeated InterpolantsPrePost imperfect = 2;
 }

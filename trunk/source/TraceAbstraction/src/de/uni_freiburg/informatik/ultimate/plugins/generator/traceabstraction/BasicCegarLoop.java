@@ -27,28 +27,19 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Deque;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
@@ -99,7 +90,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.CounterexampleSearchStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
@@ -381,15 +371,10 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			final String taskDescription = "trying to verify (iteration " + mIteration + ")";
 			throw new ToolchainCanceledException(message, getClass(), taskDescription);
 		}
-		if (mInteractive.isInteractiveMode()) {
-			mInteractive.send(traceHistogram);
-			/*
-			 * if (traceHistogram.getVisualizationArray()[0] > traceHistogram.getVisualizationArray().length) { final
-			 * String message = "bailout by trace histogram " + traceHistogram.toString(); final String taskDescription
-			 * = "trying to verify (iteration " + mIteration + ")"; throw new ToolchainCanceledException(message,
-			 * getClass(), taskDescription); }
-			 */
-		}
+		// Don't send the histogram: the complete run is sent already.
+		//if (mInteractive.isInteractiveMode()) {
+		//	mInteractive.send(traceHistogram);
+		//}
 		return false;
 	}
 
@@ -399,7 +384,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final IRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(
 				mPref.getRefinementStrategy(), mCounterexample, mAbstraction, getIteration(), getCegarLoopBenchmark());
 		try {
-			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy, mInteractive.getInterface());
+			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy, mInteractive);
 		} catch (final ToolchainCanceledException tce) {
 			final int traceHistogramMax = new HistogramOfIterable<>(mCounterexample.getWord()).getMax();
 			final String taskDescription = "analyzing trace of length " + mCounterexample.getLength()
@@ -440,7 +425,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 
 		if (mInteractive.isInteractiveMode() && feasibility == LBool.SAT) {
-			mInteractive.send("Feasiblke Counterexample Found:The Counterexample trace analyzed in iteration "
+			mInteractive.send("Feasible Counterexample:The Counterexample trace analyzed in iteration "
 					+ mIteration + " was feasible.");
 		}
 
