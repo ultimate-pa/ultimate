@@ -26,7 +26,9 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
+import java.util.Iterator;
 import java.util.Set;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -35,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.NwaToUltimateModel;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedIteratorNoopConstruction;
 
 /**
  * Interface for the most basic data structure that represents a nested word automaton (NWA). This data structure
@@ -75,7 +78,9 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends INwaSuccessor
 	 * @return Superset of all letters <tt>a</tt> such that <tt>state</tt> has an outgoing internal transition labeled
 	 *         with letter <tt>a</tt>.
 	 */
-	Set<LETTER> lettersInternal(STATE state);
+	default Set<LETTER> lettersInternal(final STATE state) {
+		return getInternalAlphabet();
+	}
 
 	/**
 	 * @param state
@@ -83,7 +88,9 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends INwaSuccessor
 	 * @return Superset of all letters <tt>a</tt> such that <tt>state</tt> has an outgoing call transition labeled with
 	 *         letter <tt>a</tt>.
 	 */
-	Set<LETTER> lettersCall(STATE state);
+	default Set<LETTER> lettersCall(final STATE state) {
+		return getCallAlphabet();
+	}
 
 	/**
 	 * @param state
@@ -91,7 +98,9 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends INwaSuccessor
 	 * @return Superset of all letters <tt>a</tt> such that <tt>state</tt> has an outgoing return transition whose
 	 * hierarchical predecessor is hier and that is labeled with letter <tt>a</tt> 
 	 */
-	Set<LETTER> lettersReturn(STATE state, STATE hier);
+	default Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
+		return getReturnAlphabet();
+	}
 	
 	/**
 	 * All internal successor transitions for a given state and letter.
@@ -128,10 +137,32 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends INwaSuccessor
 	 */
 	Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
 			final LETTER letter);
+	
+
+	@Override
+	default Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
+		final Function<LETTER, Iterator<OutgoingInternalTransition<LETTER, STATE>>> fun = x -> internalSuccessors(state, x).iterator();
+		return () -> new NestedIteratorNoopConstruction<LETTER, OutgoingInternalTransition<LETTER, STATE>>(lettersInternal(state).iterator(), fun);
+	}
+
+	@Override
+	default Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
+		final Function<LETTER, Iterator<OutgoingCallTransition<LETTER, STATE>>> fun = x -> callSuccessors(state, x).iterator();
+		return () -> new NestedIteratorNoopConstruction<LETTER, OutgoingCallTransition<LETTER, STATE>>(lettersCall(state).iterator(), fun);
+	}
+
+	@Override
+	default Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state, final STATE hier) {
+		final Function<LETTER, Iterator<OutgoingReturnTransition<LETTER, STATE>>> fun = x -> returnSuccessors(state, hier, x).iterator();
+		return () -> new NestedIteratorNoopConstruction<LETTER, OutgoingReturnTransition<LETTER, STATE>>(lettersReturn(state, hier).iterator(), fun);
+	}
 
 	@Override
 	default IElement transformToUltimateModel(final AutomataLibraryServices services)
 			throws AutomataOperationCanceledException {
 		return new NwaToUltimateModel<LETTER, STATE>(services).transformToUltimateModel(this);
 	}
+	
+
+
 }
