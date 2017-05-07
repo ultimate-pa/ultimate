@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridTermBuilder.BuildScenario;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceGroup;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslatorConstants;
 
 /**
  * Class that handles conversion of Hybrid Models/Systems/Automata to an ICFG
@@ -59,19 +60,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.Sp
  *
  */
 public class HybridIcfgGenerator {
-
-	public static final String PROC_NAME = "MAIN";
-	public static final String TIME_VAR = "TIME_VAR_$";
-	public static final String TIME_INV = TIME_VAR + ">= 0";
-
+	
 	private final ILogger mLogger;
-
+	
 	private final UnmodifiableTransFormula mTrivialTransformula;
 	private final SpaceExPreferenceManager mSpaceExPreferenceManager;
 	private final CfgSmtToolkit mSmtToolkit;
 	private final HybridVariableManager mVariableManager;
 	private final HybridIcfgGeneratorHelper mHelper;
-
 	private final IcfgLocation mErrorLocation;
 	private final IcfgLocation mRootLocation;
 	// Map of CFG Components which will be connected to an ICFG
@@ -80,12 +76,12 @@ public class HybridIcfgGenerator {
 	private final List<IcfgLocation> mConnectionList;
 	private final Scenario mScenario;
 	private int mCurrentGroupID;
-
+	
 	// Scenario that determines if Preferencegroups are used or not.
 	private enum Scenario {
 		PREF_GROUPS, NO_GROUPS
 	}
-
+	
 	public HybridIcfgGenerator(final ILogger logger, final SpaceExPreferenceManager preferenceManager,
 			final CfgSmtToolkit smtToolkit, final HybridVariableManager variableManager) {
 		mLogger = logger;
@@ -98,15 +94,15 @@ public class HybridIcfgGenerator {
 		mScenario = preferenceManager.hasPreferenceGroups() ? Scenario.PREF_GROUPS : Scenario.NO_GROUPS;
 		mTrivialTransformula = TransFormulaBuilder.getTrivialTransFormula(smtToolkit.getManagedScript());
 		// create a root and error location
-		mErrorLocation = new IcfgLocation("error", PROC_NAME);
+		mErrorLocation = new IcfgLocation("error", HybridTranslatorConstants.PROC_NAME);
 		// DD: You need the check annotation s.t. result reporting knows what you are checking
 		new Check(Spec.ASSERT).annotate(mErrorLocation);
 		// you need a location at the error loc for legacy reasons (we will find a way ;) ) -- the location is also
 		// responsible for the line number in the result
 		new DummyLocation("").annotate(mErrorLocation);
-		mRootLocation = new IcfgLocation("root", PROC_NAME);
+		mRootLocation = new IcfgLocation("root", HybridTranslatorConstants.PROC_NAME);
 	}
-
+	
 	/**
 	 * Fucntion that converts a HybridAutomaton into an ICFG
 	 *
@@ -117,7 +113,7 @@ public class HybridIcfgGenerator {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("AUTOMATON: " + automaton);
 		}
-
+		
 		// If scenario is that we have preferencegroups, get the parallel compositions of the groups.
 		// else just build the ICFG for one automaton without initial assignments.
 		if (mScenario == Scenario.PREF_GROUPS) {
@@ -131,15 +127,15 @@ public class HybridIcfgGenerator {
 		} else {
 			modelToIcfg(automaton);
 		}
-
+		
 		final BasicIcfg<IcfgLocation> icfg = new BasicIcfg<>("icfg", mSmtToolkit, IcfgLocation.class);
-
+		
 		// root location of the ICFG, to this root location each sub-icfg will be connected.
 		icfg.addLocation(mRootLocation, true, false, true, false, false);
-
+		
 		// error location
 		icfg.addLocation(mErrorLocation, false, true, false, true, false);
-
+		
 		// push the remaining locations into the icfg
 		mCfgComponents.forEach((id, comp) -> {
 			// start is proc_entry + end is proc_exit
@@ -149,18 +145,18 @@ public class HybridIcfgGenerator {
 				icfg.addOrdinaryLocation(loc);
 			}
 		});
-
+		
 		// debug stuff
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("################# COMPONENTS ###################");
 			mCfgComponents.forEach((key, value) -> mLogger.debug("ID:" + key + ", Component:" + value.toString()));
-			mLogger.debug("################# ICFG ###################");
+			mLogger.debug("#################### ICFG ######################");
 			mLogger.debug(icfg.getProgramPoints().toString());
-			mLogger.debug(icfg.getSymboltable().getLocals("MAIN").toString());
+			mLogger.debug(icfg.getSymboltable().getLocals(HybridTranslatorConstants.PROC_NAME).toString());
 		}
 		return icfg;
 	}
-
+	
 	public void modelToIcfg(final HybridAutomaton aut) {
 		/*
 		 * in order to convert the hybrid model to an ICFG, we have to convert the parallelComposition of the regarded
@@ -172,7 +168,7 @@ public class HybridIcfgGenerator {
 		// convert automaton to cfg components
 		automatonToIcfg(aut);
 	}
-
+	
 	/**
 	 * Function that converts a given hybrid automaton into ICFG components.
 	 *
@@ -197,7 +193,7 @@ public class HybridIcfgGenerator {
 		// for transitions
 		transitionsToIcfg(transitions, initialLocation);
 	}
-
+	
 	/**
 	 * Function that Creates the Variable assignment ICFG component.
 	 *
@@ -213,7 +209,7 @@ public class HybridIcfgGenerator {
 		} else {
 			group = null;
 		}
-
+		
 		// create a transformula consisting of the initial variable assingments of the group
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), Collections.emptyMap(), true,
 				Collections.emptySet(), true, Collections.emptyList(), true);
@@ -225,28 +221,30 @@ public class HybridIcfgGenerator {
 			tfb.addInVar(progVar, inVar);
 			tfb.addOutVar(progVar, outVar);
 		}
-
+		
 		// then evaluate the infix string of the variable assigment specified in the config.
 		UnmodifiableTransFormula transformula;
-		final String infix = group == null ? "" : group.getInitialVariableInfix();
-
+		final String infix = group == null ? "" : group.getVariableInfix();
+		
 		// process infix to transformula
 		if (infix.isEmpty()) {
 			transformula = mTrivialTransformula;
 		} else {
 			transformula = buildTransformula(infix, BuildScenario.INITIALLY);
 		}
-
+		
 		// create variable component of the form start ----variable assignment----> end
 		final List<IcfgLocation> locations = new ArrayList<>();
 		final List<IcfgInternalTransition> transitions = new ArrayList<>();
 		final String id = "varAssignment_" + (group == null ? "" : group.getId());
-		final IcfgLocation start = new IcfgLocation(id + "_start", PROC_NAME);
-		final IcfgLocation end = new IcfgLocation(id + "_end", PROC_NAME);
+		final IcfgLocation start = new IcfgLocation(id + "_start", HybridTranslatorConstants.PROC_NAME);
+		final IcfgLocation end = new IcfgLocation(id + "_end", HybridTranslatorConstants.PROC_NAME);
 		transitions.add(mHelper.createIcfgTransition(start, end, transformula));
+		
 		// create a list for the start node which contains the target.
 		// new cfgComponent, has to be connected to the root node.
 		mCfgComponents.put(id, new HybridCfgComponent(id, start, end, locations, transitions, ""));
+		
 		/*
 		 * Transition from Root to varAssignment
 		 */
@@ -256,7 +254,7 @@ public class HybridIcfgGenerator {
 		// add connection that has to be made from Variable assignment to initial location.
 		mConnectionList.add(end);
 	}
-
+	
 	/**
 	 * Function that converts locations to ICFG components.
 	 *
@@ -277,10 +275,14 @@ public class HybridIcfgGenerator {
 			/*
 			 * Locations: Start, End, Flow, InvariantCheck
 			 */
-			final IcfgLocation start = new IcfgLocation(autid + "_" + mCurrentGroupID + "_start", PROC_NAME);
-			final IcfgLocation end = new IcfgLocation(autid + "_" + mCurrentGroupID + "_end", PROC_NAME);
-			final IcfgLocation preFlow = new IcfgLocation(autid + "_" + mCurrentGroupID + "_preFlow", PROC_NAME);
-			final IcfgLocation postFlow = new IcfgLocation(autid + "_" + mCurrentGroupID + "_postFlow", PROC_NAME);
+			final IcfgLocation start =
+					new IcfgLocation(autid + "_" + mCurrentGroupID + "_start", HybridTranslatorConstants.PROC_NAME);
+			final IcfgLocation end =
+					new IcfgLocation(autid + "_" + mCurrentGroupID + "_end", HybridTranslatorConstants.PROC_NAME);
+			final IcfgLocation preFlow =
+					new IcfgLocation(autid + "_" + mCurrentGroupID + "_preFlow", HybridTranslatorConstants.PROC_NAME);
+			final IcfgLocation postFlow =
+					new IcfgLocation(autid + "_" + mCurrentGroupID + "_postFlow", HybridTranslatorConstants.PROC_NAME);
 			locations.add(preFlow);
 			locations.add(postFlow);
 			/*
@@ -291,7 +293,7 @@ public class HybridIcfgGenerator {
 			final UnmodifiableTransFormula invariantTransformula =
 					buildTransformula(invariant, BuildScenario.INVARIANT);
 			transitions.add(mHelper.createIcfgTransition(start, preFlow, invariantTransformula));
-
+			
 			/*
 			 * Transition preFLow to postFlow
 			 */
@@ -302,7 +304,7 @@ public class HybridIcfgGenerator {
 			 * Transition postFlow to End
 			 */
 			transitions.add(mHelper.createIcfgTransition(postFlow, end, invariantTransformula));
-
+			
 			/*
 			 * Forbidden check
 			 */
@@ -321,7 +323,7 @@ public class HybridIcfgGenerator {
 					new HybridCfgComponent(autid.toString(), start, end, locations, transitions, loc.getInvariant()));
 		}
 	}
-
+	
 	/**
 	 * Function that creates the necessary transitions between ICFG components.
 	 *
@@ -342,7 +344,7 @@ public class HybridIcfgGenerator {
 							mHelper.replaceConstantValues(trans.getGuard(), mCurrentGroupID));
 			mHelper.createIcfgTransition(source, target, transFormula);
 		});
-
+		
 		// Transitions from Group var assignment to Initial Location
 		mConnectionList.forEach((loc) -> {
 			// the source of the transition is the the end of the source CFG component
@@ -355,7 +357,7 @@ public class HybridIcfgGenerator {
 		});
 		mConnectionList.clear();
 	}
-
+	
 	/**
 	 * Fucntion to build a transformula for a transition between Locations of automata.
 	 *
@@ -381,8 +383,8 @@ public class HybridIcfgGenerator {
 		// TFB
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), Collections.emptyMap(), true,
 				Collections.emptySet(), true, Collections.emptyList(), true);
-		tb.getmInVars().forEach(tfb::addInVar);
-		tb.getmOutVars().forEach(tfb::addOutVar);
+		tb.getInVars().forEach(tfb::addInVar);
+		tb.getOutVars().forEach(tfb::addOutVar);
 		tfb.setFormula(term);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		// finish construction of the transformula.
@@ -392,16 +394,16 @@ public class HybridIcfgGenerator {
 			mLogger.debug("######## CREATING NEW TRANSITION TRANSFORMULA ######### ");
 			mLogger.debug("GUARD: " + guard);
 			mLogger.debug("UPDATE: " + update);
-
-			mLogger.debug("INVARS:  " + tb.getmInVars());
-			mLogger.debug("OUTVARS: " + tb.getmOutVars());
+			
+			mLogger.debug("INVARS:  " + tb.getInVars());
+			mLogger.debug("OUTVARS: " + tb.getOutVars());
 			mLogger.debug("AUXVAR:  " + tb.getAuxVar());
 			mLogger.debug("TERM:    " + term.toStringDirect());
 			mLogger.debug("############################################ ");
 		}
 		return transformula;
 	}
-
+	
 	/**
 	 * Function to Build a transformula according to a BuildScenario.
 	 *
@@ -416,90 +418,90 @@ public class HybridIcfgGenerator {
 			return TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
 		}
 		final HybridTermBuilder tb = new HybridTermBuilder(mVariableManager, mSmtToolkit.getManagedScript(), mLogger);
-
+		
 		// Build a term according to the scenario.
 		final Term term = tb.infixToTerm(
 				scenario != BuildScenario.INITIALLY ? mHelper.replaceConstantValues(infix, mCurrentGroupID) : infix,
 				scenario);
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), Collections.emptyMap(), true,
 				Collections.emptySet(), true, Collections.emptyList(), false);
-
+		
 		// Add in/Outvars
-		tb.getmInVars().forEach(tfb::addInVar);
-		tb.getmOutVars().forEach(tfb::addOutVar);
+		tb.getInVars().forEach(tfb::addInVar);
+		tb.getOutVars().forEach(tfb::addOutVar);
 		tfb.addAuxVar(tb.getAuxVar());
 		tfb.setFormula(term);
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-
+		
 		// finish construction of the transformula.
 		final UnmodifiableTransFormula transformula = tfb.finishConstruction(mSmtToolkit.getManagedScript());
-
+		
 		// DEBUG STUFF
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("######## CREATING NEW TRANSFORMULA ######### ");
 			mLogger.debug("INFIX: " + infix);
 			mLogger.debug("SCENARIO: " + scenario.toString());
-			mLogger.debug("INVARS:  " + tb.getmInVars());
-			mLogger.debug("OUTVARS: " + tb.getmOutVars());
+			mLogger.debug("INVARS:  " + tb.getInVars());
+			mLogger.debug("OUTVARS: " + tb.getOutVars());
 			mLogger.debug("AUXVAR:  " + tb.getAuxVar());
 			mLogger.debug("TERM:    " + term.toStringDirect());
 			mLogger.debug("############################################ ");
 		}
-
+		
 		return transformula;
 	}
-
+	
 	public BasicIcfg<IcfgLocation> getSimpleIcfg() {
 		final BasicIcfg<IcfgLocation> icfg = new BasicIcfg<>("testicfg", mSmtToolkit, IcfgLocation.class);
-
+		
 		final IcfgLocation startLoc = new IcfgLocation("start", "MAIN");
 		icfg.addLocation(startLoc, true, false, true, false, false);
-
+		
 		final IcfgLocation middleLoc = new IcfgLocation("middle", "MAIN");
 		icfg.addLocation(middleLoc, false, false, false, false, false);
-
+		
 		final IcfgLocation endLoc = new IcfgLocation("error", "MAIN");
 		icfg.addLocation(endLoc, false, true, false, true, false);
-
+		
 		// Every procedure must have a unique entry and a unique exit. It is not allowed to have more than one exit (or
 		// entry).
-
+		
 		// QUESTION: Is procExit = true correct here?
-
+		
 		TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), Collections.emptyMap(), true,
 				Collections.emptySet(), true, Collections.emptyList(), true);
 		tfb.setFormula(mSmtToolkit.getManagedScript().getScript().term("true"));
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		// QUESTION: Is not determined correct here?
-
+		
 		// QUESTION: Does BoogieASTNode influence TraceAbstraction? Currently, we pass the same BoogieASTNode every time
 		// to the ICFG. Should we construct new BoogieASTNodes every time?
-
+		
 		// QUESTION: Payload currently contains only a dummy location. Every payload consists of the SAME dummy
 		// location. Is this correct / feasible?
-
+		
 		// Transitions
 		final IcfgInternalTransition startToMiddle = new IcfgInternalTransition(startLoc, middleLoc, null,
 				tfb.finishConstruction(mSmtToolkit.getManagedScript()));
-
+		
 		tfb = new TransFormulaBuilder(Collections.emptyMap(), Collections.emptyMap(), true, Collections.emptySet(),
 				true, Collections.emptyList(), true);
 		tfb.setFormula(mSmtToolkit.getManagedScript().getScript().term("true"));
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-
+		
 		// If (true, false): Assertion error in SdHoareTripleChecker
 		// If (true, true): Cast error (to CodeBlock)
 		// If (false, false) or (false, true): No Error
-
+		
 		final IcfgInternalTransition middleToEnd = new IcfgInternalTransition(middleLoc, endLoc, null,
 				tfb.finishConstruction(mSmtToolkit.getManagedScript()));
-
+		
 		startLoc.addOutgoing(startToMiddle);
 		middleLoc.addIncoming(startToMiddle);
 		middleLoc.addOutgoing(middleToEnd);
 		endLoc.addIncoming(middleToEnd);
-
+		
 		return icfg;
 	}
-
+	
 }

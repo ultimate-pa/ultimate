@@ -46,8 +46,8 @@ public class HybridAutomatonFactory {
 		mLogger = logger;
 	}
 	
-	public HybridAutomaton createHybridAutomatonFromComponent(final String as, final ComponentType automaton,
-			final SpaceExPreferenceManager preferenceManager) {
-		return new HybridAutomaton(as, automaton, mLogger, preferenceManager);
+	public HybridAutomaton createHybridAutomatonFromComponent(final String nameInSystem, final String systemName,
+			final ComponentType automaton, final SpaceExPreferenceManager preferenceManager) {
+		return new HybridAutomaton(nameInSystem, systemName, automaton, mLogger, preferenceManager);
 	}
 }

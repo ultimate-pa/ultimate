@@ -1,34 +1,25 @@
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences;
 
+import java.util.Collections;
 import java.util.Map;
 
-public class SpaceExPreferenceGroup {
+public class SpaceExPreferenceGroup extends PreferenceGroup {
 	
-	private final int mId;
 	private final Map<String, String> mInitialLocations;
-	private final String mInitialVariableInfix;
 	
-	public SpaceExPreferenceGroup(Map<String, String> initialLocations, String initialVariableInfix, int id) {
-		mId = id;
-		mInitialLocations = initialLocations;
-		mInitialVariableInfix = initialVariableInfix;
+	public SpaceExPreferenceGroup(final Map<String, String> initialLocations, final String initialVariableInfix,
+			final int id) {
+		super(id, initialVariableInfix);
+		mInitialLocations = (initialLocations != null) ? initialLocations : Collections.emptyMap();
 	}
 	
 	public Map<String, String> getInitialLocations() {
 		return mInitialLocations;
 	}
 	
-	public String getInitialVariableInfix() {
-		return mInitialVariableInfix;
-	}
-	
-	public int getId() {
-		return mId;
-	}
-	
 	@Override
 	public String toString() {
-		return "{Locations: " + mInitialLocations + "\n Variables: " + mInitialVariableInfix + "\n Id: " + mId + "}";
+		return "{Locations: " + mInitialLocations + "\n Variables: " + mVariableInfix + "\n Id: " + mId + "}";
 	}
 	
 }

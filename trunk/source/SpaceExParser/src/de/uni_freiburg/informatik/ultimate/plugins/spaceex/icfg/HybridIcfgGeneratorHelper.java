@@ -10,6 +10,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.FirstOrderLinearODE;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslatorConstants;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.SpaceExMathHelper;
 
 public class HybridIcfgGeneratorHelper {
@@ -59,9 +60,9 @@ public class HybridIcfgGeneratorHelper {
 					if (sb.length() > 0) {
 						sb.append("&");
 					}
-					final FirstOrderLinearODE ode = new FirstOrderLinearODE(flow, HybridIcfgGenerator.TIME_VAR);
+					final FirstOrderLinearODE ode = new FirstOrderLinearODE(flow, HybridTranslatorConstants.TIME_VAR);
 					sb.append(ode.getmSolution());
-					sb.append(sb.length() == 0 ? "" : "&" + HybridIcfgGenerator.TIME_INV);
+					sb.append(sb.length() == 0 ? "" : "&" + HybridTranslatorConstants.TIME_INV);
 				}
 			}
 			mLogger.debug("FLOW TERMS: " + sb.toString());

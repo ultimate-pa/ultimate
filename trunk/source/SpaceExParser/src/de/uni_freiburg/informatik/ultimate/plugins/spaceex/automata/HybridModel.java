@@ -1,6 +1,7 @@
 /*
- * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2016 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 Julian Loeffler (loefflju@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
  *
  * This file is part of the ULTIMATE SpaceExParser plug-in.
  *
@@ -33,7 +34,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Comp
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceGroup;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslatorConstants;
 
 /**
  * Class that represents a hybrid model, consisting of multiple concurrently running hybrid automata and some system
@@ -165,8 +166,8 @@ public class HybridModel {
 	private HybridSystem createDefaultSystem(final String as, final Map<String, ComponentType> automata) {
 		assert automata.size() == 1 : "Only one hybrid automaton is possible if no system was defined.";
 		final ComponentType automatonComponent = automata.entrySet().iterator().next().getValue();
-		final HybridAutomaton automaton =
-				mHybridAutomatonFactory.createHybridAutomatonFromComponent(as, automatonComponent, mPreferenceManager);
+		final HybridAutomaton automaton = mHybridAutomatonFactory.createHybridAutomatonFromComponent(as,
+				"defaultSystem", automatonComponent, mPreferenceManager);
 		// set global parameters
 		final Set<String> globalParams = automaton.getGlobalParameters().stream()
 				.map(g -> new StringBuilder().append("system_").append(g).toString()).collect(Collectors.toSet());
@@ -192,24 +193,30 @@ public class HybridModel {
 	
 	// function that creates possible parallel compositions for preference groups for the system specified.
 	public Map<Integer, HybridAutomaton> calculateParallelCompositionsForGroups(final HybridSystem configSystem) {
+		
 		final Map<Integer, HybridAutomaton> groupIdtoMergedAutomaton = new HashMap<>();
+		
 		// get preference groups
 		final Collection<SpaceExPreferenceGroup> groups = mPreferenceManager.getPreferenceGroups().values();
+		
 		// for each group create the parallel composition starting in the groups initial locations.
 		for (final SpaceExPreferenceGroup group : groups) {
 			final HybridAutomaton merge = mergeAutomata(configSystem, group);
 			groupIdtoMergedAutomaton.put(group.getId(), merge);
 		}
+		
 		return groupIdtoMergedAutomaton;
 	}
 	
 	public HybridAutomaton mergeAutomata(final HybridSystem configSystem, final SpaceExPreferenceGroup group) {
 		final List<HybridAutomaton> automata = new ArrayList<>(configSystem.getAutomata().values());
+		
 		// if there are subsystems, retrieve all of them recursive
 		if (!configSystem.getSubSystems().isEmpty()) {
-			final List<HybridAutomaton> subsys = getSubSystems(configSystem);
+			final List<HybridAutomaton> subsys = getSubSystemAutomata(configSystem);
 			automata.addAll(subsys);
 		}
+		
 		// if there is only one automaton, there is nothing to merge.
 		if (automata.size() == 1) {
 			return automata.iterator().next();
@@ -219,14 +226,15 @@ public class HybridModel {
 		for (final HybridAutomaton aut : automata) {
 			automataAndInitial.put(aut, aut.getInitialLocationForGroup(group != null ? group.getId() : null));
 		}
+		
 		return mParallelCompositionGenerator.computeParallelCompositionNWay(automataAndInitial);
 	}
 	
-	private List<HybridAutomaton> getSubSystems(final HybridSystem configSystem) {
+	private List<HybridAutomaton> getSubSystemAutomata(final HybridSystem configSystem) {
 		final List<HybridAutomaton> automata = new ArrayList<>();
 		for (final HybridSystem sys : configSystem.getSubSystems().values()) {
 			if (!sys.getSubSystems().isEmpty()) {
-				automata.addAll(getSubSystems(sys));
+				automata.addAll(getSubSystemAutomata(sys));
 			} else {
 				automata.addAll(sys.getAutomata().values());
 			}
@@ -234,31 +242,59 @@ public class HybridModel {
 		return automata;
 	}
 	
-	public HybridSystem getPreferenceSystem(final String system) {
+	/**
+	 * Returns a @HybridSystem with the given name, if it exists.
+	 * 
+	 * @param systemName
+	 * @return
+	 */
+	public HybridSystem getSystemByName(final String systemName) {
 		HybridSystem hybsys;
-		if (mSystems.containsKey(system)) {
-			hybsys = mSystems.get(system);
-		} else if (mSystems.containsKey("system")) {
-			hybsys = mSystems.get("system");
+		if (mSystems.containsKey(systemName)) {
+			hybsys = mSystems.get(systemName);
+		} else if (mSystems.containsKey(HybridTranslatorConstants.DEFAULT_SYSTEM_NAME)) {
+			hybsys = mSystems.get(HybridTranslatorConstants.DEFAULT_SYSTEM_NAME);
 		} else {
-			throw new IllegalStateException(
-					system + " does not exist in the hybrid system, also the default value 'system' does not exist.");
+			throw new IllegalStateException(systemName
+					+ " does not exist in the hybrid system, also the default value 'system' does not exist.");
 		}
 		if (hybsys != null) {
 			if (mLogger.isDebugEnabled()) {
 				collectAndPrintBinds(hybsys);
 			}
 			renameSystemAccordingToBinds(hybsys);
+			renameVariables(hybsys);
 		}
 		return hybsys;
 	}
 	
-	// TODO: inefficient
-	private void renameSystemAccordingToBinds(final HybridSystem hybsys) {
-		hybsys.getSubSystems().forEach((id, sys) -> {
-			changeSubsystemBinds(sys, hybsys.getBinds());
-			renameSystemAccordingToBinds(sys);
+	private void renameVariables(final HybridSystem hybsys) {
+		hybsys.getAutomata().forEach((id, aut) -> {
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("RENAME VARS");
+				mLogger.debug("############# BEFORE ################");
+				mLogger.debug("GLOB CONST: " + aut.getGlobalConstants());
+				mLogger.debug("LOC CONST: " + aut.getLocalConstants());
+				mLogger.debug("GLOB PARAM: " + aut.getGlobalParameters());
+				mLogger.debug("LOC PARAM: " + aut.getLocalParameters());
+				mLogger.debug(hybsys.getBinds());
+			}
+			aut.renameConstants();
+			if (mLogger.isDebugEnabled()) {
+				mLogger.debug("############# AFTER ################");
+				mLogger.debug("GLOB CONST: " + aut.getGlobalConstants());
+				mLogger.debug("LOC CONST: " + aut.getLocalConstants());
+				mLogger.debug("GLOB PARAM: " + aut.getGlobalParameters());
+				mLogger.debug("LOC PARAM: " + aut.getLocalParameters());
+			}
 		});
+		
+		hybsys.getSubSystems().forEach((id, sys) -> {
+			renameVariables(sys);
+		});
+	}
+	
+	private void renameSystemAccordingToBinds(final HybridSystem hybsys) {
 		hybsys.getAutomata().forEach((id, aut) -> {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("SYSTEM BINDS: AUTID: " + id + " BINDS: " + hybsys.getBinds().get(id));
@@ -270,9 +306,6 @@ public class HybridModel {
 				mLogger.debug(hybsys.getBinds());
 			}
 			aut.renameAccordingToBinds(hybsys.getBinds().get(id));
-			if (mPreferenceManager != null) {
-				aut.renameConstants();
-			}
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("############# AFTER ################");
 				mLogger.debug("GLOB CONST: " + aut.getGlobalConstants());
@@ -281,62 +314,44 @@ public class HybridModel {
 				mLogger.debug("LOC PARAM: " + aut.getLocalParameters());
 			}
 		});
+		
+		hybsys.getSubSystems().forEach((id, sys) -> {
+			changeSubsystemBinds(sys, hybsys.getBinds());
+			renameSystemAccordingToBinds(sys);
+		});
 	}
 	
-	// TODO: Works, but make it easier.
 	private void changeSubsystemBinds(final HybridSystem hybsys, final Map<String, Map<String, String>> parentBinds) {
-		final Set<Entry<String, String>> parSysbinds = parentBinds.get(hybsys.getName()).entrySet();
-		final Set<Entry<String, Map<String, String>>> currSysbinds = hybsys.getBinds().entrySet();
-		// iterate over binds of parent
-		final Map<String, Map<String, String>> newBinds = new HashMap<>();
-		if (mLogger.isDebugEnabled()) {
-			mLogger.debug("################# START ###################");
-			mLogger.debug("SYS NAME: " + hybsys.getName());
-			mLogger.debug("PARENT BINDS: " + parSysbinds);
-			mLogger.debug("OLD BINDS: " + currSysbinds);
+		// copy binds
+		final Map<String, Map<String, String>> localbinds = hybsys.getBinds().entrySet().stream()
+				.collect(Collectors.toMap(e -> e.getKey(), e -> new HashMap<>(e.getValue())));
+		
+		// parent binds for the current hybrid system.
+		final Map<String, String> globalbinds =
+				parentBinds.containsKey(hybsys.getName()) ? parentBinds.get(hybsys.getName()) : null;
+		
+		mLogger.debug("################ START #################");
+		mLogger.debug("LOCALBINDS: " + localbinds);
+		mLogger.debug("GLOBALBINDS: " + globalbinds);
+		
+		if (globalbinds != null && localbinds != null) {
+			localbinds.forEach((id, binds) -> {
+				mLogger.debug("ID " + id);
+				mLogger.debug("BINDS" + binds);
+				binds.forEach((subGlobal, subLocal) -> {
+					globalbinds.forEach((parGlobal, parLocal) -> {
+						if (parLocal.equals(subGlobal) && !parGlobal.equals(subGlobal)) {
+							hybsys.getBinds().get(id).put(parGlobal, subLocal);
+							hybsys.getBinds().get(id).remove(subGlobal);
+						}
+					});
+				});
+			});
 		}
-		for (final Object element : parSysbinds) {
-			final Entry<String, String> parEntry = (Entry<String, String>) element;
-			final String parKey = parEntry.getKey();
-			final String parValue = parEntry.getValue();
-			// iterate over binds of current system
-			for (final Entry<String, Map<String, String>> curEntry : currSysbinds) {
-				final String curKey = curEntry.getKey();
-				final Set<Entry<String, String>> curBinds = curEntry.getValue().entrySet();
-				// iterate over current system bind maps
-				for (final Object element2 : curBinds) {
-					final Entry<String, String> curBindEntry = (Entry<String, String>) element2;
-					final String curbindKey = curBindEntry.getKey();
-					final String curbindValue = curBindEntry.getValue();
-					// if current system bind key appears in parent system binds, rename.
-					if (parValue.equals(curbindKey)) {
-						mLogger.debug("NEW ENTRY:" + "KEY: " + curKey + " VALUE: " + parKey + "=" + curbindValue);
-						if (newBinds.containsKey(curKey)) {
-							newBinds.get(curKey).put(parKey, curbindValue);
-						} else {
-							final Map<String, String> tmpmap = new HashMap<>();
-							tmpmap.put(parKey, curbindValue);
-							newBinds.put(curKey, tmpmap);
-						}
-					} else {
-						if (!curBinds.contains(parValue)) {
-							continue;
-						}
-						if (newBinds.containsKey(curKey)) {
-							newBinds.get(curKey).put(curbindKey, curbindValue);
-						} else {
-							final Map<String, String> tmpmap = new HashMap<>();
-							tmpmap.put(curbindKey, curbindValue);
-							newBinds.put(curKey, tmpmap);
-						}
-						mLogger.debug("NEW ENTRY:" + "KEY: " + curKey + " VALUE: " + curbindKey + "=" + curbindValue);
-					}
-				}
-			}
-		}
-		hybsys.setBinds(newBinds);
-		mLogger.debug("NEW BINDS: " + newBinds.toString());
-		mLogger.debug("############### END ###############");
+		
+		mLogger.debug("LOCALBINDS: " + hybsys.getBinds());
+		mLogger.debug("GLOBALBINDS: " + globalbinds);
+		mLogger.debug("################ END #################");
 	}
 	
 	private void collectAndPrintBinds(final HybridSystem sys) {

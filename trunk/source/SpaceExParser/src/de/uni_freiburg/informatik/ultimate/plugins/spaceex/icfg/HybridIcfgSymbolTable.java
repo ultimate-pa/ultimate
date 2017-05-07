@@ -18,6 +18,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslatorConstants;
 
 /**
  * Class that implements an IIcfgSymbolTable
@@ -30,7 +31,7 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 	private final Map<String, Set<ILocalProgramVar>> mLocals;
 	private final Map<TermVariable, ILocalProgramVar> mTVtoProgVar;
 	private final ManagedScript mScript;
-
+	
 	/**
 	 * Constructor
 	 *
@@ -47,7 +48,7 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 		variables.addAll(automaton.getGlobalConstants());
 		variables.addAll(automaton.getLocalConstants());
 		variables.addAll(automaton.getLocalParameters());
-		variables.add(HybridIcfgGenerator.TIME_VAR);
+		variables.add(HybridTranslatorConstants.TIME_VAR);
 		final Set<ILocalProgramVar> progVars = new HashSet<>();
 		for (final String var : variables) {
 			// Termvariables for the transformula.
@@ -55,7 +56,7 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 			final TermVariable outVar = script.constructFreshTermVariable(var, script.getScript().sort("Real"));
 			// IProgramVar for the transformula.
 			final HybridProgramVar progVar = variableManager.constructProgramVar(var, procedure);
-			if (!var.equals(HybridIcfgGenerator.TIME_VAR)) {
+			if (!var.equals(HybridTranslatorConstants.TIME_VAR)) {
 				variableManager.addInVarTermVariable(var, inVar);
 				variableManager.addOutVarTermVariable(var, outVar);
 				variableManager.addProgramVar(var, progVar);
@@ -66,31 +67,31 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 		}
 		mLocals.put(procedure, progVars);
 	}
-
+	
 	@Override
 	public Set<ILocalProgramVar> getLocals(final String procedurename) {
 		return mLocals.get(procedurename);
 	}
-
+	
 	@Override
 	public Set<IProgramNonOldVar> getGlobals() {
 		return Collections.emptySet();
 	}
-
+	
 	@Override
 	public Set<IProgramConst> getConstants() {
 		return Collections.emptySet();
 	}
-
+	
 	@Override
 	public IProgramVar getProgramVar(final TermVariable tv) {
 		return mTVtoProgVar.get(tv);
 	}
-
+	
 	@Override
 	public IProgramConst getProgramConst(final ApplicationTerm at) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-
+	
 }

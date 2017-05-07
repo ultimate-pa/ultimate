@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridSystemHelp
 public class HybridAutomaton {
 	
 	private final String mName;
+	private final String mSystem;
 	private final Set<String> mGlobalParameters;
 	private final Set<String> mLocalParameters;
 	private final Set<String> mGlobalConstants;
@@ -64,13 +65,14 @@ public class HybridAutomaton {
 	private final ILogger mLogger;
 	private SpaceExPreferenceManager mPreferenceManager;
 	
-	protected HybridAutomaton(final String nameInSystem, final ComponentType automaton, final ILogger logger,
-			final SpaceExPreferenceManager preferenceManager) {
+	protected HybridAutomaton(final String nameInSystem, final String systemName, final ComponentType automaton,
+			final ILogger logger, final SpaceExPreferenceManager preferenceManager) {
 		if (!automaton.getBind().isEmpty()) {
 			throw new UnsupportedOperationException(
 					"The input automaton must be a hybrid automaton, not a system template.");
 		}
 		mName = nameInSystem.isEmpty() ? automaton.getId() : nameInSystem;
+		mSystem = systemName;
 		mLocations = new HashMap<>();
 		mTransitions = new ArrayList<>();
 		mGlobalParameters = new HashSet<>();
@@ -90,7 +92,6 @@ public class HybridAutomaton {
 		
 		for (final LocationType loc : automaton.getLocation()) {
 			addLocation(loc);
-			
 		}
 		
 		for (final TransitionType trans : automaton.getTransition()) {
@@ -107,11 +108,12 @@ public class HybridAutomaton {
 		}
 	}
 	
-	protected HybridAutomaton(final String name, final Map<Integer, Location> locations, final Location initialLocation,
-			final List<Transition> transitions, final Set<String> localParameters, final Set<String> localConstants,
-			final Set<String> globalParameters, final Set<String> globalConstants, final Set<String> labels,
-			final ILogger logger) {
+	protected HybridAutomaton(final String name, final String systemName, final Map<Integer, Location> locations,
+			final Location initialLocation, final List<Transition> transitions, final Set<String> localParameters,
+			final Set<String> localConstants, final Set<String> globalParameters, final Set<String> globalConstants,
+			final Set<String> labels, final ILogger logger) {
 		mName = name;
+		mSystem = systemName;
 		mLocations = (locations != null) ? locations : Collections.emptyMap();
 		mGroupToInitialLocation = Collections.emptyMap();
 		mDefaultInitialLocation = initialLocation;
@@ -165,6 +167,7 @@ public class HybridAutomaton {
 				}
 			});
 		}
+		
 		mLocations.put(newLoc.getId(), newLoc);
 		mNametoId.put(newLoc.getName(), newLoc.getId());
 		
@@ -198,13 +201,33 @@ public class HybridAutomaton {
 	 * Function that renames constants according to the replacements the preference manager calculated.
 	 */
 	public void renameConstants() {
-		// TODO: do while renaming binds.
+		// get the map which contains all renames that have to be made.
 		final Map<String, Map<String, String>> requiresRename = mPreferenceManager.getRequiresRename();
-		if (requiresRename.containsKey(mName)) {
+		// split the name of the system the automaton belongs to into parts.
+		final String[] systemNameParts = mSystem.split("\\.");
+		// the deepest part of the systemname has the highest priority.
+		String highestPriority = "";
+		for (final String systemNamePart : systemNameParts) {
+			if (requiresRename.containsKey(systemNamePart)) {
+				highestPriority = systemNamePart;
+			}
+		}
+		if (requiresRename.containsKey(mName) || requiresRename.containsKey(highestPriority)) {
+			Map<String, String> reverse = null;
 			// reverse map so we can use an existing function instead of writing a new one.
-			final Map<String, String> reverse = requiresRename.get(mName).entrySet().stream()
-					.collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
-			renameAccordingToBinds(reverse);
+			if (requiresRename.containsKey(mName)) {
+				reverse = requiresRename.get(mName).entrySet().stream()
+						.collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+			} else if (requiresRename.containsKey(highestPriority)) {
+				reverse = requiresRename.get(highestPriority).entrySet().stream()
+						.collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
+			}
+			if (reverse != null) {
+				renameAccordingToBinds(reverse);
+			} else {
+				mLogger.warn("nothing to rename in automaton with id: " + mName + " which belongs to system with id:"
+						+ mSystem);
+			}
 		}
 	}
 	
@@ -218,34 +241,47 @@ public class HybridAutomaton {
 		if (autBinds == null) {
 			return;
 		}
-		final Map<String, String> newBinds = new HashMap<>();
+		final List<String> processLater = new ArrayList<>();
 		autBinds.forEach((glob, loc) -> {
-			if (mLabels.contains(loc)) {
-				// first of all remove the local name from labels and add the global name
-				replaceValueInSet(mLabels, loc, glob);
-				// second change the labelnames of the transitions.
-				renameTransitionLabels(loc, glob);
-			} else if (mGlobalParameters.contains(loc)) {
-				// first replace values
-				replaceValueInSet(mGlobalParameters, loc, glob);
-				// then rename in invariants and flow of locations
-				renameLocationVariables(loc, glob);
-				// then rename in guards and assignments of transitions
-				renameTransitionVariables(loc, glob);
-			} else if (mGlobalConstants.contains(loc)) {
-				replaceValueInSet(mGlobalConstants, loc, glob);
-				renameLocationVariables(loc, glob);
-				renameTransitionVariables(loc, glob);
-			} else if (mLocalParameters.contains(loc)) {
-				replaceValueInSet(mLocalParameters, loc, glob);
-				renameLocationVariables(loc, glob);
-				renameTransitionVariables(loc, glob);
-			} else if (mLocalConstants.contains(loc)) {
-				replaceValueInSet(mLocalConstants, loc, glob);
-				renameLocationVariables(loc, glob);
-				renameTransitionVariables(loc, glob);
+			if (autBinds.containsValue(glob)) {
+				processLater.add(glob);
+			} else {
+				renameAutomaton(loc, glob);
 			}
 		});
+		processLater.forEach(glob -> {
+			final String loc = autBinds.get(glob);
+			renameAutomaton(loc, glob);
+		});
+	}
+	
+	private void renameAutomaton(final String loc, final String glob) {
+		if (mLabels.contains(loc)) {
+			// first of all remove the local name from labels and add the global name
+			replaceValueInSet(mLabels, loc, glob);
+			// second change the labelnames of the transitions.
+			renameTransitionLabels(loc, glob);
+		} else if (mGlobalParameters.contains(loc)) {
+			// first replace values
+			replaceValueInSet(mGlobalParameters, loc, glob);
+			// then rename in invariants and flow of locations
+			renameLocationVariables(loc, glob);
+			// then rename in guards and assignments of transitions
+			renameTransitionVariables(loc, glob);
+		} else if (mGlobalConstants.contains(loc)) {
+			replaceValueInSet(mGlobalConstants, loc, glob);
+			renameLocationVariables(loc, glob);
+			renameTransitionVariables(loc, glob);
+		} else if (mLocalParameters.contains(loc)) {
+			replaceValueInSet(mLocalParameters, loc, glob);
+			renameLocationVariables(loc, glob);
+			renameTransitionVariables(loc, glob);
+		} else if (mLocalConstants.contains(loc)) {
+			replaceValueInSet(mLocalConstants, loc, glob);
+			renameLocationVariables(loc, glob);
+			renameTransitionVariables(loc, glob);
+		}
+		
 	}
 	
 	/*
