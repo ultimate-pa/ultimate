@@ -31,7 +31,3 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.boogie.procedureinliner,
  de.uni_freiburg.informatik.ultimate.plugins.generator.invariantsynthesis,
  de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation
-Import-Package: org.junit,
- org.junit.experimental.categories,
- org.junit.runner,
- org.junit.runners
