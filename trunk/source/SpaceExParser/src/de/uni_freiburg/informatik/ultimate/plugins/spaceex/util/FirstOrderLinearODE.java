@@ -24,6 +24,7 @@
  * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.util;
 
 import java.util.ArrayList;

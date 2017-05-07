@@ -125,10 +125,6 @@ public class SpaceExMathHelper {
 					mReplacement.put(literal + i, varMatcher.group(0));
 				}
 			}
-			/*
-			 * if (i % 5 == 0) { final char[] charArr = literal.toCharArray(); charArr[0]++; literal =
-			 * Character.toString(charArr[0]); }
-			 */
 		}
 		String replacement = initially.replaceAll("\\s+", "");
 		for (final Map.Entry<String, String> entry : mReplacement.entrySet()) {
@@ -278,13 +274,14 @@ public class SpaceExMathHelper {
 	}
 	
 	/**
-	 * This function splits a given expression into an array. e.g "x == 5" will return [x,==,5].
+	 * Function to split a given expression into an array. e.g "x == 5" will return [x,==,5].
 	 *
 	 * @param expression
 	 * @return
 	 */
 	public static List<String> expressionToArray(final String expression) {
 		final List<String> res = new ArrayList<>();
+		// Regex to split a string at ">=, <= ,>, <, ==, +, -, (, ), &, |, *, /"
 		final Pattern p = Pattern.compile("([&]{1,2}|>=?|<=?|<(?!=)|>(?!=)|==|\\+|(?<!=|&)-|/|\\*|\\||\\(|\\)| +)");
 		final String s = expression.replaceAll("\\s", "");
 		final Matcher m = p.matcher(s);
@@ -302,6 +299,13 @@ public class SpaceExMathHelper {
 		return res;
 	}
 	
+	/**
+	 * Function to convert an expression in postfix notation to infix notation.
+	 * 
+	 * @param List<String>
+	 *            postfix - is a postfix expression in list form.
+	 * @return String, the postfix converted to infix notation.
+	 */
 	public static String toInfix(final List<String> postfix) {
 		final Deque<String> stack = new LinkedList<>();
 		for (final String element : postfix) {
@@ -355,6 +359,13 @@ public class SpaceExMathHelper {
 		return output;
 	}
 	
+	/**
+	 * Function that checks whether a sign is an operator. e.g. "==" would be an operator.
+	 * 
+	 * @param String
+	 *            sign
+	 * @return True if input is operator (mOperators map)
+	 */
 	public static boolean isOperator(final String sign) {
 		return mOperators.containsKey(sign);
 	}
