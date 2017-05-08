@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPTransFormulaStateBuilderPreparer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPTfStateBuilderPreparer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqAtomicBaseNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
@@ -69,10 +69,10 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 	
 	private final VPDomain<ACTION> mDomain;
 	private final Map<Set<IProgramVarOrConst>, VPStateBottom<ACTION>> mBottomStates = new HashMap<>();
-	private final VPTransFormulaStateBuilderPreparer mTfPreparer;
+	private final VPTfStateBuilderPreparer mTfPreparer;
 	private final VPDomainPreanalysis mPreAnalysis;
 
-	public VPStateFactory(final VPDomain<ACTION> domain, final VPTransFormulaStateBuilderPreparer tfPreparer) {
+	public VPStateFactory(final VPDomain<ACTION> domain, final VPTfStateBuilderPreparer tfPreparer) {
 		mDomain = domain;
 		mTfPreparer = tfPreparer;
 		mPreAnalysis = domain.getPreAnalysis();

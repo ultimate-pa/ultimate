@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPTransFormulaStateBuilderPreparer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPTfStateBuilderPreparer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfArrayIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.VPTfNodeIdentifier;
@@ -53,13 +53,13 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
  */
 public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifier, VPTfArrayIdentifier> {
 	
-	private final VPTransFormulaStateBuilderPreparer mTfStatePreparer;
+	private final VPTfStateBuilderPreparer mTfStatePreparer;
 	private final VPDomainPreanalysis mPreAnalysis;
 
 	private final NestedMap2<Set<IProgramVarOrConst>, Set<IProgramVarOrConst>, VPTfBottomState> mVarsToBottomState = 
 			new NestedMap2<>();
 
-	public VpTfStateFactory(final VPTransFormulaStateBuilderPreparer tfStatePreparer,
+	public VpTfStateFactory(final VPTfStateBuilderPreparer tfStatePreparer,
 			final VPDomainPreanalysis preAnalysis) {
 		mTfStatePreparer = tfStatePreparer;
 		mPreAnalysis = preAnalysis;

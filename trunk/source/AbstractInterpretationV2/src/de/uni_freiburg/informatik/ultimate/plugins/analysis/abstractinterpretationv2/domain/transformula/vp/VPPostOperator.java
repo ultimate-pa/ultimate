@@ -63,7 +63,7 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final VPDomain<ACTION> mDomain;
 	private final VPStateFactory<ACTION> mStateFactory;
 	private final VPDomainPreanalysis mPreAnalysis;
-	private final VPTransFormulaStateBuilderPreparer mTfPreparer;
+	private final VPTfStateBuilderPreparer mTfPreparer;
 	private final VpTfStateFactory mTfStateFactory;
 	
 	public VPPostOperator(final ManagedScript script, final IUltimateServiceProvider services,

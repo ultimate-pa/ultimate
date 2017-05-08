@@ -627,6 +627,10 @@ public class VPDomainPreanalysis {
 		final EqNode result = mTermToEqNode.get(term);
 		return result;
 	}
+	
+	public EqFunctionNode getEqFunctionNode(IProgramVarOrConst function, List<EqNode> children) {
+		return mEqFunctionNodeStore.get(function, children);
+	}
 
 	/**
 	 *

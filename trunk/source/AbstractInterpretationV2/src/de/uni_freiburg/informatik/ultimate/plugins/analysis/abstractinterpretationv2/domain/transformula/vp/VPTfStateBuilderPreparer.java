@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class VPTransFormulaStateBuilderPreparer {
+public class VPTfStateBuilderPreparer {
 	
 	private final VPDomainPreanalysis mPreAnalysis;
 
@@ -68,7 +68,7 @@ public class VPTransFormulaStateBuilderPreparer {
 
 	private final IIcfgSymbolTable mSymbolTable;
 	
-	public VPTransFormulaStateBuilderPreparer(VPDomainPreanalysis preAnalysis, IIcfg<?> root, ILogger logger) {
+	public VPTfStateBuilderPreparer(VPDomainPreanalysis preAnalysis, IIcfg<?> root, ILogger logger) {
 		mPreAnalysis = preAnalysis;
 		mLogger = logger;
 		mSymbolTable = preAnalysis.getSymbolTable();

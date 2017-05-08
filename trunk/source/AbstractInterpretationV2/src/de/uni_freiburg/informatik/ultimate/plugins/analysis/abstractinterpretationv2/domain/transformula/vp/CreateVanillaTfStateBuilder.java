@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
  */
 public class CreateVanillaTfStateBuilder {
 
-	private VPTransFormulaStateBuilderPreparer mTfStatePreparer;
+	private VPTfStateBuilderPreparer mTfStatePreparer;
 	private VPDomainPreanalysis mPreAnalysis;
 	private TransFormula mTransFormula;
 	
@@ -95,7 +95,7 @@ public class CreateVanillaTfStateBuilder {
 	 * @param outVars
 	 */
 	public CreateVanillaTfStateBuilder(final VPDomainPreanalysis preAnalysis,
-			final VPTransFormulaStateBuilderPreparer tfStatePreparer, final IAction action,//final TransFormula tf,
+			final VPTfStateBuilderPreparer tfStatePreparer, final IAction action,//final TransFormula tf,
 			final Set<EqNode> allConstantEqNodes, final Set<IProgramVarOrConst> inVars, 
 			final Set<IProgramVarOrConst> outVars) {
 		mTfStatePreparer = tfStatePreparer;
@@ -152,6 +152,11 @@ public class CreateVanillaTfStateBuilder {
 		final Set<ApplicationTerm> xQualities =
 				new ApplicationTermFinder(new HashSet<>(Arrays.asList(new String[] { "=", "distinct" })), false)
 						.findMatchingSubterms(mTransFormula.getFormula());
+		
+		/*
+		 * we track here, which arrays are equated in the formula
+		 */
+		HashRelation<VPTfArrayIdentifier, VPTfArrayIdentifier> equatedArrays = new HashRelation<>();
 
 		/*
 		 * Step 1a. construct element wrappers, for non-array equations 
@@ -165,8 +170,10 @@ public class CreateVanillaTfStateBuilder {
 				getOrConstructElementWrapper(lhs);
 				getOrConstructElementWrapper(rhs);
 			} else {
-				getOrConstructArrayWrapper(lhs);
-				getOrConstructArrayWrapper(rhs);
+				final IArrayWrapper aw1 = getOrConstructArrayWrapper(lhs);
+				final IArrayWrapper aw2 = getOrConstructArrayWrapper(rhs);
+				equatedArrays.addPair(aw1.getBaseArray(), aw2.getBaseArray());
+				equatedArrays.addPair(aw2.getBaseArray(), aw1.getBaseArray());
 			}
 		}
 
@@ -200,7 +207,7 @@ public class CreateVanillaTfStateBuilder {
 			final String proc = mAction.getPrecedingProcedure();
 			
 			for (EqNode eqNode : mPreAnalysis.getEqNodesForScope(proc)) {
-				getOrConstructThroughNode(eqNode);
+				getOrConstructThroughNode(eqNode, equatedArrays);
 			}
 		} else {
 			/*
@@ -210,12 +217,38 @@ public class CreateVanillaTfStateBuilder {
 			 */
 			for (EqNode eqNode : mPreAnalysis.getEqNodesForScope(mAction.getPrecedingProcedure(), 
 					mAction.getSucceedingProcedure())) {
-				getOrConstructThroughNode(eqNode);
+				getOrConstructThroughNode(eqNode, equatedArrays);
 			}
 		}
 	}
 
-	private Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> getOrConstructThroughNode(EqNode eqNode) {
+	/**
+	 * Gets or constructs nodes for the given eqNode.
+	 * 
+	 * For function nodes this works recursively on the children.
+	 * 
+	 * What is constructed depends on which nodes are already present:
+	 * <ul>
+	 *  <li> If any version of the given EqNode is present, we do nothing.
+	 *  <li> If the given EqNode is constant, we can construct it easily as it will be "through".
+	 *  <li> Otherwise and if the given EqNode is atomic, we create a "through" version of it.
+	 *  <li> Otherwise and if the given EqNode is a function node, we create a "through" version of it, we have the 
+	 *     interesting case.
+ 	 *   <ul>
+ 	 *    <li> we check for all children of the top-EqNode what we already have (recursive call)
+ 	 *    <li> we may get back an inOrThrough-version, an outOrThrough-version, or both
+ 	 *    <li> we collect the matching versions for all the components
+ 	 *    <li> we check which variants of the function symbol we already have and depending on those we build
+ 	 *       one ore two function nodes from the children and the function symbols.
+	 *   </ul>
+	 * </ul>
+	 * 
+	 * @param eqNode
+	 * @param equatedArrays 
+	 * @return
+	 */
+	private Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> getOrConstructThroughNode(EqNode eqNode, 
+			HashRelation<VPTfArrayIdentifier, VPTfArrayIdentifier> equatedArrays) {
 		final Set<VPTfNodeIdentifier> alreadyConstructed = getAlreadyConstructedInOutNodeIds(eqNode);
 		assert alreadyConstructed.size() <= 2;
 		
@@ -240,7 +273,7 @@ public class CreateVanillaTfStateBuilder {
 			 * (makes recursive call to this method)
 			 */
 			final List<Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>>> children = eqfn.getArgs().stream()
-					.map(childEqNode -> getOrConstructThroughNode(childEqNode))
+					.map(childEqNode -> getOrConstructThroughNode(childEqNode, equatedArrays))
 					.collect(Collectors.toList());
 			
 			/*
@@ -277,18 +310,17 @@ public class CreateVanillaTfStateBuilder {
 				}
 			}
 			
-			/*
-			 * compute the signature "so far" (i.e. without this EqFunctionNode's symbol) from the in/outChildren,
-			 * then extend it to the signature for the result node and construct that result node.
-			 */
-			
-			// inOrThrough case
-			final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> inOrThroughResult = 
-					constructThroughFunctionNodeIfMissing(eqfn, inOrThroughChildren, true);
 
-			// outOrThrough case
+			
+			// build node for inOrThrough case
+			final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> inOrThroughResult = 
+					constructThroughFunctionNodeIfMissing(eqfn, inOrThroughChildren, equatedArrays, true);
+
+			// build node for outOrThrough case
 			final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> outOrThroughResult = 
-					constructThroughFunctionNodeIfMissing(eqfn, outOrThroughChildren, false);
+					constructThroughFunctionNodeIfMissing(eqfn, outOrThroughChildren, equatedArrays, false);
+			
+
 
 			/*
 			 * put the result into a set, return it
@@ -323,38 +355,73 @@ public class CreateVanillaTfStateBuilder {
 	}
 
 
+	/**
+	 * compute the signature "so far" (i.e. without this EqFunctionNode's symbol) from the in/outChildren,
+	 * then extend it to the signature for the result node and construct that result node.
+	 * @param equatedArrays 
+	 */
 	private EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> constructThroughFunctionNodeIfMissing(
 			final EqFunctionNode eqfn, List<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> xOrThroughChildren,
-			boolean chooseInOrThrough) {
+			HashRelation<VPTfArrayIdentifier, VPTfArrayIdentifier> equatedArrays, boolean chooseInOrThrough) {
 		if (xOrThroughChildren == null) {
 			return null;
 		}
 		
-		final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> inOrThroughResult;
+		final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> xOrThroughResult;
 
-		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
-		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
+		Map<IProgramVar, TermVariable> childrenInVars = new HashMap<>();
+		Map<IProgramVar, TermVariable> childrenOutVars = new HashMap<>();
 		for (EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> inChild : xOrThroughChildren) {
-			inVars.putAll(inChild.mNodeIdentifier.getInVars());
-			outVars.putAll(inChild.mNodeIdentifier.getOutVars());
+			childrenInVars.putAll(inChild.mNodeIdentifier.getInVars());
+			childrenOutVars.putAll(inChild.mNodeIdentifier.getOutVars());
 		}
+		childrenInVars = Collections.unmodifiableMap(childrenInVars);
+		childrenOutVars = Collections.unmodifiableMap(childrenOutVars);
 
-		final VPTfArrayIdentifier inArrayId = 
+		final VPTfArrayIdentifier xOrThroughArrayId = 
 				getArrayIdentifierConstructThroughIfMissing(eqfn.getFunction(), chooseInOrThrough);
 
-		if (inArrayId != null) {
-			inVars.putAll(inArrayId.getInVars());
-			outVars.putAll(inArrayId.getOutVars());
-			inOrThroughResult = getOrConstructEqGraphNode(eqfn, inVars, outVars);
+		if (xOrThroughArrayId != null) {
+			final Map<IProgramVar, TermVariable> inVars = new HashMap<>(childrenInVars);
+			final Map<IProgramVar, TermVariable> outVars = new HashMap<>(childrenOutVars);
+			inVars.putAll(xOrThroughArrayId.getInVars());
+			outVars.putAll(xOrThroughArrayId.getOutVars());
+			xOrThroughResult = getOrConstructEqGraphNode(eqfn, inVars, outVars);
 		} else {
 			/*
 			 *  we only have an out version for the given function (/array) symbol 
 			 *   --> we don't construct an inOrThrough node
 			 */
-			inOrThroughResult = null;
+			xOrThroughResult = null;
+		}
+		
+		/*
+		 * for array equations/extensionality we need an extra side effect here:
+		 *  if our arrayId is equated with some other array in mTransFormula, then we want to add a node with the other
+		 *  function symbol and the same children
+		 */
+		if (xOrThroughArrayId != null && equatedArrays.getDomain().contains(xOrThroughArrayId)) {
+			
+			final List<EqNode> childrenAsEqNodes = xOrThroughChildren.stream()
+					.map(eqgn -> eqgn.mNodeIdentifier.getEqNode()).collect(Collectors.toList());
+			
+			for (VPTfArrayIdentifier otherArrayId : equatedArrays.getImage(xOrThroughArrayId)) {
+				//for architectural reasons we need the EqNode here..
+				final EqFunctionNode funcNode = mPreAnalysis.getEqFunctionNode(otherArrayId.getProgramVarOrConst(), 
+						childrenAsEqNodes);
+				if (funcNode == null) {
+					// the function node we would need here is not tracked..
+					continue;
+				}
+				final Map<IProgramVar, TermVariable> inVars = new HashMap<>(childrenInVars);
+				final Map<IProgramVar, TermVariable> outVars = new HashMap<>(childrenOutVars);
+				inVars.putAll(otherArrayId.getInVars());
+				outVars.putAll(otherArrayId.getOutVars());
+				getOrConstructEqGraphNode(funcNode, inVars, outVars);
+			}
 		}
 
-		return inOrThroughResult;
+		return xOrThroughResult;
 	}
 
 	private Set<VPTfNodeIdentifier> getAlreadyConstructedInOutNodeIds(EqNode eqNode) {

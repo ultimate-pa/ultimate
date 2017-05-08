@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPTransFormulaStateBuilderPreparer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPTfStateBuilderPreparer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IArrayWrapper;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IElementWrapper;
@@ -72,7 +72,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 
 	private final TransFormula mTransFormula;
 
-	private final VPTransFormulaStateBuilderPreparer mTfStatePreparer;
+	private final VPTfStateBuilderPreparer mTfStatePreparer;
 
 	private final NestedMap3<IProgramVarOrConst, 
 		Pair<IProgramVar, TermVariable>, 
@@ -87,7 +87,7 @@ public class VPTfStateBuilder extends IVPStateOrTfStateBuilder<VPTfState, VPTfNo
 	private final Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> mOutNodes;
 
 	
-	public VPTfStateBuilder(VPDomainPreanalysis preAnalysis, VPTransFormulaStateBuilderPreparer tfStatePreparer, 
+	public VPTfStateBuilder(VPDomainPreanalysis preAnalysis, VPTfStateBuilderPreparer tfStatePreparer, 
 //			TransFormula transFormula, 
 			IAction action, 
 			Set<IProgramVarOrConst> inVars, Set<IProgramVarOrConst> outVars, 
