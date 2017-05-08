@@ -48,6 +48,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Scanner;
 import java.util.Stack;
 
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
@@ -417,6 +418,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTTranslationUnit node) {
+//		constructLineDirectiveMapping(node);
 
 		for (final IASTPreprocessorStatement preS : node.getAllPreprocessorStatements()) {
 			final Result r = main.dispatch(preS);
@@ -536,6 +538,50 @@ public class CHandler implements ICHandler {
 		}
 
 		return new Result(boogieUnit);
+	}
+
+	private void constructLineDirectiveMapping(final IASTTranslationUnit node) {
+		final Scanner scanner = new Scanner(node.getRawSignature());
+		int currentLine = 0;
+		while (scanner.hasNextLine()) {
+		  final String line = scanner.nextLine();
+		  currentLine ++;
+		  {
+			  final int idx = line.lastIndexOf("#line");
+			  if (idx == -1 ) {
+				  continue;
+			  }
+			  final String suffix = line.substring(idx + 5);
+			  int curcol = idx + 5;
+			  while (curcol < line.length() && Character.isWhitespace(line.charAt(curcol))) {
+				  curcol++;
+			  }
+			  final int fstDigit = curcol;
+			  while (curcol < line.length() && Character.isDigit(line.charAt(curcol))) {
+				  curcol++;
+			  }
+			  final String digitSequence = line.substring(fstDigit, currentLine);
+			  while (Character.isWhitespace(line.charAt(curcol))) {
+				  curcol++;
+			  }
+			  String filename;
+			  if (line.charAt(curcol) == '\"') {
+				  curcol++;
+				  final int fstfn = curcol;
+				  while (line.charAt(curcol) != '\"') {
+					  curcol++;
+				  }
+				  filename = line.substring(fstfn, curcol);
+				  
+			  } else {
+				  filename = null;
+			  }
+
+		  }
+//		  
+		}
+		scanner.close();
+		
 	}
 
 	private void processTUchild(final Dispatcher main, final ArrayList<Declaration> decl, final IASTNode child) {
