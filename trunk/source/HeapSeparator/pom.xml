@@ -32,12 +32,12 @@
 	<parent>
 		<artifactId>mavenparent</artifactId>
 		<groupId>de.uni_freiburg.informatik.ultimate</groupId>
-		<version>0.1.11</version>
+		<version>0.1.12</version>
 		<relativePath>../BA_MavenParentUltimate/pom.xml</relativePath>
 	</parent>
 
 
 	<artifactId>de.uni_freiburg.informatik.ultimate.heapseparator</artifactId>
-	<version>0.1.11</version>
+	<version>0.1.12</version>
 	<packaging>eclipse-plugin</packaging>
 </project>
