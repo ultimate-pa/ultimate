@@ -154,9 +154,31 @@ public class CreateVanillaTfStateBuilder {
 						.findMatchingSubterms(mTransFormula.getFormula());
 		
 		/*
-		 * we track here, which arrays are equated in the formula
+		 * we track which arrays are equated in the formula
 		 */
 		HashRelation<VPTfArrayIdentifier, VPTfArrayIdentifier> equatedArrays = new HashRelation<>();
+		
+		
+		/*
+		 * Step 0. construct element or array wrappers for everythin in inVars and outVars of the TransFormula
+		 *   (it might not be mentioned in the formula itself, for instance in case of a havoc..)
+		 */
+		for (TermVariable inVar : mTransFormula.getInVars().values()) {
+			if (inVar.getSort().isArraySort()) {
+				getOrConstructArrayWrapper(inVar);
+			} else {
+				getOrConstructElementWrapper(inVar);
+			}
+		}
+		for (TermVariable outVar : mTransFormula.getOutVars().values()) {
+			if (outVar.getSort().isArraySort()) {
+				getOrConstructArrayWrapper(outVar);
+			} else {
+				getOrConstructElementWrapper(outVar);
+			}
+		}
+
+		
 
 		/*
 		 * Step 1a. construct element wrappers, for non-array equations 
@@ -642,7 +664,10 @@ public class CreateVanillaTfStateBuilder {
 	 *  @return 
 	 */
 	public VPTfArrayIdentifier getOrConstructArrayIdentifier(final Term term) {
-		assert new ContainsSubterm(term).containsSubterm(mTransFormula.getFormula()) : "(see comments)";
+		assert mTransFormula.getInVars().values().contains(term) 
+			|| mTransFormula.getOutVars().values().contains(term) 
+			|| mTransFormula.getAuxVars().contains(term) 
+			|| new ContainsSubterm(term).containsSubterm(mTransFormula.getFormula()) : "(see comments)";
 		/*
 		 * an array id is identified by a IProgramVarOrConst and inVar/outVar information
 		 * Note: We don't need to take this stateBuilder's inVars/outVars here, because we assume that the argument 
