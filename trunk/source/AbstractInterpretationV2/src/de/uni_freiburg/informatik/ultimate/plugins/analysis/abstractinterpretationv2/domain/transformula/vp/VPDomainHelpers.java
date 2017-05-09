@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.IVPStateOrTfState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.IVPStateOrTfStateBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPState;
@@ -383,6 +384,35 @@ public class VPDomainHelpers {
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * Used when constructing an EqFunctionNode.
+	 * Computes the procedure it is local to, from its constructor arguments, null if it is global.
+	 * 
+	 * @param function
+	 * @param args
+	 * @return
+	 */
+	public static String computeProcedure(IProgramVarOrConst function, List<EqNode> args) {
+		String result = null;
+		
+		if (function instanceof IProgramVar) {
+			result = ((IProgramVar) function).getProcedure();
+		}
+		
+		for (EqNode arg : args) {
+			String argProc = arg.getProcedure();
+			if (argProc != null) {
+				if (result == null) {
+					result = argProc;
+				} else {
+					assert result.equals(argProc);
+				}
+			}
+		}
+		
+		return result;
 	}
 
 }

@@ -194,6 +194,9 @@ public class CreateVanillaTfStateBuilder {
 			} else {
 				final IArrayWrapper aw1 = getOrConstructArrayWrapper(lhs);
 				final IArrayWrapper aw2 = getOrConstructArrayWrapper(rhs);
+				if (aw1 == null || aw2 == null) {
+					continue;
+				}
 				equatedArrays.addPair(aw1.getBaseArray(), aw2.getBaseArray());
 				equatedArrays.addPair(aw2.getBaseArray(), aw1.getBaseArray());
 			}
@@ -240,6 +243,42 @@ public class CreateVanillaTfStateBuilder {
 			for (EqNode eqNode : mPreAnalysis.getEqNodesForScope(mAction.getPrecedingProcedure(), 
 					mAction.getSucceedingProcedure())) {
 				getOrConstructThroughNode(eqNode, equatedArrays);
+			}
+		}
+		
+		
+		/*
+		 * 5. Now we deal with nodes needed for array extensionality.
+		 *   Whenever we have a node of the form a[e], and (a, b) is in equatedArrays, we create the node b[e].
+		 */
+		final HashSet<VPTfNodeIdentifier> allNodesSoFar = new HashSet<>(mAllNodeIds);
+		for (VPTfNodeIdentifier existingNode : allNodesSoFar) {
+			if (!existingNode.isFunction()) {
+				continue;
+			}
+			// we have a function node
+			if (!equatedArrays.getDomain().contains(existingNode.getFunction())) {
+				continue;
+			}
+			
+			final EqFunctionNode existingEqFunctionNode = (EqFunctionNode) existingNode.getEqNode();
+			
+			// the function node's appears in an array equation
+			for (VPTfArrayIdentifier otherArrayId : equatedArrays.getImage(existingNode.getFunction())) {
+
+				final EqFunctionNode funcNode = mPreAnalysis.getEqFunctionNode(otherArrayId.getProgramVarOrConst(), 
+						existingEqFunctionNode.getArgs());
+				
+				final Map<IProgramVar, TermVariable> inVars = new HashMap<>(existingNode.getInVars());
+				final Map<IProgramVar, TermVariable> outVars = new HashMap<>(existingNode.getOutVars());
+				
+				inVars.keySet().removeAll(existingNode.getFunction().getInVars().keySet());
+				outVars.keySet().removeAll(existingNode.getFunction().getOutVars().keySet());
+				
+				inVars.putAll(otherArrayId.getInVars());
+				outVars.putAll(otherArrayId.getOutVars());
+
+				getOrConstructEqGraphNode(funcNode, inVars, outVars);
 			}
 		}
 	}
@@ -417,31 +456,31 @@ public class CreateVanillaTfStateBuilder {
 			xOrThroughResult = null;
 		}
 		
-		/*
-		 * for array equations/extensionality we need an extra side effect here:
-		 *  if our arrayId is equated with some other array in mTransFormula, then we want to add a node with the other
-		 *  function symbol and the same children
-		 */
-		if (xOrThroughArrayId != null && equatedArrays.getDomain().contains(xOrThroughArrayId)) {
-			
-			final List<EqNode> childrenAsEqNodes = xOrThroughChildren.stream()
-					.map(eqgn -> eqgn.mNodeIdentifier.getEqNode()).collect(Collectors.toList());
-			
-			for (VPTfArrayIdentifier otherArrayId : equatedArrays.getImage(xOrThroughArrayId)) {
-				//for architectural reasons we need the EqNode here..
-				final EqFunctionNode funcNode = mPreAnalysis.getEqFunctionNode(otherArrayId.getProgramVarOrConst(), 
-						childrenAsEqNodes);
-				if (funcNode == null) {
-					// the function node we would need here is not tracked..
-					continue;
-				}
-				final Map<IProgramVar, TermVariable> inVars = new HashMap<>(childrenInVars);
-				final Map<IProgramVar, TermVariable> outVars = new HashMap<>(childrenOutVars);
-				inVars.putAll(otherArrayId.getInVars());
-				outVars.putAll(otherArrayId.getOutVars());
-				getOrConstructEqGraphNode(funcNode, inVars, outVars);
-			}
-		}
+//		/*
+//		 * for array equations/extensionality we need an extra side effect here:
+//		 *  if our arrayId is equated with some other array in mTransFormula, then we want to add a node with the other
+//		 *  function symbol and the same children
+//		 */
+//		if (xOrThroughArrayId != null && equatedArrays.getDomain().contains(xOrThroughArrayId)) {
+//			
+//			final List<EqNode> childrenAsEqNodes = xOrThroughChildren.stream()
+//					.map(eqgn -> eqgn.mNodeIdentifier.getEqNode()).collect(Collectors.toList());
+//			
+//			for (VPTfArrayIdentifier otherArrayId : equatedArrays.getImage(xOrThroughArrayId)) {
+//				//for architectural reasons we need the EqNode here..
+//				final EqFunctionNode funcNode = mPreAnalysis.getEqFunctionNode(otherArrayId.getProgramVarOrConst(), 
+//						childrenAsEqNodes);
+//				if (funcNode == null) {
+//					// the function node we would need here is not tracked..
+//					continue;
+//				}
+//				final Map<IProgramVar, TermVariable> inVars = new HashMap<>(childrenInVars);
+//				final Map<IProgramVar, TermVariable> outVars = new HashMap<>(childrenOutVars);
+//				inVars.putAll(otherArrayId.getInVars());
+//				outVars.putAll(otherArrayId.getOutVars());
+//				getOrConstructEqGraphNode(funcNode, inVars, outVars);
+//			}
+//		}
 
 		return xOrThroughResult;
 	}

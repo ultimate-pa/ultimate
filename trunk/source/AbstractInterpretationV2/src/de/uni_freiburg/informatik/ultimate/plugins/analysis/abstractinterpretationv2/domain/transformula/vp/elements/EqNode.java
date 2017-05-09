@@ -61,10 +61,11 @@ public abstract class EqNode implements IEqNodeIdentifier<IProgramVarOrConst> {
 
 
 	EqNode(boolean isGlobal, boolean isConstant, String procedure) {
-			mIsGlobal = isGlobal;
-			mIsConstant = isConstant;
-			mProcedure = procedure;
-		}
+		assert isGlobal || procedure != null;
+		mIsGlobal = isGlobal;
+		mIsConstant = isConstant;
+		mProcedure = procedure;
+	}
 
 	/**
 	 * Yields the parents of this node in the EqNode graph (where the edges mean "is applied to"/"is a function argument

@@ -532,12 +532,14 @@ public class VPState<ACTION extends IIcfgTransition<IcfgLocation>> extends IVPSt
 
 	@Override
 	public VPState<ACTION> intersect(final VPState<ACTION> other) {
-		throw new UnsupportedOperationException("Not yet implemented");
+		final Set<VPState<ACTION>> resultSet = VPFactoryHelpers.conjoin(this, other, mStateFactory);
+		assert resultSet.size() == 1;
+		return resultSet.iterator().next();
 	}
 
 	@Override
 	public VPState<ACTION> union(final VPState<ACTION> other) {
-		throw new UnsupportedOperationException("Not yet implemented");
+		return VPFactoryHelpers.disjoin(this, other, mStateFactory);
 	}
 
 	@Override

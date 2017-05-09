@@ -59,8 +59,8 @@ public abstract class IVPStateOrTfState<NODEID extends IEqNodeIdentifier<ARRAYID
 
 	public IVPStateOrTfState(final Set<VPDomainSymmetricPair<NODEID>> disEqs, final boolean isTop, 
 			Map<NODEID, EqGraphNode<NODEID, ARRAYID>> nodeIdToEqGraphNode) {
-		mNodeIdToEqGraphNode = Collections.unmodifiableMap(nodeIdToEqGraphNode);
-		mDisEqualitySet = Collections.unmodifiableSet(disEqs);
+		mNodeIdToEqGraphNode = nodeIdToEqGraphNode == null ? null : Collections.unmodifiableMap(nodeIdToEqGraphNode);
+		mDisEqualitySet = disEqs == null ? null : Collections.unmodifiableSet(disEqs);
 		mIsTop = isTop;
 	}
 

@@ -89,12 +89,18 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 			final Set<IProgramVarOrConst> outVars, 
 			final Set<EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier>> outNodes) {
 		super(disEqs, isTop, nodeIdToEqGraphNode);
+
+		final boolean isBottomState = this instanceof VPTfBottomState;
+
 		mAction = action;
-		mTransFormula = action.getTransformula();
+		assert isBottomState || mAction != null;
+		mTransFormula = isBottomState ? null : action.getTransformula();
 		mBuilder = builder;
 		mAllNodeIds = allNodeIds;
 //		mNodeIdToEqGraphNode = Collections.unmodifiableMap(nodeIdToEqGraphNode);
-		mArrayIdToFunctionNodes = new HashRelation<>(arrayIdToFunctionNodes); // TODO is copy needed here?
+
+//		TODO is copy needed here?
+		mArrayIdToFunctionNodes = isBottomState ? null : new HashRelation<>(arrayIdToFunctionNodes); 
 		
 		mInVars = inVars;
 		mOutVars = outVars;

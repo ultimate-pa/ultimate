@@ -447,6 +447,7 @@ public class VPDomainPreanalysis {
 			if (result.isGlobal()) {
 				mGlobalEqNodes.add(result);
 			} else {
+				assert result.getProcedure() != null;
 				mProcToLocalEqNodes.addPair(result.getProcedure(), result);
 			}
 
