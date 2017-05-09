@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -67,45 +66,6 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 	protected final TfNodeInOutStatus mInOutStatus;
 
 	private final NodeIdWithSideCondition mNodeIdWithSideCondition;
-
-	/**
-	 * super constructor exclusively for VpTfExtraNodeIdentifier
-	 * @param eqNode
-	 * @param inOutStatus 
-	 */
-	protected VPTfNodeIdentifier(final EqNode eqNode, final TfNodeInOutStatus inOutStatus) {
-		this.mEqNode = eqNode;
-
-		assert !(eqNode instanceof EqFunctionNode);
-		this.mIsFunction = false;
-		this.mFunction = null;
-
-		this.mIsLiteral = eqNode.isLiteral();
-		
-		mNodeIdWithSideCondition = new NodeIdWithSideCondition(this, Collections.emptySet(), Collections.emptySet());
-		
-		mInOutStatus = inOutStatus;
-
-		Map<IProgramVar, TermVariable> inVars = new HashMap<>();
-		if (inOutStatus == TfNodeInOutStatus.IN || inOutStatus == TfNodeInOutStatus.THROUGH) {
-			for (IProgramVar var : eqNode.getVariables()) {
-				inVars.put(var, null);
-			}
-		}
-		mInVars = inVars;
-
-		Map<IProgramVar, TermVariable> outVars = new HashMap<>();
-		if (inOutStatus == TfNodeInOutStatus.OUT || inOutStatus == TfNodeInOutStatus.THROUGH) {
-			for (IProgramVar var : eqNode.getVariables()) {
-				outVars.put(var, null);
-			}
-		}
-		mOutVars = outVars;
-		
-		
-		mAllFunctions = Collections.emptySet();
-
-	}
 
 	public VPTfNodeIdentifier(EqNode eqNode, 
 			Map<IProgramVar, TermVariable> inVars,
