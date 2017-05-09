@@ -70,8 +70,12 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 	public VPTfNodeIdentifier(EqNode eqNode, 
 			Map<IProgramVar, TermVariable> inVars,
 			Map<IProgramVar, TermVariable> outVars,
-//			VPTfStateBuilder tfStateBuilder) {
 			CreateVanillaTfStateBuilder tfStateBuilder) {
+		
+		assert eqNode.getVariables().containsAll(inVars.keySet()); 
+		assert eqNode.getVariables().containsAll(outVars.keySet()); 
+		
+		
 		this.mEqNode = eqNode;
 		this.mIsFunction = eqNode instanceof EqFunctionNode;
 
@@ -238,6 +242,7 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 		if (this.mEqNode == otherNodeId.mEqNode 
 				&& this.mInVars.equals(otherNodeId.mInVars)
 				&& this.mOutVars.equals(otherNodeId.mOutVars)) {
+			assert false : "nodeIdentifiers should be unified in their context (their context being one transition)";
 			return true;
 		}
 		return false;

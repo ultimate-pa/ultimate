@@ -71,7 +71,7 @@ public class SelectTermWrapper implements IElementWrapper {
 						indexVector.stream().map(niwsc -> niwsc.mNodeId).collect(Collectors.toList());
 				
 				VPTfNodeIdentifier valueAtIndex = arrayWsc.getIndexToValue().get(indexVectorAsNodeIds);
-				
+			
 				// compute the new side condition
 				Set<VPDomainSymmetricPair<VPTfNodeIdentifier>> resultEqualities = 
 						new HashSet<>(arrayWsc.getEqualities());
@@ -93,11 +93,16 @@ public class SelectTermWrapper implements IElementWrapper {
 				} else {
 					// we don't know the array's value at the given index
 					// --> we can still return the condition under which the index is indeterminate
-					assert !resultEqualities.isEmpty() || !resultDisEqualities.isEmpty() : "would this be equivalent to adding nothing??";
-					result.add(
-							new UndeterminedNodeWithSideCondition(
-									resultEqualities, 
-									resultDisEqualities));
+//					assert !resultEqualities.isEmpty() || !resultDisEqualities.isEmpty() : 
+//						"would this be equivalent to adding nothing??";
+					if (resultEqualities.isEmpty() && resultDisEqualities.isEmpty()) {
+						// do nothing -- an UndeterminedNode with an empty side condition is useless...
+					} else {
+						result.add(
+								new UndeterminedNodeWithSideCondition(
+										resultEqualities, 
+										resultDisEqualities));
+					}
 				}
 			}
 		}

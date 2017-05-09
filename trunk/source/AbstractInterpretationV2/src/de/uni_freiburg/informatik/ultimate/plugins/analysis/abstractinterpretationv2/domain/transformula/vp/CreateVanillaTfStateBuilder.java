@@ -584,9 +584,11 @@ public class CreateVanillaTfStateBuilder {
 			for (int i = 0; i < ((EqFunctionNode) nodeIdentifier.getEqNode()).getArgs().size(); i++) {
 				final EqNode indexEqnode = eqFunctionNode.getArgs().get(i);
 				final Map<IProgramVar, TermVariable> argInVars =
-						VPDomainHelpers.projectOut(nodeIdentifier.getInVars(), eqFunctionNode.getFunction());
+						VPDomainHelpers.projectToVars(nodeIdentifier.getInVars(), indexEqnode.getVariables());
+//						VPDomainHelpers.projectOut(nodeIdentifier.getInVars(), eqFunctionNode.getFunction());
 				final Map<IProgramVar, TermVariable> argOutVars =
-						VPDomainHelpers.projectOut(nodeIdentifier.getOutVars(), eqFunctionNode.getFunction());
+//						VPDomainHelpers.projectOut(nodeIdentifier.getOutVars(), eqFunctionNode.getFunction());
+						VPDomainHelpers.projectToVars(nodeIdentifier.getOutVars(), indexEqnode.getVariables());
 				final VPTfNodeIdentifier argNodeId = getOrConstructNodeIdentifier(indexEqnode, argInVars, argOutVars);
 				final EqGraphNode<VPTfNodeIdentifier, VPTfArrayIdentifier> argNode =
 						getOrConstructEqGraphNode(argNodeId);
