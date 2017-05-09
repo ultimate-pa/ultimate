@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 /**
  * An {@link AbstractMultiState} is an abstract state that consists of many abstract states of the same type. It
  * represents a disjunction of all these states.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  * @param <STATE>
@@ -184,7 +184,6 @@ public class AbstractMultiState<STATE extends IAbstractState<STATE, VARDECL>, VA
 		}
 
 		if (!other.getVariables().equals(getVariables())) {
-			assert false;
 			return SubsetResult.NONE;
 		}
 		if (other.mStates.isEmpty() && !mStates.isEmpty()) {
