@@ -50,6 +50,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Scanner;
 import java.util.Stack;
+import java.util.TreeMap;
 
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
@@ -224,6 +225,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UnsignedTreatment;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class that handles translation of C nodes to Boogie nodes.
@@ -418,7 +420,8 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTTranslationUnit node) {
-//		constructLineDirectiveMapping(node);
+		final TreeMap<Integer, Pair<Integer, String>> lineDirectiveMapping = constructLineDirectiveMapping(node);
+		main.setLineDirectiveMapping(lineDirectiveMapping);
 
 		for (final IASTPreprocessorStatement preS : node.getAllPreprocessorStatements()) {
 			final Result r = main.dispatch(preS);
@@ -540,7 +543,15 @@ public class CHandler implements ICHandler {
 		return new Result(boogieUnit);
 	}
 
-	private void constructLineDirectiveMapping(final IASTTranslationUnit node) {
+	/**
+	 * @return A map whose domain are all lines of the input file in which 
+	 * there is a #line directive. Each such line number is mapped to a pair.
+	 * The first entry of this pair is the line number which is mentioned in
+	 * the #line directive, the second entry is the filename which is mentioned
+	 * in the #line directive or null if no filename is mentioned.
+	 */
+	private TreeMap<Integer, Pair<Integer, String>> constructLineDirectiveMapping(final IASTTranslationUnit node) {
+		final TreeMap<Integer, Pair<Integer, String>> result = new TreeMap<>();
 		final Scanner scanner = new Scanner(node.getRawSignature());
 		int currentLine = 0;
 		while (scanner.hasNextLine()) {
@@ -551,7 +562,6 @@ public class CHandler implements ICHandler {
 			  if (idx == -1 ) {
 				  continue;
 			  }
-			  final String suffix = line.substring(idx + 5);
 			  int curcol = idx + 5;
 			  while (curcol < line.length() && Character.isWhitespace(line.charAt(curcol))) {
 				  curcol++;
@@ -560,12 +570,12 @@ public class CHandler implements ICHandler {
 			  while (curcol < line.length() && Character.isDigit(line.charAt(curcol))) {
 				  curcol++;
 			  }
-			  final String digitSequence = line.substring(fstDigit, currentLine);
-			  while (Character.isWhitespace(line.charAt(curcol))) {
+			  final String digitSequence = line.substring(fstDigit, curcol);
+			  while (curcol < line.length() && Character.isWhitespace(line.charAt(curcol))) {
 				  curcol++;
 			  }
 			  String filename;
-			  if (line.charAt(curcol) == '\"') {
+			  if (curcol < line.length() && line.charAt(curcol) == '\"') {
 				  curcol++;
 				  final int fstfn = curcol;
 				  while (line.charAt(curcol) != '\"') {
@@ -576,12 +586,11 @@ public class CHandler implements ICHandler {
 			  } else {
 				  filename = null;
 			  }
-
+			  result.put(currentLine, new Pair<>(Integer.parseInt(digitSequence), filename));
 		  }
-//		  
 		}
 		scanner.close();
-		
+		return result;
 	}
 
 	private void processTUchild(final Dispatcher main, final ArrayList<Declaration> decl, final IASTNode child) {

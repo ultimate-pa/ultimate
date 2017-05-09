@@ -37,6 +37,7 @@ import java.text.ParseException;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -69,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.CACSL2BoogieBacktranslator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * @author Markus Lindenmann
@@ -125,6 +127,8 @@ public abstract class Dispatcher {
 	private final TypeSizes mTypeSizes;
 
 	private final TranslationSettings mTranslationSettings;
+
+	private TreeMap<Integer, Pair<Integer, String>> mLineDirectiveMapping;
 
 	public Dispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
 			final ILogger logger) {
@@ -345,6 +349,10 @@ public abstract class Dispatcher {
 			return mDivisionByZeroOfFloatingTypes;
 		}
 
+	}
+
+	public void setLineDirectiveMapping(final TreeMap<Integer, Pair<Integer, String>> lineDirectiveMapping) {
+		mLineDirectiveMapping = lineDirectiveMapping;
 	}
 
 }
