@@ -44,6 +44,8 @@ import org.eclipse.cdt.core.dom.ast.IASTPreprocessorStatement;
 import org.eclipse.cdt.core.dom.ast.IType;
 
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.NextACSL;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.TypeSizes;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
@@ -125,6 +127,8 @@ public abstract class Dispatcher {
 	private final TypeSizes mTypeSizes;
 
 	private final TranslationSettings mTranslationSettings;
+
+	private LocationFactory mLocationFactory;
 
 	public Dispatcher(final CACSL2BoogieBacktranslator backtranslator, final IUltimateServiceProvider services,
 			final ILogger logger) {
@@ -345,6 +349,15 @@ public abstract class Dispatcher {
 			return mDivisionByZeroOfFloatingTypes;
 		}
 
+	}
+
+	public void setLineDirectiveMapping(final LineDirectiveMapping lineDirectiveMapping) {
+		mLocationFactory = new LocationFactory(lineDirectiveMapping);
+		mBacktranslator.setLocationFactory(mLocationFactory);
+	}
+	
+	public LocationFactory getLocationFactory() {
+		return mLocationFactory;
 	}
 
 }

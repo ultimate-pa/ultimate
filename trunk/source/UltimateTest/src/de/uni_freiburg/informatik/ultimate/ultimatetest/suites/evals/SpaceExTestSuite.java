@@ -59,20 +59,15 @@ public class SpaceExTestSuite extends AbstractEvalTestSuite {
 	
 	//@formatter:off
 	private static final String[] INPUT = new String[] {
-//		"examples/programs/spaceex/",
-	//	"examples/programs/spaceex/bigstuff",
-//		"examples/programs/spaceex/tanks/test",
-		"examples/programs/spaceex/tanks/safe",
-	"examples/programs/spaceex/simple",
-	"examples/programs/spaceex/regression",
-"examples/programs/spaceex/misc",
-			//"examples/programs/spaceex/linear",
-			"examples/programs/spaceex/tanks/unsafe",
-//			"examples/programs/spaceex/tanks3Modified-safe.xml",
-//			"examples/programs/spaceex/toy_safe.xml",
-//			"examples/programs/spaceex/simple1-unsafe.xml",
-//			"examples/programs/spaceex/minimal.xml",
-//			"examples/programs/spaceex/regression/vartest.xml",
+//		"examples/hybrid/spaceex/",
+//  	"examples/hybrid/spaceex/bigstuff",
+//		"examples/hybrid/spaceex/tanks/test",
+//		"examples/hybrid/spaceex/tanks/safe",
+	    "examples/hybrid/spaceex/simple",
+	    "examples/hybrid/spaceex/regression",
+        "examples/hybrid/spaceex/misc",
+		"examples/hybrid/spaceex/linear",
+		"examples/hybrid/spaceex/tanks/unsafe",
 	};
 	//@formatter:on
 	

@@ -65,13 +65,13 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final VPDomainPreanalysis mPreAnalysis;
 	private final VPStateFactory<ACTION> mVpStateFactory;
 	private final IIcfgSymbolTable mSymboltable;
-	private final VPTransFormulaStateBuilderPreparer mTfPreparer;
+	private final VPTfStateBuilderPreparer mTfPreparer;
 	private final VpTfStateFactory mTfStateFactory;
 	private final boolean mDebugMode;
 
 	public VPDomain(final ILogger logger, final ManagedScript script, final IUltimateServiceProvider services,
 			final IIcfgSymbolTable symbolTable, final VPDomainPreanalysis preAnalysis,
-			final VPTransFormulaStateBuilderPreparer tfPreparer) {
+			final VPTfStateBuilderPreparer tfPreparer) {
 		assert script != null;
 		mLogger = logger;
 		mPreAnalysis = preAnalysis;
@@ -138,7 +138,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		return literalSet;
 	}
 
-	public VPTransFormulaStateBuilderPreparer getTfPreparer() {
+	public VPTfStateBuilderPreparer getTfPreparer() {
 		return mTfPreparer;
 	}
 

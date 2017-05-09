@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctagonDomain.LiteralCollectorFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPTransFormulaStateBuilderPreparer;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPTfStateBuilderPreparer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
@@ -157,8 +157,8 @@ public class FixpointEngineParameterFactory {
 	private IAbstractDomain<?, IcfgEdge, IProgramVarOrConst> createEqualityDomain(final ILogger logger) {
 		final VPDomainPreanalysis preAnalysis = new VPDomainPreanalysis(mRoot, logger);
 		preAnalysis.postProcess();
-		final VPTransFormulaStateBuilderPreparer tfPreparer =
-				new VPTransFormulaStateBuilderPreparer(preAnalysis, mRoot, logger);
+		final VPTfStateBuilderPreparer tfPreparer =
+				new VPTfStateBuilderPreparer(preAnalysis, mRoot, logger);
 		return new VPDomain<>(logger, mRoot.getCfgSmtToolkit().getManagedScript(), mServices,
 				mRoot.getCfgSmtToolkit().getSymbolTable(), preAnalysis, tfPreparer);
 	}

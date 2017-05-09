@@ -447,6 +447,7 @@ public class VPDomainPreanalysis {
 			if (result.isGlobal()) {
 				mGlobalEqNodes.add(result);
 			} else {
+				assert result.getProcedure() != null;
 				mProcToLocalEqNodes.addPair(result.getProcedure(), result);
 			}
 
@@ -626,6 +627,10 @@ public class VPDomainPreanalysis {
 	public EqNode getEqNode(final Term term) {
 		final EqNode result = mTermToEqNode.get(term);
 		return result;
+	}
+	
+	public EqFunctionNode getEqFunctionNode(IProgramVarOrConst function, List<EqNode> children) {
+		return mEqFunctionNodeStore.get(function, children);
 	}
 
 	/**

@@ -1,3 +1,29 @@
+/*
+ * Copyright (C) 2016 Julian Loeffler (loefflju@informatik.uni-freiburg.de)
+ * Copyright (C) 2016 University of Freiburg
+ *
+ * This file is part of the ULTIMATE SpaceExParser plug-in.
+ *
+ * The ULTIMATE SpaceExParser plug-in is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE SpaceExParser plug-in is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE SpaceExParser plug-in. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE SpaceExParser plug-in, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE SpaceExParser plug-in grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.plugins.spaceex.util;
 
 import java.util.ArrayList;
@@ -99,10 +125,6 @@ public class SpaceExMathHelper {
 					mReplacement.put(literal + i, varMatcher.group(0));
 				}
 			}
-			/*
-			 * if (i % 5 == 0) { final char[] charArr = literal.toCharArray(); charArr[0]++; literal =
-			 * Character.toString(charArr[0]); }
-			 */
 		}
 		String replacement = initially.replaceAll("\\s+", "");
 		for (final Map.Entry<String, String> entry : mReplacement.entrySet()) {
@@ -252,13 +274,14 @@ public class SpaceExMathHelper {
 	}
 	
 	/**
-	 * This function splits a given expression into an array. e.g "x == 5" will return [x,==,5].
+	 * Function to split a given expression into an array. e.g "x == 5" will return [x,==,5].
 	 *
 	 * @param expression
 	 * @return
 	 */
 	public static List<String> expressionToArray(final String expression) {
 		final List<String> res = new ArrayList<>();
+		// Regex to split a string at ">=, <= ,>, <, ==, +, -, (, ), &, |, *, /"
 		final Pattern p = Pattern.compile("([&]{1,2}|>=?|<=?|<(?!=)|>(?!=)|==|\\+|(?<!=|&)-|/|\\*|\\||\\(|\\)| +)");
 		final String s = expression.replaceAll("\\s", "");
 		final Matcher m = p.matcher(s);
@@ -276,6 +299,13 @@ public class SpaceExMathHelper {
 		return res;
 	}
 	
+	/**
+	 * Function to convert an expression in postfix notation to infix notation.
+	 * 
+	 * @param List<String>
+	 *            postfix - is a postfix expression in list form.
+	 * @return String, the postfix converted to infix notation.
+	 */
 	public static String toInfix(final List<String> postfix) {
 		final Deque<String> stack = new LinkedList<>();
 		for (final String element : postfix) {
@@ -329,6 +359,13 @@ public class SpaceExMathHelper {
 		return output;
 	}
 	
+	/**
+	 * Function that checks whether a sign is an operator. e.g. "==" would be an operator.
+	 * 
+	 * @param String
+	 *            sign
+	 * @return True if input is operator (mOperators map)
+	 */
 	public static boolean isOperator(final String sign) {
 		return mOperators.containsKey(sign);
 	}

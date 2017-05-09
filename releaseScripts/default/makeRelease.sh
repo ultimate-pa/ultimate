@@ -130,7 +130,7 @@ exitOnFailPop git push
 exitOnFailPop git push origin --tags
 
 if [ "$TO_GITHUB" = true ]; then
-	DESC=`git shortlog ${LAST_RELEASE}.. --no-merges --numbered -w0,6,9 --format="%s (https://github.com/ultimate-pa/ultimate/commit/%h)"`
+	DESC=`git shortlog ${LAST_RELEASE}.. --no-merges --numbered -w0,6,9 --format="%s ( https://github.com/ultimate-pa/ultimate/commit/%h )"`
 	echo "Creating release ${NEW_TAG}"
 	github-release release ${RELEASE_REPO} -t "${NEW_TAG}" -d "${DESC}" --draft --pre-release
 

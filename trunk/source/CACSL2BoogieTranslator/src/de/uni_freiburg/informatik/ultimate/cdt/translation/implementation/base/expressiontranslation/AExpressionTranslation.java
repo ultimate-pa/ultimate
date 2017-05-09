@@ -115,7 +115,7 @@ public abstract class AExpressionTranslation {
 	}
 
 	public ExpressionResult translateLiteral(final Dispatcher main, final IASTLiteralExpression node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 
 		switch (node.getKind()) {
 		case IASTLiteralExpression.lk_float_constant: {

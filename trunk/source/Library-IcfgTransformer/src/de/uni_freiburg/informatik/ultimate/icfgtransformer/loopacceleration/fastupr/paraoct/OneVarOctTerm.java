@@ -44,7 +44,7 @@ public class OneVarOctTerm extends OctagonTerm {
 	private final TermVariable mFirstVar;
 	private final boolean mFirstNegative;
 
-	public OneVarOctTerm(BigDecimal constant, TermVariable var, boolean negative) {
+	public OneVarOctTerm(final BigDecimal constant, final TermVariable var, final boolean negative) {
 		super(constant);
 		mFirstVar = var;
 		mFirstNegative = negative;
@@ -67,7 +67,7 @@ public class OneVarOctTerm extends OctagonTerm {
 	}
 
 	@Override
-	protected Term leftTerm(Script script) {
+	protected Term leftTerm(final Script script) {
 		final Term two = script.numeral(new BigInteger("2"));
 		final Term varTerm = script.term("*", two, mFirstVar);
 		return (mFirstNegative ? script.term("-", varTerm) : varTerm);

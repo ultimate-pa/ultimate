@@ -33,6 +33,7 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -239,12 +240,12 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 			postState = preStateWithFreshVariables.apply(postOp, preState, currentAction);
 			isHierachicalPostResultBottom(postState, currentItem);
 		}
-
+		assert postState != null;
 		assert assertIsPostSound(preState, currentAction, preStateWithFreshVariables, postState) : "Post is unsound";
 
 		// check if we enter or leave a scope and act accordingly (saving summaries, creating new scope storages, etc.)
 		postState = prepareScope(currentItem, postState);
-
+		assert postState != null;
 		return postState;
 	}
 
@@ -361,6 +362,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 
 	private WorklistItem<STATE, ACTION, VARDECL, LOC> createInitialWorklistItem(final ACTION elem) {
 		final STATE preState = mVarProvider.defineInitialVariables(elem, mDomain.createFreshState());
+		assert preState != null;
 		final AbstractMultiState<STATE, VARDECL> preMultiState = new AbstractMultiState<>(mMaxParallelStates, preState);
 		return new WorklistItem<>(preMultiState, elem, mStateStorage, mSummaryMap);
 	}
@@ -541,6 +543,8 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 			final ACTION currentAction, final AbstractMultiState<STATE, VARDECL> pendingPostState) {
 		final LOC target = mTransitionProvider.getTarget(currentAction);
 		final AbstractMultiState<STATE, VARDECL> oldPostState = currentStateStorage.getAbstractState(target);
+		assert oldPostState == null || Objects.equals(pendingPostState.getVariables(),
+				oldPostState.getVariables()) : "States in the same scope have different variables";
 		if (pendingPostState == oldPostState || pendingPostState.isSubsetOf(oldPostState) != SubsetResult.NONE) {
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogMessagePostIsSubsumed(pendingPostState, oldPostState));

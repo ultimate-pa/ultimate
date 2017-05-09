@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 
 /**
  * 
@@ -55,11 +56,12 @@ public class EqFunctionNode extends EqNode {
 				&& args.stream().map(arg -> arg.mIsGlobal).reduce((b1, b2) -> b1 && b2).get(),
 			!(function instanceof IProgramVar)
 				&& args.stream().map(arg -> arg.mIsConstant).reduce((b1, b2) -> b1 && b2).get(),
-				function instanceof IProgramVar ? 
-						((IProgramVar) function).getProcedure() : 
-							args.stream()
-								.map(arg -> arg.getProcedure())
-								.reduce((proc1, proc2) -> proc1 != null ? proc1 : proc2).get());
+				VPDomainHelpers.computeProcedure(function, args));
+//				function instanceof IProgramVar && ((IProgramVar) function).getProcedure() != null ? 
+//						((IProgramVar) function).getProcedure() : 
+//							args.stream()
+//								.map(arg -> arg.getProcedure())
+//								.reduce((proc1, proc2) -> proc1 != null ? proc1 : proc2).get());
 
 		this.mFunction = function;
 		this.mArgs = args;

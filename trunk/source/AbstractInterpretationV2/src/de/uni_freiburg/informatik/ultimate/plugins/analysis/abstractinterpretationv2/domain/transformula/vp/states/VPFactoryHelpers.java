@@ -396,8 +396,12 @@ public class VPFactoryHelpers {
 	}
 	
 	/**
-	 * Join two @VPState. Two steps: 1) Create a new @VPState conjoinedState based on thisState, add all the
-	 * edge(equality relation) from otherState into conjoinedState. 2) Join the disEqualitySet form thisState and
+	 * Join two @VPState. Two steps: 
+	 * <ol> 
+	 *  <li> Create a new @VPState conjoinedState based on thisState, add all the
+	 * edge(equality relation) from otherState into conjoinedState. 
+	 *  <li> Join the disEqualitySet form thisState and
+	 * </ol>
 	 * otherState into conjoinedState.
 	 *
 	 * @param second

@@ -140,7 +140,7 @@ public class VPTfArrayIdentifier implements IArrayWrapper {
 	@Override
 	public String toString() {
 		if (mPvoc != null) {
-			return "ArrayId: " + mPvoc.toString();
+			return String.format("ArrayId (%s): %s", mInOutStatus, mPvoc.toString());
 		}
 //		if (mTerm != null) {
 //			return "ArrayId: " + mTerm.toString();

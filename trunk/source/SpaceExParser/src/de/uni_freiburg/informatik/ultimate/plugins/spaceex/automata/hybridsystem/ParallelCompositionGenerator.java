@@ -111,9 +111,9 @@ public class ParallelCompositionGenerator {
 		mComputationStackNWay.push(initialLocations);
 		// compute the parallel composition starting from the initial location
 		createLocationsAndTransitionsNWay();
-		final HybridAutomaton hybAut = new HybridAutomaton(nameMerge, mLocationsMerge, initialLocationMerge,
-				mTransitionMerge, mLocalParamsMerge, mLocalConstsMerge, mGlobalParamsMerge, mGlobalConstsMerge,
-				mLabelsMerge, mLogger);
+		final HybridAutomaton hybAut = new HybridAutomaton(nameMerge, "mergedSystem", mLocationsMerge,
+				initialLocationMerge, mTransitionMerge, mLocalParamsMerge, mLocalConstsMerge, mGlobalParamsMerge,
+				mGlobalConstsMerge, mLabelsMerge, mLogger);
 		// clean up
 		cleanUpMembers();
 		if (mLogger.isDebugEnabled()) {

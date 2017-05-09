@@ -125,6 +125,7 @@ public class CACSL2BoogieBacktranslator
 	private final ILogger mLogger;
 	private AExpressionTranslation mExpressionTranslation;
 	private boolean mGenerateBacktranslationWarnings;
+	private LocationFactory mLocationFactory;
 
 	public CACSL2BoogieBacktranslator(final IUltimateServiceProvider services) {
 		super(BoogieASTNode.class, CACSLLocation.class, Expression.class, IASTExpression.class);
@@ -136,6 +137,10 @@ public class CACSL2BoogieBacktranslator
 
 	public void setExpressionTranslation(final AExpressionTranslation expressionTranslation) {
 		mExpressionTranslation = expressionTranslation;
+	}
+	
+	public void setLocationFactory(final LocationFactory locationFactory) {
+		mLocationFactory = locationFactory;
 	}
 
 	@Override
@@ -213,7 +218,7 @@ public class CACSL2BoogieBacktranslator
 					// if cnode is an if, we point to the condition
 					final CASTIfStatement ifstmt = (CASTIfStatement) cnode;
 					newAte = new AtomicTraceElement<>(cloc,
-							LocationFactory.createCLocation(ifstmt.getConditionExpression()), ate.getStepInfo(),
+							mLocationFactory.createCLocation(ifstmt.getConditionExpression()), ate.getStepInfo(),
 							ate.getRelevanceInformation());
 				} else if (cnode instanceof CASTWhileStatement) {
 					// if cnode is a while, we know that it is not ignored and that
@@ -307,7 +312,7 @@ public class CACSL2BoogieBacktranslator
 		if (newSi == null) {
 			return null;
 		}
-		return new AtomicTraceElement<>(cloc, LocationFactory.createCLocation(condition), newSi,
+		return new AtomicTraceElement<>(cloc, mLocationFactory.createCLocation(condition), newSi,
 				ate.getRelevanceInformation());
 	}
 
@@ -650,8 +655,8 @@ public class CACSL2BoogieBacktranslator
 		}
 	}
 
-	private static CLocation getConditionLoc(final boolean isNegated, final IASTExpression condExpr) {
-		return (CLocation) LocationFactory.createCLocation(condExpr);
+	private CLocation getConditionLoc(final boolean isNegated, final IASTExpression condExpr) {
+		return (CLocation) mLocationFactory.createCLocation(condExpr);
 	}
 
 	private IBacktranslatedCFG<String, CACSLLocation>

@@ -31,7 +31,6 @@ import org.eclipse.cdt.core.dom.ast.IASTNamedTypeSpecifier;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTTypedefNameSpecifier;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.TypeHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPrimitive;
@@ -57,7 +56,7 @@ public class SVCompTypeHandler extends TypeHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTNamedTypeSpecifier node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		if (node instanceof CASTTypedefNameSpecifier) {
 			final String cId = node.getName().toString();
 

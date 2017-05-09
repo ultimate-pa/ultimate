@@ -108,11 +108,15 @@ public final class TransFormulaUtils {
 
 	/**
 	 * @param services
+	 * @param tryAuxVarElimination Apply our partial quantifier elimination
+	 * and try to eliminate auxVars. This is a postprocessing that we apply to
+	 * the resulting formula which produces an equivalent formula with less
+	 * auxvars.   
 	 * @return the relational composition (concatenation) of transformula1 and transformula2
 	 */
 	public static UnmodifiableTransFormula sequentialComposition(final ILogger logger,
 			final IUltimateServiceProvider services, final ManagedScript mgdScript, final boolean simplify,
-			final boolean extPqe, final boolean tranformToCNF, final XnfConversionTechnique xnfConversionTechnique,
+			final boolean tryAuxVarElimination, final boolean tranformToCNF, final XnfConversionTechnique xnfConversionTechnique,
 			final SimplificationTechnique simplificationTechnique, final List<UnmodifiableTransFormula> transFormula) {
 		if (logger.isDebugEnabled()) {
 			logger.debug("sequential composition with" + (simplify ? "" : "out") + " formula simplification");
@@ -208,7 +212,7 @@ public final class TransFormulaUtils {
 			}
 		}
 
-		if (extPqe) {
+		if (tryAuxVarElimination) {
 			final Term eliminated = PartialQuantifierElimination.elim(mgdScript, QuantifiedFormula.EXISTS, auxVars,
 					formula, services, logger, simplificationTechnique, xnfConversionTechnique);
 			logger.debug(new DebugMessage("DAG size before PQE {0}, DAG size after PQE {1}",

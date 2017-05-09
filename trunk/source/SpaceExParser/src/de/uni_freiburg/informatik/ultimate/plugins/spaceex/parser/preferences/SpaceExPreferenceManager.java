@@ -45,10 +45,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.SolverMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.preferences.RcfgPreferenceInitializer;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.HybridModel;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridSystem;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.Activator;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslatorConstants;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.SpaceExMathHelper;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -67,7 +66,7 @@ public class SpaceExPreferenceManager {
 	// map that holds preferencegroups
 	private final Map<Integer, SpaceExPreferenceGroup> mPreferenceGroups;
 	private final Map<Integer, Map<String, String>> mGroupTodirectAssingment;
-	// map of the form AUT -> VAR, necessary for Constants in config of the form AUT.VAR == 5
+	// map of the form AUT -> VAR, necessary for of the form SYS.AUT.VAR == 5
 	private final Map<String, Map<String, String>> mRequiresRename;
 	private final AtomicInteger mRenameID;
 	// the forbiddengroups hold the specified locations + variables of the "forbidden" property.
@@ -87,6 +86,10 @@ public class SpaceExPreferenceManager {
 	private boolean mDumpMainTrackBenchmark;
 	private String mLogicForExternalSolver;
 	private Settings mSolverSettings;
+	
+	private enum GroupType {
+		INITIALLY, FORBIDDEN
+	}
 	
 	public SpaceExPreferenceManager(final IUltimateServiceProvider services, final ILogger logger,
 			final File spaceExFile) throws Exception {
@@ -129,29 +132,30 @@ public class SpaceExPreferenceManager {
 	
 	// function that get the settings of the TraceAbstraction in order to create the correct solver.
 	private void getTraceAbstractionPreferences() {
-		final String taPluginID =
+		final String TRACE_ABSTRACTION_PLUGIN_ID =
 				de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator.PLUGIN_ID;
-		final IPreferenceProvider traceAbstractionPreferences = mServices.getPreferenceProvider(taPluginID);
+		final IPreferenceProvider traceAbstractionPreferences =
+				mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID);
 		mSolverMode = traceAbstractionPreferences.getEnum(RcfgPreferenceInitializer.LABEL_Solver, SolverMode.class);
-		mFakeNonIncrementalScript = mServices.getPreferenceProvider(taPluginID)
+		mFakeNonIncrementalScript = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
 				.getBoolean(RcfgPreferenceInitializer.LABEL_FakeNonIncrementalScript);
 		
-		mDumpSmtScriptToFile =
-				mServices.getPreferenceProvider(taPluginID).getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
-		mPathOfDumpedScript =
-				mServices.getPreferenceProvider(taPluginID).getString(RcfgPreferenceInitializer.LABEL_Path);
+		mDumpSmtScriptToFile = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
+				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpToFile);
+		mPathOfDumpedScript = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
+				.getString(RcfgPreferenceInitializer.LABEL_Path);
 		
-		mCommandExternalSolver =
-				mServices.getPreferenceProvider(taPluginID).getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
+		mCommandExternalSolver = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
+				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverCommand);
 		
-		mDumpUsatCoreTrackBenchmark = mServices.getPreferenceProvider(taPluginID)
+		mDumpUsatCoreTrackBenchmark = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpUnsatCoreTrackBenchmark);
 		
-		mDumpMainTrackBenchmark = mServices.getPreferenceProvider(taPluginID)
+		mDumpMainTrackBenchmark = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
 				.getBoolean(RcfgPreferenceInitializer.LABEL_DumpMainTrackBenchmark);
 		
-		mLogicForExternalSolver =
-				mServices.getPreferenceProvider(taPluginID).getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
+		mLogicForExternalSolver = mServices.getPreferenceProvider(TRACE_ABSTRACTION_PLUGIN_ID)
+				.getString(RcfgPreferenceInitializer.LABEL_ExtSolverLogic);
 		mSolverSettings = SolverBuilder.constructSolverSettings(mModelFilename, mSolverMode, mFakeNonIncrementalScript,
 				mCommandExternalSolver, mDumpSmtScriptToFile, mPathOfDumpedScript);
 		
@@ -166,10 +170,12 @@ public class SpaceExPreferenceManager {
 		prop.load(fis);
 		// get properties
 		// system holds the hybridsystem which is regarded.
-		mSystem = prop.getProperty("system", "").replaceAll("\"", "");
+		mSystem = prop.getProperty(HybridTranslatorConstants.CONFIG_SYSTEM_PROPERTY, "").replaceAll("\"", "");
 		// initially holds the initial variable assignment, as well as initial locations.
-		final String initially = prop.getProperty("initially", "").replaceAll("\"", "");
-		final String forbidden = prop.getProperty("forbidden", "").replaceAll("\"", "");
+		final String initially =
+				prop.getProperty(HybridTranslatorConstants.CONFIG_INITIALLY_PROPERTY, "").replaceAll("\"", "");
+		final String forbidden =
+				prop.getProperty(HybridTranslatorConstants.CONFIG_FORBIDDEN_PROPERTY, "").replaceAll("\"", "");
 		/*
 		 * split "initially" into parts, split string at separator "&" initial location assignments are of the form:
 		 * loc(#AUTOMATON NAME#)==#INITIAL LOCATION NAME# variable assignments are of the form: #VAR NAME#==#VALUE# OR
@@ -187,7 +193,8 @@ public class SpaceExPreferenceManager {
 			final AtomicInteger id = new AtomicInteger(0);
 			final List<String> formerGroups = mMathHelper.infixToGroups(forbidden);
 			for (final String group : formerGroups) {
-				mForbiddenGroups.add(createForbiddenGroup(group, id.incrementAndGet()));
+				mForbiddenGroups
+						.add((SpaceExForbiddenGroup) createGroup(group, id.incrementAndGet(), GroupType.FORBIDDEN));
 			}
 			mHasForbiddenGroup = true;
 		} else {
@@ -203,12 +210,13 @@ public class SpaceExPreferenceManager {
 			final List<String> groups = mMathHelper.infixToGroups(initially);
 			// Parse the found groups and create Preference Groups.
 			for (final String group : groups) {
-				final SpaceExPreferenceGroup preferenceGroup = createPreferenceGroup(group, id.incrementAndGet());
+				final SpaceExPreferenceGroup preferenceGroup =
+						(SpaceExPreferenceGroup) createGroup(group, id.incrementAndGet(), GroupType.INITIALLY);
 				mPreferenceGroups.put(preferenceGroup.getId(), preferenceGroup);
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("Added new preference group: \n" + "Initial Locations:"
 							+ preferenceGroup.getInitialLocations() + "\n" + "Initial variables: "
-							+ preferenceGroup.getInitialVariableInfix());
+							+ preferenceGroup.getVariableInfix());
 				}
 			}
 		} else {
@@ -221,9 +229,8 @@ public class SpaceExPreferenceManager {
 		}
 	}
 	
-	private SpaceExForbiddenGroup createForbiddenGroup(final String infix, final int id) {
+	private PreferenceGroup createGroup(final String infix, final int id, final GroupType type) {
 		final StringBuilder sb = new StringBuilder();
-		final Map<String, List<String>> initialLocations = new HashMap<>();
 		// split at &
 		final String[] splitted = infix.split("&");
 		// for each initial statement, find out if it is variable or initial location definition.
@@ -236,76 +243,62 @@ public class SpaceExPreferenceManager {
 		final String varRegex = "(.*)(<=|<|>|>=)(.*)(<=|<|>|>=)(.*)|(.*)(<=|>=|<|>|==)(.*)";
 		final Pattern varPattern = Pattern.compile(varRegex);
 		Matcher varMatcher;
-		for (final String element : splitted) {
-			property = element.replaceAll("\\s+", "");
-			locMatcher = locPattern.matcher(property);
-			varMatcher = varPattern.matcher(property);
-			if (locMatcher.matches()) {
-				final String aut = locMatcher.group(1);
-				final String loc = locMatcher.group(2);
-				if (!initialLocations.containsKey(aut)) {
-					final List<String> locList = new ArrayList<>();
-					locList.add(loc);
-					initialLocations.put(aut, locList);
-				} else {
-					initialLocations.get(aut).add(loc);
+		if (type == GroupType.INITIALLY) {
+			final Map<String, String> initialLocations = new HashMap<>();
+			for (final String element : splitted) {
+				property = element.replaceAll("\\s+", "");
+				locMatcher = locPattern.matcher(property);
+				varMatcher = varPattern.matcher(property);
+				if (locMatcher.matches()) {
+					final String aut = locMatcher.group(1);
+					final String loc = locMatcher.group(2);
+					initialLocations.put(aut, loc);
+				} else if (varMatcher.matches()) {
+					String varString = varMatcher.group(0);
+					final List<Pair<String, String>> renameList = analyseVariable(varMatcher.group(0));
+					for (final Pair<String, String> pair : renameList) {
+						varString = varString.replaceAll(pair.getFirst(), pair.getSecond());
+					}
+					saveDirectAssignments(varString, id);
+					sb.append(varString + "&");
 				}
-			} else if (varMatcher.matches()) {
-				String varString = varMatcher.group(0);
-				final List<Pair<String, String>> renameList = analyseVariable(varMatcher.group(0));
-				for (final Pair<String, String> pair : renameList) {
-					varString = varString.replaceAll(pair.getFirst(), pair.getSecond());
-				}
-				sb.append(varString + "&");
 			}
-		}
-		String initialVariableInfix = sb.toString();
-		if (!initialVariableInfix.isEmpty()) {
-			initialVariableInfix = initialVariableInfix.substring(0, initialVariableInfix.length() - 1);
-		}
-		final int groupid = id;
-		return new SpaceExForbiddenGroup(initialLocations, initialVariableInfix, groupid);
-	}
-	
-	private SpaceExPreferenceGroup createPreferenceGroup(final String infix, final int id) {
-		final StringBuilder sb = new StringBuilder();
-		final Map<String, String> initialLocations = new HashMap<>();
-		// split at &
-		final String[] splitted = infix.split("&");
-		// for each initial statement, find out if it is variable or initial location definition.
-		String property;
-		// regex stuff for initial locations
-		final String locRegex = "loc\\((.*)\\)==(.*)";
-		final Pattern locPattern = Pattern.compile(locRegex);
-		Matcher locMatcher;
-		// regex stuff for variables of the form v1<=var<=v2 or x=v1.. etc
-		final String varRegex = "(.*)(<=|<|>|>=)(.*)(<=|<|>|>=)(.*)|(.*)(<=|>=|<|>|==)(.*)";
-		final Pattern varPattern = Pattern.compile(varRegex);
-		Matcher varMatcher;
-		for (final String element : splitted) {
-			property = element.replaceAll("\\s+", "");
-			locMatcher = locPattern.matcher(property);
-			varMatcher = varPattern.matcher(property);
-			if (locMatcher.matches()) {
-				final String aut = locMatcher.group(1);
-				final String loc = locMatcher.group(2);
-				initialLocations.put(aut, loc);
-			} else if (varMatcher.matches()) {
-				String varString = varMatcher.group(0);
-				final List<Pair<String, String>> renameList = analyseVariable(varMatcher.group(0));
-				for (final Pair<String, String> pair : renameList) {
-					varString = varString.replaceAll(pair.getFirst(), pair.getSecond());
-				}
-				saveDirectAssignments(varString, id);
-				sb.append(varString + "&");
+			String initialVariableInfix = sb.toString();
+			if (!initialVariableInfix.isEmpty()) {
+				initialVariableInfix = initialVariableInfix.substring(0, initialVariableInfix.length() - 1);
 			}
+			return new SpaceExPreferenceGroup(initialLocations, initialVariableInfix, id);
+		} else {
+			final Map<String, List<String>> initialLocations = new HashMap<>();
+			for (final String element : splitted) {
+				property = element.replaceAll("\\s+", "");
+				locMatcher = locPattern.matcher(property);
+				varMatcher = varPattern.matcher(property);
+				if (locMatcher.matches()) {
+					final String aut = locMatcher.group(1);
+					final String loc = locMatcher.group(2);
+					if (!initialLocations.containsKey(aut)) {
+						final List<String> locList = new ArrayList<>();
+						locList.add(loc);
+						initialLocations.put(aut, locList);
+					} else {
+						initialLocations.get(aut).add(loc);
+					}
+				} else if (varMatcher.matches()) {
+					String varString = varMatcher.group(0);
+					final List<Pair<String, String>> renameList = analyseVariable(varMatcher.group(0));
+					for (final Pair<String, String> pair : renameList) {
+						varString = varString.replaceAll(pair.getFirst(), pair.getSecond());
+					}
+					sb.append(varString + "&");
+				}
+			}
+			String initialVariableInfix = sb.toString();
+			if (!initialVariableInfix.isEmpty()) {
+				initialVariableInfix = initialVariableInfix.substring(0, initialVariableInfix.length() - 1);
+			}
+			return new SpaceExForbiddenGroup(initialLocations, initialVariableInfix, id);
 		}
-		String initialVariableInfix = sb.toString();
-		if (!initialVariableInfix.isEmpty()) {
-			initialVariableInfix = initialVariableInfix.substring(0, initialVariableInfix.length() - 1);
-		}
-		final int groupid = id;
-		return new SpaceExPreferenceGroup(initialLocations, initialVariableInfix, groupid);
 	}
 	
 	// save assingments of the form x==... as groupID -> (var -> val)
@@ -331,14 +324,11 @@ public class SpaceExPreferenceManager {
 	 */
 	private List<Pair<String, String>> analyseVariable(final String group) {
 		final List<String> arr = SpaceExMathHelper.expressionToArray(group);
-		final Pattern pattern = Pattern.compile("([a-z,A-Z]+)\\.([a-z,A-Z]+)");
-		Matcher renameMatcher;
 		final List<Pair<String, String>> renameList = new ArrayList<>();
 		for (final String el : arr) {
-			renameMatcher = pattern.matcher(el);
-			if (renameMatcher.matches()) {
-				final String aut = renameMatcher.group(1).replaceAll("_+.*", "");
-				final String var = renameMatcher.group(2);
+			if (el.contains(".") && !el.matches("\\d*\\.?\\d+")) {
+				final String aut = el.substring(0, el.lastIndexOf('.'));
+				final String var = el.substring(el.lastIndexOf('.') + 1, el.length());
 				String newName = generateNewName(var);
 				if (mRequiresRename.containsKey(aut)) {
 					if (!mRequiresRename.get(aut).containsKey(var)) {
@@ -351,12 +341,12 @@ public class SpaceExPreferenceManager {
 					map.put(var, newName);
 					mRequiresRename.put(aut, map);
 				}
-				renameList.add(new Pair<>(renameMatcher.group(0), newName));
+				renameList.add(new Pair<>(el, newName));
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("##### HAS TO BE RENAMED: " + el + " #####");
 					mLogger.debug("AUT: " + aut);
 					mLogger.debug("VAR: " + var);
-					mLogger.debug("NEW NAME: " + var);
+					mLogger.debug("NEW NAME: " + newName);
 					mLogger.debug("#########################################");
 				}
 			}
@@ -365,31 +355,7 @@ public class SpaceExPreferenceManager {
 	}
 	
 	private String generateNewName(final String var) {
-		return var + "_Renamedconst" + mRenameID.getAndIncrement();
-	}
-	
-	public HybridSystem getRegardedSystem(final HybridModel model) {
-		final String configSystem = mSystem != null ? mSystem : "";
-		final Map<String, HybridSystem> systems = model.getSystems();
-		// if the config file does not specify a system, get the first system of the model.
-		if (configSystem.isEmpty()) {
-			if (!systems.isEmpty()) {
-				return systems.values().iterator().next();
-			} else {
-				throw new IllegalStateException("Hybridmodel" + model.toString() + " has no systems");
-			}
-		} else {
-			// if the system specified in the config file is present in the models systems, get it
-			if (systems.containsKey(configSystem)) {
-				return systems.get(configSystem);
-			} else if (systems.containsKey("system")) {
-				return systems.get("system");
-			} else {
-				
-				throw new UnsupportedOperationException("the system specified in the config file: \"" + configSystem
-						+ "\" is not part of the hybrid model parsed from file: " + mModelFilename);
-			}
-		}
+		return var + "_Renamed" + mRenameID.getAndIncrement();
 	}
 	
 	public String getSystem() {
@@ -447,35 +413,35 @@ public class SpaceExPreferenceManager {
 		return mSolverMode;
 	}
 	
-	public boolean ismFakeNonIncrementalScript() {
+	public boolean isFakeNonIncrementalScript() {
 		return mFakeNonIncrementalScript;
 	}
 	
-	public boolean ismDumpSmtScriptToFile() {
+	public boolean isDumpSmtScriptToFile() {
 		return mDumpSmtScriptToFile;
 	}
 	
-	public String getmPathOfDumpedScript() {
+	public String getPathOfDumpedScript() {
 		return mPathOfDumpedScript;
 	}
 	
-	public String getmCommandExternalSolver() {
+	public String getCommandExternalSolver() {
 		return mCommandExternalSolver;
 	}
 	
-	public boolean ismDumpUsatCoreTrackBenchmark() {
+	public boolean isDumpUsatCoreTrackBenchmark() {
 		return mDumpUsatCoreTrackBenchmark;
 	}
 	
-	public boolean ismDumpMainTrackBenchmark() {
+	public boolean isDumpMainTrackBenchmark() {
 		return mDumpMainTrackBenchmark;
 	}
 	
-	public String getmLogicForExternalSolver() {
+	public String getLogicForExternalSolver() {
 		return mLogicForExternalSolver;
 	}
 	
-	public Settings getmSolverSettings() {
+	public Settings getSolverSettings() {
 		return mSolverSettings;
 	}
 	

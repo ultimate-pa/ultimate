@@ -255,6 +255,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 				checkTransition(edge);
 				incompleteBackbones.add(new Backbone(edge));
 			}
+			mBackbones.put(location, new ArrayList<>());
 		}
 
 		while (!incompleteBackbones.isEmpty()) {
@@ -304,6 +305,12 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 						incompleteBackbones.add(newBackbone);
 					}
 				}
+			}
+		}
+
+		for (final INLOC location : initialNodes) {
+			if (mBackbones.get(location).isEmpty()) {
+				mBackbones.remove(location);
 			}
 		}
 	}
