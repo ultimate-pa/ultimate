@@ -55,8 +55,8 @@ public class TermChecker {
 	private final FastUPRFormulaBuilder mFormulaBuilder;
 	private final Script mScript;
 
-	public TermChecker(FastUPRUtils utils, ManagedScript managedScript, OctagonCalculator calc,
-			FastUPRFormulaBuilder formulaBuilder) {
+	public TermChecker(final FastUPRUtils utils, final ManagedScript managedScript, final OctagonCalculator calc,
+			final FastUPRFormulaBuilder formulaBuilder) {
 		mFormulaBuilder = formulaBuilder;
 		mCalc = calc;
 		mManagedScript = managedScript;
@@ -64,26 +64,26 @@ public class TermChecker {
 		mScript = mManagedScript.getScript();
 	}
 
-	public void setConjunction(OctagonConjunction conjunc) {
+	public void setConjunction(final OctagonConjunction conjunc) {
 		mConjunc = conjunc;
 	}
 
-	public void setConjunction(OctagonConjunction conjunc, Map<IProgramVar, TermVariable> inVars,
-			Map<IProgramVar, TermVariable> outVars) {
+	public void setConjunction(final OctagonConjunction conjunc, final Map<IProgramVar, TermVariable> inVars,
+			final Map<IProgramVar, TermVariable> outVars) {
 		mConjunc = conjunc;
 		mInVars = inVars;
 		mOutVars = outVars;
 	}
 
-	public void setInVars(Map<IProgramVar, TermVariable> inVars) {
+	public void setInVars(final Map<IProgramVar, TermVariable> inVars) {
 		mInVars = inVars;
 	}
 
-	public void setOutVars(Map<IProgramVar, TermVariable> outVars) {
+	public void setOutVars(final Map<IProgramVar, TermVariable> outVars) {
 		mOutVars = outVars;
 	}
 
-	public int checkConsistency(int b, int c) {
+	public int checkConsistency(final int b, final int c) {
 		for (int k = 0; k <= 2; k++) {
 			if (!checkSequentialized(b + (k * c))) {
 				return k;
@@ -92,14 +92,14 @@ public class TermChecker {
 		return -1;
 	}
 
-	private boolean checkSequentialized(int count) {
+	private boolean checkSequentialized(final int count) {
 		final Script script = mManagedScript.getScript();
 		final OctagonConjunction toCheck = mCalc.sequentialize(mConjunc, mInVars, mOutVars, count);
 		return checkTerm(toCheck.toTerm(script));
 
 	}
 
-	public boolean checkTerm(Term term) {
+	public boolean checkTerm(final Term term) {
 		mScript.push(1);
 
 		try {
@@ -115,7 +115,7 @@ public class TermChecker {
 		return result.equals(LBool.SAT);
 	}
 
-	private Term getClosedTerm(Term term) {
+	private Term getClosedTerm(final Term term) {
 		final UnmodifiableTransFormula formula = mFormulaBuilder.buildTransFormula(term, mInVars, mOutVars);
 		return formula.getClosedFormula();
 	}

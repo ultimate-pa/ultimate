@@ -57,7 +57,8 @@ public class OctagonDetector extends NonRecursive {
 	private final IUltimateServiceProvider mServices;
 	private final FastUPRUtils mUtils;
 
-	public OctagonDetector(FastUPRUtils utils, ManagedScript managedScript, IUltimateServiceProvider services) {
+	public OctagonDetector(final FastUPRUtils utils, final ManagedScript managedScript,
+			final IUltimateServiceProvider services) {
 		super();
 		mUtils = utils;
 		mCheckedTerms = new HashSet<>();
@@ -73,14 +74,14 @@ public class OctagonDetector extends NonRecursive {
 		final Term mTerm;
 		final FastUPRUtils mUtils;
 
-		public ConjunctionWalker(Term t, FastUPRUtils utils) {
+		public ConjunctionWalker(final Term t, final FastUPRUtils utils) {
 			mTerm = t;
 			mUtils = utils;
 			mUtils.debug("New Concatination Walker for term:" + t.toString());
 		}
 
 		@Override
-		public void walk(NonRecursive engine) {
+		public void walk(final NonRecursive engine) {
 			// TODO Auto-generated method stub
 			mUtils.debug("walk called");
 			((OctagonDetector) engine).addConjunctTerms(mTerm);
@@ -92,12 +93,12 @@ public class OctagonDetector extends NonRecursive {
 
 		private final Term mTerm;
 
-		OctagonDetectionWalker(Term t) {
+		OctagonDetectionWalker(final Term t) {
 			mTerm = t;
 		}
 
 		@Override
-		public void walk(NonRecursive engine) {
+		public void walk(final NonRecursive engine) {
 			// TODO Auto-generated method stub
 			((OctagonDetector) engine).check(mTerm);
 
@@ -105,7 +106,7 @@ public class OctagonDetector extends NonRecursive {
 
 	}
 
-	public HashSet<Term> getConjunctSubTerms(Term t) {
+	public HashSet<Term> getConjunctSubTerms(final Term t) {
 		final Term cnfRelation = SmtUtils.toCnf(mServices, mManagedScript, t,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		mCheckedTerms.clear();
@@ -113,7 +114,7 @@ public class OctagonDetector extends NonRecursive {
 		return mSubTerms;
 	}
 
-	private void addConjunctTerms(Term t) {
+	private void addConjunctTerms(final Term t) {
 
 		mUtils.debug("Current Term:" + t.toString());
 
@@ -143,7 +144,7 @@ public class OctagonDetector extends NonRecursive {
 
 	}
 
-	public boolean isOctagonTerm(Term t) {
+	public boolean isOctagonTerm(final Term t) {
 		mCheckedTerms.clear();
 		mIsOctTerm = true;
 		mCurrentVars.clear();
@@ -152,7 +153,7 @@ public class OctagonDetector extends NonRecursive {
 		return mIsOctTerm;
 	}
 
-	private void check(Term t) {
+	private void check(final Term t) {
 
 		if (!mIsOctTerm) {
 			return;
@@ -162,11 +163,13 @@ public class OctagonDetector extends NonRecursive {
 
 		if (t instanceof TermVariable) {
 			mCurrentVars.add((TermVariable) t);
-			if (mCurrentVars.size() > 2)
+			if (mCurrentVars.size() > 2) {
 				mIsOctTerm = false;
+			}
 		} else if (t instanceof ApplicationTerm) {
 			final ApplicationTerm aT = (ApplicationTerm) t;
 			final String functionName = aT.getFunction().getName();
+			// TODO: Replace with constant set contains check
 			if (functionName.compareTo("<=") == 0 || functionName.compareTo("<") == 0
 					|| functionName.compareTo(">") == 0 || functionName.compareTo(">=") == 0
 					|| functionName.compareTo("=") == 0 || functionName.compareTo("+") == 0) {

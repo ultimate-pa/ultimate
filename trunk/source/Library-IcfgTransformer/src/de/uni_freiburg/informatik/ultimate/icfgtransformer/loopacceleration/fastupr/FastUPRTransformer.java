@@ -77,8 +77,8 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 
 	public FastUPRTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final Class<OUTLOC> outLocationClass, final ILocationFactory<INLOC, OUTLOC> locationFactory,
-			String newIcfgIdentifier, ITransformulaTransformer transformer,
-			final IBacktranslationTracker backtranslationTracker, IUltimateServiceProvider services) {
+			final String newIcfgIdentifier, final ITransformulaTransformer transformer,
+			final IBacktranslationTracker backtranslationTracker, final IUltimateServiceProvider services) {
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
 		mLogger = Objects.requireNonNull(logger);
 		mLocationFactory = Objects.requireNonNull(locationFactory);
@@ -96,12 +96,12 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 
 	@SuppressWarnings("unchecked")
 	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> originalIcfg, final String newIcfgIdentifier,
-			final Class<OUTLOC> outLocationClass, ITransformulaTransformer transformer) {
+			final Class<OUTLOC> outLocationClass, final ITransformulaTransformer transformer) {
 
 		mLogger.debug("Getting List of loop paths ...");
 
-		final FastUPRDetection loopDetection = new FastUPRDetection<>(mLogger, originalIcfg, outLocationClass,
-				newIcfgIdentifier);
+		final FastUPRDetection loopDetection =
+				new FastUPRDetection<>(mLogger, originalIcfg, outLocationClass, newIcfgIdentifier);
 		final List<Deque<INLOC>> loopPaths = loopDetection.getLoopPaths();
 
 		if (loopPaths.size() < 1) {
@@ -110,8 +110,8 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 			mLogger.debug("Found " + loopPaths.size() + " loop paths");
 		}
 
-		final BasicIcfg<OUTLOC> resultIcfg = new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(),
-				outLocationClass);
+		final BasicIcfg<OUTLOC> resultIcfg =
+				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
 
 		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(mLocationFactory,
 				mBacktranslationTracker, transformer, originalIcfg, resultIcfg);
@@ -133,8 +133,8 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 	}
 
 	@SuppressWarnings("unchecked")
-	private void getLoopIcfg(List<Deque<INLOC>> loopPaths, final BasicIcfg<OUTLOC> result, final IIcfg<INLOC> origIcfg,
-			final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
+	private void getLoopIcfg(final List<Deque<INLOC>> loopPaths, final BasicIcfg<OUTLOC> result,
+			final IIcfg<INLOC> origIcfg, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
 		// TODO: actual loop path, maybe split in three?
 		// 1 - before loop
 		// 2 - during loop
@@ -146,11 +146,10 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 		final IcfgEdge edge = start.getOutgoingEdges().get(0);
 
 		try {
-			final FastUPRCore fastUpr = new FastUPRCore(edge.getTransformula(), mLocationFactory, mManagedScript,
-					mLogger, mServices);
+			final FastUPRCore fastUpr =
+					new FastUPRCore(edge.getTransformula(), mLocationFactory, mManagedScript, mLogger, mServices);
 		} catch (final Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			mLogger.fatal("An unexpected exception occured:", e);
 		}
 
 		final Set<INLOC> init = origIcfg.getInitialNodes();
@@ -163,8 +162,9 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 		while (!open.isEmpty()) {
 			final INLOC oldSource = open.removeFirst();
 
-			if (!closed.add(oldSource))
+			if (!closed.add(oldSource)) {
 				continue;
+			}
 
 			final OUTLOC newSource = lst.createNewLocation(oldSource);
 
@@ -184,8 +184,9 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 			newSource.addOutgoing(newEdge);
 			newTarget.addIncoming(newEdge);
 
-			if (!closed.add(oldTarget))
+			if (!closed.add(oldTarget)) {
 				return;
+			}
 
 			createNewLocations(oldTarget, newTarget, closed, result, lst);
 		}
