@@ -48,9 +48,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Scanner;
 import java.util.Stack;
-import java.util.TreeMap;
 
 import org.eclipse.cdt.core.dom.ast.IASTASMDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTArrayDeclarator;
@@ -156,6 +154,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.WhileStatement;
+import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.ArrayHandler;
@@ -225,7 +224,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerCheckMode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.PointerIntegerConversion;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator.preferences.CACSLPreferenceInitializer.UnsignedTreatment;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
  * Class that handles translation of C nodes to Boogie nodes.
@@ -420,7 +418,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTTranslationUnit node) {
-		final TreeMap<Integer, Pair<Integer, String>> lineDirectiveMapping = constructLineDirectiveMapping(node);
+		final LineDirectiveMapping lineDirectiveMapping = new LineDirectiveMapping(node.getRawSignature());
 		main.setLineDirectiveMapping(lineDirectiveMapping);
 
 		for (final IASTPreprocessorStatement preS : node.getAllPreprocessorStatements()) {
@@ -543,55 +541,7 @@ public class CHandler implements ICHandler {
 		return new Result(boogieUnit);
 	}
 
-	/**
-	 * @return A map whose domain are all lines of the input file in which 
-	 * there is a #line directive. Each such line number is mapped to a pair.
-	 * The first entry of this pair is the line number which is mentioned in
-	 * the #line directive, the second entry is the filename which is mentioned
-	 * in the #line directive or null if no filename is mentioned.
-	 */
-	private TreeMap<Integer, Pair<Integer, String>> constructLineDirectiveMapping(final IASTTranslationUnit node) {
-		final TreeMap<Integer, Pair<Integer, String>> result = new TreeMap<>();
-		final Scanner scanner = new Scanner(node.getRawSignature());
-		int currentLine = 0;
-		while (scanner.hasNextLine()) {
-		  final String line = scanner.nextLine();
-		  currentLine ++;
-		  {
-			  final int idx = line.lastIndexOf("#line");
-			  if (idx == -1 ) {
-				  continue;
-			  }
-			  int curcol = idx + 5;
-			  while (curcol < line.length() && Character.isWhitespace(line.charAt(curcol))) {
-				  curcol++;
-			  }
-			  final int fstDigit = curcol;
-			  while (curcol < line.length() && Character.isDigit(line.charAt(curcol))) {
-				  curcol++;
-			  }
-			  final String digitSequence = line.substring(fstDigit, curcol);
-			  while (curcol < line.length() && Character.isWhitespace(line.charAt(curcol))) {
-				  curcol++;
-			  }
-			  String filename;
-			  if (curcol < line.length() && line.charAt(curcol) == '\"') {
-				  curcol++;
-				  final int fstfn = curcol;
-				  while (line.charAt(curcol) != '\"') {
-					  curcol++;
-				  }
-				  filename = line.substring(fstfn, curcol);
-				  
-			  } else {
-				  filename = null;
-			  }
-			  result.put(currentLine, new Pair<>(Integer.parseInt(digitSequence), filename));
-		  }
-		}
-		scanner.close();
-		return result;
-	}
+
 
 	private void processTUchild(final Dispatcher main, final ArrayList<Declaration> decl, final IASTNode child) {
 		checkForACSL(main, null, decl, child, null);
