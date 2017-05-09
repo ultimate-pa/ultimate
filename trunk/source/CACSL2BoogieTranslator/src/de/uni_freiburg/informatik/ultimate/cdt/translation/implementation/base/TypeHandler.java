@@ -63,7 +63,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.TypeDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
@@ -179,7 +178,7 @@ public class TypeHandler implements ITypeHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTNode node) {
 		final String msg = "TypeHandler: Not yet implemented: " + node.toString();
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
 
@@ -196,7 +195,7 @@ public class TypeHandler implements ITypeHandler {
 	public Result visit(final Dispatcher main, final IASTSimpleDeclSpecifier node) {
 		// we have model.boogie.ast.PrimitiveType, which should
 		// only contain BOOL, INT, REAL ...
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		switch (node.getType()) {
 		case IASTSimpleDeclSpecifier.t_void: {
 			// there is no void in Boogie,
@@ -257,7 +256,7 @@ public class TypeHandler implements ITypeHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTNamedTypeSpecifier node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		if (node instanceof CASTTypedefNameSpecifier) {
 			final String cId = node.getName().toString();
 			final String bId = main.mCHandler.getSymbolTable().get(cId, loc).getBoogieName();
@@ -270,7 +269,7 @@ public class TypeHandler implements ITypeHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTEnumerationSpecifier node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final String cId = node.getName().toString();
 		// values of enum have type int
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
@@ -317,7 +316,7 @@ public class TypeHandler implements ITypeHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTElaboratedTypeSpecifier node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		if (node.getKind() == IASTElaboratedTypeSpecifier.k_struct
 				|| node.getKind() == IASTElaboratedTypeSpecifier.k_enum
 				|| node.getKind() == IASTElaboratedTypeSpecifier.k_union) {
@@ -370,7 +369,7 @@ public class TypeHandler implements ITypeHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTCompositeTypeSpecifier node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		@Deprecated // 2016-12-08 Matthias: it seems like field is never used.
 		final ArrayList<VarList> fields = new ArrayList<>();
 		// TODO : include inactives? what are inactives?

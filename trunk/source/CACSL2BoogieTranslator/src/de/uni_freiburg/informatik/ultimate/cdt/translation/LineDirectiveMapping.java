@@ -110,7 +110,8 @@ public class LineDirectiveMapping {
 		if (floor == null) {
 			return new Pair<>(lineInTu, filename);
 		} else {
-			return floor.getValue();
+			final int distanceToLastLineDirective = (lineInTu - floor.getKey());
+			return new Pair<>(floor.getValue().getFirst() + distanceToLastLineDirective, floor.getValue().getSecond());
 		}
 	}
 

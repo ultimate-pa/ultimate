@@ -396,7 +396,7 @@ public class CHandler implements ICHandler {
 	public Result visit(final Dispatcher main, final IASTNode node) {
 		final String msg = "CHandler: Not yet implemented: \"" + node.getRawSignature() + "\" (Type: "
 				+ node.getClass().getName() + ")";
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
 
@@ -404,7 +404,7 @@ public class CHandler implements ICHandler {
 	public Result visit(final Dispatcher main, final IASTASMDeclaration node) {
 		final String msg = "CHandler: Not yet implemented: \"" + node.getRawSignature() + "\" (Type: "
 				+ node.getClass().getName() + ")";
-		throw new UnsupportedSyntaxException(LocationFactory.createCLocation(node), msg);
+		throw new UnsupportedSyntaxException(main.getLocationFactory().createCLocation(node), msg);
 	}
 
 	/**
@@ -427,7 +427,7 @@ public class CHandler implements ICHandler {
 				throw new UnsupportedOperationException("Not yet implemented " + preS.toString());
 			}
 		}
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		try {
 			mAcsl = main.nextACSLStatement();
 		} catch (final ParseException e1) {
@@ -584,7 +584,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTCompoundStatement node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		ArrayList<Statement> stmt = new ArrayList<>();
 		LRValue expr = null;
@@ -666,7 +666,7 @@ public class CHandler implements ICHandler {
 	 */
 	@Override
 	public Result visit(final Dispatcher main, final IASTSimpleDeclaration node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 
 		/*
 		 * skip this declaration if we have inferred that it is not reachable
@@ -752,7 +752,7 @@ public class CHandler implements ICHandler {
 				// FunctionHandler.procedures.
 				if (cDec.getType() instanceof CFunction && storageClass != CStorageClass.TYPEDEF) {
 					// update functionHandler.procedures instead of symbol table
-					mFunctionHandler.handleFunctionDeclarator(main, LocationFactory.createCLocation(d), mContract,
+					mFunctionHandler.handleFunctionDeclarator(main, main.getLocationFactory().createCLocation(d), mContract,
 							cDec);
 					continue;
 				}
@@ -927,7 +927,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTDeclarator node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final TypesResult resType = mCurrentDeclaredTypes.peek();
 		final TypesResult newResType = new TypesResult(resType);
 
@@ -1086,7 +1086,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTIdExpression node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final String cId = node.getName().toString();
 
 		// deal with builtin constants
@@ -1155,7 +1155,7 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTUnaryExpression node) {
 		final ExpressionResult o = (ExpressionResult) main.dispatch(node.getOperand());
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 
 		// for the cases we know that it's an RValue..
 		// ResultExpression rop = o.switchToRValueIfNecessary(main,
@@ -1486,7 +1486,7 @@ public class CHandler implements ICHandler {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final List<Overapprox> overappr = new ArrayList<>();
 
 		final ExpressionResult l = (ExpressionResult) main.dispatch(node.getOperand1());
@@ -2351,13 +2351,13 @@ public class CHandler implements ICHandler {
 			return r;
 		}
 		final String msg = "We always convert to AssignmentStatement, other options raise this error!";
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTIfStatement node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		final List<Overapprox> overappr = new ArrayList<>();
@@ -2465,7 +2465,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTContinueStatement cs) {
-		final ILocation loc = LocationFactory.createCLocation(cs);
+		final ILocation loc = main.getLocationFactory().createCLocation(cs);
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		stmt.add(new GotoStatement(loc, new String[] { mInnerMostLoopLabel.peek() }));
 		final ExpressionResult contResult = new ExpressionResult(stmt, null);
@@ -2485,7 +2485,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTInitializerList node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		if (node.getClauses().length != node.getSize()) {
 			throw new IllegalArgumentException("You might have parsed your code with "
 					+ "ITranslationUnit.AST_SKIP_TRIVIAL_EXPRESSIONS_IN_AGGREGATE_INITIALIZERS!");
@@ -2516,7 +2516,7 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTFunctionCallExpression node) {
 		final Check check = new Check(Check.Spec.PRE_CONDITION);
-		final ILocation loc = LocationFactory.createCLocation(node, check);
+		final ILocation loc = main.getLocationFactory().createCLocation(node, check);
 		final IASTExpression functionName = node.getFunctionNameExpression();
 		if (functionName instanceof IASTIdExpression) {
 			final Result standardFunction = mFunctionHandler.handleStandardFunctions(main, mMemoryHandler,
@@ -2533,7 +2533,7 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTBreakStatement node) {
 		final ArrayList<Statement> stmt = new ArrayList<>();
-		stmt.add(new BreakStatement(LocationFactory.createCLocation(node)));
+		stmt.add(new BreakStatement(main.getLocationFactory().createCLocation(node)));
 		return new ExpressionResult(stmt, null);
 	}
 
@@ -2547,7 +2547,7 @@ public class CHandler implements ICHandler {
 	 */
 	@Override
 	public Result visit(final Dispatcher main, final IASTSwitchStatement node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		ArrayList<Statement> stmt = new ArrayList<>();
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
@@ -2623,7 +2623,7 @@ public class CHandler implements ICHandler {
 				}
 
 				ifBlock = new ArrayList<>();
-				locC = LocationFactory.createCLocation(child);
+				locC = main.getLocationFactory().createCLocation(child);
 
 				if (child instanceof IASTCaseStatement) {
 					// 6.8.4.2-5: "The constant expression in each case label is converted to the promoted type of the
@@ -2712,9 +2712,9 @@ public class CHandler implements ICHandler {
 	 */
 	@Override
 	public Result visit(final Dispatcher main, final IASTCaseStatement node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		ExpressionResult c = (ExpressionResult) main.dispatch(node.getExpression());
-		c = c.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, LocationFactory.createCLocation(node));
+		c = c.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, main.getLocationFactory().createCLocation(node));
 		mExpressionTranslation.convertIntToInt(loc, c, new CPrimitive(CPrimitives.INT));
 		return c;
 	}
@@ -2725,13 +2725,13 @@ public class CHandler implements ICHandler {
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<>(0);
 		final List<Overapprox> overappr = new ArrayList<>();
-		return new ExpressionResult(stmt, new RValue(new BooleanLiteral(LocationFactory.createCLocation(node), true),
+		return new ExpressionResult(stmt, new RValue(new BooleanLiteral(main.getLocationFactory().createCLocation(node), true),
 				new CPrimitive(CPrimitives.INT)), decl, emptyAuxVars, overappr);
 	}
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTLabelStatement node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		final ArrayList<Declaration> decl = new ArrayList<>();
 		final Map<VariableDeclaration, ILocation> emptyAuxVars = new LinkedHashMap<>(0);
@@ -2783,13 +2783,13 @@ public class CHandler implements ICHandler {
 			}
 		}
 		final String[] name = new String[] { node.getName().toString() };
-		stmt.add(new GotoStatement(LocationFactory.createCLocation(node), name));
+		stmt.add(new GotoStatement(main.getLocationFactory().createCLocation(node), name));
 		return new ExpressionResult(stmt, null);
 	}
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTCastExpression node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 
 		// TODO: check validity of cast?
 
@@ -2852,7 +2852,7 @@ public class CHandler implements ICHandler {
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTConditionalExpression node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		assert node.getChildren().length == 3;
 		ExpressionResult opCondition = (ExpressionResult) main.dispatch(node.getLogicalConditionExpression());
 		opCondition = opCondition.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler, loc);
@@ -2970,7 +2970,7 @@ public class CHandler implements ICHandler {
 		assert r instanceof ExpressionResult;
 		final ExpressionResult rex = (ExpressionResult) r;
 		return rex.switchToRValueIfNecessary(main, mMemoryHandler, mStructHandler,
-				LocationFactory.createCLocation(node));
+				main.getLocationFactory().createCLocation(node));
 	}
 
 	@Override
@@ -2987,41 +2987,41 @@ public class CHandler implements ICHandler {
 	@Override
 	public Result visit(final Dispatcher main, final IASTProblemStatement node) {
 		final String msg = "Syntax error (statement problem) in C program: " + node.getProblem().getMessage();
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		throw new IncorrectSyntaxException(loc, msg);
 	}
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTProblemDeclaration node) {
 		final String msg = "Syntax error (declaration problem) in C program: " + node.getProblem().getMessage();
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		throw new IncorrectSyntaxException(loc, msg);
 	}
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTProblemExpression node) {
 		final String msg = "Syntax error (expression problem) in C program: " + node.getProblem().getMessage();
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		throw new IncorrectSyntaxException(loc, msg);
 	}
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTProblem node) {
 		final String msg = "Syntax error in C program: " + node.getMessage();
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		throw new IncorrectSyntaxException(loc, msg);
 	}
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTProblemTypeId node) {
 		final String msg = "Syntax error (type ID problem) in C program: " + node.getProblem().getMessage();
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		throw new IncorrectSyntaxException(loc, msg);
 	}
 
 	@Override
 	public Result visit(final Dispatcher main, final IASTTypeIdExpression node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		switch (node.getOperator()) {
 		case IASTTypeIdExpression.op_sizeof: {
 			final TypesResult rt = (TypesResult) main.dispatch(node.getTypeId().getDeclSpecifier());
@@ -3322,7 +3322,7 @@ public class CHandler implements ICHandler {
 							mAcsl = main.nextACSLStatement();
 						} catch (final ParseException e1) {
 							final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-							final ILocation loc = LocationFactory.createCLocation(parent);
+							final ILocation loc = main.getLocationFactory().createCLocation(parent);
 							main.unsupportedSyntax(loc, msg);
 						}
 					}
@@ -3350,12 +3350,12 @@ public class CHandler implements ICHandler {
 									mAcsl = main.nextACSLStatement();
 								} catch (final ParseException e1) {
 									final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-									final ILocation loc = LocationFactory.createCLocation(parent);
+									final ILocation loc = main.getLocationFactory().createCLocation(parent);
 									main.unsupportedSyntax(loc, msg);
 								}
 							} else {
 								final String msg = "Unexpected ACSL comment: " + acslResult.node.getClass();
-								final ILocation loc = LocationFactory.createCLocation(parent);
+								final ILocation loc = main.getLocationFactory().createCLocation(parent);
 								throw new IncorrectSyntaxException(loc, msg);
 							}
 						}
@@ -3386,7 +3386,7 @@ public class CHandler implements ICHandler {
 							}
 						} else {
 							final String msg = "Unexpected ACSL comment: " + acslNode.getClass();
-							final ILocation loc = LocationFactory.createCLocation(next);
+							final ILocation loc = main.getLocationFactory().createCLocation(next);
 							throw new IncorrectSyntaxException(loc, msg);
 						}
 					} else {
@@ -3401,7 +3401,7 @@ public class CHandler implements ICHandler {
 					mAcsl = main.nextACSLStatement();
 				} catch (final ParseException e1) {
 					final String msg = "Skipped a ACSL node due to: " + e1.getMessage();
-					final ILocation loc = LocationFactory.createCLocation(parent);
+					final ILocation loc = main.getLocationFactory().createCLocation(parent);
 					main.unsupportedSyntax(loc, msg);
 				}
 
@@ -3472,7 +3472,7 @@ public class CHandler implements ICHandler {
 		assert node instanceof IASTWhileStatement || node instanceof IASTDoStatement
 				|| node instanceof IASTForStatement;
 
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 
 		final ArrayList<Statement> stmt = new ArrayList<>();
 		final ArrayList<Declaration> decl = new ArrayList<>();
@@ -3686,7 +3686,7 @@ public class CHandler implements ICHandler {
 		final TypesResult rt = (TypesResult) r;
 		assert rt.cType instanceof CEnum;
 		final CEnum cEnum = (CEnum) rt.cType;
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final CPrimitive intType = new CPrimitive(CPrimitives.INT);
 		final ASTType at = mTypeHandler.cType2AstType(loc, intType);
 		final String enumId = cEnum.getIdentifier();

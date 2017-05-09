@@ -32,6 +32,7 @@ package de.uni_freiburg.informatik.ultimate.cdt.translation.implementation;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
@@ -40,62 +41,69 @@ import de.uni_freiburg.informatik.ultimate.model.acsl.ACSLNode;
  * @author dietsch@informatik.uni-freiburg.de
  */
 public class LocationFactory {
+	private final LineDirectiveMapping mLineDirectiveMapping;
+	
+	public LocationFactory(final LineDirectiveMapping lineDirectiveMapping) {
+		mLineDirectiveMapping = lineDirectiveMapping;
+	}
 
-	public static CACSLLocation createCLocation(IASTNode cNode) {
-		return new CLocation(cNode, new Check(Check.Spec.UNKNOWN), false);
+	public CACSLLocation createCLocation(final IASTNode cNode) {
+		return new CLocation(cNode, new Check(Check.Spec.UNKNOWN), false, mLineDirectiveMapping);
 	}
 	
-	public static CACSLLocation createIgnoreCLocation(IASTNode cNode) {
-		return new CLocation(cNode, new Check(Check.Spec.UNKNOWN), true);
+	public static CACSLLocation createIgnoreCLocation(final IASTNode cNode) {
+		return new CLocation(cNode, new Check(Check.Spec.UNKNOWN), true, null);
 	}
 
 	public static CACSLLocation createIgnoreCLocation() {
-		return new CLocation(null, new Check(Check.Spec.UNKNOWN), true);
+		return new CLocation(null, new Check(Check.Spec.UNKNOWN), true, null);
 	}
 
-	public static CACSLLocation createACSLLocation(ACSLNode acslNode) {
+	public CACSLLocation createACSLLocation(final ACSLNode acslNode) {
 		return new ACSLLocation(acslNode, new Check(Check.Spec.UNKNOWN), false);
 	}
 
-	public static CACSLLocation createACSLLocation(ACSLNode acslNode, Check type) {
+	public CACSLLocation createACSLLocation(final ACSLNode acslNode, final Check type) {
 		return new ACSLLocation(acslNode, type, false);
 	}
 
-	public static CACSLLocation createCLocation(IASTNode cNode, Check type) {
-		return new CLocation(cNode, type, false);
+	public CACSLLocation createCLocation(final IASTNode cNode, final Check type) {
+		return new CLocation(cNode, type, false, mLineDirectiveMapping);
 	}
 
-	public static CACSLLocation createLocation(CACSLLocation loc) {
+	public static CACSLLocation createLocation(final CACSLLocation loc) {
 		if (loc instanceof ACSLLocation) {
 			final ACSLLocation realLoc = (ACSLLocation) loc;
 			return new ACSLLocation(realLoc.getNode(), realLoc.getCheck(), realLoc.ignoreDuringBacktranslation());
 		} else if (loc instanceof CLocation) {
 			final CLocation realLoc = (CLocation) loc;
-			return new CLocation(realLoc.getNode(), realLoc.getCheck(), realLoc.ignoreDuringBacktranslation());
+			return new CLocation(realLoc.getNode(), realLoc.getCheck(), realLoc.ignoreDuringBacktranslation(),
+					realLoc.getLineDirectiveMapping());
 		} else {
 			throw new UnsupportedOperationException();
 		}
 	}
 
-	public static CACSLLocation createLocation(CACSLLocation loc, Check type) {
+	public static CACSLLocation createLocation(final CACSLLocation loc, final Check type) {
 		if (loc instanceof ACSLLocation) {
 			final ACSLLocation realLoc = (ACSLLocation) loc;
 			return new ACSLLocation(realLoc.getNode(), type, realLoc.ignoreDuringBacktranslation());
 		} else if (loc instanceof CLocation) {
 			final CLocation realLoc = (CLocation) loc;
-			return new CLocation(realLoc.getNode(), type, realLoc.ignoreDuringBacktranslation());
+			return new CLocation(realLoc.getNode(), type, realLoc.ignoreDuringBacktranslation(),
+					realLoc.getLineDirectiveMapping());
 		} else {
 			throw new UnsupportedOperationException();
 		}
 	}
-	
-	public static CACSLLocation createIgnoreLocation(ILocation loc) {
+
+	public static CACSLLocation createIgnoreLocation(final ILocation loc) {
 		if (loc instanceof ACSLLocation) {
 			final ACSLLocation realLoc = (ACSLLocation) loc;
 			return new ACSLLocation(realLoc.getNode(), realLoc.getCheck(), true);
 		} else if (loc instanceof CLocation) {
 			final CLocation realLoc = (CLocation) loc;
-			return new CLocation(realLoc.getNode(), realLoc.getCheck(), true);
+			return new CLocation(realLoc.getNode(), realLoc.getCheck(), true, realLoc.getLineDirectiveMapping());
 		} else {
 			throw new UnsupportedOperationException();
 		}

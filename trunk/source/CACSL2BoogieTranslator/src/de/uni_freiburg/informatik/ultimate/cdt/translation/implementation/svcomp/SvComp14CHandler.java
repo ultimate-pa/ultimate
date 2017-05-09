@@ -61,7 +61,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableLHS;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.chandler.MemoryHandler.MemoryModelDeclarations;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
@@ -142,7 +141,7 @@ public class SvComp14CHandler extends CHandler {
 			return super.visit(main, node);
 		}
 
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final IASTIdExpression astIdExpression = (IASTIdExpression) node.getFunctionNameExpression();
 		final String methodName = astIdExpression.getName().toString();
 
@@ -380,7 +379,7 @@ public class SvComp14CHandler extends CHandler {
 			throw new IllegalArgumentException("node has no name");
 		}
 		final String nodeNameStr = nodeName.toString();
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 
 		if ("null".equals(nodeNameStr)) {
 			return new ExpressionResult(new RValue(mExpressionTranslation.constructNullPointer(loc),

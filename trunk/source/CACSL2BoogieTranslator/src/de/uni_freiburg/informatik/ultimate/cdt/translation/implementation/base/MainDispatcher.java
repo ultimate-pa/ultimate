@@ -387,7 +387,7 @@ public class MainDispatcher extends Dispatcher {
 		ExtractedWitnessInvariant invariantBefore;
 		if (mWitnessInvariants != null) {
 			invariantBefore = mWitnessInvariants.get(n);
-			final ILocation loc = LocationFactory.createCLocation(n);
+			final ILocation loc = getLocationFactory().createCLocation(n);
 			witnessInvariantsBefore = translateWitnessInvariant(loc, invariantBefore, a -> a.isBefore());
 		} else {
 			invariantBefore = null;
@@ -539,7 +539,7 @@ public class MainDispatcher extends Dispatcher {
 			result = mCHandler.visit(this, n);
 		} else {
 			final String msg = "MainDispatcher: AST node type unknown: " + n.getClass();
-			final ILocation loc = LocationFactory.createCLocation(n);
+			final ILocation loc = getLocationFactory().createCLocation(n);
 			throw new UnsupportedSyntaxException(loc, msg);
 		}
 		final List<AssertStatement> witnessInvariantsAfter;
@@ -547,7 +547,7 @@ public class MainDispatcher extends Dispatcher {
 		if (mWitnessInvariants != null) {
 			// TODO: Use the new information as you see fit
 			invariantAfter = mWitnessInvariants.get(n);
-			final ILocation loc = LocationFactory.createCLocation(n);
+			final ILocation loc = getLocationFactory().createCLocation(n);
 			witnessInvariantsAfter = translateWitnessInvariant(loc, invariantAfter, a -> a.isAfter());
 		} else {
 			invariantAfter = null;
@@ -555,7 +555,7 @@ public class MainDispatcher extends Dispatcher {
 		}
 
 		if (!witnessInvariantsBefore.isEmpty() || !witnessInvariantsAfter.isEmpty()) {
-			final ILocation loc = LocationFactory.createCLocation(n);
+			final ILocation loc = getLocationFactory().createCLocation(n);
 			if (result instanceof ExpressionResult) {
 				final ExpressionResult exprResult = (ExpressionResult) result;
 				final List<Statement> stmt = exprResult.stmt;
@@ -1046,7 +1046,7 @@ public class MainDispatcher extends Dispatcher {
 		if (as == null) {
 			result = null;
 		} else {
-			final ILocation loc = LocationFactory.createCLocation(node);
+			final ILocation loc = getLocationFactory().createCLocation(node);
 			result = new LoopInvariantSpecification(loc, false, as.getFormula());
 			final Check check = new Check(Check.Spec.WITNESS_INVARIANT);
 			check.annotate(result);
@@ -1065,7 +1065,7 @@ public class MainDispatcher extends Dispatcher {
 		} else {
 			final ExtractedWitnessInvariant invariants = mWitnessInvariants.get(node);
 			try {
-				final ILocation loc = LocationFactory.createCLocation(node);
+				final ILocation loc = getLocationFactory().createCLocation(node);
 				final List<AssertStatement> list = translateWitnessInvariant(loc, invariants, (x -> x.isAt()));
 				if (list.isEmpty()) {
 					result = null;

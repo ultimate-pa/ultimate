@@ -37,16 +37,12 @@ package de.uni_freiburg.informatik.ultimate.cdt;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.eclipse.cdt.core.dom.ast.IASTComment;
 import org.eclipse.cdt.core.dom.ast.IASTFileLocation;
-import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 
 import de.uni_freiburg.informatik.ultimate.acsl.parser.ACSLSyntaxErrorException;
 import de.uni_freiburg.informatik.ultimate.acsl.parser.Parser;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -81,8 +77,8 @@ public class CommentParser {
 	 *            Map with line ranges of functions. Can be determined with
 	 *            FunctionLineVisitor.
 	 */
-	public CommentParser(IASTComment[] comments, HashMap<Integer, Integer> lineRange, ILogger logger,
-			Dispatcher dispatch) {
+	public CommentParser(final IASTComment[] comments, final HashMap<Integer, Integer> lineRange, final ILogger logger,
+			final Dispatcher dispatch) {
 		mCommentList = comments;
 		mFunctionLineRange = lineRange;
 		mLogger = logger;
@@ -134,7 +130,7 @@ public class CommentParser {
 				} catch (final ACSLSyntaxErrorException e) {
 					final ACSLNode node = e.getLocation();
 					node.setFileName(comment.getFileLocation().getFileName());
-					final ILocation loc = LocationFactory.createACSLLocation(node);
+					final ILocation loc = mDispatcher.getLocationFactory().createACSLLocation(node);
 					mDispatcher.syntaxError(loc, e.getMessageText());
 				} catch (final Exception e) {
 					throw new RuntimeException(e);
@@ -150,7 +146,7 @@ public class CommentParser {
 	 * @param comment comment
 	 * @return column offset
 	 */
-	private int getColumnOffset(IASTComment comment) {
+	private int getColumnOffset(final IASTComment comment) {
 		final IASTFileLocation loc = comment.getFileLocation();
 		if (!comment.isPartOfTranslationUnitFile()) {
 			// No idea how to get header source text
@@ -176,7 +172,7 @@ public class CommentParser {
 	 *            the CDT-Comment
 	 * @return "lstart" or "gstart" depending on the position
 	 */
-	private String determineCodePosition(IASTComment comment) {
+	private String determineCodePosition(final IASTComment comment) {
 		final int start = comment.getFileLocation().getStartingLineNumber();
 		final int end = comment.getFileLocation().getEndingLineNumber();
 		for (final Integer lineStart : mFunctionLineRange.keySet()) {

@@ -37,17 +37,13 @@ import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDesignatedInitializer;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFieldDesignator;
 
-import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
-import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructAccessExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructConstructor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.StructLHS;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CPointer;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CStruct;
@@ -83,9 +79,9 @@ public class StructHandler {
 	
 	
 
-	public StructHandler(MemoryHandler memoryHandler, 
-			TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, 
-			AExpressionTranslation expressionTranslation) {
+	public StructHandler(final MemoryHandler memoryHandler, 
+			final TypeSizeAndOffsetComputer typeSizeAndOffsetComputer, 
+			final AExpressionTranslation expressionTranslation) {
 		super();
 		mMemoryHandler = memoryHandler;
 		mTypeSizeAndOffsetComputer = typeSizeAndOffsetComputer;
@@ -103,15 +99,15 @@ public class StructHandler {
 	 * @param mMemoryHandler 
 	 * @return the translation results.
 	 */
-	public Result handleFieldReference(Dispatcher main, IASTFieldReference node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+	public Result handleFieldReference(final Dispatcher main, final IASTFieldReference node) {
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final String field = node.getFieldName().toString();
 		
 		ExpressionResult fieldOwner = (ExpressionResult) main.dispatch(node.getFieldOwner());
 
 		LRValue newValue = null;
 
-		List<ExpressionResult> unionFieldToCType = fieldOwner.otherUnionFields == null 
+		final List<ExpressionResult> unionFieldToCType = fieldOwner.otherUnionFields == null 
 				? new ArrayList<>() 
 						: new ArrayList<>(fieldOwner.otherUnionFields);
 
@@ -195,7 +191,7 @@ public class StructHandler {
 			result = new ArrayList<>(unionFieldToCType);
 		}
 
-		for (final String neighbourField : ((CUnion) foType).getFieldIds()) {
+		for (final String neighbourField : foType.getFieldIds()) {
 			if (neighbourField.equals(field)) {
 				continue;
 			}
@@ -206,15 +202,15 @@ public class StructHandler {
 				builder.setLRVal(new LocalLValue(havocSlhs, foType.getFieldType(neighbourField)));
 			} else {
 				assert fieldOwner instanceof HeapLValue;
-				Expression fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, foType, neighbourField);
-				Expression unionAddress = ((HeapLValue) fieldOwner).getAddress();
-				Expression summedOffset = mExpressionTranslation.constructArithmeticIntegerExpression(loc, 
+				final Expression fieldOffset = mTypeSizeAndOffsetComputer.constructOffsetForField(loc, foType, neighbourField);
+				final Expression unionAddress = ((HeapLValue) fieldOwner).getAddress();
+				final Expression summedOffset = mExpressionTranslation.constructArithmeticIntegerExpression(loc, 
 						IASTBinaryExpression.op_plus, 
 						MemoryHandler.getPointerOffset(unionAddress, loc), 
 						mExpressionTranslation.getCTypeOfPointerComponents(), 
 						fieldOffset, 
 						mExpressionTranslation.getCTypeOfPointerComponents());
-				StructConstructor neighbourFieldAddress = MemoryHandler.constructPointerFromBaseAndOffset(
+				final StructConstructor neighbourFieldAddress = MemoryHandler.constructPointerFromBaseAndOffset(
 						MemoryHandler.getPointerBaseAddress(unionAddress, loc), 
 						summedOffset, 
 						loc);
@@ -233,9 +229,9 @@ public class StructHandler {
 	}
 
 
-	public Result readFieldInTheStructAtAddress(Dispatcher main,
-			ILocation loc, int fieldIndex,
-			Expression structAddress, CStruct structType) {
+	public Result readFieldInTheStructAtAddress(final Dispatcher main,
+			final ILocation loc, final int fieldIndex,
+			final Expression structAddress, final CStruct structType) {
 		Expression addressBaseOfFieldOwner;
 		Expression addressOffsetOfFieldOwner;
 		
@@ -270,9 +266,9 @@ public class StructHandler {
 	}
 
 
-	Expression computeStructFieldOffset(MemoryHandler memoryHandler,
-			ILocation loc, int fieldIndex, Expression addressOffsetOfFieldOwner,
-			CStruct structType) {
+	Expression computeStructFieldOffset(final MemoryHandler memoryHandler,
+			final ILocation loc, final int fieldIndex, final Expression addressOffsetOfFieldOwner,
+			final CStruct structType) {
 		if (structType == null || !(structType instanceof CStruct)) {
 			final String msg = "Incorrect or unexpected field owner!";
 			throw new IncorrectSyntaxException(loc, msg);
@@ -291,7 +287,7 @@ public class StructHandler {
 //		}
 	}
 
-	private boolean isOffsetZero(CStruct cStruct, int fieldIndex) {
+	private boolean isOffsetZero(final CStruct cStruct, final int fieldIndex) {
 		return (fieldIndex == 0) || (cStruct instanceof CUnion);
 	}
 
@@ -313,10 +309,10 @@ public class StructHandler {
 	 *            the node to translate.
 	 * @return the translation result.
 	 */
-	public Result handleDesignatedInitializer(Dispatcher main,
-			MemoryHandler memoryHandler, StructHandler structHandler,
-			CASTDesignatedInitializer node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+	public Result handleDesignatedInitializer(final Dispatcher main,
+			final MemoryHandler memoryHandler, final StructHandler structHandler,
+			final CASTDesignatedInitializer node) {
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		assert node.getDesignators().length == 1;
 		assert node.getDesignators()[0] instanceof CASTFieldDesignator;
 		final CASTFieldDesignator fr = (CASTFieldDesignator) node.getDesignators()[0];

@@ -31,6 +31,7 @@ import java.util.HashSet;
 
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.LineDirectiveMapping;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.CdtASTUtils;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.MergedLocation;
@@ -41,16 +42,24 @@ public class CLocation extends CACSLLocation {
 
 	private static final long serialVersionUID = -7497131349540138810L;
 	private final IASTNode mNode;
+	private final LineDirectiveMapping mLineDirectiveMapping;
 
-	protected CLocation(final IASTNode node, final Check checkedSpec, final boolean ignoreDuringBacktranslation) {
+	protected CLocation(final IASTNode node, final Check checkedSpec, final boolean ignoreDuringBacktranslation, final LineDirectiveMapping lineDirectiveMapping) {
 		super(checkedSpec, ignoreDuringBacktranslation);
 		mNode = node;
+		mLineDirectiveMapping = lineDirectiveMapping;
 	}
 
 	@Override
 	public String getFileName() {
 		if (mNode != null) {
-			return mNode.getFileLocation().getFileName();
+			if (mLineDirectiveMapping == null) {
+				return mNode.getFileLocation().getFileName();
+			} else {
+				final int currentLineNumber = mNode.getFileLocation().getStartingLineNumber();
+				final String currentFilename = mNode.getFileLocation().getFileName();
+				return mLineDirectiveMapping.getOriginal(currentLineNumber, currentFilename).getSecond();
+			}
 		}
 		return null;
 	}
@@ -58,7 +67,13 @@ public class CLocation extends CACSLLocation {
 	@Override
 	public int getStartLine() {
 		if (mNode != null) {
-			return mNode.getFileLocation().getStartingLineNumber();
+			if (mLineDirectiveMapping == null) {
+				return mNode.getFileLocation().getStartingLineNumber();
+			} else {
+				final int currentLineNumber = mNode.getFileLocation().getStartingLineNumber();
+				final String currentFilename = mNode.getFileLocation().getFileName();
+				return mLineDirectiveMapping.getOriginal(currentLineNumber, currentFilename).getFirst();
+			}
 		}
 		return -1;
 	}
@@ -66,7 +81,13 @@ public class CLocation extends CACSLLocation {
 	@Override
 	public int getEndLine() {
 		if (mNode != null) {
-			return mNode.getFileLocation().getEndingLineNumber();
+			if (mLineDirectiveMapping == null) {
+				return mNode.getFileLocation().getEndingLineNumber();
+			} else {
+				final int currentLineNumber = mNode.getFileLocation().getEndingLineNumber();
+				final String currentFilename = mNode.getFileLocation().getFileName();
+				return mLineDirectiveMapping.getOriginal(currentLineNumber, currentFilename).getFirst();
+			}
 		}
 		return -1;
 	}
@@ -88,6 +109,10 @@ public class CLocation extends CACSLLocation {
 
 	public IASTNode getNode() {
 		return mNode;
+	}
+	
+	public LineDirectiveMapping getLineDirectiveMapping() {
+		return mLineDirectiveMapping;
 	}
 
 	@Override
@@ -125,7 +150,13 @@ public class CLocation extends CACSLLocation {
 			nodes.add(getNode());
 			nodes.add(otherCloc.getNode());
 			final IASTNode node = CdtASTUtils.findCommonParent(nodes);
-			return new CLocation(node, mergedCheck, ignoreDuringBacktranslation);
+			LineDirectiveMapping resultLineDirectiveMapping;
+			if (mLineDirectiveMapping == null) {
+				resultLineDirectiveMapping = otherCloc.getLineDirectiveMapping();
+			} else {
+				resultLineDirectiveMapping = mLineDirectiveMapping;
+			}
+			return new CLocation(node, mergedCheck, ignoreDuringBacktranslation, resultLineDirectiveMapping);
 		} else if (other instanceof ILocation) {
 			return MergedLocation.mergeToMergeLocation(this, (ILocation) other);
 		}

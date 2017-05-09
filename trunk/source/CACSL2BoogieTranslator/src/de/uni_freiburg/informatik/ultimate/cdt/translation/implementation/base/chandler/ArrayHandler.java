@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression.Operator;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.CHandler;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.base.expressiontranslation.AExpressionTranslation;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.c.CArray;
@@ -83,7 +82,7 @@ public class ArrayHandler {
 	 */
 	public ExpressionResult handleArraySubscriptExpression(final Dispatcher main, final MemoryHandler memoryHandler,
 			final StructHandler structHandler, final IASTArraySubscriptExpression node) {
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 
 		ExpressionResult subscript = (ExpressionResult) main.dispatch(node.getArgument());
 		subscript = subscript.switchToRValueIfNecessary(main, memoryHandler, structHandler, loc);

@@ -103,7 +103,7 @@ public class PreRunner extends ASTVisitor {
     /**
      * Constructor.
      */
-    public PreRunner(LinkedHashMap<String, IASTNode> fT) {
+    public PreRunner(final LinkedHashMap<String, IASTNode> fT) {
         shouldVisitDeclarations = true;
     	shouldVisitParameterDeclarations = true;
         shouldVisitExpressions = true;
@@ -149,7 +149,7 @@ public class PreRunner extends ASTVisitor {
 
     
     @Override
-	public int visit(IASTDeclSpecifier declSpec) {
+	public int visit(final IASTDeclSpecifier declSpec) {
     	if (declSpec instanceof IASTCompositeTypeSpecifier) {
     		sT.beginScope();
     	}
@@ -157,7 +157,7 @@ public class PreRunner extends ASTVisitor {
 	}
 
 	@Override
-	public int leave(IASTDeclSpecifier declSpec) {
+	public int leave(final IASTDeclSpecifier declSpec) {
     	if (declSpec instanceof IASTCompositeTypeSpecifier) {
     		sT.endScope();
     	}
@@ -165,7 +165,7 @@ public class PreRunner extends ASTVisitor {
 	}
 
 	@Override
- 	public int visit(IASTParameterDeclaration declaration) {
+ 	public int visit(final IASTParameterDeclaration declaration) {
     	if (declaration.getDeclarator().getPointerOperators().length > 0) {
 			isMMRequired = true;
 		}
@@ -182,9 +182,13 @@ public class PreRunner extends ASTVisitor {
     
     
     @Override
-    public int visit(IASTExpression expression) {
+    public int visit(final IASTExpression expression) {
     	if (expression instanceof IASTUnaryExpression) {
-    		final ILocation loc = LocationFactory.createCLocation(expression);
+//			TODO 2017-05-08 Matthias: I changed this from createCLocation() to
+//    		createIgnoreCLocation(). If we really need line numbers here we
+//    		can pass a LocationFactory here.
+//    		final ILocation loc = LocationFactory.createCLocation(expression);
+    		final ILocation loc = LocationFactory.createIgnoreCLocation(expression);
     		final IASTUnaryExpression ue = (IASTUnaryExpression) expression;
     		if (ue.getOperator() == IASTUnaryExpression.op_amper) {// every variable that is addressoffed has to be on the heap
     			final IASTNode operand = ue.getOperand();
@@ -312,7 +316,7 @@ public class PreRunner extends ASTVisitor {
     }
 
 
-	private void updateFunctionPointers(String id, IASTNode function) {
+	private void updateFunctionPointers(final String id, final IASTNode function) {
 		if (function instanceof IASTFunctionDefinition) {
 			functionPointers.put(id, (IASTDeclaration) function);
 		} else if (function instanceof IASTFunctionDeclarator) {
@@ -328,7 +332,7 @@ public class PreRunner extends ASTVisitor {
      * 
      */
     public static String extraxtExpressionIdFromPossiblyComplexExpression(
-			IASTNode expression) {
+			final IASTNode expression) {
     	if (expression instanceof IASTIdExpression) {
     		return ((IASTIdExpression) expression).getName().toString();
     	} else if (expression instanceof IASTFieldReference) {
@@ -354,7 +358,7 @@ public class PreRunner extends ASTVisitor {
 	}
 
 	@Override
-    public int visit(IASTDeclaration declaration) {
+    public int visit(final IASTDeclaration declaration) {
         if (declaration instanceof CASTSimpleDeclaration) {
             final CASTSimpleDeclaration cd = (CASTSimpleDeclaration) declaration;
             for (final IASTDeclarator d : cd.getDeclarators()) {
@@ -379,7 +383,7 @@ public class PreRunner extends ASTVisitor {
         return super.visit(declaration);
     }
 
-	private void addNameOfNonFunctionDeclarator(IASTDeclarator d) {
+	private void addNameOfNonFunctionDeclarator(final IASTDeclarator d) {
 		if (d instanceof IASTFunctionDeclarator) {
 			// do nothing
 		} else {
@@ -389,7 +393,7 @@ public class PreRunner extends ASTVisitor {
 	}
 
     @Override
-    public int leave(IASTDeclaration declaration) {
+    public int leave(final IASTDeclaration declaration) {
         if (declaration instanceof IASTFunctionDefinition) {
         	sT.endScope();
         }
@@ -397,7 +401,7 @@ public class PreRunner extends ASTVisitor {
     }
   
     @Override
-    public int visit(IASTStatement statement) {
+    public int visit(final IASTStatement statement) {
         if (statement instanceof IASTCompoundStatement
                 && !(statement.getParent() instanceof IASTFunctionDefinition || statement
                         .getParent() instanceof IASTForStatement)) {
@@ -413,7 +417,7 @@ public class PreRunner extends ASTVisitor {
     }
     
     @Override
- 	public int leave(IASTStatement statement) {
+ 	public int leave(final IASTStatement statement) {
      	if (statement instanceof IASTCompoundStatement
                  && !(statement.getParent() instanceof IASTFunctionDefinition || statement
                          .getParent() instanceof IASTForStatement)) {
@@ -433,7 +437,7 @@ public class PreRunner extends ASTVisitor {
     public LinkedHashMap<String, Integer> getFunctionToIndex() {
 		return functionToIndex;
     } 
-    private void updateFunctionToIndex(String id) {
+    private void updateFunctionToIndex(final String id) {
     	if (!functionToIndex.containsKey(id)) {
     		functionToIndex.put(id, pointedToFunctionCounter++);
     	}
@@ -458,7 +462,7 @@ public class PreRunner extends ASTVisitor {
      *            the location for the error, if the String is not contained.
      * @return the corresponding declaration for the given name.
      */
-    private IASTNode get(String n, ILocation loc) {
+    private IASTNode get(final String n, final ILocation loc) {
         if (!sT.containsKey(n)) {
             final String msg = "PR: Missing declaration of " + n;
             throw new IncorrectSyntaxException(loc, msg);

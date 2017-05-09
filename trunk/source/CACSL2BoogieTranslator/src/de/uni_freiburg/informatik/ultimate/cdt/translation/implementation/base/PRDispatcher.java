@@ -119,7 +119,6 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
 import de.uni_freiburg.informatik.ultimate.cdt.decorator.DecoratorNode;
-import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.SymbolTable;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.InferredType;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.container.SymbolTableValue;
@@ -421,7 +420,7 @@ public class PRDispatcher extends Dispatcher {
 			return mCHandler.visit(this, (IASTProblemTypeId) n);
 		}
 		final String msg = "MainDispatcher: AST node type unknown: " + n.getClass();
-		final ILocation loc = LocationFactory.createCLocation(n);
+		final ILocation loc = getLocationFactory().createCLocation(n);
 		throw new UnsupportedSyntaxException(loc, msg);
 	}
 

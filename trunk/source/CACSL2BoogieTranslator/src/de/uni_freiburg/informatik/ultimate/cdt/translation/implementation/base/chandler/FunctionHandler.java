@@ -241,7 +241,7 @@ public class FunctionHandler {
 			final IASTFunctionDefinition node, final CDeclaration cDec, final List<ACSLNode> contract) {
 		main.mCHandler.beginScope();
 
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final String methodName = cDec.getName();
 		final CType returnCType = ((CFunction) cDec.getType()).getResultType();
 		final boolean returnTypeIsVoid =
@@ -411,7 +411,7 @@ public class FunctionHandler {
 		final Map<VariableDeclaration, ILocation> auxVars = new LinkedHashMap<>();
 		final ArrayList<Overapprox> overApp = new ArrayList<>();
 		// The ReturnValue could be empty!
-		final ILocation loc = LocationFactory.createCLocation(node);
+		final ILocation loc = main.getLocationFactory().createCLocation(node);
 		final VarList[] outParams = mCurrentProcedure.getOutParams();
 		final ExpressionResult rExp = new ExpressionResult(stmt, null, decl, auxVars, overApp);
 		// if (mMethodsCalledBeforeDeclared.contains(mCurrentProcedure.getIdentifier()) && mCurrentProcedureIsVoid) {
