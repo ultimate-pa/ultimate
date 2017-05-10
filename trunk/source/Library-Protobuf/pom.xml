@@ -11,4 +11,5 @@
   <groupId>com.google.protobuf</groupId>
   <artifactId>com.google.protobuf</artifactId>
   <version>3.0.0</version>
+  <packaging>eclipse-plugin</packaging>
 </project>

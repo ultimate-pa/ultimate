@@ -4,7 +4,6 @@ Bundle-Name: InteractiveModel
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.interactive
 Bundle-Version: 0.1.13
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
-Bundle-ClassPath: .
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core
 Export-Package: de.uni_freiburg.informatik.ultimate.interactive,
  de.uni_freiburg.informatik.ultimate.interactive.commondata,

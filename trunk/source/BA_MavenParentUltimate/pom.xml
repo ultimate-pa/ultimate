@@ -18,7 +18,7 @@
 		<ultimate-version>0.1.13</ultimate-version>
 	
 		<!-- maven plugin versions -->
-		<tycho-version>0.26.0</tycho-version>
+		<tycho-version>1.0.0</tycho-version>
 		<sonar-version>3.2</sonar-version>
 		<jacoco-version>0.7.7.201606060606</jacoco-version>
 		<m2e-version>1.0.0</m2e-version>
@@ -301,9 +301,10 @@
 		<module>../Library-UltimateModel</module>
 		<module>../Library-ApacheCommonsCLI</module>
 		<module>../Library-IcfgTransformer</module>
+		<module>../Library-Protobuf</module>
 		<module>../Library-InteractiveModel</module>
 		<module>../Library-InteractiveCommon</module>
-		<module>../Library-Protobuf</module>
+		<module>../Library-InteractiveTA</module>
 		<module>../Library-Server</module>
 		<module>../UltimateServer</module>
 		<module>../IcfgTransformation</module>

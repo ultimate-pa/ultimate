@@ -11,4 +11,5 @@
   <groupId>de.uni_freiburg.informatik.ultimate.interactive.common</groupId>
   <artifactId>de.uni_freiburg.informatik.ultimate.interactive.common</artifactId>
   <version>0.1.13</version>
+  <packaging>eclipse-plugin</packaging>
 </project>
