@@ -165,6 +165,12 @@ public class WitnessManager {
 
 	private String createWitnessFilename(final String witnessDir, final String witnessFilename,
 			final String additionalPrefix) {
+		if (witnessFilename == null) {
+			throw new IllegalArgumentException("You did not specify a filename for the witness");
+		}
+		if (witnessDir == null) {
+			throw new IllegalArgumentException("You did not specify a directory for the witness");
+		}
 		final File witnessFile = new File(witnessFilename);
 		final File witnessFileDir = new File(witnessDir);
 

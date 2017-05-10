@@ -100,7 +100,7 @@ public class WitnessPrinter implements IOutput {
 
 	@Override
 	public List<IObserver> getObservers() {
-		if (mMode == Mode.TRUE_WITNESS && mMatchingModel) {
+		if (mMatchingModel) {
 			// we should create this class somewere in cacsl s.t. we get the correct parameters -- perhaps translation
 			// service
 			mRCFGCatcher = new RCFGCatcher();
@@ -185,8 +185,10 @@ public class WitnessPrinter implements IOutput {
 		final Collection<CounterExampleResult> cexResults =
 				ResultUtil.filterResults(mServices.getResultService().getResults(), CounterExampleResult.class);
 		final IBacktranslationService backtrans = mServices.getBacktranslationService();
+		final BoogieIcfgContainer root = mRCFGCatcher.getModel();
+		final String filename = ILocation.getAnnotation(root).getFileName();
 		for (final CounterExampleResult cex : cexResults) {
-			supplier.add(() -> new Triple<>(cex, cex.getLocation().getFileName(),
+			supplier.add(() -> new Triple<>(cex, filename,
 					backtrans.translateProgramExecution(cex.getProgramExecution()).getSVCOMPWitnessString()));
 		}
 		return supplier;

@@ -4,7 +4,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslati
 
 /**
  * Use this if you do not want to implement a backtranslation provider.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  * @param <TTE>
@@ -12,34 +12,41 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IBacktranslati
  */
 public class NoBacktranslationValueProvider<TTE, TE> implements IBacktranslationValueProvider<TTE, TE> {
 
+	private static final String NO_BACKTRANSLATION_VALUE_PROVIDER = "NoBacktranslationValueProvider";
+
 	@Override
-	public int getStartLineNumberFromStep(TTE step) {
-		throw new UnsupportedOperationException("NoBacktranslationValueProvider");
+	public int getStartLineNumberFromStep(final TTE step) {
+		throw new UnsupportedOperationException(NO_BACKTRANSLATION_VALUE_PROVIDER);
 	}
 
 	@Override
-	public int getEndLineNumberFromStep(TTE step) {
-		throw new UnsupportedOperationException("NoBacktranslationValueProvider");
+	public int getEndLineNumberFromStep(final TTE step) {
+		throw new UnsupportedOperationException(NO_BACKTRANSLATION_VALUE_PROVIDER);
 	}
 
 	@Override
-	public String getFileNameFromStep(TTE step) {
-		throw new UnsupportedOperationException("NoBacktranslationValueProvider");
+	public String getFileNameFromStep(final TTE step) {
+		throw new UnsupportedOperationException(NO_BACKTRANSLATION_VALUE_PROVIDER);
 	}
 
 	@Override
-	public String getStringFromStep(TTE step) {
-		throw new UnsupportedOperationException("NoBacktranslationValueProvider");
+	public String getStringFromStep(final TTE step) {
+		throw new UnsupportedOperationException(NO_BACKTRANSLATION_VALUE_PROVIDER);
 	}
 
 	@Override
-	public String getStringFromTraceElement(TTE traceelement) {
-		throw new UnsupportedOperationException("NoBacktranslationValueProvider");
+	public String getStringFromTraceElement(final TTE traceelement) {
+		throw new UnsupportedOperationException(NO_BACKTRANSLATION_VALUE_PROVIDER);
 	}
 
 	@Override
-	public String getStringFromExpression(TE expression) {
-		throw new UnsupportedOperationException("NoBacktranslationValueProvider");
+	public String getStringFromExpression(final TE expression) {
+		throw new UnsupportedOperationException(NO_BACKTRANSLATION_VALUE_PROVIDER);
+	}
+
+	@Override
+	public String getOriginFileNameFromStep(final TTE step) {
+		throw new UnsupportedOperationException(NO_BACKTRANSLATION_VALUE_PROVIDER);
 	}
 
 }

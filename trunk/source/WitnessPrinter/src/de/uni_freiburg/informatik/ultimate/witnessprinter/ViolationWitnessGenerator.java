@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -47,9 +47,9 @@ import edu.uci.ics.jung.graph.Hypergraph;
 /**
  * Generates an SVCOMP witness from a {@link IProgramExecution} (i.e., a false witness). Probably only useful together
  * with {@link CACSLProgramExecution} instances.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * 
+ *
  */
 public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E> {
 
@@ -75,18 +75,18 @@ public class ViolationWitnessGenerator<TE, E> extends BaseWitnessGenerator<TE, E
 		final String filename = StringEscapeUtils
 				.escapeXml10(mStringProvider.getFileNameFromStep(mProgramExecution.getTraceElement(0).getStep()));
 
-		graphWriter.setEdgeIDs(arg0 -> arg0.getName());
-		graphWriter.setVertexIDs(arg0 -> arg0.getName());
+		graphWriter.setEdgeIDs(GeneratedWitnessEdge<TE, E>::getName);
+		graphWriter.setVertexIDs(GeneratedWitnessNode::getName);
 
 		addCanonicalWitnessGraphData(graphWriter, "violation_witness", filename);
 
 		addEdgeData(graphWriter, "sourcecode", null, edge -> StringEscapeUtils.escapeXml10(edge.getSourceCode()));
 		addEdgeData(graphWriter, "assumption", null, edge -> StringEscapeUtils.escapeXml10(edge.getAssumption()));
 		addEdgeData(graphWriter, "tokens", null, edge -> null);
-		addEdgeData(graphWriter, "control", null, edge -> edge.getControl());
-		addEdgeData(graphWriter, "startline", null, edge -> edge.getStartLineNumber());
-		addEdgeData(graphWriter, "endline", null, edge -> edge.getEndLineNumber());
-		addEdgeData(graphWriter, "originfile", filename, edge -> null);
+		addEdgeData(graphWriter, "control", null, GeneratedWitnessEdge<TE, E>::getControl);
+		addEdgeData(graphWriter, "startline", null, GeneratedWitnessEdge<TE, E>::getStartLineNumber);
+		addEdgeData(graphWriter, "endline", null, GeneratedWitnessEdge<TE, E>::getEndLineNumber);
+		addEdgeData(graphWriter, "originfile", filename, GeneratedWitnessEdge<TE, E>::getOriginFileName);
 		addEdgeData(graphWriter, "enterFunction", null, edge -> null);
 		addEdgeData(graphWriter, "returnFrom", null, edge -> null);
 

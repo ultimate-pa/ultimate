@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.witnessprinter.graphml;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement;
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
@@ -147,7 +148,7 @@ public class GeneratedWitnessEdge<TE, E> {
 		final StringBuilder sb = new StringBuilder();
 
 		final boolean isConditional =
-				(mATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE) || mATE.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE));
+				mATE.hasStepInfo(StepInfo.CONDITION_EVAL_FALSE) || mATE.hasStepInfo(StepInfo.CONDITION_EVAL_TRUE);
 
 		if (isConditional) {
 			sb.append("[");
@@ -168,20 +169,19 @@ public class GeneratedWitnessEdge<TE, E> {
 	}
 
 	private void appendValidExpression(final E var, final E val, final StringBuilder sb) {
-
 		final String varStr = mStringProvider.getStringFromExpression(var);
-		final String valStr = mStringProvider.getStringFromExpression(val);
 
 		if (varStr.contains("\\") || varStr.contains("&")) {
 			// is something like read, old, etc.
 			return;
 		}
 
+		final String valStr = mStringProvider.getStringFromExpression(val);
 		try {
 			new BigDecimal(valStr);
 		} catch (final Exception ex) {
 			// this is no valid number literal, maybe its true or false?
-			if (!valStr.equalsIgnoreCase("true") && !valStr.equalsIgnoreCase("false")) {
+			if (!"true".equalsIgnoreCase(valStr) && !"false".equalsIgnoreCase(valStr)) {
 				// nope, give up
 				return;
 			}
@@ -193,12 +193,16 @@ public class GeneratedWitnessEdge<TE, E> {
 		sb.append(";");
 	}
 
+	public String getOriginFileName() {
+		return mStringProvider.getFileNameFromStep(mATE.getStep());
+	}
+
 	@Override
 	public String toString() {
-		if (getStartLineNumber() == getEndLineNumber()) {
+		if (Objects.equals(getStartLineNumber(), getEndLineNumber())) {
 			return "L" + getStartLineNumber();
-		} else {
-			return "L" + getStartLineNumber() + "-L" + getEndLineNumber();
 		}
+		return "L" + getStartLineNumber() + "-L" + getEndLineNumber();
 	}
+
 }
