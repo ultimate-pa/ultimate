@@ -301,6 +301,11 @@
 		<module>../Library-UltimateModel</module>
 		<module>../Library-ApacheCommonsCLI</module>
 		<module>../Library-IcfgTransformer</module>
+		<module>../Library-InteractiveModel</module>
+		<module>../Library-InteractiveCommon</module>
+		<module>../Library-Protobuf</module>
+		<module>../Library-Server</module>
+		<module>../UltimateServer</module>
 		<module>../IcfgTransformation</module>
 		<module>../BuchiProgramProduct</module>
 		<module>../LTL2aut</module>
