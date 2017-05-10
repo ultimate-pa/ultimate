@@ -9,9 +9,9 @@ package de.uni_freiburg.informatik.ultimate.interactive.exceptions;
  */
 public class UnregisteredTypeException extends ServerException {
 	private static final long serialVersionUID = 4316008641785575704L;
-	private Class<?> mType;
+	private final Class<?> mType;
 
-	public UnregisteredTypeException(Class<?> type) {
+	public UnregisteredTypeException(final Class<?> type) {
 		super("Unregistered Type " + type);
 		mType = type;
 	}

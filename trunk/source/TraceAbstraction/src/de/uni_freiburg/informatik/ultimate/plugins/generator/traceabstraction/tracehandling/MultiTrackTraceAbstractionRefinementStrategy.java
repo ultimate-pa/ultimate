@@ -74,7 +74,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
-	public static enum Track {
+	public enum Track {
 		/**
 		 * SMTInterpol with tree interpolation.
 		 */

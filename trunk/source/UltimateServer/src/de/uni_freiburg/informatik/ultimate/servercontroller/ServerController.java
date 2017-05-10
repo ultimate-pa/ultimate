@@ -118,7 +118,7 @@ public class ServerController implements IController<RunDefinition> {
 
 		try {
 			mCla = CommandLineArgs.parse(args);
-		} catch (org.apache.commons.cli.ParseException e) {
+		} catch (final org.apache.commons.cli.ParseException e) {
 			mLogger.error(e.getMessage());
 			mLogger.error("Arguments were \"" + String.join(" ", args) + "\"");
 			mLogger.error("--");
@@ -155,9 +155,9 @@ public class ServerController implements IController<RunDefinition> {
 
 					if (false)
 						break; // TODO: add settings that limit the server to a single (or fixed numer or time) run
-				} catch (CancellationException e) {
+				} catch (final CancellationException e) {
 					mLogger.error("Cancelled some Future", e);
-				} catch (ExecutionException e) {
+				} catch (final ExecutionException e) {
 					// throw e.getCause()
 					if (e.getCause() instanceof IOException) {
 						mLogger.error("It seems like the Connection has been Lost. Reinitializing controller.", e);
@@ -167,7 +167,7 @@ public class ServerController implements IController<RunDefinition> {
 						result = IApplication.EXIT_RELAUNCH; // What does/should that do?
 					} else {
 						mLogger.fatal(e);
-						e.printStackTrace();
+						mLogger.error(e);
 						result = -1;
 						break;
 					}
@@ -179,7 +179,7 @@ public class ServerController implements IController<RunDefinition> {
 			mLogger.fatal(e);
 			e.printStackTrace();
 			result = -1;
-		} catch (Throwable e) {
+		} catch (final Throwable e) {
 			mLogger.fatal(e);
 			e.printStackTrace();
 			result = -1;
@@ -209,7 +209,7 @@ public class ServerController implements IController<RunDefinition> {
 	}
 
 	private void initWrapper(final ICore<RunDefinition> core,
-			Map<File, IToolchainData<RunDefinition>> availableToolchains)
+			final Map<File, IToolchainData<RunDefinition>> availableToolchains)
 			throws InterruptedException, ExecutionException, TimeoutException {
 		mLogger.info("Waiting for connection...");
 
@@ -220,10 +220,12 @@ public class ServerController implements IController<RunDefinition> {
 
 		mConverterInitializer = new AbstractConverter.Initializer<>(mProtoInterface, mServer.getTypeRegistry());
 
-		ControllerConverter converter = ControllerConverter.get(null); // TODO: register this with service provider
+		// TODO: register ControllerConverter with service provider and fined out, if services can be accessed
+		final ControllerConverter converter = ControllerConverter.get(null);
 		mInternalInterface = mConverterInitializer.getConvertedInteractiveInterface(converter);
+		// TODO: fined out, if services can be accessed
 		// services.getServiceInstance(TAConverterFactory.class);
-		Converter commonConverter = new Converter(mLogger);
+		final Converter commonConverter = new Converter(mLogger);
 		mCommonInterface = mConverterInitializer.getConvertedInteractiveInterface(commonConverter);
 
 		commonFuture.complete(mCommonInterface);
@@ -277,7 +279,7 @@ public class ServerController implements IController<RunDefinition> {
 		try {
 			core.resetPreferences();
 			core.loadPreferences(settingsFile.getAbsolutePath());
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new IllegalStateException("could not load settings", e);
 		}
 	}
@@ -297,12 +299,12 @@ public class ServerController implements IController<RunDefinition> {
 		tcj.join();
 	}
 
-	private <T> T requestChoice(T[] choices, Function<T, String> toString, String title)
+	private <T> T requestChoice(final T[] choices, final Function<T, String> toString, final String title)
 			throws InterruptedException, ExecutionException {
 		return requestChoice(Arrays.asList(choices), toString, title);
 	}
 
-	private <T> T requestChoice(List<T> choices, Function<T, String> toString, String title)
+	private <T> T requestChoice(final List<T> choices, final Function<T, String> toString, final String title)
 			throws InterruptedException, ExecutionException {
 		// Controller.ChoiceRequest.Request.Builder tcBuilder = Controller.Choice.Request.newBuilder();
 		// choices.stream().map(toString).forEach(tcBuilder::addChoice);
@@ -366,14 +368,10 @@ public class ServerController implements IController<RunDefinition> {
 	public void displayToolchainResults(final IToolchainData<RunDefinition> toolchain,
 			final Map<String, List<IResult>> results) {
 		// final ResultSummarizer summarizer = new ResultSummarizer(results);
-		ResultsWrapper wrapper = new ResultsWrapper();
+		final ResultsWrapper wrapper = new ResultsWrapper();
 		wrapper.results = results;
 
 		mInternalInterface.send(wrapper);
-	}
-
-	public static class ResultsWrapper {
-		public Map<String, List<IResult>> results;
 	}
 
 	@Override
@@ -414,7 +412,7 @@ public class ServerController implements IController<RunDefinition> {
 			final File workingDir) {
 		final ToolchainLocator locator = new ToolchainLocator(workingDir, core, mLogger);
 
-		Map<File, IToolchainData<RunDefinition>> result = locator.locateToolchains();
+		final Map<File, IToolchainData<RunDefinition>> result = locator.locateToolchains();
 		if (result.isEmpty()) {
 			mLogger.fatal("There are no toolchains in directory" + workingDir);
 		}
@@ -422,9 +420,13 @@ public class ServerController implements IController<RunDefinition> {
 	}
 
 	@Override
-	public void prerun(IToolchainData<RunDefinition> tcData) {
+	public void prerun(final IToolchainData<RunDefinition> tcData) {
 		final IToolchainStorage storage = mToolchain.getStorage();
 
 		mConverterInitializer.store(GeneratedMessageV3.class, storage);
+	}
+
+	public static class ResultsWrapper {
+		public Map<String, List<IResult>> results;
 	}
 }

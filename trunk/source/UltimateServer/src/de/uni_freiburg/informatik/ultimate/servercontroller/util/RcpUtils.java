@@ -40,6 +40,8 @@ import org.osgi.framework.Bundle;
  *
  */
 public final class RcpUtils {
+	private final static String UNKNOWN = "UNKNOWN";
+
 	private RcpUtils() {
 		// utility class
 	}
@@ -47,13 +49,13 @@ public final class RcpUtils {
 	public static String getVersion(final String pluginId) {
 		final Bundle bundle = Platform.getBundle(pluginId);
 		if (bundle == null) {
-			return "UNKNOWN";
+			return UNKNOWN;
 		}
 		final Dictionary<String, String> headers = bundle.getHeaders();
 		if (headers != null) {
 			return headers.get("Bundle-Version");
 		}
-		return "UNKNOWN";
+		return UNKNOWN;
 	}
 
 	public static File getWorkingDirectory() {

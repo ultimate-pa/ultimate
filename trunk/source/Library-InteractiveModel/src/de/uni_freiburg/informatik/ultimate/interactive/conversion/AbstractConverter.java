@@ -25,16 +25,16 @@ public abstract class AbstractConverter<A, B> {
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
-	protected AbstractConverter(ILogger logger, Class<B> targetClass) {
+	protected AbstractConverter(final ILogger logger, final Class<B> targetClass) {
 		this(null, logger, targetClass);
 	}
 
-	protected AbstractConverter(IUltimateServiceProvider services, Class<B> targetClass) {
+	protected AbstractConverter(final IUltimateServiceProvider services, final Class<B> targetClass) {
 		// it would be nicer, if this could be identified with the class of the converted object
 		this(services, services.getLoggingService().getLogger(AbstractConverter.class), targetClass);
 	}
 
-	private AbstractConverter(IUltimateServiceProvider services, ILogger logger, Class<B> targetClass) {
+	private AbstractConverter(final IUltimateServiceProvider services, final ILogger logger, final Class<B> targetClass) {
 		mServices = services;
 		mLogger = logger;
 		mTargetClass = targetClass;
@@ -46,20 +46,28 @@ public abstract class AbstractConverter<A, B> {
 	protected final ILogger getLogger() {
 		return mLogger;
 	}
+	
+	protected final IUltimateServiceProvider getServices() {
+		return mServices;
+	}
+	
+	public final IInteractive<B> getInterface() {
+		return mTargetInterface;
+	}
 
-	protected abstract void init(final ConverterRegistry<A, B> converterRegistry);
+	protected abstract void init(ConverterRegistry<A, B> converterRegistry);
 
 	public static class Initializer<A> implements IStorable {
 		private static final String STORAGE_IDENTIFIER_PREFIX = Initializer.class.getName();
+
+		private final IInteractive<A> mSourceInterface;
+		private final ITypeRegistry<A> mTypeRegistry;
 
 		private static <M> String getStorageIdentifier(final Class<M> bound) {
 			return STORAGE_IDENTIFIER_PREFIX + "_" + bound.getName();
 		}
 
-		private final IInteractive<A> mSourceInterface;
-		private final ITypeRegistry<A> mTypeRegistry;
-
-		public Initializer(IInteractive<A> sourceInterface, ITypeRegistry<A> typeRegistry) {
+		public Initializer(final IInteractive<A> sourceInterface, final ITypeRegistry<A> typeRegistry) {
 			super();
 			this.mSourceInterface = sourceInterface;
 			this.mTypeRegistry = typeRegistry;
@@ -82,10 +90,7 @@ public abstract class AbstractConverter<A, B> {
 
 		@Override
 		public void destroy() {
+			// nothing to be done here.
 		}
-	}
-
-	public IInteractive<B> getInterface() {
-		return mTargetInterface;
 	}
 }

@@ -6,7 +6,6 @@ import java.io.OutputStream;
 import java.util.function.BiConsumer;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
 
 /**
  * {@link IWrappedMessage} is a message with a header that can be sent or
@@ -28,25 +27,39 @@ public interface IWrappedMessage<T> {
 
 	Message getMessage();
 
-	public class Message {
-		public static String PRAEFIX_PATTERN = "[%s] %s";
+	/**
+	 * blocks until the message is read from input Stream.
+	 * 
+	 * @param input
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
+	void readFrom(InputStream input, ITypeRegistry<T> typeRegistry) throws IOException, InterruptedException;
+	
+	void writeTo(OutputStream output) throws IOException;
+
+	Writer<T> writer();
+
+
+	class Message {
+		public final static String PRAEFIX_PATTERN = "[%s] %s";
 
 		public final String source;
 		public final String text;
 		public final Level level;
 
-		public Message(String source, String text, Level level) {
+		public Message(final String source, final String text, final Level level) {
 			this.source = source;
 			this.text = text;
 			this.level = level;
 		}
 
-		public void log(ILogger logger) {
+		public void log(final ILogger logger) {
 			final String msg = String.format(PRAEFIX_PATTERN, source, text);
 			level.logmethod.accept(logger, msg);
 		}
 
-		public void log(ILogger logger, String praefix) {
+		public void log(final ILogger logger, final String praefix) {
 			final String msg = String.format(PRAEFIX_PATTERN, praefix + source, text);
 			level.logmethod.accept(logger, msg);
 		}
@@ -56,15 +69,11 @@ public interface IWrappedMessage<T> {
 
 			BiConsumer<ILogger, String> logmethod;
 
-			Level(BiConsumer<ILogger, String> logmethod) {
+			Level(final BiConsumer<ILogger, String> logmethod) {
 				this.logmethod = logmethod;
 			}
 		}
 	}
-
-	public void writeTo(OutputStream output) throws IOException;
-
-	public Writer<T> writer();
 
 	interface Writer<T> {
 		Writer<T> setMessage(Message message);
@@ -73,7 +82,7 @@ public interface IWrappedMessage<T> {
 		
 		Writer<T> setQid(String qid);
 		
-		default Writer<T> answer(IWrappedMessage<?> query) {
+		default Writer<T> answer(final IWrappedMessage<?> query) {
 			return setQid(query.getUniqueQueryIdentifier());
 		};
 
@@ -83,15 +92,6 @@ public interface IWrappedMessage<T> {
 
 		void write();
 	}
-
-	/**
-	 * blocks until the message is read from input Stream.
-	 * 
-	 * @param input
-	 * @throws IOException
-	 * @throws InterruptedException
-	 */
-	public void readFrom(InputStream input, ITypeRegistry<T> typeRegistry) throws IOException, InterruptedException;
 
 	public enum Action {
 		QUIT, // used to indicate that the connection will be terminated

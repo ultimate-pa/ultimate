@@ -184,7 +184,7 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 				}
 
 				@Override
-				protected IRefinementStrategy<LETTER> createFallbackStrategy(RefinementStrategy strategy) {
+				protected IRefinementStrategy<LETTER> createFallbackStrategy(final RefinementStrategy strategy) {
 					return createStrategy(strategy, counterexample, abstraction, iteration, benchmark);
 				}
 

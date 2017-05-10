@@ -21,11 +21,11 @@ public class MessageQueue<T> implements IInteractiveQueue<T> {
 	protected BlockingQueue<IWrappedMessage<T>> mOutputBuffer;
 	protected Map<String, CompletableFuture<? extends T>> mFutureMap;
 
-	private ILogger mLogger;
+	private final ILogger mLogger;
 
-	private Supplier<IWrappedMessage<T>> mFactory;
+	private final Supplier<IWrappedMessage<T>> mFactory;
 
-	public MessageQueue(ILogger logger, Supplier<IWrappedMessage<T>> factory) {
+	public MessageQueue(final ILogger logger, final Supplier<IWrappedMessage<T>> factory) {
 		mLogger = logger;
 		mFactory = factory;
 
@@ -33,24 +33,24 @@ public class MessageQueue<T> implements IInteractiveQueue<T> {
 		mFutureMap = new HashMap<>();
 	}
 
-	public IWrappedMessage<T> poll(long timeout, TimeUnit unit) {
+	public IWrappedMessage<T> poll(final long timeout, final TimeUnit unit) {
 		try {
 			return mOutputBuffer.poll(5, TimeUnit.SECONDS);
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			mLogger.error("output thread interrupted.", e);
 			return null;
 		}
 	}
 
-	public void put(IWrappedMessage<T> msg) {
+	public void put(final IWrappedMessage<T> msg) {
 		try {
 			mOutputBuffer.put(msg);
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			mLogger.error("could not send message " + msg.toString(), e);
 		}
 	}
 
-	private IWrappedMessage<T> put(Consumer<Writer<T>> useWriter) {
+	private IWrappedMessage<T> put(final Consumer<Writer<T>> useWriter) {
 		final IWrappedMessage<T> msg = mFactory.get();
 
 		final Writer<T> writer = msg.writer();
@@ -64,36 +64,37 @@ public class MessageQueue<T> implements IInteractiveQueue<T> {
 		return msg;
 	}
 
-	public void answer(IWrappedMessage<?> query, T data) {
+	public void answer(final IWrappedMessage<?> query, final T data) {
 		put(w -> w.setAction(Action.SEND).answer(query).setData(data));
 	}
 
 	@Override
-	public void send(T data) {
+	public void send(final T data) {
 		put(w -> w.setAction(Action.SEND).setData(data));
 	}
 
 	@Override
-	public <T1 extends T> CompletableFuture<T1> request(Class<T1> type) {
+	public <T1 extends T> CompletableFuture<T1> request(final Class<T1> type) {
 		final IWrappedMessage<T> msg = put(w -> w.setAction(Action.REQUEST).setQuery(type));
-		CompletableFuture<T1> future = new CompletableFuture<>();
+		final CompletableFuture<T1> future = new CompletableFuture<>();
 		mFutureMap.put(msg.getUniqueQueryIdentifier(), future);
 		return future;
 	}
 
 	@Override
-	public <T1 extends T> CompletableFuture<T1> request(Class<T1> type, T data) {
+	public <T1 extends T> CompletableFuture<T1> request(final Class<T1> type, final T data) {
 		final IWrappedMessage<T> msg = put(w -> w.setAction(Action.REQUEST).setQuery(type).setData(data));
-		CompletableFuture<T1> future = new CompletableFuture<>();
+		final CompletableFuture<T1> future = new CompletableFuture<>();
 		mFutureMap.put(msg.getUniqueQueryIdentifier(), future);
 		return future;
 	}
 
-	public <T1 extends T> boolean complete(String qid, T1 data, Throwable e) {
+	public <T1 extends T> boolean complete(final String qid, final T1 data, final Throwable e) {
 		if (!mFutureMap.containsKey(qid))
 			return false;
-		CompletableFuture<? extends T> future = mFutureMap.remove(qid);
+		final CompletableFuture<? extends T> future = mFutureMap.remove(qid);
 		@SuppressWarnings("unchecked")
+		final
 		CompletableFuture<T1> castedFuture = (CompletableFuture<T1>) future;
 		final boolean result = e == null ? castedFuture.complete(data) : castedFuture.completeExceptionally(e);
 		if (!result) {

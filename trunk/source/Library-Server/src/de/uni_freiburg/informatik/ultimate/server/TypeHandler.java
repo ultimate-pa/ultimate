@@ -17,24 +17,24 @@ public class TypeHandler<T> implements ITypeHandler<T> {
 	private final Map<Class<?>, Function<?, T>> mSuppliers = new HashMap<>();
 	private Supplier<T> mSupplier;
 
-	public TypeHandler(IRegisteredType<T> registeredType) {
+	public TypeHandler(final IRegisteredType<T> registeredType) {
 		mRegisteredType = registeredType;
 	}
 
-	public void addConsumer(Consumer<T> consumer) {
+	public void addConsumer(final Consumer<T> consumer) {
 		mConsumers.add(consumer);
 	}
 
-	public void setSupplier(Supplier<T> supplier) {
+	public void setSupplier(final Supplier<T> supplier) {
 		mSupplier = supplier;
 	}
 
-	public <D> void setSupplier(Class<D> argType, Function<D, T> supplier) {
+	public <D> void setSupplier(final Class<D> argType, final Function<D, T> supplier) {
 		mSuppliers.put(argType, supplier);
 	}
 
 	@Override
-	public void consume(T data) {
+	public void consume(final T data) {
 		mConsumers.forEach(c -> c.accept(data));
 	}
 
@@ -46,7 +46,7 @@ public class TypeHandler<T> implements ITypeHandler<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	private <D> T wrappedSupply(Class<D> type, Object data) {
+	private <D> T wrappedSupply(final Class<D> type, final Object data) {
 		final Function<D, T> supplier = (Function<D, T>) mSuppliers.get(type);
 		if (supplier == null)
 			return null;
@@ -54,8 +54,9 @@ public class TypeHandler<T> implements ITypeHandler<T> {
 	}
 
 	@Override
-	public <D> T supply(D data) {
+	public <D> T supply(final D data) {
 		@SuppressWarnings("unchecked")
+		final
 		Class<? extends D> type = (Class<? extends D>) data.getClass();
 		return wrappedSupply(type, data);
 	}

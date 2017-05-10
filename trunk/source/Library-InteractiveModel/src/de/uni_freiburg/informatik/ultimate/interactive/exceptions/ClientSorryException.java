@@ -12,9 +12,9 @@ import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage;
  */
 public class ClientSorryException extends ClientException {
 	private static final long serialVersionUID = 6163598721264845950L;
-	private IWrappedMessage<?> mWrapped;
+	private final IWrappedMessage<?> mWrapped;
 
-	public ClientSorryException(IWrappedMessage<?> wrapped) {
+	public ClientSorryException(final IWrappedMessage<?> wrapped) {
 		mWrapped = wrapped;
 	}
 

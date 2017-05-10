@@ -1,9 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.interactive;
 
 public interface IRegisteredType<T> {
-	public Class<T> getType();
+	Class<T> getType();
 
-	public T getDefaultInstance();
+	T getDefaultInstance();
 
-	public String registeredName();
+	String registeredName();
 }

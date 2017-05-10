@@ -16,12 +16,12 @@ public class HandlerRegistry<M> implements IHandlerRegistry<M> {
 	final protected Map<String, TypeHandler<?>> mByName = new HashMap<>();
 	final protected Map<Class<?>, TypeHandler<?>> mByClass = new HashMap<>();
 
-	public HandlerRegistry(ITypeRegistry<M> typeRegistry) {
+	public HandlerRegistry(final ITypeRegistry<M> typeRegistry) {
 		mTypeRegistry = typeRegistry;
 	}
 
-	private final <T extends M> TypeHandler<T> register(IRegisteredType<T> type) {
-		TypeHandler<T> typeHandler = new TypeHandler<>(type);
+	private final <T extends M> TypeHandler<T> register(final IRegisteredType<T> type) {
+		final TypeHandler<T> typeHandler = new TypeHandler<>(type);
 		mByClass.put(type.getClass(), typeHandler);
 		mByName.put(type.registeredName(), typeHandler);
 
@@ -49,17 +49,17 @@ public class HandlerRegistry<M> implements IHandlerRegistry<M> {
 	}
 
 	@Override
-	public <T extends M> void register(Class<T> type, Consumer<T> consumer) {
+	public <T extends M> void register(final Class<T> type, final Consumer<T> consumer) {
 		getInternal(type).addConsumer(consumer);
 	}
 
 	@Override
-	public <T extends M> void register(Class<T> type, Supplier<T> supplier) {
+	public <T extends M> void register(final Class<T> type, final Supplier<T> supplier) {
 		getInternal(type).setSupplier(supplier);
 	}
 
 	@Override
-	public <D extends M, T extends M> void register(Class<T> type, Class<D> dataType, Function<D, T> supplier) {
+	public <D extends M, T extends M> void register(final Class<T> type, final Class<D> dataType, final Function<D, T> supplier) {
 		getInternal(type).setSupplier(dataType, supplier);
 	}
 

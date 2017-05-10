@@ -3,6 +3,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.i
 public class IterationInfo {
 	public static Info instance = new Info();
 
+	public static Info newInstance() {
+		return new Info();
+	};
+
 	public static class Info {
 		public Integer mIteration = null;
 		public String mInterpolantAutomaton = null;
@@ -13,8 +17,4 @@ public class IterationInfo {
 			return this;
 		}
 	}
-
-	public static Info newInstance() {
-		return new Info();
-	};
 }

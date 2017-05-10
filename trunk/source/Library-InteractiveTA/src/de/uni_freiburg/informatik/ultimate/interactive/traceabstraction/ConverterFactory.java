@@ -25,7 +25,7 @@ public class ConverterFactory implements TAConverterFactory<GeneratedMessageV3> 
 	}
 
 	@Override
-	public AbstractConverter<GeneratedMessageV3, Object> createConverter(IUltimateServiceProvider services) {
+	public AbstractConverter<GeneratedMessageV3, Object> createConverter(final IUltimateServiceProvider services) {
 		return new Converter(services);
 	}
 

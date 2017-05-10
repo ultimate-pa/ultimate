@@ -25,7 +25,7 @@ public class ConverterFactory implements CommonConverterFactory<GeneratedMessage
 	}
 
 	@Override
-	public AbstractConverter<GeneratedMessageV3, Object> createConverter(IUltimateServiceProvider services) {
+	public AbstractConverter<GeneratedMessageV3, Object> createConverter(final IUltimateServiceProvider services) {
 		return new Converter(services);
 	}
 

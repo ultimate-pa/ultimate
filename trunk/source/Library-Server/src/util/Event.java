@@ -1,13 +1,13 @@
 package util;
 
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Condition;;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;;
 
 public class Event {
-	Lock lock = new ReentrantLock();
-	Condition cond = lock.newCondition();
+	private final Lock lock = new ReentrantLock();
+	private final Condition cond = lock.newCondition();
 	boolean flag;
 
 	public void doWait() throws InterruptedException {
@@ -21,7 +21,7 @@ public class Event {
 		}
 	}
 
-	public void doWait(float seconds) throws InterruptedException {
+	public void doWait(final float seconds) throws InterruptedException {
 		lock.lock();
 		try {
 			while (!flag) {

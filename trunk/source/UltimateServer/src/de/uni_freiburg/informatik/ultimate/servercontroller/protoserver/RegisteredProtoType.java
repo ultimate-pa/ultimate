@@ -16,11 +16,12 @@ public class RegisteredProtoType<T extends GeneratedMessageV3> implements IRegis
 		this.mDefaultMsg = defaultMsg;
 	}
 
+	@Override
 	public String registeredName() {
 		return registeredName(mDefaultMsg);
 	}
 
-	public static String registeredName(GeneratedMessageV3 data) {
+	public static String registeredName(final GeneratedMessageV3 data) {
 		return data.getDescriptorForType().getFullName();
 	}
 

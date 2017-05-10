@@ -9,8 +9,7 @@ package de.uni_freiburg.informatik.ultimate.interactive.exceptions;
 public abstract class ServerException extends RuntimeException {
 	private static final long serialVersionUID = -5783259998242495330L;
 
-	public ServerException(String string) {
+	public ServerException(final String string) {
 		super(string);
 	}
-
 }

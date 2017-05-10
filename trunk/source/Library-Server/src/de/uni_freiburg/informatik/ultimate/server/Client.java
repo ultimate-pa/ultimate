@@ -6,11 +6,9 @@ import java.io.OutputStream;
 import java.net.Socket;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -23,7 +21,6 @@ import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage;
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage.Action;
 import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage.Message;
-import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientException;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientQuittedException;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientSorryException;
 
@@ -47,8 +44,8 @@ public abstract class Client<T> {
 	protected CompletableFuture<Void> mQuitFuture = new CompletableFuture<>();
 	protected int mCurrentRequestId = 0;
 
-	private ITypeRegistry<T> mTypeRegistry;
-	private HandlerRegistry<T> mHandlerRegistry;
+	private final ITypeRegistry<T> mTypeRegistry;
+	private final HandlerRegistry<T> mHandlerRegistry;
 
 	private CompletableFuture<Void> mInputFuture;
 	private CompletableFuture<Void> mOutputFuture;
@@ -56,7 +53,7 @@ public abstract class Client<T> {
 
 	private boolean mIOExceptionOccurred = false;
 
-	Client(Socket connectionSocket, ILogger logger, ITypeRegistry<T> typeRegistry, IWrappedMessage<T> helloMessage) {
+	Client(final Socket connectionSocket, final ILogger logger, final ITypeRegistry<T> typeRegistry, final IWrappedMessage<T> helloMessage) {
 		mLogger = logger;
 
 		mTypeRegistry = typeRegistry;
@@ -74,21 +71,21 @@ public abstract class Client<T> {
 		return mQuitFuture;
 	}
 
-	public IInteractive<T> createInteractiveInterface(CompletableFuture<IInteractiveQueue<Object>> common) {
+	public IInteractive<T> createInteractiveInterface(final CompletableFuture<IInteractiveQueue<Object>> common) {
 		return new ClientInteractiveInterface(common);
 	}
 
-	private void warnUnregistered(String typeName) {
+	private void warnUnregistered(final String typeName) {
 		mLogger.warn(String.format("received message with data of unregistered type \"%s\"", typeName));
 	}
 
-	protected void handle(IWrappedMessage<T> msg) {
+	protected void handle(final IWrappedMessage<T> msg) {
 		// mLogger.debug("handleWrappged: " + wrapped.header.toString());
 		final String queryId = msg.getUniqueQueryIdentifier();
 		final String typeName = msg.getUniqueDataTypeIdentifier();
 		final String qTypeName = msg.getUniqueQueryDataTypeIdentifier();
 		ITypeHandler<T> typeHandler = null;
-		T data = msg.get();
+		final T data = msg.get();
 		final boolean noDataType = typeName.isEmpty() && data == null;
 		final boolean dataTypeUnregistered;
 		if (mTypeRegistry.registered(typeName)) {
@@ -97,10 +94,10 @@ public abstract class Client<T> {
 		} else {
 			dataTypeUnregistered = !noDataType;
 		}
-		Message logmsg = msg.getMessage();
+		final Message logmsg = msg.getMessage();
 		logmsg.log(mLogger);
 
-		Action action = msg.getAction();
+		final Action action = msg.getAction();
 		switch (action) {
 		case LOGGING:
 			// if (!typeName.isEmpty())
@@ -157,7 +154,7 @@ public abstract class Client<T> {
 		try {
 			mSocket.close();
 			mLogger.info("Connection closed.");
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			mLogger.error("failed to shut down connection gracefully.", e);
 			handleIoException(e);
 		}
@@ -183,9 +180,9 @@ public abstract class Client<T> {
 		return mIOExceptionOccurred;
 	}
 
-	public void startQueue(ExecutorService executor) throws IOException {
-		InputStream input = mSocket.getInputStream();
-		OutputStream output = mSocket.getOutputStream();
+	public void startQueue(final ExecutorService executor) throws IOException {
+		final InputStream input = mSocket.getInputStream();
+		final OutputStream output = mSocket.getOutputStream();
 
 		mInputFuture = CompletableFuture.runAsync(() -> runOutput(output), executor);
 		mOutputFuture = CompletableFuture.runAsync(() -> runInput(input, mTypeRegistry), executor);
@@ -212,7 +209,7 @@ public abstract class Client<T> {
 		return mFinishedFuture;
 	}
 
-	private void runOutput(OutputStream output) {
+	private void runOutput(final OutputStream output) {
 		IWrappedMessage<T> msg;
 		while (!mQuitting) {
 			msg = mQueue.poll(5, TimeUnit.SECONDS);
@@ -221,7 +218,7 @@ public abstract class Client<T> {
 
 			try {
 				msg.writeTo(output);
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				mLogger.error(e);
 				handleIoException(e);
 				break;
@@ -229,7 +226,7 @@ public abstract class Client<T> {
 		}
 	}
 
-	private void runInput(InputStream input, ITypeRegistry<T> typeRegistry) {
+	private void runInput(final InputStream input, final ITypeRegistry<T> typeRegistry) {
 		IWrappedMessage<T> msg;
 		while (!mQuitting) {
 			try {
@@ -241,17 +238,17 @@ public abstract class Client<T> {
 				msg.readFrom(input, typeRegistry);
 				try {
 					handle(msg);
-				} catch (Exception e) {
-					String emsg = String.format("failed to handle %s message (%s).", msg.getAction(),
+				} catch (final Exception e) {
+					final String emsg = String.format("failed to handle %s message (%s).", msg.getAction(),
 							msg.getUniqueQueryDataTypeIdentifier());
 					mLogger.error(emsg, e);
 					continue;
 				}
-			} catch (IOException e) {
+			} catch (final IOException e) {
 				mLogger.error("failed to read input", e);
 				handleIoException(e);
 				return;
-			} catch (InterruptedException e) {
+			} catch (final InterruptedException e) {
 				mLogger.error("input thread interrupted.", e);
 				continue;
 			}
@@ -261,37 +258,37 @@ public abstract class Client<T> {
 	public class ClientInteractiveInterface implements IInteractive<T> {
 		private final CompletableFuture<IInteractiveQueue<Object>> mCommonInterface;
 
-		public ClientInteractiveInterface(CompletableFuture<IInteractiveQueue<Object>> commonInterface) {
+		public ClientInteractiveInterface(final CompletableFuture<IInteractiveQueue<Object>> commonInterface) {
 			mCommonInterface = commonInterface;
 		}
 
 		@Override
-		public <T1 extends T> void register(Class<T1> type, Consumer<T1> consumer) {
+		public <T1 extends T> void register(final Class<T1> type, final Consumer<T1> consumer) {
 			mHandlerRegistry.register(type, consumer);
 		}
 
 		@Override
-		public <T1 extends T> void register(Class<T1> type, Supplier<T1> supplier) {
+		public <T1 extends T> void register(final Class<T1> type, final Supplier<T1> supplier) {
 			mHandlerRegistry.register(type, supplier);
 		}
 
 		@Override
-		public <D extends T, T1 extends T> void register(Class<T1> type, Class<D> dataType, Function<D, T1> supplier) {
+		public <D extends T, T1 extends T> void register(final Class<T1> type, final Class<D> dataType, final Function<D, T1> supplier) {
 			mHandlerRegistry.register(type, dataType, supplier);
 		}
 
 		@Override
-		public void send(T data) {
+		public void send(final T data) {
 			mQueue.send(data);
 		}
 
 		@Override
-		public <T1 extends T> CompletableFuture<T1> request(Class<T1> type) {
+		public <T1 extends T> CompletableFuture<T1> request(final Class<T1> type) {
 			return mQueue.request(type);
 		}
 
 		@Override
-		public <T1 extends T> CompletableFuture<T1> request(Class<T1> type, T data) {
+		public <T1 extends T> CompletableFuture<T1> request(final Class<T1> type, final T data) {
 			return mQueue.request(type, data);
 		}
 

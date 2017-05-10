@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.server;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -39,7 +38,7 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 	protected final Event mConnectionEvent;
 	protected ITypeRegistry<T> mTypeRegistry;
 
-	public TCPServer(ILogger logger, int port) {
+	public TCPServer(final ILogger logger, final int port) {
 		mLogger = logger;
 		mPort = port;
 		mGetExecutorService = Executors::newWorkStealingPool;
@@ -75,7 +74,7 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 			mLogger.info("Server stopped.");
 		} catch (InterruptedException | ExecutionException e) {
 			mLogger.error("Server Thread was interrupted.", e);
-		} catch (TimeoutException e) {
+		} catch (final TimeoutException e) {
 			final boolean canceled = mServerFuture.cancel(true);
 			mLogger.error(String.format("Server Thread Timed out. Canceled execution: %s", canceled));
 		}
@@ -89,7 +88,7 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 	private void run() {
 		try {
 			mSocket = new ServerSocket(mPort);
-		} catch (IOException e1) {
+		} catch (final IOException e1) {
 			mCancelled = true;
 			mLogger.error("Server could not be started.", e1);
 			return;
@@ -114,7 +113,7 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 
 		try {
 			mLogger.info("listening on port " + mPort);
-			Socket clientSocket = mSocket.accept();
+			final Socket clientSocket = mSocket.accept();
 
 			mLogger.info("accepted connection: " + clientSocket);
 			mClient.setSocket(clientSocket);
@@ -124,21 +123,21 @@ public abstract class TCPServer<T> implements IInteractiveServer<T> {
 			mClient.setExecutor(mExecutor);
 
 			// send(Action.HELLO, null);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 			mLogger.error("Could not listen on port:" + mPort);
 			mClient.cancel(true);
 			return;
 		}
 
 		try {
-			Client<T> client = mClient.get(1, TimeUnit.MINUTES);
+			final Client<T> client = mClient.get(1, TimeUnit.MINUTES);
 
 			client.finished().get();
 		} catch (InterruptedException | ExecutionException e) {
 			mLogger.error("Client", e);
 			mClient.cancel(true);
 			return;
-		} catch (TimeoutException e) {
+		} catch (final TimeoutException e) {
 			mLogger.error("Timed out waiting for Client");
 			mClient.cancel(true);
 			return;

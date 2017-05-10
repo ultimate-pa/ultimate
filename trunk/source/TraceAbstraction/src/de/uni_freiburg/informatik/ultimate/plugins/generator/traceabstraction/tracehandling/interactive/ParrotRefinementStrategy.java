@@ -108,13 +108,13 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 			mNextTrack = null;
 			return;
 		}
-		Future<Track[]> answer = getInteractive().getInterface().request(Track[].class, mLeft.stream().toArray(Track[]::new));
+		final Future<Track[]> answer = getInteractive().getInterface().request(Track[].class, mLeft.stream().toArray(Track[]::new));
 		Track[] results;
 		try {
 			results = answer.get();
-		} catch (InterruptedException e) {
+		} catch (final InterruptedException e) {
 			throw new IllegalStateException(e);
-		} catch (ExecutionException e) {
+		} catch (final ExecutionException e) {
 			if (e.getCause() instanceof ClientSorryException) {
 				mNextTrack = null;
 				mLogger.error("No client answer.");
@@ -155,7 +155,7 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 
 		if (mIteration >= itInfo.getNextInteractiveIteration()) {
 			try {
-				ParrotInteractiveIterationInfo other =
+				final ParrotInteractiveIterationInfo other =
 						getInteractive().getInterface().request(ParrotInteractiveIterationInfo.class).get();
 				itInfo.setFrom(other);
 			} catch (InterruptedException | ExecutionException e) {
@@ -205,8 +205,8 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 	}
 
 	@Override
-	public boolean hasNextInterpolantGenerator(List<InterpolantsPreconditionPostcondition> perfectIpps,
-			List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+	public boolean hasNextInterpolantGenerator(final List<InterpolantsPreconditionPostcondition> perfectIpps,
+			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
 		return mFallback != null ? mFallback.hasNextInterpolantGenerator(perfectIpps, imperfectIpps)
 				: super.hasNextInterpolantGenerator(perfectIpps, imperfectIpps);
 	}
@@ -227,8 +227,8 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 
 	@Override
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
-			List<InterpolantsPreconditionPostcondition> perfectIpps,
-			List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+			final List<InterpolantsPreconditionPostcondition> perfectIpps,
+			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
 		return mFallback != null ? mFallback.getInterpolantAutomatonBuilder(perfectIpps, imperfectIpps)
 				: super.getInterpolantAutomatonBuilder(perfectIpps, imperfectIpps);
 	}

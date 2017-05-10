@@ -43,7 +43,7 @@ public class FutureClient<T> implements Future<Client<T>> {
 	private final CompletableFuture<Client<T>> mClientFuture;
 	private final Future<Client<T>> mClientWithHelloFuture;
 
-	public FutureClient(ILogger logger) {
+	public FutureClient(final ILogger logger) {
 		mLogger = logger;
 		mClientFuture = CompletableFuture.allOf(mSocket, mMessageFactory, mTypeRegistry, mHelloMessage).thenApply(n -> {
 			final Supplier<IWrappedMessage<T>> factory = mMessageFactory.join();
@@ -59,7 +59,7 @@ public class FutureClient<T> implements Future<Client<T>> {
 		}).thenCombine(mExecutor, (c, e) -> {
 			try {
 				c.startQueue(e);
-			} catch (IOException e1) {
+			} catch (final IOException e1) {
 				throw new RuntimeException(e1);
 			}
 			return c;
@@ -67,33 +67,33 @@ public class FutureClient<T> implements Future<Client<T>> {
 		mClientWithHelloFuture = mClientFuture.thenCompose(Client::hasSaidHello);
 	}
 
-	public void setSocket(Socket socket) {
+	public void setSocket(final Socket socket) {
 		if (!mSocket.complete(socket))
 			throw new IllegalStateException("Socket had already been set");
 	}
 
-	public void setFactory(Supplier<IWrappedMessage<T>> factory) {
+	public void setFactory(final Supplier<IWrappedMessage<T>> factory) {
 		if (!mMessageFactory.complete(factory))
 			throw new IllegalStateException("Message factory had already been set");
 	}
 
-	public void setRegistry(ITypeRegistry<T> registry) {
+	public void setRegistry(final ITypeRegistry<T> registry) {
 		if (!mTypeRegistry.complete(registry))
 			throw new IllegalStateException("Type registry had already been set");
 	}
 	
-	public void setHelloMessage(String source, String text, Level level) {
-		Message message = new Message(source, text, level);
+	public void setHelloMessage(final String source, final String text, final Level level) {
+		final Message message = new Message(source, text, level);
 		if (!mHelloMessage.complete(message))
 			throw new IllegalStateException("Hello Message had already been set");
 	}
 
-	public void setExecutor(ExecutorService executor) {
+	public void setExecutor(final ExecutorService executor) {
 		if (!mExecutor.complete(executor))
 			throw new IllegalStateException("Executor had already been set");
 	}
 
-	private static <R, T> T getNowFromFuture(final CompletableFuture<R> future, Function<R, T> f, T valueIfAbsent) {
+	private static <R, T> T getNowFromFuture(final CompletableFuture<R> future, final Function<R, T> f, final T valueIfAbsent) {
 		if (!future.isDone() || future.isCancelled() || future.isCompletedExceptionally())
 			return valueIfAbsent;
 		final R result = future.getNow(null);
@@ -111,7 +111,7 @@ public class FutureClient<T> implements Future<Client<T>> {
 	}
 
 	@Override
-	public boolean cancel(boolean mayInterruptIfRunning) {
+	public boolean cancel(final boolean mayInterruptIfRunning) {
 		return mClientWithHelloFuture.cancel(mayInterruptIfRunning);
 	}
 
@@ -131,7 +131,7 @@ public class FutureClient<T> implements Future<Client<T>> {
 	}
 
 	@Override
-	public Client<T> get(long timeout, TimeUnit unit)
+	public Client<T> get(final long timeout, final TimeUnit unit)
 			throws InterruptedException, ExecutionException, TimeoutException {
 		return mClientWithHelloFuture.get(timeout, unit);
 	}

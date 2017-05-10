@@ -8,18 +8,17 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.GnuParser;
 //import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Option;
-import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 public class CommandLineArgs {
-	public static String SETTINGS_OPTION = "S";
-	public static String INPUT_OPTION = "I";
-	public static String TOOLCHAIN_OPTION = "TC";
-	public static String PORT_OPTION = "P";
-	public static String LISTEN_TIMEOUT_OPTION = "TIMEOUT";
-	final static int DEFAULT_PORT = 6789;
-	final static int DEFAULT_TIMEOUT = 60;
+	public final static String SETTINGS_OPTION = "S";
+	public final static String INPUT_OPTION = "I";
+	public final static String TOOLCHAIN_OPTION = "TC";
+	public final static String PORT_OPTION = "P";
+	public final static String LISTEN_TIMEOUT_OPTION = "TIMEOUT";
+	private final static int DEFAULT_PORT = 6789;
+	private final static int DEFAULT_TIMEOUT = 60;
 
 	final File mToolchainDirPath;
 	final File mInputDirPath;
@@ -47,7 +46,7 @@ public class CommandLineArgs {
 		return mTimeout;
 	}
 
-	private CommandLineArgs(String toolchainDir, String inputDir, String settingsDir, int port, int timeout) {
+	private CommandLineArgs(final String toolchainDir, final String inputDir, final String settingsDir, final int port, final int timeout) {
 		this.mToolchainDirPath = validateDir(toolchainDir);
 		this.mInputDirPath = validateDir(inputDir);
 		this.mSettingsFilePath = validateDir(settingsDir);
@@ -62,7 +61,7 @@ public class CommandLineArgs {
 		return dir;
 	}
 
-	public static CommandLineArgs parse(String[] args) throws ParseException {
+	public static CommandLineArgs parse(final String[] args) throws ParseException {
 		// Alter Java ist eine dermaßen Verbose kacke, ich werde Wahnsinnig.
 		// Dieser hauffen FUCK Code hier macht schon, dass ich mir am liebsten
 		// die Augen ausstechen möchte.
@@ -70,16 +69,16 @@ public class CommandLineArgs {
 		// Menschen mit diesem shit produktiv arbeiten?
 
 		CommandLine commandLine;
-		Option option_tc = Option.builder(TOOLCHAIN_OPTION).argName("tc").hasArg().required().build();
-		Option option_input =
+		final Option option_tc = Option.builder(TOOLCHAIN_OPTION).argName("tc").hasArg().required().build();
+		final Option option_input =
 				Option.builder(INPUT_OPTION).argName("i").hasArgs().required().desc("Input Files").build();
-		Option option_setting =
+		final Option option_setting =
 				Option.builder(SETTINGS_OPTION).argName("s").hasArg().required().desc("Setting Files").build();
-		Option port_setting = Option.builder(PORT_OPTION).argName("p").hasArg().desc("The Port").build();
-		Option option_timeout = Option.builder(LISTEN_TIMEOUT_OPTION).argName("timeout").hasArg()
+		final Option port_setting = Option.builder(PORT_OPTION).argName("p").hasArg().desc("The Port").build();
+		final Option option_timeout = Option.builder(LISTEN_TIMEOUT_OPTION).argName("timeout").hasArg()
 				.desc("Timeout for listening for incoming connections in seconds").build();
-		Options options = new Options();
-		CommandLineParser parser = new MyOwnStupidFuckingParser();
+		final Options options = new Options();
+		final CommandLineParser parser = new MyOwnStupidFuckingParser();
 		// CommandLineParser parser = new DefaultParser();
 
 		options.addOption(option_tc);
@@ -95,7 +94,7 @@ public class CommandLineArgs {
 			final String portString = commandLine.getOptionValue(PORT_OPTION);
 			try {
 				port = Integer.parseInt(portString);
-			} catch (NumberFormatException e) {
+			} catch (final NumberFormatException e) {
 				throw new ParseException("Invalid value: " + portString + " cannot be parsed as port");
 			}
 		}
@@ -104,7 +103,7 @@ public class CommandLineArgs {
 			final String timeoutString = commandLine.getOptionValue(LISTEN_TIMEOUT_OPTION);
 			try {
 				timeout = Integer.parseInt(timeoutString);
-			} catch (NumberFormatException e) {
+			} catch (final NumberFormatException e) {
 				throw new ParseException("Invalid value: " + timeoutString + " cannot be parsed as timeout");
 			}
 		}

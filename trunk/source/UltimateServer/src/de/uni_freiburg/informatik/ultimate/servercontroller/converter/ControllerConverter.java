@@ -21,20 +21,20 @@ import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.ToolchainResults;
 
 public class ControllerConverter extends AbstractConverter<GeneratedMessageV3, Object> {
-	public static ControllerConverter get(ILogger logger) {
+	public static ControllerConverter get(final ILogger logger) {
 		return new ControllerConverter(logger);
 	}
 
-	protected ControllerConverter(IUltimateServiceProvider services) {
+	protected ControllerConverter(final IUltimateServiceProvider services) {
 		super(services, Object.class);
 	}
 
-	protected ControllerConverter(ILogger logger) {
+	protected ControllerConverter(final ILogger logger) {
 		super(logger, Object.class);
 	}
 
-	private static Result convertResult(IResult result) {
-		Result.Builder builder = Result.newBuilder();
+	private static Result convertResult(final IResult result) {
+		final Result.Builder builder = Result.newBuilder();
 		builder.setPlugin(result.getPlugin()).setShortDescription(result.getShortDescription())
 				.setResultClassName(result.getClass().getSimpleName()).setLongDescription(result.getLongDescription());
 		if (result instanceof IResultWithLocation) {
@@ -44,7 +44,7 @@ public class ControllerConverter extends AbstractConverter<GeneratedMessageV3, O
 		return builder.build();
 	}
 
-	private static Location convertLocation(ILocation location) {
+	private static Location convertLocation(final ILocation location) {
 		final Location.Builder builder = Location.newBuilder();
 		builder.setFileName(location.getFileName()).setStartCol(location.getStartColumn())
 				.setEndCol(location.getEndColumn()).setStartLine(location.getStartLine())
@@ -52,21 +52,21 @@ public class ControllerConverter extends AbstractConverter<GeneratedMessageV3, O
 		return builder.build();
 	}
 
-	private static Results convertResults(List<IResult> results) {
+	private static Results convertResults(final List<IResult> results) {
 		final Results.Builder builder = Results.newBuilder();
 		results.stream().map(ControllerConverter::convertResult).forEach(builder::addResults);
 		return builder.build();
 	}
 
 	@Override
-	protected void init(ConverterRegistry<GeneratedMessageV3, Object> converterRegistry) {
+	protected void init(final ConverterRegistry<GeneratedMessageV3, Object> converterRegistry) {
 		converterRegistry.registerBA(ResultSummary.class, ResultSummarizer.class, rs -> {
 			return ResultSummary.newBuilder().setDescription(rs.getResultDescription())
 					.setResult(ToolChainResult.valueOf(rs.getResultSummary().toString())).build();
 		});
 
 		converterRegistry.registerBA(ToolchainResults.class, ResultsWrapper.class, rs -> {
-			ToolchainResults.Builder builder = ToolchainResults.newBuilder();
+			final ToolchainResults.Builder builder = ToolchainResults.newBuilder();
 			rs.results.entrySet().stream().forEach(e -> builder.putResults(e.getKey(), convertResults(e.getValue())));
 			return builder.build();
 		});

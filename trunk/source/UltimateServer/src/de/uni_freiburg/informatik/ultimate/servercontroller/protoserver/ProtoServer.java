@@ -10,7 +10,7 @@ import de.uni_freiburg.informatik.ultimate.server.TCPServer;
 public class ProtoServer extends TCPServer<GeneratedMessageV3> {
 	protected final ITypeRegistry<GeneratedMessageV3> mTypeRegistry = new ProtoTypeRegistry();
 
-	public ProtoServer(ILogger logger, int port) {
+	public ProtoServer(final ILogger logger, final int port) {
 		super(logger, port);
 	}
 

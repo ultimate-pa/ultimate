@@ -22,11 +22,11 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		super(logger, Object.class);
 	}
 
-	public Converter(IUltimateServiceProvider services) {
+	public Converter(final IUltimateServiceProvider services) {
 		super(services, Object.class);
 	}
 
-	private static Common.StackTraceElement convertStackTraceElement(StackTraceElement el) {
+	private static Common.StackTraceElement convertStackTraceElement(final StackTraceElement el) {
 		return Common.StackTraceElement.newBuilder().setDeclaringClass(el.getClassName()).setFileName(el.getFileName())
 				.setMethodName(el.getMethodName()).setLineNumber(el.getLineNumber()).build();
 	}
@@ -35,11 +35,11 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		final Common.File.Builder builder = Common.File.newBuilder();
 		builder.setFileName(file.getName());
 
-		Path path = Paths.get(file.getAbsolutePath());
+		final Path path = Paths.get(file.getAbsolutePath());
 		try {
 			final String content = new String(Files.readAllBytes(path));
 			builder.setContent(content);
-		} catch (IOException e) {
+		} catch (final IOException e) {
 		}
 
 		return builder.build();
@@ -55,7 +55,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		return builder.build();
 	}
 
-	private static Object getChoice(Common.Choice choice, final ChoiceRequest available) {
+	private static Object getChoice(final Common.Choice choice, final ChoiceRequest available) {
 		final int choiceid = choice.getIndex();
 		if (choiceid < 0 || choiceid > available.mChoices.size()) {
 			throw new ClientCrazyException(String.format("Choice index from Client not within bounds: %1$d", choiceid));
@@ -74,7 +74,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 	}
 
 	@Override
-	protected void init(ConverterRegistry<GeneratedMessageV3, Object> converterRegistry) {
+	protected void init(final ConverterRegistry<GeneratedMessageV3, Object> converterRegistry) {
 		converterRegistry.registerBA(Common.Exception.class, Throwable.class, e -> {
 			final Common.Exception.Builder builder = Common.Exception.newBuilder().setClass_(e.getClass().getName());
 			Arrays.stream(e.getStackTrace()).map(Converter::convertStackTraceElement).forEach(builder::addStackTrace);
@@ -92,6 +92,6 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		converterRegistry.registerBA(Common.Choice.Request.class, ChoiceRequest.class, Converter::convertChoiceRequest);
 
 		converterRegistry.registerRConv(Common.Choice.class, ChoiceRequest.class, Object.class, Converter::getChoice);
-		;
+		
 	}
 }

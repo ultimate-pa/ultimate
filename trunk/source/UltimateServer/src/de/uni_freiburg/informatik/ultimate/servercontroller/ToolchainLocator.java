@@ -53,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  *
  */
 public class ToolchainLocator {
+	private final static String XMLEXT = ".xml";
 
 	private final File mDir;
 	private final ICore<RunDefinition> mCore;
@@ -91,13 +92,13 @@ public class ToolchainLocator {
 		}
 		final File[] xmlFiles;
 		if (mDir.isFile()) {
-			if (mDir.getName().endsWith(".xml")) {
+			if (mDir.getName().endsWith(XMLEXT)) {
 				xmlFiles = new File[] { mDir };
 			} else {
 				return Collections.emptyMap();
 			}
 		} else {
-			xmlFiles = mDir.listFiles((file, name) -> name.endsWith(".xml"));
+			xmlFiles = mDir.listFiles((file, name) -> name.endsWith(XMLEXT));
 			if (xmlFiles.length == 0) {
 				return Collections.emptyMap();
 			}

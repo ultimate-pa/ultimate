@@ -8,13 +8,13 @@ package de.uni_freiburg.informatik.ultimate.interactive;
  * @param <M>
  */
 public interface ITypeRegistry<M> {
-	<T extends M> boolean registered(final Class<T> type);
+	<T extends M> boolean registered(Class<T> type);
 
-	<T extends M> boolean registered(final String typeName);
+	<T extends M> boolean registered(String typeName);
 
-	<T extends M> IRegisteredType<T> get(final String typeName);
+	<T extends M> IRegisteredType<T> get(String typeName);
 
-	<T extends M> IRegisteredType<T> get(final Class<T> type);
+	<T extends M> IRegisteredType<T> get(Class<T> type);
 
 	/**
 	 * registers a Data type with the Server.

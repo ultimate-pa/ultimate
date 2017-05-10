@@ -11,7 +11,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IntersectNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty.SearchStrategy;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -36,6 +35,10 @@ public class InteractiveCegar {
 	public static class Preferences {
 
 		private final boolean mCEXS;
+		private final boolean mIPS;
+		private final boolean mRSS;
+		private final boolean mPaused;
+
 
 		public boolean ismCEXS() {
 			return mCEXS;
@@ -53,11 +56,7 @@ public class InteractiveCegar {
 			return mPaused;
 		}
 
-		private final boolean mIPS;
-		private final boolean mRSS;
-		private final boolean mPaused;
-
-		public Preferences(boolean cexs, boolean ips, boolean rss, boolean paused) {
+		public Preferences(final boolean cexs, final boolean ips, final boolean rss, final boolean paused) {
 			mCEXS = cexs;
 			mIPS = ips;
 			mRSS = rss;
@@ -93,7 +92,7 @@ public class InteractiveCegar {
 		}
 	}
 
-	private synchronized void setPreferences(Preferences preferences) {
+	private synchronized void setPreferences(final Preferences preferences) {
 		mLogger.info("Received Live Preferences");
 		mPreferences = preferences;
 		if (!mPreferences.mPaused && mContinue != null && !mContinue.isDone()) {
@@ -150,8 +149,8 @@ public class InteractiveCegar {
 	public <LETTER> NestedRun<LETTER, IPredicate> getUserRun(
 			final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction, final int iteration,
 			final IUltimateServiceProvider services, final SearchStrategy searchStrategy,
-			final PredicateFactoryForInterpolantAutomata taContentFactory, PredicateFactory predicateFactory,
-			ManagedScript script) throws AutomataOperationCanceledException {
+			final PredicateFactoryForInterpolantAutomata taContentFactory, final PredicateFactory predicateFactory,
+			final ManagedScript script) throws AutomataOperationCanceledException {
 		mLogger.info("Asking the user for a trace...");
 		NestedRun<LETTER, IPredicate> userRun = null;
 		/*
@@ -182,11 +181,11 @@ public class InteractiveCegar {
 		 */
 		while (true) {
 			try {
-				PreNestedWord preWord = getInterface()
+				final PreNestedWord preWord = getInterface()
 						.request(PreNestedWord.class, IterationInfo.instance.setIteration(iteration)).get();
 				// userRun = mInteractive.request(NestedRun.class).get();
 
-				INestedWordAutomatonSimple<LETTER, IPredicate> userAutomaton =
+				final INestedWordAutomatonSimple<LETTER, IPredicate> userAutomaton =
 						preWord.getAutomaton(services, abstraction, taContentFactory, predicateFactory, script);
 
 				// mInteractive.send(userAutomaton);
@@ -207,7 +206,7 @@ public class InteractiveCegar {
 							+ "current abstraction. Please select anther trace.");
 					mLogger.info("intersection of the automaton that accepts the user-trace with abstraction is empty. "
 							+ "Asking for another user run.");
-				} catch (AutomataLibraryException e) {
+				} catch (final AutomataLibraryException e) {
 					mLogger.error("Intersection with user automaton failed", e);
 					getInterface().common().send(e);
 				}

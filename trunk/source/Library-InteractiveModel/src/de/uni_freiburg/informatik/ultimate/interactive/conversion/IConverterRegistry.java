@@ -13,16 +13,15 @@ import java.util.function.Supplier;
  * @param <IA,IB>
  */
 public interface IConverterRegistry<IA, IB> {
-	<A extends IA> IConverter<A, ? extends IB> getAB(final Class<A> typeA);
+	<A extends IA> IConverter<A, ? extends IB> getAB(Class<A> typeA);
 
-	<B extends IB> IConverter<? extends IA, B> getAB2(final Class<B> typeB);
+	<B extends IB> IConverter<? extends IA, B> getAB2(Class<B> typeB);
 
-	<B extends IB, D extends IB> IResponseConverter<? extends IA, D, B> getRConv(final Class<B> typeB,
-			final Class<D> typeD);
+	<B extends IB, D extends IB> IResponseConverter<? extends IA, D, B> getRConv(Class<B> typeB, Class<D> typeD);
 
-	<B extends IB> IConverter<B, ? extends IA> getBA(final Class<B> typeB);
+	<B extends IB> IConverter<B, ? extends IA> getBA(Class<B> typeB);
 
-	<A extends IA> IConverter<? extends IB, A> getBA2(final Class<A> typeA);
+	<A extends IA> IConverter<? extends IB, A> getBA2(Class<A> typeA);
 
 	<A extends IA, B extends IB> void registerAB(IConverter<A, B> converter);
 
@@ -30,60 +29,62 @@ public interface IConverterRegistry<IA, IB> {
 
 	<A extends IA, D extends IB, B extends IB> void registerRConv(IResponseConverter<A, D, B> responseConverter);
 
-	default <A extends IA, D extends IB, B extends IB> void registerRConv(Class<A> tA, Class<D> tD, Class<B> tB,
-			BiFunction<A, D, B> ad2b) {
-		registerRConv(converter(tA, tD, tB, ad2b));
+	default <A extends IA, D extends IB, B extends IB> void registerRConv(final Class<A> typA, final Class<D> typD,
+			final Class<B> tB, final BiFunction<A, D, B> ad2b) {
+		registerRConv(converter(typA, typD, tB, ad2b));
 	}
 
-	default <A extends IA, B extends IB> void registerAB(Class<A> tA, Class<B> tB, Function<A, B> a2b) {
-		registerAB(converter(tA, tB, a2b));
+	default <A extends IA, B extends IB> void registerAB(final Class<A> tA, final Class<B> typB,
+			final Function<A, B> a2b) {
+		registerAB(converter(tA, typB, a2b));
 	}
 
-	default <A extends IA, B extends IB> void registerBA(Class<A> tA, Class<B> tB, Function<B, A> b2a) {
-		registerBA(converter(tB, tA, b2a));
+	default <A extends IA, B extends IB> void registerBA(final Class<A> tA, final Class<B> typB,
+			final Function<B, A> b2a) {
+		registerBA(converter(typB, tA, b2a));
 	}
 
-	static <A, D, B> IResponseConverter<A, D, B> converter(Class<A> tA, Class<D> tD, Class<B> tB,
-			BiFunction<A, D, B> ad2b) {
+	static <A, D, B> IResponseConverter<A, D, B> converter(final Class<A> typA, final Class<D> typD, final Class<B> typB,
+			final BiFunction<A, D, B> ad2b) {
 		return new IResponseConverter<A, D, B>() {
 
 			@Override
 			public Class<A> getTypeA() {
-				return tA;
+				return typA;
 			}
 
 			@Override
 			public Class<B> getTypeB() {
-				return tB;
+				return typB;
 			}
 
 			@Override
 			public Class<D> getTypeData() {
-				return tD;
+				return typD;
 			}
 
 			@Override
-			public B apply(A a, D d) {
+			public B apply(final A a, final D d) {
 				return ad2b.apply(a, d);
 			}
 		};
 	}
 
-	static <A, B> IConverter<A, B> converter(Class<A> tA, Class<B> tB, Function<A, B> a2b) {
+	static <A, B> IConverter<A, B> converter(final Class<A> typA, final Class<B> typB, final Function<A, B> a2b) {
 		return new IConverter<A, B>() {
 
 			@Override
 			public Class<A> getTypeA() {
-				return tA;
+				return typA;
 			}
 
 			@Override
 			public Class<B> getTypeB() {
-				return tB;
+				return typB;
 			}
 
 			@Override
-			public B apply(A a) {
+			public B apply(final A a) {
 				return a2b.apply(a);
 			}
 		};
@@ -102,11 +103,11 @@ public interface IConverterRegistry<IA, IB> {
 
 		Class<B> getTypeB();
 
-		default Consumer<A> andThen(Consumer<B> consumer) {
+		default Consumer<A> andThen(final Consumer<B> consumer) {
 			return a -> consumer.accept(apply(a));
 		}
 
-		default Supplier<B> compose(Supplier<A> supplier) {
+		default Supplier<B> compose(final Supplier<A> supplier) {
 			return () -> apply(supplier.get());
 		}
 	}
@@ -115,7 +116,7 @@ public interface IConverterRegistry<IA, IB> {
 		IConverter<B, A> inverse();
 	}
 
-	static <A, B> IBiConverter<A, B> combine(IBiConverter<A, B> forth, IBiConverter<B, A> back) {
+	static <A, B> IBiConverter<A, B> combine(final IBiConverter<A, B> forth, final IBiConverter<B, A> back) {
 		return new IBiConverter<A, B>() {
 
 			@Override
@@ -129,7 +130,7 @@ public interface IConverterRegistry<IA, IB> {
 			}
 
 			@Override
-			public B apply(A a) {
+			public B apply(final A a) {
 				return forth.apply(a);
 			}
 

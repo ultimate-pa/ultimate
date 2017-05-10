@@ -26,7 +26,7 @@ public class ParrotInteractiveIterationInfo {
 		mNextInteractiveIteration = nextInteractiveIteration;
 	}
 
-	public void setFrom(ParrotInteractiveIterationInfo other) {
+	public void setFrom(final ParrotInteractiveIterationInfo other) {
 		setData(other.getFallbackStrategy(), other.getNextInteractiveIteration());
 	}
 }

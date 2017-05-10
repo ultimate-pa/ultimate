@@ -68,12 +68,12 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
-	public Converter(IUltimateServiceProvider services) {
+	public Converter(final IUltimateServiceProvider services) {
 		super(services, Object.class);
 	}
 
 	@Override
-	protected void init(ConverterRegistry<GeneratedMessageV3, Object> converterRegistry) {
+	protected void init(final ConverterRegistry<GeneratedMessageV3, Object> converterRegistry) {
 		converterRegistry.registerBA(TraceAbstractionProtos.NestedRun.class, NestedRun.class, Converter::fromNestedRun);
 		converterRegistry.registerAB(TraceAbstractionProtos.PreNestedWord.class, PreNestedWord.class,
 				this::toPreNestedWord);
@@ -84,11 +84,10 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		// converterRegistry.registerAB(TraceAbstractionProtos.NestedWord.class, NestedWord.class,
 		// TAConverter::toNestedWord);
 		@SuppressWarnings("unchecked")
-		Class<INestedWordAutomaton<CodeBlock, IPredicate>> cls =
-				(Class<INestedWordAutomaton<CodeBlock, IPredicate>>) (Class) INestedWordAutomaton.class;
+		final Class<INestedWordAutomaton<CodeBlock, IPredicate>> cls = (Class) INestedWordAutomaton.class;
 		converterRegistry.registerBA(TraceAbstractionProtos.NestedWordAutomaton.class, cls, Converter::fromAutomaton);
-		Class<INestedWordAutomatonSimple<CodeBlock, IPredicate>> scls =
-				(Class<INestedWordAutomatonSimple<CodeBlock, IPredicate>>) (Class) INestedWordAutomatonSimple.class;
+		@SuppressWarnings("unchecked")
+		final Class<INestedWordAutomatonSimple<CodeBlock, IPredicate>> scls = (Class) INestedWordAutomatonSimple.class;
 		converterRegistry.registerBA(TraceAbstractionProtos.NestedWordAutomaton.class, scls,
 				Converter::fromSimpleAutomaton);
 		converterRegistry.registerBA(TraceAbstractionProtos.TAPreferences.class, TAPreferences.class,
@@ -126,7 +125,8 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 	}
 
 	private static InterpolantSequences getInterpolantSequences(
-			TraceAbstractionProtos.InterpolantSequences.Choices choices, InterpolantSequences originalSequences) {
+			final TraceAbstractionProtos.InterpolantSequences.Choices choices,
+			final InterpolantSequences originalSequences) {
 		final List<InterpolantsPreconditionPostcondition> newPerfectIpps =
 				choices.getPerfectList().stream().map(originalSequences.mPerfectIpps::get).collect(Collectors.toList());
 		final List<InterpolantsPreconditionPostcondition> newImperfectIpps = choices.getImperfectList().stream()
@@ -134,7 +134,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		return new InterpolantSequences().set(newPerfectIpps, newImperfectIpps);
 	}
 
-	private static InteractiveCegar.Preferences toLivePreferences(LivePreferences prefs) {
+	private static InteractiveCegar.Preferences toLivePreferences(final LivePreferences prefs) {
 		return new InteractiveCegar.Preferences(prefs.getCEXS(), prefs.getIPS(), prefs.getRSS(), prefs.getPaused());
 	}
 
@@ -157,14 +157,14 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		return builder.build();
 	}
 
-	private static Loop toLoop(TraceAbstractionProtos.PreNestedWord.Loop loop) {
+	private static Loop toLoop(final TraceAbstractionProtos.PreNestedWord.Loop loop) {
 		return new Loop(loop.getStartPosition(), loop.getEndPosition(), loop.getRepetitions());
 	}
 
-	private PreNestedWord toPreNestedWord(TraceAbstractionProtos.PreNestedWord preNestedWord) {
-		NestingRelation nr = preNestedWord.getNestingRelation();
-		List<Loop> loops = new ArrayList<>();
-		TraceAbstractionProtos.PreNestedWord.Loop[] protoloops =
+	private PreNestedWord toPreNestedWord(final TraceAbstractionProtos.PreNestedWord preNestedWord) {
+		final NestingRelation nr = preNestedWord.getNestingRelation();
+		final List<Loop> loops = new ArrayList<>();
+		final TraceAbstractionProtos.PreNestedWord.Loop[] protoloops =
 				new TraceAbstractionProtos.PreNestedWord.Loop[preNestedWord.getLoopList().size()];
 		preNestedWord.getLoopList().toArray(protoloops);
 		Arrays.sort(protoloops, LoopComparator);
@@ -176,8 +176,8 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 	private static Comparator<TraceAbstractionProtos.PreNestedWord.Loop> LoopComparator =
 			new Comparator<TraceAbstractionProtos.PreNestedWord.Loop>() {
 				@Override
-				public int compare(TraceAbstractionProtos.PreNestedWord.Loop o1,
-						TraceAbstractionProtos.PreNestedWord.Loop o2) {
+				public int compare(final TraceAbstractionProtos.PreNestedWord.Loop o1,
+						final TraceAbstractionProtos.PreNestedWord.Loop o2) {
 					final int cmp = Integer.compare(o1.getStartPosition(), o2.getStartPosition());
 					if (cmp != 0)
 						return cmp;
@@ -187,15 +187,16 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 				}
 			};
 
-	private static TraceAbstractionProtos.TraceHistogram fromHistogram(HistogramOfIterable<CodeBlock> histogram) {
-		TraceAbstractionProtos.TraceHistogram.Builder builder = TraceAbstractionProtos.TraceHistogram.newBuilder();
+	private static TraceAbstractionProtos.TraceHistogram fromHistogram(final HistogramOfIterable<CodeBlock> histogram) {
+		final TraceAbstractionProtos.TraceHistogram.Builder builder =
+				TraceAbstractionProtos.TraceHistogram.newBuilder();
 
 		Field f;
 		try {
 			f = histogram.getClass().getDeclaredField("mHistogramMap");
 			f.setAccessible(true);
 			@SuppressWarnings("unchecked")
-			Map<CodeBlock, Integer> histogramMap = (Map<CodeBlock, Integer>) f.get(histogram); // IllegalAccessException
+			final Map<CodeBlock, Integer> histogramMap = (Map<CodeBlock, Integer>) f.get(histogram); // IllegalAccessException
 
 			histogramMap.forEach((c, i) -> {
 				builder.addRecord(TraceAbstractionProtos.TraceHistogram.Record.newBuilder().setCount(i)
@@ -209,8 +210,8 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		return builder.build();
 	}
 
-	private static TraceAbstractionProtos.IterationInfo fromIterationInfo(Info info) {
-		TraceAbstractionProtos.IterationInfo.Builder builder = TraceAbstractionProtos.IterationInfo.newBuilder();
+	private static TraceAbstractionProtos.IterationInfo fromIterationInfo(final Info info) {
+		final TraceAbstractionProtos.IterationInfo.Builder builder = TraceAbstractionProtos.IterationInfo.newBuilder();
 		if (info.mAbstraction != null)
 			builder.setAbstractionSizeInfo(info.mAbstraction);
 		if (info.mInterpolantAutomaton != null)
@@ -221,7 +222,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 	}
 
 	private static TraceAbstractionProtos.CegarStatistics
-			fromCegarLoopStatisticsGenerator(CegarLoopStatisticsGenerator benchmark) {
+			fromCegarLoopStatisticsGenerator(final CegarLoopStatisticsGenerator benchmark) {
 		final TraceAbstractionProtos.CegarStatistics.Builder builder =
 				TraceAbstractionProtos.CegarStatistics.newBuilder();
 		// builder.setIteration((int) benchmark.getValue(CegarLoopStatisticsDefinitions.OverallIterations.toString()));
@@ -232,36 +233,37 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		return builder.build();
 	}
 
-	private static PredicateDoubleDecker fromDoubleDecker(DoubleDecker<IPredicate> pdd) {
+	private static PredicateDoubleDecker fromDoubleDecker(final DoubleDecker<IPredicate> pdd) {
 		final TraceAbstractionProtos.Predicate up = fromPredicate(pdd.getUp());
 		final TraceAbstractionProtos.Predicate down = fromPredicate(pdd.getUp());
 		return PredicateDoubleDecker.newBuilder().setUp(up).setDown(down).build();
 	}
 
-	private static InteractiveIterationInfo fromIterationInfo(ParrotInteractiveIterationInfo itInfo) {
+	private static InteractiveIterationInfo fromIterationInfo(final ParrotInteractiveIterationInfo itInfo) {
 		return InteractiveIterationInfo.newBuilder().setNextInteractiveIteration(itInfo.getNextInteractiveIteration())
 				.setFallback(convertTo(Strategy.class, itInfo.getFallbackStrategy())).build();
 	}
 
-	private static ParrotInteractiveIterationInfo toIterationInfo(InteractiveIterationInfo itInfo) {
+	private static ParrotInteractiveIterationInfo toIterationInfo(final InteractiveIterationInfo itInfo) {
 		return new ParrotInteractiveIterationInfo(convertTo(RefinementStrategy.class, itInfo.getFallback()),
 				itInfo.getNextInteractiveIteration());
 	}
 
 	private static TraceAbstractionProtos.Tracks
-			fromTracks(MultiTrackTraceAbstractionRefinementStrategy.Track[] tracks) {
+			fromTracks(final MultiTrackTraceAbstractionRefinementStrategy.Track[] tracks) {
 		final TraceAbstractionProtos.Tracks.Builder builder = TraceAbstractionProtos.Tracks.newBuilder();
 		Arrays.stream(tracks).map(convertToEnum(TraceAbstractionProtos.Track.class)).forEach(builder::addTrack);
 		return builder.build();
 	}
 
-	private static MultiTrackTraceAbstractionRefinementStrategy.Track[] toTracks(TraceAbstractionProtos.Tracks tracks) {
+	private static MultiTrackTraceAbstractionRefinementStrategy.Track[]
+			toTracks(final TraceAbstractionProtos.Tracks tracks) {
 		return tracks.getTrackList().stream()
 				.map(convertToEnum(MultiTrackTraceAbstractionRefinementStrategy.Track.class)).toArray(Track[]::new);
 	}
 
-	public static TraceAbstractionProtos.NestedRun fromNestedRun(NestedRun<CodeBlock, IPredicate> run) {
-		TraceAbstractionProtos.NestedRun.Builder builder = TraceAbstractionProtos.NestedRun.newBuilder();
+	public static TraceAbstractionProtos.NestedRun fromNestedRun(final NestedRun<CodeBlock, IPredicate> run) {
+		final TraceAbstractionProtos.NestedRun.Builder builder = TraceAbstractionProtos.NestedRun.newBuilder();
 		run.getStateSequence().stream().map(Converter::fromPredicate).forEach(builder::addStateSequence);
 		builder.setNestedword(fromNestedWord(run.getWord()));
 
@@ -305,7 +307,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 	 */
 
 	public static TraceAbstractionProtos.NestedWordAutomaton
-			fromAutomaton(INestedWordAutomaton<CodeBlock, IPredicate> automaton) {
+			fromAutomaton(final INestedWordAutomaton<CodeBlock, IPredicate> automaton) {
 		final TraceAbstractionProtos.NestedWordAutomaton.Builder builder =
 				TraceAbstractionProtos.NestedWordAutomaton.newBuilder();
 		final List<CodeBlock> callAlphabet = new ArrayList<>();
@@ -320,8 +322,8 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 
 		addStateRef.apply(automaton.getEmptyStackState()).accept(builder::setEmptyStack);
 
-		for (IPredicate state : states) {
-			Consumer<Consumer<Integer>> addStateStateRef = addStateRef.apply(state);
+		for (final IPredicate state : states) {
+			final Consumer<Consumer<Integer>> addStateStateRef = addStateRef.apply(state);
 			builder.addStates(fromPredicate(state));
 			if (automaton.isInitial(state))
 				addStateStateRef.accept(builder::addInitial);
@@ -348,9 +350,9 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		return builder.build();
 	}
 
-	private static void copyAlphabets(INestedWordAutomatonSimple<CodeBlock, IPredicate> fromNwa,
-			List<CodeBlock> callAlphabet, List<CodeBlock> internalAlphabet, List<CodeBlock> returnAlphabet,
-			TraceAbstractionProtos.NestedWordAutomaton.Builder toNwa) {
+	private static void copyAlphabets(final INestedWordAutomatonSimple<CodeBlock, IPredicate> fromNwa,
+			final List<CodeBlock> callAlphabet, final List<CodeBlock> internalAlphabet,
+			final List<CodeBlock> returnAlphabet, final TraceAbstractionProtos.NestedWordAutomaton.Builder toNwa) {
 		fromNwa.getCallAlphabet().forEach(callAlphabet::add);
 		fromNwa.getInternalAlphabet().forEach(internalAlphabet::add);
 		fromNwa.getReturnAlphabet().forEach(returnAlphabet::add);
@@ -359,7 +361,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 	}
 
 	public static TraceAbstractionProtos.NestedWordAutomaton
-			fromSimpleAutomaton(INestedWordAutomatonSimple<CodeBlock, IPredicate> automaton) {
+			fromSimpleAutomaton(final INestedWordAutomatonSimple<CodeBlock, IPredicate> automaton) {
 		final TraceAbstractionProtos.NestedWordAutomaton.Builder builder =
 				TraceAbstractionProtos.NestedWordAutomaton.newBuilder();
 		final List<CodeBlock> callAlphabet = new ArrayList<>();
@@ -378,7 +380,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		addStateRef.apply(automaton.getEmptyStackState()).accept(builder::setEmptyStack);
 
 		while (!openStates.isEmpty()) {
-			IPredicate state = openStates.removeFirst();
+			final IPredicate state = openStates.removeFirst();
 			if (!visitedStates.add(state))
 				continue;
 			states.add(state);
@@ -392,8 +394,8 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 					hier -> automaton.returnSuccessorsGivenHier(state, hier).forEach(t -> openStates.add(t.getSucc())));
 		}
 
-		for (IPredicate state : states) {
-			Consumer<Consumer<Integer>> addStateStateRef = addStateRef.apply(state);
+		for (final IPredicate state : states) {
+			final Consumer<Consumer<Integer>> addStateStateRef = addStateRef.apply(state);
 			builder.addStates(fromPredicate(state));
 			if (automaton.isInitial(state))
 				addStateStateRef.accept(builder::addInitial);
@@ -411,13 +413,14 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		return builder.build();
 	}
 
-	private static <T> Stream<T> stream(Iterable<T> source) {
+	private static <T> Stream<T> stream(final Iterable<T> source) {
 		return StreamSupport.stream(source.spliterator(), false);
 	}
 
 	private static
 			Function<IOutgoingTransitionlet<CodeBlock, IPredicate>, TraceAbstractionProtos.NestedWordAutomaton.transition.Builder>
-			getTransition(final Consumer<Consumer<Integer>> origin, List<CodeBlock> alphabet, List<IPredicate> states) {
+			getTransition(final Consumer<Consumer<Integer>> origin, final List<CodeBlock> alphabet,
+					final List<IPredicate> states) {
 		return transition -> {
 			final TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builder =
 					TraceAbstractionProtos.NestedWordAutomaton.transition.newBuilder();
@@ -439,59 +442,59 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 	 */
 	private static <T> Function<T, Consumer<Consumer<Integer>>> addRef(final List<T> targets) {
 		return t -> {
-			int i = targets.indexOf(t);
+			final int i = targets.indexOf(t);
 			return consumer -> consumer.accept(i);
 		};
 	}
 
-	private static TraceAbstractionProtos.Alphabet fromAlphabet(Iterable<CodeBlock> alphabet) {
+	private static TraceAbstractionProtos.Alphabet fromAlphabet(final Iterable<CodeBlock> alphabet) {
 		final TraceAbstractionProtos.Alphabet.Builder builder = TraceAbstractionProtos.Alphabet.newBuilder();
-		for (CodeBlock codeBlock : alphabet) {
+		for (final CodeBlock codeBlock : alphabet) {
 			builder.addLetter(fromCodeblock(codeBlock));
 		}
 		return builder.build();
 	}
 
 	private static TraceAbstractionProtos.NestedWordAutomaton.transition fromTransition(
-			Map<IPredicate, Map<CodeBlock, Set<IPredicate>>> transitions, List<IPredicate> states,
-			List<CodeBlock> alphabet) {
+			final Map<IPredicate, Map<CodeBlock, Set<IPredicate>>> transitions, final List<IPredicate> states,
+			final List<CodeBlock> alphabet) {
 		final TraceAbstractionProtos.NestedWordAutomaton.transition.Builder builder =
 				TraceAbstractionProtos.NestedWordAutomaton.transition.newBuilder();
-		for (Map.Entry<IPredicate, Map<CodeBlock, Set<IPredicate>>> transition : transitions.entrySet()) {
+		for (final Map.Entry<IPredicate, Map<CodeBlock, Set<IPredicate>>> transition : transitions.entrySet()) {
 			final int firstIndex = states.indexOf(transition.getKey());
 		}
 		return builder.build();
 	}
 
-	public static TraceAbstractionProtos.CodeBlock fromCodeblock(CodeBlock codeblock) {
+	public static TraceAbstractionProtos.CodeBlock fromCodeblock(final CodeBlock codeblock) {
 		return TraceAbstractionProtos.CodeBlock.newBuilder().setSerial(codeblock.getSerialNumber())
 				.setCode(codeblock.getPrettyPrintedStatements()).build();
 	}
 
-	public static TraceAbstractionProtos.IcfgLocation fromLocation(IcfgLocation location) {
+	public static TraceAbstractionProtos.IcfgLocation fromLocation(final IcfgLocation location) {
 		return TraceAbstractionProtos.IcfgLocation.newBuilder().setDebugIdentifier(location.getDebugIdentifier())
 				.setProcedure(location.getProcedure()).build();
 	}
 
-	public static TraceAbstractionProtos.Predicate fromPredicate(IPredicate predicate) {
+	public static TraceAbstractionProtos.Predicate fromPredicate(final IPredicate predicate) {
 		final TraceAbstractionProtos.Predicate.Builder builder = TraceAbstractionProtos.Predicate.newBuilder();
 		if (predicate instanceof ISLPredicate) {
-			ISLPredicate islPred = (ISLPredicate) predicate;
+			final ISLPredicate islPred = (ISLPredicate) predicate;
 			builder.addLocation(fromLocation(islPred.getProgramPoint()));
 		} else if (predicate instanceof IMLPredicate) {
-			IMLPredicate imlPred = (IMLPredicate) predicate;
+			final IMLPredicate imlPred = (IMLPredicate) predicate;
 			Arrays.stream(imlPred.getProgramPoints()).map(Converter::fromLocation).forEach(builder::addLocation);
 		}
 		builder.setFormulaString(predicate.getFormula().toString());
 		try {
 			builder.setFormulaHashCode(predicate.getFormula().hashCode());
 			Arrays.stream(predicate.getProcedures()).forEach(builder::addProcedures);
-		} catch (UnsupportedOperationException e) {
+		} catch (final UnsupportedOperationException e) {
 		}
 		return builder.build();
 	}
 
-	public static TraceAbstractionProtos.TAPreferences fromTAPreferences(TAPreferences preferences) {
+	public static TraceAbstractionProtos.TAPreferences fromTAPreferences(final TAPreferences preferences) {
 		final InterpolantAutomatonEnhancement enhancment;
 		switch (preferences.interpolantAutomatonEnhancement()) {
 		case NONE:
@@ -529,15 +532,15 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 				.build();
 	}
 
-	public static TraceAbstractionProtos.CegarResult fromResult(AbstractCegarLoop.Result result) {
+	public static TraceAbstractionProtos.CegarResult fromResult(final AbstractCegarLoop.Result result) {
 		return TraceAbstractionProtos.CegarResult.newBuilder().setResult(convertTo(Result.class, result)).build();
 	}
 
-	public static <E extends Enum<E>> Function<Enum<?>, E> convertToEnum(Class<E> toCls) {
+	public static <E extends Enum<E>> Function<Enum<?>, E> convertToEnum(final Class<E> toCls) {
 		return f -> convertTo(toCls, f);
 	}
 
-	public static <E extends Enum<E>> E convertTo(Class<E> toCls, Enum<?> from) {
+	public static <E extends Enum<E>> E convertTo(final Class<E> toCls, final Enum<?> from) {
 		return Enum.valueOf(toCls, from.name());
 	}
 }

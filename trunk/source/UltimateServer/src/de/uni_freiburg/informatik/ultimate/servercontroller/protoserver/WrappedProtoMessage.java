@@ -22,7 +22,7 @@ public class WrappedProtoMessage implements IWrappedMessage<GeneratedMessageV3> 
 	private GeneratedMessageV3 data;
 	private final ITypeRegistry<GeneratedMessageV3> mTypeRegistry;
 
-	public WrappedProtoMessage(ITypeRegistry<GeneratedMessageV3> typeRegistry) {
+	public WrappedProtoMessage(final ITypeRegistry<GeneratedMessageV3> typeRegistry) {
 		mTypeRegistry = typeRegistry;
 	}
 
@@ -59,7 +59,7 @@ public class WrappedProtoMessage implements IWrappedMessage<GeneratedMessageV3> 
 	}
 
 	@Override
-	public void writeTo(OutputStream output) throws IOException {
+	public void writeTo(final OutputStream output) throws IOException {
 		if (header == null) {
 			throw new IllegalStateException("Missing Header");
 		}
@@ -72,7 +72,7 @@ public class WrappedProtoMessage implements IWrappedMessage<GeneratedMessageV3> 
 	}
 
 	@Override
-	public void readFrom(InputStream input, ITypeRegistry<GeneratedMessageV3> typeRegistry)
+	public void readFrom(final InputStream input, final ITypeRegistry<GeneratedMessageV3> typeRegistry)
 			throws IOException, InterruptedException {
 		header = Header.parseDelimitedFrom(input);
 
@@ -105,7 +105,7 @@ public class WrappedProtoMessage implements IWrappedMessage<GeneratedMessageV3> 
 			GeneratedMessageV3 mData;
 
 			@Override
-			public Writer<GeneratedMessageV3> setMessage(IWrappedMessage.Message message) {
+			public Writer<GeneratedMessageV3> setMessage(final IWrappedMessage.Message message) {
 				final Meta.Message.Builder mb = Meta.Message.newBuilder();
 				mb.setLevel(Meta.Message.Level.valueOf(message.level.toString()));
 				mb.setSource(message.source).setText(message.text);
@@ -114,15 +114,15 @@ public class WrappedProtoMessage implements IWrappedMessage<GeneratedMessageV3> 
 			}
 
 			@Override
-			public Writer<GeneratedMessageV3> setAction(IWrappedMessage.Action action) {
+			public Writer<GeneratedMessageV3> setAction(final IWrappedMessage.Action action) {
 				builder.setAction(Header.Action.valueOf(action.toString()));
 				return this;
 			}
 
 			@Override
-			public Writer<GeneratedMessageV3> setData(GeneratedMessageV3 data) {
-				final Class<? extends GeneratedMessageV3> dType = (Class<? extends GeneratedMessageV3>) data.getClass();
-				IRegisteredType<? extends GeneratedMessageV3> rType = mTypeRegistry.get(dType);
+			public Writer<GeneratedMessageV3> setData(final GeneratedMessageV3 data) {
+				final Class<? extends GeneratedMessageV3> dType = data.getClass();
+				final IRegisteredType<? extends GeneratedMessageV3> rType = mTypeRegistry.get(dType);
 				if (rType == null)
 					throw new UnregisteredTypeException(dType);
 				builder.setDataType(rType.registeredName());
@@ -131,15 +131,15 @@ public class WrappedProtoMessage implements IWrappedMessage<GeneratedMessageV3> 
 			}
 
 			@Override
-			public Writer<GeneratedMessageV3> setQuery(Class<? extends GeneratedMessageV3> type) {
-				IRegisteredType<? extends GeneratedMessageV3> rType = mTypeRegistry.get(type);
+			public Writer<GeneratedMessageV3> setQuery(final Class<? extends GeneratedMessageV3> type) {
+				final IRegisteredType<? extends GeneratedMessageV3> rType = mTypeRegistry.get(type);
 				builder.setQueryType(rType.registeredName());
 				builder.setQueryId(makeRequestId());
 				return this;
 			}
 
 			@Override
-			public Writer<GeneratedMessageV3> setQid(String qid) {
+			public Writer<GeneratedMessageV3> setQid(final String qid) {
 				builder.setQueryId(qid);
 				return this;
 			}

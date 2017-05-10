@@ -1,9 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.interactive;
 
 public interface ITypeHandler<T> {
-	public void consume(T data);
+	void consume(T data);
 
-	public T supply();
+	T supply();
 
-	public <D> T supply(D data);
+	<D> T supply(D data);
 }

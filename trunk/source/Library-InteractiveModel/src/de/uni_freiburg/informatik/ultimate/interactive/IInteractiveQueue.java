@@ -15,7 +15,7 @@ public interface IInteractiveQueue<M> {
 	 * 
 	 * @param data
 	 */
-	void send(M data);
+	void send(final M data);
 
 	/**
 	 * waits for a data Object
@@ -39,21 +39,22 @@ public interface IInteractiveQueue<M> {
 
 	static <M> IInteractiveQueue<M> dummy() {
 		return new IInteractiveQueue<M>() {
+			private final static String ERROR_MSG = "Dummy Interface.";
 
 			@Override
-			public void send(M data) {
-				throw new IllegalAccessError("Dummy Interface.");
+			public void send(final M data) {
+				throw new IllegalAccessError(ERROR_MSG);
 			}
 
 			@Override
-			public <T extends M> CompletableFuture<T> request(Class<T> type) {
-				CompletableFuture<T> result = new CompletableFuture<>();
-				result.completeExceptionally(new IllegalAccessError("Dummy Interface."));
+			public <T extends M> CompletableFuture<T> request(final Class<T> type) {
+				final CompletableFuture<T> result = new CompletableFuture<>();
+				result.completeExceptionally(new IllegalAccessError(ERROR_MSG));
 				return result;
 			}
 
 			@Override
-			public <T extends M> CompletableFuture<T> request(Class<T> type, M data) {
+			public <T extends M> CompletableFuture<T> request(final Class<T> type, final M data) {
 				return request(type);
 			}
 		};
