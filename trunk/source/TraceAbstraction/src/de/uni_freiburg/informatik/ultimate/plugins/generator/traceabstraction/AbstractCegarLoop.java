@@ -287,7 +287,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	public String errorLocs() {
 		return mErrorLocs.toString();
 	}
-	
+
 	public final Result iterate() {
 		final Result result = iterate2();
 		mInteractive.send(result);
@@ -353,13 +353,8 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
 			mLogger.info("=== Iteration " + mIteration + " === " + errorLocs() + "===");
+			mInteractive.reportIteration(mIteration);
 			mInteractive.waitIfPaused();
-			if (mInteractive.isInteractiveMode()) {
-				final IterationInfo.Info info = IterationInfo.newInstance();
-				info.mBenchmark = mCegarLoopBenchmark;
-				info.mIteration = mIteration;
-				mInteractive.send(info);
-			}
 			mCegarLoopBenchmark.announceNextIteration();
 			if (mPref.dumpAutomata()) {
 				mDumper = new Dumper(mLogger, mPref, mName, mIteration);
@@ -453,6 +448,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				mCegarLoopBenchmark.setResult(Result.SAFE);
 				return Result.SAFE;
 			}
+			mInteractive.send(mCegarLoopBenchmark);
 		}
 		mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 		return Result.TIMEOUT;

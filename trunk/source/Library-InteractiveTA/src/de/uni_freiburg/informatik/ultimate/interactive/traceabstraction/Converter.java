@@ -12,9 +12,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import java.util.stream.Collectors;
 
 import com.google.protobuf.GeneratedMessageV3;
 
@@ -31,7 +31,6 @@ import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InterpolantsPrePost;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.LivePreferences;
-import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Message;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.NestingRelation;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.PredicateDoubleDecker;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Result;
@@ -75,8 +74,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 
 	@Override
 	protected void init(ConverterRegistry<GeneratedMessageV3, Object> converterRegistry) {
-		converterRegistry.registerBA(TraceAbstractionProtos.NestedRun.class, NestedRun.class,
-				Converter::fromNestedRun);
+		converterRegistry.registerBA(TraceAbstractionProtos.NestedRun.class, NestedRun.class, Converter::fromNestedRun);
 		converterRegistry.registerAB(TraceAbstractionProtos.PreNestedWord.class, PreNestedWord.class,
 				this::toPreNestedWord);
 		// converterRegistry.registerAB(TraceAbstractionProtos.NestedWord.class, PreNestedWord.class,
@@ -100,7 +98,6 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 
 		converterRegistry.registerAB(TraceAbstractionProtos.Question.class, Boolean.class,
 				TraceAbstractionProtos.Question::getAnswer);
-		converterRegistry.registerBA(TraceAbstractionProtos.Message.class, String.class, Converter::fromMessage);
 
 		converterRegistry.registerAB(TraceAbstractionProtos.Tracks.class,
 				MultiTrackTraceAbstractionRefinementStrategy.Track[].class, Converter::toTracks);
@@ -113,6 +110,8 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 
 		converterRegistry.registerBA(TraceAbstractionProtos.IterationInfo.class, IterationInfo.Info.class,
 				Converter::fromIterationInfo);
+		converterRegistry.registerBA(TraceAbstractionProtos.CegarStatistics.class, CegarLoopStatisticsGenerator.class,
+				Converter::fromCegarLoopStatisticsGenerator);
 		converterRegistry.registerBA(TraceAbstractionProtos.TraceHistogram.class, HistogramOfIterable.class,
 				Converter::fromHistogram);
 
@@ -158,16 +157,6 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		return builder.build();
 	}
 
-	private static Message fromMessage(final String message) {
-		final String[] msgs = message.split(":");
-		final String title, subtitle, text;
-		text = msgs.length > 0 ? msgs[msgs.length - 1] : "Empty Message";
-		title = msgs.length > 1 ? msgs[0] : "Message";
-		subtitle = msgs.length > 2 ? msgs[1] : "";
-
-		return Message.newBuilder().setTitle(title).setSubtitle(subtitle).setText(text).build();
-	}
-
 	private static Loop toLoop(TraceAbstractionProtos.PreNestedWord.Loop loop) {
 		return new Loop(loop.getStartPosition(), loop.getEndPosition(), loop.getRepetitions());
 	}
@@ -180,9 +169,8 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		preNestedWord.getLoopList().toArray(protoloops);
 		Arrays.sort(protoloops, LoopComparator);
 		Arrays.stream(protoloops).map(Converter::toLoop).forEach(l -> Loop.addLoop(loops, l));
-		return new PreNestedWord(getLogger(),
-				preNestedWord.getSymbolList(), nr.getPendingCallList(), nr.getPendingReturnList(),
-				nr.getInternalNestingMap(), loops);
+		return new PreNestedWord(getLogger(), preNestedWord.getSymbolList(), nr.getPendingCallList(),
+				nr.getPendingReturnList(), nr.getInternalNestingMap(), loops);
 	}
 
 	private static Comparator<TraceAbstractionProtos.PreNestedWord.Loop> LoopComparator =
@@ -222,12 +210,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 	}
 
 	private static TraceAbstractionProtos.IterationInfo fromIterationInfo(Info info) {
-		TraceAbstractionProtos.IterationInfo.Builder builder;
-		if (info.mBenchmark != null) {
-			builder = fromCegarLoopStatisticsGenerator(info.mBenchmark);
-		} else {
-			builder = TraceAbstractionProtos.IterationInfo.newBuilder();
-		}
+		TraceAbstractionProtos.IterationInfo.Builder builder = TraceAbstractionProtos.IterationInfo.newBuilder();
 		if (info.mAbstraction != null)
 			builder.setAbstractionSizeInfo(info.mAbstraction);
 		if (info.mInterpolantAutomaton != null)
@@ -237,37 +220,23 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		return builder.build();
 	}
 
-	private static TraceAbstractionProtos.IterationInfo.Builder
+	private static TraceAbstractionProtos.CegarStatistics
 			fromCegarLoopStatisticsGenerator(CegarLoopStatisticsGenerator benchmark) {
-		final TraceAbstractionProtos.IterationInfo.Builder builder = TraceAbstractionProtos.IterationInfo.newBuilder();
-		builder.setIteration((int) benchmark.getValue(CegarLoopStatisticsDefinitions.OverallIterations.toString()));
+		final TraceAbstractionProtos.CegarStatistics.Builder builder =
+				TraceAbstractionProtos.CegarStatistics.newBuilder();
+		// builder.setIteration((int) benchmark.getValue(CegarLoopStatisticsDefinitions.OverallIterations.toString()));
 		final SizeIterationPair biggestAbstraction =
 				(SizeIterationPair) benchmark.getValue(CegarLoopStatisticsDefinitions.BiggestAbstraction.toString());
-		builder.setBiggestAbstraction(TraceAbstractionProtos.IterationInfo.Biggest.newBuilder()
+		builder.setBiggestAbstraction(TraceAbstractionProtos.CegarStatistics.Biggest.newBuilder()
 				.setIteration(biggestAbstraction.getIteration()).setSize(biggestAbstraction.getSize()));
-		return builder;
+		return builder.build();
 	}
-
-	/*
-	 * private static PredicateDoubleDecker.QueuePair fromQueuePair(PredicateQueuePair qPair) {
-	 * PredicateDoubleDecker.QueuePair.Builder builder = PredicateDoubleDecker.QueuePair.newBuilder();
-	 * qPair.mCallQueue.stream().map(TAConverter::fromDoubleDecker).forEach(builder::addCallQueue);
-	 * qPair.mQueue.stream().map(TAConverter::fromDoubleDecker).forEach(builder::addQueue); return builder.build(); }
-	 */
 
 	private static PredicateDoubleDecker fromDoubleDecker(DoubleDecker<IPredicate> pdd) {
 		final TraceAbstractionProtos.Predicate up = fromPredicate(pdd.getUp());
 		final TraceAbstractionProtos.Predicate down = fromPredicate(pdd.getUp());
 		return PredicateDoubleDecker.newBuilder().setUp(up).setDown(down).build();
 	}
-
-	/*
-	 * private static PredicateQueueResult toDoubleDecker(PredicateDoubleDecker.QueueResponse response,
-	 * PredicateQueuePair data) { final Deque<DoubleDecker<IPredicate>> queue; switch (response.getQueueType()) { case
-	 * CALL: queue = data.mCallQueue; break; default: queue = data.mQueue; } final DoubleDecker<IPredicate>[] arr = new
-	 * DoubleDecker[queue.size()]; DoubleDecker<IPredicate> result = queue.toArray(arr)[response.getIndex()]; assert
-	 * queue.remove(result); return new PredicateQueueResult(result); }
-	 */
 
 	private static InteractiveIterationInfo fromIterationInfo(ParrotInteractiveIterationInfo itInfo) {
 		return InteractiveIterationInfo.newBuilder().setNextInteractiveIteration(itInfo.getNextInteractiveIteration())

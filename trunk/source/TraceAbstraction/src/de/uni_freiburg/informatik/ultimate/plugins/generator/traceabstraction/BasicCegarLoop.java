@@ -253,14 +253,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		mInteractive.send(mAbstraction);
 	}
 
-
 	@Override
 	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
 		final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction =
 				(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction;
 		mCounterexample =
 				new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy).getNestedRun();
-		
+
 		if (mCounterexample == null) {
 			return true;
 		}
@@ -268,7 +267,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (mInteractive.isInteractiveMode()) {
 			if (mInteractive.getPreferences().ismCEXS()) {
 				// TODO: send mCounterexample as "preview"
-				mInteractive.send("Select a Trace: Please select the trace you want Ultimate to analyze next.");
+				mInteractive.getInterface().common()
+						.send("Select a Trace: Please select the trace you want Ultimate to analyze next.");
 				mCounterexample = mInteractive.getUserRun(abstraction, mIteration, mServices, mSearchStrategy,
 						mStateFactoryForRefinement, mPredicateFactory, mCsToolkit.getManagedScript());
 			}
@@ -344,8 +344,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 
 		if (mInteractive.isInteractiveMode() && feasibility == LBool.SAT) {
-			mInteractive.send("Feasible Counterexample:The Counterexample trace analyzed in iteration " + mIteration
-					+ " was feasible.");
+			mInteractive.getInterface().common()
+					.send("Feasible Counterexample:The Counterexample trace analyzed in iteration " + mIteration
+							+ " was feasible.");
 		}
 
 		return feasibility;

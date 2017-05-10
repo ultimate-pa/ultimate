@@ -4272,6 +4272,783 @@ public final class Common {
 
   }
 
+  public interface MessageOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Message)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>optional string title = 1;</code>
+     */
+    java.lang.String getTitle();
+    /**
+     * <code>optional string title = 1;</code>
+     */
+    com.google.protobuf.ByteString
+        getTitleBytes();
+
+    /**
+     * <code>optional string subtitle = 2;</code>
+     */
+    java.lang.String getSubtitle();
+    /**
+     * <code>optional string subtitle = 2;</code>
+     */
+    com.google.protobuf.ByteString
+        getSubtitleBytes();
+
+    /**
+     * <code>optional string text = 3;</code>
+     */
+    java.lang.String getText();
+    /**
+     * <code>optional string text = 3;</code>
+     */
+    com.google.protobuf.ByteString
+        getTextBytes();
+  }
+  /**
+   * Protobuf type {@code de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Message}
+   */
+  public  static final class Message extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Message)
+      MessageOrBuilder {
+    // Use Message.newBuilder() to construct.
+    private Message(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private Message() {
+      title_ = "";
+      subtitle_ = "";
+      text_ = "";
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
+    }
+    private Message(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      int mutable_bitField0_ = 0;
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!input.skipField(tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              title_ = s;
+              break;
+            }
+            case 18: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              subtitle_ = s;
+              break;
+            }
+            case 26: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              text_ = s;
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Message_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Message_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message.class, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message.Builder.class);
+    }
+
+    public static final int TITLE_FIELD_NUMBER = 1;
+    private volatile java.lang.Object title_;
+    /**
+     * <code>optional string title = 1;</code>
+     */
+    public java.lang.String getTitle() {
+      java.lang.Object ref = title_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        title_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>optional string title = 1;</code>
+     */
+    public com.google.protobuf.ByteString
+        getTitleBytes() {
+      java.lang.Object ref = title_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        title_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int SUBTITLE_FIELD_NUMBER = 2;
+    private volatile java.lang.Object subtitle_;
+    /**
+     * <code>optional string subtitle = 2;</code>
+     */
+    public java.lang.String getSubtitle() {
+      java.lang.Object ref = subtitle_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        subtitle_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>optional string subtitle = 2;</code>
+     */
+    public com.google.protobuf.ByteString
+        getSubtitleBytes() {
+      java.lang.Object ref = subtitle_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        subtitle_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int TEXT_FIELD_NUMBER = 3;
+    private volatile java.lang.Object text_;
+    /**
+     * <code>optional string text = 3;</code>
+     */
+    public java.lang.String getText() {
+      java.lang.Object ref = text_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        text_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>optional string text = 3;</code>
+     */
+    public com.google.protobuf.ByteString
+        getTextBytes() {
+      java.lang.Object ref = text_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        text_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!getTitleBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, title_);
+      }
+      if (!getSubtitleBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 2, subtitle_);
+      }
+      if (!getTextBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 3, text_);
+      }
+    }
+
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!getTitleBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, title_);
+      }
+      if (!getSubtitleBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, subtitle_);
+      }
+      if (!getTextBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(3, text_);
+      }
+      memoizedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message)) {
+        return super.equals(obj);
+      }
+      de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message other = (de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message) obj;
+
+      boolean result = true;
+      result = result && getTitle()
+          .equals(other.getTitle());
+      result = result && getSubtitle()
+          .equals(other.getSubtitle());
+      result = result && getText()
+          .equals(other.getText());
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (37 * hash) + TITLE_FIELD_NUMBER;
+      hash = (53 * hash) + getTitle().hashCode();
+      hash = (37 * hash) + SUBTITLE_FIELD_NUMBER;
+      hash = (53 * hash) + getSubtitle().hashCode();
+      hash = (37 * hash) + TEXT_FIELD_NUMBER;
+      hash = (53 * hash) + getText().hashCode();
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Message}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Message)
+        de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.MessageOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Message_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Message_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message.class, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message.Builder.class);
+      }
+
+      // Construct using de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      public Builder clear() {
+        super.clear();
+        title_ = "";
+
+        subtitle_ = "";
+
+        text_ = "";
+
+        return this;
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Message_descriptor;
+      }
+
+      public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message getDefaultInstanceForType() {
+        return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message.getDefaultInstance();
+      }
+
+      public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message build() {
+        de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message buildPartial() {
+        de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message result = new de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message(this);
+        result.title_ = title_;
+        result.subtitle_ = subtitle_;
+        result.text_ = text_;
+        onBuilt();
+        return result;
+      }
+
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message) {
+          return mergeFrom((de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message other) {
+        if (other == de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message.getDefaultInstance()) return this;
+        if (!other.getTitle().isEmpty()) {
+          title_ = other.title_;
+          onChanged();
+        }
+        if (!other.getSubtitle().isEmpty()) {
+          subtitle_ = other.subtitle_;
+          onChanged();
+        }
+        if (!other.getText().isEmpty()) {
+          text_ = other.text_;
+          onChanged();
+        }
+        onChanged();
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private java.lang.Object title_ = "";
+      /**
+       * <code>optional string title = 1;</code>
+       */
+      public java.lang.String getTitle() {
+        java.lang.Object ref = title_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          title_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string title = 1;</code>
+       */
+      public com.google.protobuf.ByteString
+          getTitleBytes() {
+        java.lang.Object ref = title_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          title_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string title = 1;</code>
+       */
+      public Builder setTitle(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        title_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string title = 1;</code>
+       */
+      public Builder clearTitle() {
+        
+        title_ = getDefaultInstance().getTitle();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string title = 1;</code>
+       */
+      public Builder setTitleBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        title_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object subtitle_ = "";
+      /**
+       * <code>optional string subtitle = 2;</code>
+       */
+      public java.lang.String getSubtitle() {
+        java.lang.Object ref = subtitle_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          subtitle_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string subtitle = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getSubtitleBytes() {
+        java.lang.Object ref = subtitle_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          subtitle_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string subtitle = 2;</code>
+       */
+      public Builder setSubtitle(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        subtitle_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string subtitle = 2;</code>
+       */
+      public Builder clearSubtitle() {
+        
+        subtitle_ = getDefaultInstance().getSubtitle();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string subtitle = 2;</code>
+       */
+      public Builder setSubtitleBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        subtitle_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object text_ = "";
+      /**
+       * <code>optional string text = 3;</code>
+       */
+      public java.lang.String getText() {
+        java.lang.Object ref = text_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          text_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string text = 3;</code>
+       */
+      public com.google.protobuf.ByteString
+          getTextBytes() {
+        java.lang.Object ref = text_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          text_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string text = 3;</code>
+       */
+      public Builder setText(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        text_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string text = 3;</code>
+       */
+      public Builder clearText() {
+        
+        text_ = getDefaultInstance().getText();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string text = 3;</code>
+       */
+      public Builder setTextBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        text_ = value;
+        onChanged();
+        return this;
+      }
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return this;
+      }
+
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return this;
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Message)
+    }
+
+    // @@protoc_insertion_point(class_scope:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Message)
+    private static final de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message();
+    }
+
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<Message>
+        PARSER = new com.google.protobuf.AbstractParser<Message>() {
+      public Message parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+          return new Message(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<Message> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<Message> getParserForType() {
+      return PARSER;
+    }
+
+    public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Message getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface ConfirmOrBuilder extends
       // @@protoc_insertion_point(interface_extends:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Confirm)
       com.google.protobuf.MessageOrBuilder {
@@ -4733,6 +5510,11 @@ public final class Common {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_StackTraceElement_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Message_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Message_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Confirm_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -4758,8 +5540,9 @@ public final class Common {
       "tobuf.StackTraceElement\"i\n\021StackTraceEle",
       "ment\022\027\n\017declaring_class\030\001 \001(\t\022\023\n\013method_" +
       "name\030\002 \001(\t\022\021\n\tfile_name\030\003 \001(\t\022\023\n\013line_nu" +
-      "mber\030\004 \001(\005\"\025\n\007Confirm\022\n\n\002ok\030\001 \001(\010B\010B\006Com" +
-      "monb\006proto3"
+      "mber\030\004 \001(\005\"8\n\007Message\022\r\n\005title\030\001 \001(\t\022\020\n\010" +
+      "subtitle\030\002 \001(\t\022\014\n\004text\030\003 \001(\t\"\025\n\007Confirm\022" +
+      "\n\n\002ok\030\001 \001(\010B\010B\006Commonb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -4809,8 +5592,14 @@ public final class Common {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_StackTraceElement_descriptor,
         new java.lang.String[] { "DeclaringClass", "MethodName", "FileName", "LineNumber", });
-    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Confirm_descriptor =
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Message_descriptor =
       getDescriptor().getMessageTypes().get(4);
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Message_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Message_descriptor,
+        new java.lang.String[] { "Title", "Subtitle", "Text", });
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Confirm_descriptor =
+      getDescriptor().getMessageTypes().get(5);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Confirm_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Confirm_descriptor,

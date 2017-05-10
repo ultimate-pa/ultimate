@@ -36,6 +36,12 @@ message StackTraceElement {
 	int32 line_number = 4;
 }
 
+message Message {
+	string title = 1;
+	string subtitle = 2;
+	string text = 3;
+}
+
 message Confirm {
 	bool ok = 1;
 }

@@ -162,12 +162,6 @@ message Predicate {
 	int32 formulaHashCode = 4;
 }
 
-message Message {
-	string title = 1;
-	string subtitle = 2;
-	string text = 3;
-}
-
 message IcfgLocation {
 	string procedure = 2;
 	string debugIdentifier = 1;
@@ -279,11 +273,6 @@ message TraceHistogram {
 }
 
 message IterationInfo {
-	message Biggest {
-		int32 iteration = 1;
-		int32 size = 2;
-	}
-
 	NestedRun run = 1;
 	int32 iteration = 2;
 	int32 states = 3;
@@ -291,7 +280,15 @@ message IterationInfo {
 	int32 wordLength = 5;
 	string abstractionSizeInfo = 6;
 	string interpolantAutomatonSizeInfo = 7;
-	Biggest biggestAbstraction = 8;
+}
+
+message CegarStatistics {
+	message Biggest {
+		int32 iteration = 1;
+		int32 size = 2;
+	}
+
+	Biggest biggestAbstraction = 1;
 }
 
 message Alphabet {

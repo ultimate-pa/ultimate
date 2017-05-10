@@ -21,7 +21,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 	public Converter(final ILogger logger) {
 		super(logger, Object.class);
 	}
-	
+
 	public Converter(IUltimateServiceProvider services) {
 		super(services, Object.class);
 	}
@@ -63,6 +63,16 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		return available.mChoices.get(choiceid);
 	}
 
+	private static Common.Message fromMessage(final String message) {
+		final String[] msgs = message.split(":");
+		final String title, subtitle, text;
+		text = msgs.length > 0 ? msgs[msgs.length - 1] : "Empty Message";
+		title = msgs.length > 1 ? msgs[0] : "Message";
+		subtitle = msgs.length > 2 ? msgs[1] : "";
+
+		return Common.Message.newBuilder().setTitle(title).setSubtitle(subtitle).setText(text).build();
+	}
+
 	@Override
 	protected void init(ConverterRegistry<GeneratedMessageV3, Object> converterRegistry) {
 		converterRegistry.registerBA(Common.Exception.class, Throwable.class, e -> {
@@ -76,6 +86,8 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		converterRegistry.registerBA(Common.File.class, java.io.File.class, Converter::convertFile);
 
 		converterRegistry.registerAB(Common.Confirm.class, Boolean.class, Converter::toBoolean);
+
+		converterRegistry.registerBA(Common.Message.class, String.class, Converter::fromMessage);
 
 		converterRegistry.registerBA(Common.Choice.Request.class, ChoiceRequest.class, Converter::convertChoiceRequest);
 
