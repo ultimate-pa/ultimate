@@ -395,6 +395,7 @@
 				<module>../BoogiePreprocessorTest</module>
 				<module>../CoreRCPTest</module>
 				<module>../Library-AutomataTest</module>
+				<module>../Library-IcfgTransformerTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-SMTLIBTest</module>
 				<module>../Library-UltimateTestTest</module>
@@ -487,6 +488,7 @@
 				<module>../BoogiePreprocessorTest</module>
 				<module>../CoreRCPTest</module>
 				<module>../Library-AutomataTest</module>
+				<module>../Library-IcfgTransformerTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-SMTLIBTest</module>
 				<module>../Library-UltimateTestTest</module>
@@ -560,6 +562,7 @@
 				<module>../BoogiePreprocessorTest</module>
 				<module>../CoreRCPTest</module>
 				<module>../Library-AutomataTest</module>
+				<module>../Library-IcfgTransformerTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-SMTLIBTest</module>
 				<module>../Library-UltimateTestTest</module>
