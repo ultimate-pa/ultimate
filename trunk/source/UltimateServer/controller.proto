@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package de.uni_freiburg.informatik.ultimate.servercontroller.protobuf;
+
+//option java_package = "de.uni_freiburg.informatik.ultimate.graphvr";
+option java_outer_classname = "Controller";
+
+message ResultSummary {
+	string description = 1;
+	ToolChainResult result = 2;
+}
+
+message ToolchainResults {
+	map < string, Results > results = 1;
+}
+
+message Results {
+	repeated Result results = 1;
+}
+
+message Result {
+	string plugin = 1;
+	Location location = 2;
+	string shortDescription = 3;
+	string longDescription = 4;
+	string resultClassName = 5;
+}
+
+message Location {
+	string fileName = 1;
+	int32 startLine = 2;
+	int32 endLine = 3;
+	int32 startCol = 4;
+	int32 endCol = 5;
+}
+
+enum ToolChainResult {
+	GENERICRESULT = 0;
+	NORESULT = -1;
+	CORRECT = 1;
+	UNPROVABLE = 2;
+	TIMEOUT = 3;
+	INCORRECT = 4;
+	SYNTAXERROR = 5;
+}
