@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.Simpli
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InteractiveLive;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InteractiveCegar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -176,7 +176,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 * only != null if analysis result is UNKNOWN Textual explanation why result is unknown.
 	 */
 	private UnprovabilityReason mReasonUnknown = null;
-	protected final InteractiveLive mInteractive;
+	protected final InteractiveCegar mInteractive;
 
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
 
@@ -197,7 +197,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mErrorLocs = errorLocs;
 		mToolchainStorage = storage;
 
-		mInteractive = new InteractiveLive(services, logger);
+		mInteractive = new InteractiveCegar(services, logger);
 	}
 
 	public IRunningTaskStackProvider getRunningTaskStackProvider() {
@@ -287,8 +287,14 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	public String errorLocs() {
 		return mErrorLocs.toString();
 	}
-
+	
 	public final Result iterate() {
+		final Result result = iterate2();
+		mInteractive.send(result);
+		return result;
+	}
+
+	private final Result iterate2() {
 		mLogger.info("Interprodecural is " + mPref.interprocedural());
 		mLogger.info("Hoare is " + mPref.computeHoareAnnotation());
 		mLogger.info("Compute interpolants for " + mPref.interpolation());
@@ -297,18 +303,12 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mLogger.info("Difference is " + mPref.differenceSenwa());
 		mLogger.info("Minimize is " + mPref.getMinimization());
 
-		if (mInteractive.isInteractiveMode()) {
-			mLogger.info("Interactive Client connected.");
-
-			mInteractive.send(mPref);
-		}
+		mInteractive.reportStartCegar(mPref);
 
 		mIteration = 0;
 		mLogger.info("======== Iteration " + mIteration + "==of CEGAR loop == " + mName + "========");
 
-		if (mInteractive.isInteractiveMode()) {
-			mInteractive.send(IterationInfo.newInstance().setIteration(mIteration).setBenchmark(mCegarLoopBenchmark));
-		}
+		mInteractive.reportIteration(mIteration);
 
 		// initialize dump of debugging output to files if necessary
 		if (mPref.dumpAutomata()) {
@@ -417,11 +417,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 
 			mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
 			mLogger.info("Interpolant automaton has " + mInterpolAutomaton.sizeInformation());
-			if (mInteractive.isInteractiveMode()) {
-				IterationInfo.instance.mAbstraction = mAbstraction.sizeInformation();
-				IterationInfo.instance.mInterpolantAutomaton = mInterpolAutomaton.sizeInformation();
-				mInteractive.send(IterationInfo.instance);
-			}
+			mInteractive.reportSizeInfo(mAbstraction.sizeInformation(), mInterpolAutomaton.sizeInformation());
 
 			if (mPref.computeHoareAnnotation() && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
 				assert new InductivityCheck<>(mServices, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, false,

@@ -1,7 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
@@ -9,9 +7,9 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 
-public class InteractiveLive {
+public class InteractiveCegar {
 	private final IInteractive<Object> mInteractiveInterface;
 	/**
 	 * This variable was merely introduced to avoid frequent null checks on mInteractive for better readability.
@@ -53,7 +51,7 @@ public class InteractiveLive {
 		}
 	}
 
-	public InteractiveLive(final IUltimateServiceProvider services, final ILogger logger) {
+	public InteractiveCegar(final IUltimateServiceProvider services, final ILogger logger) {
 		mPreferences = new Preferences(false, false, false, true);
 		mInteractiveInterface = services.getServiceInstance(TAConverterFactory.class);
 		mLogger = logger;
@@ -76,7 +74,9 @@ public class InteractiveLive {
 	}
 
 	public void send(final Object data) {
-		mInteractiveInterface.send(data);
+		if (isInteractiveMode()) {
+			mInteractiveInterface.send(data);
+		}
 	}
 
 	private synchronized void setPreferences(Preferences preferences) {
@@ -90,16 +90,13 @@ public class InteractiveLive {
 	public Preferences getPreferences() {
 		return mPreferences;
 	}
-	
-	private boolean isPaused() {
-		return isInteractiveMode() && mPreferences.isPaused();
-	}
 
 	public void waitIfPaused() {
 		final boolean paused;
 		synchronized (this) {
 			paused = isInteractiveMode() && mPreferences.isPaused();
-			if (paused) mContinue = new CompletableFuture<Void>();
+			if (paused)
+				mContinue = new CompletableFuture<Void>();
 		}
 		if (paused) {
 			mLogger.info("Client has paused Trace Abstraction - waiting for resume");
@@ -108,8 +105,31 @@ public class InteractiveLive {
 			} catch (InterruptedException | ExecutionException e) {
 				mLogger.error("Failed to get user automaton", e);
 				getInterface().common().send(e);
-				throw new ToolchainCanceledException(InteractiveLive.class);
+				throw new ToolchainCanceledException(InteractiveCegar.class);
 			}
+		}
+	}
+
+	public void reportStartCegar(final TAPreferences prefs) {
+		if (isInteractiveMode()) {
+			mLogger.info("Interactive Client connected.");
+			getInterface().send(prefs);
+		}
+	}
+
+	public void reportIteration(final int iteration) {
+		if (isInteractiveMode()) {
+			getInterface().send(IterationInfo.newInstance().setIteration(iteration));
+			// .setBenchmark(mCegarLoopBenchmark))
+		}
+	}
+
+	public void reportSizeInfo(final String abstraction, final String interpolantAutomaton) {
+		if (isInteractiveMode()) {
+			IterationInfo.instance.mIteration = null;
+			IterationInfo.instance.mAbstraction = abstraction;
+			IterationInfo.instance.mInterpolantAutomaton = interpolantAutomaton;
+			getInterface().send(IterationInfo.instance);
 		}
 	}
 }

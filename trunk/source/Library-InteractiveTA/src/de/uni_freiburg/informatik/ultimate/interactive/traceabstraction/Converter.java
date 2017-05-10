@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ab
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarStatisticsType.SizeIterationPair;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InteractiveLive;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InteractiveCegar;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InterpolantSequences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.IterationInfo.Info;
@@ -119,7 +119,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		converterRegistry.registerBA(TraceAbstractionProtos.InterpolantSequences.class, InterpolantSequences.class,
 				Converter::fromInterpolants);
 
-		converterRegistry.registerAB(TraceAbstractionProtos.LivePreferences.class, InteractiveLive.Preferences.class,
+		converterRegistry.registerAB(TraceAbstractionProtos.LivePreferences.class, InteractiveCegar.Preferences.class,
 				Converter::toLivePreferences);
 
 		converterRegistry.registerRConv(TraceAbstractionProtos.InterpolantSequences.Choices.class,
@@ -135,8 +135,8 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		return new InterpolantSequences().set(newPerfectIpps, newImperfectIpps);
 	}
 
-	private static InteractiveLive.Preferences toLivePreferences(LivePreferences prefs) {
-		return new InteractiveLive.Preferences(prefs.getCEXS(), prefs.getIPS(), prefs.getRSS(), prefs.getPaused());
+	private static InteractiveCegar.Preferences toLivePreferences(LivePreferences prefs) {
+		return new InteractiveCegar.Preferences(prefs.getCEXS(), prefs.getIPS(), prefs.getRSS(), prefs.getPaused());
 	}
 
 	private static TraceAbstractionProtos.InterpolantSequences
