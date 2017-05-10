@@ -96,7 +96,6 @@ public class TraceAbstractionStarter {
 	private IElement mRootOfNewModel;
 	private Result mOverallResult;
 	private IElement mArtifact;
-	
 
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final IIcfg<IcfgLocation> rcfgRootNode,
@@ -105,8 +104,6 @@ public class TraceAbstractionStarter {
 		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mInteractive = services.getServiceInstance(TAConverterFactory.class);
-		//Server.init(services);
-		
 		runCegarLoops(rcfgRootNode, witnessAutomaton);
 	}
 
@@ -313,8 +310,6 @@ public class TraceAbstractionStarter {
 		taBenchmark.aggregateBenchmarkData(cegarLoopBenchmarkGenerator);
 
 		mArtifact = basicCegarLoop.getArtifact();
-		
-		//server.stop();
 	}
 
 	private BasicCegarLoop<?> constructCegarLoop(final String name, final IIcfg<IcfgLocation> root,
