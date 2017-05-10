@@ -17,7 +17,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 
 /**
  * Iterated symbolic memory of a loop.
- * 
+ *
  * @author Jonas Werner (jonaswerner95@gmail.com)
  *
  */
@@ -29,7 +29,7 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 
 	/**
 	 * Construct new Iterated symbolic memory of a loop
-	 * 
+	 *
 	 * @param script
 	 * @param logger
 	 * @param tf
@@ -40,13 +40,13 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 	 *            list of pathcounters of the loops backbones
 	 */
 	public IteratedSymbolicMemory(final ManagedScript script, final ILogger logger, final TransFormula tf,
-			final IIcfgSymbolTable oldSymbolTable, Loop loop, List<TermVariable> pathCounters) {
+			final IIcfgSymbolTable oldSymbolTable, final Loop loop, final List<TermVariable> pathCounters) {
 
 		super(script, logger, tf, oldSymbolTable);
 		mIteratedMemory = new HashMap<>();
 		mPathCounters = pathCounters;
 
-		for (Entry<IProgramVar, Term> entry : mMemoryMapping.entrySet()) {
+		for (final Entry<IProgramVar, Term> entry : mMemoryMapping.entrySet()) {
 			mIteratedMemory.put(entry.getKey(), null);
 		}
 		mLoop = loop;
@@ -58,13 +58,12 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 	 * update the memories by using the symbolic memories of the backbones.
 	 */
 	public void updateMemory() {
-
-		for (Entry<IProgramVar, Term> entry : mIteratedMemory.entrySet()) {
+		for (final Entry<IProgramVar, Term> entry : mIteratedMemory.entrySet()) {
 
 			final Term symbol = mMemoryMapping.get(entry.getKey());
 			Term update = symbol;
 
-			for (Backbone backbone : mLoop.getBackbones()) {
+			for (final Backbone backbone : mLoop.getBackbones()) {
 
 				final Term memory = backbone.getSymbolicMemory().getValue(entry.getKey());
 
@@ -88,7 +87,7 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 					mLogger.debug("Not equal");
 
 					update = mScript.getScript().term("+", update, mScript.getScript().term("*",
-							((ApplicationTerm) memory).getParameters()[1], (Term) backbone.getPathCounter()));
+							((ApplicationTerm) memory).getParameters()[1], backbone.getPathCounter()));
 
 					mLogger.debug("Update: " + update);
 				}
@@ -96,9 +95,10 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 				if (!(memory instanceof TermVariable) && !memory.equals(symbol)
 						&& "=".equals(((ApplicationTerm) memory).getFunction().getName())) {
 					update = mScript.getScript().term("+", update, mScript.getScript().term("*",
-							((ApplicationTerm) memory).getParameters()[1], (Term) backbone.getPathCounter()));
+							((ApplicationTerm) memory).getParameters()[1], backbone.getPathCounter()));
 					mLogger.debug("Zuweisung");
 				}
+
 			}
 			mIteratedMemory.replace(entry.getKey(), update);
 		}
@@ -108,7 +108,7 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 	public Map<IProgramVar, Term> getIteratedMemory() {
 		return mIteratedMemory;
 	}
-	
+
 	public List<TermVariable> getPathCounters() {
 		return mPathCounters;
 	}
