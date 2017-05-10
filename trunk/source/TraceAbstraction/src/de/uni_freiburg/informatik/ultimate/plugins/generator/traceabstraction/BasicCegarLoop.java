@@ -90,6 +90,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.CounterexampleSearchStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.HoareAnnotationPositions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
@@ -118,8 +119,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected static final boolean TRACE_HISTOGRAMM_BAILOUT = false;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;
 	private static final boolean NON_EA_INDUCTIVITY_CHECK = false;
-	
-
 
 	protected final PredicateFactoryRefinement mStateFactoryForRefinement;
 	protected final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
@@ -211,7 +210,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				mPredicateFactoryInterpolantAutomata, mIcfgContainer, mAbsIntRunner, taPrefs, mInterpolation,
 				mInterpolantAutomatonConstructionProcedure, mCegarLoopBenchmark);
 
-		mSearchStrategy = getSearchStrategy(mPref);
+		mSearchStrategy = getSearchStrategy(prefs);
 		mStoredRawInterpolantAutomata = checkStoreCounterExamples(mPref) ? new ArrayList<>() : null;
 
 		final TaCheckAndRefinementPreferences<LETTER> taCheckAndRefinementPrefs = new TaCheckAndRefinementPreferences<>(
@@ -251,105 +250,27 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			mAbstraction = new RemoveDeadEnds<>(new AutomataLibraryServices(mServices), wpa).getResult();
 			new LineCoverageCalculator<>(mServices, mAbstraction, origCoverage).reportCoverage("Witness product");
 		}
-		if (mInteractive.isInteractiveMode()) {
-			mInteractive.send(mAbstraction);
-		}
+		mInteractive.send(mAbstraction);
 	}
 
-	protected NestedRun<LETTER, IPredicate> getUserRun(final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction)
-			throws AutomataOperationCanceledException {
-		mLogger.info("Asking the user for a trace...");
-		NestedRun<LETTER, IPredicate> userRun = null;
-		/*
-		 * protected DoubleDecker<IPredicate> interactiveCounterexampleSearchStrategy( Deque<DoubleDecker<IPredicate>>
-		 * callQueue, Deque<DoubleDecker<IPredicate>> queue) { PredicateQueuePair data = new
-		 * PredicateQueuePair(callQueue, queue); Future<PredicateQueueResult> userChoice =
-		 * mInteractive.request(PredicateQueueResult.class, data); try { return userChoice.get().mResult; } catch
-		 * (InterruptedException | ExecutionException e) { // e.printStackTrace(); } return
-		 * IsEmptyInteractive.bfsDequeue(callQueue, queue); }
-		 * 
-		 * 
-		 * INestedWordAutomatonSimple<LETTER, IPredicate> userAutomaton = null;
-		 * 
-		 * while (userRun == null) { try { userAutomaton = mInteractive.request(INestedWordAutomatonSimple.class).get();
-		 * } catch (InterruptedException | ExecutionException e) { mLogger.error("Failed to get user automaton", e);
-		 * mInteractive.common().send(e); }
-		 * 
-		 * // mCounterexample = new IsEmptyInteractive<LETTER, IPredicate>(new AutomataLibraryServices(mServices), //
-		 * abstraction, this::interactiveCounterexampleSearchStrategy).getNestedRun();
-		 * 
-		 * // last arg finalIsTrap could be !mComputeHoareAnnotation; try { final IntersectNwa<LETTER, IPredicate>
-		 * intersect = new IntersectNwa<>(abstraction, userAutomaton, mStateFactoryForRefinement, false); } catch
-		 * (AutomataLibraryException e) { mLogger.error("Intersection with user automaton failed", e);
-		 * mInteractive.common().send(e); }
-		 * 
-		 * userRun = new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy).getNestedRun();
-		 * }
-		 */
-		while (true) {
-			try {
-				PreNestedWord preWord = mInteractive.getInterface()
-						.request(PreNestedWord.class, IterationInfo.instance.setIteration(mIteration)).get();
-				// userRun = mInteractive.request(NestedRun.class).get();
-
-				INestedWordAutomatonSimple<LETTER, IPredicate> userAutomaton = preWord.getAutomaton(mServices,
-						abstraction, mStateFactoryForRefinement, mPredicateFactory, mCsToolkit.getManagedScript());
-
-				// mInteractive.send(userAutomaton);
-
-				try {
-					final IntersectNwa<LETTER, IPredicate> intersect =
-							new IntersectNwa<>(abstraction, userAutomaton, mStateFactoryForRefinement, false);
-
-					// mInteractive.send(intersect);
-
-					userRun = new IsEmpty<>(new AutomataLibraryServices(mServices), intersect, mSearchStrategy)
-							.getNestedRun();
-
-					if (userRun != null)
-						break;
-					mInteractive.send("Infeasible Trace: Iteration " + mIteration + ": The Trace you have selected is not accepted by the "
-							+ "current abstraction. Please select anther trace.");
-					mLogger.info("intersection of the automaton that accepts the user-trace with abstraction is empty. "
-							+ "Asking for another user run.");
-				} catch (AutomataLibraryException e) {
-					mLogger.error("Intersection with user automaton failed", e);
-					mInteractive.getInterface().common().send(e);
-				}
-
-				// Accepts<LETTER, IPredicate> accepted = new Accepts<LETTER, IPredicate>(
-				// new AutomataLibraryServices(mServices), abstraction, userRun.getWord());
-				// if (accepted.getResult()) {
-				// break;
-				// }
-			} catch (InterruptedException | ExecutionException e) {
-				mLogger.error("Failed to get user automaton", e);
-				mInteractive.getInterface().common().send(e);
-				throw new ToolchainCanceledException(BasicCegarLoop.class);
-				// } catch (AutomataLibraryException e) {
-				// mLogger.error("Could not validate User Run", e);
-				// mInteractive.common().send(e);
-			}
-		}
-
-		return userRun;
-	}
 
 	@Override
 	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
 		final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction =
 				(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction;
-
 		mCounterexample =
 				new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy).getNestedRun();
+		
 		if (mCounterexample == null) {
 			return true;
 		}
 
 		if (mInteractive.isInteractiveMode()) {
 			if (mInteractive.getPreferences().ismCEXS()) {
+				// TODO: send mCounterexample as "preview"
 				mInteractive.send("Select a Trace: Please select the trace you want Ultimate to analyze next.");
-				mCounterexample = getUserRun(abstraction);
+				mCounterexample = mInteractive.getUserRun(abstraction, mIteration, mServices, mSearchStrategy,
+						mStateFactoryForRefinement, mPredicateFactory, mCsToolkit.getManagedScript());
 			}
 			mInteractive.send(mCounterexample);
 		}
@@ -372,9 +293,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			throw new ToolchainCanceledException(message, getClass(), taskDescription);
 		}
 		// Don't send the histogram: the complete run is sent already.
-		//if (mInteractive.isInteractiveMode()) {
-		//	mInteractive.send(traceHistogram);
-		//}
+		// mInteractive.send(traceHistogram);
 		return false;
 	}
 
@@ -425,8 +344,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 
 		if (mInteractive.isInteractiveMode() && feasibility == LBool.SAT) {
-			mInteractive.send("Feasible Counterexample:The Counterexample trace analyzed in iteration "
-					+ mIteration + " was feasible.");
+			mInteractive.send("Feasible Counterexample:The Counterexample trace analyzed in iteration " + mIteration
+					+ " was feasible.");
 		}
 
 		return feasibility;
@@ -809,8 +728,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		return pref.getMinimization() == Minimization.NWA_OVERAPPROXIMATION;
 	}
 
-	private static SearchStrategy getSearchStrategy(final TAPreferences mPrefs) {
-		switch (mPrefs.getCounterexampleSearchStrategy()) {
+	private static SearchStrategy getSearchStrategy(final IPreferenceProvider mPrefs) {
+		switch (mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY,
+				CounterexampleSearchStrategy.class)) {
 		case BFS:
 			return SearchStrategy.BFS;
 		case DFS:

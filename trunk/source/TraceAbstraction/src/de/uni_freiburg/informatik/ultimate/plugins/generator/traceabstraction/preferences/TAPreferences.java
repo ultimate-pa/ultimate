@@ -291,9 +291,4 @@ public final class TAPreferences {
 		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_REFINEMENT_STRATEGY_EXCEPTION_BLACKLIST,
 				RefinementStrategyExceptionBlacklist.class);
 	}
-	
-	public CounterexampleSearchStrategy getCounterexampleSearchStrategy() {
-		return mPrefs.getEnum(TraceAbstractionPreferenceInitializer.LABEL_COUNTEREXAMPLE_SEARCH_STRATEGY,
-				CounterexampleSearchStrategy.class);
-	}
 }
