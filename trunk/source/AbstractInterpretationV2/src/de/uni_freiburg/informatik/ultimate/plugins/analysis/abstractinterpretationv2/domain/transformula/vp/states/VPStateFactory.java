@@ -243,6 +243,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 			getLogger().debug("VPStateFactory: projectToOutVars(..) (end)");
 		}
 
+		resultStates = VPDomainHelpers.eliminateBottomStates(resultStates);
 		assert resultStates.size() == 1 : "??";
 		return resultStates.iterator().next();
 	}

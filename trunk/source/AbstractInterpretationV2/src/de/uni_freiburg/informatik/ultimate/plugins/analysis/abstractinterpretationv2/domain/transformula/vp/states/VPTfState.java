@@ -161,8 +161,8 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 			// we log the equivalence classes instead of who has which representative
 			final StringBuilder sb = new StringBuilder();
 			sb.append("VPTfState\n");
-			sb.append("InVars: " + getInVariables().toString() + "\n");
-			sb.append("OutVars: " + getOutVariables().toString() + "\n");
+//			sb.append("InVars: " + getInVariables().toString() + "\n");
+//			sb.append("OutVars: " + getOutVariables().toString() + "\n");
 			sb.append("Equivalence classes:\n");
 			for (VPTfNodeIdentifier rep : getEquivalenceRepresentatives()) {
 				// we only log equivalence classes with more than 1 element

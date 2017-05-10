@@ -216,9 +216,14 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 				}
 
 				if (state.areEqual(inNode1.mNodeIdentifier.getEqNode(), inNode2.mNodeIdentifier.getEqNode())) {
+//					assert resultStates.size() == 1 : "??";
 					resultStates = VPFactoryHelpers.addEquality(inNode1.mNodeIdentifier, inNode2.mNodeIdentifier,
 							resultStates, this);
 					assert resultStates.size() == 1 : "??";
+//					if (resultStates.size() > 1) {
+//						//FIXME: ... or should we allow multiple initial tf states??
+//						resultStates = Collections.singleton(VPFactoryHelpers.disjoinAll(resultStates, this));
+//					}
 				}
 			}
 		}

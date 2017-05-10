@@ -27,9 +27,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -37,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
  *
@@ -57,11 +60,26 @@ public abstract class IVPStateOrTfState<NODEID extends IEqNodeIdentifier<ARRAYID
 	// debug setting
 	protected boolean mLogAsGraph = false;
 
+	private final HashRelation<EqGraphNode<NODEID, ARRAYID>, EqGraphNode<NODEID, ARRAYID>> mAllEqGraphNodePairs;
+
 	public IVPStateOrTfState(final Set<VPDomainSymmetricPair<NODEID>> disEqs, final boolean isTop, 
 			Map<NODEID, EqGraphNode<NODEID, ARRAYID>> nodeIdToEqGraphNode) {
 		mNodeIdToEqGraphNode = nodeIdToEqGraphNode == null ? null : Collections.unmodifiableMap(nodeIdToEqGraphNode);
 		mDisEqualitySet = disEqs == null ? null : Collections.unmodifiableSet(disEqs);
 		mIsTop = isTop;
+		
+		// precompute all pairs of EqGraphNodes (for the corresponding getter)
+		if (nodeIdToEqGraphNode == null) {
+			mAllEqGraphNodePairs = null;
+			return;
+		}
+		final List<EqGraphNode<NODEID, ARRAYID>> nodesList = new ArrayList<>(nodeIdToEqGraphNode.values());
+		mAllEqGraphNodePairs = new HashRelation<>();
+		for (int i = 0; i < nodesList.size(); i++) {
+			for (int j = 0; j < i; j++) {
+				mAllEqGraphNodePairs.addPair(nodesList.get(i), nodesList.get(j));
+			}
+		}
 	}
 
 	public Set<NODEID> getDisequalities(final NODEID nodeIdentifer) {
@@ -124,6 +142,10 @@ public abstract class IVPStateOrTfState<NODEID extends IEqNodeIdentifier<ARRAYID
 
 	final public Collection<EqGraphNode<NODEID, ARRAYID>> getAllEqGraphNodes() {
 		return mNodeIdToEqGraphNode.values();
+	}
+	
+	final public HashRelation<EqGraphNode<NODEID, ARRAYID>, EqGraphNode<NODEID, ARRAYID>> getAllEqGraphNodePairs() {
+		return mAllEqGraphNodePairs;
 	}
 
 	final public NODEID find(NODEID id) {

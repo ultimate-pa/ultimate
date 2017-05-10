@@ -415,4 +415,29 @@ public class VPDomainHelpers {
 		return result;
 	}
 
+	/**
+	 * eliminates all the bottom states, except if the set would be empty then. In that case, returns a singleton with
+	 *  the bottom state.
+	 * @param resultStates
+	 * @return
+	 */
+	public static  <ACTION extends IIcfgTransition<IcfgLocation>> Set<VPState<ACTION>> 
+			eliminateBottomStates(Set<VPState<ACTION>> resultStates) {
+		final Set<VPState<ACTION>> result = new HashSet<>();
+		VPState<ACTION> bottom = null;
+		for (VPState<ACTION> rs : resultStates) {
+			if (rs.isBottom()) {
+				bottom = rs;
+			} else {
+				result.add(rs);
+			}
+		}
+		if (result.isEmpty()) {
+			assert bottom != null;
+			result.add(bottom);
+		}
+		return result;
+//		return resultStates.stream().filter(state -> !state.isBottom()).collect(Collectors.toSet());
+	}
+
 }
