@@ -67,15 +67,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractiveQueue;
-import de.uni_freiburg.informatik.ultimate.interactive.conversion.Converter;
+import de.uni_freiburg.informatik.ultimate.interactive.commondata.ChoiceRequest;
+import de.uni_freiburg.informatik.ultimate.interactive.common.Converter;
+import de.uni_freiburg.informatik.ultimate.interactive.conversion.AbstractConverter;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientCrazyException;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientQuittedException;
 import de.uni_freiburg.informatik.ultimate.server.Client;
 import de.uni_freiburg.informatik.ultimate.server.IInteractiveServer;
 import de.uni_freiburg.informatik.ultimate.servercontroller.converter.ControllerConverter;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller;
-import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.Choice;
-import de.uni_freiburg.informatik.ultimate.servercontroller.protobuf.Controller.File.Request;
 import de.uni_freiburg.informatik.ultimate.servercontroller.protoserver.ProtoServer;
 import de.uni_freiburg.informatik.ultimate.servercontroller.util.CommandLineArgs;
 import de.uni_freiburg.informatik.ultimate.servercontroller.util.RcpUtils;
@@ -93,10 +93,11 @@ public class ServerController implements IController<RunDefinition> {
 
 	private IInteractive<Object> mInternalInterface;
 	private IInteractive<GeneratedMessageV3> mProtoInterface;
+	private IInteractive<Object> mCommonInterface;
 
 	private CommandLineArgs mCla;
 
-	private Converter.Initializer<GeneratedMessageV3> mConverterInitializer;
+	private AbstractConverter.Initializer<GeneratedMessageV3> mConverterInitializer;
 	private int mListenTimeout;
 
 	@Override
@@ -144,8 +145,6 @@ public class ServerController implements IController<RunDefinition> {
 
 		mLogger.debug("Starting Server on Port " + mCla.getPort());
 		mServer.start();
-
-		registerTypes();
 
 		int result = IApplication.EXIT_OK;
 		int connectionNumber = 0;
@@ -211,15 +210,6 @@ public class ServerController implements IController<RunDefinition> {
 		return result;
 	}
 
-	private void registerTypes() {
-		mServer.getTypeRegistry().register(Controller.Choice.Request.class);
-		mServer.getTypeRegistry().register(Controller.Choice.class);
-
-		// If we wanted files directly - but thats not supported by Ultimate Core.
-		// mServer.getTypeRegistry().register(Controller.File.class);
-		// mServer.getTypeRegistry().register(Controller.File.Request.class);
-	}
-
 	private void initWrapper(final ICore<RunDefinition> core,
 			Map<File, IToolchainData<RunDefinition>> availableToolchains)
 			throws InterruptedException, ExecutionException, TimeoutException {
@@ -230,13 +220,15 @@ public class ServerController implements IController<RunDefinition> {
 				new CompletableFuture<IInteractiveQueue<Object>>();
 		mProtoInterface = client.createInteractiveInterface(commonFuture);
 
-		mConverterInitializer = new Converter.Initializer<>(mProtoInterface, mServer.getTypeRegistry());
+		mConverterInitializer = new AbstractConverter.Initializer<>(mProtoInterface, mServer.getTypeRegistry());
 
 		ControllerConverter converter = ControllerConverter.get(null); // TODO: register this with service provider
 		mInternalInterface = mConverterInitializer.getConvertedInteractiveInterface(converter);
+		// services.getServiceInstance(TAConverterFactory.class);
+		Converter commonConverter = new Converter(mLogger);
+		mCommonInterface = mConverterInitializer.getConvertedInteractiveInterface(commonConverter);
 
-		// TODO: separate internal interface from common interface
-		commonFuture.complete(mInternalInterface);
+		commonFuture.complete(mCommonInterface);
 
 		final List<File> tcFiles = new ArrayList<>(availableToolchains.keySet());
 
@@ -246,7 +238,7 @@ public class ServerController implements IController<RunDefinition> {
 
 			final File[] inputFiles = requestInput(core);
 
-			if (!mInternalInterface.request(Boolean.class).get())
+			if (!mCommonInterface.request(Boolean.class).get())
 				continue;
 
 			execToolchain(core, inputFiles);
@@ -259,7 +251,7 @@ public class ServerController implements IController<RunDefinition> {
 				return;
 			}
 			mLogger.info("Toolchain finished");
-			if (!mInternalInterface.request(Boolean.class).get())
+			if (!mCommonInterface.request(Boolean.class).get())
 				break;
 		}
 
@@ -295,7 +287,7 @@ public class ServerController implements IController<RunDefinition> {
 	private File[] requestInput(final ICore<RunDefinition> core) throws InterruptedException, ExecutionException {
 		final File inputFile = requestChoice(getAvailableInputFiles(), File::getName, "Pick an Input File");
 
-		mInternalInterface.send(inputFile);
+		mCommonInterface.send(inputFile);
 
 		return new File[] { inputFile };
 	}
@@ -314,18 +306,20 @@ public class ServerController implements IController<RunDefinition> {
 
 	private <T> T requestChoice(List<T> choices, Function<T, String> toString, String title)
 			throws InterruptedException, ExecutionException {
-		Controller.Choice.Request.Builder tcBuilder = Controller.Choice.Request.newBuilder();
-		choices.stream().map(toString).forEach(tcBuilder::addChoice);
-		tcBuilder.setTitle(title);
-		CompletableFuture<Choice> choice = mProtoInterface.request(Controller.Choice.class, tcBuilder.build());
+		// Controller.ChoiceRequest.Request.Builder tcBuilder = Controller.Choice.Request.newBuilder();
+		// choices.stream().map(toString).forEach(tcBuilder::addChoice);
+		// tcBuilder.setTitle(title);
+		// CompletableFuture<Choice> choice = mProtoInterface.request(Controller.ChoiceRequest.class,
+		// tcBuilder.build());
 
-		int choiceid = -1;
+		// int choiceid = -1;
 
-		choiceid = choice.get().getIndex();
-		if (choiceid < 0 || choiceid > choices.size()) {
-			throw new ClientCrazyException(String.format("Choice index from Client not within bounds: %1$d", choiceid));
-		}
-		final T result = choices.get(choiceid);
+		// choiceid = choice.get().getIndex();
+		// if (choiceid < 0 || choiceid > choices.size()) {
+		// throw new ClientCrazyException(String.format("Choice index from Client not within bounds: %1$d", choiceid));
+		// }
+		// final T result = choices.get(choiceid);
+		final T result = (T) mCommonInterface.request(Object.class, ChoiceRequest.get(choices, toString)).get();
 		mLogger.info("Client has chosen " + toString.apply(result));
 		return result;
 	}
@@ -337,12 +331,13 @@ public class ServerController implements IController<RunDefinition> {
 	 *            hint file extension to client.
 	 * @return file content as String.
 	 */
-	private String requestFileContent(final String ext) throws InterruptedException, ExecutionException {
-		Request tcRequest = Controller.File.Request.newBuilder().setExt(ext).build();
-		CompletableFuture<Controller.File> tcFuture = mProtoInterface.request(Controller.File.class, tcRequest);
-
-		return tcFuture.get().getContent();
-	}
+	/*
+	 * private String requestFileContent(final String ext) throws InterruptedException, ExecutionException { Request
+	 * tcRequest = Controller.File.Request.newBuilder().setExt(ext).build(); CompletableFuture<Controller.File> tcFuture
+	 * = mProtoInterface.request(Controller.File.class, tcRequest);
+	 * 
+	 * return tcFuture.get().getContent(); }
+	 */
 
 	@Override
 	public ISource selectParser(final Collection<ISource> parser) {
@@ -390,7 +385,7 @@ public class ServerController implements IController<RunDefinition> {
 		// Ultimate: " + description, ex);
 		mLogger.fatal("RESULT: An exception occured during the execution of Ultimate: " + description);
 		ex.printStackTrace();
-		mInternalInterface.send(ex);
+		mCommonInterface.send(ex);
 	}
 
 	@Override
@@ -431,8 +426,6 @@ public class ServerController implements IController<RunDefinition> {
 	@Override
 	public void prerun(IToolchainData<RunDefinition> tcData) {
 		final IToolchainStorage storage = mToolchain.getStorage();
-
-		// mProtoInterface.store(storage, GeneratedMessageV3.class); - not needed
 
 		mConverterInitializer.store(GeneratedMessageV3.class, storage);
 	}

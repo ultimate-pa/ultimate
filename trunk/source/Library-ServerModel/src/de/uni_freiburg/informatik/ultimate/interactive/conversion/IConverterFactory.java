@@ -6,15 +6,15 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 
 public interface IConverterFactory<S, T> extends IServiceFactory<IInteractive<T>> {
-	Converter<S, T> createConverter(IUltimateServiceProvider services);
+	AbstractConverter<S, T> createConverter(IUltimateServiceProvider services);
 
 	Class<S> sourceClass();
 
 	@Override
 	default IInteractive<T> createInstance(IUltimateServiceProvider services, IToolchainStorage storage) {
-		Converter<S, T> converter = createConverter(services);
+		AbstractConverter<S, T> converter = createConverter(services);
 
-		final Converter.Initializer<S> initializer = Converter.Initializer.fromStorage(sourceClass(), storage);
+		final AbstractConverter.Initializer<S> initializer = AbstractConverter.Initializer.fromStorage(sourceClass(), storage);
 
 		return initializer == null ? null : initializer.getConvertedInteractiveInterface(converter);
 	}

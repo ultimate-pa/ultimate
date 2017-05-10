@@ -1,17 +1,17 @@
-package de.uni_freiburg.informatik.ultimate.interactive.traceabstraction;
+package de.uni_freiburg.informatik.ultimate.interactive.common;
 
 import com.google.protobuf.GeneratedMessageV3;
 
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.interactive.commondata.CommonConverterFactory;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.AbstractConverter;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.TAConverterFactory;
 
-public class ConverterFactory implements TAConverterFactory<GeneratedMessageV3> {
+public class ConverterFactory implements CommonConverterFactory<GeneratedMessageV3> {
 
 	@Override
 	public String getPluginName() {
-		return "TAConverter";
+		return "CommonConverter";
 	}
 
 	@Override

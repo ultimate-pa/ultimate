@@ -14,7 +14,7 @@
    </configIni>
 
    <launcherArgs>
-      <programArgs>--launcher.suppressErrors -nosplash -consoleLog  -TC ${workspace_loc}/../examples/Interactive/toolchains -I ${workspace_loc}/../examples/Interactive/input -S ${workspace_loc}/../examples/Interactive/settings
+      <programArgs>--launcher.suppressErrors -nosplash -consoleLog  -TC ${workspace_loc}/../examples/Interactive/toolchains -I ${workspace_loc}/../examples/Interactive/input -S ${workspace_loc}/../examples/Interactive/settings  -TIMEOUT 3600
       </programArgs>
       <programArgsLin>-data @user.home/.ultimate
       </programArgsLin>
@@ -35,8 +35,10 @@
       </win>
    </launcher>
 
+
    <vm>
    </vm>
+
 
    <plugins>
       <plugin id="com.github.jhoenicke.javacup"/>
@@ -54,6 +56,7 @@
       <plugin id="de.uni_freiburg.informatik.ultimate.core"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.core.test" fragment="true"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.interactive"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.interactive.common"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.interactive.traceabstraction"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.automata"/>
       <plugin id="de.uni_freiburg.informatik.ultimate.lib.automata.test" fragment="true"/>

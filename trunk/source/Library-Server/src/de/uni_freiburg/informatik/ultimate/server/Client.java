@@ -170,7 +170,7 @@ public abstract class Client<T> {
 		mHelloFuture.completeExceptionally(e);
 		mQueue.completeAllFuturesExceptionally(e);
 	}
-	
+
 	private Void forwardThrowable(final Throwable e) {
 		mQuitFuture.completeExceptionally(e);
 		mFinishedFuture.completeExceptionally(e);
@@ -189,7 +189,7 @@ public abstract class Client<T> {
 
 		mInputFuture = CompletableFuture.runAsync(() -> runOutput(output), executor);
 		mOutputFuture = CompletableFuture.runAsync(() -> runInput(input, mTypeRegistry), executor);
-		
+
 		mInputFuture.exceptionally(this::forwardThrowable);
 		mOutputFuture.exceptionally(this::forwardThrowable);
 

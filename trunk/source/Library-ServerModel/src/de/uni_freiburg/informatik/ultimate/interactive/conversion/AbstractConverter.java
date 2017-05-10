@@ -1,13 +1,11 @@
 package de.uni_freiburg.informatik.ultimate.interactive.conversion;
 
-import java.util.function.Function;
-
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IStorable;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 import de.uni_freiburg.informatik.ultimate.interactive.ITypeRegistry;
-import de.uni_freiburg.informatik.ultimate.interactive.utils.ToolchainStorageUtil;
 
 /**
  * This class encapsulates type conversion for plugins that want to use the interactive interface. It should be
@@ -20,22 +18,33 @@ import de.uni_freiburg.informatik.ultimate.interactive.utils.ToolchainStorageUti
  * @param <A>
  * @param <B>
  */
-public abstract class Converter<A, B> {
+public abstract class AbstractConverter<A, B> {
 	private final ConverterRegistry<A, B> mConverterRegistry;
 	private final Class<B> mTargetClass;
 	private IInteractive<B> mTargetInterface;
+	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
 
-	protected Converter(IUltimateServiceProvider services, Class<B> targetClass) {
+	protected AbstractConverter(ILogger logger, Class<B> targetClass) {
+		this(null, logger, targetClass);
+	}
+
+	protected AbstractConverter(IUltimateServiceProvider services, Class<B> targetClass) {
+		// it would be nicer, if this could be identified with the class of the converted object
+		this(services, services.getLoggingService().getLogger(AbstractConverter.class), targetClass);
+	}
+
+	private AbstractConverter(IUltimateServiceProvider services, ILogger logger, Class<B> targetClass) {
 		mServices = services;
+		mLogger = logger;
 		mTargetClass = targetClass;
 		mConverterRegistry = new ConverterRegistry<>();
 
 		init(mConverterRegistry);
 	}
-	
-	protected final IUltimateServiceProvider getServices() {
-		return mServices;
+
+	protected final ILogger getLogger() {
+		return mLogger;
 	}
 
 	protected abstract void init(final ConverterRegistry<A, B> converterRegistry);
@@ -56,7 +65,7 @@ public abstract class Converter<A, B> {
 			this.mTypeRegistry = typeRegistry;
 		}
 
-		public <B> IInteractive<B> getConvertedInteractiveInterface(final Converter<A, B> converter) {
+		public <B> IInteractive<B> getConvertedInteractiveInterface(final AbstractConverter<A, B> converter) {
 			converter.mConverterRegistry.registerATypes(mTypeRegistry);
 			return new ApplyConversionToInteractive<>(mSourceInterface, converter.mConverterRegistry,
 					converter.mTargetClass);

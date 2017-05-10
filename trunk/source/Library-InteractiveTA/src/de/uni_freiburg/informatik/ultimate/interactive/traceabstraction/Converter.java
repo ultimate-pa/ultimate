@@ -25,7 +25,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.interactive.conversion.Converter;
+import de.uni_freiburg.informatik.ultimate.interactive.conversion.AbstractConverter;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.ConverterRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo;
@@ -68,15 +68,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive.ParrotInteractiveIterationInfo;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
-public class TAConverter extends Converter<GeneratedMessageV3, Object> {
-	public TAConverter(IUltimateServiceProvider services) {
+public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
+	public Converter(IUltimateServiceProvider services) {
 		super(services, Object.class);
 	}
 
 	@Override
 	protected void init(ConverterRegistry<GeneratedMessageV3, Object> converterRegistry) {
 		converterRegistry.registerBA(TraceAbstractionProtos.NestedRun.class, NestedRun.class,
-				TAConverter::fromNestedRun);
+				Converter::fromNestedRun);
 		converterRegistry.registerAB(TraceAbstractionProtos.PreNestedWord.class, PreNestedWord.class,
 				this::toPreNestedWord);
 		// converterRegistry.registerAB(TraceAbstractionProtos.NestedWord.class, PreNestedWord.class,
@@ -88,42 +88,42 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 		@SuppressWarnings("unchecked")
 		Class<INestedWordAutomaton<CodeBlock, IPredicate>> cls =
 				(Class<INestedWordAutomaton<CodeBlock, IPredicate>>) (Class) INestedWordAutomaton.class;
-		converterRegistry.registerBA(TraceAbstractionProtos.NestedWordAutomaton.class, cls, TAConverter::fromAutomaton);
+		converterRegistry.registerBA(TraceAbstractionProtos.NestedWordAutomaton.class, cls, Converter::fromAutomaton);
 		Class<INestedWordAutomatonSimple<CodeBlock, IPredicate>> scls =
 				(Class<INestedWordAutomatonSimple<CodeBlock, IPredicate>>) (Class) INestedWordAutomatonSimple.class;
 		converterRegistry.registerBA(TraceAbstractionProtos.NestedWordAutomaton.class, scls,
-				TAConverter::fromSimpleAutomaton);
+				Converter::fromSimpleAutomaton);
 		converterRegistry.registerBA(TraceAbstractionProtos.TAPreferences.class, TAPreferences.class,
-				TAConverter::fromTAPreferences);
+				Converter::fromTAPreferences);
 		converterRegistry.registerBA(TraceAbstractionProtos.CegarResult.class, AbstractCegarLoop.Result.class,
-				TAConverter::fromResult);
+				Converter::fromResult);
 
 		converterRegistry.registerAB(TraceAbstractionProtos.Question.class, Boolean.class,
 				TraceAbstractionProtos.Question::getAnswer);
-		converterRegistry.registerBA(TraceAbstractionProtos.Message.class, String.class, TAConverter::fromMessage);
+		converterRegistry.registerBA(TraceAbstractionProtos.Message.class, String.class, Converter::fromMessage);
 
 		converterRegistry.registerAB(TraceAbstractionProtos.Tracks.class,
-				MultiTrackTraceAbstractionRefinementStrategy.Track[].class, TAConverter::toTracks);
+				MultiTrackTraceAbstractionRefinementStrategy.Track[].class, Converter::toTracks);
 		converterRegistry.registerBA(TraceAbstractionProtos.Tracks.class,
-				MultiTrackTraceAbstractionRefinementStrategy.Track[].class, TAConverter::fromTracks);
+				MultiTrackTraceAbstractionRefinementStrategy.Track[].class, Converter::fromTracks);
 		converterRegistry.registerAB(InteractiveIterationInfo.class, ParrotInteractiveIterationInfo.class,
-				TAConverter::toIterationInfo);
+				Converter::toIterationInfo);
 		converterRegistry.registerBA(InteractiveIterationInfo.class, ParrotInteractiveIterationInfo.class,
-				TAConverter::fromIterationInfo);
+				Converter::fromIterationInfo);
 
 		converterRegistry.registerBA(TraceAbstractionProtos.IterationInfo.class, IterationInfo.Info.class,
-				TAConverter::fromIterationInfo);
+				Converter::fromIterationInfo);
 		converterRegistry.registerBA(TraceAbstractionProtos.TraceHistogram.class, HistogramOfIterable.class,
-				TAConverter::fromHistogram);
+				Converter::fromHistogram);
 
 		converterRegistry.registerBA(TraceAbstractionProtos.InterpolantSequences.class, InterpolantSequences.class,
-				TAConverter::fromInterpolants);
+				Converter::fromInterpolants);
 
 		converterRegistry.registerAB(TraceAbstractionProtos.LivePreferences.class, InteractiveLive.Preferences.class,
-				TAConverter::toLivePreferences);
+				Converter::toLivePreferences);
 
 		converterRegistry.registerRConv(TraceAbstractionProtos.InterpolantSequences.Choices.class,
-				InterpolantSequences.class, InterpolantSequences.class, TAConverter::getInterpolantSequences);
+				InterpolantSequences.class, InterpolantSequences.class, Converter::getInterpolantSequences);
 	}
 
 	private static InterpolantSequences getInterpolantSequences(
@@ -144,8 +144,8 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 		final TraceAbstractionProtos.InterpolantSequences.Builder builder =
 				TraceAbstractionProtos.InterpolantSequences.newBuilder();
 
-		interpolants.mPerfectIpps.stream().map(TAConverter::fromIPP).forEach(builder::addPerfect);
-		interpolants.mImperfectIpps.stream().map(TAConverter::fromIPP).forEach(builder::addImperfect);
+		interpolants.mPerfectIpps.stream().map(Converter::fromIPP).forEach(builder::addPerfect);
+		interpolants.mImperfectIpps.stream().map(Converter::fromIPP).forEach(builder::addImperfect);
 
 		return builder.build();
 	}
@@ -154,7 +154,7 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 		final InterpolantsPrePost.Builder builder = InterpolantsPrePost.newBuilder();
 		builder.setPreCondition(fromPredicate(ipp.getPrecondition()))
 				.setPostCondition(fromPredicate(ipp.getPostcondition()));
-		ipp.getInterpolants().stream().map(TAConverter::fromPredicate).forEach(builder::addInterpolants);
+		ipp.getInterpolants().stream().map(Converter::fromPredicate).forEach(builder::addInterpolants);
 		return builder.build();
 	}
 
@@ -179,8 +179,8 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 				new TraceAbstractionProtos.PreNestedWord.Loop[preNestedWord.getLoopList().size()];
 		preNestedWord.getLoopList().toArray(protoloops);
 		Arrays.sort(protoloops, LoopComparator);
-		Arrays.stream(protoloops).map(TAConverter::toLoop).forEach(l -> Loop.addLoop(loops, l));
-		return new PreNestedWord(getServices().getLoggingService().getLogger(PreNestedWord.class),
+		Arrays.stream(protoloops).map(Converter::toLoop).forEach(l -> Loop.addLoop(loops, l));
+		return new PreNestedWord(getLogger(),
 				preNestedWord.getSymbolList(), nr.getPendingCallList(), nr.getPendingReturnList(),
 				nr.getInternalNestingMap(), loops);
 	}
@@ -293,7 +293,7 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 
 	public static TraceAbstractionProtos.NestedRun fromNestedRun(NestedRun<CodeBlock, IPredicate> run) {
 		TraceAbstractionProtos.NestedRun.Builder builder = TraceAbstractionProtos.NestedRun.newBuilder();
-		run.getStateSequence().stream().map(TAConverter::fromPredicate).forEach(builder::addStateSequence);
+		run.getStateSequence().stream().map(Converter::fromPredicate).forEach(builder::addStateSequence);
 		builder.setNestedword(fromNestedWord(run.getWord()));
 
 		return builder.build();
@@ -511,7 +511,7 @@ public class TAConverter extends Converter<GeneratedMessageV3, Object> {
 			builder.addLocation(fromLocation(islPred.getProgramPoint()));
 		} else if (predicate instanceof IMLPredicate) {
 			IMLPredicate imlPred = (IMLPredicate) predicate;
-			Arrays.stream(imlPred.getProgramPoints()).map(TAConverter::fromLocation).forEach(builder::addLocation);
+			Arrays.stream(imlPred.getProgramPoints()).map(Converter::fromLocation).forEach(builder::addLocation);
 		}
 		builder.setFormulaString(predicate.getFormula().toString());
 		try {
