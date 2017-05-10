@@ -6,6 +6,7 @@ import java.util.Deque;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 
 /**
  * A Loop
@@ -18,6 +19,7 @@ public class Loop {
 	private final Deque<IcfgEdge> mPath;
 	private Deque<Backbone> mBackbones;
 	private final IcfgLocation mLoopHead;
+	private final TransFormula mFormula;
 	private Term mCondition;
 	private IteratedSymbolicMemory mIteratedMemory;
 
@@ -29,11 +31,14 @@ public class Loop {
 	 * 
 	 * @param loopHead
 	 *            The loop entry node.
+	 * @param tf
+	 *            the loops {@link TransFormula}
 	 */
-	public Loop(final Deque<IcfgEdge> path, final IcfgLocation loopHead) {
+	public Loop(final Deque<IcfgEdge> path, final IcfgLocation loopHead, final TransFormula tf) {
 		mPath = path;
 		mLoopHead = loopHead;
 		mBackbones = new ArrayDeque<>();
+		mFormula = tf;
 		mCondition = null;
 		mIteratedMemory = null;
 	}
@@ -53,6 +58,10 @@ public class Loop {
 	 */
 	public Deque<IcfgEdge> getPath() {
 		return mPath;
+	}
+
+	public TransFormula getFormula() {
+		return mFormula;
 	}
 
 	/**

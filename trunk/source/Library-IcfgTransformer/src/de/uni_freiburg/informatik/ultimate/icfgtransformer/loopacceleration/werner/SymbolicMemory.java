@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.wer
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -21,10 +20,10 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 
 public class SymbolicMemory {
 
-	private final Map<IProgramVar, Term> mMemoryMapping;
-	private final ManagedScript mScript;
-	private final ILogger mLogger;
-	private final IIcfgSymbolTable mOldSymbolTable;
+	protected final Map<IProgramVar, Term> mMemoryMapping;
+	protected final ManagedScript mScript;
+	protected final ILogger mLogger;
+	protected final IIcfgSymbolTable mOldSymbolTable;
 
 	/**
 	 * Construct a new Symbolic Memory.
@@ -49,12 +48,9 @@ public class SymbolicMemory {
 		mScript = script;
 		mLogger = logger;
 		mOldSymbolTable = oldSymbolTable;
-		mMemoryMapping = new HashMap<>();
 
 		// set all variables to the InVars (symbols):
-		for (Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-			mMemoryMapping.put(entry.getKey(), entry.getValue());
-		}
+		mMemoryMapping = LoopDetector.calculateSymbolTable(tf);
 	}
 
 	/**
@@ -66,20 +62,27 @@ public class SymbolicMemory {
 	public void updateVars(Map<IProgramVar, Term> value) {
 
 		for (final Map.Entry<IProgramVar, Term> entry : value.entrySet()) {
-			ApplicationTerm appTerm = (ApplicationTerm) entry.getValue();
 
+			final Term t = entry.getValue();
 			final Map<Term, Term> substitution = new HashMap<>();
 
-			for (Term term : appTerm.getParameters()) {
-				if (term instanceof TermVariable
-						&& mMemoryMapping.containsKey(mOldSymbolTable.getProgramVar((TermVariable) term))) {
-					substitution.put(term, mMemoryMapping.get(mOldSymbolTable.getProgramVar((TermVariable) term)));
+			if (t instanceof TermVariable
+					&& mMemoryMapping.containsKey(mOldSymbolTable.getProgramVar((TermVariable) t))) {
+				substitution.put(t, mMemoryMapping.get(mOldSymbolTable.getProgramVar((TermVariable) t)));
+
+			} else {
+				final ApplicationTerm appTerm = (ApplicationTerm) t;
+				for (Term term : appTerm.getParameters()) {
+					if (term instanceof TermVariable
+							&& mMemoryMapping.containsKey(mOldSymbolTable.getProgramVar((TermVariable) term))) {
+						substitution.put(term, mMemoryMapping.get(mOldSymbolTable.getProgramVar((TermVariable) term)));
+					}
 				}
 			}
 
 			final Substitution sub = new Substitution(mScript, substitution);
-			final Term t = sub.transform(appTerm);
-			mMemoryMapping.replace(entry.getKey(), t);
+			final Term t2 = sub.transform(t);
+			mMemoryMapping.replace(entry.getKey(), t2);
 		}
 		mLogger.debug("the Memory: " + mMemoryMapping.toString());
 	}
@@ -92,7 +95,7 @@ public class SymbolicMemory {
 	 * 
 	 * @return The memory value of the {@link TermVariable}.
 	 */
-	public Term getValue(TermVariable var) {
+	public Term getValue(final IProgramVar var) {
 		return mMemoryMapping.get(var);
 	}
 

@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.uni_freiburg.informatik.ultimate</groupId>
 	<artifactId>mavenparent</artifactId>
-	<version>0.1.12</version>
+	<version>0.1.13</version>
 	<packaging>pom</packaging>
 
 	<name>Ultimate</name>
@@ -15,7 +15,7 @@
 	</scm>
 
 	<properties>
-		<ultimate-version>0.1.12</ultimate-version>
+		<ultimate-version>0.1.13</ultimate-version>
 	
 		<!-- maven plugin versions -->
 		<tycho-version>0.26.0</tycho-version>
@@ -395,6 +395,7 @@
 				<module>../BoogiePreprocessorTest</module>
 				<module>../CoreRCPTest</module>
 				<module>../Library-AutomataTest</module>
+				<module>../Library-IcfgTransformerTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-SMTLIBTest</module>
 				<module>../Library-UltimateTestTest</module>
@@ -487,6 +488,7 @@
 				<module>../BoogiePreprocessorTest</module>
 				<module>../CoreRCPTest</module>
 				<module>../Library-AutomataTest</module>
+				<module>../Library-IcfgTransformerTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-SMTLIBTest</module>
 				<module>../Library-UltimateTestTest</module>
@@ -560,6 +562,7 @@
 				<module>../BoogiePreprocessorTest</module>
 				<module>../CoreRCPTest</module>
 				<module>../Library-AutomataTest</module>
+				<module>../Library-IcfgTransformerTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-SMTLIBTest</module>
 				<module>../Library-UltimateTestTest</module>

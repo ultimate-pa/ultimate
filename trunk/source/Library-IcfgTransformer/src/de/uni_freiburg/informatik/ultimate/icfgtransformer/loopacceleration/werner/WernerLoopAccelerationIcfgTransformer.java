@@ -28,8 +28,10 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -40,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ExampleLoopAccelerationTransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -48,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -100,6 +104,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		transformer.preprocessIcfg(originalIcfg);
 
 		for (final Loop loop : mLoopBodies) {
+			final List<TermVariable> pathCounter = new ArrayList<>();
 			for (final Backbone backbone : loop.getBackbones()) {
 
 				final UnmodifiableTransFormula tf = (UnmodifiableTransFormula) backbone.getFormula();
@@ -110,10 +115,21 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 				final UnmodifiableTransFormula condition = TransFormulaUtils.computeGuard(tf, mScript, mServices,
 						mLogger);
+
+				final TermVariable backbonePathCounter = mScript.constructFreshTermVariable("kappa",
+						mScript.getScript().sort(SmtSortUtils.INT_SORT));
+
+				pathCounter.add(backbonePathCounter);
+				mLogger.debug(backbonePathCounter);
+				backbone.setPathCounter(backbonePathCounter);
 				backbone.setCondition(condition);
 				backbone.setSymbolicMemory(symbolicMemory);
 			}
 
+			final IteratedSymbolicMemory iteratedSymbolicMemory = new IteratedSymbolicMemory(mScript, mLogger,
+					loop.getFormula(), mOldSymbolTable, loop, pathCounter);
+
+			iteratedSymbolicMemory.updateMemory();
 		}
 
 		final BasicIcfg<OUTLOC> resultIcfg = new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(),

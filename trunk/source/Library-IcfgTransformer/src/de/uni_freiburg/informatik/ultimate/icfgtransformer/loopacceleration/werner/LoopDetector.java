@@ -19,8 +19,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -43,9 +43,11 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 
 	/**
 	 * Loop Detector for retrieving loops in an {@link IIcfg}.
-	 *
+	 * 
 	 * @param logger
 	 * @param originalIcfg
+	 * @param services
+	 * @param script
 	 */
 	public LoopDetector(final ILogger logger, final IIcfg<INLOC> originalIcfg, IUltimateServiceProvider services,
 			ManagedScript script) {
@@ -63,6 +65,22 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		}
 	}
 
+	/**
+	 * Calculate the symbols (initial values) of variables and map them to
+	 * ProgramVars.
+	 * 
+	 * @param tf
+	 *            the {@link TransFormula} whose symbols to compute
+	 * @return a mapping of program vars to their intitial values.
+	 */
+	public static Map<IProgramVar, Term> calculateSymbolTable(final TransFormula tf) {
+		final Map<IProgramVar, Term> result = new HashMap<>();
+		for (Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
+			result.put(entry.getKey(), entry.getValue());
+		}
+		return result;
+	}
+
 	private Deque<Loop> getLoop(final IIcfg<INLOC> originalIcfg) {
 		final Set<INLOC> loopHeads = originalIcfg.getLoopLocations();
 		final Deque<Loop> loopBodies = new ArrayDeque<>();
@@ -72,7 +90,9 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 
 			for (final INLOC loopHead : loopHeads) {
 				final Deque<IcfgEdge> path = getPath(loopHead);
-				final Loop loop = new Loop(path, loopHead);
+				final TransFormula tf = calculateFormula(path);
+
+				final Loop loop = new Loop(path, loopHead, tf);
 				loopBodies.add(loop);
 			}
 
@@ -178,43 +198,42 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 				backbone.add(target.getOutgoingEdges().get(0));
 			}
 
-			Term term = mScript.getScript().term("true");
-			final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
-			final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
-
-			List<UnmodifiableTransFormula> transformula = new ArrayList<>();
-
-			for (IcfgEdge edge : backbone) {
-				term = Util.and(mScript.getScript(), term, edge.getTransformula().getFormula());
-
-				for (final Entry<IProgramVar, TermVariable> entry : edge.getTransformula().getInVars().entrySet()) {
-					inVars.put(entry.getKey(), entry.getValue());
-				}
-
-				for (final Entry<IProgramVar, TermVariable> entry : edge.getTransformula().getOutVars().entrySet()) {
-					outVars.put(entry.getKey(), entry.getValue());
-				}
-
-				transformula.add(edge.getTransformula());
-			}
-
-			final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, false,
-					backbone.getFirst().getTransformula().getNonTheoryConsts(), true, Collections.emptySet(), false);
-
-			tfb.setFormula(term);
-			tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-			final UnmodifiableTransFormula tf = tfb.finishConstruction(mScript);
-
-			mLogger.debug("New Trafo: " + tf);
-
-			mLogger.debug("In Sequential: " + TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript,
-					false, false, false, null, null, transformula));
+			final TransFormula tf = calculateFormula(backbone);
 
 			final Backbone newBackbone = new Backbone(backbone, tf);
 			backbones.addLast(newBackbone);
 		}
 		mLogger.debug("Found Backbones: " + backbones.toString());
 		return backbones;
+	}
+
+	private TransFormula calculateFormula(Deque<IcfgEdge> path) {
+		Term term = mScript.getScript().term("true");
+		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
+		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
+
+		List<UnmodifiableTransFormula> transformula = new ArrayList<>();
+
+		for (IcfgEdge edge : path) {
+			term = Util.and(mScript.getScript(), term, edge.getTransformula().getFormula());
+
+			for (final Entry<IProgramVar, TermVariable> entry : edge.getTransformula().getInVars().entrySet()) {
+				inVars.put(entry.getKey(), entry.getValue());
+			}
+
+			for (final Entry<IProgramVar, TermVariable> entry : edge.getTransformula().getOutVars().entrySet()) {
+				outVars.put(entry.getKey(), entry.getValue());
+			}
+
+			transformula.add(edge.getTransformula());
+		}
+
+		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, false,
+				path.getFirst().getTransformula().getNonTheoryConsts(), true, Collections.emptySet(), false);
+
+		tfb.setFormula(term);
+		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
+		return tfb.finishConstruction(mScript);
 	}
 
 	/**
