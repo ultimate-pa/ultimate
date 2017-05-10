@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.wer
 
 import java.util.Deque;
 
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
@@ -17,6 +18,7 @@ public class Backbone {
 
 	private final Deque<IcfgEdge> mPath;
 	private final TransFormula mFormula;
+	private TermVariable mPathCounter;
 	private TransFormula mCondition;
 	private SymbolicMemory mSymbolicMemory;
 
@@ -31,8 +33,13 @@ public class Backbone {
 	public Backbone(final Deque<IcfgEdge> path, final TransFormula tf) {
 		mPath = path;
 		mFormula = tf;
+		mPathCounter = null;
 		mCondition = null;
 		mSymbolicMemory = null;
+	}
+
+	public void setPathCounter(TermVariable pathCounter) {
+		mPathCounter = pathCounter;
 	}
 
 	/**
@@ -58,6 +65,10 @@ public class Backbone {
 		return mPath;
 	}
 
+	public TermVariable getPathCounter() {
+		return mPathCounter;
+	}
+
 	/**
 	 * Returns the {@link TransFormula} of the backbone.
 	 * 
@@ -74,7 +85,7 @@ public class Backbone {
 		return mCondition;
 	}
 
-	public SymbolicMemory getMemory() {
+	public SymbolicMemory getSymbolicMemory() {
 		return mSymbolicMemory;
 	}
 
