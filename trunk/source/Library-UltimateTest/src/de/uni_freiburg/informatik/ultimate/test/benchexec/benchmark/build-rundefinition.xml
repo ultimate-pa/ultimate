@@ -6,18 +6,21 @@
         Generate JAXB model for benchexec rundefinitions from .xsd file
     </description>
 
-	<target name="generate_rundefinition">
-		<property environment="env" />
-		<echo>Building rundefinition with xjc</echo>
-		<echo>targetDir is ${targetDir}</echo>
-		<echo>packageDir is ${packageDir}</echo>
 
+	<target name="clean">
 		<delete>
 			<fileset dir="${packageDir}">
 				<exclude name="**/*.xml" />
 				<exclude name="**/*.xsd" />
 			</fileset>
 		</delete>
+	</target>
+
+	<target name="generate_rundefinition">
+		<property environment="env" />
+		<echo>Building rundefinition with xjc</echo>
+		<echo>targetDir is ${targetDir}</echo>
+		<echo>packageDir is ${packageDir}</echo>
 
 		<!-- 
 		You can generate the benchexec .xsd from the dtd file with 
