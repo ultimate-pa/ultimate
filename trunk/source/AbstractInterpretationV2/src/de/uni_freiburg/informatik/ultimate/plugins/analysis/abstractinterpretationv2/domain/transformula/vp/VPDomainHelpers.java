@@ -421,11 +421,14 @@ public class VPDomainHelpers {
 	 * @param resultStates
 	 * @return
 	 */
-	public static  <ACTION extends IIcfgTransition<IcfgLocation>> Set<VPState<ACTION>> 
-			eliminateBottomStates(Set<VPState<ACTION>> resultStates) {
-		final Set<VPState<ACTION>> result = new HashSet<>();
-		VPState<ACTION> bottom = null;
-		for (VPState<ACTION> rs : resultStates) {
+//	public static  <ACTION extends IIcfgTransition<IcfgLocation>> Set<VPState<ACTION>> 
+//	public static  <NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<IVPStateOrTfState<NODEID, ARRAYID>> 
+	public static  <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> 
+		Set<T> 
+			eliminateBottomStates(Set<T> resultStates) {
+		final Set<T> result = new HashSet<>();
+		T bottom = null;
+		for (T rs : resultStates) {
 			if (rs.isBottom()) {
 				bottom = rs;
 			} else {

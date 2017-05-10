@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Nnf.QuantifierHandling;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.ArrayWithSideCondition;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
@@ -106,6 +107,7 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 		mOutVars = outVars;
 		mOutNodes = outNodes;
 		
+		assert isBottomState || managedScript != null;
 		mScript = managedScript;
 		
 
@@ -393,16 +395,20 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 	private Set<VPTfState> addSideConditionsToState(final INodeOrArrayWithSideCondition lhsNodeWSc, 
 			final INodeOrArrayWithSideCondition rhsNodeWSc) {
 		final VPTfStateBuilder preStateCopy = mTfStateFactory.copy(this);
+		Set<VPTfState> resultStatesForCurrentNodePair = Collections.singleton(preStateCopy.build());
+
 		// add side conditions
 		for (final VPDomainSymmetricPair<VPTfNodeIdentifier> de : lhsNodeWSc.getDisEqualities()) {
-			preStateCopy.addDisEquality(de);
+//			preStateCopy.addDisEquality(de);
+			resultStatesForCurrentNodePair = VPFactoryHelpers.addDisEquality(de.getFirst(), de.getSecond(),
+					resultStatesForCurrentNodePair, mTfStateFactory);
 		}
 		for (final VPDomainSymmetricPair<VPTfNodeIdentifier> de : rhsNodeWSc.getDisEqualities()) {
-			preStateCopy.addDisEquality(de);
+//			preStateCopy.addDisEquality(de);
+			resultStatesForCurrentNodePair = VPFactoryHelpers.addDisEquality(de.getFirst(), de.getSecond(),
+					resultStatesForCurrentNodePair, mTfStateFactory);
 		}
 
-		Set<VPTfState> resultStatesForCurrentNodePair = new HashSet<>();
-		resultStatesForCurrentNodePair.add(preStateCopy.build());
 		for (final VPDomainSymmetricPair<VPTfNodeIdentifier> eq : lhsNodeWSc.getEqualities()) {
 			resultStatesForCurrentNodePair = VPFactoryHelpers.addEquality(eq.getFirst(), eq.getSecond(),
 					resultStatesForCurrentNodePair, mTfStateFactory);
@@ -411,8 +417,8 @@ public class VPTfState extends IVPStateOrTfState<VPTfNodeIdentifier, VPTfArrayId
 			resultStatesForCurrentNodePair = VPFactoryHelpers.addEquality(eq.getFirst(), eq.getSecond(),
 					resultStatesForCurrentNodePair, mTfStateFactory);
 		}
-		// TODO: filter bottom states?
-		return resultStatesForCurrentNodePair;
+
+		return VPDomainHelpers.eliminateBottomStates(resultStatesForCurrentNodePair);
 	}
 
 	public IAction getAction() {

@@ -35,6 +35,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPSFO;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -472,13 +473,18 @@ public class VPFactoryHelpers {
 		}
 		
 		final IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder = factory.copy(first);
-
-		builder.addDisEqualites(second.getDisEqualities());
-		
 		final T conjoinedState = builder.build();
-		
+
 		Set<T> resultStates = new HashSet<>();
 		resultStates.add(conjoinedState);
+
+		for (VPDomainSymmetricPair<NODEID> deq : second.getDisEqualities()) {
+			resultStates = addDisEquality(deq.getFirst(), deq.getSecond(), resultStates, factory);
+		}
+
+//		builder.addDisEqualites(second.getDisEqualities());
+		
+		
 		for (final EqGraphNode<NODEID, ARRAYID> otherGraphNode : second.getAllEqGraphNodes()) {
 			if (otherGraphNode.getRepresentative().equals(otherGraphNode)) {
 				// no (outgoing) equality edge here..

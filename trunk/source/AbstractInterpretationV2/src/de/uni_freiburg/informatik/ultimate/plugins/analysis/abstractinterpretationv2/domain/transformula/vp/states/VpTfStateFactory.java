@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -99,7 +100,7 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 		}
 
 		for (final VPDomainSymmetricPair<VPTfNodeIdentifier> pair : state.getDisEqualities()) {
-			builder.addDisEquality(pair);
+			builder.addDisEquality(pair.getFirst(), pair.getSecond());
 			// assert !state.isTop() || pair.mFst.isLiteral()
 			// && pair.mSnd.isLiteral() : "The only disequalites in a top state are between constants";
 		}
@@ -153,20 +154,20 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 	 * @return
 	 */
 //	public VPTfState createTfState(final VPState<?> state, final UnmodifiableTransFormula tf) {
-	public VPTfState createTfState(final VPState<?> state, final IAction action) {
+	public Set<VPTfState> createTfState(final VPState<?> state, final IAction action) {
 		if (isDebugMode()) {
 			getLogger().debug("VPTfStateFactory: createTfState(..) (begin)");
 		}
 
 		if (state.isBottom()) {
 			// FIXME extra builder for var signature: a bit hacky..
-			return getBottomState(mTfStatePreparer.getVPTfStateBuilder(action).build()); 
+			return Collections.singleton(getBottomState(mTfStatePreparer.getVPTfStateBuilder(action).build())); 
 		}
 
 		if (state.isTop()) {
 			final VPTfStateBuilder builder = createFreshVanillaStateBuilder(action);
 //			builder.addVars(state.getVariables());
-			return builder.build();
+			return Collections.singleton(builder.build());
 		}
 
 		final VPTfStateBuilder builder = createFreshVanillaStateBuilder(action);
@@ -219,7 +220,7 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 //					assert resultStates.size() == 1 : "??";
 					resultStates = VPFactoryHelpers.addEquality(inNode1.mNodeIdentifier, inNode2.mNodeIdentifier,
 							resultStates, this);
-					assert resultStates.size() == 1 : "??";
+//					assert resultStates.size() == 1 : "??";
 //					if (resultStates.size() > 1) {
 //						//FIXME: ... or should we allow multiple initial tf states??
 //						resultStates = Collections.singleton(VPFactoryHelpers.disjoinAll(resultStates, this));
@@ -231,8 +232,8 @@ public class VpTfStateFactory implements IVPFactory<VPTfState, VPTfNodeIdentifie
 		if (isDebugMode()) {
 			getLogger().debug("VPTfStateFactory: createTfState(..) (end)");
 		}
-		assert resultStates.size() == 1 : "??";
-		return resultStates.iterator().next();
+		assert resultStates.size() >0 : "??";
+		return resultStates;
 	}
 
 	@Override

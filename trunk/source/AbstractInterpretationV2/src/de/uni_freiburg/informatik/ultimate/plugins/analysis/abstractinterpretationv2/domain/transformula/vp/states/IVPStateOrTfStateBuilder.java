@@ -91,7 +91,7 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 	 * @param i1
 	 * @param i2
 	 */
-	void merge(final EqGraphNode<NODEID, ARRAYID> node1, final EqGraphNode<NODEID, ARRAYID> node2) {
+	public void merge(final EqGraphNode<NODEID, ARRAYID> node1, final EqGraphNode<NODEID, ARRAYID> node2) {
 		if (node1 == node2 || node1.find() == node2.find()) {
 			// nothing to do
 			return;
@@ -212,6 +212,15 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 		return node.find().getCcpar();
 	}
 
+	/**
+	 * Adds a pair to the set of disequality pairs that this builder holds.
+	 * 
+	 * Note: This does not close the state, thus the result might not be a "state" in the strict sense. Should only be
+	 *  called from more high-level methods that will later deal with possible propagations.
+	 * 
+	 * @param id1
+	 * @param id2
+	 */
 	public void addDisEquality(final NODEID id1, final NODEID id2) {
 		assert !id1.equals(id2);
 		// assert getEqGraphNode(id1).find() == getEqGraphNode(id1) :
@@ -229,31 +238,31 @@ public abstract class IVPStateOrTfStateBuilder<T extends IVPStateOrTfState<NODEI
 		mDisEqualitySet.add(new VPDomainSymmetricPair<NODEID>(egn1.find().mNodeIdentifier, egn2.find().mNodeIdentifier));
 		// mDisEqualitySet.add(new VPDomainSymmetricPair<NODEID>(id1, id2));
 	}
-
-	public void addDisEquality(final VPDomainSymmetricPair<NODEID> newDisequality) {
-		// assert getEqGraphNode(newDisequality.getFirst()).find() == getEqGraphNode(newDisequality.getFirst()) :
-		// "the caller of this procedure has to make sure to call it on representatives only!";
-		// assert getEqGraphNode(newDisequality.getSecond()).find() == getEqGraphNode(newDisequality.getSecond()) :
-		// "the caller of this procedure has to make sure to call it on representatives only!";
-		setIsTop(false);
-		// mDisEqualitySet.add(newDisequality);
-		addDisEquality(newDisequality.getFirst(), newDisequality.getSecond());
-	}
-
-	public void addDisEqualites(final Set<VPDomainSymmetricPair<NODEID>> newDisequalities) {
-		// for (VPDomainSymmetricPair<NODEID> newDisequality : newDisequalities) {
-		// assert getEqGraphNode(newDisequality.getFirst()).find() == getEqGraphNode(newDisequality.getFirst()) :
-		// "the caller of this procedure has to make sure to call it on representatives only!";
-		// assert getEqGraphNode(newDisequality.getSecond()).find() == getEqGraphNode(newDisequality.getSecond()) :
-		// "the caller of this procedure has to make sure to call it on representatives only!";
-		// }
-
-		setIsTop(false);
-		for (final VPDomainSymmetricPair<NODEID> newDisequality : newDisequalities) {
-			addDisEquality(newDisequality);
-		}
-		// mDisEqualitySet.addAll(newDisequalities);
-	}
+//
+//	public void addDisEquality(final VPDomainSymmetricPair<NODEID> newDisequality) {
+//		// assert getEqGraphNode(newDisequality.getFirst()).find() == getEqGraphNode(newDisequality.getFirst()) :
+//		// "the caller of this procedure has to make sure to call it on representatives only!";
+//		// assert getEqGraphNode(newDisequality.getSecond()).find() == getEqGraphNode(newDisequality.getSecond()) :
+//		// "the caller of this procedure has to make sure to call it on representatives only!";
+//		setIsTop(false);
+//		// mDisEqualitySet.add(newDisequality);
+//		addDisEquality(newDisequality.getFirst(), newDisequality.getSecond());
+//	}
+//
+//	public void addDisEqualites(final Set<VPDomainSymmetricPair<NODEID>> newDisequalities) {
+//		// for (VPDomainSymmetricPair<NODEID> newDisequality : newDisequalities) {
+//		// assert getEqGraphNode(newDisequality.getFirst()).find() == getEqGraphNode(newDisequality.getFirst()) :
+//		// "the caller of this procedure has to make sure to call it on representatives only!";
+//		// assert getEqGraphNode(newDisequality.getSecond()).find() == getEqGraphNode(newDisequality.getSecond()) :
+//		// "the caller of this procedure has to make sure to call it on representatives only!";
+//		// }
+//
+//		setIsTop(false);
+//		for (final VPDomainSymmetricPair<NODEID> newDisequality : newDisequalities) {
+//			addDisEquality(newDisequality);
+//		}
+//		// mDisEqualitySet.addAll(newDisequalities);
+//	}
 
 
 	
