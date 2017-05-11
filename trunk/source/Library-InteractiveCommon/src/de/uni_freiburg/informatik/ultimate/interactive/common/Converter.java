@@ -55,8 +55,10 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 	private static Request convertChoiceRequest(final ChoiceRequest available) {
 		final Request.Builder builder = Request.newBuilder();
 		available.mChoices.stream().map(available.mToString).forEach((Consumer<String>) builder::addChoice);
-		builder.setTitle(available.mTitle);
-		builder.setSubtitle(available.mSubTitle);
+		if (available.mTitle != null)
+			builder.setTitle(available.mTitle);
+		if (available.mSubTitle != null)
+			builder.setSubtitle(available.mSubTitle);
 		return builder.build();
 	}
 
