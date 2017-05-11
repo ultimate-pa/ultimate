@@ -201,7 +201,7 @@ public class InteractiveCegar {
 
 					if (userRun != null)
 						break;
-					send("Infeasible Trace: Iteration " + iteration
+					getInterface().common().send("Infeasible Trace: Iteration " + iteration
 							+ ": The Trace you have selected is not accepted by the "
 							+ "current abstraction. Please select anther trace.");
 					mLogger.info("intersection of the automaton that accepts the user-trace with abstraction is empty. "
