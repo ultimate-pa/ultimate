@@ -44,8 +44,8 @@ public interface IConverterRegistry<IA, IB> {
 		registerBA(converter(typB, tA, b2a));
 	}
 
-	static <A, D, B> IResponseConverter<A, D, B> converter(final Class<A> typA, final Class<D> typD, final Class<B> typB,
-			final BiFunction<A, D, B> ad2b) {
+	static <A, D, B> IResponseConverter<A, D, B> converter(final Class<A> typA, final Class<D> typD,
+			final Class<B> typB, final BiFunction<A, D, B> ad2b) {
 		return new IResponseConverter<A, D, B>() {
 
 			@Override
@@ -90,32 +90,6 @@ public interface IConverterRegistry<IA, IB> {
 		};
 	}
 
-	public static interface IResponseConverter<A, D, B> extends BiFunction<A, D, B> {
-		Class<A> getTypeA();
-
-		Class<B> getTypeB();
-
-		Class<D> getTypeData();
-	}
-
-	public static interface IConverter<A, B> extends Function<A, B> {
-		Class<A> getTypeA();
-
-		Class<B> getTypeB();
-
-		default Consumer<A> andThen(final Consumer<B> consumer) {
-			return a -> consumer.accept(apply(a));
-		}
-
-		default Supplier<B> compose(final Supplier<A> supplier) {
-			return () -> apply(supplier.get());
-		}
-	}
-
-	public static interface IBiConverter<A, B> extends IConverter<A, B> {
-		IConverter<B, A> inverse();
-	}
-
 	static <A, B> IBiConverter<A, B> combine(final IBiConverter<A, B> forth, final IBiConverter<B, A> back) {
 		return new IBiConverter<A, B>() {
 
@@ -139,5 +113,31 @@ public interface IConverterRegistry<IA, IB> {
 				return back;
 			}
 		};
+	}
+
+	public interface IResponseConverter<A, D, B> extends BiFunction<A, D, B> {
+		Class<A> getTypeA();
+
+		Class<B> getTypeB();
+
+		Class<D> getTypeData();
+	}
+
+	public interface IConverter<A, B> extends Function<A, B> {
+		Class<A> getTypeA();
+
+		Class<B> getTypeB();
+
+		default Consumer<A> andThen(final Consumer<B> consumer) {
+			return a -> consumer.accept(apply(a));
+		}
+
+		default Supplier<B> compose(final Supplier<A> supplier) {
+			return () -> apply(supplier.get());
+		}
+	}
+
+	public interface IBiConverter<A, B> extends IConverter<A, B> {
+		IConverter<B, A> inverse();
 	}
 }

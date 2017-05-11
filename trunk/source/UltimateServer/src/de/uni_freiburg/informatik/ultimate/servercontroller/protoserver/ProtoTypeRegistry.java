@@ -35,7 +35,7 @@ public class ProtoTypeRegistry implements ITypeRegistry<GeneratedMessageV3> {
 		return (RegisteredProtoType<T>) mByClass.get(type);
 	}
 
-	private final <U extends GeneratedMessageV3> boolean register(final RegisteredProtoType<U> type) {
+	private <U extends GeneratedMessageV3> boolean register(final RegisteredProtoType<U> type) {
 		final boolean result = registered(type.getType());
 		mByClass.put(type.getType(), type);
 		mByName.put(type.registeredName(), type);

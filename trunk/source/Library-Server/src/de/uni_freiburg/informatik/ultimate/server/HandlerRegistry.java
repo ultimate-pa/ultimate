@@ -20,7 +20,7 @@ public class HandlerRegistry<M> implements IHandlerRegistry<M> {
 		mTypeRegistry = typeRegistry;
 	}
 
-	private final <T extends M> TypeHandler<T> register(final IRegisteredType<T> type) {
+	private <T extends M> TypeHandler<T> register(final IRegisteredType<T> type) {
 		final TypeHandler<T> typeHandler = new TypeHandler<>(type);
 		mByClass.put(type.getClass(), typeHandler);
 		mByName.put(type.registeredName(), typeHandler);
@@ -41,7 +41,7 @@ public class HandlerRegistry<M> implements IHandlerRegistry<M> {
 	}
 
 	@SuppressWarnings("unchecked")
-	private final <T extends M> TypeHandler<T> getInternal(final Class<T> type) {
+	private <T extends M> TypeHandler<T> getInternal(final Class<T> type) {
 		if (mByClass.containsKey(type)) {
 			return (TypeHandler<T>) mByName.get(type);
 		}

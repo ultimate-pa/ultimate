@@ -8,8 +8,8 @@ public class WrappedFuture<T extends GeneratedMessageV3> {
 	public final CompletableFuture<T> future;
 	public final Class<T> type;
 
-	public WrappedFuture(final Class<T> type) {
+	public WrappedFuture(final Class<T> wType) {
 		this.future = new CompletableFuture<T>();
-		this.type = type;
+		this.type = wType;
 	}
 }

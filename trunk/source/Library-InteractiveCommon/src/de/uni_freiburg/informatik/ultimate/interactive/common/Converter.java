@@ -5,6 +5,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.function.Consumer;
 
 import com.google.protobuf.GeneratedMessageV3;
 
@@ -26,9 +27,10 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		super(services, Object.class);
 	}
 
-	private static Common.StackTraceElement convertStackTraceElement(final StackTraceElement el) {
-		return Common.StackTraceElement.newBuilder().setDeclaringClass(el.getClassName()).setFileName(el.getFileName())
-				.setMethodName(el.getMethodName()).setLineNumber(el.getLineNumber()).build();
+	private static Common.StackTraceElement convertStackTraceElement(final StackTraceElement stackTraceEl) {
+		return Common.StackTraceElement.newBuilder().setDeclaringClass(stackTraceEl.getClassName())
+				.setFileName(stackTraceEl.getFileName()).setMethodName(stackTraceEl.getMethodName())
+				.setLineNumber(stackTraceEl.getLineNumber()).build();
 	}
 
 	private static Common.File convertFile(final java.io.File file) {
@@ -49,9 +51,12 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		return confirm.getOk();
 	}
 
+	@SuppressWarnings("unchecked")
 	private static Request convertChoiceRequest(final ChoiceRequest available) {
 		final Request.Builder builder = Request.newBuilder();
-		available.mChoices.stream().map(available.mToString).forEach(s -> builder.addChoice((String) s));
+		available.mChoices.stream().map(available.mToString).forEach((Consumer<String>) builder::addChoice);
+		builder.setTitle(available.mTitle);
+		builder.setSubtitle(available.mSubTitle);
 		return builder.build();
 	}
 
@@ -65,10 +70,9 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 
 	private static Common.Message fromMessage(final String message) {
 		final String[] msgs = message.split(":");
-		final String title, subtitle, text;
-		text = msgs.length > 0 ? msgs[msgs.length - 1] : "Empty Message";
-		title = msgs.length > 1 ? msgs[0] : "Message";
-		subtitle = msgs.length > 2 ? msgs[1] : "";
+		final String text = msgs.length > 0 ? msgs[msgs.length - 1] : "Empty Message";
+		final String title = msgs.length > 1 ? msgs[0] : "Message";
+		final String subtitle = msgs.length > 2 ? msgs[1] : "";
 
 		return Common.Message.newBuilder().setTitle(title).setSubtitle(subtitle).setText(text).build();
 	}
@@ -92,6 +96,6 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		converterRegistry.registerBA(Common.Choice.Request.class, ChoiceRequest.class, Converter::convertChoiceRequest);
 
 		converterRegistry.registerRConv(Common.Choice.class, ChoiceRequest.class, Object.class, Converter::getChoice);
-		
+
 	}
 }

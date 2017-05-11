@@ -11,7 +11,7 @@ import org.apache.commons.cli.Option;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
-public class CommandLineArgs {
+public final class CommandLineArgs {
 	public final static String SETTINGS_OPTION = "S";
 	public final static String INPUT_OPTION = "I";
 	public final static String TOOLCHAIN_OPTION = "TC";
@@ -19,12 +19,13 @@ public class CommandLineArgs {
 	public final static String LISTEN_TIMEOUT_OPTION = "TIMEOUT";
 	private final static int DEFAULT_PORT = 6789;
 	private final static int DEFAULT_TIMEOUT = 60;
+	private final static String PARSE_EXCEPTION_MESSAGE = "Invalid value: %s cannot be parsed as %s";
 
-	final File mToolchainDirPath;
-	final File mInputDirPath;
-	final File mSettingsFilePath;
-	final int mPort;
-	final int mTimeout;
+	private final File mToolchainDirPath;
+	private final File mInputDirPath;
+	private final File mSettingsFilePath;
+	private final int mPort;
+	private final int mTimeout;
 
 	public File getToolchainDirPath() {
 		return mToolchainDirPath;
@@ -46,7 +47,8 @@ public class CommandLineArgs {
 		return mTimeout;
 	}
 
-	private CommandLineArgs(final String toolchainDir, final String inputDir, final String settingsDir, final int port, final int timeout) {
+	private CommandLineArgs(final String toolchainDir, final String inputDir, final String settingsDir, final int port,
+			final int timeout) {
 		this.mToolchainDirPath = validateDir(toolchainDir);
 		this.mInputDirPath = validateDir(inputDir);
 		this.mSettingsFilePath = validateDir(settingsDir);
@@ -56,8 +58,9 @@ public class CommandLineArgs {
 
 	private static File validateDir(final String dirName) {
 		final File dir = new File(dirName);
-		if (!dir.isDirectory())
+		if (!dir.isDirectory()) {
 			throw new IllegalArgumentException(String.format("%1$s is not a valid Directory.", dirName));
+		}
 		return dir;
 	}
 
@@ -95,7 +98,7 @@ public class CommandLineArgs {
 			try {
 				port = Integer.parseInt(portString);
 			} catch (final NumberFormatException e) {
-				throw new ParseException("Invalid value: " + portString + " cannot be parsed as port");
+				throw new ParseException(String.format(PARSE_EXCEPTION_MESSAGE, portString, "port"));
 			}
 		}
 		int timeout = DEFAULT_TIMEOUT;
@@ -104,7 +107,7 @@ public class CommandLineArgs {
 			try {
 				timeout = Integer.parseInt(timeoutString);
 			} catch (final NumberFormatException e) {
-				throw new ParseException("Invalid value: " + timeoutString + " cannot be parsed as timeout");
+				throw new ParseException(String.format(PARSE_EXCEPTION_MESSAGE, timeoutString, "timeout"));
 			}
 		}
 

@@ -170,6 +170,11 @@ public class PreNestedWord {
 	 */
 
 	public static class Loop {
+		public final int mStart;
+		public final int mEnd;
+		public final int mReps;
+		public final ArrayList<Loop> mNested = new ArrayList<>();
+
 		public Loop(final int start, final int end, final int reps) {
 			mStart = start;
 			mEnd = end;
@@ -217,10 +222,5 @@ public class PreNestedWord {
 		public String toString() {
 			return "Loop [" + mStart + "-" + mEnd + "]x" + mReps + (mNested.isEmpty() ? "" : " nested:" + mNested);
 		}
-
-		public final int mStart;
-		public final int mEnd;
-		public final int mReps;
-		public final ArrayList<Loop> mNested = new ArrayList<>();
 	}
 }

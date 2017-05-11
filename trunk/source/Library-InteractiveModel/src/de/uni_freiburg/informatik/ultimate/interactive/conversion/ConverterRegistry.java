@@ -13,9 +13,6 @@ public class ConverterRegistry<IA, IB> implements IConverterRegistry<IA, IB> {
 	private final Map<Class<? extends IB>, Map<Class<? extends IB>, IResponseConverter<? extends IA, ? extends IB, ? extends IB>>> mapRC =
 			new HashMap<>();
 
-	public ConverterRegistry() {
-	}
-
 	public void registerATypes(final ITypeRegistry<IA> typeRegistry) {
 		mapAB.keySet().forEach(typeRegistry::register);
 		mapBA2.keySet().forEach(typeRegistry::register);

@@ -32,7 +32,8 @@ public class ApplyConversionToInteractive<M, O> implements IInteractive<M> {
 		wrapRegister(converter, mOriginal, consumer);
 	}
 
-	private static <M, T> void wrapRegister(final IConverter<M, T> src, final IInteractive<? super M> old, final Consumer<T> consumer) {
+	private static <M, T> void wrapRegister(final IConverter<M, T> src, final IInteractive<? super M> old,
+			final Consumer<T> consumer) {
 		old.register(src.getTypeA(), src.andThen(consumer));
 	}
 
@@ -42,28 +43,29 @@ public class ApplyConversionToInteractive<M, O> implements IInteractive<M> {
 		wrapRegister(converter, mOriginal, supplier);
 	}
 
-	private static <M, T> void wrapRegister(final IConverter<T, M> src, final IInteractive<? super M> old, final Supplier<T> supplier) {
+	private static <M, T> void wrapRegister(final IConverter<T, M> src, final IInteractive<? super M> old,
+			final Supplier<T> supplier) {
 		old.register(src.getTypeB(), src.compose(supplier));
 	}
 
 	@Override
-	public <D extends M, T extends M> void register(final Class<T> type, final Class<D> dataType, final Function<D, T> supplier) {
+	public <D extends M, T extends M> void register(final Class<T> type, final Class<D> dataType,
+			final Function<D, T> supplier) {
 		final IConverter<T, ? extends O> converter = mConverter.getBA(type);
 		final IConverter<? extends O, D> dConverter = mConverter.getAB2(dataType);
-		wrapRegister(type, dataType, converter, dConverter, supplier);
+		wrapRegister(type, converter, dConverter, supplier);
 	}
 
-	private <D extends M, T extends M, O1 extends O, O2 extends O> void wrapRegister(final Class<T> type, final Class<D> dataType,
+	private <D extends M, T extends M, O1 extends O, O2 extends O> void wrapRegister(final Class<T> type,
 			final IConverter<T, O1> converter, final IConverter<O2, D> dConverter, final Function<D, T> supplier) {
-		final Function<O2, O1> f = d -> converter.apply(supplier.apply(dConverter.apply(d)));
-		mOriginal.register(converter.getTypeB(), dConverter.getTypeA(), f);
+		final Function<O2, O1> cSupplier = d -> converter.apply(supplier.apply(dConverter.apply(d)));
+		mOriginal.register(converter.getTypeB(), dConverter.getTypeA(), cSupplier);
 	}
 
 	@Override
 	public void send(final M data) {
 		@SuppressWarnings("unchecked")
-		final
-		Class<? extends M> type = (Class<? extends M>) data.getClass();
+		final Class<? extends M> type = (Class<? extends M>) data.getClass();
 		IConverter<? extends M, ? extends O> converter;
 		converter = mConverter.getBA(type);
 		if (converter == null) {
@@ -92,18 +94,16 @@ public class ApplyConversionToInteractive<M, O> implements IInteractive<M> {
 	@Override
 	public <T extends M> CompletableFuture<T> request(final Class<T> type, final M data) {
 		@SuppressWarnings("unchecked")
-		final
-		Class<? extends M> dType = (Class<? extends M>) data.getClass();
+		final Class<? extends M> dType = (Class<? extends M>) data.getClass();
 		final IConverter<? extends M, ? extends O> dConverter = mConverter.getBA(dType);
 		return wrapPreRequest(dConverter, data, type);
 	}
 
-	private <T extends M, D extends M, OD extends O> CompletableFuture<T> wrapPreRequest(final IConverter<D, OD> dConverter,
-			final M data, final Class<T> type) {
+	private <T extends M, D extends M, OD extends O> CompletableFuture<T>
+			wrapPreRequest(final IConverter<D, OD> dConverter, final M data, final Class<T> type) {
 		final Class<D> dType = dConverter.getTypeA();
 		@SuppressWarnings("unchecked")
-		final
-		D dData = (D) data;
+		final D dData = (D) data;
 		final OD oData = dConverter.apply(dData);
 
 		final IResponseConverter<? extends O, D, T> rConverter = mConverter.getRConv(type, dType);
@@ -121,8 +121,8 @@ public class ApplyConversionToInteractive<M, O> implements IInteractive<M> {
 		return mOriginal.request(rConverter.getTypeA(), oData).thenCombine(data2, rConverter);
 	}
 
-	private <O1 extends O, T extends M, OD extends O> CompletableFuture<T> wrapRequest(final IConverter<O1, T> converter,
-			final OD oData) {
+	private <O1 extends O, T extends M, OD extends O> CompletableFuture<T>
+			wrapRequest(final IConverter<O1, T> converter, final OD oData) {
 		return mOriginal.request(converter.getTypeA(), oData).thenApply(converter);
 	}
 

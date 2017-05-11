@@ -236,7 +236,7 @@ public class ServerController implements IController<RunDefinition> {
 			requestAndLoadSettings(core);
 			requestAndLoadToolchain(core, tcFiles);
 
-			final File[] inputFiles = requestInput(core);
+			final File[] inputFiles = requestInput();
 
 			if (!mCommonInterface.request(Boolean.class).get())
 				continue;
@@ -284,7 +284,7 @@ public class ServerController implements IController<RunDefinition> {
 		}
 	}
 
-	private File[] requestInput(final ICore<RunDefinition> core) throws InterruptedException, ExecutionException {
+	private File[] requestInput() throws InterruptedException, ExecutionException {
 		final File inputFile = requestChoice(getAvailableInputFiles(), File::getName, "Pick an Input File");
 
 		mCommonInterface.send(inputFile);
@@ -306,20 +306,7 @@ public class ServerController implements IController<RunDefinition> {
 
 	private <T> T requestChoice(final List<T> choices, final Function<T, String> toString, final String title)
 			throws InterruptedException, ExecutionException {
-		// Controller.ChoiceRequest.Request.Builder tcBuilder = Controller.Choice.Request.newBuilder();
-		// choices.stream().map(toString).forEach(tcBuilder::addChoice);
-		// tcBuilder.setTitle(title);
-		// CompletableFuture<Choice> choice = mProtoInterface.request(Controller.ChoiceRequest.class,
-		// tcBuilder.build());
-
-		// int choiceid = -1;
-
-		// choiceid = choice.get().getIndex();
-		// if (choiceid < 0 || choiceid > choices.size()) {
-		// throw new ClientCrazyException(String.format("Choice index from Client not within bounds: %1$d", choiceid));
-		// }
-		// final T result = choices.get(choiceid);
-		final T result = (T) mCommonInterface.request(Object.class, ChoiceRequest.get(choices, toString)).get();
+		final T result = (T) mCommonInterface.request(Object.class, ChoiceRequest.get(choices, toString).setTitle(title)).get();
 		mLogger.info("Client has chosen " + toString.apply(result));
 		return result;
 	}

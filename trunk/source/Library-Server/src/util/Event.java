@@ -8,7 +8,7 @@ import java.util.concurrent.locks.ReentrantLock;;
 public class Event {
 	private final Lock lock = new ReentrantLock();
 	private final Condition cond = lock.newCondition();
-	boolean flag;
+	private boolean flag;
 
 	public void doWait() throws InterruptedException {
 		lock.lock();

@@ -15,7 +15,7 @@ public interface IInteractiveQueue<M> {
 	 * 
 	 * @param data
 	 */
-	void send(final M data);
+	void send(M data);
 
 	/**
 	 * waits for a data Object

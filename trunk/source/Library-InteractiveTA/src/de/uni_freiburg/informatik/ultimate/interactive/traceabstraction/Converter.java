@@ -187,7 +187,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 				}
 			};
 
-	private static TraceAbstractionProtos.TraceHistogram fromHistogram(final HistogramOfIterable<CodeBlock> histogram) {
+	private TraceAbstractionProtos.TraceHistogram fromHistogram(final HistogramOfIterable<CodeBlock> histogram) {
 		final TraceAbstractionProtos.TraceHistogram.Builder builder =
 				TraceAbstractionProtos.TraceHistogram.newBuilder();
 
@@ -204,7 +204,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 			});
 
 		} catch (NoSuchFieldException | SecurityException | IllegalAccessException e) {
-			e.printStackTrace();
+			getLogger().error(e);
 			throw new IllegalStateException(e);
 		}
 		return builder.build();
@@ -503,6 +503,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		default:
 			enhancment =
 					convertTo(InterpolantAutomatonEnhancement.class, preferences.interpolantAutomatonEnhancement());
+			break;
 		}
 
 		final Minimization minimization;
