@@ -122,7 +122,7 @@ public final class CFGInvariantsGenerator {
 	 * Transform the path program by applying large block encoding. Synthesize invariants only for the large block
 	 * encoded program and use less expensive techniques to obtain the remaining invariants.
 	 */
-	private static boolean APPLY_LARGE_BLOCK_ENCODING = true;
+	private final boolean mApplyLargeBlockEncoding;
 	/**
 	 * In practice we never have seen more than 5 rounds with a successful result, therefore we limit the maximal
 	 * number of rounds to 10.
@@ -184,11 +184,7 @@ public final class CFGInvariantsGenerator {
 		mPostcondition = postcondition;
 		mPathProgram = pathProgram;
 		mInvariantSynthesisSettings = invariantSynthesisSettings;
-		if (!mInvariantSynthesisSettings.useLargeBlockEncoding()) {
-			APPLY_LARGE_BLOCK_ENCODING = false;
-		} else {
-			APPLY_LARGE_BLOCK_ENCODING = true;
-		}
+		mApplyLargeBlockEncoding = mInvariantSynthesisSettings.useLargeBlockEncoding(); 
 		mPathInvariantsStatistics = new PathInvariantsStatisticsGenerator();
 		// Initialize statistics
 		mPathInvariantsStatistics.initializeStatistics();
@@ -864,7 +860,7 @@ public final class CFGInvariantsGenerator {
 		final int numLocsBeforeLbe = getNumOfPPLocations(mPathProgram);
 		LargeBlockEncodingIcfgTransformer lbeTransformer = null;
 		IIcfg<IcfgLocation> lbePathProgram;
-		if (APPLY_LARGE_BLOCK_ENCODING) {
+		if (mApplyLargeBlockEncoding) {
 			lbeTransformer = new LargeBlockEncodingIcfgTransformer(mServices, mPredicateFactory, mPredicateUnifier);
 			lbePathProgram = lbeTransformer.transform(mPathProgram);
 		} else {
@@ -885,7 +881,7 @@ public final class CFGInvariantsGenerator {
 		
 		if (invariants != null) {
 //			invariants = buTransformer.transform(invariants);
-			if (APPLY_LARGE_BLOCK_ENCODING) {
+			if (mApplyLargeBlockEncoding) {
 				invariants = lbeTransformer.transform(invariants);
 			}
 			return invariants;
