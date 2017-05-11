@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?pde version="3.5"?>
+
+<product name="Ultimate-Interactive" uid="Interactive-E4" id="de.uni_freiburg.informatik.ultimate.core.Interactive" application="de.uni_freiburg.informatik.ultimate.core.CoreRCP" version="0.1.13" useFeatures="false" includeLaunchers="true">
+
+   <aboutInfo>
+      <image path="icons/about.gif"/>
+      <text>
+         Ultimate Ultimate is a tool for model checking and static program analysis. It provides multiple toolchains which check properties or transform input files.
+      </text>
+   </aboutInfo>
+
+   <configIni use="default">
+   </configIni>
+
+   <launcherArgs>
+      <programArgs>-consoleLog --launcher.suppressErrors -nosplash -TC ${workspace_loc}/../examples/Interactive/toolchains -I ${workspace_loc}/../examples/Interactive/input -S ${workspace_loc}/../examples/Interactive/settings -TIMEOUT 3600 -data @user.home\ultimate-data
+      </programArgs>
+      <vmArgs>-Xmx8g -ea
+      </vmArgs>
+      <vmArgsMac>-XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts
+      </vmArgsMac>
+   </launcherArgs>
+
+   <windowImages/>
+
+   <launcher name="UltimateInteractive">
+      <solaris/>
+      <win useIco="false">
+         <bmp/>
+      </win>
+   </launcher>
+
+   <vm>
+      <windows include="false">org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8</windows>
+   </vm>
+
+   <plugins>
+      <plugin id="com.github.jhoenicke.javacup"/>
+      <plugin id="com.google.gson"/>
+      <plugin id="com.google.protobuf"/>
+      <plugin id="com.ibm.icu"/>
+      <plugin id="com.lmax.disruptor"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.acsl.parser"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.astbuilder"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.boogie.parser"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.boogie.preprocessor"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.boogie.printer"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.cdt.parser"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.core"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.interactive"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.interactive.common"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.interactive.traceabstraction"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.lib.automata"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.lib.boogieast"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.lib.core"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.lib.icfgtransformer"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.lib.lassoranker"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.lib.smtlib"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.lib.ultimatemodel"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.lib.util"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.analysis.irsdependencies"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.blockencoding"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.server"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.servercontroller"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.smtinterpol"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.smtsolver.external"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.witnessparser"/>
+      <plugin id="de.uni_freiburg.informatik.ultimate.witnessprinter"/>
+      <plugin id="edu.uci.ics.jung"/>
+      <plugin id="javax.xml"/>
+      <plugin id="net.sf.javabdd"/>
+      <plugin id="org.apache.commons.cli"/>
+      <plugin id="org.apache.commons.lang"/>
+      <plugin id="org.apache.log4j"/>
+      <plugin id="org.apache.logging.log4j"/>
+      <plugin id="org.eclipse.cdt.core"/>
+      <plugin id="org.eclipse.cdt.core.native"/>
+      <plugin id="org.eclipse.core.commands"/>
+      <plugin id="org.eclipse.core.contenttype"/>
+      <plugin id="org.eclipse.core.expressions"/>
+      <plugin id="org.eclipse.core.filebuffers"/>
+      <plugin id="org.eclipse.core.filesystem"/>
+      <plugin id="org.eclipse.core.jobs"/>
+      <plugin id="org.eclipse.core.resources"/>
+      <plugin id="org.eclipse.core.runtime"/>
+      <plugin id="org.eclipse.core.variables"/>
+      <plugin id="org.eclipse.equinox.app"/>
+      <plugin id="org.eclipse.equinox.common"/>
+      <plugin id="org.eclipse.equinox.preferences"/>
+      <plugin id="org.eclipse.equinox.registry"/>
+      <plugin id="org.eclipse.ltk.core.refactoring"/>
+      <plugin id="org.eclipse.osgi"/>
+      <plugin id="org.eclipse.text"/>
+      <plugin id="org.ojalgo"/>
+   </plugins>
+
+   <configurations>
+      <plugin id="org.eclipse.core.runtime" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.equinox.common" autoStart="true" startLevel="2" />
+      <plugin id="org.eclipse.osgi" autoStart="true" startLevel="-1" />
+   </configurations>
+
+</product>
