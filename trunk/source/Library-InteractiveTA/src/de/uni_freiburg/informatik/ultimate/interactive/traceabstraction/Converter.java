@@ -112,7 +112,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		converterRegistry.registerBA(TraceAbstractionProtos.CegarStatistics.class, CegarLoopStatisticsGenerator.class,
 				Converter::fromCegarLoopStatisticsGenerator);
 		converterRegistry.registerBA(TraceAbstractionProtos.TraceHistogram.class, HistogramOfIterable.class,
-				Converter::fromHistogram);
+				this::fromHistogram);
 
 		converterRegistry.registerBA(TraceAbstractionProtos.InterpolantSequences.class, InterpolantSequences.class,
 				Converter::fromInterpolants);
