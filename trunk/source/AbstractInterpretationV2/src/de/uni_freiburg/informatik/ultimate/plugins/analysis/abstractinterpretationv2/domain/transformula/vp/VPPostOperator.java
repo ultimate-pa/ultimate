@@ -112,11 +112,16 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 			return Collections.singletonList(oldState);
 		}
 		
-		final VPTfState tfState = mTfStateFactory.createTfState(oldState, transition);
+		final Set<VPTfState> tfPreStates = mTfStateFactory.createTfState(oldState, transition);
 		
-		final Set<VPTfState> tfStatesAfterTransition = tfState.applyTransition(mTfStateFactory, mServices);
-		
-		final Set<VPState<ACTION>> resultStates = mStateFactory.projectToOutVars(tfStatesAfterTransition);
+		final Set<VPState<ACTION>> resultStates = new HashSet<>();
+
+		for (VPTfState tfPreState : tfPreStates) {
+			final Set<VPTfState> tfStatesAfterTransition = tfPreState.applyTransition(mTfStateFactory, mServices);
+
+//			final Set<VPState<ACTION>> resultStates = mStateFactory.projectToOutVars(tfStatesAfterTransition);
+			resultStates.addAll(mStateFactory.projectToOutVars(tfStatesAfterTransition));
+		}
 
 		if (mPreAnalysis.isDebugMode()) {
 			mPreAnalysis.getLogger().debug("VPPostOperator: apply(..) (internal transition) (end)");
@@ -138,13 +143,17 @@ public class VPPostOperator<ACTION extends IIcfgTransition<IcfgLocation>>
 
 		if (transition instanceof Call
 				|| transition instanceof Return) {
-			final VPTfState tfState = mTfStateFactory.createTfState(stateBeforeLeaving, transition);
-			final Set<VPTfState> tfStatesAfterTransition = tfState.applyTransition(mTfStateFactory, mServices);
-			final Set<VPState<ACTION>> patchStates = mStateFactory.projectToOutVars(tfStatesAfterTransition);
+			final Set<VPTfState> tfPreStates = mTfStateFactory.createTfState(stateBeforeLeaving, transition);
 			
 			final Set<VPState<ACTION>> result = new HashSet<>();
-			for (VPState<ACTION> patchState : patchStates) {
-				result.add(stateAfterLeaving.patch(patchState));
+			for (VPTfState tfPreState : tfPreStates) {
+			
+				final Set<VPTfState> tfStatesAfterTransition = tfPreState.applyTransition(mTfStateFactory, mServices);
+				final Set<VPState<ACTION>> patchStates = mStateFactory.projectToOutVars(tfStatesAfterTransition);
+
+				for (VPState<ACTION> patchState : patchStates) {
+					result.add(stateAfterLeaving.patch(patchState));
+				}
 			}
 
 			assert VPDomainHelpers.containsNoNullElement(result);

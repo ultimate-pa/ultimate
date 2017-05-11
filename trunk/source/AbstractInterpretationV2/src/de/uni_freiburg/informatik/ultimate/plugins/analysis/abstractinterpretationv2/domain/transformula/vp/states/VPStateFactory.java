@@ -155,7 +155,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 		}
 
 		for (final VPDomainSymmetricPair<EqNode> pair : originalState.getDisEqualities()) {
-			builder.addDisEquality(pair);
+			builder.addDisEquality(pair.getFirst(), pair.getSecond());
 			assert !originalState.isTop() || pair.getFirst().isLiteral()
 					&& pair.getSecond().isLiteral() : "The only disequalites in a top state are between constants";
 		}
@@ -243,6 +243,7 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 			getLogger().debug("VPStateFactory: projectToOutVars(..) (end)");
 		}
 
+		resultStates = VPDomainHelpers.eliminateBottomStates(resultStates);
 		assert resultStates.size() == 1 : "??";
 		return resultStates.iterator().next();
 	}
@@ -277,11 +278,16 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	/**
-	 * To havoc a node. There are three main parts to handle: (1) Handling the outgoing edge chain. (2) Handling the
-	 * incoming edges. (3) Handling the node itself.
+	 * To havoc a node. There are three main parts to handle:
+	 * <ol>
+	 *  <li> Handling the outgoing edge chain. 
+	 *  <li> Handling the incoming edges. 
+	 *  <li> Handling the node itself.
+	 * </ol>
 	 *
-	 * @param EqGraphNode
-	 *            to be havoc
+	 * @param nodeToBeHavocced EqGraphNode to be havocced
+	 * @param originalState
+	 * @return 
 	 */
 	public VPState<ACTION> havoc(final EqNode nodeToBeHavocced, final VPState<ACTION> originalState) {
 		if (originalState.isBottom()) {
@@ -308,8 +314,8 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 		nextRepresentative.getReverseRepresentative().remove(graphNodeForNodeToBeHavocced);
 		while (!(nextRepresentative.equals(nextRepresentative.getRepresentative()))) {
 			nextRepresentative.getCcpar().removeAll(graphNodeForNodeToBeHavocced.getCcpar());
-			for (final Entry<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> entry : graphNodeForNodeToBeHavocced
-					.getCcchild().entrySet()) {
+			for (final Entry<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> entry 
+					: graphNodeForNodeToBeHavocced.getCcchild().entrySet()) {
 				nextRepresentative.getCcchild().removePair(entry.getKey(), entry.getValue());
 			}
 			nextRepresentative = nextRepresentative.getRepresentative();
@@ -317,12 +323,12 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 		nextRepresentative.getCcpar().removeAll(graphNodeForNodeToBeHavocced.getCcpar());
 		final HashRelation<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> copyOfGraphNodeCcchild =
 				new HashRelation<>();
-		for (final Entry<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> entry : graphNodeForNodeToBeHavocced
-				.getCcchild().entrySet()) {
+		for (final Entry<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> entry 
+				: graphNodeForNodeToBeHavocced.getCcchild().entrySet()) {
 			copyOfGraphNodeCcchild.addPair(entry.getKey(), entry.getValue());
 		}
-		for (final Entry<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> entry : copyOfGraphNodeCcchild
-				.entrySet()) {
+		for (final Entry<IProgramVarOrConst, List<EqGraphNode<EqNode, IProgramVarOrConst>>> entry 
+				: copyOfGraphNodeCcchild.entrySet()) {
 			nextRepresentative.getCcchild().removePair(entry.getKey(), entry.getValue());
 		}
 
@@ -378,7 +384,10 @@ public class VPStateFactory<ACTION extends IIcfgTransition<IcfgLocation>>
 				}
 			}
 			builder2.clearDisEqualitySet();
-			builder2.addDisEqualites(newDisEqualitySet);
+			for (VPDomainSymmetricPair<EqNode> de : newDisEqualitySet) {
+				builder2.addDisEquality(de.getFirst(), de.getSecond());
+			}
+//			builder2.addDisEqualites(newDisEqualitySet);
 		} else {
 			// do nothing: no need to update disequality set, because if x is not representative, then x should not be
 			// in disequality set.

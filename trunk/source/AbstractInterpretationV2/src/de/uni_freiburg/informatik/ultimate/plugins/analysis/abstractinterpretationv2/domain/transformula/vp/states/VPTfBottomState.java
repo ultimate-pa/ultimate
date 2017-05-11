@@ -27,8 +27,10 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
+import java.util.Collections;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -54,6 +56,12 @@ public class VPTfBottomState extends VPTfState {
 	@Override
 	public boolean isTop() {
 		return false;
+	}
+
+	@Override
+	public Set<VPTfState>  applyTransition(final VpTfStateFactory tfStateFactory, 
+			final IUltimateServiceProvider services) {
+		return Collections.singleton(this);
 	}
 	
 	@Override

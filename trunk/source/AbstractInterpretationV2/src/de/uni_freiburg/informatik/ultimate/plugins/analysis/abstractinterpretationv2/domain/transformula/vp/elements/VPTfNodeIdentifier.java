@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -68,50 +67,15 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 
 	private final NodeIdWithSideCondition mNodeIdWithSideCondition;
 
-	/**
-	 * super constructor exclusively for VpTfExtraNodeIdentifier
-	 * @param eqNode
-	 * @param inOutStatus 
-	 */
-	protected VPTfNodeIdentifier(final EqNode eqNode, final TfNodeInOutStatus inOutStatus) {
-		this.mEqNode = eqNode;
-
-		assert !(eqNode instanceof EqFunctionNode);
-		this.mIsFunction = false;
-		this.mFunction = null;
-
-		this.mIsLiteral = eqNode.isLiteral();
-		
-		mNodeIdWithSideCondition = new NodeIdWithSideCondition(this, Collections.emptySet(), Collections.emptySet());
-		
-		mInOutStatus = inOutStatus;
-
-		Map<IProgramVar, TermVariable> inVars = new HashMap<>();
-		if (inOutStatus == TfNodeInOutStatus.IN || inOutStatus == TfNodeInOutStatus.THROUGH) {
-			for (IProgramVar var : eqNode.getVariables()) {
-				inVars.put(var, null);
-			}
-		}
-		mInVars = inVars;
-
-		Map<IProgramVar, TermVariable> outVars = new HashMap<>();
-		if (inOutStatus == TfNodeInOutStatus.OUT || inOutStatus == TfNodeInOutStatus.THROUGH) {
-			for (IProgramVar var : eqNode.getVariables()) {
-				outVars.put(var, null);
-			}
-		}
-		mOutVars = outVars;
-		
-		
-		mAllFunctions = Collections.emptySet();
-
-	}
-
 	public VPTfNodeIdentifier(EqNode eqNode, 
 			Map<IProgramVar, TermVariable> inVars,
 			Map<IProgramVar, TermVariable> outVars,
-//			VPTfStateBuilder tfStateBuilder) {
 			CreateVanillaTfStateBuilder tfStateBuilder) {
+		
+		assert eqNode.getVariables().containsAll(inVars.keySet()); 
+		assert eqNode.getVariables().containsAll(outVars.keySet()); 
+		
+		
 		this.mEqNode = eqNode;
 		this.mIsFunction = eqNode instanceof EqFunctionNode;
 
@@ -278,6 +242,7 @@ public class VPTfNodeIdentifier implements IEqNodeIdentifier<VPTfArrayIdentifier
 		if (this.mEqNode == otherNodeId.mEqNode 
 				&& this.mInVars.equals(otherNodeId.mInVars)
 				&& this.mOutVars.equals(otherNodeId.mOutVars)) {
+			assert false : "nodeIdentifiers should be unified in their context (their context being one transition)";
 			return true;
 		}
 		return false;
