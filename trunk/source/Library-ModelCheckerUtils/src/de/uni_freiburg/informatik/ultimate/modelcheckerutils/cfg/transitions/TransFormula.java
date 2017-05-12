@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
-public abstract class TransFormula {
+public abstract class TransFormula implements ITransitionRelation {
 
 	protected final Map<IProgramVar, TermVariable> mInVars;
 	protected final Map<IProgramVar, TermVariable> mOutVars;
@@ -76,18 +76,34 @@ public abstract class TransFormula {
 		mNonTheoryConsts = nonTheoryConsts;
 	}
 
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation#getAssignedVars()
+	 */
+	@Override
 	public abstract Set<IProgramVar> getAssignedVars();
 
 	public abstract Term getFormula();
 
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation#getInVars()
+	 */
+	@Override
 	public Map<IProgramVar, TermVariable> getInVars() {
 		return Collections.unmodifiableMap(mInVars);
 	}
 
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation#getOutVars()
+	 */
+	@Override
 	public Map<IProgramVar, TermVariable> getOutVars() {
 		return Collections.unmodifiableMap(mOutVars);
 	}
 
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation#getNonTheoryConsts()
+	 */
+	@Override
 	public Set<IProgramConst> getNonTheoryConsts() {
 		return Collections.unmodifiableSet(mNonTheoryConsts);
 	}
@@ -96,11 +112,10 @@ public abstract class TransFormula {
 		return Collections.unmodifiableSet(mAuxVars);
 	}
 
-	/**
-	 * If this method returns true, the outVar of bv may have any value even if the value of the inVar is restricted. If
-	 * the methods returns false there are constraints on the outVar or syntactic check was not able to find out that
-	 * there are no constraints.
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation#isHavocedOut(de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar)
 	 */
+	@Override
 	public boolean isHavocedOut(final IProgramVar bv) {
 		final TermVariable inVar = mInVars.get(bv);
 		final TermVariable outVar = mOutVars.get(bv);
@@ -110,6 +125,10 @@ public abstract class TransFormula {
 		return !Arrays.asList(getFormula().getFreeVars()).contains(outVar);
 	}
 
+	/* (non-Javadoc)
+	 * @see de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation#isHavocedIn(de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar)
+	 */
+	@Override
 	public boolean isHavocedIn(final IProgramVar bv) {
 		final TermVariable inVar = mInVars.get(bv);
 		final TermVariable outVar = mOutVars.get(bv);

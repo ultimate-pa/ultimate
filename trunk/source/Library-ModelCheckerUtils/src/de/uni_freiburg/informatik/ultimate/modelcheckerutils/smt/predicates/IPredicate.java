@@ -26,10 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
  * Represents a set of program states.
@@ -37,17 +34,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  * @author heizmann@informatik.uni-freiburg.de
  *
  */
-public interface IPredicate {
-
-	String[] getProcedures();
+public interface IPredicate extends IAbstractPredicate {
 
 	Term getFormula();
 
 	Term getClosedFormula();
-
-	/**
-	 * Returns a superset of the all BoogieVars whose corresponding TermVariable occurs in the formula of this
-	 * IPredicate.
-	 */
-	Set<IProgramVar> getVars();
 }
