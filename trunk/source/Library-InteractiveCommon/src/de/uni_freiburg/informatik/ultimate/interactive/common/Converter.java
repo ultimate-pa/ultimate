@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.interactive.common;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,6 +15,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common;
 import de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.Choice.Request;
 import de.uni_freiburg.informatik.ultimate.interactive.commondata.ChoiceRequest;
+import de.uni_freiburg.informatik.ultimate.interactive.commondata.RootPath;
+import de.uni_freiburg.informatik.ultimate.interactive.commondata.RootPath.PathFilter;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.AbstractConverter;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.ConverterRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientCrazyException;
@@ -33,7 +36,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 				.setLineNumber(stackTraceEl.getLineNumber()).build();
 	}
 
-	private static Common.File convertFile(final java.io.File file) {
+	private Common.File convertFile(final java.io.File file) {
 		final Common.File.Builder builder = Common.File.newBuilder();
 		builder.setFileName(file.getName());
 
@@ -42,8 +45,47 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 			final String content = new String(Files.readAllBytes(path));
 			builder.setContent(content);
 		} catch (final IOException e) {
+			getLogger().error(e);
 		}
 
+		return builder.build();
+	}
+
+	private static Common.FS.Path convertPath(final Path path) {
+		final Common.FS.Path.Builder builder = Common.FS.Path.newBuilder();
+		path.forEach(p -> builder.addPiece(p.toString()));
+		return builder.build();
+	}
+
+	private static Path fromPath(final String base, final Common.FS.Path path) {
+		return Paths.get(base, path.getPieceList().toArray(new String[path.getPieceCount()]));
+	}
+
+	private Common.FS.Directory convertDirectory(final Path path, final PathFilter filter) {
+		if (!path.toFile().isDirectory())
+			throw new IllegalArgumentException(path.toString() + " is not a valid directory.");
+		final Common.FS.Directory.Builder builder = Common.FS.Directory.newBuilder();
+		builder.setName(path.getFileName().toString());
+		try {
+			filter.apply(path).forEach(p -> {
+				final File file = p.toFile();
+				if (file.isFile()) {
+					builder.addFiles(file.getName());
+				} else {
+					final Common.FS.Directory dir = convertDirectory(p, filter);
+					builder.addSubdirectory(dir);
+				}
+			});
+		} catch (final IOException e) {
+			getLogger().error(e);
+		}
+		return builder.build();
+	}
+
+	private Common.FS convertBasePath(final RootPath path) {
+		final Common.FS.Builder builder = Common.FS.newBuilder();
+		builder.setBase(convertDirectory(path.mBase, path.mFilter));
+		builder.setTag(path.mTag);
 		return builder.build();
 	}
 
@@ -89,7 +131,11 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 			return builder.build();
 		});
 
-		converterRegistry.registerBA(Common.File.class, java.io.File.class, Converter::convertFile);
+		converterRegistry.registerBA(Common.File.class, java.io.File.class, this::convertFile);
+
+		converterRegistry.registerBA(Common.FS.class, RootPath.class, this::convertBasePath);
+
+		converterRegistry.registerBA(Common.FS.Path.class, Path.class, Converter::convertPath);
 
 		converterRegistry.registerAB(Common.Confirm.class, Boolean.class, Converter::toBoolean);
 
@@ -99,5 +145,11 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 
 		converterRegistry.registerRConv(Common.Choice.class, ChoiceRequest.class, Object.class, Converter::getChoice);
 
+		converterRegistry.registerRConv(Common.FS.Path.class, RootPath.class, Path.class, Converter::getPath);
+
+	}
+
+	private static Path getPath(final Common.FS.Path path, final RootPath base) {
+		return fromPath(base.mBase.toString(), path);
 	}
 }

@@ -5,22 +5,37 @@ package de.uni_freiburg.informatik.ultimate.interactive.common.protobuf;
 //option java_package = "de.uni_freiburg.informatik.ultimate.graphvr";
 option java_outer_classname = "Common";
 message File {
-	string file_name = 1;
-	string content = 2;
 	message Request {
 		string ext = 1;
 	}
 
+	string file_name = 1;
+	string content = 2;
+}
+
+message FS {
+	message Directory {
+		string name = 1;
+		repeated string files = 2;
+		repeated Directory subdirectory = 3;
+	}
+
+	message Path {
+		repeated string piece = 1;
+	}
+
+	string tag = 1;
+	Directory base = 2;
 }
 
 message Choice {
-	int32 index = 1;
 	message Request {
 		string title = 1;
 		string subtitle = 2;
 		repeated string choice = 3;
 	}
 
+	int32 index = 1;
 }
 
 message Exception {

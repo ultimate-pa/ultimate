@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.servercontroller;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -69,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractiveQueue;
 import de.uni_freiburg.informatik.ultimate.interactive.common.Converter;
 import de.uni_freiburg.informatik.ultimate.interactive.commondata.ChoiceRequest;
+import de.uni_freiburg.informatik.ultimate.interactive.commondata.RootPath;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.AbstractConverter;
 import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientQuittedException;
 import de.uni_freiburg.informatik.ultimate.server.Client;
@@ -285,11 +287,17 @@ public class ServerController implements IController<RunDefinition> {
 	}
 
 	private File[] requestInput() throws InterruptedException, ExecutionException {
-		final File inputFile = requestChoice(getAvailableInputFiles(), File::getName, "Pick an Input File");
+		// final File inputFile = requestChoice(getAvailableInputFiles(), File::getName, "Pick an Input File");
+		final File inputFile = requestFile(mCla.getInputDirPath().toPath(), "Input");
 
 		mCommonInterface.send(inputFile);
 
 		return new File[] { inputFile };
+	}
+
+	private File requestFile(final Path basePath, final String tag) throws InterruptedException, ExecutionException {
+		final Path inputFile = mCommonInterface.request(Path.class, RootPath.newInstance(basePath, tag)).get();
+		return inputFile.toFile();
 	}
 
 	private void execToolchain(final ICore<RunDefinition> core, final File[] inputFiles)
@@ -306,25 +314,11 @@ public class ServerController implements IController<RunDefinition> {
 
 	private <T> T requestChoice(final List<T> choices, final Function<T, String> toString, final String title)
 			throws InterruptedException, ExecutionException {
-		final T result = (T) mCommonInterface.request(Object.class, ChoiceRequest.get(choices, toString).setTitle(title)).get();
+		final T result =
+				(T) mCommonInterface.request(Object.class, ChoiceRequest.get(choices, toString).setTitle(title)).get();
 		mLogger.info("Client has chosen " + toString.apply(result));
 		return result;
 	}
-
-	/**
-	 * Request File contents form Client
-	 * 
-	 * @param ext
-	 *            hint file extension to client.
-	 * @return file content as String.
-	 */
-	/*
-	 * private String requestFileContent(final String ext) throws InterruptedException, ExecutionException { Request
-	 * tcRequest = Controller.File.Request.newBuilder().setExt(ext).build(); CompletableFuture<Controller.File> tcFuture
-	 * = mProtoInterface.request(Controller.File.class, tcRequest);
-	 * 
-	 * return tcFuture.get().getContent(); }
-	 */
 
 	@Override
 	public ISource selectParser(final Collection<ISource> parser) {

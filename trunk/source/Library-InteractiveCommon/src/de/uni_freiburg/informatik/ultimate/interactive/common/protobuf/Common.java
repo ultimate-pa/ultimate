@@ -1157,6 +1157,2324 @@ public final class Common {
 
   }
 
+  public interface FSOrBuilder extends
+      // @@protoc_insertion_point(interface_extends:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS)
+      com.google.protobuf.MessageOrBuilder {
+
+    /**
+     * <code>optional string tag = 1;</code>
+     */
+    java.lang.String getTag();
+    /**
+     * <code>optional string tag = 1;</code>
+     */
+    com.google.protobuf.ByteString
+        getTagBytes();
+
+    /**
+     * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory base = 2;</code>
+     */
+    boolean hasBase();
+    /**
+     * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory base = 2;</code>
+     */
+    de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory getBase();
+    /**
+     * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory base = 2;</code>
+     */
+    de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.DirectoryOrBuilder getBaseOrBuilder();
+  }
+  /**
+   * Protobuf type {@code de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS}
+   */
+  public  static final class FS extends
+      com.google.protobuf.GeneratedMessageV3 implements
+      // @@protoc_insertion_point(message_implements:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS)
+      FSOrBuilder {
+    // Use FS.newBuilder() to construct.
+    private FS(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+      super(builder);
+    }
+    private FS() {
+      tag_ = "";
+    }
+
+    @java.lang.Override
+    public final com.google.protobuf.UnknownFieldSet
+    getUnknownFields() {
+      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
+    }
+    private FS(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      this();
+      int mutable_bitField0_ = 0;
+      try {
+        boolean done = false;
+        while (!done) {
+          int tag = input.readTag();
+          switch (tag) {
+            case 0:
+              done = true;
+              break;
+            default: {
+              if (!input.skipField(tag)) {
+                done = true;
+              }
+              break;
+            }
+            case 10: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              tag_ = s;
+              break;
+            }
+            case 18: {
+              de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.Builder subBuilder = null;
+              if (base_ != null) {
+                subBuilder = base_.toBuilder();
+              }
+              base_ = input.readMessage(de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.parser(), extensionRegistry);
+              if (subBuilder != null) {
+                subBuilder.mergeFrom(base_);
+                base_ = subBuilder.buildPartial();
+              }
+
+              break;
+            }
+          }
+        }
+      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+        throw e.setUnfinishedMessage(this);
+      } catch (java.io.IOException e) {
+        throw new com.google.protobuf.InvalidProtocolBufferException(
+            e).setUnfinishedMessage(this);
+      } finally {
+        makeExtensionsImmutable();
+      }
+    }
+    public static final com.google.protobuf.Descriptors.Descriptor
+        getDescriptor() {
+      return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_descriptor;
+    }
+
+    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+        internalGetFieldAccessorTable() {
+      return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_fieldAccessorTable
+          .ensureFieldAccessorsInitialized(
+              de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.class, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Builder.class);
+    }
+
+    public interface DirectoryOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory)
+        com.google.protobuf.MessageOrBuilder {
+
+      /**
+       * <code>optional string name = 1;</code>
+       */
+      java.lang.String getName();
+      /**
+       * <code>optional string name = 1;</code>
+       */
+      com.google.protobuf.ByteString
+          getNameBytes();
+
+      /**
+       * <code>repeated string files = 2;</code>
+       */
+      java.util.List<java.lang.String>
+          getFilesList();
+      /**
+       * <code>repeated string files = 2;</code>
+       */
+      int getFilesCount();
+      /**
+       * <code>repeated string files = 2;</code>
+       */
+      java.lang.String getFiles(int index);
+      /**
+       * <code>repeated string files = 2;</code>
+       */
+      com.google.protobuf.ByteString
+          getFilesBytes(int index);
+
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+       */
+      java.util.List<de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory> 
+          getSubdirectoryList();
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+       */
+      de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory getSubdirectory(int index);
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+       */
+      int getSubdirectoryCount();
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+       */
+      java.util.List<? extends de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.DirectoryOrBuilder> 
+          getSubdirectoryOrBuilderList();
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+       */
+      de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.DirectoryOrBuilder getSubdirectoryOrBuilder(
+          int index);
+    }
+    /**
+     * Protobuf type {@code de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory}
+     */
+    public  static final class Directory extends
+        com.google.protobuf.GeneratedMessageV3 implements
+        // @@protoc_insertion_point(message_implements:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory)
+        DirectoryOrBuilder {
+      // Use Directory.newBuilder() to construct.
+      private Directory(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+        super(builder);
+      }
+      private Directory() {
+        name_ = "";
+        files_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        subdirectory_ = java.util.Collections.emptyList();
+      }
+
+      @java.lang.Override
+      public final com.google.protobuf.UnknownFieldSet
+      getUnknownFields() {
+        return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
+      }
+      private Directory(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        this();
+        int mutable_bitField0_ = 0;
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              default: {
+                if (!input.skipField(tag)) {
+                  done = true;
+                }
+                break;
+              }
+              case 10: {
+                java.lang.String s = input.readStringRequireUtf8();
+
+                name_ = s;
+                break;
+              }
+              case 18: {
+                java.lang.String s = input.readStringRequireUtf8();
+                if (!((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+                  files_ = new com.google.protobuf.LazyStringArrayList();
+                  mutable_bitField0_ |= 0x00000002;
+                }
+                files_.add(s);
+                break;
+              }
+              case 26: {
+                if (!((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
+                  subdirectory_ = new java.util.ArrayList<de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory>();
+                  mutable_bitField0_ |= 0x00000004;
+                }
+                subdirectory_.add(
+                    input.readMessage(de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.parser(), extensionRegistry));
+                break;
+              }
+            }
+          }
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(this);
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(
+              e).setUnfinishedMessage(this);
+        } finally {
+          if (((mutable_bitField0_ & 0x00000002) == 0x00000002)) {
+            files_ = files_.getUnmodifiableView();
+          }
+          if (((mutable_bitField0_ & 0x00000004) == 0x00000004)) {
+            subdirectory_ = java.util.Collections.unmodifiableList(subdirectory_);
+          }
+          makeExtensionsImmutable();
+        }
+      }
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Directory_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Directory_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.class, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.Builder.class);
+      }
+
+      private int bitField0_;
+      public static final int NAME_FIELD_NUMBER = 1;
+      private volatile java.lang.Object name_;
+      /**
+       * <code>optional string name = 1;</code>
+       */
+      public java.lang.String getName() {
+        java.lang.Object ref = name_;
+        if (ref instanceof java.lang.String) {
+          return (java.lang.String) ref;
+        } else {
+          com.google.protobuf.ByteString bs = 
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          name_ = s;
+          return s;
+        }
+      }
+      /**
+       * <code>optional string name = 1;</code>
+       */
+      public com.google.protobuf.ByteString
+          getNameBytes() {
+        java.lang.Object ref = name_;
+        if (ref instanceof java.lang.String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          name_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+
+      public static final int FILES_FIELD_NUMBER = 2;
+      private com.google.protobuf.LazyStringList files_;
+      /**
+       * <code>repeated string files = 2;</code>
+       */
+      public com.google.protobuf.ProtocolStringList
+          getFilesList() {
+        return files_;
+      }
+      /**
+       * <code>repeated string files = 2;</code>
+       */
+      public int getFilesCount() {
+        return files_.size();
+      }
+      /**
+       * <code>repeated string files = 2;</code>
+       */
+      public java.lang.String getFiles(int index) {
+        return files_.get(index);
+      }
+      /**
+       * <code>repeated string files = 2;</code>
+       */
+      public com.google.protobuf.ByteString
+          getFilesBytes(int index) {
+        return files_.getByteString(index);
+      }
+
+      public static final int SUBDIRECTORY_FIELD_NUMBER = 3;
+      private java.util.List<de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory> subdirectory_;
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+       */
+      public java.util.List<de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory> getSubdirectoryList() {
+        return subdirectory_;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+       */
+      public java.util.List<? extends de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.DirectoryOrBuilder> 
+          getSubdirectoryOrBuilderList() {
+        return subdirectory_;
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+       */
+      public int getSubdirectoryCount() {
+        return subdirectory_.size();
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory getSubdirectory(int index) {
+        return subdirectory_.get(index);
+      }
+      /**
+       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.DirectoryOrBuilder getSubdirectoryOrBuilder(
+          int index) {
+        return subdirectory_.get(index);
+      }
+
+      private byte memoizedIsInitialized = -1;
+      public final boolean isInitialized() {
+        byte isInitialized = memoizedIsInitialized;
+        if (isInitialized == 1) return true;
+        if (isInitialized == 0) return false;
+
+        memoizedIsInitialized = 1;
+        return true;
+      }
+
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+                          throws java.io.IOException {
+        if (!getNameBytes().isEmpty()) {
+          com.google.protobuf.GeneratedMessageV3.writeString(output, 1, name_);
+        }
+        for (int i = 0; i < files_.size(); i++) {
+          com.google.protobuf.GeneratedMessageV3.writeString(output, 2, files_.getRaw(i));
+        }
+        for (int i = 0; i < subdirectory_.size(); i++) {
+          output.writeMessage(3, subdirectory_.get(i));
+        }
+      }
+
+      public int getSerializedSize() {
+        int size = memoizedSize;
+        if (size != -1) return size;
+
+        size = 0;
+        if (!getNameBytes().isEmpty()) {
+          size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, name_);
+        }
+        {
+          int dataSize = 0;
+          for (int i = 0; i < files_.size(); i++) {
+            dataSize += computeStringSizeNoTag(files_.getRaw(i));
+          }
+          size += dataSize;
+          size += 1 * getFilesList().size();
+        }
+        for (int i = 0; i < subdirectory_.size(); i++) {
+          size += com.google.protobuf.CodedOutputStream
+            .computeMessageSize(3, subdirectory_.get(i));
+        }
+        memoizedSize = size;
+        return size;
+      }
+
+      private static final long serialVersionUID = 0L;
+      @java.lang.Override
+      public boolean equals(final java.lang.Object obj) {
+        if (obj == this) {
+         return true;
+        }
+        if (!(obj instanceof de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory)) {
+          return super.equals(obj);
+        }
+        de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory other = (de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory) obj;
+
+        boolean result = true;
+        result = result && getName()
+            .equals(other.getName());
+        result = result && getFilesList()
+            .equals(other.getFilesList());
+        result = result && getSubdirectoryList()
+            .equals(other.getSubdirectoryList());
+        return result;
+      }
+
+      @java.lang.Override
+      public int hashCode() {
+        if (memoizedHashCode != 0) {
+          return memoizedHashCode;
+        }
+        int hash = 41;
+        hash = (19 * hash) + getDescriptorForType().hashCode();
+        hash = (37 * hash) + NAME_FIELD_NUMBER;
+        hash = (53 * hash) + getName().hashCode();
+        if (getFilesCount() > 0) {
+          hash = (37 * hash) + FILES_FIELD_NUMBER;
+          hash = (53 * hash) + getFilesList().hashCode();
+        }
+        if (getSubdirectoryCount() > 0) {
+          hash = (37 * hash) + SUBDIRECTORY_FIELD_NUMBER;
+          hash = (53 * hash) + getSubdirectoryList().hashCode();
+        }
+        hash = (29 * hash) + unknownFields.hashCode();
+        memoizedHashCode = hash;
+        return hash;
+      }
+
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseDelimitedWithIOException(PARSER, input);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      public Builder newBuilderForType() { return newBuilder(); }
+      public static Builder newBuilder() {
+        return DEFAULT_INSTANCE.toBuilder();
+      }
+      public static Builder newBuilder(de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory prototype) {
+        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      }
+      public Builder toBuilder() {
+        return this == DEFAULT_INSTANCE
+            ? new Builder() : new Builder().mergeFrom(this);
+      }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        Builder builder = new Builder(parent);
+        return builder;
+      }
+      /**
+       * Protobuf type {@code de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+          // @@protoc_insertion_point(builder_implements:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory)
+          de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.DirectoryOrBuilder {
+        public static final com.google.protobuf.Descriptors.Descriptor
+            getDescriptor() {
+          return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Directory_descriptor;
+        }
+
+        protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+            internalGetFieldAccessorTable() {
+          return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Directory_fieldAccessorTable
+              .ensureFieldAccessorsInitialized(
+                  de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.class, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.Builder.class);
+        }
+
+        // Construct using de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.newBuilder()
+        private Builder() {
+          maybeForceBuilderInitialization();
+        }
+
+        private Builder(
+            com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+          super(parent);
+          maybeForceBuilderInitialization();
+        }
+        private void maybeForceBuilderInitialization() {
+          if (com.google.protobuf.GeneratedMessageV3
+                  .alwaysUseFieldBuilders) {
+            getSubdirectoryFieldBuilder();
+          }
+        }
+        public Builder clear() {
+          super.clear();
+          name_ = "";
+
+          files_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+          bitField0_ = (bitField0_ & ~0x00000002);
+          if (subdirectoryBuilder_ == null) {
+            subdirectory_ = java.util.Collections.emptyList();
+            bitField0_ = (bitField0_ & ~0x00000004);
+          } else {
+            subdirectoryBuilder_.clear();
+          }
+          return this;
+        }
+
+        public com.google.protobuf.Descriptors.Descriptor
+            getDescriptorForType() {
+          return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Directory_descriptor;
+        }
+
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory getDefaultInstanceForType() {
+          return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.getDefaultInstance();
+        }
+
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory build() {
+          de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory result = buildPartial();
+          if (!result.isInitialized()) {
+            throw newUninitializedMessageException(result);
+          }
+          return result;
+        }
+
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory buildPartial() {
+          de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory result = new de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory(this);
+          int from_bitField0_ = bitField0_;
+          int to_bitField0_ = 0;
+          result.name_ = name_;
+          if (((bitField0_ & 0x00000002) == 0x00000002)) {
+            files_ = files_.getUnmodifiableView();
+            bitField0_ = (bitField0_ & ~0x00000002);
+          }
+          result.files_ = files_;
+          if (subdirectoryBuilder_ == null) {
+            if (((bitField0_ & 0x00000004) == 0x00000004)) {
+              subdirectory_ = java.util.Collections.unmodifiableList(subdirectory_);
+              bitField0_ = (bitField0_ & ~0x00000004);
+            }
+            result.subdirectory_ = subdirectory_;
+          } else {
+            result.subdirectory_ = subdirectoryBuilder_.build();
+          }
+          result.bitField0_ = to_bitField0_;
+          onBuilt();
+          return result;
+        }
+
+        public Builder clone() {
+          return (Builder) super.clone();
+        }
+        public Builder setField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            Object value) {
+          return (Builder) super.setField(field, value);
+        }
+        public Builder clearField(
+            com.google.protobuf.Descriptors.FieldDescriptor field) {
+          return (Builder) super.clearField(field);
+        }
+        public Builder clearOneof(
+            com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+          return (Builder) super.clearOneof(oneof);
+        }
+        public Builder setRepeatedField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            int index, Object value) {
+          return (Builder) super.setRepeatedField(field, index, value);
+        }
+        public Builder addRepeatedField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            Object value) {
+          return (Builder) super.addRepeatedField(field, value);
+        }
+        public Builder mergeFrom(com.google.protobuf.Message other) {
+          if (other instanceof de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory) {
+            return mergeFrom((de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory)other);
+          } else {
+            super.mergeFrom(other);
+            return this;
+          }
+        }
+
+        public Builder mergeFrom(de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory other) {
+          if (other == de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.getDefaultInstance()) return this;
+          if (!other.getName().isEmpty()) {
+            name_ = other.name_;
+            onChanged();
+          }
+          if (!other.files_.isEmpty()) {
+            if (files_.isEmpty()) {
+              files_ = other.files_;
+              bitField0_ = (bitField0_ & ~0x00000002);
+            } else {
+              ensureFilesIsMutable();
+              files_.addAll(other.files_);
+            }
+            onChanged();
+          }
+          if (subdirectoryBuilder_ == null) {
+            if (!other.subdirectory_.isEmpty()) {
+              if (subdirectory_.isEmpty()) {
+                subdirectory_ = other.subdirectory_;
+                bitField0_ = (bitField0_ & ~0x00000004);
+              } else {
+                ensureSubdirectoryIsMutable();
+                subdirectory_.addAll(other.subdirectory_);
+              }
+              onChanged();
+            }
+          } else {
+            if (!other.subdirectory_.isEmpty()) {
+              if (subdirectoryBuilder_.isEmpty()) {
+                subdirectoryBuilder_.dispose();
+                subdirectoryBuilder_ = null;
+                subdirectory_ = other.subdirectory_;
+                bitField0_ = (bitField0_ & ~0x00000004);
+                subdirectoryBuilder_ = 
+                  com.google.protobuf.GeneratedMessageV3.alwaysUseFieldBuilders ?
+                     getSubdirectoryFieldBuilder() : null;
+              } else {
+                subdirectoryBuilder_.addAllMessages(other.subdirectory_);
+              }
+            }
+          }
+          onChanged();
+          return this;
+        }
+
+        public final boolean isInitialized() {
+          return true;
+        }
+
+        public Builder mergeFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory parsedMessage = null;
+          try {
+            parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            parsedMessage = (de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory) e.getUnfinishedMessage();
+            throw e.unwrapIOException();
+          } finally {
+            if (parsedMessage != null) {
+              mergeFrom(parsedMessage);
+            }
+          }
+          return this;
+        }
+        private int bitField0_;
+
+        private java.lang.Object name_ = "";
+        /**
+         * <code>optional string name = 1;</code>
+         */
+        public java.lang.String getName() {
+          java.lang.Object ref = name_;
+          if (!(ref instanceof java.lang.String)) {
+            com.google.protobuf.ByteString bs =
+                (com.google.protobuf.ByteString) ref;
+            java.lang.String s = bs.toStringUtf8();
+            name_ = s;
+            return s;
+          } else {
+            return (java.lang.String) ref;
+          }
+        }
+        /**
+         * <code>optional string name = 1;</code>
+         */
+        public com.google.protobuf.ByteString
+            getNameBytes() {
+          java.lang.Object ref = name_;
+          if (ref instanceof String) {
+            com.google.protobuf.ByteString b = 
+                com.google.protobuf.ByteString.copyFromUtf8(
+                    (java.lang.String) ref);
+            name_ = b;
+            return b;
+          } else {
+            return (com.google.protobuf.ByteString) ref;
+          }
+        }
+        /**
+         * <code>optional string name = 1;</code>
+         */
+        public Builder setName(
+            java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  
+          name_ = value;
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>optional string name = 1;</code>
+         */
+        public Builder clearName() {
+          
+          name_ = getDefaultInstance().getName();
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>optional string name = 1;</code>
+         */
+        public Builder setNameBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+          
+          name_ = value;
+          onChanged();
+          return this;
+        }
+
+        private com.google.protobuf.LazyStringList files_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        private void ensureFilesIsMutable() {
+          if (!((bitField0_ & 0x00000002) == 0x00000002)) {
+            files_ = new com.google.protobuf.LazyStringArrayList(files_);
+            bitField0_ |= 0x00000002;
+           }
+        }
+        /**
+         * <code>repeated string files = 2;</code>
+         */
+        public com.google.protobuf.ProtocolStringList
+            getFilesList() {
+          return files_.getUnmodifiableView();
+        }
+        /**
+         * <code>repeated string files = 2;</code>
+         */
+        public int getFilesCount() {
+          return files_.size();
+        }
+        /**
+         * <code>repeated string files = 2;</code>
+         */
+        public java.lang.String getFiles(int index) {
+          return files_.get(index);
+        }
+        /**
+         * <code>repeated string files = 2;</code>
+         */
+        public com.google.protobuf.ByteString
+            getFilesBytes(int index) {
+          return files_.getByteString(index);
+        }
+        /**
+         * <code>repeated string files = 2;</code>
+         */
+        public Builder setFiles(
+            int index, java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureFilesIsMutable();
+          files_.set(index, value);
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>repeated string files = 2;</code>
+         */
+        public Builder addFiles(
+            java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  ensureFilesIsMutable();
+          files_.add(value);
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>repeated string files = 2;</code>
+         */
+        public Builder addAllFiles(
+            java.lang.Iterable<java.lang.String> values) {
+          ensureFilesIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, files_);
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>repeated string files = 2;</code>
+         */
+        public Builder clearFiles() {
+          files_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+          bitField0_ = (bitField0_ & ~0x00000002);
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>repeated string files = 2;</code>
+         */
+        public Builder addFilesBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+          ensureFilesIsMutable();
+          files_.add(value);
+          onChanged();
+          return this;
+        }
+
+        private java.util.List<de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory> subdirectory_ =
+          java.util.Collections.emptyList();
+        private void ensureSubdirectoryIsMutable() {
+          if (!((bitField0_ & 0x00000004) == 0x00000004)) {
+            subdirectory_ = new java.util.ArrayList<de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory>(subdirectory_);
+            bitField0_ |= 0x00000004;
+           }
+        }
+
+        private com.google.protobuf.RepeatedFieldBuilderV3<
+            de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.Builder, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.DirectoryOrBuilder> subdirectoryBuilder_;
+
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+         */
+        public java.util.List<de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory> getSubdirectoryList() {
+          if (subdirectoryBuilder_ == null) {
+            return java.util.Collections.unmodifiableList(subdirectory_);
+          } else {
+            return subdirectoryBuilder_.getMessageList();
+          }
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+         */
+        public int getSubdirectoryCount() {
+          if (subdirectoryBuilder_ == null) {
+            return subdirectory_.size();
+          } else {
+            return subdirectoryBuilder_.getCount();
+          }
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+         */
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory getSubdirectory(int index) {
+          if (subdirectoryBuilder_ == null) {
+            return subdirectory_.get(index);
+          } else {
+            return subdirectoryBuilder_.getMessage(index);
+          }
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+         */
+        public Builder setSubdirectory(
+            int index, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory value) {
+          if (subdirectoryBuilder_ == null) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            ensureSubdirectoryIsMutable();
+            subdirectory_.set(index, value);
+            onChanged();
+          } else {
+            subdirectoryBuilder_.setMessage(index, value);
+          }
+          return this;
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+         */
+        public Builder setSubdirectory(
+            int index, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.Builder builderForValue) {
+          if (subdirectoryBuilder_ == null) {
+            ensureSubdirectoryIsMutable();
+            subdirectory_.set(index, builderForValue.build());
+            onChanged();
+          } else {
+            subdirectoryBuilder_.setMessage(index, builderForValue.build());
+          }
+          return this;
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+         */
+        public Builder addSubdirectory(de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory value) {
+          if (subdirectoryBuilder_ == null) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            ensureSubdirectoryIsMutable();
+            subdirectory_.add(value);
+            onChanged();
+          } else {
+            subdirectoryBuilder_.addMessage(value);
+          }
+          return this;
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+         */
+        public Builder addSubdirectory(
+            int index, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory value) {
+          if (subdirectoryBuilder_ == null) {
+            if (value == null) {
+              throw new NullPointerException();
+            }
+            ensureSubdirectoryIsMutable();
+            subdirectory_.add(index, value);
+            onChanged();
+          } else {
+            subdirectoryBuilder_.addMessage(index, value);
+          }
+          return this;
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+         */
+        public Builder addSubdirectory(
+            de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.Builder builderForValue) {
+          if (subdirectoryBuilder_ == null) {
+            ensureSubdirectoryIsMutable();
+            subdirectory_.add(builderForValue.build());
+            onChanged();
+          } else {
+            subdirectoryBuilder_.addMessage(builderForValue.build());
+          }
+          return this;
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+         */
+        public Builder addSubdirectory(
+            int index, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.Builder builderForValue) {
+          if (subdirectoryBuilder_ == null) {
+            ensureSubdirectoryIsMutable();
+            subdirectory_.add(index, builderForValue.build());
+            onChanged();
+          } else {
+            subdirectoryBuilder_.addMessage(index, builderForValue.build());
+          }
+          return this;
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+         */
+        public Builder addAllSubdirectory(
+            java.lang.Iterable<? extends de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory> values) {
+          if (subdirectoryBuilder_ == null) {
+            ensureSubdirectoryIsMutable();
+            com.google.protobuf.AbstractMessageLite.Builder.addAll(
+                values, subdirectory_);
+            onChanged();
+          } else {
+            subdirectoryBuilder_.addAllMessages(values);
+          }
+          return this;
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+         */
+        public Builder clearSubdirectory() {
+          if (subdirectoryBuilder_ == null) {
+            subdirectory_ = java.util.Collections.emptyList();
+            bitField0_ = (bitField0_ & ~0x00000004);
+            onChanged();
+          } else {
+            subdirectoryBuilder_.clear();
+          }
+          return this;
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+         */
+        public Builder removeSubdirectory(int index) {
+          if (subdirectoryBuilder_ == null) {
+            ensureSubdirectoryIsMutable();
+            subdirectory_.remove(index);
+            onChanged();
+          } else {
+            subdirectoryBuilder_.remove(index);
+          }
+          return this;
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+         */
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.Builder getSubdirectoryBuilder(
+            int index) {
+          return getSubdirectoryFieldBuilder().getBuilder(index);
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+         */
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.DirectoryOrBuilder getSubdirectoryOrBuilder(
+            int index) {
+          if (subdirectoryBuilder_ == null) {
+            return subdirectory_.get(index);  } else {
+            return subdirectoryBuilder_.getMessageOrBuilder(index);
+          }
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+         */
+        public java.util.List<? extends de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.DirectoryOrBuilder> 
+             getSubdirectoryOrBuilderList() {
+          if (subdirectoryBuilder_ != null) {
+            return subdirectoryBuilder_.getMessageOrBuilderList();
+          } else {
+            return java.util.Collections.unmodifiableList(subdirectory_);
+          }
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+         */
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.Builder addSubdirectoryBuilder() {
+          return getSubdirectoryFieldBuilder().addBuilder(
+              de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.getDefaultInstance());
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+         */
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.Builder addSubdirectoryBuilder(
+            int index) {
+          return getSubdirectoryFieldBuilder().addBuilder(
+              index, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.getDefaultInstance());
+        }
+        /**
+         * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory subdirectory = 3;</code>
+         */
+        public java.util.List<de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.Builder> 
+             getSubdirectoryBuilderList() {
+          return getSubdirectoryFieldBuilder().getBuilderList();
+        }
+        private com.google.protobuf.RepeatedFieldBuilderV3<
+            de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.Builder, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.DirectoryOrBuilder> 
+            getSubdirectoryFieldBuilder() {
+          if (subdirectoryBuilder_ == null) {
+            subdirectoryBuilder_ = new com.google.protobuf.RepeatedFieldBuilderV3<
+                de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.Builder, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.DirectoryOrBuilder>(
+                    subdirectory_,
+                    ((bitField0_ & 0x00000004) == 0x00000004),
+                    getParentForChildren(),
+                    isClean());
+            subdirectory_ = null;
+          }
+          return subdirectoryBuilder_;
+        }
+        public final Builder setUnknownFields(
+            final com.google.protobuf.UnknownFieldSet unknownFields) {
+          return this;
+        }
+
+        public final Builder mergeUnknownFields(
+            final com.google.protobuf.UnknownFieldSet unknownFields) {
+          return this;
+        }
+
+
+        // @@protoc_insertion_point(builder_scope:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory)
+      }
+
+      // @@protoc_insertion_point(class_scope:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory)
+      private static final de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory DEFAULT_INSTANCE;
+      static {
+        DEFAULT_INSTANCE = new de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory();
+      }
+
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static final com.google.protobuf.Parser<Directory>
+          PARSER = new com.google.protobuf.AbstractParser<Directory>() {
+        public Directory parsePartialFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+            return new Directory(input, extensionRegistry);
+        }
+      };
+
+      public static com.google.protobuf.Parser<Directory> parser() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<Directory> getParserForType() {
+        return PARSER;
+      }
+
+      public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory getDefaultInstanceForType() {
+        return DEFAULT_INSTANCE;
+      }
+
+    }
+
+    public interface PathOrBuilder extends
+        // @@protoc_insertion_point(interface_extends:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path)
+        com.google.protobuf.MessageOrBuilder {
+
+      /**
+       * <code>repeated string piece = 1;</code>
+       */
+      java.util.List<java.lang.String>
+          getPieceList();
+      /**
+       * <code>repeated string piece = 1;</code>
+       */
+      int getPieceCount();
+      /**
+       * <code>repeated string piece = 1;</code>
+       */
+      java.lang.String getPiece(int index);
+      /**
+       * <code>repeated string piece = 1;</code>
+       */
+      com.google.protobuf.ByteString
+          getPieceBytes(int index);
+    }
+    /**
+     * Protobuf type {@code de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path}
+     */
+    public  static final class Path extends
+        com.google.protobuf.GeneratedMessageV3 implements
+        // @@protoc_insertion_point(message_implements:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path)
+        PathOrBuilder {
+      // Use Path.newBuilder() to construct.
+      private Path(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
+        super(builder);
+      }
+      private Path() {
+        piece_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+      }
+
+      @java.lang.Override
+      public final com.google.protobuf.UnknownFieldSet
+      getUnknownFields() {
+        return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
+      }
+      private Path(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        this();
+        int mutable_bitField0_ = 0;
+        try {
+          boolean done = false;
+          while (!done) {
+            int tag = input.readTag();
+            switch (tag) {
+              case 0:
+                done = true;
+                break;
+              default: {
+                if (!input.skipField(tag)) {
+                  done = true;
+                }
+                break;
+              }
+              case 10: {
+                java.lang.String s = input.readStringRequireUtf8();
+                if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+                  piece_ = new com.google.protobuf.LazyStringArrayList();
+                  mutable_bitField0_ |= 0x00000001;
+                }
+                piece_.add(s);
+                break;
+              }
+            }
+          }
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          throw e.setUnfinishedMessage(this);
+        } catch (java.io.IOException e) {
+          throw new com.google.protobuf.InvalidProtocolBufferException(
+              e).setUnfinishedMessage(this);
+        } finally {
+          if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
+            piece_ = piece_.getUnmodifiableView();
+          }
+          makeExtensionsImmutable();
+        }
+      }
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Path_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Path_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.class, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.Builder.class);
+      }
+
+      public static final int PIECE_FIELD_NUMBER = 1;
+      private com.google.protobuf.LazyStringList piece_;
+      /**
+       * <code>repeated string piece = 1;</code>
+       */
+      public com.google.protobuf.ProtocolStringList
+          getPieceList() {
+        return piece_;
+      }
+      /**
+       * <code>repeated string piece = 1;</code>
+       */
+      public int getPieceCount() {
+        return piece_.size();
+      }
+      /**
+       * <code>repeated string piece = 1;</code>
+       */
+      public java.lang.String getPiece(int index) {
+        return piece_.get(index);
+      }
+      /**
+       * <code>repeated string piece = 1;</code>
+       */
+      public com.google.protobuf.ByteString
+          getPieceBytes(int index) {
+        return piece_.getByteString(index);
+      }
+
+      private byte memoizedIsInitialized = -1;
+      public final boolean isInitialized() {
+        byte isInitialized = memoizedIsInitialized;
+        if (isInitialized == 1) return true;
+        if (isInitialized == 0) return false;
+
+        memoizedIsInitialized = 1;
+        return true;
+      }
+
+      public void writeTo(com.google.protobuf.CodedOutputStream output)
+                          throws java.io.IOException {
+        for (int i = 0; i < piece_.size(); i++) {
+          com.google.protobuf.GeneratedMessageV3.writeString(output, 1, piece_.getRaw(i));
+        }
+      }
+
+      public int getSerializedSize() {
+        int size = memoizedSize;
+        if (size != -1) return size;
+
+        size = 0;
+        {
+          int dataSize = 0;
+          for (int i = 0; i < piece_.size(); i++) {
+            dataSize += computeStringSizeNoTag(piece_.getRaw(i));
+          }
+          size += dataSize;
+          size += 1 * getPieceList().size();
+        }
+        memoizedSize = size;
+        return size;
+      }
+
+      private static final long serialVersionUID = 0L;
+      @java.lang.Override
+      public boolean equals(final java.lang.Object obj) {
+        if (obj == this) {
+         return true;
+        }
+        if (!(obj instanceof de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path)) {
+          return super.equals(obj);
+        }
+        de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path other = (de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path) obj;
+
+        boolean result = true;
+        result = result && getPieceList()
+            .equals(other.getPieceList());
+        return result;
+      }
+
+      @java.lang.Override
+      public int hashCode() {
+        if (memoizedHashCode != 0) {
+          return memoizedHashCode;
+        }
+        int hash = 41;
+        hash = (19 * hash) + getDescriptorForType().hashCode();
+        if (getPieceCount() > 0) {
+          hash = (37 * hash) + PIECE_FIELD_NUMBER;
+          hash = (53 * hash) + getPieceList().hashCode();
+        }
+        hash = (29 * hash) + unknownFields.hashCode();
+        memoizedHashCode = hash;
+        return hash;
+      }
+
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path parseFrom(
+          com.google.protobuf.ByteString data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path parseFrom(
+          com.google.protobuf.ByteString data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path parseFrom(byte[] data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path parseFrom(
+          byte[] data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return PARSER.parseFrom(data, extensionRegistry);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path parseFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path parseFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path parseDelimitedFrom(java.io.InputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseDelimitedWithIOException(PARSER, input);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path parseDelimitedFrom(
+          java.io.InputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path parseFrom(
+          com.google.protobuf.CodedInputStream input)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input);
+      }
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path parseFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        return com.google.protobuf.GeneratedMessageV3
+            .parseWithIOException(PARSER, input, extensionRegistry);
+      }
+
+      public Builder newBuilderForType() { return newBuilder(); }
+      public static Builder newBuilder() {
+        return DEFAULT_INSTANCE.toBuilder();
+      }
+      public static Builder newBuilder(de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path prototype) {
+        return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+      }
+      public Builder toBuilder() {
+        return this == DEFAULT_INSTANCE
+            ? new Builder() : new Builder().mergeFrom(this);
+      }
+
+      @java.lang.Override
+      protected Builder newBuilderForType(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        Builder builder = new Builder(parent);
+        return builder;
+      }
+      /**
+       * Protobuf type {@code de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path}
+       */
+      public static final class Builder extends
+          com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+          // @@protoc_insertion_point(builder_implements:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path)
+          de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.PathOrBuilder {
+        public static final com.google.protobuf.Descriptors.Descriptor
+            getDescriptor() {
+          return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Path_descriptor;
+        }
+
+        protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+            internalGetFieldAccessorTable() {
+          return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Path_fieldAccessorTable
+              .ensureFieldAccessorsInitialized(
+                  de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.class, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.Builder.class);
+        }
+
+        // Construct using de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.newBuilder()
+        private Builder() {
+          maybeForceBuilderInitialization();
+        }
+
+        private Builder(
+            com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+          super(parent);
+          maybeForceBuilderInitialization();
+        }
+        private void maybeForceBuilderInitialization() {
+          if (com.google.protobuf.GeneratedMessageV3
+                  .alwaysUseFieldBuilders) {
+          }
+        }
+        public Builder clear() {
+          super.clear();
+          piece_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+          bitField0_ = (bitField0_ & ~0x00000001);
+          return this;
+        }
+
+        public com.google.protobuf.Descriptors.Descriptor
+            getDescriptorForType() {
+          return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Path_descriptor;
+        }
+
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path getDefaultInstanceForType() {
+          return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.getDefaultInstance();
+        }
+
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path build() {
+          de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path result = buildPartial();
+          if (!result.isInitialized()) {
+            throw newUninitializedMessageException(result);
+          }
+          return result;
+        }
+
+        public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path buildPartial() {
+          de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path result = new de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path(this);
+          int from_bitField0_ = bitField0_;
+          if (((bitField0_ & 0x00000001) == 0x00000001)) {
+            piece_ = piece_.getUnmodifiableView();
+            bitField0_ = (bitField0_ & ~0x00000001);
+          }
+          result.piece_ = piece_;
+          onBuilt();
+          return result;
+        }
+
+        public Builder clone() {
+          return (Builder) super.clone();
+        }
+        public Builder setField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            Object value) {
+          return (Builder) super.setField(field, value);
+        }
+        public Builder clearField(
+            com.google.protobuf.Descriptors.FieldDescriptor field) {
+          return (Builder) super.clearField(field);
+        }
+        public Builder clearOneof(
+            com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+          return (Builder) super.clearOneof(oneof);
+        }
+        public Builder setRepeatedField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            int index, Object value) {
+          return (Builder) super.setRepeatedField(field, index, value);
+        }
+        public Builder addRepeatedField(
+            com.google.protobuf.Descriptors.FieldDescriptor field,
+            Object value) {
+          return (Builder) super.addRepeatedField(field, value);
+        }
+        public Builder mergeFrom(com.google.protobuf.Message other) {
+          if (other instanceof de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path) {
+            return mergeFrom((de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path)other);
+          } else {
+            super.mergeFrom(other);
+            return this;
+          }
+        }
+
+        public Builder mergeFrom(de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path other) {
+          if (other == de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path.getDefaultInstance()) return this;
+          if (!other.piece_.isEmpty()) {
+            if (piece_.isEmpty()) {
+              piece_ = other.piece_;
+              bitField0_ = (bitField0_ & ~0x00000001);
+            } else {
+              ensurePieceIsMutable();
+              piece_.addAll(other.piece_);
+            }
+            onChanged();
+          }
+          onChanged();
+          return this;
+        }
+
+        public final boolean isInitialized() {
+          return true;
+        }
+
+        public Builder mergeFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws java.io.IOException {
+          de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path parsedMessage = null;
+          try {
+            parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+          } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+            parsedMessage = (de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path) e.getUnfinishedMessage();
+            throw e.unwrapIOException();
+          } finally {
+            if (parsedMessage != null) {
+              mergeFrom(parsedMessage);
+            }
+          }
+          return this;
+        }
+        private int bitField0_;
+
+        private com.google.protobuf.LazyStringList piece_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+        private void ensurePieceIsMutable() {
+          if (!((bitField0_ & 0x00000001) == 0x00000001)) {
+            piece_ = new com.google.protobuf.LazyStringArrayList(piece_);
+            bitField0_ |= 0x00000001;
+           }
+        }
+        /**
+         * <code>repeated string piece = 1;</code>
+         */
+        public com.google.protobuf.ProtocolStringList
+            getPieceList() {
+          return piece_.getUnmodifiableView();
+        }
+        /**
+         * <code>repeated string piece = 1;</code>
+         */
+        public int getPieceCount() {
+          return piece_.size();
+        }
+        /**
+         * <code>repeated string piece = 1;</code>
+         */
+        public java.lang.String getPiece(int index) {
+          return piece_.get(index);
+        }
+        /**
+         * <code>repeated string piece = 1;</code>
+         */
+        public com.google.protobuf.ByteString
+            getPieceBytes(int index) {
+          return piece_.getByteString(index);
+        }
+        /**
+         * <code>repeated string piece = 1;</code>
+         */
+        public Builder setPiece(
+            int index, java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  ensurePieceIsMutable();
+          piece_.set(index, value);
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>repeated string piece = 1;</code>
+         */
+        public Builder addPiece(
+            java.lang.String value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  ensurePieceIsMutable();
+          piece_.add(value);
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>repeated string piece = 1;</code>
+         */
+        public Builder addAllPiece(
+            java.lang.Iterable<java.lang.String> values) {
+          ensurePieceIsMutable();
+          com.google.protobuf.AbstractMessageLite.Builder.addAll(
+              values, piece_);
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>repeated string piece = 1;</code>
+         */
+        public Builder clearPiece() {
+          piece_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+          bitField0_ = (bitField0_ & ~0x00000001);
+          onChanged();
+          return this;
+        }
+        /**
+         * <code>repeated string piece = 1;</code>
+         */
+        public Builder addPieceBytes(
+            com.google.protobuf.ByteString value) {
+          if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+          ensurePieceIsMutable();
+          piece_.add(value);
+          onChanged();
+          return this;
+        }
+        public final Builder setUnknownFields(
+            final com.google.protobuf.UnknownFieldSet unknownFields) {
+          return this;
+        }
+
+        public final Builder mergeUnknownFields(
+            final com.google.protobuf.UnknownFieldSet unknownFields) {
+          return this;
+        }
+
+
+        // @@protoc_insertion_point(builder_scope:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path)
+      }
+
+      // @@protoc_insertion_point(class_scope:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Path)
+      private static final de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path DEFAULT_INSTANCE;
+      static {
+        DEFAULT_INSTANCE = new de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path();
+      }
+
+      public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path getDefaultInstance() {
+        return DEFAULT_INSTANCE;
+      }
+
+      private static final com.google.protobuf.Parser<Path>
+          PARSER = new com.google.protobuf.AbstractParser<Path>() {
+        public Path parsePartialFrom(
+            com.google.protobuf.CodedInputStream input,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+            return new Path(input, extensionRegistry);
+        }
+      };
+
+      public static com.google.protobuf.Parser<Path> parser() {
+        return PARSER;
+      }
+
+      @java.lang.Override
+      public com.google.protobuf.Parser<Path> getParserForType() {
+        return PARSER;
+      }
+
+      public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Path getDefaultInstanceForType() {
+        return DEFAULT_INSTANCE;
+      }
+
+    }
+
+    public static final int TAG_FIELD_NUMBER = 1;
+    private volatile java.lang.Object tag_;
+    /**
+     * <code>optional string tag = 1;</code>
+     */
+    public java.lang.String getTag() {
+      java.lang.Object ref = tag_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        tag_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>optional string tag = 1;</code>
+     */
+    public com.google.protobuf.ByteString
+        getTagBytes() {
+      java.lang.Object ref = tag_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        tag_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int BASE_FIELD_NUMBER = 2;
+    private de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory base_;
+    /**
+     * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory base = 2;</code>
+     */
+    public boolean hasBase() {
+      return base_ != null;
+    }
+    /**
+     * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory base = 2;</code>
+     */
+    public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory getBase() {
+      return base_ == null ? de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.getDefaultInstance() : base_;
+    }
+    /**
+     * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory base = 2;</code>
+     */
+    public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.DirectoryOrBuilder getBaseOrBuilder() {
+      return getBase();
+    }
+
+    private byte memoizedIsInitialized = -1;
+    public final boolean isInitialized() {
+      byte isInitialized = memoizedIsInitialized;
+      if (isInitialized == 1) return true;
+      if (isInitialized == 0) return false;
+
+      memoizedIsInitialized = 1;
+      return true;
+    }
+
+    public void writeTo(com.google.protobuf.CodedOutputStream output)
+                        throws java.io.IOException {
+      if (!getTagBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 1, tag_);
+      }
+      if (base_ != null) {
+        output.writeMessage(2, getBase());
+      }
+    }
+
+    public int getSerializedSize() {
+      int size = memoizedSize;
+      if (size != -1) return size;
+
+      size = 0;
+      if (!getTagBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(1, tag_);
+      }
+      if (base_ != null) {
+        size += com.google.protobuf.CodedOutputStream
+          .computeMessageSize(2, getBase());
+      }
+      memoizedSize = size;
+      return size;
+    }
+
+    private static final long serialVersionUID = 0L;
+    @java.lang.Override
+    public boolean equals(final java.lang.Object obj) {
+      if (obj == this) {
+       return true;
+      }
+      if (!(obj instanceof de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS)) {
+        return super.equals(obj);
+      }
+      de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS other = (de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS) obj;
+
+      boolean result = true;
+      result = result && getTag()
+          .equals(other.getTag());
+      result = result && (hasBase() == other.hasBase());
+      if (hasBase()) {
+        result = result && getBase()
+            .equals(other.getBase());
+      }
+      return result;
+    }
+
+    @java.lang.Override
+    public int hashCode() {
+      if (memoizedHashCode != 0) {
+        return memoizedHashCode;
+      }
+      int hash = 41;
+      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (37 * hash) + TAG_FIELD_NUMBER;
+      hash = (53 * hash) + getTag().hashCode();
+      if (hasBase()) {
+        hash = (37 * hash) + BASE_FIELD_NUMBER;
+        hash = (53 * hash) + getBase().hashCode();
+      }
+      hash = (29 * hash) + unknownFields.hashCode();
+      memoizedHashCode = hash;
+      return hash;
+    }
+
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS parseFrom(
+        com.google.protobuf.ByteString data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS parseFrom(
+        com.google.protobuf.ByteString data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS parseFrom(byte[] data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS parseFrom(
+        byte[] data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS parseFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS parseFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS parseDelimitedFrom(java.io.InputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS parseDelimitedFrom(
+        java.io.InputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS parseFrom(
+        com.google.protobuf.CodedInputStream input)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input);
+    }
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS parseFrom(
+        com.google.protobuf.CodedInputStream input,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws java.io.IOException {
+      return com.google.protobuf.GeneratedMessageV3
+          .parseWithIOException(PARSER, input, extensionRegistry);
+    }
+
+    public Builder newBuilderForType() { return newBuilder(); }
+    public static Builder newBuilder() {
+      return DEFAULT_INSTANCE.toBuilder();
+    }
+    public static Builder newBuilder(de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS prototype) {
+      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
+    }
+    public Builder toBuilder() {
+      return this == DEFAULT_INSTANCE
+          ? new Builder() : new Builder().mergeFrom(this);
+    }
+
+    @java.lang.Override
+    protected Builder newBuilderForType(
+        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+      Builder builder = new Builder(parent);
+      return builder;
+    }
+    /**
+     * Protobuf type {@code de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS}
+     */
+    public static final class Builder extends
+        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
+        // @@protoc_insertion_point(builder_implements:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS)
+        de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FSOrBuilder {
+      public static final com.google.protobuf.Descriptors.Descriptor
+          getDescriptor() {
+        return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_descriptor;
+      }
+
+      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+          internalGetFieldAccessorTable() {
+        return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_fieldAccessorTable
+            .ensureFieldAccessorsInitialized(
+                de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.class, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Builder.class);
+      }
+
+      // Construct using de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.newBuilder()
+      private Builder() {
+        maybeForceBuilderInitialization();
+      }
+
+      private Builder(
+          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
+        super(parent);
+        maybeForceBuilderInitialization();
+      }
+      private void maybeForceBuilderInitialization() {
+        if (com.google.protobuf.GeneratedMessageV3
+                .alwaysUseFieldBuilders) {
+        }
+      }
+      public Builder clear() {
+        super.clear();
+        tag_ = "";
+
+        if (baseBuilder_ == null) {
+          base_ = null;
+        } else {
+          base_ = null;
+          baseBuilder_ = null;
+        }
+        return this;
+      }
+
+      public com.google.protobuf.Descriptors.Descriptor
+          getDescriptorForType() {
+        return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_descriptor;
+      }
+
+      public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS getDefaultInstanceForType() {
+        return de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.getDefaultInstance();
+      }
+
+      public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS build() {
+        de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS result = buildPartial();
+        if (!result.isInitialized()) {
+          throw newUninitializedMessageException(result);
+        }
+        return result;
+      }
+
+      public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS buildPartial() {
+        de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS result = new de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS(this);
+        result.tag_ = tag_;
+        if (baseBuilder_ == null) {
+          result.base_ = base_;
+        } else {
+          result.base_ = baseBuilder_.build();
+        }
+        onBuilt();
+        return result;
+      }
+
+      public Builder clone() {
+        return (Builder) super.clone();
+      }
+      public Builder setField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.setField(field, value);
+      }
+      public Builder clearField(
+          com.google.protobuf.Descriptors.FieldDescriptor field) {
+        return (Builder) super.clearField(field);
+      }
+      public Builder clearOneof(
+          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
+        return (Builder) super.clearOneof(oneof);
+      }
+      public Builder setRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          int index, Object value) {
+        return (Builder) super.setRepeatedField(field, index, value);
+      }
+      public Builder addRepeatedField(
+          com.google.protobuf.Descriptors.FieldDescriptor field,
+          Object value) {
+        return (Builder) super.addRepeatedField(field, value);
+      }
+      public Builder mergeFrom(com.google.protobuf.Message other) {
+        if (other instanceof de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS) {
+          return mergeFrom((de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS)other);
+        } else {
+          super.mergeFrom(other);
+          return this;
+        }
+      }
+
+      public Builder mergeFrom(de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS other) {
+        if (other == de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.getDefaultInstance()) return this;
+        if (!other.getTag().isEmpty()) {
+          tag_ = other.tag_;
+          onChanged();
+        }
+        if (other.hasBase()) {
+          mergeBase(other.getBase());
+        }
+        onChanged();
+        return this;
+      }
+
+      public final boolean isInitialized() {
+        return true;
+      }
+
+      public Builder mergeFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws java.io.IOException {
+        de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS parsedMessage = null;
+        try {
+          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
+        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
+          parsedMessage = (de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS) e.getUnfinishedMessage();
+          throw e.unwrapIOException();
+        } finally {
+          if (parsedMessage != null) {
+            mergeFrom(parsedMessage);
+          }
+        }
+        return this;
+      }
+
+      private java.lang.Object tag_ = "";
+      /**
+       * <code>optional string tag = 1;</code>
+       */
+      public java.lang.String getTag() {
+        java.lang.Object ref = tag_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          tag_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>optional string tag = 1;</code>
+       */
+      public com.google.protobuf.ByteString
+          getTagBytes() {
+        java.lang.Object ref = tag_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          tag_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>optional string tag = 1;</code>
+       */
+      public Builder setTag(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        tag_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string tag = 1;</code>
+       */
+      public Builder clearTag() {
+        
+        tag_ = getDefaultInstance().getTag();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>optional string tag = 1;</code>
+       */
+      public Builder setTagBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        tag_ = value;
+        onChanged();
+        return this;
+      }
+
+      private de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory base_ = null;
+      private com.google.protobuf.SingleFieldBuilderV3<
+          de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.Builder, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.DirectoryOrBuilder> baseBuilder_;
+      /**
+       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory base = 2;</code>
+       */
+      public boolean hasBase() {
+        return baseBuilder_ != null || base_ != null;
+      }
+      /**
+       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory base = 2;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory getBase() {
+        if (baseBuilder_ == null) {
+          return base_ == null ? de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.getDefaultInstance() : base_;
+        } else {
+          return baseBuilder_.getMessage();
+        }
+      }
+      /**
+       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory base = 2;</code>
+       */
+      public Builder setBase(de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory value) {
+        if (baseBuilder_ == null) {
+          if (value == null) {
+            throw new NullPointerException();
+          }
+          base_ = value;
+          onChanged();
+        } else {
+          baseBuilder_.setMessage(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory base = 2;</code>
+       */
+      public Builder setBase(
+          de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.Builder builderForValue) {
+        if (baseBuilder_ == null) {
+          base_ = builderForValue.build();
+          onChanged();
+        } else {
+          baseBuilder_.setMessage(builderForValue.build());
+        }
+
+        return this;
+      }
+      /**
+       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory base = 2;</code>
+       */
+      public Builder mergeBase(de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory value) {
+        if (baseBuilder_ == null) {
+          if (base_ != null) {
+            base_ =
+              de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.newBuilder(base_).mergeFrom(value).buildPartial();
+          } else {
+            base_ = value;
+          }
+          onChanged();
+        } else {
+          baseBuilder_.mergeFrom(value);
+        }
+
+        return this;
+      }
+      /**
+       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory base = 2;</code>
+       */
+      public Builder clearBase() {
+        if (baseBuilder_ == null) {
+          base_ = null;
+          onChanged();
+        } else {
+          base_ = null;
+          baseBuilder_ = null;
+        }
+
+        return this;
+      }
+      /**
+       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory base = 2;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.Builder getBaseBuilder() {
+        
+        onChanged();
+        return getBaseFieldBuilder().getBuilder();
+      }
+      /**
+       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory base = 2;</code>
+       */
+      public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.DirectoryOrBuilder getBaseOrBuilder() {
+        if (baseBuilder_ != null) {
+          return baseBuilder_.getMessageOrBuilder();
+        } else {
+          return base_ == null ?
+              de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.getDefaultInstance() : base_;
+        }
+      }
+      /**
+       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS.Directory base = 2;</code>
+       */
+      private com.google.protobuf.SingleFieldBuilderV3<
+          de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.Builder, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.DirectoryOrBuilder> 
+          getBaseFieldBuilder() {
+        if (baseBuilder_ == null) {
+          baseBuilder_ = new com.google.protobuf.SingleFieldBuilderV3<
+              de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.Directory.Builder, de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS.DirectoryOrBuilder>(
+                  getBase(),
+                  getParentForChildren(),
+                  isClean());
+          base_ = null;
+        }
+        return baseBuilder_;
+      }
+      public final Builder setUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return this;
+      }
+
+      public final Builder mergeUnknownFields(
+          final com.google.protobuf.UnknownFieldSet unknownFields) {
+        return this;
+      }
+
+
+      // @@protoc_insertion_point(builder_scope:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS)
+    }
+
+    // @@protoc_insertion_point(class_scope:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.FS)
+    private static final de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS DEFAULT_INSTANCE;
+    static {
+      DEFAULT_INSTANCE = new de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS();
+    }
+
+    public static de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS getDefaultInstance() {
+      return DEFAULT_INSTANCE;
+    }
+
+    private static final com.google.protobuf.Parser<FS>
+        PARSER = new com.google.protobuf.AbstractParser<FS>() {
+      public FS parsePartialFrom(
+          com.google.protobuf.CodedInputStream input,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+          return new FS(input, extensionRegistry);
+      }
+    };
+
+    public static com.google.protobuf.Parser<FS> parser() {
+      return PARSER;
+    }
+
+    @java.lang.Override
+    public com.google.protobuf.Parser<FS> getParserForType() {
+      return PARSER;
+    }
+
+    public de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Common.FS getDefaultInstanceForType() {
+      return DEFAULT_INSTANCE;
+    }
+
+  }
+
   public interface ChoiceOrBuilder extends
       // @@protoc_insertion_point(interface_extends:de.uni_freiburg.informatik.ultimate.interactive.common.protobuf.Choice)
       com.google.protobuf.MessageOrBuilder {
@@ -5490,6 +7808,21 @@ public final class Common {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_File_Request_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Directory_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Directory_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Path_descriptor;
+  private static final 
+    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
+      internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Path_fieldAccessorTable;
+  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Choice_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -5531,16 +7864,23 @@ public final class Common {
       "\n\014common.proto\022?de.uni_freiburg.informat" +
       "ik.ultimate.interactive.common.protobuf\"" +
       "B\n\004File\022\021\n\tfile_name\030\001 \001(\t\022\017\n\007content\030\002 " +
-      "\001(\t\032\026\n\007Request\022\013\n\003ext\030\001 \001(\t\"S\n\006Choice\022\r\n" +
+      "\001(\t\032\026\n\007Request\022\013\n\003ext\030\001 \001(\t\"\225\002\n\002FS\022\013\n\003ta" +
+      "g\030\001 \001(\t\022[\n\004base\030\002 \001(\0132M.de.uni_freiburg." +
+      "informatik.ultimate.interactive.common.p" +
+      "rotobuf.FS.Directory\032\215\001\n\tDirectory\022\014\n\004na" +
+      "me\030\001 \001(\t\022\r\n\005files\030\002 \003(\t\022c\n\014subdirectory\030" +
+      "\003 \003(\0132M.de.uni_freiburg.informatik.ultim" +
+      "ate.interactive.common.protobuf.FS.Direc",
+      "tory\032\025\n\004Path\022\r\n\005piece\030\001 \003(\t\"S\n\006Choice\022\r\n" +
       "\005index\030\001 \001(\005\032:\n\007Request\022\r\n\005title\030\001 \001(\t\022\020" +
       "\n\010subtitle\030\002 \001(\t\022\016\n\006choice\030\003 \003(\t\"\224\001\n\tExc" +
       "eption\022\r\n\005class\030\001 \001(\t\022\017\n\007message\030\002 \001(\t\022g" +
       "\n\013stack_trace\030\003 \003(\0132R.de.uni_freiburg.in" +
       "formatik.ultimate.interactive.common.pro" +
-      "tobuf.StackTraceElement\"i\n\021StackTraceEle",
+      "tobuf.StackTraceElement\"i\n\021StackTraceEle" +
       "ment\022\027\n\017declaring_class\030\001 \001(\t\022\023\n\013method_" +
       "name\030\002 \001(\t\022\021\n\tfile_name\030\003 \001(\t\022\023\n\013line_nu" +
-      "mber\030\004 \001(\005\"8\n\007Message\022\r\n\005title\030\001 \001(\t\022\020\n\010" +
+      "mber\030\004 \001(\005\"8\n\007Message\022\r\n\005title\030\001 \001(\t\022\020\n\010",
       "subtitle\030\002 \001(\t\022\014\n\004text\030\003 \001(\t\"\025\n\007Confirm\022" +
       "\n\n\002ok\030\001 \001(\010B\010B\006Commonb\006proto3"
     };
@@ -5568,8 +7908,26 @@ public final class Common {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_File_Request_descriptor,
         new java.lang.String[] { "Ext", });
-    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Choice_descriptor =
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_descriptor =
       getDescriptor().getMessageTypes().get(1);
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_descriptor,
+        new java.lang.String[] { "Tag", "Base", });
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Directory_descriptor =
+      internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_descriptor.getNestedTypes().get(0);
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Directory_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Directory_descriptor,
+        new java.lang.String[] { "Name", "Files", "Subdirectory", });
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Path_descriptor =
+      internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_descriptor.getNestedTypes().get(1);
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Path_fieldAccessorTable = new
+      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
+        internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_FS_Path_descriptor,
+        new java.lang.String[] { "Piece", });
+    internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Choice_descriptor =
+      getDescriptor().getMessageTypes().get(2);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Choice_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Choice_descriptor,
@@ -5581,25 +7939,25 @@ public final class Common {
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Choice_Request_descriptor,
         new java.lang.String[] { "Title", "Subtitle", "Choice", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Exception_descriptor =
-      getDescriptor().getMessageTypes().get(2);
+      getDescriptor().getMessageTypes().get(3);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Exception_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Exception_descriptor,
         new java.lang.String[] { "Class_", "Message", "StackTrace", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_StackTraceElement_descriptor =
-      getDescriptor().getMessageTypes().get(3);
+      getDescriptor().getMessageTypes().get(4);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_StackTraceElement_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_StackTraceElement_descriptor,
         new java.lang.String[] { "DeclaringClass", "MethodName", "FileName", "LineNumber", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Message_descriptor =
-      getDescriptor().getMessageTypes().get(4);
+      getDescriptor().getMessageTypes().get(5);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Message_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Message_descriptor,
         new java.lang.String[] { "Title", "Subtitle", "Text", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Confirm_descriptor =
-      getDescriptor().getMessageTypes().get(5);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Confirm_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_common_protobuf_Confirm_descriptor,
