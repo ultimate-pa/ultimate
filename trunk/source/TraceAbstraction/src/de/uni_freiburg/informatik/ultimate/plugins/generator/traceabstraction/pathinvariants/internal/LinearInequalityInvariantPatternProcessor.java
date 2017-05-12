@@ -734,7 +734,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			// Add constraint IT_i ==> WP_i 
 			if (loc != mErrorLocation && mLoc2OverApproximation.containsKey(loc)) {
 				// First, negate predicate WP
-				UnmodifiableTransFormula negatedWp = TransFormulaUtils.negate(mLoc2OverApproximation.get(loc), super.mCsToolkit.getManagedScript(), mServices, mLogger, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+				final UnmodifiableTransFormula negatedWp = TransFormulaUtils.negate(mLoc2OverApproximation.get(loc), super.mCsToolkit.getManagedScript(), mServices, mLogger, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 						SimplificationTechnique.SIMPLIFY_DDA);
 				// Then convert the tranformula to linear inequalities
 				final Collection<Collection<AbstractLinearInvariantPattern>> negatedWpTemplate = convertTransFormulaToPatternsForLinearInequalities(negatedWp);
@@ -1190,8 +1190,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 
 			final Collection<Collection<AbstractLinearInvariantPattern>> p =
 					mStrategy.getInvariantPatternForLocation(location, round, mSolver, newPrefix(), vars);
-			if (mLogger.isDebugEnabled()) {
-				mLogger.debug("InvariantPattern for Location " + location + " is:  " + getSizeOfPattern(p));
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("InvariantPattern for Location " + location + " is:  " + getSizeOfPattern(p));
 			}
 			// Add the coefficients of this pattern to the set of all coefficients
 			mAllPatternCoefficients.addAll(mStrategy.getPatternCoefficientsForLocation(location));

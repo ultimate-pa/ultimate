@@ -612,10 +612,14 @@ public final class CFGInvariantsGenerator {
 								varsFromUnsatCore.add(smtVars2ProgramVars.get(smtVar));
 							}
 						}
-						if (mLogger.isDebugEnabled()) {
-							mLogger.debug("Vars in unsat core: " + varsFromUnsatCore);
+						if (mLogger.isInfoEnabled()) {
+							mLogger.info("Vars in unsat core: " + varsFromUnsatCore);
 						}
 						mLogger.info(varsFromUnsatCore.size() + " out of " + (new HashSet<>(smtVars2ProgramVars.values())).size() + " program variables in unsat core");
+						if (mLogger.isInfoEnabled()) {
+							mLogger.info("Locations in unsat core: " + locsInUnsatCore);
+						}
+
 						mLogger.info(locsInUnsatCore.size() + " out of " + locationsAsList.size() + " locations in unsat core");
 					}
 				} else {
