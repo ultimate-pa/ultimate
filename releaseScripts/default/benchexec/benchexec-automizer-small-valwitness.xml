@@ -6,9 +6,9 @@
            memlimit="8GB"
            cpuCores="4">
 
-  <rundefinition name="Test">
-  </rundefinition>
-
+  <rundefinition name="Test"></rundefinition>
+  
+  <option name="--full-output"/>
   <option name="${inputfile_path_abs}/${inputfile_name}-witness.graphml"/>
 
   <tasks name="CFI">
@@ -18,8 +18,7 @@
     <include>../../trunk/examples/svcomp/loop-acceleration/simple_false-unreach-call2.i</include>
 	<include>../../trunk/examples/svcomp/loop-acceleration/multivar_true-unreach-call1.i</include>
     <propertyfile>${inputfile_path}/ALL.prp</propertyfile>
-	<option name="32bit"></option>
-	<option name="precise"></option>
+	<option name="--architecture">32bit</option>
   </tasks>
 
 <columns>

@@ -8,17 +8,19 @@
 
   <rundefinition name="Test">
   </rundefinition>
+  
+  <option name="--full-output"/>
 
   <tasks name="LTL-1">
     <include>../../../trunk/examples/LTL/svcomp17format/coolant_basis_1_neg_false-valid-ltl.c</include>
     <propertyfile>../../../trunk/examples/LTL/svcomp17format/coolant_basis_1_neg_false-valid-ltl.prp</propertyfile>
-	<option name="32bit"></option>
+	<option name="--architecture">32bit</option>
   </tasks>
   
   <tasks name="LTL-3">
     <include>../../../trunk/examples/LTL/svcomp17format/coolant/*.c</include>
     <propertyfile>../../../trunk/examples/LTL/svcomp17format/coolant/${inputfile_name}.prp</propertyfile>
-	<option name="32bit"></option>
+	<option name="--architecture">32bit</option>
   </tasks>
 
 </benchmark>

@@ -6,9 +6,9 @@
            memlimit="8GB"
            cpuCores="4">
 
-	<rundefinition name="Test">
-	</rundefinition>
-
+	<rundefinition name="Test"></rundefinition>
+	
+	<option name="--full-output"/>
 	<option name="--validate">${inputfile_path_abs}/${inputfile_name}-witness.graphml</option>
 
  <tasks name="LDV">
@@ -18,7 +18,7 @@
     <include>../../../trunk/examples/svcomp/ldv-linux-3.12-rc1/linux-3.12-rc1.tar.xz-144_2a-drivers--staging--media--lirc--lirc_sasem.ko-entry_point_false-unreach-call.cil.out.c</include>
     <include>../../../trunk/examples/svcomp/ldv-regression/mutex_lock_int.c_false-unreach-call.cil.c</include>
     <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
-	<option name="32bit"></option>
+	<option name="--architecture">32bit</option>
   </tasks>
 
   <tasks name="Memsafety">
@@ -31,13 +31,13 @@
 	<include>../../../trunk/examples/svcomp/ldv-memsafety/memset2_false-valid-deref-write.c</include>
 	<include>../../../trunk/examples/svcomp/ldv-memsafety/memset_false-valid-deref-write.c</include>
     <propertyfile>../../../trunk/examples/svcomp/PropertyMemSafety.prp</propertyfile>
-	<option name="32bit"></option>
+	<option name="--architecture">32bit</option>
   </tasks>
 
   <tasks name="Busybox-Memsafety">
     <include>../../../trunk/examples/svcomp/busybox-1.22.0/basename_false-unreach-call_true-no-overflow_true-valid-memsafety.i</include>
     <propertyfile>../../../trunk/examples/svcomp/Systems_BusyBox_MemSafety.prp</propertyfile>
-	<option name="64bit"></option>
+	<option name="--architecture">64bit</option>
   </tasks>
 
   <tasks name="Overflow">
@@ -45,7 +45,7 @@
     <include>../../../trunk/examples/svcomp/signedintegeroverflow-regression/AdditionIntMin_false-no-overflow.c.i</include>
 	<include>../../../trunk/examples/svcomp/signedintegeroverflow-regression/AdditionIntMax_false-no-overflow.c.i</include>
     <propertyfile>../../../trunk/examples/svcomp/PropertyOverflow.prp</propertyfile>
-	<option name="64bit"></option>
+	<option name="--architecture">64bit</option>
   </tasks>
   
   <tasks name="Reach">
@@ -58,7 +58,7 @@
 	<include>../../../trunk/examples/svcomp/floats-cbmc-regression/float-div1_true-unreach-call.i</include>
 	<include>../../../trunk/examples/svcomp/floats-esbmc-regression/fmod3_true-unreach-call.i</include>
     <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
-	<option name="32bit"></option>
+	<option name="--architecture">32bit</option>
   </tasks>
 
   <tasks name="Bitvectors">
@@ -76,14 +76,14 @@
 	<include>../../../trunk/examples/svcomp/bitvector/s3_clnt_1_true-unreach-call_true-no-overflow.BV.c.cil.c</include>
 	<include>../../../trunk/examples/svcomp/bitvector/soft_float_2_true-unreach-call_true-no-overflow.c.cil.c</include>
     <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
-	<option name="32bit"></option>
+	<option name="--architecture">32bit</option>
   </tasks>
 
   <tasks name="Recursive">
     <include>../../../trunk/examples/svcomp/recursive/recHanoi02_true-unreach-call_true-no-overflow_true-termination.c</include>
     <include>../../../trunk/examples/svcomp/recursive/McCarthy91_false-unreach-call_true-no-overflow_true-termination.c</include>
     <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
-	<option name="32bit"></option>
+	<option name="--architecture">32bit</option>
   </tasks>  
 
 	<columns>
