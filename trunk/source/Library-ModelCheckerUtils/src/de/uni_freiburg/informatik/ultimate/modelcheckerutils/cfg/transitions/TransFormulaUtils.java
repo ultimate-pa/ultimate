@@ -76,6 +76,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.util.DebugMessage;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -639,8 +640,8 @@ public final class TransFormulaUtils {
 			final UnmodifiableTransFormula result, final IIcfgSymbolTable symbolTable,
 			final Set<IProgramNonOldVar> modifiableGlobalsOfEndProcedure) {
 		assert result.getBranchEncoders().isEmpty() : "result check not applicable with branch encoders";
-		final PredicateTransformer pt =
-				new PredicateTransformer(services, mgdScript, simplificationTechnique, xnfConversionTechnique);
+		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
+				new PredicateTransformer<Term, IPredicate, TransFormula>(services, mgdScript, new TermDomainOperationProvider(services, mgdScript));
 		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable,
 				simplificationTechnique, xnfConversionTechnique);
 		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));
@@ -796,8 +797,8 @@ public final class TransFormulaUtils {
 			final UnmodifiableTransFormula result, final IIcfgSymbolTable symbolTable,
 			final Set<IProgramNonOldVar> modifiableGlobals) {
 		assert result.getBranchEncoders().isEmpty() : "result check not applicable with branch encoders";
-		final PredicateTransformer pt =
-				new PredicateTransformer(services, mgdScript, simplificationTechnique, xnfConversionTechnique);
+		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
+				new PredicateTransformer<Term, IPredicate, TransFormula>(services, mgdScript, new TermDomainOperationProvider(services, mgdScript));
 		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable,
 				simplificationTechnique, xnfConversionTechnique);
 		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));

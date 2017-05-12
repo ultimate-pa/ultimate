@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICall
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
@@ -58,6 +59,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Qua
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException.Reason;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.NestedFormulas;
@@ -77,7 +79,7 @@ public class IterativePredicateTransformer {
 	private final XnfConversionTechnique mXnfConversionTechnique;
 	private final ManagedScript mMgdScript;
 
-	private final PredicateTransformer mPredicateTransformer;
+	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredicateTransformer;
 	private final PredicateFactory mPredicateFactory;
 	private final NestedWord<? extends IAction> mTrace;
 	private final IPredicate mPrecondition;
@@ -102,8 +104,8 @@ public class IterativePredicateTransformer {
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mMgdScript = mgdScript;
 		mModifiedGlobals = modifiableGlobalsTable;
-		mPredicateTransformer =
-				new PredicateTransformer(services, mgdScript, simplificationTechnique, xnfConversionTechnique);
+		mPredicateTransformer = new PredicateTransformer<Term, IPredicate, TransFormula>(services, mgdScript,
+				new TermDomainOperationProvider(mServices, mMgdScript));
 		mPredicateFactory = predicateFactory;
 		mTrace = trace;
 		mPrecondition = precondition;

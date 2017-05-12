@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -45,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -64,7 +66,7 @@ public final class NonInductiveAnnotationGenerator {
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private final PredicateTransformer mPredicateTransformer;
+	private final PredicateTransformer<Term, IPredicate, TransFormula> mPredicateTransformer;
 	private final ManagedScript mManagedScript;
 	private final BasicPredicateFactory mPredicateFactory;
 	private final IIcfg<?> mIcfg;
@@ -89,7 +91,8 @@ public final class NonInductiveAnnotationGenerator {
 		mPredicateFactory = basicPredicateFactory;
 		mIcfg = icfg;
 		mManagedScript = icfg.getCfgSmtToolkit().getManagedScript();
-		mPredicateTransformer = new PredicateTransformer(mServices, mManagedScript, mSimplificationTechnique, mXnfConversionTechnique);
+		mPredicateTransformer = new PredicateTransformer<Term, IPredicate, TransFormula>(mServices, mManagedScript,
+				new TermDomainOperationProvider(mServices, mManagedScript));
 		mApproximation = approximation;
 		mExitCondition = constructExitCondition_OnlyOne();
 		switch (mApproximation) {
