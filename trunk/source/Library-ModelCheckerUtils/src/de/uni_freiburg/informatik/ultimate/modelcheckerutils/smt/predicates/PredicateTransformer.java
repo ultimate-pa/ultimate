@@ -82,11 +82,14 @@ public class PredicateTransformer<C,P extends IAbstractPredicate, R extends ITra
 
 
 	/**
-	 * Computes the strongest postcondition of the given predicate p and the TransFormula tf. - invars of the given
-	 * transformula, which don't occur in the outvars or are mapped to different values are renamed to fresh variables.
-	 * The corresponding term variables in the given predicate p, are renamed to the same fresh variables. - outvars are
-	 * renamed to corresponding term variables. If an outvar doesn't occur in the invars, its occurrence in the given
-	 * predicate is substituted by a fresh variable. All fresh variables are existentially quantified.
+	 * Computes the strongest postcondition of the given predicate p and the
+	 * {@link ITransitionRelation} transRel. - invars of the given relation,
+	 * which don't occur in the outvars or are mapped to different values are
+	 * renamed to fresh variables. The corresponding term variables in the given
+	 * predicate p, are renamed to the same fresh variables. - outvars are
+	 * renamed to corresponding term variables. If an outvar doesn't occur in
+	 * the invars, its occurrence in the given predicate is substituted by a
+	 * fresh variable. All fresh variables are existentially quantified.
 	 */
 	public C strongestPostcondition(final P p, final R transRel) {
 		final C constraint = mOperationProvider.getConstraint(p);
