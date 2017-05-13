@@ -61,6 +61,7 @@ import org.eclipse.cdt.core.dom.ast.IASTTypeId;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTSimpleDeclaration;
 
+import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.LocationFactory;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.implementation.util.SFO;
 import de.uni_freiburg.informatik.ultimate.cdt.translation.interfaces.Dispatcher;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.LinkedScopedHashMap;
@@ -672,7 +673,7 @@ public class DetermineNecessaryDeclarations extends ASTVisitor {
 					+ "\n The program does not have this method. ULTIMATE will continue in "
 					+ "library mode (i.e., each procedure can be starting procedure and global "
 					+ "variables are not initialized).";
-    			mDispatcher.warn(mDispatcher.getLocationFactory().createCLocation(translationUnit), msg);
+    			mDispatcher.warn(LocationFactory.createIgnoreCLocation(translationUnit), msg);
     		}
     		entryPoints.addAll(functionTable.keySet());
     	}
