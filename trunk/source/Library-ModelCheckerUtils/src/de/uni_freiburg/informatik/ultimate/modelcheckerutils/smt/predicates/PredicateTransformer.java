@@ -88,7 +88,7 @@ public class PredicateTransformer<C,P extends IAbstractPredicate, R extends ITra
 	 * renamed to corresponding term variables. If an outvar doesn't occur in the invars, its occurrence in the given
 	 * predicate is substituted by a fresh variable. All fresh variables are existentially quantified.
 	 */
-	public C strongestPostcondition(final IPredicate p, final R transRel) {
+	public C strongestPostcondition(final P p, final R transRel) {
 		final C constraint = mOperationProvider.getConstraint(p);
 		if (mOperationProvider.isConstaintUnsatisfiable(constraint)) {
 			return constraint;

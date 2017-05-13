@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITr
  */
 public interface IDomainSpecificOperationProvider<C,P extends IAbstractPredicate, R extends ITransitionRelation> {
 
-	C getConstraint(IPredicate p);
+	C getConstraint(P p);
 
 	boolean isConstaintUnsatisfiable(C constraint);
 
