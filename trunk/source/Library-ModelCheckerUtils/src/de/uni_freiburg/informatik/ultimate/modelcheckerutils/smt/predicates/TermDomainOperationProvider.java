@@ -37,10 +37,13 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Term domain operations that are needed for {@link PredicateTransformer}
+ * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -54,17 +57,17 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 		mScript = mgdScript.getScript();
 		mMgdScript = mgdScript;
 	}
-	
+
 	@Override
 	public Term getConstraint(final IPredicate p) {
 		return p.getFormula();
 	}
-	
+
 	@Override
 	public boolean isConstaintUnsatisfiable(final Term constraint) {
 		return SmtUtils.isFalse(constraint);
 	}
-	
+
 	@Override
 	public boolean isConstaintValid(final Term constraint) {
 		return SmtUtils.isTrue(constraint);
@@ -99,14 +102,20 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 
 	@Override
 	public Term projectExistentially(final Set<TermVariable> varsToProjectAway, final Term constraint) {
-		return PredicateTransformer.constructQuantifiedFormula(Script.EXISTS, varsToProjectAway, constraint, mMgdScript,
-				mServices);
+		return constructQuantifiedFormula(Script.EXISTS, varsToProjectAway, constraint);
 	}
 
 	@Override
 	public Term projectUniversally(final Set<TermVariable> varsToProjectAway, final Term constraint) {
-		return PredicateTransformer.constructQuantifiedFormula(Script.FORALL, varsToProjectAway, constraint, mMgdScript,
-				mServices);
+		return constructQuantifiedFormula(Script.FORALL, varsToProjectAway, constraint);
+	}
+
+	private Term constructQuantifiedFormula(final int quantifier, final Set<TermVariable> varsToQuantify,
+			final Term term) {
+		final Term quantified = SmtUtils.quantifier(mMgdScript.getScript(), quantifier, varsToQuantify, term);
+		final Term pushed = new QuantifierPusher(mMgdScript, mServices, false, PqeTechniques.ONLY_DER)
+				.transform(quantified);
+		return pushed;
 	}
 
 }

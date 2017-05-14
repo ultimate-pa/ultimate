@@ -43,9 +43,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.CallReturnPyramideInstanceProvider.Instance;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
@@ -140,13 +137,7 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 		return mOperationProvider.projectExistentially(varsToProject, conjunction);
 	}
 
-	static Term constructQuantifiedFormula(final int quantifier, final Set<TermVariable> varsToQuantify,
-			final Term term, final ManagedScript mgdScript, final IUltimateServiceProvider services) {
-		final Term quantified = SmtUtils.quantifier(mgdScript.getScript(), quantifier, varsToQuantify, term);
-		final Term pushed = new QuantifierPusher(mgdScript, services, false, PqeTechniques.ONLY_DER)
-				.transform(quantified);
-		return pushed;
-	}
+
 
 	public C strongestPostconditionCall(final P callPred, final R localVarAssignments, final R globalVarAssignments,
 			final R oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure) {
