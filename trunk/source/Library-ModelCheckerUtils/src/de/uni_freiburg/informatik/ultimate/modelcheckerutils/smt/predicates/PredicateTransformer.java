@@ -138,8 +138,7 @@ public class PredicateTransformer<C,P extends IAbstractPredicate, R extends ITra
 		final C renamedRelationConstraint = mOperationProvider.renameVariables(substitutionForTransFormula, mOperationProvider.getConstaintFromTransitionRelation(transRel));
 		final C renamedPredecessor = mOperationProvider.renameVariables(substitutionForPredecessor, constraint);
 
-		final C conjunction = mOperationProvider.constructConjunction(
-				(List<C>) Arrays.asList(new Object[] { renamedRelationConstraint, renamedPredecessor }));
+		final C conjunction = mOperationProvider.constructConjunction(toList(renamedRelationConstraint, renamedPredecessor));
 
 		// Add aux vars to varsToQuantify
 		varsToProject.addAll(transRel.getAuxVars());
@@ -339,4 +338,8 @@ public class PredicateTransformer<C,P extends IAbstractPredicate, R extends ITra
 	
 
 
+	@SafeVarargs
+	private static <E> List<E> toList(final E... elems) {
+		return Arrays.asList(elems);
+	}
 }
