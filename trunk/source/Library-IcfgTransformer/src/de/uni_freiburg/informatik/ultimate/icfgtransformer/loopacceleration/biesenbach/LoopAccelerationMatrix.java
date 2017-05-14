@@ -235,7 +235,7 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		final SimplificationTechnique simpl = SimplificationTechnique.SIMPLIFY_DDA;
 		final XnfConversionTechnique xnfConvTech = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 		final PredicateTransformer<Term, IPredicate, TransFormula> ptf = new PredicateTransformer<Term, IPredicate, TransFormula>(
-				services, mgdScript, new TermDomainOperationProvider(services, mgdScript));
+				mgdScript, new TermDomainOperationProvider(services, mgdScript));
 
 		final BasicPredicateFactory predFac =
 				new BasicPredicateFactory(services, mgdScript, cfgSmtToolkit.getSymbolTable(), simpl, xnfConvTech);

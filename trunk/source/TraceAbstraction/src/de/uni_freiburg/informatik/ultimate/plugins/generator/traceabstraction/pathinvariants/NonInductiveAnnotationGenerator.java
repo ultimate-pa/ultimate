@@ -91,8 +91,7 @@ public final class NonInductiveAnnotationGenerator {
 		mPredicateFactory = basicPredicateFactory;
 		mIcfg = icfg;
 		mManagedScript = icfg.getCfgSmtToolkit().getManagedScript();
-		mPredicateTransformer = new PredicateTransformer<Term, IPredicate, TransFormula>(mServices, mManagedScript,
-				new TermDomainOperationProvider(mServices, mManagedScript));
+		mPredicateTransformer = new PredicateTransformer<Term, IPredicate, TransFormula>(mManagedScript, new TermDomainOperationProvider(mServices, mManagedScript));
 		mApproximation = approximation;
 		mExitCondition = constructExitCondition_OnlyOne();
 		switch (mApproximation) {

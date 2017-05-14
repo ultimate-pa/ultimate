@@ -104,8 +104,7 @@ public class IterativePredicateTransformer {
 		mXnfConversionTechnique = xnfConversionTechnique;
 		mMgdScript = mgdScript;
 		mModifiedGlobals = modifiableGlobalsTable;
-		mPredicateTransformer = new PredicateTransformer<Term, IPredicate, TransFormula>(services, mgdScript,
-				new TermDomainOperationProvider(mServices, mMgdScript));
+		mPredicateTransformer = new PredicateTransformer<Term, IPredicate, TransFormula>(mgdScript, new TermDomainOperationProvider(mServices, mMgdScript));
 		mPredicateFactory = predicateFactory;
 		mTrace = trace;
 		mPrecondition = precondition;

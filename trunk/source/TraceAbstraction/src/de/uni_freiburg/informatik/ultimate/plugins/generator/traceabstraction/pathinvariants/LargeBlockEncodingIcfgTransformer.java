@@ -222,7 +222,7 @@ public final class LargeBlockEncodingIcfgTransformer {
 		final XnfConversionTechnique xnfConversionTechnique =
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt = new PredicateTransformer<Term, IPredicate, TransFormula>(
-				mServices, mgdScript, new TermDomainOperationProvider(mServices, mgdScript));
+				mgdScript, new TermDomainOperationProvider(mServices, mgdScript));
 		final List<Term> disjuncts = new ArrayList<>();
 		for (final IcfgEdge edge : loc.getIncomingEdges()) {
 			final IcfgLocation pred = edge.getSource();

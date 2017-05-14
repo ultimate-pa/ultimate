@@ -37,7 +37,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation;
@@ -57,12 +56,10 @@ import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruc
  */
 public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITransitionRelation> {
 	private final ManagedScript mMgdScript;
-	private final IUltimateServiceProvider mServices;
 	private final IDomainSpecificOperationProvider<C, P, R> mOperationProvider;
 
-	public PredicateTransformer(final IUltimateServiceProvider services, final ManagedScript mgdScript,
+	public PredicateTransformer(final ManagedScript mgdScript,
 			final IDomainSpecificOperationProvider<C, P, R> operationProvider) {
-		mServices = services;
 		mMgdScript = mgdScript;
 		mOperationProvider = operationProvider;
 	}
@@ -136,8 +133,6 @@ public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITr
 		varsToProject.addAll(transRel.getAuxVars());
 		return mOperationProvider.projectExistentially(varsToProject, conjunction);
 	}
-
-
 
 	public C strongestPostconditionCall(final P callPred, final R localVarAssignments, final R globalVarAssignments,
 			final R oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure) {

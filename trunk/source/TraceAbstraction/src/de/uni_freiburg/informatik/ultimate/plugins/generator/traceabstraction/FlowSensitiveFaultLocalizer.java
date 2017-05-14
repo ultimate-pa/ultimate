@@ -633,7 +633,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		// You should send the counter example, the CFG information and the the start of the branch and the end of the
 		// branch.
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt = new PredicateTransformer<Term, IPredicate, TransFormula>(
-				mServices, csToolkit.getManagedScript(), new TermDomainOperationProvider(mServices, csToolkit.getManagedScript()));
+				csToolkit.getManagedScript(), new TermDomainOperationProvider(mServices, csToolkit.getManagedScript()));
 		final FaultLocalizationRelevanceChecker rc = new FaultLocalizationRelevanceChecker(csToolkit);
 		final int startLocation = 0;
 		final int endLocation = counterexample.getWord().length() - 1;

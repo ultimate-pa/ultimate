@@ -641,7 +641,7 @@ public final class TransFormulaUtils {
 			final Set<IProgramNonOldVar> modifiableGlobalsOfEndProcedure) {
 		assert result.getBranchEncoders().isEmpty() : "result check not applicable with branch encoders";
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
-				new PredicateTransformer<Term, IPredicate, TransFormula>(services, mgdScript, new TermDomainOperationProvider(services, mgdScript));
+				new PredicateTransformer<Term, IPredicate, TransFormula>(mgdScript, new TermDomainOperationProvider(services, mgdScript));
 		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable,
 				simplificationTechnique, xnfConversionTechnique);
 		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));
@@ -798,7 +798,7 @@ public final class TransFormulaUtils {
 			final Set<IProgramNonOldVar> modifiableGlobals) {
 		assert result.getBranchEncoders().isEmpty() : "result check not applicable with branch encoders";
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
-				new PredicateTransformer<Term, IPredicate, TransFormula>(services, mgdScript, new TermDomainOperationProvider(services, mgdScript));
+				new PredicateTransformer<Term, IPredicate, TransFormula>(mgdScript, new TermDomainOperationProvider(services, mgdScript));
 		final BasicPredicateFactory bpf = new BasicPredicateFactory(services, mgdScript, symbolTable,
 				simplificationTechnique, xnfConversionTechnique);
 		final IPredicate truePredicate = bpf.newPredicate(mgdScript.getScript().term("true"));
