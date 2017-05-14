@@ -48,13 +48,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  *
  */
 public class TermDomainOperationProvider implements IDomainSpecificOperationProvider<Term, IPredicate, TransFormula> {
-	private final Script mScript;
 	private final ManagedScript mMgdScript;
 	private final IUltimateServiceProvider mServices;
 
 	public TermDomainOperationProvider(final IUltimateServiceProvider services, final ManagedScript mgdScript) {
 		mServices = services;
-		mScript = mgdScript.getScript();
 		mMgdScript = mgdScript;
 	}
 
@@ -87,17 +85,17 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 
 	@Override
 	public Term constructConjunction(final List<Term> conjuncts) {
-		return SmtUtils.and(mScript, conjuncts);
+		return SmtUtils.and(mMgdScript.getScript(), conjuncts);
 	}
 
 	@Override
 	public Term constructDisjunction(final List<Term> disjuncts) {
-		return SmtUtils.or(mScript, disjuncts);
+		return SmtUtils.or(mMgdScript.getScript(), disjuncts);
 	}
 
 	@Override
 	public Term constructNegation(final Term operand) {
-		return SmtUtils.not(mScript, operand);
+		return SmtUtils.not(mMgdScript.getScript(), operand);
 	}
 
 	@Override
