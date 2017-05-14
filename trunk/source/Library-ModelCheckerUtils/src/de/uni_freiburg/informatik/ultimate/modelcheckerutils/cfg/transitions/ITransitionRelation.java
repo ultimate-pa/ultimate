@@ -31,6 +31,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramFunction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 /**
@@ -49,6 +50,10 @@ public interface ITransitionRelation {
 	Map<IProgramVar, TermVariable> getOutVars();
 
 	Set<IProgramConst> getNonTheoryConsts();
+	
+	default Set<IProgramFunction> getNonTheoryFunctions() {
+		throw new UnsupportedOperationException("not yet implemented");
+	}
 
 	/**
 	 * If this method returns true, the outVar of bv may have any value even if the value of the inVar is restricted. If
