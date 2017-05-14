@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 
@@ -48,5 +49,9 @@ public interface IAbstractPredicate {
 	 * TermVariable occurs in this IPredicate.
 	 */
 	Set<IProgramVar> getVars();
+	
+	default Set<IProgramConst> getConstants() {
+		throw new UnsupportedOperationException("not yet implemented");
+	}
 
 }
