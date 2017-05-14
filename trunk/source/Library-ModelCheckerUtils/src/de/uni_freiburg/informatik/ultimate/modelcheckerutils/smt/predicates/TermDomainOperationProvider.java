@@ -66,10 +66,15 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 	}
 	
 	@Override
+	public boolean isConstaintValid(final Term constraint) {
+		return SmtUtils.isTrue(constraint);
+	}
+
+	@Override
 	public Term getConstaintFromTransitionRelation(final TransFormula tf) {
 		return tf.getFormula();
 	}
-	
+
 	@Override
 	public Term renameVariables(final Map<Term, Term> substitutionForTransFormula, final Term constraint) {
 		final Term renamedTransFormula = new SubstitutionWithLocalSimplification(mMgdScript,
@@ -83,9 +88,25 @@ public class TermDomainOperationProvider implements IDomainSpecificOperationProv
 	}
 
 	@Override
-	public Term projectExistentially(final Set<TermVariable> varsToProjectAway, final Term conjunction) {
-		return PredicateTransformer.constructQuantifiedFormula(Script.EXISTS, varsToProjectAway, conjunction,
-				mMgdScript, mServices);
+	public Term constructDisjunction(final List<Term> disjuncts) {
+		return SmtUtils.or(mScript, disjuncts);
+	}
+
+	@Override
+	public Term constructNegation(final Term operand) {
+		return SmtUtils.not(mScript, operand);
+	}
+
+	@Override
+	public Term projectExistentially(final Set<TermVariable> varsToProjectAway, final Term constraint) {
+		return PredicateTransformer.constructQuantifiedFormula(Script.EXISTS, varsToProjectAway, constraint, mMgdScript,
+				mServices);
+	}
+
+	@Override
+	public Term projectUniversally(final Set<TermVariable> varsToProjectAway, final Term constraint) {
+		return PredicateTransformer.constructQuantifiedFormula(Script.FORALL, varsToProjectAway, constraint, mMgdScript,
+				mServices);
 	}
 
 }

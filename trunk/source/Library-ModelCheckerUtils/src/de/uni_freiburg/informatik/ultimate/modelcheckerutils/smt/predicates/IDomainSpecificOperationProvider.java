@@ -45,27 +45,62 @@ public interface IDomainSpecificOperationProvider<C,P extends IAbstractPredicate
 	C getConstraint(P p);
 
 	/**
+	 * This operation is needed for post but not for wp.
+	 * 
 	 * @return true if provider can guarantee that constraint is unsatisfiable
-	 * (i.e., equivalent to false, resp. the empty set of program states)
-	 * It is always safe to return false here, the true return value can only 
-	 * bring some speedup.
+	 *         (i.e., equivalent to false, resp. the empty set of program
+	 *         states) It is always safe to return false here, the true return
+	 *         value can only bring some speedup.
+	 * 
 	 */
 	boolean isConstaintUnsatisfiable(C constraint);
 
+	/**
+	 * This operation is needed for wp but not for post.
+	 * 
+	 * @return true if provider can guarantee that constraint is valid (i.e.,
+	 *         equivalent to true, resp. the set of all program states) It is
+	 *         always safe to return false here, the true return value can only
+	 *         bring some speedup.
+	 * 
+	 */
+	boolean isConstaintValid(C constraint);
+
 	C getConstaintFromTransitionRelation(R transRel);
 
-
 	/**
-	 * @param substitutionMapping maps old variables to new variables
+	 * @param substitutionMapping
+	 *            maps old variables to new variables
 	 */
 	C renameVariables(Map<Term, Term> substitutionMapping, C constraint);
 
+	/**
+	 * This operation is needed for post but not for wp.
+	 */
 	C constructConjunction(List<C> conjuncts);
 
 	/**
-	 * Project constraint to all program vars that are not in the set 
-	 * varsToProjectAway. The projection is an existential projection.
+	 * This operation is needed for wp but not for post.
+	 */
+	C constructDisjunction(List<C> disjuncts);
+
+	/**
+	 * This operation is needed for wp but not for post.
+	 */
+	C constructNegation(C operand);
+
+	/**
+	 * Project constraint to all program vars that are not in the set
+	 * varsToProjectAway. The projection is an existential projection. This
+	 * operation is needed for post but not for wp.
 	 */
 	C projectExistentially(Set<TermVariable> varsToProjectAway, C constraint);
+
+	/**
+	 * Project constraint to all program vars that are not in the set
+	 * varsToProjectAway. The projection is a universal projection. This
+	 * operation is needed for wp but not for post.
+	 */
+	C projectUniversally(Set<TermVariable> varsToProjectAway, C constraint);
 
 }
