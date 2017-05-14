@@ -44,14 +44,28 @@ public interface IDomainSpecificOperationProvider<C,P extends IAbstractPredicate
 
 	C getConstraint(P p);
 
+	/**
+	 * @return true if provider can guarantee that constraint is unsatisfiable
+	 * (i.e., equivalent to false, resp. the empty set of program states)
+	 * It is always safe to return false here, the true return value can only 
+	 * bring some speedup.
+	 */
 	boolean isConstaintUnsatisfiable(C constraint);
 
 	C getConstaintFromTransitionRelation(R transRel);
 
-	C renameVariables(Map<Term, Term> substitutionForTransFormula, C constraint);
+
+	/**
+	 * @param substitutionMapping maps old variables to new variables
+	 */
+	C renameVariables(Map<Term, Term> substitutionMapping, C constraint);
 
 	C constructConjunction(List<C> conjuncts);
 
+	/**
+	 * Project constraint to all program vars that are not in the set 
+	 * varsToProjectAway. The projection is an existential projection.
+	 */
 	C projectExistentially(Set<TermVariable> varsToProjectAway, C constraint);
 
 }
