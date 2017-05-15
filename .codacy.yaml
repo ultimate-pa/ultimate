@@ -1,0 +1,2 @@
+exclude_paths:
+  - trunk/source/**/interactive/*/protobuf

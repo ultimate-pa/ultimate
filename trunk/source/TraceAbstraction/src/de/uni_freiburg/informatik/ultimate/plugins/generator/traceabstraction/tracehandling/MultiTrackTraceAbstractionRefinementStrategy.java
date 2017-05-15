@@ -74,7 +74,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	 *
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
-	protected enum Track {
+	public enum Track {
 		/**
 		 * SMTInterpol with tree interpolation.
 		 */
@@ -103,7 +103,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	protected final IRun<LETTER, IPredicate, ?> mCounterexample;
 
 	private final IUltimateServiceProvider mServices;
-	private final ILogger mLogger;
+	protected final ILogger mLogger;
 	private final TaCheckAndRefinementPreferences<LETTER> mPrefs;
 	protected final CfgSmtToolkit mCsToolkit;
 	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
@@ -126,7 +126,7 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	private TraceChecker mTraceChecker;
 	private IInterpolantGenerator mInterpolantGenerator;
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> mInterpolantAutomatonBuilder;
-	private final int mIteration;
+	protected final int mIteration;
 	private final CegarLoopStatisticsGenerator mCegarLoopsBenchmark;
 
 	/**

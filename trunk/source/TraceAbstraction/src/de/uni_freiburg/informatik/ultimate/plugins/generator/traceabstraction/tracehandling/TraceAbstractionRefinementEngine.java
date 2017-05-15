@@ -32,6 +32,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
@@ -42,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.AbsIntBaseInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InteractiveCegar;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interactive.InterpolantSequences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
@@ -70,17 +73,21 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	private CachingHoareTripleChecker mHoareTripleChecker;
 	private boolean mSomePerfectSequenceFound = false;
 
+	private final InteractiveCegar mInteractive;
+
 	/**
 	 * @param logger
 	 *            Logger.
 	 * @param strategy
 	 *            strategy
 	 */
-	public TraceAbstractionRefinementEngine(final ILogger logger, final IRefinementStrategy<LETTER> strategy) {
+	public TraceAbstractionRefinementEngine(final ILogger logger, final IRefinementStrategy<LETTER> strategy,
+			final InteractiveCegar interactive) {
 		// initialize fields
 		mLogger = logger;
 		mStrategy = Objects.requireNonNull(strategy);
 		mLogger.info("Using refinement strategy " + mStrategy.getClass().getSimpleName());
+		mInteractive = interactive;
 		mFeasibility = executeStrategy();
 	}
 
@@ -353,8 +360,8 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 		}
 	}
 
-	private LBool constructAutomatonFromIpps(final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+	private LBool constructAutomatonFromIpps(List<InterpolantsPreconditionPostcondition> perfectIpps,
+			List<InterpolantsPreconditionPostcondition> imperfectIpps) {
 		// construct the interpolant automaton from the sequences we have found
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Constructing automaton from " + perfectIpps.size() + " perfect and " + imperfectIpps.size()
@@ -374,6 +381,24 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 			}
 			mLogger.info("Number of different interpolants: perfect sequences " + numberInterpolantsPerfect
 					+ " imperfect sequences " + numberInterpolantsImperfect + " total " + allInterpolants.size());
+		}
+		if (mInteractive.isInteractiveMode()) {
+			final InterpolantSequences sequences = InterpolantSequences.instance.set(perfectIpps, imperfectIpps);
+			if (mInteractive.getPreferences().isIPS() && perfectIpps.size() + imperfectIpps.size() > 1) {
+				mLogger.info("Asking the user to select interpolant sequences.");
+				try {
+					final InterpolantSequences userSequences =
+							mInteractive.getInterface().request(InterpolantSequences.class, sequences).get();
+					perfectIpps = userSequences.mPerfectIpps;
+					imperfectIpps = userSequences.mImperfectIpps;
+					mLogger.info("User Selected " + perfectIpps.size() + " perfect and " + imperfectIpps.size()
+					+ " imperfect interpolant sequences.");					
+				} catch (InterruptedException | ExecutionException e) {
+					mLogger.error(e);
+				}
+			} else {
+				mInteractive.send(sequences);
+			}
 		}
 		mInterpolantAutomaton = mStrategy.getInterpolantAutomatonBuilder(perfectIpps, imperfectIpps).getResult();
 		if (!perfectIpps.isEmpty()) {

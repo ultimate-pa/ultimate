@@ -115,8 +115,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected static final boolean TRACE_HISTOGRAMM_BAILOUT = false;
 	protected static final int MINIMIZATION_TIMEOUT = 1_000;
 	private static final boolean NON_EA_INDUCTIVITY_CHECK = false;
-	
-
 
 	protected final PredicateFactoryRefinement mStateFactoryForRefinement;
 	protected final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata;
@@ -214,8 +212,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final TaCheckAndRefinementPreferences<LETTER> taCheckAndRefinementPrefs = new TaCheckAndRefinementPreferences<>(
 				mServices, mPref, mInterpolation, mSimplificationTechnique, mXnfConversionTechnique, mCsToolkit,
 				mPredicateFactory, mIcfgContainer, mToolchainStorage, mInterpolantAutomatonBuilderFactory);
-		mRefinementStrategyFactory = new RefinementStrategyFactory<>(mLogger, mServices, mToolchainStorage, mPref,
-				taCheckAndRefinementPrefs, mAbsIntRunner, mIcfgContainer, mPredicateFactory);
+		mRefinementStrategyFactory = new RefinementStrategyFactory<>(mLogger, mServices, mInteractive,
+				mToolchainStorage, mPref, taCheckAndRefinementPrefs, mAbsIntRunner, mIcfgContainer, mPredicateFactory);
 	}
 
 	@Override
@@ -248,6 +246,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			mAbstraction = new RemoveDeadEnds<>(new AutomataLibraryServices(mServices), wpa).getResult();
 			new LineCoverageCalculator<>(mServices, mAbstraction, origCoverage).reportCoverage("Witness product");
 		}
+		mInteractive.send(mAbstraction);
 	}
 
 	@Override
@@ -259,6 +258,17 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 		if (mCounterexample == null) {
 			return true;
+		}
+
+		if (mInteractive.isInteractiveMode()) {
+			if (mInteractive.getPreferences().ismCEXS()) {
+				// TODO: send mCounterexample as "preview"
+				mInteractive.getInterface().common()
+						.send("Select a Trace: Please select the trace you want Ultimate to analyze next.");
+				mCounterexample = mInteractive.getUserRun(abstraction, mIteration, mServices, mSearchStrategy,
+						mStateFactoryForRefinement, mPredicateFactory, mCsToolkit.getManagedScript());
+			}
+			mInteractive.send(mCounterexample);
 		}
 
 		if (mPref.dumpAutomata()) {
@@ -278,6 +288,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			final String taskDescription = "trying to verify (iteration " + mIteration + ")";
 			throw new ToolchainCanceledException(message, getClass(), taskDescription);
 		}
+		// Don't send the histogram: the complete run is sent already.
+		// mInteractive.send(traceHistogram);
 		return false;
 	}
 
@@ -287,7 +299,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final IRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(
 				mPref.getRefinementStrategy(), mCounterexample, mAbstraction, getIteration(), getCegarLoopBenchmark());
 		try {
-			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy);
+			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy, mInteractive);
 		} catch (final ToolchainCanceledException tce) {
 			final int traceHistogramMax = new HistogramOfIterable<>(mCounterexample.getWord()).getMax();
 			final String taskDescription = "analyzing trace of length " + mCounterexample.getLength()
@@ -322,8 +334,15 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				mRcfgProgramExecution = mRcfgProgramExecution.addRelevanceInformation(a.getRelevanceInformation());
 			}
 		} else {
-			mPathProgramDumpController.reportPathProgram((NestedRun<? extends IAction, IPredicate>) mCounterexample, 
-					((TraceAbstractionRefinementEngine) mTraceCheckAndRefinementEngine).somePerfectSequenceFound(), mIteration);
+			mPathProgramDumpController.reportPathProgram((NestedRun<? extends IAction, IPredicate>) mCounterexample,
+					((TraceAbstractionRefinementEngine) mTraceCheckAndRefinementEngine).somePerfectSequenceFound(),
+					mIteration);
+		}
+
+		if (mInteractive.isInteractiveMode() && feasibility == LBool.SAT) {
+			mInteractive.getInterface().common()
+					.send("Feasible Counterexample:The Counterexample trace analyzed in iteration " + mIteration
+							+ " was feasible.");
 		}
 
 		return feasibility;
@@ -495,12 +514,10 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (!new Accepts<>(new AutomataLibraryServices(mServices), interpolantAutomaton,
 				(NestedWord<LETTER>) mCounterexample.getWord(), true, false).getResult()) {
 
-			final boolean isOriginalBroken =
-					!new Accepts<>(new AutomataLibraryServices(mServices), inputInterpolantAutomaton,
-							(NestedWord<LETTER>) mCounterexample.getWord(), true, false).getResult();
+			final boolean isOriginalBroken = !new Accepts<>(new AutomataLibraryServices(mServices),
+					inputInterpolantAutomaton, (NestedWord<LETTER>) mCounterexample.getWord(), true, false).getResult();
 			try {
-				debugLogBrokenInterpolantAutomaton(inputInterpolantAutomaton, interpolantAutomaton,
-						mCounterexample);
+				debugLogBrokenInterpolantAutomaton(inputInterpolantAutomaton, interpolantAutomaton, mCounterexample);
 			} catch (final Error e) {
 				// suppress any exception, throw assertion error instead
 			}

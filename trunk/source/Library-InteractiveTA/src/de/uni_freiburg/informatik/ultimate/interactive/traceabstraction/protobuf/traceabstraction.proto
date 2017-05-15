@@ -1,0 +1,302 @@
+syntax = "proto3";
+
+package
+de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf;
+
+//option java_package = "de.uni_freiburg.informatik.ultimate.graphvr";
+option java_outer_classname = "TraceAbstractionProtos";
+message TAPreferences {
+	bool mInterprocedural = 1;
+	int32 mMaxIterations = 2;
+	int32 mWatchIteration = 3;
+	Artifact mArtifact = 4;
+	InterpolationTechnique mInterpolation = 5;
+	InterpolantAutomaton mInterpolantAutomaton = 6;
+	bool mDumpAutomata = 7;
+	Format mAutomataFormat = 8;
+	string mDumpPath = 9;
+	InterpolantAutomatonEnhancement mDeterminiation = 10;
+	Minimization mMinimize = 11;
+	bool mHoare = 12;
+	Concurrency mConcurrency = 13;
+	HoareTripleChecks mHoareTripleChecks = 14;
+	//IPreferenceProvider mPrefs = 15;
+	HoareAnnotationPositions mHoareAnnotationPositions = 16;
+	enum InterpolationTechnique {
+		Craig_NestedInterpolation = 0;
+		Craig_TreeInterpolation = 1;
+		ForwardPredicates = 2;
+		BackwardPredicates = 3;
+		FPandBP = 4;
+		PathInvariants = 5;
+	}
+
+	enum Minimization {
+		NO_MINIMIZATION = 0;
+		MINIMIZE_SEVPA = 1;
+		SHRINK_NWA = 2;
+		DFA_HOPCROFT_ARRAYS = 3;
+		DFA_HOPCROFT_LISTS = 4;
+		NWA_MAX_SAT = 5;
+		NWA_MAX_SAT2 = 6;
+		NWA_COMBINATOR_PATTERN = 7;
+		NWA_COMBINATOR_EVERY_KTH = 8;
+		RAQ_DIRECT_SIMULATION = 9;
+		RAQ_DIRECT_SIMULATION_B = 10;
+		NWA_OVERAPPROXIMATION = 11;
+		NWA_COMBINATOR_MULTI_DEFAULT = 12;
+		NWA_COMBINATOR_MULTI_SIMULATION = 13;
+	}
+
+	enum Artifact {
+		ABSTRACTION = 0;
+		INTERPOLANT_AUTOMATON = 1;
+		NEG_INTERPOLANT_AUTOMATON = 2;
+		RCFG = 3;
+	}
+
+	enum InterpolantAutomatonEnhancement {
+		NO_ENHANCEMENT = 0;
+		BESTAPPROXIMATION_DEPRECATED = 1;
+		SELFLOOP = 2;
+		EAGER = 3;
+		EAGER_CONSERVATIVE = 4;
+		NO_SECOND_CHANCE = 5;
+		PREDICATE_ABSTRACTION = 6;
+		PREDICATE_ABSTRACTION_CONSERVATIVE = 7;
+		PREDICATE_ABSTRACTION_CANNIBALIZE = 8;
+	}
+
+	enum HoareTripleChecks {
+		MONOLITHIC = 0;
+		INCREMENTAL = 1;
+	}
+
+	enum Concurrency {
+		FINITE_AUTOMATA = 0;
+		PETRI_NET = 1;
+	}
+
+	enum Format {
+		ATS = 0;
+		ATS_NUMERATE = 1;
+		ATS_QUOTED = 2;
+		BA = 3;
+		GFF = 4;
+		HOA = 5;
+	}
+
+	enum InterpolantAutomaton {
+		CANONICAL = 0;
+		TOTALINTERPOLATION = 1;
+		SINGLETRACE = 2;
+		TWOTRACK = 3;
+		TOTALINTERPOLATION2 = 4;
+	}
+
+	enum HoareAnnotationPositions {
+		All = 0;
+		LoopsAndPotentialCycles = 1;
+	}
+
+}
+
+message LivePreferences {
+	bool paused = 1;
+	bool CEXS = 2;
+	bool IPS = 3;
+	bool RSS = 4;
+}
+
+message Tracks {
+	repeated Track track = 1;
+}
+
+message InterpolantSequences {
+	message Choices {
+		repeated int32 perfect = 1;
+		repeated int32 imperfect = 2;
+	}
+
+	repeated InterpolantsPrePost perfect = 1;
+	repeated InterpolantsPrePost imperfect = 2;
+}
+
+message InterpolantsPrePost {
+	Predicate preCondition = 1;
+	Predicate postCondition = 2;
+	repeated Predicate interpolants = 3;
+}
+
+message InteractiveIterationInfo {
+	Strategy fallback = 1;
+	int32 nextInteractiveIteration = 2;
+}
+
+message PredicateDoubleDecker {
+	Predicate up = 1;
+	Predicate down = 2;
+	int32 hash = 3;
+	message QueuePair {
+		repeated PredicateDoubleDecker callQueue = 1;
+		repeated PredicateDoubleDecker queue = 2;
+	}
+
+	message QueueResponse {
+		QueueType queueType = 1;
+		int32 index = 2;
+	}
+
+	enum QueueType {
+		NORMAL = 0;
+		CALL = 1;
+	}
+
+}
+
+message Predicate {
+	repeated IcfgLocation location = 1;
+	repeated string procedures = 2;
+	// pretty printed formula
+	string formulaString = 3;
+	int32 formulaHashCode = 4;
+}
+
+message IcfgLocation {
+	string procedure = 2;
+	string debugIdentifier = 1;
+}
+
+enum Strategy {
+// Simple strategy that reads the information from the settings.
+	FIXED_PREFERENCES = 0;
+	// Taipan strategy.
+	TAIPAN = 1;
+	// Taipan without abstract interpretation
+	RUBBER_TAIPAN = 2;
+	// Multi track strategy that tries 1. Craig interpolation with SMTInterpol, and 2. Sp/Wp interpolation with Z3.
+	PENGUIN = 3;
+	// Multi track strategy that tries Sp/Wp interpolation and Craig interpolation.
+	WALRUS = 4;
+	CAMEL = 5;
+	WOLF = 6;
+	// Interactive PARROT strategy not listed here.
+}
+
+enum Track {
+// SMTInterpol with tree interpolation.
+	SMTINTERPOL_TREE_INTERPOLANTS = 0;
+	SMTINTERPOL_FP = 1;
+	// Z3 with forward and backward predicates.
+	Z3_FPBP = 2;
+	Z3_FP = 3;
+	// Z3 with Craig interpolation.
+	Z3_NESTED_INTERPOLANTS = 4;
+	// CVC4 with forward and backward predicates.
+	CVC4_FPBP = 5;
+	CVC4_FP = 6;
+	// MathSAT with forward and backward predicates.
+	MATHSAT_FPBP = 7;
+	MATHSAT_FP = 8;
+}
+
+enum Result {
+	SAFE = 0;
+	UNSAFE = 1;
+	TIMEOUT = 2;
+	UNKNOWN = 3;
+}
+
+message Question {
+	bool answer = 1;
+}
+
+message CegarResult {
+	Result result = 1;
+}
+
+message NestedWordAutomaton {
+	message transition {
+	// references to letters and states encoded as int32
+		int32 originState = 1;
+		int32 letter = 2;
+		int32 successorState = 3;
+	}
+
+	Alphabet internal = 1;
+	Alphabet call = 2;
+	Alphabet return = 3;
+	repeated Predicate states = 4; // references to states encoded as int32
+	int32 emptyStack = 5;
+	repeated int32 initial = 6;
+	repeated int32 final = 7;
+	repeated transition internalEdges = 8;
+	repeated transition callEdges = 9;
+	repeated transition returnEdges = 10;
+}
+
+message NestedRun {
+	NestedWord nestedword = 1;
+	repeated Predicate stateSequence = 2;
+}
+
+message NestingRelation {
+	repeated int32 pendingCall = 1;
+	repeated int32 pendingReturn = 2;
+	map < int32, int32 > internalNesting = 3;
+}
+
+message NestedWord {
+	repeated CodeBlock symbol = 1;
+	NestingRelation nestingRelation = 2;
+}
+
+message PreNestedWord {
+	repeated int32 symbol = 1;
+	NestingRelation nestingRelation = 2;
+	repeated Loop loop = 3; // loops must not cross
+	message Loop {
+		int32 startPosition = 1; // 0 refers to the first state before the first symbol.
+		int32 endPosition = 2;
+		int32 repetitions = 3;
+	}
+
+}
+
+message TraceHistogram {
+	message Record {
+		int32 count = 1;
+		CodeBlock letter = 2;
+	}
+
+	repeated Record record = 1;
+}
+
+message IterationInfo {
+	NestedRun run = 1;
+	int32 iteration = 2;
+	int32 states = 3;
+	int32 transitions = 4;
+	int32 wordLength = 5;
+	string abstractionSizeInfo = 6;
+	string interpolantAutomatonSizeInfo = 7;
+}
+
+message CegarStatistics {
+	message Biggest {
+		int32 iteration = 1;
+		int32 size = 2;
+	}
+
+	Biggest biggestAbstraction = 1;
+}
+
+message Alphabet {
+	repeated CodeBlock letter = 1;
+}
+
+message CodeBlock {
+	int32 serial = 1;
+	string code = 2;
+	// TODO: a mapping to source lines
+}
