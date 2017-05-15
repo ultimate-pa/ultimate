@@ -75,6 +75,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public abstract class AbstractCegarLoop<LETTER extends IAction> {
 
+	private static final String MSG_VERIFICATION_CANCELLED = "Verification cancelled";
+
 	/**
 	 * Result of CEGAR loop iteration
 	 * <ul>
@@ -123,7 +125,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	/**
 	 * Current Iteration of this CEGAR loop.
 	 */
-	protected int mIteration = 0;
+	protected int mIteration;
 
 	/**
 	 * Accepting run of the abstraction obtained in this iteration.
@@ -154,10 +156,6 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 */
 	protected IcfgProgramExecution mRcfgProgramExecution;
 
-	// used for the collection of statistics
-	public int mInitialAbstractionSize = 0;
-	public int mNumberOfErrorLocations = 0;
-
 	// used for debugging only
 	protected IAutomaton<LETTER, IPredicate> mArtifactAutomaton;
 
@@ -174,7 +172,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	/**
 	 * only != null if analysis result is UNKNOWN Textual explanation why result is unknown.
 	 */
-	private UnprovabilityReason mReasonUnknown = null;
+	private UnprovabilityReason mReasonUnknown;
 	protected final InteractiveCegar mInteractive;
 
 	private static final boolean DUMP_BIGGEST_AUTOMATON = false;
@@ -195,7 +193,6 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mPref = taPrefs;
 		mErrorLocs = errorLocs;
 		mToolchainStorage = storage;
-
 		mInteractive = new InteractiveCegar(services, logger);
 	}
 
@@ -210,7 +207,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 *
 	 * @throws AutomataLibraryException
 	 */
-	protected abstract void getInitialAbstraction() throws AutomataOperationCanceledException, AutomataLibraryException;
+	protected abstract void getInitialAbstraction() throws AutomataLibraryException;
 
 	/**
 	 * Return true iff the mAbstraction does not accept any trace.
@@ -258,7 +255,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 *         mAbstraction.
 	 * @throws AutomataLibraryException
 	 */
-	protected abstract boolean refineAbstraction() throws AutomataOperationCanceledException, AutomataLibraryException;
+	protected abstract boolean refineAbstraction() throws AutomataLibraryException;
 
 	/**
 	 * Add Hoare annotation to the control flow graph. Use the information computed so far annotate the ProgramPoints of
@@ -288,12 +285,12 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	}
 
 	public final Result iterate() {
-		final Result result = iterate2();
+		final Result result = iterateInternal();
 		mInteractive.send(result);
 		return result;
 	}
 
-	private Result iterate2() {
+	private Result iterateInternal() {
 		mLogger.info("Interprodecural is " + mPref.interprocedural());
 		mLogger.info("Hoare is " + mPref.computeHoareAnnotation());
 		mLogger.info("Compute interpolants for " + mPref.interpolation());
@@ -316,7 +313,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		try {
 			getInitialAbstraction();
 		} catch (final AutomataOperationCanceledException e1) {
-			mLogger.warn("Verification cancelled");
+			mLogger.warn(MSG_VERIFICATION_CANCELLED);
 			mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 			return Result.TIMEOUT;
 		} catch (final AutomataLibraryException e) {
@@ -331,9 +328,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 			final String filename = mName + "Abstraction" + mIteration;
 			writeAutomatonToFile(mAbstraction, filename);
 		}
-		mInitialAbstractionSize = mAbstraction.size();
 		mCegarLoopBenchmark.reportAbstractionSize(mAbstraction.size(), mIteration);
-		mNumberOfErrorLocations = mErrorLocs.size();
 
 		mInteractive.waitIfPaused();
 		boolean initalAbstractionCorrect;
@@ -341,7 +336,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 			initalAbstractionCorrect = isAbstractionCorrect();
 		} catch (final AutomataOperationCanceledException e1) {
 			mRunningTaskStackProvider = e1;
-			mLogger.warn("Verification cancelled");
+			mLogger.warn(MSG_VERIFICATION_CANCELLED);
 			mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 			return Result.TIMEOUT;
 		}
@@ -373,12 +368,12 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				mInteractive.waitIfPaused();
 				constructInterpolantAutomaton();
 			} catch (final AutomataOperationCanceledException e1) {
-				mLogger.warn("Verification cancelled");
+				mLogger.warn(MSG_VERIFICATION_CANCELLED);
 				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			} catch (final ToolchainCanceledException e) {
 				mRunningTaskStackProvider = e;
-				mLogger.warn("Verification cancelled");
+				mLogger.warn(MSG_VERIFICATION_CANCELLED);
 				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			}
@@ -398,7 +393,6 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				if (!progress) {
 					mLogger.warn("No progress! Counterexample is still accepted by refined abstraction.");
 					throw new AssertionError("No progress! Counterexample is still accepted by refined abstraction.");
-					// return Result.UNKNOWN;
 				}
 			} catch (final ToolchainCanceledException | AutomataOperationCanceledException e) {
 				mRunningTaskStackProvider = e;
@@ -439,7 +433,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 			try {
 				isAbstractionCorrect = isAbstractionCorrect();
 			} catch (final AutomataOperationCanceledException e) {
-				mLogger.warn("Verification cancelled");
+				mLogger.warn(MSG_VERIFICATION_CANCELLED);
 				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 				return Result.TIMEOUT;
 			}
