@@ -50,11 +50,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslator
  *
  */
 public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
-	
+
 	private final Map<String, Set<ILocalProgramVar>> mLocals;
 	private final Map<TermVariable, ILocalProgramVar> mTVtoProgVar;
 	private final ManagedScript mScript;
-	
+
 	/**
 	 * Constructor
 	 *
@@ -67,11 +67,13 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 		mScript = script;
 		mLocals = new HashMap<>();
 		mTVtoProgVar = new HashMap<>();
+
 		final Set<String> variables = automaton.getGlobalParameters();
 		variables.addAll(automaton.getGlobalConstants());
 		variables.addAll(automaton.getLocalConstants());
 		variables.addAll(automaton.getLocalParameters());
 		variables.add(HybridTranslatorConstants.TIME_VAR);
+
 		final Set<ILocalProgramVar> progVars = new HashSet<>();
 		for (final String var : variables) {
 			// Termvariables for the transformula.
@@ -90,31 +92,31 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 		}
 		mLocals.put(procedure, progVars);
 	}
-	
+
 	@Override
 	public Set<ILocalProgramVar> getLocals(final String procedurename) {
 		return mLocals.get(procedurename);
 	}
-	
+
 	@Override
 	public Set<IProgramNonOldVar> getGlobals() {
 		return Collections.emptySet();
 	}
-	
+
 	@Override
 	public Set<IProgramConst> getConstants() {
 		return Collections.emptySet();
 	}
-	
+
 	@Override
 	public IProgramVar getProgramVar(final TermVariable tv) {
 		return mTVtoProgVar.get(tv);
 	}
-	
+
 	@Override
 	public IProgramConst getProgramConst(final ApplicationTerm at) {
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 }

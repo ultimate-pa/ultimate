@@ -279,7 +279,7 @@ public class HybridModel {
 				mLogger.debug("LOC PARAM: " + aut.getLocalParameters());
 				mLogger.debug(hybsys.getBinds());
 			}
-			aut.renameConstants();
+			aut.renameReplacedVariables();
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("############# AFTER ################");
 				mLogger.debug("GLOB CONST: " + aut.getGlobalConstants());
