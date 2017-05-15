@@ -241,9 +241,9 @@ public class HybridTermBuilder {
 
 	// helper function to get TermVariable for initially Terms
 	private TermVariable getInitiallyTV(final String operand1) {
-		if (mVariableManager.getVar2OutVarTermVariable().containsKey(operand1)) {
-			final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
-			final TermVariable outvar = mVariableManager.getVar2OutVarTermVariable().get(operand1);
+		if (mVariableManager.getVarToOutVarTermVariable().containsKey(operand1)) {
+			final HybridProgramVar progvar = mVariableManager.getVarToProgramVar().get(operand1);
+			final TermVariable outvar = mVariableManager.getVarToOutVarTermVariable().get(operand1);
 			mOutVars.put(progvar, outvar);
 			return outvar;
 		} else {
@@ -253,9 +253,9 @@ public class HybridTermBuilder {
 
 	// helper function to get TermVariable for Invariant or Guard Terms
 	private TermVariable getInvariantTV(final String operand1) {
-		if (mVariableManager.getVar2InVarTermVariable().containsKey(operand1)) {
-			final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
-			final TermVariable invar = mVariableManager.getVar2InVarTermVariable().get(operand1);
+		if (mVariableManager.getVarToInVarTermVariable().containsKey(operand1)) {
+			final HybridProgramVar progvar = mVariableManager.getVarToProgramVar().get(operand1);
+			final TermVariable invar = mVariableManager.getVarToInVarTermVariable().get(operand1);
 			mInVars.put(progvar, invar);
 			mOutVars.put(progvar, invar);
 			return invar;
@@ -267,18 +267,18 @@ public class HybridTermBuilder {
 	// helper function to get TermVariable for Invariant or Update Terms
 	private TermVariable getUpdateTV(final String operand1, final boolean isLeftHandSide) {
 		if (isLeftHandSide) {
-			if (mVariableManager.getVar2OutVarTermVariable().containsKey(operand1)) {
-				final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
-				final TermVariable outvar = mVariableManager.getVar2OutVarTermVariable().get(operand1);
+			if (mVariableManager.getVarToOutVarTermVariable().containsKey(operand1)) {
+				final HybridProgramVar progvar = mVariableManager.getVarToProgramVar().get(operand1);
+				final TermVariable outvar = mVariableManager.getVarToOutVarTermVariable().get(operand1);
 				mOutVars.put(progvar, outvar);
 				return outvar;
 			} else {
 				return null;
 			}
 		} else {
-			if (mVariableManager.getVar2InVarTermVariable().containsKey(operand1)) {
-				final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
-				final TermVariable invar = mVariableManager.getVar2InVarTermVariable().get(operand1);
+			if (mVariableManager.getVarToInVarTermVariable().containsKey(operand1)) {
+				final HybridProgramVar progvar = mVariableManager.getVarToProgramVar().get(operand1);
+				final TermVariable invar = mVariableManager.getVarToInVarTermVariable().get(operand1);
 				mInVars.put(progvar, invar);
 				return invar;
 			} else {

@@ -35,15 +35,12 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-
 public class SpaceExMathHelper {
-
+	
 	// replacement map for variables of the form Literal -> real variable.. e.g
 	// A0 -> x<=5
-	private final Map<String, String> mReplacement;
-	private final ILogger mLogger;
-
+	private static final Map<String, String> mReplacement = new HashMap<>();
+	
 	protected static final Map<String, Operator> mOperators = new HashMap<>();
 	static {
 		mOperators.put("+", Operator.ADD);
@@ -63,28 +60,23 @@ public class SpaceExMathHelper {
 		mOperators.put("||", Operator.DOUBLEOR);
 		mOperators.put("or", Operator.ORTEXT);
 	}
-
+	
 	public enum Operator {
-		MULTIPLY(9), DIVIDE(9), ADD(8), SUBTRACT(8), LTEQ(7), GTEQ(7), LT(7), GT(7), EQ(7), DOUBLEEQ(7), AND(
-				6), DOUBLEAND(6), ANDTEXT(6), OR(5), DOUBLEOR(5), ORTEXT(5);
+		MULTIPLY(9), DIVIDE(9), ADD(8), SUBTRACT(8), LTEQ(7), GTEQ(7), LT(7), GT(7), EQ(7), DOUBLEEQ(7), AND(6),
+		DOUBLEAND(6), ANDTEXT(6), OR(5), DOUBLEOR(5), ORTEXT(5);
 		final int precedence;
-
+		
 		Operator(final int p) {
 			precedence = p;
 		}
 	}
-
-	public SpaceExMathHelper(final ILogger logger) {
-		mReplacement = new HashMap<>();
-		mLogger = logger;
-	}
-
+	
 	private static boolean isHigherPrec(final String op, final String sub) {
 		return mOperators.containsKey(sub) && mOperators.get(sub).precedence >= mOperators.get(op).precedence;
 	}
-
+	
 	// function to replace literals with their saved values
-	private List<String> replaceLiterals(final List<String> groups) {
+	private static List<String> replaceLiterals(final List<String> groups) {
 		final List<String> res = new ArrayList<>();
 		for (final String group : groups) {
 			String replacement = group.replaceAll("\\s+", "");
@@ -97,35 +89,32 @@ public class SpaceExMathHelper {
 		}
 		return res;
 	}
-
+	
 	// helper function to replace all elements in a string of the form x==2 &
 	// loc(x)==loc1, with single literals.
 	// x==2 & loc(x)==loc1 & y<=4 ---> A0 & A1 & A2
-	private String replaceAllWithLiterals(final String initially) {
+	private static String replaceAllWithLiterals(final String initially) {
 		mReplacement.clear();
-		// regex stuff for initial locations
+		// regex for location assignments of the form loc( <automaton name> )== <location name>
 		final String locRegex = "(.*)loc\\((.*)\\)==(.*)";
 		final Pattern locPattern = Pattern.compile(locRegex);
 		Matcher locMatcher;
-		// regex stuff for variables of the form v1<=var<=v2 or x=v1.. etc
+		// regex for variables of the form v1<=var<=v2 or x=v1.. etc
 		final String varRegex = "(.*)(<=|<|>|>=)(.*)(<=|<|>|>=)(.*)|(.*)(<=|>=|<|>|==)(.*)";
 		final Pattern varPattern = Pattern.compile(varRegex);
 		Matcher varMatcher;
 		final String literal = "A";
 		// replace all terms by a Literal
+		// the regex will split at &, | loc(xxx)==ccc, (, )
 		final String[] splitted = initially.replaceAll("\\s+", "").split("(\\&)|(\\|)|(?<!loc)(\\()|(?!\\)==)(\\))");
 		for (int i = 0; i < splitted.length; i++) {
 			final String el = splitted[i];
 			locMatcher = locPattern.matcher(el);
 			varMatcher = varPattern.matcher(el);
-			if (locMatcher.matches()) {
-				if (!mReplacement.containsValue(locMatcher.group(0))) {
-					mReplacement.put(literal + i, locMatcher.group(0));
-				}
-			} else if (varMatcher.matches()) {
-				if (!mReplacement.containsValue(varMatcher.group(0))) {
-					mReplacement.put(literal + i, varMatcher.group(0));
-				}
+			if (locMatcher.matches() && !mReplacement.containsValue(locMatcher.group(0))) {
+				mReplacement.put(literal + i, locMatcher.group(0));
+			} else if (varMatcher.matches() && !mReplacement.containsValue(varMatcher.group(0))) {
+				mReplacement.put(literal + i, varMatcher.group(0));
 			}
 		}
 		String replacement = initially.replaceAll("\\s+", "");
@@ -136,23 +125,22 @@ public class SpaceExMathHelper {
 		}
 		return replacement;
 	}
-
-	public List<String> infixToGroups(final String infix) {
+	
+	public static List<String> infixToGroups(final String infix) {
 		final String infixWithLiterals = replaceAllWithLiterals(infix);
 		final List<String> infixToArray = SpaceExMathHelper.expressionToArray(infixWithLiterals);
 		final List<String> postfix = SpaceExMathHelper.postfix(infixToArray);
 		final List<String> groups = postfixToGroups(postfix);
 		return replaceLiterals(groups);
 	}
-
+	
 	/**
-	 * Function to convert a given formula postfix back notation to groups, the
-	 * DNF.
+	 * Function to convert a given formula postfix back notation to groups, the DNF.
 	 *
 	 * @param postfix
 	 * @return
 	 */
-	public List<String> postfixToGroups(final List<String> postfix) {
+	public static List<String> postfixToGroups(final List<String> postfix) {
 		final Deque<String> stack = new LinkedList<>();
 		final List<String> openGroupstack = new ArrayList<>();
 		final List<String> finishedGroups = new ArrayList<>();
@@ -169,11 +157,9 @@ public class SpaceExMathHelper {
 				final String operand1 = (!stack.isEmpty()) ? stack.pop() : "";
 				final String operand2 = (!stack.isEmpty()) ? stack.pop() : "";
 				/*
-				 * Cases: - two single operands - & is operator and no groups
-				 * exist yet --> initialize groups - & is operator and groups
-				 * exist -> update groups - | is operator and groups exists ->
-				 * add to finished groups - | is operator and no groups exists
-				 * --> add to finished groups
+				 * Cases: - two single operands - & is operator and no groups exist yet --> initialize groups - & is
+				 * operator and groups exist -> update groups - | is operator and groups exists -> add to finished
+				 * groups - | is operator and no groups exists --> add to finished groups
 				 */
 				if (mReplacement.containsKey(operand1)
 						&& (mReplacement.containsKey(operand2) || !operand2.contains("&")) && !operand2.isEmpty()) {
@@ -229,9 +215,9 @@ public class SpaceExMathHelper {
 		finishedGroups.addAll(openGroupstack);
 		return finishedGroups;
 	}
-
+	
 	// function that evaluates operands and sets up the different groups
-	private List<String> evaluateOperands(final String operand1, final String operand2) {
+	private static List<String> evaluateOperands(final String operand1, final String operand2) {
 		final List<String> openGroupstack = new ArrayList<>();
 		if (operand1.contains("|") && operand2.contains("|")) {
 			final List<String> eval = evaluateOrAndOr(operand1, operand2);
@@ -239,18 +225,18 @@ public class SpaceExMathHelper {
 		} else if (operand1.contains("|")) {
 			final List<String> eval = evaluateOrAndAnd(operand1, operand2);
 			openGroupstack.addAll(eval);
-
+			
 		} else if (operand2.contains("|")) {
 			final List<String> eval = evaluateOrAndAnd(operand2, operand1);
 			openGroupstack.addAll(eval);
-
+			
 		} else if (operand2.contains("&")) {
 			openGroupstack.add(operand2 + "&" + operand1);
 		}
 		return openGroupstack;
 	}
-
-	private List<String> evaluateOrAndOr(final String operand1, final String operand2) {
+	
+	private static List<String> evaluateOrAndOr(final String operand1, final String operand2) {
 		final List<String> res = new ArrayList<>();
 		final String[] splitOP1 = operand1.replaceAll("(\\()|(\\))", "").split("(\\&)|(\\|)");
 		final String[] splitOP2 = operand2.replaceAll("(\\()|(\\))", "").split("(\\&)|(\\|)");
@@ -260,10 +246,10 @@ public class SpaceExMathHelper {
 			}
 		}
 		return res;
-
+		
 	}
-
-	private List<String> evaluateOrAndAnd(final String operand1, final String operand2) {
+	
+	private static List<String> evaluateOrAndAnd(final String operand1, final String operand2) {
 		final List<String> res = new ArrayList<>();
 		final String[] splitOP1 = operand1.replaceAll("(\\()|(\\))", "").split("(\\&)|(\\|)");
 		for (final String el : splitOP1) {
@@ -271,10 +257,9 @@ public class SpaceExMathHelper {
 		}
 		return res;
 	}
-
+	
 	/**
-	 * Function to split a given expression into an array. e.g "x == 5" will
-	 * return [x,==,5].
+	 * Function to split a given expression into an array. e.g "x == 5" will return [x,==,5].
 	 *
 	 * @param expression
 	 * @return
@@ -298,7 +283,7 @@ public class SpaceExMathHelper {
 		}
 		return res;
 	}
-
+	
 	/**
 	 * Function to convert an expression in postfix notation to infix notation.
 	 *
@@ -319,7 +304,7 @@ public class SpaceExMathHelper {
 		}
 		return stack.pop();
 	}
-
+	
 	/**
 	 * Function to convert infix to postfix (Shunting yard algorithm)
 	 *
@@ -329,7 +314,7 @@ public class SpaceExMathHelper {
 	public static List<String> postfix(final List<String> infixArray) {
 		final List<String> output = new ArrayList<>();
 		final Deque<String> stack = new LinkedList<>();
-
+		
 		for (final String element : infixArray) {
 			// operator
 			if (mOperators.containsKey(element)) {
@@ -340,7 +325,7 @@ public class SpaceExMathHelper {
 				// left bracket
 			} else if ("(".equals(element)) {
 				stack.push(element);
-
+				
 				// right bracket
 			} else if (")".equals(element)) {
 				while (!"(".equals(stack.peek())) {
@@ -352,16 +337,15 @@ public class SpaceExMathHelper {
 				output.add(element);
 			}
 		}
-
+		
 		while (!stack.isEmpty()) {
 			output.add(stack.pop());
 		}
 		return output;
 	}
-
+	
 	/**
-	 * Function that checks whether a sign is an operator. e.g. "==" would be an
-	 * operator.
+	 * Function that checks whether a sign is an operator. e.g. "==" would be an operator.
 	 *
 	 * @param String
 	 *            sign
@@ -370,11 +354,11 @@ public class SpaceExMathHelper {
 	public static boolean isOperator(final String sign) {
 		return mOperators.containsKey(sign);
 	}
-
+	
 	public static boolean isEvaluation(final String operator) {
 		return ("+".equals(operator) || "-".equals(operator) || "*".equals(operator) || "/".equals(operator));
 	}
-
+	
 	public static boolean isInequality(final String operator) {
 		return ">=".equals(operator) || ">".equals(operator) || "<=".equals(operator) || "<".equals(operator);
 	}

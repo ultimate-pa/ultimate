@@ -52,21 +52,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Obje
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExParserPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceProcessor;
 
 /**
  * @author Marius Greitschus
  *
  */
 public class SpaceExParser implements ISource {
-
+	
 	private final String[] mFileTypes;
 	private final List<String> mFileNames;
 	private IUltimateServiceProvider mServices;
 	private ILogger mLogger;
 	private IToolchainStorage mToolchainStorage;
-	private SpaceExPreferenceManager mPreferenceManager;
 	private ITranslator<IcfgEdge, IcfgEdge, Term, Term, String, String> mBacktranslator;
-
+	
 	/**
 	 * Constructor of the SpaceEx Parser plugin.
 	 */
@@ -74,13 +74,13 @@ public class SpaceExParser implements ISource {
 		mFileTypes = new String[] { "xml", };
 		mFileNames = new ArrayList<>();
 	}
-
+	
 	@Override
 	public void setToolchainStorage(final IToolchainStorage storage) {
 		// TODO Auto-generated method stub
 		mToolchainStorage = storage;
 	}
-
+	
 	@Override
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
@@ -88,32 +88,32 @@ public class SpaceExParser implements ISource {
 		mBacktranslator = new DefaultTranslator<>(IcfgEdge.class, IcfgEdge.class, Term.class, Term.class);
 		mServices.getBacktranslationService().addTranslator(mBacktranslator);
 	}
-
+	
 	@Override
 	public void init() {
 		// Auto-generated method stub
 	}
-
+	
 	@Override
 	public void finish() {
 		// Auto-generated method stub
 	}
-
+	
 	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
-
+	
 	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
-
+	
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new SpaceExParserPreferenceInitializer();
 	}
-
+	
 	@Override
 	public boolean parseable(final File[] files) {
 		for (final File f : files) {
@@ -123,23 +123,23 @@ public class SpaceExParser implements ISource {
 		}
 		return true;
 	}
-
+	
 	@Override
 	public boolean parseable(final File file) {
-
+		
 		boolean knownExtension = false;
-
+		
 		for (final String s : getFileTypes()) {
 			if (file.getName().endsWith(s)) {
 				knownExtension = true;
 				break;
 			}
 		}
-
+		
 		if (!knownExtension) {
 			return false;
 		}
-
+		
 		try {
 			final FileReader fr = new FileReader(file);
 			final BufferedReader br = new BufferedReader(fr);
@@ -148,7 +148,7 @@ public class SpaceExParser implements ISource {
 					mLogger.debug("The input file does not contain an opening xml tag.");
 					return false;
 				}
-
+				
 				if (!br.readLine().contains("<sspaceex")) {
 					mLogger.debug("The input file does not contain a spaceex tag.");
 					return false;
@@ -160,15 +160,15 @@ public class SpaceExParser implements ISource {
 		} catch (final IOException ioe) {
 			return false;
 		}
-
+		
 		return true;
 	}
-
+	
 	@Override
 	public IElement parseAST(final File[] files) throws Exception {
 		throw new UnsupportedOperationException("Cannot parse more than one SpaceEx model file at the moment.");
 	}
-
+	
 	@Override
 	public IElement parseAST(final File file) throws Exception {
 		// Parse the SpaceEx model
@@ -179,26 +179,26 @@ public class SpaceExParser implements ISource {
 		final Sspaceex spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
 		// Initialize the preference manager + parse the config file right away.
-		mPreferenceManager = new SpaceExPreferenceManager(mServices, mLogger, file);
-		return new SpaceExModelBuilder(spaceEx, mLogger, mPreferenceManager, mServices, mToolchainStorage).getModel();
+		final SpaceExPreferenceManager preferenceManager = new SpaceExPreferenceManager(mServices, mLogger, file);
+		final SpaceExPreferenceProcessor preferenceProcessor = new SpaceExPreferenceProcessor(mLogger,
+				preferenceManager.getSystem(), preferenceManager.getInitially(), preferenceManager.getForbidden());
+		return new SpaceExModelBuilder(spaceEx, mLogger, preferenceProcessor.getProcessedPreferences(),
+				preferenceManager, mServices, mToolchainStorage).getModel();
 		/*
 		 * final Marshaller marshaller = jaxContext.createMarshaller();
-		 * marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT,
-		 * Boolean.TRUE); final StringWriter streamWriter = new StringWriter();
-		 * final SpaceExWriter spaceexWriter = new SpaceExWriter(mLogger);
-		 * Map<String, HybridAutomaton> mergedAutomata =
-		 * system.getMergedAutomata(); Sspaceex root =
-		 * spaceexWriter.HybridAutomatonToSpaceEx(mergedAutomata.get(
-		 * "ofOnn||controller||clock")); String targetfile = "" ; // some
-		 * path/filename you want spaceexWriter.writeXmlToDisk(root,targetfile);
+		 * marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE); final StringWriter streamWriter = new
+		 * StringWriter(); final SpaceExWriter spaceexWriter = new SpaceExWriter(mLogger); Map<String, HybridAutomaton>
+		 * mergedAutomata = system.getMergedAutomata(); Sspaceex root =
+		 * spaceexWriter.HybridAutomatonToSpaceEx(mergedAutomata.get( "ofOnn||controller||clock")); String targetfile =
+		 * "" ; // some path/filename you want spaceexWriter.writeXmlToDisk(root,targetfile);
 		 */
 	}
-
+	
 	@Override
 	public String[] getFileTypes() {
 		return mFileTypes;
 	}
-
+	
 	@Override
 	public ModelType getOutputDefinition() {
 		try {
@@ -209,7 +209,7 @@ public class SpaceExParser implements ISource {
 		}
 		return null;
 	}
-
+	
 	@Override
 	public void setPreludeFile(final File prelude) {
 	}

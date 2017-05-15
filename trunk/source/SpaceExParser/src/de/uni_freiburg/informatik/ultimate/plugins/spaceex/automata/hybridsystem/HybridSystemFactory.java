@@ -32,7 +32,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceContainer;
 
 /**
  * Factory to create {@link HybridSystem} objects.
@@ -67,8 +67,8 @@ public final class HybridSystemFactory {
 	 */
 	public HybridSystem createHybridSystemFromComponent(final String parentSystemName, final ComponentType system,
 			final Map<String, ComponentType> automata, final Map<String, ComponentType> systems,
-			final SpaceExPreferenceManager preferenceManager) {
-		return new HybridSystem(parentSystemName, system, automata, systems, mLogger, preferenceManager);
+			final SpaceExPreferenceContainer preferenceContainer) {
+		return new HybridSystem(parentSystemName, system, automata, systems, mLogger, preferenceContainer);
 	}
 	
 	public HybridSystem createHybridSystem(final String name, final Set<String> globalVariables,

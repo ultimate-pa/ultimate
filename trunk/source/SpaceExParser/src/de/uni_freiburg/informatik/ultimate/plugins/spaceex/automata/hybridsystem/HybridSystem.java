@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.BindType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridSystemHelper;
 
 /**
@@ -51,7 +51,7 @@ public class HybridSystem {
 	
 	private final ILogger mLogger;
 	private final String mName;
-	SpaceExPreferenceManager mPreferenceManager;
+	SpaceExPreferenceContainer mPreferenceContainer;
 	private final Map<String, HybridAutomaton> mAutomata;
 	private final Map<String, HybridSystem> mSubSystems;
 	private final boolean mIsSubSystem;
@@ -64,12 +64,12 @@ public class HybridSystem {
 	
 	protected HybridSystem(final String parentSystemName, final ComponentType system,
 			final Map<String, ComponentType> automata, final Map<String, ComponentType> systems, final ILogger logger,
-			final SpaceExPreferenceManager preferenceManager) {
+			final SpaceExPreferenceContainer preferenceContainer) {
 		assert !system.getBind().isEmpty() : "System must contain binds";
 		
 		mLogger = logger;
 		mName = (parentSystemName.isEmpty()) ? system.getId() : parentSystemName;
-		mPreferenceManager = preferenceManager;
+		mPreferenceContainer = preferenceContainer;
 		mAutomata = new HashMap<>();
 		mSubSystems = new HashMap<>();
 		mIsSubSystem = !parentSystemName.isEmpty();
@@ -92,13 +92,13 @@ public class HybridSystem {
 			mBinds.put(as, binds);
 			if (systems.containsKey(comp)) {
 				final HybridSystem old = mSubSystems.put(as,
-						new HybridSystem(as, systems.get(comp), automata, systems, mLogger, mPreferenceManager));
+						new HybridSystem(as, systems.get(comp), automata, systems, mLogger, mPreferenceContainer));
 				if (old != null) {
 					mLogger.warn("A hybrid system with name " + as + " already existed and was replaced.");
 				}
 			} else if (automata.containsKey(comp)) {
 				final HybridAutomaton old = mAutomata.put(as,
-						new HybridAutomaton(as, mName, automata.get(comp), mLogger, mPreferenceManager));
+						new HybridAutomaton(as, mName, automata.get(comp), mLogger, mPreferenceContainer));
 				if (old != null) {
 					mLogger.warn("A hybrid automaton with name " + as + " already existed and was replaced.");
 				}

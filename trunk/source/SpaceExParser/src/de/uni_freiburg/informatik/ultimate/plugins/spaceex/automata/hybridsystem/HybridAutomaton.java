@@ -42,13 +42,13 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Comp
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.LocationType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ParamType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.TransitionType;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceGroup;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridPreprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridSystemHelper;
 
 public class HybridAutomaton {
-
+	
 	private final String mName;
 	private final String mSystem;
 	private final Set<String> mGlobalParameters;
@@ -63,10 +63,10 @@ public class HybridAutomaton {
 	private final Location mDefaultInitialLocation;
 	private final List<Transition> mTransitions;
 	private final ILogger mLogger;
-	private SpaceExPreferenceManager mPreferenceManager;
-
+	private SpaceExPreferenceContainer mPreferenceContainer;
+	
 	protected HybridAutomaton(final String nameInSystem, final String systemName, final ComponentType automaton,
-			final ILogger logger, final SpaceExPreferenceManager preferenceManager) {
+			final ILogger logger, final SpaceExPreferenceContainer preferenceContainer) {
 		if (!automaton.getBind().isEmpty()) {
 			throw new UnsupportedOperationException(
 					"The input automaton must be a hybrid automaton, not a system template.");
@@ -81,19 +81,19 @@ public class HybridAutomaton {
 		mLocalConstants = new HashSet<>();
 		mLabels = new HashSet<>();
 		mLogger = logger;
-		mPreferenceManager = preferenceManager;
+		mPreferenceContainer = preferenceContainer;
 		mNametoId = new HashMap<>();
 		mGroupToInitialLocation = new HashMap<>();
-
+		
 		for (final ParamType param : automaton.getParam()) {
 			HybridSystemHelper.addParameter(param, mLocalParameters, mGlobalParameters, mLocalConstants,
 					mGlobalConstants, mLabels, mLogger);
 		}
-
+		
 		for (final LocationType loc : automaton.getLocation()) {
 			addLocation(loc);
 		}
-
+		
 		for (final TransitionType trans : automaton.getTransition()) {
 			addTransition(trans);
 		}
@@ -101,8 +101,8 @@ public class HybridAutomaton {
 			// init location default
 			mDefaultInitialLocation = mLocations.values().iterator().next();
 			// init locations for pref groups
-			if (preferenceManager != null) {
-				final Map<Integer, SpaceExPreferenceGroup> prefGroups = mPreferenceManager.getPreferenceGroups();
+			if (preferenceContainer != null) {
+				final Map<Integer, SpaceExPreferenceGroup> prefGroups = mPreferenceContainer.getPreferenceGroups();
 				prefGroups.forEach((id, group) -> {
 					mGroupToInitialLocation.put(id, getInitialLocationFromGroup(group.getInitialLocations()));
 				});
@@ -112,7 +112,7 @@ public class HybridAutomaton {
 					"Automaton with the name " + mName + "(sys: " + systemName + ") does not have any locations.");
 		}
 	}
-
+	
 	protected HybridAutomaton(final String name, final String systemName, final Map<Integer, Location> locations,
 			final Location initialLocation, final List<Transition> transitions, final Set<String> localParameters,
 			final Set<String> localConstants, final Set<String> globalParameters, final Set<String> globalConstants,
@@ -134,7 +134,7 @@ public class HybridAutomaton {
 			mNametoId.put(location.getName(), location.getId());
 		}
 	}
-
+	
 	private Location getInitialLocationFromGroup(final Map<String, String> initLocs) {
 		if (initLocs == null) {
 			return mDefaultInitialLocation;
@@ -147,68 +147,67 @@ public class HybridAutomaton {
 			return mDefaultInitialLocation;
 		}
 	}
-
+	
 	private void addLocation(final LocationType location) {
 		if (mLocations.containsKey(location.getId())) {
 			throw new IllegalArgumentException(
 					"The location " + location.getId() + " is already part of the automaton.");
 		}
-
+		
 		final Location newLoc = new Location(location);
 		newLoc.setInvariant(HybridPreprocessor.preprocessStatement(location.getInvariant()));
 		newLoc.setFlow(HybridPreprocessor.preprocessStatement(location.getFlow()));
-		if (mPreferenceManager != null && mPreferenceManager.isLocationForbidden(mName, newLoc.getName())) {
+		if (mPreferenceContainer != null && mPreferenceContainer.isLocationForbidden(mName, newLoc.getName())) {
 			newLoc.setForbidden(true);
-			mPreferenceManager.getForbiddenGroups().forEach(forb -> {
+			mPreferenceContainer.getForbiddenGroups().forEach(forb -> {
 				if (forb.getLocations().containsKey(mName)
 						&& forb.getLocations().get(mName).contains(newLoc.getName())) {
 					newLoc.setForbiddenConstraint(HybridPreprocessor.preprocessStatement(forb.getVariableInfix()));
 				}
 			});
-		} else if (mPreferenceManager != null) {
-			mPreferenceManager.getForbiddenGroups().forEach(forb -> {
+		} else if (mPreferenceContainer != null) {
+			mPreferenceContainer.getForbiddenGroups().forEach(forb -> {
 				if (forb.hasVariables() && !forb.hasLocations()) {
 					newLoc.setForbiddenConstraint(HybridPreprocessor.preprocessStatement(forb.getVariableInfix()));
 				}
 			});
 		}
-
+		
 		mLocations.put(newLoc.getId(), newLoc);
 		mNametoId.put(newLoc.getName(), newLoc.getId());
-
+		
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("[" + mName + "]: Added location: " + newLoc);
 		}
 	}
-
+	
 	private void addTransition(final TransitionType trans) {
 		final Location source = mLocations.get(trans.getSource());
 		final Location target = mLocations.get(trans.getTarget());
-
+		
 		if (source == null || target == null) {
 			throw new UnsupportedOperationException("The source or target location referenced by transition "
 					+ trans.getSource() + " --> " + trans.getTarget() + " is not present.");
 		}
-
+		
 		final Transition newTrans = new Transition(source, target);
 		newTrans.setGuard(HybridPreprocessor.preprocessStatement(trans.getGuard()));
 		newTrans.setLabel(trans.getLabel());
 		newTrans.setUpdate(HybridPreprocessor.preprocessStatement(trans.getAssignment()));
-
+		
 		mTransitions.add(newTrans);
-
+		
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("[" + mName + "]: Added transition: " + newTrans);
 		}
 	}
-
+	
 	/**
-	 * Function that renames constants according to the replacements the
-	 * preference manager calculated.
+	 * Function that renames constants according to the replacements the preference manager calculated.
 	 */
 	public void renameReplacedVariables() {
 		// get the map which contains all renames that have to be made.
-		final Map<String, Map<String, String>> requiresRename = mPreferenceManager.getRequiresRename();
+		final Map<String, Map<String, String>> requiresRename = mPreferenceContainer.getRequiresRename();
 		// split the name of the system the automaton belongs to into parts.
 		final String[] systemNameParts = mSystem.split("\\.");
 		// the deepest part of the system-name has the highest priority.
@@ -237,7 +236,7 @@ public class HybridAutomaton {
 			}
 		}
 	}
-
+	
 	/**
 	 * Function that renames variables and labels according to a systems binds.
 	 *
@@ -261,7 +260,7 @@ public class HybridAutomaton {
 			renameAutomaton(loc, glob);
 		});
 	}
-
+	
 	private void renameAutomaton(final String loc, final String glob) {
 		if (mLabels.contains(loc)) {
 			// first of all remove the local name from labels and add the global
@@ -290,7 +289,7 @@ public class HybridAutomaton {
 			renameTransitionVariables(loc, glob);
 		}
 	}
-
+	
 	/*
 	 * Function that renames variables of guards and updates of transitions
 	 */
@@ -304,7 +303,7 @@ public class HybridAutomaton {
 			trans.setUpdate(update);
 		});
 	}
-
+	
 	/*
 	 * Function that renames invariant and flow of a location
 	 */
@@ -318,7 +317,7 @@ public class HybridAutomaton {
 			location.setFlow(flow);
 		});
 	}
-
+	
 	/*
 	 * function that replaces a value in a set
 	 */
@@ -326,7 +325,7 @@ public class HybridAutomaton {
 		set.remove(loc);
 		set.add(glob);
 	}
-
+	
 	/*
 	 * function that renames labels in transitions
 	 */
@@ -336,41 +335,41 @@ public class HybridAutomaton {
 				trans.setLabel(glob);
 			}
 		});
-
+		
 	}
-
+	
 	public String getName() {
 		return mName;
 	}
-
+	
 	public Map<Integer, Location> getLocations() {
 		return mLocations;
 	}
-
+	
 	public List<Transition> getTransitions() {
 		return mTransitions;
 	}
-
+	
 	public Set<String> getGlobalParameters() {
 		return mGlobalParameters;
 	}
-
+	
 	public Set<String> getGlobalConstants() {
 		return mGlobalConstants;
 	}
-
+	
 	public Set<String> getLocalConstants() {
 		return mLocalConstants;
 	}
-
+	
 	public Set<String> getLocalParameters() {
 		return mLocalParameters;
 	}
-
+	
 	public Set<String> getLabels() {
 		return mLabels;
 	}
-
+	
 	@Override
 	public String toString() {
 		final StringBuilder sb = new StringBuilder();
@@ -384,7 +383,7 @@ public class HybridAutomaton {
 				.append(mTransitions.toString());
 		return sb.toString();
 	}
-
+	
 	public Location getInitialLocation() {
 		if (mGroupToInitialLocation.size() == 1) {
 			return mGroupToInitialLocation.values().iterator().next();
@@ -392,7 +391,7 @@ public class HybridAutomaton {
 			return mDefaultInitialLocation;
 		}
 	}
-
+	
 	public Location getInitialLocationForGroup(final Integer groupID) {
 		if (groupID == null) {
 			return mDefaultInitialLocation;
@@ -404,7 +403,7 @@ public class HybridAutomaton {
 			return mDefaultInitialLocation;
 		}
 	}
-
+	
 	public Map<String, Integer> getNametoId() {
 		return mNametoId;
 	}
