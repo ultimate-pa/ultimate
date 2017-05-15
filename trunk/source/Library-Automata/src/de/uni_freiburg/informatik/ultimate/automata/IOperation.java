@@ -30,15 +30,16 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 
 /**
- * Interface for automata operations.<br>
- * If possible,
+ * Interface for all automata operations (like, e.g., intersection, complementation, minimization).<br>
+ * We have the following conventions.
  * <ul>
- * <li>each operation is defined in its own class
- * <li>for every application of the operation a new instance of this class is constructed
- * <li>the result is returned via the {@link #getResult()} method
- * <li>start and end of the operation are reported to the logger using log level <tt>INFO</tt>
- * <li>correctness checks for this operation are implemented in the checkResult method. Whoever executes this operation
- * should add an <blockquote> {@code assert} {@link #checkResult()} </blockquote> in the code.
+ * <li>Each operation is defined in its own class.
+ * <li>Whenever you want to apply an automata operation, you construct a new 
+ * object instance of this class. Arguments are passed via the constructor.
+ * <li>The result is returned via the {@link #getResult()} method.
+ * <li>Start and end of the operation are reported to the logger using log level <tt>INFO</tt>
+ * <li>Correctness checks for this operation are implemented in the checkResult method. Whoever executes this operation
+ * should add an <blockquote> {@code assert} {@link #checkResult()} </blockquote> in his code.
  * </ul>
  * By convention the constructor of an IOperation has the following parameters.
  * <ul>

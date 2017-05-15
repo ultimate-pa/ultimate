@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -55,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 
 /**
  *
@@ -218,31 +220,32 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 
 		// DD: Some code snippets
 		final CfgSmtToolkit cfgSmtToolkit = originalIcfg.getCfgSmtToolkit();
-		final ManagedScript mgScript = cfgSmtToolkit.getManagedScript();
+		final ManagedScript mgdScript = cfgSmtToolkit.getManagedScript();
 
-		mgScript.lock(this);
+		mgdScript.lock(this);
 		final Term formula = null;
-		final LBool result = SmtUtils.checkSatTerm(mgScript.getScript(), formula);
-		mgScript.push(this, 1);
+		final LBool result = SmtUtils.checkSatTerm(mgdScript.getScript(), formula);
+		mgdScript.push(this, 1);
 		// ...
 		final Rational one = Rational.valueOf(1, 1);
-		final Term oneTerm = one.toTerm(mgScript.getScript().sort("Int"));
-		mgScript.assertTerm(this, oneTerm);
-		final Model model = mgScript.getScript().getModel();
+		final Term oneTerm = one.toTerm(mgdScript.getScript().sort("Int"));
+		mgdScript.assertTerm(this, oneTerm);
+		final Model model = mgdScript.getScript().getModel();
 
 		final SimplificationTechnique simpl = SimplificationTechnique.SIMPLIFY_DDA;
 		final XnfConversionTechnique xnfConvTech = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
-		final PredicateTransformer ptf = new PredicateTransformer(services, mgScript, simpl, xnfConvTech);
+		final PredicateTransformer<Term, IPredicate, TransFormula> ptf = new PredicateTransformer<Term, IPredicate, TransFormula>(
+				mgdScript, new TermDomainOperationProvider(services, mgdScript));
 
 		final BasicPredicateFactory predFac =
-				new BasicPredicateFactory(services, mgScript, cfgSmtToolkit.getSymbolTable(), simpl, xnfConvTech);
+				new BasicPredicateFactory(services, mgdScript, cfgSmtToolkit.getSymbolTable(), simpl, xnfConvTech);
 
 		final UnmodifiableTransFormula tf = null;
-		final IPredicate pre = predFac.newPredicate(mgScript.getScript().term("true"));
+		final IPredicate pre = predFac.newPredicate(mgdScript.getScript().term("true"));
 		final Term postTerm = ptf.strongestPostcondition(pre, tf);
 		final IPredicate post = predFac.newPredicate(postTerm);
 
-		mgScript.pop(this, 1);
-		mgScript.unlock(this);
+		mgdScript.pop(this, 1);
+		mgdScript.unlock(this);
 	}
 }

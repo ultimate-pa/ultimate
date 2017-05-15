@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.FirstOrderLinearODE;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslatorConstants;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.SpaceExMathHelper;
@@ -44,13 +44,13 @@ public class HybridIcfgGeneratorHelper {
 	
 	private final ILogger mLogger;
 	private final HybridVariableManager mVariableManager;
-	private final SpaceExPreferenceManager mPreferenceManager;
+	private final SpaceExPreferenceContainer mPreferenceContainer;
 	
 	public HybridIcfgGeneratorHelper(final HybridVariableManager variableManager,
-			final SpaceExPreferenceManager preferenceManager, final ILogger logger) {
+			final SpaceExPreferenceContainer preferenceContainer, final ILogger logger) {
 		mLogger = logger;
 		mVariableManager = variableManager;
-		mPreferenceManager = preferenceManager;
+		mPreferenceContainer = preferenceContainer;
 	}
 	
 	/**
@@ -64,7 +64,8 @@ public class HybridIcfgGeneratorHelper {
 		final List<String> rhs = SpaceExMathHelper.expressionToArray(split[1]);
 		for (final String el : rhs) {
 			// check if element is variable and no constant
-			if (mVariableManager.getVar2ProgramVar().containsKey(el) && !mVariableManager.getConstants().contains(el)) {
+			if (mVariableManager.getVarToProgramVar().containsKey(el)
+					&& !mVariableManager.getConstants().contains(el)) {
 				mLogger.debug("flow " + flow + "contains variables, not constant!");
 				return false;
 			}
@@ -107,9 +108,9 @@ public class HybridIcfgGeneratorHelper {
 	 */
 	public String replaceConstantValues(final String infix, final int currentGroupID) {
 		String res = infix;
-		if (mPreferenceManager.getGroupTodirectAssingment().containsKey(currentGroupID)) {
+		if (mPreferenceContainer.getGroupTodirectAssingment().containsKey(currentGroupID)) {
 			final Map<String, String> assingmentMap =
-					mPreferenceManager.getGroupTodirectAssingment().get(currentGroupID);
+					mPreferenceContainer.getGroupTodirectAssingment().get(currentGroupID);
 			for (final Entry<String, String> entry : assingmentMap.entrySet()) {
 				if (mVariableManager.getConstants().contains(entry.getKey())) {
 					res = res.replaceAll("\\b" + entry.getKey() + "\\b", entry.getValue());

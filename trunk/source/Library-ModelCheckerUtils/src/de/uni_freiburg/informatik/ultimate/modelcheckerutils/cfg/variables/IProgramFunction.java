@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2010-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
- * Copyright (C) 2012-2015 University of Freiburg
+ * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 University of Freiburg
  *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
  *
@@ -24,19 +24,32 @@
  * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
+package de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables;
 
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.FunctionSymbol;
+
 
 /**
- * Represents a set of program states.
- *
- * @author heizmann@informatik.uni-freiburg.de
+ * Represents an function in the program.
+ * Note that we use the notion of Boogie here, where a function is not a
+ * procedure but a side-effect free deterministic mapping, i.e., the function
+ * always returns the same values for the same input.
+ * However, the function does not have to be completely specified, i.e. if we
+ * apply a function f to a domain value d the resulting value will always be
+ * the same value r but the function definition does not have to specify
+ * which concrete value r actually is. 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
-public interface IPredicate extends IAbstractPredicate {
+public interface IProgramFunction extends IProgramSymbol {
 
-	Term getFormula();
-
-	Term getClosedFormula();
+	@Override
+	default String getGloballyUniqueId() {
+		return getFunctionSymbol().getName();
+	}
+	
+	/**
+	 * @return the SMT function symbol which represents this function.
+	 */
+	FunctionSymbol getFunctionSymbol();
 }

@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsyste
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceContainer;
 
 /**
  * Factory that creates {@link HybridAutomaton} instances.
@@ -47,7 +47,7 @@ public class HybridAutomatonFactory {
 	}
 	
 	public HybridAutomaton createHybridAutomatonFromComponent(final String nameInSystem, final String systemName,
-			final ComponentType automaton, final SpaceExPreferenceManager preferenceManager) {
-		return new HybridAutomaton(nameInSystem, systemName, automaton, mLogger, preferenceManager);
+			final ComponentType automaton, final SpaceExPreferenceContainer preferenceContainer) {
+		return new HybridAutomaton(nameInSystem, systemName, automaton, mLogger, preferenceContainer);
 	}
 }

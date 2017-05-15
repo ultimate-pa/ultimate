@@ -42,7 +42,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslator
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.SpaceExMathHelper;
 
 /**
- * Class to build Terms from Hybrid automata expressions like Initial values, Invariants and Jumps
+ * Class to build Terms from Hybrid automata expressions like Initial values,
+ * Invariants and Jumps
  *
  * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  *
@@ -51,28 +52,28 @@ public class HybridTermBuilder {
 	private final HybridVariableManager mVariableManager;
 	private final Script mScript;
 	private final ManagedScript mManagedScript;
-	private final Map<String, Term> mStringTerm;
+	private final Map<String, Term> mStringToTerm;
 	private final Map<HybridProgramVar, TermVariable> mInVars;
 	private final Map<HybridProgramVar, TermVariable> mOutVars;
 	private TermVariable mAuxVar;
 	ILogger mLogger;
-	
+
 	public enum BuildScenario {
 		INITIALLY, INVARIANT, UPDATE, GUARD, FLOW;
 	}
-	
+
 	public HybridTermBuilder(final HybridVariableManager variableManger, final ManagedScript script,
 			final ILogger logger) {
 		mVariableManager = variableManger;
 		mScript = script.getScript();
 		mManagedScript = script;
-		mStringTerm = new HashMap<>();
+		mStringToTerm = new HashMap<>();
 		mInVars = new HashMap<>();
 		mOutVars = new HashMap<>();
 		mAuxVar = null;
 		mLogger = logger;
 	}
-	
+
 	public Term infixToTerm(final String infix, final BuildScenario scenario) {
 		List<String> infixArray = SpaceExMathHelper.expressionToArray(infix);
 		if (scenario == BuildScenario.UPDATE) {
@@ -82,9 +83,10 @@ public class HybridTermBuilder {
 		final List<String> postfixSMTConform = HybridPreprocessor.preprocessForTermBuilding(postfix);
 		return postfixToTerm(postfixSMTConform, scenario);
 	}
-	
+
 	/**
-	 * Function to convert a given formula postfix notation as array, into a term., sali ge
+	 * Function to convert a given formula postfix notation as array, into a
+	 * term.
 	 *
 	 * @param postfix
 	 * @param mScript
@@ -93,9 +95,11 @@ public class HybridTermBuilder {
 	 */
 	public Term postfixToTerm(final List<String> postfix, final BuildScenario scenario) {
 		/*
-		 * 1. Create an empty stack that can hold string values. 2. Scan the postfix expression from left to right 2a.
-		 * If operand then push into stack 2b. If operator then 1. Pop first two elements 2. Now make a term of the form
-		 * (operand2,operator,operand1)" 3. Push the new term onto stack
+		 * 1. Create an empty stack that can hold string values. 2. Scan the
+		 * postfix expression from left to right 2a. If operand then push into
+		 * stack 2b. If operator then 1. Pop first two elements 2. Now make a
+		 * term of the form (operand2,operator,operand1)" 3. Push the new term
+		 * onto stack
 		 */
 		Term term = null;
 		final Deque<String> stack = new LinkedList<>();
@@ -109,11 +113,11 @@ public class HybridTermBuilder {
 				if (term == null) {
 					term = tmpTerm;
 					stack.push(term.toString());
-					mStringTerm.put(term.toString(), term);
+					mStringToTerm.put(term.toString(), term);
 				} else if (tmpTerm != null) {
 					term = tmpTerm;
 					stack.push(tmpTerm.toString());
-					mStringTerm.put(tmpTerm.toString(), term);
+					mStringToTerm.put(tmpTerm.toString(), term);
 				}
 			} else {
 				stack.push(element);
@@ -121,28 +125,28 @@ public class HybridTermBuilder {
 		}
 		return term;
 	}
-	
+
 	// helper function to build terms from postfix notation
 	private Term checkAndbuildTerm(final String operand1, final String operand2, final String operator,
 			final BuildScenario scenario) {
 		// check if the operand already got a term.
 		Term tmpTerm;
-		if (mStringTerm.containsKey(operand1) && mStringTerm.containsKey(operand2)) {
-			final Term t1 = mStringTerm.get(operand1);
-			final Term t2 = mStringTerm.get(operand2);
+		if (mStringToTerm.containsKey(operand1) && mStringToTerm.containsKey(operand2)) {
+			final Term t1 = mStringToTerm.get(operand1);
+			final Term t2 = mStringToTerm.get(operand2);
 			tmpTerm = mScript.term(operator, t2, t1);
-		} else if (mStringTerm.containsKey(operand1) && !mStringTerm.containsKey(operand2)) {
-			final Term t1 = mStringTerm.get(operand1);
+		} else if (mStringToTerm.containsKey(operand1) && !mStringToTerm.containsKey(operand2)) {
+			final Term t1 = mStringToTerm.get(operand1);
 			tmpTerm = buildTerm(t1, operand2, operator, scenario);
-		} else if (!mStringTerm.containsKey(operand1) && mStringTerm.containsKey(operand2)) {
-			final Term t2 = mStringTerm.get(operand2);
+		} else if (!mStringToTerm.containsKey(operand1) && mStringToTerm.containsKey(operand2)) {
+			final Term t2 = mStringToTerm.get(operand2);
 			tmpTerm = buildTerm(operand1, t2, operator, scenario);
 		} else {
 			tmpTerm = buildTerm(operand1, operand2, operator, scenario);
 		}
 		return tmpTerm;
 	}
-	
+
 	// helper function to build terms from postfix notation
 	private Term buildTerm(final String operand1, final Term term2, final String operator,
 			final BuildScenario scenario) {
@@ -152,7 +156,7 @@ public class HybridTermBuilder {
 		 * There are 2 cases what can happen, either a Var Inequality or not
 		 */
 		final TermVariable[] free = term2.getFreeVars();
-		final boolean isVarInequality = free.length > 0 && isInequality(operator) ? true : false;
+		final boolean isVarInequality = free.length > 0 && SpaceExMathHelper.isInequality(operator) ? true : false;
 		// build term
 		if (isVarInequality) {
 			if (tv1 == null) {
@@ -171,11 +175,7 @@ public class HybridTermBuilder {
 		}
 		return tmpTerm;
 	}
-	
-	private boolean isInequality(final String operator) {
-		return ">=".equals(operator) || ">".equals(operator) || "<=".equals(operator) || "<".equals(operator);
-	}
-	
+
 	// helper function to build terms from postfix notation
 	private Term buildTerm(final String operand1, final String operand2, final String operator,
 			final BuildScenario scenario) {
@@ -194,7 +194,7 @@ public class HybridTermBuilder {
 		}
 		return tmpTerm;
 	}
-	
+
 	// helper function to build terms from postfix notation
 	private Term buildTerm(final Term term1, final String operand2, final String operator,
 			final BuildScenario scenario) {
@@ -208,7 +208,7 @@ public class HybridTermBuilder {
 		}
 		return tmpTerm;
 	}
-	
+
 	// helper function to get the correct termvariable for each scenario
 	private TermVariable checkAndGetTermVariable(final String operand1, final BuildScenario scenario,
 			final boolean isAssignedValue) {
@@ -226,7 +226,7 @@ public class HybridTermBuilder {
 			throw new UnsupportedOperationException("Unknown scenario " + scenario.toString());
 		}
 	}
-	
+
 	private TermVariable getFlowTV(final String operand1, final boolean isAssignedValue) {
 		if (operand1.equals(HybridTranslatorConstants.TIME_VAR)) {
 			// Create new term variable and add to auxvars
@@ -238,24 +238,24 @@ public class HybridTermBuilder {
 			return getUpdateTV(operand1, isAssignedValue);
 		}
 	}
-	
+
 	// helper function to get TermVariable for initially Terms
 	private TermVariable getInitiallyTV(final String operand1) {
-		if (mVariableManager.getVar2OutVarTermVariable().containsKey(operand1)) {
-			final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
-			final TermVariable outvar = mVariableManager.getVar2OutVarTermVariable().get(operand1);
+		if (mVariableManager.getVarToOutVarTermVariable().containsKey(operand1)) {
+			final HybridProgramVar progvar = mVariableManager.getVarToProgramVar().get(operand1);
+			final TermVariable outvar = mVariableManager.getVarToOutVarTermVariable().get(operand1);
 			mOutVars.put(progvar, outvar);
 			return outvar;
 		} else {
 			return null;
 		}
 	}
-	
+
 	// helper function to get TermVariable for Invariant or Guard Terms
 	private TermVariable getInvariantTV(final String operand1) {
-		if (mVariableManager.getVar2InVarTermVariable().containsKey(operand1)) {
-			final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
-			final TermVariable invar = mVariableManager.getVar2InVarTermVariable().get(operand1);
+		if (mVariableManager.getVarToInVarTermVariable().containsKey(operand1)) {
+			final HybridProgramVar progvar = mVariableManager.getVarToProgramVar().get(operand1);
+			final TermVariable invar = mVariableManager.getVarToInVarTermVariable().get(operand1);
 			mInVars.put(progvar, invar);
 			mOutVars.put(progvar, invar);
 			return invar;
@@ -263,22 +263,22 @@ public class HybridTermBuilder {
 			return null;
 		}
 	}
-	
+
 	// helper function to get TermVariable for Invariant or Update Terms
 	private TermVariable getUpdateTV(final String operand1, final boolean isLeftHandSide) {
 		if (isLeftHandSide) {
-			if (mVariableManager.getVar2OutVarTermVariable().containsKey(operand1)) {
-				final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
-				final TermVariable outvar = mVariableManager.getVar2OutVarTermVariable().get(operand1);
+			if (mVariableManager.getVarToOutVarTermVariable().containsKey(operand1)) {
+				final HybridProgramVar progvar = mVariableManager.getVarToProgramVar().get(operand1);
+				final TermVariable outvar = mVariableManager.getVarToOutVarTermVariable().get(operand1);
 				mOutVars.put(progvar, outvar);
 				return outvar;
 			} else {
 				return null;
 			}
 		} else {
-			if (mVariableManager.getVar2InVarTermVariable().containsKey(operand1)) {
-				final HybridProgramVar progvar = mVariableManager.getVar2ProgramVar().get(operand1);
-				final TermVariable invar = mVariableManager.getVar2InVarTermVariable().get(operand1);
+			if (mVariableManager.getVarToInVarTermVariable().containsKey(operand1)) {
+				final HybridProgramVar progvar = mVariableManager.getVarToProgramVar().get(operand1);
+				final TermVariable invar = mVariableManager.getVarToInVarTermVariable().get(operand1);
 				mInVars.put(progvar, invar);
 				return invar;
 			} else {
@@ -286,7 +286,7 @@ public class HybridTermBuilder {
 			}
 		}
 	}
-	
+
 	private void testTermBuilding() {
 		final Map<String, BuildScenario> tests = new HashMap<>();
 		tests.put("0 <= x <= y <= 5", BuildScenario.INVARIANT);
@@ -302,19 +302,19 @@ public class HybridTermBuilder {
 			mLogger.info("TERM: " + term.toStringDirect());
 			mLogger.info("###########END###########");
 		});
-		
+
 	}
-	
+
 	public Map<HybridProgramVar, TermVariable> getInVars() {
 		return mInVars;
 	}
-	
+
 	public Map<HybridProgramVar, TermVariable> getOutVars() {
 		return mOutVars;
 	}
-	
+
 	public TermVariable getAuxVar() {
 		return mAuxVar;
 	}
-	
+
 }

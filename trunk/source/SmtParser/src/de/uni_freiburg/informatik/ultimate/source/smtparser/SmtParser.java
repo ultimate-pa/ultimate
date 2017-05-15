@@ -31,9 +31,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Unit;
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
@@ -62,22 +64,15 @@ import de.uni_freiburg.informatik.ultimate.smtsolver.external.SmtInterpolLogProx
 
 /**
  * There are currently two basic modes in which SMTParser can work:
- *  <li> Directly run an SMTSolver on the input smtlib-script
- *    (which one is run depends on a setting)
- *     This means it works with an empty toolchain and does not return an IElement
- *     for further processing.
- *    </li>
- *  <li> Read an smtlib-script for further processing in TreeAutomizer.
- *    This assumes that the logic is set to HORN and the script only contains
- *     Horn clauses as defined in
- *     <a href="http://github.com/sosy-lab/sv-benchmarks/tree/master/clauses">
- *       github.com/sosy-lab/sv-benchmarks/tree/master/clauses
- *     </a>
- *    Then a set of HornClauses is extracted and returned as an IElement (with a HornAnnot) 
- *    for processing in TreeAutomizer.
- *    </li>
+ * <li>Directly run an SMTSolver on the input smtlib-script (which one is run depends on a setting) This means it works
+ * with an empty toolchain and does not return an IElement for further processing.</li>
+ * <li>Read an smtlib-script for further processing in TreeAutomizer. This assumes that the logic is set to HORN and the
+ * script only contains Horn clauses as defined in
+ * <a href="http://github.com/sosy-lab/sv-benchmarks/tree/master/clauses"> github.com/sosy-lab/sv-benchmarks/tree/master
+ * /clauses </a> Then a set of HornClauses is extracted and returned as an IElement (with a HornAnnot) for processing in
+ * TreeAutomizer.</li>
  *
- * 
+ *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * @author Daniel Dietsch
  * @author Matthias Heizmann
@@ -119,32 +114,25 @@ public class SmtParser implements ISource {
 	}
 
 	@Override
-	public IElement parseAST(final File[] files) throws IOException {
-		throw new UnsupportedOperationException("processing several files is not yet implemented");
-	}
-
-	@Override
-	public IElement parseAST(final File file) throws IOException {
-		if (file.isDirectory()) {
-			return parseAST(file.listFiles());
-		} else {
-			processFile(file);
-			return mOutput;
+	public IElement parseAST(final File[] files) throws Exception {
+		if (files.length == 1) {
+			return parseAST(files[0]);
 		}
+		throw new UnsupportedOperationException("Cannot parse more than one file");
+	}
+
+	private IElement parseAST(final File file) throws IOException {
+		processFile(file);
+		return mOutput;
 	}
 
 	@Override
-	public boolean parseable(final File[] files) {
-		for (final File f : files) {
-			if (!parseable(f)) {
-				return false;
-			}
-		}
-		return true;
+	public File[] parseable(final File[] files) {
+		final List<File> rtrList = Arrays.stream(files).filter(this::parseable).collect(Collectors.toList());
+		return rtrList.toArray(new File[rtrList.size()]);
 	}
 
-	@Override
-	public boolean parseable(final File file) {
+	private boolean parseable(final File file) {
 		for (final String s : getFileTypes()) {
 			if (file.getName().endsWith(s)) {
 				return true;
@@ -161,10 +149,6 @@ public class SmtParser implements ISource {
 	@Override
 	public ModelType getOutputDefinition() {
 		return new ModelType(Activator.PLUGIN_ID, ModelType.Type.OTHER, mFileNames);
-	}
-
-	@Override
-	public void setPreludeFile(final File prelude) {
 	}
 
 	@Override
@@ -185,12 +169,11 @@ public class SmtParser implements ISource {
 
 	@Override
 	public void finish() {
-		
+		// not necessary
 	}
-	
 
 	private void processFile(final File file) throws IOException {
-		
+
 		final boolean useExternalSolver = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.LABEL_UseExtSolver);
 		final String commandExternalSolver = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
@@ -205,9 +188,9 @@ public class SmtParser implements ISource {
 				.getBoolean(PreferenceInitializer.LABEL_HornSolverMode);
 		final boolean filterUnusedDeclarationsMode = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(PreferenceInitializer.LABEL_FilterUnusedDeclarationsMode);
-		
+
 		final LogProxy logProxy = new SmtInterpolLogProxyWrapper(mLogger);
-		
+
 		if (filterUnusedDeclarationsMode) {
 			runFilterUnusedDeclarationsMode(file, directory, logProxy);
 			return;
@@ -216,7 +199,7 @@ public class SmtParser implements ISource {
 		if (inHornSolverMode) {
 			mLogger.info("Parsing .smt2 file as a set of Horn Clauses");
 			final ConstructAndInitializeBackendSmtSolver caibss =
-					new HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver(mServices, mStorage, 
+					new HCGBuilderHelper.ConstructAndInitializeBackendSmtSolver(mServices, mStorage,
 							"treeAutomizerSolver");
 			script = new HornClauseParserScript(caibss.getScript(), caibss.getLogicForExternalSolver(),
 					caibss.getSolverSettings());
@@ -255,11 +238,10 @@ public class SmtParser implements ISource {
 		}
 	}
 
-	
 	private void runFilterUnusedDeclarationsMode(final File file, final String directory, final LogProxy logProxy)
 			throws FileNotFoundException {
 		final CollectNamesScript cns = new CollectNamesScript();
-		
+
 		final OptionMap optionMap = new OptionMap(logProxy, true);
 		final ParseEnvironment parseEnv1 = new ParseEnvironment(cns, optionMap);
 		try {
@@ -270,9 +252,10 @@ public class SmtParser implements ISource {
 			mLogger.info("SMTLIBException " + exc.getMessage());
 			parseEnv1.printError(exc.getMessage());
 		}
-		
+
 		final String outputFilename = directory + File.separator + file.getName();
-		final ParseEnvironment parseEnv2 = new ParseEnvironment(new FilteredLoggingScript(outputFilename, true, cns.getNames()), optionMap);
+		final ParseEnvironment parseEnv2 =
+				new ParseEnvironment(new FilteredLoggingScript(outputFilename, true, cns.getNames()), optionMap);
 		try {
 			parseEnv2.parseScript(file.getAbsolutePath());
 			mLogger.info("Succesfully wrote SMT file " + outputFilename);
@@ -282,10 +265,9 @@ public class SmtParser implements ISource {
 			parseEnv2.printError(exc.getMessage());
 		}
 	}
-	
-	
+
 	private class CollectNamesScript extends NoopScript {
-		
+
 		Set<String> mNames = new HashSet<>();
 
 		@Override
@@ -299,18 +281,20 @@ public class SmtParser implements ISource {
 			return mNames;
 		}
 	}
-	
+
 	private class FilteredLoggingScript extends LoggingScript {
-		
+
 		private final Set<String> mAllowedNames;
 
-		public FilteredLoggingScript(final String file, final boolean autoFlush, final Set<String> allowedNames) throws FileNotFoundException {
+		public FilteredLoggingScript(final String file, final boolean autoFlush, final Set<String> allowedNames)
+				throws FileNotFoundException {
 			super(file, autoFlush);
 			mAllowedNames = allowedNames;
 		}
 
 		@Override
-		public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort) throws SMTLIBException {
+		public void declareFun(final String fun, final Sort[] paramSorts, final Sort resultSort)
+				throws SMTLIBException {
 			if (mAllowedNames.contains(fun)) {
 				super.declareFun(fun, paramSorts, resultSort);
 			} else {
@@ -319,20 +303,15 @@ public class SmtParser implements ISource {
 		}
 
 		@Override
-		public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort, final Term definition)
-				throws SMTLIBException {
+		public void defineFun(final String fun, final TermVariable[] params, final Sort resultSort,
+				final Term definition) throws SMTLIBException {
 			if (mAllowedNames.contains(fun)) {
 				super.defineFun(fun, params, resultSort, definition);
 			} else {
 				// do nothing
 			}
 		}
-		
-		
-		
-		
-		
+
 	}
-	
-	
+
 }

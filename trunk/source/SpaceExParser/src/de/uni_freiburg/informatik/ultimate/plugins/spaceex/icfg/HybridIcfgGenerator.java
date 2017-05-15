@@ -49,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.Location;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.Transition;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.icfg.HybridTermBuilder.BuildScenario;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceGroup;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslatorConstants;
 
 /**
@@ -64,7 +64,7 @@ public class HybridIcfgGenerator {
 	private final ILogger mLogger;
 	
 	private final UnmodifiableTransFormula mTrivialTransformula;
-	private final SpaceExPreferenceManager mSpaceExPreferenceManager;
+	private final SpaceExPreferenceContainer mSpaceExPreferenceContainer;
 	private final CfgSmtToolkit mSmtToolkit;
 	private final HybridVariableManager mVariableManager;
 	private final HybridIcfgGeneratorHelper mHelper;
@@ -72,32 +72,35 @@ public class HybridIcfgGenerator {
 	private final IcfgLocation mRootLocation;
 	// Map of CFG Components which will be connected to an ICFG
 	private final Map<String, HybridCfgComponent> mCfgComponents;
-	// The connection list holds ICFGLocations which have to be connected to the initial location of a group
+	// The connection list holds ICFGLocations which have to be connected to the
+	// initial location of a group
 	private final List<IcfgLocation> mConnectionList;
 	private final Scenario mScenario;
 	private int mCurrentGroupID;
 	
-	// Scenario that determines if Preferencegroups are used or not.
+	// Scenario that determines if PreferenceGroups are used or not.
 	private enum Scenario {
 		PREF_GROUPS, NO_GROUPS
 	}
 	
-	public HybridIcfgGenerator(final ILogger logger, final SpaceExPreferenceManager preferenceManager,
+	public HybridIcfgGenerator(final ILogger logger, final SpaceExPreferenceContainer preferenceContainer,
 			final CfgSmtToolkit smtToolkit, final HybridVariableManager variableManager) {
 		mLogger = logger;
-		mSpaceExPreferenceManager = preferenceManager;
+		mSpaceExPreferenceContainer = preferenceContainer;
 		mSmtToolkit = smtToolkit;
 		mVariableManager = variableManager;
-		mHelper = new HybridIcfgGeneratorHelper(variableManager, preferenceManager, logger);
+		mHelper = new HybridIcfgGeneratorHelper(variableManager, preferenceContainer, logger);
 		mCfgComponents = new HashMap<>();
 		mConnectionList = new ArrayList<>();
-		mScenario = preferenceManager.hasPreferenceGroups() ? Scenario.PREF_GROUPS : Scenario.NO_GROUPS;
+		mScenario = preferenceContainer.hasPreferenceGroups() ? Scenario.PREF_GROUPS : Scenario.NO_GROUPS;
 		mTrivialTransformula = TransFormulaBuilder.getTrivialTransFormula(smtToolkit.getManagedScript());
 		// create a root and error location
 		mErrorLocation = new IcfgLocation("error", HybridTranslatorConstants.PROC_NAME);
-		// DD: You need the check annotation s.t. result reporting knows what you are checking
+		// DD: You need the check annotation s.t. result reporting knows what
+		// you are checking
 		new Check(Spec.ASSERT).annotate(mErrorLocation);
-		// you need a location at the error loc for legacy reasons (we will find a way ;) ) -- the location is also
+		// you need a location at the error loc for legacy reasons (we will find
+		// a way ;) ) -- the location is also
 		// responsible for the line number in the result
 		new DummyLocation("").annotate(mErrorLocation);
 		mRootLocation = new IcfgLocation("root", HybridTranslatorConstants.PROC_NAME);
@@ -114,23 +117,26 @@ public class HybridIcfgGenerator {
 			mLogger.debug("AUTOMATON: " + automaton);
 		}
 		
-		// If scenario is that we have preferencegroups, get the parallel compositions of the groups.
-		// else just build the ICFG for one automaton without initial assignments.
+		// If scenario is that we have preferencegroups, get the parallel
+		// compositions of the groups.
+		// else just build the ICFG for one automaton without initial
+		// assignments.
 		if (mScenario == Scenario.PREF_GROUPS) {
 			final Map<Integer, HybridAutomaton> parallelCompositions =
-					mSpaceExPreferenceManager.getGroupIdToParallelComposition();
+					mVariableManager.getGroupIdToParallelComposition();
 			parallelCompositions.forEach((groupid, aut) -> {
 				mLogger.info(aut);
 				mCurrentGroupID = groupid;
-				modelToIcfg(aut);
+				automatonToIcfg(aut);
 			});
 		} else {
-			modelToIcfg(automaton);
+			automatonToIcfg(automaton);
 		}
 		
 		final BasicIcfg<IcfgLocation> icfg = new BasicIcfg<>("icfg", mSmtToolkit, IcfgLocation.class);
 		
-		// root location of the ICFG, to this root location each sub-icfg will be connected.
+		// root location of the ICFG, to this root location each sub-icfg will
+		// be connected.
 		icfg.addLocation(mRootLocation, true, false, true, false, false);
 		
 		// error location
@@ -157,18 +163,6 @@ public class HybridIcfgGenerator {
 		return icfg;
 	}
 	
-	public void modelToIcfg(final HybridAutomaton aut) {
-		/*
-		 * in order to convert the hybrid model to an ICFG, we have to convert the parallelComposition of the regarded
-		 * system.
-		 */
-		if (aut == null) {
-			throw new IllegalStateException("HybridAutomaton aut has not been assigned and is null");
-		}
-		// convert automaton to cfg components
-		automatonToIcfg(aut);
-	}
-	
 	/**
 	 * Function that converts a given hybrid automaton into ICFG components.
 	 *
@@ -176,16 +170,23 @@ public class HybridIcfgGenerator {
 	 * @param groupid
 	 */
 	private void automatonToIcfg(final HybridAutomaton automaton) {
+		if (automaton == null) {
+			throw new IllegalStateException("HybridAutomaton aut has not been assigned and is null");
+		}
+		
 		final Location initialLocation = automaton.getInitialLocation();
 		final Map<Integer, Location> locations = automaton.getLocations();
 		final List<Transition> transitions = automaton.getTransitions();
+		
 		// we can merge all variables into one set.
 		final Set<String> variables = automaton.getGlobalParameters();
 		variables.addAll(automaton.getGlobalConstants());
 		variables.addAll(automaton.getLocalConstants());
 		variables.addAll(automaton.getLocalParameters());
+		
 		mVariableManager.addVarsToConstants(automaton.getGlobalConstants());
 		mVariableManager.addVarsToConstants(automaton.getLocalConstants());
+		
 		// ICFG locations + edges for variables
 		variablesToIcfg(variables);
 		// for locations
@@ -204,36 +205,39 @@ public class HybridIcfgGenerator {
 		// if the group id exists, get the group,
 		// else just set it null. Groups start from ID 1
 		SpaceExPreferenceGroup group;
-		if (mSpaceExPreferenceManager.getPreferenceGroups().containsKey(mCurrentGroupID)) {
-			group = mSpaceExPreferenceManager.getPreferenceGroups().get(mCurrentGroupID);
+		if (mSpaceExPreferenceContainer.getPreferenceGroups().containsKey(mCurrentGroupID)) {
+			group = mSpaceExPreferenceContainer.getPreferenceGroups().get(mCurrentGroupID);
 		} else {
 			group = null;
 		}
 		
-		// create a transformula consisting of the initial variable assingments of the group
+		// create a transformula consisting of the initial variable assingments
+		// of the group
 		final TransFormulaBuilder tfb = new TransFormulaBuilder(Collections.emptyMap(), Collections.emptyMap(), true,
 				Collections.emptySet(), true, Collections.emptyList(), true);
+		
 		// first add all variables.
 		for (final String var : variables) {
-			final HybridProgramVar progVar = mVariableManager.getVar2ProgramVar().get(var);
-			final TermVariable inVar = mVariableManager.getVar2InVarTermVariable().get(var);
-			final TermVariable outVar = mVariableManager.getVar2OutVarTermVariable().get(var);
+			final HybridProgramVar progVar = mVariableManager.getVarToProgramVar().get(var);
+			final TermVariable inVar = mVariableManager.getVarToInVarTermVariable().get(var);
+			final TermVariable outVar = mVariableManager.getVarToOutVarTermVariable().get(var);
 			tfb.addInVar(progVar, inVar);
 			tfb.addOutVar(progVar, outVar);
 		}
 		
-		// then evaluate the infix string of the variable assigment specified in the config.
-		UnmodifiableTransFormula transformula;
+		// then evaluate the infix string of the variable assigment specified in
+		// the config.
 		final String infix = group == null ? "" : group.getVariableInfix();
-		
 		// process infix to transformula
+		UnmodifiableTransFormula transformula;
 		if (infix.isEmpty()) {
 			transformula = mTrivialTransformula;
 		} else {
 			transformula = buildTransformula(infix, BuildScenario.INITIALLY);
 		}
 		
-		// create variable component of the form start ----variable assignment----> end
+		// create variable component of the form start ----variable
+		// assignment----> end
 		final List<IcfgLocation> locations = new ArrayList<>();
 		final List<IcfgInternalTransition> transitions = new ArrayList<>();
 		final String id = "varAssignment_" + (group == null ? "" : group.getId());
@@ -248,10 +252,12 @@ public class HybridIcfgGenerator {
 		/*
 		 * Transition from Root to varAssignment
 		 */
-		// the target of the transition is the the start of the target CFG component
+		// the target of the transition is the the start of the target CFG
+		// component
 		final IcfgLocation target = mCfgComponents.get(id).getStart();
 		mHelper.createIcfgTransition(mRootLocation, target, mTrivialTransformula);
-		// add connection that has to be made from Variable assignment to initial location.
+		// add connection that has to be made from Variable assignment to
+		// initial location.
 		mConnectionList.add(end);
 	}
 	
@@ -308,9 +314,10 @@ public class HybridIcfgGenerator {
 			/*
 			 * Forbidden check
 			 */
-			if (mSpaceExPreferenceManager.hasForbiddenGroup() && !loc.getForbiddenConstraint().isEmpty()
+			if (mSpaceExPreferenceContainer.hasForbiddenGroups() && !loc.getForbiddenConstraint().isEmpty()
 					|| loc.isForbidden()) {
-				// if the current location is forbidden, it shall get a transition from start --> error.
+				// if the current location is forbidden, it shall get a
+				// transition from start --> error.
 				// the transformula depends on whether
 				final UnmodifiableTransFormula forbiddenTransformula =
 						buildTransformula(loc.getForbiddenConstraint(), BuildScenario.INVARIANT);
@@ -331,12 +338,15 @@ public class HybridIcfgGenerator {
 	 * @param initialLocation
 	 */
 	private void transitionsToIcfg(final List<Transition> transitions, final Location initialLocation) {
-		// a transition in a hybrid automaton is simply an edge from one location to another.
+		// a transition in a hybrid automaton is simply an edge from one
+		// location to another.
 		// guard and update can be merged with &&
 		transitions.forEach(trans -> {
-			// the source of the transition is the the end of the source CFG component
+			// the source of the transition is the the end of the source CFG
+			// component
 			final IcfgLocation source = mCfgComponents.get(Integer.toString(trans.getSourceId())).getEnd();
-			// the target of the transition is the the start of the target CFG component
+			// the target of the transition is the the start of the target CFG
+			// component
 			final IcfgLocation target = mCfgComponents.get(Integer.toString(trans.getTargetId())).getStart();
 			// invariant to term:
 			final UnmodifiableTransFormula transFormula =
@@ -347,9 +357,11 @@ public class HybridIcfgGenerator {
 		
 		// Transitions from Group var assignment to Initial Location
 		mConnectionList.forEach((loc) -> {
-			// the source of the transition is the the end of the source CFG component
+			// the source of the transition is the the end of the source CFG
+			// component
 			final IcfgLocation source = loc;
-			// the target of the transition is the the start of the target CFG component
+			// the target of the transition is the the start of the target CFG
+			// component
 			final IcfgLocation target = mCfgComponents.get(Integer.toString(initialLocation.getId())).getStart();
 			final UnmodifiableTransFormula transformula =
 					TransFormulaBuilder.getTrivialTransFormula(mSmtToolkit.getManagedScript());
@@ -447,7 +459,6 @@ public class HybridIcfgGenerator {
 			mLogger.debug("TERM:    " + term.toStringDirect());
 			mLogger.debug("############################################ ");
 		}
-		
 		return transformula;
 	}
 	
@@ -463,7 +474,8 @@ public class HybridIcfgGenerator {
 		final IcfgLocation endLoc = new IcfgLocation("error", "MAIN");
 		icfg.addLocation(endLoc, false, true, false, true, false);
 		
-		// Every procedure must have a unique entry and a unique exit. It is not allowed to have more than one exit (or
+		// Every procedure must have a unique entry and a unique exit. It is not
+		// allowed to have more than one exit (or
 		// entry).
 		
 		// QUESTION: Is procExit = true correct here?
@@ -474,10 +486,12 @@ public class HybridIcfgGenerator {
 		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
 		// QUESTION: Is not determined correct here?
 		
-		// QUESTION: Does BoogieASTNode influence TraceAbstraction? Currently, we pass the same BoogieASTNode every time
+		// QUESTION: Does BoogieASTNode influence TraceAbstraction? Currently,
+		// we pass the same BoogieASTNode every time
 		// to the ICFG. Should we construct new BoogieASTNodes every time?
 		
-		// QUESTION: Payload currently contains only a dummy location. Every payload consists of the SAME dummy
+		// QUESTION: Payload currently contains only a dummy location. Every
+		// payload consists of the SAME dummy
 		// location. Is this correct / feasible?
 		
 		// Transitions

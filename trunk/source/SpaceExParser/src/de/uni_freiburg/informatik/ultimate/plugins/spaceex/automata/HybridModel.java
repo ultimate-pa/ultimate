@@ -47,8 +47,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.ParallelCompositionGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ComponentType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceGroup;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslatorConstants;
 
 /**
@@ -66,7 +66,7 @@ public class HybridModel {
 	private final HybridAutomatonFactory mHybridAutomatonFactory;
 	private final ParallelCompositionGenerator mParallelCompositionGenerator;
 	private Map<String, HybridSystem> mSystems;
-	private SpaceExPreferenceManager mPreferenceManager;
+	private SpaceExPreferenceContainer mPreferenceContainer;
 	
 	/*
 	 * This constructor is just for tests.
@@ -105,7 +105,7 @@ public class HybridModel {
 			systems.forEach((id, comp) -> {
 				mLogger.debug("creating hybridsystem for system: " + id);
 				final HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent(id, comp, automata,
-						systems, mPreferenceManager);
+						systems, mPreferenceContainer);
 				mLogger.debug("hybridsystem created:\n" + hybsys.toString());
 				mSystems.put(hybsys.getName(), hybsys);
 			});
@@ -120,10 +120,10 @@ public class HybridModel {
 	 * @param preferenceManager
 	 * @throws Exception
 	 */
-	public HybridModel(final Sspaceex root, final ILogger logger, final SpaceExPreferenceManager preferenceManager)
+	public HybridModel(final Sspaceex root, final ILogger logger, final SpaceExPreferenceContainer preferenceContainer)
 			throws Exception {
 		mLogger = logger;
-		mPreferenceManager = preferenceManager;
+		mPreferenceContainer = preferenceContainer;
 		mHybridSystemFactory = new HybridSystemFactory(mLogger);
 		mHybridAutomatonFactory = new HybridAutomatonFactory(mLogger);
 		mParallelCompositionGenerator = new ParallelCompositionGenerator(mLogger);
@@ -156,7 +156,7 @@ public class HybridModel {
 			systems.forEach((id, comp) -> {
 				mLogger.info("creating hybridsystem for system: " + id);
 				final HybridSystem hybsys = mHybridSystemFactory.createHybridSystemFromComponent("", comp, automata,
-						systems, mPreferenceManager);
+						systems, mPreferenceContainer);
 				mLogger.info("hybridsystem created:\n" + hybsys.toString());
 				mSystems.put(hybsys.getName(), hybsys);
 			});
@@ -167,7 +167,7 @@ public class HybridModel {
 		assert automata.size() == 1 : "Only one hybrid automaton is possible if no system was defined.";
 		final ComponentType automatonComponent = automata.entrySet().iterator().next().getValue();
 		final HybridAutomaton automaton = mHybridAutomatonFactory.createHybridAutomatonFromComponent(as,
-				"defaultSystem", automatonComponent, mPreferenceManager);
+				"defaultSystem", automatonComponent, mPreferenceContainer);
 		// set global parameters
 		final Set<String> globalParams = automaton.getGlobalParameters().stream()
 				.map(g -> new StringBuilder().append("system_").append(g).toString()).collect(Collectors.toSet());
@@ -197,7 +197,7 @@ public class HybridModel {
 		final Map<Integer, HybridAutomaton> groupIdtoMergedAutomaton = new HashMap<>();
 		
 		// get preference groups
-		final Collection<SpaceExPreferenceGroup> groups = mPreferenceManager.getPreferenceGroups().values();
+		final Collection<SpaceExPreferenceGroup> groups = mPreferenceContainer.getPreferenceGroups().values();
 		
 		// for each group create the parallel composition starting in the groups initial locations.
 		for (final SpaceExPreferenceGroup group : groups) {
@@ -279,7 +279,7 @@ public class HybridModel {
 				mLogger.debug("LOC PARAM: " + aut.getLocalParameters());
 				mLogger.debug(hybsys.getBinds());
 			}
-			aut.renameConstants();
+			aut.renameReplacedVariables();
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("############# AFTER ################");
 				mLogger.debug("GLOB CONST: " + aut.getGlobalConstants());

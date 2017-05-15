@@ -6,14 +6,14 @@
            memlimit="8GB"
            cpuCores="4">
 
-  <rundefinition name="Test">
-  </rundefinition>
+  <rundefinition name="Test"></rundefinition>
+  
+  <option name="--full-output"/>
 
   <tasks name="CFI">
     <include>../../../trunk/examples/svcomp/loop-acceleration/multivar_true-unreach-call1_true-termination.i</include>
     <propertyfile>../../../trunk/examples/svcomp/PropertyUnreachCall.prp</propertyfile>
-	<option name="32bit"></option>
-	<option name="precise"></option>
+	<option name="--architecture">32bit</option>
   </tasks>
 
 </benchmark>

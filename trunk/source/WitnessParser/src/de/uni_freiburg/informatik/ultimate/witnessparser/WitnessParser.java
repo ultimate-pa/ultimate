@@ -28,7 +28,10 @@ package de.uni_freiburg.informatik.ultimate.witnessparser;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvalidWitnessErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvalidWitnessErrorResult.InvalidWitnessReasons;
@@ -92,14 +95,11 @@ public class WitnessParser implements ISource {
 	}
 
 	@Override
-	public boolean parseable(final File[] files) {
-		if (files != null && files.length == 1) {
-			return parseable(files[0]);
-		}
-		return false;
+	public File[] parseable(final File[] files) {
+		final List<File> rtrList = Arrays.stream(files).filter(this::parseable).collect(Collectors.toList());
+		return rtrList.toArray(new File[rtrList.size()]);
 	}
 
-	@Override
 	public boolean parseable(final File file) {
 		for (final String suffix : getFileTypes()) {
 			if (file.getName().endsWith(suffix)) {
@@ -111,14 +111,13 @@ public class WitnessParser implements ISource {
 
 	@Override
 	public IElement parseAST(final File[] files) throws Exception {
-		if (files == null || files.length != 1) {
-			throw new UnsupportedOperationException("We currently do not support multiple witnesses");
+		if (files.length == 1) {
+			return parseAST(files[0]);
 		}
-		return parseAST(files[0]);
+		throw new UnsupportedOperationException("Cannot parse more than one file");
 	}
 
-	@Override
-	public IElement parseAST(final File file) {
+	private IElement parseAST(final File file) {
 		mFilename = file.getAbsolutePath();
 		final WitnessAutomatonConstructor wac = new WitnessAutomatonConstructor(mServices);
 		try {
@@ -144,14 +143,9 @@ public class WitnessParser implements ISource {
 		return new ModelType(getPluginID(), mWitnessType, Collections.singleton(mFilename));
 	}
 
-	@Override
-	public void setPreludeFile(final File prelude) {
-		// no prelude necessary
-	}
-
 	/**
 	 * Report an invalid witness to Ultimate. This will cancel the toolchain.
-	 * 
+	 *
 	 * @param msg
 	 *            A more detailed reason .
 	 * @param reason

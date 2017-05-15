@@ -10,28 +10,32 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
 
 public class HybridVariableManager {
 	
-	private final ManagedScript mScript;
-	private final Map<String, HybridProgramVar> mVar2ProgramVar;
-	private final Map<HybridProgramVar, String> mProgramVar2Var;
-	private final Map<String, TermVariable> mVar2InVarTermVariable;
-	private final Map<String, TermVariable> mVar2OutVarTermVariable;
+	private ManagedScript mScript;
+	private final Map<String, HybridProgramVar> mVarToProgramVar;
+	private final Map<HybridProgramVar, String> mProgramVarToVar;
+	private final Map<String, TermVariable> mVarToInVarTermVariable;
+	private final Map<String, TermVariable> mVarToOutVarTermVariable;
 	private final Set<String> mConstants;
-	private Map<TermVariable, String> mTermVariable2Var;
-	private final Map<TermVariable, String> mTermVariable2InVar;
-	private final Map<TermVariable, String> mTermVariable2OutVar;
+	private Map<TermVariable, String> mTermVariableToVar;
+	private final Map<TermVariable, String> mTermVariableToInVar;
+	private final Map<TermVariable, String> mTermVariableToOutVar;
+	// Map that holds the parallel composition of each preference group.
+	private Map<Integer, HybridAutomaton> mGroupIdToParallelComposition;
 	
-	public HybridVariableManager(final ManagedScript script) {
-		mScript = script;
-		mVar2ProgramVar = new HashMap<>();
-		mProgramVar2Var = new HashMap<>();
-		mVar2InVarTermVariable = new HashMap<>();
-		mVar2OutVarTermVariable = new HashMap<>();
-		mTermVariable2InVar = new HashMap<>();
-		mTermVariable2OutVar = new HashMap<>();
+	public HybridVariableManager() {
+		mScript = null;
+		mVarToProgramVar = new HashMap<>();
+		mProgramVarToVar = new HashMap<>();
+		mVarToInVarTermVariable = new HashMap<>();
+		mVarToOutVarTermVariable = new HashMap<>();
+		mTermVariableToInVar = new HashMap<>();
+		mTermVariableToOutVar = new HashMap<>();
 		mConstants = new HashSet<>();
+		mGroupIdToParallelComposition = new HashMap<>();
 	}
 	
 	public HybridProgramVar constructProgramVar(final String identifier, final String procedure) {
@@ -43,49 +47,49 @@ public class HybridVariableManager {
 		final ApplicationTerm primedConstant = ProgramVarUtils.constructPrimedConstant(mScript, this, sort, id);
 		final HybridProgramVar progVar =
 				new HybridProgramVar(termVariable, defaultConstant, primedConstant, id, procedure);
-		mVar2ProgramVar.put(identifier, progVar);
-		mProgramVar2Var.put(progVar, identifier);
+		mVarToProgramVar.put(identifier, progVar);
+		mProgramVarToVar.put(progVar, identifier);
 		mScript.unlock(this);
 		return progVar;
 	}
 	
-	public Map<String, HybridProgramVar> getVar2ProgramVar() {
-		return mVar2ProgramVar;
+	public Map<String, HybridProgramVar> getVarToProgramVar() {
+		return mVarToProgramVar;
 	}
 	
-	public Map<HybridProgramVar, String> getProgramVar2Var() {
-		return mProgramVar2Var;
+	public Map<HybridProgramVar, String> getProgramVarToVar() {
+		return mProgramVarToVar;
 	}
 	
-	public Map<String, TermVariable> getVar2InVarTermVariable() {
-		return mVar2InVarTermVariable;
+	public Map<String, TermVariable> getVarToInVarTermVariable() {
+		return mVarToInVarTermVariable;
 	}
 	
-	public Map<String, TermVariable> getVar2OutVarTermVariable() {
-		return mVar2OutVarTermVariable;
+	public Map<String, TermVariable> getVarToOutVarTermVariable() {
+		return mVarToOutVarTermVariable;
 	}
 	
-	public Map<TermVariable, String> getTermVariable2InVar() {
-		return mTermVariable2InVar;
+	public Map<TermVariable, String> getTermVariableToInVar() {
+		return mTermVariableToInVar;
 	}
 	
-	public Map<TermVariable, String> getTermVariable2OutVar() {
-		return mTermVariable2OutVar;
+	public Map<TermVariable, String> getTermVariableToOutVar() {
+		return mTermVariableToOutVar;
 	}
 	
 	public void addProgramVar(final String varName, final HybridProgramVar programvar) {
-		mVar2ProgramVar.put(varName, programvar);
-		mProgramVar2Var.put(programvar, varName);
+		mVarToProgramVar.put(varName, programvar);
+		mProgramVarToVar.put(programvar, varName);
 	}
 	
 	public void addInVarTermVariable(final String varName, final TermVariable termVariable) {
-		mVar2InVarTermVariable.put(varName, termVariable);
-		mTermVariable2InVar.put(termVariable, varName);
+		mVarToInVarTermVariable.put(varName, termVariable);
+		mTermVariableToInVar.put(termVariable, varName);
 	}
 	
 	public void addOutVarTermVariable(final String varName, final TermVariable termVariable) {
-		mVar2OutVarTermVariable.put(varName, termVariable);
-		mTermVariable2OutVar.put(termVariable, varName);
+		mVarToOutVarTermVariable.put(varName, termVariable);
+		mTermVariableToOutVar.put(termVariable, varName);
 	}
 	
 	public Set<String> getConstants() {
@@ -98,6 +102,18 @@ public class HybridVariableManager {
 	
 	public void addVarsToConstants(final Set<String> constants) {
 		mConstants.addAll(constants);
+	}
+	
+	public Map<Integer, HybridAutomaton> getGroupIdToParallelComposition() {
+		return mGroupIdToParallelComposition;
+	}
+	
+	public void setGroupIdToParallelComposition(final Map<Integer, HybridAutomaton> groupIdToParallelComposition) {
+		mGroupIdToParallelComposition = groupIdToParallelComposition;
+	}
+	
+	public void setScript(final ManagedScript script) {
+		mScript = script;
 	}
 	
 }

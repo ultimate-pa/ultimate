@@ -41,7 +41,7 @@ public interface IRefinementStrategy<LETTER> {
 	String COMMAND_CVC4_NO_TIMEOUT = "cvc4 --tear-down-incremental --print-success --lang smt --rewrite-divk";
 	String COMMAND_CVC4_TIMEOUT = COMMAND_CVC4_NO_TIMEOUT + " --tlimit-per=12000";
 	// 20161214 Matthias: MathSAT does not support timeouts
-	String COMMAND_MATHSAT = "mathsat";
+	String COMMAND_MATHSAT = "mathsat -unsat_core_generation=3";
 
 	long TIMEOUT_SMTINTERPOL = 12_000L;
 	long TIMEOUT_NONE_SMTINTERPOL = 0L;

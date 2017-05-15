@@ -2,22 +2,22 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * Copyright (C) 2013-2015 Vincent Langenfeld (langenfv@informatik.uni-freiburg.de)
- * 
+ *
  * This file is part of the ULTIMATE LTL2Aut plug-in.
- * 
+ *
  * The ULTIMATE LTL2Aut plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE LTL2Aut plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE LTL2Aut plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE LTL2Aut plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -29,8 +29,10 @@ package de.uni_freiburg.informatik.ultimate.ltl2aut;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
@@ -46,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.ltl2aut.preferences.PreferenceInitializer;
 
 /**
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Vincent Langenfeld (langenfv@informatik.uni-freiburg.de)
  */
@@ -172,17 +174,12 @@ public class LTL2aut implements IGenerator, ISource {
 	}
 
 	@Override
-	public boolean parseable(final File[] files) {
-		for (final File f : files) {
-			if (!parseable(f)) {
-				return false;
-			}
-		}
-		return true;
+	public File[] parseable(final File[] files) {
+		final List<File> rtrList = Arrays.stream(files).filter(this::parseable).collect(Collectors.toList());
+		return rtrList.toArray(new File[rtrList.size()]);
 	}
 
-	@Override
-	public boolean parseable(final File file) {
+	private boolean parseable(final File file) {
 		for (final String s : getFileTypes()) {
 			if (file.getName().endsWith(s)) {
 				return true;
@@ -193,11 +190,13 @@ public class LTL2aut implements IGenerator, ISource {
 
 	@Override
 	public IElement parseAST(final File[] files) throws Exception {
-		return null;
+		if (files.length == 1) {
+			return parseAST(files[0]);
+		}
+		throw new UnsupportedOperationException("Cannot parse more than one file");
 	}
 
-	@Override
-	public IElement parseAST(final File file) throws Exception {
+	private IElement parseAST(final File file) throws Exception {
 		mUseful++;
 		final LTLFileParser ltlFileParser = new LTLFileParser(mLogger);
 		return ltlFileParser.parse(file);
@@ -207,10 +206,4 @@ public class LTL2aut implements IGenerator, ISource {
 	public String[] getFileTypes() {
 		return mFileTypes;
 	}
-
-	@Override
-	public void setPreludeFile(final File prelude) {
-		// not needed
-	}
-
 }

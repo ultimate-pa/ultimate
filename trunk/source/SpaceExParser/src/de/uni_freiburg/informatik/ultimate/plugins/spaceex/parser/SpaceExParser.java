@@ -32,7 +32,9 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
@@ -52,21 +54,21 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Obje
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Sspaceex;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExParserPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceProcessor;
 
 /**
  * @author Marius Greitschus
  *
  */
 public class SpaceExParser implements ISource {
-	
+
 	private final String[] mFileTypes;
 	private final List<String> mFileNames;
 	private IUltimateServiceProvider mServices;
 	private ILogger mLogger;
 	private IToolchainStorage mToolchainStorage;
-	private SpaceExPreferenceManager mPreferenceManager;
 	private ITranslator<IcfgEdge, IcfgEdge, Term, Term, String, String> mBacktranslator;
-	
+
 	/**
 	 * Constructor of the SpaceEx Parser plugin.
 	 */
@@ -74,13 +76,13 @@ public class SpaceExParser implements ISource {
 		mFileTypes = new String[] { "xml", };
 		mFileNames = new ArrayList<>();
 	}
-	
+
 	@Override
 	public void setToolchainStorage(final IToolchainStorage storage) {
 		// TODO Auto-generated method stub
 		mToolchainStorage = storage;
 	}
-	
+
 	@Override
 	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
@@ -88,58 +90,53 @@ public class SpaceExParser implements ISource {
 		mBacktranslator = new DefaultTranslator<>(IcfgEdge.class, IcfgEdge.class, Term.class, Term.class);
 		mServices.getBacktranslationService().addTranslator(mBacktranslator);
 	}
-	
+
 	@Override
 	public void init() {
-		// Auto-generated method stub
+		// not necessary
 	}
-	
+
 	@Override
 	public void finish() {
-		// Auto-generated method stub
+		// not necessary
 	}
-	
+
 	@Override
 	public String getPluginName() {
 		return Activator.PLUGIN_NAME;
 	}
-	
+
 	@Override
 	public String getPluginID() {
 		return Activator.PLUGIN_ID;
 	}
-	
+
 	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new SpaceExParserPreferenceInitializer();
 	}
-	
+
 	@Override
-	public boolean parseable(final File[] files) {
-		for (final File f : files) {
-			if (!parseable(f)) {
-				return false;
-			}
-		}
-		return true;
+	public File[] parseable(final File[] files) {
+		final List<File> rtrList = Arrays.stream(files).filter(this::parseable).collect(Collectors.toList());
+		return rtrList.toArray(new File[rtrList.size()]);
 	}
-	
-	@Override
-	public boolean parseable(final File file) {
-		
+
+	private boolean parseable(final File file) {
+
 		boolean knownExtension = false;
-		
+
 		for (final String s : getFileTypes()) {
 			if (file.getName().endsWith(s)) {
 				knownExtension = true;
 				break;
 			}
 		}
-		
+
 		if (!knownExtension) {
 			return false;
 		}
-		
+
 		try {
 			final FileReader fr = new FileReader(file);
 			final BufferedReader br = new BufferedReader(fr);
@@ -148,7 +145,7 @@ public class SpaceExParser implements ISource {
 					mLogger.debug("The input file does not contain an opening xml tag.");
 					return false;
 				}
-				
+
 				if (!br.readLine().contains("<sspaceex")) {
 					mLogger.debug("The input file does not contain a spaceex tag.");
 					return false;
@@ -160,17 +157,19 @@ public class SpaceExParser implements ISource {
 		} catch (final IOException ioe) {
 			return false;
 		}
-		
+
 		return true;
 	}
-	
+
 	@Override
 	public IElement parseAST(final File[] files) throws Exception {
-		throw new UnsupportedOperationException("Cannot parse more than one SpaceEx model file at the moment.");
+		if (files.length == 1) {
+			return parseAST(files[0]);
+		}
+		throw new UnsupportedOperationException("Cannot parse more than one file");
 	}
-	
-	@Override
-	public IElement parseAST(final File file) throws Exception {
+
+	private IElement parseAST(final File file) throws Exception {
 		// Parse the SpaceEx model
 		mFileNames.add(file.getName());
 		final FileInputStream fis = new FileInputStream(file);
@@ -179,37 +178,33 @@ public class SpaceExParser implements ISource {
 		final Sspaceex spaceEx = (Sspaceex) unmarshaller.unmarshal(fis);
 		fis.close();
 		// Initialize the preference manager + parse the config file right away.
-		mPreferenceManager = new SpaceExPreferenceManager(mServices, mLogger, file);
-		return new SpaceExModelBuilder(spaceEx, mLogger, mPreferenceManager, mServices, mToolchainStorage).getModel();
+		final SpaceExPreferenceManager preferenceManager = new SpaceExPreferenceManager(mServices, mLogger, file);
+		final SpaceExPreferenceProcessor preferenceProcessor = new SpaceExPreferenceProcessor(mLogger,
+				preferenceManager.getSystem(), preferenceManager.getInitially(), preferenceManager.getForbidden());
+		return new SpaceExModelBuilder(spaceEx, mLogger, preferenceProcessor.getProcessedPreferences(),
+				preferenceManager, mServices, mToolchainStorage).getModel();
 		/*
 		 * final Marshaller marshaller = jaxContext.createMarshaller();
 		 * marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, Boolean.TRUE); final StringWriter streamWriter = new
 		 * StringWriter(); final SpaceExWriter spaceexWriter = new SpaceExWriter(mLogger); Map<String, HybridAutomaton>
 		 * mergedAutomata = system.getMergedAutomata(); Sspaceex root =
-		 * spaceexWriter.HybridAutomatonToSpaceEx(mergedAutomata.get("ofOnn||controller||clock")); String targetfile =
+		 * spaceexWriter.HybridAutomatonToSpaceEx(mergedAutomata.get( "ofOnn||controller||clock")); String targetfile =
 		 * "" ; // some path/filename you want spaceexWriter.writeXmlToDisk(root,targetfile);
 		 */
 	}
-	
+
 	@Override
 	public String[] getFileTypes() {
 		return mFileTypes;
 	}
-	
+
 	@Override
 	public ModelType getOutputDefinition() {
 		try {
 			return new ModelType(Activator.PLUGIN_ID, ModelType.Type.AST, mFileNames);
 		} catch (final Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			mLogger.fatal("Oh no:", e);
 		}
 		return null;
-	}
-	
-	@Override
-	public void setPreludeFile(final File prelude) {
-		// TODO Auto-generated method stub
-		
 	}
 }

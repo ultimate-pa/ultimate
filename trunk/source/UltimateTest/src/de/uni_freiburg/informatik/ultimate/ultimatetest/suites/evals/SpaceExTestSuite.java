@@ -60,7 +60,7 @@ public class SpaceExTestSuite extends AbstractEvalTestSuite {
 	//@formatter:off
 	private static final String[] INPUT = new String[] {
 //		"examples/hybrid/spaceex/",
-//  	"examples/hybrid/spaceex/bigstuff",
+// 	    "examples/hybrid/spaceex/bigstuff",
 //		"examples/hybrid/spaceex/tanks/test",
 //		"examples/hybrid/spaceex/tanks/safe",
 	    "examples/hybrid/spaceex/simple",

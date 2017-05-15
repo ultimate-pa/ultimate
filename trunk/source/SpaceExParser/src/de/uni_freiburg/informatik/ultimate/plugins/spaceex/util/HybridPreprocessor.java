@@ -30,9 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HybridPreprocessor {
-	
+
 	// update of the form x := x+1 becomes x := (x+1)
-	// needed for postfix form.
+	// needed for postfix form to ensure precedence.
 	public static List<String> preprocessForUpdate(final List<String> infixArray) {
 		final List<String> res = new ArrayList<>();
 		boolean open = false;
@@ -56,7 +56,7 @@ public class HybridPreprocessor {
 		}
 		return res;
 	}
-	
+
 	public static List<String> preprocessForTermBuilding(final List<String> postfix) {
 		final List<String> newPostfix = new ArrayList<>();
 		for (String el : postfix) {
@@ -74,7 +74,7 @@ public class HybridPreprocessor {
 		}
 		return newPostfix;
 	}
-	
+
 	public static String preprocessStatement(final String statement) {
 		if (statement == null) {
 			return "";
@@ -85,5 +85,4 @@ public class HybridPreprocessor {
 		st = st.replaceAll("'", "");
 		return st;
 	}
-	
 }

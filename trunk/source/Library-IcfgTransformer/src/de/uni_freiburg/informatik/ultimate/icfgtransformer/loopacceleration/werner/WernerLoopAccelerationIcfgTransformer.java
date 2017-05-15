@@ -1,7 +1,7 @@
 
 /*
  * Copyright (C) 2016 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2016 University of Freiburg
+ * Copyright (C) 2017 Jonas Werner (jonaswerner95@gmail.com)
  *
  * This file is part of the ULTIMATE IcfgTransformer library.
  *
@@ -79,6 +79,18 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	private final IUltimateServiceProvider mServices;
 	private final IIcfgSymbolTable mOldSymbolTable;
 
+	/**
+	 * Construct a new Loop Acceleration Icfg Transformer.
+	 * 
+	 * @param logger
+	 * @param originalIcfg
+	 * @param funLocFac
+	 * @param backtranslationTracker
+	 * @param outLocationClass
+	 * @param newIcfgIdentifier
+	 * @param transformer
+	 * @param services
+	 */
 	public WernerLoopAccelerationIcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
 			final Class<OUTLOC> outLocationClass, final String newIcfgIdentifier,

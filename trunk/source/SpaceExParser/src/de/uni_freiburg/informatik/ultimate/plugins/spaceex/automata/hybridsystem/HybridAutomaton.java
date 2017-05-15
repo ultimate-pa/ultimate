@@ -42,8 +42,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.Comp
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.LocationType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.ParamType;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.generated.TransitionType;
+import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceContainer;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceGroup;
-import de.uni_freiburg.informatik.ultimate.plugins.spaceex.parser.preferences.SpaceExPreferenceManager;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridPreprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridSystemHelper;
 
@@ -63,10 +63,10 @@ public class HybridAutomaton {
 	private final Location mDefaultInitialLocation;
 	private final List<Transition> mTransitions;
 	private final ILogger mLogger;
-	private SpaceExPreferenceManager mPreferenceManager;
+	private SpaceExPreferenceContainer mPreferenceContainer;
 	
 	protected HybridAutomaton(final String nameInSystem, final String systemName, final ComponentType automaton,
-			final ILogger logger, final SpaceExPreferenceManager preferenceManager) {
+			final ILogger logger, final SpaceExPreferenceContainer preferenceContainer) {
 		if (!automaton.getBind().isEmpty()) {
 			throw new UnsupportedOperationException(
 					"The input automaton must be a hybrid automaton, not a system template.");
@@ -81,7 +81,7 @@ public class HybridAutomaton {
 		mLocalConstants = new HashSet<>();
 		mLabels = new HashSet<>();
 		mLogger = logger;
-		mPreferenceManager = preferenceManager;
+		mPreferenceContainer = preferenceContainer;
 		mNametoId = new HashMap<>();
 		mGroupToInitialLocation = new HashMap<>();
 		
@@ -97,14 +97,19 @@ public class HybridAutomaton {
 		for (final TransitionType trans : automaton.getTransition()) {
 			addTransition(trans);
 		}
-		// init location default
-		mDefaultInitialLocation = mLocations.values().iterator().next();
-		// init locations for pref groups
-		if (preferenceManager != null) {
-			final Map<Integer, SpaceExPreferenceGroup> prefGroups = mPreferenceManager.getPreferenceGroups();
-			prefGroups.forEach((id, group) -> {
-				mGroupToInitialLocation.put(id, getInitialLocationFromGroup(group.getInitialLocations()));
-			});
+		if (!mLocations.isEmpty()) {
+			// init location default
+			mDefaultInitialLocation = mLocations.values().iterator().next();
+			// init locations for pref groups
+			if (preferenceContainer != null) {
+				final Map<Integer, SpaceExPreferenceGroup> prefGroups = mPreferenceContainer.getPreferenceGroups();
+				prefGroups.forEach((id, group) -> {
+					mGroupToInitialLocation.put(id, getInitialLocationFromGroup(group.getInitialLocations()));
+				});
+			}
+		} else {
+			throw new IllegalStateException(
+					"Automaton with the name " + mName + "(sys: " + systemName + ") does not have any locations.");
 		}
 	}
 	
@@ -152,16 +157,16 @@ public class HybridAutomaton {
 		final Location newLoc = new Location(location);
 		newLoc.setInvariant(HybridPreprocessor.preprocessStatement(location.getInvariant()));
 		newLoc.setFlow(HybridPreprocessor.preprocessStatement(location.getFlow()));
-		if (mPreferenceManager != null && mPreferenceManager.isLocationForbidden(mName, newLoc.getName())) {
+		if (mPreferenceContainer != null && mPreferenceContainer.isLocationForbidden(mName, newLoc.getName())) {
 			newLoc.setForbidden(true);
-			mPreferenceManager.getForbiddenGroups().forEach(forb -> {
+			mPreferenceContainer.getForbiddenGroups().forEach(forb -> {
 				if (forb.getLocations().containsKey(mName)
 						&& forb.getLocations().get(mName).contains(newLoc.getName())) {
 					newLoc.setForbiddenConstraint(HybridPreprocessor.preprocessStatement(forb.getVariableInfix()));
 				}
 			});
-		} else if (mPreferenceManager != null) {
-			mPreferenceManager.getForbiddenGroups().forEach(forb -> {
+		} else if (mPreferenceContainer != null) {
+			mPreferenceContainer.getForbiddenGroups().forEach(forb -> {
 				if (forb.hasVariables() && !forb.hasLocations()) {
 					newLoc.setForbiddenConstraint(HybridPreprocessor.preprocessStatement(forb.getVariableInfix()));
 				}
@@ -200,12 +205,12 @@ public class HybridAutomaton {
 	/**
 	 * Function that renames constants according to the replacements the preference manager calculated.
 	 */
-	public void renameConstants() {
+	public void renameReplacedVariables() {
 		// get the map which contains all renames that have to be made.
-		final Map<String, Map<String, String>> requiresRename = mPreferenceManager.getRequiresRename();
+		final Map<String, Map<String, String>> requiresRename = mPreferenceContainer.getRequiresRename();
 		// split the name of the system the automaton belongs to into parts.
 		final String[] systemNameParts = mSystem.split("\\.");
-		// the deepest part of the systemname has the highest priority.
+		// the deepest part of the system-name has the highest priority.
 		String highestPriority = "";
 		for (final String systemNamePart : systemNameParts) {
 			if (requiresRename.containsKey(systemNamePart)) {
@@ -214,7 +219,8 @@ public class HybridAutomaton {
 		}
 		if (requiresRename.containsKey(mName) || requiresRename.containsKey(highestPriority)) {
 			Map<String, String> reverse = null;
-			// reverse map so we can use an existing function instead of writing a new one.
+			// reverse map so we can use an existing function instead of writing
+			// a new one.
 			if (requiresRename.containsKey(mName)) {
 				reverse = requiresRename.get(mName).entrySet().stream()
 						.collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey));
@@ -257,7 +263,8 @@ public class HybridAutomaton {
 	
 	private void renameAutomaton(final String loc, final String glob) {
 		if (mLabels.contains(loc)) {
-			// first of all remove the local name from labels and add the global name
+			// first of all remove the local name from labels and add the global
+			// name
 			replaceValueInSet(mLabels, loc, glob);
 			// second change the labelnames of the transitions.
 			renameTransitionLabels(loc, glob);
@@ -281,7 +288,6 @@ public class HybridAutomaton {
 			renameLocationVariables(loc, glob);
 			renameTransitionVariables(loc, glob);
 		}
-		
 	}
 	
 	/*
@@ -401,5 +407,4 @@ public class HybridAutomaton {
 	public Map<String, Integer> getNametoId() {
 		return mNametoId;
 	}
-	
 }

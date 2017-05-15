@@ -28,56 +28,40 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.ModelCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.QuantifierPusher.PqeTechniques;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.CallReturnPyramideInstanceProvider.Instance;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache;
 import de.uni_freiburg.informatik.ultimate.util.ConstructionCache.IValueConstruction;
 
 /**
+ * Computes SP and WP. TODO: use domain specific
+ * {@link IDomainSpecificOperationProvider} for all operations
+ * 
  * @author musab@informatik.uni-freiburg.de, heizmann@informatik.uni-freiburg.de
  *
  */
-public class PredicateTransformer {
-	private final Script mScript;
+public class PredicateTransformer<C, P extends IAbstractPredicate, R extends ITransitionRelation> {
 	private final ManagedScript mMgdScript;
-	private final IUltimateServiceProvider mServices;
-	private final ILogger mLogger;
-	private final SimplificationTechnique mSimplificationTechnique;
-	private final XnfConversionTechnique mXnfConversionTechnique;
+	private final IDomainSpecificOperationProvider<C, P, R> mOperationProvider;
 
-	public PredicateTransformer(final IUltimateServiceProvider services, final ManagedScript mgdScript,
-			final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique) {
-		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(ModelCheckerUtils.PLUGIN_ID);
-		mSimplificationTechnique = simplificationTechnique;
-		mXnfConversionTechnique = xnfConversionTechnique;
-		mScript = mgdScript.getScript();
+	public PredicateTransformer(final ManagedScript mgdScript,
+			final IDomainSpecificOperationProvider<C, P, R> operationProvider) {
 		mMgdScript = mgdScript;
+		mOperationProvider = operationProvider;
 	}
 
 	private static TermVariable constructFreshTermVariable(final ManagedScript freshVarConstructor,
@@ -86,36 +70,39 @@ public class PredicateTransformer {
 	}
 
 	/**
-	 * Computes the strongest postcondition of the given predicate p and the TransFormula tf. - invars of the given
-	 * transformula, which don't occur in the outvars or are mapped to different values are renamed to fresh variables.
-	 * The corresponding term variables in the given predicate p, are renamed to the same fresh variables. - outvars are
-	 * renamed to corresponding term variables. If an outvar doesn't occur in the invars, its occurrence in the given
-	 * predicate is substituted by a fresh variable. All fresh variables are existentially quantified.
+	 * Computes the strongest postcondition of the given predicate p and the
+	 * {@link ITransitionRelation} transRel. - invars of the given relation,
+	 * which don't occur in the outvars or are mapped to different values are
+	 * renamed to fresh variables. The corresponding term variables in the given
+	 * predicate p, are renamed to the same fresh variables. - outvars are
+	 * renamed to corresponding term variables. If an outvar doesn't occur in
+	 * the invars, its occurrence in the given predicate is substituted by a
+	 * fresh variable. All fresh variables are existentially quantified.
 	 */
-	public Term strongestPostcondition(final IPredicate p, final UnmodifiableTransFormula tf) {
-		if (SmtUtils.isFalse(p.getFormula())) {
-			return p.getFormula();
+	public C strongestPostcondition(final P p, final R transRel) {
+		final C constraint = mOperationProvider.getConstraint(p);
+		if (mOperationProvider.isConstaintUnsatisfiable(constraint)) {
+			return constraint;
 		}
-		final Set<TermVariable> varsToQuantify = new HashSet<>();
-		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction =
-				new IValueConstruction<IProgramVar, TermVariable>() {
+		final Set<TermVariable> varsToProject = new HashSet<>();
+		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction = new IValueConstruction<IProgramVar, TermVariable>() {
 
-					@Override
-					public TermVariable constructValue(final IProgramVar pv) {
-						final TermVariable result = constructFreshTermVariable(mMgdScript, pv);
-						varsToQuantify.add(result);
-						return result;
-					}
+			@Override
+			public TermVariable constructValue(final IProgramVar pv) {
+				final TermVariable result = constructFreshTermVariable(mMgdScript, pv);
+				varsToProject.add(result);
+				return result;
+			}
 
-				};
-		final ConstructionCache<IProgramVar, TermVariable> termVariablesForPredecessor =
-				new ConstructionCache<>(substituentConstruction);
+		};
+		final ConstructionCache<IProgramVar, TermVariable> termVariablesForPredecessor = new ConstructionCache<>(
+				substituentConstruction);
 
 		final Map<Term, Term> substitutionForTransFormula = new HashMap<>();
 		final Map<Term, Term> substitutionForPredecessor = new HashMap<>();
-		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
+		for (final Entry<IProgramVar, TermVariable> entry : transRel.getInVars().entrySet()) {
 			final IProgramVar pv = entry.getKey();
-			if (entry.getValue() == tf.getOutVars().get(pv)) {
+			if (entry.getValue() == transRel.getOutVars().get(pv)) {
 				// special case, variable unchanged will be renamed when
 				// considering outVars
 			} else {
@@ -127,112 +114,101 @@ public class PredicateTransformer {
 			}
 		}
 
-		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
+		for (final Entry<IProgramVar, TermVariable> entry : transRel.getOutVars().entrySet()) {
 			substitutionForTransFormula.put(entry.getValue(), entry.getKey().getTermVariable());
-			if (!tf.getInVars().containsKey(entry.getKey()) && p.getVars().contains(entry.getKey())) {
+			if (!transRel.getInVars().containsKey(entry.getKey()) && p.getVars().contains(entry.getKey())) {
 				final TermVariable substituent = termVariablesForPredecessor.getOrConstruct(entry.getKey());
 				substitutionForPredecessor.put(entry.getKey().getTermVariable(), substituent);
 			}
 		}
 
-		final Term renamedTransFormula =
-				new SubstitutionWithLocalSimplification(mMgdScript, substitutionForTransFormula)
-						.transform(tf.getFormula());
-		final Term renamedPredecessor = new SubstitutionWithLocalSimplification(mMgdScript, substitutionForPredecessor)
-				.transform(p.getFormula());
+		final C renamedRelationConstraint = mOperationProvider.renameVariables(substitutionForTransFormula,
+				mOperationProvider.getConstaintFromTransitionRelation(transRel));
+		final C renamedPredecessor = mOperationProvider.renameVariables(substitutionForPredecessor, constraint);
 
-		final Term resultBody = Util.and(mScript, renamedTransFormula, renamedPredecessor);
+		final C conjunction = mOperationProvider
+				.constructConjunction(toList(renamedRelationConstraint, renamedPredecessor));
 
 		// Add aux vars to varsToQuantify
-		varsToQuantify.addAll(tf.getAuxVars());
-		return constructQuantifiedFormula(Script.EXISTS, varsToQuantify, resultBody);
+		varsToProject.addAll(transRel.getAuxVars());
+		return mOperationProvider.projectExistentially(varsToProject, conjunction);
 	}
 
-	private Term constructQuantifiedFormula(final int quantifier, final Set<TermVariable> varsToQuantify,
-			final Term resultBody) {
-		final Term quantified = SmtUtils.quantifier(mScript, quantifier, varsToQuantify, resultBody);
-		final Term pushed =
-				new QuantifierPusher(mMgdScript, mServices, false, PqeTechniques.ONLY_DER).transform(quantified);
-		return pushed;
-	}
+	public C strongestPostconditionCall(final P callPred, final R localVarAssignments, final R globalVarAssignments,
+			final R oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure) {
 
-	public Term strongestPostconditionCall(final IPredicate callPred,
-			final UnmodifiableTransFormula localVarAssignments, final UnmodifiableTransFormula globalVarAssignments,
-			final UnmodifiableTransFormula oldVarAssignments,
-			final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure) {
+		final CallReturnPyramideInstanceProvider crpip = new CallReturnPyramideInstanceProvider(mMgdScript,
+				Collections.emptySet(), localVarAssignments.getAssignedVars(), modifiableGlobalsOfCalledProcedure,
+				Instance.AFTER_CALL);
+		final C callPredTerm = renamePredicateToInstance(callPred, Instance.BEFORE_CALL, crpip);
+		final C localVarAssignmentsTerm = renameRelationToInstances(localVarAssignments, Instance.BEFORE_CALL,
+				Instance.AFTER_CALL, crpip);
+		final C oldVarsAssignmentTerm = renameRelationToInstances(oldVarAssignments, Instance.BEFORE_CALL,
+				Instance.AFTER_CALL, crpip);
+		final C globalVarsAssignmentTerm = renameRelationToInstances(globalVarAssignments, Instance.AFTER_CALL,
+				Instance.AFTER_CALL, crpip);
 
-		final CallReturnPyramideInstanceProvider crpip =
-				new CallReturnPyramideInstanceProvider(mMgdScript, Collections.emptySet(),
-						localVarAssignments.getAssignedVars(), modifiableGlobalsOfCalledProcedure, Instance.AFTER_CALL);
-		final Term callPredTerm = renamePredicateToInstance(callPred, Instance.BEFORE_CALL, crpip);
-		final Term localVarAssignmentsTerm =
-				renameTransFormulaToInstances(localVarAssignments, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
-		final Term oldVarsAssignmentTerm =
-				renameTransFormulaToInstances(oldVarAssignments, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
-		final Term globalVarsAssignmentTerm =
-				renameTransFormulaToInstances(globalVarAssignments, Instance.AFTER_CALL, Instance.AFTER_CALL, crpip);
-
-		final Term result = Util.and(mScript, localVarAssignmentsTerm, oldVarsAssignmentTerm, globalVarsAssignmentTerm,
-				callPredTerm);
-		return constructQuantifiedFormula(Script.EXISTS, crpip.getFreshTermVariables(), result);
+		final C result = mOperationProvider.constructConjunction(
+				toList(localVarAssignmentsTerm, oldVarsAssignmentTerm, globalVarsAssignmentTerm, callPredTerm));
+		return mOperationProvider.projectExistentially(crpip.getFreshTermVariables(), result);
 	}
 
 	/**
-	 * Special post operator that we use to obtain a modular (interprocedural) sequence of inductive interpolants.
+	 * Special post operator that we use to obtain a modular (interprocedural)
+	 * sequence of inductive interpolants.
 	 */
-	public Term modularPostconditionCall(final IPredicate callPred, final UnmodifiableTransFormula globalVarAssignments,
+	public C modularPostconditionCall(final P callPred, final R globalVarAssignments,
 			final Set<IProgramNonOldVar> modifiableGlobalsOfCalledProcedure) {
 
-		final CallReturnPyramideInstanceProvider crpip =
-				new CallReturnPyramideInstanceProvider(mMgdScript, Collections.emptySet(), Collections.emptySet(),
-						modifiableGlobalsOfCalledProcedure, Instance.AFTER_CALL);
-		final Term callPredTerm = renamePredicateToInstance(callPred, Instance.BEFORE_CALL, crpip);
-		final Term globalVarsAssignmentTerm =
-				renameTransFormulaToInstances(globalVarAssignments, Instance.AFTER_CALL, Instance.AFTER_CALL, crpip);
+		final CallReturnPyramideInstanceProvider crpip = new CallReturnPyramideInstanceProvider(mMgdScript,
+				Collections.emptySet(), Collections.emptySet(), modifiableGlobalsOfCalledProcedure,
+				Instance.AFTER_CALL);
+		final C callPredTerm = renamePredicateToInstance(callPred, Instance.BEFORE_CALL, crpip);
+		final C globalVarsAssignmentTerm = renameRelationToInstances(globalVarAssignments, Instance.AFTER_CALL,
+				Instance.AFTER_CALL, crpip);
 
-		final Term result = Util.and(mScript, globalVarsAssignmentTerm, callPredTerm);
-		return constructQuantifiedFormula(Script.EXISTS, crpip.getFreshTermVariables(), result);
+		final C result = mOperationProvider.constructConjunction(toList(globalVarsAssignmentTerm, callPredTerm));
+		return mOperationProvider.projectExistentially(crpip.getFreshTermVariables(), result);
 	}
 
-	public Term strongestPostconditionReturn(final IPredicate returnPred, final IPredicate callPred,
-			final UnmodifiableTransFormula returnTF, final UnmodifiableTransFormula callTF,
-			final UnmodifiableTransFormula oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobals) {
+	public C strongestPostconditionReturn(final P returnPred, final P callPred, final R returnTF, final R callTF,
+			final R oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobals) {
 
 		final CallReturnPyramideInstanceProvider crpip = new CallReturnPyramideInstanceProvider(mMgdScript,
 				returnTF.getAssignedVars(), callTF.getAssignedVars(), modifiableGlobals, Instance.AFTER_RETURN);
-		final Term callPredTerm = renamePredicateToInstance(callPred, Instance.BEFORE_CALL, crpip);
-		final Term returnPredTerm = renamePredicateToInstance(returnPred, Instance.BEFORE_RETURN, crpip);
-		final Term callTfTerm = renameTransFormulaToInstances(callTF, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
-		final Term oldVarsAssignmentTerm =
-				renameTransFormulaToInstances(oldVarAssignments, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
-		final Term returnTfTerm =
-				renameTransFormulaToInstances(returnTF, Instance.BEFORE_RETURN, Instance.AFTER_RETURN, crpip);
+		final C callPredTerm = renamePredicateToInstance(callPred, Instance.BEFORE_CALL, crpip);
+		final C returnPredTerm = renamePredicateToInstance(returnPred, Instance.BEFORE_RETURN, crpip);
+		final C callTfTerm = renameRelationToInstances(callTF, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
+		final C oldVarsAssignmentTerm = renameRelationToInstances(oldVarAssignments, Instance.BEFORE_CALL,
+				Instance.AFTER_CALL, crpip);
+		final C returnTfTerm = renameRelationToInstances(returnTF, Instance.BEFORE_RETURN, Instance.AFTER_RETURN,
+				crpip);
 
-		final Term result =
-				Util.and(mScript, callTfTerm, oldVarsAssignmentTerm, returnTfTerm, callPredTerm, returnPredTerm);
-		return constructQuantifiedFormula(Script.EXISTS, crpip.getFreshTermVariables(), result);
+		final C result = mOperationProvider.constructConjunction(
+				toList(callTfTerm, oldVarsAssignmentTerm, returnTfTerm, callPredTerm, returnPredTerm));
+		return mOperationProvider.projectExistentially(crpip.getFreshTermVariables(), result);
 	}
 
-	public Term weakestPrecondition(final IPredicate p, final UnmodifiableTransFormula tf) {
-		if (SmtUtils.isTrue(p.getFormula())) {
-			return p.getFormula();
+	public C weakestPrecondition(final P p, final R tf) {
+		final C constraint = mOperationProvider.getConstraint(p);
+		if (mOperationProvider.isConstaintValid(constraint)) {
+			return constraint;
 		}
-		final Set<TermVariable> varsToQuantify = new HashSet<>();
-		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction =
-				new IValueConstruction<IProgramVar, TermVariable>() {
+		final Set<TermVariable> varsToProject = new HashSet<>();
+		final IValueConstruction<IProgramVar, TermVariable> substituentConstruction = new IValueConstruction<IProgramVar, TermVariable>() {
 
-					@Override
-					public TermVariable constructValue(final IProgramVar pv) {
-						final TermVariable result = constructFreshTermVariable(mMgdScript, pv);
-						varsToQuantify.add(result);
-						return result;
-					}
+			@Override
+			public TermVariable constructValue(final IProgramVar pv) {
+				final TermVariable result = constructFreshTermVariable(mMgdScript, pv);
+				varsToProject.add(result);
+				return result;
+			}
 
-				};
-		final ConstructionCache<IProgramVar, TermVariable> termVariablesForSuccessor =
-				new ConstructionCache<>(substituentConstruction);
+		};
+		final ConstructionCache<IProgramVar, TermVariable> termVariablesForSuccessor = new ConstructionCache<>(
+				substituentConstruction);
 
-		final Map<Term, Term> substitutionForTransFormula = new HashMap<>();
+		final Map<Term, Term> substitutionForRelation = new HashMap<>();
 		final Map<Term, Term> substitutionForSuccessor = new HashMap<>();
 
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
@@ -242,7 +218,7 @@ public class PredicateTransformer {
 				// considering outVars
 			} else {
 				final TermVariable substituent = termVariablesForSuccessor.getOrConstruct(pv);
-				substitutionForTransFormula.put(entry.getValue(), substituent);
+				substitutionForRelation.put(entry.getValue(), substituent);
 				if (p.getVars().contains(pv)) {
 					substitutionForSuccessor.put(pv.getTermVariable(), substituent);
 				}
@@ -250,87 +226,92 @@ public class PredicateTransformer {
 		}
 
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-			substitutionForTransFormula.put(entry.getValue(), entry.getKey().getTermVariable());
+			substitutionForRelation.put(entry.getValue(), entry.getKey().getTermVariable());
 			if (!tf.getOutVars().containsKey(entry.getKey()) && p.getVars().contains(entry.getKey())) {
 				final TermVariable substituent = termVariablesForSuccessor.getOrConstruct(entry.getKey());
 				substitutionForSuccessor.put(entry.getKey().getTermVariable(), substituent);
 			}
 		}
 
-		final Term renamedTransFormula =
-				new SubstitutionWithLocalSimplification(mMgdScript, substitutionForTransFormula)
-						.transform(tf.getFormula());
-		final Term renamedSuccessor =
-				new SubstitutionWithLocalSimplification(mMgdScript, substitutionForSuccessor).transform(p.getFormula());
+		final C renamedRelationConstraint = mOperationProvider.renameVariables(substitutionForRelation,
+				mOperationProvider.getConstaintFromTransitionRelation(tf));
+		final C renamedPredecessor = mOperationProvider.renameVariables(substitutionForSuccessor, constraint);
 
-		final Term result = Util.or(mScript, SmtUtils.not(mScript, renamedTransFormula), renamedSuccessor);
+		final C disjunction = mOperationProvider.constructDisjunction(
+				toList(mOperationProvider.constructNegation(renamedRelationConstraint), renamedPredecessor));
+
 		// Add aux vars to varsToQuantify
-		varsToQuantify.addAll(tf.getAuxVars());
-		return constructQuantifiedFormula(Script.FORALL, varsToQuantify, result);
+		varsToProject.addAll(tf.getAuxVars());
+		return mOperationProvider.projectUniversally(varsToProject, disjunction);
 	}
 
-	public Term weakestPreconditionCall(final IPredicate callSucc, final UnmodifiableTransFormula callTF,
-			final UnmodifiableTransFormula globalVarsAssignments, final UnmodifiableTransFormula oldVarAssignments,
-			final Set<IProgramNonOldVar> modifiableGlobals) {
+	public C weakestPreconditionCall(final P callSucc, final R callTF, final R globalVarsAssignments,
+			final R oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobals) {
 
 		final CallReturnPyramideInstanceProvider crpip = new CallReturnPyramideInstanceProvider(mMgdScript,
 				Collections.emptySet(), callTF.getAssignedVars(), modifiableGlobals, Instance.BEFORE_CALL);
-		final Term callSuccTerm = renamePredicateToInstance(callSucc, Instance.AFTER_CALL, crpip);
-		final Term callTfTerm = renameTransFormulaToInstances(callTF, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
-		final Term oldVarsAssignmentTerm =
-				renameTransFormulaToInstances(oldVarAssignments, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
-		final Term globalVarsAssignmentTerm =
-				renameTransFormulaToInstances(globalVarsAssignments, Instance.AFTER_CALL, Instance.AFTER_CALL, crpip);
+		final C callSuccTerm = renamePredicateToInstance(callSucc, Instance.AFTER_CALL, crpip);
+		final C callTfTerm = renameRelationToInstances(callTF, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
+		final C oldVarsAssignmentTerm = renameRelationToInstances(oldVarAssignments, Instance.BEFORE_CALL,
+				Instance.AFTER_CALL, crpip);
+		final C globalVarsAssignmentTerm = renameRelationToInstances(globalVarsAssignments, Instance.AFTER_CALL,
+				Instance.AFTER_CALL, crpip);
 
-		final Term result =
-				Util.or(mScript, SmtUtils.not(mScript, callTfTerm), SmtUtils.not(mScript, oldVarsAssignmentTerm),
-						SmtUtils.not(mScript, globalVarsAssignmentTerm), callSuccTerm);
-		return constructQuantifiedFormula(Script.FORALL, crpip.getFreshTermVariables(), result);
+		final C result = mOperationProvider
+				.constructDisjunction(toList(mOperationProvider.constructNegation(callTfTerm),
+						mOperationProvider.constructNegation(oldVarsAssignmentTerm),
+						mOperationProvider.constructNegation(globalVarsAssignmentTerm), callSuccTerm));
+		return mOperationProvider.projectUniversally(crpip.getFreshTermVariables(), result);
 	}
 
-	public Term weakestPreconditionReturn(final IPredicate returnSucc, final IPredicate callPred,
-			final UnmodifiableTransFormula returnTF, final UnmodifiableTransFormula callTF,
-			final UnmodifiableTransFormula oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobals) {
+	public C weakestPreconditionReturn(final P returnSucc, final P callPred, final R returnTF, final R callTF,
+			final R oldVarAssignments, final Set<IProgramNonOldVar> modifiableGlobals) {
 
 		final CallReturnPyramideInstanceProvider crpip = new CallReturnPyramideInstanceProvider(mMgdScript,
 				returnTF.getAssignedVars(), callTF.getAssignedVars(), modifiableGlobals, Instance.BEFORE_RETURN);
-		final Term callPredTerm = renamePredicateToInstance(callPred, Instance.BEFORE_CALL, crpip);
-		final Term returnSuccTerm = renamePredicateToInstance(returnSucc, Instance.AFTER_RETURN, crpip);
-		final Term callTfTerm = renameTransFormulaToInstances(callTF, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
-		final Term oldVarsAssignmentTerm =
-				renameTransFormulaToInstances(oldVarAssignments, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
-		final Term returnTfTerm =
-				renameTransFormulaToInstances(returnTF, Instance.BEFORE_RETURN, Instance.AFTER_RETURN, crpip);
+		final C callPredTerm = renamePredicateToInstance(callPred, Instance.BEFORE_CALL, crpip);
+		final C returnSuccTerm = renamePredicateToInstance(returnSucc, Instance.AFTER_RETURN, crpip);
+		final C callTfTerm = renameRelationToInstances(callTF, Instance.BEFORE_CALL, Instance.AFTER_CALL, crpip);
+		final C oldVarsAssignmentTerm = renameRelationToInstances(oldVarAssignments, Instance.BEFORE_CALL,
+				Instance.AFTER_CALL, crpip);
+		final C returnTfTerm = renameRelationToInstances(returnTF, Instance.BEFORE_RETURN, Instance.AFTER_RETURN,
+				crpip);
 
-		final Term result =
-				Util.or(mScript, SmtUtils.not(mScript, callTfTerm), SmtUtils.not(mScript, oldVarsAssignmentTerm),
-						SmtUtils.not(mScript, returnTfTerm), SmtUtils.not(mScript, callPredTerm), returnSuccTerm);
-		return constructQuantifiedFormula(Script.FORALL, crpip.getFreshTermVariables(), result);
+		final C result = mOperationProvider
+				.constructDisjunction(toList(mOperationProvider.constructNegation(callTfTerm),
+						mOperationProvider.constructNegation(oldVarsAssignmentTerm),
+						mOperationProvider.constructNegation(returnTfTerm),
+						mOperationProvider.constructNegation(callPredTerm), returnSuccTerm));
+		return mOperationProvider.projectUniversally(crpip.getFreshTermVariables(), result);
 	}
 
-	private Term renamePredicateToInstance(final IPredicate p, final Instance instance,
+	private C renamePredicateToInstance(final P p, final Instance instance,
 			final CallReturnPyramideInstanceProvider crpip) {
 		final Map<Term, Term> substitution = new HashMap<>();
 		for (final IProgramVar pv : p.getVars()) {
 			substitution.put(pv.getTermVariable(), crpip.getInstance(pv, instance));
 		}
-		final Term result = new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(p.getFormula());
+		final C result = mOperationProvider.renameVariables(substitution, mOperationProvider.getConstraint(p));
 		return result;
 	}
 
-	private Term renameTransFormulaToInstances(final TransFormula tf, final Instance preInstance,
-			final Instance succInstance, final CallReturnPyramideInstanceProvider crpip) {
+	private C renameRelationToInstances(final R tf, final Instance preInstance, final Instance succInstance,
+			final CallReturnPyramideInstanceProvider crpip) {
 
-		final Map<Term, Term> substitution = new HashMap<>();
+		final Map<Term, Term> substitutionMapping = new HashMap<>();
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-			substitution.put(entry.getValue(), crpip.getInstance(entry.getKey(), succInstance));
+			substitutionMapping.put(entry.getValue(), crpip.getInstance(entry.getKey(), succInstance));
 		}
 		for (final Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-			substitution.put(entry.getValue(), crpip.getInstance(entry.getKey(), preInstance));
+			substitutionMapping.put(entry.getValue(), crpip.getInstance(entry.getKey(), preInstance));
 		}
-		final Term result =
-				new SubstitutionWithLocalSimplification(mMgdScript, substitution).transform(tf.getFormula());
+		final C result = mOperationProvider.renameVariables(substitutionMapping,
+				mOperationProvider.getConstaintFromTransitionRelation(tf));
 		return result;
 	}
 
+	@SafeVarargs
+	private static <E> List<E> toList(final E... elems) {
+		return Arrays.asList(elems);
+	}
 }

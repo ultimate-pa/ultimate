@@ -37,9 +37,11 @@ package de.uni_freiburg.informatik.ultimate.cdt.parser;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.parser.c.GCCParserExtensionConfiguration;
@@ -112,17 +114,12 @@ public class CDTParser implements ISource {
 	}
 
 	@Override
-	public boolean parseable(final File[] files) {
-		for (final File f : files) {
-			if (!parseable(f)) {
-				return false;
-			}
-		}
-		return true;
+	public File[] parseable(final File[] files) {
+		final List<File> rtrList = Arrays.stream(files).filter(this::parseable).collect(Collectors.toList());
+		return rtrList.toArray(new File[rtrList.size()]);
 	}
 
-	@Override
-	public boolean parseable(final File file) {
+	private boolean parseable(final File file) {
 		for (final String s : getFileTypes()) {
 			if (file.getName().endsWith(s)) {
 				return true;
@@ -133,11 +130,13 @@ public class CDTParser implements ISource {
 
 	@Override
 	public IElement parseAST(final File[] files) throws Exception {
-		return null;
+		if (files.length == 1) {
+			return parseAST(files[0]);
+		}
+		throw new UnsupportedOperationException("Cannot parse multiple C files");
 	}
 
-	@Override
-	public IElement parseAST(final File file) throws Exception {
+	private IElement parseAST(final File file) throws Exception {
 
 		final IParserLogService log = new DefaultLogService();
 
@@ -204,19 +203,13 @@ public class CDTParser implements ISource {
 	}
 
 	@Override
-	public void setPreludeFile(final File prelude) {
-		// not required
-	}
-
-	@Override
 	public IPreferenceInitializer getPreferences() {
 		return new PreferenceInitializer();
 	}
 
 	@Override
 	public void setToolchainStorage(final IToolchainStorage services) {
-		// TODO Auto-generated method stub
-
+		// not necessary
 	}
 
 	@Override
@@ -228,7 +221,6 @@ public class CDTParser implements ISource {
 
 	@Override
 	public void finish() {
-		// TODO Auto-generated method stub
-
+		// not necessary
 	}
 }
