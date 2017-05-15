@@ -28,15 +28,18 @@ package de.uni_freiburg.informatik.ultimate.core.coreplugin;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
-
-import org.eclipse.core.runtime.preferences.InstanceScope;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.ToolchainWalker.CompleteToolchainData;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.StoreObjectException;
@@ -141,7 +144,7 @@ public class ToolchainManager {
 		private final Benchmark mBenchmark;
 
 		private IToolchainData<RunDefinition> mToolchainData;
-		private final Map<File, ISource> mParsers;
+		private final Map<File[], ISource> mFiles2Parser;
 		private File[] mInputFiles;
 		private ToolchainWalker mToolchainWalker;
 
@@ -149,7 +152,7 @@ public class ToolchainManager {
 			mId = id;
 			mModelManager = modelManager;
 			mBenchmark = new Benchmark();
-			mParsers = new LinkedHashMap<>();
+			mFiles2Parser = new LinkedHashMap<>();
 		}
 
 		/*************************** IToolchain<RunDefinition> Implementation ****************************/
@@ -180,7 +183,12 @@ public class ToolchainManager {
 
 		@Override
 		public void setInputFiles(final File[] files) {
-			mInputFiles = files;
+			if (files == null || files.length == 0) {
+				mInputFiles = new File[0];
+			} else {
+				final List<File> fileList = Arrays.stream(files).filter(a -> a != null).collect(Collectors.toList());
+				mInputFiles = fileList.toArray(new File[fileList.size()]);
+			}
 		}
 
 		@Override
@@ -222,35 +230,68 @@ public class ToolchainManager {
 				return false;
 			}
 
-			for (final File inputFile : mInputFiles) {
-				final ISource parser = selectParser(inputFile);
-
-				if (parser == null) {
-					mLogger.warn(getLogPrefix() + ": No parsers available for " + inputFile.getAbsolutePath());
-					return false;
+			// compute which parser can parse which files
+			final Set<ISource> parsers = loadParsers();
+			final Set<File> alreadyParsable = new HashSet<>();
+			for (final ISource parser : parsers) {
+				final File[] parseableFiles = parser.parseable(mInputFiles);
+				assert parseableFiles != null;
+				if (parseableFiles.length > 0) {
+					mFiles2Parser.put(parseableFiles, parser);
+					for (final File parseableFile : parseableFiles) {
+						if (!alreadyParsable.add(parseableFile)) {
+							mLogger.warn("Multiple parsers will parse " + parseableFile.getAbsolutePath());
+						}
+					}
 				}
-
-				// TODO: remove preludes from parser interface
-				parser.setPreludeFile(null);
-				mParsers.put(inputFile, parser);
 			}
-			mLogger.info(getLogPrefix() + ": Parser(s) successfully initiated...");
+
+			// abort if we have no parsers
+			if (mFiles2Parser.isEmpty()) {
+				mLogger.warn(getLogPrefix() + ": No parsers available for " + getStringFromFiles(mInputFiles));
+				return false;
+			}
+
+			final Set<File> allFiles = Arrays.stream(mInputFiles).collect(Collectors.toSet());
+			final Set<File> selectedFiles = mFiles2Parser.entrySet().stream().flatMap(a -> Arrays.stream(a.getKey()))
+					.collect(Collectors.toSet());
+			if (!selectedFiles.containsAll(allFiles)) {
+				// some files cannot be parsed
+				final Set<File> notParseable = new HashSet<>(allFiles);
+				notParseable.removeAll(selectedFiles);
+				mLogger.warn(getLogPrefix() + ": No parsers available for " + getStringFromFiles(notParseable));
+				return false;
+			}
+
+			mLogger.info(getLogPrefix() + ": Parser(s) successfully initialized");
 			return true;
+		}
+
+		private String getStringFromFiles(final File[] files) {
+			return getStringFromFiles(Arrays.stream(files));
+		}
+
+		private String getStringFromFiles(final Collection<File> files) {
+			return getStringFromFiles(files.stream());
+		}
+
+		private String getStringFromFiles(final Stream<File> fileStream) {
+			return fileStream.map(File::getAbsolutePath).collect(Collectors.joining(","));
 		}
 
 		@Override
 		public void runParsers() throws Exception {
-			for (final Entry<File, ISource> entry : mParsers.entrySet()) {
+			for (final Entry<File[], ISource> entry : mFiles2Parser.entrySet()) {
 				final ISource parser = entry.getValue();
-				final File input = entry.getKey();
+				final File[] input = entry.getKey();
 
 				// note that runParser has to happen before parser.getOutputDefinition() !
 				@SuppressWarnings("squid:S1941")
 				final IElement element = runParser(input, parser);
 				final ModelType t = parser.getOutputDefinition();
 				if (t == null) {
-					final String errorMsg = parser.getPluginName() + " returned invalid output definition for file "
-							+ input.getAbsolutePath();
+					final String errorMsg = parser.getPluginName() + " returned invalid output definition for file(s) "
+							+ getStringFromFiles(input);
 					mLogger.fatal(getLogPrefix() + ": " + errorMsg + ", aborting...");
 					throw new IllegalArgumentException(errorMsg);
 				}
@@ -276,7 +317,7 @@ public class ToolchainManager {
 					throw new IllegalStateException("There is no model present.");
 				}
 
-				final Collection<ISource> parsers = mParsers.values();
+				final Collection<ISource> parsers = mFiles2Parser.values();
 				final CompleteToolchainData data = new CompleteToolchainData(mToolchainData,
 						parsers.toArray(new ISource[parsers.size()]), mCurrentController);
 				data.getController().prerun(mToolchainData);
@@ -371,7 +412,7 @@ public class ToolchainManager {
 			}
 		}
 
-		private IElement runParser(final File file, final ISource parser) throws Exception {
+		private IElement runParser(final File[] input, final ISource parser) throws Exception {
 			final boolean useBenchmark = new RcpPreferenceProvider(Activator.PLUGIN_ID)
 					.getBoolean(CorePreferenceInitializer.LABEL_BENCHMARK);
 			IElement root = null;
@@ -381,14 +422,21 @@ public class ToolchainManager {
 
 			// parse the files to Graph
 			try {
-				mLogger.info(getLogPrefix() + ": Parsing single file: " + file.getAbsolutePath());
+
 				if (useBenchmark) {
 					mBenchmark.start(parser.getPluginName());
 				}
-				root = parser.parseAST(file);
+
+				if (input.length == 1) {
+					mLogger.info(getLogPrefix() + ": Parsing single file: " + input[0].getAbsolutePath());
+				} else {
+					mLogger.info(getLogPrefix() + ": Parsing files: " + getStringFromFiles(input));
+				}
+
 				if (useBenchmark) {
 					mBenchmark.stop(parser.getPluginName());
 				}
+				root = parser.parseAST(input);
 
 			} catch (final Exception e) {
 				mLogger.fatal(getLogPrefix() + ": Exception during parsing: ", e);
@@ -413,53 +461,27 @@ public class ToolchainManager {
 			}
 		}
 
-		private ISource selectParser(final File file) {
-			// how many parsers does mSourcePlugins provide?
-			final List<ISource> usableParsers = new ArrayList<>();
+		private Set<ISource> loadParsers() {
 			final List<String> parserIds = mPluginFactory.getPluginClassNames(ISource.class);
 
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug(getLogPrefix() + ": We have " + parserIds.size() + " parsers present.");
 			}
 
-			// how many of these parsers can be used on our input file?
+			final Set<ISource> rtr = new HashSet<>();
 			for (final String parserId : parserIds) {
-				final ISource p = mPluginFactory.createTool(parserId);
-				if (p == null) {
+				final ISource parser = mPluginFactory.createTool(parserId);
+				if (parser == null) {
 					if (mLogger.isDebugEnabled()) {
 						mLogger.debug(getLogPrefix() + ": Parser with ID " + parserId
 								+ " is registered but cannot be created");
 					}
 					continue;
 				}
-
-				if (!p.parseable(file)) {
-					if (mLogger.isDebugEnabled()) {
-						mLogger.debug(getLogPrefix() + ": Parser " + p.getPluginName() + " is not usable for "
-								+ file.getAbsolutePath());
-					}
-					continue;
-				}
-
-				mLogger.info(
-						getLogPrefix() + ": Parser " + p.getPluginName() + " is usable for " + file.getAbsolutePath());
-				usableParsers.add(p);
+				rtr.add(parser);
 			}
 
-			final boolean showusableparser = InstanceScope.INSTANCE.getNode(Activator.PLUGIN_ID).getBoolean(
-					CorePreferenceInitializer.LABEL_SHOWUSABLEPARSER,
-					CorePreferenceInitializer.VALUE_SHOWUSABLEPARSER_DEFAULT);
-
-			// if only parser can be used, choose it!
-			if (usableParsers.size() == 1 && !showusableparser) {
-				return usableParsers.get(0);
-			} else if (usableParsers.isEmpty()) {
-				return null;
-			} else {
-				// otherwise use parser choosing mechanism provided by
-				// Controller
-				return mCurrentController.selectParser(usableParsers);
-			}
+			return rtr;
 		}
 
 		@Override

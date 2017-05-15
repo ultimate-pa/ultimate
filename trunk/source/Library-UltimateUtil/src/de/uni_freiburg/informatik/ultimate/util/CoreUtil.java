@@ -163,6 +163,27 @@ public class CoreUtil {
 	}
 
 	/**
+	 * Get the extension of a file, i.e., the part of the filename after the last '.'. If there is no extension, return
+	 * an empty string.
+	 *
+	 * @param file
+	 *            The file for which the extension should be obtained.
+	 * @return The extension.
+	 */
+	public static String getFileExtension(final File file) {
+		assert file != null;
+		assert file.isFile();
+		assert !file.isDirectory();
+		final String filename = file.getName();
+
+		final int i = filename.lastIndexOf('.');
+		if (i > 0) {
+			return filename.substring(i + 1);
+		}
+		return "";
+	}
+
+	/**
 	 * Returns all elements of a collection that match the check defined by predicate.
 	 *
 	 * @param collection

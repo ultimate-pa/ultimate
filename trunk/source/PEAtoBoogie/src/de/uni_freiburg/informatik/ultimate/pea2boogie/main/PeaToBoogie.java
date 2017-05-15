@@ -2,22 +2,22 @@
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE PEAtoBoogie plug-in.
- * 
+ *
  * The ULTIMATE PEAtoBoogie plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE PEAtoBoogie plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE PEAtoBoogie plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE PEAtoBoogie plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -29,8 +29,10 @@ package de.uni_freiburg.informatik.ultimate.pea2boogie.main;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -50,6 +52,7 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public void init() {
+		// not necessary
 	}
 
 	@Override
@@ -63,22 +66,24 @@ public class PeaToBoogie implements ISource {
 	}
 
 	@Override
-	public boolean parseable(final File[] files) {
-		return false;
+	public File[] parseable(final File[] files) {
+		final List<File> rtrList = Arrays.stream(files).filter(this::parseable).collect(Collectors.toList());
+		return rtrList.toArray(new File[rtrList.size()]);
 	}
 
-	@Override
 	public boolean parseable(final File file) {
 		return file.getName().endsWith(".req");
 	}
 
 	@Override
 	public IElement parseAST(final File[] files) throws Exception {
-		throw new UnsupportedOperationException();
+		if (files.length == 1) {
+			return parseAST(files[0]);
+		}
+		throw new UnsupportedOperationException("Cannot parse more than one file");
 	}
 
-	@Override
-	public IElement parseAST(final File file) throws Exception {
+	private IElement parseAST(final File file) throws Exception {
 		final Translator translator = new Translator(mLogger);
 		final String inputPath = file.getAbsolutePath();
 		mFileNames = new ArrayList<>();
@@ -112,19 +117,13 @@ public class PeaToBoogie implements ISource {
 	}
 
 	@Override
-	public void setPreludeFile(final File prelude) {
-
-	}
-
-	@Override
 	public IPreferenceInitializer getPreferences() {
 		return null;
 	}
 
 	@Override
 	public void setToolchainStorage(final IToolchainStorage storage) {
-		// TODO Auto-generated method stub
-
+		// not necessary
 	}
 
 	@Override
@@ -134,6 +133,6 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public void finish() {
-
+		// not necessary
 	}
 }
