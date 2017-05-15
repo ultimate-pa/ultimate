@@ -226,6 +226,10 @@ public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 		this.mInitCcchild = initCcchild;
 	}
 
+	public NODEID getNode() {
+		return mNodeIdentifier;
+	}
+
 	public String toString() {
 
 		final StringBuilder sb = new StringBuilder();
