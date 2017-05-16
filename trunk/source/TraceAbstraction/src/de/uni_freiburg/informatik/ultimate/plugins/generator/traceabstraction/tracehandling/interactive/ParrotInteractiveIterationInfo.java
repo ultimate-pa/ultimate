@@ -4,29 +4,36 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 
 public class ParrotInteractiveIterationInfo {
 	private RefinementStrategy mFallbackStrategy;
-	private int mNextInteractiveIteration;
+	// private int mNextInteractiveIteration;
 
-	public ParrotInteractiveIterationInfo(final RefinementStrategy fallbackTrack, final int nextInteractiveIteration) {
-		setData(fallbackTrack, nextInteractiveIteration);
-	}
+	/*
+	 * public ParrotInteractiveIterationInfo(final RefinementStrategy fallbackTrack, final int nextInteractiveIteration)
+	 * { setData(fallbackTrack, nextInteractiveIteration); }
+	 */
 
-	public ParrotInteractiveIterationInfo() {
+	public ParrotInteractiveIterationInfo(final RefinementStrategy fallbackStrategy) {
+		setFallbackStrategy(fallbackStrategy);
 	}
 
 	public RefinementStrategy getFallbackStrategy() {
 		return mFallbackStrategy;
 	}
 
-	public int getNextInteractiveIteration() {
-		return mNextInteractiveIteration;
-	}
-
-	private void setData(final RefinementStrategy fallbackTrack, final int nextInteractiveIteration) {
-		mFallbackStrategy = fallbackTrack;
-		mNextInteractiveIteration = nextInteractiveIteration;
-	}
-
 	public void setFrom(final ParrotInteractiveIterationInfo other) {
-		setData(other.getFallbackStrategy(), other.getNextInteractiveIteration());
+		// setData(other.getFallbackStrategy(), other.getNextInteractiveIteration());
+		setFallbackStrategy(other.getFallbackStrategy());
 	}
+
+	public void setFallbackStrategy(final RefinementStrategy fallbackStrategy) {
+		mFallbackStrategy = fallbackStrategy;
+	}
+
+	/*
+	 * public int getNextInteractiveIteration() { return mNextInteractiveIteration; }
+	 * 
+	 * private void setData(final RefinementStrategy fallbackTrack, final int nextInteractiveIteration) {
+	 * mFallbackStrategy = fallbackTrack; mNextInteractiveIteration = nextInteractiveIteration; }
+	 * 
+	 * public void setNextInteractiveIteration(final int iteration) { mNextInteractiveIteration = iteration; }
+	 */
 }

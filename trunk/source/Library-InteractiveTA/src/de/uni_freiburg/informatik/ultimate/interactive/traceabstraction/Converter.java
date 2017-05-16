@@ -28,13 +28,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.AbstractConverter;
 import de.uni_freiburg.informatik.ultimate.interactive.conversion.ConverterRegistry;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos;
-import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InterpolantsPrePost;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.LivePreferences;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.NestingRelation;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.PredicateDoubleDecker;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Result;
-import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.TAPreferences.Artifact;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.TAPreferences.Concurrency;
 import de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.TAPreferences.Format;
@@ -60,11 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.MultiTrackTraceAbstractionRefinementStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.MultiTrackTraceAbstractionRefinementStrategy.Track;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive.ParrotInteractiveIterationInfo;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
@@ -98,14 +92,15 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		converterRegistry.registerAB(TraceAbstractionProtos.Question.class, Boolean.class,
 				TraceAbstractionProtos.Question::getAnswer);
 
-		converterRegistry.registerAB(TraceAbstractionProtos.Tracks.class,
-				MultiTrackTraceAbstractionRefinementStrategy.Track[].class, Converter::toTracks);
-		converterRegistry.registerBA(TraceAbstractionProtos.Tracks.class,
-				MultiTrackTraceAbstractionRefinementStrategy.Track[].class, Converter::fromTracks);
-		converterRegistry.registerAB(InteractiveIterationInfo.class, ParrotInteractiveIterationInfo.class,
-				Converter::toIterationInfo);
-		converterRegistry.registerBA(InteractiveIterationInfo.class, ParrotInteractiveIterationInfo.class,
-				Converter::fromIterationInfo);
+		/*
+		 * converterRegistry.registerAB(TraceAbstractionProtos.Tracks.class,
+		 * MultiTrackTraceAbstractionRefinementStrategy.Track[].class, Converter::toTracks);
+		 * converterRegistry.registerBA(TraceAbstractionProtos.Tracks.class,
+		 * MultiTrackTraceAbstractionRefinementStrategy.Track[].class, Converter::fromTracks);
+		 * converterRegistry.registerAB(InteractiveIterationInfo.class, ParrotInteractiveIterationInfo.class,
+		 * Converter::toIterationInfo); converterRegistry.registerBA(InteractiveIterationInfo.class,
+		 * ParrotInteractiveIterationInfo.class, Converter::fromIterationInfo);
+		 */
 
 		converterRegistry.registerBA(TraceAbstractionProtos.IterationInfo.class, IterationInfo.Info.class,
 				Converter::fromIterationInfo);
@@ -239,28 +234,24 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		return PredicateDoubleDecker.newBuilder().setUp(up).setDown(down).build();
 	}
 
-	private static InteractiveIterationInfo fromIterationInfo(final ParrotInteractiveIterationInfo itInfo) {
-		return InteractiveIterationInfo.newBuilder().setNextInteractiveIteration(itInfo.getNextInteractiveIteration())
-				.setFallback(convertTo(Strategy.class, itInfo.getFallbackStrategy())).build();
-	}
-
-	private static ParrotInteractiveIterationInfo toIterationInfo(final InteractiveIterationInfo itInfo) {
-		return new ParrotInteractiveIterationInfo(convertTo(RefinementStrategy.class, itInfo.getFallback()),
-				itInfo.getNextInteractiveIteration());
-	}
-
-	private static TraceAbstractionProtos.Tracks
-			fromTracks(final MultiTrackTraceAbstractionRefinementStrategy.Track[] tracks) {
-		final TraceAbstractionProtos.Tracks.Builder builder = TraceAbstractionProtos.Tracks.newBuilder();
-		Arrays.stream(tracks).map(convertToEnum(TraceAbstractionProtos.Track.class)).forEach(builder::addTrack);
-		return builder.build();
-	}
-
-	private static MultiTrackTraceAbstractionRefinementStrategy.Track[]
-			toTracks(final TraceAbstractionProtos.Tracks tracks) {
-		return tracks.getTrackList().stream()
-				.map(convertToEnum(MultiTrackTraceAbstractionRefinementStrategy.Track.class)).toArray(Track[]::new);
-	}
+	/*
+	 * private static InteractiveIterationInfo fromIterationInfo(final ParrotInteractiveIterationInfo itInfo) { return
+	 * InteractiveIterationInfo.newBuilder() .setFallback(convertTo(Strategy.class,
+	 * itInfo.getFallbackStrategy())).build(); }
+	 * 
+	 * private static ParrotInteractiveIterationInfo toIterationInfo(final InteractiveIterationInfo itInfo) { return new
+	 * ParrotInteractiveIterationInfo(convertTo(RefinementStrategy.class, itInfo.getFallback())); }
+	 * 
+	 * private static TraceAbstractionProtos.Tracks fromTracks(final
+	 * MultiTrackTraceAbstractionRefinementStrategy.Track[] tracks) { final TraceAbstractionProtos.Tracks.Builder
+	 * builder = TraceAbstractionProtos.Tracks.newBuilder();
+	 * Arrays.stream(tracks).map(convertToEnum(TraceAbstractionProtos.Track.class)).forEach(builder::addTrack); return
+	 * builder.build(); }
+	 * 
+	 * private static MultiTrackTraceAbstractionRefinementStrategy.Track[] toTracks(final TraceAbstractionProtos.Tracks
+	 * tracks) { return tracks.getTrackList().stream()
+	 * .map(convertToEnum(MultiTrackTraceAbstractionRefinementStrategy.Track.class)).toArray(Track[]::new); }
+	 */
 
 	public static TraceAbstractionProtos.NestedRun fromNestedRun(final NestedRun<CodeBlock, IPredicate> run) {
 		final TraceAbstractionProtos.NestedRun.Builder builder = TraceAbstractionProtos.NestedRun.newBuilder();
