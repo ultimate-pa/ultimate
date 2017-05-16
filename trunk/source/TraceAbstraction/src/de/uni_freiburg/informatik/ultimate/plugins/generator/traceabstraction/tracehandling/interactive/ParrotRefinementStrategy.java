@@ -108,7 +108,7 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 				message.append("The Track " + mNextTrack.name() + " has failed. ");
 			message.append("Please select the next Track to try.");
 			result = ChoiceRequest.get(leftTracks, t -> t.name()).setLogger(mLogger).setTitle("Select Track")
-					.setSubtitle(message.toString()).request(getInteractive().getInterface());
+					.setSubtitle(message.toString()).request(getInteractive().getInterface()).get();
 		} catch (final InterruptedException | ExecutionException e) {
 			mNextTrack = null;
 			mLogger.error("No client answer. Aborting Parrot Strategy.", e);
