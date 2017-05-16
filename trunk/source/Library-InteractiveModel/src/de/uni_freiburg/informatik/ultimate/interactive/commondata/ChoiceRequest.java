@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.interactive.commondata;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 
@@ -58,17 +59,19 @@ public class ChoiceRequest<T> {
 		return result;
 	}
 
-	public T request(final IInteractive<?> interactive) throws InterruptedException, ExecutionException {
-		@SuppressWarnings("unchecked")
-		final T result = (T) interactive.common().request(Object.class, this).get();
-		if (mLogger != null)
-			mLogger.info("Client has chosen " + mToString.apply(result));
-		return result;
+	@SuppressWarnings("unchecked")
+	public CompletableFuture<T> request(final IInteractive<?> interactive) {
+		return interactive.common().request(Object.class, this).thenApply(o -> {
+			final T result = (T) o;
+			if (mLogger != null)
+				mLogger.info("Client has chosen " + mToString.apply(result));
+			return (T) o;
+		});
 	}
 
 	public T request(final IInteractive<?> interactive, final T defaultValue) {
 		try {
-			final T result = request(interactive);
+			final T result = request(interactive).get();
 			return result;
 		} catch (InterruptedException | ExecutionException e) {
 			mLogger.error("Client failed to make a choice", e);
