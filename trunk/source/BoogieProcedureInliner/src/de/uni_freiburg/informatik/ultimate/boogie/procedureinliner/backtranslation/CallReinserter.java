@@ -81,11 +81,11 @@ public class CallReinserter {
 			final BackTransValue prevBackTrans = mPrevBackTranslations.peek();
 			if (prevBackTrans != curBackTrans) {
 				mPrevBackTranslations.pop();
-				for (final CallStatement cs : prevBackTrans.getOriginalCallStack()) {
-					recoveredCalls.add(makeAtomicReturn(cs));
+				for (final CallStatement callStmt : prevBackTrans.getOriginalCallStack()) {
+					recoveredCalls.add(makeAtomicReturn(callStmt));
 				}
-			} // else
-				// there were no inlined nodes inside the called procedure
+			}
+			// there were no inlined nodes inside the called procedure
 			mAfterNonInlinedCall = false;
 		}
 
@@ -101,16 +101,17 @@ public class CallReinserter {
 			final Deque<CallStatement> prevStack = prevBackTrans.getOriginalCallStack();
 			final Deque<CallStatement> curStack = curBackTrans.getOriginalCallStack();
 			if (prevStack != curStack) {
-				final Iterator<CallStatement> prevStackRevIter = prevStack.descendingIterator(); // from stack bottom to top
+				// from stack bottom to top
+				final Iterator<CallStatement> prevStackRevIter = prevStack.descendingIterator();
 				final Iterator<CallStatement> curStackRevIter = curStack.descendingIterator();
 				final List<AtomicTraceElement<BoogieASTNode>> returns = new ArrayList<>();
 				final List<AtomicTraceElement<BoogieASTNode>> calls = new ArrayList<>();
 				while (prevStackRevIter.hasNext() && curStackRevIter.hasNext()) {
-					final CallStatement prevCS = prevStackRevIter.next();
-					final CallStatement curCS = curStackRevIter.next();
-					if (prevCS != curCS) {
-						returns.add(makeAtomicReturn(prevCS));
-						calls.add(makeAtomicCall(curCS));
+					final CallStatement prevCs = prevStackRevIter.next();
+					final CallStatement curCs = curStackRevIter.next();
+					if (prevCs != curCs) {
+						returns.add(makeAtomicReturn(prevCs));
+						calls.add(makeAtomicCall(curCs));
 					}
 				}
 				while (prevStackRevIter.hasNext()) {
@@ -151,8 +152,8 @@ public class CallReinserter {
 	public Set<String> unreturnedInlinedProcedures() {
 		final Set<String> unretInldProcs = new HashSet<>();
 		for (final BackTransValue btv : mPrevBackTranslations) {
-			for (final CallStatement cs : btv.getOriginalCallStack()) {
-				unretInldProcs.add(cs.getMethodName());
+			for (final CallStatement callStmt : btv.getOriginalCallStack()) {
+				unretInldProcs.add(callStmt.getMethodName());
 			}
 			unretInldProcs.add(btv.getInlineEntryProcId());
 		}

@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.IProgramExecut
 import de.uni_freiburg.informatik.ultimate.core.model.translation.IToString;
 
 /**
- * Backtranslates an inlined boogie program.
+ * Backtranslates an inlined Boogie program.
  *
  * @author schaetzc@informatik.uni-freiburg.de
  */
@@ -74,6 +74,10 @@ public class InlinerBacktranslator
 
 	private final ExpressionBacktranslation mExprBackTrans = new ExpressionBacktranslation();
 
+	/**
+	 * @param services
+	 *            Ultimate services.
+	 */
 	public InlinerBacktranslator(final IUltimateServiceProvider services) {
 		super(BoogieASTNode.class, BoogieASTNode.class, Expression.class, Expression.class);
 		mServices = services;
@@ -81,10 +85,10 @@ public class InlinerBacktranslator
 	}
 
 	/**
-	 * Updates the mapping, using an used InlineVersionTransformer.
+	 * Updates the mapping, using a used {@link InlineVersionTransformer}.
 	 *
 	 * @param transformer
-	 *            InlinerVersionTransformer, which already transformed a procedure.
+	 *            {@link InlineVersionTransformer} that already transformed a procedure.
 	 */
 	public void addBacktranslation(final InlineVersionTransformer transformer) {
 		mBackTransMap.putAll(transformer.getBacktranslationMap());
@@ -121,10 +125,9 @@ public class InlinerBacktranslator
 					reportUnfinishedBacktranslation("Cannot reconstruct StepInfo (either call or return): " + call);
 				}
 				knownCalls.add(call);
-				atomicTraceElem =
-						new AtomicTraceElement<BoogieASTNode>(call, call, StepInfo.PROC_CALL, stringProvider, null);
+				atomicTraceElem = new AtomicTraceElement<>(call, call, StepInfo.PROC_CALL, stringProvider, null);
 			} else {
-				atomicTraceElem = new AtomicTraceElement<BoogieASTNode>(traceElem, stringProvider, null);
+				atomicTraceElem = new AtomicTraceElement<>(traceElem, stringProvider, null);
 			}
 			final BackTransValue traceElemMapping = mBackTransMap.get(traceElem);
 			final List<AtomicTraceElement<BoogieASTNode>> recoveredCalls =
@@ -157,8 +160,7 @@ public class InlinerBacktranslator
 			final BackTransValue traceElemMapping = mBackTransMap.get(traceElem.getTraceElement());
 			translatedTrace.addAll(callReinserter.recoverInlinedCallsBefore(traceElem, traceElemMapping));
 			if (traceElemMapping == null) {
-				translatedTrace.add(traceElem); // traceElem wasn't affected by
-												// inlining
+				translatedTrace.add(traceElem); // traceElem wasn't affected by inlining
 			} else {
 				final BoogieASTNode translatedTraceElem = traceElemMapping.getOriginalNode();
 				if (translatedTraceElem != null) {
@@ -169,11 +171,10 @@ public class InlinerBacktranslator
 					} else {
 						translatedStep = stepMapping.getOriginalNode();
 					}
-					translatedTrace.add(new AtomicTraceElement<BoogieASTNode>(translatedTraceElem, translatedStep,
+					translatedTrace.add(new AtomicTraceElement<>(translatedTraceElem, translatedStep,
 							traceElem.getStepInfo(), stringProvider, traceElem.getRelevanceInformation()));
 				} else {
-					continue; // discards the associated ProgramState (State
-								// makes no sense, without Statement)
+					continue; // discards the associated ProgramState (State makes no sense without Statement)
 				}
 			}
 			final ProgramState<Expression> progState = exec.getProgramState(i);
@@ -190,8 +191,7 @@ public class InlinerBacktranslator
 				translatedStates.put(translatedTrace.size() - 1, new ProgramState<>(translatedVar2Values));
 			}
 		}
-		final BoogieProgramExecution translatedExec = new BoogieProgramExecution(translatedStates, translatedTrace);
-		return translatedExec;
+		return new BoogieProgramExecution(translatedStates, translatedTrace);
 	}
 
 	@Override
@@ -217,5 +217,4 @@ public class InlinerBacktranslator
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
 				new GenericResult(Activator.PLUGIN_ID, "Unfinished Backtranslation", message, Severity.WARNING));
 	}
-
 }
