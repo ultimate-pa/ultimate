@@ -402,21 +402,19 @@ public class ParallelCompositionGenerator {
 	private void anaylseLabels(final Set<HybridAutomaton> automata) {
 		// just count how often the label appears.
 		// if it appears in an automaton, increment a counter.
+		// every label, which occurs more than 1 time in the automata, is a
+		// global label.
 		final Map<String, Integer> labelCount = new HashMap<>();
 		for (final HybridAutomaton aut : automata) {
 			final Set<String> labels = aut.getLabels();
 			for (final String label : labels) {
 				final int count = labelCount.containsKey(label) ? labelCount.get(label) : 0;
 				labelCount.put(label, count + 1);
+				if (labelCount.get(label) > 1) {
+					mGlobalLabels.add(label);
+				}
 			}
 		}
-		// every label, which occurs more than 1 time in the automata, is a
-		// global label.
-		labelCount.forEach((lab, val) -> {
-			if (val > 1) {
-				mGlobalLabels.add(lab);
-			}
-		});
 	}
 
 	private void cleanUpMembers() {
@@ -442,7 +440,7 @@ public class ParallelCompositionGenerator {
 	 * @param label
 	 * @param guard
 	 * @param update
-	 * @return
+	 * @return Hybrid Automata Transition
 	 */
 	private Transition createTransition(final Location source, final Location target, final String label,
 			final String guard, final String update) {

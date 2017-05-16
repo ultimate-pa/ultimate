@@ -62,8 +62,8 @@ public class SpaceExMathHelper {
 	}
 
 	public enum Operator {
-		MULTIPLY(9), DIVIDE(9), ADD(8), SUBTRACT(8), LTEQ(7), GTEQ(7), LT(7), GT(7), EQ(7), DOUBLEEQ(7), AND(6),
-		DOUBLEAND(6), ANDTEXT(6), OR(5), DOUBLEOR(5), ORTEXT(5);
+		MULTIPLY(9), DIVIDE(9), ADD(8), SUBTRACT(8), LTEQ(7), GTEQ(7), LT(7), GT(7), EQ(7), DOUBLEEQ(7), AND(
+				6), DOUBLEAND(6), ANDTEXT(6), OR(5), DOUBLEOR(5), ORTEXT(5);
 		final int precedence;
 
 		Operator(final int p) {
@@ -90,13 +90,13 @@ public class SpaceExMathHelper {
 		return res;
 	}
 
-
 	// helper function to replace all elements in a string of the form x==2 &
 	// loc(x)==loc1, with single literals.
 	// x==2 & loc(x)==loc1 & y<=4 ---> A0 & A1 & A2
 	private static String replaceAllWithLiterals(final String initially) {
 		mReplacement.clear();
-		// regex for location assignments of the form loc( <automaton name> )== <location name>
+		// regex for location assignments of the form loc( <automaton name> )==
+		// <location name>
 		final String locRegex = "(.*)loc\\((.*)\\)==(.*)";
 		final Pattern locPattern = Pattern.compile(locRegex);
 		Matcher locMatcher;
@@ -129,11 +129,11 @@ public class SpaceExMathHelper {
 
 	public static List<String> infixToGroups(final String infix) {
 		final List<String> groups;
-		if(!infix.contains("|")){
+		if (!infix.contains("|")) {
 			groups = new ArrayList<>();
 			groups.add(infix);
 			return groups;
-		} else{
+		} else {
 			final String infixWithLiterals = replaceAllWithLiterals(infix);
 			final List<String> infixToArray = SpaceExMathHelper.expressionToArray(infixWithLiterals);
 			final List<String> postfix = SpaceExMathHelper.postfix(infixToArray);
@@ -143,7 +143,8 @@ public class SpaceExMathHelper {
 	}
 
 	/**
-	 * Function to convert a given formula postfix back notation to groups, the DNF.
+	 * Function to convert a given formula postfix back notation to groups, the
+	 * DNF.
 	 *
 	 * @param postfix
 	 * @return
@@ -157,9 +158,11 @@ public class SpaceExMathHelper {
 				final String operand1 = (!stack.isEmpty()) ? stack.pop() : "";
 				final String operand2 = (!stack.isEmpty()) ? stack.pop() : "";
 				/*
-				 * Cases: - two single operands - & is operator and no groups exist yet --> initialize groups - & is
-				 * operator and groups exist -> update groups - | is operator and groups exists -> add to finished
-				 * groups - | is operator and no groups exists --> add to finished groups
+				 * Cases: - two single operands - & is operator and no groups
+				 * exist yet --> initialize groups - & is operator and groups
+				 * exist -> update groups - | is operator and groups exists ->
+				 * add to finished groups - | is operator and no groups exists
+				 * --> add to finished groups
 				 */
 				if (mReplacement.containsKey(operand1)
 						&& (mReplacement.containsKey(operand2) || !operand2.contains("&")) && !operand2.isEmpty()) {
@@ -259,7 +262,8 @@ public class SpaceExMathHelper {
 	}
 
 	/**
-	 * Function to split a given expression into an array. e.g "x == 5" will return [x,==,5].
+	 * Function to split a given expression into an array. e.g "x == 5" will
+	 * return [x,==,5].
 	 *
 	 * @param expression
 	 * @return
@@ -267,34 +271,7 @@ public class SpaceExMathHelper {
 	public static List<String> expressionToArray(final String expression) {
 		final List<String> res = new ArrayList<>();
 		// Regex to split a string at ">=, <= ,>, <, ==, +, -, (, ), &, |, *, /"
-		// TODO: generate this regex from the operators.
-		final Pattern p = Pattern.compile("([&]{1,2}|>=?|<=?|<(?!=)|>(?!=)|==|\\+|(?<!=|&)-|/|\\*|\\||\\(|\\)| +)");
-		final String s = expression.replaceAll("\\s", "");
-		final Matcher m = p.matcher(s);
-		int pos = 0;
-		while (m.find()) {
-			if (pos != m.start()) {
-				res.add(s.substring(pos, m.start()));
-			}
-			res.add(m.group());
-			pos = m.end();
-		}
-		if (pos != s.length()) {
-			res.add(s.substring(pos));
-		}
-		return res;
-	}
-
-	/**
-	 * Function to split a given expression into an array. e.g "x == 5" will return [x,==,5].
-	 *
-	 * @param expression
-	 * @return
-	 */
-	public static List<String> expressionToArrayEnhanced(final String expression) {
-		final List<String> res = new ArrayList<>();
-		// Regex to split a string at ">=, <= ,>, <, ==, +, -, (, ), &, |, *, /"
-		// TODO: generate this regex from the operators.
+		// TODO: generate this regex from the operators map.
 		final Pattern p = Pattern.compile("([&]{1,2}|>=?|<=?|<(?!=)|>(?!=)|==|\\+|(?<!=|&)-|/|\\*|\\||\\(|\\)| +)");
 		final String s = expression.replaceAll("\\s", "");
 		final Matcher m = p.matcher(s);
@@ -373,7 +350,8 @@ public class SpaceExMathHelper {
 	}
 
 	/**
-	 * Function that checks whether a sign is an operator. e.g. "==" would be an operator.
+	 * Function that checks whether a sign is an operator. e.g. "==" would be an
+	 * operator.
 	 *
 	 * @param String
 	 *            sign
