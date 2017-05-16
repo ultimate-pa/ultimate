@@ -59,7 +59,9 @@ public class GenericServiceProvider implements IStorable {
 		// no it doesnt, we need to create a new one
 		final GenericServiceProvider instance = (GenericServiceProvider) toolchainStorage.getStorable(KEY);
 		final T rtrValue = instance.mFactory.createService(serviceType, toolchainStorage, toolchainStorage);
-		toolchainStorage.putStorable(serviceType.getName(), rtrValue);
+		if (rtrValue != null) {
+			toolchainStorage.putStorable(serviceType.getName(), rtrValue);
+		}
 		return rtrValue;
 	}
 
