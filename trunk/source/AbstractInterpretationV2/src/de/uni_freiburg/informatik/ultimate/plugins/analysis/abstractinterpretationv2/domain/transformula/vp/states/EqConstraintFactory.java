@@ -1,27 +1,30 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 
-public class EqConstraintFactory<NODE extends IEqNodeIdentifier<FUNCTION>, FUNCTION> {
+public class EqConstraintFactory<
+			ACTION extends IIcfgTransition<IcfgLocation>, NODE extends IEqNodeIdentifier<FUNCTION>, FUNCTION> {
 
-	public EqConstraint<NODE, FUNCTION> getEmptyConstraint() {
+	public EqConstraint<ACTION, NODE, FUNCTION> getEmptyConstraint() {
 		return null;
 	}
 
-	public EqConstraint<NODE, FUNCTION> getBottomConstraint() {
+	public EqConstraint<ACTION, NODE, FUNCTION> getBottomConstraint() {
 		return null;
 	}
 
-	public EqConstraint<NODE, FUNCTION> unfreeze(EqConstraint<NODE, FUNCTION> constraint) {
+	public EqConstraint<ACTION, NODE, FUNCTION> unfreeze(EqConstraint<ACTION, NODE, FUNCTION> constraint) {
 		assert constraint.isFrozen();
 		// TODO Auto-generated method stub
 		return null;
 	}
 
-	public EqDisjunctiveConstraint<EqNode, IProgramVarOrConst> unfreeze(
-			EqDisjunctiveConstraint<EqNode, IProgramVarOrConst> constraint) {
+	public EqDisjunctiveConstraint<ACTION, EqNode, IProgramVarOrConst> unfreeze(
+			EqDisjunctiveConstraint<ACTION, EqNode, IProgramVarOrConst> constraint) {
 		// TODO Auto-generated method stub
 		return null;
 	}

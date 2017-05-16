@@ -1,18 +1,24 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
+import java.util.Collection;
 import java.util.Collections;
-import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
-public class EqConstraint<NODE extends IEqNodeIdentifier<FUNCTION>, FUNCTION>  {
+public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NODE extends IEqNodeIdentifier<FUNCTION>, FUNCTION> 
+	implements IAbstractState<EqConstraint<ACTION, NODE, FUNCTION>, IProgramVarOrConst>  {
 
 	private boolean mIsFrozen = false;
 
@@ -132,16 +138,121 @@ public class EqConstraint<NODE extends IEqNodeIdentifier<FUNCTION>, FUNCTION>  {
 	public boolean isFrozen() {
 		return mIsFrozen;
 	}
-
-
+	
 	public void projectExistentially(Set<TermVariable> varsToProjectAway) {
 		// TODO Auto-generated method stub
 		
 	}
 
+	/*
+	 * **************** methods inherited from IAbstractState ****************
+	 */
 
-	public void renameVariables(Map<Term, Term> substitutionMapping) {
+
+
+	@Override
+	public EqConstraint<ACTION, NODE, FUNCTION> addVariable(IProgramVarOrConst variable) {
 		// TODO Auto-generated method stub
-		
+		return null;
 	}
+
+
+	@Override
+	public EqConstraint<ACTION, NODE, FUNCTION> removeVariable(IProgramVarOrConst variable) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public EqConstraint<ACTION, NODE, FUNCTION> addVariables(Collection<IProgramVarOrConst> variables) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public EqConstraint<ACTION, NODE, FUNCTION> removeVariables(Collection<IProgramVarOrConst> variables) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public boolean containsVariable(IProgramVarOrConst var) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+
+	@Override
+	public Set<IProgramVarOrConst> getVariables() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public EqConstraint<ACTION, NODE, FUNCTION> patch(EqConstraint<ACTION, NODE, FUNCTION> dominator) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public EqConstraint<ACTION, NODE, FUNCTION> intersect(EqConstraint<ACTION, NODE, FUNCTION> other) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public EqConstraint<ACTION, NODE, FUNCTION> union(EqConstraint<ACTION, NODE, FUNCTION> other) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public boolean isEmpty() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+
+	@Override
+	public boolean isEqualTo(EqConstraint<ACTION, NODE, FUNCTION> other) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+
+	@Override
+	public de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.SubsetResult isSubsetOf(
+			EqConstraint<ACTION, NODE, FUNCTION> other) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public EqConstraint<ACTION, NODE, FUNCTION> compact() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public Term getTerm(Script script) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+
+	@Override
+	public String toLogString() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }
