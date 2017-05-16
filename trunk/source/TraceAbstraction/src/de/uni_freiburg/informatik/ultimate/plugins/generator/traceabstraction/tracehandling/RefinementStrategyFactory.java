@@ -48,7 +48,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive.ParrotInteractiveIterationInfo;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive.ParrotRefinementStrategy;
 
 /**
@@ -67,8 +66,6 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	private final IToolchainStorage mStorage;
 	private final PredicateFactory mPredicateFactory;
 	private final AssertionOrderModulation<LETTER> mAssertionOrderModulation;
-	private final InteractiveCegar mInteractive;
-	private final ParrotInteractiveIterationInfo mParrotInteractiveIterationInfo;
 
 	/**
 	 * @param logger
@@ -89,7 +86,6 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	 *            predicate factory
 	 */
 	public RefinementStrategyFactory(final ILogger logger, final IUltimateServiceProvider services,
-			final InteractiveCegar interactive,
 			final IToolchainStorage storage, final TAPreferences taPrefsForInterpolantConsolidation,
 			final TaCheckAndRefinementPreferences<LETTER> prefs, final CegarAbsIntRunner<LETTER> absIntRunner,
 			final IIcfg<?> initialIcfg, final PredicateFactory predicateFactory) {
@@ -102,12 +98,6 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 		mInitialIcfg = initialIcfg;
 		mPredicateFactory = predicateFactory;
 		mAssertionOrderModulation = new AssertionOrderModulation<>(logger);
-		mInteractive = interactive;
-		if (mInteractive == null) {
-			mParrotInteractiveIterationInfo = null;
-		} else {
-			mParrotInteractiveIterationInfo = new ParrotInteractiveIterationInfo();
-		}
 	}
 
 	/**
@@ -124,12 +114,33 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 	 * @return refinement strategy
 	 */
 	public IRefinementStrategy<LETTER> createStrategy(final RefinementStrategy strategy,
-			final IRun<LETTER, IPredicate, ?> counterexample, final IAutomaton<LETTER, IPredicate> abstraction,
-			final int iteration, final CegarLoopStatisticsGenerator benchmark) {
+			final InteractiveCegar interactive, final IRun<LETTER, IPredicate, ?> counterexample,
+			final IAutomaton<LETTER, IPredicate> abstraction, final int iteration,
+			final CegarLoopStatisticsGenerator benchmark) {
 		final PredicateUnifier predicateUnifier = new PredicateUnifier(mServices,
 				mPrefs.getCfgSmtToolkit().getManagedScript(), mPredicateFactory,
 				mInitialIcfg.getCfgSmtToolkit().getSymbolTable(), mPrefsConsolidation.getSimplificationTechnique(),
 				mPrefsConsolidation.getXnfConversionTechnique());
+
+		if (interactive != null && interactive.isInteractiveMode()) {
+			return new ParrotRefinementStrategy<LETTER>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
+					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
+					mPrefsConsolidation, iteration, benchmark) {
+				@Override
+				protected InteractiveCegar getInteractive() {
+					// instead of passing the interactive interface via
+					// constructor, it is necessary to have a getter
+					// because .next() is called in the constructor of the
+					// superclass.
+					return interactive;
+				}
+
+				@Override
+				protected IRefinementStrategy<LETTER> createFallbackStrategy(final RefinementStrategy strategy) {
+					return createStrategy(strategy, null, counterexample, abstraction, iteration, benchmark);
+				}
+			};
+		}
 
 		switch (strategy) {
 		case FIXED_PREFERENCES:
@@ -166,34 +177,6 @@ public class RefinementStrategyFactory<LETTER extends IIcfgTransition<?>> {
 			return new LazyTaipanRefinementStrategy<>(mLogger, mServices, mPrefs, mInitialIcfg.getCfgSmtToolkit(),
 					mPredicateFactory, predicateUnifier, mAbsIntRunner, mAssertionOrderModulation, counterexample,
 					abstraction, iteration, benchmark);
-		case PARROT:
-			if (mInteractive == null) {
-				throw new IllegalArgumentException(
-						"Interactive strategy chosen, but interface available. Please start ultimate in Interactive mode.");
-			}
-			return new ParrotRefinementStrategy<LETTER>(mLogger, mPrefs, mServices, mInitialIcfg.getCfgSmtToolkit(),
-					mPredicateFactory, predicateUnifier, mAssertionOrderModulation, counterexample, abstraction,
-					mPrefsConsolidation, iteration, benchmark) {
-				@Override
-				protected InteractiveCegar getInteractive() {
-					// instead of passing the interactive interface via
-					// constructor, it is necessary to have a getter
-					// because .next() is called in the constructor of the
-					// superclass.
-					return mInteractive;
-				}
-
-				@Override
-				protected IRefinementStrategy<LETTER> createFallbackStrategy(final RefinementStrategy strategy) {
-					return createStrategy(strategy, counterexample, abstraction, iteration, benchmark);
-				}
-
-				@Override
-				protected ParrotInteractiveIterationInfo getIterationInfo() {
-					return mParrotInteractiveIterationInfo;
-				};
-
-			};
 		default:
 			throw new IllegalArgumentException(
 					"Unknown refinement strategy specified: " + mPrefs.getRefinementStrategy());
