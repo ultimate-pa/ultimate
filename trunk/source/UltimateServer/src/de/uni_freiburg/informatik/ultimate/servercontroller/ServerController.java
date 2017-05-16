@@ -132,11 +132,12 @@ public class ServerController implements IController<RunDefinition> {
 		final Map<File, IToolchainData<RunDefinition>> availableToolchains =
 				getAvailableToolchains(core, mCla.getToolchainDirPath());
 
-		final File[] availableSettingsFiles = getAvailableSettingsFiles();
+		// final File[] availableSettingsFiles = getAvailableSettingsFiles();
 
-		final File[] availableInputFiles = getAvailableInputFiles();
+		// final File[] availableInputFiles = getAvailableInputFiles();
 
-		if (availableSettingsFiles == null || availableInputFiles == null || availableToolchains.isEmpty()) {
+		if (availableToolchains.isEmpty()) {
+			mLogger.fatal("No toolchains found in " + mCla.getToolchainDirPath());
 			return -1;
 		}
 
@@ -191,23 +192,15 @@ public class ServerController implements IController<RunDefinition> {
 		return result;
 	}
 
-	private File[] getAvailableSettingsFiles() {
-		final File[] result = mCla.getSettingsFilePath().listFiles((file, name) -> name.endsWith(".epf"));
-		if (result.length == 0) {
-			mLogger.error("No Settings files found in " + mCla.getSettingsFilePath().getAbsolutePath());
-			return null;
-		}
-		return result;
-	}
-
-	private File[] getAvailableInputFiles() {
-		final File[] result = mCla.getInputDirPath().listFiles(f -> f.isFile());
-		if (result.length == 0) {
-			mLogger.error("No Input files found in " + mCla.getInputDirPath().getAbsolutePath());
-			return null;
-		}
-		return result;
-	}
+	/*
+	 * private File[] getAvailableSettingsFiles() { final File[] result = mCla.getSettingsFilePath().listFiles((file,
+	 * name) -> name.endsWith(".epf")); if (result.length == 0) { mLogger.error("No Settings files found in " +
+	 * mCla.getSettingsFilePath().getAbsolutePath()); return null; } return result; }
+	 * 
+	 * private File[] getAvailableInputFiles() { final File[] result = mCla.getInputDirPath().listFiles(f ->
+	 * f.isFile()); if (result.length == 0) { mLogger.error("No Input files found in " +
+	 * mCla.getInputDirPath().getAbsolutePath()); return null; } return result; }
+	 */
 
 	private void initWrapper(final ICore<RunDefinition> core,
 			final Map<File, IToolchainData<RunDefinition>> availableToolchains)
@@ -277,11 +270,12 @@ public class ServerController implements IController<RunDefinition> {
 	private void requestAndLoadSettings(final ICore<RunDefinition> core)
 			throws InterruptedException, ExecutionException {
 		// TODO: allow custom settings for plugins chosen from toolchain (see cli controller)
-		final File settingsFile = ChoiceRequest.get(getAvailableSettingsFiles(), File::getName).setLogger(mLogger)
-				.setTitle("Pick a Setting File").request(mCommonInterface);
+		final Path settingsFile = mCommonInterface
+				.request(Path.class, RootPath.newInstance(mCla.getSettingsFilePath().toPath(), "Settings", ".epf"))
+				.get();
 		try {
 			core.resetPreferences();
-			core.loadPreferences(settingsFile.getAbsolutePath());
+			core.loadPreferences(settingsFile.toFile().getAbsolutePath());
 		} catch (final Exception e) {
 			throw new IllegalStateException("could not load settings", e);
 		}
