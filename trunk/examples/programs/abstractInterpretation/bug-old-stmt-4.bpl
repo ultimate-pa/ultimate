@@ -1,3 +1,5 @@
+//#Safe
+
 var A : int;
 var B : int;
 var C : int;

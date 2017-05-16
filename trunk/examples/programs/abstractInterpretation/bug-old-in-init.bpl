@@ -1,5 +1,5 @@
 //#Safe
-/*
+/* Known bug in Ultimate's handling of oldvars: old() is not supported in initial function. 
  *
  */
 
