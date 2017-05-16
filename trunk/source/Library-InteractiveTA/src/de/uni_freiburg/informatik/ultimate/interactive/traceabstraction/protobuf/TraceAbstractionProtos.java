@@ -15,398 +15,6 @@ public final class TraceAbstractionProtos {
         (com.google.protobuf.ExtensionRegistryLite) registry);
   }
   /**
-   * Protobuf enum {@code de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy}
-   */
-  public enum Strategy
-      implements com.google.protobuf.ProtocolMessageEnum {
-    /**
-     * <pre>
-     * Simple strategy that reads the information from the settings.
-     * </pre>
-     *
-     * <code>FIXED_PREFERENCES = 0;</code>
-     */
-    FIXED_PREFERENCES(0),
-    /**
-     * <pre>
-     * Taipan strategy.
-     * </pre>
-     *
-     * <code>TAIPAN = 1;</code>
-     */
-    TAIPAN(1),
-    /**
-     * <pre>
-     * Taipan without abstract interpretation
-     * </pre>
-     *
-     * <code>RUBBER_TAIPAN = 2;</code>
-     */
-    RUBBER_TAIPAN(2),
-    /**
-     * <pre>
-     * Multi track strategy that tries 1. Craig interpolation with SMTInterpol, and 2. Sp/Wp interpolation with Z3.
-     * </pre>
-     *
-     * <code>PENGUIN = 3;</code>
-     */
-    PENGUIN(3),
-    /**
-     * <pre>
-     * Multi track strategy that tries Sp/Wp interpolation and Craig interpolation.
-     * </pre>
-     *
-     * <code>WALRUS = 4;</code>
-     */
-    WALRUS(4),
-    /**
-     * <code>CAMEL = 5;</code>
-     */
-    CAMEL(5),
-    /**
-     * <pre>
-     * Interactive PARROT strategy not listed here.
-     * </pre>
-     *
-     * <code>WOLF = 6;</code>
-     */
-    WOLF(6),
-    UNRECOGNIZED(-1),
-    ;
-
-    /**
-     * <pre>
-     * Simple strategy that reads the information from the settings.
-     * </pre>
-     *
-     * <code>FIXED_PREFERENCES = 0;</code>
-     */
-    public static final int FIXED_PREFERENCES_VALUE = 0;
-    /**
-     * <pre>
-     * Taipan strategy.
-     * </pre>
-     *
-     * <code>TAIPAN = 1;</code>
-     */
-    public static final int TAIPAN_VALUE = 1;
-    /**
-     * <pre>
-     * Taipan without abstract interpretation
-     * </pre>
-     *
-     * <code>RUBBER_TAIPAN = 2;</code>
-     */
-    public static final int RUBBER_TAIPAN_VALUE = 2;
-    /**
-     * <pre>
-     * Multi track strategy that tries 1. Craig interpolation with SMTInterpol, and 2. Sp/Wp interpolation with Z3.
-     * </pre>
-     *
-     * <code>PENGUIN = 3;</code>
-     */
-    public static final int PENGUIN_VALUE = 3;
-    /**
-     * <pre>
-     * Multi track strategy that tries Sp/Wp interpolation and Craig interpolation.
-     * </pre>
-     *
-     * <code>WALRUS = 4;</code>
-     */
-    public static final int WALRUS_VALUE = 4;
-    /**
-     * <code>CAMEL = 5;</code>
-     */
-    public static final int CAMEL_VALUE = 5;
-    /**
-     * <pre>
-     * Interactive PARROT strategy not listed here.
-     * </pre>
-     *
-     * <code>WOLF = 6;</code>
-     */
-    public static final int WOLF_VALUE = 6;
-
-
-    public final int getNumber() {
-      if (this == UNRECOGNIZED) {
-        throw new java.lang.IllegalArgumentException(
-            "Can't get the number of an unknown enum value.");
-      }
-      return value;
-    }
-
-    /**
-     * @deprecated Use {@link #forNumber(int)} instead.
-     */
-    @java.lang.Deprecated
-    public static Strategy valueOf(int value) {
-      return forNumber(value);
-    }
-
-    public static Strategy forNumber(int value) {
-      switch (value) {
-        case 0: return FIXED_PREFERENCES;
-        case 1: return TAIPAN;
-        case 2: return RUBBER_TAIPAN;
-        case 3: return PENGUIN;
-        case 4: return WALRUS;
-        case 5: return CAMEL;
-        case 6: return WOLF;
-        default: return null;
-      }
-    }
-
-    public static com.google.protobuf.Internal.EnumLiteMap<Strategy>
-        internalGetValueMap() {
-      return internalValueMap;
-    }
-    private static final com.google.protobuf.Internal.EnumLiteMap<
-        Strategy> internalValueMap =
-          new com.google.protobuf.Internal.EnumLiteMap<Strategy>() {
-            public Strategy findValueByNumber(int number) {
-              return Strategy.forNumber(number);
-            }
-          };
-
-    public final com.google.protobuf.Descriptors.EnumValueDescriptor
-        getValueDescriptor() {
-      return getDescriptor().getValues().get(ordinal());
-    }
-    public final com.google.protobuf.Descriptors.EnumDescriptor
-        getDescriptorForType() {
-      return getDescriptor();
-    }
-    public static final com.google.protobuf.Descriptors.EnumDescriptor
-        getDescriptor() {
-      return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.getDescriptor().getEnumTypes().get(0);
-    }
-
-    private static final Strategy[] VALUES = values();
-
-    public static Strategy valueOf(
-        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
-      if (desc.getType() != getDescriptor()) {
-        throw new java.lang.IllegalArgumentException(
-          "EnumValueDescriptor is not for this type.");
-      }
-      if (desc.getIndex() == -1) {
-        return UNRECOGNIZED;
-      }
-      return VALUES[desc.getIndex()];
-    }
-
-    private final int value;
-
-    private Strategy(int value) {
-      this.value = value;
-    }
-
-    // @@protoc_insertion_point(enum_scope:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy)
-  }
-
-  /**
-   * Protobuf enum {@code de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track}
-   */
-  public enum Track
-      implements com.google.protobuf.ProtocolMessageEnum {
-    /**
-     * <pre>
-     * SMTInterpol with tree interpolation.
-     * </pre>
-     *
-     * <code>SMTINTERPOL_TREE_INTERPOLANTS = 0;</code>
-     */
-    SMTINTERPOL_TREE_INTERPOLANTS(0),
-    /**
-     * <code>SMTINTERPOL_FP = 1;</code>
-     */
-    SMTINTERPOL_FP(1),
-    /**
-     * <pre>
-     * Z3 with forward and backward predicates.
-     * </pre>
-     *
-     * <code>Z3_FPBP = 2;</code>
-     */
-    Z3_FPBP(2),
-    /**
-     * <code>Z3_FP = 3;</code>
-     */
-    Z3_FP(3),
-    /**
-     * <pre>
-     * Z3 with Craig interpolation.
-     * </pre>
-     *
-     * <code>Z3_NESTED_INTERPOLANTS = 4;</code>
-     */
-    Z3_NESTED_INTERPOLANTS(4),
-    /**
-     * <pre>
-     * CVC4 with forward and backward predicates.
-     * </pre>
-     *
-     * <code>CVC4_FPBP = 5;</code>
-     */
-    CVC4_FPBP(5),
-    /**
-     * <code>CVC4_FP = 6;</code>
-     */
-    CVC4_FP(6),
-    /**
-     * <pre>
-     * MathSAT with forward and backward predicates.
-     * </pre>
-     *
-     * <code>MATHSAT_FPBP = 7;</code>
-     */
-    MATHSAT_FPBP(7),
-    /**
-     * <code>MATHSAT_FP = 8;</code>
-     */
-    MATHSAT_FP(8),
-    UNRECOGNIZED(-1),
-    ;
-
-    /**
-     * <pre>
-     * SMTInterpol with tree interpolation.
-     * </pre>
-     *
-     * <code>SMTINTERPOL_TREE_INTERPOLANTS = 0;</code>
-     */
-    public static final int SMTINTERPOL_TREE_INTERPOLANTS_VALUE = 0;
-    /**
-     * <code>SMTINTERPOL_FP = 1;</code>
-     */
-    public static final int SMTINTERPOL_FP_VALUE = 1;
-    /**
-     * <pre>
-     * Z3 with forward and backward predicates.
-     * </pre>
-     *
-     * <code>Z3_FPBP = 2;</code>
-     */
-    public static final int Z3_FPBP_VALUE = 2;
-    /**
-     * <code>Z3_FP = 3;</code>
-     */
-    public static final int Z3_FP_VALUE = 3;
-    /**
-     * <pre>
-     * Z3 with Craig interpolation.
-     * </pre>
-     *
-     * <code>Z3_NESTED_INTERPOLANTS = 4;</code>
-     */
-    public static final int Z3_NESTED_INTERPOLANTS_VALUE = 4;
-    /**
-     * <pre>
-     * CVC4 with forward and backward predicates.
-     * </pre>
-     *
-     * <code>CVC4_FPBP = 5;</code>
-     */
-    public static final int CVC4_FPBP_VALUE = 5;
-    /**
-     * <code>CVC4_FP = 6;</code>
-     */
-    public static final int CVC4_FP_VALUE = 6;
-    /**
-     * <pre>
-     * MathSAT with forward and backward predicates.
-     * </pre>
-     *
-     * <code>MATHSAT_FPBP = 7;</code>
-     */
-    public static final int MATHSAT_FPBP_VALUE = 7;
-    /**
-     * <code>MATHSAT_FP = 8;</code>
-     */
-    public static final int MATHSAT_FP_VALUE = 8;
-
-
-    public final int getNumber() {
-      if (this == UNRECOGNIZED) {
-        throw new java.lang.IllegalArgumentException(
-            "Can't get the number of an unknown enum value.");
-      }
-      return value;
-    }
-
-    /**
-     * @deprecated Use {@link #forNumber(int)} instead.
-     */
-    @java.lang.Deprecated
-    public static Track valueOf(int value) {
-      return forNumber(value);
-    }
-
-    public static Track forNumber(int value) {
-      switch (value) {
-        case 0: return SMTINTERPOL_TREE_INTERPOLANTS;
-        case 1: return SMTINTERPOL_FP;
-        case 2: return Z3_FPBP;
-        case 3: return Z3_FP;
-        case 4: return Z3_NESTED_INTERPOLANTS;
-        case 5: return CVC4_FPBP;
-        case 6: return CVC4_FP;
-        case 7: return MATHSAT_FPBP;
-        case 8: return MATHSAT_FP;
-        default: return null;
-      }
-    }
-
-    public static com.google.protobuf.Internal.EnumLiteMap<Track>
-        internalGetValueMap() {
-      return internalValueMap;
-    }
-    private static final com.google.protobuf.Internal.EnumLiteMap<
-        Track> internalValueMap =
-          new com.google.protobuf.Internal.EnumLiteMap<Track>() {
-            public Track findValueByNumber(int number) {
-              return Track.forNumber(number);
-            }
-          };
-
-    public final com.google.protobuf.Descriptors.EnumValueDescriptor
-        getValueDescriptor() {
-      return getDescriptor().getValues().get(ordinal());
-    }
-    public final com.google.protobuf.Descriptors.EnumDescriptor
-        getDescriptorForType() {
-      return getDescriptor();
-    }
-    public static final com.google.protobuf.Descriptors.EnumDescriptor
-        getDescriptor() {
-      return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.getDescriptor().getEnumTypes().get(1);
-    }
-
-    private static final Track[] VALUES = values();
-
-    public static Track valueOf(
-        com.google.protobuf.Descriptors.EnumValueDescriptor desc) {
-      if (desc.getType() != getDescriptor()) {
-        throw new java.lang.IllegalArgumentException(
-          "EnumValueDescriptor is not for this type.");
-      }
-      if (desc.getIndex() == -1) {
-        return UNRECOGNIZED;
-      }
-      return VALUES[desc.getIndex()];
-    }
-
-    private final int value;
-
-    private Track(int value) {
-      this.value = value;
-    }
-
-    // @@protoc_insertion_point(enum_scope:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track)
-  }
-
-  /**
    * Protobuf enum {@code de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Result}
    */
   public enum Result
@@ -496,7 +104,7 @@ public final class TraceAbstractionProtos {
     }
     public static final com.google.protobuf.Descriptors.EnumDescriptor
         getDescriptor() {
-      return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.getDescriptor().getEnumTypes().get(2);
+      return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.getDescriptor().getEnumTypes().get(0);
     }
 
     private static final Result[] VALUES = values();
@@ -3999,628 +3607,6 @@ public final class TraceAbstractionProtos {
 
   }
 
-  public interface TracksOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Tracks)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-     */
-    java.util.List<de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track> getTrackList();
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-     */
-    int getTrackCount();
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-     */
-    de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track getTrack(int index);
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-     */
-    java.util.List<java.lang.Integer>
-    getTrackValueList();
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-     */
-    int getTrackValue(int index);
-  }
-  /**
-   * Protobuf type {@code de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Tracks}
-   */
-  public  static final class Tracks extends
-      com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Tracks)
-      TracksOrBuilder {
-    // Use Tracks.newBuilder() to construct.
-    private Tracks(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-      super(builder);
-    }
-    private Tracks() {
-      track_ = java.util.Collections.emptyList();
-    }
-
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
-      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
-    }
-    private Tracks(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      this();
-      int mutable_bitField0_ = 0;
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!input.skipField(tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 8: {
-              int rawValue = input.readEnum();
-              if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                track_ = new java.util.ArrayList<java.lang.Integer>();
-                mutable_bitField0_ |= 0x00000001;
-              }
-              track_.add(rawValue);
-              break;
-            }
-            case 10: {
-              int length = input.readRawVarint32();
-              int oldLimit = input.pushLimit(length);
-              while(input.getBytesUntilLimit() > 0) {
-                int rawValue = input.readEnum();
-                if (!((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-                  track_ = new java.util.ArrayList<java.lang.Integer>();
-                  mutable_bitField0_ |= 0x00000001;
-                }
-                track_.add(rawValue);
-              }
-              input.popLimit(oldLimit);
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e).setUnfinishedMessage(this);
-      } finally {
-        if (((mutable_bitField0_ & 0x00000001) == 0x00000001)) {
-          track_ = java.util.Collections.unmodifiableList(track_);
-        }
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Tracks_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Tracks_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks.class, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks.Builder.class);
-    }
-
-    public static final int TRACK_FIELD_NUMBER = 1;
-    private java.util.List<java.lang.Integer> track_;
-    private static final com.google.protobuf.Internal.ListAdapter.Converter<
-        java.lang.Integer, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track> track_converter_ =
-            new com.google.protobuf.Internal.ListAdapter.Converter<
-                java.lang.Integer, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track>() {
-              public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track convert(java.lang.Integer from) {
-                de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track result = de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track.valueOf(from);
-                return result == null ? de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track.UNRECOGNIZED : result;
-              }
-            };
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-     */
-    public java.util.List<de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track> getTrackList() {
-      return new com.google.protobuf.Internal.ListAdapter<
-          java.lang.Integer, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track>(track_, track_converter_);
-    }
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-     */
-    public int getTrackCount() {
-      return track_.size();
-    }
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-     */
-    public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track getTrack(int index) {
-      return track_converter_.convert(track_.get(index));
-    }
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-     */
-    public java.util.List<java.lang.Integer>
-    getTrackValueList() {
-      return track_;
-    }
-    /**
-     * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-     */
-    public int getTrackValue(int index) {
-      return track_.get(index);
-    }
-    private int trackMemoizedSerializedSize;
-
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      getSerializedSize();
-      if (getTrackList().size() > 0) {
-        output.writeUInt32NoTag(10);
-        output.writeUInt32NoTag(trackMemoizedSerializedSize);
-      }
-      for (int i = 0; i < track_.size(); i++) {
-        output.writeEnumNoTag(track_.get(i));
-      }
-    }
-
-    public int getSerializedSize() {
-      int size = memoizedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      {
-        int dataSize = 0;
-        for (int i = 0; i < track_.size(); i++) {
-          dataSize += com.google.protobuf.CodedOutputStream
-            .computeEnumSizeNoTag(track_.get(i));
-        }
-        size += dataSize;
-        if (!getTrackList().isEmpty()) {  size += 1;
-          size += com.google.protobuf.CodedOutputStream
-            .computeUInt32SizeNoTag(dataSize);
-        }trackMemoizedSerializedSize = dataSize;
-      }
-      memoizedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    public boolean equals(final java.lang.Object obj) {
-      if (obj == this) {
-       return true;
-      }
-      if (!(obj instanceof de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks)) {
-        return super.equals(obj);
-      }
-      de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks other = (de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks) obj;
-
-      boolean result = true;
-      result = result && track_.equals(other.track_);
-      return result;
-    }
-
-    @java.lang.Override
-    public int hashCode() {
-      if (memoizedHashCode != 0) {
-        return memoizedHashCode;
-      }
-      int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
-      if (getTrackCount() > 0) {
-        hash = (37 * hash) + TRACK_FIELD_NUMBER;
-        hash = (53 * hash) + track_.hashCode();
-      }
-      hash = (29 * hash) + unknownFields.hashCode();
-      memoizedHashCode = hash;
-      return hash;
-    }
-
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input);
-    }
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Tracks}
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Tracks)
-        de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.TracksOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Tracks_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Tracks_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks.class, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks.Builder.class);
-      }
-
-      // Construct using de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessageV3
-                .alwaysUseFieldBuilders) {
-        }
-      }
-      public Builder clear() {
-        super.clear();
-        track_ = java.util.Collections.emptyList();
-        bitField0_ = (bitField0_ & ~0x00000001);
-        return this;
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Tracks_descriptor;
-      }
-
-      public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks getDefaultInstanceForType() {
-        return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks.getDefaultInstance();
-      }
-
-      public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks build() {
-        de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks buildPartial() {
-        de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks result = new de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks(this);
-        int from_bitField0_ = bitField0_;
-        if (((bitField0_ & 0x00000001) == 0x00000001)) {
-          track_ = java.util.Collections.unmodifiableList(track_);
-          bitField0_ = (bitField0_ & ~0x00000001);
-        }
-        result.track_ = track_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder clone() {
-        return (Builder) super.clone();
-      }
-      public Builder setField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
-        return (Builder) super.setField(field, value);
-      }
-      public Builder clearField(
-          com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return (Builder) super.clearField(field);
-      }
-      public Builder clearOneof(
-          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return (Builder) super.clearOneof(oneof);
-      }
-      public Builder setRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
-        return (Builder) super.setRepeatedField(field, index, value);
-      }
-      public Builder addRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
-        return (Builder) super.addRepeatedField(field, value);
-      }
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks) {
-          return mergeFrom((de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks other) {
-        if (other == de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks.getDefaultInstance()) return this;
-        if (!other.track_.isEmpty()) {
-          if (track_.isEmpty()) {
-            track_ = other.track_;
-            bitField0_ = (bitField0_ & ~0x00000001);
-          } else {
-            ensureTrackIsMutable();
-            track_.addAll(other.track_);
-          }
-          onChanged();
-        }
-        onChanged();
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks) e.getUnfinishedMessage();
-          throw e.unwrapIOException();
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-      private int bitField0_;
-
-      private java.util.List<java.lang.Integer> track_ =
-        java.util.Collections.emptyList();
-      private void ensureTrackIsMutable() {
-        if (!((bitField0_ & 0x00000001) == 0x00000001)) {
-          track_ = new java.util.ArrayList<java.lang.Integer>(track_);
-          bitField0_ |= 0x00000001;
-        }
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-       */
-      public java.util.List<de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track> getTrackList() {
-        return new com.google.protobuf.Internal.ListAdapter<
-            java.lang.Integer, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track>(track_, track_converter_);
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-       */
-      public int getTrackCount() {
-        return track_.size();
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track getTrack(int index) {
-        return track_converter_.convert(track_.get(index));
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-       */
-      public Builder setTrack(
-          int index, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track value) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        ensureTrackIsMutable();
-        track_.set(index, value.getNumber());
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-       */
-      public Builder addTrack(de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track value) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        ensureTrackIsMutable();
-        track_.add(value.getNumber());
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-       */
-      public Builder addAllTrack(
-          java.lang.Iterable<? extends de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track> values) {
-        ensureTrackIsMutable();
-        for (de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Track value : values) {
-          track_.add(value.getNumber());
-        }
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-       */
-      public Builder clearTrack() {
-        track_ = java.util.Collections.emptyList();
-        bitField0_ = (bitField0_ & ~0x00000001);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-       */
-      public java.util.List<java.lang.Integer>
-      getTrackValueList() {
-        return java.util.Collections.unmodifiableList(track_);
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-       */
-      public int getTrackValue(int index) {
-        return track_.get(index);
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-       */
-      public Builder setTrackValue(
-          int index, int value) {
-        ensureTrackIsMutable();
-        track_.set(index, value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-       */
-      public Builder addTrackValue(int value) {
-        ensureTrackIsMutable();
-        track_.add(value);
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>repeated .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Track track = 1;</code>
-       */
-      public Builder addAllTrackValue(
-          java.lang.Iterable<java.lang.Integer> values) {
-        ensureTrackIsMutable();
-        for (int value : values) {
-          track_.add(value);
-        }
-        onChanged();
-        return this;
-      }
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return this;
-      }
-
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return this;
-      }
-
-
-      // @@protoc_insertion_point(builder_scope:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Tracks)
-    }
-
-    // @@protoc_insertion_point(class_scope:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Tracks)
-    private static final de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks();
-    }
-
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    private static final com.google.protobuf.Parser<Tracks>
-        PARSER = new com.google.protobuf.AbstractParser<Tracks>() {
-      public Tracks parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-          return new Tracks(input, extensionRegistry);
-      }
-    };
-
-    public static com.google.protobuf.Parser<Tracks> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<Tracks> getParserForType() {
-      return PARSER;
-    }
-
-    public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Tracks getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
-  }
-
   public interface InterpolantSequencesOrBuilder extends
       // @@protoc_insertion_point(interface_extends:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.InterpolantSequences)
       com.google.protobuf.MessageOrBuilder {
@@ -7555,527 +6541,6 @@ public final class TraceAbstractionProtos {
     }
 
     public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InterpolantsPrePost getDefaultInstanceForType() {
-      return DEFAULT_INSTANCE;
-    }
-
-  }
-
-  public interface InteractiveIterationInfoOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.InteractiveIterationInfo)
-      com.google.protobuf.MessageOrBuilder {
-
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy fallback = 1;</code>
-     */
-    int getFallbackValue();
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy fallback = 1;</code>
-     */
-    de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy getFallback();
-
-    /**
-     * <code>optional int32 nextInteractiveIteration = 2;</code>
-     */
-    int getNextInteractiveIteration();
-  }
-  /**
-   * Protobuf type {@code de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.InteractiveIterationInfo}
-   */
-  public  static final class InteractiveIterationInfo extends
-      com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.InteractiveIterationInfo)
-      InteractiveIterationInfoOrBuilder {
-    // Use InteractiveIterationInfo.newBuilder() to construct.
-    private InteractiveIterationInfo(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
-      super(builder);
-    }
-    private InteractiveIterationInfo() {
-      fallback_ = 0;
-      nextInteractiveIteration_ = 0;
-    }
-
-    @java.lang.Override
-    public final com.google.protobuf.UnknownFieldSet
-    getUnknownFields() {
-      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
-    }
-    private InteractiveIterationInfo(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      this();
-      int mutable_bitField0_ = 0;
-      try {
-        boolean done = false;
-        while (!done) {
-          int tag = input.readTag();
-          switch (tag) {
-            case 0:
-              done = true;
-              break;
-            default: {
-              if (!input.skipField(tag)) {
-                done = true;
-              }
-              break;
-            }
-            case 8: {
-              int rawValue = input.readEnum();
-
-              fallback_ = rawValue;
-              break;
-            }
-            case 16: {
-
-              nextInteractiveIteration_ = input.readInt32();
-              break;
-            }
-          }
-        }
-      } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-        throw e.setUnfinishedMessage(this);
-      } catch (java.io.IOException e) {
-        throw new com.google.protobuf.InvalidProtocolBufferException(
-            e).setUnfinishedMessage(this);
-      } finally {
-        makeExtensionsImmutable();
-      }
-    }
-    public static final com.google.protobuf.Descriptors.Descriptor
-        getDescriptor() {
-      return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InteractiveIterationInfo_descriptor;
-    }
-
-    protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-        internalGetFieldAccessorTable() {
-      return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InteractiveIterationInfo_fieldAccessorTable
-          .ensureFieldAccessorsInitialized(
-              de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo.class, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo.Builder.class);
-    }
-
-    public static final int FALLBACK_FIELD_NUMBER = 1;
-    private int fallback_;
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy fallback = 1;</code>
-     */
-    public int getFallbackValue() {
-      return fallback_;
-    }
-    /**
-     * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy fallback = 1;</code>
-     */
-    public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy getFallback() {
-      de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy result = de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy.valueOf(fallback_);
-      return result == null ? de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy.UNRECOGNIZED : result;
-    }
-
-    public static final int NEXTINTERACTIVEITERATION_FIELD_NUMBER = 2;
-    private int nextInteractiveIteration_;
-    /**
-     * <code>optional int32 nextInteractiveIteration = 2;</code>
-     */
-    public int getNextInteractiveIteration() {
-      return nextInteractiveIteration_;
-    }
-
-    private byte memoizedIsInitialized = -1;
-    public final boolean isInitialized() {
-      byte isInitialized = memoizedIsInitialized;
-      if (isInitialized == 1) return true;
-      if (isInitialized == 0) return false;
-
-      memoizedIsInitialized = 1;
-      return true;
-    }
-
-    public void writeTo(com.google.protobuf.CodedOutputStream output)
-                        throws java.io.IOException {
-      if (fallback_ != de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy.FIXED_PREFERENCES.getNumber()) {
-        output.writeEnum(1, fallback_);
-      }
-      if (nextInteractiveIteration_ != 0) {
-        output.writeInt32(2, nextInteractiveIteration_);
-      }
-    }
-
-    public int getSerializedSize() {
-      int size = memoizedSize;
-      if (size != -1) return size;
-
-      size = 0;
-      if (fallback_ != de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy.FIXED_PREFERENCES.getNumber()) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeEnumSize(1, fallback_);
-      }
-      if (nextInteractiveIteration_ != 0) {
-        size += com.google.protobuf.CodedOutputStream
-          .computeInt32Size(2, nextInteractiveIteration_);
-      }
-      memoizedSize = size;
-      return size;
-    }
-
-    private static final long serialVersionUID = 0L;
-    @java.lang.Override
-    public boolean equals(final java.lang.Object obj) {
-      if (obj == this) {
-       return true;
-      }
-      if (!(obj instanceof de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo)) {
-        return super.equals(obj);
-      }
-      de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo other = (de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo) obj;
-
-      boolean result = true;
-      result = result && fallback_ == other.fallback_;
-      result = result && (getNextInteractiveIteration()
-          == other.getNextInteractiveIteration());
-      return result;
-    }
-
-    @java.lang.Override
-    public int hashCode() {
-      if (memoizedHashCode != 0) {
-        return memoizedHashCode;
-      }
-      int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
-      hash = (37 * hash) + FALLBACK_FIELD_NUMBER;
-      hash = (53 * hash) + fallback_;
-      hash = (37 * hash) + NEXTINTERACTIVEITERATION_FIELD_NUMBER;
-      hash = (53 * hash) + getNextInteractiveIteration();
-      hash = (29 * hash) + unknownFields.hashCode();
-      memoizedHashCode = hash;
-      return hash;
-    }
-
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo parseFrom(
-        com.google.protobuf.ByteString data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo parseFrom(
-        com.google.protobuf.ByteString data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo parseFrom(byte[] data)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data);
-    }
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo parseFrom(
-        byte[] data,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws com.google.protobuf.InvalidProtocolBufferException {
-      return PARSER.parseFrom(data, extensionRegistry);
-    }
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo parseFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo parseFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo parseDelimitedFrom(java.io.InputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input);
-    }
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo parseDelimitedFrom(
-        java.io.InputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseDelimitedWithIOException(PARSER, input, extensionRegistry);
-    }
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo parseFrom(
-        com.google.protobuf.CodedInputStream input)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input);
-    }
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo parseFrom(
-        com.google.protobuf.CodedInputStream input,
-        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-        throws java.io.IOException {
-      return com.google.protobuf.GeneratedMessageV3
-          .parseWithIOException(PARSER, input, extensionRegistry);
-    }
-
-    public Builder newBuilderForType() { return newBuilder(); }
-    public static Builder newBuilder() {
-      return DEFAULT_INSTANCE.toBuilder();
-    }
-    public static Builder newBuilder(de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo prototype) {
-      return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
-    }
-    public Builder toBuilder() {
-      return this == DEFAULT_INSTANCE
-          ? new Builder() : new Builder().mergeFrom(this);
-    }
-
-    @java.lang.Override
-    protected Builder newBuilderForType(
-        com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-      Builder builder = new Builder(parent);
-      return builder;
-    }
-    /**
-     * Protobuf type {@code de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.InteractiveIterationInfo}
-     */
-    public static final class Builder extends
-        com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.InteractiveIterationInfo)
-        de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfoOrBuilder {
-      public static final com.google.protobuf.Descriptors.Descriptor
-          getDescriptor() {
-        return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InteractiveIterationInfo_descriptor;
-      }
-
-      protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-          internalGetFieldAccessorTable() {
-        return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InteractiveIterationInfo_fieldAccessorTable
-            .ensureFieldAccessorsInitialized(
-                de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo.class, de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo.Builder.class);
-      }
-
-      // Construct using de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo.newBuilder()
-      private Builder() {
-        maybeForceBuilderInitialization();
-      }
-
-      private Builder(
-          com.google.protobuf.GeneratedMessageV3.BuilderParent parent) {
-        super(parent);
-        maybeForceBuilderInitialization();
-      }
-      private void maybeForceBuilderInitialization() {
-        if (com.google.protobuf.GeneratedMessageV3
-                .alwaysUseFieldBuilders) {
-        }
-      }
-      public Builder clear() {
-        super.clear();
-        fallback_ = 0;
-
-        nextInteractiveIteration_ = 0;
-
-        return this;
-      }
-
-      public com.google.protobuf.Descriptors.Descriptor
-          getDescriptorForType() {
-        return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InteractiveIterationInfo_descriptor;
-      }
-
-      public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo getDefaultInstanceForType() {
-        return de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo.getDefaultInstance();
-      }
-
-      public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo build() {
-        de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo result = buildPartial();
-        if (!result.isInitialized()) {
-          throw newUninitializedMessageException(result);
-        }
-        return result;
-      }
-
-      public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo buildPartial() {
-        de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo result = new de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo(this);
-        result.fallback_ = fallback_;
-        result.nextInteractiveIteration_ = nextInteractiveIteration_;
-        onBuilt();
-        return result;
-      }
-
-      public Builder clone() {
-        return (Builder) super.clone();
-      }
-      public Builder setField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
-        return (Builder) super.setField(field, value);
-      }
-      public Builder clearField(
-          com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return (Builder) super.clearField(field);
-      }
-      public Builder clearOneof(
-          com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return (Builder) super.clearOneof(oneof);
-      }
-      public Builder setRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
-        return (Builder) super.setRepeatedField(field, index, value);
-      }
-      public Builder addRepeatedField(
-          com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
-        return (Builder) super.addRepeatedField(field, value);
-      }
-      public Builder mergeFrom(com.google.protobuf.Message other) {
-        if (other instanceof de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo) {
-          return mergeFrom((de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo)other);
-        } else {
-          super.mergeFrom(other);
-          return this;
-        }
-      }
-
-      public Builder mergeFrom(de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo other) {
-        if (other == de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo.getDefaultInstance()) return this;
-        if (other.fallback_ != 0) {
-          setFallbackValue(other.getFallbackValue());
-        }
-        if (other.getNextInteractiveIteration() != 0) {
-          setNextInteractiveIteration(other.getNextInteractiveIteration());
-        }
-        onChanged();
-        return this;
-      }
-
-      public final boolean isInitialized() {
-        return true;
-      }
-
-      public Builder mergeFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws java.io.IOException {
-        de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo parsedMessage = null;
-        try {
-          parsedMessage = PARSER.parsePartialFrom(input, extensionRegistry);
-        } catch (com.google.protobuf.InvalidProtocolBufferException e) {
-          parsedMessage = (de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo) e.getUnfinishedMessage();
-          throw e.unwrapIOException();
-        } finally {
-          if (parsedMessage != null) {
-            mergeFrom(parsedMessage);
-          }
-        }
-        return this;
-      }
-
-      private int fallback_ = 0;
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy fallback = 1;</code>
-       */
-      public int getFallbackValue() {
-        return fallback_;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy fallback = 1;</code>
-       */
-      public Builder setFallbackValue(int value) {
-        fallback_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy fallback = 1;</code>
-       */
-      public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy getFallback() {
-        de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy result = de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy.valueOf(fallback_);
-        return result == null ? de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy.UNRECOGNIZED : result;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy fallback = 1;</code>
-       */
-      public Builder setFallback(de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.Strategy value) {
-        if (value == null) {
-          throw new NullPointerException();
-        }
-        
-        fallback_ = value.getNumber();
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional .de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.Strategy fallback = 1;</code>
-       */
-      public Builder clearFallback() {
-        
-        fallback_ = 0;
-        onChanged();
-        return this;
-      }
-
-      private int nextInteractiveIteration_ ;
-      /**
-       * <code>optional int32 nextInteractiveIteration = 2;</code>
-       */
-      public int getNextInteractiveIteration() {
-        return nextInteractiveIteration_;
-      }
-      /**
-       * <code>optional int32 nextInteractiveIteration = 2;</code>
-       */
-      public Builder setNextInteractiveIteration(int value) {
-        
-        nextInteractiveIteration_ = value;
-        onChanged();
-        return this;
-      }
-      /**
-       * <code>optional int32 nextInteractiveIteration = 2;</code>
-       */
-      public Builder clearNextInteractiveIteration() {
-        
-        nextInteractiveIteration_ = 0;
-        onChanged();
-        return this;
-      }
-      public final Builder setUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return this;
-      }
-
-      public final Builder mergeUnknownFields(
-          final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return this;
-      }
-
-
-      // @@protoc_insertion_point(builder_scope:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.InteractiveIterationInfo)
-    }
-
-    // @@protoc_insertion_point(class_scope:de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.InteractiveIterationInfo)
-    private static final de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo DEFAULT_INSTANCE;
-    static {
-      DEFAULT_INSTANCE = new de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo();
-    }
-
-    public static de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo getDefaultInstance() {
-      return DEFAULT_INSTANCE;
-    }
-
-    private static final com.google.protobuf.Parser<InteractiveIterationInfo>
-        PARSER = new com.google.protobuf.AbstractParser<InteractiveIterationInfo>() {
-      public InteractiveIterationInfo parsePartialFrom(
-          com.google.protobuf.CodedInputStream input,
-          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-          throws com.google.protobuf.InvalidProtocolBufferException {
-          return new InteractiveIterationInfo(input, extensionRegistry);
-      }
-    };
-
-    public static com.google.protobuf.Parser<InteractiveIterationInfo> parser() {
-      return PARSER;
-    }
-
-    @java.lang.Override
-    public com.google.protobuf.Parser<InteractiveIterationInfo> getParserForType() {
-      return PARSER;
-    }
-
-    public de.uni_freiburg.informatik.ultimate.interactive.traceabstraction.protobuf.TraceAbstractionProtos.InteractiveIterationInfo getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
 
@@ -26338,11 +24803,6 @@ public final class TraceAbstractionProtos {
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_LivePreferences_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Tracks_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Tracks_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InterpolantSequences_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
@@ -26357,11 +24817,6 @@ public final class TraceAbstractionProtos {
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
       internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InterpolantsPrePost_fieldAccessorTable;
-  private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InteractiveIterationInfo_descriptor;
-  private static final 
-    com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InteractiveIterationInfo_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_PredicateDoubleDecker_descriptor;
   private static final 
@@ -26550,138 +25005,124 @@ public final class TraceAbstractionProtos {
       "LINTERPOLATION2\020\004\"@\n\030HoareAnnotationPosi" +
       "tions\022\007\n\003All\020\000\022\033\n\027LoopsAndPotentialCycle" +
       "s\020\001\"I\n\017LivePreferences\022\016\n\006paused\030\001 \001(\010\022\014" +
-      "\n\004CEXS\030\002 \001(\010\022\013\n\003IPS\030\003 \001(\010\022\013\n\003RSS\030\004 \001(\010\"i",
-      "\n\006Tracks\022_\n\005track\030\001 \003(\0162P.de.uni_freibur" +
-      "g.informatik.ultimate.interactive.tracea" +
-      "bstraction.protobuf.Track\"\251\002\n\024Interpolan" +
-      "tSequences\022o\n\007perfect\030\001 \003(\0132^.de.uni_fre" +
-      "iburg.informatik.ultimate.interactive.tr" +
-      "aceabstraction.protobuf.InterpolantsPreP" +
-      "ost\022q\n\timperfect\030\002 \003(\0132^.de.uni_freiburg" +
-      ".informatik.ultimate.interactive.traceab" +
-      "straction.protobuf.InterpolantsPrePost\032-" +
-      "\n\007Choices\022\017\n\007perfect\030\001 \003(\005\022\021\n\timperfect\030",
-      "\002 \003(\005\"\332\002\n\023InterpolantsPrePost\022j\n\014preCond" +
-      "ition\030\001 \001(\0132T.de.uni_freiburg.informatik" +
-      ".ultimate.interactive.traceabstraction.p" +
-      "rotobuf.Predicate\022k\n\rpostCondition\030\002 \001(\013" +
-      "2T.de.uni_freiburg.informatik.ultimate.i" +
-      "nteractive.traceabstraction.protobuf.Pre" +
-      "dicate\022j\n\014interpolants\030\003 \003(\0132T.de.uni_fr" +
-      "eiburg.informatik.ultimate.interactive.t" +
-      "raceabstraction.protobuf.Predicate\"\243\001\n\030I" +
-      "nteractiveIterationInfo\022e\n\010fallback\030\001 \001(",
-      "\0162S.de.uni_freiburg.informatik.ultimate." +
-      "interactive.traceabstraction.protobuf.St" +
-      "rategy\022 \n\030nextInteractiveIteration\030\002 \001(\005" +
-      "\"\242\005\n\025PredicateDoubleDecker\022`\n\002up\030\001 \001(\0132T" +
+      "\n\004CEXS\030\002 \001(\010\022\013\n\003IPS\030\003 \001(\010\022\013\n\003RSS\030\004 \001(\010\"\251",
+      "\002\n\024InterpolantSequences\022o\n\007perfect\030\001 \003(\013" +
+      "2^.de.uni_freiburg.informatik.ultimate.i" +
+      "nteractive.traceabstraction.protobuf.Int" +
+      "erpolantsPrePost\022q\n\timperfect\030\002 \003(\0132^.de" +
+      ".uni_freiburg.informatik.ultimate.intera" +
+      "ctive.traceabstraction.protobuf.Interpol" +
+      "antsPrePost\032-\n\007Choices\022\017\n\007perfect\030\001 \003(\005\022" +
+      "\021\n\timperfect\030\002 \003(\005\"\332\002\n\023InterpolantsPrePo" +
+      "st\022j\n\014preCondition\030\001 \001(\0132T.de.uni_freibu" +
+      "rg.informatik.ultimate.interactive.trace",
+      "abstraction.protobuf.Predicate\022k\n\rpostCo" +
+      "ndition\030\002 \001(\0132T.de.uni_freiburg.informat" +
+      "ik.ultimate.interactive.traceabstraction" +
+      ".protobuf.Predicate\022j\n\014interpolants\030\003 \003(" +
+      "\0132T.de.uni_freiburg.informatik.ultimate." +
+      "interactive.traceabstraction.protobuf.Pr" +
+      "edicate\"\242\005\n\025PredicateDoubleDecker\022`\n\002up\030" +
+      "\001 \001(\0132T.de.uni_freiburg.informatik.ultim" +
+      "ate.interactive.traceabstraction.protobu" +
+      "f.Predicate\022b\n\004down\030\002 \001(\0132T.de.uni_freib",
+      "urg.informatik.ultimate.interactive.trac" +
+      "eabstraction.protobuf.Predicate\022\014\n\004hash\030" +
+      "\003 \001(\005\032\361\001\n\tQueuePair\022s\n\tcallQueue\030\001 \003(\0132`" +
       ".de.uni_freiburg.informatik.ultimate.int" +
       "eractive.traceabstraction.protobuf.Predi" +
-      "cate\022b\n\004down\030\002 \001(\0132T.de.uni_freiburg.inf" +
-      "ormatik.ultimate.interactive.traceabstra" +
-      "ction.protobuf.Predicate\022\014\n\004hash\030\003 \001(\005\032\361" +
-      "\001\n\tQueuePair\022s\n\tcallQueue\030\001 \003(\0132`.de.uni",
+      "cateDoubleDecker\022o\n\005queue\030\002 \003(\0132`.de.uni" +
       "_freiburg.informatik.ultimate.interactiv" +
       "e.traceabstraction.protobuf.PredicateDou" +
-      "bleDecker\022o\n\005queue\030\002 \003(\0132`.de.uni_freibu" +
-      "rg.informatik.ultimate.interactive.trace" +
-      "abstraction.protobuf.PredicateDoubleDeck" +
-      "er\032\235\001\n\rQueueResponse\022}\n\tqueueType\030\001 \001(\0162" +
-      "j.de.uni_freiburg.informatik.ultimate.in" +
-      "teractive.traceabstraction.protobuf.Pred" +
-      "icateDoubleDecker.QueueType\022\r\n\005index\030\002 \001" +
-      "(\005\"!\n\tQueueType\022\n\n\006NORMAL\020\000\022\010\n\004CALL\020\001\"\272\001",
-      "\n\tPredicate\022i\n\010location\030\001 \003(\0132W.de.uni_f" +
-      "reiburg.informatik.ultimate.interactive." +
-      "traceabstraction.protobuf.IcfgLocation\022\022" +
-      "\n\nprocedures\030\002 \003(\t\022\025\n\rformulaString\030\003 \001(" +
-      "\t\022\027\n\017formulaHashCode\030\004 \001(\005\":\n\014IcfgLocati" +
-      "on\022\021\n\tprocedure\030\002 \001(\t\022\027\n\017debugIdentifier" +
-      "\030\001 \001(\t\"\032\n\010Question\022\016\n\006answer\030\001 \001(\010\"p\n\013Ce" +
-      "garResult\022a\n\006result\030\001 \001(\0162Q.de.uni_freib" +
-      "urg.informatik.ultimate.interactive.trac" +
-      "eabstraction.protobuf.Result\"\252\007\n\023NestedW",
-      "ordAutomaton\022e\n\010internal\030\001 \001(\0132S.de.uni_" +
-      "freiburg.informatik.ultimate.interactive" +
-      ".traceabstraction.protobuf.Alphabet\022a\n\004c" +
-      "all\030\002 \001(\0132S.de.uni_freiburg.informatik.u" +
-      "ltimate.interactive.traceabstraction.pro" +
-      "tobuf.Alphabet\022c\n\006return\030\003 \001(\0132S.de.uni_" +
-      "freiburg.informatik.ultimate.interactive" +
-      ".traceabstraction.protobuf.Alphabet\022d\n\006s" +
-      "tates\030\004 \003(\0132T.de.uni_freiburg.informatik" +
-      ".ultimate.interactive.traceabstraction.p",
-      "rotobuf.Predicate\022\022\n\nemptyStack\030\005 \001(\005\022\017\n" +
-      "\007initial\030\006 \003(\005\022\r\n\005final\030\007 \003(\005\022\200\001\n\rintern" +
-      "alEdges\030\010 \003(\0132i.de.uni_freiburg.informat" +
-      "ik.ultimate.interactive.traceabstraction" +
-      ".protobuf.NestedWordAutomaton.transition" +
-      "\022|\n\tcallEdges\030\t \003(\0132i.de.uni_freiburg.in" +
-      "formatik.ultimate.interactive.traceabstr" +
-      "action.protobuf.NestedWordAutomaton.tran" +
-      "sition\022~\n\013returnEdges\030\n \003(\0132i.de.uni_fre" +
-      "iburg.informatik.ultimate.interactive.tr",
-      "aceabstraction.protobuf.NestedWordAutoma" +
-      "ton.transition\032I\n\ntransition\022\023\n\013originSt" +
-      "ate\030\001 \001(\005\022\016\n\006letter\030\002 \001(\005\022\026\n\016successorSt" +
-      "ate\030\003 \001(\005\"\343\001\n\tNestedRun\022i\n\nnestedword\030\001 " +
-      "\001(\0132U.de.uni_freiburg.informatik.ultimat" +
-      "e.interactive.traceabstraction.protobuf." +
-      "NestedWord\022k\n\rstateSequence\030\002 \003(\0132T.de.u" +
-      "ni_freiburg.informatik.ultimate.interact" +
-      "ive.traceabstraction.protobuf.Predicate\"" +
-      "\200\002\n\017NestingRelation\022\023\n\013pendingCall\030\001 \003(\005",
-      "\022\025\n\rpendingReturn\030\002 \003(\005\022\210\001\n\017internalNest" +
-      "ing\030\003 \003(\0132o.de.uni_freiburg.informatik.u" +
-      "ltimate.interactive.traceabstraction.pro" +
-      "tobuf.NestingRelation.InternalNestingEnt" +
-      "ry\0326\n\024InternalNestingEntry\022\013\n\003key\030\001 \001(\005\022" +
-      "\r\n\005value\030\002 \001(\005:\0028\001\"\347\001\n\nNestedWord\022d\n\006sym" +
-      "bol\030\001 \003(\0132T.de.uni_freiburg.informatik.u" +
-      "ltimate.interactive.traceabstraction.pro" +
-      "tobuf.CodeBlock\022s\n\017nestingRelation\030\002 \001(\013" +
-      "2Z.de.uni_freiburg.informatik.ultimate.i",
-      "nteractive.traceabstraction.protobuf.Nes" +
-      "tingRelation\"\312\002\n\rPreNestedWord\022\016\n\006symbol" +
-      "\030\001 \003(\005\022s\n\017nestingRelation\030\002 \001(\0132Z.de.uni" +
-      "_freiburg.informatik.ultimate.interactiv" +
-      "e.traceabstraction.protobuf.NestingRelat" +
-      "ion\022k\n\004loop\030\003 \003(\0132].de.uni_freiburg.info" +
-      "rmatik.ultimate.interactive.traceabstrac" +
-      "tion.protobuf.PreNestedWord.Loop\032G\n\004Loop" +
-      "\022\025\n\rstartPosition\030\001 \001(\005\022\023\n\013endPosition\030\002" +
-      " \001(\005\022\023\n\013repetitions\030\003 \001(\005\"\201\002\n\016TraceHisto",
-      "gram\022p\n\006record\030\001 \003(\0132`.de.uni_freiburg.i" +
-      "nformatik.ultimate.interactive.traceabst" +
-      "raction.protobuf.TraceHistogram.Record\032}" +
-      "\n\006Record\022\r\n\005count\030\001 \001(\005\022d\n\006letter\030\002 \001(\0132" +
-      "T.de.uni_freiburg.informatik.ultimate.in" +
-      "teractive.traceabstraction.protobuf.Code" +
-      "Block\"\201\002\n\rIterationInfo\022a\n\003run\030\001 \001(\0132T.d" +
+      "bleDecker\032\235\001\n\rQueueResponse\022}\n\tqueueType" +
+      "\030\001 \001(\0162j.de.uni_freiburg.informatik.ulti",
+      "mate.interactive.traceabstraction.protob" +
+      "uf.PredicateDoubleDecker.QueueType\022\r\n\005in" +
+      "dex\030\002 \001(\005\"!\n\tQueueType\022\n\n\006NORMAL\020\000\022\010\n\004CA" +
+      "LL\020\001\"\272\001\n\tPredicate\022i\n\010location\030\001 \003(\0132W.d" +
       "e.uni_freiburg.informatik.ultimate.inter" +
-      "active.traceabstraction.protobuf.NestedR" +
-      "un\022\021\n\titeration\030\002 \001(\005\022\016\n\006states\030\003 \001(\005\022\023\n",
-      "\013transitions\030\004 \001(\005\022\022\n\nwordLength\030\005 \001(\005\022\033" +
-      "\n\023abstractionSizeInfo\030\006 \001(\t\022$\n\034interpola" +
-      "ntAutomatonSizeInfo\030\007 \001(\t\"\275\001\n\017CegarStati" +
-      "stics\022~\n\022biggestAbstraction\030\001 \001(\0132b.de.u" +
-      "ni_freiburg.informatik.ultimate.interact" +
-      "ive.traceabstraction.protobuf.CegarStati" +
-      "stics.Biggest\032*\n\007Biggest\022\021\n\titeration\030\001 " +
-      "\001(\005\022\014\n\004size\030\002 \001(\005\"p\n\010Alphabet\022d\n\006letter\030" +
-      "\001 \003(\0132T.de.uni_freiburg.informatik.ultim" +
-      "ate.interactive.traceabstraction.protobu",
-      "f.CodeBlock\")\n\tCodeBlock\022\016\n\006serial\030\001 \001(\005" +
-      "\022\014\n\004code\030\002 \001(\t*n\n\010Strategy\022\025\n\021FIXED_PREF" +
-      "ERENCES\020\000\022\n\n\006TAIPAN\020\001\022\021\n\rRUBBER_TAIPAN\020\002" +
-      "\022\013\n\007PENGUIN\020\003\022\n\n\006WALRUS\020\004\022\t\n\005CAMEL\020\005\022\010\n\004" +
-      "WOLF\020\006*\260\001\n\005Track\022!\n\035SMTINTERPOL_TREE_INT" +
-      "ERPOLANTS\020\000\022\022\n\016SMTINTERPOL_FP\020\001\022\013\n\007Z3_FP" +
-      "BP\020\002\022\t\n\005Z3_FP\020\003\022\032\n\026Z3_NESTED_INTERPOLANT" +
-      "S\020\004\022\r\n\tCVC4_FPBP\020\005\022\013\n\007CVC4_FP\020\006\022\020\n\014MATHS" +
-      "AT_FPBP\020\007\022\016\n\nMATHSAT_FP\020\010*8\n\006Result\022\010\n\004S" +
-      "AFE\020\000\022\n\n\006UNSAFE\020\001\022\013\n\007TIMEOUT\020\002\022\013\n\007UNKNOW",
-      "N\020\003B\030B\026TraceAbstractionProtosb\006proto3"
+      "active.traceabstraction.protobuf.IcfgLoc" +
+      "ation\022\022\n\nprocedures\030\002 \003(\t\022\025\n\rformulaStri" +
+      "ng\030\003 \001(\t\022\027\n\017formulaHashCode\030\004 \001(\005\":\n\014Icf" +
+      "gLocation\022\021\n\tprocedure\030\002 \001(\t\022\027\n\017debugIde" +
+      "ntifier\030\001 \001(\t\"\032\n\010Question\022\016\n\006answer\030\001 \001(",
+      "\010\"p\n\013CegarResult\022a\n\006result\030\001 \001(\0162Q.de.un" +
+      "i_freiburg.informatik.ultimate.interacti" +
+      "ve.traceabstraction.protobuf.Result\"\252\007\n\023" +
+      "NestedWordAutomaton\022e\n\010internal\030\001 \001(\0132S." +
+      "de.uni_freiburg.informatik.ultimate.inte" +
+      "ractive.traceabstraction.protobuf.Alphab" +
+      "et\022a\n\004call\030\002 \001(\0132S.de.uni_freiburg.infor" +
+      "matik.ultimate.interactive.traceabstract" +
+      "ion.protobuf.Alphabet\022c\n\006return\030\003 \001(\0132S." +
+      "de.uni_freiburg.informatik.ultimate.inte",
+      "ractive.traceabstraction.protobuf.Alphab" +
+      "et\022d\n\006states\030\004 \003(\0132T.de.uni_freiburg.inf" +
+      "ormatik.ultimate.interactive.traceabstra" +
+      "ction.protobuf.Predicate\022\022\n\nemptyStack\030\005" +
+      " \001(\005\022\017\n\007initial\030\006 \003(\005\022\r\n\005final\030\007 \003(\005\022\200\001\n" +
+      "\rinternalEdges\030\010 \003(\0132i.de.uni_freiburg.i" +
+      "nformatik.ultimate.interactive.traceabst" +
+      "raction.protobuf.NestedWordAutomaton.tra" +
+      "nsition\022|\n\tcallEdges\030\t \003(\0132i.de.uni_frei" +
+      "burg.informatik.ultimate.interactive.tra",
+      "ceabstraction.protobuf.NestedWordAutomat" +
+      "on.transition\022~\n\013returnEdges\030\n \003(\0132i.de." +
+      "uni_freiburg.informatik.ultimate.interac" +
+      "tive.traceabstraction.protobuf.NestedWor" +
+      "dAutomaton.transition\032I\n\ntransition\022\023\n\013o" +
+      "riginState\030\001 \001(\005\022\016\n\006letter\030\002 \001(\005\022\026\n\016succ" +
+      "essorState\030\003 \001(\005\"\343\001\n\tNestedRun\022i\n\nnested" +
+      "word\030\001 \001(\0132U.de.uni_freiburg.informatik." +
+      "ultimate.interactive.traceabstraction.pr" +
+      "otobuf.NestedWord\022k\n\rstateSequence\030\002 \003(\013",
+      "2T.de.uni_freiburg.informatik.ultimate.i" +
+      "nteractive.traceabstraction.protobuf.Pre" +
+      "dicate\"\200\002\n\017NestingRelation\022\023\n\013pendingCal" +
+      "l\030\001 \003(\005\022\025\n\rpendingReturn\030\002 \003(\005\022\210\001\n\017inter" +
+      "nalNesting\030\003 \003(\0132o.de.uni_freiburg.infor" +
+      "matik.ultimate.interactive.traceabstract" +
+      "ion.protobuf.NestingRelation.InternalNes" +
+      "tingEntry\0326\n\024InternalNestingEntry\022\013\n\003key" +
+      "\030\001 \001(\005\022\r\n\005value\030\002 \001(\005:\0028\001\"\347\001\n\nNestedWord" +
+      "\022d\n\006symbol\030\001 \003(\0132T.de.uni_freiburg.infor",
+      "matik.ultimate.interactive.traceabstract" +
+      "ion.protobuf.CodeBlock\022s\n\017nestingRelatio" +
+      "n\030\002 \001(\0132Z.de.uni_freiburg.informatik.ult" +
+      "imate.interactive.traceabstraction.proto" +
+      "buf.NestingRelation\"\312\002\n\rPreNestedWord\022\016\n" +
+      "\006symbol\030\001 \003(\005\022s\n\017nestingRelation\030\002 \001(\0132Z" +
+      ".de.uni_freiburg.informatik.ultimate.int" +
+      "eractive.traceabstraction.protobuf.Nesti" +
+      "ngRelation\022k\n\004loop\030\003 \003(\0132].de.uni_freibu" +
+      "rg.informatik.ultimate.interactive.trace",
+      "abstraction.protobuf.PreNestedWord.Loop\032" +
+      "G\n\004Loop\022\025\n\rstartPosition\030\001 \001(\005\022\023\n\013endPos" +
+      "ition\030\002 \001(\005\022\023\n\013repetitions\030\003 \001(\005\"\201\002\n\016Tra" +
+      "ceHistogram\022p\n\006record\030\001 \003(\0132`.de.uni_fre" +
+      "iburg.informatik.ultimate.interactive.tr" +
+      "aceabstraction.protobuf.TraceHistogram.R" +
+      "ecord\032}\n\006Record\022\r\n\005count\030\001 \001(\005\022d\n\006letter" +
+      "\030\002 \001(\0132T.de.uni_freiburg.informatik.ulti" +
+      "mate.interactive.traceabstraction.protob" +
+      "uf.CodeBlock\"\201\002\n\rIterationInfo\022a\n\003run\030\001 ",
+      "\001(\0132T.de.uni_freiburg.informatik.ultimat" +
+      "e.interactive.traceabstraction.protobuf." +
+      "NestedRun\022\021\n\titeration\030\002 \001(\005\022\016\n\006states\030\003" +
+      " \001(\005\022\023\n\013transitions\030\004 \001(\005\022\022\n\nwordLength\030" +
+      "\005 \001(\005\022\033\n\023abstractionSizeInfo\030\006 \001(\t\022$\n\034in" +
+      "terpolantAutomatonSizeInfo\030\007 \001(\t\"\275\001\n\017Ceg" +
+      "arStatistics\022~\n\022biggestAbstraction\030\001 \001(\013" +
+      "2b.de.uni_freiburg.informatik.ultimate.i" +
+      "nteractive.traceabstraction.protobuf.Ceg" +
+      "arStatistics.Biggest\032*\n\007Biggest\022\021\n\titera",
+      "tion\030\001 \001(\005\022\014\n\004size\030\002 \001(\005\"p\n\010Alphabet\022d\n\006" +
+      "letter\030\001 \003(\0132T.de.uni_freiburg.informati" +
+      "k.ultimate.interactive.traceabstraction." +
+      "protobuf.CodeBlock\")\n\tCodeBlock\022\016\n\006seria" +
+      "l\030\001 \001(\005\022\014\n\004code\030\002 \001(\t*8\n\006Result\022\010\n\004SAFE\020" +
+      "\000\022\n\n\006UNSAFE\020\001\022\013\n\007TIMEOUT\020\002\022\013\n\007UNKNOWN\020\003B" +
+      "\030B\026TraceAbstractionProtosb\006proto3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -26707,14 +25148,8 @@ public final class TraceAbstractionProtos {
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_LivePreferences_descriptor,
         new java.lang.String[] { "Paused", "CEXS", "IPS", "RSS", });
-    internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Tracks_descriptor =
-      getDescriptor().getMessageTypes().get(2);
-    internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Tracks_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Tracks_descriptor,
-        new java.lang.String[] { "Track", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InterpolantSequences_descriptor =
-      getDescriptor().getMessageTypes().get(3);
+      getDescriptor().getMessageTypes().get(2);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InterpolantSequences_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InterpolantSequences_descriptor,
@@ -26726,19 +25161,13 @@ public final class TraceAbstractionProtos {
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InterpolantSequences_Choices_descriptor,
         new java.lang.String[] { "Perfect", "Imperfect", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InterpolantsPrePost_descriptor =
-      getDescriptor().getMessageTypes().get(4);
+      getDescriptor().getMessageTypes().get(3);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InterpolantsPrePost_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InterpolantsPrePost_descriptor,
         new java.lang.String[] { "PreCondition", "PostCondition", "Interpolants", });
-    internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InteractiveIterationInfo_descriptor =
-      getDescriptor().getMessageTypes().get(5);
-    internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InteractiveIterationInfo_fieldAccessorTable = new
-      com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_InteractiveIterationInfo_descriptor,
-        new java.lang.String[] { "Fallback", "NextInteractiveIteration", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_PredicateDoubleDecker_descriptor =
-      getDescriptor().getMessageTypes().get(6);
+      getDescriptor().getMessageTypes().get(4);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_PredicateDoubleDecker_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_PredicateDoubleDecker_descriptor,
@@ -26756,31 +25185,31 @@ public final class TraceAbstractionProtos {
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_PredicateDoubleDecker_QueueResponse_descriptor,
         new java.lang.String[] { "QueueType", "Index", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Predicate_descriptor =
-      getDescriptor().getMessageTypes().get(7);
+      getDescriptor().getMessageTypes().get(5);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Predicate_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Predicate_descriptor,
         new java.lang.String[] { "Location", "Procedures", "FormulaString", "FormulaHashCode", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IcfgLocation_descriptor =
-      getDescriptor().getMessageTypes().get(8);
+      getDescriptor().getMessageTypes().get(6);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IcfgLocation_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IcfgLocation_descriptor,
         new java.lang.String[] { "Procedure", "DebugIdentifier", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Question_descriptor =
-      getDescriptor().getMessageTypes().get(9);
+      getDescriptor().getMessageTypes().get(7);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Question_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Question_descriptor,
         new java.lang.String[] { "Answer", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_CegarResult_descriptor =
-      getDescriptor().getMessageTypes().get(10);
+      getDescriptor().getMessageTypes().get(8);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_CegarResult_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_CegarResult_descriptor,
         new java.lang.String[] { "Result", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_NestedWordAutomaton_descriptor =
-      getDescriptor().getMessageTypes().get(11);
+      getDescriptor().getMessageTypes().get(9);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_NestedWordAutomaton_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_NestedWordAutomaton_descriptor,
@@ -26792,13 +25221,13 @@ public final class TraceAbstractionProtos {
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_NestedWordAutomaton_transition_descriptor,
         new java.lang.String[] { "OriginState", "Letter", "SuccessorState", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_NestedRun_descriptor =
-      getDescriptor().getMessageTypes().get(12);
+      getDescriptor().getMessageTypes().get(10);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_NestedRun_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_NestedRun_descriptor,
         new java.lang.String[] { "Nestedword", "StateSequence", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_NestingRelation_descriptor =
-      getDescriptor().getMessageTypes().get(13);
+      getDescriptor().getMessageTypes().get(11);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_NestingRelation_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_NestingRelation_descriptor,
@@ -26810,13 +25239,13 @@ public final class TraceAbstractionProtos {
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_NestingRelation_InternalNestingEntry_descriptor,
         new java.lang.String[] { "Key", "Value", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_NestedWord_descriptor =
-      getDescriptor().getMessageTypes().get(14);
+      getDescriptor().getMessageTypes().get(12);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_NestedWord_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_NestedWord_descriptor,
         new java.lang.String[] { "Symbol", "NestingRelation", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_PreNestedWord_descriptor =
-      getDescriptor().getMessageTypes().get(15);
+      getDescriptor().getMessageTypes().get(13);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_PreNestedWord_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_PreNestedWord_descriptor,
@@ -26828,7 +25257,7 @@ public final class TraceAbstractionProtos {
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_PreNestedWord_Loop_descriptor,
         new java.lang.String[] { "StartPosition", "EndPosition", "Repetitions", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_TraceHistogram_descriptor =
-      getDescriptor().getMessageTypes().get(16);
+      getDescriptor().getMessageTypes().get(14);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_TraceHistogram_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_TraceHistogram_descriptor,
@@ -26840,13 +25269,13 @@ public final class TraceAbstractionProtos {
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_TraceHistogram_Record_descriptor,
         new java.lang.String[] { "Count", "Letter", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IterationInfo_descriptor =
-      getDescriptor().getMessageTypes().get(17);
+      getDescriptor().getMessageTypes().get(15);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IterationInfo_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_IterationInfo_descriptor,
         new java.lang.String[] { "Run", "Iteration", "States", "Transitions", "WordLength", "AbstractionSizeInfo", "InterpolantAutomatonSizeInfo", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_CegarStatistics_descriptor =
-      getDescriptor().getMessageTypes().get(18);
+      getDescriptor().getMessageTypes().get(16);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_CegarStatistics_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_CegarStatistics_descriptor,
@@ -26858,13 +25287,13 @@ public final class TraceAbstractionProtos {
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_CegarStatistics_Biggest_descriptor,
         new java.lang.String[] { "Iteration", "Size", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Alphabet_descriptor =
-      getDescriptor().getMessageTypes().get(19);
+      getDescriptor().getMessageTypes().get(17);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Alphabet_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_Alphabet_descriptor,
         new java.lang.String[] { "Letter", });
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_CodeBlock_descriptor =
-      getDescriptor().getMessageTypes().get(20);
+      getDescriptor().getMessageTypes().get(18);
     internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_CodeBlock_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_de_uni_freiburg_informatik_ultimate_interactive_traceabstraction_protobuf_CodeBlock_descriptor,

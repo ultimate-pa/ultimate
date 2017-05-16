@@ -42,7 +42,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -133,11 +132,12 @@ public class ServerController implements IController<RunDefinition> {
 		final Map<File, IToolchainData<RunDefinition>> availableToolchains =
 				getAvailableToolchains(core, mCla.getToolchainDirPath());
 
-		final File[] availableSettingsFiles = getAvailableSettingsFiles();
+		// final File[] availableSettingsFiles = getAvailableSettingsFiles();
 
-		final File[] availableInputFiles = getAvailableInputFiles();
+		// final File[] availableInputFiles = getAvailableInputFiles();
 
-		if (availableSettingsFiles == null || availableInputFiles == null || availableToolchains.isEmpty()) {
+		if (availableToolchains.isEmpty()) {
+			mLogger.fatal("No toolchains found in " + mCla.getToolchainDirPath());
 			return -1;
 		}
 
@@ -192,23 +192,15 @@ public class ServerController implements IController<RunDefinition> {
 		return result;
 	}
 
-	private File[] getAvailableSettingsFiles() {
-		final File[] result = mCla.getSettingsFilePath().listFiles((file, name) -> name.endsWith(".epf"));
-		if (result.length == 0) {
-			mLogger.error("No Settings files found in " + mCla.getSettingsFilePath().getAbsolutePath());
-			return null;
-		}
-		return result;
-	}
-
-	private File[] getAvailableInputFiles() {
-		final File[] result = mCla.getInputDirPath().listFiles(f -> f.isFile());
-		if (result.length == 0) {
-			mLogger.error("No Input files found in " + mCla.getInputDirPath().getAbsolutePath());
-			return null;
-		}
-		return result;
-	}
+	/*
+	 * private File[] getAvailableSettingsFiles() { final File[] result = mCla.getSettingsFilePath().listFiles((file,
+	 * name) -> name.endsWith(".epf")); if (result.length == 0) { mLogger.error("No Settings files found in " +
+	 * mCla.getSettingsFilePath().getAbsolutePath()); return null; } return result; }
+	 * 
+	 * private File[] getAvailableInputFiles() { final File[] result = mCla.getInputDirPath().listFiles(f ->
+	 * f.isFile()); if (result.length == 0) { mLogger.error("No Input files found in " +
+	 * mCla.getInputDirPath().getAbsolutePath()); return null; } return result; }
+	 */
 
 	private void initWrapper(final ICore<RunDefinition> core,
 			final Map<File, IToolchainData<RunDefinition>> availableToolchains)
@@ -263,7 +255,8 @@ public class ServerController implements IController<RunDefinition> {
 
 	private void requestAndLoadToolchain(final ICore<RunDefinition> core, final List<File> tcFiles)
 			throws InterruptedException, ExecutionException {
-		final File tcFile = requestChoice(tcFiles, File::getName, "Pick a Toolchain");
+		final File tcFile = ChoiceRequest.get(tcFiles, File::getName).setLogger(mLogger).setTitle("Pick a Toolchain")
+				.request(mCommonInterface).get();
 		try {
 			mToolchain = core.createToolchainData(tcFile.getAbsolutePath());
 		} catch (final FileNotFoundException e1) {
@@ -277,10 +270,12 @@ public class ServerController implements IController<RunDefinition> {
 	private void requestAndLoadSettings(final ICore<RunDefinition> core)
 			throws InterruptedException, ExecutionException {
 		// TODO: allow custom settings for plugins chosen from toolchain (see cli controller)
-		final File settingsFile = requestChoice(getAvailableSettingsFiles(), File::getName, "Pick a Setting File");
+		final Path settingsFile = mCommonInterface
+				.request(Path.class, RootPath.newInstance(mCla.getSettingsFilePath().toPath(), "Settings", ".epf"))
+				.get();
 		try {
 			core.resetPreferences();
-			core.loadPreferences(settingsFile.getAbsolutePath());
+			core.loadPreferences(settingsFile.toFile().getAbsolutePath());
 		} catch (final Exception e) {
 			throw new IllegalStateException("could not load settings", e);
 		}
@@ -305,19 +300,6 @@ public class ServerController implements IController<RunDefinition> {
 		final BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, mLogger, inputFiles);
 		tcj.schedule();
 		tcj.join();
-	}
-
-	private <T> T requestChoice(final T[] choices, final Function<T, String> toString, final String title)
-			throws InterruptedException, ExecutionException {
-		return requestChoice(Arrays.asList(choices), toString, title);
-	}
-
-	private <T> T requestChoice(final List<T> choices, final Function<T, String> toString, final String title)
-			throws InterruptedException, ExecutionException {
-		final T result =
-				(T) mCommonInterface.request(Object.class, ChoiceRequest.get(choices, toString).setTitle(title)).get();
-		mLogger.info("Client has chosen " + toString.apply(result));
-		return result;
 	}
 
 	@Override

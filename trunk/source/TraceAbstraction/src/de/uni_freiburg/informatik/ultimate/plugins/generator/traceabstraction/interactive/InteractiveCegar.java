@@ -15,12 +15,17 @@ import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceled
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractive;
+import de.uni_freiburg.informatik.ultimate.interactive.commondata.ChoiceRequest;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.BasicCegarLoop;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategy;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive.ParrotInteractiveIterationInfo;
 
 public class InteractiveCegar {
 	private final IInteractive<Object> mInteractiveInterface;
@@ -28,9 +33,11 @@ public class InteractiveCegar {
 	 * This variable was merely introduced to avoid frequent null checks on mInteractive for better readability.
 	 */
 	private final boolean mInteractiveMode;
+	private final ILogger mLogger;
+	private final ParrotInteractiveIterationInfo mParrotInteractiveIterationInfo;
+	private final IterationInfo.Info mIterationInfo = IterationInfo.newInstance();
 	private Preferences mPreferences;
 	private CompletableFuture<Void> mContinue;
-	private final ILogger mLogger;
 
 	public static class Preferences {
 
@@ -38,7 +45,6 @@ public class InteractiveCegar {
 		private final boolean mIPS;
 		private final boolean mRSS;
 		private final boolean mPaused;
-
 
 		public boolean ismCEXS() {
 			return mCEXS;
@@ -65,9 +71,12 @@ public class InteractiveCegar {
 	}
 
 	public InteractiveCegar(final IUltimateServiceProvider services, final ILogger logger) {
-		mPreferences = new Preferences(false, false, false, true);
 		mInteractiveInterface = services.getServiceInstance(TAConverterFactory.class);
 		mLogger = logger;
+		mPreferences = new Preferences(false, false, false, true);
+		final RefinementStrategy initialFallback = services.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getEnum(TraceAbstractionPreferenceInitializer.LABEL_REFINEMENT_STRATEGY, RefinementStrategy.class);
+		mParrotInteractiveIterationInfo = new ParrotInteractiveIterationInfo(initialFallback);
 
 		mInteractiveMode = mInteractiveInterface != null;
 		if (mInteractiveMode)
@@ -94,9 +103,15 @@ public class InteractiveCegar {
 
 	private synchronized void setPreferences(final Preferences preferences) {
 		mLogger.info("Received Live Preferences");
+		final boolean wasRSS = mPreferences.isRSS();
 		mPreferences = preferences;
 		if (!mPreferences.mPaused && mContinue != null && !mContinue.isDone()) {
 			mContinue.complete(null);
+		}
+		if (!mPreferences.isRSS() && wasRSS) { // RSS is now turned off, request new fallback strategy.
+			ChoiceRequest.get(RefinementStrategy.class).setTitle("Please select a new Fallback Strategy")
+					.setLogger(mLogger).request(getInterface())
+					.thenAccept(mParrotInteractiveIterationInfo::setFallbackStrategy);
 		}
 	}
 
@@ -132,8 +147,7 @@ public class InteractiveCegar {
 
 	public void reportIteration(final int iteration) {
 		if (isInteractiveMode()) {
-			getInterface().send(IterationInfo.newInstance().setIteration(iteration));
-			// .setBenchmark(mCegarLoopBenchmark))
+			getInterface().send(mIterationInfo.setIteration(iteration));
 		}
 	}
 
@@ -201,9 +215,10 @@ public class InteractiveCegar {
 
 					if (userRun != null)
 						break;
-					getInterface().common().send("Infeasible Trace: Iteration " + iteration
-							+ ": The Trace you have selected is not accepted by the "
-							+ "current abstraction. Please select anther trace.");
+					getInterface().common()
+							.send("Infeasible Trace: Iteration " + iteration
+									+ ": The Trace you have selected is not accepted by the "
+									+ "current abstraction. Please select anther trace.");
 					mLogger.info("intersection of the automaton that accepts the user-trace with abstraction is empty. "
 							+ "Asking for another user run.");
 				} catch (final AutomataLibraryException e) {
@@ -227,5 +242,9 @@ public class InteractiveCegar {
 		}
 
 		return userRun;
+	}
+
+	public ParrotInteractiveIterationInfo getParrotInteractiveIterationInfo() {
+		return mParrotInteractiveIterationInfo;
 	}
 }
