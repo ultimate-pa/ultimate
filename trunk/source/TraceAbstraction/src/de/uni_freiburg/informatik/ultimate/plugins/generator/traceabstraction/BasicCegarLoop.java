@@ -212,8 +212,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final TaCheckAndRefinementPreferences<LETTER> taCheckAndRefinementPrefs = new TaCheckAndRefinementPreferences<>(
 				mServices, mPref, mInterpolation, mSimplificationTechnique, mXnfConversionTechnique, mCsToolkit,
 				mPredicateFactory, mIcfgContainer, mToolchainStorage, mInterpolantAutomatonBuilderFactory);
-		mRefinementStrategyFactory = new RefinementStrategyFactory<>(mLogger, mServices, mInteractive,
-				mToolchainStorage, mPref, taCheckAndRefinementPrefs, mAbsIntRunner, mIcfgContainer, mPredicateFactory);
+		mRefinementStrategyFactory = new RefinementStrategyFactory<>(mLogger, mServices, mToolchainStorage, mPref,
+				taCheckAndRefinementPrefs, mAbsIntRunner, mIcfgContainer, mPredicateFactory);
 	}
 
 	@Override
@@ -296,8 +296,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	@Override
 	protected LBool isCounterexampleFeasible() throws AutomataOperationCanceledException {
 
-		final IRefinementStrategy<LETTER> strategy = mRefinementStrategyFactory.createStrategy(
-				mPref.getRefinementStrategy(), mCounterexample, mAbstraction, getIteration(), getCegarLoopBenchmark());
+		final IRefinementStrategy<LETTER> strategy =
+				mRefinementStrategyFactory.createStrategy(mPref.getRefinementStrategy(), mInteractive, mCounterexample,
+						mAbstraction, getIteration(), getCegarLoopBenchmark());
 		try {
 			mTraceCheckAndRefinementEngine = new TraceAbstractionRefinementEngine<>(mLogger, strategy, mInteractive);
 		} catch (final ToolchainCanceledException tce) {
