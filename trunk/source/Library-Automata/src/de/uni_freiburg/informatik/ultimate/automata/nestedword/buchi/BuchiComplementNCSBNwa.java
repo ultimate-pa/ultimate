@@ -77,12 +77,12 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 	private final StateWithRankInfo<STATE> mEmptyStackStateWri;
 
 	/**
-	 * Maps BlaStState to its representative in the resulting automaton.
+	 * Maps NCSB state to its representative in the resulting automaton.
 	 */
 	private final Map<LevelRankingState<LETTER, STATE>, STATE> mDet2res = new HashMap<>();
 
 	/**
-	 * Maps a state in resulting automaton to the BlaStState for which it was created.
+	 * Maps a state in resulting automaton to the NCSB state for which it was created.
 	 */
 	private final Map<STATE, LevelRankingState<LETTER, STATE>> mRes2det = new HashMap<>();
 
