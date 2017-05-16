@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.SetOfStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
@@ -91,9 +92,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	 */
 	protected final NestedMap4<STATE, STATE, LETTER, STATE, IsContained>  mReturnOut = new NestedMap4<>();
 
-	protected final Set<STATE> mStates = new HashSet<>();
-	protected final Set<STATE> mInitialStates = new HashSet<>();
-	protected final Set<STATE> mFinalStates = new HashSet<>();
+	protected final SetOfStates<STATE> mSetOfStates = new SetOfStates<>();
 
 	/**
 	 * Constructor.
@@ -142,11 +141,11 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	}
 
 	public final Set<STATE> getStates() {
-		return mStates;
+		return mSetOfStates.getStates();
 	}
 	
 	public final Set<STATE> getFinalStates() {
-		return Collections.unmodifiableSet(mFinalStates);
+		return mSetOfStates.getAcceptingStates();
 	}
 
 	@Override
@@ -165,12 +164,12 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	 * @return {@code true} iff the automaton contains the state
 	 */
 	public final boolean contains(final STATE state) {
-		return mStates.contains(state);
+		return mSetOfStates.getStates().contains(state);
 	}
 
 	@Override
 	public final int size() {
-		return mStates.size();
+		return mSetOfStates.getStates().size();
 	}
 
 	@Override
@@ -180,19 +179,17 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 
 	@Override
 	public final Set<STATE> getInitialStates() {
-		return mInitialStates;
+		return mSetOfStates.getInitialStates();
 	}
 
 	@Override
 	public final boolean isInitial(final STATE state) {
-		assert contains(state);
-		return mInitialStates.contains(state);
+		return mSetOfStates.isInitial(state);
 	}
 
 	@Override
 	public final boolean isFinal(final STATE state) {
-		assert contains(state);
-		return mFinalStates.contains(state);
+		return mSetOfStates.isAccepting(state);
 	}
 
 	/**
@@ -205,18 +202,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	 */
 	@SuppressWarnings("squid:S2301")
 	public void addState(final boolean isInitial, final boolean isFinal, final STATE state) {
-		assert state != null;
-		if (mStates.contains(state)) {
-			throw new IllegalArgumentException("State already exists");
-		}
-		mStates.add(state);
-
-		if (isInitial) {
-			mInitialStates.add(state);
-		}
-		if (isFinal) {
-			mFinalStates.add(state);
-		}
+		mSetOfStates.addState(isInitial, isFinal, state);
 	}
 
 	@Override

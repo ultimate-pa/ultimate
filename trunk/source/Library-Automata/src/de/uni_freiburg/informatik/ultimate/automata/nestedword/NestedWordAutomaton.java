@@ -426,13 +426,7 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 	 *            A state which is made non-initial.
 	 */
 	public void makeStateNonIntial(final STATE state) {
-		if (!contains(state)) {
-			throw new IllegalArgumentException(STATE2 + state + UNKNOWN);
-		}
-		if (!mInitialStates.contains(state)) {
-			throw new AssertionError("Can only make initial state non-Initial");
-		}
-		mInitialStates.remove(state);
+		mSetOfStates.makeStateNonInitial(state);
 	}
 
 	/**
@@ -440,11 +434,6 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 	 *            A state which is removed.
 	 */
 	public void removeState(final STATE state) {
-		if (!contains(state)) {
-			throw new IllegalArgumentException(STATE2 + state + UNKNOWN);
-		}
-		mFinalStates.remove(state);
-		mInitialStates.remove(state);
 
 		for (final OutgoingCallTransition<LETTER, STATE> outTrans : callSuccessors(state)) {
 			removeCallIn(state, outTrans.getLetter(), outTrans.getSucc());
@@ -508,9 +497,9 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 			removeInternalIn(state, outTrans.getLetter(), outTrans.getSucc());
 		}
 		removeAllInternalOut(state);
-		final boolean wasContained = mStates.remove(state);
-		assert wasContained : "state " + state + "does not exist";
 
+		mSetOfStates.removeState(state);
+		
 		// assert checkTransitionsStoredConsistent();
 		assert checkTransitionsReturnedConsistent();
 		assert sizeInformation().length() > 0;

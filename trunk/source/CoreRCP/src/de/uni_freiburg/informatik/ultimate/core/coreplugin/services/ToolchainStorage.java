@@ -78,6 +78,9 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 
 	@Override
 	public IStorable putStorable(final String key, final IStorable value) {
+		if (value == null || key == null) {
+			throw new IllegalArgumentException("Cannot store nothing");
+		}
 		return mToolchainStorage.put(key, value);
 	}
 
@@ -103,6 +106,10 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 		final ILogger coreLogger = getLoggingService().getLogger(Activator.PLUGIN_ID);
 		coreLogger.info("Clearing " + current.size() + " storables from " + getClass().getSimpleName());
 		for (final IStorable storable : current) {
+			if (storable == null) {
+				coreLogger.warn("Found NULL storable, ignoring");
+				continue;
+			}
 			try {
 				storable.destroy();
 			} catch (final Throwable t) {
