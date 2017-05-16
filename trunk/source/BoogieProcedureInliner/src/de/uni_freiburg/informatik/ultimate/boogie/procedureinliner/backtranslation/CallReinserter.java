@@ -19,9 +19,9 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogieProcedureInliner plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogieProcedureInliner plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogieProcedureInliner plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.procedureinliner.backtranslation;
@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceEle
 import de.uni_freiburg.informatik.ultimate.core.model.translation.AtomicTraceElement.StepInfo;
 
 /**
- * Analyzes a trace from an inlined boogie program and offers calls/returns to be inserted, before an new inlined call
+ * Analyzes a trace from an inlined Boogie program and offers calls/returns to be inserted before a new inlined call
  * begins/ends.
  * 
  * @author schaetzc@informatik.uni-freiburg.de
@@ -56,13 +56,13 @@ public class CallReinserter {
 	/**
 	 * Last BackTransValues for all trace sections with the same inline entry point.
 	 * <p>
-	 * There is a BackTransValue for every unreturned non-inlined call. The stack height increases after (!) non-inlined
-	 * calls and decreases before non-inlined returns.
+	 * There is a {@link BackTransValue} for every unreturned non-inlined call. The stack height increases after (!)
+	 * non-inlined calls and decreases before non-inlined returns.
 	 */
 	private final Deque<BackTransValue> mPrevBackTranslations = new ArrayDeque<>();
 
 	/**
-	 * Needs to be called for every trace element and in the order of the trace to work correct.
+	 * Needs to be called for every trace element and in the order of the trace to work correctly.
 	 * 
 	 * @param curTraceElem
 	 *            Current trace element.
@@ -71,7 +71,7 @@ public class CallReinserter {
 	 * @return CallStatements to be inserted before the current trace element.
 	 */
 	public List<AtomicTraceElement<BoogieASTNode>> recoverInlinedCallsBefore(
-			AtomicTraceElement<BoogieASTNode> curTraceElem, BackTransValue curBackTrans) {
+			final AtomicTraceElement<BoogieASTNode> curTraceElem, final BackTransValue curBackTrans) {
 		final List<AtomicTraceElement<BoogieASTNode>> recoveredCalls = new ArrayList<>();
 		final boolean nonInlinedCall = curTraceElem.hasStepInfo(StepInfo.PROC_CALL);
 		final boolean nonInlinedReturn = curTraceElem.hasStepInfo(StepInfo.PROC_RETURN);
@@ -132,13 +132,13 @@ public class CallReinserter {
 		return recoveredCalls;
 	}
 
-	private AtomicTraceElement<BoogieASTNode> makeAtomicCall(CallStatement originalCall) {
-		return new AtomicTraceElement<BoogieASTNode>(originalCall, originalCall, StepInfo.PROC_CALL,
+	private static AtomicTraceElement<BoogieASTNode> makeAtomicCall(final CallStatement originalCall) {
+		return new AtomicTraceElement<>(originalCall, originalCall, StepInfo.PROC_CALL,
 				BoogiePrettyPrinter.getBoogieToStringprovider(), null);
 	}
 
-	private AtomicTraceElement<BoogieASTNode> makeAtomicReturn(CallStatement originalReturn) {
-		return new AtomicTraceElement<BoogieASTNode>(originalReturn, originalReturn, StepInfo.PROC_RETURN,
+	private static AtomicTraceElement<BoogieASTNode> makeAtomicReturn(final CallStatement originalReturn) {
+		return new AtomicTraceElement<>(originalReturn, originalReturn, StepInfo.PROC_RETURN,
 				BoogiePrettyPrinter.getBoogieToStringprovider(), null);
 	}
 
