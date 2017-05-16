@@ -42,7 +42,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -263,7 +262,8 @@ public class ServerController implements IController<RunDefinition> {
 
 	private void requestAndLoadToolchain(final ICore<RunDefinition> core, final List<File> tcFiles)
 			throws InterruptedException, ExecutionException {
-		final File tcFile = requestChoice(tcFiles, File::getName, "Pick a Toolchain");
+		final File tcFile = ChoiceRequest.get(tcFiles, File::getName).setLogger(mLogger).setTitle("Pick a Toolchain")
+				.request(mCommonInterface);
 		try {
 			mToolchain = core.createToolchainData(tcFile.getAbsolutePath());
 		} catch (final FileNotFoundException e1) {
@@ -277,7 +277,8 @@ public class ServerController implements IController<RunDefinition> {
 	private void requestAndLoadSettings(final ICore<RunDefinition> core)
 			throws InterruptedException, ExecutionException {
 		// TODO: allow custom settings for plugins chosen from toolchain (see cli controller)
-		final File settingsFile = requestChoice(getAvailableSettingsFiles(), File::getName, "Pick a Setting File");
+		final File settingsFile = ChoiceRequest.get(getAvailableSettingsFiles(), File::getName).setLogger(mLogger)
+				.setTitle("Pick a Setting File").request(mCommonInterface);
 		try {
 			core.resetPreferences();
 			core.loadPreferences(settingsFile.getAbsolutePath());
@@ -305,19 +306,6 @@ public class ServerController implements IController<RunDefinition> {
 		final BasicToolchainJob tcj = new DefaultToolchainJob("Processing Toolchain", core, this, mLogger, inputFiles);
 		tcj.schedule();
 		tcj.join();
-	}
-
-	private <T> T requestChoice(final T[] choices, final Function<T, String> toString, final String title)
-			throws InterruptedException, ExecutionException {
-		return requestChoice(Arrays.asList(choices), toString, title);
-	}
-
-	private <T> T requestChoice(final List<T> choices, final Function<T, String> toString, final String title)
-			throws InterruptedException, ExecutionException {
-		final T result =
-				(T) mCommonInterface.request(Object.class, ChoiceRequest.get(choices, toString).setTitle(title)).get();
-		mLogger.info("Client has chosen " + toString.apply(result));
-		return result;
 	}
 
 	@Override

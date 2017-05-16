@@ -108,10 +108,6 @@ message LivePreferences {
 	bool RSS = 4;
 }
 
-message Tracks {
-	repeated Track track = 1;
-}
-
 message InterpolantSequences {
 	message Choices {
 		repeated int32 perfect = 1;
@@ -126,11 +122,6 @@ message InterpolantsPrePost {
 	Predicate preCondition = 1;
 	Predicate postCondition = 2;
 	repeated Predicate interpolants = 3;
-}
-
-message InteractiveIterationInfo {
-	Strategy fallback = 1;
-	int32 nextInteractiveIteration = 2;
 }
 
 message PredicateDoubleDecker {
@@ -165,39 +156,6 @@ message Predicate {
 message IcfgLocation {
 	string procedure = 2;
 	string debugIdentifier = 1;
-}
-
-enum Strategy {
-// Simple strategy that reads the information from the settings.
-	FIXED_PREFERENCES = 0;
-	// Taipan strategy.
-	TAIPAN = 1;
-	// Taipan without abstract interpretation
-	RUBBER_TAIPAN = 2;
-	// Multi track strategy that tries 1. Craig interpolation with SMTInterpol, and 2. Sp/Wp interpolation with Z3.
-	PENGUIN = 3;
-	// Multi track strategy that tries Sp/Wp interpolation and Craig interpolation.
-	WALRUS = 4;
-	CAMEL = 5;
-	WOLF = 6;
-	// Interactive PARROT strategy not listed here.
-}
-
-enum Track {
-// SMTInterpol with tree interpolation.
-	SMTINTERPOL_TREE_INTERPOLANTS = 0;
-	SMTINTERPOL_FP = 1;
-	// Z3 with forward and backward predicates.
-	Z3_FPBP = 2;
-	Z3_FP = 3;
-	// Z3 with Craig interpolation.
-	Z3_NESTED_INTERPOLANTS = 4;
-	// CVC4 with forward and backward predicates.
-	CVC4_FPBP = 5;
-	CVC4_FP = 6;
-	// MathSAT with forward and backward predicates.
-	MATHSAT_FPBP = 7;
-	MATHSAT_FP = 8;
 }
 
 enum Result {
