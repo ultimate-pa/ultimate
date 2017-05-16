@@ -96,6 +96,8 @@ public class ApplyConversionToInteractive<M, O> implements IInteractive<M> {
 		@SuppressWarnings("unchecked")
 		final Class<? extends M> dType = (Class<? extends M>) data.getClass();
 		final IConverter<? extends M, ? extends O> dConverter = mConverter.getBA(dType);
+		if (dConverter == null)
+			throw new UnregisteredTypeException(dType);
 		return wrapPreRequest(dConverter, data, type);
 	}
 

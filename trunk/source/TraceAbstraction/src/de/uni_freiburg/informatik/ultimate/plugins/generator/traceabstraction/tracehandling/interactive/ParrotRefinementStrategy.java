@@ -32,13 +32,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.interactive.exceptions.ClientSorryException;
+import de.uni_freiburg.informatik.ultimate.interactive.commondata.ChoiceRequest;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -93,13 +92,6 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 
 	protected abstract IRefinementStrategy<LETTER> createFallbackStrategy(RefinementStrategy strategy);
 
-	protected abstract ParrotInteractiveIterationInfo getIterationInfo();
-
-	private void useFallbackStrategy(final ParrotInteractiveIterationInfo itInfo) {
-		mLogger.info("using Fallback Strategy '" + itInfo.getFallbackStrategy() + "'.");
-		mFallback = createFallbackStrategy(itInfo.getFallbackStrategy());
-	}
-
 	private void ask() {
 		if (mAsked)
 			return;
@@ -108,23 +100,22 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 			mNextTrack = null;
 			return;
 		}
-		final Future<Track[]> answer = getInteractive().getInterface().request(Track[].class, mLeft.stream().toArray(Track[]::new));
-		Track[] results;
+		final Track[] leftTracks = mLeft.stream().toArray(Track[]::new);
+		final Track result;
 		try {
-			results = answer.get();
-		} catch (final InterruptedException e) {
-			throw new IllegalStateException(e);
-		} catch (final ExecutionException e) {
-			if (e.getCause() instanceof ClientSorryException) {
-				mNextTrack = null;
-				mLogger.error("No client answer.");
-				return;
-			}
+			final StringBuilder message = new StringBuilder();
+			if (mNextTrack != null)
+				message.append("The Track " + mNextTrack.name() + " has failed. ");
+			message.append("Please select the next Track to try.");
+			result = ChoiceRequest.get(leftTracks, t -> t.name()).setLogger(mLogger).setTitle("Select Track")
+					.setSubtitle(message.toString()).request(getInteractive().getInterface());
+		} catch (final InterruptedException | ExecutionException e) {
+			mNextTrack = null;
 			mLogger.error("No client answer. Aborting Parrot Strategy.", e);
 			return;
 		}
-		if (results != null && results.length > 0) {
-			mNextTrack = results[0];
+		if (result != null) {
+			mNextTrack = result;
 			mLeft.remove(mNextTrack);
 		}
 	}
@@ -151,22 +142,10 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 		mLeft = new HashSet<>();
 		Arrays.stream(Track.values()).forEach(mLeft::add);
 
-		final ParrotInteractiveIterationInfo itInfo = getIterationInfo();
-
-		if (mIteration >= itInfo.getNextInteractiveIteration()) {
-			try {
-				final ParrotInteractiveIterationInfo other =
-						getInteractive().getInterface().request(ParrotInteractiveIterationInfo.class).get();
-				itInfo.setFrom(other);
-			} catch (InterruptedException | ExecutionException e) {
-				mLogger.error("no client answer.");
-				useFallbackStrategy(itInfo);
-				return mIterator;
-			}
-		}
-		if (mIteration < itInfo.getNextInteractiveIteration()) {
-			useFallbackStrategy(itInfo);
-			return mIterator;
+		if (!getInteractive().getPreferences().isRSS()) {
+			final ParrotInteractiveIterationInfo itInfo = getInteractive().getParrotInteractiveIterationInfo();
+			mLogger.info("using Fallback Strategy '" + itInfo.getFallbackStrategy() + "'.");
+			mFallback = createFallbackStrategy(itInfo.getFallbackStrategy());
 		}
 
 		return mIterator;
@@ -180,7 +159,8 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 			} else {
 				// Fallback has failed before user interaction.
 				// so we ask the user to continue manually.
-				mLogger.info("Fallback Strategy " + getIterationInfo().getFallbackStrategy()
+				mLogger.info("Fallback Strategy "
+						+ getInteractive().getParrotInteractiveIterationInfo().getFallbackStrategy()
 						+ " has failed prematurely in iteration " + mIteration + " - asking the user");
 				mFallback = null;
 			}
