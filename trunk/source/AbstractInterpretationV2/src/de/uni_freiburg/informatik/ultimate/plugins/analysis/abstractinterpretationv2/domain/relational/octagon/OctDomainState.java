@@ -51,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.BoogieConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.FixpointEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.util.typeutils.TypeUtils;
@@ -285,13 +286,13 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 			if (!newState.mVariables.add(newBoogieVar)) {
 				throw new IllegalArgumentException("Variable already present: " + newBoogieVar);
 			}
-			if (TypeUtils.isNumeric(newBoogieVar)) {
+			if (SmtSortUtils.isNumericSort(newBoogieVar.getSort())) {
 				addedNumVars.add(newBoogieVar);
-				if (TypeUtils.isNumericNonInt(newBoogieVar)) {
+				if (SmtSortUtils.isRealSort(newBoogieVar.getSort())) {
 					unrefOtherNumericNonIntVars(newState);
 					newState.mNumericNonIntVars.add(newBoogieVar);
 				}
-			} else if (TypeUtils.isBoolean(newBoogieVar)) {
+			} else if (SmtSortUtils.isBoolSort(newBoogieVar.getSort())) {
 				unrefOtherBooleanAbstraction(newState);
 				newState.mBooleanAbstraction.put(newBoogieVar, BoolValue.TOP);
 			}
@@ -723,16 +724,16 @@ public final class OctDomainState implements IAbstractState<OctDomainState, IBoo
 			unrefVariables(patchedState);
 			final boolean varIsNew = patchedState.mVariables.add(newBoogieVar);
 			assert varIsNew || mVariables.contains(newBoogieVar);
-			if (TypeUtils.isNumeric(newBoogieVar)) {
+			if (SmtSortUtils.isNumericSort(newBoogieVar.getSort())) {
 				final int sourceVar = dominator.mMapNumericVarToIndex.get(newBoogieVar);
 				mapNumVarsToDominatorIndices.put(newBoogieVar, sourceVar);
 				if (varIsNew) {
-					if (TypeUtils.isNumericNonInt(newBoogieVar)) {
+					if (SmtSortUtils.isRealSort(newBoogieVar.getSort())) {
 						unrefOtherNumericNonIntVars(patchedState);
 						patchedState.mNumericNonIntVars.add(newBoogieVar);
 					}
 				}
-			} else if (TypeUtils.isBoolean(newBoogieVar)) {
+			} else if (SmtSortUtils.isBoolSort(newBoogieVar.getSort())) {
 				unrefOtherBooleanAbstraction(patchedState);
 				patchedState.mBooleanAbstraction.put(newBoogieVar, dominator.mBooleanAbstraction.get(newBoogieVar));
 			}

@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 
 /**
  * Represents a relation of the form ψ ▷ φ, where the terms ψ and φ have 
@@ -53,11 +54,11 @@ public class BinaryNumericRelation extends BinaryRelation {
 	protected void checkSort(Term[] params)
 			throws NoRelationOfThisKindException {
 		if (!params[0].getSort().isNumericSort() && 
-				!BitvectorUtils.isBitvectorSort(params[0].getSort())) {
+				!SmtSortUtils.isBitvecSort(params[0].getSort())) {
 			throw new NoRelationOfThisKindException("not numeric");
 		} else {
 			assert params[1].getSort().isNumericSort() || 
-				BitvectorUtils.isBitvectorSort(params[1].getSort());
+				SmtSortUtils.isBitvecSort(params[1].getSort());
 		}
 	}
 

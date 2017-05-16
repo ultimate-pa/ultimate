@@ -98,7 +98,7 @@ public class QuantifierEliminationTest {
 	public void varStilThereBug() {
 
 		// Sorts
-		final Sort sort_Bool = mScript.sort("Bool");
+		final Sort sort_Bool = SmtSortUtils.getBoolSort(mScript);
 		final Sort sort_Int = mScript.sort("Int");
 		final Sort sort_Array = mScript.sort("Array", sort_Int, sort_Int);
 

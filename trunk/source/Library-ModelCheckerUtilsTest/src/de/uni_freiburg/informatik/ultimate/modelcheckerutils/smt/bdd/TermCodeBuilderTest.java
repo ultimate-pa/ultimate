@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
@@ -48,7 +49,7 @@ public class TermCodeBuilderTest {
 		 * Was folgt ider der code von TermCodeBuilder.printCode(t); falls du ne bessere idee hast wie man das testet:
 		 * nur zu!
 		 */
-		final Sort sort_Bool = script.sort("Bool");
+		final Sort sort_Bool = SmtSortUtils.getBoolSort(script);
 
 		final Term var_x1 = script.variable("x1", sort_Bool);
 		final Term var_x3 = script.variable("x3", sort_Bool);
@@ -73,9 +74,9 @@ public class TermCodeBuilderTest {
 		 */
 		// TermCodeBuilder.printCode(t);
 		// Sorts
-		final Sort sort_Bool = script.sort("Bool");
-		final Sort sort_Real = script.sort("Real");
-		final Sort sort_Int = script.sort("Int");
+		final Sort sort_Bool = SmtSortUtils.getBoolSort(script);
+		final Sort sort_Real = SmtSortUtils.getRealSort(script);
+		final Sort sort_Int = SmtSortUtils.getIntSort(script);
 
 		// Constants
 		final Term con_2171 = script.decimal("7.0");
@@ -126,7 +127,7 @@ public class TermCodeBuilderTest {
 		// TermCodeBuilder.printCode(t);
 
 		// Sorts
-		final Sort sort_Bool = script.sort("Bool");
+		final Sort sort_Bool = SmtSortUtils.getBoolSort(script);
 		final Sort sort_Int = script.sort("Int");
 
 		// Constants

@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.NoRelationOfThisKindException;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.BinaryRelation.RelationSymbol;
@@ -284,7 +285,7 @@ public class AffineRelation {
 				// do nothing
 			} else {
 				final Rational newCoeff = entry.getValue().div(termsCoeff);
-				if (newCoeff.isIntegral() || "Real".equals(mAffineTerm.getSort().getName())) {
+				if (newCoeff.isIntegral() || SmtSortUtils.isIntSort(mAffineTerm.getSort())) {
 					final Rational negated = newCoeff.negate();
 					rhsSummands.add(product(script, negated, entry.getKey()));
 				} else {
@@ -301,7 +302,7 @@ public class AffineRelation {
 			}
 			final Rational newConstant = mAffineTerm.getConstant().div(termsCoeff);
 			if (newConstant.isIntegral() && newConstant.isRational()
-					|| "Real".equals(mAffineTerm.getSort().getName())) {
+					|| SmtSortUtils.isRealSort(mAffineTerm.getSort())) {
 				final Rational negated = newConstant.negate();
 				rhsSummands.add(SmtUtils.rational2Term(script, negated, mAffineTerm.getSort()));
 			} else {

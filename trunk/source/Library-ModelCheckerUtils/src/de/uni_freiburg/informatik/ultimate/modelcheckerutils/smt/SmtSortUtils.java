@@ -26,23 +26,27 @@
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
 
-import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import java.math.BigInteger;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Simplify handling of {@link Sort}s that are often used, e.g., because
- * there sorts are defined in standard SMT theories.
- * 
+ * Simplify handling of {@link Sort}s that are often used, e.g., because there sorts are defined in standard SMT
+ * theories.
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
 public final class SmtSortUtils {
 
-	public static String BOOL_SORT = "Bool";
-	public static String INT_SORT = "Int";
-	public static String REAL_SORT = "Real";
-	public static String BITVECTOR_SORT = "BitVec";
-	public static String FLOATINGPOINT_SORT = "FloatingPoint";
+	public static final String ARRAY_SORT = "Array";
+	public static final String BOOL_SORT = "Bool";
+	public static final String INT_SORT = "Int";
+	public static final String REAL_SORT = "Real";
+	public static final String BITVECTOR_SORT = "BitVec";
+	public static final String FLOATINGPOINT_SORT = "FloatingPoint";
 
 	private SmtSortUtils() {
 		// Prevent instantiation of this utility class
@@ -51,15 +55,39 @@ public final class SmtSortUtils {
 	public static boolean isBoolSort(final Sort sort) {
 		return BOOL_SORT.equals(sort.getRealSort().getName());
 	}
-	
+
+	public static Sort getBoolSort(final Script script) {
+		return script.sort(BOOL_SORT);
+	}
+
+	public static Sort getBoolSort(final ManagedScript script) {
+		return getBoolSort(script.getScript());
+	}
+
 	public static boolean isIntSort(final Sort sort) {
 		return INT_SORT.equals(sort.getRealSort().getName());
+	}
+
+	public static Sort getIntSort(final Script script) {
+		return script.sort(INT_SORT);
+	}
+
+	public static Sort getIntSort(final ManagedScript script) {
+		return getIntSort(script.getScript());
 	}
 
 	public static boolean isRealSort(final Sort sort) {
 		return REAL_SORT.equals(sort.getRealSort().getName());
 	}
-	
+
+	public static boolean isNumericSort(final Sort sort) {
+		return sort.getRealSort().isNumericSort();
+	}
+
+	public static boolean isArraySort(final Sort sort) {
+		return sort.getRealSort().isArraySort();
+	}
+
 	public static boolean isBitvecSort(final Sort sort) {
 		return BITVECTOR_SORT.equals(sort.getRealSort().getName());
 	}
@@ -67,5 +95,32 @@ public final class SmtSortUtils {
 	public static boolean isFloatingpointSort(final Sort sort) {
 		return FLOATINGPOINT_SORT.equals(sort.getRealSort().getName());
 	}
-}
 
+	public static Sort getRealSort(final Script script) {
+		return script.sort(REAL_SORT);
+	}
+
+	public static Sort getBitvectorSort(final Script script, final BigInteger[] sortIndices) {
+		return script.sort(BITVECTOR_SORT, sortIndices);
+	}
+
+	public static Sort getArraySort(final Script script, final Sort domainSort, final Sort rangeSort) {
+		return script.sort(ARRAY_SORT, domainSort, rangeSort);
+	}
+
+	public static Sort getNamedSort(final Script script, final String name) {
+		// TODO: Check if identifier is reserved (Array)
+		return script.sort(name);
+	}
+
+	public static Sort getBuiltinSort(final Script script, final String attributeDefinedIdentifier,
+			final BigInteger[] indices) {
+		// TODO: Check if identifier is reserved (Array)
+		return script.sort(attributeDefinedIdentifier, indices);
+	}
+
+	public static Sort getRealSort(final ManagedScript script) {
+		return getRealSort(script.getScript());
+	}
+
+}

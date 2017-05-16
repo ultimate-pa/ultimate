@@ -94,6 +94,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILoca
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -171,7 +172,8 @@ public class PathProgramDumper {
 							icfg.getCfgSmtToolkit().getSymbolTable(), boogieDeclarations);
 			mTerm2Expression = new Term2Expression(tsTranslation, boogie2SmtSymbolTable,
 					icfg.getCfgSmtToolkit().getManagedScript());
-			mTypeSortTranslator = new TypeSortTranslator(icfg.getCfgSmtToolkit().getManagedScript().getScript(), services);
+			mTypeSortTranslator =
+					new TypeSortTranslator(icfg.getCfgSmtToolkit().getManagedScript().getScript(), services);
 		}
 
 		final Set<? extends IcfgEdge> allowedTransitions = extractTransitionsFromRun(run.getWord());
@@ -340,7 +342,7 @@ public class PathProgramDumper {
 				String typeName;
 				if (pv.getTermVariable().getSort().getName().equals("Int")) {
 					typeName = "int";
-				} else if (pv.getTermVariable().getSort().getName().equals("Bool")) {
+				} else if (SmtSortUtils.isBoolSort(pv.getTermVariable().getSort())) {
 					typeName = "bool";
 				} else {
 					throw new UnsupportedOperationException(
@@ -348,10 +350,10 @@ public class PathProgramDumper {
 				}
 				astType = new PrimitiveType(constructNewLocation(), typeName);
 			} else {
-				final BoogieType boogieType = (BoogieType) mTypeSortTranslator.getType(pv.getTermVariable().getSort()); 
+				final BoogieType boogieType = (BoogieType) mTypeSortTranslator.getType(pv.getTermVariable().getSort());
 				astType = boogieType.toASTType(constructNewLocation());
 			}
-			
+
 			final VarList varList = new VarList(constructNewLocation(), identifiers, astType);
 			final VarList[] variables = new VarList[] { varList };
 			result[offset] = new VariableDeclaration(constructNewLocation(), attributes, variables);

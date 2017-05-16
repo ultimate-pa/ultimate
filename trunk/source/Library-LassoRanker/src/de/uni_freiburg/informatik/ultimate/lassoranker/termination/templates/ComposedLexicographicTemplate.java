@@ -64,9 +64,9 @@ public class ComposedLexicographicTemplate extends ComposableTemplate {
 	}
 	
 	@Override
-	protected void _init() {
+	protected void init() {
 		for (final ComposableTemplate t : mParts) {
-			t.init(mtas);
+			t.init(mTAS);
 		}
 	}
 	

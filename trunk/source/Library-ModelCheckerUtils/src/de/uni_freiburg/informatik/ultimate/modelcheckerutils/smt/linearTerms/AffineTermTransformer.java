@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorConstant;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
@@ -59,7 +60,7 @@ public class AffineTermTransformer extends TermTransformer {
 	protected void convert(Term term) {
 		if (term instanceof TermVariable) {
 			final TermVariable tv = (TermVariable) term;
-			if (tv.getSort().isNumericSort() || BitvectorUtils.isBitvectorSort(tv.getSort())) {
+			if (tv.getSort().isNumericSort() || SmtSortUtils.isBitvecSort(tv.getSort())) {
 				final AffineTerm result = new AffineTerm(tv);
 				setResult(result);
 				return;

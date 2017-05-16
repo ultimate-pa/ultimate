@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -45,13 +45,14 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Transform Boolean Term into negation normal form.
- * 
+ *
  * @author heizmann@informatik.uni-freiburg.de
  */
 public class Nnf {
@@ -117,7 +118,7 @@ public class Nnf {
 
 		@Override
 		protected void convert(final Term term) {
-			assert term.getSort().getName().equals("Bool") : "Input is not Bool";
+			assert SmtSortUtils.isBoolSort(term.getSort()) : "Input is not Bool";
 			if (term instanceof ApplicationTerm) {
 				final ApplicationTerm appTerm = (ApplicationTerm) term;
 				final String functionName = appTerm.getFunction().getName();
@@ -271,7 +272,7 @@ public class Nnf {
 		}
 
 		private void convertNot(final Term notParam, final Term notTerm) {
-			assert notParam.getSort().getName().equals("Bool") : "Input is not Bool";
+			assert SmtSortUtils.isBoolSort(notParam.getSort()) : "Input is not Bool";
 			if (notParam instanceof ApplicationTerm) {
 				final ApplicationTerm appTerm = (ApplicationTerm) notParam;
 				final String functionName = appTerm.getFunction().getName();
@@ -283,7 +284,7 @@ public class Nnf {
 					convert(Util.or(mScript, negateTerms(params)));
 					return;
 				} else if (functionName.equals("or")) {
-					// we deliberately call convert() instead of super.convert()
+					// we deliberately call convert() instead of super.convert()F
 					// the argument of this call might have been simplified
 					// to a term whose function symbol is neither "and" nor "or"
 					convert(Util.and(mScript, negateTerms(params)));

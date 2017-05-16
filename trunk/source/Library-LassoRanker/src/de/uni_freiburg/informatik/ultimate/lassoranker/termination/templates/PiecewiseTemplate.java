@@ -87,12 +87,12 @@ public class PiecewiseTemplate extends RankingTemplate {
 	}
 	
 	@Override
-	protected void _init() {
+	protected void init() {
 		mdelta = newDelta(s_name_delta);
 		for (int i = 0; i < size; ++i) {
-			mfgens[i] = new AffineFunctionGenerator(mscript, mvariables,
+			mfgens[i] = new AffineFunctionGenerator(mScript, mVariables,
 					s_name_function + i);
-			mpgens[i] = new AffineFunctionGenerator(mscript, mvariables,
+			mpgens[i] = new AffineFunctionGenerator(mScript, mVariables,
 					s_name_pred + i);
 		}
 	}
@@ -145,7 +145,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 				final LinearInequality li1 = mpgens[i].generate(inVars);
 				li1.negate();
 				li1.setStrict(true);
-				li1.mMotzkinCoefficient = sBlueAtoms && i == j ?
+				li1.mMotzkinCoefficient = BLUE_ATOMS && i == j ?
 						PossibleMotzkinCoefficients.ZERO_AND_ONE
 						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li1);
@@ -163,7 +163,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 				final AffineTerm a = new AffineTerm(mdelta, Rational.MONE);
 				li3.add(a);
 				li3.setStrict(true);
-				li3.mMotzkinCoefficient = sRedAtoms ?
+				li3.mMotzkinCoefficient = RED_ATOMS ?
 						PossibleMotzkinCoefficients.ZERO_AND_ONE
 						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li3);
@@ -175,7 +175,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 		for (int i = 0; i < size; ++i) {
 			final LinearInequality li = mfgens[i].generate(inVars);
 			li.setStrict(true);
-			li.mMotzkinCoefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
+			li.mMotzkinCoefficient = RED_ATOMS ? PossibleMotzkinCoefficients.ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
 		}
@@ -185,7 +185,7 @@ public class PiecewiseTemplate extends RankingTemplate {
 		for (int i = 0; i < size; ++i) {
 			final LinearInequality li = mpgens[i].generate(inVars);
 			li.setStrict(false);
-			li.mMotzkinCoefficient = sRedAtoms && i == 0 ?
+			li.mMotzkinCoefficient = RED_ATOMS && i == 0 ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);

@@ -227,17 +227,11 @@ public final class SmtUtils {
 
 	public static boolean firstParamIsBool(final ApplicationTerm term) {
 		final Term[] params = term.getParameters();
-		final boolean result = "Bool".equals(params[0].getSort().getName());
-		return result;
+		return SmtSortUtils.isBoolSort(params[0].getSort());
 	}
 
 	public static boolean allParamsAreBool(final ApplicationTerm term) {
-		for (final Term param : term.getParameters()) {
-			if (!"Bool".equals(param.getSort().getName())) {
-				return false;
-			}
-		}
-		return true;
+		return Arrays.stream(term.getParameters()).map(a -> a.getSort()).allMatch(SmtSortUtils::isBoolSort);
 	}
 
 	/**
@@ -245,8 +239,8 @@ public final class SmtUtils {
 	 * boolean connectives "and" and "or".
 	 */
 	public static Term binaryBooleanEquality(final Script script, final Term lhs, final Term rhs) {
-		assert "Bool".equals(lhs.getSort().getName());
-		assert "Bool".equals(rhs.getSort().getName());
+		assert SmtSortUtils.isBoolSort(lhs.getSort());
+		assert SmtSortUtils.isBoolSort(rhs.getSort());
 		final Term bothTrue = Util.and(script, lhs, rhs);
 		final Term bothFalse = Util.and(script, SmtUtils.not(script, lhs), SmtUtils.not(script, rhs));
 		return Util.or(script, bothTrue, bothFalse);
@@ -257,8 +251,8 @@ public final class SmtUtils {
 	 * the boolean connectives "and" and "or".
 	 */
 	public static Term binaryBooleanNotEquals(final Script script, final Term lhs, final Term rhs) {
-		assert "Bool".equals(lhs.getSort().getName());
-		assert "Bool".equals(rhs.getSort().getName());
+		assert SmtSortUtils.isBoolSort(lhs.getSort());
+		assert SmtSortUtils.isBoolSort(rhs.getSort());
 		final Term oneIsTrue = Util.or(script, lhs, rhs);
 		final Term oneIsFalse = Util.or(script, SmtUtils.not(script, lhs), SmtUtils.not(script, rhs));
 		return Util.and(script, oneIsTrue, oneIsFalse);
@@ -349,13 +343,14 @@ public final class SmtUtils {
 	 * empty.
 	 */
 	public static Term sum(final Script script, final Sort sort, final Term... summands) {
-		assert sort.isNumericSort() || BitvectorUtils.isBitvectorSort(sort);
+		assert SmtSortUtils.isNumericSort(sort) || SmtSortUtils.isBitvecSort(sort);
 		if (summands.length == 0) {
-			if ("Int".equals(sort.toString())) {
+
+			if (SmtSortUtils.isIntSort(sort)) {
 				return script.numeral(BigInteger.ZERO);
-			} else if ("Real".equals(sort.toString())) {
+			} else if (SmtSortUtils.isRealSort(sort)) {
 				return script.decimal(BigDecimal.ZERO);
-			} else if (BitvectorUtils.isBitvectorSort(sort)) {
+			} else if (SmtSortUtils.isBitvecSort(sort)) {
 				return BitvectorUtils.constructTerm(script, BigInteger.ZERO, sort);
 			} else {
 				throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
@@ -363,9 +358,9 @@ public final class SmtUtils {
 		} else if (summands.length == 1) {
 			return summands[0];
 		} else {
-			if (sort.isNumericSort()) {
+			if (SmtSortUtils.isNumericSort(sort)) {
 				return script.term("+", summands);
-			} else if (BitvectorUtils.isBitvectorSort(sort)) {
+			} else if (SmtSortUtils.isBitvecSort(sort)) {
 				if (BINARY_BITVECTOR_SUM_WORKAROUND) {
 					return binaryBitvectorSum(script, sort, summands);
 				}
@@ -403,13 +398,13 @@ public final class SmtUtils {
 	 * empty.
 	 */
 	public static Term mul(final Script script, final Sort sort, final Term... factors) {
-		assert sort.isNumericSort() || BitvectorUtils.isBitvectorSort(sort);
+		assert SmtSortUtils.isNumericSort(sort) || SmtSortUtils.isBitvecSort(sort);
 		if (factors.length == 0) {
-			if ("Int".equals(sort.toString())) {
+			if (SmtSortUtils.isIntSort(sort)) {
 				return script.numeral(BigInteger.ONE);
-			} else if ("Real".equals(sort.toString())) {
+			} else if (SmtSortUtils.isRealSort(sort)) {
 				return script.decimal(BigDecimal.ONE);
-			} else if (BitvectorUtils.isBitvectorSort(sort)) {
+			} else if (SmtSortUtils.isBitvecSort(sort)) {
 				return BitvectorUtils.constructTerm(script, BigInteger.ONE, sort);
 			} else {
 				throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
@@ -417,9 +412,9 @@ public final class SmtUtils {
 		} else if (factors.length == 1) {
 			return factors[0];
 		} else {
-			if (sort.isNumericSort()) {
+			if (SmtSortUtils.isNumericSort(sort)) {
 				return script.term("*", factors);
-			} else if (BitvectorUtils.isBitvectorSort(sort)) {
+			} else if (SmtSortUtils.isBitvecSort(sort)) {
 				return script.term("bvmul", factors);
 			} else {
 				throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
@@ -447,10 +442,10 @@ public final class SmtUtils {
 	 * Return term that represents negation (unary minus).
 	 */
 	public static Term neg(final Script script, final Sort sort, final Term operand) {
-		assert sort.isNumericSort() || BitvectorUtils.isBitvectorSort(sort);
-		if (sort.isNumericSort()) {
+		assert SmtSortUtils.isNumericSort(sort) || SmtSortUtils.isBitvecSort(sort);
+		if (SmtSortUtils.isNumericSort(sort)) {
 			return script.term("-", operand);
-		} else if (BitvectorUtils.isBitvectorSort(sort)) {
+		} else if (SmtSortUtils.isBitvecSort(sort)) {
 			return script.term("bvneg", operand);
 		} else {
 			throw new UnsupportedOperationException(ERROR_MSG_UNKNOWN_SORT + sort);
@@ -480,7 +475,7 @@ public final class SmtUtils {
 			return script.term("true");
 		} else if (twoConstantTermsWithDifferentValue(lhs, rhs)) {
 			return script.term("false");
-		} else if ("Bool".equals(lhs.getSort().getName())) {
+		} else if (SmtSortUtils.isBoolSort(lhs.getSort())) {
 			return booleanEquality(script, lhs, rhs);
 		} else {
 			return script.term("=", lhs, rhs);
@@ -803,7 +798,7 @@ public final class SmtUtils {
 	 *             if ct does not represent a Rational.
 	 */
 	public static Rational convertCT(final ConstantTerm ct) throws IllegalArgumentException {
-		if ("Real".equals(ct.getSort().getName())) {
+		if (SmtSortUtils.isRealSort(ct.getSort())) {
 			if (ct.getValue() instanceof Rational) {
 				return (Rational) ct.getValue();
 			} else if (ct.getValue() instanceof BigDecimal) {
@@ -811,7 +806,7 @@ public final class SmtUtils {
 			} else {
 				throw new UnsupportedOperationException("ConstantTerm's value has to be either Rational or BigDecimal");
 			}
-		} else if ("Int".equals(ct.getSort().getName())) {
+		} else if (SmtSortUtils.isIntSort(ct.getSort())) {
 			if (ct.getValue() instanceof Rational) {
 				return (Rational) ct.getValue();
 			}
@@ -996,7 +991,7 @@ public final class SmtUtils {
 	private static Term simplifyNestedModulo(final Script script, final Term divident, final BigInteger bigIntDivisor) {
 		if (divident instanceof ApplicationTerm) {
 			final ApplicationTerm appTerm = (ApplicationTerm) divident;
-			if (appTerm.getFunction().getApplicationString().equals("mod")) {
+			if ("mod".equals(appTerm.getFunction().getApplicationString())) {
 				final Term innerDivident = appTerm.getParameters()[1];
 				final AffineTerm affineInnerDivisor =
 						(AffineTerm) new AffineTermTransformer(script).transform(innerDivident);
@@ -1030,9 +1025,9 @@ public final class SmtUtils {
 	}
 
 	public static Term rational2Term(final Script script, final Rational rational, final Sort sort) {
-		if (sort.isNumericSort()) {
+		if (SmtSortUtils.isNumericSort(sort)) {
 			return rational.toTerm(sort);
-		} else if (BitvectorUtils.isBitvectorSort(sort)) {
+		} else if (SmtSortUtils.isBitvecSort(sort)) {
 			if (rational.isIntegral() && rational.isRational()) {
 				return BitvectorUtils.constructTerm(script, rational.numerator(), sort);
 			}
@@ -1104,9 +1099,9 @@ public final class SmtUtils {
 	 */
 	public static Rational convertConstantTermToRational(final ConstantTerm constTerm) {
 		Rational rational;
-		assert constTerm.getSort().isNumericSort();
+		assert SmtSortUtils.isNumericSort(constTerm.getSort());
 		final Object value = constTerm.getValue();
-		if ("Int".equals(constTerm.getSort().getName())) {
+		if (SmtSortUtils.isIntSort(constTerm.getSort())) {
 			if (value instanceof BigInteger) {
 				rational = Rational.valueOf((BigInteger) value, BigInteger.ONE);
 			} else if (value instanceof Rational) {
@@ -1114,7 +1109,7 @@ public final class SmtUtils {
 			} else {
 				throw new UnsupportedOperationException();
 			}
-		} else if ("Real".equals(constTerm.getSort().getName())) {
+		} else if (SmtSortUtils.isRealSort(constTerm.getSort())) {
 			if (value instanceof BigDecimal) {
 				rational = decimalToRational((BigDecimal) value);
 			} else if (value instanceof Rational) {
@@ -1292,7 +1287,7 @@ public final class SmtUtils {
 	 * sort we can get values for array cells (resp. the corresponding select term).
 	 */
 	public static boolean isSortForWhichWeCanGetValues(final Sort sort) {
-		return sort.isNumericSort() || SmtSortUtils.isBoolSort(sort) || SmtSortUtils.isBitvecSort(sort)
+		return SmtSortUtils.isNumericSort(sort) || SmtSortUtils.isBoolSort(sort) || SmtSortUtils.isBitvecSort(sort)
 				|| SmtSortUtils.isFloatingpointSort(sort);
 	}
 

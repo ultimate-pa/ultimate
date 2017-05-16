@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
@@ -47,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.test.mocks.UltimateMocks;
 
 /**
  * Tests for {@link SimplifyBdd}
- * 
+ *
  * @author Michael Steinle
  *
  */
@@ -210,7 +211,7 @@ public class SimplifyBddTest {
 	@Test
 	public void bugSimplification20161108() {
 		// Sorts
-		final Sort sort_Bool = script.sort("Bool");
+		final Sort sort_Bool = SmtSortUtils.getBoolSort(script);
 		// Vars
 		final TermVariable t = script.variable("main_#t~switch0", sort_Bool);
 		// term

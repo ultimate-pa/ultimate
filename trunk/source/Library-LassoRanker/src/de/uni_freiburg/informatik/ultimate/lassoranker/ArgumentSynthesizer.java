@@ -63,7 +63,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	/**
 	 * The SMT script for argument synthesis
 	 */
-	protected final Script mscript;
+	protected final Script mScript;
 
 	/**
 	 * The lasso program that we are analyzing
@@ -108,7 +108,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 		mlasso = lasso;
 		mservices = services;
 		mstorage = storage;
-		mscript = constructScript(mPreferences, constaintsName);
+		mScript = constructScript(mPreferences, constaintsName);
 	}
 
 	/**
@@ -122,7 +122,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 * @return the SMT script to be used for the argument synthesis
 	 */
 	public Script getScript() {
-		return mscript;
+		return mScript;
 	}
 
 	/**
@@ -165,7 +165,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	 *             if something goes wrong, e.g. the name is already defined
 	 */
 	public Term newConstant(final String name, final String sortname) throws SMTLIBException {
-		return SmtUtils.buildNewConstant(mscript, name, sortname);
+		return SmtUtils.buildNewConstant(mScript, name, sortname);
 	}
 
 	/**
@@ -174,7 +174,7 @@ public abstract class ArgumentSynthesizer implements Closeable {
 	@Override
 	public void close() {
 		if (!mclosed) {
-			mscript.exit();
+			mScript.exit();
 			mclosed = true;
 		}
 	}

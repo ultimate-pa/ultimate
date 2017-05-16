@@ -75,6 +75,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.ScopedHashMap;
@@ -160,11 +161,11 @@ public final class Term2Expression implements Serializable {
 		final IBoogieType type = mTypeSortTranslator.getType(symb.getReturnSort());
 		if (symb.getParameterSorts().length == 0) {
 			if (SmtUtils.isTrue(term)) {
-				final IBoogieType booleanType = mTypeSortTranslator.getType(mScript.sort("Bool"));
+				final IBoogieType booleanType = mTypeSortTranslator.getType(SmtSortUtils.getBoolSort(mScript));
 				return new BooleanLiteral(null, booleanType, true);
 			}
 			if (SmtUtils.isFalse(term)) {
-				final IBoogieType booleanType = mTypeSortTranslator.getType(mScript.sort("Bool"));
+				final IBoogieType booleanType = mTypeSortTranslator.getType(SmtSortUtils.getBoolSort(mScript));
 				return new BooleanLiteral(null, booleanType, false);
 			}
 			final BoogieConst boogieConst = mBoogie2SmtSymbolTable.getProgramConst(term);
@@ -179,7 +180,7 @@ public final class Term2Expression implements Serializable {
 		} else if ("ite".equals(symb.getName())) {
 			return new IfThenElseExpression(null, type, params[0], params[1], params[2]);
 		} else if (symb.isIntern()) {
-			if (symb.getParameterSorts().length > 0 && BitvectorUtils.isBitvectorSort(symb.getParameterSorts()[0])
+			if (symb.getParameterSorts().length > 0 && SmtSortUtils.isBitvecSort(symb.getParameterSorts()[0])
 					&& !"=".equals(symb.getName()) && !"distinct".equals(symb.getName())) {
 				if ("extract".equals(symb.getName())) {
 					return translateBitvectorAccess(type, term);
@@ -321,7 +322,7 @@ public final class Term2Expression implements Serializable {
 	private Expression translate(final ConstantTerm term) {
 		final Object value = term.getValue();
 		final IBoogieType type = mTypeSortTranslator.getType(term.getSort());
-		if ("BitVec".equals(term.getSort().getRealSort().getName())) {
+		if (SmtSortUtils.isBitvecSort(term.getSort())) {
 			final BigInteger[] indices = term.getSort().getIndices();
 			if (indices.length != 1) {
 				throw new AssertionError("BitVec has exactly one index");
@@ -345,9 +346,9 @@ public final class Term2Expression implements Serializable {
 		} else if (value instanceof BigDecimal) {
 			return new RealLiteral(null, type, value.toString());
 		} else if (value instanceof Rational) {
-			if ("Int".equals(term.getSort().getName())) {
+			if (SmtSortUtils.isIntSort(term.getSort())) {
 				return new IntegerLiteral(null, type, value.toString());
-			} else if ("Real".equals(term.getSort().getName())) {
+			} else if (SmtSortUtils.isRealSort(term.getSort())) {
 				return new RealLiteral(null, type, value.toString());
 			} else {
 				throw new UnsupportedOperationException("unknown Sort");
@@ -435,25 +436,28 @@ public final class Term2Expression implements Serializable {
 			final ILocation loc = astNode.getLocation();
 			final DeclarationInformation declInfo = mBoogie2SmtSymbolTable.getDeclarationInformation(pv);
 			if (pv instanceof LocalBoogieVar) {
-				result = new IdentifierExpression(loc, type, translateIdentifier(((LocalBoogieVar) pv).getIdentifier()), declInfo);
+				result = new IdentifierExpression(loc, type, translateIdentifier(((LocalBoogieVar) pv).getIdentifier()),
+						declInfo);
 			} else if (pv instanceof BoogieNonOldVar) {
-				result = new IdentifierExpression(loc, type, translateIdentifier(((BoogieNonOldVar) pv).getIdentifier()), declInfo);
+				result = new IdentifierExpression(loc, type,
+						translateIdentifier(((BoogieNonOldVar) pv).getIdentifier()), declInfo);
 			} else if (pv instanceof BoogieOldVar) {
 				assert pv.isGlobal();
-				final Expression nonOldExpression =
-						new IdentifierExpression(loc, type, translateIdentifier(((BoogieOldVar) pv).getIdentifierOfNonOldVar()), declInfo);
+				final Expression nonOldExpression = new IdentifierExpression(loc, type,
+						translateIdentifier(((BoogieOldVar) pv).getIdentifierOfNonOldVar()), declInfo);
 				result = new UnaryExpression(loc, type, UnaryExpression.Operator.OLD, nonOldExpression);
 			} else if (pv instanceof BoogieConst) {
-				result = new IdentifierExpression(loc, type, translateIdentifier(((BoogieConst) pv).getIdentifier()), declInfo);
+				result = new IdentifierExpression(loc, type, translateIdentifier(((BoogieConst) pv).getIdentifier()),
+						declInfo);
 			} else {
 				throw new AssertionError("unsupported kind of variable " + pv.getClass().getSimpleName());
 			}
 		}
 		return result;
 	}
-	
+
 	/*
-	 * TODO escape all sequences that are not allowed in Boogie 
+	 * TODO escape all sequences that are not allowed in Boogie
 	 */
 	private String translateIdentifier(final String id) {
 		return id.replace(" ", "_").replace("(", "_").replace(")", "_").replace("+", "PLUS").replace("-", "MINUS")

@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -44,17 +45,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.partialQuantifi
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Represents a simultaneous variable update that consists of two parts
- * 1. variables that get the value of an term (deterministically assigned)
- * 2. variables that are nondeterministically assigned (havoced)
- * 
- * We can often transform {@link TransFormula}s into this form.
- * We note that a {@link TransFormula} is usually not equivalent to this form,
- * because a {@link TransFormula} consists of a guard and an update.
- * The guard can be obtained by {@link TransFormulaUtils#computeGuard}.
- * The conjunction of the guard and the {@link SimultaneousUpdate} (lhs 
- * variables considered as outVars all other variables considered as inVars)
- * is equivalent to the original {@link TransFormula}.
+ * Represents a simultaneous variable update that consists of two parts 1. variables that get the value of an term
+ * (deterministically assigned) 2. variables that are nondeterministically assigned (havoced)
+ *
+ * We can often transform {@link TransFormula}s into this form. We note that a {@link TransFormula} is usually not
+ * equivalent to this form, because a {@link TransFormula} consists of a guard and an update. The guard can be obtained
+ * by {@link TransFormulaUtils#computeGuard}. The conjunction of the guard and the {@link SimultaneousUpdate} (lhs
+ * variables considered as outVars all other variables considered as inVars) is equivalent to the original
+ * {@link TransFormula}.
  *
  * @author heizmann@informatik.uni-freiburg.de
  */
@@ -64,10 +62,10 @@ public class SimultaneousUpdate {
 	Set<IProgramVar> mHavocedVars = new HashSet<>();
 
 	public SimultaneousUpdate(final TransFormula tf, final ManagedScript mgdScript) {
-		final Map<TermVariable, IProgramVar> inVarsReverseMapping = TransFormulaUtils
-				.constructReverseMapping(tf.getInVars());
-		final Map<TermVariable, IProgramVar> outVarsReverseMapping = TransFormulaUtils
-				.constructReverseMapping(tf.getOutVars());
+		final Map<TermVariable, IProgramVar> inVarsReverseMapping =
+				TransFormulaUtils.constructReverseMapping(tf.getInVars());
+		final Map<TermVariable, IProgramVar> outVarsReverseMapping =
+				TransFormulaUtils.constructReverseMapping(tf.getOutVars());
 		final Term[] conjuncts = SmtUtils.getConjuncts(tf.getFormula());
 		final HashRelation<IProgramVar, Term> pv2conjuncts = new HashRelation<>();
 		for (final Term conjunct : conjuncts) {
@@ -123,10 +121,10 @@ public class SimultaneousUpdate {
 
 		mgdScript.toString();
 	}
-	
-	private Term isAssignedWithBooleanConstant(final ManagedScript mgdScript, final TransFormula tf, final IProgramVar pv, final Set<Term> pvContainingConjuncts) {
-		if (pv.getTerm().getSort().getName().equals("Bool") &&
-				pvContainingConjuncts.size() == 1) {
+
+	private Term isAssignedWithBooleanConstant(final ManagedScript mgdScript, final TransFormula tf,
+			final IProgramVar pv, final Set<Term> pvContainingConjuncts) {
+		if (SmtSortUtils.isBoolSort(pv.getTerm().getSort()) && pvContainingConjuncts.size() == 1) {
 			final Term conjunct = pvContainingConjuncts.iterator().next();
 			if (conjunct.equals(tf.getOutVars().get(pv))) {
 				return mgdScript.getScript().term("true");

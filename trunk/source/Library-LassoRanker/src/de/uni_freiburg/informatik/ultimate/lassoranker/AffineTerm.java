@@ -35,6 +35,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
 /**
@@ -172,12 +173,12 @@ public class AffineTerm implements Serializable {
 		final Term[] summands = new Term[mCoefficients.size() + 1];
 		int i = 0;
 		for (final Map.Entry<Term, Rational> entry : mCoefficients.entrySet()) {
-			final Term coeff = entry.getValue().toTerm(script.sort("Real"));
+			final Term coeff = entry.getValue().toTerm(SmtSortUtils.getRealSort(script));
 			summands[i] = script.term("*", coeff, entry.getKey());
 			++i;
 		}
-		summands[i] = mConstant.toTerm(script.sort("Real"));
-		return SmtUtils.sum(script, script.sort("Real"), summands);
+		summands[i] = mConstant.toTerm(SmtSortUtils.getRealSort(script));
+		return SmtUtils.sum(script, SmtSortUtils.getRealSort(script), summands);
 	}
 
 	/**
@@ -196,7 +197,7 @@ public class AffineTerm implements Serializable {
 		}
 		assert mConstant.isIntegral();
 		summands[i] = script.numeral(mConstant.numerator());
-		return SmtUtils.sum(script, script.sort("Int"), summands);
+		return SmtUtils.sum(script, SmtSortUtils.getIntSort(script), summands);
 	}
 
 	@Override

@@ -40,10 +40,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.IBoogieVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 
 public final class TypeUtils {
-	private static final String SORT_BOOL = "Bool";
-	private static final String SORT_REAL = "Real";
 
 	private static final Integer ITYPE_INT = PrimitiveType.INT;
 	private static final Integer ITYPE_REAL = PrimitiveType.REAL;
@@ -68,11 +67,11 @@ public final class TypeUtils {
 			final Consumer arrayConsumer, final VARDECL variable) {
 		if (variable instanceof IBoogieVar) {
 			final IBoogieVar boogieVar = (IBoogieVar) variable;
-			if (isBoolean(boogieVar)) {
+			if (SmtSortUtils.isBoolSort(boogieVar.getSort())) {
 				boolConsumer.accept(variable);
-			} else if (isNumeric(boogieVar)) {
+			} else if (SmtSortUtils.isNumericSort(boogieVar.getSort())) {
 				varConsumer.accept(variable);
-			} else if (isArray(boogieVar)) {
+			} else if (SmtSortUtils.isArraySort(boogieVar.getSort())) {
 				// TODO: Insert arrayConsumer as soon as array support is implemented.
 				varConsumer.accept(variable);
 			} else {
@@ -81,11 +80,11 @@ public final class TypeUtils {
 		} else if (variable instanceof IProgramVarOrConst) {
 			final IProgramVarOrConst programVar = (IProgramVarOrConst) variable;
 			final Sort sort = programVar.getTerm().getSort();
-			if (isBoolean(sort)) {
+			if (SmtSortUtils.isBoolSort(sort)) {
 				boolConsumer.accept(variable);
-			} else if (isNumeric(sort)) {
+			} else if (SmtSortUtils.isNumericSort(sort)) {
 				varConsumer.accept(variable);
-			} else if (isArray(sort)) {
+			} else if (SmtSortUtils.isArraySort(sort)) {
 				// TODO: Insert arrayConsumer as soon as array support is implemented.
 				varConsumer.accept(variable);
 			} else {
@@ -110,11 +109,11 @@ public final class TypeUtils {
 			final Function arrayFunction, final VARDECL variable) {
 		if (variable instanceof IBoogieVar) {
 			final IBoogieVar boogieVar = (IBoogieVar) variable;
-			if (isBoolean(boogieVar)) {
+			if (SmtSortUtils.isBoolSort(boogieVar.getSort())) {
 				return (R) boolFunction.apply(variable);
-			} else if (isNumeric(boogieVar)) {
+			} else if (SmtSortUtils.isNumericSort(boogieVar.getSort())) {
 				return (R) varFunction.apply(variable);
-			} else if (isArray(boogieVar)) {
+			} else if (SmtSortUtils.isArraySort(boogieVar.getSort())) {
 				// TODO: Insert arrayFunction as soon as array support is implemented.
 				return (R) varFunction.apply(variable);
 			} else {
@@ -123,11 +122,11 @@ public final class TypeUtils {
 		} else if (variable instanceof IProgramVarOrConst) {
 			final IProgramVarOrConst programVar = (IProgramVarOrConst) variable;
 			final Sort sort = programVar.getTerm().getSort();
-			if (isBoolean(sort)) {
+			if (SmtSortUtils.isBoolSort(sort)) {
 				return (R) boolFunction.apply(variable);
-			} else if (isNumeric(sort)) {
+			} else if (SmtSortUtils.isNumericSort(sort)) {
 				return (R) varFunction.apply(variable);
-			} else if (isArray(sort)) {
+			} else if (SmtSortUtils.isArraySort(sort)) {
 				// TODO: Insert arrayFunction as soon as array support is implemented.
 				return (R) varFunction.apply(variable);
 			} else {
@@ -142,15 +141,15 @@ public final class TypeUtils {
 	public static <R> R applyTypeFunction(final Function<Sort, R> intFunction, final Function<Sort, R> realFunction,
 			final Function<Sort, R> boolFunction, final Function<Sort, R> arrayFunction, final Sort sort) {
 		assert sort != null;
-		if (isBoolean(sort)) {
+		if (SmtSortUtils.isBoolSort(sort)) {
 			assert boolFunction != null;
 			return boolFunction.apply(sort);
-		} else if (isNumericNonInt(sort)) {
+		} else if (SmtSortUtils.isRealSort(sort)) {
 			assert realFunction != null;
 			return realFunction.apply(sort);
-		} else if (isNumeric(sort)) {
+		} else if (SmtSortUtils.isNumericSort(sort)) {
 			return intFunction.apply(sort);
-		} else if (isArray(sort)) {
+		} else if (SmtSortUtils.isArraySort(sort)) {
 			assert arrayFunction != null;
 			return arrayFunction.apply(sort);
 		}
@@ -190,22 +189,6 @@ public final class TypeUtils {
 		throw new UnsupportedOperationException("Type not implemented: " + type.getClass());
 	}
 
-	public static boolean isArray(final Sort sort) {
-		return sort.getRealSort().isArraySort();
-	}
-
-	private static boolean isNumeric(final Sort sort) {
-		return sort.getRealSort().isNumericSort();
-	}
-
-	private static boolean isNumericNonInt(final Sort sort) {
-		return SORT_REAL.equals(sort.getRealSort().getName());
-	}
-
-	private static boolean isBoolean(final Sort sort) {
-		return SORT_BOOL.equals(sort.getRealSort().getName());
-	}
-
 	public static boolean isBoolean(final IBoogieType type) {
 		return ITYPE_BOOL.equals(primitiveType(type));
 	}
@@ -215,24 +198,8 @@ public final class TypeUtils {
 		return ITYPE_INT.equals(t) || ITYPE_REAL.equals(t);
 	}
 
-	public static boolean isNumeric(final IBoogieVar var) {
-		return isNumeric(var.getSort());
-	}
-
-	public static boolean isBoolean(final IBoogieVar var) {
-		return isBoolean(var.getSort());
-	}
-
-	private static boolean isArray(final IBoogieVar variable) {
-		return isArray(variable.getSort());
-	}
-
 	public static boolean isNumericNonInt(final IBoogieType type) {
 		return ITYPE_REAL.equals(primitiveType(type));
-	}
-
-	public static boolean isNumericNonInt(final IBoogieVar var) {
-		return isNumericNonInt(var.getSort());
 	}
 
 	public static boolean isNumericInt(final IBoogieType type) {
@@ -268,14 +235,6 @@ public final class TypeUtils {
 	 */
 	public static boolean categoryEquals(final IBoogieType a, final IBoogieType b) {
 		return isBoolean(a) == isBoolean(b) && isNumeric(a) == isNumeric(b);
-	}
-
-	public static boolean isIntTerm(final Term t) {
-		return "Int".equals(t.getSort().getRealSort().getName());
-	}
-
-	public static boolean isRealTerm(final Term t) {
-		return "Real".equals(t.getSort().getRealSort().getName());
 	}
 
 	public static Sort getInnermostArrayValueSort(final Sort sort) {

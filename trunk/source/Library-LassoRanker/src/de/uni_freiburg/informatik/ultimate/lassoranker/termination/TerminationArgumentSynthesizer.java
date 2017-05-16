@@ -127,9 +127,9 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 
 		// Set logic
 		if (mSettings.getAnalysis().isLinear()) {
-			mscript.setLogic(Logics.QF_LRA);
+			mScript.setLogic(Logics.QF_LRA);
 		} else {
-			mscript.setLogic(Logics.QF_NRA);
+			mScript.setLogic(Logics.QF_NRA);
 		}
 		if (mSettings.getAnalysis() == AnalysisType.LINEAR && !settings.isNonDecreasingInvariants()) {
 			mLogger.warn("Termination analysis type is 'Linear', " + "hence invariants must be non-decreasing!");
@@ -241,25 +241,25 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			++j;
 			for (int m = 0; m < templateConstraints.size(); ++m) {
 				final MotzkinTransformation motzkin =
-						new MotzkinTransformation(mscript, mSettings.getAnalysis(), mPreferences.isAnnotateTerms());
-				motzkin.annotation = annotations.get(m) + " " + j;
-				motzkin.add_inequalities(loopConj);
-				motzkin.add_inequalities(templateConstraints.get(m));
+						new MotzkinTransformation(mScript, mSettings.getAnalysis(), mPreferences.isAnnotateTerms());
+				motzkin.mAnnotation = annotations.get(m) + " " + j;
+				motzkin.addInequalities(loopConj);
+				motzkin.addInequalities(templateConstraints.get(m));
 
 				// Add supporting invariants
 				assert (mSettings.getNumStrictInvariants() >= 0);
 				for (int i = 0; i < mSettings.getNumStrictInvariants(); ++i) {
-					final SupportingInvariantGenerator sig = new SupportingInvariantGenerator(mscript, siVars, true);
+					final SupportingInvariantGenerator sig = new SupportingInvariantGenerator(mScript, siVars, true);
 					si_generators.add(sig);
-					motzkin.add_inequality(sig.generate(loop.getInVars()));
+					motzkin.addInequality(sig.generate(loop.getInVars()));
 				}
 				assert (mSettings.getNumNonStrictInvariants() >= 0);
 				for (int i = 0; i < mSettings.getNumNonStrictInvariants(); ++i) {
-					final SupportingInvariantGenerator sig = new SupportingInvariantGenerator(mscript, siVars, false);
+					final SupportingInvariantGenerator sig = new SupportingInvariantGenerator(mScript, siVars, false);
 					si_generators.add(sig);
 					final LinearInequality li = sig.generate(loop.getInVars());
 					li.mMotzkinCoefficient = PossibleMotzkinCoefficients.ONE;
-					motzkin.add_inequality(li);
+					motzkin.addInequality(li);
 				}
 				mLogger.debug(motzkin);
 				conj.add(motzkin.transform(eigenvalue_guesses));
@@ -277,13 +277,13 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			for (final List<LinearInequality> stemConj : stem.getPolyhedra()) {
 				++j;
 				final MotzkinTransformation motzkin =
-						new MotzkinTransformation(mscript, mSettings.getAnalysis(), mPreferences.isAnnotateTerms());
-				motzkin.annotation = "invariant " + i + " initiation " + j;
-				motzkin.add_inequalities(stemConj);
+						new MotzkinTransformation(mScript, mSettings.getAnalysis(), mPreferences.isAnnotateTerms());
+				motzkin.mAnnotation = "invariant " + i + " initiation " + j;
+				motzkin.addInequalities(stemConj);
 				final LinearInequality li = sig.generate(stem.getOutVars());
 				li.negate();
 				li.mMotzkinCoefficient = PossibleMotzkinCoefficients.ONE;
-				motzkin.add_inequality(li);
+				motzkin.addInequality(li);
 				conj.add(motzkin.transform(eigenvalue_guesses));
 			}
 
@@ -292,16 +292,16 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			for (final List<LinearInequality> loopConj : loop.getPolyhedra()) {
 				++j;
 				final MotzkinTransformation motzkin =
-						new MotzkinTransformation(mscript, mSettings.getAnalysis(), mPreferences.isAnnotateTerms());
-				motzkin.annotation = "invariant " + i + " consecution " + j;
-				motzkin.add_inequalities(loopConj);
-				motzkin.add_inequality(sig.generate(loop.getInVars())); // si(x)
+						new MotzkinTransformation(mScript, mSettings.getAnalysis(), mPreferences.isAnnotateTerms());
+				motzkin.mAnnotation = "invariant " + i + " consecution " + j;
+				motzkin.addInequalities(loopConj);
+				motzkin.addInequality(sig.generate(loop.getInVars())); // si(x)
 				final LinearInequality li = sig.generate(loop.getOutVars()); // ~si(x')
 				li.mMotzkinCoefficient =
 						mSettings.isNonDecreasingInvariants() || mSettings.getAnalysis() == AnalysisType.LINEAR
 								? PossibleMotzkinCoefficients.ZERO_AND_ONE : PossibleMotzkinCoefficients.ANYTHING;
 				li.negate();
-				motzkin.add_inequality(li);
+				motzkin.addInequality(li);
 				conj.add(motzkin.transform(eigenvalue_guesses));
 			}
 		}
@@ -402,11 +402,11 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		mLogger.info("We have " + getNumMotzkin() + " Motzkin's Theorem applications.");
 		mLogger.info("A total of " + getNumSIs() + " supporting invariants were added.");
 		for (final Term constraint : constraints) {
-			mscript.assertTerm(constraint);
+			mScript.assertTerm(constraint);
 		}
 
 		// Check for a model
-		final LBool sat = mscript.checkSat();
+		final LBool sat = mScript.checkSat();
 		if (sat == LBool.SAT) {
 			// Get all relevant variables
 			final ArrayList<Term> coefficients = new ArrayList<>();
@@ -419,9 +419,9 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			Map<Term, Rational> val;
 			if (mSettings.isSimplifyTerminationArgument()) {
 				mLogger.info("Found a termination argument, trying to simplify.");
-				val = ModelExtractionUtils.getSimplifiedAssignment_TwoMode(mscript, coefficients, mLogger, mservices);
+				val = ModelExtractionUtils.getSimplifiedAssignment_TwoMode(mScript, coefficients, mLogger, mservices);
 			} else {
-				val = ModelExtractionUtils.getValuation(mscript, coefficients);
+				val = ModelExtractionUtils.getValuation(mScript, coefficients);
 			}
 
 			// Extract ranking function and supporting invariants
@@ -441,7 +441,7 @@ public class TerminationArgumentSynthesizer extends ArgumentSynthesizer {
 						+ " redundant supporting invariants from a total of " + before + ".");
 			}
 		} else if (sat == LBool.UNKNOWN) {
-			mscript.echo(new QuotedObject(ArgumentSynthesizer.s_SolverUnknownMessage));
+			mScript.echo(new QuotedObject(ArgumentSynthesizer.s_SolverUnknownMessage));
 			// Problem: If we use the following line we can receive the
 			// following response which is not SMTLIB2 compliant.
 			// (:reason-unknown canceled)

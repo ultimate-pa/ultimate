@@ -94,8 +94,8 @@ class SupportingInvariantSimplifier {
 	 */
 	private static LinearInequality SI2LI(final SupportingInvariant si) {
 		final LinearInequality li = new LinearInequality();
-		li.add(new AffineTerm(si.mconstant));
-		for (final Map.Entry<IProgramVar, BigInteger> entry : si.mcoefficients.entrySet()) {
+		li.add(new AffineTerm(si.mConstant));
+		for (final Map.Entry<IProgramVar, BigInteger> entry : si.mCoefficients.entrySet()) {
 			li.add(ReplacementVarUtils.getDefinition(entry.getKey()), new AffineTerm(entry.getValue()));
 		}
 		li.setStrict(si.strict);
@@ -115,15 +115,15 @@ class SupportingInvariantSimplifier {
 					new MotzkinTransformation(mScript, AnalysisType.LINEAR, mAnnotateTerms);
 			final LinearInequality li = SI2LI(si);
 			li.negate();
-			motzkin.add_inequality(li);
+			motzkin.addInequality(li);
 			for (final SupportingInvariant si2 : new_sis) {
 				if (si2 == si) {
 					continue;
 				}
 				final LinearInequality li2 = SI2LI(si2);
-				motzkin.add_inequality(li2);
+				motzkin.addInequality(li2);
 			}
-			motzkin.annotation = "Simplifying supporting invariant";
+			motzkin.mAnnotation = "Simplifying supporting invariant";
 			mScript.assertTerm(motzkin.transform(new Rational[0]));
 			li.negate();
 			if (mScript.checkSat().equals(LBool.SAT)) {

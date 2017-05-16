@@ -70,6 +70,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -83,13 +84,13 @@ import de.uni_freiburg.informatik.ultimate.smtinterpol.util.DAGSize;
  * program.
  *
  * The outer collection within the invariant pattern type represents a disjunction, the inner one a conjunction. Within
- * the inner conjunction, there may be strict and non-strict inequalities. These collections are generated according to a
- * {@link ILinearInequalityInvariantPatternStrategy}.
+ * the inner conjunction, there may be strict and non-strict inequalities. These collections are generated according to
+ * a {@link ILinearInequalityInvariantPatternStrategy}.
  *
  * @author David Zschocke, Dirk Steinmetz, Matthias Heizmann, Betim Musa
  */
 public final class LinearInequalityInvariantPatternProcessor
-extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvariantPattern>>> {
+		extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinearInvariantPattern>>> {
 
 	public enum SimplificationType {
 		NO_SIMPLIFICATION, SIMPLE, TWO_MODE
@@ -111,10 +112,9 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	private Map<String, LinearInequality> mMotzkinCoefficients2LinearInequalities;
 
 	/**
-	 * Maps the invariant patterns (the set of inequalities) to the locations on which they're used.
-	 * E.g. Let IT_1 be an invariant pattern that is used for location loc_1, IT_2 is used for loc_2, and let stmt be the 
-	 * statement between loc_1 and loc_2, then the map stores the following:
-	 * IT_1 -> [loc_1], IT_2 -> [loc_2], stmt -> [loc_1, loc_2].
+	 * Maps the invariant patterns (the set of inequalities) to the locations on which they're used. E.g. Let IT_1 be an
+	 * invariant pattern that is used for location loc_1, IT_2 is used for loc_2, and let stmt be the statement between
+	 * loc_1 and loc_2, then the map stores the following: IT_1 -> [loc_1], IT_2 -> [loc_2], stmt -> [loc_1, loc_2].
 	 */
 	private Map<Set<LinearInequality>, List<IcfgLocation>> mLinearInequalities2Locations;
 
@@ -162,12 +162,10 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	private final Map<IcfgLocation, UnmodifiableTransFormula> mLoc2OverApproximation;
 
 	/**
-	 * Statistics section - the following statistics are collected
-	 * - the TreeSize of the constraints (normal and approximation constraints)
-	 * - the number of Motzkin Transformations (for normal and approximation constraints)
-	 * - the program size measured as the number of inequalities of all tranformulas
-	 * - the size of largest template
-	 * - the size of smallest template
+	 * Statistics section - the following statistics are collected - the TreeSize of the constraints (normal and
+	 * approximation constraints) - the number of Motzkin Transformations (for normal and approximation constraints) -
+	 * the program size measured as the number of inequalities of all tranformulas - the size of largest template - the
+	 * size of smallest template
 	 */
 	private int mDAGTreeSizeSumOfNormalConstraints;
 	private int mDAGTreeSizeSumOfApproxConstraints;
@@ -188,23 +186,37 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 
 	public enum LinearInequalityPatternProcessorStatistics {
 		ProgramSizeConjuncts,
+
 		ProgramSizeDisjuncts,
+
 		MotzkinTransformationsNormalConstraints,
+
 		MotzkinTransformationsApproxConstraints,
+
 		MotzkinCoefficientsNormalConstraints,
+
 		MotzkinCoefficientsApproxConstraints,
+
 		TreesizeNormalConstraints,
+
 		TreesizeApproxConstraints,
+
 		ConstraintsSolvingTime,
+
 		ConstraintsConstructionTime
 	}
 
 	public enum ConstraintsType {
-		Normal, // normal means the constraints for the path program transitions
-		Approximation // Approximation means the constraints SP_i => IT_i and/or IT_i => WP_i 
-		// (i.e. the constraints for Under-/Overapproximations)
+		/**
+		 * normal means the constraints for the path program transitions
+		 */
+		Normal,
+		/**
+		 * Approximation means the constraints SP_i => IT_i and/or IT_i => WP_i (i.e. the constraints for
+		 * Under-/Overapproximations)
+		 */
+		Approximation
 	}
-
 
 	/**
 	 * TODO
@@ -233,8 +245,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	 * @param axioms
 	 * @param errorLocation
 	 * @param startLocation
-	 * @param overApprox 
-	 * @param underApprox 
+	 * @param overApprox
+	 * @param underApprox
 	 */
 	public LinearInequalityInvariantPatternProcessor(final IUltimateServiceProvider services,
 			final IToolchainStorage storage, final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
@@ -243,8 +255,9 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			final IPredicate postcondition, final IcfgLocation startLocation, final IcfgLocation errorLocation,
 			final ILinearInequalityInvariantPatternStrategy<Collection<Collection<AbstractLinearInvariantPattern>>> strategy,
 			final boolean useNonlinearConstraints, final boolean useUnsatCores,
-			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique, 
-			final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox, final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox) {
+			final SimplificationTechnique simplicationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+			final Map<IcfgLocation, UnmodifiableTransFormula> loc2underApprox,
+			final Map<IcfgLocation, UnmodifiableTransFormula> loc2overApprox) {
 		super(predicateUnifier, csToolkit);
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -283,8 +296,6 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		// Reset statistics
 		resetStatistics();
 	}
-
-
 
 	/**
 	 * {@inheritDoc}
@@ -371,8 +382,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	}
 
 	private static Collection<Collection<LinearInequality>> negatePatternAndConvertToDNF(
-			final IUltimateServiceProvider services,
-			final Collection<Collection<LinearInequality>> mappedPattern) {
+			final IUltimateServiceProvider services, final Collection<Collection<LinearInequality>> mappedPattern) {
 		// 2. negate every LinearInequality, result is a cnf
 		final Collection<Collection<LinearInequality>> cnfAfterNegation = new ArrayList<>(mappedPattern.size());
 		for (final Collection<LinearInequality> conjunct : mappedPattern) {
@@ -386,7 +396,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			cnfAfterNegation.add(disjunctWithNegatedLinearInequalities);
 		}
 		// 3. expand the cnf to get a dnf
-		final Collection<Collection<LinearInequality>> mappedAndNegatedPattern = expandCnfToDnf(services, cnfAfterNegation);
+		final Collection<Collection<LinearInequality>> mappedAndNegatedPattern =
+				expandCnfToDnf(services, cnfAfterNegation);
 		assert mappedAndNegatedPattern != null;
 		// 4. return the resulting dnf as the solution
 		return mappedAndNegatedPattern;
@@ -395,7 +406,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	/**
 	 * Transforms and negates a pattern into a DNF of linear inequalities relative to a given mapping of
 	 * {@link IProgramVar}s involved.
-	 * @param services 
+	 *
+	 * @param services
 	 *
 	 * @param pattern
 	 *            the pattern to transform
@@ -403,8 +415,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	 *            the mapping to use
 	 * @return transformed pattern, equivalent to the negated pattern under the mapping
 	 */
-	private static Collection<Collection<LinearInequality>> mapAndNegatePattern(
-			final IUltimateServiceProvider services, 
+	private static Collection<Collection<LinearInequality>> mapAndNegatePattern(final IUltimateServiceProvider services,
 			final Collection<Collection<AbstractLinearInvariantPattern>> pattern,
 			final Map<IProgramVar, Term> mapping) {
 		// This is the trivial algorithm (expanding). Feel free to optimize ;)
@@ -423,7 +434,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			cnfAfterNegation.add(disjunctWithNegatedLinearInequalities);
 		}
 		// 3. expand the cnf to get a dnf
-		final Collection<Collection<LinearInequality>> mappedAndNegatedPattern = expandCnfToDnf(services, cnfAfterNegation);
+		final Collection<Collection<LinearInequality>> mappedAndNegatedPattern =
+				expandCnfToDnf(services, cnfAfterNegation);
 		assert mappedAndNegatedPattern != null;
 		// 4. return the resulting dnf as the solution
 		return mappedAndNegatedPattern;
@@ -440,7 +452,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	 * @return term equivalent to the negated term
 	 */
 	@SafeVarargs
-	private final Term transformNegatedConjunction(final ConstraintsType ct, final Collection<Collection<LinearInequality>>... dnfs) {
+	private final Term transformNegatedConjunction(final ConstraintsType ct,
+			final Collection<Collection<LinearInequality>>... dnfs) {
 		mLogger.info("About to invoke motzkin:");
 		if (mLogger.isDebugEnabled()) {
 			for (final Collection<? extends Collection<LinearInequality>> dnf : dnfs) {
@@ -450,7 +463,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 
 		final Collection<Collection<LinearInequality>> conjunctionDNF = expandConjunction(mServices, dnfs);
 
-		final int numOfMotzkinCoefficientsBeforeTransformation = mMotzkinCoefficients2LinearInequalities.keySet().size();
+		final int numOfMotzkinCoefficientsBeforeTransformation =
+				mMotzkinCoefficients2LinearInequalities.keySet().size();
 		// Apply Motzkin and generate the conjunction of the resulting Terms
 		final Collection<Term> resultTerms = new ArrayList<>(conjunctionDNF.size());
 		final AnalysisType analysisType = mUseNonlinearConstraints ? AnalysisType.NONLINEAR : AnalysisType.LINEAR;
@@ -459,7 +473,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 				mLogger.debug("Transforming conjunct " + conjunct);
 			}
 			final MotzkinTransformation transformation = new MotzkinTransformation(mSolver, analysisType, !false);
-			transformation.add_inequalities(conjunct);
+			transformation.addInequalities(conjunct);
 			resultTerms.add(transformation.transform(new Rational[0]));
 			mMotzkinCoefficients2LinearInequalities.putAll(transformation.getMotzkinCoefficients2LinearInequalities());
 		}
@@ -468,11 +482,13 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		if (ct == ConstraintsType.Normal) {
 			mDAGTreeSizeSumOfNormalConstraints += new DAGSize().treesize(result);
 			mMotzkinTransformationsForNormalConstraints += conjunctionDNF.size();
-			mMotzkinCoefficientsForNormalConstraints += (mMotzkinCoefficients2LinearInequalities.keySet().size() - numOfMotzkinCoefficientsBeforeTransformation);
+			mMotzkinCoefficientsForNormalConstraints += (mMotzkinCoefficients2LinearInequalities.keySet().size()
+					- numOfMotzkinCoefficientsBeforeTransformation);
 		} else if (ct == ConstraintsType.Approximation) {
 			mDAGTreeSizeSumOfApproxConstraints += new DAGSize().treesize(result);
 			mMotzkinTransformationsForApproxConstraints += conjunctionDNF.size();
-			mMotzkinCoefficientsForApproxConstraints += (mMotzkinCoefficients2LinearInequalities.keySet().size() - numOfMotzkinCoefficientsBeforeTransformation);
+			mMotzkinCoefficientsForApproxConstraints += (mMotzkinCoefficients2LinearInequalities.keySet().size()
+					- numOfMotzkinCoefficientsBeforeTransformation);
 		}
 
 		return result;
@@ -548,7 +564,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			newList.addAll(list);
 			conditionDNF.add(newList);
 		}
-		final Collection<Collection<LinearInequality>> negPatternDNF = mapAndNegatePattern(mServices, pattern, primedMapping);
+		final Collection<Collection<LinearInequality>> negPatternDNF =
+				mapAndNegatePattern(mServices, pattern, primedMapping);
 		int numberOfInequalities = 0;
 		for (final Collection<LinearInequality> conjunct : negPatternDNF) {
 			numberOfInequalities += conjunct.size();
@@ -611,7 +628,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 				if (mapToCompleteWith.get(var) != null) {
 					mapToComplete.put(var, mapToCompleteWith.get(var));
 				} else {
-					final Term replacement = SmtUtils.buildNewConstant(mSolver, prefix + var + "_" + (index++), "Real");
+					final Term replacement =
+							SmtUtils.buildNewConstant(mSolver, prefix + var + "_" + (index++), SmtSortUtils.REAL_SORT);
 					mapToComplete.put(var, replacement);
 					mapToCompleteWith.put(var, replacement);
 				}
@@ -634,8 +652,9 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			final Map<IProgramVar, Term> programVarsRecentlyOccurred) {
 		if (mLogger.isDebugEnabled()) {
 			final String transformulaAsString = predicate.getTransition().toString();
-			mLogger.debug("Building constraints for transition (" + predicate.getSourceLocation() + ", " + transformulaAsString.substring(0, transformulaAsString.indexOf("InVars")) +
-					", " + predicate.getTargetLocation() + ")");
+			mLogger.debug("Building constraints for transition (" + predicate.getSourceLocation() + ", "
+					+ transformulaAsString.substring(0, transformulaAsString.indexOf("InVars")) + ", "
+					+ predicate.getTargetLocation() + ")");
 		}
 		final LinearTransition transition = mLinearizer.linearize(predicate.getTransition());
 		final Map<IProgramVar, Term> unprimedMapping = new HashMap<>(transition.getInVars());
@@ -657,7 +676,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		if (mUseUnsatCores) {
 			final List<IcfgLocation> loc = new ArrayList<>();
 			loc.add(predicate.getSourceLocation());
-			// Store linear inequalities from startPattern, later we may use them to extract the locations from the unsat core 
+			// Store linear inequalities from startPattern, later we may use them to extract the locations from the
+			// unsat core
 			storeLinearInequalitiesToLocations(startInvariantDNF, loc);
 		}
 		if (mLogger.isDebugEnabled()) {
@@ -666,9 +686,11 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			mLogger.debug("Size of end-pattern before mapping to lin-inequalities: "
 					+ getSizeOfPattern(predicate.getInvEnd()));
 		}
-		final Collection<Collection<LinearInequality>> targetLocTemplateMappedDNF = mapPattern(predicate.getInvEnd(), primedMapping);
-		final Collection<Collection<LinearInequality>> targetLocTemplateNegatedDNF = negatePatternAndConvertToDNF(mServices, targetLocTemplateMappedDNF);
-		//				mapAndNegatePattern(predicate.getInvEnd(), primedMapping);
+		final Collection<Collection<LinearInequality>> targetLocTemplateMappedDNF =
+				mapPattern(predicate.getInvEnd(), primedMapping);
+		final Collection<Collection<LinearInequality>> targetLocTemplateNegatedDNF =
+				negatePatternAndConvertToDNF(mServices, targetLocTemplateMappedDNF);
+		// mapAndNegatePattern(predicate.getInvEnd(), primedMapping);
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Size of end-pattern after mapping to lin-inequalities and negating: "
 					+ getSizeOfPattern(targetLocTemplateNegatedDNF));
@@ -676,7 +698,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		if (mUseUnsatCores) {
 			final List<IcfgLocation> loc = new ArrayList<>();
 			loc.add(predicate.getTargetLocation());
-			// Store linear inequalities from endPattern, later we may use them to extract the locations from the unsat core 
+			// Store linear inequalities from endPattern, later we may use them to extract the locations from the unsat
+			// core
 			storeLinearInequalitiesToLocations(targetLocTemplateNegatedDNF, loc);
 		}
 		final Collection<List<LinearInequality>> transitionDNF_ = transition.getPolyhedra();
@@ -685,7 +708,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			final Collection<LinearInequality> newList = new ArrayList<>();
 			newList.addAll(list);
 			transitionDNF.add(newList);
-			// statistics section 
+			// statistics section
 			mProgramSizeConjuncts += list.size();
 		}
 		if (transitionDNF_.size() > 1) {
@@ -695,7 +718,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			final List<IcfgLocation> locs = new ArrayList<>();
 			locs.add(predicate.getSourceLocation());
 			locs.add(predicate.getTargetLocation());
-			// Store linear inequalities from the transition, later we may use them to extract the locations from the unsat core 
+			// Store linear inequalities from the transition, later we may use them to extract the locations from the
+			// unsat core
 			storeLinearInequalitiesToLocations(transitionDNF, locs);
 
 		}
@@ -706,56 +730,69 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		}
 		if (USE_UNDER_APPROX_AS_ADDITIONAL_CONSTRAINT && mCurrentRound >= 0) {
 			final IcfgLocation loc = predicate.getTargetLocation();
-			// Add constraint SP_i ==> IT_i 
+			// Add constraint SP_i ==> IT_i
 			if (loc != mErrorLocation && mLoc2UnderApproximation.containsKey(loc)) {
-				final Collection<Collection<AbstractLinearInvariantPattern>> spTemplate = convertTransFormulaToPatternsForLinearInequalities(mLoc2UnderApproximation.get(loc));
+				final Collection<Collection<AbstractLinearInvariantPattern>> spTemplate =
+						convertTransFormulaToPatternsForLinearInequalities(mLoc2UnderApproximation.get(loc));
 				final Set<IProgramVar> varsForPattern = extractVarsFromPattern(spTemplate);
 				completePatternVariablesMapping(primedMapping, varsForPattern, programVarsRecentlyOccurred);
 				final Collection<Collection<LinearInequality>> spTemplateDNF = mapPattern(spTemplate, primedMapping);
 				if (mUseUnsatCores) {
 					final List<IcfgLocation> locForSp = new ArrayList<>();
 					locForSp.add(loc);
-					// Store linear inequalities from SP, later we may use them to extract the locations from the unsat core 
+					// Store linear inequalities from SP, later we may use them to extract the locations from the unsat
+					// core
 					storeLinearInequalitiesToLocations(spTemplateDNF, locForSp);
 				}
 				if (mLogger.isDebugEnabled()) {
 					final StringBuilder sb = new StringBuilder();
 					appendConstraintToStringBuilder(sb, "\nSP-" + loc + ": ", "(true)", spTemplateDNF);
-					appendConstraintToStringBuilder(sb, "\nnegatedPattern-" + loc + ": ", "()", targetLocTemplateNegatedDNF);
+					appendConstraintToStringBuilder(sb, "\nnegatedPattern-" + loc + ": ", "()",
+							targetLocTemplateNegatedDNF);
 					printConstraintFromStringBuilder(sb);
 				}
 				final String transformulaAsString = mLoc2UnderApproximation.get(loc).toString();
-				mSolver.echo(new QuotedObject("Assertion for SP: " +  transformulaAsString.substring(0, transformulaAsString.indexOf("InVars"))));
-				annotateAndAssertTermAndStoreMapping(transformNegatedConjunction(ConstraintsType.Approximation, spTemplateDNF, targetLocTemplateNegatedDNF));
+				mSolver.echo(new QuotedObject("Assertion for SP: "
+						+ transformulaAsString.substring(0, transformulaAsString.indexOf("InVars"))));
+				annotateAndAssertTermAndStoreMapping(transformNegatedConjunction(ConstraintsType.Approximation,
+						spTemplateDNF, targetLocTemplateNegatedDNF));
 			}
 		}
-		if (USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT &&  mCurrentRound >= 0) {
+		if (USE_OVER_APPROX_AS_ADDITIONAL_CONSTRAINT && mCurrentRound >= 0) {
 			final IcfgLocation loc = predicate.getTargetLocation();
-			// Add constraint IT_i ==> WP_i 
+			// Add constraint IT_i ==> WP_i
 			if (loc != mErrorLocation && mLoc2OverApproximation.containsKey(loc)) {
 				// First, negate predicate WP
-				final UnmodifiableTransFormula negatedWp = TransFormulaUtils.negate(mLoc2OverApproximation.get(loc), super.mCsToolkit.getManagedScript(), mServices, mLogger, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-						SimplificationTechnique.SIMPLIFY_DDA);
+				final UnmodifiableTransFormula negatedWp =
+						TransFormulaUtils.negate(mLoc2OverApproximation.get(loc), super.mCsToolkit.getManagedScript(),
+								mServices, mLogger, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+								SimplificationTechnique.SIMPLIFY_DDA);
 				// Then convert the tranformula to linear inequalities
-				final Collection<Collection<AbstractLinearInvariantPattern>> negatedWpTemplate = convertTransFormulaToPatternsForLinearInequalities(negatedWp);
+				final Collection<Collection<AbstractLinearInvariantPattern>> negatedWpTemplate =
+						convertTransFormulaToPatternsForLinearInequalities(negatedWp);
 				final Set<IProgramVar> varsForPattern = extractVarsFromPattern(negatedWpTemplate);
 				completePatternVariablesMapping(primedMapping, varsForPattern, programVarsRecentlyOccurred);
-				final Collection<Collection<LinearInequality>> wpTemplateNegatedDNF = mapPattern(negatedWpTemplate, primedMapping);
+				final Collection<Collection<LinearInequality>> wpTemplateNegatedDNF =
+						mapPattern(negatedWpTemplate, primedMapping);
 				if (mUseUnsatCores) {
 					final List<IcfgLocation> locForWp = new ArrayList<>();
 					locForWp.add(loc);
-					// Store linear inequalities from WP, later we may use them to extract the locations from the unsat core 
+					// Store linear inequalities from WP, later we may use them to extract the locations from the unsat
+					// core
 					storeLinearInequalitiesToLocations(wpTemplateNegatedDNF, locForWp);
 				}
 				if (mLogger.isDebugEnabled()) {
 					final StringBuilder sb = new StringBuilder();
-					appendConstraintToStringBuilder(sb, "\nPattern-" + loc + ": ", "(true)", targetLocTemplateMappedDNF);
+					appendConstraintToStringBuilder(sb, "\nPattern-" + loc + ": ", "(true)",
+							targetLocTemplateMappedDNF);
 					appendConstraintToStringBuilder(sb, "\nnegatedWP-" + loc + ": ", "()", wpTemplateNegatedDNF);
 					printConstraintFromStringBuilder(sb);
 				}
 				final String transformulaAsString = mLoc2OverApproximation.get(loc).toString();
-				mSolver.echo(new QuotedObject("Assertion for WP: " +  transformulaAsString.substring(0, transformulaAsString.indexOf("InVars"))));
-				annotateAndAssertTermAndStoreMapping(transformNegatedConjunction(ConstraintsType.Approximation, targetLocTemplateMappedDNF, wpTemplateNegatedDNF));
+				mSolver.echo(new QuotedObject("Assertion for WP: "
+						+ transformulaAsString.substring(0, transformulaAsString.indexOf("InVars"))));
+				annotateAndAssertTermAndStoreMapping(transformNegatedConjunction(ConstraintsType.Approximation,
+						targetLocTemplateMappedDNF, wpTemplateNegatedDNF));
 			}
 		}
 		if (mLogger.isDebugEnabled()) {
@@ -765,8 +802,10 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			appendConstraintToStringBuilder(sb, "\nEndPattern: ", "(false)", targetLocTemplateNegatedDNF);
 			printConstraintFromStringBuilder(sb);
 		}
-		mSolver.echo(new QuotedObject("Assertion for trans (" + predicate.getSourceLocation() + ", " + predicate.getTargetLocation() + ")"));
-		return transformNegatedConjunction(ConstraintsType.Normal, startInvariantDNF, targetLocTemplateNegatedDNF, transitionDNF);
+		mSolver.echo(new QuotedObject(
+				"Assertion for trans (" + predicate.getSourceLocation() + ", " + predicate.getTargetLocation() + ")"));
+		return transformNegatedConjunction(ConstraintsType.Normal, startInvariantDNF, targetLocTemplateNegatedDNF,
+				transitionDNF);
 	}
 
 	private void printConstraintFromStringBuilder(final StringBuilder sb) {
@@ -774,21 +813,27 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		s = s.replaceAll("AND \\) OR", "\\) OR");
 		s = s.replaceAll("OR \n", "\n");
 		s = s.replaceAll("AND \n", "\n");
-		//		s = s.replaceAll("\\(\\)", "(true)");
+		// s = s.replaceAll("\\(\\)", "(true)");
 		mLogger.debug(s);
 	}
 
-	private void appendConstraintToStringBuilder(final StringBuilder sb, final String constraintName, final String toReplaceEmptyFormula, final Collection<Collection<LinearInequality>> patternDNF) {
+	private void appendConstraintToStringBuilder(final StringBuilder sb, final String constraintName,
+			final String toReplaceEmptyFormula, final Collection<Collection<LinearInequality>> patternDNF) {
 		sb.append(constraintName);
 		if (patternDNF.isEmpty()) {
 			sb.append(toReplaceEmptyFormula);
 		} else {
-			patternDNF.forEach(disjunct -> {sb.append("("); disjunct.forEach(lineq -> sb.append(lineq.toString() + " AND ")); sb.append(") OR ");});
+			patternDNF.forEach(disjunct -> {
+				sb.append("(");
+				disjunct.forEach(lineq -> sb.append(lineq.toString() + " AND "));
+				sb.append(") OR ");
+			});
 		}
 
 	}
 
-	private Set<IProgramVar> extractVarsFromPattern(final Collection<Collection<AbstractLinearInvariantPattern>> spTemplate) {
+	private Set<IProgramVar>
+			extractVarsFromPattern(final Collection<Collection<AbstractLinearInvariantPattern>> spTemplate) {
 		final Set<IProgramVar> result = new HashSet<>();
 		for (final Collection<AbstractLinearInvariantPattern> conjuncts : spTemplate) {
 			for (final AbstractLinearInvariantPattern conjunct : conjuncts) {
@@ -798,7 +843,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		return result;
 	}
 
-	private void storeLinearInequalitiesToLocations(final Collection<Collection<LinearInequality>> lineqs, final List<IcfgLocation> locs) {
+	private void storeLinearInequalitiesToLocations(final Collection<Collection<LinearInequality>> lineqs,
+			final List<IcfgLocation> locs) {
 		final Set<LinearInequality> lineqsAsSet = new HashSet<>(lineqs.size());
 		for (final Collection<LinearInequality> conjunct : lineqs) {
 			lineqsAsSet.addAll(conjunct);
@@ -884,8 +930,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 		// Generate and assert terms for intermediate transitions
 		for (final InvariantTransitionPredicate<Collection<Collection<AbstractLinearInvariantPattern>>> predicate : predicates) {
 			annotateAndAssertTermAndStoreMapping(buildPredicateTerm(predicate, programVarsRecentlyOccurred));
-//			final LBool smtResult = mSolver.checkSat();
-//			mLogger.info("Check-sat result: " + smtResult);
+			// final LBool smtResult = mSolver.checkSat();
+			// mLogger.info("Check-sat result: " + smtResult);
 		}
 	}
 
@@ -931,13 +977,19 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	public Map<LinearInequalityPatternProcessorStatistics, Object> getStatistics() {
 		final Map<LinearInequalityPatternProcessorStatistics, Object> stats = new HashMap<>();
 		stats.put(LinearInequalityPatternProcessorStatistics.ProgramSizeConjuncts, mProgramSizeConjuncts);
-		stats.put(LinearInequalityPatternProcessorStatistics.ProgramSizeDisjuncts, mProgramSizeDisjuncts);		
-		stats.put(LinearInequalityPatternProcessorStatistics.TreesizeNormalConstraints, mDAGTreeSizeSumOfNormalConstraints);
-		stats.put(LinearInequalityPatternProcessorStatistics.TreesizeApproxConstraints, mDAGTreeSizeSumOfApproxConstraints);		
-		stats.put(LinearInequalityPatternProcessorStatistics.MotzkinTransformationsNormalConstraints, mMotzkinTransformationsForNormalConstraints);
-		stats.put(LinearInequalityPatternProcessorStatistics.MotzkinTransformationsApproxConstraints, mMotzkinTransformationsForApproxConstraints);		
-		stats.put(LinearInequalityPatternProcessorStatistics.MotzkinCoefficientsNormalConstraints, mMotzkinCoefficientsForNormalConstraints);
-		stats.put(LinearInequalityPatternProcessorStatistics.MotzkinCoefficientsApproxConstraints, mMotzkinCoefficientsForApproxConstraints);
+		stats.put(LinearInequalityPatternProcessorStatistics.ProgramSizeDisjuncts, mProgramSizeDisjuncts);
+		stats.put(LinearInequalityPatternProcessorStatistics.TreesizeNormalConstraints,
+				mDAGTreeSizeSumOfNormalConstraints);
+		stats.put(LinearInequalityPatternProcessorStatistics.TreesizeApproxConstraints,
+				mDAGTreeSizeSumOfApproxConstraints);
+		stats.put(LinearInequalityPatternProcessorStatistics.MotzkinTransformationsNormalConstraints,
+				mMotzkinTransformationsForNormalConstraints);
+		stats.put(LinearInequalityPatternProcessorStatistics.MotzkinTransformationsApproxConstraints,
+				mMotzkinTransformationsForApproxConstraints);
+		stats.put(LinearInequalityPatternProcessorStatistics.MotzkinCoefficientsNormalConstraints,
+				mMotzkinCoefficientsForNormalConstraints);
+		stats.put(LinearInequalityPatternProcessorStatistics.MotzkinCoefficientsApproxConstraints,
+				mMotzkinCoefficientsForApproxConstraints);
 		stats.put(LinearInequalityPatternProcessorStatistics.ConstraintsSolvingTime, mConstraintsSolvingTime);
 		stats.put(LinearInequalityPatternProcessorStatistics.ConstraintsConstructionTime, mConstraintsConstructionTime);
 		return stats;
@@ -1017,7 +1069,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 								} else {
 									locs2Frequency.put(locs.get(1), new Integer(1));
 								}
-							} 
+							}
 						} else {
 							locsInUnsatCore.addAll(locs);
 							for (final IcfgLocation loc : locs) {
@@ -1037,7 +1089,8 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			if (mLogger.isDebugEnabled()) {
 				mLogger.debug("LocsInUnsatCore: " + locsInUnsatCore);
 			}
-			// Change for all locations the corresponding invariant patterns (i.e. increasing conjuncts and/or disjuncts)
+			// Change for all locations the corresponding invariant patterns (i.e. increasing conjuncts and/or
+			// disjuncts)
 			if (round >= 0) {
 				if (mLogger.isDebugEnabled()) {
 					mLogger.debug("locsInUnsatCore2Frequency:" + locs2Frequency);
@@ -1078,7 +1131,6 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	public int getMaxRounds() {
 		return mMaxRounds;
 	}
-
 
 	/**
 	 * Takes a pattern and generates a term with the csToolkit.getScript() script where the variables are valuated with
@@ -1155,7 +1207,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	 */
 	@Override
 	public Collection<Collection<AbstractLinearInvariantPattern>>
-	getInvariantPatternForLocation(final IcfgLocation location, final int round) {
+			getInvariantPatternForLocation(final IcfgLocation location, final int round) {
 
 		if (mStartLocation.equals(location)) {
 			assert mEntryInvariantPattern != null : "call initializeEntryAndExitPattern() before this";
@@ -1178,7 +1230,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 
 	@Override
 	public Collection<Collection<AbstractLinearInvariantPattern>>
-	getInvariantPatternForLocation(final IcfgLocation location, final int round, final Set<IProgramVar> vars) {
+			getInvariantPatternForLocation(final IcfgLocation location, final int round, final Set<IProgramVar> vars) {
 
 		if (mStartLocation.equals(location)) {
 			assert mEntryInvariantPattern != null : "call initializeEntryAndExitPattern() before this";
@@ -1276,10 +1328,11 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 			totalNumOfDisjuncts++;
 		}
 		return totalNumOfDisjuncts + " disjuncts with each " + Arrays.toString(conjunctsEachDisjunct)
-		+ " conjuncts (Total: " + totalNumOfConjuncts + " cojuncts)";
+				+ " conjuncts (Total: " + totalNumOfConjuncts + " cojuncts)";
 	}
 
-	public int getTotalNumberOfConjunctsInPattern(final Collection<Collection<AbstractLinearInvariantPattern>> pattern) {
+	public int
+			getTotalNumberOfConjunctsInPattern(final Collection<Collection<AbstractLinearInvariantPattern>> pattern) {
 		int totalNumOfConjuncts = 0;
 		for (final Collection<?> conjuncts : pattern) {
 			totalNumOfConjuncts = totalNumOfConjuncts + conjuncts.size();
@@ -1289,7 +1342,7 @@ extends AbstractSMTInvariantPatternProcessor<Collection<Collection<AbstractLinea
 	}
 
 	private Collection<Collection<AbstractLinearInvariantPattern>>
-	convertTransFormulaToPatternsForLinearInequalities(final UnmodifiableTransFormula tf) {
+			convertTransFormulaToPatternsForLinearInequalities(final UnmodifiableTransFormula tf) {
 		final Map<Term, IProgramVar> termVariables2ProgramVars = new HashMap<>();
 		termVariables2ProgramVars.putAll(
 				tf.getInVars().entrySet().stream().collect(Collectors.toMap(Map.Entry::getValue, Map.Entry::getKey)));

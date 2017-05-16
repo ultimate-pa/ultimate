@@ -1,27 +1,27 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt;
@@ -37,14 +37,13 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Transform term into an equivalent term without ite terms. E.g.,
- * a = b ? c : d becomes b && a = c || !b && a = d
- * (= a (ite b c d)) becomes (or (and b (= a c)) (and (not b) (= a d)))
- * 
- * TODO: This could be much more efficient if could obtain the context in which
- * the ite term occurs and check if the condition holds.(Use ideas from 
- * SimplifyDDA). For small formulas we can achieve the same result by applying
+ * Transform term into an equivalent term without ite terms. E.g., a = b ? c : d becomes b && a = c || !b && a = d (= a
+ * (ite b c d)) becomes (or (and b (= a c)) (and (not b) (= a d)))
+ *
+ * TODO: This could be much more efficient if could obtain the context in which the ite term occurs and check if the
+ * condition holds.(Use ideas from SimplifyDDA). For small formulas we can achieve the same result by applying
  * SimplifyDDA afterwards.
+ * 
  * @author Matthias Heizmann
  *
  */
@@ -58,7 +57,7 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 
 	@Override
 	protected Term transformNonCoreBooleanSubterm(final Term term) {
-		assert term.getSort().getName().equals("Bool");
+		assert SmtSortUtils.isBoolSort(term.getSort());
 		Term result = term;
 		Set<ApplicationTerm> iteSubterms = (new ApplicationTermFinder("ite", false)).findMatchingSubterms(result);
 		while (!iteSubterms.isEmpty()) {
@@ -68,11 +67,10 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 			iteSubterms = (new ApplicationTermFinder("ite", false)).findMatchingSubterms(result);
 		}
 		assert doesNotContainIteTerm(result) : "not all ite terms were removed";
-		assert (Util.checkSat(mScript.getScript(), mScript.getScript().term("distinct", 
-				term, result)) != LBool.SAT);
+		assert (Util.checkSat(mScript.getScript(), mScript.getScript().term("distinct", term, result)) != LBool.SAT);
 		return result;
 	}
-	
+
 	private boolean doesNotContainIteTerm(final Term term) {
 		return (new ApplicationTermFinder("ite", true)).findMatchingSubterms(term).isEmpty();
 	}
@@ -85,22 +83,17 @@ public class IteRemover extends NonCoreBooleanSubTermTransformer {
 		final Term elseTerm = iteTerm.getParameters()[2];
 		Term replacedWithIf;
 		{
-			final Map<Term, Term> substitutionMapping = 
-					Collections.singletonMap((Term) iteTerm, ifTerm);
-			replacedWithIf = (new SubstitutionWithLocalSimplification(
-					mScript, substitutionMapping)).transform(term);
+			final Map<Term, Term> substitutionMapping = Collections.singletonMap((Term) iteTerm, ifTerm);
+			replacedWithIf = (new SubstitutionWithLocalSimplification(mScript, substitutionMapping)).transform(term);
 		}
 		Term replacedWithElse;
 		{
-			final Map<Term, Term> substitutionMapping = 
-					Collections.singletonMap((Term) iteTerm, elseTerm);
-			replacedWithElse = (new SubstitutionWithLocalSimplification(
-					mScript, substitutionMapping)).transform(term);
+			final Map<Term, Term> substitutionMapping = Collections.singletonMap((Term) iteTerm, elseTerm);
+			replacedWithElse = (new SubstitutionWithLocalSimplification(mScript, substitutionMapping)).transform(term);
 		}
-		final Term withoutThisIte = Util.or(mScript.getScript(), 
-				Util.and(mScript.getScript(), condition, replacedWithIf), 
-				Util.and(mScript.getScript(), SmtUtils.not(mScript.getScript(), condition), replacedWithElse)
-				);
+		final Term withoutThisIte =
+				Util.or(mScript.getScript(), Util.and(mScript.getScript(), condition, replacedWithIf),
+						Util.and(mScript.getScript(), SmtUtils.not(mScript.getScript(), condition), replacedWithElse));
 		return withoutThisIte;
 	}
 

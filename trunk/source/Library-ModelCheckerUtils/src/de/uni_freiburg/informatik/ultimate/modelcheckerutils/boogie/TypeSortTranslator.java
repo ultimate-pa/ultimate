@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 
 /**
  * Translates Boogie types into SMT sorts and vice versa.
@@ -71,7 +72,7 @@ public class TypeSortTranslator {
 			// backtranslation in the case where there was no Boolean
 			// variable in the Boogie program but we translate a boolean
 			// term e.g., "true".
-			final Sort boolSort = mScript.sort("Bool");
+			final Sort boolSort = SmtSortUtils.getBoolSort(mScript);
 			final IBoogieType boolType = BoogieType.TYPE_BOOL;
 			cacheSort(boolType, boolSort);
 		}
@@ -79,17 +80,15 @@ public class TypeSortTranslator {
 			declareType(typeDecl);
 		}
 	}
-	
+
 	/**
-	 * Constructor is only used in a workaround for the backtranslation
-	 * while dumping path programs.
+	 * Constructor is only used in a workaround for the backtranslation while dumping path programs.
 	 */
-	public TypeSortTranslator(final Script script,
-			final IUltimateServiceProvider services) {
+	public TypeSortTranslator(final Script script, final IUltimateServiceProvider services) {
 		this(Collections.emptySet(), script, services);
 		{
 			// Add type/sort mapping for Int.
-			final Sort intSort = mScript.sort("Int");
+			final Sort intSort = SmtSortUtils.getIntSort(mScript);
 			final IBoogieType boolType = BoogieType.TYPE_INT;
 			cacheSort(boolType, intSort);
 		}
@@ -185,7 +184,6 @@ public class TypeSortTranslator {
 		}
 	}
 
-
 	/**
 	 * Construct the SMT sort for a Boogie type. Does not use any caching and, depending on your funAttributeCache, may
 	 * create many sorts.
@@ -195,18 +193,18 @@ public class TypeSortTranslator {
 		final Sort result;
 		if (boogieType instanceof PrimitiveType) {
 			if (boogieType.equals(BoogieType.TYPE_BOOL)) {
-				result = mScript.sort("Bool");
+				result = SmtSortUtils.getBoolSort(mScript);
 			} else if (boogieType.equals(BoogieType.TYPE_INT)) {
-				result = mScript.sort("Int");
+				result = SmtSortUtils.getIntSort(mScript);
 			} else if (boogieType.equals(BoogieType.TYPE_REAL)) {
-				result = mScript.sort("Real");
+				result = SmtSortUtils.getRealSort(mScript);
 			} else if (boogieType.equals(BoogieType.TYPE_ERROR)) {
 				throw new IllegalArgumentException("BoogieAST contains type "
 						+ "errors. This plugin supports only BoogieASTs without type errors");
 			} else if (((PrimitiveType) boogieType).getTypeCode() > 0) {
 				final int bitvectorSize = ((PrimitiveType) boogieType).getTypeCode();
 				final BigInteger[] sortIndices = { BigInteger.valueOf(bitvectorSize) };
-				result = mScript.sort("BitVec", sortIndices);
+				result = SmtSortUtils.getBitvectorSort(mScript, sortIndices);
 			} else {
 				throw new IllegalArgumentException("Unsupported PrimitiveType " + boogieType);
 			}
@@ -216,26 +214,26 @@ public class TypeSortTranslator {
 
 			for (int i = arrayType.getIndexCount() - 1; i >= 1; i--) {
 				final Sort sorti = constructSort(arrayType.getIndexType(i), funAttributeCache);
-				rangeSort = mScript.sort("Array", sorti, rangeSort);
+				rangeSort = SmtSortUtils.getArraySort(mScript, sorti, rangeSort);
 			}
 			final Sort domainSort = constructSort(arrayType.getIndexType(0), funAttributeCache);
-			result = mScript.sort("Array", domainSort, rangeSort);
+			result = SmtSortUtils.getArraySort(mScript, domainSort, rangeSort);
 		} else if (boogieType instanceof ConstructedType) {
 			final ConstructedType constructedType = (ConstructedType) boogieType;
 			final String name = constructedType.getConstr().getName();
 			final Map<String, Expression[]> attributes = funAttributeCache.apply(name);
 			if (attributes == null) {
-				result = mScript.sort(name);
+				result = SmtSortUtils.getNamedSort(mScript, name);
 			} else {
 				final String attributeDefinedIdentifier = Boogie2SmtSymbolTable
 						.checkForAttributeDefinedIdentifier(attributes, Boogie2SmtSymbolTable.ID_BUILTIN);
 				if (attributeDefinedIdentifier == null) {
-					result = mScript.sort(name);
+					result = SmtSortUtils.getNamedSort(mScript, name);
 				} else {
 					// use SMT identifier that was defined by our "builtin"
 					// attribute
 					final BigInteger[] indices = Boogie2SmtSymbolTable.checkForIndices(attributes);
-					result = mScript.sort(attributeDefinedIdentifier, indices);
+					result = SmtSortUtils.getBuiltinSort(mScript, attributeDefinedIdentifier, indices);
 				}
 			}
 		} else {

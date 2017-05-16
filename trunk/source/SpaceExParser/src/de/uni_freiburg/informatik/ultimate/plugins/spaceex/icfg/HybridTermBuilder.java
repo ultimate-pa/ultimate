@@ -36,14 +36,14 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridPreprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslatorConstants;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.SpaceExMathHelper;
 
 /**
- * Class to build Terms from Hybrid automata expressions like Initial values,
- * Invariants and Jumps
+ * Class to build Terms from Hybrid automata expressions like Initial values, Invariants and Jumps
  *
  * @author Julian Loeffler (loefflju@informatik.uni-freiburg.de)
  *
@@ -85,8 +85,7 @@ public class HybridTermBuilder {
 	}
 
 	/**
-	 * Function to convert a given formula postfix notation as array, into a
-	 * term.
+	 * Function to convert a given formula postfix notation as array, into a term.
 	 *
 	 * @param postfix
 	 * @param mScript
@@ -95,11 +94,9 @@ public class HybridTermBuilder {
 	 */
 	public Term postfixToTerm(final List<String> postfix, final BuildScenario scenario) {
 		/*
-		 * 1. Create an empty stack that can hold string values. 2. Scan the
-		 * postfix expression from left to right 2a. If operand then push into
-		 * stack 2b. If operator then 1. Pop first two elements 2. Now make a
-		 * term of the form (operand2,operator,operand1)" 3. Push the new term
-		 * onto stack
+		 * 1. Create an empty stack that can hold string values. 2. Scan the postfix expression from left to right 2a.
+		 * If operand then push into stack 2b. If operator then 1. Pop first two elements 2. Now make a term of the form
+		 * (operand2,operator,operand1)" 3. Push the new term onto stack
 		 */
 		Term term = null;
 		final Deque<String> stack = new LinkedList<>();
@@ -231,12 +228,11 @@ public class HybridTermBuilder {
 		if (operand1.equals(HybridTranslatorConstants.TIME_VAR)) {
 			// Create new term variable and add to auxvars
 			if (mAuxVar == null) {
-				mAuxVar = mManagedScript.constructFreshTermVariable(operand1, mScript.sort("Real"));
+				mAuxVar = mManagedScript.constructFreshTermVariable(operand1, SmtSortUtils.getRealSort(mScript));
 			}
 			return mAuxVar;
-		} else {
-			return getUpdateTV(operand1, isAssignedValue);
 		}
+		return getUpdateTV(operand1, isAssignedValue);
 	}
 
 	// helper function to get TermVariable for initially Terms
@@ -246,9 +242,8 @@ public class HybridTermBuilder {
 			final TermVariable outvar = mVariableManager.getVarToOutVarTermVariable().get(operand1);
 			mOutVars.put(progvar, outvar);
 			return outvar;
-		} else {
-			return null;
 		}
+		return null;
 	}
 
 	// helper function to get TermVariable for Invariant or Guard Terms
@@ -259,9 +254,8 @@ public class HybridTermBuilder {
 			mInVars.put(progvar, invar);
 			mOutVars.put(progvar, invar);
 			return invar;
-		} else {
-			return null;
 		}
+		return null;
 	}
 
 	// helper function to get TermVariable for Invariant or Update Terms
@@ -272,19 +266,16 @@ public class HybridTermBuilder {
 				final TermVariable outvar = mVariableManager.getVarToOutVarTermVariable().get(operand1);
 				mOutVars.put(progvar, outvar);
 				return outvar;
-			} else {
-				return null;
 			}
-		} else {
-			if (mVariableManager.getVarToInVarTermVariable().containsKey(operand1)) {
-				final HybridProgramVar progvar = mVariableManager.getVarToProgramVar().get(operand1);
-				final TermVariable invar = mVariableManager.getVarToInVarTermVariable().get(operand1);
-				mInVars.put(progvar, invar);
-				return invar;
-			} else {
-				return null;
-			}
+			return null;
 		}
+		if (mVariableManager.getVarToInVarTermVariable().containsKey(operand1)) {
+			final HybridProgramVar progvar = mVariableManager.getVarToProgramVar().get(operand1);
+			final TermVariable invar = mVariableManager.getVarToInVarTermVariable().get(operand1);
+			mInVars.put(progvar, invar);
+			return invar;
+		}
+		return null;
 	}
 
 	private void testTermBuilding() {

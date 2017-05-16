@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.Activator;
@@ -92,7 +93,7 @@ public class ParallelComposition extends CodeBlock implements IIcfgInternalTrans
 			transFormulas[i] = currentCodeblock.getTransformula();
 			transFormulasWithBranchEncoders[i] = currentCodeblock.getTransitionFormulaWithBranchEncoders();
 			final String varname = "LBE" + currentCodeblock.getSerialNumber();
-			final Sort boolSort = script.sort("Bool");
+			final Sort boolSort = SmtSortUtils.getBoolSort(script);
 			final TermVariable tv = script.variable(varname, boolSort);
 			branchIndicator[i] = tv;
 			mBranchIndicator2CodeBlock.put(branchIndicator[i], currentCodeblock);

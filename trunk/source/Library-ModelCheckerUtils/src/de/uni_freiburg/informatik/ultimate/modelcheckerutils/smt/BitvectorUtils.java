@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE ModelCheckerUtils Library.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -37,58 +37,32 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * Provides auxiliary methods for SMT bitvectors.
+ *
  * @author Matthias Heizmann
  *
  */
 public final class BitvectorUtils {
-	
+
 	private enum SupportedBitvectorOperations {
-		zero_extend,
-		extract,
-		bvadd,
-		bvsub,
-		bvmul,
-		bvudiv,
-		bvurem,
-		bvsdiv,
-		bvsrem,
-		bvand,
-		bvor,
-		bvxor,
-		bvnot,
-		bvneg,
-		bvshl,
-		bvlshr,
-		bvashr,
-		bvult,
-		bvule,
-		bvugt,
-		bvuge,
-		bvslt,
-		bvsle,
-		bvsgt,
-		bvsge,
+		zero_extend, extract, bvadd, bvsub, bvmul, bvudiv, bvurem, bvsdiv, bvsrem, bvand, bvor, bvxor, bvnot, bvneg, bvshl, bvlshr, bvashr, bvult, bvule, bvugt, bvuge, bvslt, bvsle, bvsgt, bvsge,
 	}
+
 	private BitvectorUtils() {
 		// Prevent instantiation of this utility class
 	}
-	
+
 	private final static String BITVEC_CONST_PATTERN = "bv\\d+";
-	
+
 	public static boolean isBitvectorConstant(final FunctionSymbol symb) {
 		return symb.isIntern() && symb.getName().matches(BITVEC_CONST_PATTERN);
 	}
-	
-	public static boolean isBitvectorSort(final Sort sort) {
-		return sort.getRealSort().getName().equals("BitVec");
-	}
-	
+
 	/**
-	 * Convert term to {@link BitvectorConstant} object.
-	 * Return a {@link BitvectorConstant} object for term if
+	 * Convert term to {@link BitvectorConstant} object. Return a {@link BitvectorConstant} object for term if
+	 *
 	 * @param term
-	 * @return {@link BitvectorConstant} object that represents term if term
-	 * is a bitvector literal otherwise null is returned.
+	 * @return {@link BitvectorConstant} object that represents term if term is a bitvector literal otherwise null is
+	 *         returned.
 	 */
 	public static BitvectorConstant constructBitvectorConstant(final Term term) {
 		if (term instanceof ApplicationTerm) {
@@ -116,34 +90,31 @@ public final class BitvectorUtils {
 		final BigInteger index = sort.getIndices()[0];
 		return constructTerm(script, new BitvectorConstant(value, index));
 	}
-	
+
 	public static Term constructTerm(final Script script, final BitvectorConstant bitvec) {
 		final String funcname = "bv" + bitvec.getValue().toString();
-		return script.term(funcname, new BigInteger[]{bitvec.getIndex()}, null, new Term[0]);
+		return script.term(funcname, new BigInteger[] { bitvec.getIndex() }, null, new Term[0]);
 	}
-	
+
 	public static boolean allTermsAreBitvectorConstants(final Term[] terms) {
 		for (final Term term : terms) {
 			if (!term.getSort().getName().equals("BitVec")) {
 				return false;
-			} else {
-				if (term instanceof ApplicationTerm) {
-					final ApplicationTerm appTerm = (ApplicationTerm) term;
-					if (isBitvectorConstant(appTerm.getFunction())) {
-						continue;
-					} else {
-						return false;
-					}
-				} else {
-					return false;
-				}
 			}
+			if (term instanceof ApplicationTerm) {
+				final ApplicationTerm appTerm = (ApplicationTerm) term;
+				if (isBitvectorConstant(appTerm.getFunction())) {
+					continue;
+				}
+				return false;
+			}
+			return false;
 		}
 		return true;
 	}
-	
-	public static Term termWithLocalSimplification(final Script script,
-			final String funcname, final BigInteger[] indices, final Term... params) {
+
+	public static Term termWithLocalSimplification(final Script script, final String funcname,
+			final BigInteger[] indices, final Term... params) {
 		final Term result;
 		final SupportedBitvectorOperations bvop = SupportedBitvectorOperations.valueOf(funcname);
 		switch (bvop) {
@@ -154,44 +125,44 @@ public final class BitvectorUtils {
 			result = new Extract().simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvadd:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvadd(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvadd(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvsub:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvsub(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvsub(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvudiv:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvudiv(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvudiv(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvurem:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvurem(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvurem(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvsdiv:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvsdiv(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvsdiv(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvsrem:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvsrem(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvsrem(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvmul:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvmul(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvmul(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvand:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvand(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvand(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvor:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvor(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvor(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvxor:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvxor(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvxor(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvnot:
 			result = new Bvnot().simplifiedResult(script, funcname, indices, params);
@@ -200,48 +171,48 @@ public final class BitvectorUtils {
 			result = new Bvneg().simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvshl:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvshl(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvshl(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvlshr:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvlshr(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvlshr(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvashr:
-			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvashr(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BitvectorResult(funcname, x -> y -> BitvectorConstant.bvashr(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvult:
-			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvult(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvult(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvule:
-			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvule(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvule(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvugt:
-			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvugt(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvugt(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvuge:
-			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvuge(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvuge(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvslt:
-			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvslt(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvslt(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvsle:
-			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvsle(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvsle(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvsgt:
-			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvsgt(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvsgt(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 		case bvsge:
-			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvsge(x, y)).
-			simplifiedResult(script, funcname, indices, params);
+			result = new RegularBitvectorOperation_BooleanResult(funcname, x -> y -> BitvectorConstant.bvsge(x, y))
+					.simplifiedResult(script, funcname, indices, params);
 			break;
 
 		default:
@@ -253,27 +224,27 @@ public final class BitvectorUtils {
 		}
 		return result;
 	}
-	
-	
+
 	private static abstract class BitvectorOperation {
-		
-		public final Term simplifiedResult(final Script script, final String funcname, final BigInteger[] indices, final Term... params) {
+
+		public final Term simplifiedResult(final Script script, final String funcname, final BigInteger[] indices,
+				final Term... params) {
 			assert getFunctionName().equals(funcname) : "wrong function name";
-			assert getNumberOfIndices() == 0 && indices == null || getNumberOfIndices() == indices.length : "wrong number of indices";
+			assert getNumberOfIndices() == 0 && indices == null
+					|| getNumberOfIndices() == indices.length : "wrong number of indices";
 			assert getNumberOfParams() == params.length : "wrong number of params";
 			final BitvectorConstant[] bvs = new BitvectorConstant[params.length];
 			boolean allConstant = true;
-			for (int i=0; i<params.length; i++) {
+			for (int i = 0; i < params.length; i++) {
 				bvs[i] = constructBitvectorConstant(params[i]);
 				allConstant &= (bvs[i] != null);
 			}
 			if (allConstant) {
 				return simplify_ConstantCase(script, indices, bvs);
-			} else {
-				return simplify_NonConstantCase(script, indices, params, bvs);
 			}
+			return simplify_NonConstantCase(script, indices, params, bvs);
 		}
-		
+
 		private Term simplify_NonConstantCase(final Script script, final BigInteger[] indices, final Term[] params,
 				final BitvectorConstant[] bvs) {
 			return notSimplified(script, indices, params);
@@ -284,12 +255,14 @@ public final class BitvectorUtils {
 		}
 
 		public abstract String getFunctionName();
+
 		public abstract int getNumberOfIndices();
+
 		public abstract int getNumberOfParams();
-		
+
 		public abstract Term simplify_ConstantCase(Script script, BigInteger[] indices, BitvectorConstant[] bvs);
 	}
-	
+
 	private static class Extract extends BitvectorOperation {
 
 		@Override
@@ -308,13 +281,15 @@ public final class BitvectorUtils {
 		}
 
 		@Override
-		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices, final BitvectorConstant[] bvs) {
-			final BitvectorConstant bv = BitvectorConstant.extract(bvs[0], indices[0].intValueExact(), indices[1].intValueExact());
+		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices,
+				final BitvectorConstant[] bvs) {
+			final BitvectorConstant bv =
+					BitvectorConstant.extract(bvs[0], indices[0].intValueExact(), indices[1].intValueExact());
 			return constructTerm(script, bv);
 		}
-		
+
 	}
-	
+
 	private static class Zero_extend extends BitvectorOperation {
 
 		@Override
@@ -333,15 +308,15 @@ public final class BitvectorUtils {
 		}
 
 		@Override
-		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices, final BitvectorConstant[] bvs) {
+		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices,
+				final BitvectorConstant[] bvs) {
 			final BitvectorConstant bv = BitvectorConstant.zero_extend(bvs[0], indices[0]);
 			return constructTerm(script, bv);
 		}
-		
+
 	}
 
 	private static abstract class RegularBitvectorOperation extends BitvectorOperation {
-		
 
 		@Override
 		public int getNumberOfIndices() {
@@ -352,80 +327,100 @@ public final class BitvectorUtils {
 		public int getNumberOfParams() {
 			return 2;
 		}
-		
+
 	}
-	
+
 	private static class RegularBitvectorOperation_BitvectorResult extends RegularBitvectorOperation {
-		
+
 		private final String mName;
 		private final Function<BitvectorConstant, Function<BitvectorConstant, BitvectorConstant>> mFunction;
+
 		public RegularBitvectorOperation_BitvectorResult(final String name,
 				final Function<BitvectorConstant, Function<BitvectorConstant, BitvectorConstant>> function) {
 			super();
 			mName = name;
 			mFunction = function;
 		}
+
 		@Override
 		public String getFunctionName() {
 			return mName;
 		}
+
 		@Override
-		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices, final BitvectorConstant[] bvs) {
+		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices,
+				final BitvectorConstant[] bvs) {
 			return constructTerm(script, mFunction.apply(bvs[0]).apply(bvs[1]));
 		}
 	}
-	
+
 	private static class RegularBitvectorOperation_BooleanResult extends RegularBitvectorOperation {
-		
+
 		private final String mName;
 		private final Function<BitvectorConstant, Function<BitvectorConstant, Boolean>> mFunction;
+
 		public RegularBitvectorOperation_BooleanResult(final String name,
 				final Function<BitvectorConstant, Function<BitvectorConstant, Boolean>> function) {
 			super();
 			mName = name;
 			mFunction = function;
 		}
+
 		@Override
 		public String getFunctionName() {
 			return mName;
 		}
+
 		@Override
-		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices, final BitvectorConstant[] bvs) {
+		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices,
+				final BitvectorConstant[] bvs) {
 			return script.term(String.valueOf(mFunction.apply(bvs[0]).apply(bvs[1])));
 		}
 	}
-	
+
 	private static class Bvnot extends BitvectorOperation {
 		@Override
-		public String getFunctionName() { return "bvnot"; }
+		public String getFunctionName() {
+			return "bvnot";
+		}
+
 		@Override
 		public int getNumberOfIndices() {
 			return 0;
 		}
+
 		@Override
 		public int getNumberOfParams() {
 			return 1;
 		}
+
 		@Override
-		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices, final BitvectorConstant[] bvs) {
+		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices,
+				final BitvectorConstant[] bvs) {
 			return constructTerm(script, BitvectorConstant.bvnot(bvs[0]));
 		}
 
 	}
-	
+
 	private static class Bvneg extends BitvectorOperation {
 		@Override
-		public String getFunctionName() { return "bvneg"; }
+		public String getFunctionName() {
+			return "bvneg";
+		}
+
 		@Override
 		public int getNumberOfIndices() {
 			return 0;
 		}
+
 		@Override
 		public int getNumberOfParams() {
 			return 1;
 		}
+
 		@Override
-		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices, final BitvectorConstant[] bvs) {
+		public Term simplify_ConstantCase(final Script script, final BigInteger[] indices,
+				final BitvectorConstant[] bvs) {
 			return constructTerm(script, BitvectorConstant.bvneg(bvs[0]));
 		}
 

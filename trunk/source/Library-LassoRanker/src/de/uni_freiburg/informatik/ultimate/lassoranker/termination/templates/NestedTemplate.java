@@ -83,10 +83,10 @@ public class NestedTemplate extends ComposableTemplate {
 	}
 	
 	@Override
-	protected void _init() {
+	protected void init() {
 		mdelta = newDelta(s_name_delta + getInstanceNumber());
 		for (int i = 0; i < mSize; ++i) {
-			mfgens[i] = new AffineFunctionGenerator(mscript, mvariables,
+			mfgens[i] = new AffineFunctionGenerator(mScript, mVariables,
 					s_name_function + getInstanceNumber() + "_" + i);
 		}
 	}
@@ -161,7 +161,7 @@ public class NestedTemplate extends ComposableTemplate {
 			final AffineTerm a = new AffineTerm(mdelta, Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
-			li.mMotzkinCoefficient = sRedAtoms ?
+			li.mMotzkinCoefficient = RED_ATOMS ?
 					PossibleMotzkinCoefficients.ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
@@ -176,7 +176,7 @@ public class NestedTemplate extends ComposableTemplate {
 			final LinearInequality li3 = mfgens[i-1].generate(inVars);
 			li.add(li3);
 			li.setStrict(true);
-			li.mMotzkinCoefficient = sRedAtoms ?
+			li.mMotzkinCoefficient = RED_ATOMS ?
 					PossibleMotzkinCoefficients.ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
@@ -198,7 +198,7 @@ public class NestedTemplate extends ComposableTemplate {
 			li2.negate();
 			li.add(li2);
 			li.setStrict(false);
-			li.mMotzkinCoefficient = sRedAtoms ?
+			li.mMotzkinCoefficient = RED_ATOMS ?
 					PossibleMotzkinCoefficients.ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			conjunction.add(Collections.singletonList(li));
@@ -212,7 +212,7 @@ public class NestedTemplate extends ComposableTemplate {
 		// f_n(x) > 0
 		final LinearInequality li = mfgens[mSize-1].generate(inVars);
 		li.setStrict(true);
-		li.mMotzkinCoefficient = sRedAtoms ?
+		li.mMotzkinCoefficient = RED_ATOMS ?
 				PossibleMotzkinCoefficients.ONE
 				: PossibleMotzkinCoefficients.ANYTHING;
 		return Collections.singletonList(Collections.singletonList(li));

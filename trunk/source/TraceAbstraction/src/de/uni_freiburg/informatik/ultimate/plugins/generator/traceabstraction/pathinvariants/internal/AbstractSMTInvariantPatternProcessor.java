@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.boogie.Boogie2SMT;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 
@@ -110,9 +111,9 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 	// }
 
 	protected static Term constructZero(final Script script, final Sort sort) {
-		if (sort.getRealSort().getName().equals("Int")) {
+		if (SmtSortUtils.isIntSort(sort)) {
 			return script.numeral(BigInteger.ZERO);
-		} else if (sort.getRealSort().getName().equals("Real")) {
+		} else if (SmtSortUtils.isRealSort(sort)) {
 			return script.decimal(BigDecimal.ZERO);
 		} else {
 			throw new IllegalArgumentException("unsupported sort " + sort);
@@ -155,7 +156,8 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 	 *            DNFs to conjunct together
 	 * @return DNF representing the conjunction of the DNFs provided, returns NULL if no DNFs were given.
 	 */
-	protected static <E> Collection<Collection<E>> expandConjunction(final IUltimateServiceProvider services, final Collection<Collection<E>>... dnfs) {
+	protected static <E> Collection<Collection<E>> expandConjunction(final IUltimateServiceProvider services,
+			final Collection<Collection<E>>... dnfs) {
 		boolean firstElement = true;
 		Collection<Collection<E>> expandedDnf = null;
 		for (final Collection<Collection<E>> currentDnf : dnfs) {
@@ -185,7 +187,8 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 	 * @return a dnf (Collection of disjuncts consisting of conjuncts of linear inequalities), equivalent to the given
 	 *         cnf
 	 */
-	protected static <E> Collection<Collection<E>> expandCnfToDnf(final IUltimateServiceProvider services, final Collection<Collection<E>> cnf) {
+	protected static <E> Collection<Collection<E>> expandCnfToDnf(final IUltimateServiceProvider services,
+			final Collection<Collection<E>> cnf) {
 		if (cnf.isEmpty()) {
 			final Collection<E> empty = Collections.emptyList();
 			return Collections.singleton(empty);
@@ -224,10 +227,8 @@ public abstract class AbstractSMTInvariantPatternProcessor<IPT> implements IInva
 	 *            : the type of Literals in the cnf/dnf
 	 * @return a new dnf equivalent to conjunct /\ dnf
 	 */
-	private static <E> Collection<Collection<E>> expandCnfToDnfSingle(
-			final IUltimateServiceProvider services,
-			final Collection<Collection<E>> dnf,
-			final Collection<E> conjunct) {
+	private static <E> Collection<Collection<E>> expandCnfToDnfSingle(final IUltimateServiceProvider services,
+			final Collection<Collection<E>> dnf, final Collection<E> conjunct) {
 		final Collection<Collection<E>> result = new ArrayList<>();
 		for (final Collection<E> disjunct : dnf) {
 			for (final E item : conjunct) {

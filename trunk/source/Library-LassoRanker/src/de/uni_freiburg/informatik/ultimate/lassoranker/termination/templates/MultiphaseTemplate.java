@@ -82,10 +82,10 @@ public class MultiphaseTemplate extends ComposableTemplate {
 	}
 	
 	@Override
-	protected void _init() {
+	protected void init() {
 		for (int i = 0; i < size; ++i) {
 			mdeltas[i] = newDelta(s_name_delta + getInstanceNumber() + "_" + i);
-			mfgens[i] = new AffineFunctionGenerator(mscript, mvariables,
+			mfgens[i] = new AffineFunctionGenerator(mScript, mVariables,
 					s_name_function + getInstanceNumber() + "_" + i);
 		}
 	}
@@ -165,14 +165,14 @@ public class MultiphaseTemplate extends ComposableTemplate {
 			final AffineTerm a = new AffineTerm(mdeltas[i], Rational.MONE);
 			li.add(a);
 			li.setStrict(true);
-			li.mMotzkinCoefficient = sRedAtoms ?
+			li.mMotzkinCoefficient = RED_ATOMS ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);
 			if (i > 0) {
 				final LinearInequality li3 = mfgens[i - 1].generate(inVars);
 				li3.setStrict(true);
-				li3.mMotzkinCoefficient = sBlueAtoms ?
+				li3.mMotzkinCoefficient = BLUE_ATOMS ?
 						PossibleMotzkinCoefficients.ZERO_AND_ONE
 						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li3);
@@ -197,14 +197,14 @@ public class MultiphaseTemplate extends ComposableTemplate {
 			li2.negate();
 			li.add(li2);
 			li.setStrict(false);
-			li.mMotzkinCoefficient = sRedAtoms ?
+			li.mMotzkinCoefficient = RED_ATOMS ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);
 			if (i > 0) {
 				final LinearInequality li3 = mfgens[i - 1].generate(inVars);
 				li3.setStrict(true);
-				li3.mMotzkinCoefficient = sBlueAtoms ?
+				li3.mMotzkinCoefficient = BLUE_ATOMS ?
 						PossibleMotzkinCoefficients.ZERO_AND_ONE
 						: PossibleMotzkinCoefficients.ANYTHING;
 				disjunction.add(li3);
@@ -222,7 +222,7 @@ public class MultiphaseTemplate extends ComposableTemplate {
 		for (int i = 0; i < size; ++i) {
 			final LinearInequality li = mfgens[i].generate(inVars);
 			li.setStrict(true);
-			li.mMotzkinCoefficient = (i == 0 && sRedAtoms) || (i > 0 && sBlueAtoms) ?
+			li.mMotzkinCoefficient = (i == 0 && RED_ATOMS) || (i > 0 && BLUE_ATOMS) ?
 					PossibleMotzkinCoefficients.ZERO_AND_ONE
 					: PossibleMotzkinCoefficients.ANYTHING;
 			disjunction.add(li);

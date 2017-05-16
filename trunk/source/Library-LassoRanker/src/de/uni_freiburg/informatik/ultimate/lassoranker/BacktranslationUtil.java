@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 
 /**
  * Translates parts of a NonterminationArgument to assist the generation of instances of NonterminationArgumentResult
@@ -62,7 +63,7 @@ public final class BacktranslationUtil {
 				final Term definition = ReplacementVarUtils.getDefinition(entry.getKey());
 				Rational r = entry.getValue();
 				// Replace Rational for boolean RankVars
-				if ("Bool".equals(definition.getSort().getName())) {
+				if (SmtSortUtils.isBoolSort(definition.getSort())) {
 					// value >= 1 means true, which is translated to 1,
 					// false is translated to 0.
 					r = entry.getValue().compareTo(Rational.ONE) < 0 ? Rational.ONE : Rational.ZERO;

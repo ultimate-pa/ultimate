@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Jan Leike (leike@informatik.uni-freiburg.de)
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2012-2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE IcfgTransformer library.
- * 
+ *
  * The ULTIMATE IcfgTransformer library is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE IcfgTransformer library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE IcfgTransformer library. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -34,11 +34,12 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
  * Replaces booleans variables b by integer replacement variables rep_b whose semantics is rep_b = (ite b 1 0)
- * 
+ *
  * @author Jan Leike
  * @author Matthias Heizmann
  */
@@ -62,7 +63,7 @@ public class RewriteBooleans extends RewriteTermVariables {
 
 	/**
 	 * Create a new RewriteBooleans preprocessor
-	 * 
+	 *
 	 * @param rankVarCollector
 	 *            collecting the new in- and outVars
 	 * @param script
@@ -77,11 +78,8 @@ public class RewriteBooleans extends RewriteTermVariables {
 		return isBool(term);
 	}
 
-	/**
-	 * return true iff sort of term is Bool.
-	 */
 	private static final boolean isBool(final Term term) {
-		return term.getSort().getName().equals("Bool");
+		return SmtSortUtils.isBoolSort(term.getSort());
 	}
 
 	@Override
@@ -102,7 +100,7 @@ public class RewriteBooleans extends RewriteTermVariables {
 	@Override
 	protected Term constructNewDefinitionForRankVar(final IProgramVar oldRankVar) {
 		final Term booleanTerm = ReplacementVarUtils.getDefinition(oldRankVar);
-		assert booleanTerm.getSort().getName().equals("Bool");
+		assert isBool(booleanTerm);
 		final Term one = mScript.getScript().numeral(BigInteger.ONE);
 		final Term zero = mScript.getScript().numeral(BigInteger.ZERO);
 		return mScript.getScript().term("ite", booleanTerm, one, zero);

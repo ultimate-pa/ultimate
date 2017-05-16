@@ -33,12 +33,14 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ILocalProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.automata.hybridsystem.HybridAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.spaceex.util.HybridTranslatorConstants;
@@ -53,7 +55,6 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 
 	private final Map<String, Set<ILocalProgramVar>> mLocals;
 	private final Map<TermVariable, ILocalProgramVar> mTVtoProgVar;
-	private final ManagedScript mScript;
 
 	/**
 	 * Constructor
@@ -64,7 +65,6 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 	 */
 	public HybridIcfgSymbolTable(final ManagedScript script, final HybridAutomaton automaton, final String procedure,
 			final HybridVariableManager variableManager) {
-		mScript = script;
 		mLocals = new HashMap<>();
 		mTVtoProgVar = new HashMap<>();
 
@@ -75,10 +75,11 @@ public class HybridIcfgSymbolTable implements IIcfgSymbolTable {
 		variables.add(HybridTranslatorConstants.TIME_VAR);
 
 		final Set<ILocalProgramVar> progVars = new HashSet<>();
+		final Sort realSort = SmtSortUtils.getRealSort(script);
 		for (final String var : variables) {
 			// Termvariables for the transformula.
-			final TermVariable inVar = script.constructFreshTermVariable(var, script.getScript().sort("Real"));
-			final TermVariable outVar = script.constructFreshTermVariable(var, script.getScript().sort("Real"));
+			final TermVariable inVar = script.constructFreshTermVariable(var, realSort);
+			final TermVariable outVar = script.constructFreshTermVariable(var, realSort);
 			// IProgramVar for the transformula.
 			final HybridProgramVar progVar = variableManager.constructProgramVar(var, procedure);
 			if (!var.equals(HybridTranslatorConstants.TIME_VAR)) {

@@ -2,22 +2,22 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE BuchiAutomizer plug-in.
- * 
+ *
  * The ULTIMATE BuchiAutomizer plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE BuchiAutomizer plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE BuchiAutomizer plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BuchiAutomizer plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -33,14 +33,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymb
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.ModifiableGlobalsTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.ProgramVarUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Constructs auxiliary variables that store the old value of a ranking 
- * function (oldRank) and that store if we already check for decreases of
- * the ranking function (unseeded). 
- * 
+ * Constructs auxiliary variables that store the old value of a ranking function (oldRank) and that store if we already
+ * check for decreases of the ranking function (unseeded).
+ *
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  *
  */
@@ -58,23 +58,22 @@ public class RankVarConstructor {
 	public RankVarConstructor(final CfgSmtToolkit csToolkit) {
 		mManagedScript = csToolkit.getManagedScript();
 
-		final DefaultIcfgSymbolTable newSymbolTable = new DefaultIcfgSymbolTable(
-				csToolkit.getSymbolTable(), csToolkit.getProcedures());
+		final DefaultIcfgSymbolTable newSymbolTable =
+				new DefaultIcfgSymbolTable(csToolkit.getSymbolTable(), csToolkit.getProcedures());
 
-		
 		mManagedScript.lock(newSymbolTable);
 
-		final Sort boolSort = csToolkit.getManagedScript().getScript().sort("Bool");
-		mUnseededVariable = ProgramVarUtils.constructGlobalProgramVarPair(UNSEEDED_IDENTIFIER, 
-				boolSort, csToolkit.getManagedScript(), newSymbolTable);
+		final Sort boolSort = SmtSortUtils.getBoolSort(csToolkit.getManagedScript());
+		mUnseededVariable = ProgramVarUtils.constructGlobalProgramVarPair(UNSEEDED_IDENTIFIER, boolSort,
+				csToolkit.getManagedScript(), newSymbolTable);
 		newSymbolTable.add(mUnseededVariable);
 
 		mOldRankVariables = new IProgramNonOldVar[MAX_LEX_COMPONENTS];
 		final Sort intSort = csToolkit.getManagedScript().getScript().sort("Int");
 		for (int i = 0; i < MAX_LEX_COMPONENTS; i++) {
 			final String name = OLD_RANK_IDENTIFIER + i;
-			mOldRankVariables[i] = ProgramVarUtils.constructGlobalProgramVarPair(name, 
-					intSort, csToolkit.getManagedScript(), newSymbolTable);
+			mOldRankVariables[i] = ProgramVarUtils.constructGlobalProgramVarPair(name, intSort,
+					csToolkit.getManagedScript(), newSymbolTable);
 			newSymbolTable.add(mOldRankVariables[i]);
 		}
 		mManagedScript.unlock(newSymbolTable);

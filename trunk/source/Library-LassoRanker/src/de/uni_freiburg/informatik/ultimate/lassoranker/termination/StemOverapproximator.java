@@ -126,11 +126,11 @@ class StemOverapproximator {
 			for (final List<LinearInequality> polyhedron : stem.getPolyhedra()) {
 				final MotzkinTransformation motzkin =
 						new MotzkinTransformation(mScript, AnalysisType.LINEAR, mAnnotateTerms);
-				motzkin.add_inequalities(polyhedron);
+				motzkin.addInequalities(polyhedron);
 				final LinearInequality li = new LinearInequality(candidate_li);
 				li.negate();
-				motzkin.add_inequality(li);
-				motzkin.annotation = "stem implies candidate linear inequality";
+				motzkin.addInequality(li);
+				motzkin.mAnnotation = "stem implies candidate linear inequality";
 				mScript.assertTerm(motzkin.transform(new Rational[0]));
 			}
 			if (mScript.checkSat().equals(LBool.SAT)) {

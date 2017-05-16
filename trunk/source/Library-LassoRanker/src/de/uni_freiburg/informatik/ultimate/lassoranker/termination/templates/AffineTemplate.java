@@ -62,9 +62,9 @@ public class AffineTemplate extends ComposableTemplate {
 	private AffineFunctionGenerator mfgen;
 	
 	@Override
-	protected void _init() {
+	protected void init() {
 		mdelta = newDelta(s_name_delta + getInstanceNumber());
-		mfgen = new AffineFunctionGenerator(mscript, mvariables,
+		mfgen = new AffineFunctionGenerator(mScript, mVariables,
 				s_name_function + getInstanceNumber());
 	}
 	
@@ -90,7 +90,7 @@ public class AffineTemplate extends ComposableTemplate {
 		final AffineTerm a = new AffineTerm(mdelta, Rational.MONE);
 		li.add(a);
 		li.setStrict(true);
-		li.mMotzkinCoefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
+		li.mMotzkinCoefficient = RED_ATOMS ? PossibleMotzkinCoefficients.ONE
 				: PossibleMotzkinCoefficients.ANYTHING;
 		
 		// delta > 0 is assured by RankingFunctionTemplate.newDelta
@@ -106,7 +106,7 @@ public class AffineTemplate extends ComposableTemplate {
 		li2.negate();
 		li.add(li2);
 		li.setStrict(false);
-		li.mMotzkinCoefficient = sRedAtoms ? PossibleMotzkinCoefficients.ONE
+		li.mMotzkinCoefficient = RED_ATOMS ? PossibleMotzkinCoefficients.ONE
 				: PossibleMotzkinCoefficients.ANYTHING;
 		return Collections.singletonList(Collections.singletonList(li));
 	}
@@ -117,7 +117,7 @@ public class AffineTemplate extends ComposableTemplate {
 		// f(x) > 0
 		final LinearInequality li = mfgen.generate(inVars);
 		li.setStrict(true);
-		li.mMotzkinCoefficient = sRedAtoms ?
+		li.mMotzkinCoefficient = RED_ATOMS ?
 				PossibleMotzkinCoefficients.ONE
 				: PossibleMotzkinCoefficients.ANYTHING;
 		return Collections.singletonList(Collections.singletonList(li));

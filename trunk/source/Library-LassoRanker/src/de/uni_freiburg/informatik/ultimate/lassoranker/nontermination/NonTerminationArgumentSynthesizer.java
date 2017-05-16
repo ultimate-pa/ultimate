@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SMTPrettyPrinter;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.Settings;
@@ -154,20 +155,20 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		if (!mIntegerMode) {
 			mAnalysisType = mSettings.getAnalysis();
 			if (mAnalysisType.isLinear()) {
-				mscript.setLogic(Logics.QF_LRA);
+				mScript.setLogic(Logics.QF_LRA);
 			} else {
-				mscript.setLogic(Logics.QF_NRA);
+				mScript.setLogic(Logics.QF_NRA);
 			}
-			mSort = mscript.sort("Real");
+			mSort = SmtSortUtils.getRealSort(mScript);
 		} else {
 			mLogger.info("Using integer mode.");
 			mAnalysisType = mSettings.getAnalysis();
 			if (mSettings.getAnalysis().isLinear()) {
-				mscript.setLogic(Logics.QF_LIA);
+				mScript.setLogic(Logics.QF_LIA);
 			} else {
-				mscript.setLogic(Logics.QF_NIA);
+				mScript.setLogic(Logics.QF_NIA);
 			}
-			mSort = mscript.sort("Int");
+			mSort = SmtSortUtils.getIntSort(mScript);
 		}
 		assert !mAnalysisType.isDisabled();
 	}
@@ -193,7 +194,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 	@Override
 	protected LBool do_synthesis() {
 		assert mSettings.getNumberOfGevs() >= 0;
-		final String sort = mIntegerMode ? "Int" : "Real";
+		final String sort = mIntegerMode ? SmtSortUtils.INT_SORT : SmtSortUtils.REAL_SORT;
 
 		// Create new variables
 		final Map<IProgramVar, Term> vars_init = new LinkedHashMap<>();
@@ -226,14 +227,14 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 
 		final Term constraints = generateConstraints(vars_init, vars_honda, vars_gevs, lambdas, nus);
 		mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(constraints)));
-		mscript.assertTerm(constraints);
+		mScript.assertTerm(constraints);
 
 		// Check for satisfiability
-		mIsSat = mscript.checkSat();
+		mIsSat = mScript.checkSat();
 		if (mIsSat == LBool.SAT) {
 			mArgument = extractArgument(vars_init, vars_honda, vars_gevs, lambdas, nus);
 		} else if (mIsSat == LBool.UNKNOWN) {
-			mscript.echo(new QuotedObject(ArgumentSynthesizer.s_SolverUnknownMessage));
+			mScript.echo(new QuotedObject(ArgumentSynthesizer.s_SolverUnknownMessage));
 		}
 		return mIsSat;
 	}
@@ -272,11 +273,11 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		Term zero; // = 0
 		Term one; // = 1
 		if (!mIntegerMode) {
-			zero = mscript.decimal("0");
-			one = mscript.decimal("1");
+			zero = mScript.decimal("0");
+			one = mScript.decimal("1");
 		} else {
-			zero = mscript.numeral("0");
-			one = mscript.numeral("1");
+			zero = mScript.numeral("0");
+			one = mScript.numeral("1");
 		}
 
 		List<Term> lambda_guesses; // possible guesses for lambda if we are generating linear constraints
@@ -314,14 +315,14 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		Term t1, t2, t3; // Three parts of the constraints
 
 		// t1: A_stem * (z, x) <= b_stem
-		t1 = mscript.term("true");
+		t1 = mScript.term("true");
 		if (!mlasso.getStem().isTrue()) {
 			final LinearTransition stem = mlasso.getStem();
 			final List<Term> disjunction = new ArrayList<>(stem.getNumPolyhedra());
 			for (final List<LinearInequality> polyhedron : stem.getPolyhedra()) {
 				disjunction.add(generateConstraint(stem, polyhedron, vars_init, vars_honda, false));
 			}
-			t1 = Util.or(mscript, disjunction.toArray(new Term[disjunction.size()]));
+			t1 = Util.or(mScript, disjunction.toArray(new Term[disjunction.size()]));
 		}
 
 		// vars_end + vars_gevs
@@ -337,7 +338,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			if (summands.length == 1) {
 				sum = summands[0];
 			} else {
-				sum = mscript.term("+", summands);
+				sum = mScript.term("+", summands);
 			}
 			vars_end_plus_gevs.put(rkVar, sum);
 		}
@@ -363,10 +364,10 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 					for (final IProgramVar rkVar : rankVars) {
 						if (mSettings.isNilpotentComponents() && i < mSettings.getNumberOfGevs() - 1) {
 							gev_next.put(rkVar,
-									mscript.term("+", mscript.term("*", vars_gevs.get(i).get(rkVar), lambda_guess),
-											mscript.term("*", vars_gevs.get(i + 1).get(rkVar), nu_guess)));
+									mScript.term("+", mScript.term("*", vars_gevs.get(i).get(rkVar), lambda_guess),
+											mScript.term("*", vars_gevs.get(i + 1).get(rkVar), nu_guess)));
 						} else {
-							gev_next.put(rkVar, mscript.term("*", vars_gevs.get(i).get(rkVar), lambda_guess));
+							gev_next.put(rkVar, mScript.term("*", vars_gevs.get(i).get(rkVar), lambda_guess));
 						}
 					}
 				}
@@ -391,18 +392,18 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 								vars_gevs_next.get(i).get(j), true);
 						Term fix_lambda;
 						if (lambda_guess == null) {
-							fix_lambda = mscript.term("true");
+							fix_lambda = mScript.term("true");
 						} else {
-							fix_lambda = mscript.term("=", lambdas.get(i), lambda_guess);
+							fix_lambda = mScript.term("=", lambdas.get(i), lambda_guess);
 						}
-						inner_disjunction[j] = Util.and(mscript, t_gev, fix_lambda);
+						inner_disjunction[j] = Util.and(mScript, t_gev, fix_lambda);
 					}
-					conjuction[i] = Util.or(mscript, inner_disjunction);
+					conjuction[i] = Util.or(mScript, inner_disjunction);
 				}
 				conjuction[mSettings.getNumberOfGevs()] = t_honda;
-				disjunction.add(Util.and(mscript, conjuction));
+				disjunction.add(Util.and(mScript, conjuction));
 			}
-			t2 = Util.or(mscript, disjunction.toArray(new Term[disjunction.size()]));
+			t2 = Util.or(mScript, disjunction.toArray(new Term[disjunction.size()]));
 		}
 
 		// t3: constraints on the lambdas and the nus
@@ -412,31 +413,31 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			// nu_i = 0 or nu_i = 1
 			for (int i = 0; i < mSettings.getNumberOfGevs() - 1; ++i) {
 				final Term nu = nus.get(i);
-				conjunction.add(Util.or(mscript, mscript.term("=", nu, zero), mscript.term("=", nu, one)));
+				conjunction.add(Util.or(mScript, mScript.term("=", nu, zero), mScript.term("=", nu, one)));
 			}
 			if (mSettings.isAllowBounded()) {
 				// lambda_i >= 0
 				for (int i = 0; i < mSettings.getNumberOfGevs(); ++i) {
-					conjunction.add(mscript.term(">=", lambdas.get(i), zero));
+					conjunction.add(mScript.term(">=", lambdas.get(i), zero));
 				}
 			} else {
 				// lambda >= 1 and any vars_gev != 0;
 				final List<Term> disjunction = new ArrayList<>(mSettings.getNumberOfGevs() * numvars);
 				for (int i = 0; i < mSettings.getNumberOfGevs(); ++i) {
 					for (final Term t : vars_gevs.get(i).values()) {
-						disjunction.add(mscript.term("<>", t, zero));
+						disjunction.add(mScript.term("<>", t, zero));
 					}
-					conjunction.add(mscript.term(">=", lambdas.get(i), one));
+					conjunction.add(mScript.term(">=", lambdas.get(i), one));
 				}
-				conjunction.add(Util.or(mscript, disjunction.toArray(new Term[disjunction.size()])));
+				conjunction.add(Util.or(mScript, disjunction.toArray(new Term[disjunction.size()])));
 			}
-			t3 = Util.and(mscript, conjunction.toArray(new Term[conjunction.size()]));
+			t3 = Util.and(mScript, conjunction.toArray(new Term[conjunction.size()]));
 		}
 
 		mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t1)));
 		mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t2)));
 		mLogger.debug(new DebugMessage("{0}", new SMTPrettyPrinter(t3)));
-		return mscript.term("and", t1, t2, t3);
+		return mScript.term("and", t1, t2, t3);
 	}
 
 	private Term generateConstraint(final LinearTransition transition, final List<LinearInequality> polyhedron,
@@ -453,8 +454,8 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 					continue;
 				}
 				final AffineTerm a = ieq.getCoefficient(entry.getValue());
-				summands.add(mscript.term("*", varsOut.get(entry.getKey()),
-						mIntegerMode ? a.asIntTerm(mscript) : a.asRealTerm(mscript)));
+				summands.add(mScript.term("*", varsOut.get(entry.getKey()),
+						mIntegerMode ? a.asIntTerm(mScript) : a.asRealTerm(mScript)));
 				added_vars.add(entry.getValue());
 			}
 
@@ -463,12 +464,12 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 				if (added_vars.contains(entry.getValue())) {
 					// the transition implicitly requires that
 					// entry.getKey() is constant
-					conjunction.add(mscript.term("=", varsIn.get(entry.getKey()), varsOut.get(entry.getKey())));
+					conjunction.add(mScript.term("=", varsIn.get(entry.getKey()), varsOut.get(entry.getKey())));
 					continue;
 				}
 				final AffineTerm a = ieq.getCoefficient(entry.getValue());
-				summands.add(mscript.term("*", varsIn.get(entry.getKey()),
-						mIntegerMode ? a.asIntTerm(mscript) : a.asRealTerm(mscript)));
+				summands.add(mScript.term("*", varsIn.get(entry.getKey()),
+						mIntegerMode ? a.asIntTerm(mScript) : a.asRealTerm(mScript)));
 				added_vars.add(entry.getValue());
 			}
 
@@ -480,22 +481,23 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 				if (auxVars.containsKey(var)) {
 					v = auxVars.get(var);
 				} else {
-					v = newConstant(PREFIX_AUX + sAuxCounter, mIntegerMode ? "Int" : "Real");
+					v = newConstant(PREFIX_AUX + sAuxCounter,
+							mIntegerMode ? SmtSortUtils.INT_SORT : SmtSortUtils.REAL_SORT);
 					auxVars.put(var, v);
 				}
 				final AffineTerm a = ieq.getCoefficient(var);
-				summands.add(mscript.term("*", v, mIntegerMode ? a.asIntTerm(mscript) : a.asRealTerm(mscript)));
+				summands.add(mScript.term("*", v, mIntegerMode ? a.asIntTerm(mScript) : a.asRealTerm(mScript)));
 				++sAuxCounter;
 			}
 			if (!rays) {
 				final AffineTerm a = ieq.getConstant();
-				summands.add(mIntegerMode ? a.asIntTerm(mscript) : a.asRealTerm(mscript));
+				summands.add(mIntegerMode ? a.asIntTerm(mScript) : a.asRealTerm(mScript));
 			}
-			conjunction.add(mscript.term(rays ? ">=" : ieq.getInequalitySymbol(),
-					SmtUtils.sum(mscript, mSort, summands.toArray(new Term[summands.size()])),
-					mIntegerMode ? mscript.numeral(BigInteger.ZERO) : mscript.decimal("0")));
+			conjunction.add(mScript.term(rays ? ">=" : ieq.getInequalitySymbol(),
+					SmtUtils.sum(mScript, mSort, summands.toArray(new Term[summands.size()])),
+					mIntegerMode ? mScript.numeral(BigInteger.ZERO) : mScript.decimal("0")));
 		}
-		return Util.and(mscript, conjunction.toArray(new Term[conjunction.size()]));
+		return Util.and(mScript, conjunction.toArray(new Term[conjunction.size()]));
 	}
 
 	/**
@@ -510,7 +512,7 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 		if (vars.isEmpty()) {
 			return Collections.emptyMap();
 		}
-		final Map<Term, Rational> val = ModelExtractionUtils.getValuation(mscript, vars.values());
+		final Map<Term, Rational> val = ModelExtractionUtils.getValuation(mScript, vars.values());
 		// Concatenate vars and val
 		final Map<IProgramVar, Rational> state = new LinkedHashMap<>();
 		for (final Map.Entry<IProgramVar, Term> entry : vars.entrySet()) {
@@ -537,13 +539,13 @@ public class NonTerminationArgumentSynthesizer extends ArgumentSynthesizer {
 			final List<Map<IProgramVar, Rational>> gevs = new ArrayList<>(mSettings.getNumberOfGevs());
 			final Map<Term, Term> lambda_val;
 			if (!var_lambdas.isEmpty()) {
-				lambda_val = mscript.getValue(var_lambdas.toArray(new Term[var_lambdas.size()]));
+				lambda_val = mScript.getValue(var_lambdas.toArray(new Term[var_lambdas.size()]));
 			} else {
 				lambda_val = Collections.emptyMap();
 			}
 			final Map<Term, Term> nu_val;
 			if (!var_nus.isEmpty()) {
-				nu_val = mscript.getValue(var_nus.toArray(new Term[var_nus.size()]));
+				nu_val = mScript.getValue(var_nus.toArray(new Term[var_nus.size()]));
 			} else {
 				nu_val = Collections.emptyMap();
 			}
