@@ -15,7 +15,7 @@ public class ParrotInteractiveIterationInfo {
 		setFallbackStrategy(fallbackStrategy);
 	}
 
-	public RefinementStrategy getFallbackStrategy() {
+	public synchronized RefinementStrategy getFallbackStrategy() {
 		return mFallbackStrategy;
 	}
 
@@ -24,7 +24,7 @@ public class ParrotInteractiveIterationInfo {
 		setFallbackStrategy(other.getFallbackStrategy());
 	}
 
-	public void setFallbackStrategy(final RefinementStrategy fallbackStrategy) {
+	public synchronized void setFallbackStrategy(final RefinementStrategy fallbackStrategy) {
 		mFallbackStrategy = fallbackStrategy;
 	}
 

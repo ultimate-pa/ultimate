@@ -256,7 +256,7 @@ public class ServerController implements IController<RunDefinition> {
 	private void requestAndLoadToolchain(final ICore<RunDefinition> core, final List<File> tcFiles)
 			throws InterruptedException, ExecutionException {
 		final File tcFile = ChoiceRequest.get(tcFiles, File::getName).setLogger(mLogger).setTitle("Pick a Toolchain")
-				.request(mCommonInterface);
+				.request(mCommonInterface).get();
 		try {
 			mToolchain = core.createToolchainData(tcFile.getAbsolutePath());
 		} catch (final FileNotFoundException e1) {

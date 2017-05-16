@@ -46,7 +46,6 @@ public class InteractiveCegar {
 		private final boolean mRSS;
 		private final boolean mPaused;
 
-
 		public boolean ismCEXS() {
 			return mCEXS;
 		}
@@ -110,10 +109,9 @@ public class InteractiveCegar {
 			mContinue.complete(null);
 		}
 		if (!mPreferences.isRSS() && wasRSS) { // RSS is now turned off, request new fallback strategy.
-			final RefinementStrategy newFallback = ChoiceRequest.get(RefinementStrategy.class)
-					.setTitle("Please select a new Fallback Strategy").setLogger(mLogger)
-					.request(getInterface(), mParrotInteractiveIterationInfo.getFallbackStrategy());
-			mParrotInteractiveIterationInfo.setFallbackStrategy(newFallback);
+			ChoiceRequest.get(RefinementStrategy.class).setTitle("Please select a new Fallback Strategy")
+					.setLogger(mLogger).request(getInterface())
+					.thenAccept(mParrotInteractiveIterationInfo::setFallbackStrategy);
 		}
 	}
 
