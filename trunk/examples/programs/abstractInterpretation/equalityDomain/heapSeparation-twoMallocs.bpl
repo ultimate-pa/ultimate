@@ -7,6 +7,7 @@ modifies #valid, #memory_int;
 
 implementation bla () {
    var p,q : int;
+   var i,j : int;
    var m1,m2 : int;
 
    assume #valid[m1] == 0;
@@ -17,7 +18,10 @@ implementation bla () {
    q := m2;
    #valid[m2] := 1;
 
-   #memory_int[p] := i;
+   assert p != q;
 
+   #memory_int[p] := i;
    #memory_int[q] := j;
+
+   assert #memory_int[p] == i;
 }
