@@ -1,5 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.interactive.commondata;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
@@ -25,8 +26,24 @@ public class RootPath {
 		return new RootPath(base, tag, p -> Files.newDirectoryStream(p, filter));
 	}
 
-	public static RootPath newInstance(final Path base, final String tag, final String filter) {
-		return new RootPath(base, tag, p -> Files.newDirectoryStream(p, filter));
+	/*
+	 * public static RootPath newInstance(final Path base, final String tag, final String filter) { return new
+	 * RootPath(base, tag, p -> Files.newDirectoryStream(p, filter)); }
+	 */
+
+	public static RootPath newInstance(final Path base, final String tag, final String fileEnding) {
+		return newInstance(base, tag, directoryOrFileThatEndswith(fileEnding));
+	}
+
+	private static Filter<? super Path> directoryOrFileThatEndswith(final String fileEnding) {
+		return p -> {
+			final File f = p.toFile();
+			if (f.isDirectory()) {
+				return true;
+			} else {
+				return f.isFile() && f.getName().endsWith(fileEnding);
+			}
+		};
 	}
 
 	@FunctionalInterface
