@@ -103,13 +103,13 @@ public class TypeSortTranslator {
 			// expressions in interpolants and don't replace them by select
 			// expressions.
 			if (sort.isArraySort()) {
-				assert "Array".equals(sort.getName());
+				assert SmtSortUtils.isArraySort(sort);
 				final Sort indexSort = sort.getArguments()[0];
 				final Sort valueSort = sort.getArguments()[1];
 				final BoogieType[] indexTypes = { (BoogieType) getType(indexSort) };
 				final BoogieType valueType = (BoogieType) getType(valueSort);
 				type = BoogieType.createArrayType(0, indexTypes, valueType);
-			} else if ("BitVec".equals(sort.getRealSort().getName())) {
+			} else if (SmtSortUtils.isBitvecSort(sort)) {
 				final BigInteger bvsize = sort.getIndices()[0];
 				type = BoogieType.createBitvectorType(bvsize.intValueExact());
 				return type;
