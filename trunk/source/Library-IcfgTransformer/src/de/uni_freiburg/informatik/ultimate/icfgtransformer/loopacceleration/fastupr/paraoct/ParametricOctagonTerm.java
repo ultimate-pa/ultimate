@@ -32,8 +32,10 @@ import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 
 /**
  *
@@ -46,11 +48,11 @@ public abstract class ParametricOctagonTerm extends OctagonTerm {
 	protected final BigDecimal mSummand;
 	protected final BigDecimal mIncrement;
 
-	public ParametricOctagonTerm(BigDecimal constant, TermVariable parametricVar, BigDecimal summant) {
+	public ParametricOctagonTerm(final BigDecimal constant, final TermVariable parametricVar, final BigDecimal summant) {
 		this(constant, parametricVar, summant, BigDecimal.ZERO);
 	}
 
-	public ParametricOctagonTerm(BigDecimal constant, TermVariable parametricVar, BigDecimal summant, BigDecimal inc) {
+	public ParametricOctagonTerm(final BigDecimal constant, final TermVariable parametricVar, final BigDecimal summant, final BigDecimal inc) {
 		super(constant);
 		mParametricVar = parametricVar;
 		mSummand = summant;
@@ -58,14 +60,15 @@ public abstract class ParametricOctagonTerm extends OctagonTerm {
 	}
 
 	@Override
-	protected Term rightTerm(Script script) {
-		final Term constTerm = (Rational.valueOf(mConstant.toBigInteger(), BigInteger.ONE)).toTerm(script.sort("Int"));
+	protected Term rightTerm(final Script script) {
+		final Sort intSort = SmtSortUtils.getIntSort(script);
+		final Term constTerm = (Rational.valueOf(mConstant.toBigInteger(), BigInteger.ONE)).toTerm(intSort);
 		Term varTerm = mParametricVar;
 		if (!mIncrement.equals(BigDecimal.ZERO)) {
 			varTerm = script.term("+", mParametricVar,
-					Rational.valueOf(mIncrement.toBigInteger(), BigInteger.ONE).toTerm(script.sort("Int")));
+					Rational.valueOf(mIncrement.toBigInteger(), BigInteger.ONE).toTerm(intSort));
 		}
-		final Term summandTerm = (Rational.valueOf(mSummand.toBigInteger(), BigInteger.ONE)).toTerm(script.sort("Int"));
+		final Term summandTerm = (Rational.valueOf(mSummand.toBigInteger(), BigInteger.ONE)).toTerm(intSort);
 		return script.term("+", script.term("*", constTerm, varTerm), summandTerm);
 	}
 

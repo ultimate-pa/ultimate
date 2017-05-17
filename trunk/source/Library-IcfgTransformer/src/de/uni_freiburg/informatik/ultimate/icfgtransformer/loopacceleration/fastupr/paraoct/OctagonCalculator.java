@@ -11,8 +11,10 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRUtils;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 public class OctagonCalculator extends NonRecursive {
@@ -20,32 +22,33 @@ public class OctagonCalculator extends NonRecursive {
 	FastUPRUtils mUtils;
 	ManagedScript mManagedScript;
 
-	public OctagonCalculator(FastUPRUtils utils, ManagedScript mgdScript) {
+	public OctagonCalculator(final FastUPRUtils utils, final ManagedScript mgdScript) {
 		mUtils = utils;
 		mManagedScript = mgdScript;
 	}
 
-	public OctagonConjunction normalizeVarNames(OctagonConjunction conjunc, Map<IProgramVar, TermVariable> inVars,
-			Map<IProgramVar, TermVariable> outVars) {
+	public OctagonConjunction normalizeVarNames(final OctagonConjunction conjunc, final Map<IProgramVar, TermVariable> inVars,
+			final Map<IProgramVar, TermVariable> outVars) {
 
 		mUtils.debug("Normalizing VarNames for:");
 		mUtils.debug(conjunc.toString());
 
 		OctagonConjunction result = conjunc;
 
+		final Sort intSort = SmtSortUtils.getIntSort(mManagedScript);
 		for (final IProgramVar p : inVars.keySet()) {
 			String name;
 			if (outVars.get(p).equals(inVars.get(p))) {
 				name = "oct_" + p.toString() + "_inout";
 				final TermVariable newVar = mManagedScript.constructFreshTermVariable(name,
-						mManagedScript.getScript().sort("Int"));
+						intSort);
 				result = replaceVars(result, inVars.get(p), newVar);
 				inVars.put(p, newVar);
 				outVars.put(p, newVar);
 			} else {
 				name = "oct_" + p.toString() + "_in";
 				final TermVariable newVar = mManagedScript.constructFreshTermVariable(name,
-						mManagedScript.getScript().sort("Int"));
+						intSort);
 				result = replaceVars(result, inVars.get(p), newVar);
 				inVars.put(p, newVar);
 			}
@@ -56,7 +59,7 @@ public class OctagonCalculator extends NonRecursive {
 			if (!outVars.get(p).equals(inVars.get(p))) {
 				final String name = "oct_" + p.toString() + "_out";
 				final TermVariable newVar = mManagedScript.constructFreshTermVariable(name,
-						mManagedScript.getScript().sort("Int"));
+						intSort);
 				result = replaceVars(result, outVars.get(p), newVar);
 				outVars.put(p, newVar);
 			}
@@ -65,7 +68,7 @@ public class OctagonCalculator extends NonRecursive {
 		return result;
 	}
 
-	private OctagonConjunction replaceVars(OctagonConjunction conjunc, TermVariable oldVar, TermVariable newVar) {
+	private OctagonConjunction replaceVars(final OctagonConjunction conjunc, final TermVariable oldVar, final TermVariable newVar) {
 
 		mUtils.debug("Replacing " + oldVar.toString() + " with " + newVar.toString());
 
@@ -108,8 +111,8 @@ public class OctagonCalculator extends NonRecursive {
 		return result;
 	}
 
-	public OctagonConjunction sequentialize(OctagonConjunction conjunc, Map<IProgramVar, TermVariable> inVars,
-			Map<IProgramVar, TermVariable> outVars, int count) {
+	public OctagonConjunction sequentialize(final OctagonConjunction conjunc, final Map<IProgramVar, TermVariable> inVars,
+			final Map<IProgramVar, TermVariable> outVars, final int count) {
 
 		mUtils.debug("Sequentializing " + count + " times:" + conjunc.toString());
 
@@ -142,8 +145,8 @@ public class OctagonCalculator extends NonRecursive {
 	}
 
 	public void getVariableSets(HashSet<TermVariable> inVarSet, HashSet<TermVariable> outVarSet,
-			HashSet<TermVariable> variableSet, Map<IProgramVar, TermVariable> inVarMap,
-			Map<IProgramVar, TermVariable> outVarMap) {
+			HashSet<TermVariable> variableSet, final Map<IProgramVar, TermVariable> inVarMap,
+			final Map<IProgramVar, TermVariable> outVarMap) {
 
 		variableSet = new HashSet<>();
 		inVarSet = new HashSet<>();
@@ -164,8 +167,8 @@ public class OctagonCalculator extends NonRecursive {
 		}
 	}
 
-	public OctagonConjunction binarySequentialize(OctagonConjunction first, OctagonConjunction second,
-			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars) {
+	public OctagonConjunction binarySequentialize(final OctagonConjunction first, final OctagonConjunction second,
+			final Map<IProgramVar, TermVariable> inVars, final Map<IProgramVar, TermVariable> outVars) {
 		final HashSet<TermVariable> variables = new HashSet<>();
 		final HashSet<TermVariable> inVarSet = new HashSet<>();
 		final HashSet<TermVariable> outVarSet = new HashSet<>();
@@ -179,9 +182,9 @@ public class OctagonCalculator extends NonRecursive {
 
 	}
 
-	OctagonConjunction binarySequentialize(OctagonConjunction first, OctagonConjunction second,
-			HashSet<TermVariable> variables, HashSet<TermVariable> inVarSet, HashSet<TermVariable> outVarSet,
-			Map<TermVariable, TermVariable> variableMapping) {
+	OctagonConjunction binarySequentialize(final OctagonConjunction first, OctagonConjunction second,
+			final HashSet<TermVariable> variables, final HashSet<TermVariable> inVarSet, final HashSet<TermVariable> outVarSet,
+			final Map<TermVariable, TermVariable> variableMapping) {
 
 		final Map<TermVariable, OctagonSubstitution> firstSubstitutions = new HashMap<>();
 		final Map<TermVariable, OctagonSubstitution> secondSubstitutions = new HashMap<>();
@@ -218,7 +221,7 @@ public class OctagonCalculator extends NonRecursive {
 		return second;
 	}
 
-	private OctagonConjunction getInputConstraints(OctagonConjunction first, HashSet<TermVariable> inVarSet) {
+	private OctagonConjunction getInputConstraints(final OctagonConjunction first, final HashSet<TermVariable> inVarSet) {
 		final OctagonConjunction result = new OctagonConjunction();
 		for (final OctagonTerm t : first.getTerms()) {
 			if (inVarSet.contains(t.getFirstVar()) && inVarSet.contains(t.getSecondVar())) {
@@ -228,7 +231,7 @@ public class OctagonCalculator extends NonRecursive {
 		return result;
 	}
 
-	private HashSet<SubstitutionTermContainer> getContainers(OctagonConjunction second) {
+	private HashSet<SubstitutionTermContainer> getContainers(final OctagonConjunction second) {
 		final HashSet<SubstitutionTermContainer> result = new HashSet<>();
 		for (final OctagonTerm t : second.getTerms()) {
 			result.add(new SubstitutionTermContainer(t));
@@ -236,8 +239,8 @@ public class OctagonCalculator extends NonRecursive {
 		return result;
 	}
 
-	private HashSet<SubstitutionTermContainer> substituteInVars(HashSet<SubstitutionTermContainer> terms,
-			HashSet<TermVariable> varSet, Map<TermVariable, TermVariable> variableMapping) {
+	private HashSet<SubstitutionTermContainer> substituteInVars(final HashSet<SubstitutionTermContainer> terms,
+			final HashSet<TermVariable> varSet, final Map<TermVariable, TermVariable> variableMapping) {
 
 		mUtils.debug("> Subsituting inVars with outVars");
 		mUtils.debug("Variable Set: " + varSet.toString());
@@ -296,8 +299,8 @@ public class OctagonCalculator extends NonRecursive {
 		return result;
 	}
 
-	private OctagonConjunction substitute(HashSet<SubstitutionTermContainer> terms, HashSet<TermVariable> varSet,
-			Map<TermVariable, OctagonSubstitution> substitutions) {
+	private OctagonConjunction substitute(final HashSet<SubstitutionTermContainer> terms, final HashSet<TermVariable> varSet,
+			final Map<TermVariable, OctagonSubstitution> substitutions) {
 
 		mUtils.debug("> Substituting a set of variables.");
 		mUtils.debug("varSet:" + varSet.toString());
@@ -332,8 +335,8 @@ public class OctagonCalculator extends NonRecursive {
 		return result;
 	}
 
-	private HashSet<OctagonTerm> getTermSubstitutions(OctagonTerm t,
-			Map<TermVariable, OctagonSubstitution> substitutions, int which) {
+	private HashSet<OctagonTerm> getTermSubstitutions(final OctagonTerm t,
+			final Map<TermVariable, OctagonSubstitution> substitutions, final int which) {
 
 		final HashSet<OctagonTerm> result = new HashSet<>();
 
@@ -411,8 +414,8 @@ public class OctagonCalculator extends NonRecursive {
 		return result;
 	}
 
-	private OctagonTerm getTermFromSubsitution(OctagonTerm t, TermVariable toReplace, OctagonSubstitutionTerm sub,
-			int which) {
+	private OctagonTerm getTermFromSubsitution(final OctagonTerm t, final TermVariable toReplace, final OctagonSubstitutionTerm sub,
+			final int which) {
 
 		mUtils.debug("-Building new substituted Term from " + t.toString() + " with substitution " + sub.toString());
 
@@ -442,7 +445,7 @@ public class OctagonCalculator extends NonRecursive {
 		return result;
 	}
 
-	private OctagonConjunction conjunction(OctagonConjunction first, OctagonConjunction second) {
+	private OctagonConjunction conjunction(final OctagonConjunction first, final OctagonConjunction second) {
 		final OctagonConjunction result = new OctagonConjunction();
 		for (final OctagonTerm t : first.getTerms()) {
 			result.addTerm(t);
@@ -455,8 +458,8 @@ public class OctagonCalculator extends NonRecursive {
 		return result;
 	}
 
-	private Map<TermVariable, TermVariable> getTermMapping(Map<IProgramVar, TermVariable> inVars,
-			Map<IProgramVar, TermVariable> outVars) {
+	private Map<TermVariable, TermVariable> getTermMapping(final Map<IProgramVar, TermVariable> inVars,
+			final Map<IProgramVar, TermVariable> outVars) {
 
 		final Map<TermVariable, TermVariable> result = new HashMap<>();
 
@@ -470,7 +473,7 @@ public class OctagonCalculator extends NonRecursive {
 		return result;
 	}
 
-	public Map<TermVariable, TermVariable> getReverseTermMapping(Map<TermVariable, TermVariable> termMapping) {
+	public Map<TermVariable, TermVariable> getReverseTermMapping(final Map<TermVariable, TermVariable> termMapping) {
 		final Map<TermVariable, TermVariable> result = new HashMap<>();
 		for (final TermVariable t : termMapping.keySet()) {
 			result.put(termMapping.get(t), t);
@@ -479,7 +482,7 @@ public class OctagonCalculator extends NonRecursive {
 		return result;
 	}
 
-	private OctagonSubstitution getSubstitution(TermVariable var, OctagonConjunction conjunc) {
+	private OctagonSubstitution getSubstitution(final TermVariable var, final OctagonConjunction conjunc) {
 		final OctagonSubstitution result = new OctagonSubstitution(var);
 		for (final OctagonTerm t : conjunc.getTerms()) {
 			result.addSubstitution(t);
@@ -493,13 +496,13 @@ public class OctagonCalculator extends NonRecursive {
 		private final HashSet<OctagonSubstitutionTerm> mGreaterEqThan;
 		private final HashSet<OctagonSubstitutionTerm> mLesserEqThan;
 
-		OctagonSubstitution(TermVariable var) {
+		OctagonSubstitution(final TermVariable var) {
 			mVar = var;
 			mGreaterEqThan = new HashSet<>();
 			mLesserEqThan = new HashSet<>();
 		}
 
-		void addSubstitution(OctagonTerm term) {
+		void addSubstitution(final OctagonTerm term) {
 			if (term.getFirstVar().equals(mVar)) {
 				addSubstitution(term, true);
 			} else if (term.getSecondVar().equals(mVar)) {
@@ -507,7 +510,7 @@ public class OctagonCalculator extends NonRecursive {
 			}
 		}
 
-		void addSubstitution(OctagonTerm term, boolean first) {
+		void addSubstitution(final OctagonTerm term, final boolean first) {
 
 			OctagonSubstitutionTerm subTerm;
 			boolean greater = false;
@@ -519,19 +522,21 @@ public class OctagonCalculator extends NonRecursive {
 					subTerm = new OctagonSubstitutionTerm((BigDecimal) term.getValue(), term.getSecondVar(),
 							term.isSecondNegative());
 				}
-				if (term.isFirstNegative())
+				if (term.isFirstNegative()) {
 					greater = true;
+				}
 			} else {
 				subTerm = new OctagonSubstitutionTerm((BigDecimal) term.getValue(), term.getFirstVar(),
 						term.isFirstNegative());
-				if (term.isSecondNegative())
+				if (term.isSecondNegative()) {
 					greater = true;
+				}
 			}
 
 			addSubstitution(subTerm, greater);
 		}
 
-		void addSubstitution(OctagonSubstitutionTerm term, boolean greater) {
+		void addSubstitution(final OctagonSubstitutionTerm term, final boolean greater) {
 			if (greater) {
 				mGreaterEqThan.add(term);
 			} else {
@@ -568,7 +573,7 @@ public class OctagonCalculator extends NonRecursive {
 		private final boolean mNegativeVar;
 		private final BigDecimal mConstant;
 
-		OctagonSubstitutionTerm(BigDecimal constant) {
+		OctagonSubstitutionTerm(final BigDecimal constant) {
 			this(constant, null, true);
 		}
 
@@ -576,7 +581,7 @@ public class OctagonCalculator extends NonRecursive {
 			return mConstant;
 		}
 
-		OctagonSubstitutionTerm(BigDecimal constant, TermVariable var, boolean negative) {
+		OctagonSubstitutionTerm(final BigDecimal constant, final TermVariable var, final boolean negative) {
 			mConstant = constant;
 			mVar = var;
 			mNegativeVar = negative;
@@ -606,15 +611,15 @@ public class OctagonCalculator extends NonRecursive {
 		private final boolean mFirstLocked;
 		private final boolean mSecondLocked;
 
-		SubstitutionTermContainer(OctagonTerm term) {
+		SubstitutionTermContainer(final OctagonTerm term) {
 			this(term, true, true);
 		}
 
-		SubstitutionTermContainer(OctagonTerm term, boolean locked) {
+		SubstitutionTermContainer(final OctagonTerm term, final boolean locked) {
 			this(term, locked, true);
 		}
 
-		SubstitutionTermContainer(OctagonTerm term, boolean first, boolean second) {
+		SubstitutionTermContainer(final OctagonTerm term, final boolean first, final boolean second) {
 			mTerm = term;
 			mFirstLocked = first;
 			mSecondLocked = second;
@@ -638,8 +643,8 @@ public class OctagonCalculator extends NonRecursive {
 		}
 	}
 
-	public ArrayList<TermVariable> getSortedVariables(Map<IProgramVar, TermVariable> inVarMap,
-			Map<IProgramVar, TermVariable> outVarMap) {
+	public ArrayList<TermVariable> getSortedVariables(final Map<IProgramVar, TermVariable> inVarMap,
+			final Map<IProgramVar, TermVariable> outVarMap) {
 
 		final ArrayList<TermVariable> sorted = new ArrayList<>();
 
@@ -665,7 +670,7 @@ public class OctagonCalculator extends NonRecursive {
 
 		final Comparator<TermVariable> compare = new Comparator<TermVariable>() {
 			@Override
-			public int compare(TermVariable one, TermVariable other) {
+			public int compare(final TermVariable one, final TermVariable other) {
 				return one.toString().compareTo(other.toString());
 			}
 		};

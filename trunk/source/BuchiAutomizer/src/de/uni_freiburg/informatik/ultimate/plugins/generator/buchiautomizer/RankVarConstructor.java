@@ -69,7 +69,7 @@ public class RankVarConstructor {
 		newSymbolTable.add(mUnseededVariable);
 
 		mOldRankVariables = new IProgramNonOldVar[MAX_LEX_COMPONENTS];
-		final Sort intSort = csToolkit.getManagedScript().getScript().sort("Int");
+		final Sort intSort = SmtSortUtils.getIntSort(csToolkit.getManagedScript());
 		for (int i = 0; i < MAX_LEX_COMPONENTS; i++) {
 			final String name = OLD_RANK_IDENTIFIER + i;
 			mOldRankVariables[i] = ProgramVarUtils.constructGlobalProgramVarPair(name, intSort,

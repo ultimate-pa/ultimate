@@ -80,7 +80,7 @@ public class QuantifierEliminationTest {
 	@Test
 	public void prenexQuantifiedCapture() {
 
-		final Sort sort_Int = mScript.sort("Int");
+		final Sort sort_Int = SmtSortUtils.getIntSort(mScript);
 		final Term seventeen = mScript.numeral(BigInteger.valueOf(17));
 		final Term fourtytwo = mScript.numeral(BigInteger.valueOf(42));
 		final TermVariable x = mScript.variable("x", sort_Int);
@@ -99,8 +99,8 @@ public class QuantifierEliminationTest {
 
 		// Sorts
 		final Sort sort_Bool = SmtSortUtils.getBoolSort(mScript);
-		final Sort sort_Int = mScript.sort("Int");
-		final Sort sort_Array = mScript.sort("Array", sort_Int, sort_Int);
+		final Sort sort_Int = SmtSortUtils.getIntSort(mScript);
+		final Sort sort_Array = SmtSortUtils.getArraySort(mScript, sort_Int, sort_Int);
 
 		// Constants
 		final Term con_0 = mScript.numeral("0");
@@ -140,9 +140,9 @@ public class QuantifierEliminationTest {
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 
 		// //Sorts
-		// final Sort sort_Bool = script.sort("Bool");
-		// final Sort sort_Int = script.sort("Int");
-		// final Sort sort_Array = script.sort("Array", sort_Int, sort_Int);
+		// final Sort sort_Bool = SmtSortUtils.getBoolSort(mScript);
+		// final Sort sort_Int = SmtSortUtils.getIntSort(mScript);
+		// final Sort sort_Array = SmtSortUtils.getArraySort(mScript, sort_Int, sort_Int);
 		//
 		// //Constants
 		// final Term con_0 = script.numeral("0");

@@ -34,6 +34,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Rational;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 
 /**
  *
@@ -44,7 +45,7 @@ public abstract class OctagonTerm {
 
 	protected BigDecimal mConstant;
 
-	public OctagonTerm(BigDecimal constant) {
+	public OctagonTerm(final BigDecimal constant) {
 		mConstant = constant;
 	}
 
@@ -62,8 +63,8 @@ public abstract class OctagonTerm {
 
 	protected abstract Term leftTerm(Script script);
 
-	protected Term rightTerm(Script script) {
-		return (Rational.valueOf(mConstant.toBigInteger(), BigInteger.ONE)).toTerm(script.sort("Int"));
+	protected Term rightTerm(final Script script) {
+		return (Rational.valueOf(mConstant.toBigInteger(), BigInteger.ONE)).toTerm(SmtSortUtils.getIntSort(script));
 	}
 
 	@Override
@@ -71,7 +72,7 @@ public abstract class OctagonTerm {
 		return " <= " + mConstant.toString();
 	}
 
-	public Term toTerm(Script script) {
+	public Term toTerm(final Script script) {
 		return script.term("<=", leftTerm(script), rightTerm(script));
 	}
 }

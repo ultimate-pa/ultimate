@@ -128,7 +128,7 @@ public class TermCodeBuilderTest {
 
 		// Sorts
 		final Sort sort_Bool = SmtSortUtils.getBoolSort(script);
-		final Sort sort_Int = script.sort("Int");
+		final Sort sort_Int = SmtSortUtils.getIntSort(script);
 
 		// Constants
 		final Term con_7 = script.numeral("7");

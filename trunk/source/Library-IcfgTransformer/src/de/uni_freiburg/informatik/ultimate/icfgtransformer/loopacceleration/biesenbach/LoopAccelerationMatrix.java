@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
@@ -113,7 +114,7 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 					// ausgeben lassen
 					// val[n] = originalTransFormula.getInVars().values().toArray(newTermVariable[2])[n]
 					final Rational one = Rational.valueOf(1, 1);
-					constT[vNumber - matrixSize] = one.toTerm(mMgScript.getScript().sort("Int"));
+					constT[vNumber - matrixSize] = one.toTerm(SmtSortUtils.getIntSort(mMgScript));
 					constI[vNumber - matrixSize] = 1;
 					final Term m = mMgScript.getScript().let(
 							mOriginalTransFormula.getInVars().values().toArray(new TermVariable[matrixSize]), constT,
@@ -141,7 +142,7 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		logger.info(mOriginalTransFormula.getFormula());
 		logger.info(mOriginalTransFormula.getClosedFormula());
 		final Script script = mMgScript.getScript();
-		final Term zero = Rational.valueOf(0, 1).toTerm(script.sort("Int"));
+		final Term zero = Rational.valueOf(0, 1).toTerm(SmtSortUtils.getIntSort(script));
 
 		final List<Entry<IProgramVar, TermVariable>> invars =
 				mOriginalTransFormula.getInVars().entrySet().stream().collect(Collectors.toList());
@@ -204,7 +205,7 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		final int[] constI = new int[matrixSize];
 		for (int n = 0; n < matrixSize; n++) {
 			final Rational one = Rational.valueOf(0, 1);
-			constT[n] = one.toTerm(mMgScript.getScript().sort("Int"));
+			constT[n] = one.toTerm(SmtSortUtils.getIntSort(mMgScript));
 			constI[n] = 0;
 		}
 		final Term m = mMgScript.getScript().let(
@@ -228,13 +229,13 @@ public class LoopAccelerationMatrix<INLOC extends IcfgLocation> {
 		mgdScript.push(this, 1);
 		// ...
 		final Rational one = Rational.valueOf(1, 1);
-		final Term oneTerm = one.toTerm(mgdScript.getScript().sort("Int"));
+		final Term oneTerm = one.toTerm(SmtSortUtils.getIntSort(mMgScript));
 		mgdScript.assertTerm(this, oneTerm);
 		final Model model = mgdScript.getScript().getModel();
 
 		final SimplificationTechnique simpl = SimplificationTechnique.SIMPLIFY_DDA;
 		final XnfConversionTechnique xnfConvTech = XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION;
-		final PredicateTransformer<Term, IPredicate, TransFormula> ptf = new PredicateTransformer<Term, IPredicate, TransFormula>(
+		final PredicateTransformer<Term, IPredicate, TransFormula> ptf = new PredicateTransformer<>(
 				mgdScript, new TermDomainOperationProvider(services, mgdScript));
 
 		final BasicPredicateFactory predFac =

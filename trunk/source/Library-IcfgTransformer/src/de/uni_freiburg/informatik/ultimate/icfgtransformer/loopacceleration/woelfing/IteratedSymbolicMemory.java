@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -70,7 +71,7 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 
 		final int numLoops = mSymbolicMemories.size();
 		mLoopCounters = new ArrayList<>(numLoops);
-		final Sort sort = mScript.getScript().sort("Int");
+		final Sort sort = SmtSortUtils.getIntSort(mScript);
 		for (int i = 0; i < numLoops; i++) {
 			mLoopCounters.add(mScript.constructFreshTermVariable("loopCounter", sort));
 		}
@@ -187,7 +188,7 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 				return null;
 			}
 
-			final Term zeroTerm = Rational.ZERO.toTerm(mScript.getScript().sort("Int"));
+			final Term zeroTerm = Rational.ZERO.toTerm(SmtSortUtils.getIntSort(mScript));
 			Term condition = mScript.getScript().term("false");
 
 			for (final TermVariable loopCounter : constantLoopCounters) {

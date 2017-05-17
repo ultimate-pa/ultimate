@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IBoogieType;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 
 /**
  * Translate integers to bit vectors, otherwise call TypeSortTranslator.
@@ -54,7 +55,7 @@ public class TypeSortTranslatorBitvectorWorkaround extends TypeSortTranslator {
 	protected Sort constructSort(final IBoogieType boogieType, final BoogieASTNode BoogieASTNode) {
 		if (boogieType.equals(BoogieType.TYPE_INT)) {
 			final BigInteger[] sortIndices = { BigInteger.valueOf(32) };
-			return mScript.sort("BitVec", sortIndices);
+			return SmtSortUtils.getBitvectorSort(mScript, sortIndices);
 		}
 		return super.constructSort(boogieType, BoogieASTNode);
 	}

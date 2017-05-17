@@ -372,12 +372,12 @@ public class SolverBuilder {
 			// add array-ext function
 			final Sort indexSort;
 			if (logicForExternalSolver.endsWith("A")) {
-				indexSort = result.sort("Int");
-				// Sort boolSort = result.sort("Bool");
-				// Sort boolArraySort = result.sort("Array", indexSort, boolSort);
+				indexSort = SmtSortUtils.getIntSort(result);
+				// Sort boolSort = SmtSortUtils.getBoolSort(result);
+				// Sort boolArraySort = SmtSortUtils.getArraySort(result, indexSort, boolSort);
 				// result.declareFun("array-ext", new Sort[] { boolArraySort, boolArraySort }, indexSort);
-				final Sort intSort = result.sort("Int");
-				final Sort intArraySort = result.sort("Array", indexSort, intSort);
+				final Sort intSort = SmtSortUtils.getIntSort(result);
+				final Sort intArraySort = SmtSortUtils.getArraySort(result, indexSort, intSort);
 				result.declareFun("array-ext", new Sort[] { intArraySort, intArraySort }, indexSort);
 			} else if (logicForExternalSolver.endsWith("BV")) {
 				// do nothing. several have to be added here

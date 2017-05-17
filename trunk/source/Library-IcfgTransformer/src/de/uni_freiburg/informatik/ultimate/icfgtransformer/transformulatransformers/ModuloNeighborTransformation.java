@@ -47,6 +47,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ApplicationTermFinder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.DagSizePrinter;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SubstitutionWithLocalSimplification;
@@ -163,7 +164,7 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 	private Term constructTerm(final ManagedScript mgdScript, Term term) {
 		mgdScript.lock(this);
 		mgdScript.push(this, 1);
-		final Sort intSort = mgdScript.getScript().sort("Int");
+		final Sort intSort = SmtSortUtils.getIntSort(mgdScript);
 		/*
 		 * Problem: nested mod terms
 		 *          the result contains also mod terms we cannot distinguish
@@ -265,9 +266,9 @@ public class ModuloNeighborTransformation extends TransitionPreprocessor {
 	private boolean isWraparoundConstant(final ConstantTerm constant) {
 		final Object value = constant.getValue();
 		if (value instanceof Rational) {
-			return isWraparoudBigInteger(((Rational) value).numerator()); 
+			return isWraparoudBigInteger(((Rational) value).numerator());
 		} else if (value instanceof BigInteger) {
-			return isWraparoudBigInteger((BigInteger) value); 
+			return isWraparoudBigInteger((BigInteger) value);
 		} else {
 			throw new UnsupportedOperationException("value has type " + value.getClass().getSimpleName());
 		}
