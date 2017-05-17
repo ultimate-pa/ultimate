@@ -24,14 +24,14 @@ modifies B, A, D, C;
     call #t~ret2 := main();
 }
 
-procedure calculate_output(#in~input : int) returns (#res : int)
+procedure foo(in1 : int) returns (#res : int)
 modifies B, A, D, C;
 {
-    var ~input : int;
+    var i : int;
 
-    ~input := #in~input;
+    i := in1;
     if (false) {
-    } else if (~input != 0) {
+    } else if (i != 0) {
         B := 1;
         #res := 0;
         return;
@@ -53,22 +53,22 @@ modifies B, A, D, C;
 {
     var #t~nondet0 : int;
     var #t~ret1 : int;
-    var ~input~7 : int;
+    var i : int;
 
     while (true)
     {
         if (false) {
             break;
         }
-        havoc ~input~7;
+        havoc i;
         assume -2147483648 <= #t~nondet0 && #t~nondet0 <= 2147483647;
-        ~input~7 := #t~nondet0;
+        i := #t~nondet0;
         havoc #t~nondet0;
-        if (~input~7 != 0 && ~input~7 != 1) {
+        if (i != 0 && i != 1) {
             #res := 0;
             return;
         }
-        call #t~ret1 := calculate_output(~input~7);
+        call #t~ret1 := foo(i);
 
     }
 }
