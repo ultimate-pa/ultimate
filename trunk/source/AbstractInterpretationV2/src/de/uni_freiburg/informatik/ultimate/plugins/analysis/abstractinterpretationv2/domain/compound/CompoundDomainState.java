@@ -66,25 +66,6 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	private final int mId;
 
 	/**
-	 * Constructor for a new CompoundDomainState.
-	 *
-	 * @param services
-	 *            The Ultimate services.
-	 * @param domainList
-	 *            The list of abstract domains to use.
-	 */
-	public CompoundDomainState(final IUltimateServiceProvider services, final List<IAbstractDomain> domainList) {
-		sId++;
-		mId = sId;
-		mServices = services;
-		mDomainList = domainList;
-		mAbstractStates = new ArrayList<>();
-		for (final IAbstractDomain domain : mDomainList) {
-			mAbstractStates.add(domain.createFreshState());
-		}
-	}
-
-	/**
 	 * Constructor for a new CompountDomainState from a given abstract state.
 	 *
 	 * @param services
@@ -108,7 +89,7 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 	}
 
 	/**
-	 * Constructor for a new compount domain state which is either top or bottom.
+	 * Constructor for a new compound domain state which is either top or bottom.
 	 *
 	 * @param services
 	 *            The Ultimate services.
@@ -124,12 +105,10 @@ public class CompoundDomainState implements IAbstractState<CompoundDomainState, 
 		mServices = services;
 		mDomainList = domainList;
 		mAbstractStates = new ArrayList<>();
-		for (final IAbstractDomain domain : mDomainList) {
-			if (isBottom) {
-				mAbstractStates.add(domain.createBottomState());
-			} else {
-				mAbstractStates.add(domain.createTopState());
-			}
+		if (isBottom) {
+			mDomainList.forEach(a -> mAbstractStates.add(a.createBottomState()));
+		} else {
+			mDomainList.forEach(a -> mAbstractStates.add(a.createTopState()));
 		}
 	}
 
