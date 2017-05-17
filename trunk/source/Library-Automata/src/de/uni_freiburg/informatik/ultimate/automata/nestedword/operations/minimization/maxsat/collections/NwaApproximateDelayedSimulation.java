@@ -33,6 +33,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
@@ -41,8 +42,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateXsimulation.SimulationType;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.automata.util.MapBackedSetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -78,6 +83,7 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
 	private final ISetOfPairs<STATE, ?> mDuplicatorEventuallyAccepting;
 	private final ISetOfPairs<STATE, ?> mSpoilerWinningStates;
+	private final BiPredicate<STATE, STATE> mAreStatesMerged;
 
 	/**
 	 * @param services
@@ -95,11 +101,7 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 		mServices = services;
 		mLogger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
-
-		// FIXME: Currently this operation only works for finite automata, in which case it is exact.
-		if (!NestedWordAutomataUtils.isFiniteAutomaton(operand)) {
-			throw new IllegalArgumentException("Currently this operation only supports finite automata");
-		}
+		mAreStatesMerged = areStatesMerged;
 
 		// FIXME somehow dead ends in the game graph have to be removed first
 		final ISetOfPairs<STATE, ?> ordinarySimulation = computeOrdinarySimulation();
@@ -140,7 +142,8 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 
 			letter: for (final Pair<STATE, LETTER> gameLetter : getOutgoingGameLetters(pair)) {
 				for (final Pair<STATE, STATE> succPair : getSuccessors(pair, gameLetter, ordinarySimulation)) {
-					if (isMarked(succPair, marked)) {
+					//Either pair is marked and letter not a return symbol or letter is marked and states can be merged
+					if (isMarked(succPair, marked) && (!(mOperand.getVpAlphabet().getReturnAlphabet().contains(gameLetter.getSecond())) || (mAreStatesMerged.test(succPair.getFirst(), succPair.getSecond())))) {
 						// marked successor found, try next letter
 						continue letter;
 					}
@@ -181,7 +184,8 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 				final Collection<Pair<STATE, STATE>> successors = getSuccessors(pair, gameLetter, null);
 				assert (!successors.isEmpty());
 				for (final Pair<STATE, STATE> succPair : successors) {
-					if (!isMarked(succPair, marked)) {
+					//either pair isn't marked or states can't be merged
+					if (!isMarked(succPair, marked) || !(mAreStatesMerged.test(succPair.getFirst(), succPair.getSecond()))) {
 						// unmarked successor found, try next letter
 						continue letter;
 					}
@@ -242,29 +246,81 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 				}
 			}
 		}
-		return result;
-	}
-
-	private Collection<Pair<STATE, LETTER>> getOutgoingGameLetters(final Pair<STATE, STATE> pair) {
-		final Set<Pair<STATE, LETTER>> result = new HashSet<>();
-		final STATE lhs = pair.getFirst();
-		final STATE rhs = pair.getSecond();
-		final Set<LETTER> rhsOutgoing = mOperand.lettersInternal(rhs);
-		for (final LETTER letter : mOperand.lettersInternal(lhs)) {
-			if (!rhsOutgoing.contains(letter)) {
+		for (final LETTER letter : mOperand.lettersCallIncoming(lhs)) {
+			if (!rhsIncoming.contains(letter)) {
 				continue;
 			}
-			for (final OutgoingInternalTransition<LETTER, STATE> lhsSucc : mOperand.internalSuccessors(lhs, letter)) {
-				result.add(new Pair<>(lhsSucc.getSucc(), letter));
+			for (final IncomingCallTransition<LETTER, STATE> lhsPred : mOperand.callPredecessors(lhs, letter)) {
+				for (final IncomingCallTransition<LETTER, STATE> rhsPred : mOperand.callPredecessors(rhs,
+						letter)) {
+					result.add(new Pair<>(lhsPred.getPred(), rhsPred.getPred()));
+				}
+			}
+		}
+		for (final LETTER letter : mOperand.lettersReturnIncoming(lhs)) {
+			if (!rhsIncoming.contains(letter)) {
+				continue;
+			}
+			for (final IncomingReturnTransition<LETTER, STATE> lhsPred : mOperand.returnPredecessors(lhs, letter)) {
+				for (final IncomingReturnTransition<LETTER, STATE> rhsPred : mOperand.returnPredecessors(rhs,
+						letter)) {
+					//LinPred or HierPred or both?
+					result.add(new Pair<>(lhsPred.getLinPred(), rhsPred.getLinPred()));
+				}
 			}
 		}
 		return result;
 	}
 
+
+	//FIXME: uses deprecated method
+	private Collection<Pair<STATE, LETTER>> getOutgoingGameLetters(final Pair<STATE, STATE> pair) {
+		final Set<Pair<STATE, LETTER>> result = new HashSet<>();
+		final STATE lhs = pair.getFirst();
+		final STATE rhs = pair.getSecond();
+		final Set<LETTER> rhsOutgoingInternal = mOperand.lettersInternal(rhs);
+		final Set<LETTER> rhsOutgoingCall = mOperand.lettersCall(rhs);
+		final Set<LETTER> rhsOutgoingReturn = mOperand.lettersReturn(rhs);
+		
+		//TODO: is this actually faster/smarter than using Iterable? 
+		//Also the for loop can be avoided by mapping l to another Stream... but maybe not very readable.
+		Stream<LETTER> stream = Stream.concat(rhsOutgoingInternal.parallelStream(), Stream.concat(rhsOutgoingCall.parallelStream(), rhsOutgoingReturn.parallelStream()));
+		stream.filter(l -> rhsOutgoingInternal.contains(l) || rhsOutgoingCall.contains(l) || rhsOutgoingReturn.contains(l)).forEach((letter) -> {
+			for (final OutgoingInternalTransition<LETTER, STATE> lhsSucc : mOperand.internalSuccessors(lhs, letter)) {
+				result.add(new Pair<>(lhsSucc.getSucc(), letter));
+			}
+			for (final OutgoingCallTransition<LETTER, STATE> lhsSucc : mOperand.callSuccessors(lhs, letter)) {
+				result.add(new Pair<>(lhsSucc.getSucc(), letter));
+			}
+			for (final OutgoingReturnTransition<LETTER, STATE> lhsSucc : mOperand.returnSuccessors(lhs, letter)) {
+				result.add(new Pair<>(lhsSucc.getSucc(), letter));
+			}
+		});
+		
+		return result;
+	}
+	
 	private Collection<Pair<STATE, STATE>> getSuccessors(final Pair<STATE, STATE> pair,
 			final Pair<STATE, LETTER> gameLetter, final ISetOfPairs<STATE, ?> allowedPairsFilter) {
 		final Set<Pair<STATE, STATE>> result = new HashSet<>();
+		
 		for (final OutgoingInternalTransition<LETTER, STATE> rhsSucc : mOperand.internalSuccessors(pair.getSecond(),
+				gameLetter.getSecond())) {
+			final STATE lhs = gameLetter.getFirst();
+			final STATE rhs = rhsSucc.getSucc();
+			if (allowedPairsFilter == null || allowedPairsFilter.containsPair(lhs, rhs)) {
+				result.add(new Pair<>(lhs, rhs));
+			}
+		}
+		for (final OutgoingCallTransition<LETTER, STATE> rhsSucc : mOperand.callSuccessors(pair.getSecond(),
+				gameLetter.getSecond())) {
+			final STATE lhs = gameLetter.getFirst();
+			final STATE rhs = rhsSucc.getSucc();
+			if (allowedPairsFilter == null || allowedPairsFilter.containsPair(lhs, rhs)) {
+				result.add(new Pair<>(lhs, rhs));
+			}
+		}
+		for (final OutgoingReturnTransition<LETTER, STATE> rhsSucc : mOperand.returnSuccessors(pair.getSecond(),
 				gameLetter.getSecond())) {
 			final STATE lhs = gameLetter.getFirst();
 			final STATE rhs = rhsSucc.getSucc();
