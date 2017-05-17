@@ -97,8 +97,8 @@ public class AffineRelation {
 
 		final Term lhs = bnr.getLhs();
 		final Term rhs = bnr.getRhs();
-		final AffineTerm affineLhs = (AffineTerm) (new AffineTermTransformer(script)).transform(lhs);
-		final AffineTerm affineRhs = (AffineTerm) (new AffineTermTransformer(script)).transform(rhs);
+		final AffineTerm affineLhs = (AffineTerm) new AffineTermTransformer(script).transform(lhs);
+		final AffineTerm affineRhs = (AffineTerm) new AffineTermTransformer(script).transform(rhs);
 		if (affineLhs.isErrorTerm() || affineRhs.isErrorTerm()) {
 			throw new NotAffineException("Relation is not affine");
 		}
@@ -285,7 +285,7 @@ public class AffineRelation {
 				// do nothing
 			} else {
 				final Rational newCoeff = entry.getValue().div(termsCoeff);
-				if (newCoeff.isIntegral() || SmtSortUtils.isIntSort(mAffineTerm.getSort())) {
+				if (newCoeff.isIntegral() || SmtSortUtils.isRealSort(mAffineTerm.getSort())) {
 					final Rational negated = newCoeff.negate();
 					rhsSummands.add(product(script, negated, entry.getKey()));
 				} else {
