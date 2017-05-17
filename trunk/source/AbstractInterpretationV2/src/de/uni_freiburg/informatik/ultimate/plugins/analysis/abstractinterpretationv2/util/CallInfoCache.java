@@ -168,9 +168,9 @@ public final class CallInfoCache {
 	 * </code>
 	 */
 	private AssignmentStatement getOldvarAssign(final CallStatement callStatement) {
-		final String methodName = callStatement.getMethodName();
-		final Set<IProgramNonOldVar> modifiableGlobals = getModifiableGlobals(methodName);
-		final int modglobsize = modifiableGlobals.size();
+		// TODO: Can we restrict the oldvars we need to track somehow?
+		final Set<IProgramNonOldVar> globals = mCfgSmtToolkit.getSymbolTable().getGlobals();
+		final int modglobsize = globals.size();
 		if (modglobsize == 0) {
 			return null;
 		}
@@ -178,7 +178,7 @@ public final class CallInfoCache {
 		final Expression[] rhs = new Expression[modglobsize];
 		int i = 0;
 		final ILocation loc = callStatement.getLocation();
-		for (final IProgramNonOldVar modGlob : modifiableGlobals) {
+		for (final IProgramNonOldVar modGlob : globals) {
 			final DeclarationInformation declInfo = new DeclarationInformation(StorageClass.GLOBAL, null);
 			final IBoogieType bType =
 					mSymbolTable.getTypeForVariableSymbol(modGlob.getGloballyUniqueId(), StorageClass.GLOBAL, null);
@@ -189,11 +189,11 @@ public final class CallInfoCache {
 		return new AssignmentStatement(loc, lhs, rhs);
 	}
 
-	private Set<IProgramNonOldVar> getModifiableGlobals(final String methodName) {
-		final Set<IProgramNonOldVar> modGlobs =
-				mCfgSmtToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(methodName);
-		return AbsIntUtil.intersect(modGlobs, mCfgSmtToolkit.getSymbolTable().getGlobals());
-	}
+	// private Set<IProgramNonOldVar> getModifiableGlobals(final String methodName) {
+	// final Set<IProgramNonOldVar> modGlobs =
+	// mCfgSmtToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(methodName);
+	// return AbsIntUtil.intersect(modGlobs, mCfgSmtToolkit.getSymbolTable().getGlobals());
+	// }
 
 	private List<IBoogieVar> getInParams(final CallStatement callStatement) {
 		final Procedure procedure = getProcedure(callStatement.getMethodName());
