@@ -2,14 +2,21 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IAbstractPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 
 public class EqPredicate<ACTION extends IIcfgTransition<IcfgLocation>> implements IAbstractPredicate {
+
+	public EqPredicate(
+			AbstractMultiState<EqConstraint<ACTION, EqNode, EqFunction>, IProgramVarOrConst> oldstate) {
+		// TODO Auto-generated constructor stub
+	}
 
 	@Override
 	public String[] getProcedures() {
@@ -23,7 +30,7 @@ public class EqPredicate<ACTION extends IIcfgTransition<IcfgLocation>> implement
 		return null;
 	}
 
-	public EqDisjunctiveConstraint<ACTION, EqNode, IProgramVarOrConst> getEqConstraint() {
+	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> getEqConstraint() {
 		// TODO Auto-generated method stub
 		return null;
 	}

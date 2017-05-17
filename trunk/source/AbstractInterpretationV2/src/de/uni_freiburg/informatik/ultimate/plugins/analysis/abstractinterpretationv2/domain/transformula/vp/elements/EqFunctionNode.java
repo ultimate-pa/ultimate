@@ -35,7 +35,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 
@@ -47,21 +46,16 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public class EqFunctionNode extends EqNode {
 	
-	private final IProgramVarOrConst mFunction;
+	private final EqFunction mFunction;
 	private final List<EqNode> mArgs;
-	private final Set<IProgramVarOrConst> mAllFunctionSymbols;
+	private final Set<EqFunction> mAllFunctionSymbols;
 
-	public EqFunctionNode(IProgramVarOrConst function, List<EqNode> args, ManagedScript script) {
+	public EqFunctionNode(EqFunction function, List<EqNode> args, ManagedScript script) {
 		super(function.isGlobal() 
 				&& args.stream().map(arg -> arg.mIsGlobal).reduce((b1, b2) -> b1 && b2).get(),
 			!(function instanceof IProgramVar)
 				&& args.stream().map(arg -> arg.mIsConstant).reduce((b1, b2) -> b1 && b2).get(),
 				VPDomainHelpers.computeProcedure(function, args));
-//				function instanceof IProgramVar && ((IProgramVar) function).getProcedure() != null ? 
-//						((IProgramVar) function).getProcedure() : 
-//							args.stream()
-//								.map(arg -> arg.getProcedure())
-//								.reduce((proc1, proc2) -> proc1 != null ? proc1 : proc2).get());
 
 		this.mFunction = function;
 		this.mArgs = args;
@@ -76,7 +70,7 @@ public class EqFunctionNode extends EqNode {
 
 		mTerm = restoreMultidimensionalSelect(script, function, args);
 		
-		Set<IProgramVarOrConst> allFunctionSymbols = new HashSet<>();
+		Set<EqFunction> allFunctionSymbols = new HashSet<>();
 		allFunctionSymbols.add(function);
 		for (EqNode arg : args) {
 			allFunctionSymbols.addAll(arg.getAllFunctions());
@@ -85,7 +79,7 @@ public class EqFunctionNode extends EqNode {
 	}
 	
 	@Override
-	public IProgramVarOrConst getFunction() {
+	public EqFunction getFunction() {
 		return mFunction;
 	}
 
@@ -113,29 +107,24 @@ public class EqFunctionNode extends EqNode {
 //	}
 	
 	private static Term restoreMultidimensionalSelect(ManagedScript script,
-			IProgramVarOrConst function, List<EqNode> args) {
+			EqFunction array, List<EqNode> args) {
 		
-		Term functionTerm = null;
-		if (function instanceof IProgramVar) {
-			functionTerm = ((IProgramVar) function).getTermVariable();
-		} else {
-			functionTerm = function.getTerm();
-		}
+		Term functionTerm = array.getTerm();
 
 		assert args.size() > 0;
 		if (args.size() == 1) {
-			script.lock(function);
-			Term result =  script.term(function, "select", functionTerm, args.get(0).getTerm());
-			script.unlock(function);
+			script.lock(array);
+			Term result =  script.term(array, "select", functionTerm, args.get(0).getTerm());
+			script.unlock(array);
 			return result;
 		} else {
 			List<EqNode> newArgs = args.subList(0, args.size() - 1);
-			Term innerTerm = restoreMultidimensionalSelect(script, function, newArgs);
-			script.lock(function);
-			Term result = script.term(function, "select", 
+			Term innerTerm = restoreMultidimensionalSelect(script, array, newArgs);
+			script.lock(array);
+			Term result = script.term(array, "select", 
 					innerTerm, 
 					args.get(args.size() - 1).getTerm());
-			script.unlock(function);
+			script.unlock(array);
 			return result;
 		}
 	}
@@ -152,7 +141,7 @@ public class EqFunctionNode extends EqNode {
 	}
 
 	@Override
-	public Collection<IProgramVarOrConst> getAllFunctions() {
+	public Collection<EqFunction> getAllFunctions() {
 		return mAllFunctionSymbols;
 	}
 }

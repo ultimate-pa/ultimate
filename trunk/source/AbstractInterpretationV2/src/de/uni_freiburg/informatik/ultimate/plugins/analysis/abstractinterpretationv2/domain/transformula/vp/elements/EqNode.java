@@ -32,7 +32,6 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 
 /**
@@ -41,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public abstract class EqNode implements IEqNodeIdentifier<IProgramVarOrConst> {
+public abstract class EqNode implements IEqNodeIdentifier<EqFunction> {
 
 	protected Set<IProgramVar> mVariables;
 	

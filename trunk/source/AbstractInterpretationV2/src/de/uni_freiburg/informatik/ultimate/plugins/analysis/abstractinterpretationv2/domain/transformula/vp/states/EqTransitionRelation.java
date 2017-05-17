@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ITransitionRelation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 
 public class EqTransitionRelation<ACTION extends IIcfgTransition<IcfgLocation>>  implements ITransitionRelation {
@@ -56,7 +56,7 @@ public class EqTransitionRelation<ACTION extends IIcfgTransition<IcfgLocation>> 
 		return null;
 	}
 
-	public EqDisjunctiveConstraint<ACTION, EqNode, IProgramVarOrConst> getEqConstraint() {
+	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> getEqConstraint() {
 		// TODO Auto-generated method stub
 		return null;
 	}

@@ -2,6 +2,8 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -14,31 +16,33 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
-public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NODE extends IEqNodeIdentifier<FUNCTION>, FUNCTION> 
+public class EqConstraint<
+					ACTION extends IIcfgTransition<IcfgLocation>, 
+					NODE extends IEqNodeIdentifier<FUNCTION>, 
+					FUNCTION extends IEqFunctionIdentifier<FUNCTION>> 
 	implements IAbstractState<EqConstraint<ACTION, NODE, FUNCTION>, IProgramVarOrConst>  {
 
 	private boolean mIsFrozen = false;
 
-	CongruenceGraph<NODE, FUNCTION> mElementEqualityGraph;
+	CongruenceGraph<NODE, FUNCTION> mElementCongruenceGraph;
 
-//	Set<VPDomainSymmetricPair<NODE>> mElementDisequalities;
-	
 	UnionFind<FUNCTION> mFunctionEqualities;
 	
 	Set<VPDomainSymmetricPair<FUNCTION>> mFunctionDisequalities;
 
 	public void merge(NODE node1, NODE node2) {
-		mElementEqualityGraph.merge(node1, node2);
+		mElementCongruenceGraph.merge(node1, node2);
 	}
 
 	
 	public void freeze() {
 		assert !mIsFrozen;
 		mIsFrozen = true;
-		mElementEqualityGraph.freeze();
+		mElementCongruenceGraph.freeze();
 		mFunctionDisequalities = Collections.unmodifiableSet(mFunctionDisequalities);
 	}
 
@@ -68,7 +72,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NODE ext
 
 
 	public Set<VPDomainSymmetricPair<NODE>> getElementDisequalities() {
-		return mElementEqualityGraph.getDisequalities();
+		return mElementCongruenceGraph.getDisequalities();
 	}
 
 
@@ -80,7 +84,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NODE ext
 	 */
 	public void addRawDisequality(NODE first, NODE second) {
 		assert !mIsFrozen;
-		mElementEqualityGraph.addDisequality(mElementEqualityGraph.find(first), mElementEqualityGraph.find(second));
+		mElementCongruenceGraph.addDisequality(mElementCongruenceGraph.find(first), mElementCongruenceGraph.find(second));
 	}
 
 
@@ -123,7 +127,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NODE ext
 
 
 	public boolean checkForContradiction() {
-		if (mElementEqualityGraph.checkContradiction()) {
+		if (mElementCongruenceGraph.checkContradiction()) {
 			return true;
 		}
 		for (VPDomainSymmetricPair<FUNCTION> fDeq : mFunctionDisequalities) {
@@ -228,7 +232,7 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NODE ext
 
 
 	@Override
-	public de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState.SubsetResult isSubsetOf(
+	public SubsetResult isSubsetOf(
 			EqConstraint<ACTION, NODE, FUNCTION> other) {
 		// TODO Auto-generated method stub
 		return null;
@@ -253,6 +257,23 @@ public class EqConstraint<ACTION extends IIcfgTransition<IcfgLocation>, NODE ext
 	public String toLogString() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+
+	public void renameVariables(Map<Term, Term> substitutionMapping) {
+		assert !mIsFrozen;
+		
+		mElementCongruenceGraph.renameVariables(substitutionMapping);
+		
+		final UnionFind<FUNCTION> newFunctionUF = new UnionFind<>();
+		for (Entry<FUNCTION, FUNCTION> fEq : getSupportingFunctionEqualities()) {
+			FUNCTION renamedF1 = newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
+					fEq.getKey().renameVariables(substitutionMapping));
+			FUNCTION renamedF2 = newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
+					fEq.getKey().renameVariables(substitutionMapping));
+			newFunctionUF.union(renamedF1, renamedF2);
+		}
+		mFunctionEqualities = newFunctionUF;
 	}
 
 }

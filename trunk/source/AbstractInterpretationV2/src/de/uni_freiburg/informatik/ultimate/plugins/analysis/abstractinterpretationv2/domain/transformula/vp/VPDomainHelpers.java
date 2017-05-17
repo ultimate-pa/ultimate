@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.IVPStateOrTfState;
@@ -394,12 +395,10 @@ public class VPDomainHelpers {
 	 * @param args
 	 * @return
 	 */
-	public static String computeProcedure(IProgramVarOrConst function, List<EqNode> args) {
+	public static String computeProcedure(EqFunction function, List<EqNode> args) {
 		String result = null;
 		
-		if (function instanceof IProgramVar) {
-			result = ((IProgramVar) function).getProcedure();
-		}
+		result = function.getProcedure();
 		
 		for (EqNode arg : args) {
 			String argProc = arg.getProcedure();

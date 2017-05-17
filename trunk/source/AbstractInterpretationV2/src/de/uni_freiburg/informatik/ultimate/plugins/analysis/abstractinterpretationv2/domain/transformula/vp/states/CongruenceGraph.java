@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
@@ -177,5 +178,10 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<FUNCTION>, FUNCTION>
 
 	public void addDisequality(NODE find, NODE find2) {
 		mDisequalities.add(new VPDomainSymmetricPair<NODE>(find, find2));
+	}
+
+	public void renameVariables(Map<Term, Term> substitutionMapping) {
+		// TODO Auto-generated method stub
+		
 	}
 }

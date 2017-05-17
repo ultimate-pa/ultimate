@@ -31,7 +31,6 @@ import java.util.Collection;
 import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 
 /**
  *
@@ -60,13 +59,13 @@ public class EqNonAtomicBaseNode extends EqNode {
 	}
 
 	@Override
-	public IProgramVarOrConst getFunction() {
+	public EqFunction getFunction() {
 		assert false : "check for isFunction() first";
 		return null;
 	}
 	
 	@Override
-	public Collection<IProgramVarOrConst> getAllFunctions() {
+	public Collection<EqFunction> getAllFunctions() {
 		return Collections.emptySet();
 	}
 }

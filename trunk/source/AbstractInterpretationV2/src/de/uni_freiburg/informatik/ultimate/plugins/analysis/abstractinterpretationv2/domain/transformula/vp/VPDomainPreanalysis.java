@@ -62,6 +62,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.algorithm.rcfg.RcfgUtils;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.ConstOrLiteral;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqAtomicBaseNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNonAtomicBaseNode;
@@ -84,7 +85,7 @@ public class VPDomainPreanalysis {
 	private final Map<Term, IProgramVarOrConst> mTermToProgramVarOrConst = new HashMap<>();
 	private final ManagedScript mManagedScript;
 	private final IIcfgSymbolTable mSymboltable;
-	private final NestedMap2<IProgramVarOrConst, List<EqNode>, EqFunctionNode> mEqFunctionNodeStore =
+	private final NestedMap2<EqFunction, List<EqNode>, EqFunctionNode> mEqFunctionNodeStore =
 			new NestedMap2<>();
 	private final Map<IProgramVarOrConst, EqAtomicBaseNode> mEqBaseNodeStore = new HashMap<>();
 	private final Set<ApplicationTerm> mEquations = new HashSet<>();
@@ -242,14 +243,14 @@ public class VPDomainPreanalysis {
 			return result;
 		}
 
-		IProgramVarOrConst arrayId;
+		EqFunction arrayId;
 		if (!isAtomicTerm(mds.getArray())) {
 			// if mds.getArray ist not a constant or variable, it must be a select, right?
 			final MultiDimensionalSelect innerSelect = new MultiDimensionalSelect(mds.getArray());
 			final EqFunctionNode innerSelectNode = (EqFunctionNode) constructEqNode(innerSelect);
 			arrayId = innerSelectNode.getFunction();
 		} else {
-			arrayId = getOrConstructBoogieVarOrConst(mds.getArray());
+			arrayId = getOrConstructEqFunction(getOrConstructBoogieVarOrConst(mds.getArray()));
 		}
 
 		final List<EqNode> arguments = new ArrayList<>();
@@ -263,7 +264,7 @@ public class VPDomainPreanalysis {
 				return argumentEqNode;
 			}
 			arguments.add(argumentEqNode);
-			mArrayToAccessingEqNodes.addPair(arrayId, argumentEqNode);
+			mArrayToAccessingEqNodes.addPair(arrayId.getPvoc(), argumentEqNode);
 		}
 		getOrConstructEqNode(mds.getValue());
 
@@ -272,20 +273,25 @@ public class VPDomainPreanalysis {
 		return result;
 	}
 
+	private EqFunction getOrConstructEqFunction(IProgramVarOrConst orConstructBoogieVarOrConst) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	private EqNode constructEqNode(final MultiDimensionalSelect mds) {
 		EqNode result = mTermToEqNode.get(mds.getSelectTerm());
 		if (result != null) {
 			return result;
 		}
 
-		IProgramVarOrConst arrayId;
+		EqFunction arrayId;
 		if (!isAtomicTerm(mds.getArray())) {
 			// if mds.getArray ist not a constant or variable, it must be a store, right?
 			final MultiDimensionalStore innerStore = new MultiDimensionalStore(mds.getArray());
 			final EqFunctionNode innerStoreNode = (EqFunctionNode) constructEqNode(innerStore);
 			arrayId = innerStoreNode.getFunction();
 		} else {
-			arrayId = getOrConstructBoogieVarOrConst(mds.getArray());
+			arrayId = getOrConstructEqFunction(getOrConstructBoogieVarOrConst(mds.getArray()));
 		}
 
 		final List<EqNode> arguments = new ArrayList<>();
@@ -299,7 +305,7 @@ public class VPDomainPreanalysis {
 				return argumentEqNode;
 			}
 			arguments.add(argumentEqNode);
-			mArrayToAccessingEqNodes.addPair(arrayId, argumentEqNode);
+			mArrayToAccessingEqNodes.addPair(arrayId.getPvoc(), argumentEqNode);
 		}
 
 		result = getOrConstructEqFnNode(arrayId, arguments);
@@ -432,7 +438,7 @@ public class VPDomainPreanalysis {
 	//
 	// }
 
-	private EqFunctionNode getOrConstructEqFnNode(final IProgramVarOrConst function, final List<EqNode> indices) {
+	private EqFunctionNode getOrConstructEqFnNode(final EqFunction function, final List<EqNode> indices) {
 
 		EqFunctionNode result = mEqFunctionNodeStore.get(function, indices);
 		if (result == null) {
@@ -440,7 +446,7 @@ public class VPDomainPreanalysis {
 			
 			mAllEqNodes.add(result);
 
-			mArrayIdToFnNodes.addPair(function, result);
+			mArrayIdToFnNodes.addPair(function.getPvoc(), result);
 
 			mEqFunctionNodeStore.put(function, indices, result);
 			
@@ -600,16 +606,18 @@ public class VPDomainPreanalysis {
 			final Term arg1 = arrayEquation.getParameters()[0];
 			final Term arg2 = arrayEquation.getParameters()[1];
 
-			final IProgramVarOrConst array1 = getOrConstructBoogieVarOrConst(VPDomainHelpers.getArrayTerm(arg1));
-			final IProgramVarOrConst array2 = getOrConstructBoogieVarOrConst(VPDomainHelpers.getArrayTerm(arg2));
+			final EqFunction array1 = getOrConstructEqFunction(
+					getOrConstructBoogieVarOrConst(VPDomainHelpers.getArrayTerm(arg1)));
+			final EqFunction array2 = getOrConstructEqFunction(
+					getOrConstructBoogieVarOrConst(VPDomainHelpers.getArrayTerm(arg2)));
 			
 			/*
 			 * for each EqFunctionNode of the form array1[i1 .. in] create the node array2[i1 .. in] and vice versa
 			 */
-			for (EqFunctionNode eqfn : mArrayIdToFnNodes.getImage(array1)) {
+			for (EqFunctionNode eqfn : mArrayIdToFnNodes.getImage(array1.getPvoc())) {
 				getOrConstructEqFnNode(array2, eqfn.getArgs());
 			}
-			for (EqFunctionNode eqfn : mArrayIdToFnNodes.getImage(array2)) {
+			for (EqFunctionNode eqfn : mArrayIdToFnNodes.getImage(array2.getPvoc())) {
 				getOrConstructEqFnNode(array1, eqfn.getArgs());
 			}
 		}
@@ -629,7 +637,7 @@ public class VPDomainPreanalysis {
 		return result;
 	}
 	
-	public EqFunctionNode getEqFunctionNode(IProgramVarOrConst function, List<EqNode> children) {
+	public EqFunctionNode getEqFunctionNode(EqFunction function, List<EqNode> children) {
 		return mEqFunctionNodeStore.get(function, children);
 	}
 
