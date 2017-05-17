@@ -74,6 +74,22 @@ public class Backbone {
 	}
 
 	/**
+	 * Checks whether the Backbone contains the given location.
+	 *
+	 * @param location
+	 *            An IcfgLocation.
+	 * @return true if the Backbone contains the location.
+	 */
+	public boolean containsLocation(final IcfgLocation location) {
+		for (final IcfgEdge transition : mTransitions) {
+			if (transition.getSource().equals(location)) {
+				return true;
+			}
+		}
+		return getLastLocation().equals(location);
+	}
+
+	/**
 	 * Checks whether the Backbone ends in a loop.
 	 *
 	 * @return true if the Backbone end in a loop.

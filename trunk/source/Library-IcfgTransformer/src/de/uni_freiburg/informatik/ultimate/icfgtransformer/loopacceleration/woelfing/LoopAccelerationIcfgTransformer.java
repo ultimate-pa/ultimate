@@ -313,6 +313,49 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 				mBackbones.remove(location);
 			}
 		}
+
+		validateBackbones();
+	}
+
+	/**
+	 * Removes backbones that cannot be accelerated.
+	 */
+	private void validateBackbones() {
+		final List<Backbone> backbones = new ArrayList<>();
+		for (final List<Backbone> value : mBackbones.values()) {
+			backbones.addAll(value);
+		}
+
+		final Set<IcfgLocation> invalidLoopEntryLocations = new HashSet<>();
+		for (final Backbone backbone1 : backbones) {
+			for (final Backbone backbone2 : backbones) {
+				if (backbone1.getLastLocation().equals(backbone2.getLastLocation())) {
+					continue;
+				}
+				// If both Backbones contain each other mark the locations as invalid.
+				// (the last location is also the first location because the Backbones are a loop)
+				if (backbone1.containsLocation(backbone2.getLastLocation())
+						&& backbone2.containsLocation(backbone1.getLastLocation())) {
+					invalidLoopEntryLocations.add(backbone1.getLastLocation());
+					invalidLoopEntryLocations.add(backbone2.getLastLocation());
+				}
+			}
+		}
+
+		final List<Backbone> invalidExitBackbones = new ArrayList<>();
+		for (final Backbone backbone : mExitBackbones) {
+			if (invalidLoopEntryLocations.contains(backbone.getTransitions().get(0).getSource())) {
+				invalidExitBackbones.add(backbone);
+			}
+		}
+		mExitBackbones.removeAll(invalidExitBackbones);
+
+		for (final IcfgLocation location : invalidLoopEntryLocations) {
+			for (final Backbone backbone : mBackbones.get(location)) {
+				mLoopEntryTransitions.remove(backbone.getLoopEntryTransition());
+			}
+			mBackbones.remove(location);
+		}
 	}
 
 	private void checkTransition(final IcfgEdge transition) {
