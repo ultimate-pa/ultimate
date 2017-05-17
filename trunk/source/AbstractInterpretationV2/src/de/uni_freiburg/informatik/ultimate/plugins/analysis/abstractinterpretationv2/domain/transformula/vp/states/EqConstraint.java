@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -22,7 +23,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 
 public class EqConstraint<
 					ACTION extends IIcfgTransition<IcfgLocation>, 
-					NODE extends IEqNodeIdentifier<FUNCTION>, 
+					NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
 					FUNCTION extends IEqFunctionIdentifier<FUNCTION>> 
 	implements IAbstractState<EqConstraint<ACTION, NODE, FUNCTION>, IProgramVarOrConst>  {
 
@@ -274,6 +275,14 @@ public class EqConstraint<
 			newFunctionUF.union(renamedF1, renamedF2);
 		}
 		mFunctionEqualities = newFunctionUF;
+		
+		Set<VPDomainSymmetricPair<FUNCTION>> newFunctionDisequalites = new HashSet<>();
+		for (VPDomainSymmetricPair<FUNCTION> fDeq : mFunctionDisequalities) {
+			newFunctionDisequalites.add(new VPDomainSymmetricPair<FUNCTION>(
+					fDeq.getFirst().renameVariables(substitutionMapping), 
+					fDeq.getSecond().renameVariables(substitutionMapping)));
+		}
+		mFunctionDisequalities = newFunctionDisequalites;
 	}
 
 }

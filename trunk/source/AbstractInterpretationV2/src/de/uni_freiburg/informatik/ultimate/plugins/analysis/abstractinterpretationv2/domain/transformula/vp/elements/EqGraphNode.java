@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
+public class EqGraphNode<NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID> {
 
 	/**
 	 * identifies an EqGraphNode uniquely _within one state or transitionstate_
@@ -120,8 +120,12 @@ public class EqGraphNode<NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> {
 		return this.getRepresentative().find();
 	}
 
-	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> void copyFields(
-			EqGraphNode<NODEID, ARRAYID> source, EqGraphNode<NODEID, ARRAYID> target, IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder) {
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, 
+					NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, 
+					ARRAYID> 
+				void copyFields(EqGraphNode<NODEID, ARRAYID> source, 
+						EqGraphNode<NODEID, ARRAYID> target, 
+						IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder) {
 		assert target.mNodeIdentifier.equals(source.mNodeIdentifier);
 		
 		EqGraphNode<NODEID, ARRAYID> targetRepresentative = builder.getEqGraphNode(source.getRepresentative().mNodeIdentifier);

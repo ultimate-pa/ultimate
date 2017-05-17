@@ -65,6 +65,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNonAtomicBaseNode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -114,6 +115,8 @@ public class VPDomainPreanalysis {
 	 *  all EqNodes, we used the mTermToEquNode map. Now we need an extra set for that task.
 	 */
 	private final Set<EqNode> mAllEqNodes = new HashSet<>();
+
+	private EqNodeFactory mEqNodeFactory;
 
 	public VPDomainPreanalysis(final IIcfg<?> root, final ILogger logger) {
 		mManagedScript = root.getCfgSmtToolkit().getManagedScript();
@@ -360,7 +363,7 @@ public class VPDomainPreanalysis {
 			constituentNodes.add(node);
 			procedure = node.getProcedure() != null ? node.getProcedure() : procedure;
 		}
-		EqNonAtomicBaseNode result = new EqNonAtomicBaseNode(t, global, procedure);
+		EqNonAtomicBaseNode result = new EqNonAtomicBaseNode(t, global, procedure, mEqNodeFactory);
 		for (EqAtomicBaseNode node : constituentNodes) {
 			node.addDependentNonAtomicBaseNode(result);
 		}
@@ -414,7 +417,7 @@ public class VPDomainPreanalysis {
 		EqAtomicBaseNode result = mEqBaseNodeStore.get(bv);
 
 		if (result == null) {
-			result = new EqAtomicBaseNode(bv);
+			result = new EqAtomicBaseNode(bv, mEqNodeFactory);
 			
 			mAllEqNodes.add(result);
 			
@@ -442,7 +445,7 @@ public class VPDomainPreanalysis {
 
 		EqFunctionNode result = mEqFunctionNodeStore.get(function, indices);
 		if (result == null) {
-			result = new EqFunctionNode(function, indices, mManagedScript);
+			result = new EqFunctionNode(function, indices, mManagedScript, mEqNodeFactory);
 			
 			mAllEqNodes.add(result);
 

@@ -31,7 +31,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -50,15 +52,48 @@ public class EqFunctionNode extends EqNode {
 	private final List<EqNode> mArgs;
 	private final Set<EqFunction> mAllFunctionSymbols;
 
-	public EqFunctionNode(EqFunction function, List<EqNode> args, ManagedScript script) {
+	public EqFunctionNode(EqFunction function, List<EqNode> args, ManagedScript script, EqNodeFactory eqNodeFactory) {
 		super(function.isGlobal() 
 				&& args.stream().map(arg -> arg.mIsGlobal).reduce((b1, b2) -> b1 && b2).get(),
 			!(function instanceof IProgramVar)
 				&& args.stream().map(arg -> arg.mIsConstant).reduce((b1, b2) -> b1 && b2).get(),
-				VPDomainHelpers.computeProcedure(function, args));
+				VPDomainHelpers.computeProcedure(function, args), 
+				eqNodeFactory);
 
-		this.mFunction = function;
-		this.mArgs = args;
+		mFunction = function;
+		mArgs = args;
+		mVariables = Collections.unmodifiableSet(computeVars(function, args));
+		mAllFunctionSymbols = Collections.unmodifiableSet(computeAllFunctions(function, args));
+
+		mTerm = restoreMultidimensionalSelect(script, function, args);
+	}
+
+	public EqFunctionNode(EqFunction function, List<EqNode> args, Term term,
+			EqNodeFactory eqNodeFactory) {
+		super(function.isGlobal() 
+				&& args.stream().map(arg -> arg.mIsGlobal).reduce((b1, b2) -> b1 && b2).get(),
+			!(function instanceof IProgramVar)
+				&& args.stream().map(arg -> arg.mIsConstant).reduce((b1, b2) -> b1 && b2).get(),
+				VPDomainHelpers.computeProcedure(function, args), 
+				eqNodeFactory);
+		mFunction = function;
+		mArgs = args;
+		mVariables = Collections.unmodifiableSet(computeVars(function, args));
+		mAllFunctionSymbols = Collections.unmodifiableSet(computeAllFunctions(function, args));
+		
+		mTerm = term;
+	}
+
+	private Set<EqFunction> computeAllFunctions(EqFunction function, List<EqNode> args) {
+		Set<EqFunction> allFunctionSymbols = new HashSet<>();
+		allFunctionSymbols.add(function);
+		for (EqNode arg : args) {
+			allFunctionSymbols.addAll(arg.getAllFunctions());
+		}
+		return allFunctionSymbols;
+	}
+
+	private Set<IProgramVar> computeVars(EqFunction function, List<EqNode> args) {
 		Set<IProgramVar> vars = new HashSet<>();
 		if (function instanceof IProgramVar) {
 			vars.add((IProgramVar) function);
@@ -66,16 +101,7 @@ public class EqFunctionNode extends EqNode {
 		for (EqNode arg : args) {
 			vars.addAll(arg.getVariables());
 		}
-		mVariables = Collections.unmodifiableSet(vars);
-
-		mTerm = restoreMultidimensionalSelect(script, function, args);
-		
-		Set<EqFunction> allFunctionSymbols = new HashSet<>();
-		allFunctionSymbols.add(function);
-		for (EqNode arg : args) {
-			allFunctionSymbols.addAll(arg.getAllFunctions());
-		}
-		mAllFunctionSymbols = Collections.unmodifiableSet(allFunctionSymbols);
+		return vars;
 	}
 	
 	@Override
@@ -143,5 +169,15 @@ public class EqFunctionNode extends EqNode {
 	@Override
 	public Collection<EqFunction> getAllFunctions() {
 		return mAllFunctionSymbols;
+	}
+
+	@Override
+	public EqNode renameVariables(Map<Term, Term> substitutionMapping) {
+		
+		final List<EqNode> renamedArgs = mArgs.stream()
+				.map(argNode -> argNode.renameVariables(substitutionMapping))
+				.collect(Collectors.toList());
+
+		return mEqNodeFactory.getOrConstructEqFunctionNode(mFunction.renameVariables(substitutionMapping), renamedArgs);
 	}
 }

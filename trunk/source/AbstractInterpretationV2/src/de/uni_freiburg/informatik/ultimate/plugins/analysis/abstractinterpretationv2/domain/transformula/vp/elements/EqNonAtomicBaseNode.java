@@ -29,8 +29,10 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 
 /**
  *
@@ -38,8 +40,8 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  */
 public class EqNonAtomicBaseNode extends EqNode {
 	
-	public EqNonAtomicBaseNode(Term t, boolean isGlobal, String procedure) {
-		super(isGlobal, t.getFreeVars().length == 0, procedure);
+	public EqNonAtomicBaseNode(Term t, boolean isGlobal, String procedure, EqNodeFactory eqNodeFactory) {
+		super(isGlobal, t.getFreeVars().length == 0, procedure, eqNodeFactory);
 		mTerm = t;
 	}
 
@@ -67,5 +69,15 @@ public class EqNonAtomicBaseNode extends EqNode {
 	@Override
 	public Collection<EqFunction> getAllFunctions() {
 		return Collections.emptySet();
+	}
+
+	@Override
+	public EqNode renameVariables(Map<Term, Term> substitutionMapping) {
+		final Term substitutedTerm = new Substitution(mEqNodeFactory.getScript(), substitutionMapping)
+				.transform(getTerm());
+		if (substitutedTerm == getTerm()) {
+			return this;
+		}
+		return mEqNodeFactory.getOrConstructEqNonAtomicBaseNode(substitutedTerm, isGlobal(), getProcedure());
 	}
 }

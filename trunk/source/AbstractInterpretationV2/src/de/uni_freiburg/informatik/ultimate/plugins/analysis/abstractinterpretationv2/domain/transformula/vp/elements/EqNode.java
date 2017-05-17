@@ -40,7 +40,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public abstract class EqNode implements IEqNodeIdentifier<EqFunction> {
+public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction> {
+	
+	protected final EqNodeFactory mEqNodeFactory;
 
 	protected Set<IProgramVar> mVariables;
 	
@@ -53,17 +55,35 @@ public abstract class EqNode implements IEqNodeIdentifier<EqFunction> {
 
 	private final String mProcedure;
 	
-
 	private Set<EqNode> mParents = new HashSet<>();
 
 	protected Term mTerm;
+	
+	/**
+	 * indicates whether the Term only contains the standard TermVariables belonging to the IProgramVars, or if it
+	 * is "versioned".
+	 */
+	protected final boolean mTermIsVersioned;
 
 
-	EqNode(boolean isGlobal, boolean isConstant, String procedure) {
+	EqNode(boolean isGlobal, boolean isConstant, String procedure, EqNodeFactory eqNodeFactory) {
 		assert isGlobal || procedure != null;
 		mIsGlobal = isGlobal;
 		mIsConstant = isConstant;
 		mProcedure = procedure;
+		mEqNodeFactory = eqNodeFactory;
+		mTermIsVersioned = false;
+	}
+
+	public EqNode(boolean isGlobal, boolean isConstant, String procedure, Term versionedTerm, 
+			EqNodeFactory eqNodeFactory) {
+		assert isGlobal || procedure != null;
+		mIsGlobal = isGlobal;
+		mIsConstant = isConstant;
+		mProcedure = procedure;
+		mEqNodeFactory = eqNodeFactory;
+		mTerm = versionedTerm;
+		mTermIsVersioned = true;
 	}
 
 	/**

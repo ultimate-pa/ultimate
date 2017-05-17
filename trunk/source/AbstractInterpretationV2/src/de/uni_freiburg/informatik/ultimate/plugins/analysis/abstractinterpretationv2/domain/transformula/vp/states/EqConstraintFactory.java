@@ -9,7 +9,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 public class EqConstraintFactory<
 			ACTION extends IIcfgTransition<IcfgLocation>, 
-			NODE extends IEqNodeIdentifier<FUNCTION>, 
+			NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
 			FUNCTION extends IEqFunctionIdentifier<FUNCTION>> {
 
 	public EqConstraint<ACTION, NODE, FUNCTION> getEmptyConstraint() {

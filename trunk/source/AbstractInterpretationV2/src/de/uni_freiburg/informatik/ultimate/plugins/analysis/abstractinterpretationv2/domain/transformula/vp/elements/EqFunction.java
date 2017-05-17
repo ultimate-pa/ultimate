@@ -33,4 +33,9 @@ public class EqFunction implements IEqFunctionIdentifier<EqFunction> {
 		return null;
 	}
 
+	public static String getFunctionName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 }

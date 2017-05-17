@@ -257,7 +257,7 @@ public class VPDomainHelpers {
 		return Collections.unmodifiableMap(result);
 	}
 
-	public static <NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> boolean
+	public static <NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID> boolean
 			disEqualitySetContainsOnlyRepresentatives(final Set<VPDomainSymmetricPair<NODEID>> disEqualitySet,
 					final IVPStateOrTfState<NODEID, ARRAYID> state) {
 		for (final VPDomainSymmetricPair<NODEID> pair : disEqualitySet) {
@@ -273,7 +273,7 @@ public class VPDomainHelpers {
 		return true;
 	}
 	
-	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID>
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID>
 			boolean disEqualitySetContainsOnlyRepresentatives(final Set<VPDomainSymmetricPair<NODEID>> disEqualitySet,
 					final IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder) {
 		for (final VPDomainSymmetricPair<NODEID> pair : disEqualitySet) {
@@ -289,7 +289,7 @@ public class VPDomainHelpers {
 		return true;
 	}
 
-	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID>
+	public static <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID>
 			boolean disEqualityRelationIrreflexive(final Set<VPDomainSymmetricPair<NODEID>> disEqualitySet,
 					final IVPStateOrTfStateBuilder<T, NODEID, ARRAYID> builder) {
 		for (final VPDomainSymmetricPair<NODEID> pair : disEqualitySet) {
@@ -336,7 +336,7 @@ public class VPDomainHelpers {
 		return projectToTerm(projectToVars(varMapping, projectionVars), projectionTerm);
 	}
 	
-	public static <ACTION extends IIcfgTransition<IcfgLocation>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID>
+	public static <ACTION extends IIcfgTransition<IcfgLocation>, NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID>
 			boolean isHavocced(final ARRAYID array, final IVPStateOrTfState<NODEID, ARRAYID> resultState) {
 		// TODO: fix the other isHavocced before using this
 		for (final EqGraphNode<NODEID, ARRAYID> node : resultState.getAllEqGraphNodes()) {
@@ -351,7 +351,7 @@ public class VPDomainHelpers {
 		return true;
 	}
 
-	public static <ACTION extends IIcfgTransition<IcfgLocation>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID>
+	public static <ACTION extends IIcfgTransition<IcfgLocation>, NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID>
 			boolean isHavocced(final NODEID nodeId, final IVPStateOrTfState<NODEID, ARRAYID> resultState) {
 		final EqGraphNode<NODEID, ARRAYID> node = resultState.getEqGraphNode(nodeId);
 		/*
@@ -422,7 +422,7 @@ public class VPDomainHelpers {
 	 */
 //	public static  <ACTION extends IIcfgTransition<IcfgLocation>> Set<VPState<ACTION>> 
 //	public static  <NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> Set<IVPStateOrTfState<NODEID, ARRAYID>> 
-	public static  <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> 
+	public static  <T extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID> 
 		Set<T> 
 			eliminateBottomStates(Set<T> resultStates) {
 		final Set<T> result = new HashSet<>();

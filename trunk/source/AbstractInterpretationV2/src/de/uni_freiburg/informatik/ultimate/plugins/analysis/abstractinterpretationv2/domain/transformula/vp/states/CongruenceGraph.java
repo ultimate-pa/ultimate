@@ -3,6 +3,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -10,14 +11,14 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 
-public class CongruenceGraph<NODE extends IEqNodeIdentifier<FUNCTION>, FUNCTION> {
+public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTION> {
 	
 	private boolean mIsFrozen = false;
 	
-	private final Map<NODE, EqGraphNode<NODE, FUNCTION>> mNodeToEqGraphNode;
+	private Map<NODE, EqGraphNode<NODE, FUNCTION>> mNodeToEqGraphNode;
 	
 	
-	private final Set<VPDomainSymmetricPair<NODE>> mDisequalities;
+	private Set<VPDomainSymmetricPair<NODE>> mDisequalities;
 	
 	public CongruenceGraph() {
 		mNodeToEqGraphNode = new HashMap<>();
@@ -181,7 +182,16 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<FUNCTION>, FUNCTION>
 	}
 
 	public void renameVariables(Map<Term, Term> substitutionMapping) {
-		// TODO Auto-generated method stub
+		assert !mIsFrozen;
+		
+		Map<NODE, EqGraphNode<NODE, FUNCTION>> newNodeToEqGraphNodeMap = new HashMap<>();
+		
+		for (Entry<NODE, EqGraphNode<NODE, FUNCTION>> en : mNodeToEqGraphNode.entrySet()) {
+			newNodeToEqGraphNodeMap.put(en.getKey().renameVariables(substitutionMapping), 
+					value);
+		}
+
+		mNodeToEqGraphNode = newNodeToEqGraphNodeMap;
 		
 	}
 }

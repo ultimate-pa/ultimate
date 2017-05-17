@@ -16,7 +16,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 public class EqDisjunctiveConstraint<
 				ACTION extends IIcfgTransition<IcfgLocation>, 
-				NODE extends IEqNodeIdentifier<FUNCTION>, 
+				NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
 				FUNCTION extends IEqFunctionIdentifier<FUNCTION>> 
      			 	extends AbstractMultiState<EqConstraint<ACTION, NODE, FUNCTION>, IProgramVarOrConst>{
 

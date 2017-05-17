@@ -28,6 +28,9 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 import java.util.Collection;
+import java.util.Map;
+
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 /**
  * 
@@ -35,13 +38,16 @@ import java.util.Collection;
  *
  * @param <ARRAYID>
  */
-public interface IEqNodeIdentifier<ARRAYID> {
-	
+public interface IEqNodeIdentifier<NODE, FUNCTION> {
+	 //extends IEqNodeIdentifier<NODE, FUNCTION>
 	boolean isFunction();
 
-	ARRAYID getFunction();
+	FUNCTION getFunction();
 	
-	Collection<ARRAYID> getAllFunctions();
+	Collection<FUNCTION> getAllFunctions();
 	
 	boolean isLiteral();
+	
+	NODE renameVariables(Map<Term, Term> substitutionMapping);
+	
 }
