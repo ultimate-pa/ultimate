@@ -148,11 +148,16 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 		assert resultingStates.size() == domains.size();
 		returnStates.add(new CompoundDomainState(mServices, domains, resultingStates));
 
-		if (mUseSmtSolverChecks) {
-			return returnStates.stream().filter(state -> checkSat(state)).collect(Collectors.toList());
+		// if (mUseSmtSolverChecks) {
+		final List<CompoundDomainState> rtr =
+				returnStates.stream().filter(state -> checkSat(state)).collect(Collectors.toList());
+		if (rtr.size() != returnStates.size()) {
+			mLogger.debug("reduced");
 		}
+		return rtr;
+		// }
 
-		return returnStates;
+		// return returnStates;
 	}
 
 	/**
@@ -294,8 +299,12 @@ public class CompoundDomainPostOperator implements IAbstractPostOperator<Compoun
 
 		assert resultingStates.size() == domainsBefore.size();
 		returnStates.add(new CompoundDomainState(mServices, domainsBefore, resultingStates));
-
-		return returnStates;
+		final List<CompoundDomainState> rtr =
+				returnStates.stream().filter(state -> checkSat(state)).collect(Collectors.toList());
+		if (rtr.size() != returnStates.size()) {
+			mLogger.debug("reduced");
+		}
+		return rtr;
 	}
 
 	private static List<IAbstractState> applyInternally(final IAbstractState<?, IBoogieVar> currentState,
