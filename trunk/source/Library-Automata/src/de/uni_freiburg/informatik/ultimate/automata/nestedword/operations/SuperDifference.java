@@ -113,8 +113,7 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 		}
 
 		// initialize the result with the empty automaton
-		mResult = new NestedWordAutomaton<>(mServices, minuend.getInternalAlphabet(), minuend.getCallAlphabet(),
-				minuend.getReturnAlphabet(), mStateFactory);
+		mResult = new NestedWordAutomaton<>(mServices, minuend.getVpAlphabet(), mStateFactory);
 		mSinkState = sinkStateFactory.createSinkStateContent();
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Created Sink-State: " + mSinkState.toString());

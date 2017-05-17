@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -176,7 +176,7 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 		@SuppressWarnings("unchecked")
 		final CanonicalInterpolantAutomatonBuilder<? extends Object, LETTER> iab =
 				new CanonicalInterpolantAutomatonBuilder<>(mServices, ipp, counterexample.getStateSequence(),
-						new InCaReAlphabet<>(abstraction), mCsToolkit, mPredicateFactory, mLogger,
+						new VpAlphabet<>(abstraction), mCsToolkit, mPredicateFactory, mLogger,
 						interpolGenerator.getPredicateUnifier(), (NestedWord<LETTER>) interpolGenerator.getTrace());
 		iab.analyze();
 		mLogger.info("Interpolants " + iab.getResult().getStates());
@@ -191,7 +191,7 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 			final IAutomaton<LETTER, IPredicate> abstraction, final IInterpolantGenerator interpolGenerator,
 			final IRun<LETTER, IPredicate, ?> counterexample, final List<InterpolantsPreconditionPostcondition> ipps) {
 		final StraightLineInterpolantAutomatonBuilder<LETTER> iab = new StraightLineInterpolantAutomatonBuilder<>(
-				mServices, new InCaReAlphabet<>(abstraction), interpolGenerator, mPredicateFactory);
+				mServices, new VpAlphabet<>(abstraction), interpolGenerator, mPredicateFactory);
 		return iab;
 	}
 

@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
@@ -139,8 +140,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
 		mStateFactory = stateFactory;
-		mCache = new NestedWordAutomatonCache<>(mServices, operand.getInternalAlphabet(), operand.getCallAlphabet(),
-				operand.getReturnAlphabet(), mStateFactory);
+		mCache = new NestedWordAutomatonCache<>(mServices, operand.getVpAlphabet(), mStateFactory);
 		mStateDeterminizer = stateDeterminizer;
 		mUserDefinedMaxRank = userDefinedMaxRank;
 		mLevelRankingGenerator =
@@ -221,18 +221,8 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 	}
 
 	@Override
-	public Set<LETTER> getInternalAlphabet() {
-		return mOperand.getInternalAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getCallAlphabet() {
-		return mOperand.getCallAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getReturnAlphabet() {
-		return mOperand.getReturnAlphabet();
+	public VpAlphabet<LETTER> getVpAlphabet() {
+		return mOperand.getVpAlphabet();
 	}
 
 	@Override
@@ -257,17 +247,17 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 
 	@Override
 	public Set<LETTER> lettersInternal(final STATE state) {
-		return mOperand.getInternalAlphabet();
+		return mOperand.getVpAlphabet().getInternalAlphabet();
 	}
 
 	@Override
 	public Set<LETTER> lettersCall(final STATE state) {
-		return mOperand.getCallAlphabet();
+		return mOperand.getVpAlphabet().getCallAlphabet();
 	}
 	
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
-		return mOperand.getReturnAlphabet();
+		return mOperand.getVpAlphabet().getReturnAlphabet();
 	}
 
 	@Override
@@ -297,7 +287,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
-		for (final LETTER letter : getInternalAlphabet()) {
+		for (final LETTER letter : getVpAlphabet().getInternalAlphabet()) {
 			internalSuccessors(state, letter);
 		}
 		return mCache.internalSuccessors(state);
@@ -350,7 +340,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
-		for (final LETTER letter : getCallAlphabet()) {
+		for (final LETTER letter : getVpAlphabet().getCallAlphabet()) {
 			callSuccessors(state, letter);
 		}
 		return mCache.callSuccessors(state);
@@ -430,7 +420,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
 			final STATE hier) {
-		for (final LETTER letter : getReturnAlphabet()) {
+		for (final LETTER letter : getVpAlphabet().getReturnAlphabet()) {
 			returnSuccessors(state, hier, letter);
 		}
 		return mCache.returnSuccessorsGivenHier(state, hier);

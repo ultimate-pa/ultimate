@@ -27,7 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -55,13 +55,12 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER>
 	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
 
 	public StraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-			final InCaReAlphabet<LETTER> alphabet, final IInterpolantGenerator interpolantGenerator,
+			final VpAlphabet<LETTER> alphabet, final IInterpolantGenerator interpolantGenerator,
 			final PredicateFactoryForInterpolantAutomata predicateFactory) {
 		mServices = services;
 		final InterpolantsPreconditionPostcondition ipp =
 				new InterpolantsPreconditionPostcondition(interpolantGenerator);
-		mResult = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet.getInternalAlphabet(),
-				alphabet.getCallAlphabet(), alphabet.getReturnAlphabet(), predicateFactory);
+		mResult = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet, predicateFactory);
 		addStatesAndTransitions(interpolantGenerator, predicateFactory, ipp);
 	}
 

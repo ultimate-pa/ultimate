@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
@@ -129,7 +129,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		mPredicateUnifier = interpolantGenerator.getPredicateUnifier();
 		mPredicateFactory = (PredicateFactory) mPredicateUnifier.getPredicateFactory();
 		mAbstraction = abstraction;
-		final InCaReAlphabet<LETTER> alphabet = new InCaReAlphabet<>(abstraction);
+		final VpAlphabet<LETTER> alphabet = new VpAlphabet<>(abstraction);
 		mIA = new StraightLineInterpolantAutomatonBuilder<>(mServices, alphabet, interpolantGenerator, predicateFactory)
 				.getResult();
 		mModifiedGlobals = modifiableGlobalsTable;

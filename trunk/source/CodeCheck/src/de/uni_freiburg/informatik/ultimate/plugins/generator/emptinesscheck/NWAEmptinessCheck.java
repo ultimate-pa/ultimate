@@ -39,6 +39,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
@@ -83,6 +84,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		private final Set<IIcfgTransition<?>> mInternalAlphabet = new HashSet<>();
 		private final Set<IIcfgTransition<?>> mCallAlphabet = new HashSet<>();
 		private final Set<IIcfgTransition<?>> mReturnAlphabet = new HashSet<>();
+		private final VpAlphabet<IIcfgTransition<?>> mVpAlphabet = new VpAlphabet<IIcfgTransition<?>>(mInternalAlphabet, mCallAlphabet, mReturnAlphabet);
 
 		private final IStateFactory<AnnotatedProgramPoint> mStateFactory = new DummyStateFactory<>();
 
@@ -234,20 +236,10 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		public String sizeInformation() {
 			return "no size info available";
 		}
-
+		
 		@Override
-		public Set<IIcfgTransition<?>> getInternalAlphabet() {
-			return mInternalAlphabet;
-		}
-
-		@Override
-		public Set<IIcfgTransition<?>> getCallAlphabet() {
-			return mCallAlphabet;
-		}
-
-		@Override
-		public Set<IIcfgTransition<?>> getReturnAlphabet() {
-			return mReturnAlphabet;
+		public VpAlphabet<IIcfgTransition<?>> getVpAlphabet() {
+			return mVpAlphabet;
 		}
 
 		@Override

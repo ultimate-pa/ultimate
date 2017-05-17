@@ -43,8 +43,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Remove
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.GameGraphChangeType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.GameGraphChanges;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.SimulationPerformance;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.Vertex;
@@ -177,7 +177,7 @@ public class FairGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		Map<STATE, STATE> input2result = null;
 
 		final NestedWordAutomaton<LETTER, STATE> result =
-				new NestedWordAutomaton<>(mServices, mBuechi.getInternalAlphabet(), null, null, getStateFactory());
+				new NestedWordAutomaton<>(mServices, mBuechi.getVpAlphabet(), getStateFactory());
 
 		// Merge states
 		if (areThereMergeableStates) {

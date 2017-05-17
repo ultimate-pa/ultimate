@@ -40,8 +40,10 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.ITransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -81,7 +83,8 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		INestedWordAutomatonSimple<LETTER, STATE> orgin, target;
 		NestedWordAutomaton<LETTER, STATE> result;
 		Collection<STATE> state1, state2;
-		Collection<LETTER> letter1, letter2, newLetterSet;
+		Collection<LETTER> letter1, letter2; 
+		Set<LETTER> newLetterSet;
 		private final AutomataLibraryServices mServices;
 
 		public NfaUnion(final AutomataLibraryServices services, final IStateFactory<STATE> sf,
@@ -92,8 +95,8 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 			mLogger.info(startMessage());
 			orgin = in1;
 			target = in2;
-			letter1 = orgin.getInternalAlphabet();
-			letter2 = target.getInternalAlphabet();
+			letter1 = orgin.getVpAlphabet().getInternalAlphabet();
+			letter2 = target.getVpAlphabet().getInternalAlphabet();
 			newLetterSet = new HashSet<>();
 			newLetterSet.addAll(letter1);
 			newLetterSet.addAll(letter2);
@@ -102,7 +105,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 		}
 
 		public void union() {
-			result = new NestedWordAutomaton<>(mServices, (Set<LETTER>) newLetterSet, null, null, stateFactory);
+			result = new NestedWordAutomaton<LETTER, STATE>(mServices, new VpAlphabet<LETTER>(newLetterSet), stateFactory);
 			final HashSet<STATE> currentStates = new HashSet<>();
 			final HashSet<STATE> nextRoundStates = new HashSet<>();
 			final HashSet<STATE> finishedStates = new HashSet<>();
@@ -1119,7 +1122,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks_multip
 	}
 
 	public static <LETTER, STATE> void abortIfContainsCallOrReturn(final INestedWordAutomatonSimple<LETTER, STATE> a) {
-		if (!a.getCallAlphabet().isEmpty() || !a.getReturnAlphabet().isEmpty()) {
+		if (!NestedWordAutomataUtils.isFiniteAutomaton(a)) {
 			throw new UnsupportedOperationException("Operation does not support call or return");
 		}
 	}

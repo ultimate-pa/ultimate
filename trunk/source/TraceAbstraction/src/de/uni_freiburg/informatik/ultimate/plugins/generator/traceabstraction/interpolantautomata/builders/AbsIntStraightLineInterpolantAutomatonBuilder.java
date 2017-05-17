@@ -112,8 +112,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 		mLogger.info("Creating interpolant automaton from AI predicates (straight)");
 
 		final NestedWordAutomaton<LETTER, IPredicate> result = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
-				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
+				new AutomataLibraryServices(mServices), oldAbstraction.getVpAlphabet(), oldAbstraction.getStateFactory());
 
 		final NestedRun<LETTER, IPredicate> cex = (NestedRun<LETTER, IPredicate>) mCurrentCounterExample;
 		final Word<LETTER> word = cex.getWord();
@@ -211,10 +210,10 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 			final NestedWordAutomaton<LETTER, IPredicate> result, final TripleStack<STATE> callStack) {
 		if (!result.getFinalStates().isEmpty()) {
 			for (final IPredicate finalState : result.getFinalStates()) {
-				oldAbstraction.getInternalAlphabet()
+				oldAbstraction.getVpAlphabet().getInternalAlphabet()
 						.forEach(l -> result.addInternalTransition(finalState, l, finalState));
-				oldAbstraction.getCallAlphabet().forEach(l -> result.addCallTransition(finalState, l, finalState));
-				for (final LETTER returnSymbol : oldAbstraction.getReturnAlphabet()) {
+				oldAbstraction.getVpAlphabet().getCallAlphabet().forEach(l -> result.addCallTransition(finalState, l, finalState));
+				for (final LETTER returnSymbol : oldAbstraction.getVpAlphabet().getReturnAlphabet()) {
 					final IIcfgReturnTransition<?, ?> ret = (IIcfgReturnTransition<?, ?>) returnSymbol;
 					result.addReturnTransition(finalState, finalState, returnSymbol, finalState);
 					for (final Triple<LETTER, IPredicate, Set<STATE>> openCall : callStack) {

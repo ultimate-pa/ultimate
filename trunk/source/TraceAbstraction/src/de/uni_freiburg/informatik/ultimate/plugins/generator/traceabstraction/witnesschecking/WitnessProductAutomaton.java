@@ -36,6 +36,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
@@ -168,18 +169,8 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	}
 
 	@Override
-	public Set<LETTER> getInternalAlphabet() {
-		return mControlFlowAutomaton.getInternalAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getCallAlphabet() {
-		return mControlFlowAutomaton.getCallAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getReturnAlphabet() {
-		return mControlFlowAutomaton.getReturnAlphabet();
+	public VpAlphabet<LETTER> getVpAlphabet() {
+		return mControlFlowAutomaton.getVpAlphabet();
 	}
 
 	@Override

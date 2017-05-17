@@ -37,6 +37,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.DummyStateFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck.CheckableExpression;
@@ -114,8 +115,7 @@ public class Never2Automaton {
 		mRewriteAssumeDuringSBE = ups.getBoolean(PreferenceInitializer.LABEL_OPTIMIZE_REWRITEASSUME);
 		
 		mAutomaton = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices),
-				collectAlphabet(), null, // call
-				null, // return
+				new VpAlphabet<>(collectAlphabet()),
 				new DummyStateFactory<String>());
 		
 		collectStates(mNeverClaim, null);
@@ -369,7 +369,7 @@ public class Never2Automaton {
 	}
 	
 	private void addTransition(final String predecessor, final CodeBlock letter, final String successor) {
-		mAutomaton.getInternalAlphabet().add(letter);
+		mAutomaton.getVpAlphabet().getInternalAlphabet().add(letter);
 		mAutomaton.addInternalTransition(predecessor, letter, successor);
 	}
 	

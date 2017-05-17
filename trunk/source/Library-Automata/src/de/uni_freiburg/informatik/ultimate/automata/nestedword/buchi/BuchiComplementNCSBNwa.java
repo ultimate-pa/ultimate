@@ -32,11 +32,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -106,8 +106,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 		mServices = services;
 		mOperand = operand;
 		mStateFactory = stateFactory;
-		mCache = new NestedWordAutomatonCache<>(mServices, operand.getInternalAlphabet(), operand.getCallAlphabet(),
-				operand.getReturnAlphabet(), mStateFactory);
+		mCache = new NestedWordAutomatonCache<>(mServices, operand.getVpAlphabet(), mStateFactory);
 		mEmptyStackStateWri = new StateWithRankInfo<>(getEmptyStackState());
 		mBclrg = new BarelyCoveredLevelRankingsGenerator<>(mServices, mOperand, BARELY_COVERED_MAX_RANK, false, true,
 				false, false, false);
@@ -149,18 +148,8 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 	}
 
 	@Override
-	public Set<LETTER> getInternalAlphabet() {
-		return mOperand.getInternalAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getCallAlphabet() {
-		return mOperand.getCallAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getReturnAlphabet() {
-		return mOperand.getReturnAlphabet();
+	public VpAlphabet<LETTER> getVpAlphabet() {
+		return mOperand.getVpAlphabet();
 	}
 
 	@Override

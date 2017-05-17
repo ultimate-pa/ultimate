@@ -66,9 +66,9 @@ public abstract class NwaWriter<LETTER, STATE> extends GeneralAutomatonPrinter {
 	public NwaWriter(final PrintWriter writer, final String name, final INestedWordAutomaton<LETTER, STATE> nwa) {
 		super(writer);
 		mNwa = nwa;
-		mInternalAlphabet = getAlphabetMapping(mNwa.getInternalAlphabet(), 'a');
-		mCallAlphabet = getAlphabetMapping(mNwa.getCallAlphabet(), 'c');
-		mReturnAlphabet = getAlphabetMapping(mNwa.getReturnAlphabet(), 'r');
+		mInternalAlphabet = getAlphabetMapping(mNwa.getVpAlphabet().getInternalAlphabet(), 'a');
+		mCallAlphabet = getAlphabetMapping(mNwa.getVpAlphabet().getCallAlphabet(), 'c');
+		mReturnAlphabet = getAlphabetMapping(mNwa.getVpAlphabet().getReturnAlphabet(), 'r');
 		mStateMapping = getStateMapping(mNwa.getStates());
 
 		final boolean isFiniteAutomaton = mCallAlphabet.isEmpty() && mReturnAlphabet.isEmpty();

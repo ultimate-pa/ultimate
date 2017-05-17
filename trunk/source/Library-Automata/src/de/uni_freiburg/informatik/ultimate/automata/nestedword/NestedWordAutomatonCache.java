@@ -72,9 +72,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	protected final AutomataLibraryServices mServices;
 	protected final ILogger mLogger;
 
-	private final Set<LETTER> mInternalAlphabet;
-	private final Set<LETTER> mCallAlphabet;
-	private final Set<LETTER> mReturnAlphabet;
+	private final VpAlphabet<LETTER> mVpAlphabet;
 
 	/**
 	 * Set of internal transitions PREs x LETTERs x SUCCs stored as map PREs -> LETTERs -> SUCCs.
@@ -108,36 +106,22 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	 * @param stateFactory
 	 *            state factory
 	 */
-	public NestedWordAutomatonCache(final AutomataLibraryServices services, final Set<LETTER> internalAlphabet,
-			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet, final IStateFactory<STATE> stateFactory) {
+	public NestedWordAutomatonCache(final AutomataLibraryServices services, 
+			final VpAlphabet<LETTER> vpAlphabet,
+			final IStateFactory<STATE> stateFactory) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
-		if (internalAlphabet == null) {
-			throw new IllegalArgumentException("nwa must have internal alphabet");
-		}
+		mVpAlphabet = vpAlphabet;
 		if (stateFactory == null) {
 			throw new IllegalArgumentException("nwa must have stateFactory");
 		}
-		mInternalAlphabet = internalAlphabet;
-		mCallAlphabet = callAlphabet;
-		mReturnAlphabet = returnAlphabet;
 		mStateFactory = stateFactory;
 		mEmptyStackState = mStateFactory.createEmptyStackState();
 	}
-
+	
 	@Override
-	public final Set<LETTER> getInternalAlphabet() {
-		return mInternalAlphabet;
-	}
-
-	@Override
-	public final Set<LETTER> getCallAlphabet() {
-		return mCallAlphabet == null ? Collections.emptySet() : mCallAlphabet;
-	}
-
-	@Override
-	public final Set<LETTER> getReturnAlphabet() {
-		return mReturnAlphabet == null ? Collections.emptySet() : mReturnAlphabet;
+	public VpAlphabet<LETTER> getVpAlphabet() {
+		return mVpAlphabet;
 	}
 
 	public final Set<STATE> getStates() {
@@ -170,11 +154,6 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	@Override
 	public final int size() {
 		return mSetOfStates.getStates().size();
-	}
-
-	@Override
-	public final Set<LETTER> getAlphabet() {
-		return getInternalAlphabet();
 	}
 
 	@Override
@@ -478,7 +457,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		assert contains(pred) : STATE + pred + NOT_IN_AUTOMATON;
 		assert contains(succ) : STATE + succ + NOT_IN_AUTOMATON;
-		assert getInternalAlphabet().contains(letter);
+		assert getVpAlphabet().getInternalAlphabet().contains(letter);
 		mInternalOut.put(pred, letter, succ, IsContained.IsContained);
 	}
 
@@ -491,7 +470,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	 *            successor states
 	 */
 	public void addInternalTransitions(final STATE pred, final LETTER letter, final Collection<STATE> succs) {
-		if (!mInternalAlphabet.contains(letter)) {
+		if (!getVpAlphabet().getInternalAlphabet().contains(letter)) {
 			throw new IllegalArgumentException("letter" + letter + " not in internal alphabet");
 		}
 		if (!contains(pred)) {
@@ -499,7 +478,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		}
 		assert contains(pred) : STATE + pred + NOT_IN_AUTOMATON;
 		assert assertThatAllStatesAreInAutomaton(succs);
-		assert getInternalAlphabet().contains(letter);
+		assert getVpAlphabet().getInternalAlphabet().contains(letter);
 		for (final STATE succ : succs) {
 			addInternalTransition(pred, letter, succ);
 		}
@@ -514,13 +493,13 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	 *            successor state
 	 */
 	public void addCallTransition(final STATE pred, final LETTER letter, final STATE succ) {
-		if (!mCallAlphabet.contains(letter)) {
+		if (!getVpAlphabet().getCallAlphabet().contains(letter)) {
 			throw new IllegalArgumentException("letter" + letter + " not in call alphabet");
 		}
 		
 		assert contains(pred) : STATE + pred + NOT_IN_AUTOMATON;
 		assert contains(succ) : STATE + succ + NOT_IN_AUTOMATON;
-		assert getCallAlphabet().contains(letter);
+		assert getVpAlphabet().getCallAlphabet().contains(letter);
 		mCallOut.put(pred, letter, succ, IsContained.IsContained);
 	}
 
@@ -535,7 +514,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	public void addCallTransitions(final STATE pred, final LETTER letter, final Collection<STATE> succs) {
 		assert contains(pred) : STATE + pred + NOT_IN_AUTOMATON;
 		assert assertThatAllStatesAreInAutomaton(succs);
-		assert getCallAlphabet().contains(letter);
+		assert getVpAlphabet().getCallAlphabet().contains(letter);
 		for (final STATE succ : succs) {
 			addCallTransition(pred, letter, succ);
 		}
@@ -552,14 +531,14 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	 *            successor state
 	 */
 	public void addReturnTransition(final STATE pred, final STATE hier, final LETTER letter, final STATE succ) {
-		if (!mReturnAlphabet.contains(letter)) {
+		if (!getVpAlphabet().getReturnAlphabet().contains(letter)) {
 			throw new IllegalArgumentException("letter" + letter + " not in return alphabet");
 		}
 		
 		assert contains(pred) : STATE + pred + NOT_IN_AUTOMATON;
 		assert contains(succ) : STATE + succ + NOT_IN_AUTOMATON;
 		assert contains(hier) : STATE + hier + NOT_IN_AUTOMATON;
-		assert getReturnAlphabet().contains(letter);
+		assert getVpAlphabet().getReturnAlphabet().contains(letter);
 		mReturnOut.put(pred, hier, letter, succ, IsContained.IsContained);
 	}
 
@@ -578,7 +557,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 		assert contains(pred) : STATE + pred + NOT_IN_AUTOMATON;
 		assert assertThatAllStatesAreInAutomaton(succs);
 		assert contains(hier) : STATE + hier + NOT_IN_AUTOMATON;
-		assert getReturnAlphabet().contains(letter);
+		assert getVpAlphabet().getReturnAlphabet().contains(letter);
 		for (final STATE succ : succs) {
 			addReturnTransition(pred, hier, letter, succ);
 		}
@@ -661,17 +640,17 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutom
 	}
 
 	private boolean isTotal(final STATE state) {
-		for (final LETTER symbol : getInternalAlphabet()) {
+		for (final LETTER symbol : getVpAlphabet().getInternalAlphabet()) {
 			if (succInternal(state, symbol).isEmpty()) {
 				return false;
 			}
 		}
-		for (final LETTER symbol : getCallAlphabet()) {
+		for (final LETTER symbol : getVpAlphabet().getCallAlphabet()) {
 			if (succCall(state, symbol).isEmpty()) {
 				return false;
 			}
 		}
-		for (final LETTER symbol : getReturnAlphabet()) {
+		for (final LETTER symbol : getVpAlphabet().getReturnAlphabet()) {
 			for (final STATE hier : getStates()) {
 				if (succReturn(state, hier, symbol).isEmpty()) {
 					return false;

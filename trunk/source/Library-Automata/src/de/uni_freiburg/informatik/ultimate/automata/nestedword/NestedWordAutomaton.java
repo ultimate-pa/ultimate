@@ -111,9 +111,9 @@ public class NestedWordAutomaton<LETTER, STATE> extends NestedWordAutomatonCache
 	 * @param stateFactory
 	 *            state factory
 	 */
-	public NestedWordAutomaton(final AutomataLibraryServices services, final Set<LETTER> internalAlphabet,
-			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet, final IStateFactory<STATE> stateFactory) {
-		super(services, internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
+	public NestedWordAutomaton(final AutomataLibraryServices services, final VpAlphabet<LETTER> vpAlphabet,
+			final IStateFactory<STATE> stateFactory) {
+		super(services, vpAlphabet, stateFactory);
 	}
 
 

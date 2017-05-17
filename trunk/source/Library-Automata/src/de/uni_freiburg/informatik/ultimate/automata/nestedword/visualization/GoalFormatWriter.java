@@ -90,7 +90,7 @@ public final class GoalFormatWriter<LETTER, STATE> extends CommonExternalFormatW
 		builder.append(TAB)
 				.append("<Alphabet type=\"Classical\">")
 				.append(NEW_LINE);
-		for (final LETTER letter : mNwa.getInternalAlphabet()) {
+		for (final LETTER letter : mNwa.getVpAlphabet().getInternalAlphabet()) {
 			builder.append(TAB)
 					.append(TAB)
 					.append("<Symbol>")

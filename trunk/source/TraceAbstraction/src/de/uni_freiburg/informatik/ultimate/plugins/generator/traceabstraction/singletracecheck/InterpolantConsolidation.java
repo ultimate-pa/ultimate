@@ -45,6 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.F
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
@@ -538,8 +539,8 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 				csToolkit.getManagedScript(), predicateFactor, taPrefs.computeHoareAnnotation());
 
 		final NestedWordAutomaton<LETTER, IPredicate> nwa =
-				new NestedWordAutomaton<>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet,
-						returnAlphabet, predicateFactoryFia);
+				new NestedWordAutomaton<>(new AutomataLibraryServices(services), new VpAlphabet<>(internalAlphabet, callAlphabet,
+						returnAlphabet), predicateFactoryFia);
 		// Set the initial and the final state of the automaton
 		nwa.addState(true, false, traceChecker.getPrecondition());
 		nwa.addState(false, true, traceChecker.getPostcondition());

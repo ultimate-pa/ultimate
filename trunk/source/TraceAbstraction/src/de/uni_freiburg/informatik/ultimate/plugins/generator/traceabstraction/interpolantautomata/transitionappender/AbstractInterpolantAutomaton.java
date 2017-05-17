@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NwaCacheBookkeeping;
@@ -118,8 +119,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INestedWor
 		mCaSucComp = new CallSuccessorComputationHelper();
 		mReSucComp = new ReturnSuccessorComputationHelper();
 		mAlreadyConstrucedAutomaton = new NestedWordAutomatonCache<>(new AutomataLibraryServices(mServices),
-				inputInterpolantAutomaton.getInternalAlphabet(), inputInterpolantAutomaton.getCallAlphabet(),
-				inputInterpolantAutomaton.getReturnAlphabet(), inputInterpolantAutomaton.getStateFactory());
+				inputInterpolantAutomaton.getVpAlphabet(), inputInterpolantAutomaton.getStateFactory());
 		if (useEfficientTotalAutomatonBookkeeping) {
 			mSuccessorComputationBookkeeping = new SuccessorComputationBookkeepingForTotalAutomata();
 		} else {
@@ -180,18 +180,8 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INestedWor
 	}
 
 	@Override
-	public final Set<LETTER> getInternalAlphabet() {
-		return mAlreadyConstrucedAutomaton.getInternalAlphabet();
-	}
-
-	@Override
-	public final Set<LETTER> getCallAlphabet() {
-		return mAlreadyConstrucedAutomaton.getCallAlphabet();
-	}
-
-	@Override
-	public final Set<LETTER> getReturnAlphabet() {
-		return mAlreadyConstrucedAutomaton.getReturnAlphabet();
+	public VpAlphabet<LETTER> getVpAlphabet() {
+		return mAlreadyConstrucedAutomaton.getVpAlphabet();
 	}
 
 	@Override
@@ -221,17 +211,17 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INestedWor
 
 	@Override
 	public final Set<LETTER> lettersInternal(final IPredicate state) {
-		return getInternalAlphabet();
+		return getVpAlphabet().getInternalAlphabet();
 	}
 
 	@Override
 	public final Set<LETTER> lettersCall(final IPredicate state) {
-		return getCallAlphabet();
+		return getVpAlphabet().getCallAlphabet();
 	}
 	
 	@Override
 	public final Set<LETTER> lettersReturn(final IPredicate state, final IPredicate hier) {
-		return getReturnAlphabet();
+		return getVpAlphabet().getReturnAlphabet();
 	}
 
 	@Override

@@ -65,9 +65,9 @@ public class UnusedLetterShrinker<LETTER, STATE> extends AbstractShrinker<TypedL
 	public INestedWordAutomaton<LETTER, STATE> createAutomaton(final List<TypedLetter<LETTER>> list) {
 		// create alphabets
 		final ListIterator<TypedLetter<LETTER>> lit = list.listIterator();
-		final Set<LETTER> internalAlphabet = unwrapLetters(lit, mAutomaton.getInternalAlphabet(), LetterType.INTERNAL);
-		final Set<LETTER> callAlphabet = unwrapLetters(lit, mAutomaton.getCallAlphabet(), LetterType.CALL);
-		final Set<LETTER> returnAlphabet = unwrapLetters(lit, mAutomaton.getReturnAlphabet(), LetterType.RETURN);
+		final Set<LETTER> internalAlphabet = unwrapLetters(lit, mAutomaton.getVpAlphabet().getInternalAlphabet(), LetterType.INTERNAL);
+		final Set<LETTER> callAlphabet = unwrapLetters(lit, mAutomaton.getVpAlphabet().getCallAlphabet(), LetterType.CALL);
+		final Set<LETTER> returnAlphabet = unwrapLetters(lit, mAutomaton.getVpAlphabet().getReturnAlphabet(), LetterType.RETURN);
 
 		// create fresh automaton
 		final INestedWordAutomaton<LETTER, STATE> automaton =
@@ -103,9 +103,9 @@ public class UnusedLetterShrinker<LETTER, STATE> extends AbstractShrinker<TypedL
 
 		// wrap complement of present letters to include type information
 		final ArrayList<TypedLetter<LETTER>> unused = new ArrayList<>();
-		addComplementLetters(internalsUsed, unused, LetterType.INTERNAL, mAutomaton.getInternalAlphabet());
-		addComplementLetters(callsUsed, unused, LetterType.CALL, mAutomaton.getCallAlphabet());
-		addComplementLetters(returnsUsed, unused, LetterType.RETURN, mAutomaton.getReturnAlphabet());
+		addComplementLetters(internalsUsed, unused, LetterType.INTERNAL, mAutomaton.getVpAlphabet().getInternalAlphabet());
+		addComplementLetters(callsUsed, unused, LetterType.CALL, mAutomaton.getVpAlphabet().getCallAlphabet());
+		addComplementLetters(returnsUsed, unused, LetterType.RETURN, mAutomaton.getVpAlphabet().getReturnAlphabet());
 		return unused;
 	}
 

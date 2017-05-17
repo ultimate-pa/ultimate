@@ -35,6 +35,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -163,18 +164,8 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 	}
 
 	@Override
-	public Set<LETTER> getInternalAlphabet() {
-		return mFstOperand.getInternalAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getCallAlphabet() {
-		return mFstOperand.getCallAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getReturnAlphabet() {
-		return mFstOperand.getReturnAlphabet();
+	public VpAlphabet<LETTER> getVpAlphabet() {
+		return mFstOperand.getVpAlphabet();
 	}
 
 	@Override
@@ -341,10 +332,6 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 		return 0;
 	}
 
-	@Override
-	public Set<LETTER> getAlphabet() {
-		return getInternalAlphabet();
-	}
 
 	@Override
 	public String sizeInformation() {

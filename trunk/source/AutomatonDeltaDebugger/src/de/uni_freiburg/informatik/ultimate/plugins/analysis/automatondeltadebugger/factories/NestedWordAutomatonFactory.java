@@ -31,6 +31,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 
@@ -72,8 +73,8 @@ public class NestedWordAutomatonFactory<LETTER, STATE> extends INestedWordAutoma
 	@Override
 	protected INestedWordAutomaton<LETTER, STATE> createWithAlphabets(final Set<LETTER> internalAlphabet,
 			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet) {
-		return new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), internalAlphabet, callAlphabet,
-				returnAlphabet, mAutomaton.getStateFactory());
+		return new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), new VpAlphabet<>(internalAlphabet, callAlphabet,
+				returnAlphabet), mAutomaton.getStateFactory());
 	}
 
 	@Override

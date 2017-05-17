@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.AutomatonSccComputation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
@@ -110,10 +111,11 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	 */
 	private NestedWordAutomatonReachableStates<LETTER, STATE> constructGraph()
 			throws AutomataOperationCanceledException {
-		final LETTER letter = mOperand.getInternalAlphabet().iterator().next();
+		final LETTER letter = mOperand.getVpAlphabet().getInternalAlphabet().iterator().next();
 		final Set<LETTER> singletonAlphabet = Collections.singleton(letter);
-		final NestedWordAutomaton<LETTER, STATE> graph = new NestedWordAutomaton<>(mServices, singletonAlphabet,
-				singletonAlphabet, singletonAlphabet, mOperand.getStateFactory());
+		final NestedWordAutomaton<LETTER, STATE> graph = new NestedWordAutomaton<>(mServices,
+				new VpAlphabet<>(singletonAlphabet, singletonAlphabet, singletonAlphabet),
+				mOperand.getStateFactory());
 
 		for (final STATE state : mOperand.getStates()) {
 			graph.addState(true, true, state);

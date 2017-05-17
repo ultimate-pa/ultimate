@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
@@ -294,7 +295,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	 *            Automaton to verify validity
 	 */
 	public void verifyAutomatonValidity(final INestedWordAutomatonSimple<LETTER, STATE> automaton) {
-		if (!automaton.getCallAlphabet().isEmpty() || !automaton.getReturnAlphabet().isEmpty()) {
+		if (!NestedWordAutomataUtils.isFiniteAutomaton(automaton)) {
 			throw new IllegalArgumentException(
 					"The inputed automaton is no Buechi-automaton. It must have an empty call and return alphabet.");
 		}

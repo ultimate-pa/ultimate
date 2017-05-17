@@ -43,6 +43,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
@@ -54,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Summa
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementSvwStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -77,7 +80,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	protected final STATE mEmptyStackState;
 	protected final AutomataLibraryServices mServices;
 	private final TransitionMonoidAutomaton mTma;
-	private final Set<LETTER> mAlphabet;
+	private final VpAlphabet<LETTER> mVpAlphabet;
 	private SizeInfoContainer mSizeInfo;
 	// not all transitions have been computed
 	private boolean mBuildCompleted;
@@ -107,8 +110,8 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mTma = new TransitionMonoidAutomaton(operand);
-		mAlphabet = operand.getInternalAlphabet();
-		if (!operand.getCallAlphabet().isEmpty() || !operand.getReturnAlphabet().isEmpty()) {
+		mVpAlphabet = operand.getVpAlphabet();
+		if (!NestedWordAutomataUtils.isFiniteAutomaton(operand)) {
 			throw new IllegalArgumentException("only applicable to Buchi automata (not BuchiNWA)");
 		}
 		mStateFactory = stateFactory;
@@ -126,7 +129,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	 */
 	public INestedWordAutomaton<LETTER, STATE> toNestedWordAutomaton() throws AutomataOperationCanceledException {
 		final NestedWordAutomaton<LETTER, STATE> result =
-				new NestedWordAutomaton<>(mServices, mAlphabet, null, null, mStateFactory);
+				new NestedWordAutomaton<>(mServices, mVpAlphabet, mStateFactory);
 		final int size = getSizeInfo().mTotalSize;
 		// Breadth-first traversal of the state space.
 		final Set<STATE> alreadySeen = new HashSet<>(size);
@@ -136,7 +139,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		result.addState(true, false, mInitialState);
 		while (!queue.isEmpty()) {
 			final STATE state = queue.remove();
-			for (final LETTER letter : mAlphabet) {
+			for (final LETTER letter : getAlphabet()) {
 				final Collection<STATE> succSet = succInternal(state, letter);
 				for (final STATE succState : succSet) {
 					addIfNotContained1(result, alreadySeen, queue, succState);
@@ -158,11 +161,6 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 	}
 
 	@Override
-	public Set<LETTER> getAlphabet() {
-		return mAlphabet;
-	}
-
-	@Override
 	public String sizeInformation() {
 		final SizeInfoContainer sizeInfo = getSizeInfo();
 		final StringBuilder sb = new StringBuilder();
@@ -176,11 +174,6 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			.append('.');
 		// @formatter:on
 		return sb.toString();
-	}
-
-	@Override
-	public Set<LETTER> getInternalAlphabet() {
-		return mAlphabet;
 	}
 
 	@Override
@@ -201,7 +194,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		queue.add(mInitialState);
 		while (!queue.isEmpty()) {
 			final STATE state = queue.remove();
-			for (final LETTER letter : mAlphabet) {
+			for (final LETTER letter : getAlphabet()) {
 				final Collection<STATE> succSet = succInternal(state, letter);
 				for (final STATE succState : succSet) {
 					addIfNotContained2(alreadySeen, queue, succState);
@@ -267,7 +260,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		if (!knows(state)) {
 			throw new IllegalArgumentException(STATE_STRING + state + IS_NOT_YET_KNOWN);
 		}
-		return mAlphabet;
+		return getAlphabet();
 	}
 
 	@Override
@@ -276,7 +269,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 			throw new IllegalArgumentException(STATE_STRING + state + IS_NOT_YET_KNOWN);
 		}
 		final Set<LETTER> result = new HashSet<>();
-		for (final LETTER letter : mAlphabet) {
+		for (final LETTER letter : getAlphabet()) {
 			final Collection<STATE> predStateSet = predInternal(state, letter);
 			if (!predStateSet.isEmpty()) {
 				result.add(letter);
@@ -294,7 +287,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		Set<STATE> result = map.get(letter);
 		// If the result is not in the map, compute it.
 		if (result == null) {
-			if (!mAlphabet.contains(letter)) {
+			if (!getAlphabet().contains(letter)) {
 				throw new IllegalArgumentException("Letter " + letter + " is not in the alphabet.");
 			}
 			final MetaState mState = getMetaState2(state);
@@ -341,7 +334,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		if (result != null) {
 			return result;
 		}
-		if (!mAlphabet.contains(letter)) {
+		if (!getAlphabet().contains(letter)) {
 			throw new IllegalArgumentException("Letter " + letter + " is not in the alphabet.");
 		}
 		final MetaState mState = getMetaState2(state);
@@ -426,22 +419,6 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		// - IMPLEMENTATION ----------------------------------------------------
 		// return true;
 		// ---------------------------------------------------------------------
-	}
-
-	@Override
-	public Set<LETTER> getCallAlphabet() {
-		if (mLogger.isWarnEnabled()) {
-			mLogger.warn("No nwa. Has no call alphabet.");
-		}
-		return Collections.emptySet();
-	}
-
-	@Override
-	public Set<LETTER> getReturnAlphabet() {
-		if (mLogger.isWarnEnabled()) {
-			mLogger.warn("No nwa. Has no return alphabet.");
-		}
-		return Collections.emptySet();
 	}
 
 	@Override
@@ -748,7 +725,7 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 		public TransitionMonoidAutomaton(final INestedWordAutomaton<LETTER, STATE> origAutomaton)
 				throws AutomataOperationCanceledException {
 			mOrigAutomaton = origAutomaton;
-			final Collection<LETTER> alphabet = origAutomaton.getInternalAlphabet();
+			final Collection<LETTER> alphabet = origAutomaton.getVpAlphabet().getInternalAlphabet();
 
 			// Map from numbers to corresponding transition profiles
 			final Map<Integer, TransitionProfile> mapNum2Tp = new HashMap<>();
@@ -1093,5 +1070,17 @@ public class BuchiComplementAutomatonSVW<LETTER, STATE> implements INestedWordAu
 				return true;
 			}
 		}
+	}
+
+	@Override
+	public VpAlphabet<LETTER> getVpAlphabet() {
+		return mVpAlphabet;
+	}
+
+	@Override
+	public IElement transformToUltimateModel(final AutomataLibraryServices services)
+			throws AutomataOperationCanceledException {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

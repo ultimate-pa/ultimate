@@ -152,7 +152,7 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 	}
 
 	private void classifySymbols() {
-		for (final S symbol : mNwa.getInternalAlphabet()) {
+		for (final S symbol : mNwa.getVpAlphabet().getInternalAlphabet()) {
 			final HashSet<C> selfloopStates = new HashSet<>();
 			final HashSet<C> changerStates = new HashSet<>();
 			for (final C state : mNwa.getStates()) {

@@ -62,9 +62,8 @@ public class DoubleDeckerAutomaton<LETTER, STATE> extends NestedWordAutomaton<LE
 	 * @param stateFactory
 	 *            state factory
 	 */
-	public DoubleDeckerAutomaton(final AutomataLibraryServices services, final Set<LETTER> internalAlphabet,
-			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet, final IStateFactory<STATE> stateFactory) {
-		super(services, internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
+	public DoubleDeckerAutomaton(final AutomataLibraryServices services, final VpAlphabet<LETTER> vpAlphabet, final IStateFactory<STATE> stateFactory) {
+		super(services, vpAlphabet, stateFactory);
 		mUp2Down = null;
 	}
 

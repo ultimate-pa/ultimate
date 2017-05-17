@@ -72,9 +72,9 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 	 */
 	public GetRandomNestedWord(final AutomataLibraryServices services,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final int length, final long seed) {
-		mInternalAlphabet = new ArrayList<>(nwa.getInternalAlphabet());
-		mCallAlphabet = new ArrayList<>(nwa.getCallAlphabet());
-		mReturnAlphabet = new ArrayList<>(nwa.getReturnAlphabet());
+		mInternalAlphabet = new ArrayList<>(nwa.getVpAlphabet().getInternalAlphabet());
+		mCallAlphabet = new ArrayList<>(nwa.getVpAlphabet().getCallAlphabet());
+		mReturnAlphabet = new ArrayList<>(nwa.getVpAlphabet().getReturnAlphabet());
 		mRandom = new Random(seed);
 
 		final int sum = mInternalAlphabet.size() + mCallAlphabet.size() + mReturnAlphabet.size();

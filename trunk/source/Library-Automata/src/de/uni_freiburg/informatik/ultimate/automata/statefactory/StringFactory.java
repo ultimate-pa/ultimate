@@ -179,7 +179,7 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 			return complementState.toString();
 		}
 
-		final boolean isNestedWordAutomaton = !complementState.getOperand().getCallAlphabet().isEmpty();
+		final boolean isNestedWordAutomaton = !complementState.getOperand().getVpAlphabet().getCallAlphabet().isEmpty();
 		final StringBuilder builder = new StringBuilder();
 		builder.append(OPEN_BRACE);
 		for (final StateWithRankInfo<String> downState : complementState.getDownStates()) {
@@ -228,7 +228,7 @@ public class StringFactory implements ISenwaStateFactory<String>, IBlackWhiteSta
 				}
 			}
 		}
-		final boolean isNestedWordAutomaton = !complementState.getOperand().getCallAlphabet().isEmpty();
+		final boolean isNestedWordAutomaton = !complementState.getOperand().getVpAlphabet().getCallAlphabet().isEmpty();
 		final StringBuilder builder = new StringBuilder(listN.size() + listC.size() + listS.size() + listB.size());
 		builder.append(OPEN_PARENTHESIS);
 		prettyprintCollectionOfStates(builder, listN, isNestedWordAutomaton);

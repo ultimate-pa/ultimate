@@ -38,6 +38,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
@@ -212,10 +213,10 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 		@SuppressWarnings("squid:S1244")
 		final boolean isFiniteAutomaton = mCallTransitionDensity == 0D && mReturnTransitionDensity == 0D;
 		if (isFiniteAutomaton) {
-			result = new NestedWordAutomaton<>(mServices, new HashSet<>(num2Letter), null, null, new StringFactory());
+			result = new NestedWordAutomaton<>(mServices, new VpAlphabet<>(new HashSet<>(num2Letter)), new StringFactory());
 		} else {
-			result = new NestedWordAutomaton<>(mServices, new HashSet<>(num2Letter), new HashSet<>(num2Letter),
-					new HashSet<>(num2Letter), new StringFactory());
+			result = new NestedWordAutomaton<>(mServices, new VpAlphabet<>(new HashSet<>(num2Letter), new HashSet<>(num2Letter),
+					new HashSet<>(num2Letter)), new StringFactory());
 		}
 
 		// --------------------------------------------------------------------

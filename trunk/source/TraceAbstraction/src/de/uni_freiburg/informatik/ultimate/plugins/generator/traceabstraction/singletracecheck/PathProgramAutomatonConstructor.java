@@ -35,6 +35,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -91,9 +92,9 @@ public class PathProgramAutomatonConstructor<LETTER extends IIcfgTransition<?>> 
 		final IStateFactory<IPredicate> predicateFactoryFia = new PredicateFactoryForInterpolantAutomata(
 				csToolkit.getManagedScript(), predicateFactory, taPrefs.computeHoareAnnotation());
 		// Create the automaton
-		final NestedWordAutomaton<LETTER, IPredicate> pathPA =
-				new NestedWordAutomaton<>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet,
-						returnAlphabet, predicateFactoryFia);
+		final NestedWordAutomaton<LETTER, IPredicate> pathPA = new NestedWordAutomaton<>(
+				new AutomataLibraryServices(services),
+				new VpAlphabet<>(internalAlphabet, callAlphabet, returnAlphabet), predicateFactoryFia);
 
 		// We need this list to create the transitions of the automaton.
 		mPositionsToStates = new ArrayList<>(path.length() + 1);

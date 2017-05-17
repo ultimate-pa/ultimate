@@ -37,6 +37,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -163,8 +164,6 @@ public abstract class CFG2Automaton<LETTER extends IIcfgTransition<?>, RESULT> {
 		mLogger.debug("Step: determine the alphabet");
 		// determine the alphabet
 		final Set<LETTER> internalAlphabet = new HashSet<>();
-		final Set<LETTER> callAlphabet = new HashSet<>(0);
-		final Set<LETTER> returnAlphabet = new HashSet<>(0);
 
 		// add transAnnot from sharedVars initialization
 		internalAlphabet.add(mSharedVarsInit);
@@ -179,9 +178,8 @@ public abstract class CFG2Automaton<LETTER extends IIcfgTransition<?>, RESULT> {
 
 		mLogger.debug("Step: construct the automaton");
 		// construct the automaton
-		final NestedWordAutomaton<LETTER, IPredicate> nwa =
-				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), internalAlphabet, callAlphabet,
-						returnAlphabet, mContentFactory);
+		final NestedWordAutomaton<LETTER, IPredicate> nwa = new NestedWordAutomaton<>(
+				new AutomataLibraryServices(mServices), new VpAlphabet<LETTER>(internalAlphabet), mContentFactory);
 
 		IPredicate procedureInitialState = null;
 

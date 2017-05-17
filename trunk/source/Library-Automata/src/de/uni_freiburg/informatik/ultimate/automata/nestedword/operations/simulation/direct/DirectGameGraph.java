@@ -37,8 +37,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.SimulationPerformance;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
@@ -165,7 +165,7 @@ public class DirectGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 		// Merge states
 		final NestedWordAutomaton<LETTER, STATE> result =
-				new NestedWordAutomaton<>(mServices, mBuechi.getInternalAlphabet(), null, null, mStateFactory);
+				new NestedWordAutomaton<>(mServices, mBuechi.getVpAlphabet(), mStateFactory);
 		final Set<STATE> representativesOfInitials = new HashSet<>();
 		for (final STATE initial : mBuechi.getInitialStates()) {
 			representativesOfInitials.add(uf.find(initial));

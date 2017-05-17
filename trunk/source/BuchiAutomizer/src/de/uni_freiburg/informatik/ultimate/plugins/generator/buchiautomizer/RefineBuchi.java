@@ -313,7 +313,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		// : "no progress";
 		if (mDumpAutomata) {
 			final String automatonString;
-			if (mInterpolAutomatonUsedInRefinement.getCallAlphabet().isEmpty()) {
+			if (mInterpolAutomatonUsedInRefinement.getVpAlphabet().getCallAlphabet().isEmpty()) {
 				automatonString = "interpolBuchiAutomatonUsedInRefinement";
 			} else {
 				automatonString = "interpolBuchiNestedWordAutomatonUsedInRefinement";
@@ -340,7 +340,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 				determinicity = "nondeterministic";
 			}
 			final String automatonString;
-			if (mInterpolAutomatonUsedInRefinement.getCallAlphabet().isEmpty()) {
+			if (mInterpolAutomatonUsedInRefinement.getVpAlphabet().getCallAlphabet().isEmpty()) {
 				automatonString = "interpolBuchiAutomatonUsedInRefinement";
 			} else {
 				automatonString = "interpolBuchiNestedWordAutomatonUsedInRefinement";
@@ -549,8 +549,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			final NestedWord<LETTER> loop, final IPredicate[] loopInterpolants,
 			final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction) {
 		final NestedWordAutomaton<LETTER, IPredicate> result =
-				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), abstraction.getInternalAlphabet(),
-						abstraction.getCallAlphabet(), abstraction.getReturnAlphabet(), abstraction.getStateFactory());
+				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), abstraction.getVpAlphabet(), abstraction.getStateFactory());
 		final boolean emptyStem = stem.length() == 0;
 		if (emptyStem) {
 			result.addState(true, true, honda);

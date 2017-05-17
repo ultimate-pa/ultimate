@@ -749,7 +749,7 @@ public abstract class MinimizeNwaMaxSat2<LETTER, STATE, T> extends AbstractMinim
 	}
 
 	private static <LETTER, STATE> boolean hasNoReturnTransitions(final IDoubleDeckerAutomaton<LETTER, STATE> operand) {
-		return operand.getReturnAlphabet().isEmpty();
+		return operand.getVpAlphabet().getReturnAlphabet().isEmpty();
 	}
 
 	protected final void checkTimeout(final String currentTask) throws AutomataOperationCanceledException {

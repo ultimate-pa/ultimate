@@ -26,15 +26,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders;
 
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -89,23 +87,9 @@ public class MultiTrackInterpolantAutomatonBuilder<LETTER> implements IInterpola
 			final IUltimateServiceProvider services, final IAutomaton<LETTER, IPredicate> abstraction,
 			final List<InterpolantsPreconditionPostcondition> interpolantSequences, final NestedWord<LETTER> nestedWord,
 			final IStateFactory<IPredicate> taContentFactory) {
-		final Set<LETTER> internalAlphabet = abstraction.getAlphabet();
-		final Set<LETTER> callAlphabet;
-		final Set<LETTER> returnAlphabet;
-
-		if (abstraction instanceof INestedWordAutomatonSimple) {
-			final INestedWordAutomatonSimple<LETTER, IPredicate> abstractionAsNwa =
-					(INestedWordAutomatonSimple<LETTER, IPredicate>) abstraction;
-			callAlphabet = abstractionAsNwa.getCallAlphabet();
-			returnAlphabet = abstractionAsNwa.getReturnAlphabet();
-		} else {
-			callAlphabet = Collections.emptySet();
-			returnAlphabet = Collections.emptySet();
-		}
 
 		final NestedWordAutomaton<LETTER, IPredicate> nwa =
-				new NestedWordAutomaton<>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet,
-						returnAlphabet, taContentFactory);
+				new NestedWordAutomaton<>(new AutomataLibraryServices(services), new VpAlphabet<>(abstraction), taContentFactory);
 
 		addStatesAccordingToPredicates(nwa, interpolantSequences, nestedWord);
 		addBasicTransitions(nwa, interpolantSequences, nestedWord);

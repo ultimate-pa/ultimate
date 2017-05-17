@@ -79,9 +79,9 @@ public class PreNestedWord {
 			final IStateFactory<IPredicate> taContentFactory, final PredicateFactory predicateFactory,
 			final ManagedScript script) {
 
-		final Set<LETTER> internalAlphabet = automaton.getAlphabet();
-		final Set<LETTER> callAlphabet = automaton.getCallAlphabet();
-		final Set<LETTER> returnAlphabet = automaton.getReturnAlphabet();
+		final Set<LETTER> internalAlphabet = automaton.getVpAlphabet().getInternalAlphabet();
+		final Set<LETTER> callAlphabet = automaton.getVpAlphabet().getCallAlphabet();
+		final Set<LETTER> returnAlphabet = automaton.getVpAlphabet().getReturnAlphabet();
 		final Map<Integer, LETTER> internalAlphabetMap =
 				internalAlphabet.stream().collect(Collectors.toMap(Object::hashCode, x -> x));
 		final Map<Integer, LETTER> callAlphabetMap =
@@ -93,8 +93,7 @@ public class PreNestedWord {
 		// allAlphabetMap.putAll(callAlphabetMap);
 		// allAlphabetMap.putAll(returnAlphabetMap);
 		final NestedWordAutomaton<LETTER, IPredicate> nwa =
-				new NestedWordAutomaton<>(new AutomataLibraryServices(services), automaton.getAlphabet(),
-						automaton.getCallAlphabet(), automaton.getReturnAlphabet(), taContentFactory);
+				new NestedWordAutomaton<>(new AutomataLibraryServices(services), automaton.getVpAlphabet(), taContentFactory);
 
 		IPredicate previousState = newTruePredicate(predicateFactory, script);
 		IPredicate previousHierarchyState = null;
@@ -142,9 +141,9 @@ public class PreNestedWord {
 	}
 
 	public <LETTER> LETTER[] getWord(final INestedWordAutomatonSimple<LETTER, ?> automaton) {
-		final Set<LETTER> internalAlphabet = automaton.getAlphabet();
-		final Set<LETTER> callAlphabet = automaton.getCallAlphabet();
-		final Set<LETTER> returnAlphabet = automaton.getReturnAlphabet();
+		final Set<LETTER> internalAlphabet = automaton.getVpAlphabet().getInternalAlphabet();
+		final Set<LETTER> callAlphabet = automaton.getVpAlphabet().getCallAlphabet();
+		final Set<LETTER> returnAlphabet = automaton.getVpAlphabet().getReturnAlphabet();
 		final Map<Integer, LETTER> internalAlphabetMap =
 				internalAlphabet.stream().collect(Collectors.toMap(Object::hashCode, x -> x));
 		final Map<Integer, LETTER> callAlphabetMap =

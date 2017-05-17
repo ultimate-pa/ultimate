@@ -344,9 +344,9 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 	private static void copyAlphabets(final INestedWordAutomatonSimple<CodeBlock, IPredicate> fromNwa,
 			final List<CodeBlock> callAlphabet, final List<CodeBlock> internalAlphabet,
 			final List<CodeBlock> returnAlphabet, final TraceAbstractionProtos.NestedWordAutomaton.Builder toNwa) {
-		fromNwa.getCallAlphabet().forEach(callAlphabet::add);
-		fromNwa.getInternalAlphabet().forEach(internalAlphabet::add);
-		fromNwa.getReturnAlphabet().forEach(returnAlphabet::add);
+		fromNwa.getVpAlphabet().getCallAlphabet().forEach(callAlphabet::add);
+		fromNwa.getVpAlphabet().getInternalAlphabet().forEach(internalAlphabet::add);
+		fromNwa.getVpAlphabet().getReturnAlphabet().forEach(returnAlphabet::add);
 		toNwa.setCall(fromAlphabet(callAlphabet)).setInternal(fromAlphabet(internalAlphabet))
 				.setReturn(fromAlphabet(returnAlphabet));
 	}

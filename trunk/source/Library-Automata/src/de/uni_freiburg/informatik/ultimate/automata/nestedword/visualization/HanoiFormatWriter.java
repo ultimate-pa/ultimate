@@ -92,18 +92,18 @@ public final class HanoiFormatWriter<LETTER, STATE> extends CommonExternalFormat
 		}
 
 		builder.append("AP: ")
-				.append(mNwa.getInternalAlphabet().size());
-		for (final LETTER letter : mNwa.getInternalAlphabet()) {
+				.append(mNwa.getVpAlphabet().getInternalAlphabet().size());
+		for (final LETTER letter : mNwa.getVpAlphabet().getInternalAlphabet()) {
 			builder.append(" \"p")
 					.append(mLetterConverter.convert(letter) + QUOTE);
 		}
 		builder.append(NEW_LINE);
 
-		for (final LETTER letter : mNwa.getInternalAlphabet()) {
+		for (final LETTER letter : mNwa.getVpAlphabet().getInternalAlphabet()) {
 			builder.append("Alias: @")
 					.append(mAlphabetMapping.get(letter));
 			boolean firstOther = true;
-			for (final LETTER otherLetter : mNwa.getInternalAlphabet()) {
+			for (final LETTER otherLetter : mNwa.getVpAlphabet().getInternalAlphabet()) {
 				if (firstOther) {
 					firstOther = false;
 				} else {

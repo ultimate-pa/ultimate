@@ -39,6 +39,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IPetriNet2FiniteAutomatonStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -91,7 +92,8 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 
 		mContentFactory = factory;
 		final Set<S> alphabet = new HashSet<>(operand.getAlphabet());
-		mResult = new NestedWordAutomaton<>(mServices, alphabet, Collections.emptySet(), Collections.emptySet(),
+		final VpAlphabet<S> vpAlphabet = new VpAlphabet<S>(alphabet, Collections.emptySet(), Collections.emptySet());
+		mResult = new NestedWordAutomaton<>(mServices, vpAlphabet,
 				operand.getStateFactory());
 		getState(operand.getInitialMarking(), true);
 		while (!mWorklist.isEmpty()) {

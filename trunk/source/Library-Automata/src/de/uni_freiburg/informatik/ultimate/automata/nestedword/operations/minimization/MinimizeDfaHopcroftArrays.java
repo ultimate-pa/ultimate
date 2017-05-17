@@ -211,7 +211,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 		mNumberOfFinalStates = mOperand.getFinalStates().size();
 		mFinalStates = new int[mNumberOfFinalStates];
 		mNumberOfStates = mOperand.size();
-		mNumberOfLetters = mOperand.getInternalAlphabet().size();
+		mNumberOfLetters = mOperand.getVpAlphabet().getInternalAlphabet().size();
 
 		initializeMappings();
 		initializeLables();
@@ -241,7 +241,7 @@ public class MinimizeDfaHopcroftArrays<LETTER, STATE> extends AbstractMinimizeNw
 			mState2int.put(state, ++index);
 		}
 		index = -1;
-		for (final LETTER letter : mOperand.getInternalAlphabet()) {
+		for (final LETTER letter : mOperand.getVpAlphabet().getInternalAlphabet()) {
 			mInt2letter.add(letter);
 			mLetter2int.put(letter, ++index);
 		}

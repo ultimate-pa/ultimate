@@ -138,7 +138,7 @@ public final class PetriNetJulian<S, C> implements IPetriNet<S, C> {
 	 */
 	public PetriNetJulian(final AutomataLibraryServices services, final INestedWordAutomaton<S, C> nwa)
 			throws AutomataLibraryException {
-		this(services, nwa.getInternalAlphabet(), nwa.getStateFactory(), true, false);
+		this(services, nwa.getVpAlphabet().getInternalAlphabet(), nwa.getStateFactory(), true, false);
 		final Map<C, Place<S, C>> state2place = new HashMap<>();
 		for (final C content : nwa.getStates()) {
 			// C content = state.getContent();

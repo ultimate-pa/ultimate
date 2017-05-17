@@ -148,7 +148,7 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 	private void successorConfigurationsInternal(final int position,
 			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final Set<ArrayDeque<STATE>> succConfigs,
 			final ArrayDeque<STATE> config, final STATE state, final LETTER symbol) throws AutomataLibraryException {
-		if (!nwa.getInternalAlphabet().contains(symbol)) {
+		if (!nwa.getVpAlphabet().getInternalAlphabet().contains(symbol)) {
 			throw new AutomataLibraryException(this.getClass(), UNABLE_TO_CHECK_ACCEPTANCE_LETTER + symbol + AT_POSITION
 					+ position + " not in internal alphabet of automaton.");
 		}
@@ -165,7 +165,7 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 	private void successorConfigurationsCall(final int position, final INestedWordAutomatonSimple<LETTER, STATE> nwa,
 			final Set<ArrayDeque<STATE>> succConfigs, final ArrayDeque<STATE> config, final STATE state,
 			final LETTER symbol) throws AutomataLibraryException {
-		if (!nwa.getCallAlphabet().contains(symbol)) {
+		if (!nwa.getVpAlphabet().getCallAlphabet().contains(symbol)) {
 			throw new AutomataLibraryException(this.getClass(), UNABLE_TO_CHECK_ACCEPTANCE_LETTER + symbol + AT_POSITION
 					+ position + " not in call alphabet of automaton.");
 		}
@@ -182,7 +182,7 @@ public abstract class AbstractAcceptance<LETTER, STATE> extends UnaryNwaOperatio
 	private void successorConfigurationsReturn(final int position, final INestedWordAutomatonSimple<LETTER, STATE> nwa,
 			final Set<ArrayDeque<STATE>> succConfigs, final ArrayDeque<STATE> config, final STATE state,
 			final LETTER symbol) throws AutomataLibraryException {
-		if (!nwa.getReturnAlphabet().contains(symbol)) {
+		if (!nwa.getVpAlphabet().getReturnAlphabet().contains(symbol)) {
 			throw new AutomataLibraryException(this.getClass(), UNABLE_TO_CHECK_ACCEPTANCE_LETTER + symbol + AT_POSITION
 					+ position + " not in return alphabet of automaton.");
 		}

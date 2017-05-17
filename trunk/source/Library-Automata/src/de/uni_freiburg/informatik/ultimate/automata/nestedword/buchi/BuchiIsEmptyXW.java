@@ -161,8 +161,8 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 		final Set<STATE> allStates = new HashSet<>();
 		final Set<STATE> acceptingStates = new HashSet<>();
 		final Set<STATE> initialStates = new HashSet<>();
-		final Collection<LETTER> callAlphabet = mOperand.getCallAlphabet();
-		final Collection<LETTER> returnAlphabet = mOperand.getReturnAlphabet();
+		final Collection<LETTER> callAlphabet = mOperand.getVpAlphabet().getCallAlphabet();
+		final Collection<LETTER> returnAlphabet = mOperand.getVpAlphabet().getReturnAlphabet();
 
 		// Get all states and accepting states
 		// TODO: xw: check the consequence of casting

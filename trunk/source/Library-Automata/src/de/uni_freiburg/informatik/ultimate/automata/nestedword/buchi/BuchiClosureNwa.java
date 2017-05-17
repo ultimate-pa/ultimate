@@ -35,6 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingReturnTransition;
@@ -158,20 +159,10 @@ public final class BuchiClosureNwa<LETTER, STATE> implements IDoubleDeckerAutoma
 	public Set<STATE> getInitialStates() {
 		return mOperand.getInitialStates();
 	}
-
+	
 	@Override
-	public Set<LETTER> getInternalAlphabet() {
-		return mOperand.getInternalAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getCallAlphabet() {
-		return mOperand.getCallAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getReturnAlphabet() {
-		return mOperand.getReturnAlphabet();
+	public VpAlphabet<LETTER> getVpAlphabet() {
+		return mOperand.getVpAlphabet();
 	}
 
 	@Override
@@ -206,7 +197,7 @@ public final class BuchiClosureNwa<LETTER, STATE> implements IDoubleDeckerAutoma
 	
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
-		return mOperand.getReturnAlphabet();
+		return mOperand.lettersReturn(state, hier);
 	}
 
 	@Override

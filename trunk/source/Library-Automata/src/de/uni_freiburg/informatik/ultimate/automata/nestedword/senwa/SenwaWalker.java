@@ -304,8 +304,7 @@ public class SenwaWalker<LETTER, STATE> {
 
 	protected Senwa<LETTER, STATE> getTotalizedEmptyAutomaton() {
 		final Senwa<LETTER, STATE> emptyAutomaton =
-				new Senwa<>(mServices, mTraversedSenwa.getInternalAlphabet(), mTraversedSenwa.getCallAlphabet(),
-						mTraversedSenwa.getReturnAlphabet(), mTraversedSenwa.getStateFactory());
+				new Senwa<>(mServices, mTraversedSenwa.getVpAlphabet(), mTraversedSenwa.getStateFactory());
 		// TODO Christian 2017-02-15 Temporary workaround, make state factory a parameter
 		final STATE sinkState = ((ISinkStateFactory<STATE>) emptyAutomaton.getStateFactory()).createSinkStateContent();
 		emptyAutomaton.addState(sinkState, true, false, sinkState);
@@ -319,17 +318,17 @@ public class SenwaWalker<LETTER, STATE> {
 
 	private void getTotalizedEmptyAutomatonHelper(final Senwa<LETTER, STATE> emptyAutomaton, final STATE sinkState,
 			final STATE state) {
-		for (final LETTER letter : emptyAutomaton.getInternalAlphabet()) {
+		for (final LETTER letter : emptyAutomaton.getVpAlphabet().getInternalAlphabet()) {
 			if (!emptyAutomaton.internalSuccessors(state, letter).iterator().hasNext()) {
 				emptyAutomaton.addInternalTransition(state, letter, sinkState);
 			}
 		}
-		for (final LETTER letter : emptyAutomaton.getCallAlphabet()) {
+		for (final LETTER letter : emptyAutomaton.getVpAlphabet().getCallAlphabet()) {
 			if (!emptyAutomaton.callSuccessors(state, letter).iterator().hasNext()) {
 				emptyAutomaton.addCallTransition(state, letter, sinkState);
 			}
 		}
-		for (final LETTER letter : emptyAutomaton.getReturnAlphabet()) {
+		for (final LETTER letter : emptyAutomaton.getVpAlphabet().getReturnAlphabet()) {
 			for (final STATE hier : emptyAutomaton.getStates()) {
 				if (!emptyAutomaton.returnSuccessors(state, hier, letter).iterator().hasNext()) {
 					emptyAutomaton.addReturnTransition(state, hier, letter, sinkState);

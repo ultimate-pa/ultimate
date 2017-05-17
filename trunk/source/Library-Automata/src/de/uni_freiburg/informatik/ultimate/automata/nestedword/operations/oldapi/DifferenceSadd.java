@@ -160,8 +160,7 @@ public final class DifferenceSadd<LETTER, STATE>
 			mLogger.info(startMessage());
 		}
 
-		mDifference = new NestedWordAutomaton<>(mServices, minuend.getInternalAlphabet(), minuend.getCallAlphabet(),
-				minuend.getReturnAlphabet(), minuend.getStateFactory());
+		mDifference = new NestedWordAutomaton<>(mServices, minuend.getVpAlphabet(), minuend.getStateFactory());
 		mAuxiliaryEmptyStackState = mDifference.getEmptyStackState();
 		computeDifference();
 
@@ -312,7 +311,7 @@ public final class DifferenceSadd<LETTER, STATE>
 		final DeterminizedState<LETTER, STATE> detState = diffState.getSubtrahendDeterminizedState();
 
 		for (final LETTER symbol : mMinuend.lettersInternal(minuState)) {
-			if (!mSubtrahend.getInternalAlphabet().contains(symbol)) {
+			if (!mSubtrahend.getVpAlphabet().getInternalAlphabet().contains(symbol)) {
 				continue;
 			}
 			final DeterminizedState<LETTER, STATE> detSucc = mStateDeterminizer.internalSuccessor(detState, symbol);
@@ -327,7 +326,7 @@ public final class DifferenceSadd<LETTER, STATE>
 		}
 
 		for (final LETTER symbol : mMinuend.lettersCall(minuState)) {
-			if (!mSubtrahend.getCallAlphabet().contains(symbol)) {
+			if (!mSubtrahend.getVpAlphabet().getCallAlphabet().contains(symbol)) {
 				continue;
 			}
 			final DeterminizedState<LETTER, STATE> detSucc = mStateDeterminizer.callSuccessor(detState, symbol);
@@ -341,7 +340,7 @@ public final class DifferenceSadd<LETTER, STATE>
 		}
 
 		for (final LETTER symbol : mMinuend.lettersReturn(minuState)) {
-			if (!mSubtrahend.getReturnAlphabet().contains(symbol)) {
+			if (!mSubtrahend.getVpAlphabet().getReturnAlphabet().contains(symbol)) {
 				continue;
 			}
 			final STATE resLinPred = resSummaryState.getCallerState();

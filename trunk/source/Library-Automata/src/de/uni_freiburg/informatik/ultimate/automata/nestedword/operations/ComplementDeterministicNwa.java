@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
@@ -75,18 +76,8 @@ public final class ComplementDeterministicNwa<LETTER, STATE> implements INestedW
 	}
 
 	@Override
-	public Set<LETTER> getInternalAlphabet() {
-		return mOperand.getInternalAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getCallAlphabet() {
-		return mOperand.getCallAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getReturnAlphabet() {
-		return mOperand.getReturnAlphabet();
+	public VpAlphabet<LETTER> getVpAlphabet() {
+		return mOperand.getVpAlphabet();
 	}
 
 	@Override
@@ -111,17 +102,17 @@ public final class ComplementDeterministicNwa<LETTER, STATE> implements INestedW
 
 	@Override
 	public Set<LETTER> lettersInternal(final STATE state) {
-		return mOperand.getInternalAlphabet();
+		return mOperand.getVpAlphabet().getInternalAlphabet();
 	}
 
 	@Override
 	public Set<LETTER> lettersCall(final STATE state) {
-		return mOperand.getCallAlphabet();
+		return mOperand.getVpAlphabet().getCallAlphabet();
 	}
 	
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
-		return mOperand.getReturnAlphabet();
+		return mOperand.getVpAlphabet().getReturnAlphabet();
 	}
 
 	@Override

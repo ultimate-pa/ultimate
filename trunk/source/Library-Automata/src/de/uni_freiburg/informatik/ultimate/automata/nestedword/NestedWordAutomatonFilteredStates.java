@@ -155,20 +155,10 @@ public class NestedWordAutomatonFilteredStates<LETTER, STATE> implements INested
 	public String sizeInformation() {
 		return mRemainingStates.size() + " states.";
 	}
-
+	
 	@Override
-	public Set<LETTER> getInternalAlphabet() {
-		return mNwa.getInternalAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getCallAlphabet() {
-		return mNwa.getCallAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getReturnAlphabet() {
-		return mNwa.getReturnAlphabet();
+	public VpAlphabet<LETTER> getVpAlphabet() {
+		return mNwa.getVpAlphabet();
 	}
 
 	@Override

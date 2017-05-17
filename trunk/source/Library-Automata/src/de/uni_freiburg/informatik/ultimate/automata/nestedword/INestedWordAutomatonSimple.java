@@ -79,7 +79,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends INwaOutgoingT
 	 *         with letter <tt>a</tt>.
 	 */
 	default Set<LETTER> lettersInternal(final STATE state) {
-		return getInternalAlphabet();
+		return getVpAlphabet().getInternalAlphabet();
 	}
 
 	/**
@@ -89,7 +89,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends INwaOutgoingT
 	 *         letter <tt>a</tt>.
 	 */
 	default Set<LETTER> lettersCall(final STATE state) {
-		return getCallAlphabet();
+		return getVpAlphabet().getCallAlphabet();
 	}
 
 	/**
@@ -99,7 +99,7 @@ public interface INestedWordAutomatonSimple<LETTER, STATE> extends INwaOutgoingT
 	 * hierarchical predecessor is hier and that is labeled with letter <tt>a</tt> 
 	 */
 	default Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
-		return getReturnAlphabet();
+		return getVpAlphabet().getReturnAlphabet();
 	}
 	
 	/**

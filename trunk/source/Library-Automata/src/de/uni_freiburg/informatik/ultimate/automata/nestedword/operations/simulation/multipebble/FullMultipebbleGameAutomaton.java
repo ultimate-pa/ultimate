@@ -35,6 +35,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonForLetterBasedOnDemandConstruction;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -71,14 +72,14 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 		mEmptyStackState = gameFactory.createEmptyStackState();
 		mInitialStates = new HashSet<>();
 		mGameStateMapping = new NestedMap2<>();
-		if (mOperand.getInternalAlphabet().isEmpty()) {
+		if (mOperand.getVpAlphabet().getInternalAlphabet().isEmpty()) {
 			mInternalLetterForSpoilerWinningSink = null;
-			if (mOperand.getCallAlphabet().isEmpty()) {
+			if (mOperand.getVpAlphabet().getCallAlphabet().isEmpty()) {
 				throw new UnsupportedOperationException("Unsupported: automata where internal alphabet and call alphabet are empty.");
 			}
-			mCallLetterForSpoilerWinningSink = mOperand.getCallAlphabet().iterator().next();
+			mCallLetterForSpoilerWinningSink = mOperand.getVpAlphabet().getCallAlphabet().iterator().next();
 		} else {
-			mInternalLetterForSpoilerWinningSink = mOperand.getInternalAlphabet().iterator().next();
+			mInternalLetterForSpoilerWinningSink = mOperand.getVpAlphabet().getInternalAlphabet().iterator().next();
 			mCallLetterForSpoilerWinningSink = null; 
 		}
 		constructInitialStates(initialPairs);
@@ -106,23 +107,8 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 	}
 
 	@Override
-	public Set<LETTER> getAlphabet() {
-		return mOperand.getAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getInternalAlphabet() {
-		return mOperand.getInternalAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getCallAlphabet() {
-		return mOperand.getCallAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getReturnAlphabet() {
-		return mOperand.getReturnAlphabet();
+	public VpAlphabet<LETTER> getVpAlphabet() {
+		return mOperand.getVpAlphabet();
 	}
 
 	@Override

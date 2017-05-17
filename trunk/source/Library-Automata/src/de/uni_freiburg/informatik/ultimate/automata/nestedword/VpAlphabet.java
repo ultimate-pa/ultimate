@@ -32,6 +32,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 
 /**
+ * Visibly pushdown Alphabet.
  * Alphabet consisting of three not necessarily disjoint sets. For visibly pushdown automata a (disjoint) partition into
  * internal, call, and return alphabets is necessary. For our NestedWordAutomata this segmentation can increase the
  * performance of operations but is not necessary.
@@ -40,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
  * @param <LETTER>
  *            Type of the Objects that can be used as letters.
  */
-public class InCaReAlphabet<LETTER> {
+public class VpAlphabet<LETTER> {
 	private final Set<LETTER> mInternalAlphabet;
 	private final Set<LETTER> mCallAlphabet;
 	private final Set<LETTER> mReturnAlphabet;
@@ -55,11 +56,17 @@ public class InCaReAlphabet<LETTER> {
 	 * @param returnAlphabet
 	 *            return alphabet
 	 */
-	public InCaReAlphabet(final Set<LETTER> internalAlphabet, final Set<LETTER> callAlphabet,
+	public VpAlphabet(final Set<LETTER> internalAlphabet, final Set<LETTER> callAlphabet,
 			final Set<LETTER> returnAlphabet) {
 		mInternalAlphabet = internalAlphabet;
 		mCallAlphabet = callAlphabet;
 		mReturnAlphabet = returnAlphabet;
+	}
+	
+	public VpAlphabet(final Set<LETTER> internalAlphabet) {
+		mInternalAlphabet = internalAlphabet;
+		mCallAlphabet = Collections.emptySet();
+		mReturnAlphabet = Collections.emptySet();
 	}
 
 	/**
@@ -68,12 +75,12 @@ public class InCaReAlphabet<LETTER> {
 	 * @param automaton
 	 *            automaton
 	 */
-	public InCaReAlphabet(final IAutomaton<LETTER, ?> automaton) {
+	public VpAlphabet(final IAutomaton<LETTER, ?> automaton) {
 		if (automaton instanceof INestedWordAutomatonSimple) {
 			final INestedWordAutomatonSimple<LETTER, ?> nwa = (INestedWordAutomatonSimple<LETTER, ?>) automaton;
-			mInternalAlphabet = nwa.getInternalAlphabet();
-			mCallAlphabet = nwa.getCallAlphabet();
-			mReturnAlphabet = nwa.getReturnAlphabet();
+			mInternalAlphabet = nwa.getVpAlphabet().getInternalAlphabet();
+			mCallAlphabet = nwa.getVpAlphabet().getCallAlphabet();
+			mReturnAlphabet = nwa.getVpAlphabet().getReturnAlphabet();
 		} else {
 			mInternalAlphabet = automaton.getAlphabet();
 			mCallAlphabet = Collections.emptySet();
@@ -81,15 +88,72 @@ public class InCaReAlphabet<LETTER> {
 		}
 	}
 
+	/**
+	 * @return Set of all letters that can occur as label of an internal transition.
+	 *         <p>
+	 *         The default definition of nested word automata does not allow separate alphabets for internal, call, and
+	 *         return symbols. The default definition of visibly pushdown automata requires that all three alphabets are
+	 *         disjoint. We deviate from both definitions. We allow separate alphabets but do not require that they are
+	 *         disjoint.
+	 */
 	public Set<LETTER> getInternalAlphabet() {
 		return mInternalAlphabet;
 	}
 
+	
+	/**
+	 * @return Set of all letters that can occur as label of a call transition.
+	 * @see #getInternalAlphabet()
+	 */
 	public Set<LETTER> getCallAlphabet() {
 		return mCallAlphabet;
 	}
 
+	
+	/**
+	 * @return Set of all letters that can occur as label of a return transition.
+	 * @see #getInternalAlphabet()
+	 */
 	public Set<LETTER> getReturnAlphabet() {
 		return mReturnAlphabet;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((mCallAlphabet == null) ? 0 : mCallAlphabet.hashCode());
+		result = prime * result + ((mInternalAlphabet == null) ? 0 : mInternalAlphabet.hashCode());
+		result = prime * result + ((mReturnAlphabet == null) ? 0 : mReturnAlphabet.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(final Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		final VpAlphabet other = (VpAlphabet) obj;
+		if (mCallAlphabet == null) {
+			if (other.mCallAlphabet != null)
+				return false;
+		} else if (!mCallAlphabet.equals(other.mCallAlphabet))
+			return false;
+		if (mInternalAlphabet == null) {
+			if (other.mInternalAlphabet != null)
+				return false;
+		} else if (!mInternalAlphabet.equals(other.mInternalAlphabet))
+			return false;
+		if (mReturnAlphabet == null) {
+			if (other.mReturnAlphabet != null)
+				return false;
+		} else if (!mReturnAlphabet.equals(other.mReturnAlphabet))
+			return false;
+		return true;
+	}
+	
+	
 }

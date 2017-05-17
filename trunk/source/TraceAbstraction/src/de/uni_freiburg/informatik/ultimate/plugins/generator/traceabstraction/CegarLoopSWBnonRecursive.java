@@ -206,8 +206,7 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 
 		// create an new interpolant automaton
 		mInterpolAutomaton = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices),
-				mNestedAbstraction.getAlphabet(), mNestedAbstraction.getCallAlphabet(),
-				mNestedAbstraction.getReturnAlphabet(), mNestedAbstraction.getStateFactory());
+				mNestedAbstraction.getVpAlphabet(), mNestedAbstraction.getStateFactory());
 
 		// remember some of its properties
 		mAbstractionInitialState = mInterpolantGenerator.getPrecondition();

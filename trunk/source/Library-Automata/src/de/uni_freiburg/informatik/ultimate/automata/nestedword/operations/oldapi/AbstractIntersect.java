@@ -39,6 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
@@ -99,16 +100,16 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 		}
 
 		final Set<LETTER> newInternals = new HashSet<>();
-		newInternals.addAll(mFstNwa.getInternalAlphabet());
-		newInternals.retainAll(mSndNwa.getInternalAlphabet());
+		newInternals.addAll(mFstNwa.getVpAlphabet().getInternalAlphabet());
+		newInternals.retainAll(mSndNwa.getVpAlphabet().getInternalAlphabet());
 		final Set<LETTER> newCalls = new HashSet<>();
-		newCalls.addAll(mFstNwa.getCallAlphabet());
-		newCalls.retainAll(mSndNwa.getCallAlphabet());
+		newCalls.addAll(mFstNwa.getVpAlphabet().getCallAlphabet());
+		newCalls.retainAll(mSndNwa.getVpAlphabet().getCallAlphabet());
 		final Set<LETTER> newReturns = new HashSet<>();
-		newReturns.addAll(mFstNwa.getReturnAlphabet());
-		newReturns.retainAll(mSndNwa.getReturnAlphabet());
+		newReturns.addAll(mFstNwa.getVpAlphabet().getReturnAlphabet());
+		newReturns.retainAll(mSndNwa.getVpAlphabet().getReturnAlphabet());
 
-		mResultNwa = new NestedWordAutomaton<>(mServices, newInternals, newCalls, newReturns, stateFactory);
+		mResultNwa = new NestedWordAutomaton<>(mServices, new VpAlphabet<>(newInternals, newCalls, newReturns), stateFactory);
 	}
 
 	@Override

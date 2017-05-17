@@ -34,7 +34,6 @@ import java.util.Objects;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
@@ -87,8 +86,7 @@ public class LassoExtractorBuchi<LETTER extends IIcfgTransition<?>> extends Abst
 			mSomeNoneForErrorReport = extractSomeNodeForErrorReport(rootNode);
 		} else {
 			final NestedLassoWord<LETTER> nlw = run.getNestedLassoWord();
-			final InCaReAlphabet<LETTER> alphabet = new InCaReAlphabet<>(mCfgAutomaton);
-			mLassoAutomaton = new LassoAutomatonBuilder<>(alphabet, mPredicateFactoryRc, mPredicateFactory,
+			mLassoAutomaton = new LassoAutomatonBuilder<>(mCfgAutomaton.getVpAlphabet(), mPredicateFactoryRc, mPredicateFactory,
 					nlw.getStem(), nlw.getLoop(), mServices).getResult();
 			final INestedWordAutomatonSimple<LETTER, IPredicate> difference =
 					new BuchiDifferenceFKV<>(new AutomataLibraryServices(mServices), mPredicateFactoryRc, mCfgAutomaton,

@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -65,13 +65,12 @@ public class CanonicalInterpolantAutomatonBuilder<CL, LETTER> extends CoverageAn
 
 	public CanonicalInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final InterpolantsPreconditionPostcondition ipp, final List<CL> programPointSequence,
-			final InCaReAlphabet<LETTER> alphabet, final CfgSmtToolkit csToolkit,
+			final VpAlphabet<LETTER> alphabet, final CfgSmtToolkit csToolkit,
 			final IStateFactory<IPredicate> predicateFactory, final ILogger logger,
 			final IPredicateUnifier predicateUnifier, final NestedWord<LETTER> nestedWord) {
 		super(services, ipp, programPointSequence, logger, predicateUnifier);
 		mNestedWord = nestedWord;
-		mIA = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet.getInternalAlphabet(),
-				alphabet.getCallAlphabet(), alphabet.getReturnAlphabet(), predicateFactory);
+		mIA = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet, predicateFactory);
 	}
 
 	@Override
@@ -96,13 +95,13 @@ public class CanonicalInterpolantAutomatonBuilder<CL, LETTER> extends CoverageAn
 	protected void postprocess() {
 		if (mSelfloopAtInitial) {
 			final IPredicate precond = mIpp.getPrecondition();
-			for (final LETTER symbol : mIA.getInternalAlphabet()) {
+			for (final LETTER symbol : mIA.getVpAlphabet().getInternalAlphabet()) {
 				mIA.addInternalTransition(precond, symbol, precond);
 			}
-			for (final LETTER symbol : mIA.getCallAlphabet()) {
+			for (final LETTER symbol : mIA.getVpAlphabet().getCallAlphabet()) {
 				mIA.addCallTransition(precond, symbol, precond);
 			}
-			for (final LETTER symbol : mIA.getReturnAlphabet()) {
+			for (final LETTER symbol : mIA.getVpAlphabet().getReturnAlphabet()) {
 				mIA.addReturnTransition(precond, precond, symbol, precond);
 				for (final Integer pos : mAlternativeCallPredecessors.keySet()) {
 					for (final IPredicate hier : mAlternativeCallPredecessors.get(pos)) {
@@ -114,13 +113,13 @@ public class CanonicalInterpolantAutomatonBuilder<CL, LETTER> extends CoverageAn
 
 		if (mSelfloopAtFinal) {
 			final IPredicate postcond = mIpp.getPostcondition();
-			for (final LETTER symbol : mIA.getInternalAlphabet()) {
+			for (final LETTER symbol : mIA.getVpAlphabet().getInternalAlphabet()) {
 				mIA.addInternalTransition(postcond, symbol, postcond);
 			}
-			for (final LETTER symbol : mIA.getCallAlphabet()) {
+			for (final LETTER symbol : mIA.getVpAlphabet().getCallAlphabet()) {
 				mIA.addCallTransition(postcond, symbol, postcond);
 			}
-			for (final LETTER symbol : mIA.getReturnAlphabet()) {
+			for (final LETTER symbol : mIA.getVpAlphabet().getReturnAlphabet()) {
 				mIA.addReturnTransition(postcond, postcond, symbol, postcond);
 				for (final Integer pos : mAlternativeCallPredecessors.keySet()) {
 					for (final IPredicate hier : mAlternativeCallPredecessors.get(pos)) {

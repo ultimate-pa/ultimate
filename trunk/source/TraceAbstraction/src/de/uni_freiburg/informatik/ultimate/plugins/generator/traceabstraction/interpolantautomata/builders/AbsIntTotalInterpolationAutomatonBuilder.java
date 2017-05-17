@@ -137,8 +137,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 		mLogger.info("Creating interpolant automaton from AI predicates (total)");
 
 		final NestedWordAutomaton<LETTER, IPredicate> result = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
-				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
+				new AutomataLibraryServices(mServices), oldAbstraction.getVpAlphabet(), oldAbstraction.getStateFactory());
 
 		final NestedRun<LETTER, IPredicate> counterExample = (NestedRun<LETTER, IPredicate>) mCurrentCounterExample;
 		final Word<LETTER> word = counterExample.getWord();

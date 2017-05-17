@@ -116,7 +116,7 @@ public class TransitionConsistencyCheck<LETTER, STATE> {
 			result = result && returnSummary(trans.getLinPred(), trans.getHierPred(), trans.getLetter(), state);
 			assert result;
 		}
-		for (final LETTER letter : mNwa.getReturnAlphabet()) {
+		for (final LETTER letter : mNwa.getVpAlphabet().getReturnAlphabet()) {
 			for (final SummaryReturnTransition<LETTER, STATE> trans : mNwa.summarySuccessors(state, letter)) {
 				result = result && returnIn(trans.getLinPred(), state, trans.getLetter(), trans.getSucc());
 				assert result;

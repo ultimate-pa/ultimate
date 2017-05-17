@@ -46,32 +46,22 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  *            Type of objects which can be used as states.
  */
 public interface INwaOutgoingTransitionProvider<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
-	/**
-	 * @return Set of all letters that can occur as label of an internal transition.
-	 *         <p>
-	 *         The default definition of nested word automata does not allow separate alphabets for internal, call, and
-	 *         return symbols. The default definition of visibly pushdown automata requires that all three alphabets are
-	 *         disjoint. We deviate from both definitions. We allow separate alphabets but do not require that they are
-	 *         disjoint.
-	 */
-	Set<LETTER> getInternalAlphabet();
+
+//	Set<LETTER> getInternalAlphabet();
+//	
+//	Set<LETTER> getCallAlphabet();
+//
+//	Set<LETTER> getReturnAlphabet();
+	
+	VpAlphabet<LETTER> getVpAlphabet();
+
 	
 	@Override
 	default Set<LETTER> getAlphabet() {
-		return getInternalAlphabet();
+		return getVpAlphabet().getInternalAlphabet();
 	}
 
-	/**
-	 * @return Set of all letters that can occur as label of a call transition.
-	 * @see #getInternalAlphabet()
-	 */
-	Set<LETTER> getCallAlphabet();
 
-	/**
-	 * @return Set of all letters that can occur as label of a return transition.
-	 * @see #getInternalAlphabet()
-	 */
-	Set<LETTER> getReturnAlphabet();
 
 	/**
 	 * @return Auxiliary state used to model the hierarchical predecessor of a pending return in some operations.<br>

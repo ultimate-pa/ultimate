@@ -27,13 +27,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstractionwithafas;
 
 import java.util.BitSet;
-import java.util.Collections;
 import java.util.LinkedList;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -55,9 +55,7 @@ public class RAFA_Determination<LETTER> extends GeneralOperation<LETTER, IPredic
 		mCsToolkit = csToolkit;
 		mPredicateUnifier = predicateUnifier;
 		mResultAutomaton = new NestedWordAutomaton<>(services,
-				alternatingAutomaton.getAlphabet(),
-				Collections.<LETTER> emptySet(),
-				Collections.<LETTER> emptySet(),
+				new VpAlphabet<>(alternatingAutomaton.getAlphabet()),
 				alternatingAutomaton.getStateFactory());
 		final LinkedList<BitSet> newStates = new LinkedList<>();
 		newStates.add(alternatingAutomaton.getFinalStatesBitVector());

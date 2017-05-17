@@ -27,12 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking;
 
 import java.util.ArrayDeque;
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -49,12 +49,9 @@ public class WitnessModelToAutomatonTransformer {
 		super();
 		mWitnessRoot = witnessRoot;
 		final Set<WitnessEdge> internalAlphabet = new LinkedHashSet<>();
-		final Set<WitnessEdge> callAlphabet = Collections.emptySet();
-		final Set<WitnessEdge> returnAlphabet = Collections.emptySet();
 		final IStateFactory<WitnessNode> stateFactory = new IStateFactory<WitnessNode>() {
 		};
-		mResult = new NestedWordAutomaton<>(new AutomataLibraryServices(services), internalAlphabet, callAlphabet,
-				returnAlphabet, stateFactory);
+		mResult = new NestedWordAutomaton<>(new AutomataLibraryServices(services), new VpAlphabet<>(internalAlphabet), stateFactory);
 		constructAutomaton(internalAlphabet);
 	}
 

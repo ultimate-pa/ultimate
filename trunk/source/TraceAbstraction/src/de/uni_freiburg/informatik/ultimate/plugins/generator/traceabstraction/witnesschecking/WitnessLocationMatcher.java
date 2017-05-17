@@ -66,16 +66,16 @@ public class WitnessLocationMatcher<LETTER extends IIcfgTransition<?>> {
 			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		partitionEdges(witnessAutomaton.getInternalAlphabet());
-		matchLocations(controlFlowAutomaton.getInternalAlphabet());
-		matchLocations(controlFlowAutomaton.getCallAlphabet());
-		matchLocations(controlFlowAutomaton.getReturnAlphabet());
-		mUnmatchedWitnessLetters = new ArrayList<>(witnessAutomaton.getInternalAlphabet());
+		partitionEdges(witnessAutomaton.getVpAlphabet().getInternalAlphabet());
+		matchLocations(controlFlowAutomaton.getVpAlphabet().getInternalAlphabet());
+		matchLocations(controlFlowAutomaton.getVpAlphabet().getCallAlphabet());
+		matchLocations(controlFlowAutomaton.getVpAlphabet().getReturnAlphabet());
+		mUnmatchedWitnessLetters = new ArrayList<>(witnessAutomaton.getVpAlphabet().getInternalAlphabet());
 		mUnmatchedWitnessLetters.removeAll(mWitnessLetters2SingleLineLocations.getDomain());
 		// for (WitnessEdge witnessLetter : mUnmatchedWitnessLetters) {
 		// mLogger.info("Unmatched witness edge: " + witnessLetter);
 		// }
-		mLogger.info(witnessAutomaton.getInternalAlphabet().size() + " witness edges");
+		mLogger.info(witnessAutomaton.getVpAlphabet().getInternalAlphabet().size() + " witness edges");
 		mLogger.info(mPureAnnotationEdges.size() + " pure annotation edges");
 		mLogger.info(mUnmatchedWitnessLetters.size() + " unmatched witness edges");
 		mLogger.info(mWitnessLetters2SingleLineLocations.getDomain().size() + " matched witness edges");

@@ -114,8 +114,7 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 		mComplement = complement;
 		mOperand = operand;
 		mLogger.info(startMessage());
-		mTraversedNwa = new DoubleDeckerAutomaton<>(mServices, operand.getInternalAlphabet(), operand.getCallAlphabet(),
-				operand.getReturnAlphabet(), operand.getStateFactory());
+		mTraversedNwa = new DoubleDeckerAutomaton<>(mServices, operand.getVpAlphabet(), operand.getStateFactory());
 		super.mRemoveDeadEnds = removeDeadEnds;
 		super.mRemoveNonLiveStates = removeNonLiveStates;
 		final boolean operandHasInitialStates = mOperand.getInitialStates().iterator().hasNext();
@@ -140,13 +139,13 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 				throw new AutomataOperationCanceledException(this.getClass());
 			}
 
-			for (final LETTER letter : mTraversedNwa.getInternalAlphabet()) {
+			for (final LETTER letter : mTraversedNwa.getVpAlphabet().getInternalAlphabet()) {
 				if (!mTraversedNwa.internalSuccessors(state, letter).iterator().hasNext()) {
 					((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addInternalTransition(state, letter,
 							sinkState);
 				}
 			}
-			for (final LETTER letter : mTraversedNwa.getCallAlphabet()) {
+			for (final LETTER letter : mTraversedNwa.getVpAlphabet().getCallAlphabet()) {
 				if (!mTraversedNwa.callSuccessors(state, letter).iterator().hasNext()) {
 					((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addCallTransition(state, letter, sinkState);
 				}
@@ -156,7 +155,7 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 	}
 
 	private void makeAutomatonTotalReturn(final STATE sinkState, final STATE state) {
-		for (final LETTER symbol : mTraversedNwa.getReturnAlphabet()) {
+		for (final LETTER symbol : mTraversedNwa.getVpAlphabet().getReturnAlphabet()) {
 			for (final STATE hier : mTraversedNwa.getStates()) {
 				if (!mTraversedNwa.returnSuccessors(state, hier, symbol).iterator().hasNext()) {
 					((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addReturnTransition(state, hier, symbol,

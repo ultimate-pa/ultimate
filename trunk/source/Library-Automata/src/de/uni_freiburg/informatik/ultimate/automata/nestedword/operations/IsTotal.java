@@ -87,7 +87,7 @@ public class IsTotal<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	 */
 	private boolean isTotal(final STATE state) {
 		// internals
-		for (final LETTER symbol : mOperand.getInternalAlphabet()) {
+		for (final LETTER symbol : mOperand.getVpAlphabet().getInternalAlphabet()) {
 			final Iterable<OutgoingInternalTransition<LETTER, STATE>> it = mOperand.internalSuccessors(state, symbol);
 			if (!it.iterator().hasNext()) {
 				return false;
@@ -95,7 +95,7 @@ public class IsTotal<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 		}
 
 		// calls
-		for (final LETTER symbol : mOperand.getCallAlphabet()) {
+		for (final LETTER symbol : mOperand.getVpAlphabet().getCallAlphabet()) {
 			final Iterable<OutgoingCallTransition<LETTER, STATE>> it = mOperand.callSuccessors(state, symbol);
 			if (!it.iterator().hasNext()) {
 				return false;
@@ -103,7 +103,7 @@ public class IsTotal<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 		}
 
 		// returns
-		for (final LETTER symbol : mOperand.getReturnAlphabet()) {
+		for (final LETTER symbol : mOperand.getVpAlphabet().getReturnAlphabet()) {
 			for (final STATE hier : mOperand.getStates()) {
 				// TODO Christian 2016-09-18: Is this what we want? How can we check that 'hier' is a valid candidate?
 				final Iterable<OutgoingReturnTransition<LETTER, STATE>> it =

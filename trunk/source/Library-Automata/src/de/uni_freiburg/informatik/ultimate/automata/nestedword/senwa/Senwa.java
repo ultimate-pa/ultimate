@@ -34,6 +34,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -77,9 +78,8 @@ public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, ST
 	 * @param stateFactory
 	 *            state factory
 	 */
-	public Senwa(final AutomataLibraryServices services, final Set<LETTER> internalAlphabet,
-			final Set<LETTER> callAlphabet, final Set<LETTER> returnAlphabet, final IStateFactory<STATE> stateFactory) {
-		super(services, internalAlphabet, callAlphabet, returnAlphabet, stateFactory);
+	public Senwa(final AutomataLibraryServices services, final VpAlphabet<LETTER> vpAlphabet, final IStateFactory<STATE> stateFactory) {
+		super(services, vpAlphabet, stateFactory);
 		assert isModuleInformationConsistent();
 	}
 	

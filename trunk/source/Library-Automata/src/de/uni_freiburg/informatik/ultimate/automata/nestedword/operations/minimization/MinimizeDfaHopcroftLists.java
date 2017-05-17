@@ -140,7 +140,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 //		stateToOutgoingEdges = new HashMap<Integer,
 //				Iterable<OutgoingInternalTransition<LETTER, STATE>>>(
 //				stateAmount);
-		final int letterAmount = operand.getInternalAlphabet().size();
+		final int letterAmount = operand.getVpAlphabet().getInternalAlphabet().size();
 		mLetterToId = new HashMap<>(letterAmount);
 
 		init(stateAmount, letterAmount);
@@ -309,7 +309,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 			maxAmount = letterAmount;
 		}
 		final Iterator<STATE> states = mOperand.getStates().iterator();
-		final Iterator<LETTER> letters = mOperand.getInternalAlphabet().iterator();
+		final Iterator<LETTER> letters = mOperand.getVpAlphabet().getInternalAlphabet().iterator();
 
 		for (int i = 0; i < maxAmount; i++) {
 			if (states.hasNext()) {
@@ -443,7 +443,7 @@ public final class MinimizeDfaHopcroftLists<LETTER, STATE> extends AbstractMinim
 			splitCandidates.remove(splitter);
 
 			final LinkedList<LinkedHashSet<Integer>> splitCandidatesToAppend =
-					split(splitter, mOperand.getInternalAlphabet().size());
+					split(splitter, mOperand.getVpAlphabet().getInternalAlphabet().size());
 
 			splitCandidates.addAll(splitCandidatesToAppend);
 		}

@@ -106,8 +106,7 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 		}
 
 		final NestedWordAutomaton<LETTER, IPredicate> result = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(mServices), oldAbstraction.getInternalAlphabet(),
-				oldAbstraction.getCallAlphabet(), oldAbstraction.getReturnAlphabet(), oldAbstraction.getStateFactory());
+				new AutomataLibraryServices(mServices), oldAbstraction.getVpAlphabet(), oldAbstraction.getStateFactory());
 
 		final Map<IPredicate, IPredicate> newStates = new HashMap<>();
 		final Map<LETTER, IPredicate> callHierPreds = new HashMap<>();

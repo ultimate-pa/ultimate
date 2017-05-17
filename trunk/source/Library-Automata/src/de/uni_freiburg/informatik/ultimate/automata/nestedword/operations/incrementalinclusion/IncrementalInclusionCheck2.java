@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 
@@ -606,7 +607,7 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 	}
 
 	public static <LETTER, STATE> void abortIfContainsCallOrReturn(final INestedWordAutomatonSimple<LETTER, STATE> a) {
-		if (!a.getCallAlphabet().isEmpty() || !a.getReturnAlphabet().isEmpty()) {
+		if (!NestedWordAutomataUtils.isFiniteAutomaton(a)) {
 			throw new UnsupportedOperationException("Operation does not support call or return");
 		}
 	}

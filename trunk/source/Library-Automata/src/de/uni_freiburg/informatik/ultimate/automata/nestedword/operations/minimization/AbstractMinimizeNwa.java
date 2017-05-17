@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutom
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEquivalent;
@@ -300,8 +301,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 		if (mResult != null) {
 			throw new AssertionError("The result has already been constructed.");
 		}
-		mTemporaryResult = new DoubleDeckerAutomaton<>(mServices, getOperand().getInternalAlphabet(),
-				getOperand().getCallAlphabet(), getOperand().getReturnAlphabet(), mStateFactory);
+		mTemporaryResult = new DoubleDeckerAutomaton<>(mServices, getOperand().getVpAlphabet(), mStateFactory);
 	}
 
 	/**
@@ -503,7 +503,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	 * @return true iff automaton contains no call and return letters
 	 */
 	protected final boolean isFiniteAutomaton() {
-		return (getOperand().getCallAlphabet().isEmpty()) && (getOperand().getReturnAlphabet().isEmpty());
+		return (NestedWordAutomataUtils.isFiniteAutomaton(getOperand()));
 	}
 
 	/**

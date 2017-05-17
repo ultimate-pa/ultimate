@@ -27,11 +27,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.automatascriptinterpreter;
 
-import java.util.HashSet;
+import java.util.Collections;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -105,9 +106,10 @@ public class AutomataScriptInterpreterObserver implements IUnmanagedObserver {
 	
 	public IAutomaton<String, String> getDummyAutomatonWithMessage() {
 		final NestedWordAutomaton<String, String> dummyAutomaton = new NestedWordAutomaton<>(
-				new AutomataLibraryServices(mServices), new HashSet<String>(0), null, null, new StringFactory());
-		dummyAutomaton.addState(true, false, "Use the print keyword in .ats file to select an automaton"
-				+ " for visualization");
+				new AutomataLibraryServices(mServices), new VpAlphabet<>(Collections.emptySet()),
+				new StringFactory());
+		dummyAutomaton.addState(true, false,
+				"Use the print keyword in .ats file to select an automaton" + " for visualization");
 		return dummyAutomaton;
 	}
 }

@@ -99,14 +99,12 @@ public class QuotientNwaConstructor<LETTER, STATE> {
 
 		if (operand instanceof IDoubleDeckerAutomaton<?, ?>) {
 			// create a DoubleDeckerAutomaton
-			mResult = new DoubleDeckerAutomaton<>(mServices, mOperand.getInternalAlphabet(), mOperand.getCallAlphabet(),
-					mOperand.getReturnAlphabet(), mStateFactory);
+			mResult = new DoubleDeckerAutomaton<>(mServices, mOperand.getVpAlphabet(), mStateFactory);
 			mUp2Down = new HashMap<>(partition.size());
 			((DoubleDeckerAutomaton<LETTER, STATE>) mResult).setUp2Down(mUp2Down);
 		} else {
 			// create a NestedWordAutomaton
-			mResult = new NestedWordAutomaton<>(mServices, mOperand.getInternalAlphabet(), mOperand.getCallAlphabet(),
-					mOperand.getReturnAlphabet(), mStateFactory);
+			mResult = new NestedWordAutomaton<>(mServices, mOperand.getVpAlphabet(), mStateFactory);
 			mUp2Down = null;
 		}
 

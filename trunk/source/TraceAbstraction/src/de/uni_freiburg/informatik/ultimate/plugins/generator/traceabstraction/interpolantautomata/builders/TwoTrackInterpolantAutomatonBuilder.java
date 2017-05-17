@@ -27,14 +27,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -93,20 +91,8 @@ public class TwoTrackInterpolantAutomatonBuilder<LETTER> implements IInterpolant
 
 	private NestedWordAutomaton<LETTER, IPredicate> buildTwoTrackInterpolantAutomaton(
 			final IAutomaton<LETTER, IPredicate> abstraction, final IStateFactory<IPredicate> tAContentFactory) {
-		final Set<LETTER> internalAlphabet = abstraction.getAlphabet();
-		Set<LETTER> callAlphabet = new HashSet<>(0);
-		Set<LETTER> returnAlphabet = new HashSet<>(0);
-
-		if (abstraction instanceof INestedWordAutomatonSimple) {
-			final INestedWordAutomatonSimple<LETTER, IPredicate> abstractionAsNwa =
-					(INestedWordAutomatonSimple<LETTER, IPredicate>) abstraction;
-			callAlphabet = abstractionAsNwa.getCallAlphabet();
-			returnAlphabet = abstractionAsNwa.getReturnAlphabet();
-		}
-
 		final NestedWordAutomaton<LETTER, IPredicate> nwa =
-				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), internalAlphabet, callAlphabet,
-						returnAlphabet, tAContentFactory);
+				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), new VpAlphabet<>(abstraction), tAContentFactory);
 
 		// Add states, which contains the predicates computed via SP, WP.
 		addStatesAccordingToPredicates(nwa);

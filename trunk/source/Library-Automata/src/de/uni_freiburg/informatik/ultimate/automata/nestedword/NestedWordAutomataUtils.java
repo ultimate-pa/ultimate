@@ -286,7 +286,7 @@ public final class NestedWordAutomataUtils {
 	 * @return {@code true} iff both the call alphabet and the return alphabet is empty.
 	 */
 	public static <LETTER, STATE> boolean isFiniteAutomaton(final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
-		return nwa.getCallAlphabet().isEmpty() && nwa.getReturnAlphabet().isEmpty();
+		return nwa.getVpAlphabet().getCallAlphabet().isEmpty() && nwa.getVpAlphabet().getReturnAlphabet().isEmpty();
 	}
 
 	/**
@@ -305,9 +305,7 @@ public final class NestedWordAutomataUtils {
 	public static <LETTER, STATE> boolean sameAlphabet(final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
 			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) {
 		boolean result;
-		result = fstOperand.getInternalAlphabet().equals(sndOperand.getInternalAlphabet());
-		result = result && fstOperand.getCallAlphabet().equals(sndOperand.getCallAlphabet());
-		result = result && fstOperand.getReturnAlphabet().equals(sndOperand.getReturnAlphabet());
+		result = fstOperand.getVpAlphabet().equals(sndOperand.getVpAlphabet());
 		return result;
 	}
 

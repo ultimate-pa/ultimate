@@ -127,8 +127,7 @@ public class MinimizeNfaBrzozowski<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	@SuppressWarnings("squid:S3047")
 	private INestedWordAutomaton<LETTER, STATE> reverse(final INestedWordAutomaton<LETTER, STATE> automaton) {
 		final NestedWordAutomaton<LETTER, STATE> reversed =
-				new NestedWordAutomaton<>(mServices, automaton.getInternalAlphabet(), automaton.getCallAlphabet(),
-						automaton.getReturnAlphabet(), automaton.getStateFactory());
+				new NestedWordAutomaton<>(mServices, automaton.getVpAlphabet(), automaton.getStateFactory());
 
 		// add states
 		for (final STATE state : automaton.getStates()) {

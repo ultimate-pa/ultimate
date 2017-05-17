@@ -340,7 +340,7 @@ public class MinimizeDfaHopcroftParallel<LETTER, STATE> extends AbstractMinimize
 
 			final HashSet<Integer> elem = currentBlock.getStates();
 
-			for (final LETTER letter : mOperand.getInternalAlphabet()) {
+			for (final LETTER letter : mOperand.getVpAlphabet().getInternalAlphabet()) {
 				// Initialize Predecessors on letter.
 				final Set<Integer> x = new HashSet<>();
 				for (final int state : elem) {

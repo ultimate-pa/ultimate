@@ -36,6 +36,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IConcurrentProductStateFactory;
@@ -114,16 +116,16 @@ public final class ConcurrentProduct<LETTER, STATE> extends BinaryNwaOperation<L
 		*/
 
 		if (mLogger.isWarnEnabled()
-				&& (!fstOperand.getCallAlphabet().isEmpty() || !fstOperand.getReturnAlphabet().isEmpty()
-						|| !sndOperand.getCallAlphabet().isEmpty() || !sndOperand.getReturnAlphabet().isEmpty())) {
+				&& (!NestedWordAutomataUtils.isFiniteAutomaton(fstOperand)
+						|| !NestedWordAutomataUtils.isFiniteAutomaton(sndOperand))) {
 			mLogger.warn("Call alphabet and return alphabet are ignored.");
 		}
-		mSynchronizationAlphabet = new HashSet<>(fstOperand.getInternalAlphabet());
-		mSynchronizationAlphabet.retainAll(sndOperand.getInternalAlphabet());
-		final Set<LETTER> commonAlphabet = new HashSet<>(fstOperand.getInternalAlphabet());
-		commonAlphabet.addAll(sndOperand.getInternalAlphabet());
+		mSynchronizationAlphabet = new HashSet<>(fstOperand.getAlphabet());
+		mSynchronizationAlphabet.retainAll(sndOperand.getAlphabet());
+		final Set<LETTER> commonAlphabet = new HashSet<>(fstOperand.getAlphabet());
+		commonAlphabet.addAll(sndOperand.getAlphabet());
 		// TODO Christian 2016-09-04: Use Collections.emptySet() or is it intended that a user modifies the result?
-		mResult = new NestedWordAutomaton<>(mServices, commonAlphabet, new HashSet<LETTER>(0), new HashSet<LETTER>(0),
+		mResult = new NestedWordAutomaton<>(mServices, new VpAlphabet<>(commonAlphabet),
 				mContentFactory);
 		constructInitialStates();
 		while (!mWorklist.isEmpty()) {

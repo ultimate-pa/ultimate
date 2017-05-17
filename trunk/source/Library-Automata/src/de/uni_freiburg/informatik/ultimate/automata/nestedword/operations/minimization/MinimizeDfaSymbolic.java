@@ -148,7 +148,7 @@ public class MinimizeDfaSymbolic<LETTER, STATE> extends AbstractMinimizeNwa<LETT
 		mInitialState = mOperand.getInitialStates().iterator().next();
 
 		// get internal alphabet of moperand.
-		final Collection<LETTER> alphabet = mOperand.getInternalAlphabet();
+		final Collection<LETTER> alphabet = mOperand.getVpAlphabet().getInternalAlphabet();
 
 		// iterate over whole alphabet and construct letter --> atom mapping.
 		final Iterator<LETTER> alphabetIt = alphabet.iterator();

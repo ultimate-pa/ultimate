@@ -37,6 +37,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -110,9 +111,9 @@ final class Converter<LETTER, STATE> {
 		mOldInitialStates = automaton.getInitialStates();
 		mOldFinalStates = automaton.getFinalStates();
 
-		mIAlphabet = automaton.getInternalAlphabet();
-		mCAlphabet = automaton.getCallAlphabet();
-		mRAlphabet = automaton.getReturnAlphabet();
+		mIAlphabet = automaton.getVpAlphabet().getInternalAlphabet();
+		mCAlphabet = automaton.getVpAlphabet().getCallAlphabet();
+		mRAlphabet = automaton.getVpAlphabet().getReturnAlphabet();
 
 		mOldStateIndex = new HashMap<>();
 		mOldState = new ArrayList<>();
@@ -280,7 +281,7 @@ final class Converter<LETTER, STATE> {
 		 */
 
 		NestedWordAutomaton<LETTER, STATE> nwa;
-		nwa = new NestedWordAutomaton<LETTER, STATE>(mServices, mIAlphabet, mCAlphabet, mRAlphabet, mFactory);
+		nwa = new NestedWordAutomaton<LETTER, STATE>(mServices, new VpAlphabet<>(mIAlphabet, mCAlphabet, mRAlphabet), mFactory);
 
 		for (final STATE st : newState) {
 			nwa.addState(newInitialStates.contains(st), newFinalStates.contains(st), st);

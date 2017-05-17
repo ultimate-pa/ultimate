@@ -116,7 +116,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	 */
 	private void initializeData() {
 		final int nOfStates = mOperand.size();
-		final int nOfLables = mOperand.getInternalAlphabet().size();
+		final int nOfLables = mOperand.getVpAlphabet().getInternalAlphabet().size();
 		initializeMappings(nOfStates, nOfLables);
 		initializeLables();
 	}
@@ -137,7 +137,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 			mState2int.put(state, ++index);
 		}
 		index = -1;
-		for (final LETTER letter : mOperand.getInternalAlphabet()) {
+		for (final LETTER letter : mOperand.getVpAlphabet().getInternalAlphabet()) {
 			mInt2letter.add(letter);
 			mLetter2int.put(letter, ++index);
 		}
@@ -150,7 +150,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 	 */
 	private void initializeLables() {
 		final int capacity = (int) Math.min(Integer.MAX_VALUE,
-				(double) mOperand.size() * mOperand.size() * mOperand.getInternalAlphabet().size());
+				(double) mOperand.size() * mOperand.size() * mOperand.getVpAlphabet().getInternalAlphabet().size());
 		mLabels = new int[capacity];
 		mLabelTails = new int[capacity];
 		mLabelHeads = new int[capacity];
@@ -188,7 +188,7 @@ public class MinimizeDfaHopcroftWiki<LETTER, STATE> extends AbstractMinimizeNwa<
 		final Worklist worklist = mPartition.getWorklist();
 		while (!worklist.isEmpty()) {
 			final int[] elem = worklist.popFromWorklist();
-			for (final LETTER letter : mOperand.getInternalAlphabet()) {
+			for (final LETTER letter : mOperand.getVpAlphabet().getInternalAlphabet()) {
 				// This is far from optimal (hopefully): Find X, set of all
 				// states for which a transition on letter leads to a state in
 				// elem.

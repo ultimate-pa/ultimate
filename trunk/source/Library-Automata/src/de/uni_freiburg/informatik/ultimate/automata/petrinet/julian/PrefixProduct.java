@@ -148,10 +148,10 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 
 	private PetriNetJulian<S, C> computeResult() {
 		final HashSet<S> netOnlyAlphabet = new HashSet<>(mOperand.getAlphabet());
-		netOnlyAlphabet.removeAll(mNwa.getInternalAlphabet());
+		netOnlyAlphabet.removeAll(mNwa.getVpAlphabet().getInternalAlphabet());
 		final HashSet<S> sharedAlphabet = new HashSet<>(mOperand.getAlphabet());
 		sharedAlphabet.removeAll(netOnlyAlphabet);
-		final HashSet<S> nwaOnlyAlphabet = new HashSet<>(mNwa.getInternalAlphabet());
+		final HashSet<S> nwaOnlyAlphabet = new HashSet<>(mNwa.getVpAlphabet().getInternalAlphabet());
 		nwaOnlyAlphabet.removeAll(sharedAlphabet);
 		final HashSet<S> unionAlphabet = new HashSet<>(mOperand.getAlphabet());
 		unionAlphabet.addAll(nwaOnlyAlphabet);

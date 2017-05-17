@@ -196,7 +196,7 @@ public class NwaApproximateBisimulation<LETTER, STATE>
 		for (final Set<STATE> block : mPartition) {
 			queue.add(block);
 		}
-		final boolean hasCalls = !mOperand.getCallAlphabet().isEmpty();
+		final boolean hasCalls = !mOperand.getVpAlphabet().getCallAlphabet().isEmpty();
 
 		while (!queue.isEmpty()) {
 			final Set<STATE> block = queue.poll();

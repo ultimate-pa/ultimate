@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
@@ -53,13 +53,12 @@ public final class LassoAutomatonBuilder<LETTER> {
 	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
 	private final PredicateFactory mPredicateFactory;
 
-	public LassoAutomatonBuilder(final InCaReAlphabet<LETTER> alphabet,
+	public LassoAutomatonBuilder(final VpAlphabet<LETTER> alphabet,
 			final IStateFactory<IPredicate> predicateFactoryRc, final PredicateFactory predicateFactory,
 			final NestedWord<LETTER> stem, final NestedWord<LETTER> loop, final IUltimateServiceProvider services)
 			throws AutomataOperationCanceledException {
 		mPredicateFactory = predicateFactory;
-		mResult = new NestedWordAutomaton<>(new AutomataLibraryServices(services), alphabet.getInternalAlphabet(),
-				alphabet.getCallAlphabet(), alphabet.getReturnAlphabet(), predicateFactoryRc);
+		mResult = new NestedWordAutomaton<>(new AutomataLibraryServices(services), alphabet, predicateFactoryRc);
 		final List<IPredicate> stemStates = constructListOfDontCarePredicates(stem.length());
 		final List<IPredicate> loopStates = constructListOfDontCarePredicates(loop.length());
 		IPredicate initialState;

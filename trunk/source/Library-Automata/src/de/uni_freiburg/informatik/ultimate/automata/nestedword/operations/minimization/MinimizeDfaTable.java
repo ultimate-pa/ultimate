@@ -137,7 +137,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 				for (int j = 0; j < i; j++) {
 					// if (i, j) not marked
 					if (!table[i][j]) {
-						for (final LETTER s : mOperand.getInternalAlphabet()) {
+						for (final LETTER s : mOperand.getVpAlphabet().getInternalAlphabet()) {
 							final ArrayList<STATE> first = getSuccessors(states, s, i);
 							final ArrayList<STATE> second = getSuccessors(states, s, j);
 							// if either i or j has no successors, for k mark
@@ -268,7 +268,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 
 		// add edges
 		for (final STATE c : mOperand.getStates()) {
-			for (final LETTER s : mOperand.getInternalAlphabet()) {
+			for (final LETTER s : mOperand.getVpAlphabet().getInternalAlphabet()) {
 				for (final OutgoingInternalTransition<LETTER, STATE> trans : mOperand.internalSuccessors(c, s)) {
 					final STATE newPred = oldSNames2newSNames.get(c);
 					final STATE newSucc = oldSNames2newSNames.get(trans.getSucc());
@@ -314,7 +314,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 	private void printTransitions(final INestedWordAutomaton<LETTER, STATE> nwa) {
 		StringBuilder msg;
 		for (final STATE c : nwa.getStates()) {
-			for (final LETTER s : nwa.getInternalAlphabet()) {
+			for (final LETTER s : nwa.getVpAlphabet().getInternalAlphabet()) {
 				for (final OutgoingInternalTransition<LETTER, STATE> trans : nwa.internalSuccessors(c, s)) {
 					msg = new StringBuilder(c.toString());
 					msg.append(" ").append(s).append(" ").append(trans.getSucc());

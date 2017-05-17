@@ -35,6 +35,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
@@ -45,8 +46,8 @@ public class AA_DeterminizeReversed<LETTER> extends GeneralOperation<LETTER, Bit
 	public AA_DeterminizeReversed(final AutomataLibraryServices services,
 			final AlternatingAutomaton<LETTER, BitSet> alternatingAutomaton) {
 		super(services);
-		mResultAutomaton = new NestedWordAutomaton<>(services, alternatingAutomaton.getAlphabet(),
-				Collections.emptySet(), Collections.emptySet(), alternatingAutomaton.getStateFactory());
+		final VpAlphabet<LETTER> vpAlphabet = new VpAlphabet<LETTER>(alternatingAutomaton.getAlphabet(), Collections.emptySet(), Collections.emptySet());
+		mResultAutomaton = new NestedWordAutomaton<>(services, vpAlphabet, alternatingAutomaton.getStateFactory());
 		final LinkedList<BitSet> newStates = new LinkedList<>();
 		newStates.add(alternatingAutomaton.getFinalStatesBitVector());
 		final List<Pair<BitSet, Pair<LETTER, BitSet>>> transitionsToAdd = new ArrayList<>();

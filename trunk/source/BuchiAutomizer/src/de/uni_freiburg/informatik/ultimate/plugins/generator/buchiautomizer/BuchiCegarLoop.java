@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.InCaReAlphabet;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -693,7 +693,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			acceptingNodes = allNodes;
 		}
 		mAbstraction = cFG2NestedWordAutomaton.getNestedWordAutomaton(mIcfg, mDefaultStateFactory, acceptingNodes);
-		if (!ALLOW_CALLS && !mAbstraction.getCallAlphabet().isEmpty()) {
+		if (!ALLOW_CALLS && !mAbstraction.getVpAlphabet().getCallAlphabet().isEmpty()) {
 			throw new AssertionError("Calls are not allowed in this debugging mode");
 		}
 	}
@@ -772,7 +772,7 @@ public class BuchiCegarLoop<LETTER extends IIcfgTransition<?>> {
 			final NestedRun<LETTER, IPredicate> run) throws AutomataOperationCanceledException {
 		final CanonicalInterpolantAutomatonBuilder<? extends Object, LETTER> iab =
 				new CanonicalInterpolantAutomatonBuilder<>(mServices, traceChecker.getIpp(), run.getStateSequence(),
-						new InCaReAlphabet<>(mAbstraction), mCsToolkitWithRankVars, mAbstraction.getStateFactory(),
+						new VpAlphabet<>(mAbstraction), mCsToolkitWithRankVars, mAbstraction.getStateFactory(),
 						mLogger, traceChecker.getPredicateUnifier(), run.getWord());
 		iab.analyze();
 		mInterpolAutomaton = iab.getResult();

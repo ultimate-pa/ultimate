@@ -34,6 +34,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
@@ -393,8 +394,8 @@ public class GetRandomNwaTv extends GeneralOperation<String, String, IStateFacto
 		final Set<String> returnAlphabet = new HashSet<>(mNumberOfInternalLetters);
 
 		// create raw automaton
-		final NestedWordAutomaton<String, String> result = new NestedWordAutomaton<>(mServices, internalAlphabet,
-				callAlphabet, returnAlphabet, new StringFactory());
+		final NestedWordAutomaton<String, String> result = new NestedWordAutomaton<>(mServices, new VpAlphabet<>(internalAlphabet,
+				callAlphabet, returnAlphabet), new StringFactory());
 
 		if (mNumberOfStates == 0) {
 			// empty automaton

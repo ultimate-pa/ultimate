@@ -34,6 +34,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
@@ -141,18 +142,8 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	}
 
 	@Override
-	public Set<LETTER> getInternalAlphabet() {
-		return mOperand.getInternalAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getCallAlphabet() {
-		return mOperand.getCallAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getReturnAlphabet() {
-		return mOperand.getReturnAlphabet();
+	public VpAlphabet<LETTER> getVpAlphabet() {
+		return mOperand.getVpAlphabet();
 	}
 
 	@Override
@@ -192,17 +183,17 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 
 	@Override
 	public Set<LETTER> lettersInternal(final STATE state) {
-		return mOperand.getInternalAlphabet();
+		return mOperand.getVpAlphabet().getInternalAlphabet();
 	}
 
 	@Override
 	public Set<LETTER> lettersCall(final STATE state) {
-		return mOperand.getCallAlphabet();
+		return mOperand.getVpAlphabet().getCallAlphabet();
 	}
 	
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
-		return mOperand.getReturnAlphabet();
+		return mOperand.getVpAlphabet().getReturnAlphabet();
 	}
 
 	@Override
@@ -234,7 +225,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 		if (mNondeterministicTransitionsDetected) {
 			return Collections.emptySet();
 		}
-		final Set<LETTER> alphabet = getInternalAlphabet();
+		final Set<LETTER> alphabet = getVpAlphabet().getInternalAlphabet();
 		final ArrayList<OutgoingInternalTransition<LETTER, STATE>> result = new ArrayList<>(alphabet.size());
 		for (final LETTER letter : alphabet) {
 			final Iterator<OutgoingInternalTransition<LETTER, STATE>> it = internalSuccessors(state, letter).iterator();
@@ -275,7 +266,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 		if (mNondeterministicTransitionsDetected) {
 			return Collections.emptySet();
 		}
-		final Set<LETTER> alphabet = getCallAlphabet();
+		final Set<LETTER> alphabet = getVpAlphabet().getCallAlphabet();
 		final ArrayList<OutgoingCallTransition<LETTER, STATE>> result = new ArrayList<>(alphabet.size());
 		for (final LETTER letter : alphabet) {
 			final Iterator<OutgoingCallTransition<LETTER, STATE>> it = callSuccessors(state, letter).iterator();
@@ -318,7 +309,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 		if (mNondeterministicTransitionsDetected) {
 			return Collections.emptySet();
 		}
-		final Set<LETTER> alphabet = getReturnAlphabet();
+		final Set<LETTER> alphabet = getVpAlphabet().getReturnAlphabet();
 		final ArrayList<OutgoingReturnTransition<LETTER, STATE>> result = new ArrayList<>(alphabet.size());
 		for (final LETTER letter : alphabet) {
 			final Iterator<OutgoingReturnTransition<LETTER, STATE>> it =

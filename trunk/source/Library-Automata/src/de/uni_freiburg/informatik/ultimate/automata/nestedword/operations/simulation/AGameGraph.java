@@ -35,6 +35,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.SimulationPerformance;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
@@ -849,7 +850,7 @@ public abstract class AGameGraph<LETTER, STATE> {
 	 *            Automaton to verify validity
 	 */
 	public void verifyAutomatonValidity(final INestedWordAutomaton<LETTER, STATE> automaton) {
-		if (!automaton.getCallAlphabet().isEmpty() || !automaton.getReturnAlphabet().isEmpty()) {
+		if (!NestedWordAutomataUtils.isFiniteAutomaton(automaton)) {
 			throw new IllegalArgumentException(
 					"The inputed automaton is no Buechi-automaton. It must have an empty call and return alphabet.");
 		}

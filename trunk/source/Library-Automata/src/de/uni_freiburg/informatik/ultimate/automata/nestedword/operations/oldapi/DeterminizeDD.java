@@ -112,8 +112,7 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 		}
 
 		mStateDeterminizer = stateDeterminizer;
-		super.mTraversedNwa = new NestedWordAutomaton<>(mServices, operand.getInternalAlphabet(),
-				operand.getCallAlphabet(), operand.getReturnAlphabet(), operand.getStateFactory());
+		super.mTraversedNwa = new NestedWordAutomaton<>(mServices, operand.getVpAlphabet(), operand.getStateFactory());
 		mRemoveDeadEnds = false;
 		traverseDoubleDeckerGraph();
 		assert new IsDeterministic<>(mServices, mTraversedNwa).getResult();
@@ -159,7 +158,7 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 
 		final DeterminizedState<LETTER, STATE> detState = mRes2det.get(resState);
 
-		for (final LETTER symbol : mOperand.getInternalAlphabet()) {
+		for (final LETTER symbol : mOperand.getVpAlphabet().getInternalAlphabet()) {
 			final DeterminizedState<LETTER, STATE> detSucc = mStateDeterminizer.internalSuccessor(detState, symbol);
 			final STATE resSucc = getResState(detSucc);
 			((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addInternalTransition(resState, symbol, resSucc);
@@ -175,7 +174,7 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 
 		final DeterminizedState<LETTER, STATE> detState = mRes2det.get(resState);
 
-		for (final LETTER symbol : mOperand.getCallAlphabet()) {
+		for (final LETTER symbol : mOperand.getVpAlphabet().getCallAlphabet()) {
 			final DeterminizedState<LETTER, STATE> detSucc = mStateDeterminizer.callSuccessor(detState, symbol);
 			final STATE resSucc = getResState(detSucc);
 			((NestedWordAutomaton<LETTER, STATE>) mTraversedNwa).addCallTransition(resState, symbol, resSucc);
@@ -197,7 +196,7 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 		final STATE resState = doubleDecker.getUp();
 		final DeterminizedState<LETTER, STATE> detLinPred = mRes2det.get(resLinPred);
 		final DeterminizedState<LETTER, STATE> detState = mRes2det.get(resState);
-		for (final LETTER symbol : mOperand.getReturnAlphabet()) {
+		for (final LETTER symbol : mOperand.getVpAlphabet().getReturnAlphabet()) {
 			final DeterminizedState<LETTER, STATE> detSucc =
 					mStateDeterminizer.returnSuccessor(detState, detLinPred, symbol);
 			final STATE resSucc = getResState(detSucc);

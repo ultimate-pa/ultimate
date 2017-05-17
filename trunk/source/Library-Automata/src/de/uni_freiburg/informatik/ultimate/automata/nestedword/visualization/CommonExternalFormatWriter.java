@@ -59,7 +59,7 @@ public abstract class CommonExternalFormatWriter<LETTER, STATE> extends GeneralA
 	 */
 	public CommonExternalFormatWriter(final PrintWriter writer, final INestedWordAutomaton<LETTER, STATE> nwa) {
 		super(writer);
-		mAlphabetMapping = getAlphabetMapping(nwa.getInternalAlphabet());
+		mAlphabetMapping = getAlphabetMapping(nwa.getVpAlphabet().getInternalAlphabet());
 		mStateMapping = getStateMapping(nwa.getStates());
 		mNwa = nwa;
 	}

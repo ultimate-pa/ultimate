@@ -50,6 +50,7 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DownStateConsistencyCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
@@ -103,9 +104,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 
 	private final INwaOutgoingTransitionProvider<LETTER, STATE> mOperand;
 
-	private final Set<LETTER> mInternalAlphabet;
-	private final Set<LETTER> mCallAlphabet;
-	private final Set<LETTER> mReturnAlphabet;
+	private final VpAlphabet<LETTER> mVpAlphabet;
 
 	private final Set<STATE> mInitialStates = new HashSet<>();
 	private final Set<STATE> mFinalStates = new HashSet<>();
@@ -180,9 +179,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
-		mInternalAlphabet = operand.getInternalAlphabet();
-		mCallAlphabet = operand.getCallAlphabet();
-		mReturnAlphabet = operand.getReturnAlphabet();
+		mVpAlphabet = operand.getVpAlphabet();
 		mStateFactory = operand.getStateFactory();
 		try {
 			new ReachableStatesComputation();
@@ -319,11 +316,6 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 	}
 
 	@Override
-	public Set<LETTER> getAlphabet() {
-		return mInternalAlphabet;
-	}
-
-	@Override
 	public String sizeInformation() {
 		final int states = mStates.size();
 		String result = states + " states and " + mNumberTransitions + " transitions.";
@@ -340,20 +332,10 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 			final int numberOfSccs) {
 		return numberOfTransitions - numberOfStates + numberOfSccs;
 	}
-
+	
 	@Override
-	public Set<LETTER> getInternalAlphabet() {
-		return mInternalAlphabet;
-	}
-
-	@Override
-	public Set<LETTER> getCallAlphabet() {
-		return mCallAlphabet;
-	}
-
-	@Override
-	public Set<LETTER> getReturnAlphabet() {
-		return mReturnAlphabet;
+	public VpAlphabet<LETTER> getVpAlphabet() {
+		return mVpAlphabet;
 	}
 
 	@Override
@@ -1061,7 +1043,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 			if (mOperand.hasModifiableAlphabet()) {
 				return true;
 			}
-			if (getReturnAlphabet().isEmpty()) {
+			if (getVpAlphabet().getReturnAlphabet().isEmpty()) {
 				return false;
 			}
 			return true;

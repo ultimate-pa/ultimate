@@ -99,8 +99,7 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 		} else {
 			mTotalizedOperand = new ReachableStatesCopy<>(mServices, operand, true, false, false, false).getResult();
 		}
-		mTraversedNwa = new NestedWordAutomaton<>(mServices, operand.getInternalAlphabet(), operand.getCallAlphabet(),
-				operand.getReturnAlphabet(), operand.getStateFactory());
+		mTraversedNwa = new NestedWordAutomaton<>(mServices, operand.getVpAlphabet(), operand.getStateFactory());
 		traverseDoubleDeckerGraph();
 
 		if (mLogger.isInfoEnabled()) {

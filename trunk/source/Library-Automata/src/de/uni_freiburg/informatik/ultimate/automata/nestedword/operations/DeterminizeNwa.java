@@ -34,6 +34,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizedState;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -102,8 +103,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 		mOperand = operand;
 		mStateDeterminizer = stateDeterminizer;
 		mStateFactory = stateFactory;
-		mCache = new NestedWordAutomaton<>(services, operand.getInternalAlphabet(), operand.getCallAlphabet(),
-				operand.getReturnAlphabet(), stateFactory);
+		mCache = new NestedWordAutomaton<>(services, operand.getVpAlphabet(), stateFactory);
 		mPredefinedInitials = predefinedInitials;
 		mMakeAutomatonTotal = makeAutomatonTotal;
 	}
@@ -152,23 +152,8 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	}
 
 	@Override
-	public Set<LETTER> getAlphabet() {
-		return getInternalAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getInternalAlphabet() {
-		return mCache.getInternalAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getCallAlphabet() {
-		return mCache.getCallAlphabet();
-	}
-
-	@Override
-	public Set<LETTER> getReturnAlphabet() {
-		return mCache.getReturnAlphabet();
+	public VpAlphabet<LETTER> getVpAlphabet() {
+		return mCache.getVpAlphabet();
 	}
 
 	@Override
@@ -194,7 +179,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	@Override
 	public Set<LETTER> lettersInternal(final STATE state) {
 		if (mMakeAutomatonTotal) {
-			return getInternalAlphabet();
+			return getVpAlphabet().getInternalAlphabet();
 		}
 		final Set<LETTER> result = new HashSet<>();
 		final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
@@ -209,7 +194,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	@Override
 	public Set<LETTER> lettersCall(final STATE state) {
 		if (mMakeAutomatonTotal) {
-			return getCallAlphabet();
+			return getVpAlphabet().getCallAlphabet();
 		}
 		final Set<LETTER> result = new HashSet<>();
 		final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);
@@ -224,7 +209,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	@Override
 	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
 		if (mMakeAutomatonTotal) {
-			return getReturnAlphabet();
+			return getVpAlphabet().getReturnAlphabet();
 		}
 		final Set<LETTER> result = new HashSet<>();
 		final DeterminizedState<LETTER, STATE> detState = mRes2det.get(state);

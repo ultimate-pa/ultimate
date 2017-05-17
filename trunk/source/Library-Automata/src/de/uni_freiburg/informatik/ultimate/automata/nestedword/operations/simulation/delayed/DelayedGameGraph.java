@@ -39,8 +39,8 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.SimulationPerformance;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.performance.TimeMeasure;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.DuplicatorVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
@@ -164,7 +164,7 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 		final Set<STATE> temp = new HashSet<>();
 		final HashMap<STATE, STATE> oldSNames2newSNames = new HashMap<>();
 		final NestedWordAutomaton<LETTER, STATE> result =
-				new NestedWordAutomaton<>(mServices, mBuechi.getInternalAlphabet(), null, null, getStateFactory());
+				new NestedWordAutomaton<>(mServices, mBuechi.getVpAlphabet(), getStateFactory());
 
 		for (int i = 0; i < states.size(); i++) {
 			if (marker[i]) {
@@ -202,7 +202,7 @@ public class DelayedGameGraph<LETTER, STATE> extends AGameGraph<LETTER, STATE> {
 
 		// Add edges
 		for (final STATE c : mBuechi.getStates()) {
-			for (final LETTER s : mBuechi.getInternalAlphabet()) {
+			for (final LETTER s : mBuechi.getVpAlphabet().getInternalAlphabet()) {
 				for (final OutgoingInternalTransition<LETTER, STATE> trans : mBuechi.internalSuccessors(c, s)) {
 					final STATE newPred = oldSNames2newSNames.get(c);
 					final STATE newSucc = oldSNames2newSNames.get(trans.getSucc());

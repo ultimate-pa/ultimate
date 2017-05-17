@@ -60,6 +60,7 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE>
 	protected final Set<LETTER> mInternalAlphabet;
 	protected final Set<LETTER> mCallAlphabet;
 	protected final Set<LETTER> mReturnAlphabet;
+	private final VpAlphabet<LETTER> mVpAlphabet;
 
 	protected boolean mInitialStateHaveBeenConstructed;
 
@@ -84,8 +85,8 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE>
 		mInternalAlphabet = new HashSet<>();
 		mCallAlphabet = new HashSet<>();
 		mReturnAlphabet = new HashSet<>();
-		mCache = new NestedWordAutomatonCache<>(mServices, mInternalAlphabet, mCallAlphabet, mReturnAlphabet,
-				stateFactory);
+		mVpAlphabet = new VpAlphabet<>(mInternalAlphabet, mCallAlphabet, mReturnAlphabet);
+		mCache = new NestedWordAutomatonCache<>(mServices, mVpAlphabet, stateFactory);
 	}
 
 	protected abstract void constructInitialStates() throws AutomataOperationCanceledException;
@@ -96,28 +97,9 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE>
 
 	protected abstract void constructReturnSuccessors(STATE lin, STATE hier);
 
-	/**
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#getInternalAlphabet()
-	 */
 	@Override
-	public Set<LETTER> getInternalAlphabet() {
-		return mCache.getInternalAlphabet();
-	}
-
-	/**
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#getCallAlphabet()
-	 */
-	@Override
-	public Set<LETTER> getCallAlphabet() {
-		return mCache.getCallAlphabet();
-	}
-
-	/**
-	 * @see de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache#getReturnAlphabet()
-	 */
-	@Override
-	public Set<LETTER> getReturnAlphabet() {
-		return mCache.getReturnAlphabet();
+	public VpAlphabet<LETTER> getVpAlphabet() {
+		return mVpAlphabet;
 	}
 
 	/**

@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateSimulation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateXsimulation.SimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IncomingInternalTransition;
@@ -96,7 +97,7 @@ public class NwaApproximateDelayedSimulation<LETTER, STATE> {
 		mOperand = operand;
 
 		// FIXME: Currently this operation only works for finite automata, in which case it is exact.
-		if (!mOperand.getCallAlphabet().isEmpty() || !mOperand.getReturnAlphabet().isEmpty()) {
+		if (!NestedWordAutomataUtils.isFiniteAutomaton(operand)) {
 			throw new IllegalArgumentException("Currently this operation only supports finite automata");
 		}
 

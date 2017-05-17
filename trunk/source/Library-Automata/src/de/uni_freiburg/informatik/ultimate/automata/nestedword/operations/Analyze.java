@@ -316,9 +316,9 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	}
 
 	private final void computeNumberOfSymbols() {
-		mNumberOfInternalSymbols = mOperand.getInternalAlphabet().size();
-		mNumberOfCallSymbols = mOperand.getCallAlphabet().size();
-		mNumberOfReturnSymbols = mOperand.getReturnAlphabet().size();
+		mNumberOfInternalSymbols = mOperand.getVpAlphabet().getInternalAlphabet().size();
+		mNumberOfCallSymbols = mOperand.getVpAlphabet().getCallAlphabet().size();
+		mNumberOfReturnSymbols = mOperand.getVpAlphabet().getReturnAlphabet().size();
 
 		mNumberOfSymbolsComputed = true;
 	}

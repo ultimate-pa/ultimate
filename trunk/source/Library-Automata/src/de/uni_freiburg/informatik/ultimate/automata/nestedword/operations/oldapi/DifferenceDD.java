@@ -29,11 +29,9 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldap
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
@@ -187,17 +185,6 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 		this(services, stateFactory, minuend, subtrahend, new PowersetDeterminizer<>(subtrahend, true, stateFactory),
 				false, false, false);
 
-		// TODO Christian 2016-10-05: These sets are never used - a bug?
-		final Set<LETTER> newInternals = new HashSet<>();
-		newInternals.addAll(minuend.getInternalAlphabet());
-		newInternals.retainAll(subtrahend.getInternalAlphabet());
-		final Set<LETTER> newCalls = new HashSet<>();
-		newCalls.addAll(minuend.getCallAlphabet());
-		newCalls.retainAll(subtrahend.getCallAlphabet());
-		final Set<LETTER> newReturns = new HashSet<>();
-		newReturns.addAll(minuend.getReturnAlphabet());
-		newReturns.retainAll(subtrahend.getReturnAlphabet());
-
 		runConstruction();
 
 		if (mLogger.isInfoEnabled()) {
@@ -230,8 +217,7 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 			mLogger.info(startMessage());
 		}
 
-		super.mTraversedNwa = new DoubleDeckerAutomaton<>(mServices, minuend.getInternalAlphabet(),
-				minuend.getCallAlphabet(), minuend.getReturnAlphabet(), mStateFactoryForIntersection);
+		super.mTraversedNwa = new DoubleDeckerAutomaton<>(mServices, minuend.getVpAlphabet(), mStateFactoryForIntersection);
 
 		/*
 		mDeterminizedSubtrahend =
@@ -360,7 +346,7 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 		final DeterminizedState<LETTER, STATE> detState = diffState.getSubtrahendDeterminizedState();
 
 		for (final LETTER symbol : mMinuend.lettersInternal(minuState)) {
-			if (!mSubtrahend.getInternalAlphabet().contains(symbol)) {
+			if (!mSubtrahend.getVpAlphabet().getInternalAlphabet().contains(symbol)) {
 				continue;
 			}
 			DeterminizedState<LETTER, STATE> detSucc = internalSuccessorCache(detState, symbol);
@@ -401,7 +387,7 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 		final DeterminizedState<LETTER, STATE> detState = diffState.getSubtrahendDeterminizedState();
 
 		for (final LETTER symbol : mMinuend.lettersCall(minuState)) {
-			if (!mSubtrahend.getCallAlphabet().contains(symbol)) {
+			if (!mSubtrahend.getVpAlphabet().getCallAlphabet().contains(symbol)) {
 				continue;
 			}
 			DeterminizedState<LETTER, STATE> detSucc = callSuccessorCache(detState, symbol);
@@ -465,7 +451,7 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 				continue;
 			}
 
-			if (!mSubtrahend.getReturnAlphabet().contains(symbol)) {
+			if (!mSubtrahend.getVpAlphabet().getReturnAlphabet().contains(symbol)) {
 				continue;
 			}
 

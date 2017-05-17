@@ -43,6 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determinize;
@@ -736,7 +737,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			// If there are no merge-able states simply
 			// copy the inputed automaton
 			final NestedWordAutomaton<LETTER, STATE> resultAsChangeableAutomaton = new NestedWordAutomaton<>(mServices,
-					mNwa.getInternalAlphabet(), mNwa.getCallAlphabet(), mNwa.getReturnAlphabet(), stateFactory);
+					mNwa.getVpAlphabet(), stateFactory);
 			for (final STATE state : mNwa.getStates()) {
 				// Copy states
 				final boolean isInitial = mNwa.isInitial(state);
@@ -2438,9 +2439,12 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 		final Set<IGameLetter<LETTER, STATE>> internalGameAlphabet = new HashSet<>();
 		final Set<IGameLetter<LETTER, STATE>> callGameAlphabet = new HashSet<>();
 		final Set<IGameLetter<LETTER, STATE>> returnGameAlphabet = new HashSet<>();
+		
+		final VpAlphabet<IGameLetter<LETTER, STATE>> gameVpAlphabet = new VpAlphabet<>(internalGameAlphabet, callGameAlphabet, returnGameAlphabet);
+		
 
 		final NestedWordAutomaton<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton = new NestedWordAutomaton<>(
-				mServices, internalGameAlphabet, callGameAlphabet, returnGameAlphabet, new GameFactory());
+				mServices, gameVpAlphabet, new GameFactory());
 
 		// Collect all data by using
 		// (spoilerVertex -> duplicatorSucc -> spoilerSucc)

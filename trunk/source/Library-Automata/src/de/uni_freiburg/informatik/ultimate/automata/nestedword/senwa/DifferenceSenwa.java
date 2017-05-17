@@ -148,8 +148,7 @@ public final class DifferenceSenwa<LETTER, STATE>
 
 		mStateDeterminizer = new StateDeterminizerCache<>(stateDeterminizer);
 
-		mSenwa = new Senwa<>(mServices, minuend.getInternalAlphabet(), minuend.getCallAlphabet(),
-				minuend.getReturnAlphabet(), minuend.getStateFactory());
+		mSenwa = new Senwa<>(mServices, minuend.getVpAlphabet(), minuend.getStateFactory());
 		mSenwaWalker = new SenwaWalker<>(mServices, mSenwa, this, removeDeadEndsImmediately);
 		mLogger.info(exitMessage());
 	}

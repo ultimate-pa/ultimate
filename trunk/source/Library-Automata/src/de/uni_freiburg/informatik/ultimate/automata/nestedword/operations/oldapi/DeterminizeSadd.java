@@ -90,8 +90,7 @@ public final class DeterminizeSadd<LETTER, STATE>
 			mLogger.info(startMessage());
 		}
 
-		mResult = new NestedWordAutomaton<>(mServices, mOperand.getInternalAlphabet(), mOperand.getCallAlphabet(),
-				mOperand.getReturnAlphabet(), mOperand.getStateFactory());
+		mResult = new NestedWordAutomaton<>(mServices, mOperand.getVpAlphabet(), mOperand.getStateFactory());
 		mAuxiliaryEmptyStackState = mOperand.getEmptyStackState();
 		determinize();
 

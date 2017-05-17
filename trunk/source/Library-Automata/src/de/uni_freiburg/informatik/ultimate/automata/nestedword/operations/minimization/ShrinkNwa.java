@@ -2645,7 +2645,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	private class OutgoingHelperInternal implements IOutgoingHelper<LETTER, STATE> {
 		@Override
 		public int size() {
-			return mOperand.getInternalAlphabet().size();
+			return mOperand.getVpAlphabet().getInternalAlphabet().size();
 		}
 
 		@Override
@@ -2690,7 +2690,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	private class OutgoingHelperCall implements IOutgoingHelper<LETTER, STATE> {
 		@Override
 		public int size() {
-			return mOperand.getCallAlphabet().size();
+			return mOperand.getVpAlphabet().getCallAlphabet().size();
 		}
 
 		@Override

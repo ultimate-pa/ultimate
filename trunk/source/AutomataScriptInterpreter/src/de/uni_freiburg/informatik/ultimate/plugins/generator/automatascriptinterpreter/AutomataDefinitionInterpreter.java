@@ -46,6 +46,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.BooleanExpression;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.Place;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.julian.PetriNetJulian;
@@ -322,7 +323,7 @@ public class AutomataDefinitionInterpreter {
 		}
 		
 		final NestedWordAutomaton<String, String> nw = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices),
-				internalAlphabet, callAlphabet, returnAlphabet, new StringFactory());
+				new VpAlphabet<String>(internalAlphabet, callAlphabet, returnAlphabet), new StringFactory());
 		
 		// add the states
 		for (final String state : allStates) {
