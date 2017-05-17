@@ -46,11 +46,6 @@ public class CongruenceDomain implements IAbstractDomain<CongruenceDomainState<I
 	}
 
 	@Override
-	public CongruenceDomainState<IBoogieVar> createFreshState() {
-		return createTopState();
-	}
-
-	@Override
 	public CongruenceDomainState<IBoogieVar> createTopState() {
 		return new CongruenceDomainState<>(mLogger, false);
 	}

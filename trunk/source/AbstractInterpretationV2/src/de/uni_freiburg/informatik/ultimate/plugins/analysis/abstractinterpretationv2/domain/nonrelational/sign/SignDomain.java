@@ -66,11 +66,6 @@ public class SignDomain implements IAbstractDomain<SignDomainState<IBoogieVar>, 
 	}
 
 	@Override
-	public SignDomainState<IBoogieVar> createFreshState() {
-		return createTopState();
-	}
-
-	@Override
 	public SignDomainState<IBoogieVar> createTopState() {
 		return new SignDomainState<>(mLogger, false);
 	}

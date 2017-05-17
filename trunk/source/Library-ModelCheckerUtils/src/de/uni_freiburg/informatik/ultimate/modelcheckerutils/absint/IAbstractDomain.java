@@ -37,11 +37,6 @@ package de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint;
 public interface IAbstractDomain<STATE extends IAbstractState<STATE, VARDECL>, ACTION, VARDECL> {
 
 	/**
-	 * @return A new state of the current abstract domain.
-	 */
-	STATE createFreshState();
-
-	/**
 	 * @return A new state of the current abstract domain representing &top;.
 	 */
 	STATE createTopState();

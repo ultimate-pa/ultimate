@@ -59,13 +59,8 @@ public class LiveVariableDomain<ACTION extends IAction>
 	}
 
 	@Override
-	public LiveVariableState<ACTION> createFreshState() {
-		return new LiveVariableState<>();
-	}
-
-	@Override
 	public LiveVariableState<ACTION> createTopState() {
-		throw new UnsupportedOperationException("createTopState not implemented, yet.");
+		return new LiveVariableState<>();
 	}
 
 	@Override

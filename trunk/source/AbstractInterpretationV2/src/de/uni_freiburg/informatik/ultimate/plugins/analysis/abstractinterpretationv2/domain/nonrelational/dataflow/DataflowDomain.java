@@ -61,13 +61,8 @@ public class DataflowDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public DataflowState<ACTION> createFreshState() {
-		return new DataflowState<>();
-	}
-
-	@Override
 	public DataflowState<ACTION> createTopState() {
-		throw new UnsupportedOperationException("createTopState not implemented, yet.");
+		return new DataflowState<>();
 	}
 
 	@Override

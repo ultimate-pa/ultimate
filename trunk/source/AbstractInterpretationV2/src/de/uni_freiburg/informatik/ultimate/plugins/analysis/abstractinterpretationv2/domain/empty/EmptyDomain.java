@@ -44,11 +44,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractSta
 public class EmptyDomain<ACTION, VARDECL> implements IAbstractDomain<EmptyDomainState<VARDECL>, ACTION, VARDECL> {
 
 	@Override
-	public EmptyDomainState<VARDECL> createFreshState() {
-		return new EmptyDomainState<>();
-	}
-
-	@Override
 	public EmptyDomainState<VARDECL> createTopState() {
 		return new EmptyDomainState<>(false);
 	}

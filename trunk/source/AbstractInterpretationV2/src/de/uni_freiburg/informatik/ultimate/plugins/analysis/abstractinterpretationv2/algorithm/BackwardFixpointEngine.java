@@ -234,9 +234,8 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 	}
 
 	private AbstractMultiState<STATE, VARDECL> createFreshPrestateWithVariables(final ACTION elem) {
-		final STATE preState = mVarProvider.defineInitialVariables(elem, mDomain.createFreshState());
-		final AbstractMultiState<STATE, VARDECL> preMultiState =
-				new AbstractMultiState<>(mMaxParallelStates, preState);
+		final STATE preState = mVarProvider.defineInitialVariables(elem, mDomain.createTopState());
+		final AbstractMultiState<STATE, VARDECL> preMultiState = new AbstractMultiState<>(mMaxParallelStates, preState);
 		return preMultiState;
 	}
 
@@ -267,8 +266,7 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 
 	private AbstractMultiState<STATE, VARDECL> widenIfNecessary(
 			final BackwardsWorklistItem<STATE, ACTION, VARDECL, LOC> currentItem,
-			final AbstractMultiState<STATE, VARDECL> preState,
-			final IAbstractStateBinaryOperator<STATE> wideningOp) {
+			final AbstractMultiState<STATE, VARDECL> preState, final IAbstractStateBinaryOperator<STATE> wideningOp) {
 
 		final ACTION currentAction = currentItem.getAction();
 
@@ -342,8 +340,7 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 			getWidenStateAtScopeEntry(final BackwardsWorklistItem<STATE, ACTION, VARDECL, LOC> currentItem) {
 		final ACTION currentAction = currentItem.getAction();
 
-		final Deque<Pair<ACTION, AbstractMultiState<STATE, VARDECL>>> scopeStack =
-				currentItem.getScopeWideningStack();
+		final Deque<Pair<ACTION, AbstractMultiState<STATE, VARDECL>>> scopeStack = currentItem.getScopeWideningStack();
 		// count all stack items that are there more than once and the current item
 		final Optional<Long> count = scopeStack.stream().map(a -> a.getFirst()).filter(a -> a != null)
 				.collect(Collectors.groupingBy(a -> a, Collectors.counting())).entrySet().stream()
@@ -465,8 +462,7 @@ public class BackwardFixpointEngine<STATE extends IAbstractState<STATE, VARDECL>
 		return sb.toString();
 	}
 
-	private StringBuilder
-			getLogMessagePreIsBottom(final AbstractMultiState<STATE, VARDECL> pendingNewPostState) {
+	private StringBuilder getLogMessagePreIsBottom(final AbstractMultiState<STATE, VARDECL> pendingNewPostState) {
 		return new StringBuilder().append(AbsIntPrefInitializer.INDENT)
 				.append(" Skipping all successors because pre state [").append(pendingNewPostState.hashCode())
 				.append("] is bottom");

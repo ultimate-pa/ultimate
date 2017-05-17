@@ -35,11 +35,6 @@ public class IntervalDomain
 	}
 
 	@Override
-	public IntervalDomainState<IProgramVarOrConst> createFreshState() {
-		return createTopState();
-	}
-
-	@Override
 	public IntervalDomainState<IProgramVarOrConst> createTopState() {
 		return new IntervalDomainState<>(mLogger, false);
 	}
@@ -79,7 +74,7 @@ public class IntervalDomain
 		if (mPostOperator == null) {
 			final IPreferenceProvider prefs = mServices.getPreferenceProvider(Activator.PLUGIN_ID);
 			final int maxParallelStates = prefs.getInt(AbsIntPrefInitializer.LABEL_MAX_PARALLEL_STATES);
-			final Supplier<IntervalDomainState<IProgramVarOrConst>> topStateSupplier = () -> createFreshState();
+			final Supplier<IntervalDomainState<IProgramVarOrConst>> topStateSupplier = () -> createTopState();
 			final Supplier<IntervalDomainState<IProgramVarOrConst>> bottomStateSupplier = () -> createBottomState();
 			mPostOperator = new IntervalPostOperator(mLogger, maxParallelStates, topStateSupplier, bottomStateSupplier);
 		}

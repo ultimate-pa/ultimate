@@ -63,11 +63,6 @@ public class CompoundDomain implements IAbstractDomain<CompoundDomainState, Icfg
 	}
 
 	@Override
-	public CompoundDomainState createFreshState() {
-		return new CompoundDomainState(mServices, mDomainList);
-	}
-
-	@Override
 	public CompoundDomainState createTopState() {
 		return new CompoundDomainState(mServices, mDomainList, false);
 	}

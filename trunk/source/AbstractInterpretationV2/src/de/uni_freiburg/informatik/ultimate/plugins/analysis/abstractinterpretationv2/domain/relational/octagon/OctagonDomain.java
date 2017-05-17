@@ -185,11 +185,6 @@ public class OctagonDomain implements IAbstractDomain<OctDomainState, IcfgEdge, 
 	}
 
 	@Override
-	public OctDomainState createFreshState() {
-		return mOctDomainStateFactory.apply(false);
-	}
-
-	@Override
 	public OctDomainState createTopState() {
 		return mOctDomainStateFactory.apply(false);
 	}

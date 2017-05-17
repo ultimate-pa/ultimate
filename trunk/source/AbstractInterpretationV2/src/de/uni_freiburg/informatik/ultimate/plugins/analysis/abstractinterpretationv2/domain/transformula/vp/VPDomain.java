@@ -86,11 +86,6 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	}
 
 	@Override
-	public VPState<ACTION> createFreshState() {
-		return getVpStateFactory().createEmptyStateBuilder().build();
-	}
-
-	@Override
 	public IAbstractStateBinaryOperator<VPState<ACTION>> getWideningOperator() {
 		return mMerge;
 	}
@@ -148,7 +143,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public VPState<ACTION> createTopState() {
-		throw new UnsupportedOperationException("Not implemented: createTopState");
+		return getVpStateFactory().createEmptyStateBuilder().build();
 	}
 
 	@Override

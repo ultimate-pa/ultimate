@@ -361,7 +361,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 	}
 
 	private WorklistItem<STATE, ACTION, VARDECL, LOC> createInitialWorklistItem(final ACTION elem) {
-		final STATE preState = mVarProvider.defineInitialVariables(elem, mDomain.createFreshState());
+		final STATE preState = mVarProvider.defineInitialVariables(elem, mDomain.createTopState());
 		assert preState != null;
 		final AbstractMultiState<STATE, VARDECL> preMultiState = new AbstractMultiState<>(mMaxParallelStates, preState);
 		return new WorklistItem<>(preMultiState, elem, mStateStorage, mSummaryMap);
