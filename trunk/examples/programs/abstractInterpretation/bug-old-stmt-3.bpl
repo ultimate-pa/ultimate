@@ -6,96 +6,34 @@
 
 */ 
 
-var ~sent_encrypted : int;
-
-procedure ULTIMATE.init() returns ()
-modifies ~sent_encrypted;
-{
-    ~sent_encrypted := 0;
-}
+var x : int;
 
 procedure ULTIMATE.start() returns ()
-modifies ~sent_encrypted;
+modifies x;
 {
-    call ULTIMATE.init();
-    call main();
-}
-
-procedure fooG() returns ()
-modifies ~sent_encrypted;
-{
-    ~sent_encrypted := 1;
-}
-
-procedure fooI() returns (){
-    call __automaton_fail();
-}
-
-procedure fooF() returns ()
-modifies ~sent_encrypted;
-{
-    call fooG();
-    call fooH();
-}
-
-procedure fooE() returns ()
-modifies ~sent_encrypted;
-{
-    call fooF();
-}
-
-procedure fooD() returns ()
-modifies ~sent_encrypted;
-{
-    call fooE();
-}
-
-procedure fooC() returns ()
-modifies ~sent_encrypted;
-{
-    call fooD();
-}
-
-procedure fooB() returns ()
-modifies ~sent_encrypted;
-{
-    call fooC();
-}
-
-procedure fooH() returns (){
-    call fooI();
-}
-
-procedure __automaton_fail() returns (){
-  ERROR:
-    assert false;
-}
-
-procedure fooA() returns ()
-modifies ~sent_encrypted;
-{
-    call fooB();
-}
-
-procedure main() returns ()
-modifies ~sent_encrypted;
-{
-    call test();
-}
-
-procedure test() returns ()
-modifies ~sent_encrypted;
-{
-
     var i : int;
+	x := 0;
+	 
     i := 0;
     while (true)
     {
         if (i < 4) {
         } else {
-            call fooA();
+            call foo();
 			return;
         }
         i := i + 1;
     }
+}
+
+procedure foo() returns ()
+modifies x;
+{
+    x := 1;
+    call fail();
+}
+
+
+procedure fail() returns (){
+    assert false;
 }
