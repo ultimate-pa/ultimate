@@ -115,6 +115,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 	 *            The transformer that should be applied to each transformula of each transition of the input
 	 *            {@link IIcfg} to create a new {@link IIcfg}.
 	 * @param services
+	 *            An IUltimateServiceProvider.
 	 */
 	public LoopAccelerationIcfgTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final IBacktranslationTracker backtranslationTracker,
@@ -264,7 +265,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 				final IcfgLocation lastLocation = backbone.getLastLocation();
 				final IcfgLocation entryLocation = backbone.getTransitions().get(0).getSource();
 
-				if (lastLocation != entryLocation && backbone.endsInLoop()) {
+				if (!lastLocation.equals(entryLocation) && backbone.endsInLoop()) {
 					incompleteBackbones.remove(i);
 					final IcfgEdge loopEntryTransition = backbone.getLoopEntryTransition();
 					if (mLoopEntryTransitions.contains(loopEntryTransition)) {
@@ -273,7 +274,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 					mLoopEntryTransitions.add(loopEntryTransition);
 					incompleteBackbones.add(new Backbone(loopEntryTransition));
 					mBackbones.putIfAbsent((INLOC) loopEntryTransition.getSource(), new ArrayList<>());
-				} else if (lastLocation == entryLocation) {
+				} else if (lastLocation.equals(entryLocation)) {
 					assert backbone.endsInLoop();
 					incompleteBackbones.remove(i);
 					mBackbones.get(entryLocation).add(backbone);
@@ -358,7 +359,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		}
 	}
 
-	private void checkTransition(final IcfgEdge transition) {
+	private static void checkTransition(final IcfgEdge transition) {
 
 		final TermClassifier tclassifier = new TermClassifier();
 		tclassifier.checkTerm(transition.getTransformula().getFormula());
@@ -387,7 +388,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 				transFormulas.add(tf);
 
 				final INLOC target = (INLOC) edge.getTarget();
-				if (target != backbone.getLastLocation() && mBackbones.containsKey(target)) {
+				if (!target.equals(backbone.getLastLocation()) && mBackbones.containsKey(target)) {
 					final IteratedSymbolicMemory iteratedSymbolicMemory = getIteratedSymbolicMemoryForLoop(target);
 					overapproximation |= iteratedSymbolicMemory.isOverapproximation()
 							|| iteratedSymbolicMemory.getLoopCounters().size() > 1;

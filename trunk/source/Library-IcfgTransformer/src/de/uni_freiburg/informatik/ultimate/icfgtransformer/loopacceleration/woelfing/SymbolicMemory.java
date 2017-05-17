@@ -145,9 +145,8 @@ public class SymbolicMemory {
 	public Term toTerm() {
 		Term term = mScript.getScript().term("true");
 
-		for (final TermVariable termVar : mVariableTerms.keySet()) {
-			term = Util.and(mScript.getScript(), term,
-					mScript.getScript().term("=", termVar, mVariableTerms.get(termVar)));
+		for (final Map.Entry<TermVariable, Term> entry : mVariableTerms.entrySet()) {
+			term = Util.and(mScript.getScript(), term, mScript.getScript().term("=", entry.getKey(), entry.getValue()));
 		}
 
 		return term;

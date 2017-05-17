@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  *
  */
 public class Backbone {
-
 	private final List<IcfgEdge> mTransitions;
 
 	/**
@@ -97,7 +96,7 @@ public class Backbone {
 	public boolean endsInLoop() {
 		final IcfgLocation lastLocation = getLastLocation();
 		for (final IcfgEdge edge : mTransitions) {
-			if (edge.getSource() == lastLocation) {
+			if (edge.getSource().equals(lastLocation)) {
 				return true;
 			}
 		}
@@ -122,7 +121,7 @@ public class Backbone {
 		final IcfgLocation loopEntry = getLastLocation();
 
 		for (final IcfgEdge edge : mTransitions) {
-			if (edge.getSource() == loopEntry) {
+			if (edge.getSource().equals(loopEntry)) {
 				return edge;
 			}
 		}
