@@ -1,7 +1,7 @@
 /*
- * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
- * Copyright (C) 2015 University of Freiburg
+ * Copyright (C) 2015-2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2016 Marius Greitschus (greitsch@informatik.uni-freiburg.de)
+ * Copyright (C) 2015-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE AbstractInterpretationV2 plug-in.
  *
@@ -76,7 +76,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
 /**
- * The post operator of the interval domain for {@link IBoogieVar}s.
+ * A basic post operator for non-relational domains that operate on Boogie code and {@link IBoogieVar}s. It relies on
+ * {@link INonrelationalValue} for most of its operations.
  *
  * @author Marius Greitschus (greitsch@informatik.uni-freiburg.de)
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
@@ -219,19 +220,18 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 	private List<STATE> handleReturnTransition(final STATE stateBeforeLeaving, final STATE stateAfterLeaving,
 			final IcfgEdge transition) {
 		final CallStatement correspondingCall = getCorrespondingCall(transition);
-		final List<STATE> returnList = new ArrayList<>();
-
 		final Procedure procedure = getProcedure(correspondingCall.getMethodName());
 		final Pair<Deque<V>, Deque<BooleanValue>> outVals = getOutParamValues(procedure, stateBeforeLeaving);
-		final List<ITermProvider> inVals = getInParamValues(procedure, stateBeforeLeaving);
 		final VariableLHS[] lhs = correspondingCall.getLhs();
-		final Expression[] args = correspondingCall.getArguments();
 
 		if (outVals.getFirst().size() + outVals.getSecond().size() != lhs.length) {
 			throw new UnsupportedOperationException("The expected number of return variables (" + lhs.length
 					+ ") is different from the function's number of return variables (" + outVals.getFirst().size()
 					+ " vals, " + outVals.getSecond().size() + " bools).");
 		}
+
+		final List<ITermProvider> inVals = getInParamValues(procedure, stateBeforeLeaving);
+		final Expression[] args = correspondingCall.getArguments();
 
 		if (inVals.size() != args.length) {
 			throw new UnsupportedOperationException("The expected number of input expressions (" + args.length
@@ -260,8 +260,8 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		for (final IBoogieVar boogieVar : updateVarNames) {
 			TypeUtils.consumeVariable(varConsumer, boolConsumer, null, boogieVar);
 		}
-		assert outVals.getFirst().size() == 0;
-		assert outVals.getSecond().size() == 0;
+		assert outVals.getFirst().isEmpty();
+		assert outVals.getSecond().isEmpty();
 
 		final List<Expression> inputParameterExpressionTerms = new ArrayList<>();
 
@@ -299,15 +299,16 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 		}
 
 		// Create arrays for state update functions.
-		final IBoogieVar[] updateVarNameArray = updateVars.stream().map(entry -> entry.getFirst())
+		final IBoogieVar[] updateVarNameArray = updateVars.stream().map(Pair<IBoogieVar, V>::getFirst)
 				.collect(Collectors.toList()).toArray(new IBoogieVar[updateVars.size()]);
-		final V[] updateVarValsArray = updateVars.stream().map(entry -> entry.getSecond()).collect(Collectors.toList())
-				.toArray(stateAfterLeaving.getArray(updateVars.size()));
-		final IBoogieVar[] updateBoolNameArray = updateBools.stream().map(entry -> entry.getFirst())
+		final V[] updateVarValsArray = updateVars.stream().map(Pair<IBoogieVar, V>::getSecond)
+				.collect(Collectors.toList()).toArray(stateAfterLeaving.getArray(updateVars.size()));
+		final IBoogieVar[] updateBoolNameArray = updateBools.stream().map(Pair<IBoogieVar, BooleanValue>::getFirst)
 				.collect(Collectors.toList()).toArray(new IBoogieVar[updateBools.size()]);
-		final BooleanValue[] updateBoolValsArray = updateBools.stream().map(entry -> entry.getSecond())
+		final BooleanValue[] updateBoolValsArray = updateBools.stream().map(Pair<IBoogieVar, BooleanValue>::getSecond)
 				.collect(Collectors.toList()).toArray(new BooleanValue[updateBools.size()]);
 
+		final List<STATE> returnList = new ArrayList<>();
 		for (final STATE s : rets) {
 			// TODO: Implement better handling of arrays.
 			returnList.add(s.setMixedValues(updateVarNameArray, updateVarValsArray, updateBoolNameArray,
@@ -342,7 +343,7 @@ public abstract class NonrelationalPostOperator<STATE extends NonrelationalState
 
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("    Resulting post states: "
-					+ postResults.stream().map(r -> r.toLogString()).collect(Collectors.toList()));
+					+ postResults.stream().map(STATE::toLogString).collect(Collectors.toList()));
 		}
 		return postResults;
 	}
