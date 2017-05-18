@@ -50,4 +50,5 @@ public interface IEqNodeIdentifier<NODE, FUNCTION> {
 	
 	NODE renameVariables(Map<Term, Term> substitutionMapping);
 	
+	Term getTerm();
 }

@@ -39,6 +39,18 @@ public class EqConstraint<
 		mElementCongruenceGraph.merge(node1, node2);
 	}
 
+	public void havoc(NODE node) {
+		assert !mIsFrozen;
+		if (isBottom()) {
+			return;
+		}
+		mElementCongruenceGraph.havoc(node);
+	}
+	
+	public void havocFunction(FUNCTION func) {
+		assert !mIsFrozen;
+		
+	}
 	
 	public void freeze() {
 		assert !mIsFrozen;

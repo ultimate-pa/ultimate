@@ -7,9 +7,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqAtomicBaseNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNonAtomicBaseNode;
 
 public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTION> {
 	
@@ -147,10 +152,164 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 		return mNodeToEqGraphNode.get(node).find().getNode();
 	}
 	
-	public void havoc (NODE node) {
+	/**
+	 * To havoc a node. There are three main parts to handle:
+	 * <ol>
+	 *  <li> Handling the outgoing edge chain. 
+	 *  <li> Handling the incoming edges. 
+	 *  <li> Handling the node itself.
+	 * </ol>
+	 *
+	 * @param nodeToBeHavocced EqGraphNode to be havocced
+	 * @param originalState
+	 * @return 
+	 */
+	public void havoc (NODE nodeToBeHavocced) {
 		assert !mIsFrozen;
+
+		assert !nodeToBeHavocced.isLiteral() : "cannot havoc a literal";
+
 		
+		EqGraphNode<NODE, FUNCTION> graphNodeForNodeToBeHavocced = mNodeToEqGraphNode.get(nodeToBeHavocced);
+
+		// TODO: determine if state becomes top through the havoc!
+
+		/*
+		 * 1. Handling the outgoing edge chain
+		 * 
+		 *  <li> sever the outgoing edge from nodeToBeHavocced
+		 *  <li> update ccchild and ccpar entries in each of the transitive representatives of the havocced node
+		 *  <li>  Remember that the ccchild and ccpar entries of each node represent the history of those fields, i.e.,
+		 *      the ccchild/par when that node was a representative
+		 *  <li> for each of the transitive representatives we build the set difference
+		 */
+		final EqGraphNode<NODE, FUNCTION> firstRepresentative =
+				graphNodeForNodeToBeHavocced.getRepresentative();
+		EqGraphNode<NODE, FUNCTION> nextRepresentative = firstRepresentative;
+		// remove the outgoing equality edge from the nodeToBeHavocced
+		nextRepresentative.getReverseRepresentative().remove(graphNodeForNodeToBeHavocced);
+		while (!(nextRepresentative.equals(nextRepresentative.getRepresentative()))) {
+			nextRepresentative.getCcpar().removeAll(graphNodeForNodeToBeHavocced.getCcpar());
+			nextRepresentative.getCcchild().removeAllPairs(graphNodeForNodeToBeHavocced.getCcchild());
+			nextRepresentative = nextRepresentative.getRepresentative();
+		}
+		assert nextRepresentative != graphNodeForNodeToBeHavocced : "do we need a special case, here?";
+		// one more step is needed for the last element of the representative chain
+		nextRepresentative.getCcpar().removeAll(graphNodeForNodeToBeHavocced.getCcpar());
+		nextRepresentative.getCcchild().removeAllPairs(graphNodeForNodeToBeHavocced.getCcchild());
+
+		/*
+		 * 2. Handling the incoming edges (reverseRepresentative). Point nodes in reverseRepresentative to the
+		 * representative of the node that is being havoc. For example, y -> x -> z. Havoc x, then we have y -> z But if
+		 * the node that is being havoc is its own representative, then point nodes in reverseRepresentative to one of
+		 * them. For example, y -> x <- z, Havoc x, then we have y -> z or z -> y.
+		 */
+		EqGraphNode<NODE, FUNCTION> firstReverseRepresentativeNode = null;
+		if (!graphNodeForNodeToBeHavocced.getReverseRepresentative().isEmpty()) {
+			firstReverseRepresentativeNode = graphNodeForNodeToBeHavocced.getReverseRepresentative().iterator().next();
+		}
+		for (final EqGraphNode<NODE, FUNCTION> reverseNode : graphNodeForNodeToBeHavocced
+				.getReverseRepresentative()) {
+			// first reset the representative of all the reverseRepresentative nodes.
+			reverseNode.setRepresentative(reverseNode);
+		}
+		
+		/*
+		 * we have to reconnect nodes that were connected through an equality chain that contained the nodeToBeHavocced
+		 */
+		boolean havocNodeWasItsRepresentativeBeforeHavoc = false;
+		for (final EqGraphNode<NODE, FUNCTION> reverseNode : graphNodeForNodeToBeHavocced
+				.getReverseRepresentative()) {
+			// case y -> x <- z
+			if (firstRepresentative.equals(graphNodeForNodeToBeHavocced)) {
+				havocNodeWasItsRepresentativeBeforeHavoc = true;
+				if (graphNodeForNodeToBeHavocced.getReverseRepresentative().size() > 1) {
+					assert firstReverseRepresentativeNode != null;
+					merge(reverseNode.getNode(), firstRepresentative.getNode());
+					
+				}
+			} else { // case y -> x -> z
+				merge(reverseNode.getNode(), firstRepresentative.getNode());
+			}
+		}
+		
+//		final VPStateBuilder<ACTION> builder2 = copy(resultState);
+//		graphNodeForNodeToBeHavocced = builder2.getEqGraphNode(nodeToBeHavocced);
+		
+		/*
+		 * 3. Handling the nodeToBeHavocced itself: First update disequality set. Then set nodeToBeHavocced to initial.
+		 */
+		if (havocNodeWasItsRepresentativeBeforeHavoc) {
+			/*
+			 *  nodeToBehavocced was the representative of an equivalence class --> we need to 
+			 */
+			final Set<VPDomainSymmetricPair<NODE>> newDisEqualitySet = new HashSet<>();
+			for (final VPDomainSymmetricPair<NODE> pair : getDisequalities()) {
+				if (pair.contains(graphNodeForNodeToBeHavocced.mNodeIdentifier)) {
+					newDisEqualitySet.add(new VPDomainSymmetricPair<NODE>(
+							pair.getOther(nodeToBeHavocced),
+							find(firstReverseRepresentativeNode.getNode())));
+				} else {
+					newDisEqualitySet.add(pair);
+				}
+			}
+			mDisequalities = newDisEqualitySet;
+		} else {
+			// do nothing: no need to update disequality set, because if x is not representative, then x should not be
+			// in disequality set.
+		}
+		graphNodeForNodeToBeHavocced.setNodeToInitial();
+
+		/*
+		 * 
+		 */
+		if (nodeToBeHavocced instanceof EqFunctionNode) {
+			restorePropagation((EqFunctionNode) nodeToBeHavocced);
+		}
+//		
+		// also havoc the function nodes which index had been havoc.
+		if (!graphNodeForNodeToBeHavocced.getInitCcpar().isEmpty()) {
+			for (final EqGraphNode<NODE, FUNCTION> initCcpar : graphNodeForNodeToBeHavocced
+					.getInitCcpar()) {
+				havoc(initCcpar.getNode());
+			}
+		}
+		
+		/*
+		 * havoc all the non-atomic EqNodes which depend on this one
+		 */
+		if (nodeToBeHavocced instanceof EqAtomicBaseNode) {
+			for (final EqNonAtomicBaseNode dependentNode : ((EqAtomicBaseNode) nodeToBeHavocced)
+					.getDependentNonAtomicBaseNodes()) {
+				havoc((NODE) dependentNode);
+			}
+		}
 	}
+	
+	
+	/**
+	 * An additional process after a function node is havoc, in order to restore the propagation.
+	 * For example, we have two nodes a[i] and a[j], if i = j, by equality propagation,
+	 * we also know a[i] = a[j]. When a[i] is being havoc, we lose the information of a[i] = a[j],
+	 * which is the result of equality propagation of (i = j). This method is to restore this
+	 * information.
+	 *
+	 * @param functionNode
+	 */
+	 void restorePropagation(final EqFunctionNode functionNode) {
+	
+		 EqNode firstIndex = functionNode.getArgs().get(0);
+		 EqGraphNode<EqNode, IProgramVarOrConst> firstIndexGN = getEqGraphNode(firstIndex);
+
+		 final Set<EqFunctionNode> fnNodeSet = mDomain.getPreAnalysis().getArrayIdToFnNodeMap().getImage(functionNode.getFunction());
+		 for (final EqFunctionNode fnNode : fnNodeSet) {
+			 if (getEqGraphNode(fnNode.getArgs().get(0)).find().equals(firstIndexGN.find())) {
+				 if (congruent(getEqGraphNode(fnNode), getEqGraphNode(functionNode))) {
+					 merge(getEqGraphNode(fnNode), getEqGraphNode(functionNode));
+				 }
+			 }
+		 }
+	 }
 	
 	/**
 	 * Use disEqualitySet to check if there exist contradiction in the graph.
@@ -184,11 +343,15 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 	public void renameVariables(Map<Term, Term> substitutionMapping) {
 		assert !mIsFrozen;
 		
+		final Map<NODE, NODE> oldNodeToSubstitutedNode = new HashMap<>();
+		for (NODE oldNode : mNodeToEqGraphNode.keySet()) {
+			oldNodeToSubstitutedNode.put(oldNode, oldNode.renameVariables(substitutionMapping));
+		}
+		
 		Map<NODE, EqGraphNode<NODE, FUNCTION>> newNodeToEqGraphNodeMap = new HashMap<>();
 		
 		for (Entry<NODE, EqGraphNode<NODE, FUNCTION>> en : mNodeToEqGraphNode.entrySet()) {
-			newNodeToEqGraphNodeMap.put(en.getKey().renameVariables(substitutionMapping), 
-					value);
+			
 		}
 
 		mNodeToEqGraphNode = newNodeToEqGraphNodeMap;

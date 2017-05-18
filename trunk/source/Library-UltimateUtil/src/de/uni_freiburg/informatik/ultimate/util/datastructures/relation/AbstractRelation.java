@@ -104,6 +104,18 @@ public abstract class AbstractRelation<D, R, MAP extends Map<D, Set<R>>> impleme
 		}
 		return result;
 	}
+	
+	/**
+	 * Removes all pairs from the given relation from this relation.
+	 * (i.e., subtracts the argument relation from this one)
+	 * 
+	 * @param rel relation to subtract from this one
+	 */
+	public void removeAllPairs(final AbstractRelation<D, R, ?> rel) {
+		for (final Entry<D, R> en : rel.entrySet()) {
+			removePair(en.getKey(), en.getValue());
+		}
+	}
 
 	/**
 	 * Add all elements contained in relation rel to this relation. Does not reuse sets of the relation rel but
