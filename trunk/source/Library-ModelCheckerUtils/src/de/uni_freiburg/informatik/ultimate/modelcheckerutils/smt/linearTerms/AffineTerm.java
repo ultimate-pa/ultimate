@@ -40,7 +40,6 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.BitvectorUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 
@@ -134,7 +133,7 @@ public class AffineTerm extends Term {
 			}
 			break;
 		default:
-			mVariable2Coefficient = new HashMap<Term, Rational>();
+			mVariable2Coefficient = new HashMap<>();
 			for (int i = 0; i < terms.length; i++) {
 				checkIfTermIsLegalVariable(terms[i]);
 				if (!coefficients[i].equals(Rational.ZERO)) {
@@ -162,7 +161,7 @@ public class AffineTerm extends Term {
 	public AffineTerm(final AffineTerm... affineTerms) {
 		super(0);
 		mSort = affineTerms[0].getSort();
-		mVariable2Coefficient = new HashMap<Term, Rational>();
+		mVariable2Coefficient = new HashMap<>();
 		Rational constant = Rational.ZERO;
 		for (final AffineTerm affineTerm : affineTerms) {
 			for (final Map.Entry<Term, Rational> summand : affineTerm.mVariable2Coefficient.entrySet()) {
@@ -204,7 +203,7 @@ public class AffineTerm extends Term {
 			mConstant = Rational.ZERO;
 			mVariable2Coefficient = Collections.emptyMap();
 		} else {
-			mVariable2Coefficient = new HashMap<Term, Rational>();
+			mVariable2Coefficient = new HashMap<>();
 			mSort = affineTerm.getSort();
 			if (SmtSortUtils.isBitvecSort(mSort)) {
 				mConstant = bringValueInRange(affineTerm.mConstant.mul(multiplier), mSort);
@@ -361,7 +360,7 @@ public class AffineTerm extends Term {
 
 	public static AffineTerm applyModuloToAllCoefficients(final Script script, final AffineTerm affineTerm,
 			final BigInteger divident) {
-		assert affineTerm.getSort().getName().equals("Int");
+		assert SmtSortUtils.isIntSort(affineTerm.getSort());
 		final Map<Term, Rational> map = affineTerm.getVariable2Coefficient();
 		final Term[] terms = new Term[map.size()];
 		final Rational[] coefficients = new Rational[map.size()];

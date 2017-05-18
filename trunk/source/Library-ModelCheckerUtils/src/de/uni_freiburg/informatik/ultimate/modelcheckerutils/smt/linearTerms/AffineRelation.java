@@ -104,7 +104,7 @@ public class AffineRelation {
 		}
 		final AffineTerm difference = new AffineTerm(affineLhs, new AffineTerm(affineRhs, Rational.MONE));
 		if (transformInequality != TransformInequality.NO_TRANFORMATION
-				&& "Int".equals(difference.getSort().getName())) {
+				&& SmtSortUtils.isIntSort(difference.getSort())) {
 			if (transformInequality == TransformInequality.STRICT2NONSTRICT) {
 				switch (bnr.getRelationSymbol()) {
 				case DISTINCT:

@@ -340,7 +340,7 @@ public class PathProgramDumper {
 			if (mInputMode == InputMode.BOOGIE) {
 				// FIXME: do not only support int.
 				String typeName;
-				if (pv.getTermVariable().getSort().getName().equals("Int")) {
+				if (SmtSortUtils.isIntSort(pv.getTermVariable().getSort())) {
 					typeName = "int";
 				} else if (SmtSortUtils.isBoolSort(pv.getTermVariable().getSort())) {
 					typeName = "bool";

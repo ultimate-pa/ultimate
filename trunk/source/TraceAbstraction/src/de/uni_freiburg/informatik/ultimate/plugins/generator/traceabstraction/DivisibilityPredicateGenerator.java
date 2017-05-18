@@ -38,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
@@ -96,7 +97,7 @@ public class DivisibilityPredicateGenerator {
 	}
 
 	private boolean isOffsetVar(final IProgramVar bv) {
-		if (bv.getTermVariable().getSort().getName().equals("Int")) {
+		if (SmtSortUtils.isIntSort(bv.getTermVariable().getSort())) {
 			return bv.getGloballyUniqueId().contains("offset");
 		}
 		return false;

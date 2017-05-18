@@ -345,7 +345,7 @@ public class HornClauseParserScript extends NoopScript {
 
 		final Term result = super.term(funcname, indices, returnSort, params);
 
-		// if (returnSort.getName().equals("Bool")) {}
+		// if (SmtSortUtils.isBoolSort(returnSort)) {}
 		if (funcname.equals("=>")) {
 			int i = 0;
 			i++;

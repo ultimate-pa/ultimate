@@ -66,7 +66,7 @@ public final class BitvectorUtils {
 	 */
 	public static BitvectorConstant constructBitvectorConstant(final Term term) {
 		if (term instanceof ApplicationTerm) {
-			if (term.getSort().getName().equals("BitVec")) {
+			if (SmtSortUtils.isBitvecSort(term.getSort())) {
 				if (term.getSort().getIndices().length == 1) {
 					final ApplicationTerm appTerm = (ApplicationTerm) term;
 					final FunctionSymbol symb = appTerm.getFunction();
@@ -98,7 +98,7 @@ public final class BitvectorUtils {
 
 	public static boolean allTermsAreBitvectorConstants(final Term[] terms) {
 		for (final Term term : terms) {
-			if (!term.getSort().getName().equals("BitVec")) {
+			if (!SmtSortUtils.isBitvecSort(term.getSort())) {
 				return false;
 			}
 			if (term instanceof ApplicationTerm) {

@@ -52,12 +52,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 public class AffineTermTransformer extends TermTransformer {
 	private final Script mScript;
 
-	public AffineTermTransformer(Script script) {
+	public AffineTermTransformer(final Script script) {
 		mScript = script;
 	}
 
 	@Override
-	protected void convert(Term term) {
+	protected void convert(final Term term) {
 		if (term instanceof TermVariable) {
 			final TermVariable tv = (TermVariable) term;
 			if (tv.getSort().isNumericSort() || SmtSortUtils.isBitvecSort(tv.getSort())) {
@@ -129,7 +129,7 @@ public class AffineTermTransformer extends TermTransformer {
 	 * Convert ConstantTerm with numericSort to AffineTerm
 	 * 
 	 */
-	private AffineTerm convertConstantNumericTerm(ConstantTerm constTerm) {
+	private AffineTerm convertConstantNumericTerm(final ConstantTerm constTerm) {
 		final Rational rational = SmtUtils.convertConstantTermToRational(constTerm);
 		final AffineTerm result = new AffineTerm(constTerm.getSort(), rational);
 		return result;
@@ -140,7 +140,7 @@ public class AffineTermTransformer extends TermTransformer {
 	 * If the input term is an integer literal we convert it to a real literal,
 	 * otherwise we consider the "to_real" term as a variable of an affine term.
 	 */
-	private AffineTerm convertToReal(ApplicationTerm term) {
+	private AffineTerm convertToReal(final ApplicationTerm term) {
 		if (!term.getFunction().getName().equals("to_real")) {
 			throw new IllegalArgumentException("no to_real term");
 		}
@@ -152,7 +152,7 @@ public class AffineTermTransformer extends TermTransformer {
 		final Term param = params[0];
 		if (param instanceof ConstantTerm) {
 			final ConstantTerm constant = (ConstantTerm) param;
-			if (!constant.getSort().getName().equals("Int")) {
+			if (!SmtSortUtils.isIntSort(constant.getSort())) {
 				throw new UnsupportedOperationException();
 			} else {
 				final AffineTerm intTerm = convertConstantNumericTerm(constant);
@@ -165,13 +165,13 @@ public class AffineTermTransformer extends TermTransformer {
 		return result;
 	}
 
-	private boolean isAffineSymbol(String funName) {
+	private boolean isAffineSymbol(final String funName) {
 		return (funName.equals("+") || funName.equals("-") || funName.equals("*") || funName.equals("/")
 				|| funName.equals("bvadd") || funName.equals("bvsub") || funName.equals("bvmul"));
 	}
 
 	@Override
-	public void convertApplicationTerm(ApplicationTerm appTerm, Term[] newArgs) {
+	public void convertApplicationTerm(final ApplicationTerm appTerm, final Term[] newArgs) {
 		final AffineTerm[] affineArgs = new AffineTerm[newArgs.length];
 		for (int i = 0; i < affineArgs.length; i++) {
 			if (newArgs[i] instanceof AffineTerm) {
@@ -290,7 +290,7 @@ public class AffineTermTransformer extends TermTransformer {
 	 * Convert a BigDecimal into a Rational. Stolen from Jochen's code
 	 * de.uni_freiburg.informatik.ultimate.smtinterpol.convert.ConvertFormula.
 	 */
-	public static Rational decimalToRational(BigDecimal d) {
+	public static Rational decimalToRational(final BigDecimal d) {
 		Rational rat;
 		if (d.scale() <= 0) {
 			final BigInteger num = d.toBigInteger();

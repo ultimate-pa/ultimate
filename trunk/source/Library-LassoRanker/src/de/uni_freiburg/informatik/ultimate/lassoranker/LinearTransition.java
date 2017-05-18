@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transformations.ReplacementVarUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.ModifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 
 
 /**
@@ -114,7 +115,7 @@ public class LinearTransition implements Serializable {
 		for (final List<LinearInequality> polyhedron : mpolyhedra) {
 			for (final LinearInequality ieq : polyhedron) {
 				for (final Term var : ieq.getVariables()) {
-					if (var.getSort().getName().equals("Int")) {
+					if (SmtSortUtils.isIntSort(var.getSort())) {
 						return true;
 					}
 				}
@@ -172,7 +173,7 @@ public class LinearTransition implements Serializable {
 	 * @return list of clauses
 	 */
 	private static List<Term> toClauses(final Term term) {
-		final List<Term> l = new ArrayList<Term>();
+		final List<Term> l = new ArrayList<>();
 		if (!(term instanceof ApplicationTerm)) {
 			l.add(term);
 			return l;
@@ -205,7 +206,7 @@ public class LinearTransition implements Serializable {
 			final NlaHandling nlaHandling)
 			throws TermException {
 		final List<List<LinearInequality>> polyhedra =
-				new ArrayList<List<LinearInequality>>();
+				new ArrayList<>();
 		for (final Term disjunct : toClauses(tf.getFormula())) {
 			polyhedra.add(InequalityConverter.convert(disjunct, nlaHandling));
 		}
@@ -310,7 +311,7 @@ public class LinearTransition implements Serializable {
 	 * @return all variables occuring in any of the inequalities
 	 */
 	public Set<Term> getVariables() {
-		final Set<Term> vars = new LinkedHashSet<Term>();
+		final Set<Term> vars = new LinkedHashSet<>();
 		for (final List<LinearInequality> polyhedron : mpolyhedra) {
 			for (final LinearInequality li : polyhedron) {
 				vars.addAll(li.getVariables());
