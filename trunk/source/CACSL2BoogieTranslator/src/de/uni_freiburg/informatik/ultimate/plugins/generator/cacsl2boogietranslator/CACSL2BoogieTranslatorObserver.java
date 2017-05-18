@@ -123,13 +123,17 @@ public class CACSL2BoogieTranslatorObserver implements IUnmanagedObserver {
 			return false;
 		}
 
-		if (!(root instanceof WrapperNode) || !(((WrapperNode) root).getBacking() instanceof IASTTranslationUnit)) {
-			// we ignore everything that will not get us an IASTTranslationUnit
+		if ((root instanceof WrapperNode) && (((WrapperNode) root).getBacking() instanceof IASTTranslationUnit)) {
+			mInputTU = (IASTTranslationUnit) ((WrapperNode) root).getBacking();
+			mWitnessExtractor.setAST(mInputTU);
 			return false;
 		}
-		mInputTU = (IASTTranslationUnit) ((WrapperNode) root).getBacking();
-		mWitnessExtractor.setAST(mInputTU);
-		return false;
+		
+		if (root instanceof Unit) {
+			throw new UnsupportedOperationException("Your input file is a Boogie program. This plugin takes as input a C program.");
+		}
+		
+		throw new UnsupportedOperationException("This plugin takes as input a C program. Your input is not a C program.");
 	}
 
 	private void extractWitnessInformation(final WitnessNode wnode) {
