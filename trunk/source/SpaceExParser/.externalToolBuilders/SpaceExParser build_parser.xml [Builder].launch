@@ -11,6 +11,8 @@
 </listAttribute>
 <booleanAttribute key="org.eclipse.debug.ui.ATTR_LAUNCH_IN_BACKGROUND" value="false"/>
 <stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.ant.ui.AntClasspathProvider"/>
+<stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.eclipse.ant.internal.launching.remote.InternalAntRunner"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="SpaceExParser"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.ant.ui.AntClasspathProvider"/>
 <stringAttribute key="org.eclipse.ui.externaltools.ATTR_BUILD_SCOPE" value="${working_set:&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;&#13;&#10;&lt;resources&gt;&#13;&#10;&lt;item path=&quot;/SpaceExParser/src/de/uni_freiburg/informatik/ultimate/plugins/spaceex/parser/build_parser.xml&quot; type=&quot;1&quot;/&gt;&#13;&#10;&lt;item path=&quot;/SpaceExParser/src/de/uni_freiburg/informatik/ultimate/plugins/spaceex/parser/generated&quot; type=&quot;2&quot;/&gt;&#13;&#10;&lt;item path=&quot;/SpaceExParser/src/de/uni_freiburg/informatik/ultimate/plugins/spaceex/parser/sspaceex.xsd&quot; type=&quot;1&quot;/&gt;&#13;&#10;&lt;/resources&gt;}"/>
