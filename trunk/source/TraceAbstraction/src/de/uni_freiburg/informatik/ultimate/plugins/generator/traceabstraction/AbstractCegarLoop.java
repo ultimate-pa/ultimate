@@ -74,8 +74,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author heizmann@informatik.uni-freiburg.de
  */
 public abstract class AbstractCegarLoop<LETTER extends IAction> {
-
 	private static final String MSG_VERIFICATION_CANCELLED = "Verification cancelled";
+	
+	private static final boolean CONTINUE_AFTER_ERROR_TRACE_FOUND = false;
 
 	/**
 	 * Result of CEGAR loop iteration
@@ -244,6 +245,16 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	protected abstract void constructInterpolantAutomaton() throws AutomataOperationCanceledException;
 
 	/**
+	 * Construct an automaton that
+	 * <ul>
+	 * <li>accepts the trace of mCounterexample,
+	 * <li>accepts only feasible traces.
+	 * </ul>
+	 * @return
+	 */
+	protected abstract void constructErrorAutomaton() throws AutomataOperationCanceledException;
+
+	/**
 	 * Construct a new automaton mAbstraction such that
 	 * <ul>
 	 * <li>the language of the new mAbstraction is (not necessary strictly) smaller than the language of the old
@@ -358,15 +369,23 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				final LBool isCounterexampleFeasible = isCounterexampleFeasible();
 				if (isCounterexampleFeasible == Script.LBool.SAT) {
 					mCegarLoopBenchmark.setResult(Result.UNSAFE);
-					return Result.UNSAFE;
-				}
-				if (isCounterexampleFeasible == Script.LBool.UNKNOWN) {
+					if (CONTINUE_AFTER_ERROR_TRACE_FOUND) {
+						if (mLogger.isInfoEnabled()) {
+							mLogger.info("trying to exclude counterexample and continue analysis now");
+						}
+						mInteractive.waitIfPaused();
+						constructErrorAutomaton();
+					} else {
+						return Result.UNSAFE;
+					}
+				} else if (isCounterexampleFeasible == Script.LBool.UNKNOWN) {
 					mCegarLoopBenchmark.setResult(Result.UNKNOWN);
 					mReasonUnknown = new UnprovabilityReason("unable to decide satisfiability of path constraint");
 					return Result.UNKNOWN;
+				} else {
+					mInteractive.waitIfPaused();
+					constructInterpolantAutomaton();
 				}
-				mInteractive.waitIfPaused();
-				constructInterpolantAutomaton();
 			} catch (final AutomataOperationCanceledException e1) {
 				mLogger.warn(MSG_VERIFICATION_CANCELLED);
 				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
