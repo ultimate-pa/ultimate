@@ -115,12 +115,12 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 		mCoreStorage = new ToolchainStorage();
 		mLoggingService = mCoreStorage.getLoggingService();
 		mLogger = mLoggingService.getLogger(Activator.PLUGIN_ID);
-		mLogger.info("Initializing application");
+		mLogger.debug("Initializing application");
 
 		final ILogger tmpLogger = mLogger;
 		mJobChangeAdapter = new UltimateJobChangeAdapter(tmpLogger);
 		Job.getJobManager().addJobChangeListener(mJobChangeAdapter);
-		mLogger.info("--------------------------------------------------------------------------------");
+		mLogger.debug("--------------------------------------------------------------------------------");
 
 		// loading default settings
 		mSettingsManager = new SettingsManager(mLogger);
@@ -160,7 +160,7 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 	 * @return Ultimate's exit code.
 	 */
 	private int activateController() {
-		mLogger.info("Initializing controller ...");
+		mLogger.debug("Initializing controller ...");
 		if (getCurrentController() == null) {
 			mLogger.fatal("Could not find a controller. Ultimate will exit.");
 			return -1;
@@ -168,7 +168,13 @@ public class UltimateCore implements IApplication, ICore<RunDefinition>, IUltima
 		// TODO: Find better way than this cast
 		mLoggingService.setCurrentControllerID(getCurrentControllerID());
 		final int returnCode = getCurrentController().init(this);
-		mLogger.info("Preparing to exit Ultimate with return code " + returnCode);
+		final String msg = "Preparing to exit Ultimate with return code " + returnCode;
+		if (returnCode == 0) {
+			mLogger.debug(msg);
+		} else {
+			mLogger.warn(msg);
+		}
+
 		return returnCode;
 	}
 

@@ -90,19 +90,19 @@ final class PluginFactory implements IServiceFactoryFactory {
 		mAvailableServicesByClassName = new HashMap<>();
 		mSettingsManager = settingsManager;
 
-		mLogger.info("--------------------------------------------------------------------------------");
-		mLogger.info("Detecting plugins...");
+		mLogger.debug("--------------------------------------------------------------------------------");
+		mLogger.debug("Detecting plugins...");
 		registerType(IController.class);
 		registerType(ISource.class);
 		registerType(IOutput.class);
 		registerType(IGenerator.class);
 		registerType(IAnalysis.class);
 		mController = loadControllerPlugin(mRegistry);
-		mLogger.info("Finished detecting plugins!");
-		mLogger.info("Loading services ...");
+		mLogger.debug("Finished detecting plugins!");
+		mLogger.debug("Loading services ...");
 		registerType(IServiceFactory.class);
-		mLogger.info("Finished loading services!");
-		mLogger.info("--------------------------------------------------------------------------------");
+		mLogger.debug("Finished loading services!");
+		mLogger.debug("--------------------------------------------------------------------------------");
 	}
 
 	IController<RunDefinition> getController() {
@@ -184,8 +184,8 @@ final class PluginFactory implements IServiceFactoryFactory {
 
 	private List<IToolchainPlugin> loadAdmissiblePlugins() {
 		final List<IToolchainPlugin> rtr = new ArrayList<>();
-		mLogger.info("--------------------------------------------------------------------------------");
-		mLogger.info("Loading all admissible plugins (creating one instance, loading preferences)");
+		mLogger.debug("--------------------------------------------------------------------------------");
+		mLogger.debug("Loading all admissible plugins (creating one instance, loading preferences)");
 		int notAdmissible = 0;
 		final Set<String> pluginIds = new HashSet<>();
 		for (final Class<?> type : ITOOLCHAIN_PLUGIN_CLASSES) {
@@ -210,9 +210,9 @@ final class PluginFactory implements IServiceFactoryFactory {
 				}
 			}
 		}
-		mLogger.info("Finished loading " + rtr.size() + " admissible plugins"
+		mLogger.debug("Finished loading " + rtr.size() + " admissible plugins"
 				+ (notAdmissible > 0 ? " (" + notAdmissible + " not admissible)" : " (all were admissible)"));
-		mLogger.info("--------------------------------------------------------------------------------");
+		mLogger.debug("--------------------------------------------------------------------------------");
 		return rtr;
 	}
 
@@ -284,7 +284,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 		mGuiMode = Boolean.valueOf(controllerDescriptor.getAttribute("isGraphical"));
 		mSettingsManager.registerPlugin(controller);
 
-		mLogger.info("Loaded " + (mGuiMode ? "graphical " : "") + "controller " + controller.getPluginName());
+		mLogger.debug("Loaded " + (mGuiMode ? "graphical " : "") + "controller " + controller.getPluginName());
 		return controller;
 	}
 
@@ -316,7 +316,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 					mLogger.fatal("Cannot register type: " + e);
 				}
 			}
-			mLogger.info(mAvailableServicesByClassName.size() + " " + clazz.getSimpleName() + " services available");
+			mLogger.debug(mAvailableServicesByClassName.size() + " " + clazz.getSimpleName() + " services available");
 		} else {
 			registerTool(clazz);
 		}
@@ -346,7 +346,7 @@ final class PluginFactory implements IServiceFactoryFactory {
 			mAvailableToolsByClassName.put(className, element);
 			mPluginIDToClassName.put(createPluginID(className), className);
 		}
-		mLogger.info(result.size() + " " + clazz.getSimpleName() + " plugins available");
+		mLogger.debug(result.size() + " " + clazz.getSimpleName() + " plugins available");
 	}
 
 	private static String createPluginID(final String classname) {

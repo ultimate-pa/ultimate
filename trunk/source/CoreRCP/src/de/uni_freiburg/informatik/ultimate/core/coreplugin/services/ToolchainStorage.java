@@ -104,7 +104,9 @@ public class ToolchainStorage implements IToolchainStorage, IUltimateServiceProv
 		Collections.reverse(current);
 
 		final ILogger coreLogger = getLoggingService().getLogger(Activator.PLUGIN_ID);
-		coreLogger.info("Clearing " + current.size() + " storables from " + getClass().getSimpleName());
+		if (coreLogger.isDebugEnabled()) {
+			coreLogger.debug("Clearing " + current.size() + " storables from " + getClass().getSimpleName());
+		}
 		for (final IStorable storable : current) {
 			if (storable == null) {
 				coreLogger.warn("Found NULL storable, ignoring");
