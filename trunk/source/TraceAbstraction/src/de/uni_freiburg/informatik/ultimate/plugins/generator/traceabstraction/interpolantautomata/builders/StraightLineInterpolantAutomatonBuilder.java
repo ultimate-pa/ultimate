@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2014-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  * 
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
@@ -26,10 +27,12 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders;
 
+import java.util.function.Function;
+
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
@@ -46,34 +49,63 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * interpolants, hence the resulting automaton may also have loops and accept more than a single word.
  * 
  * @author Matthias Heizmann
- *
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class StraightLineInterpolantAutomatonBuilder<LETTER>
 		implements IInterpolantAutomatonBuilder<LETTER, IPredicate> {
 	private final IUltimateServiceProvider mServices;
-
 	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
 
+	/**
+	 * Constructor from a general trace and predicate provider.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param alphabet
+	 *            automaton alphabet
+	 * @param predicateFactory
+	 *            predicate factory
+	 * @param trace
+	 *            trace
+	 * @param index2predicate
+	 *            Maps a trace index to a predicate. Index {@code 0} represents the pre- and index {@code n} represents
+	 *            the postcondition.
+	 */
+	public StraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
+			final VpAlphabet<LETTER> alphabet, final PredicateFactoryForInterpolantAutomata predicateFactory,
+			final NestedWord<LETTER> trace, final Function<Integer, IPredicate> index2predicate) {
+		mServices = services;
+		mResult = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet, predicateFactory);
+		addStatesAndTransitions(trace, index2predicate);
+	}
+
+	/**
+	 * Convenience constructor from interpolants.
+	 * 
+	 * @param services
+	 *            Ultimate services
+	 * @param alphabet
+	 *            automaton alphabet
+	 * @param interpolantGenerator
+	 *            interpolant generator
+	 * @param predicateFactory
+	 *            predicate factory
+	 */
+	@SuppressWarnings("unchecked")
 	public StraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final VpAlphabet<LETTER> alphabet, final IInterpolantGenerator interpolantGenerator,
 			final PredicateFactoryForInterpolantAutomata predicateFactory) {
-		mServices = services;
-		final InterpolantsPreconditionPostcondition ipp =
-				new InterpolantsPreconditionPostcondition(interpolantGenerator);
-		mResult = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet, predicateFactory);
-		addStatesAndTransitions(interpolantGenerator, predicateFactory, ipp);
+		this(services, alphabet, predicateFactory, (NestedWord<LETTER>) interpolantGenerator.getTrace(),
+				convertInterpolantGenerator(interpolantGenerator));
 	}
 
-	private void addStatesAndTransitions(final IInterpolantGenerator interpolantGenerator,
-			final PredicateFactoryForInterpolantAutomata predicateFactory,
-			final InterpolantsPreconditionPostcondition ipp) {
-
-		mResult.addState(true, false, interpolantGenerator.getPrecondition());
-		mResult.addState(false, true, interpolantGenerator.getPostcondition());
-		final NestedWord<LETTER> trace = (NestedWord<LETTER>) interpolantGenerator.getTrace();
+	private void addStatesAndTransitions(final NestedWord<LETTER> trace,
+			final Function<Integer, IPredicate> predicateSequenceProvider) {
+		mResult.addState(true, false, predicateSequenceProvider.apply(0));
+		mResult.addState(false, true, predicateSequenceProvider.apply(trace.length()));
 		for (int i = 0; i < trace.length(); i++) {
-			final IPredicate pred = ipp.getInterpolant(i);
-			final IPredicate succ = ipp.getInterpolant(i + 1);
+			final IPredicate pred = predicateSequenceProvider.apply(i);
+			final IPredicate succ = predicateSequenceProvider.apply(i + 1);
 			assert mResult.getStates().contains(pred);
 			if (!mResult.getStates().contains(succ)) {
 				mResult.addState(false, false, succ);
@@ -83,7 +115,7 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER>
 			} else if (trace.isReturnPosition(i)) {
 				assert !trace.isPendingReturn(i);
 				final int callPos = trace.getCallPosition(i);
-				final IPredicate hierPred = ipp.getInterpolant(callPos);
+				final IPredicate hierPred = predicateSequenceProvider.apply(callPos);
 				mResult.addReturnTransition(pred, hierPred, trace.getSymbol(i), succ);
 			} else {
 				assert trace.isInternalPosition(i);
@@ -97,4 +129,15 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER>
 		return mResult;
 	}
 
+	private static Function<Integer, IPredicate>
+			convertInterpolantGenerator(final IInterpolantGenerator interpolantGenerator) {
+		final InterpolantsPreconditionPostcondition ipp =
+				new InterpolantsPreconditionPostcondition(interpolantGenerator);
+		return new Function<Integer, IPredicate>() {
+			@Override
+			public IPredicate apply(final Integer index) {
+				return ipp.getInterpolant(index);
+			}
+		};
+	}
 }
