@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -40,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
  */
 public class EqNonAtomicBaseNode extends EqNode {
 	
-	public EqNonAtomicBaseNode(Term t, boolean isGlobal, String procedure, EqNodeFactory eqNodeFactory) {
+	public EqNonAtomicBaseNode(Term t, boolean isGlobal, String procedure, EqNodeAndFunctionFactory eqNodeFactory) {
 		super(isGlobal, t.getFreeVars().length == 0, procedure, eqNodeFactory);
 		mTerm = t;
 	}
@@ -79,5 +80,11 @@ public class EqNonAtomicBaseNode extends EqNode {
 			return this;
 		}
 		return mEqNodeFactory.getOrConstructEqNonAtomicBaseNode(substitutedTerm, isGlobal(), getProcedure());
+	}
+
+	@Override
+	public List<EqNode> getArgs() {
+		assert false : "check for isFunction() first";
+		return null;
 	}
 }

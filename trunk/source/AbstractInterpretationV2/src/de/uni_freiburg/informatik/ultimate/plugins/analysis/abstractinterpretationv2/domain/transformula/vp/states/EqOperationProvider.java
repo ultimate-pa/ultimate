@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -12,7 +11,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IDomainSpecificOperationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 
@@ -44,11 +42,7 @@ public class EqOperationProvider<ACTION extends IIcfgTransition<IcfgLocation>> i
 	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> renameVariables(
 			Map<Term, Term> substitutionMapping,
 			EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> constraint) {
-		final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> newConstraint =	
-				mEqConstraintFactory.unfreeze(constraint);
-		newConstraint.renameVariables(substitutionMapping);
-		newConstraint.freeze();
-		return newConstraint;
+		return constraint.renameVariables(substitutionMapping);
 	}
 
 	@Override
@@ -62,55 +56,21 @@ public class EqOperationProvider<ACTION extends IIcfgTransition<IcfgLocation>> i
 				VPDomainHelpers.computeCrossProduct(listOfConstraintSets);
 		
 		final Set<EqConstraint<ACTION, EqNode, EqFunction>> constraintSet = crossProduct.stream()
-				.map(constraintList -> conjoin(constraintList))
+				.map(constraintList -> mEqConstraintFactory.conjoin(constraintList))
 				.collect(Collectors.toSet());
 
 		return mEqConstraintFactory.getDisjunctiveConstraint(constraintSet);
 	}
 	
 	
-	public EqConstraint<ACTION, EqNode, EqFunction> conjoin(
-			List<EqConstraint<ACTION, EqNode, EqFunction>> conjuncts) {
-		final EqConstraint<ACTION, EqNode, EqFunction> newConstraint = mEqConstraintFactory.getEmptyConstraint();
-		
-		for (EqConstraint<ACTION, EqNode, EqFunction> conjunct : conjuncts) {
-			newConstraint.addNodes(conjunct.getAllNodes());
-			
-			for (Entry<EqNode, EqNode> eq : conjunct.getSupportingElementEqualities().entrySet()) {
-				newConstraint.merge(eq.getKey(), eq.getValue());
-			}
-			
-			for (VPDomainSymmetricPair<EqNode> deq : conjunct.getElementDisequalities()) {
-				newConstraint.addRawDisequality(deq.getFirst(), deq.getSecond());
-			}
-			
-			for (Entry<EqFunction, EqFunction> aEq : conjunct.getSupportingFunctionEqualities()) {
-				newConstraint.addFunctionEquality(aEq.getKey(), aEq.getValue());
-			}
-			
-			for (VPDomainSymmetricPair<EqFunction> aDeq : conjunct.getFunctionDisequalites()) {
-				newConstraint.addFunctionDisequality(aDeq.getFirst(), aDeq.getSecond());
-			}
 
-			if (newConstraint.checkForContradiction()) {
-				return mEqConstraintFactory.getBottomConstraint();
-			}
-		}
-		
-		newConstraint.freeze();
-		return newConstraint;
-
-	}
 
 	@Override
 	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> projectExistentially(Set<TermVariable> varsToProjectAway,
 			EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> constraint) {
-		final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> newConstraint =	
-				mEqConstraintFactory.unfreeze(constraint);
-		newConstraint.projectExistentially(varsToProjectAway);
-		newConstraint.freeze();
-		return newConstraint;
+		return constraint.projectExistentially(varsToProjectAway);
 	}
+
 
 	@Override
 	public boolean isConstaintValid(EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> constraint) {

@@ -52,7 +52,7 @@ public class EqFunctionNode extends EqNode {
 	private final List<EqNode> mArgs;
 	private final Set<EqFunction> mAllFunctionSymbols;
 
-	public EqFunctionNode(EqFunction function, List<EqNode> args, ManagedScript script, EqNodeFactory eqNodeFactory) {
+	public EqFunctionNode(EqFunction function, List<EqNode> args, ManagedScript script, EqNodeAndFunctionFactory eqNodeFactory) {
 		super(function.isGlobal() 
 				&& args.stream().map(arg -> arg.mIsGlobal).reduce((b1, b2) -> b1 && b2).get(),
 			!(function instanceof IProgramVar)
@@ -69,7 +69,7 @@ public class EqFunctionNode extends EqNode {
 	}
 
 	public EqFunctionNode(EqFunction function, List<EqNode> args, Term term,
-			EqNodeFactory eqNodeFactory) {
+			EqNodeAndFunctionFactory eqNodeFactory) {
 		super(function.isGlobal() 
 				&& args.stream().map(arg -> arg.mIsGlobal).reduce((b1, b2) -> b1 && b2).get(),
 			!(function instanceof IProgramVar)
@@ -109,6 +109,7 @@ public class EqFunctionNode extends EqNode {
 		return mFunction;
 	}
 
+	@Override
 	public List<EqNode> getArgs() {
 		return mArgs;
 	}

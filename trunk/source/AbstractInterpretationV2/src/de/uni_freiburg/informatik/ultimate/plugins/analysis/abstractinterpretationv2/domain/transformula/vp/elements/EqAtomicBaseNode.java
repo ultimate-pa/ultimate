@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -50,7 +51,7 @@ public class EqAtomicBaseNode extends EqNode {
 	private final boolean mIsLiteral;
 	private final Set<EqNonAtomicBaseNode> mDependentNonAtomicNodes = new HashSet<>();
 
-	public EqAtomicBaseNode(IProgramVarOrConst bv, EqNodeFactory eqNodeFactory) {
+	public EqAtomicBaseNode(IProgramVarOrConst bv, EqNodeAndFunctionFactory eqNodeFactory) {
 		super(bv.isGlobal(), 
 				!(bv instanceof IProgramVar),
 				bv instanceof IProgramVar ? ((IProgramVar) bv).getProcedure() : null, 
@@ -61,7 +62,7 @@ public class EqAtomicBaseNode extends EqNode {
 		mTerm = bv.getTerm();
 	}
 	
-	public EqAtomicBaseNode(IProgramVarOrConst bv, Term versionedTerm, EqNodeFactory eqNodeFactory) {
+	public EqAtomicBaseNode(IProgramVarOrConst bv, Term versionedTerm, EqNodeAndFunctionFactory eqNodeFactory) {
 		super(bv.isGlobal(), 
 				!(bv instanceof IProgramVar),
 				bv instanceof IProgramVar ? ((IProgramVar) bv).getProcedure() : null, 
@@ -94,7 +95,12 @@ public class EqAtomicBaseNode extends EqNode {
 	public Set<EqNonAtomicBaseNode> getDependentNonAtomicBaseNodes() {
 		return Collections.unmodifiableSet(mDependentNonAtomicNodes);
 	}
-	
+
+	@Override
+	public List<EqNode> getArgs() {
+		assert false : "check for isFunction() first";
+		return null;
+	}
 	
 	@Override
 	public boolean isFunction() {

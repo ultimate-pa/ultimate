@@ -65,7 +65,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNonAtomicBaseNode;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -116,7 +116,7 @@ public class VPDomainPreanalysis {
 	 */
 	private final Set<EqNode> mAllEqNodes = new HashSet<>();
 
-	private EqNodeFactory mEqNodeFactory;
+	private EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 
 	public VPDomainPreanalysis(final IIcfg<?> root, final ILogger logger) {
 		mManagedScript = root.getCfgSmtToolkit().getManagedScript();
@@ -253,7 +253,7 @@ public class VPDomainPreanalysis {
 			final EqFunctionNode innerSelectNode = (EqFunctionNode) constructEqNode(innerSelect);
 			arrayId = innerSelectNode.getFunction();
 		} else {
-			arrayId = getOrConstructEqFunction(getOrConstructBoogieVarOrConst(mds.getArray()));
+			arrayId = mEqNodeAndFunctionFactory.getOrConstructEqFunction(getOrConstructBoogieVarOrConst(mds.getArray()));
 		}
 
 		final List<EqNode> arguments = new ArrayList<>();
@@ -276,11 +276,6 @@ public class VPDomainPreanalysis {
 		return result;
 	}
 
-	private EqFunction getOrConstructEqFunction(IProgramVarOrConst orConstructBoogieVarOrConst) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 	private EqNode constructEqNode(final MultiDimensionalSelect mds) {
 		EqNode result = mTermToEqNode.get(mds.getSelectTerm());
 		if (result != null) {
@@ -294,7 +289,7 @@ public class VPDomainPreanalysis {
 			final EqFunctionNode innerStoreNode = (EqFunctionNode) constructEqNode(innerStore);
 			arrayId = innerStoreNode.getFunction();
 		} else {
-			arrayId = getOrConstructEqFunction(getOrConstructBoogieVarOrConst(mds.getArray()));
+			arrayId = mEqNodeAndFunctionFactory.getOrConstructEqFunction(getOrConstructBoogieVarOrConst(mds.getArray()));
 		}
 
 		final List<EqNode> arguments = new ArrayList<>();
@@ -363,7 +358,7 @@ public class VPDomainPreanalysis {
 			constituentNodes.add(node);
 			procedure = node.getProcedure() != null ? node.getProcedure() : procedure;
 		}
-		EqNonAtomicBaseNode result = new EqNonAtomicBaseNode(t, global, procedure, mEqNodeFactory);
+		EqNonAtomicBaseNode result = new EqNonAtomicBaseNode(t, global, procedure, mEqNodeAndFunctionFactory);
 		for (EqAtomicBaseNode node : constituentNodes) {
 			node.addDependentNonAtomicBaseNode(result);
 		}
@@ -417,7 +412,7 @@ public class VPDomainPreanalysis {
 		EqAtomicBaseNode result = mEqBaseNodeStore.get(bv);
 
 		if (result == null) {
-			result = new EqAtomicBaseNode(bv, mEqNodeFactory);
+			result = new EqAtomicBaseNode(bv, mEqNodeAndFunctionFactory);
 			
 			mAllEqNodes.add(result);
 			
@@ -437,15 +432,11 @@ public class VPDomainPreanalysis {
 		return result;
 	}
 
-	// private EqFunctionNode getOrConstructEqFnNode(final EqNode eqNode, final List<EqNode> indices) {
-	//
-	// }
-
 	private EqFunctionNode getOrConstructEqFnNode(final EqFunction function, final List<EqNode> indices) {
 
 		EqFunctionNode result = mEqFunctionNodeStore.get(function, indices);
 		if (result == null) {
-			result = new EqFunctionNode(function, indices, mManagedScript, mEqNodeFactory);
+			result = new EqFunctionNode(function, indices, mManagedScript, mEqNodeAndFunctionFactory);
 			
 			mAllEqNodes.add(result);
 
@@ -609,9 +600,9 @@ public class VPDomainPreanalysis {
 			final Term arg1 = arrayEquation.getParameters()[0];
 			final Term arg2 = arrayEquation.getParameters()[1];
 
-			final EqFunction array1 = getOrConstructEqFunction(
+			final EqFunction array1 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(
 					getOrConstructBoogieVarOrConst(VPDomainHelpers.getArrayTerm(arg1)));
-			final EqFunction array2 = getOrConstructEqFunction(
+			final EqFunction array2 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(
 					getOrConstructBoogieVarOrConst(VPDomainHelpers.getArrayTerm(arg2)));
 			
 			/*

@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -43,6 +44,8 @@ public interface IEqNodeIdentifier<NODE, FUNCTION> {
 	boolean isFunction();
 
 	FUNCTION getFunction();
+
+	List<NODE> getArgs();
 	
 	Collection<FUNCTION> getAllFunctions();
 	

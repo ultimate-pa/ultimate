@@ -4,6 +4,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
@@ -22,29 +23,29 @@ public class EqDisjunctiveConstraint<
 
 	Set<EqConstraint<ACTION, NODE, FUNCTION>> mConstraints;
 
+	private EqConstraintFactory<ACTION, NODE, FUNCTION> mEqConstraintFactory;
+
 	public EqDisjunctiveConstraint(Collection<EqConstraint<ACTION, NODE, FUNCTION>> constraintList) {
 		mConstraints = new HashSet<>(constraintList);
 	}
 
 	public boolean isBottom() {
-		// TODO Auto-generated method stub
-		return false;
+		return mConstraints.stream().map(conjConstraint -> conjConstraint.isBottom()).reduce((a, b) -> a && b).get();
 	}
 
-	public void renameVariables(Map<Term, Term> substitutionMapping) {
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> renameVariables(Map<Term, Term> substitutionMapping) {
 		for (EqConstraint<ACTION, NODE, FUNCTION> constraint : mConstraints) {
 			constraint.renameVariables(substitutionMapping);
 		}
+		return this;
 	}
 
-	public void freeze() {
-		// TODO Auto-generated method stub
-		
-	}
 
-	public void projectExistentially(Set<TermVariable> varsToProjectAway) {
-		// TODO Auto-generated method stub
-		
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> projectExistentially(Set<TermVariable> varsToProjectAway) {
+		return mEqConstraintFactory.getDisjunctiveConstraint(
+				mConstraints.stream()
+					.map(conjConstraint -> conjConstraint.projectExistentially(varsToProjectAway))
+					.collect(Collectors.toSet()));
 	}
 
 	public Set<EqConstraint<ACTION, NODE, FUNCTION>> getConstraints() {

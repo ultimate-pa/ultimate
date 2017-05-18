@@ -1,10 +1,13 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 
 public class EqConstraintFactory<
@@ -35,5 +38,39 @@ public class EqConstraintFactory<
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> 
 			getDisjunctiveConstraint(Collection<EqConstraint<ACTION, NODE, FUNCTION>> constraintList) {
 		return new EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>(constraintList);
+	}
+	
+	
+	public EqConstraint<ACTION, NODE, FUNCTION> conjoin(
+			List<EqConstraint<ACTION, NODE, FUNCTION>> conjuncts) {
+		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = getEmptyConstraint();
+		
+		for (EqConstraint<ACTION, NODE, FUNCTION> conjunct : conjuncts) {
+			newConstraint.addNodes(conjunct.getAllNodes());
+			
+			for (Entry<NODE, NODE> eq : conjunct.getSupportingElementEqualities().entrySet()) {
+				newConstraint.merge(eq.getKey(), eq.getValue());
+			}
+			
+			for (VPDomainSymmetricPair<NODE> deq : conjunct.getElementDisequalities()) {
+				newConstraint.addRawDisequality(deq.getFirst(), deq.getSecond());
+			}
+			
+			for (Entry<FUNCTION, FUNCTION> aEq : conjunct.getSupportingFunctionEqualities()) {
+				newConstraint.addFunctionEquality(aEq.getKey(), aEq.getValue());
+			}
+			
+			for (VPDomainSymmetricPair<FUNCTION> aDeq : conjunct.getFunctionDisequalites()) {
+				newConstraint.addFunctionDisequality(aDeq.getFirst(), aDeq.getSecond());
+			}
+
+			if (newConstraint.checkForContradiction()) {
+				return getBottomConstraint();
+			}
+		}
+		
+		newConstraint.freeze();
+		return newConstraint;
+
 	}
 }

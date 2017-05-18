@@ -5,15 +5,13 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqAtomicBaseNode;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNonAtomicBaseNode;
 
 public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTION> {
@@ -263,11 +261,13 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 		/*
 		 * 
 		 */
-		if (nodeToBeHavocced instanceof EqFunctionNode) {
-			restorePropagation((EqFunctionNode) nodeToBeHavocced);
+		if (nodeToBeHavocced.isFunction()) {
+			restorePropagation(nodeToBeHavocced);
 		}
-//		
-		// also havoc the function nodes which index had been havoc.
+		
+		/*
+		 * havoc the function nodes which nodeToBeHavocced was an index of
+		 */
 		if (!graphNodeForNodeToBeHavocced.getInitCcpar().isEmpty()) {
 			for (final EqGraphNode<NODE, FUNCTION> initCcpar : graphNodeForNodeToBeHavocced
 					.getInitCcpar()) {
@@ -296,21 +296,30 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 	 *
 	 * @param functionNode
 	 */
-	 void restorePropagation(final EqFunctionNode functionNode) {
+	 private void restorePropagation(final NODE functionNode) {
+		 assert functionNode.isFunction();
 	
-		 EqNode firstIndex = functionNode.getArgs().get(0);
-		 EqGraphNode<EqNode, IProgramVarOrConst> firstIndexGN = getEqGraphNode(firstIndex);
+		 NODE firstIndex = functionNode.getArgs().get(0);
+		 
+		 EqGraphNode<NODE, FUNCTION> firstIndexGN = mNodeToEqGraphNode.get(firstIndex);
 
-		 final Set<EqFunctionNode> fnNodeSet = mDomain.getPreAnalysis().getArrayIdToFnNodeMap().getImage(functionNode.getFunction());
-		 for (final EqFunctionNode fnNode : fnNodeSet) {
-			 if (getEqGraphNode(fnNode.getArgs().get(0)).find().equals(firstIndexGN.find())) {
-				 if (congruent(getEqGraphNode(fnNode), getEqGraphNode(functionNode))) {
-					 merge(getEqGraphNode(fnNode), getEqGraphNode(functionNode));
+		 final Set<NODE> fnNodesWithSameFunction = getFunctionNodesForFunctionSymbol(functionNode.getFunction());
+		 for (final NODE fnNode : fnNodesWithSameFunction) {
+			 if (mNodeToEqGraphNode.get(fnNode.getArgs().get(0)).find().equals(firstIndexGN.find())) {
+				 if (congruent(mNodeToEqGraphNode.get(fnNode), mNodeToEqGraphNode.get(functionNode))) {
+					 merge(fnNode, functionNode);
 				 }
 			 }
 		 }
 	 }
 	
+	private Set<NODE> getFunctionNodesForFunctionSymbol(FUNCTION function) {
+		// TODO: cache?
+		return mNodeToEqGraphNode.keySet().stream()
+			.filter(node -> (node.isFunction() && node.getFunction().equals(function)))
+			.collect(Collectors.toSet());
+	}
+
 	/**
 	 * Use disEqualitySet to check if there exist contradiction in the graph.
 	 *

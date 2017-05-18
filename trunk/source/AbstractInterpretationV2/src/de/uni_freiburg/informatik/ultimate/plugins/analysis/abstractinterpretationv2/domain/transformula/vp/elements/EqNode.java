@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  */
 public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction> {
 	
-	protected final EqNodeFactory mEqNodeFactory;
+	protected final EqNodeAndFunctionFactory mEqNodeFactory;
 
 	protected Set<IProgramVar> mVariables;
 	
@@ -66,7 +66,7 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction> {
 	protected final boolean mTermIsVersioned;
 
 
-	EqNode(boolean isGlobal, boolean isConstant, String procedure, EqNodeFactory eqNodeFactory) {
+	EqNode(boolean isGlobal, boolean isConstant, String procedure, EqNodeAndFunctionFactory eqNodeFactory) {
 		assert isGlobal || procedure != null;
 		mIsGlobal = isGlobal;
 		mIsConstant = isConstant;
@@ -76,7 +76,7 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction> {
 	}
 
 	public EqNode(boolean isGlobal, boolean isConstant, String procedure, Term versionedTerm, 
-			EqNodeFactory eqNodeFactory) {
+			EqNodeAndFunctionFactory eqNodeFactory) {
 		assert isGlobal || procedure != null;
 		mIsGlobal = isGlobal;
 		mIsConstant = isConstant;

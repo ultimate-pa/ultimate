@@ -7,7 +7,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
-public class EqNodeFactory {
+public class EqNodeAndFunctionFactory {
 	
 	ManagedScript mMgdScript;
 
@@ -16,17 +16,17 @@ public class EqNodeFactory {
 		return new EqAtomicBaseNode(varOrConst, substitutedTerm, this);
 	}
 
-	public EqFunctionNode getOrConstructEqFunctionNode(EqFunction renameVariables, List<EqNode> renamedArgs) {
+	public EqFunctionNode getOrConstructEqFunctionNode(EqFunction function, List<EqNode> args) {
 
-		final List<Term> paramTerms = renamedArgs.stream().map(eqNode -> eqNode.getTerm()).collect(Collectors.toList());
+		final List<Term> paramTerms = args.stream().map(eqNode -> eqNode.getTerm()).collect(Collectors.toList());
 		mMgdScript.lock(this);
 		final Term term = mMgdScript.term(this, 
-				EqFunction.getFunctionName(), 
+				function.getFunctionName(), 
 				paramTerms.toArray(new Term[paramTerms.size()]));
 		mMgdScript.unlock(this);
 		
 		
-		return  new EqFunctionNode(renameVariables, renamedArgs, term, this);
+		return  new EqFunctionNode(function, args, term, this);
 	}
 
 	public ManagedScript getScript() {
@@ -37,4 +37,11 @@ public class EqNodeFactory {
 		return new EqNonAtomicBaseNode(substitutedTerm, isGlobal, procedure, this);
 	}
 
+	public EqFunction getOrConstructEqFunction(IProgramVarOrConst pvoc) {
+		return new EqFunction(pvoc, this);
+	}
+
+	public EqFunction getOrConstructEqFunction(IProgramVarOrConst pvoc, Term term) {
+		return new EqFunction(pvoc, term, this);
+	}
 }
