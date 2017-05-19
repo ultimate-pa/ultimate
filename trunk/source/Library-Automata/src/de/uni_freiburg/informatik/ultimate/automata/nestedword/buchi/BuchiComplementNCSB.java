@@ -32,7 +32,9 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
+import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
@@ -167,5 +169,18 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 	@Override
 	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult() {
 		return mResult;
+	}
+	
+	@Override
+	public AutomataOperationStatistics getAutomataOperationStatistics() {
+		final AutomataOperationStatistics result = new AutomataOperationStatistics();
+
+		final int inputSize = getOperand().size();
+		final int outputSize = getResult().size();
+
+		result.addKeyValuePair(StatisticsType.STATES_INPUT, inputSize);
+		result.addKeyValuePair(StatisticsType.STATES_OUTPUT, outputSize);
+
+		return result;
 	}
 }
