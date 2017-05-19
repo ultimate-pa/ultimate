@@ -418,15 +418,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			e.printStackTrace();
 			throw new AssertionError();
 		}
-		final Function<Integer, IPredicate> map = new Function<Integer, IPredicate>() {
-			@Override
-			public IPredicate apply(final Integer index) {
-				return weakestPreconditionSequence.getPredicate(index);
-			}
-		};
-
+		
 		mInterpolAutomaton = new StraightLineInterpolantAutomatonBuilder<>(mServices, new VpAlphabet<>(mAbstraction),
-				mPredicateFactoryInterpolantAutomata, trace, map).getResult();
+				mPredicateFactoryInterpolantAutomata, trace, weakestPreconditionSequence).getResult();
 		mErrorAutomatonAvailable = true;
 		assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
 		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Interpolant automaton broken!";
