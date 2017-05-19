@@ -28,6 +28,27 @@
 package de.uni_freiburg.informatik.ultimate.automata.statefactory;
 
 /**
+ * In this automata library, we do not have dedicated objects to represent
+ * the states of automata (resp. places of Petri nets). 
+ * The type of the state is a generic parameter of the automaton class; the
+ * user of the library can take the type that is most suitable for his 
+ * application.
+ * E.g., the AutomataScript interpreter which reads automata from a text file
+ * uses string objects as states.  The software verifier Ultimate Automizer
+ * uses a class that defines a set of program valuations.
+ * 
+ * This modular approach requires that new application domains bring their
+ * methods for composing states. E.g., in the default string-based application
+ * domain the product state of a state "q1" and a state "p7" is the state
+ * that is represented by the composed string "(q1,p7)".  The software verifier
+ * uses some conjunction-like operation for predicates to obtain the object
+ * that represents the product state.
+ * 
+ * We encapsulate the construction of states via the {@link IStateFactory}
+ * interfaces. Developers of automata operations have to define new interfaces
+ * or use existing interfaces for constructing states. Users of the automata 
+ * library that use a new application domain have to implement these interfaces.
+ * 
  * This is an empty interface only used to mark other state factories. Every factory for states used in the automata
  * library must implement this empty interface. The purpose is to allow the automata script interpreter to identify a
  * constructor argument as a state factory and pass a {@link StringFactory}.
