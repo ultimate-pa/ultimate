@@ -152,6 +152,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected HoareAnnotationFragments<LETTER> mHaf;
 	private INestedWordAutomatonSimple<WitnessEdge, WitnessNode> mWitnessAutomaton;
 	protected IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> mTraceCheckAndRefinementEngine;
+	private boolean mErrorAutomatonAvailable;
 
 	public BasicCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -426,6 +427,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 		mInterpolAutomaton = new StraightLineInterpolantAutomatonBuilder<>(mServices, new VpAlphabet<>(mAbstraction),
 				mPredicateFactoryInterpolantAutomata, trace, map).getResult();
+		mErrorAutomatonAvailable = true;
 		assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
 		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Interpolant automaton broken!";
 	}
@@ -460,7 +462,11 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final InterpolantAutomatonEnhancement enhanceMode = mPref.interpolantAutomatonEnhancement();
 
 		final INestedWordAutomatonSimple<LETTER, IPredicate> interpolantAutomaton;
-		if (enhanceMode == InterpolantAutomatonEnhancement.NONE) {
+		final boolean useErrorAutomaton = mErrorAutomatonAvailable;
+		if (useErrorAutomaton) {
+			interpolantAutomaton = mInterpolAutomaton;
+			mErrorAutomatonAvailable = false;
+		} else if (enhanceMode == InterpolantAutomatonEnhancement.NONE) {
 			interpolantAutomaton = inputInterpolantAutomaton;
 		} else {
 			interpolantAutomaton = constructInterpolantAutomatonForOnDemandEnhancement(inputInterpolantAutomaton,
@@ -493,7 +499,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
 				throw tce;
 			} finally {
-				if (enhanceMode != InterpolantAutomatonEnhancement.NONE) {
+				if (!useErrorAutomaton && enhanceMode != InterpolantAutomatonEnhancement.NONE) {
 					assert interpolantAutomaton instanceof AbstractInterpolantAutomaton : "if enhancement is used, we need AbstractInterpolantAutomaton";
 					((AbstractInterpolantAutomaton<LETTER>) interpolantAutomaton).switchToReadonlyMode();
 				}
@@ -504,7 +510,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				super.writeAutomatonToFile(interpolantAutomaton, filename);
 			}
 
-			checkEnhancement(inputInterpolantAutomaton, interpolantAutomaton);
+			if (!useErrorAutomaton) {
+				checkEnhancement(inputInterpolantAutomaton, interpolantAutomaton);
+			}
 
 			if (REMOVE_DEAD_ENDS) {
 				if (mComputeHoareAnnotation) {
