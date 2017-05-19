@@ -91,7 +91,14 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 	private final ITransformulaTransformer mTransformer;
 
 	private final Set<IcfgEdge> mLoopEntryTransitions;
+	/**
+	 * A map from loop heads to backbones
+	 */
 	private final Map<INLOC, List<Backbone>> mBackbones;
+
+	/**
+	 * Backbones that start at a loop head but leave the loop through some location that is not the loop head.
+	 */
 	private final Set<Backbone> mExitBackbones;
 	private final Map<Backbone, TransFormula> mBackboneTransformulas;
 	private final ManagedScript mScript;
@@ -124,6 +131,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 			final ITransformulaTransformer transformer, final IUltimateServiceProvider services) {
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
 		mLogger = Objects.requireNonNull(logger);
+		// TODO: Remove transformer (not used)
 		mTransformer = Objects.requireNonNull(transformer);
 
 		mLoopEntryTransitions = new HashSet<>();
@@ -320,7 +328,7 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 	}
 
 	/**
-	 * Removes backbones that cannot be accelerated.
+	 * Removes backbones that cannot be accelerated because they contain each other (i.e., loops of the form AB and BA).
 	 */
 	private void validateBackbones() {
 		final List<Backbone> backbones = new ArrayList<>();
@@ -360,8 +368,10 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 		}
 	}
 
+	/**
+	 * Throw an exception if we cannot handle this transition.
+	 */
 	private static void checkTransition(final IcfgEdge transition) {
-
 		final TermClassifier tclassifier = new TermClassifier();
 		tclassifier.checkTerm(transition.getTransformula().getFormula());
 		if (tclassifier.hasArrays()) {

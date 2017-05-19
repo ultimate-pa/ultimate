@@ -233,7 +233,7 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 	}
 
 	/**
-	 * Simplifies a given term.
+	 * Simplifies a given term and exclude things we cannot handle.
 	 *
 	 * @param symbolicMemory
 	 *            The symbolic memory the term was taken from.

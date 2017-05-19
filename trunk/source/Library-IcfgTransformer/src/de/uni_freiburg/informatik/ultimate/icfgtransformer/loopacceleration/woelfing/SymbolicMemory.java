@@ -106,6 +106,7 @@ public class SymbolicMemory {
 	 */
 	public Term replaceTermVars(final Term term, final Map<IProgramVar, TermVariable> termInVars) {
 		if (mVariableTerms.containsKey(term)) {
+			// note that we admit mappings to null here and you cannot replace contains/get with a get and null test
 			final Term newTerm = mVariableTerms.get(term);
 			return newTerm == null ? term : replaceTermVars(newTerm, termInVars);
 		}
@@ -165,7 +166,7 @@ public class SymbolicMemory {
 	}
 
 	/**
-	 * Returns a term for a given output program variable.
+	 * Returns a term that represents the symbolic memory for a given output program variable.
 	 *
 	 * @param var
 	 *            A IProgramVar.
