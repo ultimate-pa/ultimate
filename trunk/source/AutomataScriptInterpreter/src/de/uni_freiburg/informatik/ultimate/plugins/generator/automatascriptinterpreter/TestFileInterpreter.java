@@ -1027,7 +1027,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 	@SuppressWarnings("unchecked")
 	private IOperation<String, String, ? super StringFactory> getAutomataOperation(
 			final OperationInvocationExpressionAST oe, final List<Object> arguments) throws InterpreterException {
-		final String operationName = oe.getOperationName().toLowerCase();
+		final String operationName = convertOperationNameToNamingConvention(oe.getOperationName());
 		if (!mExistingOperations.containsKey(operationName)) {
 			final String allOperations = (new ListExistingOperations(mExistingOperations)).prettyPrint();
 			final String longDescr =
@@ -1095,6 +1095,16 @@ public class TestFileInterpreter implements IMessagePrinter {
 		throw new InterpreterException(oe.getLocation(), longDescr);
 	}
 	
+	private static String convertOperationNameToNamingConvention(final String operationName) {
+		return operationName.toLowerCase();
+		/*
+		 * TODO 2017-05-19 Christian:
+		 *      Old convention above: case insensitive
+		 *      New convention below: case sensitive as original class name except first letter lowercase
+		 */
+		// return Character.toLowerCase(operationName.charAt(0)) + operationName.substring(1);
+	}
+
 	private static void printStackTrace(final Exception e) {
 		if (PRINT_STACK_TRACE_FOR_EXCEPTIONS) {
 			e.printStackTrace();
@@ -1224,7 +1234,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 			return false;
 		}
 		
-		final String opName = clazz.getSimpleName().toLowerCase();
+		final String opName = convertOperationNameToNamingConvention(clazz.getSimpleName());
 		Set<Class<?>> set = result.get(opName);
 		if (set == null) {
 			set = new HashSet<>();
@@ -1233,7 +1243,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		set.add(clazz);
 		return true;
 	}
-	
+
 	private Class<?> getClassFromFile(final String packageName, final File file) {
 		final String qualifiedName = getQualifiedNameFromFile(packageName, file);
 		final Class<?> clazz;
