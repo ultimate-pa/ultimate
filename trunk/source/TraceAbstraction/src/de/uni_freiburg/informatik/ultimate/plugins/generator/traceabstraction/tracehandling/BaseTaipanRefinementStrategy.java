@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.smtinterpol.smtlib2.SMTInterpol;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
@@ -170,8 +170,8 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	protected abstract Mode getNextTraceCheckerMode();
 
 	@Override
-	public boolean hasNextInterpolantGenerator(final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+	public boolean hasNextInterpolantGenerator(final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps) {
 		// current policy: stop after finding one perfect interpolant sequence
 		return perfectIpps.isEmpty() && hasNextInterpolantGeneratorAvailable();
 	}
@@ -228,8 +228,8 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 
 	@Override
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
-			final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+			final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps) {
 		if (mInterpolantAutomatonBuilder == null) {
 			mInterpolantAutomatonBuilder =
 					constructInterpolantAutomatonBuilder(perfectIpps, imperfectIpps, mCurrentMode);
@@ -238,8 +238,8 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 	}
 
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> constructInterpolantAutomatonBuilder(
-			final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps, final Mode mode) {
+			final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps, final Mode mode) {
 		switch (mode) {
 		case ABSTRACT_INTERPRETATION:
 		case SMTINTERPOL:

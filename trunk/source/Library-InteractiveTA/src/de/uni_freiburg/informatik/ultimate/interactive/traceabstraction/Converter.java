@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IMLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
 
 public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
@@ -122,9 +122,9 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 	private static InterpolantSequences getInterpolantSequences(
 			final TraceAbstractionProtos.InterpolantSequences.Choices choices,
 			final InterpolantSequences originalSequences) {
-		final List<InterpolantsPreconditionPostcondition> newPerfectIpps =
+		final List<TracePredicates> newPerfectIpps =
 				choices.getPerfectList().stream().map(originalSequences.mPerfectIpps::get).collect(Collectors.toList());
-		final List<InterpolantsPreconditionPostcondition> newImperfectIpps = choices.getImperfectList().stream()
+		final List<TracePredicates> newImperfectIpps = choices.getImperfectList().stream()
 				.map(originalSequences.mImperfectIpps::get).collect(Collectors.toList());
 		return new InterpolantSequences().set(newPerfectIpps, newImperfectIpps);
 	}
@@ -144,11 +144,11 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		return builder.build();
 	}
 
-	private static TraceAbstractionProtos.InterpolantsPrePost fromIPP(final InterpolantsPreconditionPostcondition ipp) {
+	private static TraceAbstractionProtos.InterpolantsPrePost fromIPP(final TracePredicates ipp) {
 		final InterpolantsPrePost.Builder builder = InterpolantsPrePost.newBuilder();
 		builder.setPreCondition(fromPredicate(ipp.getPrecondition()))
 				.setPostCondition(fromPredicate(ipp.getPostcondition()));
-		ipp.getInterpolants().stream().map(Converter::fromPredicate).forEach(builder::addInterpolants);
+		ipp.getPredicates().stream().map(Converter::fromPredicate).forEach(builder::addInterpolants);
 		return builder.build();
 	}
 

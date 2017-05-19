@@ -27,7 +27,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -98,7 +97,7 @@ public final class TraceCheckerUtils {
 
 	/**
 	 * Variant of
-	 * {@link #computeCoverageCapability(IUltimateServiceProvider, InterpolantsPreconditionPostcondition, List, ILogger, PredicateUnifier)}
+	 * {@link #computeCoverageCapability(IUltimateServiceProvider, TracePredicates, List, ILogger, PredicateUnifier)}
 	 * where the sequence of ProgramPoints is not a parameter but computed from the trace.
 	 *
 	 * @param services
@@ -119,7 +118,7 @@ public final class TraceCheckerUtils {
 	}
 
 	public static <CL> BackwardCoveringInformation computeCoverageCapability(final IUltimateServiceProvider services,
-			final InterpolantsPreconditionPostcondition ipp, final List<CL> controlLocationSequence,
+			final TracePredicates ipp, final List<CL> controlLocationSequence,
 			final ILogger logger, final IPredicateUnifier predicateUnifier) {
 		final CoverageAnalysis<CL> ca =
 				new CoverageAnalysis<>(services, ipp, controlLocationSequence, logger, predicateUnifier);
@@ -157,8 +156,8 @@ public final class TraceCheckerUtils {
 			final SortedMap<Integer, IPredicate> pendingContexts, final String computation,
 			final CfgSmtToolkit csToolkit, final ILogger logger, final ManagedScript managedScript) {
 		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(csToolkit);
-		final InterpolantsPreconditionPostcondition ipp =
-				new InterpolantsPreconditionPostcondition(precondition, postcondition, interpolants);
+		final TracePredicates ipp =
+				new TracePredicates(precondition, postcondition, interpolants);
 		Validity result;
 		for (int i = 0; i <= interpolants.size(); i++) {
 			result = checkInductivityAtPosition(i, ipp, trace, pendingContexts, htc, logger);
@@ -199,8 +198,8 @@ public final class TraceCheckerUtils {
 			final SortedMap<Integer, IPredicate> pendingContexts, final String computation,
 			final CfgSmtToolkit csToolkit, final ILogger logger, final ManagedScript managedScript) {
 		final IHoareTripleChecker htc = new MonolithicHoareTripleChecker(csToolkit);
-		final InterpolantsPreconditionPostcondition ipp =
-				new InterpolantsPreconditionPostcondition(precondition, postcondition, interpolants);
+		final TracePredicates ipp =
+				new TracePredicates(precondition, postcondition, interpolants);
 		for (int i = interpolants.size(); i >= 0; i--) {
 			final Validity result;
 			result = checkInductivityAtPosition(i, ipp, trace, pendingContexts, htc, logger);
@@ -211,11 +210,11 @@ public final class TraceCheckerUtils {
 		return true;
 	}
 
-	private static Validity checkInductivityAtPosition(final int pos, final InterpolantsPreconditionPostcondition ipp,
+	private static Validity checkInductivityAtPosition(final int pos, final TracePredicates ipp,
 			final NestedWord<? extends IAction> trace, final SortedMap<Integer, IPredicate> pendingContexts,
 			final IHoareTripleChecker htc, final ILogger logger) {
-		final IPredicate predecessor = ipp.getInterpolant(pos);
-		final IPredicate successor = ipp.getInterpolant(pos + 1);
+		final IPredicate predecessor = ipp.getPredicate(pos);
+		final IPredicate successor = ipp.getPredicate(pos + 1);
 		final IAction cb = trace.getSymbol(pos);
 		final Validity result;
 		if (trace.isCallPosition(pos)) {
@@ -230,7 +229,7 @@ public final class TraceCheckerUtils {
 				hierarchicalPredecessor = pendingContexts.get(pos);
 			} else {
 				final int callPosition = trace.getCallPosition(pos);
-				hierarchicalPredecessor = ipp.getInterpolant(callPosition);
+				hierarchicalPredecessor = ipp.getPredicate(callPosition);
 			}
 			result = htc.checkReturn(predecessor, hierarchicalPredecessor, (IReturnAction) cb, successor);
 			logger.info(new DebugMessage("{0}: Hoare quadruple '{'{1}'}' '{'{5}'}' {2} '{'{3}'}' is {4}", pos,
@@ -325,80 +324,5 @@ public final class TraceCheckerUtils {
 			exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
 		}
 		return new TraceCheckReasonUnknown(reason, e, exceptionCategory);
-	}
-	
-
-	/**
-	 * The sequence of interpolants returned by a TraceChecker contains neither the precondition nor the postcondition
-	 * of the trace check. This auxiliary class allows one to access the precondition via the index 0 and to access the
-	 * postcondition via the index interpolants.length+1 (first index after the interpolants array). All other indices
-	 * are shifted by one. In the future we might also use negative indices to access pending contexts (therefore you
-	 * should not catch the Error throw by the getInterpolant method).
-	 */
-	public static class InterpolantsPreconditionPostcondition {
-		private final IPredicate mPrecondition;
-		private final IPredicate mPostcondition;
-		private final List<IPredicate> mInterpolants;
-
-		/**
-		 * @param interpolantGenerator
-		 *            Interpolant generator.
-		 */
-		public InterpolantsPreconditionPostcondition(final IInterpolantGenerator interpolantGenerator) {
-			if (interpolantGenerator.getInterpolants() == null) {
-				throw new AssertionError(
-						"We can only build an interpolant " + "automaton for which interpolants were computed");
-			}
-			mPrecondition = interpolantGenerator.getPrecondition();
-			mPostcondition = interpolantGenerator.getPostcondition();
-			mInterpolants = Arrays.asList(interpolantGenerator.getInterpolants());
-		}
-
-		/**
-		 * @param precondition
-		 *            Precondition.
-		 * @param postcondition
-		 *            postcondition
-		 * @param interpolants
-		 *            sequence of interpolants
-		 */
-		public InterpolantsPreconditionPostcondition(final IPredicate precondition, final IPredicate postcondition,
-				final List<IPredicate> interpolants) {
-			super();
-			mPrecondition = precondition;
-			mPostcondition = postcondition;
-			mInterpolants = interpolants;
-		}
-
-		/**
-		 * @param pos
-		 *            Position.
-		 * @return interpolant at the given position
-		 */
-		public IPredicate getInterpolant(final int pos) {
-			if (pos < 0) {
-				throw new AssertionError("index beyond precondition");
-			} else if (pos == 0) {
-				return mPrecondition;
-			} else if (pos <= mInterpolants.size()) {
-				return mInterpolants.get(pos - 1);
-			} else if (pos == mInterpolants.size() + 1) {
-				return mPostcondition;
-			} else {
-				throw new AssertionError("index beyond postcondition");
-			}
-		}
-
-		public List<IPredicate> getInterpolants() {
-			return Collections.unmodifiableList(mInterpolants);
-		}
-
-		public IPredicate getPrecondition() {
-			return mPrecondition;
-		}
-
-		public IPredicate getPostcondition() {
-			return mPostcondition;
-		}
 	}
 }

@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
  * {@link IRefinementStrategy} that first tries an {@link InterpolatingTraceChecker} using
@@ -210,8 +210,8 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 	}
 
 	@Override
-	public boolean hasNextInterpolantGenerator(final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+	public boolean hasNextInterpolantGenerator(final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps) {
 		if (!hasNextInterpolantGeneratorAvailable()) {
 			return false;
 		}
@@ -248,10 +248,10 @@ public abstract class MultiTrackTraceAbstractionRefinementStrategy<LETTER extend
 
 	@Override
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
-			final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+			final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps) {
 		// current policy: use all interpolant sequences
-		final List<InterpolantsPreconditionPostcondition> allIpps =
+		final List<TracePredicates> allIpps =
 				IRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
 
 		if (mInterpolantAutomatonBuilder == null) {

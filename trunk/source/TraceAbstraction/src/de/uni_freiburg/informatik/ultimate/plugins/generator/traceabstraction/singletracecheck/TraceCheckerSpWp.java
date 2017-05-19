@@ -73,7 +73,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantComputationStatus.ItpErrorStatus;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerStatisticsGenerator.InterpolantType;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 /**
  * Use unsat core, predicate transformer and live variable analsysis to compute a sequence of interpolants.
@@ -201,8 +200,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		return mInterpolantsFp;
 	}
 
-	public InterpolantsPreconditionPostcondition getForwardIpp() {
-		return new InterpolantsPreconditionPostcondition(getPrecondition(), getPostcondition(), getForwardPredicates());
+	public TracePredicates getForwardIpp() {
+		return new TracePredicates(getPrecondition(), getPostcondition(), getForwardPredicates());
 	}
 
 	public List<IPredicate> getBackwardPredicates() {
@@ -210,8 +209,8 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 		return mInterpolantsBp;
 	}
 
-	public InterpolantsPreconditionPostcondition getBackwardIpp() {
-		return new InterpolantsPreconditionPostcondition(getPrecondition(), getPostcondition(),
+	public TracePredicates getBackwardIpp() {
+		return new TracePredicates(getPrecondition(), getPostcondition(),
 				getBackwardPredicates());
 	}
 
@@ -282,7 +281,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						mCfgManagedScript, mCsToolkit.getModifiableGlobalsTable(), mServices, mTrace, mPrecondition,
 						mPostcondition, mPendingContexts, null, mSimplificationTechnique, mXnfConversionTechnique,
 						mBoogie2SmtSymbolTable);
-				mInterpolantsFp = spt.computeStrongestPostconditionSequence(rtf, postprocs).getInterpolants();
+				mInterpolantsFp = spt.computeStrongestPostconditionSequence(rtf, postprocs).getPredicates();
 			} catch (final ToolchainCanceledException tce) {
 				final String taskDescription = "constructing forward predicates";
 				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
@@ -328,7 +327,7 @@ public class TraceCheckerSpWp extends InterpolatingTraceChecker {
 						mBoogie2SmtSymbolTable);
 				mInterpolantsBp =
 						spt.computeWeakestPreconditionSequence(rtf, postprocs, false, mAlternatingQuantifierBailout)
-								.getInterpolants();
+								.getPredicates();
 
 				assert TraceCheckerUtils.checkInterpolantsInductivityBackward(mInterpolantsBp, mTrace, mPrecondition,
 						mPostcondition, mPendingContexts, "BP", mCsToolkit, mLogger,

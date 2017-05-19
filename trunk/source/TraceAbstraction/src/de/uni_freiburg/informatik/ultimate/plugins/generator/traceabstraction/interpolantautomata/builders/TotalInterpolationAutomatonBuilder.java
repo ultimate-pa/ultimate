@@ -80,7 +80,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolatingTraceCheckerCraig;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
@@ -378,23 +378,23 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 	}
 
 	private void addTransitions(final ArrayList<IPredicate> stateSequence, final InterpolatingTraceChecker tc) {
-		final InterpolantsPreconditionPostcondition ipp = new InterpolantsPreconditionPostcondition(tc);
+		final TracePredicates ipp = new TracePredicates(tc);
 		final NestedWord<? extends IAction> nw = NestedWord.nestedWord(tc.getTrace());
 		for (int i = 0; i < nw.length(); i++) {
 			if (nw.isInternalPosition(i)) {
-				mIA.addInternalTransition(ipp.getInterpolant(i), (LETTER) nw.getSymbol(i), ipp.getInterpolant(i + 1));
+				mIA.addInternalTransition(ipp.getPredicate(i), (LETTER) nw.getSymbol(i), ipp.getPredicate(i + 1));
 			} else if (nw.isCallPosition(i)) {
-				mIA.addCallTransition(ipp.getInterpolant(i), (LETTER) nw.getSymbol(i), ipp.getInterpolant(i + 1));
+				mIA.addCallTransition(ipp.getPredicate(i), (LETTER) nw.getSymbol(i), ipp.getPredicate(i + 1));
 			} else if (nw.isReturnPosition(i)) {
 				IPredicate hierPred;
 				if (nw.isPendingReturn(i)) {
 					hierPred = tc.getPendingContexts().get(i);
 				} else {
 					final int callPredPos = nw.getCallPosition(i);
-					hierPred = ipp.getInterpolant(callPredPos);
+					hierPred = ipp.getPredicate(callPredPos);
 				}
-				mIA.addReturnTransition(ipp.getInterpolant(i), hierPred, (LETTER) nw.getSymbol(i),
-						ipp.getInterpolant(i + 1));
+				mIA.addReturnTransition(ipp.getPredicate(i), hierPred, (LETTER) nw.getSymbol(i),
+						ipp.getPredicate(i + 1));
 			} else {
 				throw new AssertionError();
 			}

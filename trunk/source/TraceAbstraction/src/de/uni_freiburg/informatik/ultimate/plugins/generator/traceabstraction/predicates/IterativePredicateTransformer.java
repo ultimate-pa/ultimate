@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Term
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException.Reason;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.NestedFormulas;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
  * Compute sequence of predicates via strongest post or weakest precondition along a trace.
@@ -135,15 +135,15 @@ public class IterativePredicateTransformer {
 	 *            TODO: If the given postcondition is null, we also compute a precondition (IPredicate before the first
 	 *            {@link IAction} in the trace)
 	 */
-	public InterpolantsPreconditionPostcondition computeStrongestPostconditionSequence(
+	public TracePredicates computeStrongestPostconditionSequence(
 			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nf,
 			final List<IPredicatePostprocessor> postprocs) {
 		final IPredicate[] spSequence = new IPredicate[mTrace.length() - 1];
-		final InterpolantsPreconditionPostcondition ipp =
-				new InterpolantsPreconditionPostcondition(mPrecondition, mPostcondition, Arrays.asList(spSequence));
+		final TracePredicates ipp =
+				new TracePredicates(mPrecondition, mPostcondition, Arrays.asList(spSequence));
 
 		for (int i = 0; i < mTrace.length() - 1; i++) {
-			final IPredicate predecessor = ipp.getInterpolant(i);
+			final IPredicate predecessor = ipp.getPredicate(i);
 			final Term spTerm;
 			if (mTrace.getSymbol(i) instanceof IIcfgCallTransition<?>) {
 				final IIcfgCallTransition<?> call = (IIcfgCallTransition<?>) mTrace.getSymbol(i);
@@ -167,7 +167,7 @@ public class IterativePredicateTransformer {
 				} else {
 					final int callPos = mTrace.getCallPosition(i);
 					assert callPos >= 0 && callPos <= i : "Bad call position!";
-					callerPred = ipp.getInterpolant(callPos);
+					callerPred = ipp.getPredicate(callPos);
 					callOldVarsAssignment = nf.getOldVarAssignment(callPos);
 					callLocalVarsAssignment = nf.getLocalVarAssignment(callPos);
 				}
@@ -246,13 +246,13 @@ public class IterativePredicateTransformer {
 	 *            List of postprocessors that apply to each IPredicate after it was constructed via WP. May be empty.
 	 * @throws TraceInterpolationException
 	 */
-	public InterpolantsPreconditionPostcondition computeWeakestPreconditionSequence(
+	public TracePredicates computeWeakestPreconditionSequence(
 			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nf,
 			final List<IPredicatePostprocessor> postprocs, final boolean callPredecessorIsAlwaysFalse,
 			final boolean alternatingQuantifierBailout) throws TraceInterpolationException {
 		final IPredicate[] wpSequence = new IPredicate[mTrace.length() - 1];
-		final InterpolantsPreconditionPostcondition ipp =
-				new InterpolantsPreconditionPostcondition(mPrecondition, mPostcondition, Arrays.asList(wpSequence));
+		final TracePredicates ipp =
+				new TracePredicates(mPrecondition, mPostcondition, Arrays.asList(wpSequence));
 		/**
 		 * Contains the predicates, which are computed during a Return with the second method, where the callerPred is
 		 * computed as wp(returnerPred, summaryOfCalledProcedure).
@@ -266,7 +266,7 @@ public class IterativePredicateTransformer {
 		for (int i = mTrace.length() - 1; i >= positionOfFirstPredicate; i--) {
 			final Term wpTerm;
 
-			final IPredicate successor = ipp.getInterpolant(i + 1);
+			final IPredicate successor = ipp.getPredicate(i + 1);
 			if (mTrace.getSymbol(i) instanceof IIcfgCallTransition<?>) {
 				if (mTrace.isPendingCall(i)) {
 					final IIcfgCallTransition<?> call = (IIcfgCallTransition<?>) mTrace.getSymbol(i);
@@ -350,7 +350,7 @@ public class IterativePredicateTransformer {
 			}
 		}
 		if (computePrecondition) {
-			return new InterpolantsPreconditionPostcondition(computedPrecondition, mPostcondition,
+			return new TracePredicates(computedPrecondition, mPostcondition,
 					Arrays.asList(wpSequence));
 		}
 		return ipp;

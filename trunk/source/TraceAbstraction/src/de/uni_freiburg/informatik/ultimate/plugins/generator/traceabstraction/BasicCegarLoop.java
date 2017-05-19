@@ -98,7 +98,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.DefaultTransFormulas;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementStrategyFactory;
@@ -409,7 +409,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				mSimplificationTechnique, mXnfConversionTechnique, mIcfgContainer.getCfgSmtToolkit().getSymbolTable());
 		final DefaultTransFormulas dtf = new DefaultTransFormulas(trace, null, falsePredicate,
 				Collections.emptySortedMap(), mCsToolkit.getOldVarsAssignmentCache(), false);
-		final InterpolantsPreconditionPostcondition weakestPreconditionSequence;
+		final TracePredicates weakestPreconditionSequence;
 		try {
 			weakestPreconditionSequence =
 					ipt.computeWeakestPreconditionSequence(dtf, Collections.emptyList(), true, false);
@@ -421,7 +421,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final Function<Integer, IPredicate> map = new Function<Integer, IPredicate>() {
 			@Override
 			public IPredicate apply(final Integer index) {
-				return weakestPreconditionSequence.getInterpolant(index);
+				return weakestPreconditionSequence.getPredicate(index);
 			}
 		};
 

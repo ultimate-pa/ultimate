@@ -82,7 +82,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.DefaultTransFormulas;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 
 /**
@@ -355,7 +355,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		} else {
 			postprocessors = Collections.emptyList();
 		}
-		InterpolantsPreconditionPostcondition weakestPreconditionSequence;
+		TracePredicates weakestPreconditionSequence;
 		try {
 			weakestPreconditionSequence = ipt.computeWeakestPreconditionSequence(dtf, postprocessors, true, false);
 		} catch (final TraceInterpolationException e) {
@@ -367,8 +367,8 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		for (int i = counterexampleWord.length() - 1; i >= 0; i--) {
 			final IAction action = counterexampleWord.getSymbolAt(i);
 			// Calculate WP and PRE
-			final IPredicate wp = weakestPreconditionSequence.getInterpolant(i + 1);
-			final IPredicate pre = mPredicateFactory.not(weakestPreconditionSequence.getInterpolant(i));
+			final IPredicate wp = weakestPreconditionSequence.getPredicate(i + 1);
+			final IPredicate pre = mPredicateFactory.not(weakestPreconditionSequence.getPredicate(i));
 
 			// Figure out what is the type of the statement (internal, call or Return)
 			final ERelevanceStatus relevance;
@@ -404,10 +404,10 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("- - - - - - [Non-Flow Sensitive Analysis with statments + pre/wp information]- - - - - -");
 			for (int i = 0; i < counterexampleWord.length(); i++) {
-				mLogger.debug(weakestPreconditionSequence.getInterpolant(i));
+				mLogger.debug(weakestPreconditionSequence.getPredicate(i));
 				mLogger.debug(mRelevanceOfTrace[i]);
 			}
-			mLogger.debug(weakestPreconditionSequence.getInterpolant(counterexampleWord.length()));
+			mLogger.debug(weakestPreconditionSequence.getPredicate(counterexampleWord.length()));
 			mLogger.debug("------------------------------------------------------------------------------------------");
 		}
 	}
@@ -580,7 +580,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 	 */
 	private ERelevanceStatus computeRelevance(final int position, final IAction action, final IPredicate pre,
 			final IPredicate weakestPreconditionRight, final IPredicate weakestPreconditionLeft,
-			final InterpolantsPreconditionPostcondition weakestPreconditionSequence,
+			final TracePredicates weakestPreconditionSequence,
 			final NestedWord<LETTER> counterexampleWord, final FaultLocalizationRelevanceChecker rc,
 			final CfgSmtToolkit csToolkit) {
 		ERelevanceStatus relevance;
@@ -598,7 +598,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 			if (weakestPreconditionSequence != null) {
 				// In case of Non-FlowSensitive
 				final int callPos = counterexampleWord.getCallPosition(position);
-				callPredecessor = weakestPreconditionSequence.getInterpolant(callPos);
+				callPredecessor = weakestPreconditionSequence.getPredicate(callPos);
 			} else {
 				// In case of FlowSensitive.
 				callPredecessor = weakestPreconditionLeft;

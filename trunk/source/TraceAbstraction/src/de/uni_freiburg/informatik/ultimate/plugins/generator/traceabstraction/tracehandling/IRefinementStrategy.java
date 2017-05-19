@@ -12,7 +12,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.RefinementStrategyExceptionBlacklist;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
  * An {@link IRefinementStrategy} allows an {@link IRefinementEngine} to try multiple combinations of
@@ -82,8 +82,8 @@ public interface IRefinementStrategy<LETTER> {
 	 *            imperfect interpolant sequences constructed so far
 	 * @return {@code true} iff there is another {@link IInterpolantGenerator} available and should be used
 	 */
-	boolean hasNextInterpolantGenerator(List<InterpolantsPreconditionPostcondition> perfectIpps,
-			List<InterpolantsPreconditionPostcondition> imperfectIpps);
+	boolean hasNextInterpolantGenerator(List<TracePredicates> perfectIpps,
+			List<TracePredicates> imperfectIpps);
 
 	/**
 	 * Changes the {@link IInterpolantGenerator}.<br>
@@ -107,8 +107,8 @@ public interface IRefinementStrategy<LETTER> {
 	 * @return an interpolant automaton builder
 	 */
 	IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
-			List<InterpolantsPreconditionPostcondition> perfectIpps,
-			List<InterpolantsPreconditionPostcondition> imperfectIpps);
+			List<TracePredicates> perfectIpps,
+			List<TracePredicates> imperfectIpps);
 
 	/**
 	 * @return Predicate unifier.
@@ -128,10 +128,10 @@ public interface IRefinementStrategy<LETTER> {
 	 *            second list
 	 * @return new list containing all elements from the two lists
 	 */
-	static List<InterpolantsPreconditionPostcondition> wrapTwoListsInOne(
-			final List<InterpolantsPreconditionPostcondition> list1,
-			final List<InterpolantsPreconditionPostcondition> list2) {
-		final List<InterpolantsPreconditionPostcondition> allIpps = new ArrayList<>(list1.size() + list2.size());
+	static List<TracePredicates> wrapTwoListsInOne(
+			final List<TracePredicates> list1,
+			final List<TracePredicates> list2) {
+		final List<TracePredicates> allIpps = new ArrayList<>(list1.size() + list2.size());
 		allIpps.addAll(list1);
 		allIpps.addAll(list2);
 		return allIpps;

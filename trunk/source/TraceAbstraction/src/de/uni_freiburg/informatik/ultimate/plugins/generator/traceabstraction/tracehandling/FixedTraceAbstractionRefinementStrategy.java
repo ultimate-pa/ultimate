@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
  * {@link IRefinementStrategy} that provides only one element, namely the one selected in the Ultimate preferences.
@@ -135,8 +135,8 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	}
 
 	@Override
-	public boolean hasNextInterpolantGenerator(final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+	public boolean hasNextInterpolantGenerator(final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps) {
 		return false;
 	}
 
@@ -157,10 +157,10 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 
 	@Override
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
-			final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+			final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps) {
 		// use all interpolant sequences
-		final List<InterpolantsPreconditionPostcondition> allIpps =
+		final List<TracePredicates> allIpps =
 				IRefinementStrategy.wrapTwoListsInOne(perfectIpps, imperfectIpps);
 
 		if (mInterpolantAutomatonBuilder == null) {
@@ -170,7 +170,7 @@ public class FixedTraceAbstractionRefinementStrategy<LETTER extends IIcfgTransit
 	}
 
 	private IInterpolantAutomatonBuilder<LETTER, IPredicate> constructInterpolantAutomatonBuilder(
-			final IInterpolantGenerator interpolantGenerator, final List<InterpolantsPreconditionPostcondition> ipps) {
+			final IInterpolantGenerator interpolantGenerator, final List<TracePredicates> ipps) {
 		final IInterpolantGenerator localInterpolantGenerator = Objects.requireNonNull(interpolantGenerator,
 				"cannot construct interpolant automaton if no interpolant generator is present");
 		try {

@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
  * Interpolant automaton builder for multiple sequences of interpolants (also works for one sequence).
@@ -66,7 +66,7 @@ public class MultiTrackInterpolantAutomatonBuilder<LETTER> implements IInterpola
 	 */
 	public MultiTrackInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final IRun<LETTER, IPredicate, ?> nestedRun,
-			final List<InterpolantsPreconditionPostcondition> interpolantSequences,
+			final List<TracePredicates> interpolantSequences,
 			final IAutomaton<LETTER, IPredicate> abstraction) {
 		if (interpolantSequences.isEmpty()) {
 			throw new IllegalArgumentException("Empty list of interpolant sequences is not allowed.");
@@ -85,7 +85,7 @@ public class MultiTrackInterpolantAutomatonBuilder<LETTER> implements IInterpola
 
 	private NestedWordAutomaton<LETTER, IPredicate> constructInterpolantAutomaton(
 			final IUltimateServiceProvider services, final IAutomaton<LETTER, IPredicate> abstraction,
-			final List<InterpolantsPreconditionPostcondition> interpolantSequences, final NestedWord<LETTER> nestedWord,
+			final List<TracePredicates> interpolantSequences, final NestedWord<LETTER> nestedWord,
 			final IStateFactory<IPredicate> taContentFactory) {
 
 		final NestedWordAutomaton<LETTER, IPredicate> nwa =
@@ -108,14 +108,14 @@ public class MultiTrackInterpolantAutomatonBuilder<LETTER> implements IInterpola
 	 *            trace along which the interpolants are constructed
 	 */
 	private void addStatesAccordingToPredicates(final NestedWordAutomaton<LETTER, IPredicate> nwa,
-			final List<InterpolantsPreconditionPostcondition> interpolantSequences,
+			final List<TracePredicates> interpolantSequences,
 			final NestedWord<LETTER> nestedWord) {
 		// add initial state with precondition predicate
 		nwa.addState(true, false, interpolantSequences.get(0).getPrecondition());
 
-		for (final InterpolantsPreconditionPostcondition interpolantSequence : interpolantSequences) {
+		for (final TracePredicates interpolantSequence : interpolantSequences) {
 			for (int i = 1; i < nestedWord.length() + 1; i++) {
-				final IPredicate interpolant = interpolantSequence.getInterpolant(i);
+				final IPredicate interpolant = interpolantSequence.getPredicate(i);
 				if (!nwa.getStates().contains(interpolant)) {
 					nwa.addState(false, isFalsePredicate(interpolant), interpolant);
 				}
@@ -148,9 +148,9 @@ public class MultiTrackInterpolantAutomatonBuilder<LETTER> implements IInterpola
 	 *            trace along which the interpolants are constructed
 	 */
 	private void addBasicTransitions(final NestedWordAutomaton<LETTER, IPredicate> nwa,
-			final List<InterpolantsPreconditionPostcondition> interpolantSequences,
+			final List<TracePredicates> interpolantSequences,
 			final NestedWord<LETTER> nestedWord) {
-		for (final InterpolantsPreconditionPostcondition interpolantSequence : interpolantSequences) {
+		for (final TracePredicates interpolantSequence : interpolantSequences) {
 			for (int i = 0; i < nestedWord.length(); i++) {
 				addTransition(nwa, interpolantSequence, nestedWord, i);
 			}
@@ -158,24 +158,24 @@ public class MultiTrackInterpolantAutomatonBuilder<LETTER> implements IInterpola
 	}
 
 	private void addTransition(final NestedWordAutomaton<LETTER, IPredicate> nwa,
-			final InterpolantsPreconditionPostcondition interpolantSequence, final NestedWord<LETTER> nestedWord,
+			final TracePredicates interpolantSequence, final NestedWord<LETTER> nestedWord,
 			final int symbolPos) {
 		final LETTER symbol = nestedWord.getSymbol(symbolPos);
-		final IPredicate succ = interpolantSequence.getInterpolant(symbolPos + 1);
+		final IPredicate succ = interpolantSequence.getPredicate(symbolPos + 1);
 		if (nestedWord.isCallPosition(symbolPos)) {
-			final IPredicate pred = interpolantSequence.getInterpolant(symbolPos);
+			final IPredicate pred = interpolantSequence.getPredicate(symbolPos);
 			if (!nwa.containsCallTransition(pred, symbol, succ)) {
 				nwa.addCallTransition(pred, symbol, succ);
 			}
 		} else if (nestedWord.isReturnPosition(symbolPos)) {
-			final IPredicate pred = interpolantSequence.getInterpolant(symbolPos);
+			final IPredicate pred = interpolantSequence.getPredicate(symbolPos);
 			final int callPos = nestedWord.getCallPosition(symbolPos);
-			final IPredicate hier = interpolantSequence.getInterpolant(callPos);
+			final IPredicate hier = interpolantSequence.getPredicate(callPos);
 			if (!nwa.containsReturnTransition(pred, hier, symbol, succ)) {
 				nwa.addReturnTransition(pred, hier, symbol, succ);
 			}
 		} else {
-			final IPredicate pred = interpolantSequence.getInterpolant(symbolPos);
+			final IPredicate pred = interpolantSequence.getPredicate(symbolPos);
 			if (!nwa.containsInternalTransition(pred, symbol, succ)) {
 				nwa.addInternalTransition(pred, symbol, succ);
 			}
@@ -184,15 +184,15 @@ public class MultiTrackInterpolantAutomatonBuilder<LETTER> implements IInterpola
 
 	@SuppressWarnings("squid:S1698")
 	private static boolean
-			sequencesHaveSamePrePostconditions(final List<InterpolantsPreconditionPostcondition> interpolantSequences) {
-		final Iterator<InterpolantsPreconditionPostcondition> it = interpolantSequences.iterator();
-		final InterpolantsPreconditionPostcondition first = it.next();
+			sequencesHaveSamePrePostconditions(final List<TracePredicates> interpolantSequences) {
+		final Iterator<TracePredicates> it = interpolantSequences.iterator();
+		final TracePredicates first = it.next();
 
 		final IPredicate precondition = first.getPrecondition();
 		final IPredicate postcondition = first.getPostcondition();
 
 		while (it.hasNext()) {
-			final InterpolantsPreconditionPostcondition sequence = it.next();
+			final TracePredicates sequence = it.next();
 			if (precondition != sequence.getPrecondition() || postcondition != sequence.getPostcondition()) {
 				return false;
 			}

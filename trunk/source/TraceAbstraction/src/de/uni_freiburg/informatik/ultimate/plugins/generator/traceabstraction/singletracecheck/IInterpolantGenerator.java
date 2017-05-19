@@ -34,7 +34,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IActi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarAbsIntRunner;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
 
 /**
  * Interface for objects that generate sequences of interpolants. Given
@@ -69,8 +68,8 @@ public interface IInterpolantGenerator {
 	 */
 	IPredicateUnifier getPredicateUnifier();
 
-	default InterpolantsPreconditionPostcondition getIpp() {
-		return new InterpolantsPreconditionPostcondition(getPrecondition(), getPostcondition(),
+	default TracePredicates getIpp() {
+		return new TracePredicates(getPrecondition(), getPostcondition(),
 				Arrays.asList(getInterpolants()));
 	}
 

@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
  * Object that will analyze a trace with respect to a sequence of ProgramPoints and a sequence of interpolants. The
@@ -71,9 +71,9 @@ public class CoverageAnalysis<CL> {
 	private int mTrivial;
 	private int mNotchecked;
 
-	protected final InterpolantsPreconditionPostcondition mIpp;
+	protected final TracePredicates mIpp;
 
-	public CoverageAnalysis(final IUltimateServiceProvider services, final InterpolantsPreconditionPostcondition ipp,
+	public CoverageAnalysis(final IUltimateServiceProvider services, final TracePredicates ipp,
 			final List<CL> programPointSequence, final ILogger logger, final IPredicateUnifier predicateUnifier) {
 		mServices = services;
 		mLogger = logger;
@@ -83,7 +83,7 @@ public class CoverageAnalysis<CL> {
 	}
 
 	public void analyze() {
-		assert mProgramPointSequence.size() - 2 == mIpp.getInterpolants().size();
+		assert mProgramPointSequence.size() - 2 == mIpp.getPredicates().size();
 		preprocess();
 
 		for (int i = 0; i < mProgramPointSequence.size() - 1; i++) {
@@ -98,8 +98,8 @@ public class CoverageAnalysis<CL> {
 			} else {
 				for (final int previousOccurrence : previousOccurrences) {
 					assert i > previousOccurrence;
-					final IPredicate currentPredicate = mIpp.getInterpolant(i);
-					final IPredicate previousPredicate = mIpp.getInterpolant(previousOccurrence);
+					final IPredicate currentPredicate = mIpp.getPredicate(i);
+					final IPredicate previousPredicate = mIpp.getPredicate(previousOccurrence);
 					if (currentPredicate == previousPredicate) {
 						// trivially covered and backedges already contained
 						mTrivial++;

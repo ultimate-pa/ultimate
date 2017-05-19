@@ -52,7 +52,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.InterpolantConsolidation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckReasonUnknown;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
  * Checks a trace for feasibility and, if infeasible, constructs an interpolant automaton.<br>
@@ -129,8 +129,8 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	 * @return counterexample feasibility
 	 */
 	private LBool executeStrategy() {
-		final List<InterpolantsPreconditionPostcondition> perfectIpps = new LinkedList<>();
-		final List<InterpolantsPreconditionPostcondition> imperfectIpps = new LinkedList<>();
+		final List<TracePredicates> perfectIpps = new LinkedList<>();
+		final List<TracePredicates> imperfectIpps = new LinkedList<>();
 		while (true) {
 			/*
 			 * check feasibility using the strategy
@@ -219,8 +219,8 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 		return LBool.SAT;
 	}
 
-	private LBool handleUnknownCase(final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+	private LBool handleUnknownCase(final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps) {
 		if (perfectIpps.size() + imperfectIpps.size() > 0) {
 			// infeasibility was shown in previous attempt already
 			constructAutomatonFromIpps(perfectIpps, imperfectIpps);
@@ -236,8 +236,8 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	/**
 	 * @return {@code true} iff outer loop should be continued.
 	 */
-	private boolean handleInfeasibleCase(final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+	private boolean handleInfeasibleCase(final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps) {
 		extractInterpolants(perfectIpps, imperfectIpps);
 		if (mStrategy.hasNextInterpolantGenerator(perfectIpps, imperfectIpps)) {
 			// construct the next sequence of interpolants
@@ -250,8 +250,8 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 		return false;
 	}
 
-	private void extractInterpolants(final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+	private void extractInterpolants(final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps) {
 		IInterpolantGenerator interpolantGenerator = null;
 		try {
 			interpolantGenerator = mStrategy.getInterpolantGenerator();
@@ -310,7 +310,7 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 			return;
 		}
 
-		final InterpolantsPreconditionPostcondition interpolants = interpolantGenerator.getIpp();
+		final TracePredicates interpolants = interpolantGenerator.getIpp();
 		final boolean interpolantsArePerfect = interpolantGenerator.isPerfectSequence();
 		if (interpolantsArePerfect) {
 			perfectIpps.add(interpolants);
@@ -326,8 +326,8 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	 * <li>there are two sequences of interpolants.</li>
 	 * </ol>
 	 */
-	private static void handleTraceCheckerSpWpCase(final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps, final TraceCheckerSpWp traceCheckerSpWp) {
+	private static void handleTraceCheckerSpWpCase(final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps, final TraceCheckerSpWp traceCheckerSpWp) {
 		if (traceCheckerSpWp.wasForwardPredicateComputationRequested()) {
 			addForwardPredicates(traceCheckerSpWp, perfectIpps, imperfectIpps);
 		}
@@ -337,9 +337,9 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	}
 
 	private static void addForwardPredicates(final TraceCheckerSpWp traceCheckerSpWp,
-			final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
-		final InterpolantsPreconditionPostcondition interpolants = traceCheckerSpWp.getForwardIpp();
+			final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps) {
+		final TracePredicates interpolants = traceCheckerSpWp.getForwardIpp();
 		assert interpolants != null;
 		if (traceCheckerSpWp.isForwardSequencePerfect()) {
 			perfectIpps.add(interpolants);
@@ -349,9 +349,9 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 	}
 
 	private static void addBackwardPredicates(final TraceCheckerSpWp traceCheckerSpWp,
-			final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
-		final InterpolantsPreconditionPostcondition interpolants = traceCheckerSpWp.getBackwardIpp();
+			final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps) {
+		final TracePredicates interpolants = traceCheckerSpWp.getBackwardIpp();
 		assert interpolants != null;
 		if (traceCheckerSpWp.isBackwardSequencePerfect()) {
 			perfectIpps.add(interpolants);
@@ -360,8 +360,8 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 		}
 	}
 
-	private LBool constructAutomatonFromIpps(List<InterpolantsPreconditionPostcondition> perfectIpps,
-			List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+	private LBool constructAutomatonFromIpps(List<TracePredicates> perfectIpps,
+			List<TracePredicates> imperfectIpps) {
 		// construct the interpolant automaton from the sequences we have found
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Constructing automaton from " + perfectIpps.size() + " perfect and " + imperfectIpps.size()
@@ -370,14 +370,14 @@ public final class TraceAbstractionRefinementEngine<LETTER>
 		if (mLogger.isInfoEnabled()) {
 			final List<Integer> numberInterpolantsPerfect = new ArrayList<>();
 			final Set<IPredicate> allInterpolants = new HashSet<>();
-			for (final InterpolantsPreconditionPostcondition ipps : perfectIpps) {
-				numberInterpolantsPerfect.add(new HashSet<>(ipps.getInterpolants()).size());
-				allInterpolants.addAll(ipps.getInterpolants());
+			for (final TracePredicates ipps : perfectIpps) {
+				numberInterpolantsPerfect.add(new HashSet<>(ipps.getPredicates()).size());
+				allInterpolants.addAll(ipps.getPredicates());
 			}
 			final List<Integer> numberInterpolantsImperfect = new ArrayList<>();
-			for (final InterpolantsPreconditionPostcondition ipps : imperfectIpps) {
-				numberInterpolantsImperfect.add(new HashSet<>(ipps.getInterpolants()).size());
-				allInterpolants.addAll(ipps.getInterpolants());
+			for (final TracePredicates ipps : imperfectIpps) {
+				numberInterpolantsImperfect.add(new HashSet<>(ipps.getPredicates()).size());
+				allInterpolants.addAll(ipps.getPredicates());
 			}
 			mLogger.info("Number of different interpolants: perfect sequences " + numberInterpolantsPerfect
 					+ " imperfect sequences " + numberInterpolantsImperfect + " total " + allInterpolants.size());

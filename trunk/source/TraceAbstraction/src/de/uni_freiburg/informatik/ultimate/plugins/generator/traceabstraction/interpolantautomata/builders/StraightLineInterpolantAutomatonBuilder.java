@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryForInterpolantAutomata;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
  * Build an interpolant automaton whose shape is a straight line. The input for this construction is a TraceChecker that
@@ -131,12 +131,12 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER>
 
 	private static Function<Integer, IPredicate>
 			convertInterpolantGenerator(final IInterpolantGenerator interpolantGenerator) {
-		final InterpolantsPreconditionPostcondition ipp =
-				new InterpolantsPreconditionPostcondition(interpolantGenerator);
+		final TracePredicates ipp =
+				new TracePredicates(interpolantGenerator);
 		return new Function<Integer, IPredicate>() {
 			@Override
 			public IPredicate apply(final Integer index) {
-				return ipp.getInterpolant(index);
+				return ipp.getPredicate(index);
 			}
 		};
 	}

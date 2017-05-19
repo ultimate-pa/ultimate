@@ -2,16 +2,16 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.i
 
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 public class InterpolantSequences {
 	public static InterpolantSequences instance = new InterpolantSequences();
 	
-	public List<InterpolantsPreconditionPostcondition> mPerfectIpps;
-	public List<InterpolantsPreconditionPostcondition> mImperfectIpps;
+	public List<TracePredicates> mPerfectIpps;
+	public List<TracePredicates> mImperfectIpps;
 
-	public InterpolantSequences set(final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+	public InterpolantSequences set(final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps) {
 		mPerfectIpps = perfectIpps;
 		mImperfectIpps = imperfectIpps;
 		return this;

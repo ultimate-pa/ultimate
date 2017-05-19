@@ -53,7 +53,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.IInterpolantGenerator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.AssertionOrderModulation;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.MultiTrackTraceAbstractionRefinementStrategy;
@@ -185,8 +185,8 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 	}
 
 	@Override
-	public boolean hasNextInterpolantGenerator(final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+	public boolean hasNextInterpolantGenerator(final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps) {
 		return mFallback != null ? mFallback.hasNextInterpolantGenerator(perfectIpps, imperfectIpps)
 				: super.hasNextInterpolantGenerator(perfectIpps, imperfectIpps);
 	}
@@ -207,8 +207,8 @@ public abstract class ParrotRefinementStrategy<LETTER extends IIcfgTransition<?>
 
 	@Override
 	public IInterpolantAutomatonBuilder<LETTER, IPredicate> getInterpolantAutomatonBuilder(
-			final List<InterpolantsPreconditionPostcondition> perfectIpps,
-			final List<InterpolantsPreconditionPostcondition> imperfectIpps) {
+			final List<TracePredicates> perfectIpps,
+			final List<TracePredicates> imperfectIpps) {
 		return mFallback != null ? mFallback.getInterpolantAutomatonBuilder(perfectIpps, imperfectIpps)
 				: super.getInterpolantAutomatonBuilder(perfectIpps, imperfectIpps);
 	}

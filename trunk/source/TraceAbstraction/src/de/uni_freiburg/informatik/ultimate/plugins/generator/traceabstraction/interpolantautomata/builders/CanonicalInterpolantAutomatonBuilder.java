@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CoverageAnalysis;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils.InterpolantsPreconditionPostcondition;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
  * Constructs the canonical interpolant automaton. Boolean flags determine if we also add selfloops in the initial and
@@ -64,7 +64,7 @@ public class CanonicalInterpolantAutomatonBuilder<CL, LETTER> extends CoverageAn
 	private final Map<Integer, Set<IPredicate>> mAlternativeCallPredecessors = new HashMap<>();
 
 	public CanonicalInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-			final InterpolantsPreconditionPostcondition ipp, final List<CL> programPointSequence,
+			final TracePredicates ipp, final List<CL> programPointSequence,
 			final VpAlphabet<LETTER> alphabet, final CfgSmtToolkit csToolkit,
 			final IStateFactory<IPredicate> predicateFactory, final ILogger logger,
 			final IPredicateUnifier predicateUnifier, final NestedWord<LETTER> nestedWord) {
@@ -76,7 +76,7 @@ public class CanonicalInterpolantAutomatonBuilder<CL, LETTER> extends CoverageAn
 	@Override
 	protected void processCodeBlock(final int i) {
 		// interpolant after the CodeBlock
-		final IPredicate successorInterpolant = mIpp.getInterpolant(i + 1);
+		final IPredicate successorInterpolant = mIpp.getPredicate(i + 1);
 		if (!mIA.getStates().contains(successorInterpolant)) {
 			assert (successorInterpolant != mIpp.getPostcondition());
 			mIA.addState(false, false, successorInterpolant);
@@ -151,17 +151,17 @@ public class CanonicalInterpolantAutomatonBuilder<CL, LETTER> extends CoverageAn
 	}
 
 	private void addTransition(final int prePos, final int symbolPos, final int succPos) {
-		final IPredicate pred = mIpp.getInterpolant(prePos);
-		final IPredicate succ = mIpp.getInterpolant(succPos);
+		final IPredicate pred = mIpp.getPredicate(prePos);
+		final IPredicate succ = mIpp.getPredicate(succPos);
 		final LETTER symbol = mNestedWord.getSymbol(symbolPos);
 		if (mNestedWord.isCallPosition(symbolPos)) {
 			mIA.addCallTransition(pred, symbol, succ);
-			if (mIpp.getInterpolant(prePos) != mIpp.getInterpolant(symbolPos)) {
-				addAlternativeCallPredecessor(symbolPos, mIpp.getInterpolant(prePos));
+			if (mIpp.getPredicate(prePos) != mIpp.getPredicate(symbolPos)) {
+				addAlternativeCallPredecessor(symbolPos, mIpp.getPredicate(prePos));
 			}
 		} else if (mNestedWord.isReturnPosition(symbolPos)) {
 			final int callPos = mNestedWord.getCallPosition(symbolPos);
-			final IPredicate hier = mIpp.getInterpolant(callPos);
+			final IPredicate hier = mIpp.getPredicate(callPos);
 			mIA.addReturnTransition(pred, hier, symbol, succ);
 			addAlternativeReturnTransitions(pred, callPos, symbol, succ);
 		} else {
