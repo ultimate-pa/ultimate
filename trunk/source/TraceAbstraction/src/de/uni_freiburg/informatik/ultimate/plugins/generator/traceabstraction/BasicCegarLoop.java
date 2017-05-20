@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2013-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2011-2015 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
  *
  * This file is part of the ULTIMATE TraceAbstraction plug-in.
@@ -113,7 +114,8 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 /**
  * Subclass of AbstractCegarLoop which provides all algorithms for checking safety (not termination).
  *
- * @author heizmann@informatik.uni-freiburg.de
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  */
 public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractCegarLoop<LETTER> {
 
@@ -155,6 +157,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	
 	// TODO 2017-05-20 Christian: This should only be a temporary hack, properly integrate this into the control flow.
 	private boolean mErrorAutomatonAvailable;
+	private final ErrorTraceContainer<LETTER> mErrorTraces = new ErrorTraceContainer<>();
 
 	public BasicCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -267,7 +270,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	}
 
 	@Override
-	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
+	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
 		final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction =
 				(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction;
 		mCounterexample =
@@ -423,6 +426,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		
 		mInterpolAutomaton = new StraightLineInterpolantAutomatonBuilder<>(mServices, new VpAlphabet<>(mAbstraction),
 				mPredicateFactoryInterpolantAutomata, trace, weakestPreconditionSequence).getResult();
+		mErrorTraces.add(mCounterexample);
 		mErrorAutomatonAvailable = true;
 		assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
 		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Error automaton broken!";
@@ -795,6 +799,20 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	 */
 	public void finish() {
 		// do nothing
+	}
+
+	@Override
+	protected Result getAnalysisResult() {
+		try {
+			assert new IsEmpty<>(new AutomataLibraryServices(mServices),
+					(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction, mSearchStrategy).getResult();
+		} catch (final AutomataOperationCanceledException e) {
+			// do nothing and assume everything was fine
+		}
+		if (mErrorTraces.isEmpty()) {
+			return Result.SAFE;
+		}
+		return Result.UNSAFE;
 	}
 
 	public void setWitnessAutomaton(final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {

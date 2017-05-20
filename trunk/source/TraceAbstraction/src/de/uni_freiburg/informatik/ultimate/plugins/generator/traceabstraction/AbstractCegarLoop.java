@@ -215,7 +215,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 *
 	 * @throws AutomataOperationCanceledException
 	 */
-	protected abstract boolean isAbstractionCorrect() throws AutomataOperationCanceledException;
+	protected abstract boolean isAbstractionEmpty() throws AutomataOperationCanceledException;
 
 	/**
 	 * Determine if the trace of mCounterexample is a feasible sequence of CodeBlocks. Return
@@ -266,6 +266,18 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 * @throws AutomataLibraryException
 	 */
 	protected abstract boolean refineAbstraction() throws AutomataLibraryException;
+
+	/**
+	 * Returns the analysis result after termination.
+	 * <p>
+	 * In case error traces are not reported immediately, the analysis may terminate with an empty abstraction, but the
+	 * program contains errors. Hence the result cannot always be inferred immediately from the fact that the
+	 * abstraction is empty.
+	 * 
+	 * @return {@link Result#SAFE} if no feasible counterexample was detected, {@link Result#UNSAFE} if at least one
+	 *         feasible counterexample was detected
+	 */
+	protected abstract Result getAnalysisResult();
 
 	/**
 	 * Add Hoare annotation to the control flow graph. Use the information computed so far annotate the ProgramPoints of
@@ -341,14 +353,13 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		mInteractive.waitIfPaused();
 		boolean initalAbstractionCorrect;
 		try {
-			initalAbstractionCorrect = isAbstractionCorrect();
+			initalAbstractionCorrect = isAbstractionEmpty();
 		} catch (final AutomataOperationCanceledException e) {
 			mRunningTaskStackProvider = e;
 			return preformTimeoutActions();
 		}
 		if (initalAbstractionCorrect) {
-			mCegarLoopBenchmark.setResult(Result.SAFE);
-			return Result.SAFE;
+			return reportResult(Result.SAFE);
 		}
 
 		for (mIteration = 1; mIteration <= mPref.maxIterations(); mIteration++) {
@@ -364,7 +375,6 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 			try {
 				final LBool isCounterexampleFeasible = isCounterexampleFeasible();
 				if (isCounterexampleFeasible == Script.LBool.SAT) {
-					mCegarLoopBenchmark.setResult(Result.UNSAFE);
 					if (CONTINUE_AFTER_ERROR_TRACE_FOUND) {
 						if (mLogger.isInfoEnabled()) {
 							mLogger.info("trying to exclude counterexample and continue analysis now");
@@ -373,12 +383,12 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 						automatonType = "Error";
 						constructErrorAutomaton();
 					} else {
-						return Result.UNSAFE;
+						return reportResult(Result.UNSAFE);
 					}
 				} else if (isCounterexampleFeasible == Script.LBool.UNKNOWN) {
-					mCegarLoopBenchmark.setResult(Result.UNKNOWN);
+					// TODO 2017-05-20 Christian: Check for existing counterexamples before concluding with UNKNOWN.
 					mReasonUnknown = new UnprovabilityReason("unable to decide satisfiability of path constraint");
-					return Result.UNKNOWN;
+					return reportResult(Result.UNKNOWN);
 				} else {
 					mInteractive.waitIfPaused();
 					automatonType = "Interpolant";
@@ -442,24 +452,26 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 			mInteractive.waitIfPaused();
 			boolean isAbstractionCorrect;
 			try {
-				isAbstractionCorrect = isAbstractionCorrect();
+				isAbstractionCorrect = isAbstractionEmpty();
 			} catch (final AutomataOperationCanceledException e) {
 				return preformTimeoutActions();
 			}
 			if (isAbstractionCorrect) {
-				mCegarLoopBenchmark.setResult(Result.SAFE);
-				return Result.SAFE;
+				return reportResult(getAnalysisResult());
 			}
 			mInteractive.send(mCegarLoopBenchmark);
 		}
-		mCegarLoopBenchmark.setResult(Result.TIMEOUT);
-		return Result.TIMEOUT;
+		return reportResult(Result.TIMEOUT);
+	}
+
+	private Result reportResult(final Result result) {
+		mCegarLoopBenchmark.setResult(result);
+		return result;
 	}
 
 	private Result preformTimeoutActions() {
 		mLogger.warn(MSG_VERIFICATION_CANCELED);
-		mCegarLoopBenchmark.setResult(Result.TIMEOUT);
-		return Result.TIMEOUT;
+		return reportResult(Result.TIMEOUT);
 	}
 
 	protected void writeAutomatonToFile(final IAutomaton<LETTER, IPredicate> automaton, final String filename) {

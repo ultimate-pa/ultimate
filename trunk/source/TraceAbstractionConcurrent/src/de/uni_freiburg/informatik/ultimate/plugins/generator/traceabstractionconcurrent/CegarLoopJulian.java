@@ -98,7 +98,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 	}
 
 	@Override
-	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
+	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
 		final PetriNetJulian<LETTER, IPredicate> abstraction = (PetriNetJulian<LETTER, IPredicate>) mAbstraction;
 		final String orderString = mPref.order();
 		final boolean cutOffSameTrans = mPref.cutOffRequiresSameTransition();

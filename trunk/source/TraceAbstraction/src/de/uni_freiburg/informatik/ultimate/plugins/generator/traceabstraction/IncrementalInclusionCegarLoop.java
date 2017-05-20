@@ -182,7 +182,7 @@ public class IncrementalInclusionCegarLoop<LETTER extends IIcfgTransition<?>> ex
 	}
 
 	@Override
-	protected boolean isAbstractionCorrect() throws AutomataOperationCanceledException {
+	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
 		super.mCounterexample = mInclusionCheck.getCounterexample();
 		// try {
 		// mCounterexample = emptyWithAI.getNestedRun();
