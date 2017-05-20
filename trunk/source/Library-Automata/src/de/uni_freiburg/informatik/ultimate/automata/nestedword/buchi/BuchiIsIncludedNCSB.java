@@ -97,7 +97,7 @@ public final class BuchiIsIncludedNCSB<LETTER, STATE> extends BinaryNwaOperation
 
 	@Override
 	public String operationName() {
-		return "BuchiIsIncluded";
+		return "buchiIsIncludedNCSB";
 	}
 
 	@Override
