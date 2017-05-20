@@ -26,30 +26,40 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.ErrorTraceContainer.ErrorTrace;
 
 /**
  * Container for one or more error traces.
- * <p>
- * Currently this class only collects a list of traces, but it might store more data in the future.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type in the trace
  */
-public class ErrorTraceContainer<LETTER> {
-	private final List<IRun<LETTER, IPredicate, ?>> mTraces = new LinkedList<>();
+public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>> {
+	private final List<ErrorTrace<LETTER>> mTraces = new LinkedList<>();
+
+	/**
+	 * @param trace
+	 *            Error trace.
+	 * @param precondition
+	 *            precondition
+	 */
+	public void addTrace(final IRun<LETTER, IPredicate, ?> trace, final IPredicate precondition) {
+		mTraces.add(new ErrorTrace<>(trace, precondition));
+	}
 
 	/**
 	 * @param trace
 	 *            Error trace.
 	 */
-	public void add(final IRun<LETTER, IPredicate, ?> trace) {
-		mTraces.add(trace);
+	public void addTrace(final IRun<LETTER, IPredicate, ?> trace) {
+		addTrace(trace, null);
 	}
 
 	/**
@@ -59,7 +69,54 @@ public class ErrorTraceContainer<LETTER> {
 		return mTraces.isEmpty();
 	}
 
-	public List<IRun<LETTER, IPredicate, ?>> getTraces() {
-		return mTraces;
+	/**
+	 * @return Number of error traces stored.
+	 */
+	public int size() {
+		return mTraces.size();
+	}
+
+	@Override
+	public Iterator<ErrorTrace<LETTER>> iterator() {
+		return mTraces.iterator();
+	}
+
+	/**
+	 * Wrapper for a single error trace.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 * @param <LETTER>
+	 *            letter type in the trace
+	 */
+	public static final class ErrorTrace<LETTER> {
+		private final IRun<LETTER, IPredicate, ?> mTrace;
+		private final IPredicate mPrecondition;
+
+		/**
+		 * @param trace
+		 *            Error trace.
+		 * @param precondition
+		 *            precondition
+		 */
+		public ErrorTrace(final IRun<LETTER, IPredicate, ?> trace, final IPredicate precondition) {
+			mTrace = trace;
+			mPrecondition = precondition;
+		}
+
+		/**
+		 * @param trace
+		 *            Error trace.
+		 */
+		public ErrorTrace(final IRun<LETTER, IPredicate, ?> trace) {
+			this(trace, null);
+		}
+
+		public IRun<LETTER, IPredicate, ?> getTrace() {
+			return mTrace;
+		}
+
+		public IPredicate getPrecondition() {
+			return mPrecondition;
+		}
 	}
 }

@@ -73,6 +73,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareT
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.ErrorTraceContainer.ErrorTrace;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
@@ -426,7 +427,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		
 		mInterpolAutomaton = new StraightLineInterpolantAutomatonBuilder<>(mServices, new VpAlphabet<>(mAbstraction),
 				mPredicateFactoryInterpolantAutomata, trace, weakestPreconditionSequence).getResult();
-		mErrorTraces.add(mCounterexample);
+		mErrorTraces.addTrace(mCounterexample, weakestPreconditionSequence.getPrecondition());
 		mErrorAutomatonAvailable = true;
 		assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
 		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Error automaton broken!";
@@ -802,8 +803,18 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	}
 
 	@Override
-	protected boolean isResultUnsafe() {
-		return !mErrorTraces.isEmpty();
+	protected boolean isResultUnsafe(final boolean reportErrorStatistics) {
+		if (mErrorTraces.isEmpty()) {
+			return false;
+		}
+		if (mLogger.isInfoEnabled()) {
+			mLogger.info("Found " + mErrorTraces.size() + " different error traces in total:");
+			for (final ErrorTrace<LETTER> errorTrace : mErrorTraces) {
+				mLogger.info(" Error trace of length " + errorTrace.getTrace().getLength() + " has precondition "
+						+ errorTrace.getPrecondition().getFormula() + ".");
+			}
+		}
+		return true;
 	}
 
 	public void setWitnessAutomaton(final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
