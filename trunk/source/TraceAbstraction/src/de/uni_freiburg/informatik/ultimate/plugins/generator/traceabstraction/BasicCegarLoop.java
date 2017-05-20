@@ -802,17 +802,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	}
 
 	@Override
-	protected Result getAnalysisResult() {
-		try {
-			assert new IsEmpty<>(new AutomataLibraryServices(mServices),
-					(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction, mSearchStrategy).getResult();
-		} catch (final AutomataOperationCanceledException e) {
-			// do nothing and assume everything was fine
-		}
-		if (mErrorTraces.isEmpty()) {
-			return Result.SAFE;
-		}
-		return Result.UNSAFE;
+	protected boolean isResultUnsafe() {
+		return !mErrorTraces.isEmpty();
 	}
 
 	public void setWitnessAutomaton(final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
