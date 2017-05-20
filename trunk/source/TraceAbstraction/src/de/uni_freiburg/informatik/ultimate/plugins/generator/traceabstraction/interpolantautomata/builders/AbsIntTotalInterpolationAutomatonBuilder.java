@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
@@ -111,7 +111,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 	 * @param xnfConversionTechnique
 	 */
 	public AbsIntTotalInterpolationAutomatonBuilder(final IUltimateServiceProvider services,
-			final INestedWordAutomatonSimple<LETTER, IPredicate> oldAbstraction,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
 			final IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> aiResult,
 			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final IRun<LETTER, IPredicate, ?> currentCounterExample, final IIcfgSymbolTable symbolTable,
@@ -130,7 +130,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 	}
 
 	private NestedWordAutomaton<LETTER, IPredicate> constructAutomaton(
-			final INestedWordAutomatonSimple<LETTER, IPredicate> oldAbstraction,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
 			final IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> aiResult,
 			final IPredicateUnifier predicateUnifier) {
 
@@ -242,7 +242,7 @@ public class AbsIntTotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransi
 	 * @param predicateToStates
 	 * @param predicateUnifier
 	 */
-	private void enhanceResult(final INestedWordAutomatonSimple<LETTER, IPredicate> oldAbstraction,
+	private void enhanceResult(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
 			final IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> aiResult,
 			final NestedWordAutomaton<LETTER, IPredicate> result,
 			final Map<IPredicate, Set<IAbstractState<?, IBoogieVar>>> predicateToStates,

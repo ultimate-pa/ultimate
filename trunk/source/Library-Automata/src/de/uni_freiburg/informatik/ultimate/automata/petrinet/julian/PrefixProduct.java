@@ -36,7 +36,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.ConcurrentProduct;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
@@ -275,11 +275,11 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 	public boolean checkResult(final CRSF stateFactory) throws AutomataLibraryException {
 		mLogger.info("Testing correctness of prefixProduct");
 
-		final INestedWordAutomatonSimple<S, C> op1AsNwa =
+		final INwaOutgoingLetterAndTransitionProvider<S, C> op1AsNwa =
 				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult();
-		final INestedWordAutomatonSimple<S, C> resultAsNwa =
+		final INwaOutgoingLetterAndTransitionProvider<S, C> resultAsNwa =
 				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mResult)).getResult();
-		final INestedWordAutomatonSimple<S, C> nwaResult =
+		final INwaOutgoingLetterAndTransitionProvider<S, C> nwaResult =
 				(new ConcurrentProduct<>(mServices, stateFactory, op1AsNwa, mNwa, true)).getResult();
 		boolean correct;
 		correct = (new IsEquivalent<>(mServices, stateFactory, resultAsNwa, nwaResult)).getResult();

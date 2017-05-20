@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
@@ -71,7 +71,7 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends StateRemoval<LETTE
 	 *             if timeout exceeds
 	 */
 	public RemoveNonLiveStates(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services, operand);
 
 		mReach = new NestedWordAutomatonReachableStates<>(mServices, mOperand);
@@ -146,7 +146,7 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends StateRemoval<LETTE
 	}
 
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataLibraryException {
 		final boolean op = (new BuchiAccepts<>(mServices, operand, nlw)).getResult();
 		final boolean res = (new BuchiAccepts<>(mServices, mResult, nlw)).getResult();
 		final boolean correct = op == res;

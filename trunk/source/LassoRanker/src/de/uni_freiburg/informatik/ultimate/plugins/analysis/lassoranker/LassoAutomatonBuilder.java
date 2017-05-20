@@ -32,7 +32,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -101,7 +101,7 @@ public final class LassoAutomatonBuilder<LETTER> {
 		}
 	}
 
-	public INestedWordAutomatonSimple<LETTER, IPredicate> getResult() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getResult() {
 		return mResult;
 	}
 }

@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
@@ -62,8 +62,8 @@ public class WitnessLocationMatcher<LETTER extends IIcfgTransition<?>> {
 	private final ArrayList<WitnessEdge> mUnmatchedWitnessLetters;
 
 	public WitnessLocationMatcher(final IUltimateServiceProvider services,
-			final INestedWordAutomatonSimple<LETTER, IPredicate> controlFlowAutomaton,
-			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> controlFlowAutomaton,
+			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		partitionEdges(witnessAutomaton.getVpAlphabet().getInternalAlphabet());

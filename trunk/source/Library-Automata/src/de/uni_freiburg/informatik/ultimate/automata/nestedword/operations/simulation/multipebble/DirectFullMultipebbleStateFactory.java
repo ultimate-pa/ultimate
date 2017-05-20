@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.IFullMultipebbleAuxiliaryGameState.AuxiliaryGameStateType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -68,7 +68,7 @@ public class DirectFullMultipebbleStateFactory<STATE>
 	@Override
 	protected <LETTER> DirectFullMultipebbleGameState<STATE> computeSuccessorsInternalGivenSpoilerSucc(
 			final DoubleDecker<STATE> spoilerSucc, final DirectFullMultipebbleGameState<STATE> gs, final LETTER letter,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
 		final HashRelation<STATE, STATE> duplicatorSuccStates = new HashRelation<>();
 		for (final Entry<STATE, STATE> doubleDecker : gs.getDuplicatorDoubleDeckers().entrySet()) {
@@ -94,7 +94,7 @@ public class DirectFullMultipebbleStateFactory<STATE>
 	@Override
 	protected <LETTER> DirectFullMultipebbleGameState<STATE> computeSuccessorsCallGivenSpoilerSucc(
 			final DoubleDecker<STATE> spoilerSucc, final DirectFullMultipebbleGameState<STATE> gs, final LETTER letter,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
 		final HashRelation<STATE, STATE> duplicatorSuccStates = new HashRelation<>();
 		for (final Entry<STATE, STATE> doubleDecker : gs.getDuplicatorDoubleDeckers().entrySet()) {
@@ -121,7 +121,7 @@ public class DirectFullMultipebbleStateFactory<STATE>
 	protected <LETTER> DirectFullMultipebbleGameState<STATE> computeSuccessorsReturnGivenSpoilerSucc(
 			final DoubleDecker<STATE> spoilerSucc, final DirectFullMultipebbleGameState<STATE> gs,
 			final DirectFullMultipebbleGameState<STATE> hier, final LETTER letter,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
 		final HashRelation<STATE, STATE> duplicatorSuccStates = new HashRelation<>();
 		for (final Entry<STATE, STATE> hierDoubleDecker : hier.getDuplicatorDoubleDeckers().entrySet()) {
@@ -149,13 +149,13 @@ public class DirectFullMultipebbleStateFactory<STATE>
 
 	@Override
 	public <LETTER> boolean isImmediatelyWinningForSpoiler(final STATE q0, final STATE q1,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) {
 		return operand.isFinal(q0) && !operand.isFinal(q1);
 	}
 
 	@Override
 	public <LETTER> DirectFullMultipebbleGameState<STATE> constructInitialState(final STATE q0, final STATE q1,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) {
 		if (isImmediatelyWinningForSpoiler(q0, q1, operand)) {
 			throw new AssertionError("cannot construct state that is winning for spoiler");
 		}

@@ -35,7 +35,7 @@ import java.util.Random;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -71,7 +71,7 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 	 *            seed
 	 */
 	public GetRandomNestedWord(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final int length, final long seed) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa, final int length, final long seed) {
 		mInternalAlphabet = new ArrayList<>(nwa.getVpAlphabet().getInternalAlphabet());
 		mCallAlphabet = new ArrayList<>(nwa.getVpAlphabet().getCallAlphabet());
 		mReturnAlphabet = new ArrayList<>(nwa.getVpAlphabet().getReturnAlphabet());

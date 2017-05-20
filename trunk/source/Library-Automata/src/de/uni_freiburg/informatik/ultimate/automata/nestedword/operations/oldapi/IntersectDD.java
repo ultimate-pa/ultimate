@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldap
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -59,8 +59,8 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 	 *             if alphabets differ
 	 */
 	public IntersectDD(final AutomataLibraryServices services, final IIntersectionStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa) throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstNwa,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndNwa) throws AutomataLibraryException {
 		this(services, stateFactory, fstNwa, sndNwa, false);
 	}
 
@@ -81,8 +81,8 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 	 *             if alphabets differ
 	 */
 	public IntersectDD(final AutomataLibraryServices services, final IIntersectionStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa, final boolean minimizeResult)
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstNwa,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndNwa, final boolean minimizeResult)
 			throws AutomataLibraryException {
 		super(services, stateFactory, fstNwa, sndNwa, minimizeResult);
 		mStateFactory = stateFactory;

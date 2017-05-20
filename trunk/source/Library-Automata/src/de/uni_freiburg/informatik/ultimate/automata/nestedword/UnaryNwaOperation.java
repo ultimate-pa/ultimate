@@ -62,7 +62,7 @@ public abstract class UnaryNwaOperation<LETTER, STATE, CRSF extends IStateFactor
 	/**
 	 * @return The operand nested word automaton.
 	 */
-	protected abstract INestedWordAutomatonSimple<LETTER, STATE> getOperand();
+	protected abstract INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand();
 
 	/**
 	 * @return generic running task description.

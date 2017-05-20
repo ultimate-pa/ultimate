@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoWord;
@@ -42,8 +42,8 @@ public final class ResultChecker {
 	}
 
 	public static <LETTER, STATE> boolean buchiComplement(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand,
-			final INestedWordAutomatonSimple<LETTER, STATE> result) throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> result) throws AutomataLibraryException {
 		final ILogger logger = services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		if (sResultCheckStackHeight >= MAX_RESULT_CHECK_STACK_HEIGHT) {
 			return true;

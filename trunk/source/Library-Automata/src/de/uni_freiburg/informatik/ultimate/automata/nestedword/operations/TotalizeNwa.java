@@ -33,7 +33,7 @@ import java.util.Iterator;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -51,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+public class TotalizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	private final ISinkStateFactory<STATE> mStateFactory;
 	private STATE mSinkState;
 	private boolean mSinkStateWasConstructed;
@@ -67,7 +67,7 @@ public class TotalizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LE
 	 * @param stateFactory
 	 *            state factory
 	 */
-	public TotalizeNwa(final INestedWordAutomatonSimple<LETTER, STATE> operand,
+	public TotalizeNwa(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final ISinkStateFactory<STATE> stateFactory) {
 		mOperand = operand;
 		mStateFactory = stateFactory;

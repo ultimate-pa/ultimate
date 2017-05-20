@@ -36,7 +36,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.PowersetIterator;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -79,7 +79,7 @@ public class BarelyCoveredLevelRankingsGenerator<LETTER, STATE>
 	 *            {@code true} iff delayed rank decrease is allowed
 	 */
 	public BarelyCoveredLevelRankingsGenerator(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand, final int userDefinedMaxRank,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final int userDefinedMaxRank,
 			final boolean allowRankZero, final boolean allowEmptyLevelRanking,
 			final boolean restrictToElasticLevelRankings, final boolean voluntaryDecreaseOnlyForStatesInO,
 			final boolean allowDelayedRankDecrease) {

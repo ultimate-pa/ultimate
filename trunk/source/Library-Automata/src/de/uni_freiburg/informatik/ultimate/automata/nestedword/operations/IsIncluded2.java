@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.incrementalinclusion.IIncrementalInclusionStateFactory;
@@ -47,9 +47,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public final class IsIncluded2<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
-	private final INestedWordAutomatonSimple<LETTER, STATE> mB1;
-	private final INestedWordAutomatonSimple<LETTER, STATE> mB2;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mB1;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mB2;
 
 	private final InclusionViaDifference<LETTER, STATE, ?> mInclusionViaDifference;
 
@@ -74,9 +74,9 @@ public final class IsIncluded2<LETTER, STATE> extends UnaryNwaOperation<LETTER, 
 	 */
 	public IsIncluded2(final AutomataLibraryServices services,
 			final IIncrementalInclusionStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operandA,
-			final INestedWordAutomatonSimple<LETTER, STATE> operandB1,
-			final INestedWordAutomatonSimple<LETTER, STATE> operandB2) throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operandA,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operandB1,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operandB2) throws AutomataLibraryException {
 		super(services);
 		mOperand = operandA;
 		mB1 = operandB1;
@@ -115,7 +115,7 @@ public final class IsIncluded2<LETTER, STATE> extends UnaryNwaOperation<LETTER, 
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 

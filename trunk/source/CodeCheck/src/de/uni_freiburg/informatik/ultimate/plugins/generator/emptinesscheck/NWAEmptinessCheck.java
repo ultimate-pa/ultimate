@@ -38,7 +38,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
@@ -67,7 +67,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 
 	@Override
 	public NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> checkForEmptiness(final AnnotatedProgramPoint root) {
-		final INestedWordAutomatonSimple<IIcfgTransition<?>, AnnotatedProgramPoint> converted = new MyNWA(root);
+		final INwaOutgoingLetterAndTransitionProvider<IIcfgTransition<?>, AnnotatedProgramPoint> converted = new MyNWA(root);
 		try {
 			return new IsEmpty<>(new AutomataLibraryServices(mServices),
 					new RemoveUnreachable<>(new AutomataLibraryServices(mServices), converted).getResult())
@@ -78,7 +78,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		}
 	}
 
-	private final class MyNWA implements INestedWordAutomatonSimple<IIcfgTransition<?>, AnnotatedProgramPoint> {
+	private final class MyNWA implements INwaOutgoingLetterAndTransitionProvider<IIcfgTransition<?>, AnnotatedProgramPoint> {
 
 		private final Set<IIcfgTransition<?>> mAlphabet = new HashSet<>();
 		private final Set<IIcfgTransition<?>> mInternalAlphabet = new HashSet<>();

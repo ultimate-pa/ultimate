@@ -40,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
@@ -64,7 +64,7 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 	private final Map<STATE, STATE> mOld2new = new HashMap<>();
 	private final Map<STATE, STATE> mNew2old = new HashMap<>();
 
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	private final boolean mComplement;
 
 	/**
@@ -76,16 +76,16 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 	 *            operand
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
-	 * @see #ReachableStatesCopy(AutomataLibraryServices, INestedWordAutomatonSimple, boolean, boolean, boolean,
+	 * @see #ReachableStatesCopy(AutomataLibraryServices, INwaOutgoingLetterAndTransitionProvider, boolean, boolean, boolean,
 	 *      boolean)
 	 */
 	public ReachableStatesCopy(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, operand, false, false, false, false);
 	}
 
 	/**
-	 * Given an {@link INestedWordAutomatonSimple} return an {@link INestedWordAutomaton} that has the same states, but
+	 * Given an {@link INwaOutgoingLetterAndTransitionProvider} return an {@link INestedWordAutomaton} that has the same states, but
 	 * all states that are not reachable are omitted. Each state of the result also occurred in the input. Only the
 	 * auxiliary empty stack state of the result is different.
 	 * 
@@ -105,7 +105,7 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 	 *             if operation was canceled
 	 */
 	public ReachableStatesCopy(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand, final boolean totalize, final boolean complement,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final boolean totalize, final boolean complement,
 			final boolean removeDeadEnds, final boolean removeNonLiveStates) throws AutomataOperationCanceledException {
 		super(services);
 		if (complement && !totalize) {
@@ -279,15 +279,15 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 		boolean correct = true;
 		if (!mRemoveNonLiveStates) {
 			mLogger.info("Start testing correctness of " + operationName());
-			final INestedWordAutomatonSimple<LETTER, STATE> input;
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> input;
 			if (!mComplement) {
 				input = mOperand;
 			} else {
 				// intersection of operand and result should be empty
-				final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
+				final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> intersectionOperandResult =
 						(new IntersectDD<>(mServices, stateFactory, mOperand, mTraversedNwa)).getResult();
 				correct &= (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
-				final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
+				final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> resultSadd =
 						(new ComplementDD<>(mServices, stateFactory, mOperand)).getResult();
 				input = resultSadd;
 			}

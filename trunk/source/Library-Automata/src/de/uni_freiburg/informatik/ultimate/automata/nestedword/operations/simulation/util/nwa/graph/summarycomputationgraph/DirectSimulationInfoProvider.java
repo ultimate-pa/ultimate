@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 
 /**
@@ -70,7 +70,7 @@ public class DirectSimulationInfoProvider<LETTER, STATE> implements ISimulationI
 
 	@Override
 	public boolean isSimulationInformationProvider(final SpoilerVertex<LETTER, STATE> spoilerVertex,
-			final INestedWordAutomatonSimple<LETTER, STATE> inputAutomaton) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> inputAutomaton) {
 		if (spoilerVertex.getQ0() == null || spoilerVertex.getQ1() == null) {
 			throw new UnsupportedOperationException("no states are not supported");
 		}

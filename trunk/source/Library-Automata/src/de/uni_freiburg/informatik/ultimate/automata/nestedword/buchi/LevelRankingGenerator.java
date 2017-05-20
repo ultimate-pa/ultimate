@@ -30,7 +30,7 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -47,7 +47,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 public abstract class LevelRankingGenerator<LETTER, STATE, CONSTRAINT extends LevelRankingConstraint<LETTER, STATE>> {
 	protected final AutomataLibraryServices mServices;
 	protected final ILogger mLogger;
-	protected final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	protected final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	protected final int mUserDefinedMaxRank;
 
 	/**
@@ -61,7 +61,7 @@ public abstract class LevelRankingGenerator<LETTER, STATE, CONSTRAINT extends Le
 	 *            user-defined maximal rank
 	 */
 	public LevelRankingGenerator(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand, final int userDefinedMaxRank) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final int userDefinedMaxRank) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;

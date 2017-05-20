@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public final class BuchiComplementRE<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	private INestedWordAutomaton<LETTER, STATE> mResult;
 
 	private boolean mBuchiComplementReApplicable;
@@ -70,7 +70,7 @@ public final class BuchiComplementRE<LETTER, STATE> extends UnaryNwaOperation<LE
 	 */
 	public <SF extends IDeterminizeStateFactory<STATE> & IBuchiComplementDeterministicStateFactory<STATE> & IBuchiIntersectStateFactory<STATE>> BuchiComplementRE(
 			final AutomataLibraryServices services, final SF stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataLibraryException {
 		super(services);
 		mOperand = operand;
 
@@ -151,7 +151,7 @@ public final class BuchiComplementRE<LETTER, STATE> extends UnaryNwaOperation<LE
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 }

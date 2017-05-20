@@ -42,7 +42,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -153,7 +153,7 @@ public class CegarAbsIntRunner<LETTER extends IIcfgTransition<?>> {
 	 * </ul>
 	 */
 	public void generateFixpoints(final IRun<LETTER, IPredicate, ?> currentCex,
-			final INestedWordAutomatonSimple<LETTER, IPredicate> currentAbstraction, final IPredicateUnifier unifier) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> currentAbstraction, final IPredicateUnifier unifier) {
 		assert currentCex != null : "Cannot run AI on empty counterexample";
 		assert currentAbstraction != null : "Cannot run AI on empty abstraction";
 

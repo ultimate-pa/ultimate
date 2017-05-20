@@ -62,10 +62,10 @@ public abstract class BinaryNwaOperation<LETTER, STATE, CRSF extends IStateFacto
 	/**
 	 * @return The first operand.
 	 */
-	public abstract INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand();
+	public abstract INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getFirstOperand();
 
 	/**
 	 * @return The second operand.
 	 */
-	public abstract INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand();
+	public abstract INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondOperand();
 }

@@ -32,7 +32,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -118,7 +118,7 @@ public final class BuchiClosure<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 

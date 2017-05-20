@@ -39,7 +39,7 @@ import java.util.function.Supplier;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.AGameGraph;
@@ -91,7 +91,7 @@ public final class NwaSimulationUtil {
 	 * @return {@code false} only if the simulation results are not correct (however, {@code true} has no meaning)
 	 */
 	public static <LETTER, STATE> boolean areNwaSimulationResultsCorrect(final AGameGraph<LETTER, STATE> gameGraph,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final SimulationOrMinimizationType simulationType,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa, final SimulationOrMinimizationType simulationType,
 			final BiPredicate<STATE, STATE> isInitialPairPredicate, final ILogger logger) {
 		if (logger.isInfoEnabled()) {
 			logger.info("Starting checking correctness of simulation results.");

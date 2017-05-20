@@ -35,7 +35,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.AbstractAcceptance;
 
@@ -74,7 +74,7 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 	 * @throws AutomataLibraryException
 	 *             if accept fails
 	 */
-	public BuchiAccepts(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand,
+	public BuchiAccepts(final AutomataLibraryServices services, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final NestedLassoWord<LETTER> nlw) throws AutomataLibraryException {
 		super(services, operand);
 		mStem = nlw.getStem();
@@ -249,7 +249,7 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 	 * Remove from the input all accepting configurations. Return all these configurations which were accepting.
 	 */
 	private Set<ArrayDeque<STATE>> removeAcceptingConfigurations(final Set<ArrayDeque<STATE>> configurations,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		final Set<ArrayDeque<STATE>> acceptingConfigurations = new HashSet<>();
 		for (final ArrayDeque<STATE> config : configurations) {
 			final STATE state = config.peek();

@@ -6,7 +6,7 @@ import java.util.concurrent.ExecutionException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IntersectNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
@@ -161,7 +161,7 @@ public class InteractiveCegar {
 	}
 
 	public <LETTER> NestedRun<LETTER, IPredicate> getUserRun(
-			final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction, final int iteration,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction, final int iteration,
 			final IUltimateServiceProvider services, final SearchStrategy searchStrategy,
 			final PredicateFactoryForInterpolantAutomata taContentFactory, final PredicateFactory predicateFactory,
 			final ManagedScript script) throws AutomataOperationCanceledException {
@@ -199,7 +199,7 @@ public class InteractiveCegar {
 						.request(PreNestedWord.class, IterationInfo.instance.setIteration(iteration)).get();
 				// userRun = mInteractive.request(NestedRun.class).get();
 
-				final INestedWordAutomatonSimple<LETTER, IPredicate> userAutomaton =
+				final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> userAutomaton =
 						preWord.getAutomaton(services, abstraction, taContentFactory, predicateFactory, script);
 
 				// mInteractive.send(userAutomaton);

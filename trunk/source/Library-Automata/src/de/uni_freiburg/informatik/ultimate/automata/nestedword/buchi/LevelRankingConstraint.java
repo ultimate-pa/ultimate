@@ -31,7 +31,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
@@ -78,7 +78,7 @@ public class LevelRankingConstraint<LETTER, STATE> extends LevelRankingState<LET
 	 * @param useDoubleDeckers
 	 *            {code true} iff double deckers should be used
 	 */
-	public LevelRankingConstraint(final INestedWordAutomatonSimple<LETTER, STATE> operand,
+	public LevelRankingConstraint(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final boolean predecessorOwasEmpty, final int userDefinedMaxRank, final boolean useDoubleDeckers) {
 		super(operand);
 		mPredecessorOwasEmpty = predecessorOwasEmpty;

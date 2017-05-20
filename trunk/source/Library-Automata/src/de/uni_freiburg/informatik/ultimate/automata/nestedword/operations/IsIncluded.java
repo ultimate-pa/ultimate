@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public final class IsIncluded<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
-	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
-	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndOperand;
 	private final Boolean mResult;
 	private final NestedRun<LETTER, STATE> mCounterexample;
 
@@ -64,8 +64,8 @@ public final class IsIncluded<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	 *             if construction fails
 	 */
 	public IsIncluded(final AutomataLibraryServices services, final INwaInclusionStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
@@ -95,12 +95,12 @@ public final class IsIncluded<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	}
 
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getFirstOperand() {
 		return mFstOperand;
 	}
 
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
 

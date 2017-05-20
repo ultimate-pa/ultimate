@@ -37,7 +37,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
@@ -63,7 +63,7 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 	 */
 	private final NestedWord<LETTER> mLoop;
 
-	private final INestedWordAutomatonSimple<LETTER, STATE> mNwa;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mNwa;
 	private final boolean mAccepted;
 
 	/**
@@ -80,7 +80,7 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 	 *            NestedWordAutomaton which is interpreted as Buchi nested word automaton here
 	 */
 	public BuchiAcceptsRecursive(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final NestedLassoWord<LETTER> nlw) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa, final NestedLassoWord<LETTER> nlw) {
 		super(services);
 		mNwa = nwa;
 
@@ -109,7 +109,7 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mNwa;
 	}
 
@@ -144,7 +144,7 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 		return true;
 	}
 
-	private boolean computeResult(final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+	private boolean computeResult(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		// First compute all states in which the automaton can be after processing the
 		// stem.
 		// Honda denotes the part of the lasso where stem and loop are connected.

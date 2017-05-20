@@ -35,7 +35,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
@@ -58,7 +58,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            state type
  */
-public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
+public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
 	private static final int WARN_SIZE_1 = 2;
 	private static final int WARN_SIZE_2 = 4;
 
@@ -76,7 +76,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 	 */
 	private final int mUserDefinedMaxRank;
 
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 
 	private final NestedWordAutomatonCache<LETTER, STATE> mCache;
 
@@ -132,7 +132,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INestedWordAutomato
 	 *             if operation was canceled
 	 */
 	public BuchiComplementFKVNwa(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
 			final IBuchiComplementFkvStateFactory<STATE> stateFactory, final FkvOptimization optimization,
 			final int userDefinedMaxRank) throws AutomataOperationCanceledException {

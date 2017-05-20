@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeSta
  */
 public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, STATE>
 		implements IOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>> {
-	protected INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	protected IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 
 	/**
@@ -86,7 +86,7 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 	 *             if operation was canceled
 	 */
 	public DeterminizeDD(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, operand, new PowersetDeterminizer<>(operand, true, stateFactory));
 	}
 
@@ -103,7 +103,7 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 	 *             if operation was canceled
 	 */
 	public DeterminizeDD(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -229,7 +229,7 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 			mLogger.info("Testing correctness of determinization");
 			final INestedWordAutomaton<LETTER, STATE> operandOld =
 					(new RemoveUnreachable<>(mServices, mOperand)).getResult();
-			final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> resultSadd =
 					(new DeterminizeSadd<>(mServices, stateFactory, operandOld)).getResult();
 			correct &= new IsEquivalent<>(mServices, stateFactory, resultSadd, mTraversedNwa).getResult();
 			mLogger.info("Finished testing correctness of determinization");

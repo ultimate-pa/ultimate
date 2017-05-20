@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public class NumberOfStates<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 
 	/**
 	 * Constructor.
@@ -53,7 +53,7 @@ public class NumberOfStates<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 	 *            operand
 	 */
 	public NumberOfStates(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) {
 		super(services);
 		mOperand = operand;
 	}
@@ -64,7 +64,7 @@ public class NumberOfStates<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 

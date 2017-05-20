@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 
 /**
  * Represents a state (S,O,g) in the complement automaton.
@@ -58,14 +58,14 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 	protected final Map<StateWithRankInfo<STATE>, HashMap<STATE, Integer>> mLevelRanking;
 	protected final Map<StateWithRankInfo<STATE>, Set<STATE>> mO;
 
-	protected final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	protected final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 
 	/**
 	 * Highest rank in this LevelRankingState. Only used to get statistics.
 	 */
 	protected int mHighestRank;
 
-	LevelRankingState(final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+	LevelRankingState(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) {
 		mLevelRanking = new HashMap<>();
 		mO = new HashMap<>();
 		mOperand = operand;
@@ -106,7 +106,7 @@ public class LevelRankingState<LETTER, STATE> implements IFkvState<LETTER, STATE
 		return result;
 	}
 
-	public INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 

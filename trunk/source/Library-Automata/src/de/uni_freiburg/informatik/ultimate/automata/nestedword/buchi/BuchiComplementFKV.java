@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
@@ -56,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private final BuchiComplementFKVNwa<LETTER, STATE> mComplemented;
 	private final FkvOptimization mOptimization;
@@ -75,7 +75,7 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	 */
 	public <SF extends IDeterminizeStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE>> BuchiComplementFKV(
 			final AutomataLibraryServices services, final SF stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, FkvOptimization.HEIMAT2.toString(), Integer.MAX_VALUE);
 	}
 
@@ -97,7 +97,7 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	 */
 	public <SF extends IDeterminizeStateFactory<STATE> & IBuchiComplementFkvStateFactory<STATE>> BuchiComplementFKV(
 			final AutomataLibraryServices services, final SF stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand, final String optimization,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final String optimization,
 			final int userDefinedMaxRank) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, new PowersetDeterminizer<>(operand, true, stateFactory),
 				FkvOptimization.valueOf(optimization), userDefinedMaxRank);
@@ -119,7 +119,7 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	 */
 	public BuchiComplementFKV(final AutomataLibraryServices services,
 			final IBuchiComplementFkvStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, stateDeterminizer, FkvOptimization.HEIMAT2, Integer.MAX_VALUE);
 	}
@@ -147,7 +147,7 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	 */
 	private BuchiComplementFKV(final AutomataLibraryServices services,
 			final IBuchiComplementFkvStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final FkvOptimization optimization,
 			final int userDefinedMaxRank) throws AutomataOperationCanceledException {
 		super(services);
@@ -242,12 +242,12 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand, final boolean underApproximationOfComplement)
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final boolean underApproximationOfComplement)
 			throws AutomataLibraryException {
 		final boolean op = (new BuchiAccepts<>(mServices, operand, nlw)).getResult();
 		final boolean res = (new BuchiAccepts<>(mServices, mResult, nlw)).getResult();

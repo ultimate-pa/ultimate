@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationCheckResultStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
@@ -136,7 +136,7 @@ public class MinimizeDfaSimulation<LETTER, STATE> extends AbstractMinimizeNwa<LE
 			final DirectSimulation<LETTER, STATE> sccSim =
 					new DirectSimulation<>(mServices.getProgressAwareTimer(), mLogger, true, stateFactory, graph);
 			sccSim.doSimulation();
-			final INestedWordAutomatonSimple<LETTER, STATE> sccResult = sccSim.getResult();
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sccResult = sccSim.getResult();
 			if (mResult.size() != sccResult.size()) {
 				throw new AssertionError();
 			}

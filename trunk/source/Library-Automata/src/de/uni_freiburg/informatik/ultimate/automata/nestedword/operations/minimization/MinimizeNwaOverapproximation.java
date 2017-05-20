@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
@@ -131,7 +131,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 			final AutomataLibraryServices services, final SF stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> operand, final PartitionBackedSetOfPairs<STATE> initialPartition,
 			final boolean addMapOldState2newState, final int time,
-			final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages)
+			final Collection<? extends INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> forbiddenLanguages)
 			throws AutomataOperationCanceledException {
 		super(services, stateFactory);
 		mOperand = operand;
@@ -170,7 +170,7 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 
 	private void constructResult(final boolean wasInterrrupted,
 			final INestedWordAutomaton<LETTER, STATE> minimizerResult,
-			final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages,
+			final Collection<? extends INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> forbiddenLanguages,
 			final INwaInclusionStateFactory<STATE> stateFactoryIntersect) throws AutomataOperationCanceledException {
 		if (!wasInterrrupted || forbiddenLanguages.isEmpty() || mOperand.size() == minimizerResult.size()) {
 			// no special handling necessary
@@ -187,13 +187,13 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 	 * difference of the two automata.
 	 */
 	private void minimizeWithDifferenceRefinement(final INestedWordAutomaton<LETTER, STATE> minimizerResult,
-			final Collection<? extends INestedWordAutomatonSimple<LETTER, STATE>> forbiddenLanguages,
+			final Collection<? extends INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> forbiddenLanguages,
 			final INwaInclusionStateFactory<STATE> stateFactoryIntersect)
 			throws AutomataOperationCanceledException, AssertionError {
 		INestedWordAutomaton<LETTER, STATE> refinedResult = minimizerResult;
 
-		for (final INestedWordAutomatonSimple<LETTER, STATE> automaton : forbiddenLanguages) {
-			final INestedWordAutomatonSimple<LETTER, STATE> intersection;
+		for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton : forbiddenLanguages) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> intersection;
 			try {
 				intersection = new Intersect<>(mServices, stateFactoryIntersect, refinedResult, automaton).getResult();
 			} catch (final AutomataOperationCanceledException e) {

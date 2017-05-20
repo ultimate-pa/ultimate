@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwaDd;
@@ -153,7 +153,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 		try {
 			final GameFactory gameFactory = new GameFactory();
 			final SpoilerNwaVertex<LETTER, STATE> uniqueSpoilerWinningSink = constructUniqueSpoilerWinningSink();
-			final INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton;
+			final INwaOutgoingLetterAndTransitionProvider<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton;
 
 			gameAutomaton = new GameAutomaton<>(mServices, gameFactory, initialPairs, operand, simulationInfoProvider,
 					uniqueSpoilerWinningSink);
@@ -272,7 +272,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 	 */
 	private void readoutSimulationRelation(final AGameGraph<LETTER, STATE> gameGraph,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand, final ISetOfPairs<STATE, ?> simulationRelation) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final ISetOfPairs<STATE, ?> simulationRelation) {
 		for (final SpoilerVertex<LETTER, STATE> spoilerVertex : gameGraph.getSpoilerVertices()) {
 			if (isAuxiliaryVertex(spoilerVertex)) {
 				continue;

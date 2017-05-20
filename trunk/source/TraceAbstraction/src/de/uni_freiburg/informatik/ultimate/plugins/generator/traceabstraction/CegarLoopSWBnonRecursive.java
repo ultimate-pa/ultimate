@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -198,7 +198,7 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 		mNestedAbstraction = (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction;
 
 		mDoubleDeckerAbstraction = new RemoveUnreachable<>(new AutomataLibraryServices(mServices),
-				(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction).getResult();
+				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction).getResult();
 		// (IDoubleDeckerAutomaton<LETTER, IPredicate>) mAbstraction.get;
 
 		// cast the path as nested run

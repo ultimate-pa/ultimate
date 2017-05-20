@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            state type
  */
 public final class BuchiIsIncludedNCSB<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
-	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
-	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndOperand;
 
 	private final Boolean mResult;
 
@@ -71,8 +71,8 @@ public final class BuchiIsIncludedNCSB<LETTER, STATE> extends BinaryNwaOperation
 	 */
 	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IBuchiComplementNcsbStateFactory<STATE>> BuchiIsIncludedNCSB(final AutomataLibraryServices services,
 			final FACTORY stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
@@ -81,9 +81,9 @@ public final class BuchiIsIncludedNCSB<LETTER, STATE> extends BinaryNwaOperation
 			mLogger.info(startMessage());
 		}
 
-		final INestedWordAutomatonSimple<LETTER, STATE> sndComplement =
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndComplement =
 				(new BuchiComplementNCSB<LETTER, STATE>(mServices, stateFactory, mSndOperand)).getResult();
-		final INestedWordAutomatonSimple<LETTER, STATE> difference =
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> difference =
 				(new BuchiIntersectDD<>(mServices, stateFactory, mFstOperand, sndComplement, true)).getResult();
 		final BuchiIsEmpty<LETTER, STATE> emptinessCheck = new BuchiIsEmpty<>(mServices, difference);
 
@@ -106,12 +106,12 @@ public final class BuchiIsIncludedNCSB<LETTER, STATE> extends BinaryNwaOperation
 	}
 
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getFirstOperand() {
 		return mFstOperand;
 	}
 
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
 

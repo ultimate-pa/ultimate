@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonFilteredStates;
@@ -1410,7 +1410,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 			mLogger.debug("Generating summarize edges.");
 		}
 		// Create the game automaton, we will use it for summarize computation
-		final INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton = createGameAutomaton();
+		final INwaOutgoingLetterAndTransitionProvider<IGameLetter<LETTER, STATE>, IGameState> gameAutomaton = createGameAutomaton();
 		final NestedWordAutomatonReachableStates<IGameLetter<LETTER, STATE>, IGameState> gameAutomatonWithSummaries =
 				new RemoveUnreachable<>(mServices, gameAutomaton).getResult();
 
@@ -1492,7 +1492,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 					(IDeterminizeStateFactory<IGameState>) gameAutomatonWithSummaries.getStateFactory();
 			// Determinizing is very expensive, it is the dominant part of the
 			// whole algorithm
-			final INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton =
+			final INwaOutgoingLetterAndTransitionProvider<IGameLetter<LETTER, STATE>, IGameState> determinizedGameAutomaton =
 					new Determinize<>(mServices, stateFactory, gameAutomatonWithSummaries, summarySources).getResult();
 			mSimulationPerformance.setCountingMeasure(CountingMeasure.DETERMINIZED_GAME_AUTOMATON_STATES,
 					determinizedGameAutomaton.size());
@@ -2434,7 +2434,7 @@ public final class NwaGameGraphGeneration<LETTER, STATE> {
 	 * @throws AutomataOperationCanceledException
 	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
-	private INestedWordAutomatonSimple<IGameLetter<LETTER, STATE>, IGameState> createGameAutomaton()
+	private INwaOutgoingLetterAndTransitionProvider<IGameLetter<LETTER, STATE>, IGameState> createGameAutomaton()
 			throws AutomataOperationCanceledException {
 		final Set<IGameLetter<LETTER, STATE>> internalGameAlphabet = new HashSet<>();
 		final Set<IGameLetter<LETTER, STATE>> callGameAlphabet = new HashSet<>();

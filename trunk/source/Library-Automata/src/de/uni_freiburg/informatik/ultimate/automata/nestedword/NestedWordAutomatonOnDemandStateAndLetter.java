@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  *            state type
  */
 public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE>
-		implements INestedWordAutomatonSimple<LETTER, STATE> {
+		implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
 
 	protected final AutomataLibraryServices mServices;
 

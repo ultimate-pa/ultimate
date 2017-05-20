@@ -33,7 +33,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation3;
 
 /**
@@ -61,7 +61,7 @@ public class LevelRankingConstraintDrdCheck<LETTER, STATE> extends LevelRankingC
 	 * @param useDoubleDeckers
 	 *            {code true} iff double deckers should be used
 	 */
-	public LevelRankingConstraintDrdCheck(final INestedWordAutomatonSimple<LETTER, STATE> operand,
+	public LevelRankingConstraintDrdCheck(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final boolean predecessorOwasEmpty, final int userDefinedMaxRank, final boolean useDoubleDeckers) {
 		super(operand, predecessorOwasEmpty, userDefinedMaxRank, useDoubleDeckers);
 		mRanksOfPredecessorsNonAcceptingPredecessors = new HashRelation3<>();

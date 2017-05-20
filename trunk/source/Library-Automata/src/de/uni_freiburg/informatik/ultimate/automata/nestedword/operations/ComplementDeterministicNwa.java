@@ -28,7 +28,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -44,8 +44,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public final class ComplementDeterministicNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+public final class ComplementDeterministicNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 
 	/**
 	 * Constructor.
@@ -53,7 +53,7 @@ public final class ComplementDeterministicNwa<LETTER, STATE> implements INestedW
 	 * @param operand
 	 *            operand
 	 */
-	public ComplementDeterministicNwa(final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+	public ComplementDeterministicNwa(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) {
 		if (operand instanceof DeterminizeNwa) {
 			if (!((DeterminizeNwa<LETTER, STATE>) operand).isTotal()) {
 				throw new AssertionError("can only complement total automata");
@@ -66,7 +66,7 @@ public final class ComplementDeterministicNwa<LETTER, STATE> implements INestedW
 		}
 	}
 
-	private static boolean isDeterministicTotalNwa(final INestedWordAutomatonSimple<?, ?> operand) {
+	private static boolean isDeterministicTotalNwa(final INwaOutgoingLetterAndTransitionProvider<?, ?> operand) {
 		throw new UnsupportedOperationException("this check is currently not supported");
 	}
 

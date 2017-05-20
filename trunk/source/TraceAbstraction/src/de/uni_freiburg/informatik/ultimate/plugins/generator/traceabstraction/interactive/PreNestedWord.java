@@ -9,7 +9,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -74,8 +74,8 @@ public class PreNestedWord {
 		return predicateFactory.newPredicate(script.getScript().term("true"));
 	}
 
-	public <LETTER> INestedWordAutomatonSimple<LETTER, IPredicate> getAutomaton(final IUltimateServiceProvider services,
-			final INestedWordAutomatonSimple<LETTER, IPredicate> automaton,
+	public <LETTER> INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getAutomaton(final IUltimateServiceProvider services,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> automaton,
 			final IStateFactory<IPredicate> taContentFactory, final PredicateFactory predicateFactory,
 			final ManagedScript script) {
 
@@ -140,7 +140,7 @@ public class PreNestedWord {
 		return nwa;
 	}
 
-	public <LETTER> LETTER[] getWord(final INestedWordAutomatonSimple<LETTER, ?> automaton) {
+	public <LETTER> LETTER[] getWord(final INwaOutgoingLetterAndTransitionProvider<LETTER, ?> automaton) {
 		final Set<LETTER> internalAlphabet = automaton.getVpAlphabet().getInternalAlphabet();
 		final Set<LETTER> callAlphabet = automaton.getVpAlphabet().getCallAlphabet();
 		final Set<LETTER> returnAlphabet = automaton.getVpAlphabet().getReturnAlphabet();

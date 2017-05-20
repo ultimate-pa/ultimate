@@ -40,7 +40,7 @@ import java.util.Locale;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.visualization.AlternatingAutomatonWriter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.BaFormatWriter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.GoalFormatWriter;
@@ -301,8 +301,8 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	 */
 	@SuppressWarnings("unchecked")
 	private void printAutomaton(final String name, final IAutomaton<?, ?> automaton, final Format format) {
-		if (automaton instanceof INestedWordAutomatonSimple) {
-			printNestedWordAutomaton(name, (INestedWordAutomatonSimple<LETTER, STATE>) automaton, format);
+		if (automaton instanceof INwaOutgoingLetterAndTransitionProvider) {
+			printNestedWordAutomaton(name, (INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>) automaton, format);
 		} else if (automaton instanceof IPetriNet) {
 			printPetriNet(name, (IPetriNet<LETTER, STATE>) automaton, format);
 		} else if (automaton instanceof AlternatingAutomaton) {
@@ -329,7 +329,7 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	}
 
 	@SuppressWarnings("unused")
-	private void printNestedWordAutomaton(final String name, final INestedWordAutomatonSimple<LETTER, STATE> automaton,
+	private void printNestedWordAutomaton(final String name, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton,
 			final Format format) throws AssertionError {
 		INestedWordAutomaton<LETTER, STATE> nwa;
 		if (automaton instanceof INestedWordAutomaton) {

@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -54,8 +54,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, STATE>
 		implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
-	protected final INestedWordAutomatonSimple<LETTER, STATE> mFstNwa;
-	protected final INestedWordAutomatonSimple<LETTER, STATE> mSndNwa;
+	protected final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstNwa;
+	protected final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndNwa;
 	private final NestedWordAutomaton<LETTER, STATE> mResultNwa;
 
 	private final Map<STATE, STATE> mResult2fst = new HashMap<>();
@@ -82,8 +82,8 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 	 *             if alphabets differ
 	 */
 	public AbstractIntersect(final AutomataLibraryServices services, final IStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstNwa,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndNwa, final boolean minimizeResult)
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstNwa,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndNwa, final boolean minimizeResult)
 			throws AutomataLibraryException {
 		super(services);
 

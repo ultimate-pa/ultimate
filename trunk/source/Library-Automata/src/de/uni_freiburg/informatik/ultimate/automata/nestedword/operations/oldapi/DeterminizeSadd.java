@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
@@ -110,7 +110,7 @@ public final class DeterminizeSadd<LETTER, STATE>
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 
@@ -350,7 +350,7 @@ public final class DeterminizeSadd<LETTER, STATE>
 		}
 
 		boolean correct;
-		final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> resultDd =
 				(new DeterminizeDD<>(mServices, stateFactory, mOperand)).getResult();
 		correct = (new IsEquivalent<>(mServices, stateFactory, resultDd, mResult)).getResult();
 

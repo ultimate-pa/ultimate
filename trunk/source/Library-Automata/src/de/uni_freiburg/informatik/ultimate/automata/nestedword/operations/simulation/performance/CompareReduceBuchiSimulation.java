@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
@@ -172,7 +172,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	/**
 	 * The inputed buechi automaton.
 	 */
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	/**
 	 * Holds time measures of the comparison.
 	 */
@@ -196,7 +196,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	 */
 	public CompareReduceBuchiSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		verifyAutomatonValidity(operand);
 
@@ -294,7 +294,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	 * @param automaton
 	 *            Automaton to verify validity
 	 */
-	public void verifyAutomatonValidity(final INestedWordAutomatonSimple<LETTER, STATE> automaton) {
+	public void verifyAutomatonValidity(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton) {
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(automaton)) {
 			throw new IllegalArgumentException(
 					"The inputed automaton is no Buechi-automaton. It must have an empty call and return alphabet.");
@@ -379,7 +379,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	 */
 	private SimulationPerformance createOutOfMemoryPerformance(final String name,
 			final SimulationOrMinimizationType type, final boolean useSCCs,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) {
 		final SimulationPerformance performance = SimulationPerformance.createOutOfMemoryPerformance(type, useSCCs);
 		performance.setName(name);
 		performance.setCountingMeasure(CountingMeasure.BUCHI_STATES, operand.size());
@@ -400,7 +400,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	 * @return The timed out performance object
 	 */
 	private SimulationPerformance createTimedOutPerformance(final String name, final SimulationOrMinimizationType type,
-			final boolean useSCCs, final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+			final boolean useSCCs, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) {
 		final SimulationPerformance performance = SimulationPerformance.createTimedOutPerformance(type, useSCCs);
 		performance.setName(name);
 		performance.setCountingMeasure(CountingMeasure.BUCHI_STATES, operand.size());
@@ -564,7 +564,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	@SuppressWarnings("unchecked")
 	protected void appendMethodPerformanceToLog(final Object method, final String name,
 			final SimulationOrMinimizationType type, final boolean usedSCCs, final boolean timedOut,
-			final boolean outOfMemory, final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+			final boolean outOfMemory, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) {
 		createAndResetPerformanceHead();
 
 		if (method instanceof ASimulation) {
@@ -582,7 +582,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 		} else if (method instanceof ReduceNwaFullMultipebbleSimulation) {
 			final ReduceNwaFullMultipebbleSimulation<LETTER, STATE, FullMultipebbleGameState<STATE>> fullMultipebbleSimulation =
 					(ReduceNwaFullMultipebbleSimulation<LETTER, STATE, FullMultipebbleGameState<STATE>>) method;
-			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = fullMultipebbleSimulation.getResult();
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> methodResult = fullMultipebbleSimulation.getResult();
 			// Performance data
 			addGeneralAutomataPerformanceForExternalMethod((INestedWordAutomaton<LETTER, STATE>) operand,
 					(INestedWordAutomaton<LETTER, STATE>) methodResult);
@@ -590,7 +590,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 			mTimeMeasures.put(TimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
 		} else if (method instanceof MinimizeSevpa) {
 			final MinimizeSevpa<LETTER, STATE> minimizeSevpa = (MinimizeSevpa<LETTER, STATE>) method;
-			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = minimizeSevpa.getResult();
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> methodResult = minimizeSevpa.getResult();
 			// Performance data
 			addGeneralAutomataPerformanceForExternalMethod((INestedWordAutomaton<LETTER, STATE>) operand,
 					(INestedWordAutomaton<LETTER, STATE>) methodResult);
@@ -598,7 +598,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 			mTimeMeasures.put(TimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
 		} else if (method instanceof ShrinkNwa) {
 			final ShrinkNwa<LETTER, STATE> shrinkNwa = (ShrinkNwa<LETTER, STATE>) method;
-			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = shrinkNwa.getResult();
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> methodResult = shrinkNwa.getResult();
 			// Performance data
 			addGeneralAutomataPerformanceForExternalMethod((INestedWordAutomaton<LETTER, STATE>) operand,
 					(INestedWordAutomaton<LETTER, STATE>) methodResult);
@@ -606,7 +606,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 			mTimeMeasures.put(TimeMeasure.OVERALL, ComparisonTables.millisToSeconds(mExternalOverallTime));
 		} else if (method instanceof MinimizeNwaPmaxSat) {
 			final MinimizeNwaPmaxSat<LETTER, STATE> minimizeNwaPmaxSat = (MinimizeNwaPmaxSat<LETTER, STATE>) method;
-			final INestedWordAutomatonSimple<LETTER, STATE> methodResult = minimizeNwaPmaxSat.getResult();
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> methodResult = minimizeNwaPmaxSat.getResult();
 			// Performance data
 			addGeneralAutomataPerformanceForExternalMethod((INestedWordAutomaton<LETTER, STATE>) operand,
 					(INestedWordAutomaton<LETTER, STATE>) methodResult);
@@ -633,7 +633,7 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 

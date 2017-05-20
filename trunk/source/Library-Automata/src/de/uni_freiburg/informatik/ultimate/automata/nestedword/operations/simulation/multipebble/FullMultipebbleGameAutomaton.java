@@ -34,7 +34,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonForLetterBasedOnDemandConstruction;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -55,7 +55,7 @@ public class FullMultipebbleGameAutomaton<LETTER, STATE, GS extends FullMultipeb
 		extends NestedWordAutomatonForLetterBasedOnDemandConstruction<LETTER, GS> {
 
 	private final AutomataLibraryServices mServices;
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	private final FullMultipebbleStateFactory<STATE, GS> mStateFactory;
 	private final GS mEmptyStackState;
 	private final NestedMap2<STATE, STATE, GS> mGameStateMapping;

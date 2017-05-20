@@ -76,8 +76,8 @@ public class VpAlphabet<LETTER> {
 	 *            automaton
 	 */
 	public VpAlphabet(final IAutomaton<LETTER, ?> automaton) {
-		if (automaton instanceof INestedWordAutomatonSimple) {
-			final INestedWordAutomatonSimple<LETTER, ?> nwa = (INestedWordAutomatonSimple<LETTER, ?>) automaton;
+		if (automaton instanceof INwaOutgoingLetterAndTransitionProvider) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, ?> nwa = (INwaOutgoingLetterAndTransitionProvider<LETTER, ?>) automaton;
 			mInternalAlphabet = nwa.getVpAlphabet().getInternalAlphabet();
 			mCallAlphabet = nwa.getVpAlphabet().getCallAlphabet();
 			mReturnAlphabet = nwa.getVpAlphabet().getReturnAlphabet();

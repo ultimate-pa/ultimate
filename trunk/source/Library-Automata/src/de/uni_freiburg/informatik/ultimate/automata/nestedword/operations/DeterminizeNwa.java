@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizedState;
@@ -51,8 +51,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+public class DeterminizeNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	private final NestedWordAutomaton<LETTER, STATE> mCache;
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 	private final IStateFactory<STATE> mStateFactory;
@@ -75,7 +75,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	 *            state factory
 	 */
 	public DeterminizeNwa(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final IStateFactory<STATE> stateFactory) {
 		this(services, operand, stateDeterminizer, stateFactory, null, false);
 	}
@@ -97,7 +97,7 @@ public class DeterminizeNwa<LETTER, STATE> implements INestedWordAutomatonSimple
 	 *            make automaton total?
 	 */
 	public DeterminizeNwa(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final IStateFactory<STATE> stateFactory,
 			final Set<STATE> predefinedInitials, final boolean makeAutomatonTotal) {
 		mOperand = operand;

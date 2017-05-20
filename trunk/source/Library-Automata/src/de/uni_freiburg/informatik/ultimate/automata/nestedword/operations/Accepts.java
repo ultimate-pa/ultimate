@@ -31,7 +31,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 
 /**
@@ -66,7 +66,7 @@ public final class Accepts<LETTER, STATE> extends AbstractAcceptance<LETTER, STA
 	 * @throws AutomataLibraryException
 	 *             if acceptance fails
 	 */
-	public Accepts(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand,
+	public Accepts(final AutomataLibraryServices services, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final NestedWord<LETTER> word, final boolean prefixOfIntputIsAccepted,
 			final boolean inputIsSuffixOfAcceptedWord) throws AutomataLibraryException {
 		super(services, operand);
@@ -97,7 +97,7 @@ public final class Accepts<LETTER, STATE> extends AbstractAcceptance<LETTER, STA
 	 * @throws AutomataLibraryException
 	 *             if acceptance fails
 	 */
-	public Accepts(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand,
+	public Accepts(final AutomataLibraryServices services, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final NestedWord<LETTER> word) throws AutomataLibraryException {
 		this(services, operand, word, false, false);
 	}

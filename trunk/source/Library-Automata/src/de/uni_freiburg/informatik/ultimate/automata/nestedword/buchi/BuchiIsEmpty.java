@@ -30,7 +30,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.AcceptingComponentsAnalysis;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            Content. Type of the labels (the content) of the automata states.
  */
 public final class BuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	private NestedWordAutomatonReachableStates<LETTER, STATE> mReach;
 	private AcceptingComponentsAnalysis<LETTER, STATE> mSccs;
 	private final Boolean mResult;
@@ -63,7 +63,7 @@ public final class BuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public BuchiIsEmpty(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand)
+	public BuchiIsEmpty(final AutomataLibraryServices services, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -99,7 +99,7 @@ public final class BuchiIsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 

@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -67,7 +67,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
 public final class DifferenceSadd<LETTER, STATE>
 		extends BinaryNwaOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>> {
 	private final INestedWordAutomaton<LETTER, STATE> mMinuend;
-	private final INestedWordAutomatonSimple<LETTER, STATE> mSubtrahend;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSubtrahend;
 	private final NestedWordAutomaton<LETTER, STATE> mDifference;
 
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
@@ -120,7 +120,7 @@ public final class DifferenceSadd<LETTER, STATE>
 	public <SF extends IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> DifferenceSadd(
 			final AutomataLibraryServices services, final SF stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> minuend,
-			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend) throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> subtrahend) throws AutomataLibraryException {
 		this(services, stateFactory, minuend, subtrahend, new PowersetDeterminizer<>(subtrahend, true, stateFactory));
 	}
 
@@ -142,7 +142,7 @@ public final class DifferenceSadd<LETTER, STATE>
 	 */
 	public DifferenceSadd(final AutomataLibraryServices services, final IIntersectionStateFactory<STATE> contentFactory,
 			final INestedWordAutomaton<LETTER, STATE> minuend,
-			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> subtrahend,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataLibraryException {
 		super(services);
 
@@ -186,12 +186,12 @@ public final class DifferenceSadd<LETTER, STATE>
 	}
 
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getFirstOperand() {
 		return mMinuend;
 	}
 
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondOperand() {
 		return mSubtrahend;
 	}
 
@@ -392,7 +392,7 @@ public final class DifferenceSadd<LETTER, STATE>
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
 
-			final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> resultDd =
 					(new DifferenceDD<>(mServices, stateFactory, mMinuend, mSubtrahend)).getResult();
 			correct = new IsEquivalent<>(mServices, stateFactory, resultDd, mDifference).getResult();
 			if (!correct) {

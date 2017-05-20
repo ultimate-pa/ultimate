@@ -39,7 +39,7 @@ import java.util.TreeSet;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TreeRelation;
 
 /**
@@ -89,7 +89,7 @@ public class MultiOptimizationLevelRankingGenerator<LETTER, STATE, CONSTRAINT ex
 	 *            user-defined maximal rank
 	 */
 	public MultiOptimizationLevelRankingGenerator(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand, final FkvOptimization optimization,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand, final FkvOptimization optimization,
 			final int userDefinedMaxRank) {
 		super(services, operand, userDefinedMaxRank);
 		mOptimization = optimization;

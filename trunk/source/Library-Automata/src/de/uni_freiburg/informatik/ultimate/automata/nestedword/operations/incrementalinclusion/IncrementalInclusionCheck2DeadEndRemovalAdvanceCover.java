@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
@@ -63,14 +63,14 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 	public PseudoAutomata workingAutomata;
 	public int nodeNumberBeforeDelete = 0;
 	public int totalNodes = 0, totalAACNodes = 0, totalCoveredNodes = 0, totalUniqueNodes = 0;
-	private final INestedWordAutomatonSimple<LETTER, STATE> local_mA;
-	private final List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB;
-	private final List<INestedWordAutomatonSimple<LETTER, STATE>> local_mB2;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> local_mA;
+	private final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> local_mB;
+	private final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> local_mB2;
 	private final AutomataLibraryServices localServiceProvider;
 	private final boolean macc;
 
 	class PseudoAutomata {
-		public INestedWordAutomatonSimple<LETTER, STATE> associatedAutomata;
+		public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> associatedAutomata;
 		public PseudoAutomata prvPAutomata;
 		public Set<LETTER> letter;
 		public HashSet<NodeData> allNodes;
@@ -80,7 +80,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 		public HashMap<NodeData, LinkedList<NodeData>> completedNodes, currentNodes;
 		public HashSet<NodeData> initialNodes;
 
-		public PseudoAutomata(final INestedWordAutomatonSimple<LETTER, STATE> a)
+		public PseudoAutomata(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a)
 				throws AutomataOperationCanceledException {
 			associatedAutomata = a;
 			prvPAutomata = null;
@@ -103,7 +103,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 			} while (true);
 		}
 
-		public PseudoAutomata(final PseudoAutomata preAutomata, final INestedWordAutomatonSimple<LETTER, STATE> bn)
+		public PseudoAutomata(final PseudoAutomata preAutomata, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bn)
 				throws AutomataOperationCanceledException {
 			associatedAutomata = bn;
 			prvPAutomata = preAutomata;
@@ -648,8 +648,8 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 	}
 
 	public IncrementalInclusionCheck2DeadEndRemovalAdvanceCover(final AutomataLibraryServices services,
-			final IDeterminizeStateFactory<STATE> sf, final INestedWordAutomatonSimple<LETTER, STATE> a,
-			final List<INestedWordAutomatonSimple<LETTER, STATE>> b, final boolean acc)
+			final IDeterminizeStateFactory<STATE> sf, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a,
+			final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> b, final boolean acc)
 			throws AutomataLibraryException {
 		super(services, a);
 		IncrementalInclusionCheck2DeadEndRemovalAdvanceCover.abortIfContainsCallOrReturn(a);
@@ -660,7 +660,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 		local_mB = new ArrayList<>();
 		local_mB2 = new ArrayList<>();
 		workingAutomata = new PseudoAutomata(local_mA);
-		for (final INestedWordAutomatonSimple<LETTER, STATE> bn : b) {
+		for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bn : b) {
 			try {
 				super.addSubtrahend(bn);
 				if (!getResult()) {
@@ -678,8 +678,8 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 	}
 
 	public IncrementalInclusionCheck2DeadEndRemovalAdvanceCover(final AutomataLibraryServices services,
-			final IDeterminizeStateFactory<STATE> sf, final INestedWordAutomatonSimple<LETTER, STATE> a,
-			final List<INestedWordAutomatonSimple<LETTER, STATE>> b) throws AutomataLibraryException {
+			final IDeterminizeStateFactory<STATE> sf, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a,
+			final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> b) throws AutomataLibraryException {
 		super(services, a);
 		IncrementalInclusionCheck2DeadEndRemovalAdvanceCover.abortIfContainsCallOrReturn(a);
 		macc = true;
@@ -689,7 +689,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 		local_mB = new ArrayList<>();
 		local_mB2 = new ArrayList<>();
 		workingAutomata = new PseudoAutomata(local_mA);
-		for (final INestedWordAutomatonSimple<LETTER, STATE> bn : b) {
+		for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bn : b) {
 			try {
 				super.addSubtrahend(bn);
 				if (!getResult()) {
@@ -707,7 +707,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 	}
 
 	@Override
-	public void addSubtrahend(final INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
+	public void addSubtrahend(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) throws AutomataLibraryException {
 		mLogger.info(startMessage());
 		super.addSubtrahend(nwa);
 		local_mB.add(nwa);
@@ -784,11 +784,11 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 	 */
 	public static <LETTER, STATE> boolean compareInclusionCheckResult(final AutomataLibraryServices services,
 			final IIncrementalInclusionStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a, final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> b,
 			final NestedRun<LETTER, STATE> ctrEx) throws AutomataLibraryException {
 		final InclusionViaDifference<LETTER, STATE, ?> ivd = new InclusionViaDifference<>(services, stateFactory, a);
 		// add all b automata
-		for (final INestedWordAutomatonSimple<LETTER, STATE> bi : b) {
+		for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bi : b) {
 			ivd.addSubtrahend(bi);
 		}
 		// obtain counterexample, counterexample is null if inclusion holds
@@ -812,7 +812,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 		return result;
 	}
 
-	public static <LETTER, STATE> void abortIfContainsCallOrReturn(final INestedWordAutomatonSimple<LETTER, STATE> a) {
+	public static <LETTER, STATE> void abortIfContainsCallOrReturn(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a) {
 		if (!NestedWordAutomataUtils.isFiniteAutomaton(a)) {
 			throw new UnsupportedOperationException("Operation does not support call or return");
 		}

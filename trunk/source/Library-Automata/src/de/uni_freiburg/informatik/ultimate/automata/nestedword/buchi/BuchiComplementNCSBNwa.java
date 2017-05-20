@@ -35,7 +35,7 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
+public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
 	private static final int MAGIC_RANK = 7777;
 	private static final int BARELY_COVERED_MAX_RANK = 3;
 	private static final Integer RANK_FINAL = Integer.valueOf(2);
@@ -68,7 +68,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 
 	private final AutomataLibraryServices mServices;
 
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 
 	private final NestedWordAutomatonCache<LETTER, STATE> mCache;
 
@@ -102,7 +102,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INestedWordA
 	 */
 	public BuchiComplementNCSBNwa(final AutomataLibraryServices services,
 			final IBuchiComplementNcsbStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		mServices = services;
 		mOperand = operand;
 		mStateFactory = stateFactory;

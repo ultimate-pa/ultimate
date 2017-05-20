@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
@@ -70,7 +70,7 @@ public final class DifferenceSenwa<LETTER, STATE>
 		implements ISuccessorVisitor<LETTER, STATE>, IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
 	// TODO Christian 2016-09-18: Can be made INestedWordAutomatonSimple when guarding assertions.
 	private final INestedWordAutomaton<LETTER, STATE> mMinuend;
-	private final INestedWordAutomatonSimple<LETTER, STATE> mSubtrahend;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSubtrahend;
 
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 
@@ -109,7 +109,7 @@ public final class DifferenceSenwa<LETTER, STATE>
 	public <SF extends ISenwaStateFactory<STATE> & IDeterminizeStateFactory<STATE> & IIntersectionStateFactory<STATE>> DifferenceSenwa(
 			final AutomataLibraryServices services, final SF stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> minuend,
-			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> subtrahend) throws AutomataOperationCanceledException {
 		this(services, stateFactory, minuend, subtrahend, new PowersetDeterminizer<>(subtrahend, true, stateFactory),
 				true);
 	}
@@ -135,7 +135,7 @@ public final class DifferenceSenwa<LETTER, STATE>
 	public <SF extends ISenwaStateFactory<STATE> & IIntersectionStateFactory<STATE>> DifferenceSenwa(
 			final AutomataLibraryServices services, final SF stateFactory,
 			final INestedWordAutomaton<LETTER, STATE> minuend,
-			final INestedWordAutomatonSimple<LETTER, STATE> subtrahend,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> subtrahend,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final boolean removeDeadEndsImmediately)
 			throws AutomataOperationCanceledException {
 		super(services);
@@ -266,12 +266,12 @@ public final class DifferenceSenwa<LETTER, STATE>
 	}
 
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getFirstOperand() {
 		return mMinuend;
 	}
 
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondOperand() {
 		return mSubtrahend;
 	}
 
@@ -331,7 +331,7 @@ public final class DifferenceSenwa<LETTER, STATE>
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			mLogger.info("Start testing correctness of " + operationName());
 
-			final INestedWordAutomatonSimple<LETTER, STATE> resultSadd =
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> resultSadd =
 					(new DifferenceSadd<>(mServices, stateFactory, mMinuend, mSubtrahend)).getResult();
 			correct &= new IsEquivalent<>(mServices, stateFactory, resultSadd, mSenwa).getResult();
 			if (!correct) {

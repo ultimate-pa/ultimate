@@ -30,7 +30,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.multipebble.IFullMultipebbleAuxiliaryGameState.AuxiliaryGameStateType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -70,7 +70,7 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 	@Override
 	protected <LETTER> DelayedFullMultipebbleGameState<STATE> computeSuccessorsInternalGivenSpoilerSucc(
 			final DoubleDecker<STATE> spoilerSucc, final DelayedFullMultipebbleGameState<STATE> gs, final LETTER letter,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
 		final NestedMap2<STATE, STATE, Boolean> duplicatorSuccStates = new NestedMap2<>();
 		for (final Triple<STATE, STATE, Boolean> doubleDecker : gs.getDuplicatorDoubleDeckers().entrySet()) {
@@ -101,7 +101,7 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 	@Override
 	protected <LETTER> DelayedFullMultipebbleGameState<STATE> computeSuccessorsCallGivenSpoilerSucc(
 			final DoubleDecker<STATE> spoilerSucc, final DelayedFullMultipebbleGameState<STATE> gs, final LETTER letter,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
 		final NestedMap2<STATE, STATE, Boolean> duplicatorSuccStates = new NestedMap2<>();
 		for (final Triple<STATE, STATE, Boolean> doubleDecker : gs.getDuplicatorDoubleDeckers().entrySet()) {
@@ -134,7 +134,7 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 	protected <LETTER> DelayedFullMultipebbleGameState<STATE> computeSuccessorsReturnGivenSpoilerSucc(
 			final DoubleDecker<STATE> spoilerSucc, final DelayedFullMultipebbleGameState<STATE> gs,
 			final DelayedFullMultipebbleGameState<STATE> hier, final LETTER letter,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		final boolean spoilerSuccIsFinal = nwa.isFinal(spoilerSucc.getUp());
 		final NestedMap2<STATE, STATE, Boolean> duplicatorSuccStates = new NestedMap2<>();
 		for (final Triple<STATE, STATE, Boolean> hierDoubleDecker : hier.getDuplicatorDoubleDeckers().entrySet()) {
@@ -186,20 +186,20 @@ public class DelayedFullMultipebbleStateFactory<STATE>
 
 	private <LETTER> boolean computeSuccDuplicatorObligationBit(final boolean spoilerSuccIsFinal,
 			final Boolean predecessorDuplicatorObligationBit, final STATE duplicatorSucc,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		return (spoilerSuccIsFinal || predecessorDuplicatorObligationBit) && !nwa.isFinal(duplicatorSucc);
 
 	}
 
 	@Override
 	public <LETTER> boolean isImmediatelyWinningForSpoiler(final STATE q0, final STATE q1,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) {
 		return false;
 	}
 
 	@Override
 	public <LETTER> DelayedFullMultipebbleGameState<STATE> constructInitialState(final STATE q0, final STATE q1,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) {
 		final NestedMap2<STATE, STATE, Boolean> duplicatorDoubleDeckers = new NestedMap2<>();
 		final boolean duplicatorObligationBit = operand.isFinal(q0) && !operand.isFinal(q1);
 		duplicatorDoubleDeckers.put(operand.getEmptyStackState(), q1, duplicatorObligationBit);

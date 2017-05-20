@@ -35,7 +35,7 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -65,12 +65,12 @@ import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNodeAnnotation;
 
 public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
-		implements INestedWordAutomatonSimple<LETTER, IPredicate> {
+		implements INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> {
 	private static final Integer STUTTERING_STEPS_LIMIT = Integer.valueOf(10);
 
 	private final PredicateFactory mPredicateFactory;
-	private final INestedWordAutomatonSimple<LETTER, IPredicate> mControlFlowAutomaton;
-	private final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> mWitnessAutomaton;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> mControlFlowAutomaton;
+	private final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> mWitnessAutomaton;
 
 	private final NestedMap3<IPredicate, WitnessNode, Integer, ProductState> mCfg2Witness2Result = new NestedMap3<>();
 	private final Map<IPredicate, ProductState> mResult2Product = new HashMap<>();
@@ -126,8 +126,8 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	}
 
 	public WitnessProductAutomaton(final IUltimateServiceProvider services,
-			final INestedWordAutomatonSimple<LETTER, IPredicate> controlFlowAutomaton,
-			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton, final CfgSmtToolkit csToolkit,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> controlFlowAutomaton,
+			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory) {
 		mWitnessLocationMatcher = new WitnessLocationMatcher<>(services, controlFlowAutomaton, witnessAutomaton);
 		mControlFlowAutomaton = controlFlowAutomaton;

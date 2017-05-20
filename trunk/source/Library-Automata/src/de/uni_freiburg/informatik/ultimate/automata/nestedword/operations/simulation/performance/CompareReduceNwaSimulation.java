@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Analyze.SymbolType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.IMinimizationStateFactory;
@@ -83,7 +83,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	 */
 	public CompareReduceNwaSimulation(final AutomataLibraryServices services,
 			final IMinimizationStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services, stateFactory, operand);
 	}
 
@@ -93,7 +93,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	}
 
 	@Override
-	public void verifyAutomatonValidity(final INestedWordAutomatonSimple<LETTER, STATE> automaton) {
+	public void verifyAutomatonValidity(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton) {
 		// Do noting to accept nwa automata
 	}
 

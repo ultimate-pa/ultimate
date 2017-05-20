@@ -60,7 +60,7 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Transfor
  * @param <STATE>
  *            state type
  */
-public class NestedWordAutomatonCache<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
+public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
 	private static final String STATE = "State ";
 	private static final String NOT_IN_AUTOMATON = " not in automaton";
 	private static final String UNKNOWN = " unknown";

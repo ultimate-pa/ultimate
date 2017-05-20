@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.visualization.AutomatonTransition.Transition;
@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
- * Converts an {@link INestedWordAutomatonSimple} to an Ultimate model.
+ * Converts an {@link INwaOutgoingLetterAndTransitionProvider} to an Ultimate model.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
@@ -74,7 +74,7 @@ public class NwaToUltimateModel<LETTER, STATE> {
 	 * @throws AutomataOperationCanceledException
 	 *             if operation was canceled
 	 */
-	public IElement transformToUltimateModel(final INestedWordAutomatonSimple<LETTER, STATE> nwaSimple)
+	public IElement transformToUltimateModel(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwaSimple)
 			throws AutomataOperationCanceledException {
 		final INestedWordAutomaton<LETTER, STATE> nwa;
 		if (nwaSimple instanceof INestedWordAutomaton) {

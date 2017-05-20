@@ -43,15 +43,15 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Summa
  *            letter type
  * @param <STATE>
  *            state type
- * @see INestedWordAutomatonSimple
+ * @see INwaOutgoingLetterAndTransitionProvider
  */
-public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomatonSimple<LETTER, STATE> {
+public interface INestedWordAutomaton<LETTER, STATE> extends INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
 	/**
 	 * @return The set of states of this automaton. <b>Use with caution!</b> Some implementations (e.g., automaton which
 	 *         represents result of a complementation) construct their set of states on the fly.
 	 *         <p>
 	 *         Using the
-	 *         {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple# getInitialStates()
+	 *         {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider# getInitialStates()
 	 *         getInitialStates()} method and the successor methods is preferred.
 	 */
 	Set<STATE> getStates();
@@ -60,10 +60,10 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomato
 	 * @return The set of initial states.
 	 *         <p>
 	 *         For iteration, the
-	 *         {@link de.uni_freiburg.informatik.ultimate.automata.nestedword .INestedWordAutomatonSimple#InitialStates()
+	 *         {@link de.uni_freiburg.informatik.ultimate.automata.nestedword .INwaOutgoingLetterAndTransitionProvider#InitialStates()
 	 *         getInitialStates()} method is preferred.<br>
 	 *         To perform a check for an initial state, the
-	 *         {@link de.uni_freiburg.informatik.ultimate.automata .nestedword.INestedWordAutomatonSimple#isInitial(Object)
+	 *         {@link de.uni_freiburg.informatik.ultimate.automata .nestedword.INwaOutgoingLetterAndTransitionProvider#isInitial(Object)
 	 *         isInitial(state)} method is preferred.
 	 */
 	@Override
@@ -77,7 +77,7 @@ public interface INestedWordAutomaton<LETTER, STATE> extends INestedWordAutomato
 	 *         duplicates.
 	 *         <p>
 	 *         Using the
-	 *         {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple# isFinal(Object)
+	 *         {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider# isFinal(Object)
 	 *         isFinal(Object)} method to check if a specific state is final is preferred.
 	 */
 	Collection<STATE> getFinalStates();

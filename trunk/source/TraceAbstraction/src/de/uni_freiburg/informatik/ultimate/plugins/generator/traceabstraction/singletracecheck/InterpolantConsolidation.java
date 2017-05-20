@@ -44,7 +44,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -192,7 +192,7 @@ public class InterpolantConsolidation<LETTER extends IIcfgTransition<?>> impleme
 				final AutomatonDefinitionPrinter<LETTER, IPredicate> interpolantAutomatonPrinterDet =
 						new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices),
 								"InterpolantAutomatonDet", Format.ATS, interpolantAutomatonDeterminized);
-				final INestedWordAutomatonSimple<LETTER, IPredicate> diffAutomaton = diff.getResult();
+				final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> diffAutomaton = diff.getResult();
 				final AutomatonDefinitionPrinter<LETTER, IPredicate> diffAutomatonPrinter =
 						new AutomatonDefinitionPrinter<>(new AutomataLibraryServices(mServices), "DifferenceAutomaton",
 								Format.ATS, diffAutomaton);

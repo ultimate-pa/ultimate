@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
@@ -138,7 +138,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private final boolean mDoFaultLocalizationFlowSensitive;
 	private final Set<IcfgLocation> mHoareAnnotationLocations;
 
-	protected final Collection<INestedWordAutomatonSimple<LETTER, IPredicate>> mStoredRawInterpolantAutomata;
+	protected final Collection<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>> mStoredRawInterpolantAutomata;
 
 	private final SearchStrategy mSearchStrategy;
 
@@ -147,7 +147,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	protected boolean mFallbackToFpIfInterprocedural = false;
 	protected HoareAnnotationFragments<LETTER> mHaf;
-	private INestedWordAutomatonSimple<WitnessEdge, WitnessNode> mWitnessAutomaton;
+	private INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> mWitnessAutomaton;
 	protected IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> mTraceCheckAndRefinementEngine;
 	
 	// TODO 2017-05-20 Christian: This should only be a temporary hack, properly integrate this into the control flow.
@@ -251,9 +251,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 		if (mWitnessAutomaton != null) {
 			final WitnessProductAutomaton<LETTER> wpa = new WitnessProductAutomaton<>(mServices,
-					(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction, mWitnessAutomaton, mCsToolkit,
+					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, mWitnessAutomaton, mCsToolkit,
 					mPredicateFactory);
-			final INestedWordAutomatonSimple<LETTER, IPredicate> test =
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> test =
 					new RemoveUnreachable<>(new AutomataLibraryServices(mServices), wpa).getResult();
 			mLogger.info("Full witness product has " + test.sizeInformation());
 			mLogger.info(wpa.generateBadWitnessInformation());
@@ -266,8 +266,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	@Override
 	protected boolean isAbstractionEmpty() throws AutomataOperationCanceledException {
-		final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction =
-				(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction;
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction =
+				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction;
 		mCounterexample =
 				new IsEmpty<>(new AutomataLibraryServices(mServices), abstraction, mSearchStrategy).getNestedRun();
 
@@ -446,7 +446,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 		final InterpolantAutomatonEnhancement enhanceMode = mPref.interpolantAutomatonEnhancement();
 
-		final INestedWordAutomatonSimple<LETTER, IPredicate> subtrahend;
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahend;
 		if (useErrorAutomaton || enhanceMode == InterpolantAutomatonEnhancement.NONE) {
 			subtrahend = subtrahendBeforeEnhancement;
 		} else {
@@ -462,13 +462,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		minimizeAbstractionIfEnabled();
 
 		final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(mServices),
-				(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction,
+				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction,
 				(NestedWord<LETTER>) mCounterexample.getWord()).getResult();
 		return !stillAccepted;
 	}
 
 	private void computeAutomataDifference(final INestedWordAutomaton<LETTER, IPredicate> minuend,
-			final INestedWordAutomatonSimple<LETTER, IPredicate> substrahend,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> substrahend,
 			final NestedWordAutomaton<LETTER, IPredicate> subtrahendBeforeEnhancement,
 			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,
 			final IHoareTripleChecker htc, final InterpolantAutomatonEnhancement enhanceMode,
@@ -533,7 +533,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 	}
 
-	private void dumpAutomatonIfEnabled(final INestedWordAutomatonSimple<LETTER, IPredicate> substrahend,
+	private void dumpAutomatonIfEnabled(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> substrahend,
 			final String prefix, final String automatonType) {
 		if (mPref.dumpAutomata()) {
 			final String type = Character.toUpperCase(automatonType.charAt(0)) + automatonType.substring(1);
@@ -543,7 +543,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	}
 
 	private void checkEnhancement(final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
-			final INestedWordAutomatonSimple<LETTER, IPredicate> interpolantAutomaton)
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> interpolantAutomaton)
 			throws AutomataLibraryException, AssertionError, AutomataOperationCanceledException {
 		if (!new Accepts<>(new AutomataLibraryServices(mServices), interpolantAutomaton,
 				(NestedWord<LETTER>) mCounterexample.getWord(), true, false).getResult()) {
@@ -567,8 +567,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	}
 
 	private void debugLogBrokenInterpolantAutomaton(
-			final INestedWordAutomatonSimple<LETTER, IPredicate> interpolantAutomaton,
-			final INestedWordAutomatonSimple<LETTER, IPredicate> enhancedInterpolantAutomaton,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> interpolantAutomaton,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> enhancedInterpolantAutomaton,
 			final IRun<LETTER, IPredicate, ?> counterexample) {
 		mLogger.fatal("--");
 		mLogger.fatal("enhanced interpolant automaton broken: counterexample not accepted");
@@ -583,7 +583,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		mLogger.fatal("--");
 	}
 
-	private INestedWordAutomatonSimple<LETTER, IPredicate> constructInterpolantAutomatonForOnDemandEnhancement(
+	private INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> constructInterpolantAutomatonForOnDemandEnhancement(
 			final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
 			final IPredicateUnifier predicateUnifier, final IHoareTripleChecker htc,
 			final InterpolantAutomatonEnhancement enhanceMode) {
@@ -757,7 +757,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	}
 
 	protected boolean accepts(final IUltimateServiceProvider services,
-			final INestedWordAutomatonSimple<LETTER, IPredicate> nia, final Word<LETTER> word)
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> nia, final Word<LETTER> word)
 			throws AutomataOperationCanceledException {
 		try {
 			return new Accepts<>(new AutomataLibraryServices(services), nia, NestedWord.nestedWord(word), false, false)
@@ -795,7 +795,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		return true;
 	}
 
-	public void setWitnessAutomaton(final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
+	public void setWitnessAutomaton(final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
 		mWitnessAutomaton = witnessAutomaton;
 
 	}

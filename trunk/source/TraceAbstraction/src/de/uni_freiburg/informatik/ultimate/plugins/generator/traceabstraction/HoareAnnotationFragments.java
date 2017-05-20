@@ -37,7 +37,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IntersectNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval.UpDownEntry;
@@ -109,7 +109,7 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 	 */
 	public void updateOnIntersection(
 			final Map<IPredicate, Map<IPredicate, IntersectNwa<LETTER, IPredicate>.ProductState>> fst2snd2res,
-			final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction) {
 		final IUpdate update = new IntersectionUpdate(fst2snd2res);
 		update(update, abstraction);
 	}
@@ -119,7 +119,7 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 	 * updated by a minimization.
 	 */
 	public void updateOnMinimization(final Map<IPredicate, IPredicate> old2New,
-			final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction) {
 		final IUpdate update = new MinimizationUpdate(old2New);
 		update(update, abstraction);
 	}
@@ -131,7 +131,7 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 	 * WARNING: At the moment we update only the contexts and the context2enry mapping, because we expect the our
 	 * HoareAnnotationFragments stores double deckers that have been removed by a dead end removal.
 	 */
-	private void update(final IUpdate update, final INestedWordAutomatonSimple<LETTER, IPredicate> newAbstraction) {
+	private void update(final IUpdate update, final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> newAbstraction) {
 		final Map<IPredicate, HashRelation<IcfgLocation, IPredicate>> oldLiveContexts2ProgPoint2Preds =
 				mLiveContexts2ProgPoint2Preds;
 		mLiveContexts2ProgPoint2Preds = new HashMap<>();
@@ -171,7 +171,7 @@ public class HoareAnnotationFragments<LETTER extends IAction> {
 	 * Get the unique call successor of a state newContext. Return null if there is no call successor. Throw exception
 	 * if call successor is not unique.
 	 */
-	private IPredicate getEntry(final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction,
+	private IPredicate getEntry(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
 			final IPredicate newContext) {
 		final Iterator<OutgoingCallTransition<LETTER, IPredicate>> it =
 				abstraction.callSuccessors(newContext).iterator();

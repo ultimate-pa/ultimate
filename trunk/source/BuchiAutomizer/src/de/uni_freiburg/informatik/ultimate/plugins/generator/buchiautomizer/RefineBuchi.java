@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
@@ -110,7 +110,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 	/**
 	 * Interpolant automaton of this iteration.
 	 */
-	protected INestedWordAutomatonSimple<LETTER, IPredicate> mInterpolAutomatonUsedInRefinement;
+	protected INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> mInterpolAutomatonUsedInRefinement;
 
 	private final IUltimateServiceProvider mServices;
 
@@ -140,7 +140,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		mXnfConversionTechnique = xnfConversionTechnique;
 	}
 
-	public INestedWordAutomatonSimple<LETTER, IPredicate> getInterpolAutomatonUsedInRefinement() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> getInterpolAutomatonUsedInRefinement() {
 		return mInterpolAutomatonUsedInRefinement;
 	}
 
@@ -149,7 +149,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 	}
 
 	INestedWordAutomaton<LETTER, IPredicate> refineBuchi(
-			final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
 			final NestedLassoRun<LETTER, IPredicate> mCounterexample, final int mIteration,
 			final BuchiInterpolantAutomatonConstructionStyle setting, final BinaryStatePredicateManager bspm,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final InterpolationTechnique interpolation,
@@ -287,7 +287,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 			finishComputation(mInterpolAutomatonUsedInRefinement, setting);
 			benchmarkGenerator.reportHighestRank(complNwa.getHighestRank());
 			assert complNwa.checkResult(mStateFactoryInterpolAutom);
-			final INestedWordAutomatonSimple<LETTER, IPredicate> complement = complNwa.getResult();
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> complement = complNwa.getResult();
 			assert !new BuchiAccepts<>(new AutomataLibraryServices(mServices), complement,
 					mCounterexample.getNestedLassoWord()).getResult();
 			final BuchiIntersect<LETTER, IPredicate> interNwa = new BuchiIntersect<>(
@@ -355,14 +355,14 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		return newAbstraction;
 	}
 
-	private INestedWordAutomatonSimple<LETTER, IPredicate> buildBuchiInterpolantAutomatonForOnDemandConstruction(
+	private INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> buildBuchiInterpolantAutomatonForOnDemandConstruction(
 			final NestedLassoRun<LETTER, IPredicate> mCounterexample,
 			final BuchiInterpolantAutomatonConstructionStyle biaConstructionStyle,
 			final BinaryStatePredicateManager bspm, final InterpolationTechnique interpolation,
 			final NestedWord<LETTER> stem, final NestedWord<LETTER> loop, final PredicateUnifier pu,
 			final IPredicate[] stemInterpolants, final IPredicate[] loopInterpolants,
 			final NestedWordAutomaton<LETTER, IPredicate> mInterpolAutomaton, final BuchiHoareTripleChecker bhtc) {
-		INestedWordAutomatonSimple<LETTER, IPredicate> buchiInterpolantAutomatonForOnDemandConstruction;
+		INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> buchiInterpolantAutomatonForOnDemandConstruction;
 		switch (biaConstructionStyle.getInterpolantAutomaton()) {
 		case LassoAutomaton:
 			buchiInterpolantAutomatonForOnDemandConstruction = mInterpolAutomaton;
@@ -425,7 +425,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private INestedWordAutomaton<LETTER, IPredicate> nsbcDifference(
-			final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
 			final BuchiInterpolantAutomatonConstructionStyle setting,
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator) throws AutomataLibraryException {
 		INestedWordAutomaton<LETTER, IPredicate> newAbstraction;
@@ -440,7 +440,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private INestedWordAutomaton<LETTER, IPredicate> rankBasedOptimization(
-			final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
 			final BuchiInterpolantAutomatonConstructionStyle setting,
 			final BuchiCegarLoopBenchmarkGenerator benchmarkGenerator,
 			final IStateDeterminizer<LETTER, IPredicate> stateDeterminizer, final FkvOptimization optimization)
@@ -488,9 +488,9 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 	}
 
 	private boolean isUsefulInterpolantAutomaton(
-			final INestedWordAutomatonSimple<LETTER, IPredicate> interpolAutomatonUsedInRefinement,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> interpolAutomatonUsedInRefinement,
 			final NestedLassoRun<LETTER, IPredicate> counterexample) throws AutomataLibraryException {
-		INestedWordAutomatonSimple<LETTER, IPredicate> oldApi;
+		INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldApi;
 		oldApi = new RemoveUnreachable<>(new AutomataLibraryServices(mServices), interpolAutomatonUsedInRefinement)
 				.getResult();
 		final NestedWord<LETTER> stem = counterexample.getStem().getWord();
@@ -526,7 +526,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 		return true;
 	}
 
-	private void finishComputation(final INestedWordAutomatonSimple<LETTER, IPredicate> interpolantAutomaton,
+	private void finishComputation(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> interpolantAutomaton,
 			final BuchiInterpolantAutomatonConstructionStyle setting) {
 		switch (setting.getInterpolantAutomaton()) {
 		case LassoAutomaton:
@@ -547,7 +547,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 	private NestedWordAutomaton<LETTER, IPredicate> constructBuchiInterpolantAutomaton(final IPredicate precondition,
 			final NestedWord<LETTER> stem, final IPredicate[] stemInterpolants, final IPredicate honda,
 			final NestedWord<LETTER> loop, final IPredicate[] loopInterpolants,
-			final INestedWordAutomatonSimple<LETTER, IPredicate> abstraction) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction) {
 		final NestedWordAutomaton<LETTER, IPredicate> result =
 				new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), abstraction.getVpAlphabet(), abstraction.getStateFactory());
 		final boolean emptyStem = stem.length() == 0;

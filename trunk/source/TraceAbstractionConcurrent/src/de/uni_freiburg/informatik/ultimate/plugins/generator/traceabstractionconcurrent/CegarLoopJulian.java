@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledExc
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
@@ -136,10 +136,10 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 		}
 
 		// Determinize the interpolant automaton
-		final INestedWordAutomatonSimple<LETTER, IPredicate> dia = determinizeInterpolantAutomaton(mInterpolAutomaton);
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> dia = determinizeInterpolantAutomaton(mInterpolAutomaton);
 
 		// Complement the interpolant automaton
-		final INestedWordAutomatonSimple<LETTER, IPredicate> nia =
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> nia =
 				new ComplementDD<>(new AutomataLibraryServices(mServices), mPredicateFactoryInterpolantAutomata, dia)
 						.getResult();
 		assert !accepts(mServices, nia, mCounterexample.getWord()) : "Complementation broken!";
@@ -218,7 +218,7 @@ public class CegarLoopJulian<LETTER extends IIcfgTransition<?>> extends BasicCeg
 			final IAutomaton<LETTER, IPredicate> automaton, final Word<LETTER> word)
 			throws AutomataOperationCanceledException {
 		final NestedWord<LETTER> nw = NestedWord.nestedWord(word);
-		final INestedWordAutomatonSimple<LETTER, IPredicate> petriNetAsFA =
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> petriNetAsFA =
 				new PetriNet2FiniteAutomaton<>(new AutomataLibraryServices(services),
 						mPredicateFactoryInterpolantAutomata,
 						(IPetriNet<LETTER, IPredicate>) automaton).getResult();

@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -53,9 +53,9 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
-	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
-	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
+public class BuchiIntersectNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndOperand;
 	private final IBuchiIntersectStateFactory<STATE> mStateFactory;
 	private final STATE mEmptyStackState;
 
@@ -78,8 +78,8 @@ public class BuchiIntersectNwa<LETTER, STATE> implements INestedWordAutomatonSim
 	 *             if alphabets differ or operation was canceled
 	 */
 	public <FACTORY extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> BuchiIntersectNwa(
-			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand, final FACTORY stateFactory)
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand, final FACTORY stateFactory)
 			throws AutomataLibraryException {
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;

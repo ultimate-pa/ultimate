@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.ResultChecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsTotal;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DoubleDeckerVisitor;
@@ -63,7 +63,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDeckerVisitor<LETTER, STATE>
 		implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INestedWordAutomaton<LETTER, STATE> mOperand;
-	private final INestedWordAutomatonSimple<LETTER, STATE> mTotalizedOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mTotalizedOperand;
 	private final IBuchiComplementDeterministicStateFactory<STATE> mContentFactory;
 
 	private final HashMap<STATE, STATE> mNew2Old = new HashMap<>();

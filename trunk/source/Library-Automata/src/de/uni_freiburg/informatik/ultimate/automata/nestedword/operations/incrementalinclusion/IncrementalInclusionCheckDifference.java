@@ -31,7 +31,7 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -40,11 +40,11 @@ public class IncrementalInclusionCheckDifference<LETTER, STATE, SF extends IInte
 		extends InclusionViaDifference<LETTER, STATE, SF> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 	public IncrementalInclusionCheckDifference(final AutomataLibraryServices services,
 			final IIncrementalInclusionStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b)
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a, final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> b)
 			throws AutomataLibraryException {
 		super(services, stateFactory, a);
 		mLogger.info(startMessage());
-		for (final INestedWordAutomatonSimple<LETTER, STATE> bi : b) {
+		for (final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> bi : b) {
 			addSubtrahend(bi);
 		}
 		// obtain counterexample, counterexample is null if inclusion holds

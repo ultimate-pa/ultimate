@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BoogieASTNode;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.IRunningTaskStackProvider;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Check;
@@ -96,7 +96,7 @@ public class TraceAbstractionStarter {
 
 	public TraceAbstractionStarter(final IUltimateServiceProvider services, final IToolchainStorage storage,
 			final IIcfg<IcfgLocation> rcfgRootNode,
-			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
+			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
 		mServices = services;
 		mToolchainStorage = storage;
 		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
@@ -104,7 +104,7 @@ public class TraceAbstractionStarter {
 	}
 
 	private void runCegarLoops(final IIcfg<IcfgLocation> icfg,
-			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
+			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
 		final TAPreferences taPrefs = new TAPreferences(mServices);
 
 		String settings = "Automizer settings:";
@@ -272,7 +272,7 @@ public class TraceAbstractionStarter {
 	private void iterate(final String name, final IIcfg<IcfgLocation> root, final TAPreferences taPrefs,
 			final CfgSmtToolkit csToolkit, final PredicateFactory predicateFactory,
 			final TraceAbstractionBenchmarks taBenchmark, final Collection<IcfgLocation> errorLocs,
-			final INestedWordAutomatonSimple<WitnessEdge, WitnessNode> witnessAutomaton) {
+			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
 		final BasicCegarLoop<?> basicCegarLoop =
 				constructCegarLoop(name, root, taPrefs, csToolkit, predicateFactory, taBenchmark, errorLocs);
 		basicCegarLoop.setWitnessAutomaton(witnessAutomaton);

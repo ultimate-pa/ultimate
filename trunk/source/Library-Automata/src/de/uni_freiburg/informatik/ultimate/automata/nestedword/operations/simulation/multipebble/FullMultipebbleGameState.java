@@ -30,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
@@ -57,7 +57,7 @@ public abstract class FullMultipebbleGameState<STATE> {
 	public abstract int getNumberOfDoubleDeckerPebbles();
 
 	protected <LETTER> List<DoubleDecker<STATE>> computeSpoilerSuccessorsInternal(final LETTER letter,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		final List<DoubleDecker<STATE>> result = new ArrayList<>();
 		for (final OutgoingInternalTransition<LETTER, STATE> trans : nwa
 				.internalSuccessors(mSpoilerDoubleDecker.getUp(), letter)) {
@@ -67,7 +67,7 @@ public abstract class FullMultipebbleGameState<STATE> {
 	}
 
 	protected <LETTER> List<DoubleDecker<STATE>> computeSpoilerSuccessorsCall(final LETTER letter,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		final List<DoubleDecker<STATE>> result = new ArrayList<>();
 		for (final OutgoingCallTransition<LETTER, STATE> trans : nwa.callSuccessors(mSpoilerDoubleDecker.getUp(),
 				letter)) {
@@ -77,7 +77,7 @@ public abstract class FullMultipebbleGameState<STATE> {
 	}
 
 	protected <LETTER> List<DoubleDecker<STATE>> computeSpoilerSuccessorsReturn(final DoubleDecker<STATE> hier,
-			final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+			final LETTER letter, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		if (!hier.getUp().equals(mSpoilerDoubleDecker.getDown())) {
 			throw new IllegalArgumentException("mismatch");
 		}

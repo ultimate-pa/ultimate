@@ -37,7 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
 /**
@@ -57,7 +57,7 @@ public class Jeffery_Test_4<LETTER, STATE> implements IOperation<LETTER, STATE, 
 	String folder;
 
 	public Jeffery_Test_4(final AutomataLibraryServices services, final IIncrementalInclusionStateFactory<STATE> sf,
-			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b)
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a, final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> b)
 			throws AutomataLibraryException, IOException {
 		folder = "/media/user_data/Java/trunk/examples/Automata/finiteAutomata/incrementalInclusion/randomCasesDumpedResults/";
 		timeBuffer1 = new Date().getTime();
@@ -130,7 +130,7 @@ public class Jeffery_Test_4<LETTER, STATE> implements IOperation<LETTER, STATE, 
 	}
 
 	public Jeffery_Test_4(final AutomataLibraryServices services, final IIncrementalInclusionStateFactory<STATE> sf,
-			final INestedWordAutomatonSimple<LETTER, STATE> a, final List<INestedWordAutomatonSimple<LETTER, STATE>> b,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> a, final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> b,
 			final String folderInput) throws AutomataLibraryException, IOException {
 		folder = folderInput;
 		timeBuffer1 = new Date().getTime();

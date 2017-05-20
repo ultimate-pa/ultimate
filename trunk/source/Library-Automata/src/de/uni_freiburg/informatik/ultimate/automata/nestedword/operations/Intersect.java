@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IntersectDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
@@ -49,8 +49,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
  */
 public final class Intersect<LETTER, STATE>
 		extends BinaryNwaOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>> {
-	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
-	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 
 	/**
@@ -69,8 +69,8 @@ public final class Intersect<LETTER, STATE>
 	 */
 	public <SF extends IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Intersect(
 			final AutomataLibraryServices services, final SF stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
@@ -98,12 +98,12 @@ public final class Intersect<LETTER, STATE>
 	}
 
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getFirstOperand() {
 		return mFstOperand;
 	}
 
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
 
@@ -118,7 +118,7 @@ public final class Intersect<LETTER, STATE>
 			mLogger.info("Start testing correctness of " + operationName());
 		}
 
-		final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> resultDd =
 				(new IntersectDD<>(mServices, stateFactory, mFstOperand, mSndOperand)).getResult();
 		boolean correct = true;
 		correct &= (resultDd.size() == mResult.size());

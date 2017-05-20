@@ -35,7 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.AbstractMinimizeNwa;
@@ -103,7 +103,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 			final IUltimateServiceProvider services, final INestedWordAutomaton<LETTER, IPredicate> operand,
 			final Minimization minimization, final boolean computeOldState2NewStateMapping, final int iteration,
 			final SF predicateFactoryRefinement, final int minimizeEveryKthIteration,
-			final Collection<INestedWordAutomatonSimple<LETTER, IPredicate>> storedRawInterpolantAutomata,
+			final Collection<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>> storedRawInterpolantAutomata,
 			final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton, final int minimizationTimeout,
 			final PredicateFactoryResultChecking resultCheckPredFac, final Function<LCSP, LCS> lcsProvider,
 			final boolean initialPartitionSeparatesFinalsAndNonfinals) throws AutomataMinimizationTimeout {
@@ -186,7 +186,7 @@ public class AutomataMinimization<LCS, LCSP extends IPredicate, LETTER> {
 		MinimizationResult doMinimizationOperation(final INestedWordAutomaton<LETTER, IPredicate> operand,
 			final Minimization minimization, final boolean computeOldState2NewStateMapping, final int iteration,
 			final SF predicateFactoryRefinement, final int minimizeEveryKthIteration,
-			final Collection<INestedWordAutomatonSimple<LETTER, IPredicate>> storedRawInterpolantAutomata,
+			final Collection<INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>> storedRawInterpolantAutomata,
 			final INestedWordAutomaton<LETTER, IPredicate> interpolAutomaton, final int minimizationTimeout,
 			final PartitionBackedSetOfPairs<IPredicate> partition, final AutomataLibraryServices autServices,
 			final boolean initialPartitionSeparatesFinalsAndNonfinals)

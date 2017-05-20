@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomDfa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwa;
@@ -51,11 +51,11 @@ public final class CompareWithRandomAutomata<LETTER, STATE>
 	/**
 	 * The inputed buechi automaton.
 	 */
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	/**
 	 * The resulting buechi automaton.
 	 */
-	private final INestedWordAutomatonSimple<LETTER, STATE> mResult;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mResult;
 
 	/**
 	 * Compares the different types of simulation methods for buechi reduction using random automata. Resulting
@@ -69,7 +69,7 @@ public final class CompareWithRandomAutomata<LETTER, STATE>
 	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public CompareWithRandomAutomata(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mResult = operand;
@@ -84,7 +84,7 @@ public final class CompareWithRandomAutomata<LETTER, STATE>
 		final int totalityInPerc = 10;
 		final int logEvery = 100;
 		final int amount = 1000;
-		INestedWordAutomatonSimple<String, String> buechi;
+		INwaOutgoingLetterAndTransitionProvider<String, String> buechi;
 
 		for (int i = 1; i <= amount; i++) {
 			if (i % logEvery == 0) {
@@ -114,7 +114,7 @@ public final class CompareWithRandomAutomata<LETTER, STATE>
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 

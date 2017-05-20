@@ -31,7 +31,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.ComplementDD;
@@ -51,7 +51,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
  */
 public final class Complement<LETTER, STATE>
 		extends UnaryNwaOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>> {
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	private ComplementDeterministicNwa<LETTER, STATE> mComplement;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
@@ -71,7 +71,7 @@ public final class Complement<LETTER, STATE>
 	 */
 	public <SF extends ISinkStateFactory<STATE> & IDeterminizeStateFactory<STATE>> Complement(
 			final AutomataLibraryServices services, final SF stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		this(services, stateFactory, operand, new PowersetDeterminizer<>(operand, true, stateFactory));
 	}
 
@@ -90,7 +90,7 @@ public final class Complement<LETTER, STATE>
 	 *             if operation was canceled
 	 */
 	public Complement(final AutomataLibraryServices services, final ISinkStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
@@ -158,7 +158,7 @@ public final class Complement<LETTER, STATE>
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 
@@ -175,10 +175,10 @@ public final class Complement<LETTER, STATE>
 				mLogger.info("Start testing correctness of " + operationName());
 			}
 			// intersection of operand and result should be empty
-			final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> intersectionOperandResult =
 					(new IntersectDD<>(mServices, stateFactory, mOperand, mResult)).getResult();
 			correct &= (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
-			final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> resultDd =
 					(new ComplementDD<>(mServices, stateFactory, mOperand)).getResult();
 
 			// should have same number of states as old complementation

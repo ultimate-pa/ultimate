@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.petrinet.julian;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.IPetriNet;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNet2FiniteAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.petrinet.PetriNetRun;
@@ -96,7 +96,7 @@ public final class IsEmpty<LETTER, STATE>
 	@Override
 	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
-		final INestedWordAutomatonSimple<LETTER, STATE> finiteAutomaton =
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> finiteAutomaton =
 				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult();
 		final boolean automatonEmpty =
 				(new de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty<>(mServices,

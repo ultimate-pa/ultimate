@@ -86,7 +86,7 @@ public class DownStateConsistencyCheck<LETTER, STATE> extends UnaryNwaOperation<
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 

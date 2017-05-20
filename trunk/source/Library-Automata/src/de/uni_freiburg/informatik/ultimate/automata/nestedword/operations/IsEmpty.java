@@ -42,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
@@ -91,7 +91,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	/**
 	 * Operand.
 	 */
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	/**
 	 * Set of states in which the run we are searching has to begin.
 	 */
@@ -208,7 +208,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 * @param operand
 	 *            input NWA
 	 */
-	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand)
+	public IsEmpty(final AutomataLibraryServices services, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand)
 			throws AutomataOperationCanceledException {
 		this(services, operand, SearchStrategy.BFS);
 	}
@@ -222,9 +222,9 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	 *            input NWA
 	 * @param strategy
 	 *            search strategy
-	 * @see #IsEmpty(AutomataLibraryServices, INestedWordAutomatonSimple)
+	 * @see #IsEmpty(AutomataLibraryServices, INwaOutgoingLetterAndTransitionProvider)
 	 */
-	public IsEmpty(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand,
+	public IsEmpty(final AutomataLibraryServices services, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final SearchStrategy strategy) throws AutomataOperationCanceledException {
 		this(services, operand, Utils.constructHashSet(operand.getInitialStates()), Collections.emptySet(), null, true,
 				strategy);
@@ -254,7 +254,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 		assert operand.getStates().containsAll(goalStates) : "unknown states";
 	}
 
-	private IsEmpty(final AutomataLibraryServices services, final INestedWordAutomatonSimple<LETTER, STATE> operand,
+	private IsEmpty(final AutomataLibraryServices services, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand,
 			final Set<STATE> startStates, final Set<STATE> forbiddenStates, final Set<STATE> goalStates,
 			final boolean goalStateIsAcceptingState, final SearchStrategy strategy)
 			throws AutomataOperationCanceledException {
@@ -724,7 +724,7 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 

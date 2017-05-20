@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.incre
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.ComplementDeterministicNwa;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.DeterminizeNwa;
@@ -57,7 +57,7 @@ public class InclusionViaDifference<LETTER, STATE, SF extends IIntersectionState
 		extends AbstractIncrementalInclusionCheck<LETTER, STATE> {
 	private final SF mStateFactoryIntersect;
 	private final IDeterminizeStateFactory<STATE> mStateFactoryDeterminize;
-	private INestedWordAutomatonSimple<LETTER, STATE> mDifference;
+	private INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mDifference;
 	private NestedRun<LETTER, STATE> mAcceptingRun;
 
 	private final boolean mRemoveDeadEnds = true;
@@ -77,7 +77,7 @@ public class InclusionViaDifference<LETTER, STATE, SF extends IIntersectionState
 	@SuppressWarnings("unchecked")
 	public InclusionViaDifference(final AutomataLibraryServices services,
 			final IIncrementalInclusionStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwaA) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwaA) throws AutomataOperationCanceledException {
 		this(services, (SF) stateFactory, stateFactory, nwaA);
 	}
 
@@ -98,7 +98,7 @@ public class InclusionViaDifference<LETTER, STATE, SF extends IIntersectionState
 	 */
 	public InclusionViaDifference(final AutomataLibraryServices services, final SF stateFactoryIntersect,
 			final IDeterminizeStateFactory<STATE> stateFactoryDeterminize,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwaA) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwaA) throws AutomataOperationCanceledException {
 		super(services, nwaA);
 		mStateFactoryIntersect = stateFactoryIntersect;
 		mStateFactoryDeterminize = stateFactoryDeterminize;
@@ -113,15 +113,15 @@ public class InclusionViaDifference<LETTER, STATE, SF extends IIntersectionState
 	}
 
 	@Override
-	public void addSubtrahend(final INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
+	public void addSubtrahend(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) throws AutomataLibraryException {
 		super.addSubtrahend(nwa);
-		final INestedWordAutomatonSimple<LETTER, STATE> determinized = new DeterminizeNwa<>(mServices, nwa,
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> determinized = new DeterminizeNwa<>(mServices, nwa,
 				new PowersetDeterminizer<>(nwa, true, mStateFactoryDeterminize), mStateFactoryDeterminize, null, true);
-		final INestedWordAutomatonSimple<LETTER, STATE> complemented = new ComplementDeterministicNwa<>(determinized);
-		final INestedWordAutomatonSimple<LETTER, STATE> difference =
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> complemented = new ComplementDeterministicNwa<>(determinized);
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> difference =
 				new IntersectNwa<>(mDifference, complemented, mStateFactoryIntersect, false);
 		if (mRemoveDeadEnds) {
-			final INestedWordAutomatonSimple<LETTER, STATE> removedDeadEnds =
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> removedDeadEnds =
 					(new RemoveDeadEnds<>(mServices, difference)).getResult();
 			mDifference = removedDeadEnds;
 		} else {

@@ -32,7 +32,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IDeterminizeStateFactory;
 
 /**
@@ -68,7 +68,7 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 	 * @param nwa
 	 *            nested word automaton
 	 */
-	public DeterminizedState(final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+	public DeterminizedState(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		mCaller2presents = new HashMap<>();
 	}
 
@@ -94,7 +94,7 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 	 *            A nested word automaton.
 	 * @return true iff for all pair in the set, the first entry is an accepting state and the set is not empty
 	 */
-	public boolean allFinal(final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+	public boolean allFinal(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		if (mCaller2presents.isEmpty()) {
 			return false;
 		}
@@ -130,7 +130,7 @@ public class DeterminizedState<LETTER, STATE> implements IDeterminizedState<LETT
 	 * @param nwa
 	 *            nested word automaton
 	 */
-	public void addPair(final STATE caller, final STATE present, final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+	public void addPair(final STATE caller, final STATE present, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		if (mConstructionFinished) {
 			throw new IllegalArgumentException("Construction finished must not add pairs.");
 		}

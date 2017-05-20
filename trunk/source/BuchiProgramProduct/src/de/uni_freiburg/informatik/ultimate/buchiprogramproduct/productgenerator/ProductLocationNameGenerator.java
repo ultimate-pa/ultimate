@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.buchiprogramproduct.productgenerator;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.CodeBlock;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.BoogieIcfgLocation;
 
@@ -39,9 +39,9 @@ public final class ProductLocationNameGenerator {
 
 	private static final String HELPER_STATE_PREFIX = "crhelper";
 	private int mHelperUnifique;
-	private final INestedWordAutomatonSimple<CodeBlock, String> mNWA;
+	private final INwaOutgoingLetterAndTransitionProvider<CodeBlock, String> mNWA;
 
-	protected ProductLocationNameGenerator(final INestedWordAutomatonSimple<CodeBlock, String> nwa) {
+	protected ProductLocationNameGenerator(final INwaOutgoingLetterAndTransitionProvider<CodeBlock, String> nwa) {
 		assert nwa != null;
 
 		mHelperUnifique = 0;

@@ -33,7 +33,7 @@ import java.util.Objects;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiDifferenceFKV;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiIsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
@@ -62,8 +62,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 public class LassoExtractorBuchi<LETTER extends IIcfgTransition<?>> extends AbstractLassoExtractor<LETTER> {
 
 	private final IUltimateServiceProvider mServices;
-	private final INestedWordAutomatonSimple<LETTER, IPredicate> mCfgAutomaton;
-	private INestedWordAutomatonSimple<LETTER, IPredicate> mLassoAutomaton;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> mCfgAutomaton;
+	private INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> mLassoAutomaton;
 	private final PredicateFactoryResultChecking mPredicateFactoryRc;
 	private final CfgSmtToolkit mCsToolkit;
 	private final PredicateFactory mPredicateFactory;
@@ -88,7 +88,7 @@ public class LassoExtractorBuchi<LETTER extends IIcfgTransition<?>> extends Abst
 			final NestedLassoWord<LETTER> nlw = run.getNestedLassoWord();
 			mLassoAutomaton = new LassoAutomatonBuilder<>(mCfgAutomaton.getVpAlphabet(), mPredicateFactoryRc, mPredicateFactory,
 					nlw.getStem(), nlw.getLoop(), mServices).getResult();
-			final INestedWordAutomatonSimple<LETTER, IPredicate> difference =
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> difference =
 					new BuchiDifferenceFKV<>(new AutomataLibraryServices(mServices), mPredicateFactoryRc, mCfgAutomaton,
 							mLassoAutomaton).getResult();
 			final boolean isEmpty = new BuchiIsEmpty<>(new AutomataLibraryServices(mServices), difference).getResult();
@@ -112,7 +112,7 @@ public class LassoExtractorBuchi<LETTER extends IIcfgTransition<?>> extends Abst
 		return ((ISLPredicate) run.getLoop().getStateAtPosition(0)).getProgramPoint();
 	}
 
-	private INestedWordAutomatonSimple<LETTER, IPredicate> constructCfgAutomaton(final IIcfg<IcfgLocation> rootNode,
+	private INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> constructCfgAutomaton(final IIcfg<IcfgLocation> rootNode,
 			final CfgSmtToolkit csToolkit) {
 		final CFG2NestedWordAutomaton<LETTER> cFG2NestedWordAutomaton =
 				new CFG2NestedWordAutomaton<>(mServices, true, csToolkit, mPredicateFactory, mLogger);

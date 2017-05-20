@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
@@ -222,7 +222,7 @@ public class CegarLoopConcurrentAutomata<LETTER extends IIcfgTransition<?>> exte
 		}
 
 		final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(mServices),
-				(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction,
+				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction,
 				(NestedWord<LETTER>) mCounterexample.getWord()).getResult();
 		return !stillAccepted;
 	}

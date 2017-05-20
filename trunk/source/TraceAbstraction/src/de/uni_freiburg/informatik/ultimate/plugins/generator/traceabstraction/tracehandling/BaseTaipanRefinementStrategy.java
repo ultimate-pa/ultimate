@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -378,7 +378,7 @@ public abstract class BaseTaipanRefinementStrategy<LETTER extends IIcfgTransitio
 		case ABSTRACT_INTERPRETATION:
 			mCurrentMode = Mode.ABSTRACT_INTERPRETATION;
 			mAbsIntRunner.generateFixpoints(mCounterexample,
-					(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction, mPredicateUnifierSmt);
+					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, mPredicateUnifierSmt);
 			return mAbsIntRunner.getInterpolantGenerator();
 		default:
 			throw new IllegalArgumentException(UNKNOWN_MODE + mode);

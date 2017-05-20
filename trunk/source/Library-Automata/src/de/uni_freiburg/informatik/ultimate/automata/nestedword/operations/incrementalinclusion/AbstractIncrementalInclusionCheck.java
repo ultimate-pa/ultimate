@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
@@ -50,8 +50,8 @@ public abstract class AbstractIncrementalInclusionCheck<LETTER, STATE> {
 	protected final AutomataLibraryServices mServices;
 	protected final ILogger mLogger;
 
-	private final INestedWordAutomatonSimple<LETTER, STATE> mNwaA;
-	private final List<INestedWordAutomatonSimple<LETTER, STATE>> mNwaB = new ArrayList<>();
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mNwaA;
+	private final List<INwaOutgoingLetterAndTransitionProvider<LETTER, STATE>> mNwaB = new ArrayList<>();
 
 	/**
 	 * Constructor.
@@ -62,7 +62,7 @@ public abstract class AbstractIncrementalInclusionCheck<LETTER, STATE> {
 	 *            minuend
 	 */
 	public AbstractIncrementalInclusionCheck(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwaA) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwaA) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		if (nwaA == null) {
@@ -87,11 +87,11 @@ public abstract class AbstractIncrementalInclusionCheck<LETTER, STATE> {
 	 * @throws AutomataLibraryException
 	 *             if construction fails
 	 */
-	public void addSubtrahend(final INestedWordAutomatonSimple<LETTER, STATE> nwa) throws AutomataLibraryException {
+	public void addSubtrahend(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) throws AutomataLibraryException {
 		mNwaB.add(nwa);
 	}
 
-	public INestedWordAutomatonSimple<LETTER, STATE> getA() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getA() {
 		return mNwaA;
 	}
 }

@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  *            state type
  */
 public abstract class NestedWordAutomatonForLetterBasedOnDemandConstruction<LETTER, STATE>
-		implements INestedWordAutomatonSimple<LETTER, STATE> {
+		implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
 
 	@Override
 	public final Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {

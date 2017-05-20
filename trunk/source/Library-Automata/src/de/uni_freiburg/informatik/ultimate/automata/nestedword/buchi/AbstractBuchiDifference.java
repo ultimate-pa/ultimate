@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
@@ -53,8 +53,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public abstract class AbstractBuchiDifference<LETTER, STATE>
 		extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
-	protected final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
-	protected final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
+	protected final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstOperand;
+	protected final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndOperand;
 	protected BuchiIntersectNwa<LETTER, STATE> mIntersect;
 	protected NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
 
@@ -69,8 +69,8 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 	 *            second operand
 	 */
 	public AbstractBuchiDifference(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) {
 		super(services);
 		mFstOperand = fstOperand;
 		mSndOperand = sndOperand;
@@ -79,7 +79,7 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 	/**
 	 * @return The second operand complemented.
 	 */
-	public abstract INestedWordAutomatonSimple<LETTER, STATE> getSndComplemented();
+	public abstract INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSndComplemented();
 
 	/**
 	 * Constructs the difference using the complement of the second operand.
@@ -101,12 +101,12 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 	}
 
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getFirstOperand() {
 		return mFstOperand;
 	}
 
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
 
@@ -158,8 +158,8 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 	}
 
 	private boolean checkAcceptance(final NestedLassoWord<LETTER> nlw,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand1,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand2, final boolean underApproximationOfComplement)
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand1,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand2, final boolean underApproximationOfComplement)
 			throws AutomataLibraryException {
 		boolean correct;
 		final boolean op1 = (new BuchiAccepts<>(mServices, operand1, nlw)).getResult();

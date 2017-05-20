@@ -30,7 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
@@ -48,8 +48,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IIntersectionSt
  */
 public final class ComplementDD<LETTER, STATE>
 		extends UnaryNwaOperation<LETTER, STATE, IIntersectionStateFactory<STATE>> {
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
-	private INestedWordAutomatonSimple<LETTER, STATE> mDeterminizedOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
+	private INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mDeterminizedOperand;
 	private final INestedWordAutomaton<LETTER, STATE> mResult;
 
 	/**
@@ -65,7 +65,7 @@ public final class ComplementDD<LETTER, STATE>
 	 *             if operation was canceled
 	 */
 	public ComplementDD(final AutomataLibraryServices services, final IDeterminizeStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 
@@ -92,7 +92,7 @@ public final class ComplementDD<LETTER, STATE>
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 
@@ -109,7 +109,7 @@ public final class ComplementDD<LETTER, STATE>
 
 		boolean correct;
 		// TODO Christian 2017-02-16 Cast is temporary workaround until state factory becomes class parameter
-		final INestedWordAutomatonSimple<LETTER, STATE> intersectionOperandResult =
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> intersectionOperandResult =
 				(new IntersectDD<>(mServices, stateFactory, mOperand, mResult, false)).getResult();
 		correct = (new IsEmpty<>(mServices, intersectionOperandResult)).getResult();
 

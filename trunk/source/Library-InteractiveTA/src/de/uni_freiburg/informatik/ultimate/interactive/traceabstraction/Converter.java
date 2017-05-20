@@ -20,7 +20,7 @@ import com.google.protobuf.GeneratedMessageV3;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutgoingTransitionlet;
@@ -81,7 +81,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		final Class<INestedWordAutomaton<CodeBlock, IPredicate>> cls = (Class) INestedWordAutomaton.class;
 		converterRegistry.registerBA(TraceAbstractionProtos.NestedWordAutomaton.class, cls, Converter::fromAutomaton);
 		@SuppressWarnings("unchecked")
-		final Class<INestedWordAutomatonSimple<CodeBlock, IPredicate>> scls = (Class) INestedWordAutomatonSimple.class;
+		final Class<INwaOutgoingLetterAndTransitionProvider<CodeBlock, IPredicate>> scls = (Class) INwaOutgoingLetterAndTransitionProvider.class;
 		converterRegistry.registerBA(TraceAbstractionProtos.NestedWordAutomaton.class, scls,
 				Converter::fromSimpleAutomaton);
 		converterRegistry.registerBA(TraceAbstractionProtos.TAPreferences.class, TAPreferences.class,
@@ -341,7 +341,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		return builder.build();
 	}
 
-	private static void copyAlphabets(final INestedWordAutomatonSimple<CodeBlock, IPredicate> fromNwa,
+	private static void copyAlphabets(final INwaOutgoingLetterAndTransitionProvider<CodeBlock, IPredicate> fromNwa,
 			final List<CodeBlock> callAlphabet, final List<CodeBlock> internalAlphabet,
 			final List<CodeBlock> returnAlphabet, final TraceAbstractionProtos.NestedWordAutomaton.Builder toNwa) {
 		fromNwa.getVpAlphabet().getCallAlphabet().forEach(callAlphabet::add);
@@ -352,7 +352,7 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 	}
 
 	public static TraceAbstractionProtos.NestedWordAutomaton
-			fromSimpleAutomaton(final INestedWordAutomatonSimple<CodeBlock, IPredicate> automaton) {
+			fromSimpleAutomaton(final INwaOutgoingLetterAndTransitionProvider<CodeBlock, IPredicate> automaton) {
 		final TraceAbstractionProtos.NestedWordAutomaton.Builder builder =
 				TraceAbstractionProtos.NestedWordAutomaton.newBuilder();
 		final List<CodeBlock> callAlphabet = new ArrayList<>();

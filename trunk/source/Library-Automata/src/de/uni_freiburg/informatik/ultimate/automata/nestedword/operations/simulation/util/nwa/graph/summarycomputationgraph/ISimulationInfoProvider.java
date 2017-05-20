@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.nwa.graph.summarycomputationgraph;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simulation.util.SpoilerVertex;
 
 /**
@@ -52,7 +52,7 @@ public interface ISimulationInfoProvider<LETTER, STATE> {
 	public boolean isImmediatelyWinningForSpoiler(boolean isSpoilerAccepting, boolean isDuplicatorAccepting);
 
 	public boolean isSimulationInformationProvider(SpoilerVertex<LETTER, STATE> spoilerVertex,
-			INestedWordAutomatonSimple<LETTER, STATE> inputAutomaton);
+			INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> inputAutomaton);
 
 	public boolean mayMergeFinalAndNonFinalStates();
 }

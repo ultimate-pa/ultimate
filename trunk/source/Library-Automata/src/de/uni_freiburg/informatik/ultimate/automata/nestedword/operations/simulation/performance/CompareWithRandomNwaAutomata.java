@@ -29,7 +29,7 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.simul
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.GetRandomNwa;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -51,7 +51,7 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE>
 	/**
 	 * The inputed nwa automaton.
 	 */
-	private final INestedWordAutomatonSimple<LETTER, STATE> mOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 
 	/**
 	 * Compares the different types of nwa simulation methods for nwa reduction using random automata. Resulting
@@ -65,7 +65,7 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE>
 	 *             If the operation was canceled, for example from the Ultimate framework.
 	 */
 	public CompareWithRandomNwaAutomata(final AutomataLibraryServices services,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand) throws AutomataOperationCanceledException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand) throws AutomataOperationCanceledException {
 		super(services);
 		mOperand = operand;
 		mLogger.info(startMessage());
@@ -81,7 +81,7 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE>
 		final int totalityReturnInPerc = 1;
 		final int logEvery = 50;
 		final int amount = 1000;
-		INestedWordAutomatonSimple<String, String> nwa;
+		INwaOutgoingLetterAndTransitionProvider<String, String> nwa;
 
 		for (int i = 1; i <= amount; i++) {
 			if (i % logEvery == 0) {
@@ -106,7 +106,7 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE>
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getOperand() {
+	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}
 

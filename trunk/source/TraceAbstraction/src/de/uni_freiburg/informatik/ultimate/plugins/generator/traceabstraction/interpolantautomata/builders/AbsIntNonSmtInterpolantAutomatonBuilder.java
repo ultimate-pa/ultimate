@@ -34,7 +34,7 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -67,7 +67,7 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 	private final ManagedScript mBoogie2Smt;
 
 	public AbsIntNonSmtInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-			final INestedWordAutomatonSimple<LETTER, IPredicate> oldAbstraction, final IPredicateUnifier predUnifier,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction, final IPredicateUnifier predUnifier,
 			final ManagedScript csToolkit, final IIcfgSymbolTable symbolTable,
 			final IRun<LETTER, IPredicate, ?> currentCounterexample,
 			final SimplificationTechnique simplificationTechnique,
@@ -88,13 +88,13 @@ public class AbsIntNonSmtInterpolantAutomatonBuilder<LETTER>
 	}
 
 	private NestedWordAutomaton<LETTER, IPredicate> getPathProgramAutomaton(
-			final INestedWordAutomatonSimple<LETTER, IPredicate> oldAbstraction,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
 			final IPredicateUnifier predicateUnifier) {
 		return getPathProgramAutomatonNew(oldAbstraction, predicateUnifier);
 	}
 
 	private NestedWordAutomaton<LETTER, IPredicate> getPathProgramAutomatonNew(
-			final INestedWordAutomatonSimple<LETTER, IPredicate> oldAbstraction,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
 			final IPredicateUnifier predicateUnifier) {
 		mLogger.info("Creating interpolant automaton from AI using abstract post for generalization");
 

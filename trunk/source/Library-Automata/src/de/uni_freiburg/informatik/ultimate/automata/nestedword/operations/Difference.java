@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperatio
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomatonFilteredStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DifferenceDD;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.IOpWithDelayedDeadEndRemoval;
@@ -56,8 +56,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFacto
  */
 public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE, INwaInclusionStateFactory<STATE>>
 		implements IOpWithDelayedDeadEndRemoval<LETTER, STATE> {
-	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
-	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndOperand;
 	private final IStateDeterminizer<LETTER, STATE> mStateDeterminizer;
 	private IntersectNwa<LETTER, STATE> mIntersect;
 	private NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
@@ -71,8 +71,8 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 
 	public <SF extends ISinkStateFactory<STATE> & IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Difference(
 			final AutomataLibraryServices services, final SF stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand,
 			final IStateDeterminizer<LETTER, STATE> stateDeterminizer, final boolean finalIsTrap)
 			throws AutomataLibraryException {
 		super(services);
@@ -109,8 +109,8 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	 *             if construction fails
 	 */
 	public Difference(final AutomataLibraryServices services, final INwaInclusionStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		this(services, stateFactory, fstOperand, sndOperand, new PowersetDeterminizer<>(sndOperand, true, stateFactory),
 				false);
 	}
@@ -159,12 +159,12 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	}
 
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getFirstOperand() {
 		return mFstOperand;
 	}
 
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
 
@@ -182,7 +182,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 			mLogger.info("Start testing correctness of " + operationName());
 		}
 		final INestedWordAutomaton<LETTER, STATE> fstUnreach = new RemoveUnreachable<>(mServices, mFstOperand).getResult();
-		final INestedWordAutomatonSimple<LETTER, STATE> resultDd =
+		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> resultDd =
 				(new DifferenceDD<>(mServices, stateFactory, fstUnreach, mSndOperand,
 						new PowersetDeterminizer<>(mSndOperand, true, stateFactory), false, false)).getResult();
 		boolean correct = true;

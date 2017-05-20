@@ -33,7 +33,7 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDeckerAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> implements INestedWordAutomatonSimple<LETTER, STATE> {
+public final class Senwa<LETTER, STATE> extends DoubleDeckerAutomaton<LETTER, STATE> implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
 	private final Map<STATE, STATE> mState2Entry = new HashMap<>();
 	private final Map<STATE, Set<STATE>> mEntry2Module = new HashMap<>();
 

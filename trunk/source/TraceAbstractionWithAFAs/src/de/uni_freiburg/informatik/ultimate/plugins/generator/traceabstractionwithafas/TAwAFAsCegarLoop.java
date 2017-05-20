@@ -43,7 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.alternating.AA_MergedUnion;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.AlternatingAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.alternating.BooleanExpression;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
@@ -534,7 +534,7 @@ public class TAwAFAsCegarLoop<LETTER extends IIcfgTransition<?>> extends CegarLo
 		}
 
 		final boolean stillAccepted = new Accepts<>(new AutomataLibraryServices(mServices),
-				(INestedWordAutomatonSimple<LETTER, IPredicate>) mAbstraction,
+				(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction,
 				(NestedWord<LETTER>) mCounterexample.getWord()).getResult();
 		assert !stillAccepted : "stillAccepted --> no progress";
 		return !stillAccepted;

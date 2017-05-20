@@ -33,7 +33,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
@@ -71,8 +71,8 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	private static final int NUMBER_OF_ONE_SYMBOL_RANDOM_WORDS = 6;
 	private static final int NUMBER_OF_TWO_SYMBOL_RANDOM_WORDS = 11;
 
-	private final INestedWordAutomatonSimple<LETTER, STATE> mFstOperand;
-	private final INestedWordAutomatonSimple<LETTER, STATE> mSndOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mFstOperand;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndOperand;
 	private final boolean mResult;
 	private NestedLassoWord<LETTER> mCounterexample;
 	private boolean mCompleteTestWasApplied;
@@ -115,8 +115,8 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	 */
 	public BuchiIsEquivalent(final AutomataLibraryServices services,
 			final IBuchiNwaInclusionStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		this(services, stateFactory, fstOperand, sndOperand, TestMode.DYNAMIC);
 	}
 
@@ -138,8 +138,8 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	 */
 	public BuchiIsEquivalent(final AutomataLibraryServices services,
 			final IBuchiNwaInclusionStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand, final TestMode mode)
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand, final TestMode mode)
 			throws AutomataLibraryException {
 		super(services);
 		mFstOperand = fstOperand;
@@ -171,12 +171,12 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 	}
 
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getFirstOperand() {
 		return mFstOperand;
 	}
 
 	@Override
-	public INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
 
@@ -237,8 +237,8 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 
 	private boolean checkInclusionPrecisely(final AutomataLibraryServices services,
 			final IBuchiNwaInclusionStateFactory<STATE> stateFactory,
-			final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) throws AutomataLibraryException {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) throws AutomataLibraryException {
 		final NestedLassoRun<LETTER, STATE> counterexample =
 				(new BuchiIsIncluded<>(services, stateFactory, fstOperand, sndOperand)).getCounterexample();
 		if (counterexample != null) {
@@ -290,8 +290,8 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 		return checkEquivalenceImprecisely();
 	}
 
-	private boolean extractAndCheckLassoWords(final INestedWordAutomatonSimple<LETTER, STATE> source,
-			final INestedWordAutomatonSimple<LETTER, STATE> target) throws AutomataLibraryException {
+	private boolean extractAndCheckLassoWords(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> source,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> target) throws AutomataLibraryException {
 		// extract lasso words from the source automaton
 		final List<NestedLassoWord<LETTER>> nestedLassoWords = new ArrayList<>();
 		nestedLassoWords.addAll((new LassoExtractor<>(mServices, source)).getResult());
@@ -300,7 +300,7 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 		return checkLassoWords(target, nestedLassoWords);
 	}
 
-	private boolean checkLassoWords(final INestedWordAutomatonSimple<LETTER, STATE> automaton,
+	private boolean checkLassoWords(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton,
 			final List<NestedLassoWord<LETTER>> nestedLassoWords) throws AutomataLibraryException {
 		for (final NestedLassoWord<LETTER> nestedLassoWord : nestedLassoWords) {
 			if (!checkLassoWord(automaton, nestedLassoWord)) {
@@ -311,7 +311,7 @@ public final class BuchiIsEquivalent<LETTER, STATE> extends BinaryNwaOperation<L
 		return true;
 	}
 
-	private boolean checkLassoWord(final INestedWordAutomatonSimple<LETTER, STATE> automaton,
+	private boolean checkLassoWord(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton,
 			final NestedLassoWord<LETTER> nestedLassoWord) throws AutomataLibraryException {
 		return (new BuchiAccepts<>(mServices, automaton, nestedLassoWord)).getResult();
 	}

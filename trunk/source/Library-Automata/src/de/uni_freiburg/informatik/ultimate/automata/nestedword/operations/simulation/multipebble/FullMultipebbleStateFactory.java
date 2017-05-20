@@ -31,7 +31,7 @@ import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DoubleDecker;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
@@ -68,22 +68,22 @@ public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipeb
 	protected abstract <LETTER> GS constructSpoilerWinningSink();
 
 	protected abstract <LETTER> GS computeSuccessorsInternalGivenSpoilerSucc(DoubleDecker<STATE> spoilerSucc, GS gs,
-			final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa);
+			final LETTER letter, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa);
 
 	protected abstract <LETTER> GS computeSuccessorsCallGivenSpoilerSucc(DoubleDecker<STATE> spoilerSucc, GS gs,
-			final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa);
+			final LETTER letter, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa);
 
 	protected abstract <LETTER> GS computeSuccessorsReturnGivenSpoilerSucc(DoubleDecker<STATE> spoilerSucc, GS gs,
-			final GS hier, final LETTER letter, final INestedWordAutomatonSimple<LETTER, STATE> nwa);
+			final GS hier, final LETTER letter, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa);
 
 	public abstract <LETTER> boolean isImmediatelyWinningForSpoiler(final STATE q0, final STATE q1,
-			final INestedWordAutomatonSimple<LETTER, STATE> operand);
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand);
 
 	public abstract <LETTER> GS constructInitialState(STATE q0, STATE q1,
-			INestedWordAutomatonSimple<LETTER, STATE> operand);
+			INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> operand);
 
 	public final <LETTER> List<GS> computeSuccessorsInternal(final GS gs, final LETTER letter,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		if (IFullMultipebbleAuxiliaryGameState.isSpoilerWinningSink(gs)) {
 			return Collections.singletonList(mSpoilerWinningSink);
 		}
@@ -100,7 +100,7 @@ public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipeb
 	}
 
 	public final <LETTER> List<GS> computeSuccessorsCall(final GS gs, final LETTER letter,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		if (IFullMultipebbleAuxiliaryGameState.isSpoilerWinningSink(gs)) {
 			return Collections.singletonList(mSpoilerWinningSink);
 		}
@@ -117,7 +117,7 @@ public abstract class FullMultipebbleStateFactory<STATE, GS extends FullMultipeb
 	}
 
 	public final <LETTER> List<GS> computeSuccessorsReturn(final GS gs, final GS hier, final LETTER letter,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		if (IFullMultipebbleAuxiliaryGameState.isSpoilerWinningSink(gs)) {
 			return Collections.singletonList(mSpoilerWinningSink);
 		}

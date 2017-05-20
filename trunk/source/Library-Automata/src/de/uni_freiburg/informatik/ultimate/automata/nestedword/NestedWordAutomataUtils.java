@@ -249,7 +249,7 @@ public final class NestedWordAutomataUtils {
 	}
 
 	public static <LETTER, STATE> Set<STATE> constructInternalSuccessors(
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final STATE state, final LETTER letter) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa, final STATE state, final LETTER letter) {
 		if (nwa instanceof NestedWordAutomaton) {
 			return ((NestedWordAutomaton<LETTER, STATE>) nwa).succInternal(state, letter);
 		}
@@ -258,7 +258,7 @@ public final class NestedWordAutomataUtils {
 	}
 
 	public static <LETTER, STATE> Set<STATE> constructCallSuccessors(
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final STATE state, final LETTER letter) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa, final STATE state, final LETTER letter) {
 		if (nwa instanceof NestedWordAutomaton) {
 			return ((NestedWordAutomaton<LETTER, STATE>) nwa).succCall(state, letter);
 		}
@@ -267,7 +267,7 @@ public final class NestedWordAutomataUtils {
 	}
 
 	public static <LETTER, STATE> Set<STATE> constructReturnSuccessors(
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final STATE lin, final STATE hier,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa, final STATE lin, final STATE hier,
 			final LETTER letter) {
 		if (nwa instanceof NestedWordAutomaton) {
 			return ((NestedWordAutomaton<LETTER, STATE>) nwa).succReturn(lin, hier, letter);
@@ -285,7 +285,7 @@ public final class NestedWordAutomataUtils {
 	 *            state type
 	 * @return {@code true} iff both the call alphabet and the return alphabet is empty.
 	 */
-	public static <LETTER, STATE> boolean isFiniteAutomaton(final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+	public static <LETTER, STATE> boolean isFiniteAutomaton(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		return nwa.getVpAlphabet().getCallAlphabet().isEmpty() && nwa.getVpAlphabet().getReturnAlphabet().isEmpty();
 	}
 
@@ -302,8 +302,8 @@ public final class NestedWordAutomataUtils {
 	 *            state type
 	 * @return {@code true} iff the automata have the same alphabets
 	 */
-	public static <LETTER, STATE> boolean sameAlphabet(final INestedWordAutomatonSimple<LETTER, STATE> fstOperand,
-			final INestedWordAutomatonSimple<LETTER, STATE> sndOperand) {
+	public static <LETTER, STATE> boolean sameAlphabet(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> fstOperand,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> sndOperand) {
 		boolean result;
 		result = fstOperand.getVpAlphabet().equals(sndOperand.getVpAlphabet());
 		return result;
@@ -321,7 +321,7 @@ public final class NestedWordAutomataUtils {
 	 * @return random {@link NestedLassoWord}
 	 */
 	public static <LETTER, STATE> NestedLassoWord<LETTER> getRandomNestedLassoWord(
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa, final int size, final long seed) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa, final int size, final long seed) {
 		final NestedWord<LETTER> stem = (new GetRandomNestedWord<>(null, nwa, size, seed)).getResult();
 		final NestedWord<LETTER> loop = (new GetRandomNestedWord<>(null, nwa, size, seed)).getResult();
 		return new NestedLassoWord<>(stem, loop);
@@ -334,7 +334,7 @@ public final class NestedWordAutomataUtils {
 	 * labeled with the same letter.
 	 */
 	private static <LETTER, STATE> boolean isNondeterministicInternal(final STATE state,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		for (final LETTER letter : nwa.lettersInternal(state)) {
 			int numberOfSuccs = 0;
 			for (final Iterator<OutgoingInternalTransition<LETTER, STATE>> iterator =
@@ -353,7 +353,7 @@ public final class NestedWordAutomataUtils {
 	 * labeled with the same letter.
 	 */
 	private static <LETTER, STATE> boolean isNondeterministicCall(final STATE state,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		for (final LETTER letter : nwa.lettersCall(state)) {
 			int numberOfSuccs = 0;
 			for (final Iterator<OutgoingCallTransition<LETTER, STATE>> iterator =
@@ -372,7 +372,7 @@ public final class NestedWordAutomataUtils {
 	 * are the same hierarchical predecessors. 
 	 */
 	private static <LETTER, STATE> boolean isNondeterministicReturn(final STATE state, final STATE hier,
-			final INestedWordAutomatonSimple<LETTER, STATE> nwa) {
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> nwa) {
 		for (final LETTER letter : nwa.lettersReturn(state, hier)) {
 			int numberOfSuccs = 0;
 			for (final Iterator<OutgoingReturnTransition<LETTER, STATE>> iterator =

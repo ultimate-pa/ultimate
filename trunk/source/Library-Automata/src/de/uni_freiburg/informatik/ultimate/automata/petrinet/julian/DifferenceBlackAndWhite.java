@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaInclusionStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEquivalent;
@@ -391,9 +391,9 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 
 		final INestedWordAutomaton<S, C> op1AsNwa =
 				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mOperand)).getResult();
-		final INestedWordAutomatonSimple<S, C> rcResult =
+		final INwaOutgoingLetterAndTransitionProvider<S, C> rcResult =
 				(new DifferenceDD<>(mServices, stateFactory, op1AsNwa, mNwa)).getResult();
-		final INestedWordAutomatonSimple<S, C> resultAsNwa =
+		final INwaOutgoingLetterAndTransitionProvider<S, C> resultAsNwa =
 				(new PetriNet2FiniteAutomaton<>(mServices, stateFactory, mResult)).getResult();
 
 		boolean correct = true;

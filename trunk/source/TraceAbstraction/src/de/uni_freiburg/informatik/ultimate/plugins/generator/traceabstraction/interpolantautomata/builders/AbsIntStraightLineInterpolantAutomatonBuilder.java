@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IRun;
 import de.uni_freiburg.informatik.ultimate.automata.Word;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -84,7 +84,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 	private final IIcfgSymbolTable mSymbolTable;
 
 	public AbsIntStraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
-			final INestedWordAutomatonSimple<LETTER, IPredicate> oldAbstraction,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
 			final IAbstractInterpretationResult<?, LETTER, IBoogieVar, ?> aiResult, final IPredicateUnifier predUnifier,
 			final CfgSmtToolkit csToolkit, final IRun<LETTER, IPredicate, ?> currentCounterExample,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
@@ -103,7 +103,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 	}
 
 	private <STATE extends IAbstractState<STATE, IBoogieVar>> NestedWordAutomaton<LETTER, IPredicate>
-			constructAutomaton(final INestedWordAutomatonSimple<LETTER, IPredicate> oldAbstraction,
+			constructAutomaton(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
 					final IAbstractInterpretationResult<STATE, LETTER, IBoogieVar, ?> aiResult,
 					final IPredicateUnifier predicateUnifier) {
 
@@ -206,7 +206,7 @@ public class AbsIntStraightLineInterpolantAutomatonBuilder<LETTER extends IIcfgT
 	}
 
 	private <STATE extends IAbstractState<STATE, IBoogieVar>> void addSelfLoops(
-			final INestedWordAutomatonSimple<LETTER, IPredicate> oldAbstraction,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> oldAbstraction,
 			final NestedWordAutomaton<LETTER, IPredicate> result, final TripleStack<STATE> callStack) {
 		if (!result.getFinalStates().isEmpty()) {
 			for (final IPredicate finalState : result.getFinalStates()) {

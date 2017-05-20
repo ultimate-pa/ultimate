@@ -34,7 +34,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache;
@@ -78,7 +78,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Ac
  * @author Matthias Heizmann
  *
  */
-public abstract class AbstractInterpolantAutomaton<LETTER> implements INestedWordAutomatonSimple<LETTER, IPredicate> {
+public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> {
 
 	public enum Mode {
 		ON_DEMAND_CONSTRUCTION, READ_ONLY
