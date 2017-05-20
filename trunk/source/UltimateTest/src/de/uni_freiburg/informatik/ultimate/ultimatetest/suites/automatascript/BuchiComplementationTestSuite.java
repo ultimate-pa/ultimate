@@ -75,8 +75,7 @@ public class BuchiComplementationTestSuite extends UltimateTestSuite {
 //			"examples/Automata/benchmarks/nwa/operations/minimization",
 
 			
-			// The following folder is not in the repository.
-			// Copy your automata benchmark sets into this folder.
+			// TODO: find some better folder
 			"examples/Automata/regression/nwa/operations/buchiComplement/ba",
 	};
 	
@@ -96,24 +95,6 @@ public class BuchiComplementationTestSuite extends UltimateTestSuite {
 			StatisticsType.RUNTIME_TOTAL.toString(),
 			StatisticsType.STATES_INPUT.toString(),
 			StatisticsType.STATES_OUTPUT.toString(),
-			StatisticsType.STATES_REDUCTION_ABSOLUTE.toString(),
-			StatisticsType.STATES_REDUCTION_RELATIVE.toString(),
-			StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK.toString(),
-			StatisticsType.TIME_PREPROCESSING.toString(),
-			StatisticsType.TIME_SIMULATION.toString(),
-			StatisticsType.TIME_ASSERTING.toString(),
-			StatisticsType.TIME_SOLVING.toString(),
-			StatisticsType.BUCHI_NONDETERMINISTIC_STATES.toString(),
-			StatisticsType.BUCHI_TRANSITION_DENSITY_MILLION.toString(),
-			StatisticsType.SIZE_GAME_AUTOMATON.toString(),
-			StatisticsType.SIZE_GAME_GRAPH.toString(),
-			StatisticsType.MAX_NUMBER_OF_DOUBLEDECKER_PEBBLES.toString(),
-			StatisticsType.NUMBER_INITIAL_PAIRS.toString(),
-			StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK.toString(),
-			StatisticsType.NUMBER_INITIAL_PAIRS_PMAXSAT.toString(),
-			StatisticsType.NUMBER_RESULT_PAIRS.toString(),
-			StatisticsType.SIZE_INITIAL_PARTITION_PMAXSAT.toString(),
-			StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK_PMAXSAT.toString(),
 	};
 	
 	private static final Set<String> INTERESTING_COLUMNS_AS_SET = new HashSet<>(Arrays.asList(INTERESTING_COLUMNS));
