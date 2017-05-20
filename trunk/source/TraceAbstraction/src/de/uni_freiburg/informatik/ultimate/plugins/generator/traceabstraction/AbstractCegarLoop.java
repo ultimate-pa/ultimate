@@ -74,7 +74,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * @author heizmann@informatik.uni-freiburg.de
  */
 public abstract class AbstractCegarLoop<LETTER extends IAction> {
-	private static final String MSG_VERIFICATION_CANCELLED = "Verification cancelled";
+	private static final String MSG_VERIFICATION_CANCELED = "Verification canceled";
 	
 	private static final boolean CONTINUE_AFTER_ERROR_TRACE_FOUND = false;
 
@@ -250,7 +250,6 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 * <li>accepts the trace of mCounterexample,
 	 * <li>accepts only feasible traces.
 	 * </ul>
-	 * @return
 	 */
 	protected abstract void constructErrorAutomaton() throws AutomataOperationCanceledException;
 
@@ -323,10 +322,8 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		}
 		try {
 			getInitialAbstraction();
-		} catch (final AutomataOperationCanceledException e1) {
-			mLogger.warn(MSG_VERIFICATION_CANCELLED);
-			mCegarLoopBenchmark.setResult(Result.TIMEOUT);
-			return Result.TIMEOUT;
+		} catch (final AutomataOperationCanceledException e) {
+			return preformTimeoutActions();
 		} catch (final AutomataLibraryException e) {
 			throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 		}
@@ -345,11 +342,9 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		boolean initalAbstractionCorrect;
 		try {
 			initalAbstractionCorrect = isAbstractionCorrect();
-		} catch (final AutomataOperationCanceledException e1) {
-			mRunningTaskStackProvider = e1;
-			mLogger.warn(MSG_VERIFICATION_CANCELLED);
-			mCegarLoopBenchmark.setResult(Result.TIMEOUT);
-			return Result.TIMEOUT;
+		} catch (final AutomataOperationCanceledException e) {
+			mRunningTaskStackProvider = e;
+			return preformTimeoutActions();
 		}
 		if (initalAbstractionCorrect) {
 			mCegarLoopBenchmark.setResult(Result.SAFE);
@@ -365,6 +360,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				mDumper = new Dumper(mLogger, mPref, mName, mIteration);
 			}
 
+			final String automatonType;
 			try {
 				final LBool isCounterexampleFeasible = isCounterexampleFeasible();
 				if (isCounterexampleFeasible == Script.LBool.SAT) {
@@ -374,6 +370,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 							mLogger.info("trying to exclude counterexample and continue analysis now");
 						}
 						mInteractive.waitIfPaused();
+						automatonType = "Error";
 						constructErrorAutomaton();
 					} else {
 						return Result.UNSAFE;
@@ -384,26 +381,23 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 					return Result.UNKNOWN;
 				} else {
 					mInteractive.waitIfPaused();
+					automatonType = "Interpolant";
 					constructInterpolantAutomaton();
 				}
-			} catch (final AutomataOperationCanceledException e1) {
-				mLogger.warn(MSG_VERIFICATION_CANCELLED);
-				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
-				return Result.TIMEOUT;
+			} catch (final AutomataOperationCanceledException e) {
+				return preformTimeoutActions();
 			} catch (final ToolchainCanceledException e) {
 				mRunningTaskStackProvider = e;
-				mLogger.warn(MSG_VERIFICATION_CANCELLED);
-				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
-				return Result.TIMEOUT;
+				return preformTimeoutActions();
 			}
 
-			mLogger.info("Interpolant Automaton has " + mInterpolAutomaton.getStates().size() + " states");
+			mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.getStates().size() + " states");
 
 			if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON) {
 				mArtifactAutomaton = mInterpolAutomaton;
 			}
 			if (mPref.dumpAutomata()) {
-				writeAutomatonToFile(mInterpolAutomaton, "InterpolantAutomaton_Iteration" + mIteration);
+				writeAutomatonToFile(mInterpolAutomaton, automatonType + "Automaton_Iteration" + mIteration);
 			}
 
 			mInteractive.waitIfPaused();
@@ -415,15 +409,13 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				}
 			} catch (final ToolchainCanceledException | AutomataOperationCanceledException e) {
 				mRunningTaskStackProvider = e;
-				mLogger.warn("Verification canceled");
-				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
-				return Result.TIMEOUT;
+				return preformTimeoutActions();
 			} catch (final AutomataLibraryException e) {
 				throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 			}
 
 			mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
-			mLogger.info("Interpolant automaton has " + mInterpolAutomaton.sizeInformation());
+			mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.sizeInformation());
 			mInteractive.reportSizeInfo(mAbstraction.sizeInformation(), mInterpolAutomaton.sizeInformation());
 
 			if (mPref.computeHoareAnnotation() && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
@@ -452,9 +444,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 			try {
 				isAbstractionCorrect = isAbstractionCorrect();
 			} catch (final AutomataOperationCanceledException e) {
-				mLogger.warn(MSG_VERIFICATION_CANCELLED);
-				mCegarLoopBenchmark.setResult(Result.TIMEOUT);
-				return Result.TIMEOUT;
+				return preformTimeoutActions();
 			}
 			if (isAbstractionCorrect) {
 				mCegarLoopBenchmark.setResult(Result.SAFE);
@@ -462,6 +452,12 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 			}
 			mInteractive.send(mCegarLoopBenchmark);
 		}
+		mCegarLoopBenchmark.setResult(Result.TIMEOUT);
+		return Result.TIMEOUT;
+	}
+
+	private Result preformTimeoutActions() {
+		mLogger.warn(MSG_VERIFICATION_CANCELED);
 		mCegarLoopBenchmark.setResult(Result.TIMEOUT);
 		return Result.TIMEOUT;
 	}
@@ -483,5 +479,4 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	public UnprovabilityReason getReasonUnknown() {
 		return mReasonUnknown;
 	}
-
 }
