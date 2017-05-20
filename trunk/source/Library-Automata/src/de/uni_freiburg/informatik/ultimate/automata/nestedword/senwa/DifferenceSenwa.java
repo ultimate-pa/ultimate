@@ -266,12 +266,12 @@ public final class DifferenceSenwa<LETTER, STATE>
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+	public INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
 		return mMinuend;
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+	public INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
 		return mSubtrahend;
 	}
 

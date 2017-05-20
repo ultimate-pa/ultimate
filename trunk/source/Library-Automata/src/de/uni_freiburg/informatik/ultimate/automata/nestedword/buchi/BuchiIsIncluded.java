@@ -107,12 +107,12 @@ public final class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LET
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+	public INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
 		return mFstOperand;
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+	public INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
 
@@ -137,8 +137,8 @@ public final class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LET
 		return result;
 	}
 
-	private static <LETTER, STATE> AutomataOperationStatistics constructBasicInclusionStatistics(final AutomataLibraryServices services,
-			final ILogger logger, final BuchiIsIncluded<LETTER, STATE> buchiIsIncluded) {
+	static <LETTER, STATE> AutomataOperationStatistics constructBasicInclusionStatistics(final AutomataLibraryServices services,
+			final ILogger logger, final BinaryNwaOperation<LETTER, STATE, ?> buchiIsIncluded) {
 		final AutomataOperationStatistics result = new AutomataOperationStatistics();
 		final int lhsSize = buchiIsIncluded.getFirstOperand().size();
 		final int rhsSize = buchiIsIncluded.getSecondOperand().size();
@@ -155,7 +155,7 @@ public final class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LET
 			logger.info("wanted to run IsSemiDeterministic for statistics but toolchain was cancelled");
 		}
 
-		final boolean isIncluded = buchiIsIncluded.getResult();
+		final boolean isIncluded = (boolean) buchiIsIncluded.getResult();
 
 		result.addKeyValuePair(StatisticsType.STATES_LHS, lhsSize);
 		result.addKeyValuePair(StatisticsType.STATES_RHS, rhsSize);

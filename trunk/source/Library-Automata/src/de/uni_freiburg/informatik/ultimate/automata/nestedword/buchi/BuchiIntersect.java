@@ -102,12 +102,12 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
+	public INestedWordAutomatonSimple<LETTER, STATE> getFirstOperand() {
 		return mFstOperand;
 	}
 
 	@Override
-	protected INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
+	public INestedWordAutomatonSimple<LETTER, STATE> getSecondOperand() {
 		return mSndOperand;
 	}
 
