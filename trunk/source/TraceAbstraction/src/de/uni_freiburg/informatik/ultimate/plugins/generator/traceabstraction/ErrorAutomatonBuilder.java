@@ -36,11 +36,13 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
@@ -48,40 +50,64 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
- * Cosntructs an error automaton for a given error trace.
+ * Constructs an error automaton for a given error trace.
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type in the trace
  */
 public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
+	private static final boolean USE_NONDET_AUTOMATON = false;
+
 	private final NestedWordAutomaton<LETTER, IPredicate> mAutomaton;
 
-	public ErrorAutomatonBuilder(final IPredicateUnifier predicateUnifier, final PredicateFactory mPredicateFactory,
-			final CfgSmtToolkit mCsToolkit, final IUltimateServiceProvider mServices,
-			final SimplificationTechnique mSimplificationTechnique,
-			final XnfConversionTechnique mXnfConversionTechnique, final IIcfg<?> mIcfgContainer,
-			final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata,
-			final IAutomaton<LETTER, IPredicate> mAbstraction, final NestedWord<LETTER> trace) {
-		mAutomaton = constructStraightLineAutomaton(predicateUnifier, mPredicateFactory, mCsToolkit, mServices,
-				mSimplificationTechnique, mXnfConversionTechnique, mIcfgContainer, mPredicateFactoryInterpolantAutomata,
-				mAbstraction, trace);
+	public ErrorAutomatonBuilder(final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory,
+			final CfgSmtToolkit csToolkit, final IUltimateServiceProvider services,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+			final IIcfg<?> icfgContainer,
+			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
+			final IAutomaton<LETTER, IPredicate> abstraction, final NestedWord<LETTER> trace) {
+		if (USE_NONDET_AUTOMATON) {
+			mAutomaton = constructNondeterministicAutomaton(predicateUnifier, predicateFactory, csToolkit, services,
+					simplificationTechnique, xnfConversionTechnique, icfgContainer, predicateFactoryInterpolantAutomata,
+					abstraction, trace);
+		} else {
+			mAutomaton = constructStraightLineAutomaton(predicateUnifier, predicateFactory, csToolkit, services,
+					simplificationTechnique, xnfConversionTechnique, icfgContainer, predicateFactoryInterpolantAutomata,
+					abstraction, trace);
+		}
+	}
+
+	private NestedWordAutomaton<LETTER, IPredicate> constructNondeterministicAutomaton(
+			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory,
+			final CfgSmtToolkit csToolkit, final IUltimateServiceProvider services,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+			final IIcfg<?> icfgContainer,
+			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
+			final IAutomaton<LETTER, IPredicate> abstraction, final NestedWord<LETTER> trace) {
+		final IHoareTripleChecker hoareTripleChecker = null;
+		final boolean conservativeSuccessorCandidateSelection = true;
+		final boolean secondChance = false;
+		final NondeterministicInterpolantAutomaton<LETTER> result =
+				new NondeterministicInterpolantAutomaton<>(services, csToolkit, hoareTripleChecker, mAutomaton,
+						predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
+		return null;
 	}
 
 	private NestedWordAutomaton<LETTER, IPredicate> constructStraightLineAutomaton(
-			final IPredicateUnifier predicateUnifier, final PredicateFactory mPredicateFactory,
-			final CfgSmtToolkit mCsToolkit, final IUltimateServiceProvider mServices,
-			final SimplificationTechnique mSimplificationTechnique,
-			final XnfConversionTechnique mXnfConversionTechnique, final IIcfg<?> mIcfgContainer,
-			final PredicateFactoryForInterpolantAutomata mPredicateFactoryInterpolantAutomata,
-			final IAutomaton<LETTER, IPredicate> mAbstraction, final NestedWord<LETTER> trace) throws AssertionError {
+			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory,
+			final CfgSmtToolkit csToolkit, final IUltimateServiceProvider services,
+			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
+			final IIcfg<?> icfgContainer,
+			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
+			final IAutomaton<LETTER, IPredicate> abstraction, final NestedWord<LETTER> trace) throws AssertionError {
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
-		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(mPredicateFactory,
-				mCsToolkit.getManagedScript(), mCsToolkit.getModifiableGlobalsTable(), mServices, trace, null,
-				falsePredicate, null, mPredicateFactory.not(falsePredicate), mSimplificationTechnique,
-				mXnfConversionTechnique, mIcfgContainer.getCfgSmtToolkit().getSymbolTable());
+		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(predicateFactory,
+				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), services, trace, null,
+				falsePredicate, null, predicateFactory.not(falsePredicate), simplificationTechnique,
+				xnfConversionTechnique, icfgContainer.getCfgSmtToolkit().getSymbolTable());
 		final DefaultTransFormulas dtf = new DefaultTransFormulas(trace, null, falsePredicate,
-				Collections.emptySortedMap(), mCsToolkit.getOldVarsAssignmentCache(), false);
+				Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
 		final TracePredicates weakestPreconditionSequence;
 		try {
 			weakestPreconditionSequence =
@@ -90,8 +116,8 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			throw new AssertionError();
 		}
 
-		return new StraightLineInterpolantAutomatonBuilder<>(mServices, new VpAlphabet<>(mAbstraction),
-				mPredicateFactoryInterpolantAutomata, trace, weakestPreconditionSequence).getResult();
+		return new StraightLineInterpolantAutomatonBuilder<>(services, new VpAlphabet<>(abstraction),
+				predicateFactoryInterpolantAutomata, trace, weakestPreconditionSequence).getResult();
 	}
 
 	public NestedWordAutomaton<LETTER, IPredicate> getResult() {
