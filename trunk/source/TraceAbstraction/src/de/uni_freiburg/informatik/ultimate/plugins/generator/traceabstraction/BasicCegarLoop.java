@@ -46,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutoma
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
@@ -78,14 +77,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.au
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.automataminimization.AutomataMinimization.AutomataMinimizationTimeout;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.benchmark.LineCoverageCalculator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.InterpolantAutomatonBuilderFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.DeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.ISLPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.InductivityCheck;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.Artifact;
@@ -98,9 +94,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.pr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.Minimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.UnsatCores;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.DefaultTransFormulas;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementEngine;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.IRefinementStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.RefinementStrategyFactory;
@@ -387,7 +381,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				new IncrementalHoareTripleChecker(super.mCsToolkit)).getResult();
 	}
 
-	private boolean isInterpolantAutomatonOfSingleStateType(final INestedWordAutomaton<?, IPredicate> automaton) {
+	private static boolean isInterpolantAutomatonOfSingleStateType(
+			final INestedWordAutomaton<?, IPredicate> automaton) {
 		Class<? extends IPredicate> typeofState = null;
 		for (final IPredicate state : automaton.getStates()) {
 			if (typeofState == null) {
@@ -406,28 +401,11 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("constructing error automaton for trace of length " + trace.length());
 		}
-
-		// TODO first approach: only construct straight-line automaton
-		final IPredicate falsePredicate = mTraceCheckAndRefinementEngine.getPredicateUnifier().getFalsePredicate();
-		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(mPredicateFactory,
-				mCsToolkit.getManagedScript(), mCsToolkit.getModifiableGlobalsTable(), mServices,
-				trace, null, falsePredicate, null, mPredicateFactory.not(falsePredicate),
-				mSimplificationTechnique, mXnfConversionTechnique, mIcfgContainer.getCfgSmtToolkit().getSymbolTable());
-		final DefaultTransFormulas dtf = new DefaultTransFormulas(trace, null, falsePredicate,
-				Collections.emptySortedMap(), mCsToolkit.getOldVarsAssignmentCache(), false);
-		final TracePredicates weakestPreconditionSequence;
-		try {
-			weakestPreconditionSequence =
-					ipt.computeWeakestPreconditionSequence(dtf, Collections.emptyList(), true, false);
-		} catch (final TraceInterpolationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-			throw new AssertionError();
-		}
-		
-		mInterpolAutomaton = new StraightLineInterpolantAutomatonBuilder<>(mServices, new VpAlphabet<>(mAbstraction),
-				mPredicateFactoryInterpolantAutomata, trace, weakestPreconditionSequence).getResult();
-		mErrorTraces.addTrace(mCounterexample, weakestPreconditionSequence.getPrecondition());
+		final ErrorAutomatonBuilder<LETTER> builder = new ErrorAutomatonBuilder<>(
+				mTraceCheckAndRefinementEngine.getPredicateUnifier(), mPredicateFactory, mCsToolkit, mServices,
+				mSimplificationTechnique, mXnfConversionTechnique, mIcfgContainer, mPredicateFactoryInterpolantAutomata,
+				mAbstraction, trace);
+		mInterpolAutomaton = builder.getResult();
 		mErrorAutomatonAvailable = true;
 		assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
 		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Error automaton broken!";
