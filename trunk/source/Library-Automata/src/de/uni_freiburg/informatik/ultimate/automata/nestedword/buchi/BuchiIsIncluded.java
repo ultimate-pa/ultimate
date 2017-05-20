@@ -138,24 +138,24 @@ public final class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LET
 	}
 
 	static <LETTER, STATE> AutomataOperationStatistics constructBasicInclusionStatistics(final AutomataLibraryServices services,
-			final ILogger logger, final BinaryNwaOperation<LETTER, STATE, ?> buchiIsIncluded) {
+			final ILogger logger, final BinaryNwaOperation<LETTER, STATE, ?> buchiIsIncludedOperation) {
 		final AutomataOperationStatistics result = new AutomataOperationStatistics();
-		final int lhsSize = buchiIsIncluded.getFirstOperand().size();
-		final int rhsSize = buchiIsIncluded.getSecondOperand().size();
+		final int lhsSize = buchiIsIncludedOperation.getFirstOperand().size();
+		final int rhsSize = buchiIsIncludedOperation.getSecondOperand().size();
 		Boolean rhsIsDeterministic = null;
 		try {
-			rhsIsDeterministic = new IsDeterministic<>(services, buchiIsIncluded.getSecondOperand()).getResult();
+			rhsIsDeterministic = new IsDeterministic<>(services, buchiIsIncludedOperation.getSecondOperand()).getResult();
 		} catch (final AutomataOperationCanceledException e) {
 			logger.info("wanted to run IsDeterministic for statistics but toolchain was cancelled");
 		}
 		Boolean rhsIsSemiDeterministic = null;
 		try {
-			rhsIsSemiDeterministic = new IsSemiDeterministic<>(services, buchiIsIncluded.getSecondOperand()).getResult();
+			rhsIsSemiDeterministic = new IsSemiDeterministic<>(services, buchiIsIncludedOperation.getSecondOperand()).getResult();
 		} catch (final AutomataOperationCanceledException e) {
 			logger.info("wanted to run IsSemiDeterministic for statistics but toolchain was cancelled");
 		}
 
-		final boolean isIncluded = (boolean) buchiIsIncluded.getResult();
+		final boolean isIncluded = (boolean) buchiIsIncludedOperation.getResult();
 
 		result.addKeyValuePair(StatisticsType.STATES_LHS, lhsSize);
 		result.addKeyValuePair(StatisticsType.STATES_RHS, rhsSize);
