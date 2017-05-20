@@ -185,6 +185,10 @@ public enum StatisticsType {
 	 */
 	HAS_TIMED_OUT,
 	/**
+	 * Result of an inclusion check.
+	 */
+	IS_INCLUDED,
+	/**
 	 * If the operation ran out of memory.
 	 */
 	IS_OUT_OF_MEMORY,
@@ -291,6 +295,14 @@ public enum StatisticsType {
 	 */
 	RESULT_TRANSITION_RETURN_DENSITY_MILLION,
 	/**
+	 * Is right-hand side operand deterministic?
+	 */
+	RHS_IS_DETERMINISTIC,
+	/**
+	 * Is right-hand side operand semi-deterministic?
+	 */
+	RHS_IS_SEMIDETERMINISTIC,
+	/**
 	 * Total runtime.
 	 */
 	RUNTIME_TOTAL,
@@ -341,9 +353,17 @@ public enum StatisticsType {
 	 */
 	STATES_INPUT,
 	/**
+	 * Number of states in the left-hand side input operand.
+	 */
+	STATES_LHS,
+	/**
 	 * Number of states in the input.
 	 */
 	STATES_OUTPUT,
+	/**
+	 * Number of states in the right-hand side input operand.
+	 */
+	STATES_RHS,
 	/**
 	 * Absolute difference in the number of states between input and output.
 	 */

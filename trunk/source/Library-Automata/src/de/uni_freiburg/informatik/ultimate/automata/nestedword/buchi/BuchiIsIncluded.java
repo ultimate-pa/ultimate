@@ -28,9 +28,15 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationStatistics;
+import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.BinaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomatonSimple;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsDeterministic;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsSemiDeterministic;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
  * Operation that checks if the language of the first Buchi automaton is included in the language of the second Buchi
@@ -122,5 +128,40 @@ public final class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LET
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
+	}
+	
+	@Override
+	public AutomataOperationStatistics getAutomataOperationStatistics() {
+		final AutomataOperationStatistics result = constructBasicInclusionStatistics(mServices, mLogger, this);
+
+		return result;
+	}
+
+	private static <LETTER, STATE> AutomataOperationStatistics constructBasicInclusionStatistics(final AutomataLibraryServices services,
+			final ILogger logger, final BuchiIsIncluded<LETTER, STATE> buchiIsIncluded) {
+		final AutomataOperationStatistics result = new AutomataOperationStatistics();
+		final int lhsSize = buchiIsIncluded.getFirstOperand().size();
+		final int rhsSize = buchiIsIncluded.getSecondOperand().size();
+		Boolean rhsIsDeterministic = null;
+		try {
+			rhsIsDeterministic = new IsDeterministic<>(services, buchiIsIncluded.getSecondOperand()).getResult();
+		} catch (final AutomataOperationCanceledException e) {
+			logger.info("wanted to run IsDeterministic for statistics but toolchain was cancelled");
+		}
+		Boolean rhsIsSemiDeterministic = null;
+		try {
+			rhsIsSemiDeterministic = new IsSemiDeterministic<>(services, buchiIsIncluded.getSecondOperand()).getResult();
+		} catch (final AutomataOperationCanceledException e) {
+			logger.info("wanted to run IsSemiDeterministic for statistics but toolchain was cancelled");
+		}
+
+		final boolean isIncluded = buchiIsIncluded.getResult();
+
+		result.addKeyValuePair(StatisticsType.STATES_LHS, lhsSize);
+		result.addKeyValuePair(StatisticsType.STATES_RHS, rhsSize);
+		result.addKeyValuePair(StatisticsType.RHS_IS_DETERMINISTIC, rhsIsDeterministic);
+		result.addKeyValuePair(StatisticsType.RHS_IS_SEMIDETERMINISTIC, rhsIsSemiDeterministic);
+		result.addKeyValuePair(StatisticsType.IS_INCLUDED, isIncluded);
+		return result;
 	}
 }
