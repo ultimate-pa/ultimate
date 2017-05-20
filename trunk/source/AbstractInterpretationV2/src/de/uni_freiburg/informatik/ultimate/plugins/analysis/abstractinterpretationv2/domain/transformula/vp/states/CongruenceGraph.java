@@ -1,7 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -10,9 +13,11 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPSFO;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqAtomicBaseNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNonAtomicBaseNode;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTION> {
 	
@@ -345,10 +350,6 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 		return mDisequalities;
 	}
 
-	public void addDisequality(NODE find, NODE find2) {
-		mDisequalities.add(new VPDomainSymmetricPair<NODE>(find, find2));
-	}
-
 	public void renameVariables(Map<Term, Term> substitutionMapping) {
 		assert !mIsFrozen;
 		
@@ -365,5 +366,70 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 
 		mNodeToEqGraphNode = newNodeToEqGraphNodeMap;
 		
+	}
+
+	public void addDisequality(NODE find, NODE find2) {
+		mDisequalities.add(new VPDomainSymmetricPair<NODE>(find, find2));
+		
+	}
+	
+	/**
+	 * Takes a preState and two representatives of different equivalence classes. Under the assumption that a
+	 * disequality between the equivalence classes has been introduced, propagates all the disequalities that follow
+	 * from that disequality.
+	 *
+	 * @param originalStateCopy
+	 * @param representative1
+	 * @param representative2
+	 * @return
+	 */
+	public static <STATE extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID>
+			Set<STATE>
+			propagateDisEqualites(final STATE originalStateCopy, final EqGraphNode<NODEID, ARRAYID> representative1,
+					final EqGraphNode<NODEID, ARRAYID> representative2,
+					final IVPFactory<STATE, NODEID, ARRAYID> factory) {
+		factory.getBenchmark().unpause(VPSFO.propagateDisEqualitiesClock);
+		if (factory.isDebugMode()) {
+			factory.getLogger().debug("VPFactoryHelpers: propagateDisEqualities(..)");
+		}
+
+		Set<STATE> result = new HashSet<>();
+		result.add(originalStateCopy);
+
+		final HashRelation<ARRAYID, List<EqGraphNode<NODEID, ARRAYID>>> ccchild1 = representative1.find().getCcchild();
+		final HashRelation<ARRAYID, List<EqGraphNode<NODEID, ARRAYID>>> ccchild2 = representative2.find().getCcchild();
+
+		for (final ARRAYID arrayId : ccchild1.getDomain()) {
+			for (final List<EqGraphNode<NODEID, ARRAYID>> list1 : ccchild1.getImage(arrayId)) {
+				for (final List<EqGraphNode<NODEID, ARRAYID>> list2 : ccchild2.getImage(arrayId)) {
+					final Set<STATE> intermediateResult = new HashSet<>(result);
+					result = new HashSet<>();
+					for (int i = 0; i < list1.size(); i++) {
+						final EqGraphNode<NODEID, ARRAYID> c1 = list1.get(i);
+						final EqGraphNode<NODEID, ARRAYID> c2 = list2.get(i);
+						if (originalStateCopy.containsDisEquality(c1.find().mNodeIdentifier, c2.find().mNodeIdentifier)) {
+							continue;
+						}
+						factory.getBenchmark().stop(VPSFO.propagateDisEqualitiesClock);
+						result.addAll(
+								addDisEquality(c1.mNodeIdentifier, c2.mNodeIdentifier, intermediateResult, factory));
+						factory.getBenchmark().unpause(VPSFO.propagateDisEqualitiesClock);
+					}
+				}
+			}
+		}
+
+		if (result.isEmpty()) {
+			// no propagations -- return the input state
+			factory.getBenchmark().stop(VPSFO.propagateDisEqualitiesClock);
+			return Collections.singleton(originalStateCopy);
+		}
+		factory.getBenchmark().stop(VPSFO.propagateDisEqualitiesClock);
+		return result;
+	}
+
+	public void addNodes(Collection<NODE> allNodes) {
+		// TODO Auto-generated method stub
+		assert false;
 	}
 }

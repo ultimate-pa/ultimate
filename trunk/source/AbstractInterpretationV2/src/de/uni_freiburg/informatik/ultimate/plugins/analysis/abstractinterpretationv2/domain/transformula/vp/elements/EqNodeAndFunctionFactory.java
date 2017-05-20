@@ -44,4 +44,9 @@ public class EqNodeAndFunctionFactory {
 	public EqFunction getOrConstructEqFunction(IProgramVarOrConst pvoc, Term term) {
 		return new EqFunction(pvoc, term, this);
 	}
+
+	public EqNode getOrConstructEqNode(Term term) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

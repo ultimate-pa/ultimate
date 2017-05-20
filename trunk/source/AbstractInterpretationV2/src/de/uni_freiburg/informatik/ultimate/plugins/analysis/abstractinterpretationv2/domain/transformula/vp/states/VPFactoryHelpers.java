@@ -605,7 +605,7 @@ public class VPFactoryHelpers {
 	 * @param fnNode2
 	 * @return
 	 */
-	public static <NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID> boolean congruentIgnoreFunctionSymbol(
+	public static <NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID> boolean congruentIgnoreFunctionSymbol(
 			final EqGraphNode<NODEID, ARRAYID> fnNode1, final EqGraphNode<NODEID, ARRAYID> fnNode2) {
 		// assert fnNode1.getArgs() != null && fnNode2.getArgs() != null;
 		// assert fnNode1.getArgs().size() == fnNode2.getArgs().size();

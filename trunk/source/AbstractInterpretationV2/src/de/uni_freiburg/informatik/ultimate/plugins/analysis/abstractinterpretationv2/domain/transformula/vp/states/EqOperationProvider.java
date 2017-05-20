@@ -3,14 +3,12 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IDomainSpecificOperationProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 
@@ -48,18 +46,7 @@ public class EqOperationProvider<ACTION extends IIcfgTransition<IcfgLocation>> i
 	@Override
 	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> constructConjunction(
 			List<EqDisjunctiveConstraint<ACTION, EqNode, EqFunction>> conjuncts) {
-		
-		final List<Set<EqConstraint<ACTION, EqNode, EqFunction>>> listOfConstraintSets = conjuncts.stream()
-				.map(conjunct -> conjunct.getConstraints()).collect(Collectors.toList());
-		
-		final Set<List<EqConstraint<ACTION, EqNode, EqFunction>>> crossProduct = 
-				VPDomainHelpers.computeCrossProduct(listOfConstraintSets);
-		
-		final Set<EqConstraint<ACTION, EqNode, EqFunction>> constraintSet = crossProduct.stream()
-				.map(constraintList -> mEqConstraintFactory.conjoin(constraintList))
-				.collect(Collectors.toSet());
-
-		return mEqConstraintFactory.getDisjunctiveConstraint(constraintSet);
+		return mEqConstraintFactory.conjoinDisjunctiveConstraints(conjuncts);
 	}
 	
 	

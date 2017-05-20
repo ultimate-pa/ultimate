@@ -1,9 +1,10 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -77,7 +78,6 @@ public class EqConstraint<
 
 
 	public boolean isBottom() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -88,9 +88,8 @@ public class EqConstraint<
 	}
 
 
-	public void addNodes(Set<NODE> allNodes) {
-		// TODO Auto-generated method stub
-		
+	public void addNodes(Collection<NODE> allNodes) {
+		mElementCongruenceGraph.addNodes(allNodes);
 	}
 
 
@@ -106,14 +105,17 @@ public class EqConstraint<
 
 
 	/**
-	 * "Raw" means here that the disequality is not yet normalized so as to speak about equivalence representatives.
+	 * "Raw" means here that the disequality is not yet normalized such that it only speaks about equivalence 
+	 * representatives.
 	 * 
 	 * @param first
 	 * @param second
 	 */
 	public void addRawDisequality(NODE first, NODE second) {
 		assert !mIsFrozen;
-		mElementCongruenceGraph.addDisequality(mElementCongruenceGraph.find(first), mElementCongruenceGraph.find(second));
+		mElementCongruenceGraph.addDisequality(
+				mElementCongruenceGraph.find(first), 
+				mElementCongruenceGraph.find(second));
 	}
 
 
@@ -247,14 +249,19 @@ public class EqConstraint<
 
 	@Override
 	public EqConstraint<ACTION, NODE, FUNCTION> intersect(EqConstraint<ACTION, NODE, FUNCTION> other) {
-		return mFactory.conjoin(Arrays.asList(new EqConstraint[] { this, other }));
+		final List<EqConstraint<ACTION, NODE, FUNCTION>> constraints = new ArrayList<>(2);
+		constraints.add(this);
+		constraints.add(other);
+		return mFactory.conjoin(constraints).flatten();
 	}
 
 
 	@Override
 	public EqConstraint<ACTION, NODE, FUNCTION> union(EqConstraint<ACTION, NODE, FUNCTION> other) {
-		// TODO Auto-generated method stub
-		return null;
+		final List<EqConstraint<ACTION, NODE, FUNCTION>> constraints = new ArrayList<>(2);
+		constraints.add(this);
+		constraints.add(other);
+		return mFactory.getDisjunctiveConstraint(constraints).flatten();
 	}
 
 

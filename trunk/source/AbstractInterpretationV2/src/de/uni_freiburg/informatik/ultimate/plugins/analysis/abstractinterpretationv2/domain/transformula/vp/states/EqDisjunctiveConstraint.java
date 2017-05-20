@@ -51,6 +51,15 @@ public class EqDisjunctiveConstraint<
 	public Set<EqConstraint<ACTION, NODE, FUNCTION>> getConstraints() {
 		return mConstraints;
 	}
+
+	/**
+	 * Return the strongest conjunctive EqConstraint that is implied by all elements of mConstraints.
+	 * @return
+	 */
+	public EqConstraint<ACTION, NODE, FUNCTION> flatten() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 	
 //	/**
 //	 * Create a new {@link AbstractMultiState} by applying some function to each pair of states from this
