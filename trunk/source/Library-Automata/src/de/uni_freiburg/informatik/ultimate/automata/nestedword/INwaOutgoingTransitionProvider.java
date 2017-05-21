@@ -26,8 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
-import java.util.Set;
-
 import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -45,50 +43,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
  * @param <STATE>
  *            Type of objects which can be used as states.
  */
-public interface INwaOutgoingTransitionProvider<LETTER, STATE> extends IAutomaton<LETTER, STATE> {
-
-//	Set<LETTER> getInternalAlphabet();
-//	
-//	Set<LETTER> getCallAlphabet();
-//
-//	Set<LETTER> getReturnAlphabet();
-	
-	VpAlphabet<LETTER> getVpAlphabet();
-
-	
-	@Override
-	default Set<LETTER> getAlphabet() {
-		return getVpAlphabet().getInternalAlphabet();
-	}
-
-
-
-	/**
-	 * @return Auxiliary state used to model the hierarchical predecessor of a pending return in some operations.<br>
-	 *         Recall that we generally do not accept nested words with pending returns. This auxiliary state is
-	 *         <i>never</i> contained in the set of states. Viewing nested word automata as visibly pushdown automata,
-	 *         this state can be seen as a "bottom letter" of the pushdown alphabet.
-	 */
-	STATE getEmptyStackState();
-
-	/**
-	 * @return All initial states of the automaton.
-	 */
-	Iterable<STATE> getInitialStates();
-
-	/**
-	 * @param state
-	 *            state
-	 * @return true iff the state is initial.
-	 */
-	boolean isInitial(STATE state);
-
-	/**
-	 * @param state
-	 *            state
-	 * @return true iff the state is final.
-	 */
-	boolean isFinal(STATE state);
+public interface INwaOutgoingTransitionProvider<LETTER, STATE> extends IAutomaton<LETTER, STATE>, INwaBasis<LETTER, STATE> {
 
 	/**
 	 * All internal successor transitions for a given state.
