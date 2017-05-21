@@ -361,10 +361,6 @@ public enum StatisticsType {
 	 */
 	STATES_OUTPUT,
 	/**
-	 * Number of states in the right-hand side input operand.
-	 */
-	STATES_RHS,
-	/**
 	 * Absolute difference in the number of states between input and output.
 	 */
 	STATES_REDUCTION_ABSOLUTE,
@@ -372,6 +368,10 @@ public enum StatisticsType {
 	 * Relative difference in the number of states between input and output.
 	 */
 	STATES_REDUCTION_RELATIVE,
+	/**
+	 * Number of states in the right-hand side input operand.
+	 */
+	STATES_RHS,
 	/**
 	 * Amount of sub-summarize edges a nwa game graph has (used in simulation, for compatibility with
 	 * {@link ECountingMeasure}).
