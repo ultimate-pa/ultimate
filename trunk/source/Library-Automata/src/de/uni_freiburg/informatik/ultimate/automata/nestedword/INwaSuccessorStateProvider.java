@@ -38,9 +38,9 @@ import java.util.Set;
  */
 public interface INwaSuccessorStateProvider<LETTER, STATE> extends INwaBasis<LETTER, STATE> {
 
-	Set<STATE> internalSuccessors(final STATE state);
+	Set<STATE> internalSuccessors(final STATE state, final LETTER letter);
 
-	Set<STATE> callSuccessors(final STATE state);
+	Set<STATE> callSuccessors(final STATE state, final LETTER letter);
 
-	Set<STATE> returnSuccessorsGivenHier(final STATE state, final STATE hier);
+	Set<STATE> returnSuccessorsGivenHier(final STATE state, final STATE hier, final LETTER letter);
 }
