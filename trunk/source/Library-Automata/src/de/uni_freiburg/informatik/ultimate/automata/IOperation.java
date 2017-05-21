@@ -69,7 +69,7 @@ public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 	 *         Do not override this method.
 	 */
 	default String getOperationName() {
-		return getClass().getSimpleName();
+		return computeOperationName(getClass());
 	}
 
 	/**
@@ -117,5 +117,13 @@ public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 	 */
 	default AutomataOperationStatistics getAutomataOperationStatistics() {
 		return null;
+	}
+	
+	static <C extends IOperation<?,?,?>> String computeOperationName(final Class<C> clazz) {
+		return firstLetterToLowerCase(clazz.getSimpleName());
+	}
+	
+	static String firstLetterToLowerCase(final String str) {
+		return str.substring(0, 1).toUpperCase() + str.substring(1);
 	}
 }
