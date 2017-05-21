@@ -11,8 +11,8 @@ AlternatingAutomaton aa1 = (
 	acceptingFunction = q0&~q1,
 	isReversed = true
 );
-assert(aa_accepts(aa1, [b a a a]));
-assert(!aa_accepts(aa1, [a b b b]));
+assert(aA_accepts(aa1, [b a a a]));
+assert(!aA_accepts(aa1, [a b b b]));
 
 AlternatingAutomaton aa2 = (
 	alphabet = {a b},
@@ -29,29 +29,29 @@ AlternatingAutomaton aa2 = (
 	acceptingFunction = s0,
 	isReversed = true
 );
-assert(aa_accepts(aa2, [a b b]));
-assert(aa_accepts(aa2, [a b b b b b b a]));
-assert(!aa_accepts(aa2, [a b a b]));
-assert(aa_accepts(aa2, [a a a b a b b]));
-assert(aa_accepts(aa2, [a b b a a a a a a]));
+assert(aA_accepts(aa2, [a b b]));
+assert(aA_accepts(aa2, [a b b b b b b a]));
+assert(!aA_accepts(aa2, [a b a b]));
+assert(aA_accepts(aa2, [a a a b a b b]));
+assert(aA_accepts(aa2, [a b b a a a a a a]));
 
-AlternatingAutomaton aaMergedUnion = aa_mergedunion(aa1, aa2);
+AlternatingAutomaton aaMergedUnion = aA_mergedunion(aa1, aa2);
 //TestCases aa1
-assert(aa_accepts(aaMergedUnion, [b a a a]));
-assert(aa_accepts(aaMergedUnion, [a b b b]));
+assert(aA_accepts(aaMergedUnion, [b a a a]));
+assert(aA_accepts(aaMergedUnion, [a b b b]));
 //TestCases aa2
-assert(aa_accepts(aaMergedUnion, [a b b]));
-assert(aa_accepts(aaMergedUnion, [a b b b b b b a]));
-assert(!aa_accepts(aaMergedUnion, [a b a b]));
-assert(aa_accepts(aaMergedUnion, [a a a b a b b]));
-assert(aa_accepts(aaMergedUnion, [a b b a a a a a a]));
+assert(aA_accepts(aaMergedUnion, [a b b]));
+assert(aA_accepts(aaMergedUnion, [a b b b b b b a]));
+assert(!aA_accepts(aaMergedUnion, [a b a b]));
+assert(aA_accepts(aaMergedUnion, [a a a b a b b]));
+assert(aA_accepts(aaMergedUnion, [a b b a a a a a a]));
 
-NestedWordAutomaton nwa1 = aa_determinizeReversed(aa1);
+NestedWordAutomaton nwa1 = aA_determinizeReversed(aa1);
 //TestCases aa1
 assert(accepts(nwa1, [b a a a]));
 assert(!accepts(nwa1, [a b b b]));
 
-NestedWordAutomaton nwa2 = aa_determinizeReversed(aa2);
+NestedWordAutomaton nwa2 = aA_determinizeReversed(aa2);
 //TestCases aa2
 assert(accepts(nwa2, [a b b]));
 assert(accepts(nwa2, [a b b b b b b a]));

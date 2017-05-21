@@ -3,8 +3,8 @@
 // typical(?) Büchi interpolant automaton that is not easy to complement
 
 NestedWordAutomaton res = buchiComplementFKV(bia);
-assert( !BuchiAccepts(bia, [a b, a b]));
-assert( BuchiAccepts(res, [a b, a b]));
+assert( !buchiAccepts(bia, [a b, a b]));
+assert( buchiAccepts(res, [a b, a b]));
 print(res);
 
 NestedWordAutomaton bia = (
