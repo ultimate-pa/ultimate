@@ -330,13 +330,19 @@ class AutomataScriptTypeChecker {
 	
 	private void checkType(final OperationInvocationExpressionAST oe) throws InterpreterException {
 		final ILocation errorLocation = oe.getLocation();
-		final String opName = oe.getOperationName().toLowerCase();
+		final String opName = oe.getOperationName();
 		if (!mExistingOperations.containsKey(opName) && !opName.equals(TestFileInterpreter.ASSERT)
 				&& !opName.equals(TestFileInterpreter.PRINT) && !opName.equals(TestFileInterpreter.WRITE)) {
 			final String shortDescr = "Unsupported operation \"" + oe.getOperationName() + "\"";
 			final String shortDescription = shortDescr;
 			final String allOperations = (new ListExistingOperations(mExistingOperations)).prettyPrint();
-			final String longDescr = "We support only the following operations " + LINE_SEPARATOR + allOperations;
+			String longDescr;
+			if (!Character.isLowerCase(opName.charAt(0))) {
+				longDescr = "Operation names have to start with a lowercase letter." + LINE_SEPARATOR;
+			} else {
+				longDescr = "";
+			}
+			longDescr +="We support only the following operations " + LINE_SEPARATOR + allOperations;
 			final String longDescription = longDescr;
 			throw new InterpreterException(errorLocation, shortDescription, longDescription);
 		}
@@ -513,7 +519,7 @@ class AutomataScriptTypeChecker {
 	private Set<Class<?>> getTypes(final AtsASTNode n) {
 		if (n instanceof OperationInvocationExpressionAST) {
 			final OperationInvocationExpressionAST oe = (OperationInvocationExpressionAST) n;
-			final String opName = oe.getOperationName().toLowerCase();
+			final String opName = oe.getOperationName();
 			final Set<Class<?>> returnTypes = new HashSet<>();
 			if (opName.equals(TestFileInterpreter.PRINT) || opName.equals(TestFileInterpreter.ASSERT)
 					|| opName.equals(TestFileInterpreter.WRITE)) {
