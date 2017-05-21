@@ -76,7 +76,7 @@ public class BuchiIsIncludedTestSuite extends UltimateTestSuite {
 			// You have to get a copy of the automata-benchmarks repository
 			// an put it in the examples folder
 			// https://github.com/ultimate-pa/automata-benchmarks
-			"examples/automata-benchmarks/20170520-TerminationAnalysis-BuchiIsIncluded",
+			"examples/automata-benchmarks/20170521-TerminationAnalysis-BuchiIsIncluded",
 	};
 	
 	private static final String[] mFileEndings = { ".ats" };
