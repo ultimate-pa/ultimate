@@ -124,7 +124,7 @@ NestedWordAutomaton A3 = (
 // Next, we subtract from AControlMinusA4 the language of A3.
 NestedWordAutomaton AControlMinusA4MinusA3 = difference(AControlMinusA4, A3);
 // The result does not accept any nested word
-assert(IsEmpty(AControlMinusA4MinusA3));
+assert(isEmpty(AControlMinusA4MinusA3));
 
 // We took the set of all labelings of path from initial location to the error 
 // location of a program (represented by automaton ControlAutomaton).

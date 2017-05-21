@@ -27,7 +27,7 @@ assert(accepts(oneOfEach, [ e c d b a f ]));
 
 // However the smallest deterministic finite automaton that accpets the same
 // language has 33 states.
-print(numberOfStates(minimizeDFATable(PetriNet2FiniteAutomaton(oneOfEach))));
+print(numberOfStates(minimizeDfaTable(petriNet2FiniteAutomaton(oneOfEach))));
 
 // The following operation (developed by Julian Jarecki) checks if the language
 // of a Petri net is empty. The basis of this algorithm is the Petri net 

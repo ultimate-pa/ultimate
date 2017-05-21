@@ -31,7 +31,7 @@ LassoWord omega_1 = [A A B, A];
 
 // Our acceptance check for Büchi automata shows that the omega word omega_1
 // is accepted by the Büchi automaton nba_infA.
-boolean acceptance1 = BuchiAccepts(nba_infA, omega_1);
+boolean acceptance1 = buchiAccepts(nba_infA, omega_1);
 print(acceptance1);
 
 
@@ -51,14 +51,14 @@ FiniteAutomaton nba_infB = (
 
 
 // The omega word omega_1 is not accepted by nba_infB.
-print(BuchiAccepts(nba_infB, omega_1));
+print(buchiAccepts(nba_infB, omega_1));
 
 // Construct the intersection of nba_infA and nba_infB.
-FiniteAutomaton intersec = BuchiIntersect(nba_infA, nba_infB);
+FiniteAutomaton intersec = buchiIntersect(nba_infA, nba_infB);
 print(intersec);
 
 // Check if the intersection is emtpy.
-print(BuchiIsEmpty(intersec));
+print(buchiIsEmpty(intersec));
 
 // Find some word that is accepted by intersec.
 LassoWord omega_2 = getAcceptedLassoWord(intersec);

@@ -22,14 +22,14 @@ FiniteAutomaton nfa1 = (
 Word word1 = [A A B A A B A];
 
 // Check whether nfa1 accepts word1.
-boolean acceptance1 = Accepts(nfa1, word1);
+boolean acceptance1 = accepts(nfa1, word1);
 
 // Print the acceptance test result.
 print(acceptance1);
 
 // Check another word.
 Word word2 = [A B B];
-print(Accepts(nfa1, word2));
+print(accepts(nfa1, word2));
 
 // Declare a second finite automaton.
 FiniteAutomaton nfa2 = (
@@ -48,14 +48,14 @@ FiniteAutomaton nfa2 = (
 );
 
 // Check the acceptance for the same words as above.
-print(Accepts(nfa2, word1));
-print(Accepts(nfa2, word2));
+print(accepts(nfa2, word1));
+print(accepts(nfa2, word2));
 
 // Construct the intersection of nfa1 and nfa2.
-FiniteAutomaton intersecNfa = Intersect(nfa1, nfa2);
+FiniteAutomaton intersecNfa = intersect(nfa1, nfa2);
 
 // Check whether the language accepted by intersecNfa is empty.
-print(IsEmpty(intersecNfa));
+print(isEmpty(intersecNfa));
 
 // Print the intersection automaton.
 print(intersecNfa);
