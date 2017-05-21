@@ -85,11 +85,6 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 	}
 
 	@Override
-	public String operationName() {
-		return "BuchiIntersect";
-	}
-
-	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}

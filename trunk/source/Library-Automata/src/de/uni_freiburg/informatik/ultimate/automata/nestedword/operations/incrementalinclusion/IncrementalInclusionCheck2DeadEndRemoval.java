@@ -348,11 +348,6 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 	}
 
 	@Override
-	public String operationName() {
-		return "IncrementalInclusionCheck2DeadEndRemovalDeadEndRemoval";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Start " + operationName();
 	}

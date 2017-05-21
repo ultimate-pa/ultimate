@@ -86,11 +86,6 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 	}
 
 	@Override
-	public String operationName() {
-		return "BuchiComplementNCBS";
-	}
-
-	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Operand " + mOperand.sizeInformation() + " Result "
 				+ mResult.sizeInformation();

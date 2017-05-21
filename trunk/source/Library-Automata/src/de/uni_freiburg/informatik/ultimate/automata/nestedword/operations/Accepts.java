@@ -103,11 +103,6 @@ public final class Accepts<LETTER, STATE> extends AbstractAcceptance<LETTER, STA
 	}
 
 	@Override
-	public String operationName() {
-		return "Accepts";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Automaton has " + mOperand.sizeInformation() + " Word has length "
 				+ mWord.length();

@@ -85,11 +85,6 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends StateRemoval<LETTE
 	}
 
 	@Override
-	public String operationName() {
-		return "RemoveNonLiveStates";
-	}
-
-	@Override
 	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}

@@ -283,11 +283,6 @@ public class Analyze<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	// --- interface methods ---
 
 	@Override
-	public String operationName() {
-		return "Analyze";
-	}
-
-	@Override
 	public final String startMessage() {
 		return "Started automaton analysis";
 	}

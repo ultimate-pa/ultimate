@@ -68,11 +68,6 @@ public class Complement<LETTER, STATE> implements IOperation<LETTER, STATE, ISta
 	}
 
 	@Override
-	public String operationName() {
-		return "Complement";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Starting complementing";
 	}

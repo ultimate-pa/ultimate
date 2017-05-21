@@ -122,11 +122,6 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 	}
 
 	@Override
-	public String operationName() {
-		return "BuchiDifferenceFKV";
-	}
-
-	@Override
 	public INestedWordAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}

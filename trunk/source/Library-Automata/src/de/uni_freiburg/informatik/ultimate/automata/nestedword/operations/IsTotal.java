@@ -117,11 +117,6 @@ public class IsTotal<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, ISt
 	}
 
 	@Override
-	public String operationName() {
-		return "IsTotal";
-	}
-
-	@Override
 	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}

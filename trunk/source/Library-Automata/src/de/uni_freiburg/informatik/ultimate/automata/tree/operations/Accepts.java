@@ -80,11 +80,6 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE, IStateF
 	}
 
 	@Override
-	public String operationName() {
-		return "TreeAccepts";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Start " + operationName();
 	}

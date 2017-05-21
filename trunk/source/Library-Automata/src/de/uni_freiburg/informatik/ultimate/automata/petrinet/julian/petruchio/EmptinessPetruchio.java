@@ -162,11 +162,6 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPet
 	}
 
 	@Override
-	public String operationName() {
-		return "EmptinessPetruchio";
-	}
-
-	@Override
 	protected IPetriNet<S, C> getOperand() {
 		return mNetJulian;
 	}

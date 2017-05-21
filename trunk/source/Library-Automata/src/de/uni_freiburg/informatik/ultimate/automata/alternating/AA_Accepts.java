@@ -41,11 +41,6 @@ public class AA_Accepts<LETTER, STATE> extends GeneralOperation<LETTER, STATE, I
 	}
 
 	@Override
-	public String operationName() {
-		return "AA_Accepts";
-	}
-
-	@Override
 	public Boolean getResult() {
 		return mIsAccepted;
 	}

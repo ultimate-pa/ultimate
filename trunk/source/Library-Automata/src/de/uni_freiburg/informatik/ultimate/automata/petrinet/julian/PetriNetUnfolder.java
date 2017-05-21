@@ -176,11 +176,6 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 	}
 
 	@Override
-	public String operationName() {
-		return "PetriNetUnfolder";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Net " + mOperand.sizeInformation() + (mStopIfAcceptingRunFound
 				? "We stop if some accepting run was found"

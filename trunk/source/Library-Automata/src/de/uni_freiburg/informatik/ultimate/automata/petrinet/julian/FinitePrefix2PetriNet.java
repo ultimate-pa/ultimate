@@ -278,11 +278,6 @@ public final class FinitePrefix2PetriNet<L, C> extends GeneralOperation<L, C, IS
 	}
 
 	@Override
-	public String operationName() {
-		return "FinitePrefix2PetriNet";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Input " + mInput.sizeInformation();
 	}

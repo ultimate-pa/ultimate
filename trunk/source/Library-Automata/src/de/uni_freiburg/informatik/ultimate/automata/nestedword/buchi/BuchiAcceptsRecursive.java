@@ -104,11 +104,6 @@ public final class BuchiAcceptsRecursive<LETTER, STATE> extends UnaryNwaOperatio
 	}
 
 	@Override
-	public String operationName() {
-		return "BuchiAcceptsRecursive";
-	}
-
-	@Override
 	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mNwa;
 	}

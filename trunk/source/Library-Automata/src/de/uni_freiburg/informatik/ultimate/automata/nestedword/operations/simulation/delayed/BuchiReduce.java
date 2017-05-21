@@ -159,11 +159,6 @@ public class BuchiReduce<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STAT
 		return mResult;
 	}
 
-	@Override
-	public String operationName() {
-		return "BuchiReduce";
-	}
-
 	/**
 	 * Gets the logger used by the Ultimate framework.
 	 * 

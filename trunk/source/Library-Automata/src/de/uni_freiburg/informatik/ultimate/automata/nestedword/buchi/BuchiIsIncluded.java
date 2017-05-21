@@ -97,11 +97,6 @@ public final class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LET
 	}
 
 	@Override
-	public String operationName() {
-		return "BuchiIsIncluded";
-	}
-
-	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Language is " + (mResult ? "" : "not ") + "included";
 	}

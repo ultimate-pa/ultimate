@@ -124,11 +124,6 @@ public final class BuchiComplementRE<LETTER, STATE> extends UnaryNwaOperation<LE
 	}
 
 	@Override
-	public String operationName() {
-		return "BuchiComplementRE";
-	}
-
-	@Override
 	public String exitMessage() {
 		if (mBuchiComplementReApplicable) {
 			return "Finished " + operationName() + ". Result " + mResult.sizeInformation();

@@ -38,11 +38,6 @@ public final class ConstructRandomAutomata implements IOperation<String, String,
 	}
 
 	@Override
-	public String operationName() {
-		return null;
-	}
-
-	@Override
 	public String startMessage() {
 		return null;
 	}

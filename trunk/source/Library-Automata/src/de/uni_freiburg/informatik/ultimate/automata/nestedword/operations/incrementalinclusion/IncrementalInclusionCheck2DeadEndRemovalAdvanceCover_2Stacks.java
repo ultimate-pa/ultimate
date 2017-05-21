@@ -914,11 +914,6 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 	}
 
 	@Override
-	public String operationName() {
-		return "IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Start " + operationName();
 	}

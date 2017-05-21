@@ -73,11 +73,6 @@ public final class BuchiClosure<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 	}
 
 	@Override
-	public String operationName() {
-		return "BuchiClosure";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " Operand " + mOperand.sizeInformation() + " thereof "
 				+ mOperand.getFinalStates().size() + " accepting";

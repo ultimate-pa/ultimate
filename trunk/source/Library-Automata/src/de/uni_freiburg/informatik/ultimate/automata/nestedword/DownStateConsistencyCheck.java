@@ -76,11 +76,6 @@ public class DownStateConsistencyCheck<LETTER, STATE> extends UnaryNwaOperation<
 	}
 
 	@Override
-	public String operationName() {
-		return "DownStateConsistencyCheck";
-	}
-
-	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Result " + mResult;
 	}

@@ -84,11 +84,6 @@ public final class RemoveDeadEnds<LETTER, STATE> extends StateRemoval<LETTER, ST
 	}
 
 	@Override
-	public String operationName() {
-		return "RemoveDeadEnds";
-	}
-
-	@Override
 	public IDoubleDeckerAutomaton<LETTER, STATE> getResult() {
 		return mResult;
 	}

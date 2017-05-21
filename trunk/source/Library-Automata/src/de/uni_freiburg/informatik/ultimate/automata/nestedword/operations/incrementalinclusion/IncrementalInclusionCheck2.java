@@ -467,11 +467,6 @@ public class IncrementalInclusionCheck2<LETTER, STATE> extends AbstractIncrement
 	}
 
 	@Override
-	public String operationName() {
-		return "IncrementalInclusionCheck2";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Start " + operationName();
 	}

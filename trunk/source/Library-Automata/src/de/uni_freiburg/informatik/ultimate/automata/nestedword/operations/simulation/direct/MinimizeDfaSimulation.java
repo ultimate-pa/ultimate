@@ -158,11 +158,6 @@ public class MinimizeDfaSimulation<LETTER, STATE> extends AbstractMinimizeNwa<LE
 	}
 
 	@Override
-	public String operationName() {
-		return "minimizeDfaSimulation";
-	}
-
-	@Override
 	public Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		return checkLanguageEquivalence(stateFactory);

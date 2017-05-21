@@ -122,9 +122,4 @@ public final class CompareWithRandomAutomata<LETTER, STATE>
 	public Object getResult() {
 		return mResult;
 	}
-
-	@Override
-	public String operationName() {
-		return "compareWithRandomAutomata";
-	}
 }

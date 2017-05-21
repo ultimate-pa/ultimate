@@ -140,10 +140,6 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 	}
 
 	/* *** *** *** Functions *** *** *** */
-	@Override
-	public String operationName() {
-		return "SuperDifference";
-	}
 
 	@Override
 	public String startMessage() {

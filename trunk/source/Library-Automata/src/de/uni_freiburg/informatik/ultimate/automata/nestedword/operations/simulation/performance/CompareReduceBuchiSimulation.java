@@ -277,16 +277,6 @@ public class CompareReduceBuchiSimulation<LETTER, STATE>
 		return "no result";
 	}
 
-	/*
-	 * (non-Javadoc)
-	 *
-	 * @see de.uni_freiburg.informatik.ultimate.automata.IOperation#operationName()
-	 */
-	@Override
-	public String operationName() {
-		return "compareReduceBuchiSimulation";
-	}
-
 	/**
 	 * Verifies the validity of a given automaton. If the automaton is not valid it throws an
 	 * {@link IllegalArgumentException}.

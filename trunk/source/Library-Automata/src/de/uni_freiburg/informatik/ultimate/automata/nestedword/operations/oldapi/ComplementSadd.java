@@ -87,11 +87,6 @@ public final class ComplementSadd<LETTER, STATE>
 	}
 
 	@Override
-	public String operationName() {
-		return "ComplementSadd";
-	}
-
-	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
 	}

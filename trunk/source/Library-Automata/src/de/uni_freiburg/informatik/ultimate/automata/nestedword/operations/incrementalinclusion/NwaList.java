@@ -89,11 +89,6 @@ public class NwaList<LETTER, STATE> implements IOperation<LETTER, STATE, IStateF
 	}
 
 	@Override
-	public String operationName() {
-		return "NwaList";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Start " + operationName();
 	}

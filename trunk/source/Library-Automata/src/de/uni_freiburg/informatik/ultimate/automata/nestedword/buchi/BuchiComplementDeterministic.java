@@ -108,11 +108,6 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 	}
 
 	@Override
-	public String operationName() {
-		return "BuchiComplementDeterministic";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand " + mOperand.sizeInformation();
 	}

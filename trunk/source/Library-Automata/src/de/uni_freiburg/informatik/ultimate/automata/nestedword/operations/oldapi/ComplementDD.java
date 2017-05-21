@@ -82,11 +82,6 @@ public final class ComplementDD<LETTER, STATE>
 	}
 
 	@Override
-	public String operationName() {
-		return "ComplementDD";
-	}
-
-	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
 	}

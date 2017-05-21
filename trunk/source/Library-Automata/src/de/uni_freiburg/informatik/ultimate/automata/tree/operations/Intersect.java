@@ -102,11 +102,6 @@ public class Intersect<LETTER, STATE> implements IOperation<LETTER, STATE, IStat
 	}
 
 	@Override
-	public String operationName() {
-		return "ta_intersect";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Start intersection tree automatons";
 	}

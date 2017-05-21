@@ -118,11 +118,6 @@ public final class BuchiAccepts<LETTER, STATE> extends AbstractAcceptance<LETTER
 	}
 
 	@Override
-	public String operationName() {
-		return "BuchiAccepts";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " Operand " + mOperand.sizeInformation() + " Stem has " + mStem.length()
 				+ " letters." + " Loop has " + mLoop.length() + " letters.";

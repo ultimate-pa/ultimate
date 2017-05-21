@@ -214,11 +214,6 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	}
 
 	@Override
-	public String operationName() {
-		return "BuchiComplementFKV";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Start " + operationName() + " with optimization " + mOptimization + ". Operand "
 				+ mOperand.sizeInformation();

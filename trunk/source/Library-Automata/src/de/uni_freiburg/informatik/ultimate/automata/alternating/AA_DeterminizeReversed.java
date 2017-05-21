@@ -35,8 +35,8 @@ import java.util.List;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 
@@ -88,11 +88,6 @@ public class AA_DeterminizeReversed<LETTER> extends GeneralOperation<LETTER, Bit
 			final Pair<LETTER, BitSet> innerPair = transition.getSecond();
 			mResultAutomaton.addInternalTransition(transition.getFirst(), innerPair.getFirst(), innerPair.getSecond());
 		}
-	}
-
-	@Override
-	public String operationName() {
-		return "AA_DeterminizeReversed";
 	}
 
 	@Override

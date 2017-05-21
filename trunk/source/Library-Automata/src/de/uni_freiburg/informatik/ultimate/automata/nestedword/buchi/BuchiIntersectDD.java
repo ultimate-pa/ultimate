@@ -98,11 +98,6 @@ public class BuchiIntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, S
 	}
 
 	@Override
-	public String operationName() {
-		return "BuchiIntersectDD";
-	}
-
-	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isWarnEnabled()) {
 			mLogger.warn("No result check for " + operationName() + " available yet.");

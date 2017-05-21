@@ -517,10 +517,6 @@ public class IncrementalInclusionCheck3<LETTER, STATE> extends AbstractIncrement
 		return result;
 	}
 
-	@Override
-	public String operationName() {
-		return "IncrementalInclusionCheck3.";
-	}
 
 	@Override
 	public String startMessage() {

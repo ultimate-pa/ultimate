@@ -80,11 +80,6 @@ public final class GetAcceptedLassoWord<LETTER, STATE> extends UnaryNwaOperation
 	}
 
 	@Override
-	public String operationName() {
-		return "GetAcceptedLassoWord";
-	}
-
-	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Length of stem: " + mAcceptedWord.getStem().length()
 				+ " Length of loop:" + mAcceptedWord.getLoop().length();

@@ -85,11 +85,6 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE, ISt
 	}
 
 	@Override
-	public String operationName() {
-		return "Determinization";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Starting determinization";
 	}

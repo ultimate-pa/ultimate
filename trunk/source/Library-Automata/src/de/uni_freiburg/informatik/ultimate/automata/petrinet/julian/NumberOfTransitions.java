@@ -57,11 +57,6 @@ public class NumberOfTransitions<LETTER, PLACE> extends UnaryNetOperation<LETTER
 	}
 
 	@Override
-	public String operationName() {
-		return "NumberOfTransitions";
-	}
-
-	@Override
 	protected IPetriNet<LETTER, PLACE> getOperand() {
 		return mOperand;
 	}

@@ -114,9 +114,4 @@ public final class CompareWithRandomNwaAutomata<LETTER, STATE>
 	public String getResult() {
 		return "no result";
 	}
-
-	@Override
-	public String operationName() {
-		return "compareWithRandomNwaAutomata";
-	}
 }

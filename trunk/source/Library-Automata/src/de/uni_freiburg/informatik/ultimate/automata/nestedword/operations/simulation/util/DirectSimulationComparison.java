@@ -91,11 +91,6 @@ public class DirectSimulationComparison<LETTER, STATE>
 	}
 
 	@Override
-	public String operationName() {
-		return "DirectSimulationComparison";
-	}
-
-	@Override
 	public boolean checkResult(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		boolean correct;

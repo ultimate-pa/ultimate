@@ -85,11 +85,6 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 	}
 
 	@Override
-	public String operationName() {
-		return "GetRandomNestedWord";
-	}
-
-	@Override
 	public String startMessage() {
 		return MessageFormat.format(
 				"Start {0}. Internal alphabet has {1} letters, call alphabet has {2} letters, "

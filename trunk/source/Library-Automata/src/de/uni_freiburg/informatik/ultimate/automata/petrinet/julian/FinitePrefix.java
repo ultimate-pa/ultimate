@@ -74,11 +74,6 @@ public final class FinitePrefix<LETTER, STATE> extends UnaryNetOperation<LETTER,
 	}
 
 	@Override
-	public String operationName() {
-		return "FinitePrefix";
-	}
-
-	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
 	}

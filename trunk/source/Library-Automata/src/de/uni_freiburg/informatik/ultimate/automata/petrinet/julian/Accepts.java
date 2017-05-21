@@ -88,11 +88,6 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 		}
 	}
 
-	@Override
-	public String operationName() {
-		return "acceptsJulian";
-	}
-
 	// private Collection<Place<S, C>> marking;
 	// private int position;
 

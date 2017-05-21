@@ -81,11 +81,6 @@ public class NumberOfTransitions<LETTER, STATE> extends UnaryNwaOperation<LETTER
 	}
 
 	@Override
-	public String operationName() {
-		return "NumberOfTransitions";
-	}
-
-	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		return true;
 	}

@@ -374,11 +374,6 @@ public class Jeffery_Test_3<LETTER, STATE> implements IOperation<LETTER, STATE, 
 	}
 
 	@Override
-	public String operationName() {
-		return "Jeffery_Test_3";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Start " + operationName();
 	}

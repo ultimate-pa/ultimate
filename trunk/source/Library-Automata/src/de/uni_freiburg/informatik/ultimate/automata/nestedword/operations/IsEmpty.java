@@ -757,11 +757,6 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	}
 
 	@Override
-	public String operationName() {
-		return "IsEmpty";
-	}
-
-	@Override
 	public String exitMessage() {
 		if (mAcceptingRun == null) {
 			return "Finished " + operationName() + ". No accepting run.";

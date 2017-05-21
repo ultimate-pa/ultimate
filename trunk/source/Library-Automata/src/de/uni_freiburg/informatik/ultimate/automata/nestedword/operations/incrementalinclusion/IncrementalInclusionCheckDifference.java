@@ -52,11 +52,6 @@ public class IncrementalInclusionCheckDifference<LETTER, STATE, SF extends IInte
 	}
 
 	@Override
-	public String operationName() {
-		return "IncrementalInclusionCheckDifference";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Start " + operationName();
 	}

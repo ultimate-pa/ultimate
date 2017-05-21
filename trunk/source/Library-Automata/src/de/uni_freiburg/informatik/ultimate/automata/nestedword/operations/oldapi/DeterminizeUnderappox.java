@@ -65,11 +65,6 @@ public class DeterminizeUnderappox<LETTER, STATE> extends DeterminizeDD<LETTER, 
 		super(services, operand, stateDeterminizer);
 	}
 
-	@Override
-	public String operationName() {
-		return "DeterminizeUnderapprox";
-	}
-
 	/**
 	 * As opposed to {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determinize Determinize},
 	 * here a determinized state is only accepting if all its states are accepting.

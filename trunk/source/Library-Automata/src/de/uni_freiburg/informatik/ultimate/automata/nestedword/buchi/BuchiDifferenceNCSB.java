@@ -90,9 +90,4 @@ public final class BuchiDifferenceNCSB<LETTER, STATE> extends AbstractBuchiDiffe
 	public BuchiComplementNCSBNwa<LETTER, STATE> getSndComplemented() {
 		return mSndComplemented;
 	}
-
-	@Override
-	public String operationName() {
-		return "BuchiDifferenceNCBS";
-	}
 }

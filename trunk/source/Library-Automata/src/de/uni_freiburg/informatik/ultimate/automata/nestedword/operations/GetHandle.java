@@ -233,11 +233,6 @@ public final class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 	}
 
 	@Override
-	public String operationName() {
-		return "GetHandle";
-	}
-
-	@Override
 	public String exitMessage() {
 		final StringBuilder builder = new StringBuilder();
 		// @formatter:off

@@ -87,11 +87,6 @@ public class Minimize<LETTER, STATE> implements IOperation<LETTER, STATE, IState
 	}
 
 	@Override
-	public String operationName() {
-		return "Minimize";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Starting " + operationName();
 	}

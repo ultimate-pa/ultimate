@@ -99,11 +99,6 @@ public final class IsIncluded2<LETTER, STATE> extends UnaryNwaOperation<LETTER, 
 	}
 
 	@Override
-	public String operationName() {
-		return "IsIncluded2";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Start " + operationName() + ". Operand A " + mOperand.sizeInformation() + ". Operand B_1 "
 				+ mB1.sizeInformation() + ". Operand B_2 " + mB2.sizeInformation();

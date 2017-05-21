@@ -59,11 +59,6 @@ public class NumberOfStates<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 	}
 
 	@Override
-	public String operationName() {
-		return "NumberOfStates";
-	}
-
-	@Override
 	protected INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getOperand() {
 		return mOperand;
 	}

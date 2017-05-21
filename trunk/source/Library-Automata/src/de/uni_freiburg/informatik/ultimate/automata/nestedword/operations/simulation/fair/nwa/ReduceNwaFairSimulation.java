@@ -123,9 +123,4 @@ public final class ReduceNwaFairSimulation<LETTER, STATE> extends ReduceBuchiFai
 								services.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID), operand,
 								possibleEquivalentClasses.getRelation())));
 	}
-
-	@Override
-	public String operationName() {
-		return "reduceNwaFairSimulation";
-	}
 }

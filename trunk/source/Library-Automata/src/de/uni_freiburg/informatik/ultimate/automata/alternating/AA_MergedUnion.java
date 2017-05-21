@@ -83,11 +83,6 @@ public class AA_MergedUnion<LETTER, STATE> extends GeneralOperation<LETTER, STAT
 	}
 
 	@Override
-	public String operationName() {
-		return "AA_MergedUnion";
-	}
-
-	@Override
 	public AlternatingAutomaton<LETTER, STATE> getResult() {
 		return mResultAutomaton;
 	}

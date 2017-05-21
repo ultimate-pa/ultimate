@@ -67,11 +67,6 @@ public class TreeEmptinessCheck<LETTER, STATE> implements IOperation<LETTER, STA
 	}
 
 	@Override
-	public String operationName() {
-		return "Emptiness";
-	}
-
-	@Override
 	public String startMessage() {
 		return "Starting emptiness check";
 	}

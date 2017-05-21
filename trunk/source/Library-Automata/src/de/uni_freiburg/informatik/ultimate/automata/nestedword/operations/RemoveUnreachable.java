@@ -70,11 +70,6 @@ public final class RemoveUnreachable<LETTER, STATE> extends StateRemoval<LETTER,
 	}
 
 	@Override
-	public String operationName() {
-		return "RemoveUnreachable";
-	}
-
-	@Override
 	public NestedWordAutomatonReachableStates<LETTER, STATE> getResult() {
 		return mResult;
 	}

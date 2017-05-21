@@ -256,11 +256,6 @@ public class ReduceBuchiFairSimulation<LETTER, STATE> extends AbstractMinimizeNw
 		return mResult;
 	}
 
-	@Override
-	public String operationName() {
-		return "reduceBuchiFairSimulation";
-	}
-
 	/**
 	 * Gets the logger used by the Ultimate framework.
 	 * 

@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
 
 /**
  * Totalize TreeAutomaton operation
@@ -157,11 +156,6 @@ public class Totalize<LETTER, STATE> implements IOperation<LETTER, STATE, IState
 			}
 		}
 		return res;
-	}
-
-	@Override
-	public String operationName() {
-		return "Totalize";
 	}
 
 	@Override

@@ -97,11 +97,6 @@ public final class LassoExtractor<LETTER, STATE> extends UnaryNwaOperation<LETTE
 	}
 
 	@Override
-	public String operationName() {
-		return "getSomeAcceptedLassoRuns";
-	}
-
-	@Override
 	public String exitMessage() {
 		return "Finished " + operationName() + ". Found " + mNestedLassoRuns.size() + " examples of accepted words.";
 	}

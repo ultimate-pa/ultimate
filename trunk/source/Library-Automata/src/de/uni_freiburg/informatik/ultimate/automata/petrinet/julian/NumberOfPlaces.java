@@ -57,11 +57,6 @@ public class NumberOfPlaces<LETTER, PLACE> extends UnaryNetOperation<LETTER, PLA
 	}
 
 	@Override
-	public String operationName() {
-		return "NumberOfPlaces";
-	}
-
-	@Override
 	protected IPetriNet<LETTER, PLACE> getOperand() {
 		return mOperand;
 	}

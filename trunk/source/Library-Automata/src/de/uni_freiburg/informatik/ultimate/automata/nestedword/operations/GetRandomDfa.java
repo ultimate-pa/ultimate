@@ -42,8 +42,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 
@@ -338,11 +338,6 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 	@Override
 	public INestedWordAutomaton<String, String> getResult() {
 		return mResult;
-	}
-
-	@Override
-	public String operationName() {
-		return "GetRandomDfa";
 	}
 
 	@Override
