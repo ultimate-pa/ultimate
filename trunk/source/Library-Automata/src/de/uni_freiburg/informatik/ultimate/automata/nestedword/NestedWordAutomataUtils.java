@@ -28,8 +28,10 @@
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -49,6 +51,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.util.PartitionBackedSetOfPairs.PartitionSizeInformation;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.FilteredIterable;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.TransformIterator;
 
 /**
  * Provides static methods that are helpful for working with nested word automata.
@@ -432,6 +438,34 @@ public final class NestedWordAutomataUtils {
 		final Iterable<OutgoingReturnTransition<LETTER, STATE>> iterable = nwa.returnSuccessors(state);
 		final Predicate<OutgoingReturnTransition<LETTER, STATE>> remainingElements = x -> x.getLetter().equals(letter);
 		return new FilteredIterable<>(iterable, remainingElements);
+	}
+	
+	
+	
+	public static <LETTER, STATE> Iterable<OutgoingInternalTransition<LETTER, STATE>> constructInternalTransitionIteratorFromNestedMap(
+			final STATE state, final LETTER letter, final NestedMap3<STATE, LETTER, STATE, IsContained> internalOut) {
+		final Function<STATE, OutgoingInternalTransition<LETTER, STATE>> transformer = x -> new OutgoingInternalTransition<>(letter, x);
+		return () -> new TransformIterator<STATE, OutgoingInternalTransition<LETTER, STATE>>(keySetOrEmpty(internalOut.get(state, letter)).iterator(), transformer);
+	}
+	
+	public static <LETTER, STATE> Iterable<OutgoingCallTransition<LETTER, STATE>> constructCallTransitionIteratorFromNestedMap(
+			final STATE state, final LETTER letter, final NestedMap3<STATE, LETTER, STATE, IsContained> callOut) {
+		final Function<STATE, OutgoingCallTransition<LETTER, STATE>> transformer = x -> new OutgoingCallTransition<>(letter, x);
+		return () -> new TransformIterator<STATE, OutgoingCallTransition<LETTER, STATE>>(keySetOrEmpty(callOut.get(state, letter)).iterator(), transformer);
+	}
+	
+	public static <LETTER, STATE> Iterable<OutgoingReturnTransition<LETTER, STATE>> constructReturnTransitionIteratorFromNestedMap(
+			final STATE state, final STATE hier, final LETTER letter, final NestedMap4<STATE, STATE, LETTER, STATE, IsContained> returnOut) {
+		return () -> new TransformIterator<STATE, OutgoingReturnTransition<LETTER, STATE>>(
+				keySetOrEmpty(returnOut.get(state, hier, letter)).iterator(), x -> new OutgoingReturnTransition<LETTER, STATE>(hier, letter, x));
+	}
+
+	private static <STATE> Iterable<STATE> keySetOrEmpty(final Map<STATE, IsContained> map) {
+		if (map == null) {
+			return Collections.emptySet();
+		} else {
+			return map.keySet();
+		}
 	}
 	
 }

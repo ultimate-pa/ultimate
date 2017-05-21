@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
@@ -300,17 +299,10 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 	@Override
 	public final Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
 			final LETTER letter) {
-		final Function<STATE, OutgoingInternalTransition<LETTER, STATE>> transformer = x -> new OutgoingInternalTransition<>(letter, x);
-		return () -> new TransformIterator<STATE, OutgoingInternalTransition<LETTER, STATE>>(keySetOrEmpty(mInternalOut.get(state, letter)).iterator(), transformer);
+		return NestedWordAutomataUtils.constructInternalTransitionIteratorFromNestedMap(state, letter, mInternalOut);
 	}
 
-	private Iterable<STATE> keySetOrEmpty(final Map<STATE, IsContained> map) {
-		if (map == null) {
-			return Collections.emptySet();
-		} else {
-			return map.keySet();
-		}
-	}
+
 
 	@Override
 	public final Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
@@ -320,9 +312,9 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 
 	@Override
 	public final Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
-		final Function<STATE, OutgoingCallTransition<LETTER, STATE>> transformer = x -> new OutgoingCallTransition<>(letter, x);
-		return () -> new TransformIterator<STATE, OutgoingCallTransition<LETTER, STATE>>(keySetOrEmpty(mCallOut.get(state, letter)).iterator(), transformer);
+		return NestedWordAutomataUtils.constructCallTransitionIteratorFromNestedMap(state, letter, mCallOut);
 	}
+
 
 
 	@Override
@@ -334,9 +326,10 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 	@Override
 	public final Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
 			final LETTER letter) {
-		return () -> new TransformIterator<STATE, OutgoingReturnTransition<LETTER, STATE>>(
-				keySetOrEmpty(mReturnOut.get(state, hier, letter)).iterator(), x -> new OutgoingReturnTransition<LETTER, STATE>(hier, letter, x));
+		return NestedWordAutomataUtils.constructReturnTransitionIteratorFromNestedMap(state, hier, letter, mReturnOut);
 	}
+
+
 
 	@Override
 	public final Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
