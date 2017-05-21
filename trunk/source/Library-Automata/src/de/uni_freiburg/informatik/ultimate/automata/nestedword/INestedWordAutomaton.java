@@ -37,6 +37,24 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Summa
 
 /**
  * Interface for data structures that implement nested word automata.
+ * A nested word automaton is a machine model which accepts nested words (see {@link NestedWord}) introduced by Alur et
+ * al.
+ * <ul>
+ * <li>[1] http://www.cis.upenn.edu/~alur/nw.html</li>
+ * <li>[2] Rajeev Alur, P. Madhusudan: Adding Nesting Structure to Words. Developments in Language Theory 2006:1-13</li>
+ * <li>[3] Rajeev Alur, P. Madhusudan: Adding nesting structure to words. J. ACM (JACM) 56(3) (2009)</li>
+ * </ul>
+ * We stick to the definitions of [2] and deviate from [3] by using only one kind of states (instead of a separation of
+ * hierarchical states and linear states).
+ * <p>
+ * We also deviate from all common definitions of NWA by specifying three kinds of Alphabets. The idea is that they do
+ * not have to be disjoint and allow to totalize and complement the automaton with respect to the limitation of which
+ * letter can occur in which kind of transition (which is convenient to speed up applications where the automaton models
+ * a program and call statements occur anyway only at call transitions). If a user wants to use NWA according to the
+ * common definition, they should just use the same set for the internal, call, and return alphabet.
+ * <p>
+ * Another deviation from the general model is that we generally do not accept nested words with pending returns. We do
+ * accept, however, nested words with pending calls.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
