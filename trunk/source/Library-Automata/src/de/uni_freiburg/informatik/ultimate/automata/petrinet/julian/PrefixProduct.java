@@ -102,13 +102,13 @@ public final class PrefixProduct<S, C, CRSF extends IPetriNet2FiniteAutomatonSta
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + "First Operand " + mOperand.sizeInformation() + "Second Operand "
+		return "Start " + getOperationName() + "First Operand " + mOperand.sizeInformation() + "Second Operand "
 				+ mNwa.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
+		return "Finished " + getOperationName() + " Result " + mResult.sizeInformation();
 	}
 
 	@Override

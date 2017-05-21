@@ -97,7 +97,7 @@ public final class BuchiIsIncludedNCSB<LETTER, STATE> extends BinaryNwaOperation
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Language is " + (mResult ? "" : "not ") + "included";
+		return "Finished " + getOperationName() + ". Language is " + (mResult ? "" : "not ") + "included";
 	}
 
 	@Override

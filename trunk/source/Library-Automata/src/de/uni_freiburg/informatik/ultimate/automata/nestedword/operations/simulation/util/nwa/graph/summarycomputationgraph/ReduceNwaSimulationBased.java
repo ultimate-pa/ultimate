@@ -200,7 +200,7 @@ public abstract class ReduceNwaSimulationBased<LETTER, STATE> extends AbstractMi
 				final Collection<Set<STATE>> initialPartition =
 						((PartitionBackedSetOfPairs<STATE>) initialPairs).getRelation();
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
-						NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(operationName(),
+						NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(getOperationName(),
 								mOperand, initialPartition));
 				aoce.addRunningTaskInfo(rti);
 			} else {

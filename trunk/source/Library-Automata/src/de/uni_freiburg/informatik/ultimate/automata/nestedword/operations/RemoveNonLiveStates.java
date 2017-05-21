@@ -145,7 +145,7 @@ public final class RemoveNonLiveStates<LETTER, STATE> extends StateRemoval<LETTE
 		final boolean op = (new BuchiAccepts<>(mServices, operand, nlw)).getResult();
 		final boolean res = (new BuchiAccepts<>(mServices, mResult, nlw)).getResult();
 		final boolean correct = op == res;
-		assert correct : operationName() + " wrong result!";
+		assert correct : getOperationName() + " wrong result!";
 		return correct;
 	}
 

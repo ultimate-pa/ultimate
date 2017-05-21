@@ -189,7 +189,7 @@ public abstract class ReduceNwaFullMultipebbleSimulation<LETTER, STATE, GS exten
 			if (initialPairs instanceof PartitionBackedSetOfPairs<?>) {
 				final PartitionBackedSetOfPairs<STATE> partition = (PartitionBackedSetOfPairs<STATE>) initialPairs;
 				final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
-						NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(operationName(),
+						NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(getOperationName(),
 								mOperand, partition.getOrConstructPartitionSizeInformation()));
 				aoce.addRunningTaskInfo(rti);
 			} else {

@@ -151,17 +151,17 @@ public final class MinimizeNwaOverapproximation<LETTER, STATE> extends AbstractM
 	public Pair<Boolean, String> checkResultHelper(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Start testing correctness of " + operationName());
+			mLogger.info("Start testing correctness of " + getOperationName());
 		}
 
 		final boolean correct = new IsIncluded<>(mServices, stateFactory, mOperand, getResult()).getResult();
 		assert correct;
 
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
 					THE_RESULT_RECOGNIZES_LESS_WORDS_THAN_BEFORE, mOperand);
 			return new Pair<>(correct, THE_RESULT_RECOGNIZES_LESS_WORDS_THAN_BEFORE);
 		}

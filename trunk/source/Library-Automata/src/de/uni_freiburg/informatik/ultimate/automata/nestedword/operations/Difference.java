@@ -117,7 +117,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
+		return "Finished " + getOperationName() + " Result " + mResult.sizeInformation();
 	}
 
 	private <SF extends IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void
@@ -174,7 +174,7 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 	@Override
 	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Start testing correctness of " + operationName());
+			mLogger.info("Start testing correctness of " + getOperationName());
 		}
 		final INestedWordAutomaton<LETTER, STATE> fstUnreach = new RemoveUnreachable<>(mServices, mFstOperand).getResult();
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> resultDd =
@@ -188,11 +188,11 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 		correct &= new IsEquivalent<>(mServices, stateFactory, resultDd, mResult).getResult();
 		assert correct;
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
 					"language is different", mFstOperand, mSndOperand);
 		}
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
 		return correct;
 	}

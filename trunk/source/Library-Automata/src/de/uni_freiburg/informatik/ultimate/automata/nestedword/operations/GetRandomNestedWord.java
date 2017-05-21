@@ -89,7 +89,7 @@ public class GetRandomNestedWord<LETTER, STATE> implements IOperation<LETTER, ST
 		return MessageFormat.format(
 				"Start {0}. Internal alphabet has {1} letters, call alphabet has {2} letters, "
 						+ "return alphabet has {3} letters",
-				operationName(), mInternalAlphabet.size(), mCallAlphabet.size(), mReturnAlphabet.size());
+				getOperationName(), mInternalAlphabet.size(), mCallAlphabet.size(), mReturnAlphabet.size());
 	}
 
 	@Override

@@ -171,13 +171,13 @@ public final class DifferenceSadd<LETTER, STATE>
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Minuend " + mMinuend.sizeInformation() + ". Subtrahend "
+		return "Start " + getOperationName() + ". Minuend " + mMinuend.sizeInformation() + ". Subtrahend "
 				+ mSubtrahend.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Result " + mDifference.sizeInformation();
+		return "Finished " + getOperationName() + ". Result " + mDifference.sizeInformation();
 	}
 
 	@Override
@@ -385,17 +385,17 @@ public final class DifferenceSadd<LETTER, STATE>
 	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
-			mLogger.info("Start testing correctness of " + operationName());
+			mLogger.info("Start testing correctness of " + getOperationName());
 
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> resultDd =
 					(new DifferenceDD<>(mServices, stateFactory, mMinuend, mSubtrahend)).getResult();
 			correct = new IsEquivalent<>(mServices, stateFactory, resultDd, mDifference).getResult();
 			if (!correct) {
-				mLogger.info("Finished testing correctness of " + operationName());
+				mLogger.info("Finished testing correctness of " + getOperationName());
 			} else {
 				mLogger.warn("Unable to test correctness if state determinizer is not the PowersetDeterminizer.");
 			}
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
 					"language is different", mMinuend, mSubtrahend);
 		}
 		return correct;

@@ -55,7 +55,7 @@ public abstract class BinaryNwaOperation<LETTER, STATE, CRSF extends IStateFacto
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". First operand " + getFirstOperand().sizeInformation()
+		return "Start " + getOperationName() + ". First operand " + getFirstOperand().sizeInformation()
 				+ " Second operand " + getSecondOperand().sizeInformation();
 	}
 

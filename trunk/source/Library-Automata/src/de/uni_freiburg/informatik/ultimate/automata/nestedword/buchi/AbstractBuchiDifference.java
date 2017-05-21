@@ -95,7 +95,7 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". First operand " + mFstOperand.sizeInformation() + ". Second operand "
+		return "Finished " + getOperationName() + ". First operand " + mFstOperand.sizeInformation() + ". Second operand "
 				+ mSndOperand.sizeInformation() + " Result " + mResult.sizeInformation() + " Complement of second has "
 				+ getSndComplemented().size() + " states.";
 	}
@@ -114,7 +114,7 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		final boolean underApproximationOfComplement = false;
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Start testing correctness of " + operationName());
+			mLogger.info("Start testing correctness of " + getOperationName());
 		}
 
 		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<>();
@@ -148,11 +148,11 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 			assert correct;
 		}
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
 					"language is different", mFstOperand, mSndOperand);
 		}
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
 		return correct;
 	}
@@ -170,7 +170,7 @@ public abstract class AbstractBuchiDifference<LETTER, STATE>
 		} else {
 			correct = !(!underApproximationOfComplement && op1 && !op2);
 		}
-		assert correct : operationName() + " wrong result!";
+		assert correct : getOperationName() + " wrong result!";
 		return correct;
 	}
 }

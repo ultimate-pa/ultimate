@@ -60,6 +60,6 @@ public abstract class UnaryNetOperation<LETTER, PLACE, CRSF extends IStateFactor
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Operand " + getOperand().sizeInformation();
+		return "Start " + getOperationName() + ". Operand " + getOperand().sizeInformation();
 	}
 }

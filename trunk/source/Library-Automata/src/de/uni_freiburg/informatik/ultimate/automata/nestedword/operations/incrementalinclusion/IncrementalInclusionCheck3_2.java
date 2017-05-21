@@ -623,7 +623,7 @@ public class IncrementalInclusionCheck3_2<LETTER, STATE> extends AbstractIncreme
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName();
+		return "Start " + getOperationName();
 	}
 
 	@Override
@@ -631,7 +631,7 @@ public class IncrementalInclusionCheck3_2<LETTER, STATE> extends AbstractIncreme
 		mLogger.info("total:" + counter_total_nodes + "nodes");
 		mLogger.info(completeLeafSet.size() + "nodes in the end");
 		mLogger.info("total:" + counter_run + "runs");
-		return "Exit " + operationName();
+		return "Exit " + getOperationName();
 	}
 
 	/*

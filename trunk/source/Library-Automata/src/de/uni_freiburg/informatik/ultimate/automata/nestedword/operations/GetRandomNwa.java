@@ -138,13 +138,13 @@ public final class GetRandomNwa extends GeneralOperation<String, String, IStateF
 				"Start {0}. Alphabet size {1} Number of states {2} "
 						+ "Density internal transition {3} Density call transition {4} Density return transition {5} "
 						+ "Acceptance density {6}",
-				operationName(), mAlphabetSize, mSize, mInternalTransitionDensity, mCallTransitionDensity,
+				getOperationName(), mAlphabetSize, mSize, mInternalTransitionDensity, mCallTransitionDensity,
 				mReturnTransitionDensity, mAcceptanceDensity);
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Result " + mResult.sizeInformation() + '.';
+		return "Finished " + getOperationName() + ". Result " + mResult.sizeInformation() + '.';
 	}
 
 	@Override

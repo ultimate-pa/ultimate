@@ -730,7 +730,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName();
+		return "Start " + getOperationName();
 	}
 
 	@Override
@@ -745,7 +745,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover<LETTER, STATE>
 		mLogger.info("Total Hash: " + hashTotal + " node(s)");
 		mLogger.info("Sec Hash: " + hashSec + " node(s)");
 		mLogger.info("Fail Hash: " + hashFail + " node(s)");
-		return "Exit " + operationName();
+		return "Exit " + getOperationName();
 	}
 
 	@Override

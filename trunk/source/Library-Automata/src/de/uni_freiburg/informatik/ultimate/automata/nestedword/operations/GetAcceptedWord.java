@@ -91,6 +91,6 @@ public final class GetAcceptedWord<LETTER, STATE> extends UnaryNwaOperation<LETT
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Found word of length " + mAcceptedWord.length();
+		return "Finished " + getOperationName() + ". Found word of length " + mAcceptedWord.length();
 	}
 }

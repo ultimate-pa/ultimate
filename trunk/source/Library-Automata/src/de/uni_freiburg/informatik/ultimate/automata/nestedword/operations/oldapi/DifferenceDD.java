@@ -228,13 +228,13 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Minuend " + mMinuend.sizeInformation() + ". Subtrahend "
+		return "Start " + getOperationName() + ". Minuend " + mMinuend.sizeInformation() + ". Subtrahend "
 				+ mSubtrahend.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + mTraversedNwa.sizeInformation()
+		return "Finished " + getOperationName() + " Result " + mTraversedNwa.sizeInformation()
 				+ ". Max degree of Nondeterminism is " + mStateDeterminizer.getMaxDegreeOfNondeterminism()
 				+ ". DeterminizedStates: " + mDetStateCache.size();
 	}
@@ -504,19 +504,19 @@ public final class DifferenceDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTE
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			if (mLogger.isInfoEnabled()) {
-				mLogger.info("Start testing correctness of " + operationName());
+				mLogger.info("Start testing correctness of " + getOperationName());
 			}
 
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> resultSadd =
 					(new DifferenceSadd<>(mServices, stateFactory, mMinuend, mSubtrahend)).getResult();
 			correct &= new IsEquivalent<>(mServices, stateFactory, resultSadd, mTraversedNwa).getResult();
 			if (!correct) {
-				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
 						"language is different", mMinuend, mSubtrahend);
 			}
 
 			if (mLogger.isInfoEnabled()) {
-				mLogger.info("Finished testing correctness of " + operationName());
+				mLogger.info("Finished testing correctness of " + getOperationName());
 			}
 		} else if (mLogger.isWarnEnabled()) {
 			mLogger.warn("Unable to test correctness if state determinzier is not the PowersetDeterminizer.");

@@ -93,7 +93,7 @@ public final class Accepts<S, C> extends UnaryNetOperation<S, C, IPetriNet2Finit
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Operand " + mOperand.sizeInformation();
+		return "Start " + getOperationName() + ". Operand " + mOperand.sizeInformation();
 	}
 
 	@Override

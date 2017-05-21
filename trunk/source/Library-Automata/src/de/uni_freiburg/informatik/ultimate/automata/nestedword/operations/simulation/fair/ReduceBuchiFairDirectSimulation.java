@@ -120,7 +120,7 @@ public final class ReduceBuchiFairDirectSimulation<LETTER, STATE> extends Reduce
 	}
 
 	@Override
-	public String operationName() {
+	public String getOperationName() {
 		return "reduceBuchiFairDirectSimulation";
 	}
 }

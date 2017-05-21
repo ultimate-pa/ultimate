@@ -65,10 +65,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 	/**
 	 * @return Name of the operation.<br>
-	 *         This name should also be used in the test grammar.
+	 *         The name is determined by the class name.
+	 *         Do not override this method.
 	 */
-	default String operationName() {
-		// use runtime class name by default
+	default String getOperationName() {
 		return getClass().getSimpleName();
 	}
 
@@ -78,7 +78,7 @@ public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 	 *         "Started operation Intersection. First operand has 2394 states, second operand has 9374 states."
 	 */
 	default String startMessage() {
-		return "Started " + operationName() + '.';
+		return "Started " + getOperationName() + '.';
 	}
 
 	/**
@@ -86,7 +86,7 @@ public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 	 *         Use some information like: "Finished operation intersection. Result has 345 states."
 	 */
 	default String exitMessage() {
-		return "Finished " + operationName() + '.';
+		return "Finished " + getOperationName() + '.';
 	}
 
 	/**

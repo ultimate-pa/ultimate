@@ -83,7 +83,7 @@ public final class Automaton2Net<LETTER, STATE> extends UnaryNwaOperation<LETTER
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". PetriNet " + mNet.sizeInformation();
+		return "Finished " + getOperationName() + ". PetriNet " + mNet.sizeInformation();
 	}
 
 	@Override

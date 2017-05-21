@@ -124,12 +124,12 @@ public class DeterminizeDD<LETTER, STATE> extends DoubleDeckerBuilder<LETTER, ST
 
 	@Override
 	public final String startMessage() {
-		return "Start " + operationName() + ". Operand " + mOperand.sizeInformation();
+		return "Start " + getOperationName() + ". Operand " + mOperand.sizeInformation();
 	}
 
 	@Override
 	public final String exitMessage() {
-		return "Finished " + operationName() + ". Result " + mTraversedNwa.sizeInformation();
+		return "Finished " + getOperationName() + ". Result " + mTraversedNwa.sizeInformation();
 	}
 
 	@Override

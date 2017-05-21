@@ -915,7 +915,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName();
+		return "Start " + getOperationName();
 	}
 
 	@Override
@@ -946,7 +946,7 @@ public class IncrementalInclusionCheck2DeadEndRemovalAdvanceCover_2Stacks<LETTER
 		 * // TODO Auto-generated catch block e.printStackTrace(); } } if(i!=0){ mLogger.info("Total States: "+i);
 		 * mLogger.info("Total non-Deterministic States:"+j); mLogger.info("non-Determinism: "+((j*1.0)/(i*1.0))); }
 		 */
-		return "Exit " + operationName();
+		return "Exit " + getOperationName();
 	}
 
 	private boolean stateDeterministicCheck(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automata,

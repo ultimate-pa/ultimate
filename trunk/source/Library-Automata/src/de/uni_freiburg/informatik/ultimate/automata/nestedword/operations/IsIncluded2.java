@@ -100,13 +100,13 @@ public final class IsIncluded2<LETTER, STATE> extends UnaryNwaOperation<LETTER, 
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Operand A " + mOperand.sizeInformation() + ". Operand B_1 "
+		return "Start " + getOperationName() + ". Operand A " + mOperand.sizeInformation() + ". Operand B_1 "
 				+ mB1.sizeInformation() + ". Operand B_2 " + mB2.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Language is " + (mResult ? "" : "not ") + "included";
+		return "Finished " + getOperationName() + ". Language is " + (mResult ? "" : "not ") + "included";
 	}
 
 	@Override

@@ -114,13 +114,13 @@ public abstract class AbstractIntersect<LETTER, STATE> extends DoubleDeckerBuild
 
 	@Override
 	public final String startMessage() {
-		return "Start " + operationName() + ". First operand " + mFstNwa.sizeInformation() + " Second operand "
+		return "Start " + getOperationName() + ". First operand " + mFstNwa.sizeInformation() + " Second operand "
 				+ mSndNwa.sizeInformation();
 	}
 
 	@Override
 	public final String exitMessage() {
-		return "Finished " + operationName() + ". Result " + mTraversedNwa.sizeInformation();
+		return "Finished " + getOperationName() + ". Result " + mTraversedNwa.sizeInformation();
 	}
 
 	protected final void run() throws AutomataOperationCanceledException {

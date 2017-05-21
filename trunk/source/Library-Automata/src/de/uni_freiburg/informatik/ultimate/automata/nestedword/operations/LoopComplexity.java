@@ -256,7 +256,7 @@ public final class LoopComplexity<LETTER, STATE> extends UnaryNwaOperation<LETTE
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Operand with " + mOperand.size() + " states has loop complexity "
+		return "Finished " + getOperationName() + ". Operand with " + mOperand.size() + " states has loop complexity "
 				+ mResult;
 	}
 

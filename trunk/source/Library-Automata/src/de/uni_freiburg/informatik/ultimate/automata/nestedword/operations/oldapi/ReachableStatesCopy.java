@@ -176,12 +176,12 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Operand " + mOperand.sizeInformation();
+		return "Start " + getOperationName() + ". Operand " + mOperand.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + mTraversedNwa.sizeInformation();
+		return "Finished " + getOperationName() + " Result " + mTraversedNwa.sizeInformation();
 	}
 
 	@Override
@@ -273,7 +273,7 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
 		if (!mRemoveNonLiveStates) {
-			mLogger.info("Start testing correctness of " + operationName());
+			mLogger.info("Start testing correctness of " + getOperationName());
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> input;
 			if (!mComplement) {
 				input = mOperand;
@@ -288,10 +288,10 @@ public final class ReachableStatesCopy<LETTER, STATE> extends DoubleDeckerBuilde
 			}
 			// should recognize same language as old computation
 			correct &= new IsEquivalent<>(mServices, stateFactory, input, mTraversedNwa).getResult();
-			mLogger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
 					"language is different", mTraversedNwa);
 		}
 		return correct;

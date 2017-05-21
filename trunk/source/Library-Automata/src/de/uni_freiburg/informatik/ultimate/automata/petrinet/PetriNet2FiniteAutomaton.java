@@ -108,7 +108,7 @@ public final class PetriNet2FiniteAutomaton<S, C> extends UnaryNetOperation<S, C
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
+		return "Finished " + getOperationName() + ". Result " + mResult.sizeInformation();
 	}
 
 	/**

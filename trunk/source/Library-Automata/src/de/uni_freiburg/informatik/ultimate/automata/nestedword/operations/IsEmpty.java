@@ -759,8 +759,8 @@ public final class IsEmpty<LETTER, STATE> extends UnaryNwaOperation<LETTER, STAT
 	@Override
 	public String exitMessage() {
 		if (mAcceptingRun == null) {
-			return "Finished " + operationName() + ". No accepting run.";
+			return "Finished " + getOperationName() + ". No accepting run.";
 		}
-		return "Finished " + operationName() + ". Found accepting run of length " + mAcceptingRun.getLength();
+		return "Finished " + getOperationName() + ". Found accepting run of length " + mAcceptingRun.getLength();
 	}
 }

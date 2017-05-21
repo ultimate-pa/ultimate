@@ -75,7 +75,7 @@ public final class IsEmpty<LETTER, STATE>
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " language is " + (mResult ? "empty" : "not empty");
+		return "Finished " + getOperationName() + " language is " + (mResult ? "empty" : "not empty");
 	}
 
 	@Override

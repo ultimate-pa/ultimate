@@ -88,7 +88,7 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	}
 
 	@Override
-	public String operationName() {
+	public String getOperationName() {
 		return "compareReduceNwaSimulation";
 	}
 

@@ -137,13 +137,13 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + "First Operand " + mOperand.sizeInformation() + "Second Operand "
+		return "Start " + getOperationName() + "First Operand " + mOperand.sizeInformation() + "Second Operand "
 				+ mNwa.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
+		return "Finished " + getOperationName() + ". Result " + mResult.sizeInformation();
 	}
 
 	private void classifySymbols() {
@@ -381,7 +381,7 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 	@Override
 	public boolean checkResult(final CRSF stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Testing correctness of " + operationName());
+			mLogger.info("Testing correctness of " + getOperationName());
 		}
 
 		final INestedWordAutomaton<S, C> op1AsNwa =
@@ -395,7 +395,7 @@ public final class DifferenceBlackAndWhite<S, C, CRSF extends IPetriNet2FiniteAu
 		correct &= new IsEquivalent<>(mServices, stateFactory, resultAsNwa, rcResult).getResult();
 
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
 		return correct;
 	}

@@ -237,7 +237,7 @@ public final class GetHandle<LETTER, STATE> extends UnaryNwaOperation<LETTER, ST
 		final StringBuilder builder = new StringBuilder();
 		// @formatter:off
 		builder.append("Finished ")
-				.append(operationName());
+				.append(getOperationName());
 		// @formatter:on
 		if (mHandle == null) {
 			// @formatter:off

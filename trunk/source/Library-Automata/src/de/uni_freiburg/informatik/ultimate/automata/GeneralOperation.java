@@ -91,20 +91,20 @@ public abstract class GeneralOperation<LETTER, STATE, CRSF extends IStateFactory
 
 	protected final void printStartCheckMessage() {
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Start testing correctness of " + operationName());
+			mLogger.info("Start testing correctness of " + getOperationName());
 		}
 	}
 
 	protected final void printExitCheckMessage() {
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
 	}
 
 	@Override
 	public boolean checkResult(final CRSF stateFactory) throws AutomataLibraryException {
 		if (mLogger.isWarnEnabled()) {
-			mLogger.warn("No result check for " + operationName() + " available yet.");
+			mLogger.warn("No result check for " + getOperationName() + " available yet.");
 		}
 		return true;
 	}
@@ -113,7 +113,7 @@ public abstract class GeneralOperation<LETTER, STATE, CRSF extends IStateFactory
 	 * @return generic running task description.
 	 */
 	protected String generateGenericRunningTaskDescription() {
-		return "applying " + operationName();
+		return "applying " + getOperationName();
 	}
 
 	/**

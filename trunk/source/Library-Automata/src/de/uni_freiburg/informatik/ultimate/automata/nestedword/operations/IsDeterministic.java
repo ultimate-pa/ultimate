@@ -109,7 +109,7 @@ public final class IsDeterministic<LETTER, STATE> extends UnaryNwaOperation<LETT
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Operand is " + (mResult ? "" : "not ") + "deterministic.";
+		return "Finished " + getOperationName() + ". Operand is " + (mResult ? "" : "not ") + "deterministic.";
 	}
 
 	@Override

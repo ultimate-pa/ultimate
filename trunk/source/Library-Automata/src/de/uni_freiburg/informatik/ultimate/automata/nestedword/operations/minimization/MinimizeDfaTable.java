@@ -370,7 +370,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 
 	private void startMessageDebug() {
 		final StringBuilder msg = new StringBuilder("Start ");
-		msg.append(operationName()).append(" Operand ").append(mOperand.sizeInformation());
+		msg.append(getOperationName()).append(" Operand ").append(mOperand.sizeInformation());
 		mLogger.info(msg.toString());
 
 		if (mLogger.isDebugEnabled()) {
@@ -390,7 +390,7 @@ public class MinimizeDfaTable<LETTER, STATE> extends AbstractMinimizeNwa<LETTER,
 			printTransitions(getResult());
 		}
 		final StringBuilder msg = new StringBuilder();
-		msg.append("Finished ").append(operationName()).append(" Result ").append(getResult().sizeInformation());
+		msg.append("Finished ").append(getOperationName()).append(" Result ").append(getResult().sizeInformation());
 		mLogger.info(msg.toString());
 	}
 

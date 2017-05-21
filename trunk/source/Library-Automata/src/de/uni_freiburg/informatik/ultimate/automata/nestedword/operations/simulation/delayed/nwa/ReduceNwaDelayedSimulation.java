@@ -122,7 +122,7 @@ public final class ReduceNwaDelayedSimulation<LETTER, STATE> extends BuchiReduce
 	}
 
 	@Override
-	public String operationName() {
+	public String getOperationName() {
 		return "reduceNwaDelayedSimulation";
 	}
 }

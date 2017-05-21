@@ -346,13 +346,13 @@ public final class GetRandomDfa extends GeneralOperation<String, String, IStateF
 				"Start {0}. Alphabet size {1} Number of states {2} Number of accepting states {3} "
 						+ "Perc of totality {4} Ensure states reach final {5} Ensure is uniform {6} "
 						+ "Is caching enabled {7}",
-				operationName(), mAlphabetSize, mSize, mNumOfAccStates, mPercOfTotality, mEnsureStatesReachFinal,
+				getOperationName(), mAlphabetSize, mSize, mNumOfAccStates, mPercOfTotality, mEnsureStatesReachFinal,
 				mEnsureIsUniform, mEnableCaching);
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + mResult.sizeInformation() + '.';
+		return "Finished " + getOperationName() + " Result " + mResult.sizeInformation() + '.';
 	}
 
 	/**

@@ -170,7 +170,7 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		final boolean underApproximationOfComplement = false;
-		mLogger.info("Start testing correctness of " + operationName());
+		mLogger.info("Start testing correctness of " + getOperationName());
 		final List<NestedLassoWord<LETTER>> lassoWords = new ArrayList<>();
 		final BuchiIsEmpty<LETTER, STATE> operandEmptiness = new BuchiIsEmpty<>(mServices, mOperand);
 		final boolean operandEmpty = operandEmptiness.getResult();
@@ -206,22 +206,22 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 		}
 
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
 					"language is different", mOperand, mResult);
 		}
-		mLogger.info("Finished testing correctness of " + operationName());
+		mLogger.info("Finished testing correctness of " + getOperationName());
 		return correct;
 	}
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + " with optimization " + mOptimization + ". Operand "
+		return "Start " + getOperationName() + " with optimization " + mOptimization + ". Operand "
 				+ mOperand.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " with optimization " + mOptimization + ". Operand "
+		return "Finished " + getOperationName() + " with optimization " + mOptimization + ". Operand "
 				+ mOperand.sizeInformation() + " Result " + mResult.sizeInformation()
 				+ mComplemented.getPowersetStates() + " powerset states" + mComplemented.getRankStates()
 				+ " rank states. The highest rank that occured is " + mComplemented.getHighesRank();

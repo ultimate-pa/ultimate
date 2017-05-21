@@ -84,7 +84,7 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Reduced from " + mOperand.size() + " states to "
+		return "Finished " + getOperationName() + ". Reduced from " + mOperand.size() + " states to "
 				+ getResult().sizeInformation();
 	}
 
@@ -119,16 +119,16 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 		final IDoubleDeckerAutomaton<LETTER, STATE> result = getResult();
 		final IDoubleDeckerAutomaton<LETTER, STATE> reachableStatesCopy = rsc.getResult();
 		correct = reachableStatesCopy.getStates().containsAll(result.getStates());
-		assert correct : operationName() + " incorrect: too few states";
+		assert correct : getOperationName() + " incorrect: too few states";
 
 		correct = correct && checkEachState((DoubleDeckerAutomaton<LETTER, STATE>) reachableStatesCopy, result);
-		assert correct : operationName() + " incorrect: checkEachState failed";
+		assert correct : getOperationName() + " incorrect: checkEachState failed";
 
 		correct = correct && checkResultFurther(reachableStatesCopy);
-		assert correct : operationName() + " incorrect: further tests failed";
+		assert correct : getOperationName() + " incorrect: further tests failed";
 
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
 					"language is different", mOperand);
 		}
 
@@ -149,7 +149,7 @@ public abstract class StateRemoval<LETTER, STATE> extends UnaryNwaOperation<LETT
 			checkAllStatesAreInReachableStatesCopy(final INestedWordAutomaton<LETTER, STATE> reachableStatesCopy) {
 		// check that all result states are also present in the ReachableStatesCopy
 		final boolean correct = getResult().getStates().containsAll(reachableStatesCopy.getStates());
-		assert correct : operationName() + " incorrect: too many states";
+		assert correct : getOperationName() + " incorrect: too many states";
 		return correct;
 	}
 

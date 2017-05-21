@@ -145,7 +145,7 @@ public class MinimizeNwaPmaxSat<LETTER, STATE> extends MinimizeNwaMaxSat2<LETTER
 
 	@Override
 	protected String createTaskDescription() {
-		return NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(operationName(), mOperand,
+		return NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(getOperationName(), mOperand,
 				mInitialPartitionSize, mLargestBlockInitialPartition);
 	}
 

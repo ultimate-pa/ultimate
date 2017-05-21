@@ -98,7 +98,7 @@ public final class BuchiIsIncluded<LETTER, STATE> extends BinaryNwaOperation<LET
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Language is " + (mResult ? "" : "not ") + "included";
+		return "Finished " + getOperationName() + ". Language is " + (mResult ? "" : "not ") + "included";
 	}
 
 	@Override

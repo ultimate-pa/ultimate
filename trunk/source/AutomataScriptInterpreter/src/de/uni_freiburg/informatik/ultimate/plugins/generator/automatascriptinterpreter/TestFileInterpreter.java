@@ -689,7 +689,7 @@ public class TestFileInterpreter implements IMessagePrinter {
 		}
 		if (op != null) {
 			try {
-				assert op.checkResult(new StringFactory()) : "Result of operation " + op.operationName()
+				assert op.checkResult(new StringFactory()) : "Result of operation " + op.getOperationName()
 						+ " is wrong (according to its checkResult method)";
 				return op.getResult();
 			} catch (final AutomataLibraryException | AssertionError | OutOfMemoryError e) {

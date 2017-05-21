@@ -114,7 +114,7 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 
 	@Override
 	public final String exitMessage() {
-		return "Finished " + operationName() + ". Reduced states from " + getOperand().size() + " to "
+		return "Finished " + getOperationName() + ". Reduced states from " + getOperand().size() + " to "
 				+ getResult().size() + '.';
 	}
 
@@ -211,17 +211,17 @@ public abstract class AbstractMinimizeNwa<LETTER, STATE>
 	public final boolean checkResult(final IMinimizationCheckResultStateFactory<STATE> stateFactory)
 			throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Start testing correctness of " + operationName());
+			mLogger.info("Start testing correctness of " + getOperationName());
 		}
 
 		// call submethod to enable overriding by subclasses
 		final Pair<Boolean, String> equivalenceResult = checkResultHelper(stateFactory);
 
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
 		if (!equivalenceResult.getFirst()) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
 					equivalenceResult.getSecond(), getOperand());
 		}
 		return equivalenceResult.getFirst();

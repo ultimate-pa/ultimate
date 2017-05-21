@@ -87,14 +87,14 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Operand " + mOperand.sizeInformation() + " Result "
+		return "Finished " + getOperationName() + ". Operand " + mOperand.sizeInformation() + " Result "
 				+ mResult.sizeInformation();
 	}
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Start testing correctness of " + operationName());
+			mLogger.info("Start testing correctness of " + getOperationName());
 		}
 
 		final boolean underApproximationOfComplement = false;
@@ -133,11 +133,11 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 		}
 
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
 					"language is different", mOperand, mResult);
 		}
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
 		return correct;
 	}

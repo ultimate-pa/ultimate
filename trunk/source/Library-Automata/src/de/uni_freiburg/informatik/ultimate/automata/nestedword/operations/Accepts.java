@@ -104,7 +104,7 @@ public final class Accepts<LETTER, STATE> extends AbstractAcceptance<LETTER, STA
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Automaton has " + mOperand.sizeInformation() + " Word has length "
+		return "Start " + getOperationName() + ". Automaton has " + mOperand.sizeInformation() + " Word has length "
 				+ mWord.length();
 	}
 
@@ -113,7 +113,7 @@ public final class Accepts<LETTER, STATE> extends AbstractAcceptance<LETTER, STA
 		final StringBuilder builder = new StringBuilder();
 		// @formatter:off
 		builder.append("Finished ")
-				.append(operationName())
+				.append(getOperationName())
 				.append(". ");
 		// @formatter:on
 		final String quantifier = mIsAccepted ? "some " : "each ";

@@ -101,7 +101,7 @@ public final class BuchiIsEmptyXW<LETTER, STATE> extends UnaryNwaOperation<LETTE
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Result is " + mResult;
+		return "Finished " + getOperationName() + ". Result is " + mResult;
 	}
 
 	@Override

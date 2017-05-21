@@ -143,13 +143,13 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Minuend " + mMinuend.sizeInformation() + " Subtrahend "
+		return "Start " + getOperationName() + ". Minuend " + mMinuend.sizeInformation() + " Subtrahend "
 				+ mSubtrahend.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
+		return "Finished " + getOperationName() + " Result " + mResult.sizeInformation();
 	}
 
 	@Override

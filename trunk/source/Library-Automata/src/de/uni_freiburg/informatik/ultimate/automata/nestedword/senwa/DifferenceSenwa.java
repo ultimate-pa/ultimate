@@ -310,13 +310,13 @@ public final class DifferenceSenwa<LETTER, STATE>
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Minuend " + mMinuend.sizeInformation() + ". Subtrahend "
+		return "Start " + getOperationName() + ". Minuend " + mMinuend.sizeInformation() + ". Subtrahend "
 				+ mSubtrahend.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + mSenwa.sizeInformation()
+		return "Finished " + getOperationName() + " Result " + mSenwa.sizeInformation()
 				+ ". Max degree of Nondeterminism is " + mStateDeterminizer.getMaxDegreeOfNondeterminism();
 	}
 
@@ -324,16 +324,16 @@ public final class DifferenceSenwa<LETTER, STATE>
 	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		boolean correct = true;
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
-			mLogger.info("Start testing correctness of " + operationName());
+			mLogger.info("Start testing correctness of " + getOperationName());
 
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> resultSadd =
 					(new DifferenceSadd<>(mServices, stateFactory, mMinuend, mSubtrahend)).getResult();
 			correct &= new IsEquivalent<>(mServices, stateFactory, resultSadd, mSenwa).getResult();
 			if (!correct) {
-				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+				AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
 						"language is different", mMinuend, mSubtrahend);
 			}
-			mLogger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + getOperationName());
 		} else {
 			mLogger.warn("Unable to test correctness if state determinzier is not the PowersetDeterminizer.");
 		}

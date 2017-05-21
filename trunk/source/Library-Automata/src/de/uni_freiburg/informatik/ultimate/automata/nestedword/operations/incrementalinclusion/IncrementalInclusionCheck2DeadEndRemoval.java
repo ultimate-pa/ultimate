@@ -349,7 +349,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName();
+		return "Start " + getOperationName();
 	}
 
 	@Override
@@ -362,7 +362,7 @@ public class IncrementalInclusionCheck2DeadEndRemoval<LETTER, STATE>
 		mLogger.info("total:" + mAllNodes.size() + "nodes");
 		mLogger.info(mCompleteTree.size() + "nodes in the end");
 		mLogger.info("total:" + mCounterRun + "runs");
-		return "Exit " + operationName();
+		return "Exit " + getOperationName();
 	}
 
 	@Override

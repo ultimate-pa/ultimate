@@ -175,7 +175,7 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPet
 	public boolean checkResult(final IPetriNet2FiniteAutomatonStateFactory<C> stateFactory)
 			throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Testing correctness of " + operationName());
+			mLogger.info("Testing correctness of " + getOperationName());
 		}
 
 		final boolean correct;
@@ -188,7 +188,7 @@ public final class EmptinessPetruchio<S, C> extends UnaryNetOperation<S, C, IPet
 		}
 
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
 		return correct;
 	}

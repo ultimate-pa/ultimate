@@ -204,12 +204,12 @@ public class Jeffery_Test_4<LETTER, STATE> implements IOperation<LETTER, STATE, 
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName();
+		return "Start " + getOperationName();
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Exit " + operationName();
+		return "Exit " + getOperationName();
 	}
 
 	@Override

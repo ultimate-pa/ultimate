@@ -107,7 +107,7 @@ public class DirectSimulationComparison<LETTER, STATE>
 					correctNew, newSize, correctMaxSat, maxSatSize));
 		}
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed", operationName(),
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed", getOperationName(),
 					mOperand);
 		}
 		return correct;

@@ -89,7 +89,7 @@ public final class Intersect<LETTER, STATE>
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
+		return "Finished " + getOperationName() + ". Result " + mResult.sizeInformation();
 	}
 
 	@Override
@@ -110,7 +110,7 @@ public final class Intersect<LETTER, STATE>
 	@Override
 	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Start testing correctness of " + operationName());
+			mLogger.info("Start testing correctness of " + getOperationName());
 		}
 
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> resultDd =
@@ -121,12 +121,12 @@ public final class Intersect<LETTER, STATE>
 		correct &= new IsEquivalent<>(mServices, stateFactory, resultDd, mResult).getResult();
 		assert correct;
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
 					"language is different", mFstOperand, mSndOperand);
 		}
 
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
 		return correct;
 	}

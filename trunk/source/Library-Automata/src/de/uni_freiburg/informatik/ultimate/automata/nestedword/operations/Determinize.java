@@ -110,7 +110,7 @@ public final class Determinize<LETTER, STATE>
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
+		return "Finished " + getOperationName() + ". Result " + mResult.sizeInformation();
 	}
 
 	@Override
@@ -132,7 +132,7 @@ public final class Determinize<LETTER, STATE>
 		 */
 		if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			if (mLogger.isInfoEnabled()) {
-				mLogger.info("Start testing correctness of " + operationName());
+				mLogger.info("Start testing correctness of " + getOperationName());
 			}
 
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> resultDd =
@@ -141,7 +141,7 @@ public final class Determinize<LETTER, STATE>
 			correct &= new IsEquivalent<>(mServices, stateFactory, resultDd, mResult).getResult();
 
 			if (mLogger.isInfoEnabled()) {
-				mLogger.info("Finished testing correctness of " + operationName());
+				mLogger.info("Finished testing correctness of " + getOperationName());
 			}
 		} else {
 			if (mLogger.isWarnEnabled()) {
@@ -149,7 +149,7 @@ public final class Determinize<LETTER, STATE>
 			}
 		}
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
 					"language is different", mOperand);
 		}
 		return correct;

@@ -140,12 +140,12 @@ public final class HasUnreachableStates<LETTER, STATE> extends DoubleDeckerVisit
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + " Operand " + mTraversedNwa.sizeInformation();
+		return "Start " + getOperationName() + " Operand " + mTraversedNwa.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Operand has " + mUnreachableStates + " unreachable states";
+		return "Finished " + getOperationName() + " Operand has " + mUnreachableStates + " unreachable states";
 	}
 
 	@Override

@@ -74,20 +74,20 @@ public final class BuchiClosure<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + " Operand " + mOperand.sizeInformation() + " thereof "
+		return "Start " + getOperationName() + " Operand " + mOperand.sizeInformation() + " thereof "
 				+ mOperand.getFinalStates().size() + " accepting";
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Start " + operationName() + " Result " + mResult.sizeInformation() + " thereof "
+		return "Start " + getOperationName() + " Result " + mResult.sizeInformation() + " thereof "
 				+ mResult.getFinalStates().size() + " accepting";
 	}
 
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Start testing correctness of " + operationName());
+			mLogger.info("Start testing correctness of " + getOperationName());
 		}
 
 		// TODO Christian 2016-09-08: This variable is never read - a bug?
@@ -107,7 +107,7 @@ public final class BuchiClosure<LETTER, STATE> extends UnaryNwaOperation<LETTER,
 		assert correct;
 
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
 		return correct;
 	}

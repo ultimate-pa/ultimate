@@ -53,12 +53,12 @@ public class IncrementalInclusionCheckDifference<LETTER, STATE, SF extends IInte
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName();
+		return "Start " + getOperationName();
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Exit " + operationName() + ". Result has " + size() + " states.";
+		return "Exit " + getOperationName() + ". Result has " + size() + " states.";
 	}
 
 	@Override

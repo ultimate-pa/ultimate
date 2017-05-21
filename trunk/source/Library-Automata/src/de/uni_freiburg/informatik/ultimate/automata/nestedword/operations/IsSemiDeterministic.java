@@ -92,7 +92,7 @@ public final class IsSemiDeterministic<LETTER, STATE> extends UnaryNwaOperation<
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Operand is " + (mResult ? "" : "not") + "semideterministic."
+		return "Finished " + getOperationName() + " Operand is " + (mResult ? "" : "not") + "semideterministic."
 				+ " There are " + mNondeterministicSuccessorOfAccepting
 				+ "nondeterministic non-strict successors of accepting states.";
 	}

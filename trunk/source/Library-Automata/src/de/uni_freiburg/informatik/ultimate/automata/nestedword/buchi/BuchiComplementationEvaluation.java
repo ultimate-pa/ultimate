@@ -91,7 +91,7 @@ public final class BuchiComplementationEvaluation<LETTER, STATE>
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Operand " + mOperand.sizeInformation() + ". Result " + mResult;
+		return "Finished " + getOperationName() + ". Operand " + mOperand.sizeInformation() + ". Result " + mResult;
 	}
 
 	@Override

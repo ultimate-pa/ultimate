@@ -97,7 +97,7 @@ public class IntersectDD<LETTER, STATE> extends AbstractIntersect<LETTER, STATE>
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isWarnEnabled()) {
-			mLogger.warn("No result check for " + operationName() + " available yet.");
+			mLogger.warn("No result check for " + getOperationName() + " available yet.");
 		}
 		return true;
 	}

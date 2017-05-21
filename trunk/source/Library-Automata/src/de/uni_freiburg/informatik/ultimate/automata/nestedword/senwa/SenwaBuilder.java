@@ -92,7 +92,7 @@ public final class SenwaBuilder<LETTER, STATE> extends
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Result " + mSenwa.sizeInformation();
+		return "Finished " + getOperationName() + ". Result " + mSenwa.sizeInformation();
 	}
 
 	private STATE getOrConstructResultState(final STATE opEntry, final STATE opState, final boolean isInitial) {
@@ -193,17 +193,17 @@ public final class SenwaBuilder<LETTER, STATE> extends
 	@Override
 	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Start testing correctness of " + operationName());
+			mLogger.info("Start testing correctness of " + getOperationName());
 		}
 
 		boolean correct;
 		correct = new IsEquivalent<>(mServices, stateFactory, mNwa, mSenwa).getResult();
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed", "", mNwa);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed", "", mNwa);
 		}
 
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
 		return correct;
 	}

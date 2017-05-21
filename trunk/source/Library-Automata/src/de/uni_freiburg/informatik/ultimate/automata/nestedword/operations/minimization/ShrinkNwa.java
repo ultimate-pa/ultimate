@@ -609,7 +609,7 @@ public class ShrinkNwa<LETTER, STATE> extends AbstractMinimizeNwa<LETTER, STATE>
 	private void checkTimeOut() throws AutomataOperationCanceledException {
 		if (isCancellationRequested()) {
 			final String taskDescription = NestedWordAutomataUtils.generateGenericMinimizationRunningTaskDescription(
-					operationName(), mOperand, mInitialPartitionSize, mLargestBlockInitialPartition);
+					getOperationName(), mOperand, mInitialPartitionSize, mLargestBlockInitialPartition);
 			throw new AutomataOperationCanceledException(new RunningTaskInfo(this.getClass(), taskDescription));
 		}
 	}

@@ -80,7 +80,7 @@ public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
+		return "Finished " + getOperationName() + " Result " + mResult.sizeInformation();
 	}
 
 	@Override
@@ -96,7 +96,7 @@ public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 	@Override
 	public boolean checkResult(final INwaInclusionStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Start testing correctness of " + operationName());
+			mLogger.info("Start testing correctness of " + getOperationName());
 		}
 
 		final String message;
@@ -122,10 +122,10 @@ public final class Totalize<LETTER, STATE> extends UnaryNwaOperation<LETTER, STA
 		}
 
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed", message, mOperand);
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed", message, mOperand);
 		}
 		return correct;
 	}

@@ -86,7 +86,7 @@ public final class BuchiComplementSVW<LETTER, STATE> extends UnaryNwaOperation<L
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Result " + mResult.sizeInformation();
+		return "Finished " + getOperationName() + ". Result " + mResult.sizeInformation();
 	}
 
 	@Override

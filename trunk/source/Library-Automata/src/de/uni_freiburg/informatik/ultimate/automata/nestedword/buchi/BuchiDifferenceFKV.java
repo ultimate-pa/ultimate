@@ -128,7 +128,7 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". First operand " + mFstOperand.sizeInformation() + " Second operand "
+		return "Finished " + getOperationName() + ". First operand " + mFstOperand.sizeInformation() + " Second operand "
 				+ mSndOperand.sizeInformation() + " Result " + mResult.sizeInformation() + " Complement of second has "
 				+ mSndComplemented.size() + " states " + mSndComplemented.getPowersetStates() + " powerset states"
 				+ mSndComplemented.getRankStates() + " rank states. The highest rank that occured is "

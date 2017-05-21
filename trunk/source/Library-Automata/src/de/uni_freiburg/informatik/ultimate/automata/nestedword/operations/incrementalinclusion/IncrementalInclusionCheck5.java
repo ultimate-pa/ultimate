@@ -614,7 +614,7 @@ public class IncrementalInclusionCheck5<LETTER, STATE> extends AbstractIncrement
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName();
+		return "Start " + getOperationName();
 	}
 
 	@Override
@@ -622,7 +622,7 @@ public class IncrementalInclusionCheck5<LETTER, STATE> extends AbstractIncrement
 		mLogger.info("total:" + counter_total_nodes + "nodes");
 		mLogger.info(completeLeafSet.size() + "nodes in the end");
 		mLogger.info("total:" + counter_run + "runs");
-		return "Exit " + operationName();
+		return "Exit " + getOperationName();
 	}
 
 	@Override

@@ -177,14 +177,14 @@ public final class PetriNetUnfolder<S, C> extends UnaryNetOperation<S, C, IPetri
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Net " + mOperand.sizeInformation() + (mStopIfAcceptingRunFound
+		return "Start " + getOperationName() + ". Net " + mOperand.sizeInformation() + (mStopIfAcceptingRunFound
 				? "We stop if some accepting run was found"
 				: "We compute complete finite Prefix");
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Result " + mUnfolding.sizeInformation();
+		return "Finished " + getOperationName() + ". Result " + mUnfolding.sizeInformation();
 	}
 
 	private void computeUnfolding() throws AutomataOperationCanceledException {

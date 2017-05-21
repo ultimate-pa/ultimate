@@ -86,7 +86,7 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + " Result " + mResult.sizeInformation();
+		return "Finished " + getOperationName() + " Result " + mResult.sizeInformation();
 	}
 
 	private <SF extends IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void
@@ -114,7 +114,7 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 	@Override
 	public boolean checkResult(final IStateFactory<STATE> stateFactory) throws AutomataLibraryException {
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Start testing correctness of " + operationName());
+			mLogger.info("Start testing correctness of " + getOperationName());
 		}
 		boolean correct = true;
 		/*
@@ -126,11 +126,11 @@ public final class BuchiIntersect<LETTER, STATE> extends BinaryNwaOperation<LETT
 		correct &= resultCheckWithRandomWords();
 		assert correct;
 		if (!correct) {
-			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, operationName() + "Failed",
+			AutomatonDefinitionPrinter.writeToFileIfPreferred(mServices, getOperationName() + "Failed",
 					"language is different", mFstOperand, mSndOperand);
 		}
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Finished testing correctness of " + operationName());
+			mLogger.info("Finished testing correctness of " + getOperationName());
 		}
 		return correct;
 	}

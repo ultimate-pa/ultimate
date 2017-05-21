@@ -121,7 +121,7 @@ public final class ReduceNwaDirectSimulation<LETTER, STATE> extends MinimizeDfaS
 	}
 
 	@Override
-	public String operationName() {
+	public String getOperationName() {
 		return "ReduceNwaDirectSimulation";
 	}
 }

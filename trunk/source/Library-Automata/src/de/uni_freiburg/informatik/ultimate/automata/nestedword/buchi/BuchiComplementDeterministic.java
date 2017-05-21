@@ -109,12 +109,12 @@ public final class BuchiComplementDeterministic<LETTER, STATE> extends DoubleDec
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Operand " + mOperand.sizeInformation();
+		return "Start " + getOperationName() + ". Operand " + mOperand.sizeInformation();
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finished " + operationName() + ". Result " + mTraversedNwa.sizeInformation();
+		return "Finished " + getOperationName() + ". Result " + mTraversedNwa.sizeInformation();
 	}
 
 	@Override

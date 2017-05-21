@@ -160,12 +160,12 @@ public class Totalize<LETTER, STATE> implements IOperation<LETTER, STATE, IState
 
 	@Override
 	public String startMessage() {
-		return "Starting " + operationName();
+		return "Starting " + getOperationName();
 	}
 
 	@Override
 	public String exitMessage() {
-		return "Finishing " + operationName();
+		return "Finishing " + getOperationName();
 	}
 
 	@Override

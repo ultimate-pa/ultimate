@@ -56,7 +56,7 @@ public abstract class UnaryNwaOperation<LETTER, STATE, CRSF extends IStateFactor
 
 	@Override
 	public String startMessage() {
-		return "Start " + operationName() + ". Operand " + getOperand().sizeInformation();
+		return "Start " + getOperationName() + ". Operand " + getOperand().sizeInformation();
 	}
 
 	/**
@@ -69,6 +69,6 @@ public abstract class UnaryNwaOperation<LETTER, STATE, CRSF extends IStateFactor
 	 */
 	@Override
 	protected String generateGenericRunningTaskDescription() {
-		return "applying " + operationName() + " to NWA with " + getOperand().size() + " states";
+		return "applying " + getOperationName() + " to NWA with " + getOperand().size() + " states";
 	}
 }
