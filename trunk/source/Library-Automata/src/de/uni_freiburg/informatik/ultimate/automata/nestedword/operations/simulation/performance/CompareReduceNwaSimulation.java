@@ -88,11 +88,6 @@ public final class CompareReduceNwaSimulation<LETTER, STATE> extends CompareRedu
 	}
 
 	@Override
-	public String getOperationName() {
-		return "compareReduceNwaSimulation";
-	}
-
-	@Override
 	public void verifyAutomatonValidity(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton) {
 		// Do noting to accept nwa automata
 	}
