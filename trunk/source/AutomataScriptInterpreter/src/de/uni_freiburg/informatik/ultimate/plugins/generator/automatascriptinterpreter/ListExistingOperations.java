@@ -33,6 +33,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+
 /**
  * Create a list of all available operations.
  * 
@@ -59,14 +62,24 @@ public class ListExistingOperations {
 	
 	private static String constructorStringRepresentation(final Constructor<?> constructor) {
 		final StringBuilder result = new StringBuilder();
-		result.append(constructor.getDeclaringClass().getSimpleName());
+		result.append(firstLetterToLowerCase(constructor.getDeclaringClass().getSimpleName()));
 		result.append("(");
+		boolean alreadySomeParameterAdded = false;
 		for (int i = 0; i < constructor.getParameterTypes().length; i++) {
 			final Class<?> clazz = constructor.getParameterTypes()[i];
-			if (i != 0) {
+			if (AutomataLibraryServices.class.isAssignableFrom(clazz)) {
+				// do not add this parameter
+				continue;
+			}
+			if (IStateFactory.class.isAssignableFrom(clazz)) {
+				// do not add this parameter
+				continue;
+			}
+			if (alreadySomeParameterAdded) {
 				result.append(",");
 			}
 			result.append(clazz.getSimpleName());
+			alreadySomeParameterAdded = true;
 		}
 		result.append(")");
 		return result.toString();
@@ -84,5 +97,9 @@ public class ListExistingOperations {
 			result.append(System.getProperty("line.separator"));
 		}
 		return result.toString();
+	}
+	
+	static String firstLetterToLowerCase(final String str) {
+		return str.substring(0, 1).toLowerCase() + str.substring(1);
 	}
 }
