@@ -40,9 +40,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 /**
- * Nested word automaton with on-demand construction for letters and states. Supports all methods that are required by
- * {@link NestedWordAutomatonReachableStates} which is able to transform objects of this class into an
- * {@link IDoubleDeckerAutomaton}.
+ * Nested word automaton where not only the states but also the letters of the 
+ * alphabet are constructed on-demand. Supports all methods that are required 
+ * by {@link NestedWordAutomatonReachableStates} which is able to transform 
+ * objects of this class into an {@link IDoubleDeckerAutomaton}.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
