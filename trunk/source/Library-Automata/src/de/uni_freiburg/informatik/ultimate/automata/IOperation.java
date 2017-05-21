@@ -124,6 +124,6 @@ public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 	}
 	
 	static String firstLetterToLowerCase(final String str) {
-		return str.substring(0, 1).toUpperCase() + str.substring(1);
+		return str.substring(0, 1).toLowerCase() + str.substring(1);
 	}
 }
