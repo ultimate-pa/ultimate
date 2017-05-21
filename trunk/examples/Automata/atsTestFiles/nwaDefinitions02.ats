@@ -18,7 +18,7 @@ NestedWordAutomaton nwa1 = (
 
 
 // This is basically a finite automaton
-// Accepts words which contain exactly 2 b's.
+// accepts words which contain exactly 2 b's.
 NestedWordAutomaton accepts2Bs = ( 
   callAlphabet = {},
   internalAlphabet = {a b c d},

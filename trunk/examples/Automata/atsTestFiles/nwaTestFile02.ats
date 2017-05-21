@@ -12,7 +12,7 @@ NestedWord wordWith1c = [a b b b a c];
 // Acceptance should be true.
 assert(accepts(accepts2Bs, wordWith2Bs));
 // Acceptance should be false
-assert(!Accepts(accepts2Bs, wordWithManyBs));
+assert(!accepts(accepts2Bs, wordWithManyBs));
 // Acceptance should be true.
 assert(accepts(acceptsWithC, wordWith1c));
 // Acceptance should be false

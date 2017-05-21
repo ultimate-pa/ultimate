@@ -44,13 +44,13 @@ TreeAutomaton ta2 = (
 
 
 
-assert(Accepts(ta1, Tree [ g(f(a), b) ]));
-assert(Accepts(ta1, Tree [ g(a, f(f(b))) ]));
-assert(Accepts(ta1, Tree [ a ]));
+assert(accepts(ta1, Tree [ g(f(a), b) ]));
+assert(accepts(ta1, Tree [ g(a, f(f(b))) ]));
+assert(accepts(ta1, Tree [ a ]));
 
-assert(Accepts(ta2, Tree [ g(f(a), b) ]));
-assert(Accepts(ta2, Tree [ g(a, f(f(b))) ]));
-assert(Accepts(ta2, Tree [ a ]));
+assert(accepts(ta2, Tree [ g(f(a), b) ]));
+assert(accepts(ta2, Tree [ g(a, f(f(b))) ]));
+assert(accepts(ta2, Tree [ a ]));
 
 
 

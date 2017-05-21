@@ -16787,4 +16787,4 @@ NestedWordAutomaton AllErrorsAtOnceAbstraction0 = (
 );
 
 print(loopComplexity(AllErrorsAtOnceAbstraction0));
-print(BuchiIsEmpty(AllErrorsAtOnceAbstraction0));
+print(buchiIsEmpty(AllErrorsAtOnceAbstraction0));

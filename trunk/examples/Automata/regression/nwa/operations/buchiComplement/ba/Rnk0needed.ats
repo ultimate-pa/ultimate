@@ -8,7 +8,7 @@
 print(numberOfStates(nwa));
 print(isSemiDeterministic(nwa));
 // print(buchiComplementFKV(nwa,"Schewe", 777));
-print(BuchiComplementationEvaluation(nwa));
+print(buchiComplementationEvaluation(nwa));
 
 NestedWordAutomaton nwa = (
 	callAlphabet = { },

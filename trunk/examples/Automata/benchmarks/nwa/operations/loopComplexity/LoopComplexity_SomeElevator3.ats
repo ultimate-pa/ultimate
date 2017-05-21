@@ -417,4 +417,4 @@ NestedWordAutomaton Abstraction3 = (
 );
 
 print(loopComplexity(Abstraction3));
-print(BuchiIsEmpty(Abstraction3));
+print(buchiIsEmpty(Abstraction3));

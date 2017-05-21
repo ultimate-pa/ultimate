@@ -24,5 +24,5 @@ TreeAutomaton ta2 = (
 
 
 Tree t = Tree [ f(a,b) ];
-assert(!Accepts(ta730845, t));
-assert(Accepts(ta2, t));
+assert(!accepts(ta730845, t));
+assert(accepts(ta2, t));

@@ -17,8 +17,8 @@ NestedLassoWord nlw2 = [a< b< c<, i< m< j< >o >k >l];
 // Define a new nestedword automaton
 NestedWordAutomaton nwa2 = complement(nwa1);
 // Define new testcases
-assert(Accepts(nwa1, nw2));
-assert(!Accepts(nwa2, nw2));
+assert(accepts(nwa1, nw2));
+assert(!accepts(nwa2, nw2));
 
 NestedWordAutomaton nwa3 = (
   callAlphabet = {c a l l},
@@ -39,7 +39,7 @@ NestedWordAutomaton nwa3 = (
 );
 
 // Define further test cases
-assert(!IsEmpty(nwa3));
+assert(!isEmpty(nwa3));
 assert(!accepts(nwa3, nw1));
 assert(!buchiAccepts(nwa3, nlw2));
 

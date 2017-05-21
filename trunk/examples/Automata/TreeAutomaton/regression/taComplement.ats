@@ -58,35 +58,35 @@ Tree listE = Tree [cons(succ(succ(succ(succ(succ(succ("0")))))),cons(succ(succ(s
 
 
 // Not lists of integers
-assert(Accepts(Complement(taIntList), list0));
-assert(Accepts(Complement(taEvenIntList), list0));
-assert(Accepts(Complement(taMul3IntList), list0));
+assert(accepts(Complement(taIntList), list0));
+assert(accepts(Complement(taEvenIntList), list0));
+assert(accepts(Complement(taMul3IntList), list0));
 
 // taIntList accepts all integer lists
-assert(!Accepts(Complement(taIntList), listA));
-assert(!Accepts(Complement(taIntList), listB));
-assert(!Accepts(Complement(taIntList), listC));
-assert(!Accepts(Complement(taIntList), listD));
-assert(!Accepts(Complement(taIntList), listE));
+assert(!accepts(Complement(taIntList), listA));
+assert(!accepts(Complement(taIntList), listB));
+assert(!accepts(Complement(taIntList), listC));
+assert(!accepts(Complement(taIntList), listD));
+assert(!accepts(Complement(taIntList), listE));
 
 // taEvenList accepts only lists of even numbers
-assert(Accepts(Complement(taEvenIntList), listA));
-assert(!Accepts(Complement(taEvenIntList), listB));
-assert(!Accepts(Complement(taEvenIntList), listC));
-assert(Accepts(Complement(taEvenIntList), listD));
-assert(!Accepts(Complement(taEvenIntList), listE));
+assert(accepts(Complement(taEvenIntList), listA));
+assert(!accepts(Complement(taEvenIntList), listB));
+assert(!accepts(Complement(taEvenIntList), listC));
+assert(accepts(Complement(taEvenIntList), listD));
+assert(!accepts(Complement(taEvenIntList), listE));
 
 // taMul3IntList accepts only lists of multiples of 3
-assert(Accepts(Complement(taMul3IntList), listA));
-assert(Accepts(Complement(taMul3IntList), listB));
-assert(Accepts(Complement(taMul3IntList), listC));
-assert(!Accepts(Complement(taMul3IntList), listD));
-assert(!Accepts(Complement(taMul3IntList), listE));
+assert(accepts(Complement(taMul3IntList), listA));
+assert(accepts(Complement(taMul3IntList), listB));
+assert(accepts(Complement(taMul3IntList), listC));
+assert(!accepts(Complement(taMul3IntList), listD));
+assert(!accepts(Complement(taMul3IntList), listE));
 
 // Intersection of taMul3IntList and taEvenIntList accepts only lists of multiples of 6
-assert(Accepts(Complement(Intersect(taMul3IntList, taEvenIntList)), listA));
-assert(Accepts(Complement(Intersect(taMul3IntList, taEvenIntList)), listB));
-assert(Accepts(Complement(Intersect(taMul3IntList, taEvenIntList)), listC));
-assert(Accepts(Complement(Intersect(taMul3IntList, taEvenIntList)), listD));
-assert(!Accepts(Complement(Intersect(taMul3IntList, taEvenIntList)), listE));
+assert(accepts(Complement(Intersect(taMul3IntList, taEvenIntList)), listA));
+assert(accepts(Complement(Intersect(taMul3IntList, taEvenIntList)), listB));
+assert(accepts(Complement(Intersect(taMul3IntList, taEvenIntList)), listC));
+assert(accepts(Complement(Intersect(taMul3IntList, taEvenIntList)), listD));
+assert(!accepts(Complement(Intersect(taMul3IntList, taEvenIntList)), listE));
 

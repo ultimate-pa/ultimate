@@ -350,4 +350,4 @@ NestedWordAutomaton Abstraction4 = (
 );
 
 print(loopComplexity(Abstraction4));
-print(BuchiIsEmpty(Abstraction4));
+print(buchiIsEmpty(Abstraction4));

@@ -58,46 +58,46 @@ Tree listE = Tree [cons(succ(succ(succ(succ(succ(succ("0")))))),cons(succ(succ(s
 
 
 // Not lists of integers
-assert(!Accepts(taIntList, list0));
-assert(!Accepts(taEvenIntList, list0));
-assert(!Accepts(taMul3IntList, list0));
-assert(!Accepts(Minimize(taIntList), list0));
-assert(!Accepts(taEvenIntList, list0));
-assert(!Accepts(Minimize(taMul3IntList), list0));
+assert(!accepts(taIntList, list0));
+assert(!accepts(taEvenIntList, list0));
+assert(!accepts(taMul3IntList, list0));
+assert(!accepts(Minimize(taIntList), list0));
+assert(!accepts(taEvenIntList, list0));
+assert(!accepts(Minimize(taMul3IntList), list0));
 
 // taIntList accepts all integer lists
-assert(Accepts(taIntList, listA));
-assert(Accepts(taIntList, listB));
-assert(Accepts(taIntList, listC));
-assert(Accepts(taIntList, listD));
-assert(Accepts(taIntList, listE));
-assert(Accepts(Minimize(taIntList), listA));
-assert(Accepts(Minimize(taIntList), listB));
-assert(Accepts(Minimize(taIntList), listC));
-assert(Accepts(Minimize(taIntList), listD));
-assert(Accepts(Minimize(taIntList), listE));
+assert(accepts(taIntList, listA));
+assert(accepts(taIntList, listB));
+assert(accepts(taIntList, listC));
+assert(accepts(taIntList, listD));
+assert(accepts(taIntList, listE));
+assert(accepts(Minimize(taIntList), listA));
+assert(accepts(Minimize(taIntList), listB));
+assert(accepts(Minimize(taIntList), listC));
+assert(accepts(Minimize(taIntList), listD));
+assert(accepts(Minimize(taIntList), listE));
 
 // taEvenList accepts only lists of even numbers
-assert(!Accepts(taEvenIntList, listA));
-assert(Accepts(taEvenIntList, listB));
-assert(Accepts(taEvenIntList, listC));
-assert(!Accepts(taEvenIntList, listD));
-assert(Accepts(taEvenIntList, listE));
-assert(!Accepts(taEvenIntList, listA));
-assert(Accepts(taEvenIntList, listB));
-assert(Accepts(taEvenIntList, listC));
-assert(!Accepts(taEvenIntList, listD));
-assert(Accepts(taEvenIntList, listE));
+assert(!accepts(taEvenIntList, listA));
+assert(accepts(taEvenIntList, listB));
+assert(accepts(taEvenIntList, listC));
+assert(!accepts(taEvenIntList, listD));
+assert(accepts(taEvenIntList, listE));
+assert(!accepts(taEvenIntList, listA));
+assert(accepts(taEvenIntList, listB));
+assert(accepts(taEvenIntList, listC));
+assert(!accepts(taEvenIntList, listD));
+assert(accepts(taEvenIntList, listE));
 
 // taMul3IntList accepts only lists of multiples of 3
-assert(!Accepts(taMul3IntList, listA));
-assert(!Accepts(taMul3IntList, listB));
-assert(!Accepts(taMul3IntList, listC));
-assert(Accepts(taMul3IntList, listD));
-assert(Accepts(taMul3IntList, listE));
-assert(!Accepts(Minimize(taMul3IntList), listA));
-assert(!Accepts(Minimize(taMul3IntList), listB));
-assert(!Accepts(Minimize(taMul3IntList), listC));
-assert(Accepts(Minimize(taMul3IntList), listD));
-assert(Accepts(Minimize(taMul3IntList), listE));
+assert(!accepts(taMul3IntList, listA));
+assert(!accepts(taMul3IntList, listB));
+assert(!accepts(taMul3IntList, listC));
+assert(accepts(taMul3IntList, listD));
+assert(accepts(taMul3IntList, listE));
+assert(!accepts(Minimize(taMul3IntList), listA));
+assert(!accepts(Minimize(taMul3IntList), listB));
+assert(!accepts(Minimize(taMul3IntList), listC));
+assert(accepts(Minimize(taMul3IntList), listD));
+assert(accepts(Minimize(taMul3IntList), listE));
 

@@ -9,8 +9,8 @@
 #IsNotEmpty InterpolantAutomatonForPi3
 #IsNotEmpty InterpolantAutomatonForPi4
 #IsNotEmpty ControlAutomaton
-#IsEmpty intersect(intersect(ControlAutomaton complement(InterpolantAutomatonForPi4)) complement(InterpolantAutomatonForPi3))
-#IsEmpty difference(difference(ControlAutomaton InterpolantAutomatonForPi4) InterpolantAutomatonForPi3)
+#isEmpty intersect(intersect(ControlAutomaton complement(InterpolantAutomatonForPi4)) complement(InterpolantAutomatonForPi3))
+#isEmpty difference(difference(ControlAutomaton InterpolantAutomatonForPi4) InterpolantAutomatonForPi3)
 
 #Print difference(difference(ControlAutomaton InterpolantAutomatonForPi4) InterpolantAutomatonForPi3)
 

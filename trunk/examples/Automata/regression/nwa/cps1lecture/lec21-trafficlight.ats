@@ -31,9 +31,9 @@ FiniteAutomaton badBehaviors = (
 print(badBehaviors);
 
 
-FiniteAutomaton inter = BuchiIntersect(tracesOfTs, badBehaviors);
+FiniteAutomaton inter = buchiIntersect(tracesOfTs, badBehaviors);
 print(inter);
 
 
-boolean empty = BuchiIsEmpty(inter);
+boolean empty = buchiIsEmpty(inter);
 print(empty);

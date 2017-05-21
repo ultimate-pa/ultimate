@@ -3,7 +3,7 @@
 // Author: heizmann@informatik.uni-freiburg.de
 
 
-NestedWordAutomaton result = RemoveNonLiveStates(nwa);
+NestedWordAutomaton result = removeNonLiveStates(nwa);
 print(buchiIsEmpty(nwa));
 
 
