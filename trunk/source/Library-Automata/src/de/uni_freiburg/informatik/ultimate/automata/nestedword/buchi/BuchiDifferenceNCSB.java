@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NwaOutgoingLetterAndTransitionAdapter;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiIntersectStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
@@ -44,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
  *            state type
  */
 public final class BuchiDifferenceNCSB<LETTER, STATE> extends AbstractBuchiDifference<LETTER, STATE> {
-	private BuchiComplementNCSBNwa<LETTER, STATE> mSndComplemented;
+	private INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndComplemented;
 
 	/**
 	 * Constructor.
@@ -77,7 +78,8 @@ public final class BuchiDifferenceNCSB<LETTER, STATE> extends AbstractBuchiDiffe
 
 	private <SF extends IBuchiComplementNcsbStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
 			void constructResult(final SF stateFactory) throws AutomataLibraryException {
-		mSndComplemented = new BuchiComplementNCSBNwa<>(mServices, stateFactory, mSndOperand);
+		final BuchiComplementNCSBNwa<LETTER, STATE> onDemandComplemented = new BuchiComplementNCSBNwa<>(mServices, stateFactory, mSndOperand);
+		mSndComplemented = new NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE>(onDemandComplemented);
 		constructDifferenceFromComplement(stateFactory);
 	}
 
@@ -87,7 +89,7 @@ public final class BuchiDifferenceNCSB<LETTER, STATE> extends AbstractBuchiDiffe
 	}
 
 	@Override
-	public BuchiComplementNCSBNwa<LETTER, STATE> getSndComplemented() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSndComplemented() {
 		return mSndComplemented;
 	}
 }

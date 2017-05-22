@@ -35,14 +35,16 @@ import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
+import de.uni_freiburg.informatik.ultimate.automata.SetOfStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaSuccessorStateProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 
 /**
  * Buchi Complementation based on the algorithm proposed by Frantisek Blahoudek and Jan Stejcek. This complementation is
@@ -54,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  * @param <STATE>
  *            state type
  */
-public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
+public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccessorStateProvider<LETTER, STATE> {
 	private static final int MAGIC_RANK = 7777;
 	private static final int BARELY_COVERED_MAX_RANK = 3;
 	private static final Integer RANK_FINAL = Integer.valueOf(2);
@@ -67,10 +69,11 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaOutgoing
 	private static final boolean EARLY_SINK_HEURISTIC = false;
 
 	private final AutomataLibraryServices mServices;
+	
+	private final SetOfStates<STATE> mSetOfStates;
+	private final STATE mEmptyStackState;
 
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
-
-	private final NestedWordAutomatonCache<LETTER, STATE> mCache;
 
 	private final IBuchiComplementNcsbStateFactory<STATE> mStateFactory;
 
@@ -106,8 +109,9 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaOutgoing
 		mServices = services;
 		mOperand = operand;
 		mStateFactory = stateFactory;
-		mCache = new NestedWordAutomatonCache<>(mServices, operand.getVpAlphabet(), mStateFactory);
-		mEmptyStackStateWri = new StateWithRankInfo<>(getEmptyStackState());
+		mSetOfStates = new SetOfStates<>();
+		mEmptyStackState = stateFactory.createEmptyStackState();
+		mEmptyStackStateWri = new StateWithRankInfo<>(mEmptyStackState);
 		mBclrg = new BarelyCoveredLevelRankingsGenerator<>(mServices, mOperand, BARELY_COVERED_MAX_RANK, false, true,
 				false, false, false);
 		constructInitialState();
@@ -135,7 +139,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaOutgoing
 			mDet2res.put(lvlrk, resState);
 			mRes2det.put(resState, lvlrk);
 			final boolean isFinal = !lvlrk.isNonAcceptingSink() && lvlrk.isOempty();
-			mCache.addState(isInitial, isFinal, resState);
+			mSetOfStates.addState(isInitial, isFinal, resState);
 		} else {
 			assert !isInitial;
 		}
@@ -144,7 +148,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaOutgoing
 
 	@Override
 	public Iterable<STATE> getInitialStates() {
-		return mCache.getInitialStates();
+		return mSetOfStates.getInitialStates();
 	}
 
 	@Override
@@ -159,17 +163,17 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaOutgoing
 
 	@Override
 	public boolean isInitial(final STATE state) {
-		return mCache.isInitial(state);
+		return mSetOfStates.isInitial(state);
 	}
 
 	@Override
 	public boolean isFinal(final STATE state) {
-		return mCache.isFinal(state);
+		return mSetOfStates.isAccepting(state);
 	}
 
 	@Override
 	public STATE getEmptyStackState() {
-		return mCache.getEmptyStackState();
+		return mEmptyStackState;
 	}
 
 
@@ -311,53 +315,46 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaOutgoing
 		return computedSuccs;
 	}
 
-	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
-			final LETTER letter) {
-		final Collection<STATE> succs = mCache.succInternal(state, letter);
-		if (succs == null) {
-			final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint =
-					computeSuccLevelRankingConstraint_Internal(state, letter);
-			final Collection<STATE> computedSuccs = computeStates(constraint);
-			mCache.addInternalTransitions(state, letter, computedSuccs);
-		}
-		return mCache.internalSuccessors(state, letter);
-	}
-
-	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
-		final Collection<STATE> succs = mCache.succCall(state, letter);
-		if (succs == null) {
-			final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint =
-					computeSuccLevelRankingConstraint_Call(state, letter);
-			final Collection<STATE> computedSuccs = computeStates(constraint);
-			mCache.addCallTransitions(state, letter, computedSuccs);
-		}
-		return mCache.callSuccessors(state, letter);
-	}
-
-	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
-			final LETTER letter) {
-		final Collection<STATE> succs = mCache.succReturn(state, hier, letter);
-		if (succs == null) {
-			final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint =
-					computeSuccLevelRankingConstraint_Return(state, hier, letter);
-			final Collection<STATE> computedSuccs = computeStates(constraint);
-			mCache.addReturnTransitions(state, hier, letter, computedSuccs);
-		}
-		return mCache.returnSuccessors(state, hier, letter);
-	}
 
 
 	@Override
 	public int size() {
-		return mCache.size();
+		return mSetOfStates.getStates().size();
 	}
 
 
 	@Override
 	public String sizeInformation() {
 		return "size Information not available";
+	}
+
+	@Override
+	public Collection<STATE> internalSuccessors(final STATE state, final LETTER letter) {
+		final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint =
+				computeSuccLevelRankingConstraint_Internal(state, letter);
+		final Collection<STATE> computedSuccs = computeStates(constraint);
+		return computedSuccs;
+	}
+
+	@Override
+	public Collection<STATE> callSuccessors(final STATE state, final LETTER letter) {
+		final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint =
+				computeSuccLevelRankingConstraint_Call(state, letter);
+		final Collection<STATE> computedSuccs = computeStates(constraint);
+		return computedSuccs;
+	}
+
+	@Override
+	public Collection<STATE> returnSuccessorsGivenHier(final STATE state, final STATE hier, final LETTER letter) {
+		final LevelRankingConstraintDrdCheck<LETTER, STATE> constraint =
+				computeSuccLevelRankingConstraint_Return(state, hier, letter);
+		final Collection<STATE> computedSuccs = computeStates(constraint);
+		return computedSuccs;
+	}
+
+	@Override
+	public IElement transformToUltimateModel(final AutomataLibraryServices services)
+			throws AutomataOperationCanceledException {
+		throw new UnsupportedOperationException();
 	}
 }

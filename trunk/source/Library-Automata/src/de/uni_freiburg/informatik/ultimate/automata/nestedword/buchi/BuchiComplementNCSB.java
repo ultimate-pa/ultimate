@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NwaOutgoingLetterAndTransitionAdapter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementNcsbStateFactory;
@@ -77,8 +78,10 @@ public final class BuchiComplementNCSB<LETTER, STATE> extends UnaryNwaOperation<
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(startMessage());
 		}
-		final BuchiComplementNCSBNwa<LETTER, STATE> complemented =
+		final BuchiComplementNCSBNwa<LETTER, STATE> onDemandComplement =
 				new BuchiComplementNCSBNwa<>(mServices, stateFactory, operand);
+		final NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE> complemented =
+				new NwaOutgoingLetterAndTransitionAdapter<>(onDemandComplement);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, complemented);
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info(exitMessage());
