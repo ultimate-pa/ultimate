@@ -156,7 +156,9 @@ public class VPFactoryHelpers {
 	}
 
 	/**
-	 * Three steps for adding equality relation into graph: 1) Union two nodes. 2) Propagate (merge congruence class).
+	 * Three steps for adding equality relation into graph: 
+	 * 1) Union two nodes. 
+	 * 2) Propagate (merge congruence class).
 	 * 3) Check for contradiction.
 	 *
 	 * @param graphNode1

@@ -19,7 +19,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -53,8 +52,15 @@ public class EqConstraint<
 
 	}
 
-	public void merge(NODE node1, NODE node2) {
-		mElementCongruenceGraph.merge(node1, node2);
+	/**
+	 * 
+	 * @param node1
+	 * @param node2
+	 * @return The merge history, i.e., all pairs of former representatives that have been merged by this merge 
+	 *    operation
+	 */
+	public HashRelation<NODE, NODE> merge(NODE node1, NODE node2) {
+		return mElementCongruenceGraph.merge(node1, node2);
 	}
 
 	public void havoc(NODE node) {
@@ -335,8 +341,27 @@ public class EqConstraint<
 		return mElementCongruenceGraph.find(node1).equals(mElementCongruenceGraph.find(node2));
 	}
 
-	public HashRelation<FUNCTION, List<EqGraphNode<NODE, FUNCTION>>> getCCChild(NODE representative1) {
-		mElementCongruenceGraph.getCCChild(representative1);
+	public HashRelation<FUNCTION, List<NODE>> getCCChild(NODE representative1) {
+		return mElementCongruenceGraph.getCCChild(representative1);
+	}
+
+	public boolean areUnequal(NODE c1, NODE c2) {
+		final VPDomainSymmetricPair<NODE> representativePair = new VPDomainSymmetricPair<>(
+				mElementCongruenceGraph.find(c1), mElementCongruenceGraph.find(c2));
+		return mElementCongruenceGraph.getDisequalities().contains(representativePair);
+	}
+
+	/**
+	 * Returns all the equivalence representatives that the given node is unequal in this constraint.
+	 */
+	public Set<NODE> getDisequalities(NODE node) {
+		final Set<NODE> result = new HashSet<>();
+		for (VPDomainSymmetricPair<NODE> deq : mElementCongruenceGraph.getDisequalities()) {
+			if (deq.contains(node)) {
+				result.add(deq.getOther(node));
+			}
+		}
+		return result;
 	}
 
 }

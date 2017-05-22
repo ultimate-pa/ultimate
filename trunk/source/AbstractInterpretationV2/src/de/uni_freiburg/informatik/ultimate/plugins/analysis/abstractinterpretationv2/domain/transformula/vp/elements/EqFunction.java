@@ -69,4 +69,10 @@ public class EqFunction implements IEqFunctionIdentifier<EqFunction> {
 		return mPvoc.toString();
 	}
 
+	@Override
+	public int getArity() {
+		assert false : "TODO";
+		return 0;
+	}
+
 }

@@ -1,7 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -13,7 +12,6 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPSFO;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqAtomicBaseNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNonAtomicBaseNode;
@@ -39,8 +37,9 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 	 * 
 	 * @param node1
 	 * @param node2
+	 * @return all node pairs that have been merged during this call and its recursion (no symmetry closure needed)
 	 */
-	void merge(NODE node1, NODE node2) {
+	HashRelation<NODE, NODE> merge(NODE node1, NODE node2) {
 		assert !mIsFrozen;
 		
 		final EqGraphNode<NODE, FUNCTION> egn1 = mNodeToEqGraphNode.get(node1);
@@ -48,26 +47,36 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 
 		if (egn1 == egn2 || egn1.find() == egn2.find()) {
 			// nothing to do
-			return;
+			return new HashRelation<>();
 		}
 
+
+		final HashRelation<NODE, NODE> mergeHistory = new HashRelation<>();
 		union(egn1, egn2);
-		equalityPropagation(egn1, egn2);
+		mergeHistory.addPair(node1, node2);
+
+		mergeHistory.addAll(equalityPropagation(egn1, egn2));
+
+		return mergeHistory;
 	}
 	
-	private void equalityPropagation(final EqGraphNode<NODE, FUNCTION> node1,
+	private HashRelation<NODE, NODE> equalityPropagation(final EqGraphNode<NODE, FUNCTION> node1,
 			final EqGraphNode<NODE, FUNCTION> node2) {
 
-		final Set<EqGraphNode<NODE, FUNCTION>> p1 = node1.find().getCcpar();
-		final Set<EqGraphNode<NODE, FUNCTION>> p2 = node2.find().getCcpar();
+		final Set<EqGraphNode<NODE, FUNCTION>> p1 = node1.find().getCcpar()
+				.stream().map(node -> mNodeToEqGraphNode.get(node)).collect(Collectors.toSet());
+		final Set<EqGraphNode<NODE, FUNCTION>> p2 = node2.find().getCcpar()
+				.stream().map(node -> mNodeToEqGraphNode.get(node)).collect(Collectors.toSet());
 
+		final HashRelation<NODE, NODE> mergeHistory = new HashRelation<>();
 		for (final EqGraphNode<NODE, FUNCTION> t1 : p1) {
 			for (final EqGraphNode<NODE, FUNCTION> t2 : p2) {
 				if (!(t1.find().equals(t2.find())) && congruent(t1, t2)) {
-					merge(t1.getNode(), t2.getNode());
+					mergeHistory.addAll(merge(t1.getNode(), t2.getNode()));
 				}
 			}
 		}
+		return mergeHistory;
 	}
 	
 	/**
@@ -274,9 +283,8 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 		 * havoc the function nodes which nodeToBeHavocced was an index of
 		 */
 		if (!graphNodeForNodeToBeHavocced.getInitCcpar().isEmpty()) {
-			for (final EqGraphNode<NODE, FUNCTION> initCcpar : graphNodeForNodeToBeHavocced
-					.getInitCcpar()) {
-				havoc(initCcpar.getNode());
+			for (final NODE initCcpar : graphNodeForNodeToBeHavocced.getInitCcpar()) {
+				havoc(initCcpar);
 			}
 		}
 		
@@ -370,70 +378,16 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 
 	public void addDisequality(NODE find, NODE find2) {
 		mDisequalities.add(new VPDomainSymmetricPair<NODE>(find, find2));
-		
 	}
 	
-	/**
-	 * Takes a preState and two representatives of different equivalence classes. Under the assumption that a
-	 * disequality between the equivalence classes has been introduced, propagates all the disequalities that follow
-	 * from that disequality.
-	 *
-	 * @param originalStateCopy
-	 * @param representative1
-	 * @param representative2
-	 * @return
-	 */
-	public static <STATE extends IVPStateOrTfState<NODEID, ARRAYID>, NODEID extends IEqNodeIdentifier<ARRAYID>, ARRAYID>
-			Set<STATE>
-			propagateDisEqualites(final STATE originalStateCopy, final EqGraphNode<NODEID, ARRAYID> representative1,
-					final EqGraphNode<NODEID, ARRAYID> representative2,
-					final IVPFactory<STATE, NODEID, ARRAYID> factory) {
-		factory.getBenchmark().unpause(VPSFO.propagateDisEqualitiesClock);
-		if (factory.isDebugMode()) {
-			factory.getLogger().debug("VPFactoryHelpers: propagateDisEqualities(..)");
-		}
 
-		Set<STATE> result = new HashSet<>();
-		result.add(originalStateCopy);
-
-		final HashRelation<ARRAYID, List<EqGraphNode<NODEID, ARRAYID>>> ccchild1 = representative1.find().getCcchild();
-		final HashRelation<ARRAYID, List<EqGraphNode<NODEID, ARRAYID>>> ccchild2 = representative2.find().getCcchild();
-
-		for (final ARRAYID arrayId : ccchild1.getDomain()) {
-			for (final List<EqGraphNode<NODEID, ARRAYID>> list1 : ccchild1.getImage(arrayId)) {
-				for (final List<EqGraphNode<NODEID, ARRAYID>> list2 : ccchild2.getImage(arrayId)) {
-					final Set<STATE> intermediateResult = new HashSet<>(result);
-					result = new HashSet<>();
-					for (int i = 0; i < list1.size(); i++) {
-						final EqGraphNode<NODEID, ARRAYID> c1 = list1.get(i);
-						final EqGraphNode<NODEID, ARRAYID> c2 = list2.get(i);
-						if (originalStateCopy.containsDisEquality(c1.find().mNodeIdentifier, c2.find().mNodeIdentifier)) {
-							continue;
-						}
-						factory.getBenchmark().stop(VPSFO.propagateDisEqualitiesClock);
-						result.addAll(
-								addDisEquality(c1.mNodeIdentifier, c2.mNodeIdentifier, intermediateResult, factory));
-						factory.getBenchmark().unpause(VPSFO.propagateDisEqualitiesClock);
-					}
-				}
-			}
-		}
-
-		if (result.isEmpty()) {
-			// no propagations -- return the input state
-			factory.getBenchmark().stop(VPSFO.propagateDisEqualitiesClock);
-			return Collections.singleton(originalStateCopy);
-		}
-		factory.getBenchmark().stop(VPSFO.propagateDisEqualitiesClock);
-		return result;
-	}
 
 	public void addNodes(Collection<NODE> allNodes) {
 		// TODO Auto-generated method stub
 		assert false;
 	}
 
-	public void getCCChild(NODE representative1) {
-		mNodeToEqGraphNode.get(representative1).getCcchild();
+	public HashRelation<FUNCTION, List<NODE>> getCCChild(NODE representative1) {
+		return mNodeToEqGraphNode.get(representative1).getCcchild();
 	}
 }

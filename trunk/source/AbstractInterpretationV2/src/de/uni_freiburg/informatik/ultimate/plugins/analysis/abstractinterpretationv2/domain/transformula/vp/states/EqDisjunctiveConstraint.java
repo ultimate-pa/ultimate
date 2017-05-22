@@ -60,6 +60,19 @@ public class EqDisjunctiveConstraint<
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	/**
+	 * Only does the cast, other than that just calls @see AbstractMultistate.union
+	 * 
+	 */
+	@Override
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> union(
+			AbstractMultiState<EqConstraint<ACTION, NODE, FUNCTION>, IProgramVarOrConst> other) {
+		assert other instanceof EqDisjunctiveConstraint;
+		return (EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>) super.union(other);
+	}
+	
+	
 	
 //	/**
 //	 * Create a new {@link AbstractMultiState} by applying some function to each pair of states from this
