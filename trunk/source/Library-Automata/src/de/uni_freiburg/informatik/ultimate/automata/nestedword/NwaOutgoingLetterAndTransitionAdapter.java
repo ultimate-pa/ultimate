@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
-import java.util.Set;
+import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
@@ -111,7 +111,7 @@ public class NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE> implements INw
 	@Override
 	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state, final LETTER letter) {
 		if (mInternalTransitionBookkeeping.get(state, letter) == null) {
-			final Set<STATE> computedSuccs = mNwaSuccessorStateProvider.internalSuccessors(state, letter);
+			final Collection<STATE> computedSuccs = mNwaSuccessorStateProvider.internalSuccessors(state, letter);
 			for (final STATE succ : computedSuccs) {
 				mInternalTransitionCache.put(state, letter, succ, IsContained.IsContained);
 			}
@@ -122,7 +122,7 @@ public class NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE> implements INw
 	@Override
 	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
 		if (mCallTransitionBookkeeping.get(state, letter) == null) {
-			final Set<STATE> computedSuccs = mNwaSuccessorStateProvider.callSuccessors(state, letter);
+			final Collection<STATE> computedSuccs = mNwaSuccessorStateProvider.callSuccessors(state, letter);
 			for (final STATE succ : computedSuccs) {
 				mCallTransitionCache.put(state, letter, succ, IsContained.IsContained);
 			}
@@ -133,7 +133,7 @@ public class NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE> implements INw
 	@Override
 	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier, final LETTER letter) {
 		if (mReturnTransitionBookkeeping.get(state, hier, letter) == null) {
-			final Set<STATE> computedSuccs = mNwaSuccessorStateProvider.returnSuccessorsGivenHier(state, hier, letter);
+			final Collection<STATE> computedSuccs = mNwaSuccessorStateProvider.returnSuccessorsGivenHier(state, hier, letter);
 			for (final STATE succ : computedSuccs) {
 				mReturnTransitionCache.put(state, hier, letter, succ, IsContained.IsContained);
 			}

@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 
-import java.util.Set;
+import java.util.Collection;
 
 /**
  * 
@@ -38,9 +38,9 @@ import java.util.Set;
  */
 public interface INwaSuccessorStateProvider<LETTER, STATE> extends INwaBasis<LETTER, STATE> {
 
-	Set<STATE> internalSuccessors(final STATE state, final LETTER letter);
+	Collection<STATE> internalSuccessors(final STATE state, final LETTER letter);
 
-	Set<STATE> callSuccessors(final STATE state, final LETTER letter);
+	Collection<STATE> callSuccessors(final STATE state, final LETTER letter);
 
-	Set<STATE> returnSuccessorsGivenHier(final STATE state, final STATE hier, final LETTER letter);
+	Collection<STATE> returnSuccessorsGivenHier(final STATE state, final STATE hier, final LETTER letter);
 }
