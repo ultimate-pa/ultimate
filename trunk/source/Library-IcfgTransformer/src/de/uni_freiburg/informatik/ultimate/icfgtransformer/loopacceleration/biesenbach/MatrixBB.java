@@ -1,70 +1,68 @@
+/*
+ * Copyright (C) 2017 Ben Biesenbach (ben.biesenbach@gmx.de)
+ *
+ * This file is part of the ULTIMATE IcfgTransformer library.
+ *
+ * The ULTIMATE IcfgTransformer is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE IcfgTransformer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE IcfgTransformer library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer grant you additional permission
+ * to convey the resulting work.
+ */
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 
 public class MatrixBB {
 	
-	private int[][] mMatrixInt;
-	private Term[][] mMatrixTerm;
-	private int mMatrixSize;
-	private int mNumberOfVariables;
+	private Map<Integer, Map<Term, Term>> mMatrix = new HashMap<>();
+	private Map<Integer, Map<Term, Term>> mLGS = new HashMap<>();
+	private Map<IProgramVar, TermVariable> mInVars;
 	private ILogger mLogger;
 	
-	public MatrixBB(int numberOfVariables, ILogger logger){
+	public MatrixBB(Map<IProgramVar, TermVariable> inVars, ILogger logger){
 		mLogger = logger;
-		mNumberOfVariables = numberOfVariables;
-		mMatrixSize = numberOfVariables * 2 + 2;
-		mMatrixInt = new int[mMatrixSize][mMatrixSize];
-		mMatrixTerm = new Term[numberOfVariables+1][numberOfVariables];
-		
-		init(numberOfVariables);
+		mInVars = inVars;
 	}
 	
-	private void init(int numberOfVariables){
-		//n(matrix) = 0
-		for(int i = 0; i < numberOfVariables; i++){
-			mMatrixInt[i][i] = 1;
-		}
-	}
-	
-	public void setVector(int vectorNumber, int[] values, Term[] term, int n){
-		for(int i = 0; i < mNumberOfVariables; i++){
-			mMatrixInt[vectorNumber][i] = values[i];
-			mMatrixInt[vectorNumber][i + mNumberOfVariables + 1] = values[i];
-		}
-		mMatrixInt[vectorNumber][mNumberOfVariables] = n;
-		mMatrixInt[vectorNumber][mMatrixSize-1] = n * n;
-		setVectorTerm(vectorNumber, term);
-	}
-	
-	/**
-	 * Prints the matrix in the logger
-	 */
 	public void print(){
-		for(int i = 0; i < mMatrixInt.length; i++){
-			String line = "";
-			for(int j = 0; j < mMatrixInt.length; j++){
-				line += Integer.toString(mMatrixInt[i][j]);
-			}
-			mLogger.info(line);
-		}
+		mMatrix.entrySet().forEach(vector 
+				-> mLogger.info("#" + vector.getKey() + ": " + vector.getValue() + " -> " + mLGS.get(vector.getKey())));
 	}
 	
-	public int[] getVectorInt(int vectorNumber){
-		return mMatrixInt[vectorNumber];
+	public void setVector(Map<Term,Term> vector, int index){
+		mMatrix.put(index, vector);
 	}
 	
-	private void setVectorTerm(int vectorNumber, Term[] term){
-		mMatrixTerm[vectorNumber - mNumberOfVariables] = term;
+	public void setSolution(Map<Term,Term> vectorSolution, int index){
+		mLGS.put(index, vectorSolution);
 	}
 	
-	public Term[] getVectorTerm(int vectorNumber){
-		return mMatrixTerm[vectorNumber-mNumberOfVariables];
+	public Map<Integer, Map<Term, Term>> getLGS(){
+		return mLGS;
 	}
 	
-	public int[] getResult(){
-		//TODO calculate alphas
-		return null;
+	public Map<Integer, Map<Term, Term>> getMatrix(){
+		return mMatrix;
 	}
 }

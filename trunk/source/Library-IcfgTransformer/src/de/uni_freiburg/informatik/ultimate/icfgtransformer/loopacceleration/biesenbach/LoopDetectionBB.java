@@ -1,7 +1,5 @@
 /*
  * Copyright (C) 2017 Ben Biesenbach (Ben.Biesenbach@gmx.de)
- * Copyright (C) 2016-2017 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
- * Copyright (C) 2016-2017 University of Freiburg
  *
  * This file is part of the ULTIMATE IcfgTransformer library.
  *
@@ -51,7 +49,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Unm
  * @param <OUTLOC>
  *            The type of the locations of the IIcfg with only loops left.
  *
- * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * @author Ben Biesenbach (Ben.Biesenbach@gmx.de)
  */
 public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
@@ -71,6 +68,7 @@ public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 	 * @param backtranslationTracker
 	 * @param services
 	 */
+	@SuppressWarnings("unchecked")
 	public LoopDetectionBB(final ILogger logger, final IIcfg<INLOC> originalIcfg, final Class<OUTLOC> outLocationClass,
 			final ILocationFactory<INLOC, OUTLOC> funLocFac, final String newIcfgIdentifier,
 			final ITransformulaTransformer transformer, final IBacktranslationTracker backtranslationTracker,
@@ -103,13 +101,13 @@ public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 			transformer.preprocessIcfg(initHelper);
 			final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(funLocFac,
 					backtranslationTracker, transformer, (IIcfg<INLOC>) initHelper, resultLoop);
-			transformPathToIcfg((IIcfg<INLOC>) initHelper, resultLoop, loopPath, lst);
+			transformPathToIcfg((IIcfg<INLOC>) initHelper, loopPath, lst);
 			lst.finish();
 
 			mLoopIcfgs.addLast(resultLoop);
 		}
 		
-		LoopAccelerationMatrix lam = new LoopAccelerationMatrix(mLogger, mLoopIcfgs.getLast(), services);
+		LoopAccelerationMatrix<OUTLOC> lam = new LoopAccelerationMatrix<>(mLogger, mLoopIcfgs.getLast());
 		
 		mLogger.info("BB_End...");
 	}
@@ -133,7 +131,7 @@ public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 	}
 
 	@SuppressWarnings("unchecked")
-	private void transformPathToIcfg(final IIcfg<INLOC> origIcfg, final BasicIcfg<OUTLOC> resultIcfg,
+	private void transformPathToIcfg(final IIcfg<INLOC> origIcfg,
 			final Deque<INLOC> path, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
 
 		final Deque<INLOC> open = new ArrayDeque<>();
