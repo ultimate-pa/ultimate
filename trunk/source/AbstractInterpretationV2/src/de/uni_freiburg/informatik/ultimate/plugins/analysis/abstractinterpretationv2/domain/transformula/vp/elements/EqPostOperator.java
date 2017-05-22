@@ -37,7 +37,10 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 			EqPredicate<ACTION>, 
 			EqTransitionRelation<ACTION>> pt = new PredicateTransformer<>(mScript, operationProvider);	
 
-		return Collections.singletonList(pt.strongestPostcondition(new EqPredicate<ACTION>(oldstate), transrel));
+		return Collections.singletonList(
+				pt.strongestPostcondition(
+						new EqPredicate<ACTION>((EqDisjunctiveConstraint<ACTION, EqNode, EqFunction>) oldstate), 
+							transrel));
 	}
 
 	@Override
@@ -45,6 +48,15 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 			AbstractMultiState<EqConstraint<ACTION, EqNode, EqFunction>, IProgramVarOrConst> stateBeforeLeaving,
 			AbstractMultiState<EqConstraint<ACTION, EqNode, EqFunction>, IProgramVarOrConst> stateAfterLeaving,
 			ACTION transition) {
+		
+//		PredicateTransformer<
+//			EqDisjunctiveConstraint<ACTION, EqNode, EqFunction>, 
+//			EqPredicate<ACTION>, 
+//			EqTransitionRelation<ACTION>> pt = new PredicateTransformer<>(mScript, operationProvider);	
+//
+//		pt.strongestPostconditionReturn(returnPred, callPred, returnTF, callTF, oldVarAssignments, modifiableGlobals)
+
+		
 		// TODO Auto-generated method stub
 		return null;
 	}

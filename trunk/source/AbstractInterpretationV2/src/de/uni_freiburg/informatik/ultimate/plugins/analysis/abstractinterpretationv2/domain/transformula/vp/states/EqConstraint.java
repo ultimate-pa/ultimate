@@ -95,14 +95,13 @@ public class EqConstraint<
 	}
 
 
-	public void addNodes(Collection<NODE> allNodes) {
-		mElementCongruenceGraph.addNodes(allNodes);
-	}
+//	public void addNodes(Collection<NODE> allNodes) {
+//		mElementCongruenceGraph.addNodes(allNodes);
+//	}
 
 
 	public HashRelation<NODE, NODE> getSupportingElementEqualities() {
-		// TODO Auto-generated method stub
-		return null;
+		return mElementCongruenceGraph.getSupportingEqualities();
 	}
 
 
@@ -337,17 +336,41 @@ public class EqConstraint<
 		mFunctionDisequalities = newFunctionDisequalites;
 	}
 
+	/**
+	 * 
+	 * @param node1
+	 * @param node2
+	 * @return true iff this constraint says "node1 and node2 must be equal"
+	 */
 	public boolean areEqual(NODE node1, NODE node2) {
-		return mElementCongruenceGraph.find(node1).equals(mElementCongruenceGraph.find(node2));
+		final NODE find1 = mElementCongruenceGraph.find(node1);
+		final NODE find2 = mElementCongruenceGraph.find(node2);
+		if (find1 == null || find2 == null) {
+			// this constraint does not track at least one of the given nodes
+			return false;
+		}
+		return find1.equals(find2);
 	}
 
 	public HashRelation<FUNCTION, List<NODE>> getCCChild(NODE representative1) {
 		return mElementCongruenceGraph.getCCChild(representative1);
 	}
 
-	public boolean areUnequal(NODE c1, NODE c2) {
+	/**
+	 * 
+	 * @param node1
+	 * @param node2
+	 * @return true iff this constraint says "node1 and node2 must be unequal"
+	 */
+	public boolean areUnequal(NODE node1, NODE node2) {
+		final NODE find1 = mElementCongruenceGraph.find(node1);
+		final NODE find2 = mElementCongruenceGraph.find(node2);
+		if (find1 == null || find2 == null) {
+			// this constraint does not track at least one of the given nodes
+			return false;
+		}
 		final VPDomainSymmetricPair<NODE> representativePair = new VPDomainSymmetricPair<>(
-				mElementCongruenceGraph.find(c1), mElementCongruenceGraph.find(c2));
+				find1, find2);
 		return mElementCongruenceGraph.getDisequalities().contains(representativePair);
 	}
 

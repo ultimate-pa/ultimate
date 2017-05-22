@@ -13,6 +13,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -74,16 +75,60 @@ public class EqConstraintFactory<
 		return result;
 	}
 	
-	private EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addFunctionDisequality(FUNCTION first, FUNCTION second,
-			EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> result) {
-		// TODO Auto-generated method stub
+	private EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addFunctionDisequality(FUNCTION f1, FUNCTION f2,
+			EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
+		EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> result = getDisjunctiveConstraint(Collections.emptySet());
+
+		for (EqConstraint<ACTION, NODE, FUNCTION> inputDisjunct : inputConstraint.getConstraints()) {
+			result = result.union(addFunctionDisequality(f1, f2, inputDisjunct));
+		}
+
+		return result;
+	}
+		
+	private EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addFunctionDisequality(FUNCTION f1, FUNCTION f2,
+			EqConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
 		return null;
 	}
 
-	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addFunctionEquality(FUNCTION key, FUNCTION value,
-			EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> result) {
-		// TODO Auto-generated method stub
-		return null;
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addFunctionEquality(FUNCTION f1, FUNCTION f2,
+			EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
+
+		EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> result = getDisjunctiveConstraint(Collections.emptySet());
+
+		for (EqConstraint<ACTION, NODE, FUNCTION> inputDisjunct : inputConstraint.getConstraints()) {
+			result = result.union(addFunctionEquality(f1, f2, inputDisjunct));
+		}
+
+		return result;
+	}
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addFunctionEquality(FUNCTION func1, FUNCTION func2,
+			EqConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
+//		if (factory.isDebugMode()) {
+//			factory.getLogger().debug("VPFactoryHelpers: arrayEqualityWithException(..)");
+//		}
+//		assert (exceptionArrayNode == null) == (exceptionValueNode == null);
+
+		final T resultState = factory.copy(state).build();
+		
+		Set<T> resultStates = new HashSet<>();
+		resultStates.add(resultState);
+		for (final NODE fnNode1 : inputConstraint.getFunctionNodesForArray(resultState, func1)) {
+			for (final NODE fnNode2 : inputConstraint.getFunctionNodesForArray(resultState, func2)) {
+				final EqGraphNode<NODE, FUNCTION> gn1 = resultState.getEqGraphNode(fnNode1);
+				final EqGraphNode<NODE, FUNCTION> gn2 = resultState.getEqGraphNode(fnNode2);
+
+				if (inputConstraint.congruentIgnoreFunctionSymbol(gn1, gn2)) {
+					resultStates =
+							conjoinAll(resultStates, addEquality(fnNode1, fnNode2, resultState, factory), factory);
+				}
+			}
+		}
+		
+		if (resultStates.isEmpty()) {
+			resultStates.add(resultState);
+		}
+		return resultStates;
 	}
 
 //	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> conjoin(
@@ -278,7 +323,7 @@ public class EqConstraintFactory<
 
 		return result;
 	}
-
+	
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addDisEquality(
 			final NODE i1, final NODE i2, final EqConstraint<ACTION, NODE, FUNCTION> originalState) {
 //		if (factory.isDebugMode()) {
@@ -440,4 +485,29 @@ public class EqConstraintFactory<
 		return result;
 	}
 
+	/**
+	 * Checks if the arguments of the given EqFunctionNodes are all congruent. 
+	 * (and only the arguments, for the standard congruence check from the congruence closure algorithm one will have to
+	 *  compare the function symbol, additionally)
+	 *
+	 * @param fnNode1
+	 * @param fnNode2
+	 * @return
+	 */
+	public static <NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID> boolean congruentIgnoreFunctionSymbol(
+			final EqGraphNode<NODEID, ARRAYID> fnNode1, final EqGraphNode<NODEID, ARRAYID> fnNode2) {
+		// assert fnNode1.getArgs() != null && fnNode2.getArgs() != null;
+		// assert fnNode1.getArgs().size() == fnNode2.getArgs().size();
+		assert fnNode1.mNodeIdentifier.isFunction();
+		assert fnNode2.mNodeIdentifier.isFunction();
+		
+		for (int i = 0; i < fnNode1.getInitCcchild().size(); i++) {
+			final EqGraphNode<NODEID, ARRAYID> fnNode1Arg = fnNode1.getInitCcchild().get(i);
+			final EqGraphNode<NODEID, ARRAYID> fnNode2Arg = fnNode2.getInitCcchild().get(i);
+			if (!fnNode1Arg.find().equals(fnNode2Arg.find())) {
+				return false;
+			}
+		}
+		return true;
+	}
 }

@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -125,16 +124,16 @@ public class ConvertTransformulaToEqDisjunctiveConstraint<ACTION extends IIcfgTr
 
 			final EqConstraint<ACTION, EqNode, EqFunction> emptyConstraint = 
 					mEqConstraintFactory.getEmptyConstraint();
-			emptyConstraint.addNodes(Arrays.asList(new EqNode[] { node1, node2 }));
+//			emptyConstraint.addNodes(Arrays.asList(new EqNode[] { node1, node2 }));
 
 			final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> newConstraint;
 			if (polarity) {
 				newConstraint = 
-					mEqConstraintFactory.addEquality(
+					mEqConstraintFactory.addEquality(node1, node2,
 							mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(emptyConstraint)));
 			} else {
 				newConstraint = 
-					mEqConstraintFactory.addDisequality(
+					mEqConstraintFactory.addDisequality(node1, node2,
 							mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(emptyConstraint)));
 			}
 			

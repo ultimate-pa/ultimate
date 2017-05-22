@@ -1,6 +1,5 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -160,8 +159,19 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 		return mNodeToEqGraphNode.get(node);
 	}
 
+	/**
+	 * Returns the representative node of the given node in the current congruence graph.
+	 * Returns null if the given node does not exist in the graph.
+	 * 
+	 * @param node
+	 * @return representative or null
+	 */
 	public NODE find(NODE node) {
-		return mNodeToEqGraphNode.get(node).find().getNode();
+		EqGraphNode<NODE, FUNCTION> egn = mNodeToEqGraphNode.get(node);
+		if (egn == null) {
+			return null;
+		}
+		return egn.find().getNode();
 	}
 	
 	/**
@@ -382,12 +392,22 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 	
 
 
-	public void addNodes(Collection<NODE> allNodes) {
-		// TODO Auto-generated method stub
+//	public void addNodes(Collection<NODE> allNodes) {
+//		// TODO Auto-generated method stub
+//		assert false;
+//	}
+	
+	private void addNode(NODE node) {
+		// TODO
 		assert false;
 	}
 
 	public HashRelation<FUNCTION, List<NODE>> getCCChild(NODE representative1) {
 		return mNodeToEqGraphNode.get(representative1).getCcchild();
+	}
+
+	public HashRelation<NODE, NODE> getSupportingEqualities() {
+		
+		return null;
 	}
 }
