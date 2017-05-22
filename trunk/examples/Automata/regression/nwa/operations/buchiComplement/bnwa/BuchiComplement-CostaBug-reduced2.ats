@@ -5,8 +5,10 @@
 NestedLassoWord nlw = [ "c"< >"r" "c"<  "c"< >"r" "c"< , "c"< >"r" "c"< "c"< >"r" >"r" "a" "c"<  ];
 boolean accepted = buchiAccepts(ia, nlw);
 NestedWordAutomaton complementNCSB = buchiComplementNCSB(ia);
+assert(numberOfStates(complementNCSB) == 14);
 boolean acceptedComplementNCSB = buchiAccepts(complementNCSB, nlw);
 NestedWordAutomaton complementFKV = buchiComplementFKV(ia);
+assert(numberOfStates(complementFKV) == 20);
 boolean acceptedComplementFKV = buchiAccepts(complementFKV, nlw);
 assert(!accepted);
 assert(acceptedComplementNCSB);
