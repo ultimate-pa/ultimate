@@ -31,23 +31,34 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Represents a set of states of an automaton. States can be initial or
- * accepting.
- * This class stores initial and accepting states explicitly which allows
- * one to iterate over these sets.
+ * Represents a set of states of an automaton. States can be initial and/or accepting. This class stores initial and
+ * accepting states explicitly which allows iteration and modification over these sets.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @param <STATE>
+ *            type of states
  */
 public class SetOfStates<STATE> {
+	private static final String NOT_A_STATE = "Not a state: ";
 
-	private final Set<STATE> mStates = new HashSet<STATE>();
-	private final Set<STATE> mInitialStates = new HashSet<STATE>();
-	private final Set<STATE> mAcceptingStates = new HashSet<STATE>();
+	private final Set<STATE> mStates = new HashSet<>();
+	private final Set<STATE> mInitialStates = new HashSet<>();
+	private final Set<STATE> mAcceptingStates = new HashSet<>();
 
-
+	/**
+	 * Adds a state.
+	 * 
+	 * @param isInitial
+	 *            {@code true} iff the state is initial
+	 * @param isAccepting
+	 *            {@code true} iff the state is accepting
+	 * @param state
+	 *            state
+	 */
+	@SuppressWarnings("squid:S2301")
 	public void addState(final boolean isInitial, final boolean isAccepting, final STATE state) {
 		if (state == null) {
-			throw new NullPointerException("state must not be null");
+			throw new IllegalArgumentException("state must not be null");
 		}
 		if (mStates.contains(state)) {
 			throw new IllegalArgumentException("state already exists: " + state);
@@ -60,26 +71,37 @@ public class SetOfStates<STATE> {
 			mAcceptingStates.add(state);
 		}
 	}
-	
+
+	/**
+	 * Removes a state.
+	 * 
+	 * @param state
+	 *            state
+	 */
 	public void removeState(final STATE state) {
 		final boolean modified = mStates.remove(state);
 		if (!modified) {
-			throw new IllegalArgumentException("Not a state: " + state);
+			throw new IllegalArgumentException(NOT_A_STATE + state);
 		}
 		mInitialStates.remove(state);
 		mAcceptingStates.remove(state);
 	}
-	
+
+	/**
+	 * Makes an initial state non-initial.
+	 * 
+	 * @param state
+	 *            state
+	 */
 	public void makeStateNonInitial(final STATE state) {
 		if (!mStates.contains(state)) {
-			throw new IllegalArgumentException("Not a state: " + state);
+			throw new IllegalArgumentException(NOT_A_STATE + state);
 		}
 		final boolean modified = mInitialStates.remove(state);
 		if (!modified) {
-			throw new IllegalArgumentException("Can only make initial state non-Initial");
+			throw new IllegalArgumentException("Can only make initial states non-initial");
 		}
 	}
-	
 
 	public Set<STATE> getStates() {
 		return Collections.unmodifiableSet(mStates);
@@ -93,20 +115,28 @@ public class SetOfStates<STATE> {
 		return Collections.unmodifiableSet(mAcceptingStates);
 	}
 
+	/**
+	 * @param state
+	 *            State.
+	 * @return {@code true} iff the state is initial
+	 */
 	public boolean isInitial(final STATE state) {
-		if (mStates.contains(state)) {
-			return mInitialStates.contains(state);
-		} else {
-			throw new IllegalArgumentException("Not a state: " + state);
+		if (!mStates.contains(state)) {
+			throw new IllegalArgumentException(NOT_A_STATE + state);
 		}
+		return mInitialStates.contains(state);
 	}
 
+	/**
+	 * @param state
+	 *            State.
+	 * @return {@code true} iff the state is accepting
+	 */
 	public boolean isAccepting(final STATE state) {
-		if (mStates.contains(state)) {
-			return mAcceptingStates.contains(state);
-		} else {
-			throw new IllegalArgumentException("Not a state: " + state);
+		if (!mStates.contains(state)) {
+			throw new IllegalArgumentException(NOT_A_STATE + state);
 		}
+		return mAcceptingStates.contains(state);
 	}
 
 }

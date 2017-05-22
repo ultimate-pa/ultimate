@@ -50,10 +50,10 @@ public interface IAutomaton<LETTER, STATE> {
 	/**
 	 * Can the alphabet still change after the automaton was constructed? Note that the correctness of this property is
 	 * not checked and the user of the library has to use this with caution. (There is no simple check for this property
-	 * since the automata usually take user provided Set objects as alphabet and for performance reasons we do not want
-	 * to change this.)
+	 * since the automata usually take user-provided {@link Set} objects as alphabet and for performance reasons we do
+	 * not want to change this.)
 	 * 
-	 * @return true iff the automaton's alphabet may be modified after the automaton was constructed
+	 * @return {@code true} iff the automaton's alphabet may be modified after the automaton was constructed
 	 */
 	default boolean hasModifiableAlphabet() {
 		return false;

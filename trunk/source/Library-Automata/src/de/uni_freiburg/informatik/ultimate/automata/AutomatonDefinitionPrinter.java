@@ -313,7 +313,8 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 		mPrintWriter.close();
 	}
 
-	private void printTreeAutomaton(String name, TreeAutomatonBU<LETTER, STATE> automaton, Format format) {
+	private void printTreeAutomaton(final String name, final TreeAutomatonBU<LETTER, STATE> automaton,
+			final Format format) {
 		switch (format) {
 			case ATS:
 				new TreeAutomatonWriter<>(mPrintWriter, name, automaton);
@@ -329,8 +330,9 @@ public class AutomatonDefinitionPrinter<LETTER, STATE> {
 	}
 
 	@SuppressWarnings("unused")
-	private void printNestedWordAutomaton(final String name, final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton,
-			final Format format) throws AssertionError {
+	private void printNestedWordAutomaton(final String name,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton, final Format format)
+			throws AssertionError {
 		INestedWordAutomaton<LETTER, STATE> nwa;
 		if (automaton instanceof INestedWordAutomaton) {
 			nwa = (INestedWordAutomaton<LETTER, STATE>) automaton;

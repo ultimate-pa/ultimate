@@ -39,9 +39,7 @@ import de.uni_freiburg.informatik.ultimate.util.csv.SimpleCsvProvider;
 /**
  * Object that stores statistics of an automata library operation.
  * <p>
- * Stores a single row of a CSV as a key-value map.
- * <p>
- * Statistics are not allowed to be overwritten.
+ * Statistics are stored as a key-value map and are not allowed to be overwritten.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
@@ -51,9 +49,6 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	 * Used to indicate an invalid percentage (if the base is zero).
 	 */
 	private static final int INVALID_PERCENTAGE = -1;
-
-	private static final String FIRST_INSERT_THE_VALUE_FOR_KEY = "First insert the value for key ";
-	private static final String MUST_BE_OF_INTEGER_TYPE = " has a value stored that is not of integer type.";
 
 	private final TreeMap<StatisticsType, Object> mKeyValueMap;
 
@@ -185,10 +180,10 @@ public class AutomataOperationStatistics implements ICsvProviderProvider<Object>
 	private Integer getInteger(final StatisticsType key) {
 		final Object raw = mKeyValueMap.get(key);
 		if (raw == null) {
-			throw new IllegalArgumentException(FIRST_INSERT_THE_VALUE_FOR_KEY + key);
+			throw new IllegalArgumentException("First insert the value for key " + key);
 		}
 		if (!(raw instanceof Integer)) {
-			throw new IllegalArgumentException(key + MUST_BE_OF_INTEGER_TYPE);
+			throw new IllegalArgumentException(key + " has a value stored that is not of integer type.");
 		}
 		return (Integer) raw;
 	}

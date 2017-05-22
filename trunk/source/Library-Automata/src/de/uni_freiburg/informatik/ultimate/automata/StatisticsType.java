@@ -295,11 +295,11 @@ public enum StatisticsType {
 	 */
 	RESULT_TRANSITION_RETURN_DENSITY_MILLION,
 	/**
-	 * Is right-hand side operand deterministic?
+	 * Tells whether right-hand side operand is deterministic.
 	 */
 	RHS_IS_DETERMINISTIC,
 	/**
-	 * Is right-hand side operand semi-deterministic?
+	 * Tells whether right-hand side operand semi-deterministic.
 	 */
 	RHS_IS_SEMIDETERMINISTIC,
 	/**

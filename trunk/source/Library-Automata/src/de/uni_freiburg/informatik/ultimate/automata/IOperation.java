@@ -34,12 +34,12 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * We have the following conventions.
  * <ul>
  * <li>Each operation is defined in its own class.
- * <li>Whenever you want to apply an automata operation, you construct a new 
- * object instance of this class. Arguments are passed via the constructor.
+ * <li>Whenever you want to apply an automata operation, you construct a new object instance of this class. Arguments
+ * are passed via the constructor.
  * <li>The result is returned via the {@link #getResult()} method.
  * <li>Start and end of the operation are reported to the logger using log level <tt>INFO</tt>
  * <li>Correctness checks for this operation are implemented in the checkResult method. Whoever executes this operation
- * should add an <blockquote> {@code assert} {@link #checkResult()} </blockquote> in his code.
+ * should add an <blockquote> {@code assert} {@link #checkResult(IStateFactory)} </blockquote> in his code.
  * </ul>
  * By convention the constructor of an IOperation has the following parameters.
  * <ul>
@@ -58,15 +58,14 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
  * @param <LETTER>
  *            Type of objects that are contained in the alphabet.
  * @param <STATE>
- *            Type of objects that are used to label states (resp. places for PetriNet)
+ *            Type of objects that are used to label states (resp. places for Petri nets)
  * @param <CRSF>
  *            type of {@link IStateFactory} that is used in the {@link #checkResult(IStateFactory)} method
  */
 public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 	/**
 	 * @return Name of the operation.<br>
-	 *         The name is determined by the class name.
-	 *         Do not override this method.
+	 *         The name is determined by the class name. Do not override this method.
 	 */
 	default String getOperationName() {
 		return computeOperationName(getClass());
@@ -99,7 +98,7 @@ public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 	 * 
 	 * @param stateFactory
 	 *            If new automata have to be built, use this state factory.
-	 * @return true iff all checks succeeded.
+	 * @return {@code true} iff all checks succeeded.
 	 * @throws AutomataLibraryException
 	 *             if checks fail or timeout was requested
 	 */
@@ -118,12 +117,16 @@ public interface IOperation<LETTER, STATE, CRSF extends IStateFactory<STATE>> {
 	default AutomataOperationStatistics getAutomataOperationStatistics() {
 		return null;
 	}
-	
-	static <C extends IOperation<?,?,?>> String computeOperationName(final Class<C> clazz) {
-		return firstLetterToLowerCase(clazz.getSimpleName());
-	}
-	
-	static String firstLetterToLowerCase(final String str) {
-		return str.substring(0, 1).toLowerCase() + str.substring(1);
+
+	/**
+	 * @param clazz
+	 *            Class object.
+	 * @param <C>
+	 *            class type (must inherit {@link IOperation}
+	 * @return automata script interpreter
+	 */
+	static <C extends IOperation<?, ?, ?>> String computeOperationName(final Class<C> clazz) {
+		final String className = clazz.getSimpleName();
+		return Character.toLowerCase(className.charAt(0)) + className.substring(1);
 	}
 }
