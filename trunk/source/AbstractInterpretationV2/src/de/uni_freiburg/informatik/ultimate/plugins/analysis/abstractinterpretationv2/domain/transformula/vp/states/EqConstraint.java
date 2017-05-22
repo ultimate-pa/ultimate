@@ -19,6 +19,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -328,6 +329,14 @@ public class EqConstraint<
 					fDeq.getSecond().renameVariables(substitutionMapping)));
 		}
 		mFunctionDisequalities = newFunctionDisequalites;
+	}
+
+	public boolean areEqual(NODE node1, NODE node2) {
+		return mElementCongruenceGraph.find(node1).equals(mElementCongruenceGraph.find(node2));
+	}
+
+	public HashRelation<FUNCTION, List<EqGraphNode<NODE, FUNCTION>>> getCCChild(NODE representative1) {
+		mElementCongruenceGraph.getCCChild(representative1);
 	}
 
 }

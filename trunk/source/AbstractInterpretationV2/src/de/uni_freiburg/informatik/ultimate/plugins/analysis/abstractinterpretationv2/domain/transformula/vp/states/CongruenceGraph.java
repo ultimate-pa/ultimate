@@ -432,4 +432,8 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 		// TODO Auto-generated method stub
 		assert false;
 	}
+
+	public void getCCChild(NODE representative1) {
+		mNodeToEqGraphNode.get(representative1).getCcchild();
+	}
 }
