@@ -26,9 +26,11 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.automata.IAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
@@ -57,71 +59,83 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *            letter type in the trace
  */
 public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
-	private static final boolean USE_NONDET_AUTOMATON = false;
+	// TODO 2017-05-17 Christian: Make this a setting?
+	private static final boolean USE_NONDET_AUTOMATON_ENHANCEMENT = false;
 
-	private final NestedWordAutomaton<LETTER, IPredicate> mAutomaton;
+	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
 
 	public ErrorAutomatonBuilder(final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory,
 			final CfgSmtToolkit csToolkit, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfg<?> icfgContainer,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
-			final IAutomaton<LETTER, IPredicate> abstraction, final NestedWord<LETTER> trace) {
-		if (USE_NONDET_AUTOMATON) {
-			mAutomaton = constructNondeterministicAutomaton(predicateUnifier, predicateFactory, csToolkit, services,
-					simplificationTechnique, xnfConversionTechnique, icfgContainer, predicateFactoryInterpolantAutomata,
-					abstraction, trace);
+			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace) {
+		final NestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton = constructStraightLineAutomaton(services,
+				csToolkit, predicateFactory, predicateUnifier.getFalsePredicate(), simplificationTechnique,
+				xnfConversionTechnique, icfgContainer, predicateFactoryInterpolantAutomata, alphabet, trace);
+
+		if (USE_NONDET_AUTOMATON_ENHANCEMENT) {
+			mResult = constructNondeterministicAutomaton(services, straightLineAutomaton, csToolkit, predicateUnifier);
 		} else {
-			mAutomaton = constructStraightLineAutomaton(predicateUnifier, predicateFactory, csToolkit, services,
-					simplificationTechnique, xnfConversionTechnique, icfgContainer, predicateFactoryInterpolantAutomata,
-					abstraction, trace);
+			mResult = straightLineAutomaton;
 		}
 	}
 
-	private NestedWordAutomaton<LETTER, IPredicate> constructNondeterministicAutomaton(
-			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory,
-			final CfgSmtToolkit csToolkit, final IUltimateServiceProvider services,
-			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IIcfg<?> icfgContainer,
-			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
-			final IAutomaton<LETTER, IPredicate> abstraction, final NestedWord<LETTER> trace) {
-		final IHoareTripleChecker hoareTripleChecker = null;
-		final boolean conservativeSuccessorCandidateSelection = true;
-		final boolean secondChance = false;
-		final NondeterministicInterpolantAutomaton<LETTER> result =
-				new NondeterministicInterpolantAutomaton<>(services, csToolkit, hoareTripleChecker, mAutomaton,
-						predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
-		return null;
+	public NestedWordAutomaton<LETTER, IPredicate> getResult() {
+		return mResult;
 	}
 
 	private NestedWordAutomaton<LETTER, IPredicate> constructStraightLineAutomaton(
-			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory,
-			final CfgSmtToolkit csToolkit, final IUltimateServiceProvider services,
+			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
+			final PredicateFactory predicateFactory, final IPredicate falsePredicate,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfg<?> icfgContainer,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
-			final IAutomaton<LETTER, IPredicate> abstraction, final NestedWord<LETTER> trace) throws AssertionError {
-		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
+			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace) throws AssertionError {
+		// compute 'wp' sequence from 'false'
 		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(predicateFactory,
 				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), services, trace, null,
 				falsePredicate, null, predicateFactory.not(falsePredicate), simplificationTechnique,
 				xnfConversionTechnique, icfgContainer.getCfgSmtToolkit().getSymbolTable());
 		final DefaultTransFormulas dtf = new DefaultTransFormulas(trace, null, falsePredicate,
 				Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
-		final TracePredicates weakestPreconditionSequence;
+		final TracePredicates wpPredicate;
 		try {
-			weakestPreconditionSequence =
-					ipt.computeWeakestPreconditionSequence(dtf, Collections.emptyList(), true, false);
+			wpPredicate = ipt.computeWeakestPreconditionSequence(dtf, Collections.emptyList(), true, false);
 		} catch (final TraceInterpolationException e) {
+			// TODO 2017-05-17 Christian: better error handling
 			throw new AssertionError();
 		}
 
-		return new StraightLineInterpolantAutomatonBuilder<>(services, new VpAlphabet<>(abstraction),
-				predicateFactoryInterpolantAutomata, trace, weakestPreconditionSequence).getResult();
+		// negate 'wp' sequence to get 'pre'
+		final List<IPredicate> oldIntermediatePredicates = wpPredicate.getPredicates();
+		final List<IPredicate> newIntermediatePredicates = new ArrayList<>(oldIntermediatePredicates.size());
+		for (final IPredicate pred : oldIntermediatePredicates) {
+			newIntermediatePredicates.add(predicateFactory.not(pred));
+		}
+		final IPredicate newPrecondition = predicateFactory.not(wpPredicate.getPrecondition());
+		final IPredicate newPostcondition = predicateFactory.not(wpPredicate.getPostcondition());
+		final TracePredicates newPredicates =
+				new TracePredicates(newPrecondition, newPostcondition, newIntermediatePredicates);
+
+		// TODO 2017-05-17 Christian: additionally compute 'sp' sequence and intersect
+
+		return new StraightLineInterpolantAutomatonBuilder<>(services, alphabet, predicateFactoryInterpolantAutomata,
+				trace, newPredicates).getResult();
 	}
 
-	public NestedWordAutomaton<LETTER, IPredicate> getResult() {
-		return mAutomaton;
+	private NestedWordAutomaton<LETTER, IPredicate> constructNondeterministicAutomaton(
+			final IUltimateServiceProvider services,
+			final INestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton, final CfgSmtToolkit csToolkit,
+			final IPredicateUnifier predicateUnifier) {
+		// 2017-05-17 Christian: construct right object
+		final IHoareTripleChecker hoareTripleChecker = null;
+		final boolean conservativeSuccessorCandidateSelection = false;
+		final boolean secondChance = false;
+		final NondeterministicInterpolantAutomaton<LETTER> result =
+				new NondeterministicInterpolantAutomaton<>(services, csToolkit, hoareTripleChecker,
+						straightLineAutomaton, predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
+		// TODO 2017-05-17 Christian: How do we get the correct type here? Should the CEGAR class be refactored?
+		return null;
 	}
-
 }

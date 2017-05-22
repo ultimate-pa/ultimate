@@ -46,6 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLette
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
@@ -404,7 +405,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final ErrorAutomatonBuilder<LETTER> builder = new ErrorAutomatonBuilder<>(
 				mTraceCheckAndRefinementEngine.getPredicateUnifier(), mPredicateFactory, mCsToolkit, mServices,
 				mSimplificationTechnique, mXnfConversionTechnique, mIcfgContainer, mPredicateFactoryInterpolantAutomata,
-				mAbstraction, trace);
+				new VpAlphabet<>(mAbstraction), trace);
 		mInterpolAutomaton = builder.getResult();
 		mErrorAutomatonAvailable = true;
 		assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
