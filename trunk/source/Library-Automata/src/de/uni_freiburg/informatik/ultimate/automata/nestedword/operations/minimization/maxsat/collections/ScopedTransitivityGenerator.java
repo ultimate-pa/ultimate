@@ -12,6 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
+
 /**
  * This data structure can be fed with equality information and returns all fresh transitive implications. Additionally,
  * the data structure supports scoping and making scopes persistent.
@@ -24,7 +26,7 @@ import java.util.Set;
  * @param <C>
  *            content type
  */
-public abstract class ScopedTransitivityGenerator<T, C> {
+public abstract class ScopedTransitivityGenerator<T, C> implements IAssignmentCheckerAndGenerator<T> {
 	protected final Map<C, NormalNode<C>> mContent2node;
 
 	private final ScopeStack<C> mStack;
@@ -46,6 +48,26 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 		mTemporaryRootPredicate = new TemporaryRootPredicate();
 		mPersistentRootPredicate = new PersistentRootPredicate();
 		mCompressPaths = compressPaths;
+	}
+
+	@Override
+	public void addVariable(final T pair) {
+		// check that transitivity generator knows the variables
+		assert hasContent(pair);
+	}
+
+	@Override
+	public void makeAssignmentsPersistent() {
+		makeAllScopesPersistent();
+	}
+
+	@Override
+	public Iterable<Pair<T, Boolean>> checkAssignment(final T pair, final boolean newStatus) {
+		if (!newStatus) {
+			// ignore inequality
+			return Collections.emptySet();
+		}
+		return assertEquality(pair);
 	}
 
 	/**
@@ -90,13 +112,13 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 	 * @return all transitive pairs of contents which also need to be equal
 	 */
 	@SuppressWarnings("squid:S1698")
-	public Iterable<T> assertEquality(final T pair) {
+	public Iterable<Pair<T, Boolean>> assertEquality(final T pair) {
 		final NormalNode<C> root1 = find(mContent2node.get(getFirst(pair)));
 		final NormalNode<C> root2 = find(mContent2node.get(getSecond(pair)));
 		// equality is intended here
 		if (root1 == root2) {
 			// equality is already known, do nothing and report empty information
-			return Collections.emptyList();
+			return Collections.emptySet();
 		}
 
 		/*
@@ -121,6 +143,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 	/**
 	 * Reverts the last scope of changes.
 	 */
+	@Override
 	public void revertOneScope() {
 		mStack.revertOneScope();
 	}
@@ -131,6 +154,7 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 	 * The scope lasts until either {@link #makeAllScopesPersistent()} is called from any scope or
 	 * {@link #revertOneScope()} is called while this scope is the current scope.
 	 */
+	@Override
 	public void addScope() {
 		mStack.addScope();
 	}
@@ -200,9 +224,9 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 	 *            information which should not occur in the result
 	 * @return all transitive information
 	 */
-	private Iterable<T> getTransitiveInformation(final NormalNode<C> root1, final NormalNode<C> root2,
+	private Iterable<Pair<T, Boolean>> getTransitiveInformation(final NormalNode<C> root1, final NormalNode<C> root2,
 			final BridgeNode<C> newBridgeNode, final T inputPair) {
-		// at the moment we only have an array-based implemenation
+		// at the moment we only have an array-based implementation
 		return getTransitiveInformationArrays(root1, root2, newBridgeNode, inputPair);
 	}
 
@@ -223,19 +247,19 @@ public abstract class ScopedTransitivityGenerator<T, C> {
 	 *            information which should not occur in the result
 	 * @return all transitive information
 	 */
-	private Iterable<T> getTransitiveInformationArrays(final NormalNode<C> root1, final NormalNode<C> root2,
+	private Iterable<Pair<T, Boolean>> getTransitiveInformationArrays(final NormalNode<C> root1, final NormalNode<C> root2,
 			final BridgeNode<C> newBridgeNode, final T inputPair) {
 		// transform trees to arrays
 		final ArrayList<C> asList1 = toArrayList(root1, newBridgeNode);
 		final ArrayList<C> asList2 = toArrayList(root2, null);
 
 		// insert all pairs to a list
-		final List<T> result = new ArrayList<>(asList1.size() * asList2.size() - 1);
+		final List<Pair<T, Boolean>> result = new ArrayList<>(asList1.size() * asList2.size() - 1);
 		for (final C content1 : asList1) {
 			for (final C content2 : asList2) {
 				final T pair = createPair(content1, content2);
 				if (!pair.equals(inputPair)) {
-					result.add(pair);
+					result.add(new Pair<>(pair, Boolean.TRUE));
 				}
 			}
 		}

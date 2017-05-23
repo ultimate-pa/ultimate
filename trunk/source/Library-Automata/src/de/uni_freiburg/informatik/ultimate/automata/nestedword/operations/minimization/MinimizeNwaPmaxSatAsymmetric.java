@@ -44,8 +44,9 @@ import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.NwaApproximateXsimulation.SimulationType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.AbstractMaxSatSolver;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.IAssignmentCheckerAndGenerator;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.InteractiveMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.ScopedTransitivityGeneratorPair;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.minimization.maxsat.collections.TransitivityGeneralMaxSatSolver;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.IPartition;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap2;
@@ -226,7 +227,7 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 		final List<Pair<STATE, STATE>> pairsThatShouldBeRemoved = new ArrayList<>();
 		for (final Triple<STATE, STATE, Pair<STATE, STATE>> entry : initialPairs.entrySet()) {
 			if (entry.getFirst().equals(entry.getSecond())) {
-				pairsThatShouldBeRemoved.add(new Pair<STATE, STATE>(entry.getFirst(), entry.getSecond()));
+				pairsThatShouldBeRemoved.add(new Pair<>(entry.getFirst(), entry.getSecond()));
 			}
 		}
 		for (final Pair<STATE, STATE> pair : pairsThatShouldBeRemoved) {
@@ -255,7 +256,10 @@ public class MinimizeNwaPmaxSatAsymmetric<LETTER, STATE> extends MinimizeNwaMaxS
 	@Override
 	protected AbstractMaxSatSolver<Pair<STATE, STATE>> createTransitivitySolver() {
 		mTransitivityGenerator = new ScopedTransitivityGeneratorPair<>(mSettings.isUsePathCompression());
-		return new TransitivityGeneralMaxSatSolver<>(mServices, mTransitivityGenerator);
+		final List<IAssignmentCheckerAndGenerator<Pair<STATE, STATE>>> assignmentCheckerAndGeneratorList =
+				new ArrayList<>();
+		assignmentCheckerAndGeneratorList.add(mTransitivityGenerator);
+		return new InteractiveMaxSatSolver<>(mServices, assignmentCheckerAndGeneratorList);
 	}
 
 	@Override
