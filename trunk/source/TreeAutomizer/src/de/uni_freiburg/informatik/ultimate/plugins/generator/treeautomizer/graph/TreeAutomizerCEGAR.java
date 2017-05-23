@@ -144,8 +144,8 @@ public class TreeAutomizerCEGAR {
 		mCfgSmtToolkit = new CfgSmtToolkit(new ModifiableGlobalsTable(new HashRelation<>()), mBackendSmtSolverScript,
 				mSymbolTable, mInitialPredicate, Collections.singleton(HornUtilConstants.HORNCLAUSEMETHODNAME));
 		mPredicateUnifier = new PredicateUnifier(services, mBackendSmtSolverScript, mPredicateFactory, mSymbolTable,
-				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED, mInitialPredicate,
-				mFinalPredicate);
+				SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BDD_BASED, mInitialPredicate);
+				// , mFinalPredicate);
 		mHoareTripleChecker = new HCHoareTripleChecker(mPredicateUnifier, mCfgSmtToolkit, mPredicateFactory,
 				mSymbolTable);
 
@@ -335,7 +335,16 @@ public class TreeAutomizerCEGAR {
 				mAutomataLibraryServices, mStateFactory, mAbstraction, cCounterExample)).getResult();
 		mLogger.debug(String.format("Size before totalize %d states, %d rules.", mAbstraction.getStates().size(),
 				((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
-
+		
+		final Set<IPredicate> states = new HashSet<>();
+		states.addAll(mAbstraction.getStates());
+		for (final IPredicate pred : states) {
+		
+			if (pred.getFormula().toString().equals("false")) {
+				mAbstraction.removeState(pred);
+			}
+		}
+/*
 		mAbstraction = (TreeAutomatonBU<HornClause, IPredicate>) (new Totalize<HornClause, IPredicate>(
 				mAutomataLibraryServices, mStateFactory, mAbstraction)).getResult();
 		mLogger.debug(String.format("Size after totalize %d states, %d rules.", mAbstraction.getStates().size(),
@@ -345,7 +354,7 @@ public class TreeAutomizerCEGAR {
 				mAutomataLibraryServices, mStateFactory, mAbstraction)).getResult();
 		mLogger.debug(String.format("Size after minimize %d states, %d rules.", mAbstraction.getStates().size(),
 				((Set<TreeAutomatonRule<HornClause, IPredicate>>) mAbstraction.getRules()).size()));
-
+*/
 		mLogger.debug("Refine ends...");
 
 		assert !(new Accepts<>(mAutomataLibraryServices, mAbstraction, mCounterExample).getResult());

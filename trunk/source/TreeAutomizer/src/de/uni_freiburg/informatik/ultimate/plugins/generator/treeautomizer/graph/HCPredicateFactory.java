@@ -80,9 +80,9 @@ public class HCPredicateFactory extends PredicateFactory {
 
 		mBackendSmtSolverScript.lock(this);
 		mDontCarePredicate = newPredicate(symbolTable.getDontCareHornClausePredicateSymbol(),
-				mBackendSmtSolverScript.term(this, "true"), Collections.emptyList());
-		mFalsePredicate = newPredicate(symbolTable.getFalseHornClausePredicateSymbol(),
 				mBackendSmtSolverScript.term(this, "false"), Collections.emptyList());
+		mFalsePredicate = newPredicate(symbolTable.getFalseHornClausePredicateSymbol(),
+				mBackendSmtSolverScript.term(this, "true"), Collections.emptyList());
 		mTruePredicate = newPredicate(symbolTable.getTrueHornClausePredicateSymbol(),
 				mBackendSmtSolverScript.term(this, "true"), Collections.emptyList());
 		mBackendSmtSolverScript.unlock(this);

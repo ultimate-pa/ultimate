@@ -6,6 +6,7 @@
 **/bin/*
 **.swp
 **/.recommenders/*
+**/.gitignore
 
 /trunk/source/Servers
 /trunk/source/.sonarlint/*

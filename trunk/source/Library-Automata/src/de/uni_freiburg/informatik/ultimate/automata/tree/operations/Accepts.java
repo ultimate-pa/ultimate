@@ -56,7 +56,9 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE, IStateF
 	private final Boolean mResult;
 
 	/***
-	 * Operator to check if accepting a given tree run by a given tree automaton.
+	 * Operator to check if accepting a given tree run by a given tree
+	 * automaton.
+	 * 
 	 * @param services
 	 * @param automaton
 	 * @param run
@@ -65,9 +67,10 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE, IStateF
 			final TreeRun<LETTER, STATE> run) {
 		this(services, automaton, run.getTree());
 	}
-	
+
 	/***
 	 * Operator to check if accepting a given tree by a given tree automaton.
+	 * 
 	 * @param services
 	 * @param automaton
 	 * @param run
@@ -96,7 +99,7 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE, IStateF
 			next.add(checkTree(ch));
 		}
 		final Iterable<TreeAutomatonRule<LETTER, STATE>> st = mTreeAutomaton.getRulesByLetter(t.getSymbol());
-		
+
 		if (st == null) {
 			return res;
 		}
@@ -104,14 +107,14 @@ public class Accepts<LETTER, STATE> implements IOperation<LETTER, STATE, IStateF
 			boolean validDerivation = true;
 			for (int i = 0, k = 0; i < rule.getArity(); ++i) {
 				final STATE sr = rule.getSource().get(i);
-				if ((!next.isEmpty() || !mTreeAutomaton.isInitialState(sr)) && (k >= next.size() 
-						|| !next.get(k++).contains(sr))) {
-					validDerivation = false;
-					break;
+				if ((!next.isEmpty() || !mTreeAutomaton.isInitialState(sr))) {
+					if (k >= next.size() || !next.get(k++).contains(sr)) {
+						validDerivation = false;
+						break;
+					}
 				}
 			}
 			if (validDerivation) {
-				System.err.println(t + " derived by " + rule);
 				res.add(rule.getDest());
 			}
 		}

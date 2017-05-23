@@ -32,7 +32,9 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap.KeySetView;
 
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 
@@ -49,10 +51,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  */
 public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, STATE> {
 
-	private final Map<List<STATE>, Map<LETTER, Iterable<TreeAutomatonRule<LETTER, STATE>>>> mParentsMap;
-	private final Map<STATE, Map<LETTER, Iterable<TreeAutomatonRule<LETTER, STATE>>>> mChildrenMap;
-	private final Map<LETTER, Iterable<TreeAutomatonRule<LETTER, STATE>>> mLettersMap;
-	private final Map<STATE, Iterable<TreeAutomatonRule<LETTER, STATE>>> mSourceMap;
+	private final Map<List<STATE>, Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>>> mParentsMap;
+	private final Map<STATE, Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>>> mChildrenMap;
+	private final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> mLettersMap;
+	private final Map<STATE, Collection<TreeAutomatonRule<LETTER, STATE>>> mSourceMap;
 	private final Set<TreeAutomatonRule<LETTER, STATE>> mRules;
 	private final Set<LETTER> mAlphabet;
 	private final Set<STATE> mFinalStates;
@@ -74,6 +76,51 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 		mInitalStates = new HashSet<>();
 	}
 
+	private boolean ruleContains(final TreeAutomatonRule<LETTER, STATE> rule, final STATE st) {
+		if (rule.getDest().equals(st)) {
+			return true;
+		}
+		for (final STATE state : rule.getSource()) {
+			if (state.equals(st)) {
+				return true;
+			}
+		}
+		
+		return false;
+	}
+	
+	/***
+	 * Remove a given state from all the rules
+	 * @param st
+	 */
+	public void removeState(final STATE st) {
+		final Set<TreeAutomatonRule<LETTER, STATE>> badRules = new HashSet<>();
+		for (final TreeAutomatonRule<LETTER, STATE> rule : mRules) {
+			if (ruleContains(rule, st)) {
+				badRules.add(rule);
+			}
+		}
+		for (final Entry<List<STATE>, Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>>> e : mParentsMap.entrySet()) {
+			for (final Entry<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> e2 : e.getValue().entrySet()) {
+				e2.getValue().removeAll(badRules);
+			}
+		}
+		for (final Entry<STATE, Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>>> e : mChildrenMap.entrySet()) {
+			for (final Entry<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> e2 : e.getValue().entrySet()) {
+				e2.getValue().removeAll(badRules);
+			}
+		}
+		for (final Entry<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> e : mLettersMap.entrySet()) {
+			e.getValue().removeAll(badRules);
+		}
+		for (final Entry<STATE, Collection<TreeAutomatonRule<LETTER, STATE>>> e : mSourceMap.entrySet()) {
+			e.getValue().removeAll(badRules);
+		}
+		mRules.removeAll(badRules);
+		mStates.remove(st);
+		mFinalStates.remove(st);
+		mInitalStates.remove(st);
+	}
 	/**
 	 * Add a rule to the automaton.
 	 * 
@@ -97,9 +144,9 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 		}
 		// children(q)[f] = <q1, ..., qn>
 		if (!mChildrenMap.containsKey(dest)) {
-			mChildrenMap.put(dest, new HashMap<LETTER, Iterable<TreeAutomatonRule<LETTER, STATE>>>());
+			mChildrenMap.put(dest, new HashMap<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>>());
 		}
-		final Map<LETTER, Iterable<TreeAutomatonRule<LETTER, STATE>>> childLetter = mChildrenMap.get(dest);
+		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> childLetter = mChildrenMap.get(dest);
 		if (!childLetter.containsKey(letter)) {
 			childLetter.put(letter, new HashSet<TreeAutomatonRule<LETTER, STATE>>());
 		}
@@ -109,9 +156,9 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 
 		// parents(q1, ..., qn)[f] = q
 		if (!mParentsMap.containsKey(src)) {
-			mParentsMap.put(src, new HashMap<LETTER, Iterable<TreeAutomatonRule<LETTER, STATE>>>());
+			mParentsMap.put(src, new HashMap<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>>());
 		}
-		final Map<LETTER, Iterable<TreeAutomatonRule<LETTER, STATE>>> parentLetter = mParentsMap.get(src);
+		final Map<LETTER, Collection<TreeAutomatonRule<LETTER, STATE>>> parentLetter = mParentsMap.get(src);
 		if (!parentLetter.containsKey(letter)) {
 			parentLetter.put(letter, new HashSet<TreeAutomatonRule<LETTER, STATE>>());
 		}
@@ -320,12 +367,14 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 
 	private String stateString(STATE state) {
 		final StringBuilder res = new StringBuilder(state.toString());
+		res.append('"');
 		if (mInitalStates.contains(state)) {
 			res.append("_");
 		}
 		if (isFinalState(state)) {
 			res.append("*");
 		}
+		res.append('"');
 		return res.toString();
 	}
 
@@ -379,7 +428,9 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 			if (alphabet.length() > 0) {
 				alphabet.append(" ");
 			}
+			alphabet.append('"');
 			alphabet.append(letter);
+			alphabet.append('"');
 		}
 
 		final StringBuilder states = new StringBuilder();
@@ -387,7 +438,9 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 			if (states.length() > 0) {
 				states.append(" ");
 			}
+			states.append('"');
 			states.append(state);
+			states.append('"');
 		}
 
 		final StringBuilder initialStates = new StringBuilder();
@@ -395,7 +448,9 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 			if (initialStates.length() > 0) {
 				initialStates.append(" ");
 			}
+			initialStates.append('"');
 			initialStates.append(state);
+			initialStates.append('"');
 		}
 
 		final StringBuilder finalStates = new StringBuilder();
@@ -403,7 +458,9 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 			if (finalStates.length() > 0) {
 				finalStates.append(" ");
 			}
+			finalStates.append('"');
 			finalStates.append(state);
+			finalStates.append('"');
 		}
 
 		final StringBuilder transitionTable = new StringBuilder();
@@ -416,9 +473,20 @@ public class TreeAutomatonBU<LETTER, STATE> implements ITreeAutomatonBU<LETTER, 
 				if (src.length() > 0) {
 					src.append(" ");
 				}
+				src.append('"');
 				src.append(st);
+				src.append('"');
 			}
-			transitionTable.append(String.format("\t\t((%s) %s %s)", src, rule.getLetter(), rule.getDest()));
+			final StringBuilder dest = new StringBuilder();
+			dest.append('"');
+			dest.append(rule.getDest());
+			dest.append('"');
+			
+			final StringBuilder letter = new StringBuilder();
+			letter.append('"');
+			letter.append(rule.getLetter());
+			letter.append('"');
+			transitionTable.append(String.format("\t\t((%s) %s %s)", src, letter, dest));
 		}
 		return String.format(
 				"TreeAutomaton %s = {\n\talphabet = {%s},\n\tstates = {%s},\n\tinitialStates = {%s},\n\tfinalStates = {%s},\n\ttransitionTable = {\n%s\n\t}\n}",
