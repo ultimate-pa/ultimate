@@ -93,17 +93,23 @@ public class IterativePredicateTransformer {
 	 *      result in a {@code NullPointerException}. The latter passes a predicate for {@code true}, which is counter-
 	 *      intuitive.
 	 */
-	private final IPredicate mFalsePredicate;
+	private final IPredicate mTruePredicate;
 
 	private final IIcfgSymbolTable mSymbolTable;
 
 	private static final boolean INTERPROCEDURAL_POST = true;
 	private static final boolean TRANSFORM_SUMMARY_TO_CNF = true;
 
+	/**
+	 * 
+	 * @param truePredicate only required if you want to compute the 
+	 * non-inductive wp sequence in which the call predecessor is always
+	 * the true predicate
+	 */
 	public IterativePredicateTransformer(final PredicateFactory predicateFactory, final ManagedScript mgdScript,
 			final ModifiableGlobalsTable modifiableGlobalsTable, final IUltimateServiceProvider services,
 			final NestedWord<? extends IAction> trace, final IPredicate precondition, final IPredicate postcondition,
-			final SortedMap<Integer, IPredicate> pendingContexts, final IPredicate falsePredicate,
+			final SortedMap<Integer, IPredicate> pendingContexts, final IPredicate truePredicate,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfgSymbolTable symbolTable) {
 		mServices = services;
@@ -118,7 +124,7 @@ public class IterativePredicateTransformer {
 		mPrecondition = precondition;
 		mPostcondition = postcondition;
 		mPendingContexts = pendingContexts;
-		mFalsePredicate = falsePredicate;
+		mTruePredicate = truePredicate;
 		mSymbolTable = symbolTable;
 	}
 
@@ -252,11 +258,27 @@ public class IterativePredicateTransformer {
 	 *            representation of the trace along which we compute the WP sequence
 	 * @param postprocs
 	 *            List of postprocessors that apply to each IPredicate after it was constructed via WP. May be empty.
+	 *            
+ 	 * @param useTrueAsCallPredecessor
+ 	 * In our interprocedural setting, a return has two predecessor a linear
+ 	 * predecessor (predicate before return) and a hierarchical predecessor 
+ 	 * (predicate before the call). A consequence is that the weakest 
+ 	 * precondition(s) of a return is/are not unique. The stronger the call 
+ 	 * predecessor the weaker the return predecessor and vice versa.
+ 	 * Only a carefully chosen compromise between both extremes ensures that
+ 	 * the resulting sequence is inductive.
+ 	 * If this option is set to true, we compute the return predecessor without
+ 	 * any "help" from the call predecessor (i.e., under the assumption that the
+ 	 * call predecessor is true).
+ 	 * If this option is set to false, the resulting sequence will be inductive.
+ 	 * For most applications you should pick "false".
+ 	 * 
 	 * @throws TraceInterpolationException
+	 * 
 	 */
 	public TracePredicates computeWeakestPreconditionSequence(
 			final NestedFormulas<UnmodifiableTransFormula, IPredicate> nf,
-			final List<IPredicatePostprocessor> postprocs, final boolean callPredecessorIsAlwaysFalse,
+			final List<IPredicatePostprocessor> postprocs, final boolean useTrueAsCallPredecessor,
 			final boolean alternatingQuantifierBailout) throws TraceInterpolationException {
 		final IPredicate[] wpSequence = new IPredicate[mTrace.length() - 1];
 		final TracePredicates ipp =
@@ -296,8 +318,8 @@ public class IterativePredicateTransformer {
 				final UnmodifiableTransFormula returnTf = nf.getFormulaFromNonCallPos(i);
 
 				if (mTrace.isPendingReturn(i)) {
-					if (callPredecessorIsAlwaysFalse) {
-						callerPred = mFalsePredicate;
+					if (useTrueAsCallPredecessor) {
+						callerPred = mTruePredicate;
 					} else {
 						callerPred = mPendingContexts.get(Integer.valueOf(i));
 					}
@@ -328,8 +350,8 @@ public class IterativePredicateTransformer {
 						}
 					}
 					callerPredicatesComputed.put(callPos, wpOfSummary);
-					if (callPredecessorIsAlwaysFalse) {
-						callerPred = mFalsePredicate;
+					if (useTrueAsCallPredecessor) {
+						callerPred = mTruePredicate;
 					} else {
 						callerPred = wpOfSummary;
 					}
