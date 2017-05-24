@@ -73,7 +73,14 @@ public class TraceCheckReasonUnknown {
 		/**
 		 * Solver crash that does not fall in one of the other categories
 		 */
-		SOLVER_CRASH_OTHER
+		SOLVER_CRASH_OTHER,
+		
+		/**
+		 * Solver crash because Ultimate developers do not follow SMT-LIB
+		 * standard. E.g., according to SMT-LIB bvadd may only take 2
+		 * parameters.
+		 */
+		ULTIMATE_VIOLATES_SMT_LIB_STANDARD_AND_SOLVER_COMPLAINS,
 	}
 	
 	private final Reason mReason;

@@ -319,6 +319,10 @@ public final class TraceCheckerUtils {
 			// timeout
 			reason = Reason.SOLVER_RESPONSE_TIMEOUT;
 			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
+		} else if (message.startsWith("ERROR: bvadd takes exactly 2 arguments")) {
+			// we use bvadd with larger number of params, e.g., MatSAT complains
+			reason = Reason.ULTIMATE_VIOLATES_SMT_LIB_STANDARD_AND_SOLVER_COMPLAINS;
+			exceptionCategory = ExceptionHandlingCategory.KNOWN_IGNORE;
 		} else {
 			reason = Reason.SOLVER_CRASH_OTHER;
 			exceptionCategory = ExceptionHandlingCategory.UNKNOWN;
