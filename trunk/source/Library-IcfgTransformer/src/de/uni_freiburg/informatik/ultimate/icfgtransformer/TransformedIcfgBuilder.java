@@ -28,9 +28,12 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.models.annotation.Overapprox;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -39,8 +42,11 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer.TransforumlaTransformationResult;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.DefaultIcfgSymbolTable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
@@ -52,16 +58,18 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.BasicPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 
 /**
- * 
+ *
  * The {@link TransformedIcfgBuilder} constructs and adds locations and transitions to a {@link BasicIcfg} based on some
  * input {@link IIcfg}.
- * 
+ *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  * @param <INLOC>
@@ -72,15 +80,17 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
 	private final Map<INLOC, OUTLOC> mOldLoc2NewLoc;
 	private final Map<IIcfgCallTransition<INLOC>, IcfgCallTransition> mOldCalls2NewCalls;
+	private final Set<IProgramVarOrConst> mNewVars;
 	private final ILocationFactory<INLOC, OUTLOC> mLocationFactory;
 	private final IBacktranslationTracker mBacktranslationTracker;
 	private final ITransformulaTransformer mTransformer;
 	private final IIcfg<INLOC> mOriginalIcfg;
 	private final BasicIcfg<OUTLOC> mResultIcfg;
+	private boolean mIsFinished;
 
 	/**
 	 * Default constructor of {@link TransformedIcfgBuilder}.
-	 * 
+	 *
 	 * @param funLocFac
 	 *            A function that actually creates new locations.
 	 * @param backtranslationTracker
@@ -103,12 +113,14 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		mResultIcfg = Objects.requireNonNull(resultIcfg);
 		mOldLoc2NewLoc = new HashMap<>();
 		mOldCalls2NewCalls = new HashMap<>();
+		mNewVars = new HashSet<>();
+		mIsFinished = false;
 	}
 
 	/**
 	 * Create a fresh transition between a given source and target by transforming any transformula of an old transition
 	 * and copying all annotations.
-	 * 
+	 *
 	 * @param newSource
 	 *            A location in the new result Icfg that will act as the new source of the transition.
 	 * @param newTarget
@@ -119,6 +131,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	 */
 	@SuppressWarnings("unchecked")
 	public IcfgEdge createNewTransition(final OUTLOC newSource, final OUTLOC newTarget, final IcfgEdge oldTransition) {
+		assert !mIsFinished;
 		final IcfgEdge newTransition;
 		if (oldTransition instanceof IIcfgInternalTransition) {
 			newTransition =
@@ -138,14 +151,76 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	}
 
 	/**
+	 * Add a completely new transition to the resulting {@link IIcfg}.
+	 *
+	 * @param newSource
+	 * @param newTarget
+	 * @param newTf
+	 * @return
+	 */
+	public IcfgEdge createNewInternalTransition(final OUTLOC source, final OUTLOC target,
+			final UnmodifiableTransFormula transformula, final boolean isOverapprox) {
+		assert !mIsFinished;
+		final IcfgInternalTransition localTrans = createNewLocalTransition(source, target,
+				new TransforumlaTransformationResult(transformula, isOverapprox), null);
+		source.addOutgoing(localTrans);
+		target.addIncoming(localTrans);
+		rememberNewVariables(transformula);
+		return localTrans;
+	}
+
+	/**
+	 * Save all variables that are added trough new transformulas so that they can be added to the symbol table of the
+	 * new {@link IIcfg}.
+	 */
+	private void rememberNewVariables(final UnmodifiableTransFormula transformula) {
+		final IIcfgSymbolTable symbolTable = mOriginalIcfg.getCfgSmtToolkit().getSymbolTable();
+
+		final Predicate<Entry<IProgramVar, TermVariable>> checkVar = a -> {
+			final IProgramVar invar = a.getKey();
+			if (invar.getProcedure() == null) {
+				// should be a global
+				if (symbolTable.getGlobals().contains(invar)) {
+					return true;
+				}
+			} else {
+				// should be a local
+				if (symbolTable.getLocals(invar.getProcedure()).contains(invar)) {
+					return true;
+				}
+			}
+			return false;
+		};
+		for (final Entry<IProgramVar, TermVariable> entry : transformula.getInVars().entrySet()) {
+			if (checkVar.test(entry)) {
+				continue;
+			}
+			mNewVars.add(entry.getKey());
+		}
+		for (final Entry<IProgramVar, TermVariable> entry : transformula.getOutVars().entrySet()) {
+			if (checkVar.test(entry)) {
+				continue;
+			}
+			mNewVars.add(entry.getKey());
+		}
+		final Set<IProgramConst> unknownConsts = new HashSet<>(transformula.getNonTheoryConsts());
+		unknownConsts.removeAll(symbolTable.getConstants());
+		mNewVars.addAll(unknownConsts);
+
+		// TODO: What about transformula.getNonTheoryFunctions() ?
+
+	}
+
+	/**
 	 * Create a new location in the new {@link IIcfg} based on the old location's attributes in the original
 	 * {@link IIcfg}
-	 * 
+	 *
 	 * @param oldLoc
 	 *            The old location.
 	 * @return A new location.
 	 */
 	public OUTLOC createNewLocation(final INLOC oldLoc) {
+		assert !mIsFinished;
 		final OUTLOC alreadyCreated = mOldLoc2NewLoc.get(oldLoc);
 		if (alreadyCreated != null) {
 			// was already created, no need to re-add to the result icfg
@@ -176,10 +251,21 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	 * Finalize the creation of the new {@link IIcfg}.
 	 */
 	public void finish() {
+		mIsFinished = true;
 		final CfgSmtToolkit oldToolkit = mOriginalIcfg.getCfgSmtToolkit();
-		final CfgSmtToolkit csToolkit =
-				new CfgSmtToolkit(oldToolkit.getModifiableGlobalsTable(), oldToolkit.getManagedScript(),
-						mTransformer.getNewIcfgSymbolTable(), oldToolkit.getAxioms(), oldToolkit.getProcedures());
+		final IIcfgSymbolTable newSymbolTable;
+
+		if (mNewVars.isEmpty()) {
+			newSymbolTable = mTransformer.getNewIcfgSymbolTable();
+		} else {
+			final DefaultIcfgSymbolTable result =
+					new DefaultIcfgSymbolTable(mTransformer.getNewIcfgSymbolTable(), oldToolkit.getProcedures());
+			mNewVars.forEach(result::add);
+			newSymbolTable = result;
+		}
+
+		final CfgSmtToolkit csToolkit = new CfgSmtToolkit(oldToolkit.getModifiableGlobalsTable(),
+				oldToolkit.getManagedScript(), newSymbolTable, oldToolkit.getAxioms(), oldToolkit.getProcedures());
 		mResultIcfg.setCfgSmtToolkit(csToolkit);
 	}
 
@@ -217,8 +303,14 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	private IcfgInternalTransition createNewLocalTransition(final IcfgLocation source, final IcfgLocation target,
 			final IIcfgInternalTransition<INLOC> oldTransition) {
 		final TransforumlaTransformationResult unmodTf = mTransformer.transform(oldTransition.getTransformula());
-		final IcfgInternalTransition newTrans = new IcfgInternalTransition(source, target,
-				getPayloadIfAvailable(oldTransition), unmodTf.getTransformula());
+		final IPayload payload = getPayloadIfAvailable(oldTransition);
+		return createNewLocalTransition(source, target, unmodTf, payload);
+	}
+
+	private IcfgInternalTransition createNewLocalTransition(final IcfgLocation source, final IcfgLocation target,
+			final TransforumlaTransformationResult unmodTf, final IPayload payload) {
+		final IcfgInternalTransition newTrans =
+				new IcfgInternalTransition(source, target, payload, unmodTf.getTransformula());
 		if (unmodTf.isOverapproximation()) {
 			annotateOverapprox(newTrans);
 		}
@@ -238,11 +330,10 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		}
 		return null;
 	}
-	
-	
+
 	/**
 	 * 2017-03-26 Matthias: Can be used to transform axioms. Not yet tested
-	 * 
+	 *
 	 */
 	private IPredicate transformAxioms() {
 		final IUltimateServiceProvider services = null;
@@ -250,8 +341,8 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 
 		final ManagedScript mgdScript = mOriginalIcfg.getCfgSmtToolkit().getManagedScript();
 		final IPredicate axioms = mOriginalIcfg.getCfgSmtToolkit().getAxioms();
-		final UnmodifiableTransFormula axiomsAsTransFormula = TransFormulaBuilder
-				.constructTransFormulaFromPredicate(axioms, mgdScript);
+		final UnmodifiableTransFormula axiomsAsTransFormula =
+				TransFormulaBuilder.constructTransFormulaFromPredicate(axioms, mgdScript);
 		assert axiomsAsTransFormula.getInVars().isEmpty() : "axiom must not contain variables";
 		assert axiomsAsTransFormula.getOutVars().isEmpty() : "axiom must not contain variables";
 		assert axiomsAsTransFormula.getAuxVars().isEmpty() : "axiom must not contain variables";
@@ -275,7 +366,7 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 		final Term closedFormula = term;
 		final IPredicate newAxioms = new BasicPredicate(serialNumber, procedures, term, vars, closedFormula);
 		return newAxioms;
-		
+
 	}
 
 }
