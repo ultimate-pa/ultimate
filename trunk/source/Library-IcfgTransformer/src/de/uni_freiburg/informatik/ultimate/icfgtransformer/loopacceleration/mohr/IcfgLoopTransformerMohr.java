@@ -38,8 +38,8 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.IdentityTransformer;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
@@ -57,25 +57,38 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 
-public class IcfgLoopTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> implements IIcfgTransformer<OUTLOC>{
+public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation>
+		implements IIcfgTransformer<OUTLOC> {
 
-	final private IIcfg<OUTLOC> mResult;
-	final private ITransformulaTransformer mTransformer;
-	final private TransformedIcfgBuilder<INLOC, OUTLOC> mTib;
-	final private ManagedScript mManagedScript;
-	final private IIcfgSymbolTable mSymbolTable;
-	final private IUltimateServiceProvider mServices;
+	private final IIcfg<OUTLOC> mResult;
+	private final TransformedIcfgBuilder<INLOC, OUTLOC> mTib;
+	private final ManagedScript mManagedScript;
+	private final IIcfgSymbolTable mSymbolTable;
+	private final IUltimateServiceProvider mServices;
 
-	public IcfgLoopTransformer(final ILogger logger, final IUltimateServiceProvider services, final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
+	public IcfgLoopTransformerMohr(final ILogger logger, final IUltimateServiceProvider services,
+			final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
 			final IBacktranslationTracker backtranslationTracker, final Class<OUTLOC> outLocationClass,
-			final String newIcfgIdentifier, final ITransformulaTransformer transformer) {
-		mTransformer = transformer;
+			final String newIcfgIdentifier) {
+
+		// Notes:
+		// you can use SimultaneousUpdate and TransformulaUtils.computeGuard to decompose transformulas in their update
+		// and guard parts
+		// use the TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, emptyNonTheoryConsts,
+		// nonTheoryConsts, emptyBranchEncoders, branchEncoders, emptyAuxVars);
+		// new Overapprox("Because of loop acceleration", null).annotate(edge)
+		// use mTib to create the new IIcfg
+
 		mManagedScript = originalIcfg.getCfgSmtToolkit().getManagedScript();
 		mServices = services;
 		mSymbolTable = originalIcfg.getCfgSmtToolkit().getSymbolTable();
-		final BasicIcfg<OUTLOC> resultIcfg = new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
-		mTib = new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, mTransformer, originalIcfg, resultIcfg);
+		final BasicIcfg<OUTLOC> resultIcfg =
+				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
+		final IdentityTransformer identityTransformer = new IdentityTransformer(mSymbolTable);
+		mTib = new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, identityTransformer, originalIcfg,
+				resultIcfg);
 		mResult = transform(originalIcfg);
+		mTib.finish();
 	}
 
 	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> origIcfg) {
@@ -83,12 +96,13 @@ public class IcfgLoopTransformer<INLOC extends IcfgLocation, OUTLOC extends Icfg
 		final Set<IcfgLoop<INLOC>> loops = loopDetector.getResult();
 		for (final IcfgLoop<INLOC> loop : loops) {
 			@SuppressWarnings("unused")
-			final UnmodifiableTransFormula loopSummaryTransformula = transfromLoop(loop);
+			final UnmodifiableTransFormula loopSummaryTransformula = transformLoop(loop);
 		}
+
 		return null;
 	}
 
-	private UnmodifiableTransFormula transfromLoop(final IcfgLoop<INLOC> loop) {
+	private UnmodifiableTransFormula transformLoop(final IcfgLoop<INLOC> loop) {
 		final ArrayList<Map<IProgramVar, Term>> symbolicMem = new ArrayList<>();
 		final Set<IProgramVar> assignedVariables = new HashSet<>();
 		final Set<TermVariable> assignedKappas = new HashSet<>();
@@ -98,7 +112,8 @@ public class IcfgLoopTransformer<INLOC extends IcfgLocation, OUTLOC extends Icfg
 		int pathCount = 0;
 		for (final ArrayList<IcfgEdge> p : paths) {
 			symbolicMem.add(new HashMap<>());
-			final TermVariable kappa = mManagedScript.constructFreshTermVariable("kappa"+pathCount, mManagedScript.getScript().sort("Int"));
+			final TermVariable kappa = mManagedScript.constructFreshTermVariable("kappa" + pathCount,
+					mManagedScript.getScript().sort("Int"));
 			kappas.add(kappa);
 			for (final IcfgEdge edge : p) {
 				final TransFormula formula = edge.getTransformula();
@@ -119,9 +134,10 @@ public class IcfgLoopTransformer<INLOC extends IcfgLocation, OUTLOC extends Icfg
 		final Map<IProgramVar, Term> summarizedSymbMemory = new HashMap<>();
 		for (final IProgramVar variable : assignedVariables) {
 			final ArrayList<Term> pathSums = new ArrayList<>();
-			for (final Map<IProgramVar, Term> pathSM: symbolicMem) {
+			for (final Map<IProgramVar, Term> pathSM : symbolicMem) {
 				final Term smTerm = pathSM.get(variable);
-				if (smTerm instanceof ApplicationTerm && kappaTerms.contains(((ApplicationTerm) smTerm).getParameters()[1])) {
+				if (smTerm instanceof ApplicationTerm
+						&& kappaTerms.contains(((ApplicationTerm) smTerm).getParameters()[1])) {
 					pathSums.add(((ApplicationTerm) smTerm).getParameters()[1]);
 				} else if (smTerm != null) {
 					pathSums.clear();
@@ -139,7 +155,7 @@ public class IcfgLoopTransformer<INLOC extends IcfgLocation, OUTLOC extends Icfg
 			Term constant = null;
 			final Set<TermVariable> k = new HashSet<>();
 			pathCount = 0;
-			for (final Map<IProgramVar, Term> pathSM: symbolicMem) {
+			for (final Map<IProgramVar, Term> pathSM : symbolicMem) {
 				final Term smTerm = pathSM.get(variable);
 				pathCount++;
 				if (smTerm instanceof ConstantTerm) {
@@ -152,7 +168,8 @@ public class IcfgLoopTransformer<INLOC extends IcfgLocation, OUTLOC extends Icfg
 						constant = smTerm;
 					}
 					k.add(kappas.get(pathCount));
-				} else if (smTerm instanceof TermVariable && assignedVariables.contains(mSymbolTable.getProgramVar((TermVariable) smTerm))) {
+				} else if (smTerm instanceof TermVariable
+						&& assignedVariables.contains(mSymbolTable.getProgramVar((TermVariable) smTerm))) {
 					if (constant != null) {
 						if (!smTerm.equals(constant)) {
 							constant = null;
@@ -185,7 +202,8 @@ public class IcfgLoopTransformer<INLOC extends IcfgLocation, OUTLOC extends Icfg
 				final Term[] ks = new Term[k.size()];
 				k.toArray(ks);
 				final Term sum = mManagedScript.getScript().term("+", ks);
-				final Term cond = mManagedScript.getScript().term("<", Rational.ZERO.toTerm(mManagedScript.getScript().sort("Int")), sum);
+				final Term cond = mManagedScript.getScript().term("<",
+						Rational.ZERO.toTerm(mManagedScript.getScript().sort("Int")), sum);
 				final Term t = mManagedScript.getScript().term("ite", cond, constant, variable.getTermVariable());
 				summarizedSymbMemory.put(variable, t);
 			}
@@ -194,15 +212,16 @@ public class IcfgLoopTransformer<INLOC extends IcfgLocation, OUTLOC extends Icfg
 		return null;
 	}
 
-
-	private void updateSymbolicMemory(final Term term, final TermVariable kappa, final IProgramVar assignedVar, final Map<IProgramVar, Term> symbolicMem,
-			final Map<IProgramVar, TermVariable> inVars, final Set<TermVariable> assignedKappas, final Set<Term> kappaTerms) {
+	private void updateSymbolicMemory(final Term term, final TermVariable kappa, final IProgramVar assignedVar,
+			final Map<IProgramVar, Term> symbolicMem, final Map<IProgramVar, TermVariable> inVars,
+			final Set<TermVariable> assignedKappas, final Set<Term> kappaTerms) {
 		final Term oldVal = symbolicMem.get(assignedVar);
 		if (term instanceof ConstantTerm) {
 			symbolicMem.put(assignedVar, term);
 		} else if (term instanceof ApplicationTerm) {
 			if (inVars.containsKey(assignedVar)) {
-				if ("+".equals(((ApplicationTerm) term).getFunction().getName()) || "-".equals(((ApplicationTerm) term).getFunction().getName())) {
+				if ("+".equals(((ApplicationTerm) term).getFunction().getName())
+						|| "-".equals(((ApplicationTerm) term).getFunction().getName())) {
 					final ArrayList<Term> parameter = new ArrayList<>();
 					for (final Term t : ((ApplicationTerm) term).getParameters()) {
 						if (!(t instanceof TermVariable) || t != assignedVar.getTermVariable()) {
@@ -221,7 +240,8 @@ public class IcfgLoopTransformer<INLOC extends IcfgLocation, OUTLOC extends Icfg
 					if (oldVal != null) {
 						symbolicMem.put(assignedVar, mManagedScript.getScript().term("+", oldVal, summary));
 					} else {
-						symbolicMem.put(assignedVar, mManagedScript.getScript().term("+", assignedVar.getTermVariable(), summary));
+						symbolicMem.put(assignedVar,
+								mManagedScript.getScript().term("+", assignedVar.getTermVariable(), summary));
 					}
 					assignedKappas.add(kappa);
 					kappaTerms.add(summary);
