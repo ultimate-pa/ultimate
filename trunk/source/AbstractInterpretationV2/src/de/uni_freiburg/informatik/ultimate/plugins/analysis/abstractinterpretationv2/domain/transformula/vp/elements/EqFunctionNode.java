@@ -52,7 +52,9 @@ public class EqFunctionNode extends EqNode {
 	private final List<EqNode> mArgs;
 	private final Set<EqFunction> mAllFunctionSymbols;
 
-	public EqFunctionNode(EqFunction function, List<EqNode> args, ManagedScript script, EqNodeAndFunctionFactory eqNodeFactory) {
+	@Deprecated
+	public EqFunctionNode(EqFunction function, List<EqNode> args, ManagedScript script, 
+			EqNodeAndFunctionFactory eqNodeFactory) {
 		super(function.isGlobal() 
 				&& args.stream().map(arg -> arg.mIsGlobal).reduce((b1, b2) -> b1 && b2).get(),
 			!(function instanceof IProgramVar)
@@ -67,22 +69,15 @@ public class EqFunctionNode extends EqNode {
 
 		mTerm = restoreMultidimensionalSelect(script, function, args);
 	}
-
-	public EqFunctionNode(EqFunction function, List<EqNode> args, Term term,
-			EqNodeAndFunctionFactory eqNodeFactory) {
-		super(function.isGlobal() 
-				&& args.stream().map(arg -> arg.mIsGlobal).reduce((b1, b2) -> b1 && b2).get(),
-			!(function instanceof IProgramVar)
-				&& args.stream().map(arg -> arg.mIsConstant).reduce((b1, b2) -> b1 && b2).get(),
-				VPDomainHelpers.computeProcedure(function, args), 
-				eqNodeFactory);
+	
+	public EqFunctionNode(EqFunction function, List<EqNode> args, Term term, EqNodeAndFunctionFactory eqNodeFactory) {
+		super(term, eqNodeFactory);
+		
 		mFunction = function;
 		mArgs = args;
-		mVariables = Collections.unmodifiableSet(computeVars(function, args));
 		mAllFunctionSymbols = Collections.unmodifiableSet(computeAllFunctions(function, args));
-		
-		mTerm = term;
 	}
+
 
 	private Set<EqFunction> computeAllFunctions(EqFunction function, List<EqNode> args) {
 		Set<EqFunction> allFunctionSymbols = new HashSet<>();

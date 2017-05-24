@@ -47,10 +47,12 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
  */
 public class EqAtomicBaseNode extends EqNode {
 	
-	private final IProgramVarOrConst mVarOrConst;
+	@Deprecated
+	private IProgramVarOrConst mVarOrConst;
 	private final boolean mIsLiteral;
 	private final Set<EqNonAtomicBaseNode> mDependentNonAtomicNodes = new HashSet<>();
 
+	@Deprecated
 	public EqAtomicBaseNode(IProgramVarOrConst bv, EqNodeAndFunctionFactory eqNodeFactory) {
 		super(bv.isGlobal(), 
 				!(bv instanceof IProgramVar),
@@ -62,6 +64,7 @@ public class EqAtomicBaseNode extends EqNode {
 		mTerm = bv.getTerm();
 	}
 	
+	@Deprecated
 	public EqAtomicBaseNode(IProgramVarOrConst bv, Term versionedTerm, EqNodeAndFunctionFactory eqNodeFactory) {
 		super(bv.isGlobal(), 
 				!(bv instanceof IProgramVar),
@@ -71,6 +74,11 @@ public class EqAtomicBaseNode extends EqNode {
 		mVarOrConst = bv;
 		mIsLiteral = bv.getTerm() instanceof ConstantTerm;
 		// don't assign mTerm here (is assigned by super constructor)
+	}
+	
+	public EqAtomicBaseNode(Term term, EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
+		super(term, eqNodeAndFunctionFactory);
+		mIsLiteral = term instanceof ConstantTerm;
 	}
 
 	@Override
@@ -125,6 +133,7 @@ public class EqAtomicBaseNode extends EqNode {
 			return this;
 		} 
 			
-		return mEqNodeFactory.getOrConstructEqAtomicNode(mVarOrConst, substitutedTerm);
+//		return mEqNodeFactory.getOrConstructEqAtomicNode(mVarOrConst, substitutedTerm);
+		return mEqNodeFactory.getOrConstructEqNode(substitutedTerm);
 	}
 }

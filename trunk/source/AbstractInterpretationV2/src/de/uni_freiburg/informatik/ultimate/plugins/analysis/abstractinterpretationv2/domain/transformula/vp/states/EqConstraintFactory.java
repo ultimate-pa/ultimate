@@ -75,7 +75,7 @@ public class EqConstraintFactory<
 		return result;
 	}
 	
-	private EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addFunctionDisequality(FUNCTION f1, FUNCTION f2,
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addFunctionDisequality(FUNCTION f1, FUNCTION f2,
 			EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
 		EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> result = getDisjunctiveConstraint(Collections.emptySet());
 
@@ -86,7 +86,7 @@ public class EqConstraintFactory<
 		return result;
 	}
 		
-	private EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addFunctionDisequality(FUNCTION f1, FUNCTION f2,
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addFunctionDisequality(FUNCTION f1, FUNCTION f2,
 			EqConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
 		return null;
 	}
@@ -102,6 +102,17 @@ public class EqConstraintFactory<
 
 		return result;
 	}
+	
+	/**
+	 * Update the given constraint with an equality between the two given functions/arrays. 
+	 * The functions may be identifiers, or array store expressions.
+	 * Because of extensionality, we have to add element equalities for the given symbols.
+	 * 
+	 * @param func1
+	 * @param func2
+	 * @param inputConstraint
+	 * @return
+	 */
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addFunctionEquality(FUNCTION func1, FUNCTION func2,
 			EqConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
 //		if (factory.isDebugMode()) {
@@ -163,6 +174,32 @@ public class EqConstraintFactory<
 //		return newConstraint;
 //	}
 
+	/**
+	 * Checks if the arguments of the given EqFunctionNodes are all congruent. 
+	 * (and only the arguments, for the standard congruence check from the congruence closure algorithm one will have to
+	 *  compare the function symbol, additionally)
+	 *
+	 * @param fnNode1
+	 * @param fnNode2
+	 * @return
+	 */
+	public static <NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID> boolean congruentIgnoreFunctionSymbol(
+			final EqGraphNode<NODEID, ARRAYID> fnNode1, final EqGraphNode<NODEID, ARRAYID> fnNode2) {
+		// assert fnNode1.getArgs() != null && fnNode2.getArgs() != null;
+		// assert fnNode1.getArgs().size() == fnNode2.getArgs().size();
+		assert fnNode1.mNodeIdentifier.isFunction();
+		assert fnNode2.mNodeIdentifier.isFunction();
+		
+		for (int i = 0; i < fnNode1.getInitCcchild().size(); i++) {
+			final EqGraphNode<NODEID, ARRAYID> fnNode1Arg = fnNode1.getInitCcchild().get(i);
+			final EqGraphNode<NODEID, ARRAYID> fnNode2Arg = fnNode2.getInitCcchild().get(i);
+			if (!fnNode1Arg.find().equals(fnNode2Arg.find())) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> conjoinDisjunctiveConstraints(
 			List<EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>> conjuncts) {
 		final List<Set<EqConstraint<ACTION, NODE, FUNCTION>>> listOfConstraintSets = conjuncts.stream()
@@ -208,8 +245,10 @@ public class EqConstraintFactory<
 	 * Add an equality to a (conjunctive) EqConstraint and close under propagation.
 	 * <ol> Steps:
 	 *  <li> merge the two nodes in the congruence graph, this closes under transitivity, symmetry, "forward" function
-	 *    congruence, the result is still a conjunction.
+	 *    congruence; the result is still a conjunction.
 	 *  <li> close under backward function congruence, the result may be a disjunction
+	 *  <li> (TODO) close wrt array axioms: an added equality may mean that array equalities with store terms may allow
+	 *      further conclusions, also select-over-store terms (in the element congruence graph) may allow conclusions
 	 * </ol>
 	 * 
 	 * @param node1
@@ -318,13 +357,13 @@ public class EqConstraintFactory<
 		EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> result = getDisjunctiveConstraint(Collections.emptySet());
 
 		for (EqConstraint<ACTION, NODE, FUNCTION> inputDisjunct : inputConstraint.getConstraints()) {
-			result = result.union(addDisEquality(node1, node2, inputDisjunct));
+			result = result.union(addDisequality(node1, node2, inputDisjunct));
 		}
 
 		return result;
 	}
 	
-	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addDisEquality(
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addDisequality(
 			final NODE i1, final NODE i2, final EqConstraint<ACTION, NODE, FUNCTION> originalState) {
 //		if (factory.isDebugMode()) {
 //			factory.getLogger().debug("VPFactoryHelpers: addDisEquality(..)");
@@ -484,30 +523,24 @@ public class EqConstraintFactory<
 //		factory.getBenchmark().stop(VPSFO.propagateDisEqualitiesClock);
 		return result;
 	}
-
+	
 	/**
-	 * Checks if the arguments of the given EqFunctionNodes are all congruent. 
-	 * (and only the arguments, for the standard congruence check from the congruence closure algorithm one will have to
-	 *  compare the function symbol, additionally)
-	 *
-	 * @param fnNode1
-	 * @param fnNode2
+	 * Adds the given node to the given constraint, returns the resulting constraint.
+	 * 
+	 * Adding a node -can- have side effects, even though no (dis)equality constraint is added.
+	 * <ul> Reasons:
+	 *  <li> the constraint may have an array equality that, by extensionality, says something about the new node
+	 *  <li> .. other reasons?..
+	 * </ul>
+	 * 
+	 * 
+	 * @param nodeToAdd
+	 * @param constraint
 	 * @return
 	 */
-	public static <NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID> boolean congruentIgnoreFunctionSymbol(
-			final EqGraphNode<NODEID, ARRAYID> fnNode1, final EqGraphNode<NODEID, ARRAYID> fnNode2) {
-		// assert fnNode1.getArgs() != null && fnNode2.getArgs() != null;
-		// assert fnNode1.getArgs().size() == fnNode2.getArgs().size();
-		assert fnNode1.mNodeIdentifier.isFunction();
-		assert fnNode2.mNodeIdentifier.isFunction();
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addNode(NODE nodeToAdd, 
+			EqConstraint<ACTION, NODE, FUNCTION> constraint) {
 		
-		for (int i = 0; i < fnNode1.getInitCcchild().size(); i++) {
-			final EqGraphNode<NODEID, ARRAYID> fnNode1Arg = fnNode1.getInitCcchild().get(i);
-			final EqGraphNode<NODEID, ARRAYID> fnNode2Arg = fnNode2.getInitCcchild().get(i);
-			if (!fnNode1Arg.find().equals(fnNode2Arg.find())) {
-				return false;
-			}
-		}
-		return true;
+		return null;
 	}
 }

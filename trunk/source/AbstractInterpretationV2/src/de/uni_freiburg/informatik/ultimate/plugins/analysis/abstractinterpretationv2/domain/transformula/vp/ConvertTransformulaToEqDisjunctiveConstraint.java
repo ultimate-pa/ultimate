@@ -119,25 +119,59 @@ public class ConvertTransformulaToEqDisjunctiveConstraint<ACTION extends IIcfgTr
 		}
 
 		private void handleXquality(Term arg1, Term arg2, boolean polarity) {
-			final EqNode node1 = mEqNodeAndFunctionFactory.getOrConstructEqNode(arg1);
-			final EqNode node2 = mEqNodeAndFunctionFactory.getOrConstructEqNode(arg2);
-
+			
 			final EqConstraint<ACTION, EqNode, EqFunction> emptyConstraint = 
 					mEqConstraintFactory.getEmptyConstraint();
-//			emptyConstraint.addNodes(Arrays.asList(new EqNode[] { node1, node2 }));
-
-			final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> newConstraint;
-			if (polarity) {
-				newConstraint = 
-					mEqConstraintFactory.addEquality(node1, node2,
-							mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(emptyConstraint)));
-			} else {
-				newConstraint = 
-					mEqConstraintFactory.addDisequality(node1, node2,
-							mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(emptyConstraint)));
-			}
+			final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> emptyDisjunctiveConstraint = 
+					mEqConstraintFactory.getDisjunctiveConstraint(
+							Collections.singleton(emptyConstraint));
 			
-			mResultStack.push(newConstraint);
+			if (arg1.getSort().isArraySort()) {
+				// we have an array equality
+				final EqFunction func1 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg1);
+				final EqFunction func2 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg2);
+				
+				if (func1 == null || func2 == null) {
+					// we don't track both sides of the equation --> return an empty constraint
+					mResultStack.push(emptyDisjunctiveConstraint);
+					return;
+				}
+				
+				final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> newConstraint;
+				if (polarity) {
+					newConstraint = 
+							mEqConstraintFactory.addFunctionEquality(func1, func2, emptyConstraint);
+				} else {
+					newConstraint = 
+							mEqConstraintFactory.addFunctionDisequality(func1, func2, emptyConstraint);
+				}
+				
+				mResultStack.push(newConstraint);
+				return;
+			} else {
+				// we have an "normal", element equality
+				final EqNode node1 = mEqNodeAndFunctionFactory.getOrConstructEqNode(arg1);
+				final EqNode node2 = mEqNodeAndFunctionFactory.getOrConstructEqNode(arg2);
+				
+				if (node1 == null || node2 == null) {
+					// we don't track both sides of the equation --> return an empty constraint
+					mResultStack.push(emptyDisjunctiveConstraint);
+					return;
+				}
+
+
+				final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> newConstraint;
+				if (polarity) {
+					newConstraint = 
+							mEqConstraintFactory.addEquality(node1, node2, emptyConstraint);
+				} else {
+					newConstraint = 
+							mEqConstraintFactory.addDisequality(node1, node2, emptyConstraint);
+				}
+
+				mResultStack.push(newConstraint);
+				return;
+			}
 		}
 
 		@Override

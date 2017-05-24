@@ -10,11 +10,22 @@ public class EqFunction implements IEqFunctionIdentifier<EqFunction> {
 	
 	
 	
-	private final IProgramVarOrConst mPvoc;
-	private final Term mTerm;
-	private final boolean mIsVersioned;
-	private final EqNodeAndFunctionFactory mFactory;
+	@Deprecated
+	private IProgramVarOrConst mPvoc;
 
+	private final Term mTerm;
+
+	@Deprecated
+	private boolean mIsVersioned;
+
+	private final EqNodeAndFunctionFactory mFactory;
+	
+	public EqFunction(Term term, EqNodeAndFunctionFactory factory) {
+		mTerm = term;
+		mFactory = factory;
+	}
+
+	@Deprecated
 	public EqFunction(IProgramVarOrConst pvoc, EqNodeAndFunctionFactory factory) {
 		mPvoc = pvoc;
 		mTerm = pvoc.getTerm();
@@ -22,6 +33,7 @@ public class EqFunction implements IEqFunctionIdentifier<EqFunction> {
 		mFactory = factory;
 	}
 	
+	@Deprecated
 	public EqFunction(IProgramVarOrConst pvoc, Term term, EqNodeAndFunctionFactory factory) {
 		mPvoc = pvoc;
 		mTerm = term;
@@ -53,11 +65,12 @@ public class EqFunction implements IEqFunctionIdentifier<EqFunction> {
 
 	@Override
 	public EqFunction renameVariables(Map<Term, Term> substitutionMapping) {
-		final Term renamed = substitutionMapping.get(mTerm);
-		if (renamed == null) {
-			return this;
-		}
-		return mFactory.getOrConstructEqFunction(mPvoc, renamed);
+//		final Term renamed = substitutionMapping.get(mTerm);
+//		if (renamed == null) {
+//			return this;
+//		}
+//		return mFactory.getOrConstructEqFunction(mPvoc, renamed);
+		return mFactory.constructRenamedEqFunction(this, substitutionMapping);
 	}
 
 	public IProgramVarOrConst getPvoc() {

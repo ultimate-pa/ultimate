@@ -27,10 +27,13 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 
@@ -44,16 +47,19 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction> {
 	
 	protected final EqNodeAndFunctionFactory mEqNodeFactory;
 
+	@Deprecated
 	protected Set<IProgramVar> mVariables;
 	
 	/**
 	 * Is true iff this EqNode's term only uses global program symbols.
 	 */
-	protected final boolean mIsGlobal;
+	@Deprecated
+	protected boolean mIsGlobal;
 	
-	protected final boolean mIsConstant;
+	protected boolean mIsConstant;
 
-	private final String mProcedure;
+	@Deprecated
+	private String mProcedure;
 	
 	private Set<EqNode> mParents = new HashSet<>();
 
@@ -63,9 +69,18 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction> {
 	 * indicates whether the Term only contains the standard TermVariables belonging to the IProgramVars, or if it
 	 * is "versioned".
 	 */
-	protected final boolean mTermIsVersioned;
+	@Deprecated
+	protected boolean mTermIsVersioned;
+	
+	
+	
+	public EqNode(Term term, EqNodeAndFunctionFactory eqNodeFactory) {
+		mTerm = term;
+		mEqNodeFactory = eqNodeFactory;
+	}
 
 
+	@Deprecated
 	EqNode(boolean isGlobal, boolean isConstant, String procedure, EqNodeAndFunctionFactory eqNodeFactory) {
 		assert isGlobal || procedure != null;
 		mIsGlobal = isGlobal;
@@ -75,6 +90,7 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction> {
 		mTermIsVersioned = false;
 	}
 
+	@Deprecated
 	public EqNode(boolean isGlobal, boolean isConstant, String procedure, Term versionedTerm, 
 			EqNodeAndFunctionFactory eqNodeFactory) {
 		assert isGlobal || procedure != null;
@@ -90,10 +106,12 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction> {
 	 * Yields the parents of this node in the EqNode graph (where the edges mean "is applied to"/"is a function argument
 	 *  of"). Can be used to obtain initial ccParents for the corresponding EqGraphNode.
 	 */
+	@Deprecated
 	Set<EqNode> getParents() {
 		return mParents;
 	}
 	
+	@Deprecated
 	public void addParent(EqNode parent) {
 		mParents.add(parent);
 	}
@@ -103,6 +121,7 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction> {
 	/**
 	 * Is true iff this EqNode's term only uses global program symbols.
 	 */
+	@Deprecated
 	public boolean isGlobal() {
 		return mIsGlobal;
 	}
@@ -111,7 +130,12 @@ public abstract class EqNode implements IEqNodeIdentifier<EqNode, EqFunction> {
 	public boolean isConstant() {
 		return mIsConstant;
 	}
+	
+	public Collection<TermVariable> getFreeVariables() {
+		return Arrays.asList(mTerm.getFreeVars());
+	}
 
+	@Deprecated
 	public Set<IProgramVar> getVariables() {
 		return mVariables;
 	}
