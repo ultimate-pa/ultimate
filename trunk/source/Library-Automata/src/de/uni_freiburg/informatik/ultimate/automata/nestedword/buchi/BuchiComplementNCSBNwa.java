@@ -71,7 +71,6 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 	private final AutomataLibraryServices mServices;
 	
 	private final SetOfStates<STATE> mSetOfStates;
-	private final STATE mEmptyStackState;
 
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 
@@ -109,9 +108,8 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 		mServices = services;
 		mOperand = operand;
 		mStateFactory = stateFactory;
-		mSetOfStates = new SetOfStates<>();
-		mEmptyStackState = stateFactory.createEmptyStackState();
-		mEmptyStackStateWri = new StateWithRankInfo<>(mEmptyStackState);
+		mSetOfStates = new SetOfStates<>(mStateFactory.createEmptyStackState());
+		mEmptyStackStateWri = new StateWithRankInfo<>(mSetOfStates.getEmptyStackState());
 		mBclrg = new BarelyCoveredLevelRankingsGenerator<>(mServices, mOperand, BARELY_COVERED_MAX_RANK, false, true,
 				false, false, false);
 		constructInitialState();
@@ -173,7 +171,7 @@ public final class BuchiComplementNCSBNwa<LETTER, STATE> implements INwaSuccesso
 
 	@Override
 	public STATE getEmptyStackState() {
-		return mEmptyStackState;
+		return mSetOfStates.getEmptyStackState();
 	}
 
 

@@ -66,8 +66,6 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 
 	protected final IStateFactory<STATE> mStateFactory;
 
-	protected final STATE mEmptyStackState;
-
 	protected final AutomataLibraryServices mServices;
 	protected final ILogger mLogger;
 
@@ -89,7 +87,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 	 */
 	protected final NestedMap4<STATE, STATE, LETTER, STATE, IsContained>  mReturnOut = new NestedMap4<>();
 
-	protected final SetOfStates<STATE> mSetOfStates = new SetOfStates<>();
+	protected final SetOfStates<STATE> mSetOfStates;
 
 	/**
 	 * Constructor.
@@ -115,7 +113,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 			throw new IllegalArgumentException("nwa must have stateFactory");
 		}
 		mStateFactory = stateFactory;
-		mEmptyStackState = mStateFactory.createEmptyStackState();
+		mSetOfStates = new SetOfStates<STATE>(mStateFactory.createEmptyStackState());
 	}
 	
 	@Override
@@ -133,7 +131,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 
 	@Override
 	public final STATE getEmptyStackState() {
-		return mEmptyStackState;
+		return mSetOfStates.getEmptyStackState();
 	}
 
 	@Override
