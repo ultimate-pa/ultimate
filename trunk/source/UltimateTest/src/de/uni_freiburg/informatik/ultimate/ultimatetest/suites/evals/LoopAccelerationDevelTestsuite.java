@@ -61,27 +61,27 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 //			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
-//			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
-//			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
+			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
 
-			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
-			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
+//			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
 //			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr_Debug.epf"),
 
-//			new Triple<>("AutomizerCInline.xml", C, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
-//			new Triple<>("AutomizerCInlineTransformed.xml", C, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
+			new Triple<>("AutomizerCInline.xml", C, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
+			new Triple<>("AutomizerCInlineTransformed.xml", C, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
 	};
 
 	private static final String[] INPUT = new String[] {
 
 			// Normal regressions
-			"examples/programs/loopAcceleration",
+//			"examples/programs/loopAcceleration",
 //			"examples/programs/loopAcceleration/loopAccelerationBB/loop1.bpl",
 
-			// Stackoverflow error
-//			"examples/programs/loopAcceleration/emptyLoop-bug-npe.bpl",
-//			"examples/programs/loopAcceleration/emptyLoop-bug-stackoverflow.bpl",
-//			"examples/svcomp/loop-invgen/nested6_true-unreach-call_true-termination.i"
+			//Errors in Woelfing
+			"examples/svcomp/loop-lit/cggmp2005_true-unreach-call_true-termination.c.i",
+			"examples/svcomp/loops/for_bounded_loop1_false-unreach-call_true-termination.i",
+			"examples/svcomp/loop-invgen/SpamAssassin-loop_true-unreach-call_false-termination.i",
 
 	};
 	// @formatter:on
@@ -89,7 +89,7 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 	@Override
 	protected long getTimeout() {
 		// timeout in ms
-		return 10 * 1000;
+		return 30 * 1000;
 	}
 
 	@Override
