@@ -466,7 +466,7 @@ public class EqConstraintFactory<
 			final EqConstraint<ACTION, NODE, FUNCTION> inputState, 
 			final NODE representative1,
 			final NODE representative2,
-			boolean allowDisjunctions) {
+			final boolean allowDisjunctions) {
 		assert inputState.areUnequal(representative1, representative2);
 
 //		factory.getBenchmark().unpause(VPSFO.propagateDisEqualitiesClock);
@@ -527,7 +527,7 @@ public class EqConstraintFactory<
 	/**
 	 * Adds the given node to the given constraint, returns the resulting constraint.
 	 * 
-	 * Adding a node -can- have side effects, even though no (dis)equality constraint is added.
+	 * Adding a node can have side effects, even though no (dis)equality constraint is added.
 	 * <ul> Reasons:
 	 *  <li> the constraint may have an array equality that, by extensionality, says something about the new node
 	 *  <li> .. other reasons?..

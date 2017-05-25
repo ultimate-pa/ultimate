@@ -29,7 +29,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqDisjunctiveConstraint;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqTransitionRelation;
 
-public class ConvertTransformulaToEqDisjunctiveConstraint<ACTION extends IIcfgTransition<IcfgLocation>> 
+public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTransition<IcfgLocation>> 
 		extends NonRecursive {
 
 	private final TransFormula mTf;
@@ -45,7 +45,7 @@ public class ConvertTransformulaToEqDisjunctiveConstraint<ACTION extends IIcfgTr
 	 */
 	private final ArrayDeque<EqDisjunctiveConstraint<ACTION, EqNode, EqFunction>> mResultStack = new ArrayDeque<>();
 	
-	public ConvertTransformulaToEqDisjunctiveConstraint(TransFormula tf, 
+	public ConvertTransformulaToEqTransitionRelation(TransFormula tf, 
 			EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory, 
 			EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
 		mTf = tf;
