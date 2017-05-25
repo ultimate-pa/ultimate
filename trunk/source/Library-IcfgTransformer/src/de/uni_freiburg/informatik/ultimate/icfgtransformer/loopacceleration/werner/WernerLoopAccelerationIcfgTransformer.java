@@ -120,14 +120,22 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			for (final Backbone backbone : loop.getBackbones()) {
 
 				final UnmodifiableTransFormula tf = (UnmodifiableTransFormula) backbone.getFormula();
+								
+				mLogger.debug("Backbone Formula: " + tf);
+				
 				final SimultaneousUpdate update = new SimultaneousUpdate(tf, mScript);
-
-				final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mLogger, tf, mOldSymbolTable);
+				
+				mLogger.debug("updated vars: " + update.getUpdatedVars());
+				
+				final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mLogger, tf);
 				symbolicMemory.updateVars(update.getUpdatedVars());
 
 				final UnmodifiableTransFormula condition = TransFormulaUtils.computeGuard(tf, mScript, mServices,
 						mLogger);
-
+				
+				
+				
+				
 				final TermVariable backbonePathCounter = mScript.constructFreshTermVariable("kappa",
 						mScript.getScript().sort(SmtSortUtils.INT_SORT));
 
@@ -135,6 +143,9 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 				mLogger.debug(backbonePathCounter);
 				backbone.setPathCounter(backbonePathCounter);
 				backbone.setCondition(condition);
+				
+				mLogger.debug("Backbone Condition: " + backbone.getCondition());
+				
 				backbone.setSymbolicMemory(symbolicMemory);
 			}
 
@@ -142,6 +153,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 					loop.getFormula(), mOldSymbolTable, loop, pathCounter);
 
 			iteratedSymbolicMemory.updateMemory();
+			iteratedSymbolicMemory.updateCondition();
 		}
 
 		final BasicIcfg<OUTLOC> resultIcfg = new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(),

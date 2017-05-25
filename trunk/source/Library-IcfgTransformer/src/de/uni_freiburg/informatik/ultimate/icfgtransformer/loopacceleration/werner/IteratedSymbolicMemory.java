@@ -26,6 +26,7 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -35,11 +36,14 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -53,6 +57,8 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 	private final Map<IProgramVar, Term> mIteratedMemory;
 	private final Loop mLoop;
 	private final List<TermVariable> mPathCounters;
+	private final List<TermVariable> mNewPathCounters;
+	private final IIcfgSymbolTable mOldsymbolTable;
 
 	private enum mCaseType {
 		NOT_CHANGED, ADDITION, CONSTANT_ASSIGNMENT, CONSTANT_ASSIGNMENT_PATHCOUNTER
@@ -73,15 +79,24 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 	public IteratedSymbolicMemory(final ManagedScript script, final ILogger logger, final TransFormula tf,
 			final IIcfgSymbolTable oldSymbolTable, final Loop loop, final List<TermVariable> pathCounters) {
 
-		super(script, logger, tf, oldSymbolTable);
+		super(script, logger, tf);
 		mIteratedMemory = new HashMap<>();
 		mPathCounters = pathCounters;
+		mNewPathCounters = new ArrayList<>();
+		mOldsymbolTable = oldSymbolTable;
+		
+		for (int i = 0; i < pathCounters.size(); i++) {
+			final TermVariable newBackbonePathCounter = mScript.constructFreshTermVariable("tau",
+					mScript.getScript().sort(SmtSortUtils.INT_SORT));
+			mNewPathCounters.add(newBackbonePathCounter);
+		}
 
 		for (final Entry<IProgramVar, Term> entry : mMemoryMapping.entrySet()) {
 			mIteratedMemory.put(entry.getKey(), null);
 		}
 		mLoop = loop;
 		mLogger.debug("Iterated Memory: " + mIteratedMemory);
+		// mLogger.debug("New PathCounters: " + mNewPathCounters);
 	}
 
 	/**
@@ -89,9 +104,11 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 	 * backbones.
 	 */
 	public void updateMemory() {
+		
 		for (final Entry<IProgramVar, Term> entry : mIteratedMemory.entrySet()) {
 
 			final Term symbol = mMemoryMapping.get(entry.getKey());
+			
 			Term update = symbol;
 			mCaseType caseType = mCaseType.NOT_CHANGED;
 			mCaseType prevCase = mCaseType.NOT_CHANGED;
@@ -140,7 +157,7 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 
 				// Case 3:
 				// in each backbone the variable is either not changed or set to
-				// a expression,
+				// an expression,
 				if (!memory.equals(symbol)
 						&& !Arrays.asList(((ApplicationTerm) memory).getParameters()).contains(symbol)) {
 
@@ -150,11 +167,41 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 
 					mLogger.debug("Assignment");
 				}
+				
+				// @todo only allowed in one backbone
+				if (!memory.equals(symbol)
+						&& !Arrays.asList(((ApplicationTerm) memory).getParameters()).contains(symbol)
+						&& Arrays.asList(((ApplicationTerm) memory).getParameters()).contains(backbone.getPathCounter())) {
+				
+					final Map<Term, Term> mapping = new HashMap<>();
+					
+					final Term newMapping = mScript.getScript().term("-", backbone.getPathCounter(), mScript.getScript().numeral("1"));
+					mapping.put(backbone.getPathCounter(), newMapping);
+					
+					final Substitution sub = new Substitution(mScript, mapping);
+					update = sub.transform(memory);
+				}
 			}
-
 			mIteratedMemory.replace(entry.getKey(), update);
 		}
 		mLogger.debug("Iterated Memory: " + mIteratedMemory);
+	}
+	
+	public void updateCondition() {
+		for (final Backbone backbone : mLoop.getBackbones()) {
+			final List<TermVariable> freeVars = new ArrayList<>(); 
+			for (final TermVariable var : backbone.getCondition().getFormula().getFreeVars()) {
+				if (mPathCounters.contains(var)) {
+					freeVars.add(var);
+				}
+			}
+			// final Map<Term, Term> mapping = new HashMap<>();
+			final ApplicationTerm appTerm = (ApplicationTerm) backbone.getCondition().getFormula();
+			for (Term term : appTerm.getParameters()) {
+				mLogger.debug("Params: " + term);
+			}
+			// backbone.getCondition().getFormula();
+		}
 	}
 
 	/**
