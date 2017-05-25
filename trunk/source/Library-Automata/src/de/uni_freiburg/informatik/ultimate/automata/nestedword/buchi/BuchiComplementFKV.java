@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.StatisticsType;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NwaOutgoingLetterAndTransitionAdapter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.UnaryNwaOperation;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
@@ -58,8 +59,10 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 	private final NestedWordAutomatonReachableStates<LETTER, STATE> mResult;
-	private final BuchiComplementFKVNwa<LETTER, STATE> mComplemented;
+	private final BuchiComplementFKVNwa<LETTER, STATE> mOnDemandComplement;
+	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mComplemented;
 	private final FkvOptimization mOptimization;
+	
 
 	/**
 	 * Extended constructor.
@@ -158,8 +161,9 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 			mLogger.info(startMessage());
 		}
 
-		mComplemented = new BuchiComplementFKVNwa<>(mServices, operand, stateDeterminizer, stateFactory, mOptimization,
+		mOnDemandComplement = new BuchiComplementFKVNwa<>(mServices, operand, stateDeterminizer, stateFactory, mOptimization,
 				userDefinedMaxRank);
+		mComplemented = new NwaOutgoingLetterAndTransitionAdapter<>(mOnDemandComplement);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, mComplemented);
 
 		if (mLogger.isInfoEnabled()) {
@@ -223,12 +227,12 @@ public final class BuchiComplementFKV<LETTER, STATE> extends UnaryNwaOperation<L
 	public String exitMessage() {
 		return "Finished " + getOperationName() + " with optimization " + mOptimization + ". Operand "
 				+ mOperand.sizeInformation() + " Result " + mResult.sizeInformation()
-				+ mComplemented.getPowersetStates() + " powerset states" + mComplemented.getRankStates()
-				+ " rank states. The highest rank that occured is " + mComplemented.getHighesRank();
+				+ mOnDemandComplement.getPowersetStates() + " powerset states" + mOnDemandComplement.getRankStates()
+				+ " rank states. The highest rank that occured is " + mOnDemandComplement.getHighesRank();
 	}
 
 	public int getHighestRank() {
-		return mComplemented.getHighesRank();
+		return mOnDemandComplement.getHighesRank();
 	}
 
 	@Override

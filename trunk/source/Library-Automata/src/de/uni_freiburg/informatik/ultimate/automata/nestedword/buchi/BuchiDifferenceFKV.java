@@ -30,6 +30,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NwaOutgoingLetterAndTransitionAdapter;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
@@ -48,7 +49,8 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStat
  *            state type
  */
 public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDifference<LETTER, STATE> {
-	private BuchiComplementFKVNwa<LETTER, STATE> mSndComplemented;
+	private BuchiComplementFKVNwa<LETTER, STATE> mOnDemandComplemented;
+	private INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mSndComplemented;
 
 	/**
 	 * Constructor which creates a PowersetDeterminizer.
@@ -112,13 +114,14 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 	private <SF extends IBuchiComplementFkvStateFactory<STATE> & IBuchiIntersectStateFactory<STATE> & IEmptyStackStateFactory<STATE>>
 			void constructResult(final SF stateFactory, final IStateDeterminizer<LETTER, STATE> stateDeterminizer,
 					final int userDefinedMaxRank, final FkvOptimization optimization) throws AutomataLibraryException {
-		mSndComplemented = new BuchiComplementFKVNwa<>(mServices, mSndOperand, stateDeterminizer, stateFactory,
+		mOnDemandComplemented = new BuchiComplementFKVNwa<>(mServices, mSndOperand, stateDeterminizer, stateFactory,
 				optimization, userDefinedMaxRank);
+		mSndComplemented = new NwaOutgoingLetterAndTransitionAdapter<LETTER, STATE>(mOnDemandComplemented);
 		constructDifferenceFromComplement(stateFactory);
 	}
 
 	public int getHighestRank() {
-		return mSndComplemented.getHighesRank();
+		return mOnDemandComplemented.getHighesRank();
 	}
 
 	@Override
@@ -130,13 +133,13 @@ public final class BuchiDifferenceFKV<LETTER, STATE> extends AbstractBuchiDiffer
 	public String exitMessage() {
 		return "Finished " + getOperationName() + ". First operand " + mFstOperand.sizeInformation() + " Second operand "
 				+ mSndOperand.sizeInformation() + " Result " + mResult.sizeInformation() + " Complement of second has "
-				+ mSndComplemented.size() + " states " + mSndComplemented.getPowersetStates() + " powerset states"
-				+ mSndComplemented.getRankStates() + " rank states. The highest rank that occured is "
-				+ mSndComplemented.getHighesRank();
+				+ mSndComplemented.size() + " states " + mOnDemandComplemented.getPowersetStates() + " powerset states"
+				+ mOnDemandComplemented.getRankStates() + " rank states. The highest rank that occured is "
+				+ mOnDemandComplemented.getHighesRank();
 	}
 
 	@Override
-	public BuchiComplementFKVNwa<LETTER, STATE> getSndComplemented() {
+	public INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> getSndComplemented() {
 		return mSndComplemented;
 	}
 }

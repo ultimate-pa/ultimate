@@ -30,23 +30,21 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
+import de.uni_freiburg.informatik.ultimate.automata.SetOfStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaSuccessorStateProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.MultiOptimizationLevelRankingGenerator.FkvOptimization;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IStateDeterminizer;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.oldapi.DeterminizedState;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IBuchiComplementFkvStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 
 /**
@@ -58,7 +56,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
  * @param <STATE>
  *            state type
  */
-public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> {
+public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaSuccessorStateProvider<LETTER, STATE> {
 	private static final int WARN_SIZE_1 = 2;
 	private static final int WARN_SIZE_2 = 4;
 
@@ -78,7 +76,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaOutgoingLetterA
 
 	private final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> mOperand;
 
-	private final NestedWordAutomatonCache<LETTER, STATE> mCache;
+	private final SetOfStates<STATE> mSetOfStates;
 
 	private final IBuchiComplementFkvStateFactory<STATE> mStateFactory;
 
@@ -140,7 +138,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaOutgoingLetterA
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mOperand = operand;
 		mStateFactory = stateFactory;
-		mCache = new NestedWordAutomatonCache<>(mServices, operand.getVpAlphabet(), mStateFactory);
+		mSetOfStates = new SetOfStates<STATE>(mStateFactory.createEmptyStackState());
 		mStateDeterminizer = stateDeterminizer;
 		mUserDefinedMaxRank = userDefinedMaxRank;
 		mLevelRankingGenerator =
@@ -156,7 +154,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaOutgoingLetterA
 	private STATE constructSinkState() {
 		final DeterminizedState<LETTER, STATE> detSinkState = new DeterminizedState<>(mOperand);
 		final STATE resSinkState = mStateDeterminizer.getState(detSinkState);
-		mCache.addState(false, true, resSinkState);
+		mSetOfStates.addState(false, true, resSinkState);
 		mDet2res.put(detSinkState, resSinkState);
 		mRes2scs.put(resSinkState, new FkvSubsetComponentState<>(detSinkState));
 		return resSinkState;
@@ -173,7 +171,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaOutgoingLetterA
 		if (resSucc == null) {
 			resSucc = mStateFactory.buchiComplementFkv(lrkState);
 			assert resSucc != null;
-			mCache.addState(false, lrkState.isOempty(), resSucc);
+			mSetOfStates.addState(false, lrkState.isOempty(), resSucc);
 			mLrk2res.put(lrkState, resSucc);
 			mRes2lrk.put(resSucc, lrkState);
 			if (this.mHighestRank < lrkState.mHighestRank) {
@@ -195,7 +193,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaOutgoingLetterA
 		if (resSucc == null) {
 			resSucc = mStateDeterminizer.getState(detState);
 			assert resSucc != null;
-			mCache.addState(isInitial, false, resSucc);
+			mSetOfStates.addState(isInitial, false, resSucc);
 			mDet2res.put(detState, resSucc);
 			mRes2scs.put(resSucc, new FkvSubsetComponentState<>(detState));
 		}
@@ -217,7 +215,7 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaOutgoingLetterA
 	@Override
 	public Iterable<STATE> getInitialStates() {
 		constructInitialState();
-		return mCache.getInitialStates();
+		return mSetOfStates.getInitialStates();
 	}
 
 	@Override
@@ -232,65 +230,36 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaOutgoingLetterA
 
 	@Override
 	public boolean isInitial(final STATE state) {
-		return mCache.isInitial(state);
+		return mSetOfStates.isInitial(state);
 	}
 
 	@Override
 	public boolean isFinal(final STATE state) {
-		return mCache.isFinal(state);
+		return mSetOfStates.isAccepting(state);
 	}
 
 	@Override
 	public STATE getEmptyStackState() {
-		return mCache.getEmptyStackState();
+		return mSetOfStates.getEmptyStackState();
 	}
 
 	@Override
-	public Set<LETTER> lettersInternal(final STATE state) {
-		return mOperand.getVpAlphabet().getInternalAlphabet();
-	}
+	public Collection<STATE> internalSuccessors(final STATE state, final LETTER letter) {
+		final Collection<STATE> resSuccs = new ArrayList<>();
+		final FkvSubsetComponentState<LETTER, STATE> detUp = mRes2scs.get(state);
+		if (detUp != null) {
+			final DeterminizedState<LETTER, STATE> detSucc =
+					mStateDeterminizer.internalSuccessor(detUp.getDeterminizedState(), letter);
+			final STATE resSucc = getOrAdd(detSucc, false);
+			resSuccs.add(resSucc);
 
-	@Override
-	public Set<LETTER> lettersCall(final STATE state) {
-		return mOperand.getVpAlphabet().getCallAlphabet();
-	}
-	
-	@Override
-	public Set<LETTER> lettersReturn(final STATE state, final STATE hier) {
-		return mOperand.getVpAlphabet().getReturnAlphabet();
-	}
-
-	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state,
-			final LETTER letter) {
-		final Collection<STATE> succs = mCache.succInternal(state, letter);
-		if (succs == null) {
-			// TODO Christian 2016-09-07: Adding to 'resSuccs' is useless. A bug?
-			final Collection<STATE> resSuccs = new ArrayList<>();
-			final FkvSubsetComponentState<LETTER, STATE> detUp = mRes2scs.get(state);
-			if (detUp != null) {
-				final DeterminizedState<LETTER, STATE> detSucc =
-						mStateDeterminizer.internalSuccessor(detUp.getDeterminizedState(), letter);
-				final STATE resSucc = getOrAdd(detSucc, false);
-				mCache.addInternalTransition(state, letter, resSucc);
-				resSuccs.add(resSucc);
-
-				internalSuccessorsHelper(state, letter, resSuccs, detUp, O_IS_EMPTY, true, WARN_SIZE_1);
-			}
-			final LevelRankingState<LETTER, STATE> complUp = mRes2lrk.get(state);
-			if (complUp != null) {
-				internalSuccessorsHelper(state, letter, resSuccs, complUp, complUp.isOempty(), false, WARN_SIZE_2);
-			}
+			internalSuccessorsHelper(state, letter, resSuccs, detUp, O_IS_EMPTY, true, WARN_SIZE_1);
 		}
-		return mCache.internalSuccessors(state, letter);
-	}
-
-	@Override
-	public Iterable<OutgoingInternalTransition<LETTER, STATE>> internalSuccessors(final STATE state) {
-		for (final LETTER letter : getVpAlphabet().getInternalAlphabet()) {
-			internalSuccessors(state, letter);
+		final LevelRankingState<LETTER, STATE> complUp = mRes2lrk.get(state);
+		if (complUp != null) {
+			internalSuccessorsHelper(state, letter, resSuccs, complUp, complUp.isOempty(), false, WARN_SIZE_2);
 		}
-		return mCache.internalSuccessors(state);
+		return resSuccs;
 	}
 
 	private void internalSuccessorsHelper(final STATE state, final LETTER letter, final Collection<STATE> resSuccs,
@@ -309,41 +278,28 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaOutgoingLetterA
 		}
 		for (final LevelRankingState<LETTER, STATE> complSucc : result) {
 			final STATE resSucc = getOrAdd(complSucc);
-			mCache.addInternalTransition(state, letter, resSucc);
 			resSuccs.add(resSucc);
 		}
 	}
-
+	
+	
 	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state, final LETTER letter) {
-		final Collection<STATE> succs = mCache.succCall(state, letter);
-		if (succs == null) {
-			// TODO Christian 2016-09-07: Adding to 'resSuccs' is useless. A bug?
-			final Collection<STATE> resSuccs = new ArrayList<>();
-			final FkvSubsetComponentState<LETTER, STATE> detUp = mRes2scs.get(state);
-			if (detUp != null) {
-				final DeterminizedState<LETTER, STATE> detSucc =
-						mStateDeterminizer.callSuccessor(detUp.getDeterminizedState(), letter);
-				final STATE resSucc = getOrAdd(detSucc, false);
-				mCache.addCallTransition(state, letter, resSucc);
-				resSuccs.add(resSucc);
+	public Collection<STATE> callSuccessors(final STATE state, final LETTER letter) {
+		final Collection<STATE> resSuccs = new ArrayList<>();
+		final FkvSubsetComponentState<LETTER, STATE> detUp = mRes2scs.get(state);
+		if (detUp != null) {
+			final DeterminizedState<LETTER, STATE> detSucc =
+					mStateDeterminizer.callSuccessor(detUp.getDeterminizedState(), letter);
+			final STATE resSucc = getOrAdd(detSucc, false);
+			resSuccs.add(resSucc);
 
-				callSuccessorsHelper(state, letter, resSuccs, detUp, O_IS_EMPTY, true);
-			}
-			final LevelRankingState<LETTER, STATE> complUp = mRes2lrk.get(state);
-			if (complUp != null) {
-				callSuccessorsHelper(state, letter, resSuccs, complUp, complUp.isOempty(), false);
-			}
+			callSuccessorsHelper(state, letter, resSuccs, detUp, O_IS_EMPTY, true);
 		}
-		return mCache.callSuccessors(state, letter);
-	}
-
-	@Override
-	public Iterable<OutgoingCallTransition<LETTER, STATE>> callSuccessors(final STATE state) {
-		for (final LETTER letter : getVpAlphabet().getCallAlphabet()) {
-			callSuccessors(state, letter);
+		final LevelRankingState<LETTER, STATE> complUp = mRes2lrk.get(state);
+		if (complUp != null) {
+			callSuccessorsHelper(state, letter, resSuccs, complUp, complUp.isOempty(), false);
 		}
-		return mCache.callSuccessors(state);
+		return resSuccs;
 	}
 
 	private void callSuccessorsHelper(final STATE state, final LETTER letter, final Collection<STATE> resSuccs,
@@ -355,43 +311,38 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaOutgoingLetterA
 				generateLevelRankings(predecessorIsSubsetComponent, constraints);
 		for (final LevelRankingState<LETTER, STATE> complSucc : result) {
 			final STATE resSucc = getOrAdd(complSucc);
-			mCache.addCallTransition(state, letter, resSucc);
 			resSuccs.add(resSucc);
 		}
 	}
-
+	
+	
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessors(final STATE state, final STATE hier,
-			final LETTER letter) {
-		final Collection<STATE> succs = mCache.succReturn(state, hier, letter);
-		if (succs == null) {
-			// TODO Christian 2016-09-07: Adding to 'resSuccs' is useless. A bug?
-			final Collection<STATE> resSuccs = new ArrayList<>();
-			final FkvSubsetComponentState<LETTER, STATE> detUp = mRes2scs.get(state);
-			final FkvSubsetComponentState<LETTER, STATE> detDown = mRes2scs.get(hier);
-			if (detUp != null) {
-				final DeterminizedState<LETTER, STATE> detSucc = mStateDeterminizer
-						.returnSuccessor(detUp.getDeterminizedState(), detDown.getDeterminizedState(), letter);
-				final STATE resSucc = getOrAdd(detSucc, false);
-				mCache.addReturnTransition(state, hier, letter, resSucc);
-				resSuccs.add(resSucc);
+	public Collection<STATE> returnSuccessorsGivenHier(final STATE state, final STATE hier, final LETTER letter) {
+		final Collection<STATE> resSuccs = new ArrayList<>();
+		final FkvSubsetComponentState<LETTER, STATE> detUp = mRes2scs.get(state);
+		final FkvSubsetComponentState<LETTER, STATE> detDown = mRes2scs.get(hier);
+		if (detUp != null) {
+			final DeterminizedState<LETTER, STATE> detSucc = mStateDeterminizer
+					.returnSuccessor(detUp.getDeterminizedState(), detDown.getDeterminizedState(), letter);
+			final STATE resSucc = getOrAdd(detSucc, false);
+			resSuccs.add(resSucc);
 
-				returnSuccessorsHelper(state, hier, letter, resSuccs, detUp, detDown, O_IS_EMPTY, true);
-			}
-			final LevelRankingState<LETTER, STATE> complUp = mRes2lrk.get(state);
-			IFkvState<LETTER, STATE> complDown;
-			if (mRes2scs.containsKey(hier)) {
-				complDown = mRes2scs.get(hier);
-			} else {
-				assert mRes2lrk.containsKey(hier);
-				complDown = mRes2lrk.get(hier);
-			}
-			if (complUp != null) {
-				returnSuccessorsHelper(state, hier, letter, resSuccs, complUp, complDown, complUp.isOempty(), false);
-			}
+			returnSuccessorsHelper(state, hier, letter, resSuccs, detUp, detDown, O_IS_EMPTY, true);
 		}
-		return mCache.returnSuccessors(state, hier, letter);
+		final LevelRankingState<LETTER, STATE> complUp = mRes2lrk.get(state);
+		IFkvState<LETTER, STATE> complDown;
+		if (mRes2scs.containsKey(hier)) {
+			complDown = mRes2scs.get(hier);
+		} else {
+			assert mRes2lrk.containsKey(hier);
+			complDown = mRes2lrk.get(hier);
+		}
+		if (complUp != null) {
+			returnSuccessorsHelper(state, hier, letter, resSuccs, complUp, complDown, complUp.isOempty(), false);
+		}
+		return resSuccs;
 	}
+
 
 	private void returnSuccessorsHelper(final STATE state, final STATE hier, final LETTER letter,
 			final Collection<STATE> resSuccs, final IFkvState<LETTER, STATE> fkvUp,
@@ -402,7 +353,6 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaOutgoingLetterA
 				generateLevelRankings(predecessorIsSubsetComponent, constraints);
 		for (final LevelRankingState<LETTER, STATE> complSucc : result) {
 			final STATE resSucc = getOrAdd(complSucc);
-			mCache.addReturnTransition(state, hier, letter, resSucc);
 			resSuccs.add(resSucc);
 		}
 	}
@@ -418,26 +368,24 @@ public class BuchiComplementFKVNwa<LETTER, STATE> implements INwaOutgoingLetterA
 	}
 
 	@Override
-	public Iterable<OutgoingReturnTransition<LETTER, STATE>> returnSuccessorsGivenHier(final STATE state,
-			final STATE hier) {
-		for (final LETTER letter : getVpAlphabet().getReturnAlphabet()) {
-			returnSuccessors(state, hier, letter);
-		}
-		return mCache.returnSuccessorsGivenHier(state, hier);
-	}
-
-	@Override
 	public int size() {
-		return mCache.size();
-	}
-
-	@Override
-	public Set<LETTER> getAlphabet() {
-		return mOperand.getAlphabet();
+		return mSetOfStates.getStates().size();
 	}
 
 	@Override
 	public String sizeInformation() {
 		return "size Information not available";
 	}
+
+	@Override
+	public IElement transformToUltimateModel(final AutomataLibraryServices services)
+			throws AutomataOperationCanceledException {
+		throw new UnsupportedOperationException();
+	}
+
+
+
+
+
+
 }
