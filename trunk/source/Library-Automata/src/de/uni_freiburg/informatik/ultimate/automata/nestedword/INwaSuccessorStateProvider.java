@@ -29,6 +29,16 @@ package de.uni_freiburg.informatik.ultimate.automata.nestedword;
 import java.util.Collection;
 
 /**
+ * Most developer-friendly interface for the implementation of on-demand
+ * automata operations. (See {@link INwaOutgoingLetterAndTransitionProvider} 
+ * for more details about on-demand construction.) Classes that implement this 
+ * interface do not have to provide any transitions but only successors for
+ * a given state and letter.
+ * Most automata operations need an {@link INwaOutgoingLetterAndTransitionProvider}
+ * this class can be wrapped into a {@link INwaOutgoingLetterAndTransitionProvider}
+ * by the {@link NwaOutgoingLetterAndTransitionAdapter}.
+ * Do not implement any caching of computed successors in this class, since a
+ * caching in already done in the {@link NwaOutgoingLetterAndTransitionAdapter}.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>

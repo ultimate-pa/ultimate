@@ -41,10 +41,11 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedIt
 
 /**
  * Interface for the most basic data structure that represents a nested word automaton (NWA). This data structure
- * neither provides a method for getting all states nor for getting incoming transitions and hence allows an
- * implementation that constructs automata lazily. (See {@link INestedWordAutomaton} for an interface that provides
- * these methods.)
- * <p>
+ * neither provides a method for getting all states nor for getting incoming transitions and hence allows us to have an
+ * implementation that constructs automata on-demand (resp. lazily aka on-the-fly).
+ * Classes that implement this interface do not have to store all transitions of the automaton explicitly.
+ * Instead these classes only have to provide outgoing transitions for a given
+ * state or a state/letter combination.
  * 
  * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
  * @param <LETTER>
