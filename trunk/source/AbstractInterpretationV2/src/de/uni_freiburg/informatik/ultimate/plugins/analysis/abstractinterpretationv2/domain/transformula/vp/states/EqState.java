@@ -122,4 +122,22 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		return null;
 	}
 
+	public boolean areUnequal(EqNode accessingNode1, EqNode accessingNode2) {
+		// TODO Auto-generated method stub
+		assert false;
+		return false;
+	}
+
+	public boolean areEqual(Term oneElement, Term otherElement) {
+		// TODO Auto-generated method stub
+		assert false;
+		return false;
+	}
+
+	public boolean areUnequal(Term oneElement, Term otherElement) {
+		// TODO Auto-generated method stub
+		assert false;
+		return false;
+	}
+
 }

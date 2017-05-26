@@ -44,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqPostOperator;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 /**
@@ -158,5 +159,10 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	public Benchmark getVpBenchmark() {
 		return mPreAnalysis.getBenchmark();
+	}
+
+	public EqStateFactory getEqStateFactory() {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

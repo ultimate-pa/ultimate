@@ -14,7 +14,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.EqualityAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.equalityanalysis.IEqualityAnalysisResultProvider;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPState;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Doubleton;
@@ -23,7 +23,7 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 
 	private final IUltimateServiceProvider mServices;
 	private final ILogger mLogger;
-	private Map<IcfgLocation, Set<VPState<IcfgEdge>>> mLoc2States;
+	private Map<IcfgLocation, Set<EqState<IcfgEdge>>> mLoc2States;
 
 	public AbsIntEqualityProvider(final IUltimateServiceProvider services) {
 		mServices = services;
@@ -33,7 +33,7 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 	@Override
 	public void preprocess(final IIcfg<?> icfg) {
 		final IProgressAwareTimer timer = mServices.getProgressMonitorService();
-		final IAbstractInterpretationResult<VPState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation> absIntResult =
+		final IAbstractInterpretationResult<EqState<IcfgEdge>, IcfgEdge, IProgramVarOrConst, IcfgLocation> absIntResult =
 				AbstractInterpreter.runFutureEqualityDomain(icfg, timer, mServices, false, mLogger);
 		mLoc2States = absIntResult.getLoc2States();
 	}
@@ -41,7 +41,7 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 	@Override
 	public EqualityAnalysisResult getAnalysisResult(final IcfgLocation location,
 			final Set<Doubleton<Term>> doubletons) {
-		final Set<VPState<IcfgEdge>> states = mLoc2States.get(location);
+		final Set<EqState<IcfgEdge>> states = mLoc2States.get(location);
 		if (states == null) {
 			return new EqualityAnalysisResult(doubletons);
 		}
@@ -54,7 +54,7 @@ public class AbsIntEqualityProvider implements IEqualityAnalysisResultProvider<I
 					.allMatch(a -> a.areEqual(unorderedPair.getOneElement(), unorderedPair.getOtherElement()))) {
 				equal.add(unorderedPair);
 			} else if (states.stream()
-					.allMatch(a -> a.areUnEqual(unorderedPair.getOneElement(), unorderedPair.getOtherElement()))) {
+					.allMatch(a -> a.areUnequal(unorderedPair.getOneElement(), unorderedPair.getOtherElement()))) {
 				distinct.add(unorderedPair);
 			} else {
 				unknown.add(unorderedPair);
