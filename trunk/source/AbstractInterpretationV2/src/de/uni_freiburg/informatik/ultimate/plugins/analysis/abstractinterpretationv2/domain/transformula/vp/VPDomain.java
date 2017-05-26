@@ -41,13 +41,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraint;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPFactoryHelpers;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPState;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPStateFactory;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VpTfStateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqPostOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqState;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 
 /**
@@ -57,46 +53,52 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  */
 public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
-		implements IAbstractDomain<EqConstraint<ACTION, EqNode, EqFunction>, ACTION, IProgramVarOrConst> {
+		implements IAbstractDomain<EqState<ACTION>, ACTION, IProgramVarOrConst> {
+//		implements IAbstractDomain<EqConstraint<ACTION, EqNode, EqFunction>, ACTION, IProgramVarOrConst> {
 
-	private final VPPostOperator<ACTION> mPost;
+//	private final VPPostOperator<ACTION> mPost;
+	private final EqPostOperator<ACTION> mPost;
 	private final VPMergeOperator mMerge;
 	private final ILogger mLogger;
 
 	private final ManagedScript mManagedScript;
 	private final VPDomainPreanalysis mPreAnalysis;
 	private final IIcfgSymbolTable mSymboltable;
-	private final VPTfStateBuilderPreparer mTfPreparer;
+//	private final VPTfStateBuilderPreparer mTfPreparer;
 	private final boolean mDebugMode;
 
 	public VPDomain(final ILogger logger, final ManagedScript script, final IUltimateServiceProvider services,
-			final IIcfgSymbolTable symbolTable, final VPDomainPreanalysis preAnalysis,
-			final VPTfStateBuilderPreparer tfPreparer) {
+			final IIcfgSymbolTable symbolTable, final VPDomainPreanalysis preAnalysis) {
+//			final VPTfStateBuilderPreparer tfPreparer) {
 		assert script != null;
 		mLogger = logger;
 		mPreAnalysis = preAnalysis;
 		mManagedScript = script;
 		mMerge = new VPMergeOperator();
 		mSymboltable = symbolTable;
-		mTfPreparer = tfPreparer;
-		mPost = new VPPostOperator<>(script, services, this);
+//		mTfPreparer = tfPreparer;
+//		mPost = new VPPostOperator<>(script, services, this);
+		mPost = new EqPostOperator<>();
+
 		mDebugMode = mPreAnalysis.isDebugMode();
 	}
 
 	@Override
-	public IAbstractStateBinaryOperator<VPState<ACTION>> getWideningOperator() {
+	public IAbstractStateBinaryOperator<EqState<ACTION>> getWideningOperator() {
 		return mMerge;
 	}
 
 	@Override
-	public IAbstractPostOperator<VPState<ACTION>, ACTION, IProgramVarOrConst> getPostOperator() {
+	public IAbstractPostOperator<EqState<ACTION>, ACTION, IProgramVarOrConst> getPostOperator() {
 		return mPost;
 	}
 
-	private final class VPMergeOperator implements IAbstractStateBinaryOperator<VPState<ACTION>> {
+	private final class VPMergeOperator implements IAbstractStateBinaryOperator<EqState<ACTION>> {
 		@Override
-		public VPState<ACTION> apply(final VPState<ACTION> first, final VPState<ACTION> second) {
-			return VPFactoryHelpers.disjoin(first, second, getVpStateFactory());
+		public EqState<ACTION> apply(final EqState<ACTION> first, final EqState<ACTION> second) {
+//			return VPFactoryHelpers.disjoin(first, second, getVpStateFactory());
+			assert false : "TODO"; // TODO
+			return null;
 		}
 	}
 
@@ -112,9 +114,9 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		return mPreAnalysis;
 	}
 
-	public VPStateFactory<ACTION> getVpStateFactory() {
-		return mVpStateFactory;
-	}
+//	public EqStateFactory<ACTION> getVpStateFactory() {
+//		return mVpStateFactory;
+//	}
 
 	public IIcfgSymbolTable getSymbolTable() {
 		return mSymboltable;
@@ -131,21 +133,22 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		return literalSet;
 	}
 
-	public VPTfStateBuilderPreparer getTfPreparer() {
-		return mTfPreparer;
-	}
+//	public VPTfStateBuilderPreparer getTfPreparer() {
+//		return mTfPreparer;
+//	}
 
-	public VpTfStateFactory getTfStateFactory() {
-		return mTfStateFactory;
+//	public VpTfStateFactory getTfStateFactory() {
+//		return mTfStateFactory;
+//	}
+
+	@Override
+	public EqState<ACTION> createTopState() {
+//		return getVpStateFactory().createEmptyStateBuilder().build();
+		return null;
 	}
 
 	@Override
-	public VPState<ACTION> createTopState() {
-		return getVpStateFactory().createEmptyStateBuilder().build();
-	}
-
-	@Override
-	public VPState<ACTION> createBottomState() {
+	public EqState<ACTION> createBottomState() {
 		throw new UnsupportedOperationException("Not implemented: createBottomState");
 	}
 

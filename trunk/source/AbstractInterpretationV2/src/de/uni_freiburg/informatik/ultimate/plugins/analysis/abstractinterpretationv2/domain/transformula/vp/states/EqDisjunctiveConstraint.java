@@ -2,6 +2,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -57,6 +58,15 @@ public class EqDisjunctiveConstraint<
 	public EqConstraint<ACTION, NODE, FUNCTION> flatten() {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	public List<EqState<ACTION>> toEqStates() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public boolean isEmpty() {
+		return mConstraints.isEmpty();
 	}
 
 //	/**

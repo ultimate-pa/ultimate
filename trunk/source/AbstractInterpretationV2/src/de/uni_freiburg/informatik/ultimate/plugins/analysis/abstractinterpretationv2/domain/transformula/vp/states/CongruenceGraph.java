@@ -93,7 +93,32 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 		if (!(node1.mNodeIdentifier.getFunction().equals(node2.mNodeIdentifier.getFunction()))) {
 			return false;
 		}
-		return VPFactoryHelpers.congruentIgnoreFunctionSymbol(node1, node2);
+//		return VPFactoryHelpers.congruentIgnoreFunctionSymbol(node1, node2);
+		return congruentIgnoreFunctionSymbol(node1, node2);
+	}
+	
+	public boolean congruentIgnoreFunctionSymbol(
+			final EqGraphNode<NODE, FUNCTION> fnNode1, final EqGraphNode<NODE, FUNCTION> fnNode2) {
+//			final NODE node1, final NODE node2) {
+		// assert fnNode1.getArgs() != null && fnNode2.getArgs() != null;
+		// assert fnNode1.getArgs().size() == fnNode2.getArgs().size();
+//		assert node1.isFunction();
+//		assert node2.isFunction();
+		
+		for (int i = 0; i < fnNode1.getInitCcchild().size(); i++) {
+//		for (int i = 0; i < node1.getArgs().size(); i++) {
+//			final EqGraphNode<NODE, FUNCTION> fnNode1Arg = fnNode1.getInitCcchild().get(i);
+//			final EqGraphNode<NODE, FUNCTION> fnNode2Arg = fnNode2.getInitCcchild().get(i);
+//			final NODE ithArg1 = mNodeToEqGraphNode.get(node1).getInitCcchild().get(i);
+//			final NODE ithArg2 = mNodeToEqGraphNode.get(node2).getInitCcchild().get(i);
+			final NODE ithArg1 = fnNode1.getInitCcchild().get(i);
+			final NODE ithArg2 = fnNode2.getInitCcchild().get(i);
+//			if (!fnNode1Arg.find().equals(fnNode2Arg.find())) {
+			if (!find(ithArg1).equals(find(ithArg2))) {
+				return false;
+			}
+		}
+		return true;
 	}
 	
 		/**

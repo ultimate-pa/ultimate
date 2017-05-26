@@ -13,7 +13,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -80,7 +79,8 @@ public class EqConstraintFactory<
 		EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> result = getDisjunctiveConstraint(Collections.emptySet());
 
 		for (EqConstraint<ACTION, NODE, FUNCTION> inputDisjunct : inputConstraint.getConstraints()) {
-			result = result.union(addFunctionDisequality(f1, f2, inputDisjunct));
+//			result = result.union(addFunctionDisequality(f1, f2, inputDisjunct));
+			result = disjoinDisjunctiveConstraints(result, addFunctionDisequality(f1, f2, inputDisjunct));
 		}
 
 		return result;
@@ -97,7 +97,8 @@ public class EqConstraintFactory<
 		EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> result = getDisjunctiveConstraint(Collections.emptySet());
 
 		for (EqConstraint<ACTION, NODE, FUNCTION> inputDisjunct : inputConstraint.getConstraints()) {
-			result = result.union(addFunctionEquality(f1, f2, inputDisjunct));
+//			result = result.union(addFunctionEquality(f1, f2, inputDisjunct));
+			result = disjoinDisjunctiveConstraints(result, addFunctionEquality(f1, f2, inputDisjunct));
 		}
 
 		return result;
@@ -120,26 +121,28 @@ public class EqConstraintFactory<
 //		}
 //		assert (exceptionArrayNode == null) == (exceptionValueNode == null);
 
-		final T resultState = factory.copy(state).build();
+//		final T resultState = factory.copy(state).build();
+//		
+//		Set<T> resultStates = new HashSet<>();
+//		resultStates.add(resultState);
+//		for (final NODE fnNode1 : inputConstraint.getFunctionNodesForArray(resultState, func1)) {
+//			for (final NODE fnNode2 : inputConstraint.getFunctionNodesForArray(resultState, func2)) {
+//				final EqGraphNode<NODE, FUNCTION> gn1 = resultState.getEqGraphNode(fnNode1);
+//				final EqGraphNode<NODE, FUNCTION> gn2 = resultState.getEqGraphNode(fnNode2);
+//
+//				if (inputConstraint.congruentIgnoreFunctionSymbol(gn1, gn2)) {
+//					resultStates =
+//							conjoinAll(resultStates, addEquality(fnNode1, fnNode2, resultState, factory), factory);
+//				}
+//			}
+//		}
 		
-		Set<T> resultStates = new HashSet<>();
-		resultStates.add(resultState);
-		for (final NODE fnNode1 : inputConstraint.getFunctionNodesForArray(resultState, func1)) {
-			for (final NODE fnNode2 : inputConstraint.getFunctionNodesForArray(resultState, func2)) {
-				final EqGraphNode<NODE, FUNCTION> gn1 = resultState.getEqGraphNode(fnNode1);
-				final EqGraphNode<NODE, FUNCTION> gn2 = resultState.getEqGraphNode(fnNode2);
-
-				if (inputConstraint.congruentIgnoreFunctionSymbol(gn1, gn2)) {
-					resultStates =
-							conjoinAll(resultStates, addEquality(fnNode1, fnNode2, resultState, factory), factory);
-				}
-			}
-		}
-		
-		if (resultStates.isEmpty()) {
-			resultStates.add(resultState);
-		}
-		return resultStates;
+//		if (resultStates.isEmpty()) {
+//			resultStates.add(resultState);
+//		}
+//		return resultStates;
+		// TODO
+		return null;
 	}
 
 //	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> conjoin(
@@ -174,32 +177,64 @@ public class EqConstraintFactory<
 //		return newConstraint;
 //	}
 
-	/**
-	 * Checks if the arguments of the given EqFunctionNodes are all congruent. 
-	 * (and only the arguments, for the standard congruence check from the congruence closure algorithm one will have to
-	 *  compare the function symbol, additionally)
-	 *
-	 * @param fnNode1
-	 * @param fnNode2
-	 * @return
-	 */
-	public static <NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID> boolean congruentIgnoreFunctionSymbol(
-			final EqGraphNode<NODEID, ARRAYID> fnNode1, final EqGraphNode<NODEID, ARRAYID> fnNode2) {
-		// assert fnNode1.getArgs() != null && fnNode2.getArgs() != null;
-		// assert fnNode1.getArgs().size() == fnNode2.getArgs().size();
-		assert fnNode1.mNodeIdentifier.isFunction();
-		assert fnNode2.mNodeIdentifier.isFunction();
-		
-		for (int i = 0; i < fnNode1.getInitCcchild().size(); i++) {
-			final EqGraphNode<NODEID, ARRAYID> fnNode1Arg = fnNode1.getInitCcchild().get(i);
-			final EqGraphNode<NODEID, ARRAYID> fnNode2Arg = fnNode2.getInitCcchild().get(i);
-			if (!fnNode1Arg.find().equals(fnNode2Arg.find())) {
-				return false;
-			}
-		}
-		return true;
+//	/**
+//	 * Checks if the arguments of the given EqFunctionNodes are all congruent. 
+//	 * (and only the arguments, for the standard congruence check from the congruence closure algorithm one will have to
+//	 *  compare the function symbol, additionally)
+//	 *
+//	 * @param fnNode1
+//	 * @param fnNode2
+//	 * @return
+//	 */
+//	public static <NODEID extends IEqNodeIdentifier<NODEID, ARRAYID>, ARRAYID> boolean congruentIgnoreFunctionSymbol(
+//			final EqGraphNode<NODEID, ARRAYID> fnNode1, final EqGraphNode<NODEID, ARRAYID> fnNode2) {
+//		// assert fnNode1.getArgs() != null && fnNode2.getArgs() != null;
+//		// assert fnNode1.getArgs().size() == fnNode2.getArgs().size();
+//		assert fnNode1.mNodeIdentifier.isFunction();
+//		assert fnNode2.mNodeIdentifier.isFunction();
+//		
+//		for (int i = 0; i < fnNode1.getInitCcchild().size(); i++) {
+//			final EqGraphNode<NODEID, ARRAYID> fnNode1Arg = fnNode1.getInitCcchild().get(i);
+//			final EqGraphNode<NODEID, ARRAYID> fnNode2Arg = fnNode2.getInitCcchild().get(i);
+//			if (!fnNode1Arg.find().equals(fnNode2Arg.find())) {
+//				return false;
+//			}
+//		}
+//		return true;
+//	}
+
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjoinDisjunctiveConstraints(
+			EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjunct1,
+			EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjunct2) {
+		final Set<EqConstraint<ACTION, NODE, FUNCTION>> allConjunctiveConstraints = new HashSet<>();			
+		allConjunctiveConstraints.addAll(disjunct1.getConstraints());
+		allConjunctiveConstraints.addAll(disjunct2.getConstraints());
+		return getDisjunctiveConstraint(allConjunctiveConstraints);
 	}
 
+	/**
+	 * disjunction/union/meet
+	 * 
+	 * @param disjuncts
+	 * @return
+	 */
+	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjoinDisjunctiveConstraints(
+			List<EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>> disjuncts) {
+		
+		Set<EqConstraint<ACTION, NODE, FUNCTION>> allConjunctiveConstraints = new HashSet<>();			
+		for (EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjunct : disjuncts) {
+			allConjunctiveConstraints.addAll(disjunct.getConstraints());
+		}
+
+		return getDisjunctiveConstraint(allConjunctiveConstraints);
+	}
+	
+	/**
+	 * conjunction/intersection/join
+	 * 
+	 * @param conjuncts
+	 * @return
+	 */
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> conjoinDisjunctiveConstraints(
 			List<EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>> conjuncts) {
 		final List<Set<EqConstraint<ACTION, NODE, FUNCTION>>> listOfConstraintSets = conjuncts.stream()
@@ -233,7 +268,8 @@ public class EqConstraintFactory<
 		EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> result = getDisjunctiveConstraint(Collections.emptySet());
 
 		for (EqConstraint<ACTION, NODE, FUNCTION> inputDisjunct : inputConstraint.getConstraints()) {
-			result = result.union(addEquality(node1, node2, inputDisjunct));
+//			result = result.union(addEquality(node1, node2, inputDisjunct));
+			result = disjoinDisjunctiveConstraints(result, addEquality(node1, node2, inputDisjunct));
 		}
 
 		return result;
@@ -322,13 +358,17 @@ public class EqConstraintFactory<
 			for (final NODE other : originalState.getDisequalities(pair.getKey())) {
 				//			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 				//			resultStates.addAll(propagateDisEqualites(resultState, node1, other));
-				resultState = resultState.union(propagateDisequalites(constraintAfterMerge, pair.getKey(), other));
+//				resultState = resultState.union(propagateDisequalites(constraintAfterMerge, pair.getKey(), other));
+				resultState = disjoinDisjunctiveConstraints(
+						resultState, propagateDisequalites(constraintAfterMerge, pair.getKey(), other));
 				//			factory.getBenchmark().unpause(VPSFO.addEqualityClock);
 			}
 			for (final NODE other : originalState.getDisequalities(pair.getValue())) {
 				//			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 //				resultStates.addAll(propagateDisequalites(resultState, node2, other));
-				resultState = resultState.union(propagateDisequalites(constraintAfterMerge, pair.getValue(), other));
+//				resultState = resultState.union(propagateDisequalites(constraintAfterMerge, pair.getValue(), other));
+				resultState = disjoinDisjunctiveConstraints(
+						resultState, propagateDisequalites(constraintAfterMerge, pair.getValue(), other));
 				//			factory.getBenchmark().unpause(VPSFO.addEqualityClock);
 		}
 		}
@@ -357,7 +397,8 @@ public class EqConstraintFactory<
 		EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> result = getDisjunctiveConstraint(Collections.emptySet());
 
 		for (EqConstraint<ACTION, NODE, FUNCTION> inputDisjunct : inputConstraint.getConstraints()) {
-			result = result.union(addDisequality(node1, node2, inputDisjunct));
+//			result = result.union(addDisequality(node1, node2, inputDisjunct));
+			result = disjoinDisjunctiveConstraints(result, addDisequality(node1, node2, inputDisjunct));
 		}
 
 		return result;
@@ -508,7 +549,9 @@ public class EqConstraintFactory<
 							continue;
 						}
 //						factory.getBenchmark().stop(VPSFO.propagateDisEqualitiesClock);
-						result = result.union(addDisequality(c1, c2, intermediateResult));
+//						result = result.union(addDisequality(c1, c2, intermediateResult));
+						result = disjoinDisjunctiveConstraints(result,
+								addDisequality(c1, c2, intermediateResult));
 //						factory.getBenchmark().unpause(VPSFO.propagateDisEqualitiesClock);
 					}
 				}
