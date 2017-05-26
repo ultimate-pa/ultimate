@@ -1,0 +1,62 @@
+
+// Binary Trees of natural numbers
+TreeAutomaton taBinaryTrees = (
+    alphabet = { nil "0" cons succ elem },
+    states = { Node Num BinTree "_" },
+    initialStates = { "_" },
+    finalStates = { BinTree },
+    transitionTable = {
+        (("_") "0" Num)
+        ((Node BinTree BinTree) cons BinTree)
+        ((Node BinTree) cons BinTree)
+        (("_") nil BinTree)
+        ((Num) succ Num)
+        ((Num) elem Node)
+    }
+);
+
+
+//       1
+//     /   \
+//    0     -
+//   /
+//  -
+Tree binaryTree = Tree[cons(elem(succ("0")), cons(elem("0"), nil), nil)];
+
+// Good binary tree
+assert(accepts(taBinaryTrees, binaryTree));
+
+
+// _____________________________________________________________________________
+
+
+TreeAutomaton taLists = (
+    alphabet = { nil "0" cons succ elem },
+    states = { Node Num List "_" },
+    initialStates = { "_" },
+    finalStates = { List },
+    transitionTable = {
+        (("_") "0" Num)
+        ((Node List) cons List)
+        (("_") nil List)
+        ((Num) succ Num)
+        ((Num) elem Node)
+    }
+);
+
+// [0, 1]
+Tree list = Tree[cons(elem("0"), cons(elem(succ("0")), nil))];
+
+// Good list
+assert(accepts(taLists, list));
+
+
+// _____________________________________________________________________________
+
+
+// Lists are also binary trees
+assert(accepts(taBinaryTrees, list));
+
+// All lists are binary trees, so the lists and non-binary trees are disjoint.
+assert(TreeEmptinessCheck(Intersect(taLists, Complement(taBinaryTrees))));
+
