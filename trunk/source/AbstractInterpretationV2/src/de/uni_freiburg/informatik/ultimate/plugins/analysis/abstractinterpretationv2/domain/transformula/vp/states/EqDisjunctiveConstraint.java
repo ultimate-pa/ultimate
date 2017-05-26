@@ -8,18 +8,16 @@ import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.AbstractMultiState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 
 public class EqDisjunctiveConstraint<
 				ACTION extends IIcfgTransition<IcfgLocation>, 
 				NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
-				FUNCTION extends IEqFunctionIdentifier<FUNCTION>> 
-     			 	extends AbstractMultiState<EqConstraint<ACTION, NODE, FUNCTION>, IProgramVarOrConst>{
+				FUNCTION extends IEqFunctionIdentifier<FUNCTION>>  {
+//     			 	extends AbstractMultiState<EqConstraint<ACTION, NODE, FUNCTION>, IProgramVarOrConst>{
 
 	Set<EqConstraint<ACTION, NODE, FUNCTION>> mConstraints;
 
@@ -61,16 +59,16 @@ public class EqDisjunctiveConstraint<
 		return null;
 	}
 
-	/**
-	 * Only does the cast, other than that just calls @see AbstractMultistate.union
-	 * 
-	 */
-	@Override
-	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> union(
-			AbstractMultiState<EqConstraint<ACTION, NODE, FUNCTION>, IProgramVarOrConst> other) {
-		assert other instanceof EqDisjunctiveConstraint;
-		return (EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>) super.union(other);
-	}
+//	/**
+//	 * Only does the cast, other than that just calls @see AbstractMultistate.union
+//	 * 
+//	 */
+//	@Override
+//	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> union(
+//			AbstractMultiState<EqConstraint<ACTION, NODE, FUNCTION>, IProgramVarOrConst> other) {
+//		assert other instanceof EqDisjunctiveConstraint;
+//		return (EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>) super.union(other);
+//	}
 	
 	
 	

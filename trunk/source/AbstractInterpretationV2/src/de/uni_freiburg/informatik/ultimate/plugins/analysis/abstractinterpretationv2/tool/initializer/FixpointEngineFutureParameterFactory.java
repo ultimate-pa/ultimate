@@ -29,7 +29,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.nonrelational.livevariable.LiveVariableDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomain;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
-import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPTfStateBuilderPreparer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.preferences.AbsIntPrefInitializer;
 
 public class FixpointEngineFutureParameterFactory {
@@ -164,8 +163,8 @@ public class FixpointEngineFutureParameterFactory {
 			final IUltimateServiceProvider services) {
 		final VPDomainPreanalysis preAnalysis = new VPDomainPreanalysis(root, logger);
 		preAnalysis.postProcess();
-		final VPTfStateBuilderPreparer tfPreparer =
-				new VPTfStateBuilderPreparer(preAnalysis, root, logger);
+//		final VPTfStateBuilderPreparer tfPreparer =
+//				new VPTfStateBuilderPreparer(preAnalysis, root, logger);
 		return new VPDomain<>(logger, root.getCfgSmtToolkit().getManagedScript(), services,
 				root.getCfgSmtToolkit().getSymbolTable(), preAnalysis, tfPreparer);
 	}

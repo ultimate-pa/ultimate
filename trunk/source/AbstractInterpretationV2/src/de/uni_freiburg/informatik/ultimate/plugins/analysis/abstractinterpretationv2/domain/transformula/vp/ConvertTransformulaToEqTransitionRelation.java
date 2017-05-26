@@ -39,6 +39,8 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 	private ManagedScript mMgdScript;
 	private IUltimateServiceProvider mServices;
+	
+	private VPDomainPreanalysis mPreAnalysis;
 
 	/**
 	 * stores intermediate results of the "recursion"
@@ -123,20 +125,22 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 			final EqConstraint<ACTION, EqNode, EqFunction> emptyConstraint = 
 					mEqConstraintFactory.getEmptyConstraint();
 			final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> emptyDisjunctiveConstraint = 
-					mEqConstraintFactory.getDisjunctiveConstraint(
-							Collections.singleton(emptyConstraint));
+					mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(emptyConstraint));
 			
 			if (arg1.getSort().isArraySort()) {
 				// we have an array equality
-				final EqFunction func1 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg1);
-				final EqFunction func2 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg2);
 				
-				if (func1 == null || func2 == null) {
+				if (!isFunctionTracked(arg1) || !isFunctionTracked(arg2)) {
 					// we don't track both sides of the equation --> return an empty constraint
 					mResultStack.push(emptyDisjunctiveConstraint);
 					return;
 				}
+	
 				
+				final EqFunction func1 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg1);
+				final EqFunction func2 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg2);
+				
+			
 				final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> newConstraint;
 				if (polarity) {
 					newConstraint = 
@@ -150,14 +154,21 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 				return;
 			} else {
 				// we have an "normal", element equality
-				final EqNode node1 = mEqNodeAndFunctionFactory.getOrConstructEqNode(arg1);
-				final EqNode node2 = mEqNodeAndFunctionFactory.getOrConstructEqNode(arg2);
 				
-				if (node1 == null || node2 == null) {
+				if (!isElementTracked(arg1) || !isElementTracked(arg2)) {
 					// we don't track both sides of the equation --> return an empty constraint
 					mResultStack.push(emptyDisjunctiveConstraint);
 					return;
 				}
+				
+				final EqNode node1 = mEqNodeAndFunctionFactory.getOrConstructEqNode(arg1);
+				final EqNode node2 = mEqNodeAndFunctionFactory.getOrConstructEqNode(arg2);
+				
+//				if (node1 == null || node2 == null) {
+//					// we don't track both sides of the equation --> return an empty constraint
+//					mResultStack.push(emptyDisjunctiveConstraint);
+//					return;
+//				}
 
 
 				final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> newConstraint;
@@ -172,6 +183,14 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 				mResultStack.push(newConstraint);
 				return;
 			}
+		}
+
+		private boolean isElementTracked(Term term) {
+			return mPreAnalysis.isElementTracked(term);
+		}
+
+		private boolean isFunctionTracked(Term term) {
+			return mPreAnalysis.isArrayTracked(term, mTf.getInVars(), mTf.getOutVars());
 		}
 
 		@Override

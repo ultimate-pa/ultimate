@@ -1,19 +1,14 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.absint.IAbstractState;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
@@ -26,8 +21,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
 public class EqConstraint<
 					ACTION extends IIcfgTransition<IcfgLocation>, 
 					NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
-					FUNCTION extends IEqFunctionIdentifier<FUNCTION>> 
-	implements IAbstractState<EqConstraint<ACTION, NODE, FUNCTION>, IProgramVarOrConst>  {
+					FUNCTION extends IEqFunctionIdentifier<FUNCTION>>  {
+//	implements IAbstractState<EqConstraint<ACTION, NODE, FUNCTION>, IProgramVarOrConst>  {
 
 	private boolean mIsFrozen = false;
 
@@ -198,118 +193,118 @@ public class EqConstraint<
 		return null;
 	}
 
-	/*
-	 * **************** methods inherited from IAbstractState ****************
-	 */
-
-
-
-	@Override
-	public EqConstraint<ACTION, NODE, FUNCTION> addVariable(IProgramVarOrConst variable) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-	@Override
-	public EqConstraint<ACTION, NODE, FUNCTION> removeVariable(IProgramVarOrConst variable) {
-		return removeVariables(Collections.singleton(variable));
-	}
-
-
-	@Override
-	public EqConstraint<ACTION, NODE, FUNCTION> addVariables(Collection<IProgramVarOrConst> variables) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-	@Override
-	public EqConstraint<ACTION, NODE, FUNCTION> removeVariables(Collection<IProgramVarOrConst> variables) {
-		assert !mIsVersioned : "this constraint is not a 'predicate-style' constraint, it should not be treated like an"
-				+ " abstract state";
-		Set<TermVariable> termVariablesFromPvocs = variables.stream()
-				.map(pvoc -> (TermVariable) pvoc.getTerm()).collect(Collectors.toSet());
-		return projectExistentially(termVariablesFromPvocs);
-	}
-
-
-	@Override
-	public boolean containsVariable(IProgramVarOrConst var) {
-		return getVariables().contains(var);
-	}
-
-
-	@Override
-	public Set<IProgramVarOrConst> getVariables() {
-		return mVariables;
-	}
-
-
-	@Override
-	public EqConstraint<ACTION, NODE, FUNCTION> patch(EqConstraint<ACTION, NODE, FUNCTION> dominator) {
-		EqConstraint<ACTION, NODE, FUNCTION> newConstraint = this.removeVariables(dominator.getVariables());
-		return newConstraint.intersect(dominator);
-	}
-
-
-	@Override
-	public EqConstraint<ACTION, NODE, FUNCTION> intersect(EqConstraint<ACTION, NODE, FUNCTION> other) {
-		final List<EqConstraint<ACTION, NODE, FUNCTION>> constraints = new ArrayList<>(2);
-		constraints.add(this);
-		constraints.add(other);
-		return mFactory.conjoin(constraints).flatten();
-	}
-
-
-	@Override
-	public EqConstraint<ACTION, NODE, FUNCTION> union(EqConstraint<ACTION, NODE, FUNCTION> other) {
-		final List<EqConstraint<ACTION, NODE, FUNCTION>> constraints = new ArrayList<>(2);
-		constraints.add(this);
-		constraints.add(other);
-		return mFactory.getDisjunctiveConstraint(constraints).flatten();
-	}
-
-
-	@Override
-	public boolean isEmpty() {
-		return getVariables().isEmpty();
-	}
-
-
-	@Override
-	public boolean isEqualTo(EqConstraint<ACTION, NODE, FUNCTION> other) {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-
-	@Override
-	public SubsetResult isSubsetOf(EqConstraint<ACTION, NODE, FUNCTION> other) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-	@Override
-	public EqConstraint<ACTION, NODE, FUNCTION> compact() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-	@Override
-	public Term getTerm(Script script) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-	@Override
-	public String toLogString() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	/*
+//	 * **************** methods inherited from IAbstractState ****************
+//	 */
+//
+//
+//
+//	@Override
+//	public EqConstraint<ACTION, NODE, FUNCTION> addVariable(IProgramVarOrConst variable) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+//
+//
+//	@Override
+//	public EqConstraint<ACTION, NODE, FUNCTION> removeVariable(IProgramVarOrConst variable) {
+//		return removeVariables(Collections.singleton(variable));
+//	}
+//
+//
+//	@Override
+//	public EqConstraint<ACTION, NODE, FUNCTION> addVariables(Collection<IProgramVarOrConst> variables) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+//
+//
+//	@Override
+//	public EqConstraint<ACTION, NODE, FUNCTION> removeVariables(Collection<IProgramVarOrConst> variables) {
+//		assert !mIsVersioned : "this constraint is not a 'predicate-style' constraint, it should not be treated like an"
+//				+ " abstract state";
+//		Set<TermVariable> termVariablesFromPvocs = variables.stream()
+//				.map(pvoc -> (TermVariable) pvoc.getTerm()).collect(Collectors.toSet());
+//		return projectExistentially(termVariablesFromPvocs);
+//	}
+//
+//
+//	@Override
+//	public boolean containsVariable(IProgramVarOrConst var) {
+//		return getVariables().contains(var);
+//	}
+//
+//
+//	@Override
+//	public Set<IProgramVarOrConst> getVariables() {
+//		return mVariables;
+//	}
+//
+//
+//	@Override
+//	public EqConstraint<ACTION, NODE, FUNCTION> patch(EqConstraint<ACTION, NODE, FUNCTION> dominator) {
+//		EqConstraint<ACTION, NODE, FUNCTION> newConstraint = this.removeVariables(dominator.getVariables());
+//		return newConstraint.intersect(dominator);
+//	}
+//
+//
+//	@Override
+//	public EqConstraint<ACTION, NODE, FUNCTION> intersect(EqConstraint<ACTION, NODE, FUNCTION> other) {
+//		final List<EqConstraint<ACTION, NODE, FUNCTION>> constraints = new ArrayList<>(2);
+//		constraints.add(this);
+//		constraints.add(other);
+//		return mFactory.conjoin(constraints).flatten();
+//	}
+//
+//
+//	@Override
+//	public EqConstraint<ACTION, NODE, FUNCTION> union(EqConstraint<ACTION, NODE, FUNCTION> other) {
+//		final List<EqConstraint<ACTION, NODE, FUNCTION>> constraints = new ArrayList<>(2);
+//		constraints.add(this);
+//		constraints.add(other);
+//		return mFactory.getDisjunctiveConstraint(constraints).flatten();
+//	}
+//
+//
+//	@Override
+//	public boolean isEmpty() {
+//		return getVariables().isEmpty();
+//	}
+//
+//
+//	@Override
+//	public boolean isEqualTo(EqConstraint<ACTION, NODE, FUNCTION> other) {
+//		// TODO Auto-generated method stub
+//		return false;
+//	}
+//
+//
+//	@Override
+//	public SubsetResult isSubsetOf(EqConstraint<ACTION, NODE, FUNCTION> other) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+//
+//
+//	@Override
+//	public EqConstraint<ACTION, NODE, FUNCTION> compact() {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+//
+//
+//	@Override
+//	public Term getTerm(Script script) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
+//
+//
+//	@Override
+//	public String toLogString() {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
 
 	public void renameVariables(Map<Term, Term> substitutionMapping) {
@@ -375,7 +370,7 @@ public class EqConstraint<
 	}
 
 	/**
-	 * Returns all the equivalence representatives that the given node is unequal in this constraint.
+	 * Returns all the equivalence representatives that the given node is unequal to in this constraint.
 	 */
 	public Set<NODE> getDisequalities(NODE node) {
 		final Set<NODE> result = new HashSet<>();

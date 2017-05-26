@@ -14,6 +14,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 
 public class EqNodeAndFunctionFactory {
 	
@@ -24,6 +25,14 @@ public class EqNodeAndFunctionFactory {
 
 
 	private final Map<Term, EqFunction> mTermToEqFunction = new HashMap<>();
+	
+	private final VPDomainPreanalysis mPreAnalysis;
+	
+	public EqNodeAndFunctionFactory(VPDomainPreanalysis preAnalysis, ManagedScript script) {
+		mPreAnalysis = preAnalysis;
+		mMgdScript = script;
+	}
+	
 
 	@Deprecated
 	public EqAtomicBaseNode getOrConstructEqAtomicNode(IProgramVarOrConst varOrConst, Term substitutedTerm) {

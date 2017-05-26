@@ -187,7 +187,8 @@ public class VPDomainPreanalysis {
 	private void handleTransFormula(TransFormula tf) {
 		final Map<Term, Term> substitionMap =
 				VPDomainHelpers.computeNormalizingSubstitution(tf);
-		final Term formulaWithNormalizedVariables = new Substitution(mManagedScript, substitionMap).transform(tf.getFormula());
+		final Term formulaWithNormalizedVariables = new Substitution(mManagedScript, substitionMap)
+				.transform(tf.getFormula());
 		
 		/*
 		 * handle selects in the formula
@@ -737,6 +738,10 @@ public class VPDomainPreanalysis {
 		locals.retainAll(mProcToLocalEqNodes.getImage(proc2));
 		result.addAll(locals);
 		return result;
+	}
+
+	public boolean isElementTracked(Term term) {
+		return getEqNode(term) != null;
 	}
 }
 

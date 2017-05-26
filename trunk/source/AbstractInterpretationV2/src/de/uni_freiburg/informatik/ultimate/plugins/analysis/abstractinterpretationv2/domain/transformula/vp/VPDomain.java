@@ -41,7 +41,9 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraint;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPFactoryHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.VPStateFactory;
@@ -55,7 +57,7 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
  * @author Yu-Wen Chen (yuwenchen1105@gmail.com)
  */
 public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
-		implements IAbstractDomain<VPState<ACTION>, ACTION, IProgramVarOrConst> {
+		implements IAbstractDomain<EqConstraint<ACTION, EqNode, EqFunction>, ACTION, IProgramVarOrConst> {
 
 	private final VPPostOperator<ACTION> mPost;
 	private final VPMergeOperator mMerge;
@@ -63,10 +65,8 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	private final ManagedScript mManagedScript;
 	private final VPDomainPreanalysis mPreAnalysis;
-	private final VPStateFactory<ACTION> mVpStateFactory;
 	private final IIcfgSymbolTable mSymboltable;
 	private final VPTfStateBuilderPreparer mTfPreparer;
-	private final VpTfStateFactory mTfStateFactory;
 	private final boolean mDebugMode;
 
 	public VPDomain(final ILogger logger, final ManagedScript script, final IUltimateServiceProvider services,
@@ -79,8 +79,6 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		mMerge = new VPMergeOperator();
 		mSymboltable = symbolTable;
 		mTfPreparer = tfPreparer;
-		mVpStateFactory = new VPStateFactory<>(this, tfPreparer);
-		mTfStateFactory = new VpTfStateFactory(tfPreparer, preAnalysis);
 		mPost = new VPPostOperator<>(script, services, this);
 		mDebugMode = mPreAnalysis.isDebugMode();
 	}
