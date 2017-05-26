@@ -153,7 +153,8 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
 				new PredicateTransformer<>(mgdScript, new TermDomainOperationProvider(services, mgdScript));
-		final IHoareTripleChecker hoareTripleChecker = new InclusionInPreChecker(mic, pt, predicateFactory);
+		final IHoareTripleChecker hoareTripleChecker =
+				new InclusionInPreChecker(mic, pt, predicateFactory, predicateUnifier);
 		final boolean conservativeSuccessorCandidateSelection = false;
 		final boolean secondChance = false;
 		final NondeterministicInterpolantAutomaton<LETTER> result =
@@ -173,32 +174,45 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		private final MonolithicImplicationChecker mMic;
 		private final PredicateTransformer<Term, IPredicate, TransFormula> mPt;
 		private final PredicateFactory mPf;
+		private final IPredicateUnifier mPu;
 
 		public InclusionInPreChecker(final MonolithicImplicationChecker mic,
-				final PredicateTransformer<Term, IPredicate, TransFormula> pt, final PredicateFactory pf) {
+				final PredicateTransformer<Term, IPredicate, TransFormula> pt, final PredicateFactory pf,
+				final IPredicateUnifier pu) {
 			mMic = mic;
 			mPt = pt;
 			mPf = pf;
+			mPu = pu;
 		}
 
 		@Override
 		public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
-			// TODO 2017-05-17 Christian: How do I get an IPredicate from a Term again?
-			// final IPredicate preFormula = mPf.not(mPt.weakestPrecondition(mPf.not(succ), act.getTransformula()));
-			// return checkImplication(pre, preFormula);
-			return null;
+			return checkTransition(pre, getWpInternal(act, succ));
 		}
 
 		@Override
 		public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
-			// TODO Auto-generated method stub
+//			final TransFormula globalVarsAssignments;
+//			final TransFormula oldVarAssignments;
+//			final Set<IProgramNonOldVar> modifiableGlobals;
+//			final IPredicate preFormula = mPf.not(mPu.getOrConstructPredicate(mPt.weakestPreconditionCall(mPf.not(succ),
+//					act.getTransformula(), globalVarsAssignments, oldVarAssignments, modifiableGlobals)));
+//			return checkImplication(pre, preFormula);
+			// TODO calls
 			return null;
 		}
 
 		@Override
 		public Validity checkReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act,
 				final IPredicate succ) {
-			// TODO Auto-generated method stub
+//			final TransFormula returnTF;
+//			final TransFormula callTF;
+//			final TransFormula oldVarAssignments;
+//			final Set<IProgramNonOldVar> modifiableGlobals;
+//			final IPredicate preFormula = mPf.not(mPu.getOrConstructPredicate(mPt.weakestPreconditionReturn(succ,
+//					preHier, returnTF, callTF, oldVarAssignments, modifiableGlobals)));
+//			return checkImplication(pre, preFormula);
+			// TODO returns
 			return null;
 		}
 
@@ -215,6 +229,15 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 		private Validity checkImplication(final IPredicate pre, final IPredicate succ) {
 			return mMic.checkImplication(pre, false, succ, false);
+		}
+
+		private Validity checkTransition(final IPredicate pre, final Term wpInternal) {
+			final IPredicate preFormula = mPf.not(mPf.newPredicate(wpInternal));
+			return checkImplication(pre, preFormula);
+		}
+
+		private Term getWpInternal(final IInternalAction act, final IPredicate succ) {
+			return mPt.weakestPrecondition(mPf.not(succ), act.getTransformula());
 		}
 	}
 }
