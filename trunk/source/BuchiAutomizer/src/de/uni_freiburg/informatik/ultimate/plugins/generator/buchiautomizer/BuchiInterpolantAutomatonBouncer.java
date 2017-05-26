@@ -205,7 +205,7 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 	protected String switchToReadonlyMessage() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Switched to read-only mode: Buchi interpolant automaton has ");
-		sb.append(mAlreadyConstrucedAutomaton.size()).append(" states ");
+		sb.append(mAlreadyConstructedAutomaton.size()).append(" states ");
 		sb.append(mStemResPred2InputPreds.getDomain().size()).append(" stem states ");
 		sb.append(mLoopResPred2InputPreds.getDomain().size()).append(" non-accepting loop states ");
 		sb.append(mAcceptingResPred2InputPreds.getDomain().size()).append(" accepting loop states ");
@@ -216,7 +216,7 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 	protected String switchToOnDemandConstructionMessage() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Switched to OnTheFlyConstruction mode: Buchi interpolant automaton has ");
-		sb.append(mAlreadyConstrucedAutomaton.size()).append(" states ");
+		sb.append(mAlreadyConstructedAutomaton.size()).append(" states ");
 		sb.append(mStemResPred2InputPreds.getDomain().size()).append(" stem states ");
 		sb.append(mLoopResPred2InputPreds.getDomain().size()).append(" non-accepting loop states ");
 		sb.append(mAcceptingResPred2InputPreds.getDomain().size()).append(" accepting loop states ");
@@ -227,14 +227,14 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 	protected void computeSuccs(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
 			final SuccessorComputationHelper sch) {
 		if (isPredHierLetterFalse(resPred, resHier, letter, sch)) {
-			if (!mAlreadyConstrucedAutomaton.contains(mIaFalseState)) {
-				mAlreadyConstrucedAutomaton.addState(false, true, mIaFalseState);
+			if (!mAlreadyConstructedAutomaton.contains(mIaFalseState)) {
+				mAlreadyConstructedAutomaton.addState(false, true, mIaFalseState);
 				mLogger.debug("BenchmarkResult: Transition to False Predicate");
 			}
 			sch.addTransition(resPred, resHier, letter, mIaFalseState);
 		} else if (isFalseSucc(resPred, resHier, letter, sch)) {
-			if (!mAlreadyConstrucedAutomaton.contains(mIaFalseState)) {
-				mAlreadyConstrucedAutomaton.addState(false, true, mIaFalseState);
+			if (!mAlreadyConstructedAutomaton.contains(mIaFalseState)) {
+				mAlreadyConstructedAutomaton.addState(false, true, mIaFalseState);
 				mLogger.debug("BenchmarkResult: Transition to False Predicate");
 			}
 			sch.addTransition(resPred, resHier, letter, mIaFalseState);
@@ -316,8 +316,8 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 		inputSuccsRankEquality.add(mBspm.getRankEquality());
 		final IPredicate rankEquality = getOrConstructPredicate(inputSuccsRankEquality, mLoopPU,
 				mRankEqInputPreds2ResultPreds, mRankEqResPred2InputPreds);
-		if (!mAlreadyConstrucedAutomaton.contains(rankDecreaseAndBound)) {
-			mAlreadyConstrucedAutomaton.addState(isInitial, true, rankDecreaseAndBound);
+		if (!mAlreadyConstructedAutomaton.contains(rankDecreaseAndBound)) {
+			mAlreadyConstructedAutomaton.addState(isInitial, true, rankDecreaseAndBound);
 		}
 		((BuchiHoareTripleChecker) mIHoareTripleChecker).putDecreaseEqualPair(rankDecreaseAndBound, rankEquality);
 		return rankDecreaseAndBound;
@@ -326,8 +326,8 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 	private IPredicate getOrConstructStemPredicate(final Set<IPredicate> inputSuccs, final boolean isInitial) {
 		final IPredicate resSucc =
 				getOrConstructPredicate(inputSuccs, mStemPU, mStemInputPreds2ResultPreds, mStemResPred2InputPreds);
-		if (!mAlreadyConstrucedAutomaton.contains(resSucc)) {
-			mAlreadyConstrucedAutomaton.addState(isInitial, false, resSucc);
+		if (!mAlreadyConstructedAutomaton.contains(resSucc)) {
+			mAlreadyConstructedAutomaton.addState(isInitial, false, resSucc);
 		}
 		return resSucc;
 	}
@@ -335,8 +335,8 @@ public class BuchiInterpolantAutomatonBouncer<LETTER extends IAction> extends Ab
 	private IPredicate getOrConstructLoopPredicate(final Set<IPredicate> inputSuccs, final boolean isInitial) {
 		final IPredicate resSucc =
 				getOrConstructPredicate(inputSuccs, mLoopPU, mLoopInputPreds2ResultPreds, mLoopResPred2InputPreds);
-		if (!mAlreadyConstrucedAutomaton.contains(resSucc)) {
-			mAlreadyConstrucedAutomaton.addState(isInitial, false, resSucc);
+		if (!mAlreadyConstructedAutomaton.contains(resSucc)) {
+			mAlreadyConstructedAutomaton.addState(isInitial, false, resSucc);
 		}
 		return resSucc;
 	}

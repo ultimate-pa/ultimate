@@ -86,10 +86,10 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 
 		assert SmtUtils.isTrue(mIaTrueState.getFormula());
 		assert allPredicates.contains(mIaTrueState);
-		mAlreadyConstrucedAutomaton.addState(true, false, mIaTrueState);
+		mAlreadyConstructedAutomaton.addState(true, false, mIaTrueState);
 		assert SmtUtils.isFalse(mIaFalseState.getFormula());
 		assert allPredicates.contains(mIaFalseState);
-		mAlreadyConstrucedAutomaton.addState(false, true, mIaFalseState);
+		mAlreadyConstructedAutomaton.addState(false, true, mIaFalseState);
 
 		mNonTrivialPredicates = new HashSet<>();
 		for (final IPredicate state : allPredicates) {
@@ -99,7 +99,7 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 				// true/false are initial/final states of the automaton.
 				final boolean isInitial = inputInterpolantAutomaton.isInitial(state);
 				final boolean isFinal = inputInterpolantAutomaton.isFinal(state);
-				mAlreadyConstrucedAutomaton.addState(isInitial, isFinal, state);
+				mAlreadyConstructedAutomaton.addState(isInitial, isFinal, state);
 			}
 		}
 
@@ -121,7 +121,7 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 	protected String switchToReadonlyMessage() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Switched to read-only mode: nondeterministic interpolant automaton has ");
-		sb.append(mAlreadyConstrucedAutomaton.size()).append(" states. ");
+		sb.append(mAlreadyConstructedAutomaton.size()).append(" states. ");
 		return sb.toString();
 	}
 
@@ -129,7 +129,7 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 	protected String switchToOnDemandConstructionMessage() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Switched to On-DemandConstruction mode: nondeterministic interpolant automaton has ");
-		sb.append(mAlreadyConstrucedAutomaton.size()).append(" states. ");
+		sb.append(mAlreadyConstructedAutomaton.size()).append(" states. ");
 		return sb.toString();
 	}
 

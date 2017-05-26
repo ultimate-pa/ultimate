@@ -90,7 +90,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 	protected final CfgSmtToolkit mCsToolkit;
 	protected final IHoareTripleChecker mIHoareTripleChecker;
 	protected final IPredicate mIaFalseState;
-	protected final NestedWordAutomatonCache<LETTER, IPredicate> mAlreadyConstrucedAutomaton;
+	protected final NestedWordAutomatonCache<LETTER, IPredicate> mAlreadyConstructedAutomaton;
 	protected final INestedWordAutomaton<LETTER, IPredicate> mInputInterpolantAutomaton;
 
 	private Mode mMode = Mode.ON_DEMAND_CONSTRUCTION;
@@ -118,7 +118,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 		mInSucComp = new InternalSuccessorComputationHelper();
 		mCaSucComp = new CallSuccessorComputationHelper();
 		mReSucComp = new ReturnSuccessorComputationHelper();
-		mAlreadyConstrucedAutomaton = new NestedWordAutomatonCache<>(new AutomataLibraryServices(mServices),
+		mAlreadyConstructedAutomaton = new NestedWordAutomatonCache<>(new AutomataLibraryServices(mServices),
 				inputInterpolantAutomaton.getVpAlphabet(), inputInterpolantAutomaton.getStateFactory());
 		if (useEfficientTotalAutomatonBookkeeping) {
 			mSuccessorComputationBookkeeping = new SuccessorComputationBookkeepingForTotalAutomata();
@@ -163,12 +163,12 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 
 	@Override
 	public final int size() {
-		return mAlreadyConstrucedAutomaton.size();
+		return mAlreadyConstructedAutomaton.size();
 	}
 
 	@Override
 	public final Set<LETTER> getAlphabet() {
-		return mAlreadyConstrucedAutomaton.getAlphabet();
+		return mAlreadyConstructedAutomaton.getAlphabet();
 	}
 
 	@Override
@@ -181,32 +181,32 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 
 	@Override
 	public VpAlphabet<LETTER> getVpAlphabet() {
-		return mAlreadyConstrucedAutomaton.getVpAlphabet();
+		return mAlreadyConstructedAutomaton.getVpAlphabet();
 	}
 
 	@Override
 	public final IStateFactory<IPredicate> getStateFactory() {
-		return mAlreadyConstrucedAutomaton.getStateFactory();
+		return mAlreadyConstructedAutomaton.getStateFactory();
 	}
 
 	@Override
 	public final IPredicate getEmptyStackState() {
-		return mAlreadyConstrucedAutomaton.getEmptyStackState();
+		return mAlreadyConstructedAutomaton.getEmptyStackState();
 	}
 
 	@Override
 	public final Iterable<IPredicate> getInitialStates() {
-		return mAlreadyConstrucedAutomaton.getInitialStates();
+		return mAlreadyConstructedAutomaton.getInitialStates();
 	}
 
 	@Override
 	public final boolean isInitial(final IPredicate state) {
-		return mAlreadyConstrucedAutomaton.isInitial(state);
+		return mAlreadyConstructedAutomaton.isInitial(state);
 	}
 
 	@Override
 	public final boolean isFinal(final IPredicate state) {
-		return mAlreadyConstrucedAutomaton.isFinal(state);
+		return mAlreadyConstructedAutomaton.isFinal(state);
 	}
 
 	@Override
@@ -232,7 +232,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 				computeSuccs(state, null, letter, mInSucComp);
 			}
 		}
-		return mAlreadyConstrucedAutomaton.internalSuccessors(state, letter);
+		return mAlreadyConstructedAutomaton.internalSuccessors(state, letter);
 	}
 
 	@Override
@@ -244,7 +244,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 				}
 			}
 		}
-		return mAlreadyConstrucedAutomaton.internalSuccessors(state);
+		return mAlreadyConstructedAutomaton.internalSuccessors(state);
 	}
 
 	@Override
@@ -255,19 +255,19 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 				computeSuccs(state, null, letter, mCaSucComp);
 			}
 		}
-		return mAlreadyConstrucedAutomaton.callSuccessors(state, letter);
+		return mAlreadyConstructedAutomaton.callSuccessors(state, letter);
 	}
 
 	@Override
 	public final Iterable<OutgoingCallTransition<LETTER, IPredicate>> callSuccessors(final IPredicate state) {
 		if (mMode == Mode.ON_DEMAND_CONSTRUCTION) {
 			for (final LETTER letter : lettersCall(state)) {
-				if (!mAlreadyConstrucedAutomaton.callSuccessors(state, letter).iterator().hasNext()) {
+				if (!mAlreadyConstructedAutomaton.callSuccessors(state, letter).iterator().hasNext()) {
 					computeSuccs(state, null, letter, mCaSucComp);
 				}
 			}
 		}
-		return mAlreadyConstrucedAutomaton.callSuccessors(state);
+		return mAlreadyConstructedAutomaton.callSuccessors(state);
 	}
 
 	@Override
@@ -278,7 +278,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 				computeSuccs(state, hier, letter, mReSucComp);
 			}
 		}
-		return mAlreadyConstrucedAutomaton.returnSuccessors(state, hier, letter);
+		return mAlreadyConstructedAutomaton.returnSuccessors(state, hier, letter);
 	}
 
 	@Override
@@ -286,12 +286,12 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 			returnSuccessorsGivenHier(final IPredicate state, final IPredicate hier) {
 		if (mMode == Mode.ON_DEMAND_CONSTRUCTION) {
 			for (final LETTER letter : lettersReturn(state, hier)) {
-				if (!mAlreadyConstrucedAutomaton.returnSuccessors(state, hier, letter).iterator().hasNext()) {
+				if (!mAlreadyConstructedAutomaton.returnSuccessors(state, hier, letter).iterator().hasNext()) {
 					computeSuccs(state, hier, letter, mReSucComp);
 				}
 			}
 		}
-		return mAlreadyConstrucedAutomaton.returnSuccessorsGivenHier(state, hier);
+		return mAlreadyConstructedAutomaton.returnSuccessorsGivenHier(state, hier);
 	}
 
 	@Override
@@ -343,7 +343,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 		public void addTransition(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
 				final IPredicate inputSucc) {
 			assert resHier == null;
-			mAlreadyConstrucedAutomaton.addInternalTransition(resPred, letter, inputSucc);
+			mAlreadyConstructedAutomaton.addInternalTransition(resPred, letter, inputSucc);
 		}
 
 		@Override
@@ -390,7 +390,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 		public void addTransition(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
 				final IPredicate inputSucc) {
 			assert resHier == null;
-			mAlreadyConstrucedAutomaton.addCallTransition(resPred, letter, inputSucc);
+			mAlreadyConstructedAutomaton.addCallTransition(resPred, letter, inputSucc);
 		}
 
 		@Override
@@ -435,7 +435,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 		@Override
 		public void addTransition(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
 				final IPredicate inputSucc) {
-			mAlreadyConstrucedAutomaton.addReturnTransition(resPred, resHier, letter, inputSucc);
+			mAlreadyConstructedAutomaton.addReturnTransition(resPred, resHier, letter, inputSucc);
 		}
 
 		@Override
@@ -550,7 +550,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 
 		@Override
 		public boolean areInternalSuccsComputed(final IPredicate state, final LETTER letter) {
-			final Collection<IPredicate> succs = mAlreadyConstrucedAutomaton.succInternal(state, letter);
+			final Collection<IPredicate> succs = mAlreadyConstructedAutomaton.succInternal(state, letter);
 			if (succs == null) {
 				return false;
 			}
@@ -559,7 +559,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 
 		@Override
 		public boolean areCallSuccsComputed(final IPredicate state, final LETTER call) {
-			final Collection<IPredicate> succs = mAlreadyConstrucedAutomaton.succCall(state, call);
+			final Collection<IPredicate> succs = mAlreadyConstructedAutomaton.succCall(state, call);
 			if (succs == null) {
 				return false;
 			}
@@ -568,7 +568,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 
 		@Override
 		public boolean areReturnSuccsComputed(final IPredicate state, final IPredicate hier, final LETTER ret) {
-			final Collection<IPredicate> succs = mAlreadyConstrucedAutomaton.succReturn(state, hier, ret);
+			final Collection<IPredicate> succs = mAlreadyConstructedAutomaton.succReturn(state, hier, ret);
 			if (succs == null) {
 				return false;
 			}

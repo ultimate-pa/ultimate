@@ -91,7 +91,7 @@ public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 					mPredicateUnifier.cannibalizeAll(mSplitNumericEqualities, inputInterpolantAutomaton.getStates());
 			for (final IPredicate pred : allPredicates) {
 				if (!inputInterpolantAutomaton.getStates().contains(pred)) {
-					mAlreadyConstrucedAutomaton.addState(false, false, pred);
+					mAlreadyConstructedAutomaton.addState(false, false, pred);
 				}
 			}
 		} else {
@@ -105,18 +105,18 @@ public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 			allPredicates.addAll(divPreds);
 			for (final IPredicate pred : divPreds) {
 				if (!inputInterpolantAutomaton.getStates().contains(pred)) {
-					mAlreadyConstrucedAutomaton.addState(false, false, pred);
+					mAlreadyConstructedAutomaton.addState(false, false, pred);
 				}
 			}
 		}
 
 		assert mIaTrueState.getFormula().toString().equals("true");
 		assert allPredicates.contains(mIaTrueState);
-		mAlreadyConstrucedAutomaton.addState(true, false, mIaTrueState);
+		mAlreadyConstructedAutomaton.addState(true, false, mIaTrueState);
 		mResPred2InputPreds.addPair(mIaTrueState, mIaTrueState);
 		assert mIaFalseState.getFormula().toString().equals("false");
 		assert allPredicates.contains(mIaFalseState);
-		mAlreadyConstrucedAutomaton.addState(false, true, mIaFalseState);
+		mAlreadyConstructedAutomaton.addState(false, true, mIaFalseState);
 		mResPred2InputPreds.addPair(mIaFalseState, mIaFalseState);
 
 		mNonTrivialPredicates = new HashSet<>();
@@ -159,7 +159,7 @@ public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 	protected String switchToReadonlyMessage() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Switched to read-only mode: deterministic interpolant automaton has ");
-		sb.append(mAlreadyConstrucedAutomaton.size()).append(" states. ");
+		sb.append(mAlreadyConstructedAutomaton.size()).append(" states. ");
 		return sb.toString();
 	}
 
@@ -167,7 +167,7 @@ public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 	protected String switchToOnDemandConstructionMessage() {
 		final StringBuilder sb = new StringBuilder();
 		sb.append("Switched to On-DemandConstruction mode: deterministic interpolant automaton has ");
-		sb.append(mAlreadyConstrucedAutomaton.size()).append(" states. ");
+		sb.append(mAlreadyConstructedAutomaton.size()).append(" states. ");
 		return sb.toString();
 	}
 
@@ -250,8 +250,8 @@ public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 			result = mIaTrueState;
 		} else if (succs.size() == 1) {
 			result = succs.iterator().next();
-			if (!mAlreadyConstrucedAutomaton.contains(result)) {
-				mAlreadyConstrucedAutomaton.addState(false, false, result);
+			if (!mAlreadyConstructedAutomaton.contains(result)) {
+				mAlreadyConstructedAutomaton.addState(false, false, result);
 			}
 		} else {
 			IPredicate resSucc = mInputPreds2ResultPreds.get(succs);
@@ -259,15 +259,15 @@ public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 				resSucc = mPredicateUnifier.getOrConstructPredicateForConjunction(succs);
 				mInputPreds2ResultPreds.put(succs, resSucc);
 				for (final IPredicate succ : succs) {
-					assert mAlreadyConstrucedAutomaton.contains(succ)
+					assert mAlreadyConstructedAutomaton.contains(succ)
 							|| mInputInterpolantAutomaton.getStates().contains(succ) : "unknown state " + succ;
 					if (mNonTrivialPredicates.contains(succ)) {
 						mResPred2InputPreds.addPair(resSucc, succ);
 					}
 				}
-				if (!mAlreadyConstrucedAutomaton.contains(resSucc)) {
+				if (!mAlreadyConstructedAutomaton.contains(resSucc)) {
 					processResPredInputPredsMapping(resSucc);
-					mAlreadyConstrucedAutomaton.addState(false, false, resSucc);
+					mAlreadyConstructedAutomaton.addState(false, false, resSucc);
 				}
 			}
 			result = resSucc;
