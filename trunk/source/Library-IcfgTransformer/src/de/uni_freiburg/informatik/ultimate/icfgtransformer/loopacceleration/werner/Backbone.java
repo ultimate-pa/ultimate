@@ -27,6 +27,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.wer
 
 import java.util.Deque;
 
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
@@ -43,7 +44,7 @@ public class Backbone {
 	private final Deque<IcfgEdge> mPath;
 	private final TransFormula mFormula;
 	private TermVariable mPathCounter;
-	private TransFormula mCondition;
+	private Term mCondition;
 	private SymbolicMemory mSymbolicMemory;
 
 	/**
@@ -72,7 +73,7 @@ public class Backbone {
 	 * @param condition
 	 *            the backbone's condition.
 	 */
-	public void setCondition(final TransFormula condition) {
+	public void setCondition(final Term condition) {
 		mCondition = condition;
 	}
 
@@ -105,7 +106,7 @@ public class Backbone {
 	/**
 	 * Returns the entry condition of the backbone.
 	 */
-	public TransFormula getCondition() {
+	public Term getCondition() {
 		return mCondition;
 	}
 

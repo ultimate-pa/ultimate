@@ -79,12 +79,12 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 	public IteratedSymbolicMemory(final ManagedScript script, final ILogger logger, final TransFormula tf,
 			final IIcfgSymbolTable oldSymbolTable, final Loop loop, final List<TermVariable> pathCounters) {
 
-		super(script, logger, tf);
+		super(script, logger, tf, oldSymbolTable);
 		mIteratedMemory = new HashMap<>();
 		mPathCounters = pathCounters;
 		mNewPathCounters = new ArrayList<>();
 		mOldsymbolTable = oldSymbolTable;
-		
+
 		for (int i = 0; i < pathCounters.size(); i++) {
 			final TermVariable newBackbonePathCounter = mScript.constructFreshTermVariable("tau",
 					mScript.getScript().sort(SmtSortUtils.INT_SORT));
@@ -104,11 +104,11 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 	 * backbones.
 	 */
 	public void updateMemory() {
-		
+
 		for (final Entry<IProgramVar, Term> entry : mIteratedMemory.entrySet()) {
 
 			final Term symbol = mMemoryMapping.get(entry.getKey());
-			
+
 			Term update = symbol;
 			mCaseType caseType = mCaseType.NOT_CHANGED;
 			mCaseType prevCase = mCaseType.NOT_CHANGED;
@@ -167,17 +167,19 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 
 					mLogger.debug("Assignment");
 				}
-				
-				// @todo only allowed in one backbone
+
+				// TODO only allowed in one backbone
 				if (!memory.equals(symbol)
 						&& !Arrays.asList(((ApplicationTerm) memory).getParameters()).contains(symbol)
-						&& Arrays.asList(((ApplicationTerm) memory).getParameters()).contains(backbone.getPathCounter())) {
-				
+						&& Arrays.asList(((ApplicationTerm) memory).getParameters())
+								.contains(backbone.getPathCounter())) {
+
 					final Map<Term, Term> mapping = new HashMap<>();
-					
-					final Term newMapping = mScript.getScript().term("-", backbone.getPathCounter(), mScript.getScript().numeral("1"));
+
+					final Term newMapping = mScript.getScript().term("-", backbone.getPathCounter(),
+							mScript.getScript().numeral("1"));
 					mapping.put(backbone.getPathCounter(), newMapping);
-					
+
 					final Substitution sub = new Substitution(mScript, mapping);
 					update = sub.transform(memory);
 				}
@@ -186,21 +188,37 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 		}
 		mLogger.debug("Iterated Memory: " + mIteratedMemory);
 	}
-	
+
+	/**
+	 * Compute the abstract condition using the {@link IteratedSymbolicMemory}
+	 */
 	public void updateCondition() {
 		for (final Backbone backbone : mLoop.getBackbones()) {
-			final List<TermVariable> freeVars = new ArrayList<>(); 
-			for (final TermVariable var : backbone.getCondition().getFormula().getFreeVars()) {
+			final List<TermVariable> freeVars = new ArrayList<>();
+			for (final TermVariable var : backbone.getCondition().getFreeVars()) {
 				if (mPathCounters.contains(var)) {
 					freeVars.add(var);
 				}
 			}
-			// final Map<Term, Term> mapping = new HashMap<>();
-			final ApplicationTerm appTerm = (ApplicationTerm) backbone.getCondition().getFormula();
+
+			final Map<Term, Term> mapping = new HashMap<>();
+			final ApplicationTerm appTerm = (ApplicationTerm) backbone.getCondition();
 			for (Term term : appTerm.getParameters()) {
 				mLogger.debug("Params: " + term);
+				if (term instanceof TermVariable
+						&& mIteratedMemory.containsKey(mOldsymbolTable.getProgramVar((TermVariable) term))) {
+					mapping.put(term, mIteratedMemory.get(mOldsymbolTable.getProgramVar((TermVariable) term)));
+					continue;
+				}
+
+				if (term instanceof ConstantTerm) {
+					continue;
+				}
+
+				mapping.putAll(termUnravel((ApplicationTerm) term));
+
 			}
-			// backbone.getCondition().getFormula();
+			mLogger.debug("MAPPING: " + mapping);
 		}
 	}
 
@@ -213,6 +231,11 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 		return mIteratedMemory;
 	}
 
+	/**
+	 * Get the pathcounters of the {@link Backbone}s
+	 * 
+	 * @return
+	 */
 	public List<TermVariable> getPathCounters() {
 		return mPathCounters;
 	}

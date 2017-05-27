@@ -42,6 +42,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.ITransformulaTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.TransformedIcfgBuilder;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ExampleLoopAccelerationTransformulaTransformer;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
@@ -127,15 +128,11 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 				
 				mLogger.debug("updated vars: " + update.getUpdatedVars());
 				
-				final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mLogger, tf);
+				final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mLogger, tf, mOldSymbolTable);
 				symbolicMemory.updateVars(update.getUpdatedVars());
-
-				final UnmodifiableTransFormula condition = TransFormulaUtils.computeGuard(tf, mScript, mServices,
-						mLogger);
-				
-				
-				
-				
+				final Term condition = symbolicMemory.updateCondition(TransFormulaUtils.computeGuard(tf, mScript, mServices,
+						mLogger));		
+								
 				final TermVariable backbonePathCounter = mScript.constructFreshTermVariable("kappa",
 						mScript.getScript().sort(SmtSortUtils.INT_SORT));
 

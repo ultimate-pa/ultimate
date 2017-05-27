@@ -28,6 +28,9 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.wer
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
+
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -35,6 +38,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -50,6 +54,7 @@ public class SymbolicMemory {
 	protected final Map<IProgramVar, Term> mMemoryMapping;
 	protected final ManagedScript mScript;
 	protected final ILogger mLogger;
+	protected final IIcfgSymbolTable mOldSymbolTable;
 
 	/**
 	 * Construct a new Symbolic Memory.
@@ -68,10 +73,12 @@ public class SymbolicMemory {
 	 *            {@link TermVariable} to an {@link IProgramVar} for changing in
 	 *            the memory.
 	 */
-	public SymbolicMemory(final ManagedScript script, final ILogger logger, final TransFormula tf) {
+	public SymbolicMemory(final ManagedScript script, final ILogger logger, final TransFormula tf,
+			final IIcfgSymbolTable oldSymboltable) {
 
 		mScript = script;
 		mLogger = logger;
+		mOldSymbolTable = oldSymboltable;
 
 		// set all variables to the InVars (symbols):
 		mMemoryMapping = LoopDetector.calculateSymbolTable(tf);
@@ -83,37 +90,116 @@ public class SymbolicMemory {
 	 * @param value
 	 *            A mapping of {@link IProgramVar} to their new changed value.
 	 */
-	public void updateVars(Map<IProgramVar, Term> value) {
-		
+	public void updateVars(final Map<IProgramVar, Term> value) {
+
 		for (final Map.Entry<IProgramVar, Term> entry : value.entrySet()) {
 
 			final Term t = entry.getValue();
 			final Map<Term, Term> substitution = new HashMap<>();
 
-			if (t instanceof TermVariable
-					&& mMemoryMapping.containsKey(entry.getKey())) {
-				substitution.put(t, mMemoryMapping.get(entry.getKey()));
-
-			}
-			
-			if (t instanceof ConstantTerm) {
-				mLogger.debug(t + " " + entry.getKey().getTermVariable().toString() + " " + mMemoryMapping.get(entry.getKey()));
-				substitution.put(mMemoryMapping.get(entry.getKey()), t);
-			} else {
-				final ApplicationTerm appTerm = (ApplicationTerm) t;
-				for (Term term : appTerm.getParameters()) {
-					if (term instanceof TermVariable
-							&& mMemoryMapping.containsKey(entry.getKey())) {
-						substitution.put(term, mMemoryMapping.get(entry.getKey()));
-					}
+			if (t instanceof TermVariable) {
+				if (mMemoryMapping.containsKey(entry.getKey())) {
+					substitution.put(t, mMemoryMapping.get(entry.getKey()));
 				}
+				continue;
 			}
+
+			if (t instanceof ConstantTerm) {
+				substitution.put(mMemoryMapping.get(entry.getKey()), t);
+				continue;
+			}
+
+			final ApplicationTerm appTerm = (ApplicationTerm) t;
+			substitution.putAll(termUnravel(appTerm));
 
 			final Substitution sub = new Substitution(mScript, substitution);
 			final Term t2 = sub.transform(t);
 			mMemoryMapping.replace(entry.getKey(), t2);
 		}
 		mLogger.debug("the Memory: " + mMemoryMapping.toString());
+	}
+
+	/**
+	 * Translate the given condition {@link TransFormula} to a for symbolic
+	 * memory compatible format.
+	 * 
+	 * @param tf
+	 * @return
+	 */
+	public Term updateCondition(final UnmodifiableTransFormula tf) {
+
+		mLogger.debug("TRAFO: " + tf);
+
+		final ApplicationTerm appTerm = (ApplicationTerm) tf.getFormula();
+		final Map<Term, Term> substitution = new HashMap<>();
+
+		substitution.putAll(termUnravel(appTerm, tf.getInVars()));
+
+		mLogger.debug("Sub: " + substitution);
+
+		final Substitution sub = new Substitution(mScript, substitution);
+		final Term t2 = sub.transform(tf.getFormula());
+
+		mLogger.debug("Condition: " + t2);
+
+		return t2;
+	}
+
+	/**
+	 * 
+	 * @param appTerm
+	 * @return
+	 */
+	protected Map<Term, Term> termUnravel(final ApplicationTerm appTerm) {
+		final Map<Term, Term> result = new HashMap<>();
+		for (Term term : appTerm.getParameters()) {
+
+			if (term instanceof TermVariable) {
+				if (mMemoryMapping.containsKey(mOldSymbolTable.getProgramVar((TermVariable) term))) {
+					result.put(term, mMemoryMapping.get(mOldSymbolTable.getProgramVar((TermVariable) term)));
+				}
+				continue;
+			}
+
+			// TODO something
+			if (term instanceof ConstantTerm) {
+				continue;
+			}
+			result.putAll(termUnravel((ApplicationTerm) term));
+		}
+		return result;
+	}
+
+	/**
+	 * 
+	 * @param appTerm
+	 * @param progVars
+	 * @return
+	 */
+	private Map<Term, Term> termUnravel(final ApplicationTerm appTerm, final Map<IProgramVar, TermVariable> progVars) {
+		final Map<Term, Term> result = new HashMap<>();
+		IProgramVar progVar = null;
+		for (Term term : appTerm.getParameters()) {
+			for (final Entry<IProgramVar, TermVariable> entry : progVars.entrySet()) {
+				if (entry.getValue().equals(term)) {
+					progVar = entry.getKey();
+				}
+			}
+
+			if (term instanceof TermVariable) {
+				if (mMemoryMapping.containsKey(progVar)) {
+					result.put(term, progVar.getTerm());
+				}
+				continue;
+			}
+
+			// @todo something
+			if (term instanceof ConstantTerm) {
+				continue;
+			}
+			result.putAll(termUnravel((ApplicationTerm) term, progVars));
+		}
+		return result;
 	}
 
 	/**
