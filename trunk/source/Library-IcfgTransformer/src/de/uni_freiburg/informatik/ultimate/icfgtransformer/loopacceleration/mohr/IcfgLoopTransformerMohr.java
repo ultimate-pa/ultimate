@@ -54,6 +54,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.Tra
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.normalForms.Dnf;
 
@@ -65,6 +66,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 	private final ManagedScript mManagedScript;
 	private final IIcfgSymbolTable mSymbolTable;
 	private final IUltimateServiceProvider mServices;
+	private final ILogger mLogger;
 
 	public IcfgLoopTransformerMohr(final ILogger logger, final IUltimateServiceProvider services,
 			final IIcfg<INLOC> originalIcfg, final ILocationFactory<INLOC, OUTLOC> funLocFac,
@@ -81,6 +83,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 
 		mManagedScript = originalIcfg.getCfgSmtToolkit().getManagedScript();
 		mServices = services;
+		mLogger = logger;
 		mSymbolTable = originalIcfg.getCfgSmtToolkit().getSymbolTable();
 		final BasicIcfg<OUTLOC> resultIcfg =
 				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
@@ -107,14 +110,19 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 		final Set<IProgramVar> assignedVariables = new HashSet<>();
 		final Set<TermVariable> assignedKappas = new HashSet<>();
 		final ArrayList<TermVariable> kappas = new ArrayList<>();
+		final Map<Term, Term> kappaTauRel = new HashMap<>();
 		final Set<Term> kappaTerms = new HashSet<>();
 		final Set<ArrayList<IcfgEdge>> paths = loop.getPaths();
+		final ArrayList<Set<Term>> pathAssertions = new ArrayList<>();
 		int pathCount = 0;
 		for (final ArrayList<IcfgEdge> p : paths) {
+			pathAssertions.add(new HashSet<>());
 			symbolicMem.add(new HashMap<>());
 			final TermVariable kappa = mManagedScript.constructFreshTermVariable("kappa" + pathCount,
 					mManagedScript.getScript().sort("Int"));
 			kappas.add(kappa);
+			kappaTauRel.put(kappa, mManagedScript.constructFreshTermVariable("tau" + pathCount,
+					mManagedScript.getScript().sort("Int")));
 			for (final IcfgEdge edge : p) {
 				final TransFormula formula = edge.getTransformula();
 				final Term term = formula.getFormula();
@@ -126,12 +134,14 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 					updateSymbolicMemory(cleanVariables(assignedTerm, formula.getInVars()), kappa,
 							formula.getAssignedVars().iterator().next(), symbolicMem.get(pathCount),
 							formula.getInVars(), assignedKappas, kappaTerms);
+				} else {
+					pathAssertions.get(pathCount).add(cleanVariables(term, formula.getInVars()));
 				}
 			}
 			pathCount++;
 		}
 
-		final Map<IProgramVar, Term> summarizedSymbMemory = new HashMap<>();
+		final Map<Term, Term> summarizedSymbMemory = new HashMap<>();
 		for (final IProgramVar variable : assignedVariables) {
 			final ArrayList<Term> pathSums = new ArrayList<>();
 			for (final Map<IProgramVar, Term> pathSM : symbolicMem) {
@@ -149,7 +159,7 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 				pathSums.toArray(parameters);
 				parameters[pathSums.size()] = variable.getTermVariable();
 				final Term t = mManagedScript.getScript().term("+", parameters);
-				summarizedSymbMemory.put(variable, t);
+				summarizedSymbMemory.put(variable.getTermVariable(), t);
 				continue;
 			}
 			Term constant = null;
@@ -205,9 +215,56 @@ public class IcfgLoopTransformerMohr<INLOC extends IcfgLocation, OUTLOC extends 
 				final Term cond = mManagedScript.getScript().term("<",
 						Rational.ZERO.toTerm(mManagedScript.getScript().sort("Int")), sum);
 				final Term t = mManagedScript.getScript().term("ite", cond, constant, variable.getTermVariable());
-				summarizedSymbMemory.put(variable, t);
+				summarizedSymbMemory.put(variable.getTermVariable(), t);
 			}
 		}
+
+		final ArrayList<Term> pathSummaries = new ArrayList<>();
+
+		final Substitution symMemSub = new Substitution(mManagedScript, summarizedSymbMemory);
+		final Substitution kappaSub = new Substitution(mManagedScript, kappaTauRel);
+
+		for (int i = 0; i < pathAssertions.size(); i++) {
+			final Set<Term> asserts = new HashSet<>();
+			for (final Term t : pathAssertions.get(i)) {
+				asserts.add(kappaSub.transform(symMemSub.transform(t)));
+			}
+			final TermVariable[] taus = new TermVariable[kappas.size() - 1];
+			final Term[] rangeTerms = new Term[kappas.size() - 1];
+			int arrayIndex = 0;
+			for (int j = 0; j < kappas.size(); j++) {
+				if (j != i) {
+					taus[arrayIndex] = (TermVariable) kappaTauRel.get(kappas.get(j));
+					rangeTerms[arrayIndex] = mManagedScript.getScript().term("<",
+							Rational.ZERO.toTerm(mManagedScript.getScript().sort("Int")),
+							kappaTauRel.get(kappas.get(j)),
+							kappas.get(j));
+					arrayIndex++;
+				}
+			}
+			// todo: case for only one path; no exists etc
+			// todo: case for no asserts in path
+			final Term range = rangeTerms.length > 1 ?
+					mManagedScript.getScript().term("and", rangeTerms) : rangeTerms[0];
+			final Term[] params = new Term[asserts.size()];
+			asserts.toArray(params);
+			final Term pathSum = asserts.size() > 1 ?
+					mManagedScript.getScript().term("and", asserts.toArray(new Term[asserts.size()])) :
+					asserts.iterator().next();
+			final Term summaryBody = mManagedScript.getScript().term("and", range, pathSum);
+			final TermVariable[] existVariables = new TermVariable[kappaTauRel.keySet().size()];
+			kappaTauRel.keySet().toArray(existVariables);
+			final Term exists = mManagedScript.getScript().quantifier(0, taus, summaryBody, (Term []) null);
+			final TermVariable[] pathTau = new TermVariable[1];
+			pathTau[0] = (TermVariable) kappaTauRel.get(kappas.get(i));
+			final Term forAll = mManagedScript.getScript().quantifier(1, pathTau, exists, (Term[]) null);
+			mLogger.debug(forAll);
+			pathSummaries.add(forAll);
+		}
+
+		final Term loopSummary = mManagedScript.getScript().term("and",
+				pathSummaries.toArray(new Term[pathSummaries.size()]));
+		mLogger.debug(loopSummary.toStringDirect());
 
 		return null;
 	}
