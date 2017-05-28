@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.IOutg
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.util.ISetOfPairs;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -77,7 +77,7 @@ public class GameAutomaton<LETTER, STATE>
 	private final GameStateFactory mGameStateFactory;
 	private final GameLetterFactory mGameLetterFactory;
 
-	public GameAutomaton(final AutomataLibraryServices services, final IStateFactory<IGameState> stateFactory,
+	public GameAutomaton(final AutomataLibraryServices services, final IEmptyStackStateFactory<IGameState> stateFactory,
 			final ISetOfPairs<STATE, ?> initialPairs, final IDoubleDeckerAutomaton<LETTER, STATE> operand,
 			final ISimulationInfoProvider<LETTER, STATE> simulationInfoProvider,
 			final SpoilerNwaVertex<LETTER, STATE> uniqueSpoilerWinningSink) throws AutomataOperationCanceledException {

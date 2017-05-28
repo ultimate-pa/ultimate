@@ -33,8 +33,7 @@ package de.uni_freiburg.informatik.ultimate.automata.statefactory;
  * @param <STATE>
  *            state type
  */
-@FunctionalInterface
-public interface IBuchiIntersectStateFactory<STATE> extends IStateFactory<STATE> {
+public interface IBuchiIntersectStateFactory<STATE> extends IEmptyStackStateFactory<STATE> {
 	/**
 	 * Intersection of two states in Buchi automata ("product construction") with a track.
 	 * 

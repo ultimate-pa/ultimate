@@ -59,8 +59,5 @@ package de.uni_freiburg.informatik.ultimate.automata.statefactory;
  *            state type
  */
 public interface IStateFactory<STATE> {
-	// TODO Christian 2017-02-16 remove this method after all broken places have been fixed
-	default STATE createEmptyStackState() {
-		return null;
-	}
+
 }

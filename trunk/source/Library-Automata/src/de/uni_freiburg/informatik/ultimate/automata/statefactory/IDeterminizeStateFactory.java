@@ -36,8 +36,7 @@ import java.util.Set;
  * @param <STATE>
  *            state type
  */
-@FunctionalInterface
-public interface IDeterminizeStateFactory<STATE> extends IStateFactory<STATE> {
+public interface IDeterminizeStateFactory<STATE> extends IEmptyStackStateFactory<STATE> {
 	/**
 	 * Determinization of several states.
 	 * 

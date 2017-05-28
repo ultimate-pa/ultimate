@@ -42,4 +42,9 @@ public class DummyStateFactory<STATE> implements IMergeStateFactory<STATE> {
 	public STATE merge(final Collection<STATE> states) {
 		return null;
 	}
+
+	@Override
+	public STATE createEmptyStackState() {
+		return null;
+	}
 }

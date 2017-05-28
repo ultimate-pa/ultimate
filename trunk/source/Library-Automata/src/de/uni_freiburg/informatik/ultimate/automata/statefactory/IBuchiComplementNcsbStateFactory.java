@@ -35,8 +35,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.LevelRankin
  * @param <STATE>
  *            state type
  */
-@FunctionalInterface
-public interface IBuchiComplementNcsbStateFactory<STATE> extends IStateFactory<STATE> {
+public interface IBuchiComplementNcsbStateFactory<STATE> extends IEmptyStackStateFactory<STATE> {
 	/**
 	 * Complement state in <tt>NCSB</tt> construction for Buchi automata.
 	 * 

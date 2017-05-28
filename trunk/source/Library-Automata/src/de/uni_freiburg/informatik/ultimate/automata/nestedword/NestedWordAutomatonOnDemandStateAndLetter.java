@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.N
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -78,7 +79,7 @@ public abstract class NestedWordAutomatonOnDemandStateAndLetter<LETTER, STATE>
 	 *            state factory
 	 */
 	public NestedWordAutomatonOnDemandStateAndLetter(final AutomataLibraryServices services,
-			final IStateFactory<STATE> stateFactory) {
+			final IEmptyStackStateFactory<STATE> stateFactory) {
 		mServices = services;
 		mInternalSuccessorsConstruted = new HashSet<>();
 		mCallSuccessorsConstruted = new HashSet<>();

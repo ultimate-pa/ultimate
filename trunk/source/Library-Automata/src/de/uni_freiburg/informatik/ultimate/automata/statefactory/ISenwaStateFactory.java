@@ -33,8 +33,7 @@ package de.uni_freiburg.informatik.ultimate.automata.statefactory;
  * @param <STATE>
  *            state type
  */
-@FunctionalInterface
-public interface ISenwaStateFactory<STATE> extends IStateFactory<STATE> {
+public interface ISenwaStateFactory<STATE> extends IEmptyStackStateFactory<STATE> {
 	/**
 	 * State in {@link de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.Senwa Senwa}.
 	 * 

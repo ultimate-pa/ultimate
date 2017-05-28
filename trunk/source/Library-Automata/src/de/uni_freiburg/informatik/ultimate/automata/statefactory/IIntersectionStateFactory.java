@@ -33,8 +33,7 @@ package de.uni_freiburg.informatik.ultimate.automata.statefactory;
  * @param <STATE>
  *            state type
  */
-@FunctionalInterface
-public interface IIntersectionStateFactory<STATE> extends IStateFactory<STATE> {
+public interface IIntersectionStateFactory<STATE> extends IEmptyStackStateFactory<STATE> {
 	/**
 	 * Intersection of two states ("product construction").
 	 * 

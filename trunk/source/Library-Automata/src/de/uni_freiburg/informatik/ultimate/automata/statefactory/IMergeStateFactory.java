@@ -35,8 +35,7 @@ import java.util.Collection;
  * @param <STATE>
  *            state type
  */
-@FunctionalInterface
-public interface IMergeStateFactory<STATE> extends IStateFactory<STATE> {
+public interface IMergeStateFactory<STATE> extends IEmptyStackStateFactory<STATE> {
 	/**
 	 * Merging of several states.
 	 * 

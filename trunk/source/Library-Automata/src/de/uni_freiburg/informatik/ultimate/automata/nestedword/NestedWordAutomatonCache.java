@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.SetOfStates;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
@@ -64,7 +65,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 	private static final String NOT_IN_AUTOMATON = " not in automaton";
 	private static final String UNKNOWN = " unknown";
 
-	protected final IStateFactory<STATE> mStateFactory;
+	protected final IEmptyStackStateFactory<STATE> mStateFactory;
 
 	protected final AutomataLibraryServices mServices;
 	protected final ILogger mLogger;
@@ -105,7 +106,7 @@ public class NestedWordAutomatonCache<LETTER, STATE> implements INwaOutgoingLett
 	 */
 	public NestedWordAutomatonCache(final AutomataLibraryServices services, 
 			final VpAlphabet<LETTER> vpAlphabet,
-			final IStateFactory<STATE> stateFactory) {
+			final IEmptyStackStateFactory<STATE> stateFactory) {
 		mServices = services;
 		mLogger = mServices.getLoggingService().getLogger(LibraryIdentifiers.PLUGIN_ID);
 		mVpAlphabet = vpAlphabet;

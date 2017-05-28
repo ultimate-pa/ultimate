@@ -33,7 +33,7 @@ package de.uni_freiburg.informatik.ultimate.automata.statefactory;
  * @param <STATE>
  *            state type
  */
-public interface IBuchiComplementDeterministicStateFactory<STATE> extends IStateFactory<STATE> {
+public interface IBuchiComplementDeterministicStateFactory<STATE> extends IEmptyStackStateFactory<STATE> {
 	/**
 	 * Complement state in construction for deterministic Buchi automata.
 	 * 
