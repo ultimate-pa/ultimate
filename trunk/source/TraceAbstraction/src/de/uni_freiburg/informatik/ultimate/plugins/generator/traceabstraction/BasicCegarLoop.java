@@ -253,7 +253,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (mWitnessAutomaton != null) {
 			final WitnessProductAutomaton<LETTER> wpa = new WitnessProductAutomaton<>(mServices,
 					(INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate>) mAbstraction, mWitnessAutomaton, mCsToolkit,
-					mPredicateFactory);
+					mPredicateFactory, mStateFactoryForRefinement);
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> test =
 					new RemoveUnreachable<>(new AutomataLibraryServices(mServices), wpa).getResult();
 			mLogger.info("Full witness product has " + test.sizeInformation());

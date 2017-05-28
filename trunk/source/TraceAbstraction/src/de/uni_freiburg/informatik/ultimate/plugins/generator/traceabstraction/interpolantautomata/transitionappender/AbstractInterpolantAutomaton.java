@@ -35,13 +35,14 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonDefinitionPrinter.Format;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomatonCache;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NwaCacheBookkeeping;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -119,7 +120,7 @@ public abstract class AbstractInterpolantAutomaton<LETTER> implements INwaOutgoi
 		mCaSucComp = new CallSuccessorComputationHelper();
 		mReSucComp = new ReturnSuccessorComputationHelper();
 		mAlreadyConstructedAutomaton = new NestedWordAutomatonCache<>(new AutomataLibraryServices(mServices),
-				inputInterpolantAutomaton.getVpAlphabet(), inputInterpolantAutomaton.getStateFactory());
+				inputInterpolantAutomaton.getVpAlphabet(), (IEmptyStackStateFactory) inputInterpolantAutomaton.getStateFactory());
 		if (useEfficientTotalAutomatonBookkeeping) {
 			mSuccessorComputationBookkeeping = new SuccessorComputationBookkeepingForTotalAutomata();
 		} else {

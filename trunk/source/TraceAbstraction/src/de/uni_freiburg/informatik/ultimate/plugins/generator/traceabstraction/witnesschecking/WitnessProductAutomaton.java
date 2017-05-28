@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
@@ -128,14 +129,14 @@ public class WitnessProductAutomaton<LETTER extends IIcfgTransition<?>>
 	public WitnessProductAutomaton(final IUltimateServiceProvider services,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> controlFlowAutomaton,
 			final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory) {
+			final PredicateFactory predicateFactory, final IEmptyStackStateFactory<IPredicate> stateFactory) {
 		mWitnessLocationMatcher = new WitnessLocationMatcher<>(services, controlFlowAutomaton, witnessAutomaton);
 		mControlFlowAutomaton = controlFlowAutomaton;
 		mWitnessAutomaton = witnessAutomaton;
 		mPredicateFactory = predicateFactory;
 		mInitialStates = constructInitialStates();
 		mFinalStates = new HashSet<>();
-		mEmptyStackState = mControlFlowAutomaton.getStateFactory().createEmptyStackState();
+		mEmptyStackState = stateFactory.createEmptyStackState();
 	}
 
 	private ProductState getOrConstructProductState(final IPredicate cfgAutomatonState,
