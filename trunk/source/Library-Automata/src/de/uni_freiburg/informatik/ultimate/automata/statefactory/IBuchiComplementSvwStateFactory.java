@@ -33,7 +33,7 @@ package de.uni_freiburg.informatik.ultimate.automata.statefactory;
  * @param <STATE>
  *            state type
  */
-public interface IBuchiComplementSvwStateFactory<STATE> extends IEmptyStackStateFactory<STATE> {
+public interface IBuchiComplementSvwStateFactory<STATE> extends IEmptyStackStateFactory<STATE>, ISinkStateFactory<STATE> {
 	/**
 	 * State in <tt>SVW</tt> result construction ("TMA") for Buchi automata.
 	 * 
