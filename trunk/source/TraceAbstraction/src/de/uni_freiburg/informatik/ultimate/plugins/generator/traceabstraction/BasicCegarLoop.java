@@ -470,7 +470,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	private void computeAutomataDifference(final INestedWordAutomaton<LETTER, IPredicate> minuend,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> substrahend,
-			final NestedWordAutomaton<LETTER, IPredicate> subtrahendBeforeEnhancement,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahendBeforeEnhancement,
 			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,
 			final IHoareTripleChecker htc, final InterpolantAutomatonEnhancement enhanceMode,
 			final boolean useErrorAutomaton, final String automatonType)
@@ -543,7 +543,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 	}
 
-	private void checkEnhancement(final NestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
+	private void checkEnhancement(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> inputInterpolantAutomaton,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> interpolantAutomaton)
 			throws AutomataLibraryException, AssertionError, AutomataOperationCanceledException {
 		if (!new Accepts<>(new AutomataLibraryServices(mServices), interpolantAutomaton,
