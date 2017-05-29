@@ -55,6 +55,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgInternalTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -70,6 +71,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfCon
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermClassifier;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Triple;
 
 /**
  * An IcfgTransformer that accelerates loops.
@@ -182,6 +184,8 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 
 			final OUTLOC newSource = lst.createNewLocation(oldSource);
 
+			final Set<Triple<OUTLOC, OUTLOC, IIcfgReturnTransition<?, ?>>> returnTransitions = new HashSet<>();
+
 			for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
 				if (mLoopEntryTransitions.contains(oldTransition)) {
 					continue;
@@ -195,9 +199,17 @@ public class LoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, OUTLOC 
 					final IcfgEdge newTransition = getAcceleratedTransition(oldTransition, newSource, newTarget);
 					backtranslationTracker.rememberRelation(oldTransition, newTransition);
 				} else {
-					lst.createNewTransition(newSource, newTarget, oldTransition);
+					if (oldTransition instanceof IIcfgReturnTransition<?, ?>) {
+						returnTransitions
+								.add(new Triple<>(newSource, newTarget, (IIcfgReturnTransition<?, ?>) oldTransition));
+					} else {
+						lst.createNewTransition(newSource, newTarget, oldTransition);
+					}
+
 				}
 			}
+			returnTransitions.stream().filter(a -> lst.isCorrespondingCallContained(a.getThird()))
+					.forEach(a -> lst.createNewTransition(a.getFirst(), a.getSecond(), (IcfgEdge) a.getThird()));
 		}
 
 		final Set<IcfgEdge> transformedEdges = new HashSet<>();

@@ -151,6 +151,16 @@ public final class TransformedIcfgBuilder<INLOC extends IcfgLocation, OUTLOC ext
 	}
 
 	/**
+	 * @return true if the corresponding call was already created and one can safely create a new transition for this
+	 *         return transition.
+	 */
+	public boolean isCorrespondingCallContained(final IIcfgReturnTransition<?, ?> oldTransition) {
+		final IIcfgCallTransition<?> oldCorrespondingCall = oldTransition.getCorrespondingCall();
+		final IcfgCallTransition newCorrespondingCall = mOldCalls2NewCalls.get(oldCorrespondingCall);
+		return newCorrespondingCall != null;
+	}
+
+	/**
 	 * Add a completely new transition to the resulting {@link IIcfg}.
 	 *
 	 * @param newSource

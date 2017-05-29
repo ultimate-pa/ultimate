@@ -279,9 +279,8 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 		if (mRenamedVars.containsKey(term) && (termInVars == null || !termInVars.containsValue(term))) {
 			if (mOutVars.containsValue(mRenamedVars.get(term))) {
 				return replaceTermVars(mRenamedVars.get(term), termInVars);
-			} else {
-				assert false;
 			}
+			assert false;
 		}
 
 		if (mRenamedVars.containsKey(term) && termInVars != null && termInVars.containsValue(term)) {
