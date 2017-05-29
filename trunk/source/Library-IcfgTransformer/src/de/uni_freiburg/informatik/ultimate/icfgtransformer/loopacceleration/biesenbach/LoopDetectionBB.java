@@ -39,7 +39,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.BasicIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 
 /**
  * Extracts the loops from an {@link IIcfg}.
@@ -106,10 +105,24 @@ public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 
 			mLoopIcfgs.addLast(resultLoop);
 		}
-		
-		LoopAccelerationMatrix<OUTLOC> lam = new LoopAccelerationMatrix<>(mLogger, mLoopIcfgs.getLast());
-		
+
+		final LoopAccelerationMatrix<OUTLOC> lam = new LoopAccelerationMatrix<>(mLogger, mLoopIcfgs.getLast());
+
 		mLogger.info("BB_End...");
+
+		// Notes:
+		// Get the "guard" part of a transformula:
+		// UnmodifiableTransFormula guardTf = TransFormulaUtils.computeGuard(mOriginalTransFormula, mMgScript, services,
+		// mLogger);
+
+		// mark something as overapproximation
+		// new Overapprox("loop acceleration: ... ", null).annotate(icfgedge)
+
+		// add some setting s.t. one can switch between "throw exception", "mark as overapprox", "do not accelerate"
+
+		// eliminate quantifiers
+		// Term simplfiedTerm = PartialQuantifierElimination.tryToEliminate(services, mLogger, mgdScript, term,
+		// SimplificationTechnique.SIMPLIFY_DDA, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -131,8 +144,8 @@ public class LoopDetectionBB<INLOC extends IcfgLocation, OUTLOC extends IcfgLoca
 	}
 
 	@SuppressWarnings("unchecked")
-	private void transformPathToIcfg(final IIcfg<INLOC> origIcfg,
-			final Deque<INLOC> path, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
+	private void transformPathToIcfg(final IIcfg<INLOC> origIcfg, final Deque<INLOC> path,
+			final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
 
 		final Deque<INLOC> open = new ArrayDeque<>();
 		open.add(path.removeFirst());
