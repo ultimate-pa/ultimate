@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
@@ -43,6 +44,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.MonolithicImplicationChecker;
@@ -154,7 +156,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
 				new PredicateTransformer<>(mgdScript, new TermDomainOperationProvider(services, mgdScript));
 		final IHoareTripleChecker hoareTripleChecker =
-				new InclusionInPreChecker(mic, pt, predicateFactory, predicateUnifier);
+				new InclusionInPreChecker(mic, pt, predicateFactory, predicateUnifier, csToolkit);
 		final boolean conservativeSuccessorCandidateSelection = false;
 		final boolean secondChance = false;
 		final NondeterministicInterpolantAutomaton<LETTER> result =
@@ -175,14 +177,16 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		private final PredicateTransformer<Term, IPredicate, TransFormula> mPt;
 		private final PredicateFactory mPf;
 		private final IPredicateUnifier mPu;
+		private final CfgSmtToolkit mCsToolkit;
 
 		public InclusionInPreChecker(final MonolithicImplicationChecker mic,
 				final PredicateTransformer<Term, IPredicate, TransFormula> pt, final PredicateFactory pf,
-				final IPredicateUnifier pu) {
+				final IPredicateUnifier pu, final CfgSmtToolkit csToolkit) {
 			mMic = mic;
 			mPt = pt;
 			mPf = pf;
 			mPu = pu;
+			mCsToolkit = csToolkit;
 		}
 
 		@Override
@@ -192,28 +196,29 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 		@Override
 		public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
-//			final TransFormula globalVarsAssignments;
-//			final TransFormula oldVarAssignments;
-//			final Set<IProgramNonOldVar> modifiableGlobals;
-//			final IPredicate preFormula = mPf.not(mPu.getOrConstructPredicate(mPt.weakestPreconditionCall(mPf.not(succ),
-//					act.getTransformula(), globalVarsAssignments, oldVarAssignments, modifiableGlobals)));
-//			return checkImplication(pre, preFormula);
-			// TODO calls
-			return null;
+			final TransFormula globalVarsAssignments = mCsToolkit.getOldVarsAssignmentCache()
+					.getGlobalVarsAssignment(act.getSucceedingProcedure());
+			final TransFormula oldVarAssignments = mCsToolkit.getOldVarsAssignmentCache()
+					.getOldVarsAssignment(act.getSucceedingProcedure());
+			final Set<IProgramNonOldVar> modifiableGlobals = mCsToolkit.getModifiableGlobalsTable()
+					.getModifiedBoogieVars(act.getSucceedingProcedure());
+			final IPredicate preFormula = mPf.not(mPu.getOrConstructPredicate(mPt.weakestPreconditionCall(mPf.not(succ),
+					act.getTransformula(), globalVarsAssignments, oldVarAssignments, modifiableGlobals)));
+			return checkImplication(pre, preFormula);
 		}
 
 		@Override
 		public Validity checkReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act,
 				final IPredicate succ) {
-//			final TransFormula returnTF;
-//			final TransFormula callTF;
-//			final TransFormula oldVarAssignments;
-//			final Set<IProgramNonOldVar> modifiableGlobals;
-//			final IPredicate preFormula = mPf.not(mPu.getOrConstructPredicate(mPt.weakestPreconditionReturn(succ,
-//					preHier, returnTF, callTF, oldVarAssignments, modifiableGlobals)));
-//			return checkImplication(pre, preFormula);
-			// TODO returns
-			return null;
+			final TransFormula returnTF = act.getAssignmentOfReturn();
+			final TransFormula callTF = act.getLocalVarsAssignmentOfCall();
+			final TransFormula oldVarAssignments = mCsToolkit.getOldVarsAssignmentCache()
+					.getOldVarsAssignment(act.getSucceedingProcedure());
+			final Set<IProgramNonOldVar> modifiableGlobals = mCsToolkit.getModifiableGlobalsTable()
+					.getModifiedBoogieVars(act.getSucceedingProcedure());
+			final IPredicate preFormula = mPf.not(mPu.getOrConstructPredicate(mPt.weakestPreconditionReturn(succ,
+					preHier, returnTF, callTF, oldVarAssignments, modifiableGlobals)));
+			return checkImplication(preLin, preFormula);
 		}
 
 		@Override
