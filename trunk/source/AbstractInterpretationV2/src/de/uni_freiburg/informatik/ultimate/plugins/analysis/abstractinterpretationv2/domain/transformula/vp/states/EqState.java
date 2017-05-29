@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -14,41 +16,48 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 public class EqState<ACTION extends IIcfgTransition<IcfgLocation>> 
 		implements IAbstractState<EqState<ACTION>, IProgramVarOrConst> {
+	
+	Set<IProgramVarOrConst> mVariables = new HashSet<>();
+
+	private final EqConstraint<ACTION, EqNode, EqFunction> mConstraint;
+	
+	
+	public EqState(EqConstraint<ACTION, EqNode, EqFunction> constraint) {
+		mConstraint = constraint;
+	}
 
 	@Override
 	public EqState<ACTION> addVariable(IProgramVarOrConst variable) {
-		// TODO Auto-generated method stub
-		return null;
+		mVariables.add(variable);
+		return this;
 	}
 
 	@Override
 	public EqState<ACTION> removeVariable(IProgramVarOrConst variable) {
-		// TODO Auto-generated method stub
-		return null;
+		mVariables.remove(variable);
+		return this;
 	}
 
 	@Override
 	public EqState<ACTION> addVariables(Collection<IProgramVarOrConst> variables) {
-		// TODO Auto-generated method stub
-		return null;
+		mVariables.addAll(variables);
+		return this;
 	}
 
 	@Override
 	public EqState<ACTION> removeVariables(Collection<IProgramVarOrConst> variables) {
-		// TODO Auto-generated method stub
-		return null;
+		mVariables.removeAll(variables);
+		return this;
 	}
 
 	@Override
 	public boolean containsVariable(IProgramVarOrConst var) {
-		// TODO Auto-generated method stub
-		return false;
+		return mVariables.contains(var);
 	}
 
 	@Override
 	public Set<IProgramVarOrConst> getVariables() {
-		// TODO Auto-generated method stub
-		return null;
+		return Collections.unmodifiableSet(mVariables);
 	}
 
 	@Override
@@ -71,14 +80,12 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public boolean isEmpty() {
-		// TODO Auto-generated method stub
-		return false;
+		return mVariables.isEmpty();
 	}
 
 	@Override
 	public boolean isBottom() {
-		// TODO Auto-generated method stub
-		return false;
+		return mConstraint instanceof EqBottomConstraint;
 	}
 
 	@Override

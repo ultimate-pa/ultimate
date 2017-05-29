@@ -21,12 +21,16 @@ public class EqConstraintFactory<
 			NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
 			FUNCTION extends IEqFunctionIdentifier<FUNCTION>> {
 
+	private EqConstraint<ACTION, NODE, FUNCTION> mBottomConstraint = new EqBottomConstraint<>(this);
+
 	public EqConstraint<ACTION, NODE, FUNCTION> getEmptyConstraint() {
 		return null;
 	}
 
 	public EqConstraint<ACTION, NODE, FUNCTION> getBottomConstraint() {
-		return null;
+//		EqConstraint<ACTION, NODE, FUNCTION> result = mBottomConstraint;;
+//		if (result == null)
+		return mBottomConstraint;
 	}
 
 	public EqConstraint<ACTION, NODE, FUNCTION> unfreeze(EqConstraint<ACTION, NODE, FUNCTION> constraint) {
@@ -35,16 +39,17 @@ public class EqConstraintFactory<
 		return null;
 	}
 
-	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> unfreeze(
-			EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> constraint) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> unfreeze(
+//			EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> constraint) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> 
 			getDisjunctiveConstraint(Collection<EqConstraint<ACTION, NODE, FUNCTION>> constraintList) {
-		// TODO filter bottoms
-		return new EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>(constraintList);
+		final Collection<EqConstraint<ACTION, NODE, FUNCTION>> bottomsFiltered = constraintList.stream()
+				.filter(cons -> (cons instanceof EqBottomConstraint)).collect(Collectors.toSet());
+		return new EqDisjunctiveConstraint<ACTION, NODE, FUNCTION>(bottomsFiltered);
 	}
 
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> conjoin(

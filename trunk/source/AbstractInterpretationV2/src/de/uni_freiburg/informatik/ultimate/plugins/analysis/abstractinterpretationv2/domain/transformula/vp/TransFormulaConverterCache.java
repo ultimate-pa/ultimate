@@ -1,5 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
@@ -9,14 +12,29 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraintFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqTransitionRelation;
 
-public class TransFormulaConverter<ACTION extends IIcfgTransition<IcfgLocation>> {
+public class TransFormulaConverterCache<ACTION extends IIcfgTransition<IcfgLocation>> {
 
-	private EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory;
-	private EqNodeAndFunctionFactory eqNodeAndFunctionFactory;
+	private EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
+	private EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
+	
+	private final Map<TransFormula, EqTransitionRelation<ACTION>> mTransformulaToEqTransitionRelationCache =
+			new HashMap<>();
+	
+	public TransFormulaConverterCache(EqNodeAndFunctionFactory eqNodeAndFunctionFactory, 
+			EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory) {
+		
+		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
+		mEqConstraintFactory = eqConstraintFactory;
+	}
 
 	public EqTransitionRelation<ACTION> getEqTransitionRelationFromTransformula(TransFormula tf) {
-		return new ConvertTransformulaToEqTransitionRelation<ACTION>(tf, 
-				eqConstraintFactory, eqNodeAndFunctionFactory)
+		EqTransitionRelation<ACTION> result = mTransformulaToEqTransitionRelationCache.get(tf);
+		if (result == null) {
+			result = new ConvertTransformulaToEqTransitionRelation<ACTION>(tf, 
+					mEqConstraintFactory, mEqNodeAndFunctionFactory)
 				.getResult();
+			mTransformulaToEqTransitionRelationCache.put(tf, result);
+		}
+		return result;
 	}
 }

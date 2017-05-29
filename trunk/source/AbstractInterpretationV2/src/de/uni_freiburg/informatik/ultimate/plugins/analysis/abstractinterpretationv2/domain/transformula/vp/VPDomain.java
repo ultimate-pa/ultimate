@@ -41,8 +41,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqPostOperator;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraintFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqState;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqStateFactory;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
@@ -68,18 +71,25 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 //	private final VPTfStateBuilderPreparer mTfPreparer;
 	private final boolean mDebugMode;
 
-	public VPDomain(final ILogger logger, final ManagedScript script, final IUltimateServiceProvider services,
+	private EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
+	private EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
+
+	public VPDomain(final ILogger logger, final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final IIcfgSymbolTable symbolTable, final VPDomainPreanalysis preAnalysis) {
 //			final VPTfStateBuilderPreparer tfPreparer) {
-		assert script != null;
+		assert mgdScript != null;
 		mLogger = logger;
 		mPreAnalysis = preAnalysis;
-		mManagedScript = script;
+		mManagedScript = mgdScript;
 		mMerge = new VPMergeOperator();
 		mSymboltable = symbolTable;
 //		mTfPreparer = tfPreparer;
 //		mPost = new VPPostOperator<>(script, services, this);
-		mPost = new EqPostOperator<>();
+		
+		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(preAnalysis, mgdScript);
+		mEqConstraintFactory = new EqConstraintFactory<>();
+
+		mPost = new EqPostOperator<>(mEqNodeAndFunctionFactory, mEqConstraintFactory);
 
 		mDebugMode = mPreAnalysis.isDebugMode();
 	}

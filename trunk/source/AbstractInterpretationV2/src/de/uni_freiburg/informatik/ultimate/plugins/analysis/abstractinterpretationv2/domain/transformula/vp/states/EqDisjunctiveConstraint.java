@@ -25,11 +25,14 @@ public class EqDisjunctiveConstraint<
 	private EqConstraintFactory<ACTION, NODE, FUNCTION> mEqConstraintFactory;
 
 	public EqDisjunctiveConstraint(Collection<EqConstraint<ACTION, NODE, FUNCTION>> constraintList) {
+		assert !constraintList.stream().filter(cons -> (cons instanceof EqBottomConstraint)).findAny().isPresent() 
+		  : "we filter out EqBottomConstraints up front, right? (could also do it here..)";
 		mConstraints = new HashSet<>(constraintList);
 	}
 
 	public boolean isBottom() {
-		return mConstraints.stream().map(conjConstraint -> conjConstraint.isBottom()).reduce((a, b) -> a && b).get();
+//		return mConstraints.stream().map(conjConstraint -> conjConstraint.isBottom()).reduce((a, b) -> a && b).get();
+		return mConstraints.isEmpty();
 	}
 
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> renameVariables(Map<Term, Term> substitutionMapping) {
