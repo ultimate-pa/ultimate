@@ -1,5 +1,31 @@
 
-// Binary Trees of natural numbers
+// Tree automaton that accepts lists of natural numbers in unary encoding
+TreeAutomaton taLists = (
+    alphabet = { nil "0" cons succ elem },
+    states = { Node Num List "_" },
+    initialStates = { "_" },
+    finalStates = { List },
+    transitionTable = {
+        (("_") "0" Num)
+        ((Node List) cons List)
+        (("_") nil List)
+        ((Num) succ Num)
+        ((Num) elem Node)
+    }
+);
+
+// [0, 1]
+Tree list = Tree[cons(elem("0"), cons(elem(succ("0")), nil))];
+
+// Good list
+assert(accepts(taLists, list));
+
+// _____________________________________________________________________________
+
+
+
+// Tree automaton that accepts binary trees whose nodes contain natural numbers 
+// in unary encoding
 TreeAutomaton taBinaryTrees = (
     alphabet = { nil "0" cons succ elem },
     states = { Node Num BinTree "_" },
@@ -30,33 +56,12 @@ assert(accepts(taBinaryTrees, binaryTree));
 // _____________________________________________________________________________
 
 
-TreeAutomaton taLists = (
-    alphabet = { nil "0" cons succ elem },
-    states = { Node Num List "_" },
-    initialStates = { "_" },
-    finalStates = { List },
-    transitionTable = {
-        (("_") "0" Num)
-        ((Node List) cons List)
-        (("_") nil List)
-        ((Num) succ Num)
-        ((Num) elem Node)
-    }
-);
-
-// [0, 1]
-Tree list = Tree[cons(elem("0"), cons(elem(succ("0")), nil))];
-
-// Good list
-assert(accepts(taLists, list));
-
-
-// _____________________________________________________________________________
-
-
-// Lists are also binary trees
+// Check that our example list is also a binary tree
 assert(accepts(taBinaryTrees, list));
 
-// All lists are binary trees, so the lists and non-binary trees are disjoint.
+// Check that all lists accepted by tree automaton taLists are also accepted by 
+// tree automaton taBinaryTrees.
+// (checks set inclusion by reduction to emptiness, intersection and complement 
+//  operations)
 assert(TreeEmptinessCheck(Intersect(taLists, Complement(taBinaryTrees))));
 
