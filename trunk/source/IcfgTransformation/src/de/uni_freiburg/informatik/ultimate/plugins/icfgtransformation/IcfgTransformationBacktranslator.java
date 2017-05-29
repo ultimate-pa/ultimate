@@ -87,7 +87,7 @@ public class IcfgTransformationBacktranslator
 			}
 			newTrace.add(mappedEdge);
 			addProgramState(i, newValues, programExecution.getProgramState(i));
-			if (oldBranchEncoders != null) {
+			if (oldBranchEncoders != null && oldBranchEncoders.length > i) {
 				newBranchEncoders.add(oldBranchEncoders[i]);
 			}
 		}
