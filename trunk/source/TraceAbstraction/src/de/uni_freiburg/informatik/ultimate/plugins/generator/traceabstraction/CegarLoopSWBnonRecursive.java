@@ -711,8 +711,8 @@ public class CegarLoopSWBnonRecursive<LETTER extends IIcfgTransition<?>> extends
 	 */
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		final SuperDifference<LETTER, IPredicate> diff = new SuperDifference<>(new AutomataLibraryServices(mServices),
-				mNestedAbstraction, mInterpolAutomaton, mEpimorphism, false);
+		final SuperDifference<LETTER, IPredicate, PredicateFactoryRefinement> diff = new SuperDifference<>(new AutomataLibraryServices(mServices),
+				mStateFactoryForRefinement,	mNestedAbstraction, mInterpolAutomaton, mEpimorphism, false);
 
 		mAbstraction = diff.getResult();
 
