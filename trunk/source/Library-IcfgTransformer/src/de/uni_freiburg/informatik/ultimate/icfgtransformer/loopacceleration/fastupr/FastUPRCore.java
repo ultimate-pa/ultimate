@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctConjunction;
@@ -81,6 +83,12 @@ public class FastUPRCore {
 	public FastUPRCore(final UnmodifiableTransFormula formula, final ManagedScript managedScript, final ILogger logger,
 			final IUltimateServiceProvider services) throws NotAffineException {
 		mServices = services;
+		
+		// Notes: Check timeout 
+//		if(!services.getProgressMonitorService().continueProcessing()){
+//			throw new ToolchainCanceledException(new RunningTaskInfo(this.getClass(), "the current task"));
+//		}
+		
 		mManagedScript = managedScript;
 		mUtils = new FastUPRUtils(logger, false);
 		mUtils.output("==================================================");
