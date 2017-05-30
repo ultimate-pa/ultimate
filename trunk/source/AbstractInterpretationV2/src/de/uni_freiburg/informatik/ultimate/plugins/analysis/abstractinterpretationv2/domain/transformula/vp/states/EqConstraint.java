@@ -1,16 +1,20 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
@@ -36,7 +40,8 @@ public class EqConstraint<
 
 	private boolean mIsVersioned;
 
-	private Set<IProgramVarOrConst> mVariables;
+	private Set<IProgramVar> mVariables;
+	private Set<IProgramVarOrConst> mPvocs;
 	
 	public EqConstraint(EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
 		mFactory = factory;
@@ -156,6 +161,7 @@ public class EqConstraint<
 
 
 	public void addFunctionDisequality(FUNCTION first, FUNCTION second) {
+		assert false : "TODO: work with UF-representatives..";//TODO
 		mFunctionDisequalities.add(new VPDomainSymmetricPair<FUNCTION>(first, second));
 	}
 
@@ -382,4 +388,44 @@ public class EqConstraint<
 		return result;
 	}
 
+	
+	public Term getTerm(Script script) {
+		final List<Term> elementEqualities = getSupportingElementEqualities().entrySet().stream()
+			.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm())).collect(Collectors.toList());
+		final List<Term> elementDisequalities = getElementDisequalities().stream()
+				.map(pair -> script.term("distinct", pair.getFirst().getTerm(), pair.getSecond().getTerm()))
+				.collect(Collectors.toList());
+		final List<Term> functionEqualities = getSupportingFunctionEqualities().entrySet().stream()
+			.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm())).collect(Collectors.toList());
+		final List<Term> functionDisequalities = getFunctionDisequalites().stream()
+				.map(pair -> script.term("distinct", pair.getFirst().getTerm(), pair.getSecond().getTerm()))
+				.collect(Collectors.toList());
+		
+		final List<Term> allConjuncts = new ArrayList<>();
+		allConjuncts.addAll(elementEqualities);
+		allConjuncts.addAll(elementDisequalities);
+		allConjuncts.addAll(functionEqualities);
+		allConjuncts.addAll(functionDisequalities);
+
+		return script.term("and", allConjuncts.toArray(new Term[allConjuncts.size()]));
+	}
+
+	public boolean areEqual(FUNCTION node1, FUNCTION node2) {
+		return mFunctionEqualities.find(node1).equals(mFunctionEqualities.find(node2));
+	}
+	
+	public boolean areUnequal(FUNCTION node1, FUNCTION node2) {
+		final FUNCTION rep1 = mFunctionEqualities.find(node1);
+		final FUNCTION rep2 = mFunctionEqualities.find(node2);
+		return mFunctionDisequalities.contains(new VPDomainSymmetricPair<FUNCTION>(rep1, rep2));
+	}
+
+	public Set<IProgramVar> getVariables() {
+		return mVariables;
+	}
+	
+	public Set<IProgramVarOrConst> getPvocs() {
+		return mPvocs;
+	}
+	
 }

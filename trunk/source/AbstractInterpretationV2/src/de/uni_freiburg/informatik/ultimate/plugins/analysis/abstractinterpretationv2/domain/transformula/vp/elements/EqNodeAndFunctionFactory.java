@@ -179,7 +179,24 @@ public class EqNodeAndFunctionFactory {
 		// TODO Auto-generated method stub
 		return null;
 	}
+
+	/**
+	 * 
+	 * @param term
+	 * @return
+	 */
+	public EqNode getEqNode(Term term) {
+		return mTermToEqNode.get(term);
+	}
 	
+	/**
+	 * 
+	 * @param term
+	 * @return
+	 */
+	public EqFunction getEqFunction(Term term) {
+		return mTermToEqFunction.get(term);
+	}
 	
 
 }

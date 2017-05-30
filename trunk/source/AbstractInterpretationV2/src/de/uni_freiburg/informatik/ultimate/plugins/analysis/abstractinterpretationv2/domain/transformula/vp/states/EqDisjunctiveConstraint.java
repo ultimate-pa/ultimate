@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
@@ -71,6 +72,28 @@ public class EqDisjunctiveConstraint<
 	public boolean isEmpty() {
 		return mConstraints.isEmpty();
 	}
+
+	public Term getTerm(Script script) {
+		List<Term> disjuncts = mConstraints.stream().map(cons -> cons.getTerm(script)).collect(Collectors.toList());
+		return script.term("or", disjuncts.toArray(new Term[disjuncts.size()]));
+	}
+
+	public boolean areEqual(NODE node1, NODE node2) {
+		return mConstraints.stream().map(cons -> cons.areEqual(node1, node2)).reduce((a, b) -> (a || b)).get();
+	}
+
+	public boolean areUnequal(NODE node1, NODE node2) {
+		return mConstraints.stream().map(cons -> cons.areUnequal(node1, node2)).reduce((a, b) -> (a || b)).get();
+	}
+
+	public boolean areEqual(FUNCTION func1, FUNCTION func2) {
+		return mConstraints.stream().map(cons -> cons.areEqual(func1, func2)).reduce((a, b) -> (a || b)).get();
+	}
+
+	public boolean areUnequal(FUNCTION func1, FUNCTION func2) {
+		return mConstraints.stream().map(cons -> cons.areUnequal(func1, func2)).reduce((a, b) -> (a || b)).get();
+	}
+	
 
 //	/**
 //	 * Only does the cast, other than that just calls @see AbstractMultistate.union
