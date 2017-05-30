@@ -60,9 +60,10 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 //			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
 //			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing_Debug.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr.epf"),
+//			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr.epf"),
 //			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
-			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
+//			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
+//			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
 
 //			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
 //			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Mohr.epf"),
@@ -82,8 +83,13 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 			"examples/svcomp/loop-lit/cggmp2005_true-unreach-call_true-termination.c.i",
 			"examples/svcomp/loops/for_bounded_loop1_false-unreach-call_true-termination.i",
 			"examples/svcomp/loop-invgen/SpamAssassin-loop_true-unreach-call_false-termination.i",
+			"examples/svcomp/loops/while_infinite_loop_4_false-unreach-call_true-termination.i",
+			"examples/svcomp/loops/for_infinite_loop_2_true-unreach-call_false-termination.i",
 
+			//example: cannot handle arrays
+			"examples/svcomp/bitvector-loops/verisec_sendmail__tTflag_arr_one_loop_false-unreach-call.i",
 	};
+
 	// @formatter:on
 
 	@Override
