@@ -29,14 +29,20 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fas
 
 import java.util.Map;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctConjunction;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonCalculator;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonConjunction;
+import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -51,12 +57,22 @@ public class TermChecker {
 	private final OctagonCalculator mCalc;
 	private Map<IProgramVar, TermVariable> mInVars;
 	private Map<IProgramVar, TermVariable> mOutVars;
-	private OctagonConjunction mConjunc;
+	private OctConjunction mConjunc;
 	private final FastUPRFormulaBuilder mFormulaBuilder;
 	private final Script mScript;
+	private final IUltimateServiceProvider mServices;
 
-	public TermChecker(final FastUPRUtils utils, final ManagedScript managedScript, final OctagonCalculator calc,
-			final FastUPRFormulaBuilder formulaBuilder) {
+	/**
+	 *
+	 * @param utils
+	 * @param managedScript
+	 * @param calc
+	 * @param formulaBuilder
+	 * @param services
+	 */
+	public TermChecker(FastUPRUtils utils, ManagedScript managedScript, OctagonCalculator calc,
+			FastUPRFormulaBuilder formulaBuilder, IUltimateServiceProvider services) {
+		mServices = services;
 		mFormulaBuilder = formulaBuilder;
 		mCalc = calc;
 		mManagedScript = managedScript;
@@ -64,26 +80,38 @@ public class TermChecker {
 		mScript = mManagedScript.getScript();
 	}
 
-	public void setConjunction(final OctagonConjunction conjunc) {
+	public void setConjunction(OctConjunction conjunc) {
 		mConjunc = conjunc;
 	}
 
-	public void setConjunction(final OctagonConjunction conjunc, final Map<IProgramVar, TermVariable> inVars,
-			final Map<IProgramVar, TermVariable> outVars) {
+	/**
+	 *
+	 * @param conjunc
+	 * @param inVars
+	 * @param outVars
+	 */
+	public void setConjunction(OctConjunction conjunc, Map<IProgramVar, TermVariable> inVars,
+			Map<IProgramVar, TermVariable> outVars) {
 		mConjunc = conjunc;
 		mInVars = inVars;
 		mOutVars = outVars;
 	}
 
-	public void setInVars(final Map<IProgramVar, TermVariable> inVars) {
+	public void setInVars(Map<IProgramVar, TermVariable> inVars) {
 		mInVars = inVars;
 	}
 
-	public void setOutVars(final Map<IProgramVar, TermVariable> outVars) {
+	public void setOutVars(Map<IProgramVar, TermVariable> outVars) {
 		mOutVars = outVars;
 	}
 
-	public int checkConsistency(final int b, final int c) {
+	/**
+	 *
+	 * @param b
+	 * @param c
+	 * @return
+	 */
+	public int checkConsistency(int b, int c) {
 		for (int k = 0; k <= 2; k++) {
 			if (!checkSequentialized(b + (k * c))) {
 				return k;
@@ -92,30 +120,43 @@ public class TermChecker {
 		return -1;
 	}
 
-	private boolean checkSequentialized(final int count) {
+	private boolean checkSequentialized(int count) {
 		final Script script = mManagedScript.getScript();
-		final OctagonConjunction toCheck = mCalc.sequentialize(mConjunc, mInVars, mOutVars, count);
+		final OctConjunction toCheck = mCalc.sequentialize(mConjunc, mInVars, mOutVars, count);
 		return checkTerm(toCheck.toTerm(script));
 
 	}
 
-	public boolean checkTerm(final Term term) {
-		mScript.push(1);
-
-		try {
-			mScript.assertTerm(getClosedTerm(term));
-		} catch (final Exception e) {
-			mUtils.debug(e.getClass().toString());
-			mUtils.debug(e.toString());
-		}
-		final LBool result = mScript.checkSat();
-
-		mScript.pop(1);
-
-		return result.equals(LBool.SAT);
+	public boolean checkQuantifiedTerm(Term term) {
+		final Term eliminated = PartialQuantifierElimination.tryToEliminate(mServices, mUtils.getLogger(),
+				mManagedScript, term, SimplificationTechnique.SIMPLIFY_DDA,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		return SmtUtils.checkSatTerm(mScript, eliminated) == LBool.SAT;
 	}
 
-	private Term getClosedTerm(final Term term) {
+	/**
+	 *
+	 * @param term
+	 * @return
+	 */
+	public boolean checkTerm(Term term) {
+		try {
+			mScript.push(1);
+			mScript.assertTerm(getClosedTerm(term));
+			final LBool result = mScript.checkSat();
+
+			mScript.pop(1);
+
+			mUtils.output(result.equals(LBool.SAT));
+
+			return result.equals(LBool.SAT);
+		} catch (final SMTLIBException e) {
+			mUtils.output(e.toString());
+			return checkQuantifiedTerm(term);
+		}
+	}
+
+	private Term getClosedTerm(Term term) {
 		final UnmodifiableTransFormula formula = mFormulaBuilder.buildTransFormula(term, mInVars, mOutVars);
 		return formula.getClosedFormula();
 	}

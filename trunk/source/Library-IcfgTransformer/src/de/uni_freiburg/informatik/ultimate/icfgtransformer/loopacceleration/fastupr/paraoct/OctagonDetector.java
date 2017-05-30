@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRUtils;
@@ -57,8 +58,7 @@ public class OctagonDetector extends NonRecursive {
 	private final IUltimateServiceProvider mServices;
 	private final FastUPRUtils mUtils;
 
-	public OctagonDetector(final FastUPRUtils utils, final ManagedScript managedScript,
-			final IUltimateServiceProvider services) {
+	public OctagonDetector(FastUPRUtils utils, ManagedScript managedScript, IUltimateServiceProvider services) {
 		super();
 		mUtils = utils;
 		mCheckedTerms = new HashSet<>();
@@ -71,18 +71,17 @@ public class OctagonDetector extends NonRecursive {
 
 	private static class ConjunctionWalker implements NonRecursive.Walker {
 
-		final Term mTerm;
-		final FastUPRUtils mUtils;
+		private final Term mTerm;
+		private final FastUPRUtils mUtils;
 
-		public ConjunctionWalker(final Term t, final FastUPRUtils utils) {
+		public ConjunctionWalker(Term t, FastUPRUtils utils) {
 			mTerm = t;
 			mUtils = utils;
 			mUtils.debug("New Concatination Walker for term:" + t.toString());
 		}
 
 		@Override
-		public void walk(final NonRecursive engine) {
-			// TODO Auto-generated method stub
+		public void walk(NonRecursive engine) {
 			mUtils.debug("walk called");
 			((OctagonDetector) engine).addConjunctTerms(mTerm);
 		}
@@ -93,20 +92,26 @@ public class OctagonDetector extends NonRecursive {
 
 		private final Term mTerm;
 
-		OctagonDetectionWalker(final Term t) {
+		OctagonDetectionWalker(Term t) {
 			mTerm = t;
 		}
 
 		@Override
-		public void walk(final NonRecursive engine) {
-			// TODO Auto-generated method stub
+		public void walk(NonRecursive engine) {
 			((OctagonDetector) engine).check(mTerm);
 
 		}
 
 	}
 
-	public HashSet<Term> getConjunctSubTerms(final Term t) {
+	/**
+	 * Returns a Set of conjunct subterms.
+	 *
+	 * @param t
+	 *            The Term to split
+	 * @return Set of Subterms
+	 */
+	public Set<Term> getConjunctSubTerms(Term t) {
 		final Term cnfRelation = SmtUtils.toCnf(mServices, mManagedScript, t,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		mCheckedTerms.clear();
@@ -114,8 +119,7 @@ public class OctagonDetector extends NonRecursive {
 		return mSubTerms;
 	}
 
-	private void addConjunctTerms(final Term t) {
-
+	private void addConjunctTerms(Term t) {
 		mUtils.debug("Current Term:" + t.toString());
 
 		if (mCheckedTerms.contains(t)) {
@@ -138,13 +142,11 @@ public class OctagonDetector extends NonRecursive {
 		}
 
 		mUtils.debug("Other Term or other Application Term");
-
 		mSubTerms.add(t);
 		mCheckedTerms.add(t);
-
 	}
 
-	public boolean isOctagonTerm(final Term t) {
+	public boolean isOctagonTerm(Term t) {
 		mCheckedTerms.clear();
 		mIsOctTerm = true;
 		mCurrentVars.clear();
@@ -153,8 +155,7 @@ public class OctagonDetector extends NonRecursive {
 		return mIsOctTerm;
 	}
 
-	private void check(final Term t) {
-
+	private void check(Term t) {
 		if (!mIsOctTerm) {
 			return;
 		}
@@ -163,13 +164,11 @@ public class OctagonDetector extends NonRecursive {
 
 		if (t instanceof TermVariable) {
 			mCurrentVars.add((TermVariable) t);
-			if (mCurrentVars.size() > 2) {
+			if (mCurrentVars.size() > 2)
 				mIsOctTerm = false;
-			}
 		} else if (t instanceof ApplicationTerm) {
 			final ApplicationTerm aT = (ApplicationTerm) t;
 			final String functionName = aT.getFunction().getName();
-			// TODO: Replace with constant set contains check
 			if (functionName.compareTo("<=") == 0 || functionName.compareTo("<") == 0
 					|| functionName.compareTo(">") == 0 || functionName.compareTo(">=") == 0
 					|| functionName.compareTo("=") == 0 || functionName.compareTo("+") == 0) {
@@ -191,11 +190,14 @@ public class OctagonDetector extends NonRecursive {
 
 	}
 
+	/**
+	 * Clears the set of checked terms.
+	 */
 	public void clearChecked() {
 		mCheckedTerms.clear();
 	}
 
-	public HashSet<Term> getSubTerms() {
+	public Set<Term> getSubTerms() {
 		return mSubTerms;
 	}
 

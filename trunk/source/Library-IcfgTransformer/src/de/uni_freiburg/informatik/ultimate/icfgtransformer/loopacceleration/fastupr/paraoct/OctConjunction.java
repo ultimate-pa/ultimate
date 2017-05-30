@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fas
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRUtils;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -40,29 +41,44 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  * @author Jill Enke (enkei@informatik.uni-freiburg.de)
  *
  */
-public class OctagonConjunction {
+public class OctConjunction {
 
-	private final ArrayList<OctagonTerm> mTerms;
+	private final ArrayList<OctTerm> mTerms;
 	private HashSet<TermVariable> mCachedVariables;
 
-	public OctagonConjunction() {
+	/**
+	 * Creates an empty OctConjunction
+	 */
+	public OctConjunction() {
 		mTerms = new ArrayList<>();
 		mCachedVariables = new HashSet<>();
 	}
 
-	public void addTerm(OctagonTerm octagonTerm) {
-		if (octagonTerm.equals(null))
+	/**
+	 * Adds an OctagonTerm to the Conjunction
+	 *
+	 * @param octagonTerm
+	 */
+	public void addTerm(OctTerm octagonTerm) {
+		if (octagonTerm == null) {
 			return;
+		}
 		mTerms.add(octagonTerm);
 		mCachedVariables = null;
 	}
 
-	public void removeTerm(OctagonTerm octagonTerm) {
+	/**
+	 * Removes an OctTerm form the conjunction
+	 *
+	 * @param octagonTerm
+	 *            Term to be removed.
+	 */
+	public void removeTerm(OctTerm octagonTerm) {
 		mTerms.remove(octagonTerm);
 		mCachedVariables = null;
 	}
 
-	public ArrayList<OctagonTerm> getTerms() {
+	public List<OctTerm> getTerms() {
 		return mTerms;
 	}
 
@@ -71,15 +87,16 @@ public class OctagonConjunction {
 	}
 
 	private HashSet<TermVariable> getVariables() {
-		if (mCachedVariables != null)
+		if (mCachedVariables != null) {
 			return mCachedVariables;
+		}
 		final HashSet<TermVariable> variables = new HashSet<>();
-		for (final OctagonTerm t : mTerms) {
-			if (t instanceof OneVarOctTerm) {
+		for (final OctTerm t : mTerms) {
+			if (t.isOneVar()) {
 				variables.add(t.getFirstVar());
-			} else if (t instanceof TwoVarOctTerm) {
+			} else {
 				variables.add(t.getFirstVar());
-				variables.add(((TwoVarOctTerm) t).getSecondVar());
+				variables.add(t.getSecondVar());
 			}
 		}
 		mCachedVariables = variables;
@@ -88,19 +105,29 @@ public class OctagonConjunction {
 
 	@Override
 	public String toString() {
-		if (mTerms.size() == 0)
+		if (mTerms.isEmpty()) {
 			return "";
-		String result = "(" + mTerms.get(0).toString() + ")";
-		for (int i = 1; i < mTerms.size(); i++) {
-			result = result + " and (" + mTerms.get(i).toString() + ")";
 		}
-		return result;
+		final StringBuilder sb = new StringBuilder("(" + mTerms.get(0).toString() + ")");
+		for (int i = 1; i < mTerms.size(); i++) {
+			sb.append(" and (" + mTerms.get(i).toString() + ")");
+		}
+		return sb.toString();
 	}
 
+	/**
+	 * Converts the conjunction to a Term
+	 *
+	 * @param script
+	 *            Script to build a term
+	 * @param utils
+	 *            Utils for Debug output
+	 * @return fresh Term representing the conjunction
+	 */
 	public Term toTerm(Script script, FastUPRUtils utils) {
 		final ArrayList<Term> terms = new ArrayList<>();
-		for (final OctagonTerm t : mTerms) {
-			utils.debug("OctagonTerm: " + t.toString());
+		for (final OctTerm t : mTerms) {
+			utils.debug("OctTerm: " + t.toString());
 			terms.add(t.toTerm(script));
 			utils.debug("Term: " + t.toTerm(script).toString());
 		}
@@ -111,9 +138,16 @@ public class OctagonConjunction {
 		return result;
 	}
 
+	/**
+	 * Converts the conjunction to a Term
+	 *
+	 * @param script
+	 *            Script to build a term
+	 * @return fresh Term representing the conjunction
+	 */
 	public Term toTerm(Script script) {
 		final ArrayList<Term> terms = new ArrayList<>();
-		for (final OctagonTerm t : mTerms) {
+		for (final OctTerm t : mTerms) {
 			terms.add(t.toTerm(script));
 		}
 		Term[] termArray = new Term[terms.size()];

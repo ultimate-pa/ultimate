@@ -27,16 +27,18 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.ILocationFactory;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctConjunction;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonCalculator;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonConjunction;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonDetector;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.ParametricOctMatrix;
@@ -44,7 +46,6 @@ import de.uni_freiburg.informatik.ultimate.logic.QuantifiedFormula;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -58,35 +59,29 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * @author Jill Enke (enkei@informatik.uni-freiburg.de)
  *
  */
-@SuppressWarnings("unused")
-public class FastUPRCore<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
+public class FastUPRCore {
 
 	private final Term mRelation;
 	private final UnmodifiableTransFormula mFormula;
 	private UnmodifiableTransFormula mResult;
-	private final ILogger mLogger;
 	private final FastUPRUtils mUtils;
-	private final ILocationFactory<INLOC, OUTLOC> mReplacementVarFactory;
 
 	private final ManagedScript mManagedScript;
 	private final IUltimateServiceProvider mServices;
 	private final OctagonTransformer mOctagonTransformer;
 	private final OctagonDetector mOctagonDetector;
 	private final OctagonCalculator mOctagonCalculator;
-	private OctagonConjunction mConjunc;
+	private OctConjunction mConjunc;
 	private final Map<IProgramVar, TermVariable> mInVars;
 	private final Map<IProgramVar, TermVariable> mOutVars;
-	private ArrayList<TermVariable> mVariables;
+	private List<TermVariable> mVariables;
 	private final TermChecker mTermChecker;
 	private final FastUPRFormulaBuilder mFormulaBuilder;
 
-	public FastUPRCore(final UnmodifiableTransFormula formula, final ILocationFactory<INLOC, OUTLOC> factory,
-			final ManagedScript managedScript, final ILogger logger, final IUltimateServiceProvider services)
-			throws Exception {
-		mLogger = logger;
+	public FastUPRCore(final UnmodifiableTransFormula formula, final ManagedScript managedScript, final ILogger logger,
+			final IUltimateServiceProvider services) throws NotAffineException {
 		mServices = services;
 		mManagedScript = managedScript;
-		mReplacementVarFactory = factory;
 		mUtils = new FastUPRUtils(logger, false);
 		mUtils.output("==================================================");
 		mUtils.output("== FAST UPR CORE ==");
@@ -100,10 +95,10 @@ public class FastUPRCore<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation
 		}
 
 		mOctagonDetector = new OctagonDetector(mUtils, managedScript, services);
-		mOctagonTransformer = new OctagonTransformer(mUtils, managedScript, mOctagonDetector);
+		mOctagonTransformer = new OctagonTransformer(mUtils, managedScript.getScript(), mOctagonDetector);
 		mOctagonCalculator = new OctagonCalculator(mUtils, managedScript);
-		mFormulaBuilder = new FastUPRFormulaBuilder(mUtils, mManagedScript);
-		mTermChecker = new TermChecker(mUtils, mManagedScript, mOctagonCalculator, mFormulaBuilder);
+		mFormulaBuilder = new FastUPRFormulaBuilder(mUtils, mManagedScript, mOctagonCalculator, mOctagonTransformer);
+		mTermChecker = new TermChecker(mUtils, mManagedScript, mOctagonCalculator, mFormulaBuilder, mServices);
 
 		mUtils.output("Formula:" + mFormula.toString());
 
@@ -112,36 +107,35 @@ public class FastUPRCore<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation
 
 		mVariables = new ArrayList<>();
 
-		// mUtils.debug(mUtils.composition(mServices, mManagedScript, mFormula,
-		// 3).getFormula().toString());
-
-		// TODO: REMOVE
-		final boolean skip = true;
-
-		if (isOctagon(mRelation, managedScript.getScript())) {
+		if (mOctagonCalculator.isTrivial(mInVars, mOutVars)) {
+			mUtils.output("Trivial TransFormula, loop does nothing.");
+			mResult = formula;
+		} else if (isOctagon(mRelation, managedScript.getScript())) {
 			mConjunc = mOctagonTransformer.transform(mRelation);
-			mUtils.output(">> IS OCTAGON: STARTING PREFIX LOOP");
-			mUtils.output("Conjunction: " + mConjunc.toString());
 
 			mConjunc = mOctagonCalculator.normalizeVarNames(mConjunc, mInVars, mOutVars);
-
-			mConjunc = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, 10);
+			mUtils.debug(mConjunc.toString());
+			mConjunc = mOctagonCalculator.removeInOutVars(mConjunc, mInVars, mOutVars);
+			mUtils.debug(mConjunc.toString());
 
 			mVariables = mOctagonCalculator.getSortedVariables(mInVars, mOutVars);
 
 			mTermChecker.setConjunction(mConjunc, mInVars, mOutVars);
 
-			prefixLoop();
+			mUtils.output(">> IS OCTAGON: STARTING PREFIX LOOP");
+			mUtils.output("Conjunction: " + mConjunc.toString());
 
+			prefixLoop();
 		} else {
-			// TODO :
+			mResult = null;
 		}
 
 	}
 
 	private void prefixLoop() {
 		int b = 0;
-		while (!periodLoop(b++)) {
+		while (!periodLoop(b)) {
+			b++;
 			// TODO remove
 			if (b > 100) {
 				return;
@@ -158,30 +152,86 @@ public class FastUPRCore<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation
 				mUtils.output(">> NOT CONSISTENT FOR 2 ITERATIONS: RETURNING COMPOSITION RESULT");
 				mResult = mFormulaBuilder.buildConsistencyFormula(mConjunc, k * c + b - 1, mInVars, mOutVars);
 				return true;
-			} else {
-				mUtils.output(">> CONSISTENT: CHECKING FOR PERIODICITY");
-				mUtils.setDetailed(false);
-				final ParametricOctMatrix difference = periodCheck(b, c);
-
-				// TODO REMOVE && true
-
-				if (difference != null) {
-					if (checkForAll(difference, b, c)) {
-						mResult = paramatericSolution();
-					}
-				}
-
-				throw new IllegalArgumentException();
-
+			}
+			mUtils.output(">> CONSISTENT: CHECKING FOR PERIODICITY");
+			mUtils.setDetailed(false);
+			final ParametricOctMatrix difference = periodCheck(b, c);
+			if (difference == null) {
+				mUtils.output("PeriodCheck Not Successful.");
+				continue;
+			}
+			final boolean forAll = checkForAll(difference, b, c);
+			if (forAll) {
+				mUtils.output("ForAll Successful.");
+				mResult = paramatericSolution(b, difference);
+				return true;
+			}
+			mUtils.output("ForAll Unsuccessful. Periodicity until Inconsistency.");
+			final boolean periodicity = checkPeriodicity(difference, b, c);
+			if (periodicity && periodicityCalculation(difference, b, c)) {
+				return true;
 			}
 
 		}
 		return false;
+
 	}
 
-	private UnmodifiableTransFormula paramatericSolution() {
-		// TODO Auto-generated method stub
-		return null;
+	private boolean periodicityCalculation(ParametricOctMatrix difference, int b, int c) {
+		boolean inconsistent = false;
+		int n = 0;
+
+		// Find minimum n for which the period becomes inconsistent.
+		while (!inconsistent) {
+			final ParametricOctMatrix differenceN = difference.multiplyConstant(new BigDecimal(n));
+			final ParametricOctMatrix differenceN1 = difference.multiplyConstant(new BigDecimal(n + 1));
+			final OctConjunction rB = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, b);
+			final ParametricOctMatrix rBMatrix = mOctagonTransformer.getMatrix(rB, mVariables);
+			final ParametricOctMatrix intervalMatrix = differenceN.add(rBMatrix);
+			final OctConjunction interval = intervalMatrix.toOctConjunction();
+			final OctConjunction rC = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, c);
+			final OctConjunction intervalRC = mOctagonCalculator.binarySequentialize(interval, rC, mInVars, mOutVars);
+			inconsistent = !(mTermChecker.checkTerm(intervalRC.toTerm(mManagedScript.getScript())));
+			final OctConjunction interval1 = (differenceN1.add(rBMatrix)).toOctConjunction();
+
+			if (!mTermChecker.checkTerm(mManagedScript.getScript().term("=",
+					intervalRC.toTerm(mManagedScript.getScript()), interval1.toTerm(mManagedScript.getScript())))) {
+				return false;
+			}
+			n++;
+
+		}
+
+		mResult = periodicityResult(difference, b, c, n);
+		return true;
+	}
+
+	private UnmodifiableTransFormula periodicityResult(ParametricOctMatrix difference, int b, int c, int n) {
+		return mFormulaBuilder.buildPeriodicityResult(mConjunc, difference, b, c, n, mInVars, mOutVars, mVariables);
+	}
+
+	private boolean checkPeriodicity(ParametricOctMatrix difference, int b, int c) {
+		// Exists n >= 0 rho(n*difference + sigma(R^b) ○ R^c
+
+		final Script script = mManagedScript.getScript();
+		final OctConjunction rB = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, b);
+		final ParametricOctMatrix rBMatrix = mOctagonTransformer.getMatrix(rB, mVariables);
+		final ParametricOctMatrix differenceN = difference.multiplyVar("n", mManagedScript);
+		final ParametricOctMatrix intervalMatrix = differenceN.add(rBMatrix);
+
+		final OctConjunction rC = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, c);
+		final OctConjunction interval = mOctagonCalculator.binarySequentialize(intervalMatrix.toOctConjunction(), rC,
+				mInVars, mOutVars);
+
+		final Term quantified = script.quantifier(QuantifiedFormula.EXISTS,
+				new TermVariable[] { differenceN.getParametricVar() },
+				script.term("and", script.term(">=", differenceN.getParametricVar(), script.decimal(BigDecimal.ZERO)),
+						interval.toTerm(script)));
+		return mTermChecker.checkQuantifiedTerm(quantified);
+	}
+
+	private UnmodifiableTransFormula paramatericSolution(int b, ParametricOctMatrix difference) {
+		return mFormulaBuilder.buildParametricSolution(mConjunc, b, difference, mInVars, mOutVars, mVariables);
 	}
 
 	private ParametricOctMatrix periodCheck(final int b, final int c) {
@@ -192,9 +242,9 @@ public class FastUPRCore<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation
 
 		mUtils.output(">>> PERIOD CHECK");
 
-		final OctagonConjunction c0 = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, b);
-		final OctagonConjunction c1 = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, b + c);
-		final OctagonConjunction c2 = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, b + 2 * c);
+		final OctConjunction c0 = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, b);
+		final OctConjunction c1 = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, b + c);
+		final OctConjunction c2 = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, b + 2 * c);
 
 		mUtils.debug(c0.toString());
 		mUtils.debug(c1.toString());
@@ -215,14 +265,17 @@ public class FastUPRCore<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation
 		final ParametricOctMatrix difference = c1Matrix.subtract(c0Matrix);
 		final ParametricOctMatrix difference2 = c2Matrix.subtract(c1Matrix);
 
+		mUtils.setDetailed(true);
+
 		mUtils.debug(difference.getMatrix().toString());
 		mUtils.debug(difference2.getMatrix().toString());
-		mUtils.debug(difference.toOctagonConjunction().toString());
-		mUtils.debug(difference2.toOctagonConjunction().toString());
+		mUtils.debug(difference.toOctConjunction().toString());
+		mUtils.debug(difference2.toOctConjunction().toString());
 
+		mUtils.setDetailed(false);
 		// Check Equality
 
-		if (difference.equals(difference2)) {
+		if (difference.isEqualTo(difference2)) {
 			mUtils.output("> Success!");
 			return difference;
 		}
@@ -235,31 +288,46 @@ public class FastUPRCore<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation
 		// <=> rho((n+1) * difference + sigma(R^b))∘R^c <=/=> false
 
 		mUtils.output(">>> FOR ALL CHECK, b=" + b + ",c=" + c);
+		mUtils.setDetailed(true);
 
 		// PREPARATIONS
 
 		final Script script = mManagedScript.getScript();
-		final OctagonConjunction rB = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, b);
-		final OctagonConjunction rC = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, c);
+		final OctConjunction rB = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, b);
+		final OctConjunction rC = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, c);
 		final ParametricOctMatrix rBMatrix = mOctagonTransformer.getMatrix(rB, mVariables);
 
 		// n * difference, (n+1) * difference
 
 		mUtils.debug("Creating Parametric Matrix differenceN.");
 		final ParametricOctMatrix differenceN = difference.multiplyVar("n", mManagedScript);
-		mUtils.debug(differenceN.toOctagonConjunction().toString());
+		mUtils.debug(differenceN.toOctConjunction().toString());
 
 		// Additions
 
-		final ParametricOctMatrix intervalBeginningMatrix = differenceN.add(rBMatrix);
-		final ParametricOctMatrix intervalEndMatrix = differenceN.add(rBMatrix);
+		mUtils.debug(differenceN.getMapping().toString());
+		mUtils.debug(rBMatrix.getMapping().toString());
+		mUtils.debug(differenceN.getMatrix().toString());
+		mUtils.debug(rBMatrix.getMatrix().toString());
+		mUtils.debug(differenceN.getSummands().toString());
+		mUtils.debug(differenceN.getParametricVar().toString());
+
+		differenceN.setLogger(mUtils.getLogger());
+		final ParametricOctMatrix intervalMatrix = differenceN.add(rBMatrix);
+
+		mUtils.debug("Creating Intervals.");
 
 		// Back to OctagonConjunction and concatinate with R^c
 
-		final OctagonConjunction intervalBeginning = mOctagonCalculator
-				.binarySequentialize(intervalBeginningMatrix.toOctagonConjunction(), rC, mInVars, mOutVars);
-		final OctagonConjunction intervalEnd = mOctagonCalculator
-				.binarySequentialize(intervalBeginningMatrix.toOctagonConjunction(1), rC, mInVars, mOutVars);
+		intervalMatrix.setLogger(mUtils.getLogger());
+
+		final OctConjunction intervalBeginning = mOctagonCalculator
+				.binarySequentialize(intervalMatrix.toOctConjunction(), rC, mInVars, mOutVars);
+		final OctConjunction intervalEnd = intervalMatrix.toOctConjunction(1);
+
+		mUtils.debug("Intervals:");
+		mUtils.debug(intervalBeginning.toString());
+		mUtils.debug(intervalEnd.toString());
 
 		// Equality Term (<=>)
 
@@ -268,13 +336,17 @@ public class FastUPRCore<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation
 
 		// QuantifiedTerm (for all n >= 0)
 
+		final Term greaterEqZero = script.term("and",
+				script.term(">=", differenceN.getParametricVar(), script.numeral(BigInteger.ZERO)), eqTerm);
+		final Term lesserEqZero = script.term("<", differenceN.getParametricVar(), script.numeral(BigInteger.ZERO));
+
 		final Term quantTerm = script.quantifier(QuantifiedFormula.FORALL,
-				new TermVariable[] { differenceN.getParametricVar() }, eqTerm);
-		mUtils.debug("quantTerm: " + eqTerm.toString());
+				new TermVariable[] { differenceN.getParametricVar() }, script.term("or", greaterEqZero, lesserEqZero));
+		mUtils.debug("quantTerm: " + quantTerm.toString());
 
-		mTermChecker.checkTerm(quantTerm);
+		final boolean isSat = mTermChecker.checkQuantifiedTerm(quantTerm);
 
-		return false;
+		return isSat;
 	}
 
 	private boolean isOctagon(final Term relation, final Script script) throws NotAffineException {
@@ -288,7 +360,7 @@ public class FastUPRCore<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation
 
 		// Get all SubTerms seperated by conjunction.
 
-		final HashSet<Term> subTerms = mOctagonDetector.getConjunctSubTerms(cnfRelation);
+		final Set<Term> subTerms = mOctagonDetector.getConjunctSubTerms(cnfRelation);
 		mUtils.debug("Term count:" + subTerms.size());
 
 		mOctagonDetector.clearChecked();
@@ -311,6 +383,10 @@ public class FastUPRCore<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation
 
 		}
 		return true;
+	}
+
+	public UnmodifiableTransFormula getResult() {
+		return mResult;
 	}
 
 }

@@ -61,6 +61,7 @@ public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLoc
 	private final List<Deque<INLOC>> mLoopPaths;
 	private final Map<INLOC, OUTLOC> mOldLoc2NewLoc;
 	private final Map<IIcfgCallTransition<INLOC>, IcfgCallTransition> mOldCalls2NewCalls;
+	private final List<INLOC> mLoopHeads;
 
 	public FastUPRDetection(final ILogger logger, final IIcfg<INLOC> originalIcfg, final Class<OUTLOC> outLocationClass,
 			final String newIcfgIdentifier) {
@@ -69,22 +70,22 @@ public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLoc
 		mOldLoc2NewLoc = new HashMap<>();
 		mOldCalls2NewCalls = new HashMap<>();
 
+		mLoopHeads = getLoopHeads(originalIcfg);
 		mLoopPaths = getLoops(originalIcfg);
 	}
 
 	private List<Deque<INLOC>> getLoops(final IIcfg<INLOC> originalIcfg) {
-		final HashSet<INLOC> loopHeads = getLoopHeads(originalIcfg);
 		final List<Deque<INLOC>> loopPaths = new ArrayList<>();
-		for (final INLOC loopHead : loopHeads) {
+		for (final INLOC loopHead : mLoopHeads) {
 			loopPaths.add(getPath(loopHead));
 		}
 		return loopPaths;
 	}
 
 	@SuppressWarnings("unchecked")
-	private HashSet<INLOC> getLoopHeads(final IIcfg<INLOC> originalIcfg) {
+	private List<INLOC> getLoopHeads(final IIcfg<INLOC> originalIcfg) {
 
-		final HashSet<INLOC> loopHeads = new HashSet<>();
+		final List<INLOC> loopHeads = new ArrayList<>();
 		final Set<INLOC> init = originalIcfg.getInitialNodes();
 		final Set<INLOC> closed = new HashSet<>();
 		final Deque<INLOC> open = new ArrayDeque<>(init);
@@ -106,7 +107,7 @@ public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLoc
 		return loopHeads;
 	}
 
-	@SuppressWarnings({ "unused", "unchecked" })
+	@SuppressWarnings("unchecked")
 	private Deque<INLOC> getPath(final INLOC loopHead) {
 
 		final Deque<INLOC> currentPath = new ArrayDeque<>();
@@ -116,19 +117,10 @@ public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLoc
 		currentPathIndices.addLast(0);
 
 		while (!currentPath.isEmpty()) {
-			// mLogger.debug("Outgoing Edges:");
-			// mLogger.debug(currentPath.getLast().getOutgoingEdges().size());
-			// mLogger.debug("Path/Indices");
-			// mLogger.debug(currentPath.size());
-			// mLogger.debug(currentPathIndices.size());
 			if (currentPath.getLast().getOutgoingEdges().size() > currentPathIndices.getLast()) {
 
 				final INLOC target = (INLOC) currentPath.getLast().getOutgoingEdges().get(currentPathIndices.getLast())
 						.getTarget();
-
-				// mLogger.debug("Current node: " +
-				// currentPath.getLast().toString());
-				// mLogger.debug("Target node: " + target.toString());
 
 				final int index = currentPathIndices.removeLast();
 
@@ -151,8 +143,11 @@ public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLoc
 	}
 
 	public List<Deque<INLOC>> getLoopPaths() {
-
 		return mLoopPaths;
+	}
+
+	public List<INLOC> getLoopHeads() {
+		return mLoopHeads;
 	}
 
 }
