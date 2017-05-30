@@ -92,7 +92,7 @@ public class BuchiComplementationTestSuite extends UltimateTestSuite {
 			// "Settings",
 			// StatisticsType.ATS_ID.toString(),
 			StatisticsType.OPERATION_NAME.toString(),
-			StatisticsType.RUNTIME_TOTAL.toString(),
+			StatisticsType.RUNTIME_TOTAL_MS.toString(),
 			StatisticsType.STATES_INPUT.toString(),
 			StatisticsType.STATES_OUTPUT.toString(),
 	};

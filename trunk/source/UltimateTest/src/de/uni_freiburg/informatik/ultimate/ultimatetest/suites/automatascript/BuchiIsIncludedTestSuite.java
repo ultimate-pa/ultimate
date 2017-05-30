@@ -91,7 +91,7 @@ public class BuchiIsIncludedTestSuite extends UltimateTestSuite {
 			// "Settings",
 			// StatisticsType.ATS_ID.toString(),
 			StatisticsType.OPERATION_NAME.toString(),
-			StatisticsType.RUNTIME_TOTAL.toString(),
+			StatisticsType.RUNTIME_TOTAL_MS.toString(),
 			StatisticsType.STATES_LHS.toString(),
 			StatisticsType.STATES_RHS.toString(),
 			StatisticsType.RHS_IS_DETERMINISTIC.toString(),

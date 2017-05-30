@@ -81,7 +81,7 @@ public class CompareToDimacsTestSuite extends UltimateTestSuite {
 	private static final String[] INTERESTING_COLUMNS = { "File",
 			// "Settings",
 			// StatisticsType.ATS_ID.toString(),
-			StatisticsType.OPERATION_NAME.toString(), StatisticsType.RUNTIME_TOTAL.toString(),
+			StatisticsType.OPERATION_NAME.toString(), StatisticsType.RUNTIME_TOTAL_MS.toString(),
 			StatisticsType.STATES_INPUT.toString(), StatisticsType.STATES_OUTPUT.toString(),
 			StatisticsType.STATES_REDUCTION_ABSOLUTE.toString(), StatisticsType.STATES_REDUCTION_RELATIVE.toString(),
 			StatisticsType.SIZE_MAXIMAL_INITIAL_BLOCK.toString(), };
