@@ -195,7 +195,8 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 		@Override
 		public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
-			return checkTransition(pre, getWpInternal(act, succ));
+			final IPredicate preFormula = mPf.not(mPf.newPredicate(getWpInternal(act, succ)));
+			return checkImplication(pre, preFormula);
 		}
 
 		@Override
@@ -238,11 +239,6 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 		private Validity checkImplication(final IPredicate pre, final IPredicate succ) {
 			return mMic.checkImplication(pre, false, succ, false);
-		}
-
-		private Validity checkTransition(final IPredicate pre, final Term wpInternal) {
-			final IPredicate preFormula = mPf.not(mPf.newPredicate(wpInternal));
-			return checkImplication(pre, preFormula);
 		}
 
 		private Term getWpInternal(final IInternalAction act, final IPredicate succ) {
