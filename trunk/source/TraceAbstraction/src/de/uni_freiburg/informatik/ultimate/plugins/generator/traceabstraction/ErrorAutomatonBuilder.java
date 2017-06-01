@@ -83,7 +83,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace,
 			final InterpolantAutomatonEnhancement enhanceMode) {
 		mResultBeforeEnhancement = constructStraightLineAutomaton(services, csToolkit, predicateFactory,
-				predicateUnifier.getFalsePredicate(), simplificationTechnique, xnfConversionTechnique, icfgContainer,
+				predicateUnifier, simplificationTechnique, xnfConversionTechnique, icfgContainer,
 				predicateFactoryInterpolantAutomata, alphabet, trace);
 
 		mResultAfterEnhancement = enhanceMode != InterpolantAutomatonEnhancement.NONE
@@ -105,13 +105,13 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 	private NestedWordAutomaton<LETTER, IPredicate> constructStraightLineAutomaton(
 			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final IPredicate falsePredicate,
+			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfg<?> icfgContainer,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
 			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace) throws AssertionError {
 		// compute 'wp' sequence from 'false'
-		final IPredicate postcondition = falsePredicate;
+		final IPredicate postcondition = predicateUnifier.getFalsePredicate();
 		final TracePredicates wpPredicates = getWpPredicates(services, csToolkit, predicateFactory,
 				simplificationTechnique, xnfConversionTechnique, icfgContainer, trace, postcondition);
 
@@ -122,7 +122,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			newIntermediatePredicates.add(predicateFactory.not(pred));
 		}
 		final IPredicate newPrecondition = predicateFactory.not(wpPredicates.getPrecondition());
-		final IPredicate newPostcondition = predicateFactory.not(wpPredicates.getPostcondition());
+		final IPredicate newPostcondition = predicateUnifier.getTruePredicate();
 		final TracePredicates newPredicates =
 				new TracePredicates(newPrecondition, newPostcondition, newIntermediatePredicates);
 
