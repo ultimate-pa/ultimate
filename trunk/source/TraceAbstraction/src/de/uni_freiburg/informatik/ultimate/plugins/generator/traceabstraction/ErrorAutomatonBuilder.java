@@ -60,6 +60,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.in
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.DefaultTransFormulas;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
@@ -71,31 +72,35 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  *            letter type in the trace
  */
 public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
-	// TODO 2017-05-17 Christian: Make this a setting?
-	private static final boolean USE_NONDET_AUTOMATON_ENHANCEMENT = false;
-
-	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
+	private final NestedWordAutomaton<LETTER, IPredicate> mResultBeforeEnhancement;
+	private final NondeterministicInterpolantAutomaton<LETTER> mResultAfterEnhancement;
 
 	public ErrorAutomatonBuilder(final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory,
 			final CfgSmtToolkit csToolkit, final IUltimateServiceProvider services,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfg<?> icfgContainer,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
-			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace) {
-		final NestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton = constructStraightLineAutomaton(services,
-				csToolkit, predicateFactory, predicateUnifier.getFalsePredicate(), simplificationTechnique,
-				xnfConversionTechnique, icfgContainer, predicateFactoryInterpolantAutomata, alphabet, trace);
+			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace,
+			final InterpolantAutomatonEnhancement enhanceMode) {
+		mResultBeforeEnhancement = constructStraightLineAutomaton(services, csToolkit, predicateFactory,
+				predicateUnifier.getFalsePredicate(), simplificationTechnique, xnfConversionTechnique, icfgContainer,
+				predicateFactoryInterpolantAutomata, alphabet, trace);
 
-		if (USE_NONDET_AUTOMATON_ENHANCEMENT) {
-			mResult = constructNondeterministicAutomaton(services, straightLineAutomaton, csToolkit, predicateUnifier,
-					predicateFactory);
-		} else {
-			mResult = straightLineAutomaton;
-		}
+		mResultAfterEnhancement = enhanceMode != InterpolantAutomatonEnhancement.NONE
+				? constructNondeterministicAutomaton(services, mResultBeforeEnhancement, csToolkit, predicateUnifier,
+						predicateFactory)
+				: null;
 	}
 
-	public NestedWordAutomaton<LETTER, IPredicate> getResult() {
-		return mResult;
+	public NestedWordAutomaton<LETTER, IPredicate> getResultBeforeEnhancement() {
+		return mResultBeforeEnhancement;
+	}
+
+	public NondeterministicInterpolantAutomaton<LETTER> getResultAfterEnhancement() {
+		if (mResultAfterEnhancement == null) {
+			throw new UnsupportedOperationException("No enhancement was requested.");
+		}
+		return mResultAfterEnhancement;
 	}
 
 	private NestedWordAutomaton<LETTER, IPredicate> constructStraightLineAutomaton(
@@ -147,7 +152,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		return wpPredicate;
 	}
 
-	private NestedWordAutomaton<LETTER, IPredicate> constructNondeterministicAutomaton(
+	private NondeterministicInterpolantAutomaton<LETTER> constructNondeterministicAutomaton(
 			final IUltimateServiceProvider services,
 			final INestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton, final CfgSmtToolkit csToolkit,
 			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory) {
@@ -162,8 +167,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		final NondeterministicInterpolantAutomaton<LETTER> result =
 				new NondeterministicInterpolantAutomaton<>(services, csToolkit, hoareTripleChecker,
 						straightLineAutomaton, predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
-		// TODO 2017-05-17 Christian: How do we get the correct type here? Should the CEGAR class be refactored?
-		return null;
+		return result;
 	}
 
 	/**
@@ -196,12 +200,12 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 		@Override
 		public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
-			final TransFormula globalVarsAssignments = mCsToolkit.getOldVarsAssignmentCache()
-					.getGlobalVarsAssignment(act.getSucceedingProcedure());
-			final TransFormula oldVarAssignments = mCsToolkit.getOldVarsAssignmentCache()
-					.getOldVarsAssignment(act.getSucceedingProcedure());
-			final Set<IProgramNonOldVar> modifiableGlobals = mCsToolkit.getModifiableGlobalsTable()
-					.getModifiedBoogieVars(act.getSucceedingProcedure());
+			final TransFormula globalVarsAssignments =
+					mCsToolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(act.getSucceedingProcedure());
+			final TransFormula oldVarAssignments =
+					mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(act.getSucceedingProcedure());
+			final Set<IProgramNonOldVar> modifiableGlobals =
+					mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(act.getSucceedingProcedure());
 			final IPredicate preFormula = mPf.not(mPu.getOrConstructPredicate(mPt.weakestPreconditionCall(mPf.not(succ),
 					act.getTransformula(), globalVarsAssignments, oldVarAssignments, modifiableGlobals)));
 			return checkImplication(pre, preFormula);
@@ -212,10 +216,10 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				final IPredicate succ) {
 			final TransFormula returnTF = act.getAssignmentOfReturn();
 			final TransFormula callTF = act.getLocalVarsAssignmentOfCall();
-			final TransFormula oldVarAssignments = mCsToolkit.getOldVarsAssignmentCache()
-					.getOldVarsAssignment(act.getSucceedingProcedure());
-			final Set<IProgramNonOldVar> modifiableGlobals = mCsToolkit.getModifiableGlobalsTable()
-					.getModifiedBoogieVars(act.getSucceedingProcedure());
+			final TransFormula oldVarAssignments =
+					mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(act.getSucceedingProcedure());
+			final Set<IProgramNonOldVar> modifiableGlobals =
+					mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(act.getSucceedingProcedure());
 			final IPredicate preFormula = mPf.not(mPu.getOrConstructPredicate(mPt.weakestPreconditionReturn(succ,
 					preHier, returnTF, callTF, oldVarAssignments, modifiableGlobals)));
 			return checkImplication(preLin, preFormula);

@@ -151,8 +151,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	private INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> mWitnessAutomaton;
 	protected IRefinementEngine<NestedWordAutomaton<LETTER, IPredicate>> mTraceCheckAndRefinementEngine;
 	
-	// TODO 2017-05-20 Christian: This should only be a temporary hack, properly integrate this into the control flow.
-	private boolean mErrorAutomatonAvailable;
+	private ErrorAutomatonBuilder<LETTER> mErrorAutomatonBuilder;
 	private final ErrorTraceContainer<LETTER> mErrorTraces = new ErrorTraceContainer<>();
 
 	public BasicCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
@@ -402,41 +401,30 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("constructing error automaton for trace of length " + trace.length());
 		}
-		final ErrorAutomatonBuilder<LETTER> builder = new ErrorAutomatonBuilder<>(
+		mErrorAutomatonBuilder = new ErrorAutomatonBuilder<>(
 				mTraceCheckAndRefinementEngine.getPredicateUnifier(), mPredicateFactory, mCsToolkit, mServices,
 				mSimplificationTechnique, mXnfConversionTechnique, mIcfgContainer, mPredicateFactoryInterpolantAutomata,
-				new VpAlphabet<>(mAbstraction), trace);
-		mInterpolAutomaton = builder.getResult();
-		mErrorAutomatonAvailable = true;
+				new VpAlphabet<>(mAbstraction), trace, getErrorAutomatonEnhancementMode());
+		mInterpolAutomaton = null;
 		assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
 		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Error automaton broken!";
 	}
 
+	private InterpolantAutomatonEnhancement getErrorAutomatonEnhancementMode() {
+		// TODO 2017-06-01 Christian: add setting for error automaton enhancement?
+		return mPref.interpolantAutomatonEnhancement();
+	}
+
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
-		final String automatonType;
-		final boolean useErrorAutomaton;
-		if (mErrorAutomatonAvailable) {
-			automatonType = "error";
-			useErrorAutomaton = true;
-			mErrorAutomatonAvailable = false;
-		} else {
-			automatonType = "interpolant";
-			useErrorAutomaton = false;
-		}
-
-		final NestedWordAutomaton<LETTER, IPredicate> subtrahendBeforeEnhancement = mInterpolAutomaton;
 		final IPredicateUnifier predicateUnifier = mTraceCheckAndRefinementEngine.getPredicateUnifier();
 		mStateFactoryForRefinement.setIteration(super.mIteration);
-
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		final boolean exploitSigmaStarConcatOfIa = !mComputeHoareAnnotation;
-
 		final INestedWordAutomaton<LETTER, IPredicate> minuend =
 				(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction;
 
 		final IHoareTripleChecker htc;
-
 		if (mTraceCheckAndRefinementEngine.getHoareTripleChecker() != null) {
 			htc = mTraceCheckAndRefinementEngine.getHoareTripleChecker();
 		} else {
@@ -444,14 +432,28 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 					mPref.getHoareTripleChecks(), super.mCsToolkit,
 					mTraceCheckAndRefinementEngine.getPredicateUnifier());
 		}
-
-		final InterpolantAutomatonEnhancement enhanceMode = mPref.interpolantAutomatonEnhancement();
-
+		
+		final String automatonType;
+		final boolean useErrorAutomaton;
+		final NestedWordAutomaton<LETTER, IPredicate> subtrahendBeforeEnhancement;
+		final InterpolantAutomatonEnhancement enhanceMode;
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahend;
-		if (useErrorAutomaton || enhanceMode == InterpolantAutomatonEnhancement.NONE) {
-			subtrahend = subtrahendBeforeEnhancement;
+		if (mErrorAutomatonBuilder != null) {
+			automatonType = "error";
+			useErrorAutomaton = true;
+			subtrahendBeforeEnhancement = mInterpolAutomaton;
+			enhanceMode = getErrorAutomatonEnhancementMode();
+			subtrahend = (enhanceMode == InterpolantAutomatonEnhancement.NONE)
+					? subtrahendBeforeEnhancement
+					: mErrorAutomatonBuilder.getResultBeforeEnhancement();;
 		} else {
-			subtrahend = constructInterpolantAutomatonForOnDemandEnhancement(subtrahendBeforeEnhancement,
+			automatonType = "interpolant";
+			useErrorAutomaton = false;
+			subtrahendBeforeEnhancement = mInterpolAutomaton;
+			enhanceMode = mPref.interpolantAutomatonEnhancement();
+			subtrahend = enhanceMode == InterpolantAutomatonEnhancement.NONE
+					? subtrahendBeforeEnhancement
+					: constructInterpolantAutomatonForOnDemandEnhancement(subtrahendBeforeEnhancement,
 					predicateUnifier, htc, enhanceMode);
 		}
 
