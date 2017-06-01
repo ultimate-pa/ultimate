@@ -763,7 +763,11 @@ public class IntegerTranslation extends AExpressionTranslation {
 	public Expression constructBinaryEqualityExpressionFloating(final ILocation loc, final int nodeOperator, final Expression exp1,
 			final CType type1, final Expression exp2, final CType type2) {
 		final String prefixedFunctionName = declareBinaryFloatComparisonOverApprox(loc, (CPrimitive) type1);
-		return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2 });
+		if (mOverapproximateFloatingPointOperations) {
+			return new FunctionApplication(loc, prefixedFunctionName, new Expression[] { exp1, exp2 });
+		} else {
+			return constructEquality(loc, nodeOperator, exp1, exp2);
+		}
 	}
 
 	@Override
@@ -780,7 +784,14 @@ public class IntegerTranslation extends AExpressionTranslation {
 				rightExpr = applyWraparound(loc, mTypeSizes, primitive2, rightExpr);
 			}
 		}
+		return constructEquality(loc, nodeOperator, leftExpr, rightExpr);
+	}
 
+	/**
+	 * Construct either equals or not-equals relation, depending on nodeOperator.
+	 */
+	private Expression constructEquality(final ILocation loc, final int nodeOperator, final Expression leftExpr,
+			final Expression rightExpr) {
 		if (nodeOperator == IASTBinaryExpression.op_equals) {
 			return ExpressionFactory.newBinaryExpression(loc, BinaryExpression.Operator.COMPEQ, leftExpr, rightExpr);
 		} else if (nodeOperator == IASTBinaryExpression.op_notequals) {
