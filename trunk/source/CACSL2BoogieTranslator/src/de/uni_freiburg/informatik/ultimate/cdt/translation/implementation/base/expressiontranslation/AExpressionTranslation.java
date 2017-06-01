@@ -39,8 +39,6 @@ import java.util.Map;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation;
-import de.uni_freiburg.informatik.ultimate.boogie.DeclarationInformation.StorageClass;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Attribute;
@@ -529,35 +527,14 @@ public abstract class AExpressionTranslation {
 			convertFloatToInt_NonBool(loc, rexp, newType);
 		}
 	}
-
-	public void convertFloatToInt_NonBool(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
-//		throw new UnsupportedSyntaxException(loc, "conversion from float to int not yet implemented");
-		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
-		final Expression oldExpression = rexp.lrVal.getValue();
-		final IdentifierExpression roundingMode = new IdentifierExpression(null, BitvectorTranslation.BOOGIE_ROUNDING_MODE_RTZ);
-		roundingMode.setDeclarationInformation(new DeclarationInformation(StorageClass.GLOBAL, null));
-		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {roundingMode, oldExpression});
-		final RValue rValue = new RValue(resultExpression, newType, false, false);
-		rexp.lrVal = rValue;
-	}
-
-	public void convertIntToFloat(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
-//		throw new UnsupportedSyntaxException(loc, "conversion from int to float not yet implemented");
-		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
-		final Expression oldExpression = rexp.lrVal.getValue();
-		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {getRoundingMode(), oldExpression});
-		final RValue rValue = new RValue(resultExpression, newType, false, false);
-		rexp.lrVal = rValue;
-	}
 	
-	public void convertFloatToFloat(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
-//		throw new UnsupportedSyntaxException(loc, "conversion from float to float not yet implemented");
-		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
-		final Expression oldExpression = rexp.lrVal.getValue();
-		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] { getRoundingMode(), oldExpression});
-		final RValue rValue = new RValue(resultExpression, newType, false, false);
-		rexp.lrVal = rValue;
-	}
+	public abstract void convertFloatToFloat(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType);
+
+	public abstract void convertIntToFloat(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType);
+
+	public abstract void convertFloatToInt_NonBool(ILocation loc, ExpressionResult rexp, CPrimitive newType);
+
+
 	
 	/**
 	 * Convert any scalar type to _Bool. Section 6.3.1.2 of C11 says:
@@ -744,4 +721,6 @@ public abstract class AExpressionTranslation {
 	public abstract Expression transformBitvectorToFloat(ILocation loc, Expression bitvector, CPrimitives floatType);
 
 	public abstract Expression transformFloatToBitvector(ILocation loc, Expression value, CPrimitives cprimitive);
+
+
 }

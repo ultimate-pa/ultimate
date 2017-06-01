@@ -429,6 +429,34 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			operand.lrVal = rVal;
 		}
 	}
+	
+	
+	public void convertFloatToInt_NonBool(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
+		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		final Expression oldExpression = rexp.lrVal.getValue();
+		final IdentifierExpression roundingMode = new IdentifierExpression(null, BitvectorTranslation.BOOGIE_ROUNDING_MODE_RTZ);
+		roundingMode.setDeclarationInformation(new DeclarationInformation(StorageClass.GLOBAL, null));
+		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {roundingMode, oldExpression});
+		final RValue rValue = new RValue(resultExpression, newType, false, false);
+		rexp.lrVal = rValue;
+	}
+
+	public void convertIntToFloat(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
+		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		final Expression oldExpression = rexp.lrVal.getValue();
+		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {getRoundingMode(), oldExpression});
+		final RValue rValue = new RValue(resultExpression, newType, false, false);
+		rexp.lrVal = rValue;
+	}
+	
+	public void convertFloatToFloat(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
+		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		final Expression oldExpression = rexp.lrVal.getValue();
+		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] { getRoundingMode(), oldExpression});
+		final RValue rValue = new RValue(resultExpression, newType, false, false);
+		rexp.lrVal = rValue;
+	}
+	
 
 	@Override
 	public Expression extractBits(final ILocation loc, final Expression operand, final int high, final int low) {
