@@ -836,6 +836,16 @@ public class IntegerTranslation extends AExpressionTranslation {
 		rexp.lrVal = rValue;
 	}
 	
+	
+	@Override
+	public void convertFloatToInt_NonBool(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
+		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		final Expression oldExpression = rexp.lrVal.getValue();
+		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {oldExpression});
+		final RValue rValue = new RValue(resultExpression, newType, false, false);
+		rexp.lrVal = rValue;
+	}
+	
 	@Override
 	protected String declareConversionFunction(final ILocation loc, final CPrimitive oldType, final CPrimitive newType) {
 		
