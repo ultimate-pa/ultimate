@@ -37,6 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
@@ -141,14 +142,7 @@ public class TermChecker {
 	 */
 	public boolean checkTerm(Term term) {
 		try {
-			mScript.push(1);
-			mScript.assertTerm(getClosedTerm(term));
-			final LBool result = mScript.checkSat();
-
-			mScript.pop(1);
-
-			mUtils.output(result.equals(LBool.SAT));
-
+			final LBool result = Util.checkSat(mScript, term);
 			return result.equals(LBool.SAT);
 		} catch (final SMTLIBException e) {
 			mUtils.output(e.toString());
