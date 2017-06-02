@@ -444,11 +444,11 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (mErrorAutomatonBuilder != null) {
 			automatonType = "error";
 			useErrorAutomaton = true;
-			subtrahendBeforeEnhancement = mInterpolAutomaton;
+			subtrahendBeforeEnhancement = mErrorAutomatonBuilder.getResultBeforeEnhancement();
 			enhanceMode = getErrorAutomatonEnhancementMode();
 			subtrahend = (enhanceMode == InterpolantAutomatonEnhancement.NONE)
 					? subtrahendBeforeEnhancement
-					: mErrorAutomatonBuilder.getResultBeforeEnhancement();;
+					: mErrorAutomatonBuilder.getResultAfterEnhancement();
 		} else {
 			automatonType = "interpolant";
 			useErrorAutomaton = false;
