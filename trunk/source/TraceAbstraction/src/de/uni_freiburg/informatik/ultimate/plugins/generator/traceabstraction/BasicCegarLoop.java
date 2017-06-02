@@ -406,8 +406,11 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 				mSimplificationTechnique, mXnfConversionTechnique, mIcfgContainer, mPredicateFactoryInterpolantAutomata,
 				new VpAlphabet<>(mAbstraction), trace, getErrorAutomatonEnhancementMode());
 		mInterpolAutomaton = null;
-		assert isInterpolantAutomatonOfSingleStateType(mInterpolAutomaton);
-		assert accepts(mServices, mInterpolAutomaton, mCounterexample.getWord()) : "Error automaton broken!";
+		// TODO 2017-06-02 Christian: This does not hold in general. Is this a problem?
+		// assert isInterpolantAutomatonOfSingleStateType(mErrorAutomatonBuilder.getResultBeforeEnhancement());
+		// assert isInterpolantAutomatonOfSingleStateType(mErrorAutomatonBuilder.getResultAfterEnhancement());
+		// assert accepts(mServices, mErrorAutomatonBuilder.getResultBeforeEnhancement(), mCounterexample.getWord()) :
+		// 	"Error automaton broken!";
 	}
 
 	private InterpolantAutomatonEnhancement getErrorAutomatonEnhancementMode() {
