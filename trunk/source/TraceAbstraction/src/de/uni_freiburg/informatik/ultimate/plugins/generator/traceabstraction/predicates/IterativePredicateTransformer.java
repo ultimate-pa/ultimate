@@ -61,10 +61,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.FlowSensitiveFaultLocalizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException.Reason;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.NestedFormulas;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
@@ -87,12 +85,7 @@ public class IterativePredicateTransformer {
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	protected final SortedMap<Integer, IPredicate> mPendingContexts;
-	/**
-	 * TODO 2017-05-22 Christian&Matthias: Not sure about this field. There are two users, {@link TraceCheckerSpWp} and
-	 *      {@link FlowSensitiveFaultLocalizer}. The further passe {@code null}, which should, if this field is read,
-	 *      result in a {@code NullPointerException}. The latter passes a predicate for {@code true}, which is counter-
-	 *      intuitive.
-	 */
+
 	private final IPredicate mTruePredicate;
 
 	private final IIcfgSymbolTable mSymbolTable;
