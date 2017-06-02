@@ -486,15 +486,13 @@ public final class SmtUtils {
 	 * Returns the equality ("=" lhs rhs), but checks if one of the arguments is true/false and simplifies accordingly.
 	 */
 	private static Term booleanEquality(final Script script, final Term lhs, final Term rhs) {
-		final Term trueTerm = script.term("true");
-		final Term falseTerm = script.term("false");
-		if (lhs.equals(trueTerm)) {
+		if (isTrue(lhs)) {
 			return rhs;
-		} else if (lhs.equals(falseTerm)) {
+		} else if (isFalse(lhs)) {
 			return SmtUtils.not(script, rhs);
-		} else if (rhs.equals(trueTerm)) {
+		} else if (isTrue(rhs)) {
 			return lhs;
-		} else if (rhs.equals(falseTerm)) {
+		} else if (isFalse(rhs)) {
 			return SmtUtils.not(script, lhs);
 		} else {
 			return script.term("=", lhs, rhs);
