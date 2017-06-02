@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
@@ -154,8 +153,21 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 	private NondeterministicInterpolantAutomaton<LETTER> constructNondeterministicAutomaton(
 			final IUltimateServiceProvider services,
-			final INestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton, final CfgSmtToolkit csToolkit,
+			final NestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton, final CfgSmtToolkit csToolkit,
 			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory) {
+		// add 'false' state if not present (required by the automaton builder)
+		boolean containsFalsePredicate = false;
+		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
+		for (final IPredicate pred : straightLineAutomaton.getStates()) {
+			if (pred == falsePredicate) {
+				containsFalsePredicate = true;
+				break;
+			}
+		}
+		if (!containsFalsePredicate) {
+			straightLineAutomaton.addState(false, false, falsePredicate);
+		}
+
 		final ManagedScript mgdScript = csToolkit.getManagedScript();
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
@@ -164,10 +176,8 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				new InclusionInPreChecker(mic, pt, predicateFactory, predicateUnifier, csToolkit);
 		final boolean conservativeSuccessorCandidateSelection = false;
 		final boolean secondChance = false;
-		final NondeterministicInterpolantAutomaton<LETTER> result =
-				new NondeterministicInterpolantAutomaton<>(services, csToolkit, hoareTripleChecker,
-						straightLineAutomaton, predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
-		return result;
+		return new NondeterministicInterpolantAutomaton<>(services, csToolkit, hoareTripleChecker,
+				straightLineAutomaton, predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
 	}
 
 	/**
@@ -176,7 +186,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
-	private class InclusionInPreChecker implements IHoareTripleChecker {
+	private static class InclusionInPreChecker implements IHoareTripleChecker {
 		private final MonolithicImplicationChecker mMic;
 		private final PredicateTransformer<Term, IPredicate, TransFormula> mPt;
 		private final PredicateFactory mPf;
@@ -215,14 +225,14 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		@Override
 		public Validity checkReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act,
 				final IPredicate succ) {
-			final TransFormula returnTF = act.getAssignmentOfReturn();
-			final TransFormula callTF = act.getLocalVarsAssignmentOfCall();
+			final TransFormula returnTf = act.getAssignmentOfReturn();
+			final TransFormula callTf = act.getLocalVarsAssignmentOfCall();
 			final TransFormula oldVarAssignments =
 					mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(act.getSucceedingProcedure());
 			final Set<IProgramNonOldVar> modifiableGlobals =
 					mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(act.getSucceedingProcedure());
 			final IPredicate preFormula = mPf.not(mPu.getOrConstructPredicate(mPt.weakestPreconditionReturn(succ,
-					preHier, returnTF, callTF, oldVarAssignments, modifiableGlobals)));
+					preHier, returnTf, callTf, oldVarAssignments, modifiableGlobals)));
 			return checkImplication(preLin, preFormula);
 		}
 
