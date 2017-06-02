@@ -41,6 +41,9 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithBenchmarkResults;
+import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithVMParameters;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
@@ -147,12 +150,26 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
+		if (createLogs()) {
+			return new ITestSummary[] { new TraceAbstractionTestSummary(this.getClass()) };
+		}
 		return new ITestSummary[0];
 	}
 
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
+		if (createLogs()) {
+			return new IIncrementalLog[] { new IncrementalLogWithBenchmarkResults(this.getClass()),
+					new IncrementalLogWithVMParameters(this.getClass(), mTimeout) };
+		}
 		return new IIncrementalLog[0];
+	}
+
+	/**
+	 * @return true if you want to create standard summaries and logs for our regression test suite, false otherwise.
+	 */
+	protected boolean createLogs() {
+		return false;
 	}
 
 	/***
