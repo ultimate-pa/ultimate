@@ -526,22 +526,18 @@ public final class SmtUtils {
 		}
 		if (!fst.getSort().isNumericSort()) {
 			return false;
+		} else {
+			final ConstantTerm fstConst = (ConstantTerm) fst;
+			final ConstantTerm sndConst = (ConstantTerm) snd;
+			final Rational fstValue = convertConstantTermToRational(fstConst);
+			final Rational sndValue = convertConstantTermToRational(sndConst);
+			if (!fstValue.getClass().isAssignableFrom(sndValue.getClass())
+					&& sndValue.getClass().isAssignableFrom(fst.getClass())) {
+				throw new UnsupportedOperationException("Incompatible classes. " + "First value is "
+						+ fstValue.getClass().getSimpleName() + " second value is " + sndValue.getClass().getSimpleName());
+			}
+			return !fstValue.equals(sndValue);
 		}
-		final ConstantTerm fstConst = (ConstantTerm) fst;
-		final ConstantTerm sndConst = (ConstantTerm) snd;
-		Object fstValue = fstConst.getValue();
-		Object sndValue = sndConst.getValue();
-		if (fstValue instanceof BigInteger && sndValue instanceof Rational) {
-			fstValue = Rational.valueOf((BigInteger) fstValue, BigInteger.ONE);
-		} else if (fstValue instanceof Rational && sndValue instanceof BigInteger) {
-			sndValue = Rational.valueOf((BigInteger) sndValue, BigInteger.ONE);
-		}
-		if (!fstValue.getClass().isAssignableFrom(sndValue.getClass())
-				&& sndValue.getClass().isAssignableFrom(fst.getClass())) {
-			throw new UnsupportedOperationException("Incompatible classes. " + "First value is "
-					+ fstValue.getClass().getSimpleName() + " second value is " + sndValue.getClass().getSimpleName());
-		}
-		return !fstValue.equals(sndValue);
 	}
 
 	public static List<Term> substitutionElementwise(final List<Term> subtituents, final Substitution subst) {
@@ -796,7 +792,9 @@ public final class SmtUtils {
 	 * @return Rational from the value of ct
 	 * @throws IllegalArgumentException
 	 *             if ct does not represent a Rational.
+	 * @deprecated replace this method by convertConstantTermToRational()
 	 */
+	@Deprecated
 	public static Rational convertCT(final ConstantTerm ct) throws IllegalArgumentException {
 		if (SmtSortUtils.isRealSort(ct.getSort())) {
 			if (ct.getValue() instanceof Rational) {
