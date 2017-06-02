@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Alexander Nutz (nutz@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -34,9 +34,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
 
 /**
  * Defines preference page for C translation.
- * 
+ *
  * Check https://wiki.debian.org/ArchitectureSpecificsMemo to find our which setting for typesizes you want to use.
- * 
+ *
  * @author Matthias Heizmann
  *
  */
@@ -65,11 +65,15 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 			"If two pointers are subtracted or compared they have the same base address";
 	public static final String LABEL_UNSIGNED_TREATMENT = "How to treat unsigned ints differently from normal ones";
 	public static final String LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES = "Check division by zero";
-	public static final String LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES = "Check division by zero for floating types";
+	public static final String LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES =
+			"Check division by zero for floating types";
 	public static final String LABEL_CHECK_SIGNED_INTEGER_BOUNDS = "Check absence of signed integer overflows";
 	public static final String LABEL_ASSUME_NONDET_VALUES_IN_RANGE = "Assume nondeterminstic values are in range";
 	public static final String LABEL_BITVECTOR_TRANSLATION = "Use bitvectors instead of ints";
 	public static final String LABEL_OVERAPPROXIMATE_FLOATS = "Overapproximate operations on floating types";
+	private static final String DESC_OVERAPPROXIMATE_FLOATS =
+			"Overapproximate all operations on floats (including plus, minus, multiplication, conversions, etc.) by havoc. "
+					+ "The resulting analysis will be fast and sound, but the result is UNKNOWN if such an operation occurs in a counterexample.";
 	public static final String LABEL_FP_TO_IEEE_BV_EXTENSION = "Use Z3's non-standard fp.to_ieee_bv extension";
 	public static final String LABEL_SMT_BOOL_ARRAYS_WORKAROUND = "SMT bool arrays workaround";
 
@@ -150,14 +154,15 @@ public class CACSLPreferenceInitializer extends UltimatePreferenceInitializer {
 						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_UNSIGNED_TREATMENT, UnsignedTreatment.WRAPAROUND,
 						PreferenceType.Combo, UnsignedTreatment.values()),
-				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES, PointerCheckMode.ASSERTandASSUME,
-						PreferenceType.Combo, PointerCheckMode.values()),
+				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_INTEGER_TYPES,
+						PointerCheckMode.ASSERTandASSUME, PreferenceType.Combo, PointerCheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_DIVISION_BY_ZERO_OF_FLOATING_TYPES, PointerCheckMode.IGNORE,
 						PreferenceType.Combo, PointerCheckMode.values()),
 				new UltimatePreferenceItem<>(LABEL_CHECK_SIGNED_INTEGER_BOUNDS, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_ASSUME_NONDET_VALUES_IN_RANGE, true, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_BITVECTOR_TRANSLATION, false, PreferenceType.Boolean),
-				new UltimatePreferenceItem<>(LABEL_OVERAPPROXIMATE_FLOATS, false, PreferenceType.Boolean),
+				new UltimatePreferenceItem<>(LABEL_OVERAPPROXIMATE_FLOATS, false, DESC_OVERAPPROXIMATE_FLOATS,
+						PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_FP_TO_IEEE_BV_EXTENSION, false, PreferenceType.Boolean),
 				new UltimatePreferenceItem<>(LABEL_SMT_BOOL_ARRAYS_WORKAROUND, true, PreferenceType.Boolean),
 
