@@ -473,10 +473,12 @@ public final class SmtUtils {
 	public static Term binaryEquality(final Script script, final Term lhs, final Term rhs) {
 		if (lhs == rhs) {
 			return script.term("true");
-		} else if (twoConstantTermsWithDifferentValue(lhs, rhs)) {
-			return script.term("false");
+		} else if (lhs.getSort().isNumericSort()) {
+			return numericEquality(script, lhs, rhs);
 		} else if (SmtSortUtils.isBoolSort(lhs.getSort())) {
 			return booleanEquality(script, lhs, rhs);
+		} else if (SmtSortUtils.isBitvecSort(lhs.getSort())) {
+			return bitvectorEquality(script, lhs, rhs);
 		} else {
 			return script.term("=", lhs, rhs);
 		}
@@ -498,46 +500,64 @@ public final class SmtUtils {
 			return script.term("=", lhs, rhs);
 		}
 	}
-
+	
 	/**
-	 * Returns true iff. fst and snd are different literals of the same numeric sort ("Int" or "Real").
-	 *
-	 * @exception Throws
-	 *                UnsupportedOperationException if both arguments do not have the same Sort.
+	 * Returns the equality ("=" lhs rhs), for inputs of sort BitVec.
+	 * Simplifies if both inputs are literals.
 	 */
-	private static boolean twoConstantTermsWithDifferentValue(final Term fst, final Term snd) {
-		if (!fst.getSort().equals(snd.getSort())) {
-			throw new UnsupportedOperationException("arguments sort different");
+	private static Term bitvectorEquality(final Script script, final Term lhs, final Term rhs) {
+		if (!SmtSortUtils.isBitvecSort(lhs.getSort())) {
+			throw new UnsupportedOperationException("need BitVec sort");
 		}
-		final BitvectorConstant fstbw = BitvectorUtils.constructBitvectorConstant(fst);
+		if (!SmtSortUtils.isBitvecSort(rhs.getSort())) {
+			throw new UnsupportedOperationException("need BitVec sort");
+		}
+		final BitvectorConstant fstbw = BitvectorUtils.constructBitvectorConstant(lhs);
 		if (fstbw != null) {
-			final BitvectorConstant sndbw = BitvectorUtils.constructBitvectorConstant(snd);
+			final BitvectorConstant sndbw = BitvectorUtils.constructBitvectorConstant(rhs);
 			if (sndbw != null) {
-				return !fstbw.equals(sndbw);
+				if (fstbw.equals(sndbw)) {
+					return script.term("true");
+				}
 			}
 		}
-		if (!(fst instanceof ConstantTerm)) {
-			return false;
+		return script.term("=", lhs, rhs);
+	}
+	
+	
+	/**
+	 * Returns the equality ("=" lhs rhs), for inputs of numeric sort (int, real)
+	 * Simplifies if both inputs are literals.
+	 */
+	private static Term numericEquality(final Script script, final Term lhs, final Term rhs) {
+		if (!lhs.getSort().isNumericSort()) {
+			throw new UnsupportedOperationException("need numeric sort");
 		}
-		if (!(snd instanceof ConstantTerm)) {
-			return false;
+		if (!rhs.getSort().isNumericSort()) {
+			throw new UnsupportedOperationException("need numeric sort");
 		}
-		if (!fst.getSort().isNumericSort()) {
-			return false;
+		if (!(lhs instanceof ConstantTerm)) {
+			return script.term("=", lhs, rhs);
+		}
+		if (!(rhs instanceof ConstantTerm)) {
+			return script.term("=", lhs, rhs);
+		}
+		final ConstantTerm lhsConst = (ConstantTerm) lhs;
+		final ConstantTerm rhsConst = (ConstantTerm) rhs;
+		final Rational lhsValue = convertConstantTermToRational(lhsConst);
+		final Rational rhsValue = convertConstantTermToRational(rhsConst);
+		if (!lhsValue.getClass().isAssignableFrom(rhsValue.getClass())
+				&& rhsValue.getClass().isAssignableFrom(lhs.getClass())) {
+			throw new UnsupportedOperationException("Incompatible classes. " + "First value is "
+					+ lhsValue.getClass().getSimpleName() + " second value is " + rhsValue.getClass().getSimpleName());
+		}
+		if (lhsValue.equals(rhsValue)) {
+			return script.term("true");
 		} else {
-			final ConstantTerm fstConst = (ConstantTerm) fst;
-			final ConstantTerm sndConst = (ConstantTerm) snd;
-			final Rational fstValue = convertConstantTermToRational(fstConst);
-			final Rational sndValue = convertConstantTermToRational(sndConst);
-			if (!fstValue.getClass().isAssignableFrom(sndValue.getClass())
-					&& sndValue.getClass().isAssignableFrom(fst.getClass())) {
-				throw new UnsupportedOperationException("Incompatible classes. " + "First value is "
-						+ fstValue.getClass().getSimpleName() + " second value is " + sndValue.getClass().getSimpleName());
-			}
-			return !fstValue.equals(sndValue);
+			return script.term("false");
 		}
 	}
-
+	
 	public static List<Term> substitutionElementwise(final List<Term> subtituents, final Substitution subst) {
 		final List<Term> result = new ArrayList<>();
 		for (int i = 0; i < subtituents.size(); i++) {
