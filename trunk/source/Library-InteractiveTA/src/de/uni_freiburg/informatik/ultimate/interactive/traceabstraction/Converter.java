@@ -71,36 +71,18 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 		converterRegistry.registerBA(TraceAbstractionProtos.NestedRun.class, NestedRun.class, Converter::fromNestedRun);
 		converterRegistry.registerAB(TraceAbstractionProtos.PreNestedWord.class, PreNestedWord.class,
 				this::toPreNestedWord);
-		// converterRegistry.registerAB(TraceAbstractionProtos.NestedWord.class, PreNestedWord.class,
-		// TAConverter::nwToPreNestedWord);
-		// converterRegistry.registerAB(TraceAbstractionProtos.NestedRun.class, NestedRun.class,
-		// TAConverter::toNestedRun);
-		// converterRegistry.registerAB(TraceAbstractionProtos.NestedWord.class, NestedWord.class,
-		// TAConverter::toNestedWord);
 		@SuppressWarnings("unchecked")
 		final Class<INestedWordAutomaton<CodeBlock, IPredicate>> cls = (Class) INestedWordAutomaton.class;
 		converterRegistry.registerBA(TraceAbstractionProtos.NestedWordAutomaton.class, cls, Converter::fromAutomaton);
 		@SuppressWarnings("unchecked")
-		final Class<INwaOutgoingLetterAndTransitionProvider<CodeBlock, IPredicate>> scls = (Class) INwaOutgoingLetterAndTransitionProvider.class;
+		final Class<INwaOutgoingLetterAndTransitionProvider<CodeBlock, IPredicate>> scls =
+				(Class) INwaOutgoingLetterAndTransitionProvider.class;
 		converterRegistry.registerBA(TraceAbstractionProtos.NestedWordAutomaton.class, scls,
 				Converter::fromSimpleAutomaton);
 		converterRegistry.registerBA(TraceAbstractionProtos.TAPreferences.class, TAPreferences.class,
 				Converter::fromTAPreferences);
 		converterRegistry.registerBA(TraceAbstractionProtos.CegarResult.class, AbstractCegarLoop.Result.class,
 				Converter::fromResult);
-
-		converterRegistry.registerAB(TraceAbstractionProtos.Question.class, Boolean.class,
-				TraceAbstractionProtos.Question::getAnswer);
-
-		/*
-		 * converterRegistry.registerAB(TraceAbstractionProtos.Tracks.class,
-		 * MultiTrackTraceAbstractionRefinementStrategy.Track[].class, Converter::toTracks);
-		 * converterRegistry.registerBA(TraceAbstractionProtos.Tracks.class,
-		 * MultiTrackTraceAbstractionRefinementStrategy.Track[].class, Converter::fromTracks);
-		 * converterRegistry.registerAB(InteractiveIterationInfo.class, ParrotInteractiveIterationInfo.class,
-		 * Converter::toIterationInfo); converterRegistry.registerBA(InteractiveIterationInfo.class,
-		 * ParrotInteractiveIterationInfo.class, Converter::fromIterationInfo);
-		 */
 
 		converterRegistry.registerBA(TraceAbstractionProtos.IterationInfo.class, IterationInfo.Info.class,
 				Converter::fromIterationInfo);
@@ -117,6 +99,22 @@ public class Converter extends AbstractConverter<GeneratedMessageV3, Object> {
 
 		converterRegistry.registerRConv(TraceAbstractionProtos.InterpolantSequences.Choices.class,
 				InterpolantSequences.class, InterpolantSequences.class, Converter::getInterpolantSequences);
+
+		// converterRegistry.registerAB(TraceAbstractionProtos.NestedWord.class, PreNestedWord.class,
+		// TAConverter::nwToPreNestedWord);
+		// converterRegistry.registerAB(TraceAbstractionProtos.NestedRun.class, NestedRun.class,
+		// TAConverter::toNestedRun);
+		// converterRegistry.registerAB(TraceAbstractionProtos.NestedWord.class, NestedWord.class,
+		// TAConverter::toNestedWord);
+		//
+		// converterRegistry.registerAB(TraceAbstractionProtos.Tracks.class,
+		// MultiTrackTraceAbstractionRefinementStrategy.Track[].class, Converter::toTracks);
+		// converterRegistry.registerBA(TraceAbstractionProtos.Tracks.class,
+		// MultiTrackTraceAbstractionRefinementStrategy.Track[].class, Converter::fromTracks);
+		// converterRegistry.registerAB(InteractiveIterationInfo.class, ParrotInteractiveIterationInfo.class,
+		// Converter::toIterationInfo);
+		// converterRegistry.registerBA(InteractiveIterationInfo.class, ParrotInteractiveIterationInfo.class,
+		// Converter::fromIterationInfo);
 	}
 
 	private static InterpolantSequences getInterpolantSequences(
