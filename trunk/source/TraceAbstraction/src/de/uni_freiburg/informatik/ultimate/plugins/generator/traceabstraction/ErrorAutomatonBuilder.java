@@ -128,7 +128,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		// TODO 2017-05-17 Christian: additionally compute 'sp' sequence and intersect
 
 		return new StraightLineInterpolantAutomatonBuilder<>(services, alphabet, predicateFactoryInterpolantAutomata,
-				trace, newPredicates).getResult();
+				trace, newPredicates, StraightLineInterpolantAutomatonBuilder.AcceptingStateMode.ALL).getResult();
 	}
 
 	private TracePredicates getWpPredicates(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,

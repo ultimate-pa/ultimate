@@ -130,8 +130,8 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		mPredicateFactory = (PredicateFactory) mPredicateUnifier.getPredicateFactory();
 		mAbstraction = abstraction;
 		final VpAlphabet<LETTER> alphabet = new VpAlphabet<>(abstraction);
-		mIA = new StraightLineInterpolantAutomatonBuilder<>(mServices, alphabet, interpolantGenerator, predicateFactory)
-				.getResult();
+		mIA = new StraightLineInterpolantAutomatonBuilder<>(mServices, alphabet, interpolantGenerator, predicateFactory,
+				StraightLineInterpolantAutomatonBuilder.AcceptingStateMode.ONLY_LAST).getResult();
 		mModifiedGlobals = modifiableGlobalsTable;
 		mInterpolation = interpolation;
 		mEpimorphism = new AutomatonEpimorphism<>(new AutomataLibraryServices(mServices));
