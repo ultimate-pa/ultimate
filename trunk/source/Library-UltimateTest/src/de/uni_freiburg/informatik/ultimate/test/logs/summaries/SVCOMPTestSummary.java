@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.ultimatetest.summaries;
+package de.uni_freiburg.informatik.ultimate.test.logs.summaries;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -41,7 +41,6 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
 import de.uni_freiburg.informatik.ultimate.test.reporting.BaseTestSummary;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.svcomp.SVCOMP15TestSuite;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
 
 /**

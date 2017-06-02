@@ -10,6 +10,8 @@ Export-Package: de.uni_freiburg.informatik.ultimate.test,
  de.uni_freiburg.informatik.ultimate.test.junitextension,
  de.uni_freiburg.informatik.ultimate.test.junitextension.categories,
  de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory,
+ de.uni_freiburg.informatik.ultimate.test.logs.summaries,
+ de.uni_freiburg.informatik.ultimate.test.logs.incremental,
  de.uni_freiburg.informatik.ultimate.test.mocks,
  de.uni_freiburg.informatik.ultimate.test.reporting,
  de.uni_freiburg.informatik.ultimate.test.util

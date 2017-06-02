@@ -25,7 +25,7 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.ultimatetest.logs;
+package de.uni_freiburg.informatik.ultimate.test.logs.incremental;
 
 import java.io.File;
 import java.io.FileWriter;

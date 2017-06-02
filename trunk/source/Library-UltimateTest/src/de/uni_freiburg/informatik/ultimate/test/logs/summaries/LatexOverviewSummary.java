@@ -24,12 +24,11 @@
  * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.ultimatetest.summaries;
+package de.uni_freiburg.informatik.ultimate.test.logs.summaries;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -39,7 +38,6 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ExtendedResult;
 import de.uni_freiburg.informatik.ultimate.util.CoreUtil;
-import de.uni_freiburg.informatik.ultimate.util.CoreUtil.IMapReduce;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -49,35 +47,37 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
  * @author dietsch@informatik.uni-freiburg.de
  *
  */
-public class LatexDetailedSummary extends LatexSummary {
+public class LatexOverviewSummary extends LatexSummary {
 
+	private static final String NO_SETTINGS_NAME = "No settings";
 	private final int mLatexTableHeaderCount;
 
-	public LatexDetailedSummary(final Class<? extends UltimateTestSuite> ultimateTestSuite,
+	/**
+	 * Create a summary that prints a file containing LaTex table for each toolchain. The table groups test runs by
+	 * folder name and compares them against different setting files.
+	 *
+	 * The values result from benchmark providers collected during the Ultimate runs.
+	 *
+	 * @param ultimateTestSuite
+	 *            To which testsuite belongs this summary?
+	 * @param benchmarks
+	 *            A list of benchmark types that should be included in the table.
+	 * @param columnDefinitions
+	 *            An array of column definitions that specify how the benchmark results should be processed (values as
+	 *            well as strings)
+	 */
+	public LatexOverviewSummary(final Class<? extends UltimateTestSuite> ultimateTestSuite,
 			final Collection<Class<? extends ICsvProviderProvider<? extends Object>>> benchmarks,
 			final ColumnDefinition[] columnDefinitions) {
 		super(ultimateTestSuite, benchmarks, columnDefinitions);
-
-		mLatexTableHeaderCount =
-				CoreUtil.reduce(mColumnDefinitions, (IMapReduce<Integer, ColumnDefinition>) (lastValue, entry) -> {
-					if (lastValue == null) {
-						lastValue = 0;
-					}
-					return entry.getLatexColumnTitle() != null ? lastValue + 1 : lastValue;
-				});
+		mLatexTableHeaderCount = (int) mColumnDefinitions.stream().filter(a -> a.getLatexColumnTitle() != null).count();
 	}
 
 	@Override
 	public String getLog() {
 		final StringBuilder sb = new StringBuilder();
 		final PartitionedResults results = partitionResults(mResults.entrySet());
-
-		try {
-			makeTables(sb, results);
-		} catch (final Error e) {
-			return "";
-		}
-
+		makeTables(sb, results);
 		return sb.toString();
 	}
 
@@ -87,28 +87,25 @@ public class LatexDetailedSummary extends LatexSummary {
 	}
 
 	private void makeTables(final StringBuilder sb, final PartitionedResults results) {
-
-		final int additionalHeaders = 4;
-
 		final Set<String> tools =
-				CoreUtil.selectDistinct(results.All, entry -> entry.getKey().getToolchain().getName());
-
+				results.All.stream().map(a -> a.getKey().getToolchain().getName()).collect(Collectors.toSet());
 		final String br = CoreUtil.getPlatformLineSeparator();
 
 		appendPreamble(sb, br);
 
 		for (final String tool : tools) {
 			// make table header
-			sb.append("\\begin{longtabu} to \\linewidth {llll");
+			sb.append("\\begin{longtabu} to \\linewidth {lcllc");
 			for (int i = 0; i < mLatexTableHeaderCount; ++i) {
 				sb.append("r");
 			}
 			sb.append("}").append(br);
 			sb.append("\\toprule").append(br);
 			sb.append("  \\header{}& ").append(br);
+			sb.append("  \\header{\\#}&").append(br);
 			sb.append("  \\header{Result}&").append(br);
-			sb.append("  \\header{File}& ").append(br);
 			sb.append("  \\header{Variant}& ").append(br);
+			sb.append("  \\header{Count}&").append(br);
 
 			int i = 0;
 			for (final ColumnDefinition cd : mColumnDefinitions) {
@@ -127,18 +124,20 @@ public class LatexDetailedSummary extends LatexSummary {
 				sb.append(br);
 			}
 			sb.append("  \\cmidrule(r){2-");
-			sb.append(additionalHeaders + mLatexTableHeaderCount);
+			sb.append(5 + mLatexTableHeaderCount);
 			sb.append("}").append(br);
 
 			// make table body
-			final PartitionedResults resultsPerTool = partitionResults(
-					CoreUtil.where(results.All, entry -> entry.getKey().getToolchain().getName().equals(tool)));
-			makeTableBody(sb, resultsPerTool, tool, additionalHeaders);
+
+			final PartitionedResults resultsPerTool = partitionResults(results.All.stream()
+					.filter(a -> a.getKey().getToolchain().getName().equals(tool)).collect(Collectors.toList()));
+			makeTableBody(sb, resultsPerTool, tool);
 
 			// end table
 			sb.append("\\caption{Results for ").append(removeInvalidCharsForLatex(tool)).append(".}").append(br);
 			sb.append("\\end{longtabu}").append(br);
 		}
+
 		// append finishing code
 		appendEnd(sb, br);
 	}
@@ -149,7 +148,7 @@ public class LatexDetailedSummary extends LatexSummary {
 
 	private void appendPreamble(final StringBuilder sb, final String br) {
 		// append preamble
-		sb.append("\\documentclass[a3paper,landscape]{article}").append(br);
+		sb.append("\\documentclass[a3paper]{article}").append(br);
 		sb.append("\\usepackage[a3paper, margin=1.5cm, top=1.1cm]{geometry}").append(br);
 		sb.append("\\usepackage[table]{xcolor} ").append(br);
 		sb.append("\\usepackage[utf8]{inputenc}").append(br);
@@ -170,8 +169,8 @@ public class LatexDetailedSummary extends LatexSummary {
 		sb.append("\\newcommand{\\folder}[1]{\\parbox{5em}{#1}}").append(br);
 	}
 
-	private void makeTableBody(final StringBuilder sb, final PartitionedResults results, final String toolname,
-			final int additionalTableHeaders) {
+	private void makeTableBody(final StringBuilder sb, final PartitionedResults results, final String toolname) {
+		// make header
 		final Set<String> distinctSuffixes = getDistinctFolderSuffixes(results);
 
 		int i = 0;
@@ -183,81 +182,92 @@ public class LatexDetailedSummary extends LatexSummary {
 											.anyMatch(a -> a.getParent().endsWith(suffix)))
 									.collect(Collectors.toList()));
 			i++;
-			makeFolderRow(sb, resultsPerFolder, suffix, i >= distinctSuffixes.size(), additionalTableHeaders);
+			makeFolderRow(sb, resultsPerFolder, suffix, i >= distinctSuffixes.size());
 		}
 	}
 
 	private void makeFolderRow(final StringBuilder sb, final PartitionedResults results, final String folder,
-			final boolean last, final int additionalTableHeaders) {
+			final boolean last) {
 		final String br = CoreUtil.getPlatformLineSeparator();
-		final int additionalHeaders = additionalTableHeaders;
+		final int resultRows = 4;
+		final List<String> variants =
+				results.All.stream().map(a -> a.getKey().getSettingsName()).distinct().collect(Collectors.toList());
 
-		final List<String> files =
-				new ArrayList<>(CoreUtil.selectDistinct(results.All, entry -> entry.getKey().getInputFileNames()));
-
-		final int safeRows = results.Safe.size() == 0 ? 1 : results.Safe.size();
-		final int unsafeRows = results.Unsafe.size() == 0 ? 1 : results.Unsafe.size();
-		final int timeoutRows = results.Timeout.size() == 0 ? 1 : results.Timeout.size();
-		final int errorRows = results.Error.size() == 0 ? 1 : results.Error.size();
-		final int folderRows = safeRows + unsafeRows + timeoutRows + errorRows;
-
-		// folder name header
+		// folder name
 		sb.append("\\multirow{");
-		sb.append(folderRows);
+		sb.append(variants.size() * resultRows);
 		sb.append("}{*}{\\folder{");
 		sb.append(removeInvalidCharsForLatex(folder));
-		sb.append("}}").append(br);
+		sb.append("}} &").append(br);
 
-		// row header unsafe
-		sb.append("& \\multirow{");
-		sb.append(unsafeRows);
+		// count expected unsafe & row header unsafe
+		sb.append("\\multirow{");
+		sb.append(variants.size());
 		sb.append("}{*}{");
-		sb.append("\\folder{Unsafe}} ").append(br);
+		sb.append(results.ExpectedUnsafe / variants.size());
+		sb.append("} &").append(br);
+		sb.append("\\multirow{");
+		sb.append(variants.size());
+		sb.append("}{*}{\\folder{Unsafe}} ").append(br);
 
 		// results unsafe
-		makeFileEntry(sb, results.Unsafe, files);
-
+		for (int i = 0; i < variants.size(); ++i) {
+			makeVariantEntry(sb, results.Unsafe, variants.get(i), i == 0);
+		}
 		sb.append("  \\cmidrule[0.01em](l){2-");
-		sb.append(mLatexTableHeaderCount + additionalHeaders);
+		sb.append(mLatexTableHeaderCount + 5);
 		sb.append("}").append(br);
 
-		// row header safe
+		// count expected safe & row header safe
 		sb.append("& \\multirow{");
-		sb.append(safeRows);
+		sb.append(variants.size());
 		sb.append("}{*}{");
-		sb.append("\\folder{Safe}} ").append(br);
+		sb.append(results.ExpectedSafe / variants.size());
+		sb.append("} &").append(br);
+		sb.append("\\multirow{");
+		sb.append(variants.size());
+		sb.append("}{*}{\\folder{Safe}} ").append(br);
 
 		// results safe
-		makeFileEntry(sb, results.Safe, files);
-
+		for (int i = 0; i < variants.size(); ++i) {
+			makeVariantEntry(sb, results.Safe, variants.get(i), i == 0);
+		}
 		sb.append("  \\cmidrule[0.01em](l){2-");
-		sb.append(mLatexTableHeaderCount + additionalHeaders);
+		sb.append(mLatexTableHeaderCount + 5);
 		sb.append("}").append(br);
 
-		// row header timeout
+		// count total & row header total
 		sb.append("& \\multirow{");
-		sb.append(timeoutRows);
+		sb.append(variants.size());
+		sb.append("}{*}{");
+		sb.append(results.All.size() / variants.size());
+		sb.append("} &").append(br);
+		sb.append("\\multirow{");
+		sb.append(variants.size());
+		sb.append("}{*}{\\folder{Completed}} ").append(br);
+		final Collection<Entry<UltimateRunDefinition, ExtendedResult>> completed = new ArrayList<>();
+		completed.addAll(results.Safe);
+		completed.addAll(results.Unsafe);
+		for (int i = 0; i < variants.size(); ++i) {
+			// this is the last in the foldoer row, so it gets a different
+			// separator, hence false == isLast
+			makeVariantEntry(sb, completed, variants.get(i), i == 0);
+		}
+		sb.append("  \\cmidrule[0.01em](l){2-");
+		sb.append(mLatexTableHeaderCount + 5);
+		sb.append("}").append(br);
+
+		// row timeout
+		sb.append("& & \\multirow{");
+		sb.append(variants.size());
 		sb.append("}{*}{\\folder{Timeout}} ").append(br);
+		for (int i = 0; i < variants.size(); ++i) {
+			makeVariantEntry(sb, results.Timeout, variants.get(i), i == 0);
+		}
 
-		// results timeout
-		makeFileEntry(sb, results.Timeout, files);
-
-		sb.append("  \\cmidrule[0.01em](l){2-");
-		sb.append(mLatexTableHeaderCount + additionalHeaders);
-		sb.append("}").append(br);
-
-		// row header error
-		sb.append("& \\multirow{");
-		sb.append(errorRows);
-		sb.append("}{*}{\\folder{Error}} ").append(br);
-
-		// results error
-		makeFileEntry(sb, results.Error, files);
-
-		// table body ending
 		if (last) {
 			sb.append("\\bottomrule").append(br);
-			for (int i = 0; i < mLatexTableHeaderCount + additionalHeaders - 1; ++i) {
+			for (int i = 0; i < mLatexTableHeaderCount + 4; ++i) {
 				sb.append("& ");
 			}
 			sb.append("\\\\").append(br);
@@ -266,95 +276,79 @@ public class LatexDetailedSummary extends LatexSummary {
 		}
 	}
 
-	private void makeFileEntry(final StringBuilder sb,
-			final Collection<Entry<UltimateRunDefinition, ExtendedResult>> current, final List<String> files) {
+	private void makeVariantEntry(final StringBuilder sb,
+			final Collection<Entry<UltimateRunDefinition, ExtendedResult>> current, final String variant,
+			final boolean isFirst) {
 
-		final List<Entry<UltimateRunDefinition, ExtendedResult>> results = current.stream()
-				.filter(a -> files.contains(a.getKey().getInputFileNames())).collect(Collectors.toList());
-
-		Collections.sort(results, (o1, o2) -> o1.getKey().compareTo(o2.getKey()));
+		final Collection<Entry<UltimateRunDefinition, ExtendedResult>> results =
+				current.stream().filter(a -> a.getKey().getSettingsName().equals(variant)).collect(Collectors.toList());
 
 		final String br = CoreUtil.getPlatformLineSeparator();
 		final String sep = " & ";
 
-		if (results.isEmpty()) {
-			// insert an empty row for this category
-			final int length = mLatexTableHeaderCount + 2;
-			for (int i = 0; i < length; ++i) {
-				sb.append(sep);
-			}
-			sb.append("\\\\");
-			sb.append(br);
-			return;
+		if (isFirst) {
+			sb.append(sep);
+		} else {
+			sb.append(sep).append(sep).append(sep);
 		}
+		sb.append(removeInvalidCharsForLatex(variant));
+		sb.append(sep);
 
-		boolean isFirst = true;
+		ICsvProvider<String> csv = makePrintCsvProviderFromResults(results, mColumnDefinitions);
 
-		for (final Entry<UltimateRunDefinition, ExtendedResult> result : results) {
-			if (isFirst) {
-				sb.append(sep);
-				isFirst = false;
-			} else {
-				sb.append(sep).append(sep);
-			}
-			sb.append(removeInvalidCharsForLatex(result.getKey().getInputFileNames()));
-			sb.append(sep);
-			sb.append(removeInvalidCharsForLatex(result.getKey().getSettingsName()));
-			sb.append(sep);
+		csv = CsvUtils.projectColumn(csv,
+				mColumnDefinitions.stream().map(a -> a.getCsvColumnTitle()).collect(Collectors.toList()));
 
-			ICsvProvider<String> csv =
-					makePrintCsvProviderFromResults(Collections.singleton(result), mColumnDefinitions);
+		csv = ColumnDefinitionUtil.reduceProvider(csv,
+				mColumnDefinitions.stream().map(a -> a.getManyRunsToOneRow()).collect(Collectors.toList()),
+				mColumnDefinitions);
 
-			csv = CsvUtils.projectColumn(csv, CoreUtil.select(mColumnDefinitions, entry -> entry.getCsvColumnTitle()));
+		csv = ColumnDefinitionUtil.makeHumanReadable(csv, mColumnDefinitions);
+		csv = CsvUtils.addColumn(csv, "Count", 0, Arrays.asList(new String[] { Integer.toString(results.size()) }));
 
-			csv = ColumnDefinitionUtil.reduceProvider(csv,
-					CoreUtil.select(mColumnDefinitions, entry -> entry.getManyRunsToOneRow()), mColumnDefinitions);
-
-			csv = ColumnDefinitionUtil.makeHumanReadable(csv, mColumnDefinitions);
-
-			// make list of indices to ignore idx -> true / false
-			final boolean[] idx = new boolean[csv.getColumnTitles().size()];
-			// because of count
-			idx[0] = true;
-			for (int i = 1; i < idx.length; ++i) {
-				final String currentHeader = csv.getColumnTitles().get(i);
-				for (final ColumnDefinition cd : mColumnDefinitions) {
-					if (cd.getCsvColumnTitle().equals(currentHeader)) {
-						idx[i] = cd.getLatexColumnTitle() != null;
-						break;
-					}
+		// make list of indices to ignore idx -> true / false
+		final boolean[] idx = new boolean[csv.getColumnTitles().size()];
+		// because of count
+		idx[0] = true;
+		for (int i = 1; i < idx.length; ++i) {
+			final String currentHeader = csv.getColumnTitles().get(i);
+			for (final ColumnDefinition cd : mColumnDefinitions) {
+				if (cd.getCsvColumnTitle().equals(currentHeader)) {
+					idx[i] = cd.getLatexColumnTitle() != null;
+					break;
 				}
 			}
+		}
 
-			final int length = mLatexTableHeaderCount;
-			int i = 0;
-			final List<String> row = csv.getRow(0);
-			if (row == null || row.isEmpty()) {
-				// no results in this category, just fill with empty fields
-				for (; i < length; ++i) {
+		// one more because of Count
+		final int length = mLatexTableHeaderCount + 1;
+		int i = 0;
+		final List<String> row = csv.getRow(0);
+		if (row == null || row.isEmpty()) {
+			// no results in this category, just fill with empty fields
+			for (; i < length; ++i) {
+				sb.append(sep);
+			}
+		} else {
+			for (final String cell : row) {
+				if (!idx[i]) {
+					// skip this column, we dont want to print it
+					i++;
+					continue;
+				}
+				if (isInvalidForLatex(cell)) {
+					sb.append("-I-");
+				} else {
+					sb.append(removeInvalidCharsForLatex(cell));
+				}
+
+				if (i < row.size() - 1) {
 					sb.append(sep);
 				}
-			} else {
-				for (final String cell : row) {
-					if (!idx[i]) {
-						// skip this column, we dont want to print it
-						i++;
-						continue;
-					}
-					if (isInvalidForLatex(cell)) {
-						sb.append("-I-");
-					} else {
-						sb.append(removeInvalidCharsForLatex(cell));
-					}
-
-					if (i < row.size() - 1) {
-						sb.append(sep);
-					}
-					i++;
-				}
+				i++;
 			}
-			sb.append("\\\\");
-			sb.append(br);
 		}
+		sb.append("\\\\");
+		sb.append(br);
 	}
 }

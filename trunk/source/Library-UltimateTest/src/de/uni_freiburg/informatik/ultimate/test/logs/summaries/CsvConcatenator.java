@@ -26,7 +26,7 @@
  * licensors of the ULTIMATE UnitTest Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.ultimatetest.summaries;
+package de.uni_freiburg.informatik.ultimate.test.logs.summaries;
 
 import java.util.Collections;
 import java.util.List;

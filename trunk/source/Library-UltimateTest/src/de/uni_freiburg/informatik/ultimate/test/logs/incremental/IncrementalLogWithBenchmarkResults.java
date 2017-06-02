@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.ultimatetest.logs;
+package de.uni_freiburg.informatik.ultimate.test.logs.incremental;
 
 import java.util.ArrayList;
 import java.util.List;

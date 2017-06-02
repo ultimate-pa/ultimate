@@ -3,8 +3,8 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites.treeautomizer;
 import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.AbstractEvalTestSuite;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition;
 
 public class TreeAutomatonOperationsTest extends AbstractEvalTestSuite {
 

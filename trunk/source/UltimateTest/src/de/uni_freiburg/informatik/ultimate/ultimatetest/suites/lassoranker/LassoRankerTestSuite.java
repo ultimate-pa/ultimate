@@ -40,12 +40,12 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.LassoRankerTestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.LassoRankerTestResultDecider.ExpectedResult;
 import de.uni_freiburg.informatik.ultimate.test.junitextension.testfactory.TestFactory;
+import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithBenchmarkResults;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.logs.IncrementalLogWithBenchmarkResults;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.CsvConcatenator;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.TraceAbstractionTestSummary;
 
 /**
  * Test Suite for the LassoRanker plugin

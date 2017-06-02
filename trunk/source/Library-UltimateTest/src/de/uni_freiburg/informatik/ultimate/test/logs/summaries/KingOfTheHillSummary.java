@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.ultimatetest.summaries;
+package de.uni_freiburg.informatik.ultimate.test.logs.summaries;
 
 import java.util.Arrays;
 import java.util.Collection;

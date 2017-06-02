@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE Test Library grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.ultimatetest.logs;
+package de.uni_freiburg.informatik.ultimate.test.logs.incremental;
 
 import java.util.Collections;
 import java.util.List;
@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider.TestResult;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinitionUtil;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinitionUtil;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProvider;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
