@@ -398,13 +398,14 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				return preformTimeoutActions(e);
 			}
 
-			mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.getStates().size() + " states");
-
-			if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON) {
-				mArtifactAutomaton = mInterpolAutomaton;
-			}
-			if (mPref.dumpAutomata()) {
-				writeAutomatonToFile(mInterpolAutomaton, automatonType + "Automaton_Iteration" + mIteration);
+			if (mInterpolAutomaton != null) {
+				mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.getStates().size() + " states");
+				if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON) {
+					mArtifactAutomaton = mInterpolAutomaton;
+				}
+				if (mPref.dumpAutomata()) {
+					writeAutomatonToFile(mInterpolAutomaton, automatonType + "Automaton_Iteration" + mIteration);
+				}
 			}
 
 			mInteractive.waitIfPaused();
@@ -420,9 +421,11 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 			}
 
-			mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
-			mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.sizeInformation());
-			mInteractive.reportSizeInfo(mAbstraction.sizeInformation(), mInterpolAutomaton.sizeInformation());
+			if (mInterpolAutomaton != null) {
+				mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
+				mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.sizeInformation());
+				mInteractive.reportSizeInfo(mAbstraction.sizeInformation(), mInterpolAutomaton.sizeInformation());
+			}
 
 			if (mPref.computeHoareAnnotation() && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
 				assert new InductivityCheck<>(mServices, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, false,
