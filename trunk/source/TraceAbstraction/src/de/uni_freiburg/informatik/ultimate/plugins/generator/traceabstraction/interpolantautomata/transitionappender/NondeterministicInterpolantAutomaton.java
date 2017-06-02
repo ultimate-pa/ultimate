@@ -86,21 +86,23 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 
 		assert SmtUtils.isTrue(mIaTrueState.getFormula());
 		assert allPredicates.contains(mIaTrueState);
-		mAlreadyConstructedAutomaton.addState(true, false, mIaTrueState);
+		// TODO 2017-06-02 Christian: removed special role of true and false state; remove after testing
+//		mAlreadyConstructedAutomaton.addState(true, false, mIaTrueState);
 		assert SmtUtils.isFalse(mIaFalseState.getFormula());
 		assert allPredicates.contains(mIaFalseState);
-		mAlreadyConstructedAutomaton.addState(false, true, mIaFalseState);
+//		mAlreadyConstructedAutomaton.addState(false, true, mIaFalseState);
 
 		mNonTrivialPredicates = new HashSet<>();
 		for (final IPredicate state : allPredicates) {
 			if (state != mIaTrueState && state != mIaFalseState) {
 				mNonTrivialPredicates.add(state);
-				// the following two lines are important if not (only)
-				// true/false are initial/final states of the automaton.
-				final boolean isInitial = inputInterpolantAutomaton.isInitial(state);
-				final boolean isFinal = inputInterpolantAutomaton.isFinal(state);
-				mAlreadyConstructedAutomaton.addState(isInitial, isFinal, state);
 			}
+			// TODO 2017-06-02 Christian: comment became redundant, remove when removing above commented code
+			// the following two lines are important if not (only)
+			// true/false are initial/final states of the automaton.
+			final boolean isInitial = inputInterpolantAutomaton.isInitial(state);
+			final boolean isFinal = inputInterpolantAutomaton.isFinal(state);
+			mAlreadyConstructedAutomaton.addState(isInitial, isFinal, state);
 		}
 
 		mLogger.info(startMessage());
