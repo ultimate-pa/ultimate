@@ -49,7 +49,7 @@ public class ApplyConversionToInteractive<M, O> implements IInteractive<M> {
 	}
 
 	@Override
-	public <D extends M, T extends M> void register(final Class<T> type, final Class<D> dataType,
+	public <T extends M, D extends M> void register(final Class<T> type, final Class<D> dataType,
 			final Function<D, T> supplier) {
 		final IConverter<T, ? extends O> converter = mConverter.getBA(type);
 		final IConverter<? extends O, D> dConverter = mConverter.getAB2(dataType);
@@ -84,6 +84,7 @@ public class ApplyConversionToInteractive<M, O> implements IInteractive<M> {
 	@Override
 	public <T extends M> CompletableFuture<T> request(final Class<T> type) {
 		final IConverter<? extends O, T> converter = mConverter.getAB2(type);
+		if (converter==null) throw new UnregisteredTypeException(type);
 		return wrapRequest(converter);
 	}
 
@@ -114,6 +115,7 @@ public class ApplyConversionToInteractive<M, O> implements IInteractive<M> {
 		}
 
 		final IConverter<? extends O, T> converter = mConverter.getAB2(type);
+		if (converter==null) throw new UnregisteredTypeException(type);
 		return wrapRequest(converter, oData);
 	}
 

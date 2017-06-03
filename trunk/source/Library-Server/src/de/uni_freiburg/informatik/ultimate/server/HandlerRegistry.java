@@ -59,7 +59,7 @@ public class HandlerRegistry<M> implements IHandlerRegistry<M> {
 	}
 
 	@Override
-	public <D extends M, T extends M> void register(final Class<T> type, final Class<D> dataType, final Function<D, T> supplier) {
+	public <T extends M, D extends M> void register(final Class<T> type, final Class<D> dataType, final Function<D, T> supplier) {
 		getInternal(type).setSupplier(dataType, supplier);
 	}
 

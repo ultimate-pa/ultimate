@@ -273,7 +273,7 @@ public abstract class Client<T> {
 		}
 
 		@Override
-		public <D extends T, T1 extends T> void register(final Class<T1> type, final Class<D> dataType, final Function<D, T1> supplier) {
+		public <T1 extends T, D extends T> void register(final Class<T1> type, final Class<D> dataType, final Function<D, T1> supplier) {
 			mHandlerRegistry.register(type, dataType, supplier);
 		}
 
