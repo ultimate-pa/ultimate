@@ -179,7 +179,10 @@ public class PostProcessor {
 			if ((typeHandler).areFloatingTypesNeeded()) {
 				decl.addAll(PostProcessor.declareFloatDataTypes(loc, main.getTypeSizes(), typeHandler, mOverapproximateFloatingPointOperations, expressionTranslation));
 			}
-
+			
+			final String[] importantFunctions = new String[]{ "bvadd" };
+			final BitvectorTranslation bitvectorTranslation = (BitvectorTranslation) expressionTranslation;
+			bitvectorTranslation.declareBinaryBitvectorFunctionsForAllIntegerDatatypes(loc, importantFunctions);
 		}
 		return decl;
 	}
