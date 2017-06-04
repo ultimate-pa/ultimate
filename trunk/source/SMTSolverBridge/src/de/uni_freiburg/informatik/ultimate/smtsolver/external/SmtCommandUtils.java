@@ -394,7 +394,7 @@ public class SmtCommandUtils {
 		}
 
 		public static String buildString(final Term term) {
-			return "(assert " + term.toStringDirect() + ")";
+			return "(assert " + term.toString() + ")";
 		}
 
 		@Override
