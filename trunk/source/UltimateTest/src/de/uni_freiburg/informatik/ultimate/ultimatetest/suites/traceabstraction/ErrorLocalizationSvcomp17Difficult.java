@@ -38,6 +38,9 @@ import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SvcompReachTestResultDecider;
 
 /**
+ * Testsuite that contains benchmarks where we get a timeout during
+ * error localization.
+ * 
  * @author heizmann@informatik.uni-freiburg.de
  * 
  */
@@ -45,8 +48,8 @@ public class ErrorLocalizationSvcomp17Difficult extends AbstractTraceAbstraction
 
 	// @formatter:off
 	private static final String[] BENCHMARKS = {
-            "examples/svcomp/floats-cdfpl/newton_1_6_false-unreach-call.i",
-            "examples/svcomp/floats-cdfpl/newton_1_7_false-unreach-call.i",
+//            "examples/svcomp/floats-cdfpl/newton_1_6_false-unreach-call.i",
+//            "examples/svcomp/floats-cdfpl/newton_1_7_false-unreach-call.i",
             "examples/svcomp/forester-heap/dll-queue_false-unreach-call_false-valid-memcleanup.i",
             "examples/svcomp/forester-heap/dll-sorted_false-unreach-call_false-valid-memcleanup.i",
             "examples/svcomp/forester-heap/dll-token_false-unreach-call_false-valid-memcleanup.i",
