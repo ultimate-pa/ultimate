@@ -104,6 +104,7 @@ public final class SmtUtils {
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
 		}
+		final long startTime = System.nanoTime();
 		final Term simplified;
 		switch (simplificationTechnique) {
 		case SIMPLIFY_BDD_PROP:
@@ -126,6 +127,16 @@ public final class SmtUtils {
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("DAG size before simplification {0}, DAG size after simplification {1}",
 					new DagSizePrinter(formula), new DagSizePrinter(simplified)));
+		}
+		final long endTime = System.nanoTime();
+		final long overallTimeMs = (endTime - startTime) / 1_000_000;
+		if (formula.equals(simplified) && overallTimeMs >= 100) {
+			logger.warn("Spent " + overallTimeMs + "ms on a formula simplification that was a NOOP. DAG size: "
+					+ new DagSizePrinter(formula));
+		} else if (overallTimeMs >= 100) {
+			logger.warn("Spent " + overallTimeMs + "ms on a formula simplification. DAG size of input: "
+					+ new DagSizePrinter(formula) + " DAG size of output " + new DagSizePrinter(simplified));
+			
 		}
 		return simplified;
 	}
