@@ -399,7 +399,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected void constructErrorAutomaton() throws AutomataOperationCanceledException {
 		final NestedWord<LETTER> trace = (NestedWord<LETTER>) mCounterexample.getWord();
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("constructing error automaton for trace of length " + trace.length());
+			mLogger.info("Constructing error automaton for trace of length " + trace.length());
 		}
 		mErrorAutomatonBuilder = new ErrorAutomatonBuilder<>(
 				mTraceCheckAndRefinementEngine.getPredicateUnifier(), mPredicateFactory, mCsToolkit, mServices,

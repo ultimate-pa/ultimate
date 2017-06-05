@@ -272,7 +272,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 * run into termination issues, but it has already found out that the program contains errors. This method can be
 	 * used to ask for such results whenever the analysis terminates.
 	 * 
-	 * @param reportErrorStatistics 
+	 * @param reportErrorStatistics
 	 * 	          {@code true} iff statistics should be reported
 	 * @return {@code true} if at least one feasible counterexample was detected
 	 */
@@ -375,7 +375,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				if (isCounterexampleFeasible == Script.LBool.SAT) {
 					if (CONTINUE_AFTER_ERROR_TRACE_FOUND) {
 						if (mLogger.isInfoEnabled()) {
-							mLogger.info("trying to exclude counterexample and continue analysis now");
+							mLogger.info("Generalizing and excluding counterexample to continue analysis");
 						}
 						mInteractive.waitIfPaused();
 						automatonType = "Error";
