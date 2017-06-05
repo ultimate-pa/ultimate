@@ -101,7 +101,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		mScript = origIcfg.getCfgSmtToolkit().getManagedScript();
 		mLogger = Objects.requireNonNull(logger);
 		mServices = services;
-		mLoopDetector = new LoopDetector<>(mLogger, origIcfg, mServices, mScript);
+		mLoopDetector = new LoopDetector<>(mLogger, origIcfg, mScript);
 		mOldSymbolTable = originalIcfg.getCfgSmtToolkit().getSymbolTable();
 
 		mLoopBodies = mLoopDetector.getLoopBodies();
@@ -117,22 +117,25 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		transformer.preprocessIcfg(originalIcfg);
 
 		for (final Loop loop : mLoopBodies) {
+
 			final List<TermVariable> pathCounter = new ArrayList<>();
+
 			for (final Backbone backbone : loop.getBackbones()) {
 
 				final UnmodifiableTransFormula tf = (UnmodifiableTransFormula) backbone.getFormula();
-								
+
 				mLogger.debug("Backbone Formula: " + tf);
-				
+
 				final SimultaneousUpdate update = new SimultaneousUpdate(tf, mScript);
-				
+
 				mLogger.debug("updated vars: " + update.getUpdatedVars());
-				
+
 				final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mLogger, tf, mOldSymbolTable);
 				symbolicMemory.updateVars(update.getUpdatedVars());
-				final Term condition = symbolicMemory.updateCondition(TransFormulaUtils.computeGuard(tf, mScript, mServices,
-						mLogger));		
-								
+
+				final Term condition = symbolicMemory
+						.updateCondition(TransFormulaUtils.computeGuard(tf, mScript, mServices, mLogger));
+
 				final TermVariable backbonePathCounter = mScript.constructFreshTermVariable("kappa",
 						mScript.getScript().sort(SmtSortUtils.INT_SORT));
 
@@ -140,9 +143,9 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 				mLogger.debug(backbonePathCounter);
 				backbone.setPathCounter(backbonePathCounter);
 				backbone.setCondition(condition);
-				
+
 				mLogger.debug("Backbone Condition: " + backbone.getCondition());
-				
+
 				backbone.setSymbolicMemory(symbolicMemory);
 			}
 
@@ -151,6 +154,8 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 			iteratedSymbolicMemory.updateMemory();
 			iteratedSymbolicMemory.updateCondition();
+
+			mLogger.debug("ABSTRACT PATH CONDITION: " + iteratedSymbolicMemory.getAbstractCondition());
 		}
 
 		final BasicIcfg<OUTLOC> resultIcfg = new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(),

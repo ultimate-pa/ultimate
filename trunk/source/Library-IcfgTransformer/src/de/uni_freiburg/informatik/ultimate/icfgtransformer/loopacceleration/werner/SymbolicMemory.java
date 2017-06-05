@@ -29,7 +29,6 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.wer
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
@@ -52,6 +51,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 public class SymbolicMemory {
 
 	protected final Map<IProgramVar, Term> mMemoryMapping;
+	protected final Map<IProgramVar, Term> mSymbols;
 	protected final ManagedScript mScript;
 	protected final ILogger mLogger;
 	protected final IIcfgSymbolTable mOldSymbolTable;
@@ -74,14 +74,15 @@ public class SymbolicMemory {
 	 *            the memory.
 	 */
 	public SymbolicMemory(final ManagedScript script, final ILogger logger, final TransFormula tf,
-			final IIcfgSymbolTable oldSymboltable) {
+			final IIcfgSymbolTable oldSymbolTable) {
 
 		mScript = script;
 		mLogger = logger;
-		mOldSymbolTable = oldSymboltable;
+		mOldSymbolTable = oldSymbolTable;
 
 		// set all variables to the InVars (symbols):
-		mMemoryMapping = LoopDetector.calculateSymbolTable(tf);
+		mSymbols = calculateSymbolTable(tf);
+		mMemoryMapping = mSymbols;
 	}
 
 	/**
@@ -150,22 +151,25 @@ public class SymbolicMemory {
 	 * @param appTerm
 	 * @return
 	 */
-	protected Map<Term, Term> termUnravel(final ApplicationTerm appTerm) {
+	protected Map<Term, Term> termUnravel(final Term term) {
+
 		final Map<Term, Term> result = new HashMap<>();
-		for (Term term : appTerm.getParameters()) {
 
-			if (term instanceof TermVariable) {
-				if (mMemoryMapping.containsKey(mOldSymbolTable.getProgramVar((TermVariable) term))) {
-					result.put(term, mMemoryMapping.get(mOldSymbolTable.getProgramVar((TermVariable) term)));
-				}
-				continue;
-			}
+		if (term instanceof TermVariable) {
 
-			// TODO something
-			if (term instanceof ConstantTerm) {
-				continue;
+			if (mMemoryMapping.containsKey(mOldSymbolTable.getProgramVar((TermVariable) term))) {
+				result.put(term, mMemoryMapping.get(mOldSymbolTable.getProgramVar((TermVariable) term)));
 			}
-			result.putAll(termUnravel((ApplicationTerm) term));
+			return result;
+		}
+
+		if (term instanceof ConstantTerm) {
+			return result;
+		}
+
+		final ApplicationTerm appTerm = (ApplicationTerm) term;
+		for (Term subTerm : appTerm.getParameters()) {
+			result.putAll(termUnravel(subTerm));
 		}
 		return result;
 	}
@@ -176,28 +180,50 @@ public class SymbolicMemory {
 	 * @param progVars
 	 * @return
 	 */
-	private Map<Term, Term> termUnravel(final ApplicationTerm appTerm, final Map<IProgramVar, TermVariable> progVars) {
+	private Map<Term, Term> termUnravel(final Term term, final Map<IProgramVar, TermVariable> progVars) {
+
+		mLogger.debug("NEW TERM: " + term);
+
 		final Map<Term, Term> result = new HashMap<>();
-		IProgramVar progVar = null;
-		for (Term term : appTerm.getParameters()) {
+
+		if (term instanceof TermVariable) {
+
 			for (final Entry<IProgramVar, TermVariable> entry : progVars.entrySet()) {
-				if (entry.getValue().equals(term)) {
-					progVar = entry.getKey();
+				if (entry.getValue().equals(term) && (mMemoryMapping.containsKey(entry.getKey()))) {
+					result.put(term, mMemoryMapping.get(entry.getKey()));
 				}
 			}
+			return result;
+		}
 
-			if (term instanceof TermVariable) {
-				if (mMemoryMapping.containsKey(progVar)) {
-					result.put(term, progVar.getTerm());
-				}
-				continue;
-			}
+		if (term instanceof ConstantTerm) {
+			return result;
+		}
 
-			// @todo something
-			if (term instanceof ConstantTerm) {
-				continue;
-			}
-			result.putAll(termUnravel((ApplicationTerm) term, progVars));
+		final ApplicationTerm appTerm = (ApplicationTerm) term;
+		for (Term subTerm : appTerm.getParameters()) {
+			result.putAll(termUnravel(subTerm, progVars));
+		}
+
+		mLogger.debug("RESULT: " + result);
+		return result;
+	}
+
+	/**
+	 * Calculate the symbols (initial values) of variables and map them to
+	 * ProgramVars.
+	 * 
+	 * @param tf
+	 *            the {@link TransFormula} whose symbols to compute
+	 * @return a mapping of program vars to their intitial values.
+	 */
+	public static Map<IProgramVar, Term> calculateSymbolTable(final TransFormula tf) {
+		final Map<IProgramVar, Term> result = new HashMap<>();
+		for (Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
+			result.put(entry.getKey(), entry.getValue());
+		}
+		for (Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
+			result.put(entry.getKey(), entry.getValue());
 		}
 		return result;
 	}

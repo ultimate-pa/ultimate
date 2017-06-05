@@ -38,7 +38,6 @@ import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
@@ -63,7 +62,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 
 public class LoopDetector<INLOC extends IcfgLocation> {
 	private final ILogger mLogger;
-	private final IUltimateServiceProvider mServices;
 	private final ManagedScript mScript;
 	private final Deque<Loop> mLoopBodies;
 
@@ -75,11 +73,9 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	 * @param services
 	 * @param script
 	 */
-	public LoopDetector(final ILogger logger, final IIcfg<INLOC> originalIcfg, IUltimateServiceProvider services,
-			ManagedScript script) {
+	public LoopDetector(final ILogger logger, final IIcfg<INLOC> originalIcfg, ManagedScript script) {
 		mLogger = Objects.requireNonNull(logger);
 		mScript = script;
-		mServices = services;
 		mLogger.debug("Loop detector constructed.");
 		mLoopBodies = getLoop(originalIcfg);
 		for (final Loop loop : mLoopBodies) {
@@ -91,24 +87,6 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		}
 	}
 
-	/**
-	 * Calculate the symbols (initial values) of variables and map them to
-	 * ProgramVars.
-	 * 
-	 * @param tf
-	 *            the {@link TransFormula} whose symbols to compute
-	 * @return a mapping of program vars to their intitial values.
-	 */
-	public static Map<IProgramVar, Term> calculateSymbolTable(final TransFormula tf) {
-		final Map<IProgramVar, Term> result = new HashMap<>();
-		for (Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-			result.put(entry.getKey(), entry.getValue());
-		}
-		for (Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-			result.put(entry.getKey(), entry.getValue());
-		}
-		return result;
-	}
 
 	private Deque<Loop> getLoop(final IIcfg<INLOC> originalIcfg) {
 		final Set<INLOC> loopHeads = originalIcfg.getLoopLocations();
@@ -217,7 +195,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 
 				// in case of multiple outgoing edges create more possible
 				// backbones.
-				if (target.getOutgoingEdges().size() > 1) {
+				if (!target.getOutgoingEdges().isEmpty()) {
 					for (int i = 1; i < target.getOutgoingEdges().size(); i++) {
 						final Deque<IcfgEdge> newPossibleBackbone = new ArrayDeque<>(backbone);
 						newPossibleBackbone.addLast(target.getOutgoingEdges().get(i));
