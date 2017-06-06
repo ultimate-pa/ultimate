@@ -403,8 +403,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 		mErrorAutomatonBuilder = new ErrorAutomatonBuilder<>(
 				mTraceCheckAndRefinementEngine.getPredicateUnifier(), mPredicateFactory, mCsToolkit, mServices,
-				mSimplificationTechnique, mXnfConversionTechnique, mIcfgContainer, mPredicateFactoryInterpolantAutomata,
-				new VpAlphabet<>(mAbstraction), trace, getErrorAutomatonEnhancementMode());
+				mSimplificationTechnique, mXnfConversionTechnique, mIcfgContainer.getCfgSmtToolkit().getSymbolTable(),
+				mPredicateFactoryInterpolantAutomata, new VpAlphabet<>(mAbstraction), trace,
+				getErrorAutomatonEnhancementMode());
 		mInterpolAutomaton = null;
 		// TODO 2017-06-02 Christian: This does not hold in general. Is this a problem?
 		// assert isInterpolantAutomatonOfSingleStateType(mErrorAutomatonBuilder.getResultBeforeEnhancement());
