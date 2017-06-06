@@ -52,17 +52,17 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 public class StraightLineInterpolantAutomatonBuilder<LETTER>
 		implements IInterpolantAutomatonBuilder<LETTER, IPredicate> {
 	/**
-	 * Determines which states become accepting in the automaton.
+	 * Determines which states become initial and accepting in the automaton.
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
-	public enum AcceptingStateMode {
+	public enum InitialAndAcceptingStateMode {
 		/**
-		 * Only the last state becomes accepting.
+		 * Only the first state becomes initial and the last state becomes accepting.
 		 */
-		ONLY_LAST,
+		ONLY_FIRST_INITIAL_LAST_ACCEPTING,
 		/**
-		 * All states become accepting.
+		 * All states become initial and accepting.
 		 */
 		ALL
 	}
@@ -88,7 +88,7 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER>
 	public StraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final VpAlphabet<LETTER> alphabet, final PredicateFactoryForInterpolantAutomata predicateFactory,
 			final NestedWord<LETTER> trace, final TracePredicates tracePredicates,
-			final AcceptingStateMode acceptingStateMode) {
+			final InitialAndAcceptingStateMode acceptingStateMode) {
 		mServices = services;
 		mResult = new NestedWordAutomaton<>(new AutomataLibraryServices(mServices), alphabet, predicateFactory);
 		addStatesAndTransitions(trace, tracePredicates, acceptingStateMode);
@@ -110,22 +110,23 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER>
 	public StraightLineInterpolantAutomatonBuilder(final IUltimateServiceProvider services,
 			final VpAlphabet<LETTER> alphabet, final IInterpolantGenerator interpolantGenerator,
 			final PredicateFactoryForInterpolantAutomata predicateFactory,
-			final AcceptingStateMode acceptingStateMode) {
+			final InitialAndAcceptingStateMode acceptingStateMode) {
 		this(services, alphabet, predicateFactory, (NestedWord<LETTER>) interpolantGenerator.getTrace(),
 				new TracePredicates(interpolantGenerator), acceptingStateMode);
 	}
 
 	private void addStatesAndTransitions(final NestedWord<LETTER> trace, final TracePredicates tracePredicates,
-			final AcceptingStateMode acceptingStateMode) {
-		final boolean isAccepting = acceptingStateMode == AcceptingStateMode.ALL ? true : false;
+			final InitialAndAcceptingStateMode acceptingStateMode) {
+		final boolean isInitial = acceptingStateMode == InitialAndAcceptingStateMode.ALL ? true : false;
+		final boolean isAccepting = acceptingStateMode == InitialAndAcceptingStateMode.ALL ? true : false;
 		mResult.addState(true, isAccepting, tracePredicates.getPrecondition());
-		mResult.addState(false, true, tracePredicates.getPostcondition());
+		mResult.addState(isInitial, true, tracePredicates.getPostcondition());
 		for (int i = 0; i < trace.length(); i++) {
 			final IPredicate pred = tracePredicates.getPredicate(i);
 			final IPredicate succ = tracePredicates.getPredicate(i + 1);
 			assert mResult.getStates().contains(pred);
 			if (!mResult.getStates().contains(succ)) {
-				mResult.addState(false, isAccepting, succ);
+				mResult.addState(isInitial, isAccepting, succ);
 			}
 			if (trace.isCallPosition(i)) {
 				mResult.addCallTransition(pred, trace.getSymbol(i), succ);

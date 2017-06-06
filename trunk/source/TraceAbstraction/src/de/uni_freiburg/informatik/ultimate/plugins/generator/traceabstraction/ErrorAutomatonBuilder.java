@@ -128,7 +128,8 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		// TODO 2017-05-17 Christian: additionally compute 'sp' sequence and intersect
 
 		return new StraightLineInterpolantAutomatonBuilder<>(services, alphabet, predicateFactoryInterpolantAutomata,
-				trace, newPredicates, StraightLineInterpolantAutomatonBuilder.AcceptingStateMode.ALL).getResult();
+				trace, newPredicates, StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ALL)
+						.getResult();
 	}
 
 	private TracePredicates getWpPredicates(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
@@ -155,18 +156,11 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final IUltimateServiceProvider services,
 			final NestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton, final CfgSmtToolkit csToolkit,
 			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory) {
-		// add 'false' state if not present (required by the automaton builder)
-		boolean containsFalsePredicate = false;
+		// add 'false' state (required by the automaton builder)
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
-		for (final IPredicate pred : straightLineAutomaton.getStates()) {
-			if (pred == falsePredicate) {
-				containsFalsePredicate = true;
-				break;
-			}
-		}
-		if (!containsFalsePredicate) {
-			straightLineAutomaton.addState(false, false, falsePredicate);
-		}
+		assert !containsFalsePredicateState(straightLineAutomaton,
+				falsePredicate) : "The error trace is feasible; hence the predicate 'False' should not be present.";
+		straightLineAutomaton.addState(false, false, falsePredicate);
 
 		final ManagedScript mgdScript = csToolkit.getManagedScript();
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
@@ -178,6 +172,18 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		final boolean secondChance = false;
 		return new NondeterministicInterpolantAutomaton<>(services, csToolkit, hoareTripleChecker,
 				straightLineAutomaton, predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
+	}
+
+	private boolean containsFalsePredicateState(final NestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton,
+			final IPredicate falsePredicate) {
+		boolean containsFalsePredicate = false;
+		for (final IPredicate pred : straightLineAutomaton.getStates()) {
+			if (pred == falsePredicate) {
+				containsFalsePredicate = true;
+				break;
+			}
+		}
+		return containsFalsePredicate;
 	}
 
 	/**

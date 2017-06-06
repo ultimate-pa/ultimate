@@ -192,7 +192,7 @@ public class InterpolantAutomatonBuilderFactory<LETTER extends IIcfgTransition<?
 			final IRun<LETTER, IPredicate, ?> counterexample, final List<TracePredicates> ipps) {
 		final StraightLineInterpolantAutomatonBuilder<LETTER> iab = new StraightLineInterpolantAutomatonBuilder<>(
 				mServices, new VpAlphabet<>(abstraction), interpolGenerator, mPredicateFactory,
-				StraightLineInterpolantAutomatonBuilder.AcceptingStateMode.ONLY_LAST);
+				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_LAST_ACCEPTING);
 		return iab;
 	}
 

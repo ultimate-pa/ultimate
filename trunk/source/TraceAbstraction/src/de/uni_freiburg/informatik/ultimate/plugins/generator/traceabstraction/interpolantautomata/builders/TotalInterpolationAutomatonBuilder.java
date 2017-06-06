@@ -131,7 +131,7 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		mAbstraction = abstraction;
 		final VpAlphabet<LETTER> alphabet = new VpAlphabet<>(abstraction);
 		mIA = new StraightLineInterpolantAutomatonBuilder<>(mServices, alphabet, interpolantGenerator, predicateFactory,
-				StraightLineInterpolantAutomatonBuilder.AcceptingStateMode.ONLY_LAST).getResult();
+				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_LAST_ACCEPTING).getResult();
 		mModifiedGlobals = modifiableGlobalsTable;
 		mInterpolation = interpolation;
 		mEpimorphism = new AutomatonEpimorphism<>(new AutomataLibraryServices(mServices));
