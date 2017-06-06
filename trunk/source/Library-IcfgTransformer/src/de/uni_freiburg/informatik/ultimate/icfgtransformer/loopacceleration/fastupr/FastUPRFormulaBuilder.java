@@ -61,6 +61,8 @@ public class FastUPRFormulaBuilder {
 
 	public UnmodifiableTransFormula buildConsistencyFormula(OctConjunction conjunc, int count,
 			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars) {
+
+		mUtils.output("Returning Consistency Result");
 		return null;
 	}
 
@@ -96,12 +98,14 @@ public class FastUPRFormulaBuilder {
 					.add(getParametricSolutionRightSide(conjunc, b, i, parametricDiff, inVars, outVars, variables));
 		}
 		final Term secondOr = mScript.term("or", secondOrTerms.toArray(new Term[0]));
-		final Term secondOrQuantified = mScript.quantifier(QuantifiedFormula.FORALL,
+		final Term secondOrQuantified = mScript.quantifier(QuantifiedFormula.EXISTS,
 				new TermVariable[] { parametricDiff.getParametricVar() },
 				mScript.term("and",
 						mScript.term(">=", parametricDiff.getParametricVar(), mScript.decimal(BigDecimal.ZERO)),
 						secondOr));
 		final Term result = mScript.term("or", firstOr, secondOrQuantified);
+
+		mUtils.output("Returning Parametric Result");
 		return buildTransFormula(result, inVars, outVars);
 	}
 
@@ -114,6 +118,7 @@ public class FastUPRFormulaBuilder {
 		final OctConjunction firstPart = completeMatrix.toOctConjunction();
 		final OctConjunction result = mCalculator.binarySequentialize(firstPart,
 				mCalculator.sequentialize(conjunc, inVars, outVars, i), inVars, outVars);
+
 		return result.toTerm(mScript);
 	}
 
@@ -127,18 +132,20 @@ public class FastUPRFormulaBuilder {
 		for (int i = 0; i < b; i++) {
 			firstOrTerms.add(mCalculator.sequentialize(conjunc, inVars, outVars, i).toTerm(mScript));
 		}
-		final Term firstOr = mScript.term("or", (Term[]) firstOrTerms.toArray());
+		final Term firstOr = mScript.term("or", firstOrTerms.toArray(new Term[0]));
 		final List<Term> outerOrTerms = new ArrayList<>();
 		for (int k = 0; k < n; k++) {
 			final List<Term> innerOrTerms = new ArrayList<>();
 			for (int i = 0; i < c; i++) {
 				innerOrTerms.add(getInnerOrTerm(conjunc, b, i, n, difference, inVars, outVars, variables));
 			}
-			final Term innerOr = mScript.term("or", (Term[]) innerOrTerms.toArray());
+			final Term innerOr = mScript.term("or", innerOrTerms.toArray(new Term[0]));
 			outerOrTerms.add(innerOr);
 		}
-		final Term outerOr = mScript.term("or", (Term[]) outerOrTerms.toArray());
+		final Term outerOr = mScript.term("or", outerOrTerms.toArray(new Term[0]));
 		final Term result = mScript.term("or", firstOr, outerOr);
+
+		mUtils.output("Returning Periodicity Result");
 
 		return buildTransFormula(result, inVars, outVars);
 	}

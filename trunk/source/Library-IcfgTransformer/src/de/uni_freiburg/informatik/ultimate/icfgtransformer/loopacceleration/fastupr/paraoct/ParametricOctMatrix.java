@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctMatrix;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.relational.octagon.OctValue;
@@ -264,7 +265,7 @@ public class ParametricOctMatrix {
 		if (isParametric())
 			throw new IllegalArgumentException("Octagon already parametric.");
 		final TermVariable var = mManagedScript.constructFreshTermVariable(varname,
-				mManagedScript.getScript().sort("Int"));
+				mManagedScript.getScript().sort(SmtSortUtils.INT_SORT));
 		return multipyVar(var);
 
 	}

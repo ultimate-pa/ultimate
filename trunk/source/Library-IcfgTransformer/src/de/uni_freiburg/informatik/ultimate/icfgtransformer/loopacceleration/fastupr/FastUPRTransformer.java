@@ -29,8 +29,10 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fas
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -114,46 +116,54 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 
 		mLogger.debug("Transforming loop into icfg...");
 
-		for (final Deque<IcfgEdge> path : loopEdgePaths) {
-			if (path != null && !path.isEmpty()) {
-				getLoopIcfg(path, resultIcfg, originalIcfg, lst);
-			}
-		}
+		getLoopIcfg(loopEdgePaths, resultIcfg, originalIcfg, lst);
 
 		mLogger.debug("Icfg created.");
 
 		return resultIcfg;
 	}
 
-	private void getLoopIcfg(Deque<IcfgEdge> path, final BasicIcfg<OUTLOC> resultIcfg, final IIcfg<INLOC> origIcfg,
-			final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
+	private void getLoopIcfg(List<Deque<IcfgEdge>> loopEdgePaths, final BasicIcfg<OUTLOC> resultIcfg,
+			final IIcfg<INLOC> origIcfg, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
 
-		@SuppressWarnings("unchecked")
-		INLOC start = (INLOC) path.getFirst().getSource();
-		IcfgEdge loopEdge = path.getFirst();
+		final Map<IcfgEdge, UnmodifiableTransFormula> loopMapping = new HashMap<>();
 
-		final List<UnmodifiableTransFormula> formulas = new ArrayList<>();
+		for (final Deque<IcfgEdge> path : loopEdgePaths) {
 
-		while (!path.isEmpty()) {
-			formulas.add(path.pop().getTransformula());
-		}
+			if (path == null || path.isEmpty()) {
+				continue;
+			}
 
-		final UnmodifiableTransFormula formula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
-				mManagedScript, true, false, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
-				SimplificationTechnique.SIMPLIFY_DDA, formulas);
-		UnmodifiableTransFormula resultFormula = formula;
-		try {
-			final FastUPRCore fastUpr = new FastUPRCore(formula, mManagedScript, mLogger, mServices);
-			resultFormula = fastUpr.getResult();
-		} catch (final Exception e) {
-			mLogger.error("", e);
-			start = null;
-			loopEdge = null;
-		}
+			IcfgEdge loopEdge = path.getFirst();
 
-		if (resultFormula == null) {
-			start = null;
-			loopEdge = null;
+			final List<UnmodifiableTransFormula> formulas = new ArrayList<>();
+
+			UnmodifiableTransFormula resultFormula = null;
+
+			try {
+
+				while (!path.isEmpty()) {
+					formulas.add(path.pop().getTransformula());
+					if (!path.isEmpty() && path.getFirst().getSource().getOutgoingEdges().size() > 1) {
+						throw new IllegalArgumentException("Can't compute nondeterministic paths");
+					}
+				}
+
+				final UnmodifiableTransFormula formula = TransFormulaUtils.sequentialComposition(mLogger, mServices,
+						mManagedScript, true, false, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
+						SimplificationTechnique.SIMPLIFY_DDA, formulas);
+				final FastUPRCore fastUpr = new FastUPRCore(formula, mManagedScript, mLogger, mServices);
+				resultFormula = fastUpr.getResult();
+				mLogger.debug("Result Formula:" + resultFormula.toString());
+			} catch (final Exception e) {
+				mLogger.error("", e);
+				loopEdge = null;
+			}
+
+			if (loopEdge != null) {
+				loopMapping.put(loopEdge, resultFormula);
+			}
+
 		}
 
 		final Set<INLOC> init = origIcfg.getInitialNodes();
@@ -172,23 +182,21 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 			final OUTLOC newSource = lst.createNewLocation(oldSource);
 			resultIcfg.addOrdinaryLocation(newSource);
 
-			if (oldSource.equals(start)) {
-
-			}
-			createNewLocations(oldSource, newSource, closed, resultIcfg, lst, start, resultFormula, loopEdge);
+			createNewLocations(oldSource, newSource, closed, resultIcfg, lst, loopMapping);
 		}
 	}
 
 	@SuppressWarnings("unchecked")
 	private void createNewLocations(final INLOC oldSource, final OUTLOC newSource, final Set<INLOC> closed,
-			final BasicIcfg<OUTLOC> result, final TransformedIcfgBuilder<INLOC, OUTLOC> lst, INLOC start,
-			UnmodifiableTransFormula resultFormula, IcfgEdge loopEdge) {
+			final BasicIcfg<OUTLOC> result, final TransformedIcfgBuilder<INLOC, OUTLOC> lst,
+			Map<IcfgEdge, UnmodifiableTransFormula> loopMapping) {
 
 		result.addOrdinaryLocation(newSource);
 
 		for (final IcfgEdge oldEdge : oldSource.getOutgoingEdges()) {
-			if (oldEdge.equals(loopEdge)) {
-				final IcfgEdge newTrans = lst.createNewInternalTransition(newSource, newSource, resultFormula, false);
+			if (loopMapping.containsKey(oldEdge)) {
+				final IcfgEdge newTrans = lst.createNewInternalTransition(newSource, newSource,
+						loopMapping.get(oldEdge), false);
 				newSource.addOutgoing(newTrans);
 				newSource.addIncoming(newTrans);
 				continue;
@@ -203,7 +211,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 				return;
 			}
 
-			createNewLocations(oldTarget, newTarget, closed, result, lst, start, resultFormula, loopEdge);
+			createNewLocations(oldTarget, newTarget, closed, result, lst, loopMapping);
 
 		}
 
@@ -213,19 +221,5 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 	public IIcfg<OUTLOC> getResult() {
 		return mResultIcfg;
 	}
-
-	private OUTLOC createFreshLoopLocation(final INLOC oldLoc, final BasicIcfg<OUTLOC> result) {
-		final String proc = oldLoc.getProcedure();
-		final OUTLOC freshLoc = mLocationFactory.createLocation(oldLoc, "LoopExit", proc);
-
-		final boolean isInitial = false;
-		final Set<INLOC> errorLocs = mOriginalIcfg.getProcedureErrorNodes().get(proc);
-		final boolean isError = errorLocs != null && errorLocs.contains(oldLoc);
-		final boolean isProcExit = oldLoc.equals(mOriginalIcfg.getProcedureExitNodes().get(proc));
-		final boolean isLoopLocation = mOriginalIcfg.getLoopLocations().contains(oldLoc);
-		result.addLocation(freshLoc, isInitial, isError, false, isProcExit, isLoopLocation);
-		return freshLoc;
-	}
-
 	// add fresh location to resultIcfg
 }

@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -116,7 +115,7 @@ public class ParametricOctValue {
 	public Term getTerm(Script script) {
 		final Term inner = mIncrement.equals(BigDecimal.ZERO) ? mVar
 				: script.term("+", mVar, script.decimal(mIncrement));
-		final Term coeff = mCoefficient.equals(BigDecimal.ZERO) ? script.numeral(BigInteger.ZERO)
+		final Term coeff = mCoefficient.equals(BigDecimal.ZERO) ? script.decimal(BigDecimal.ZERO)
 				: script.term("*", script.decimal(mCoefficient), inner);
 		return mSummand.equals(BigDecimal.ZERO) ? coeff : script.term("+", coeff, script.decimal(mSummand));
 	}

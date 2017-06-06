@@ -12,8 +12,10 @@ import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRUtils;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
+import de.uni_freiburg.informatik.ultimate.logic.Sort;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -54,10 +56,12 @@ public class OctagonCalculator extends NonRecursive {
 		for (final Entry<IProgramVar, TermVariable> e : inVars.entrySet()) {
 			if (outVars.containsValue(e.getValue())) {
 
+				final Sort varSort = mManagedScript.getScript().sort(SmtSortUtils.INT_SORT);
+
 				final String inName = "oct_" + e.getKey().toString() + "_in";
-				final TermVariable inVar = mManagedScript.constructFreshTermVariable(inName, e.getValue().getSort());
+				final TermVariable inVar = mManagedScript.constructFreshTermVariable(inName, varSort);
 				final String outName = "oct_" + e.getKey().toString() + "_out";
-				final TermVariable outVar = mManagedScript.constructFreshTermVariable(outName, e.getValue().getSort());
+				final TermVariable outVar = mManagedScript.constructFreshTermVariable(outName, varSort);
 
 				result = replaceInOutVars(result, e.getValue(), inVar);
 				result = getInOutVarTerms(result, e.getValue(), inVar, outVar);
@@ -116,17 +120,19 @@ public class OctagonCalculator extends NonRecursive {
 
 		OctConjunction result = conjunc;
 
+		final Sort varSort = mManagedScript.getScript().sort(SmtSortUtils.INT_SORT);
+
 		for (final IProgramVar p : inVars.keySet()) {
 			String name;
 			if (outVars.get(p).equals(inVars.get(p))) {
 				name = "oct_" + p.toString() + "_inout";
-				final TermVariable newVar = mManagedScript.constructFreshTermVariable(name, inVars.get(p).getSort());
+				final TermVariable newVar = mManagedScript.constructFreshTermVariable(name, varSort);
 				result = replaceVars(result, inVars.get(p), newVar);
 				inVars.put(p, newVar);
 				outVars.put(p, newVar);
 			} else {
 				name = "oct_" + p.toString() + "_in";
-				final TermVariable newVar = mManagedScript.constructFreshTermVariable(name, inVars.get(p).getSort());
+				final TermVariable newVar = mManagedScript.constructFreshTermVariable(name, varSort);
 				result = replaceVars(result, inVars.get(p), newVar);
 				inVars.put(p, newVar);
 			}
@@ -136,7 +142,7 @@ public class OctagonCalculator extends NonRecursive {
 		for (final IProgramVar p : outVars.keySet()) {
 			if (!outVars.get(p).equals(inVars.get(p))) {
 				final String name = "oct_" + p.toString() + "_out";
-				final TermVariable newVar = mManagedScript.constructFreshTermVariable(name, outVars.get(p).getSort());
+				final TermVariable newVar = mManagedScript.constructFreshTermVariable(name, varSort);
 				result = replaceVars(result, outVars.get(p), newVar);
 				outVars.put(p, newVar);
 			}

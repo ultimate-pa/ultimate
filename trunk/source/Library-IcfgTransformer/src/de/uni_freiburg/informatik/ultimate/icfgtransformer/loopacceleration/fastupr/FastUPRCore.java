@@ -28,7 +28,6 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -83,12 +82,13 @@ public class FastUPRCore {
 	public FastUPRCore(final UnmodifiableTransFormula formula, final ManagedScript managedScript, final ILogger logger,
 			final IUltimateServiceProvider services) throws NotAffineException {
 		mServices = services;
-		
-		// Notes: Check timeout 
-//		if(!services.getProgressMonitorService().continueProcessing()){
-//			throw new ToolchainCanceledException(new RunningTaskInfo(this.getClass(), "the current task"));
-//		}
-		
+
+		// Notes: Check timeout
+		// if(!services.getProgressMonitorService().continueProcessing()){
+		// throw new ToolchainCanceledException(new
+		// RunningTaskInfo(this.getClass(), "the current task"));
+		// }
+
 		mManagedScript = managedScript;
 		mUtils = new FastUPRUtils(logger, false);
 		mUtils.output("==================================================");
@@ -112,6 +112,8 @@ public class FastUPRCore {
 
 		mInVars = new HashMap<>(mFormula.getInVars());
 		mOutVars = new HashMap<>(mFormula.getOutVars());
+
+		mTermChecker.checkTerm(mRelation);
 
 		mVariables = new ArrayList<>();
 
@@ -207,6 +209,10 @@ public class FastUPRCore {
 				return false;
 			}
 			n++;
+
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(new RunningTaskInfo(this.getClass(), "the current task"));
+			}
 
 		}
 
@@ -345,8 +351,8 @@ public class FastUPRCore {
 		// QuantifiedTerm (for all n >= 0)
 
 		final Term greaterEqZero = script.term("and",
-				script.term(">=", differenceN.getParametricVar(), script.numeral(BigInteger.ZERO)), eqTerm);
-		final Term lesserEqZero = script.term("<", differenceN.getParametricVar(), script.numeral(BigInteger.ZERO));
+				script.term(">=", differenceN.getParametricVar(), script.decimal(BigDecimal.ZERO)), eqTerm);
+		final Term lesserEqZero = script.term("<", differenceN.getParametricVar(), script.decimal(BigDecimal.ZERO));
 
 		final Term quantTerm = script.quantifier(QuantifiedFormula.FORALL,
 				new TermVariable[] { differenceN.getParametricVar() }, script.term("or", greaterEqZero, lesserEqZero));
