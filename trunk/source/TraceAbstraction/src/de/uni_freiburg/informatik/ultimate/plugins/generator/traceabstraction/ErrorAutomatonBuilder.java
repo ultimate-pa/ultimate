@@ -192,16 +192,22 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final Iterator<IPredicate> preIt = preIntermediatePredicates.iterator();
 			final Iterator<IPredicate> spIt = spPredicates.getPredicates().iterator();
 			while (preIt.hasNext()) {
-				newIntermediatePredicates.add(predicateFactory.and(preIt.next(), spIt.next()));
+				final IPredicate pred = predicateFactory.and(preIt.next(), spIt.next());
+				newIntermediatePredicates.add(predicateUnifier.getOrConstructPredicate(pred));
 			}
 			newPostcondition = spPredicates.getPostcondition();
 		} else {
-			newIntermediatePredicates = preIntermediatePredicates;
+			newIntermediatePredicates = new ArrayList<>(preIntermediatePredicates.size());
+			for (final IPredicate pred : preIntermediatePredicates) {
+				newIntermediatePredicates.add(predicateUnifier.getOrConstructPredicate(pred));
+			}
 			newPostcondition = truePredicate;
 		}
 
+		// final predicates (unified)
 		final TracePredicates newPredicates =
-				new TracePredicates(prePrecondition, newPostcondition, newIntermediatePredicates);
+				new TracePredicates(predicateUnifier.getOrConstructPredicate(prePrecondition),
+						predicateUnifier.getOrConstructPredicate(newPostcondition), newIntermediatePredicates);
 
 		return new StraightLineInterpolantAutomatonBuilder<>(services, alphabet, predicateFactoryInterpolantAutomata,
 				trace, newPredicates, StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ALL)
