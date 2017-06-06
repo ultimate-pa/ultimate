@@ -40,6 +40,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.Queue;
 import java.util.Set;
 
@@ -57,6 +58,7 @@ import org.eclipse.cdt.core.dom.ast.gnu.c.ICASTKnRFunctionDeclarator;
 import de.uni_freiburg.informatik.ultimate.boogie.ExpressionFactory;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ASTType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayAccessExpression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.ArrayType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssertStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssignmentStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
@@ -68,16 +70,19 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Declaration;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.EnsuresSpecification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.GeneratedBoogieAstVisitor;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.HavocStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IdentifierExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.IntegerLiteral;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.LeftHandSide;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ModifiesSpecification;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.NamedType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.PrimitiveType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Procedure;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.ReturnStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Specification;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
+import de.uni_freiburg.informatik.ultimate.boogie.ast.StructType;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VarList;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.VariableDeclaration;
@@ -255,13 +260,15 @@ public class FunctionHandler {
 		VarList[] out = new VarList[1];
 		final ASTType type = main.mTypeHandler.cType2AstType(loc, returnCType);
 
-		if (returnTypeIsVoid) { // void, so there are no out vars
+		if (returnTypeIsVoid) {
+			// void, so there are no out vars
 			out = new VarList[0];
 		} else if (mMethodsCalledBeforeDeclared.contains(methodName)) {
 			// defaulting to int, when a method is called that is only declared later
 			final CPrimitive cPrimitive = new CPrimitive(CPrimitives.INT);
 			out[0] = new VarList(loc, new String[] { SFO.RES }, main.mTypeHandler.cType2AstType(loc, cPrimitive));
-		} else { // "normal case"
+		} else {
+			// "normal case"
 			assert type != null;
 			out[0] = new VarList(loc, new String[] { SFO.RES }, type);
 		}
@@ -272,7 +279,8 @@ public class FunctionHandler {
 			final Attribute[] attr = new Attribute[0];
 			final String[] typeParams = new String[0];
 			if (isInParamVoid(in)) {
-				in = new VarList[0]; // in parameter is "void"
+				// in parameter is "void"
+				in = new VarList[0];
 			}
 			proc = new Procedure(loc, attr, methodName, typeParams, in, out, spec, null);
 			if (mProcedures.containsKey(methodName)) {
@@ -281,7 +289,8 @@ public class FunctionHandler {
 				throw new IncorrectSyntaxException(loc, msg);
 			}
 			mProcedures.put(methodName, proc);
-		} else { // check declaration against its implementation
+		} else {
+			// check declaration against its implementation
 			VarList[] declIn = proc.getInParams();
 			boolean checkInParams = true;
 			if (in.length != proc.getInParams().length || out.length != proc.getOutParams().length
@@ -301,6 +310,7 @@ public class FunctionHandler {
 					throw new IncorrectSyntaxException(loc, msg);
 				}
 			}
+
 			if (checkInParams) {
 				for (int i = 0; i < in.length; i++) {
 					if (!in[i].getType().toString().equals(proc.getInParams()[i].getType().toString())) {
@@ -1858,4 +1868,224 @@ public class FunctionHandler {
 		return Collections.unmodifiableSet(mFunctionSignaturesThatHaveAFunctionPointer);
 	}
 
+	/**
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	private static final class ASTTypeComparisonVisitor extends GeneratedBoogieAstVisitor {
+
+		private ASTType mOther;
+		private boolean mResult;
+		private boolean mIsFinished;
+
+		public boolean isSimilar(final ASTType one, final ASTType other) {
+			if (!isNonNull(one, other)) {
+				return compareNull(one, other);
+			}
+			mOther = other;
+			mIsFinished = false;
+			mResult = true;
+			one.accept(this);
+			return mResult;
+		}
+
+		public boolean isSimilar(final VarList one, final VarList other) {
+			if (!isNonNull(one, other)) {
+				return compareNull(one, other);
+			}
+
+			if (one.getWhereClause() != null || other.getWhereClause() != null) {
+				throw new UnsupportedOperationException("Not yet implemented");
+			}
+			return isSimilar(one.getType(), other.getType());
+		}
+
+		@Override
+		public boolean visit(final ArrayType node) {
+			if (mIsFinished) {
+				return false;
+			}
+			if (!(mOther instanceof ArrayType)) {
+				return finishFalse();
+			}
+
+			final ArrayType other = (ArrayType) mOther;
+			final ASTType[] oneIdxTypes = node.getIndexTypes();
+			final ASTType[] otherIdxTypes = other.getIndexTypes();
+			final ASTType oneValueType = node.getValueType();
+			final ASTType otherValueType = other.getValueType();
+
+			// check null
+			if (!isNonNull(oneIdxTypes, otherIdxTypes)) {
+				if (isNonNull(oneValueType, otherValueType)) {
+					updateResult(compareNull(oneIdxTypes, otherIdxTypes) && compareNull(oneValueType, otherValueType));
+				} else {
+					updateResult(false);
+				}
+				mIsFinished = true;
+				return false;
+			}
+
+			// check index types
+			if (visit(oneIdxTypes, otherIdxTypes)) {
+				mOther = otherValueType;
+				oneValueType.accept(this);
+				if (mIsFinished) {
+					return false;
+				}
+			}
+
+			mOther = other;
+			return false;
+		}
+
+		@Override
+		public boolean visit(final NamedType node) {
+			if (mIsFinished) {
+				return false;
+			}
+			if (!(mOther instanceof NamedType)) {
+				return finishFalse();
+			}
+			final NamedType other = (NamedType) mOther;
+			if (!Objects.equals(node.getName(), other.getName())) {
+				return finishFalse();
+			}
+
+			final ASTType[] oneArgs = node.getTypeArgs();
+			final ASTType[] otherArgs = other.getTypeArgs();
+			visit(oneArgs, otherArgs);
+			return false;
+		}
+
+		@Override
+		public boolean visit(final PrimitiveType node) {
+			if (mIsFinished) {
+				return false;
+			}
+			if (!(mOther instanceof PrimitiveType)) {
+				return finishFalse();
+			}
+			final PrimitiveType other = (PrimitiveType) mOther;
+			updateResult(Objects.equals(node.getName(), other.getName()));
+			return false;
+		}
+
+		@Override
+		public boolean visit(final StructType node) {
+			if (mIsFinished) {
+				return false;
+			}
+			if (!(mOther instanceof StructType)) {
+				return finishFalse();
+			}
+
+			final StructType other = (StructType) mOther;
+
+			final VarList[] oneFields = node.getFields();
+			final VarList[] otherFields = other.getFields();
+
+			// check null
+			if (!isNonNull(oneFields, otherFields)) {
+				updateResult(compareNull(oneFields, otherFields));
+				mIsFinished = true;
+				return false;
+			}
+
+			if (oneFields.length != otherFields.length) {
+				return finishFalse();
+			}
+
+			for (int i = 0; i < oneFields.length; ++i) {
+				final VarList oneField = oneFields[i];
+				final VarList otherField = otherFields[i];
+
+				if (oneField.getWhereClause() != null || otherField.getWhereClause() != null) {
+					throw new UnsupportedOperationException("Not yet implemented");
+				}
+
+				if (!isNonNull(oneField, otherField)) {
+					if (compareNull(oneField, otherField)) {
+						continue;
+					}
+					return finishFalse();
+				}
+
+				final ASTType oneType = oneField.getType();
+				final ASTType otherType = otherField.getType();
+				if (!isNonNull(oneType, otherType)) {
+					if (compareNull(oneType, otherType)) {
+						continue;
+					}
+					return finishFalse();
+				}
+
+				mOther = otherType;
+				oneType.accept(this);
+				if (mIsFinished) {
+					return false;
+				}
+			}
+			mOther = other;
+
+			return false;
+		}
+
+		private boolean visit(final ASTType[] oneTypes, final ASTType[] otherTypes) {
+			if (oneTypes.length != otherTypes.length) {
+				return finishFalse();
+			}
+			final ASTType other = mOther;
+
+			for (int i = 0; i < oneTypes.length; ++i) {
+				final ASTType oneType = oneTypes[i];
+				final ASTType otherType = otherTypes[i];
+				if (!isNonNull(oneType, otherType)) {
+					if (compareNull(oneType, otherType)) {
+						continue;
+					}
+					return finishFalse();
+				}
+
+				mOther = otherType;
+				oneType.accept(this);
+				if (mIsFinished) {
+					return false;
+				}
+			}
+			mOther = other;
+			return true;
+		}
+
+		private boolean finishFalse() {
+			mResult = false;
+			mIsFinished = true;
+			return false;
+		}
+
+		private void updateResult(final boolean value) {
+			mResult = mResult && value;
+			if (mResult == false) {
+				mIsFinished = true;
+			}
+		}
+
+		private static boolean isNonNull(final Object one, final Object other) {
+			return one != null && other != null;
+		}
+
+		private static boolean compareNull(final Object one, final Object other) {
+			if (one == null && other == null) {
+				return true;
+			}
+			if (one == null) {
+				return false;
+			}
+			if (other == null) {
+				return false;
+			}
+			throw new IllegalArgumentException("Both arguments are non-null");
+		}
+	}
 }
