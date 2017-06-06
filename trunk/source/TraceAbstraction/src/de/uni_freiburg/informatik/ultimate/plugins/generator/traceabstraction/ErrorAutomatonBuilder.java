@@ -28,6 +28,7 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
@@ -68,25 +69,46 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * <p>
  * TODO 2017-06-05 Christian: Why do I use two different predicate factories? Do I use them correctly?
  * <p>
- * TODO 2017-06-05 Christian: Should we use predicate unification or not? For which parts?
+ * TODO 2017-06-05 Christian: Should we use predicate unification or not? For which parts? Currently we need it only for
+ * 'True'/'False' and constructing the {@link NondeterministicInterpolantAutomaton}.
+ * <p>
+ * TODO 2017-06-05 Christian: Should we apply simplifications?
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type in the trace
  */
 public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
+	/**
+	 * Predicate transformer types.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	private enum PredicateTransformerType {
+		/**
+		 * Weakest precondition.
+		 */
+		WP,
+		/**
+		 * Strongest postcondition.
+		 */
+		SP
+	}
+
+	private static final boolean ADD_SP_PREDICATES = true;
+
 	private final NestedWordAutomaton<LETTER, IPredicate> mResultBeforeEnhancement;
 	private final NondeterministicInterpolantAutomaton<LETTER> mResultAfterEnhancement;
 
 	/**
-	 * @param predicateUnifier
-	 *            Predicate unifier.
+	 * @param services
+	 *            Ultimate services.
 	 * @param predicateFactory
 	 *            predicate factory
+	 * @param predicateUnifier
+	 *            predicate unifier
 	 * @param csToolkit
 	 *            SMT toolkit
-	 * @param services
-	 *            Ultimate services
 	 * @param simplificationTechnique
 	 *            simplification technique
 	 * @param xnfConversionTechnique
@@ -103,8 +125,8 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	 *            mode for automaton enhancement
 	 */
 	@SuppressWarnings("squid:S00107")
-	public ErrorAutomatonBuilder(final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory,
-			final CfgSmtToolkit csToolkit, final IUltimateServiceProvider services,
+	public ErrorAutomatonBuilder(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
+			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfgSymbolTable symbolTable,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryErrorAutomaton,
@@ -143,46 +165,69 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final IIcfgSymbolTable symbolTable,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
 			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace) throws AssertionError {
+		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
+		final IPredicate truePredicate = predicateUnifier.getTruePredicate();
+
 		// compute 'wp' sequence from 'false'
-		final IPredicate postcondition = predicateUnifier.getFalsePredicate();
-		final TracePredicates wpPredicates = getWpPredicates(services, csToolkit, predicateFactory,
-				simplificationTechnique, xnfConversionTechnique, symbolTable, trace, postcondition);
+		final TracePredicates wpPredicates =
+				getPredicates(services, csToolkit, predicateFactory, simplificationTechnique, xnfConversionTechnique,
+						symbolTable, truePredicate, trace, null, falsePredicate, PredicateTransformerType.WP);
 
 		// negate 'wp' sequence to get 'pre'
-		final List<IPredicate> oldIntermediatePredicates = wpPredicates.getPredicates();
-		final List<IPredicate> newIntermediatePredicates = new ArrayList<>(oldIntermediatePredicates.size());
-		for (final IPredicate pred : oldIntermediatePredicates) {
-			newIntermediatePredicates.add(predicateFactory.not(pred));
+		final List<IPredicate> wpIntermediatePredicates = wpPredicates.getPredicates();
+		final List<IPredicate> preIntermediatePredicates = new ArrayList<>(wpIntermediatePredicates.size());
+		for (final IPredicate wpPred : wpIntermediatePredicates) {
+			preIntermediatePredicates.add(predicateFactory.not(wpPred));
 		}
-		final IPredicate newPrecondition = predicateFactory.not(wpPredicates.getPrecondition());
-		final IPredicate newPostcondition = predicateUnifier.getTruePredicate();
-		final TracePredicates newPredicates =
-				new TracePredicates(newPrecondition, newPostcondition, newIntermediatePredicates);
+		final IPredicate prePrecondition = predicateFactory.not(wpPredicates.getPrecondition());
 
-		// TODO 2017-05-17 Christian: additionally compute 'sp' sequence and intersect
+		final List<IPredicate> newIntermediatePredicates;
+		final IPredicate newPostcondition;
+		if (ADD_SP_PREDICATES) {
+			final TracePredicates spPredicates = getPredicates(services, csToolkit, predicateFactory,
+					simplificationTechnique, xnfConversionTechnique, symbolTable, truePredicate, trace, prePrecondition,
+					truePredicate, PredicateTransformerType.SP);
+			assert (preIntermediatePredicates.size() == spPredicates.getPredicates().size());
+			newIntermediatePredicates = new ArrayList<>(preIntermediatePredicates.size());
+			final Iterator<IPredicate> preIt = preIntermediatePredicates.iterator();
+			final Iterator<IPredicate> spIt = spPredicates.getPredicates().iterator();
+			while (preIt.hasNext()) {
+				newIntermediatePredicates.add(predicateFactory.and(preIt.next(), spIt.next()));
+			}
+			newPostcondition = spPredicates.getPostcondition();
+		} else {
+			newIntermediatePredicates = preIntermediatePredicates;
+			newPostcondition = truePredicate;
+		}
+
+		final TracePredicates newPredicates =
+				new TracePredicates(prePrecondition, newPostcondition, newIntermediatePredicates);
 
 		return new StraightLineInterpolantAutomatonBuilder<>(services, alphabet, predicateFactoryInterpolantAutomata,
 				trace, newPredicates, StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ALL)
 						.getResult();
 	}
 
-	private TracePredicates getWpPredicates(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
+	private TracePredicates getPredicates(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
-			final NestedWord<LETTER> trace, final IPredicate postcondition) throws AssertionError {
-		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(predicateFactory,
-				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), services, trace, null,
-				postcondition, null, null, simplificationTechnique, xnfConversionTechnique, symbolTable);
-		final DefaultTransFormulas dtf = new DefaultTransFormulas(trace, null, postcondition,
+			final IPredicate truePredicate, final NestedWord<LETTER> trace, final IPredicate precondition,
+			final IPredicate postcondition, final PredicateTransformerType predicateTransformer) throws AssertionError {
+		final DefaultTransFormulas dtf = new DefaultTransFormulas(trace, precondition, postcondition,
 				Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
-		final TracePredicates wpPredicate;
+		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(predicateFactory,
+				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), services, trace, precondition,
+				postcondition, null, truePredicate, simplificationTechnique, xnfConversionTechnique, symbolTable);
+		final TracePredicates predicates;
 		try {
-			wpPredicate = ipt.computeWeakestPreconditionSequence(dtf, Collections.emptyList(), false, false);
+			predicates = (predicateTransformer == PredicateTransformerType.WP)
+					? ipt.computeWeakestPreconditionSequence(dtf, Collections.emptyList(), false, false)
+					: ipt.computeStrongestPostconditionSequence(dtf, Collections.emptyList());
 		} catch (final TraceInterpolationException e) {
 			// TODO 2017-05-17 Christian: better error handling
 			throw new AssertionError();
 		}
-		return wpPredicate;
+		return predicates;
 	}
 
 	private NondeterministicInterpolantAutomaton<LETTER> constructNondeterministicAutomaton(

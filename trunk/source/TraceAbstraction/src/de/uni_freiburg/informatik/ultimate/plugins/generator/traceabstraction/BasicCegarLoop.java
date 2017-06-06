@@ -402,7 +402,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			mLogger.info("Constructing error automaton for trace of length " + trace.length());
 		}
 		mErrorAutomatonBuilder = new ErrorAutomatonBuilder<>(
-				mTraceCheckAndRefinementEngine.getPredicateUnifier(), mPredicateFactory, mCsToolkit, mServices,
+				mServices, mPredicateFactory, mTraceCheckAndRefinementEngine.getPredicateUnifier(), mCsToolkit,
 				mSimplificationTechnique, mXnfConversionTechnique, mIcfgContainer.getCfgSmtToolkit().getSymbolTable(),
 				mPredicateFactoryInterpolantAutomata, new VpAlphabet<>(mAbstraction), trace,
 				getErrorAutomatonEnhancementMode());
