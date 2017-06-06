@@ -307,7 +307,7 @@ public class SvComp14CHandler extends CHandler {
 			main.mCHandler.convert(loc, src, new CPointer(new CPrimitive(CPrimitives.VOID)));
 			ExpressionResult size = (ExpressionResult) main.dispatch(node.getArguments()[2]);
 			size = size.switchToRValueIfNecessary(main, getMemoryHandler(), mStructHandler, loc);
-			main.mCHandler.convert(loc, size, mTypeSizeComputer.getSize_T());
+			main.mCHandler.convert(loc, size, mTypeSizeComputer.getSizeT());
 
 			final ExpressionResult result = ExpressionResult.copyStmtDeclAuxvarOverapprox(dest, src, size);
 

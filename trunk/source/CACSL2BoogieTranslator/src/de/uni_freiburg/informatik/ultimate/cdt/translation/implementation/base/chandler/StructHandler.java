@@ -282,7 +282,7 @@ public class StructHandler {
 			final Expression result = mExpressionTranslation.constructArithmeticExpression(
 					loc, 
 					IASTBinaryExpression.op_plus, addressOffsetOfFieldOwner, 
-					mTypeSizeAndOffsetComputer.getSize_T(), fieldOffset, mTypeSizeAndOffsetComputer.getSize_T());
+					mTypeSizeAndOffsetComputer.getSizeT(), fieldOffset, mTypeSizeAndOffsetComputer.getSizeT());
 			return result;
 //		}
 	}
