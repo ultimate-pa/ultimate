@@ -146,9 +146,8 @@ public class FastUPRCore {
 		int b = 0;
 		while (!periodLoop(b)) {
 			b++;
-			// TODO remove
-			if (b > 100) {
-				return;
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				throw new ToolchainCanceledException(new RunningTaskInfo(this.getClass(), "the current task"));
 			}
 		}
 	}
@@ -400,6 +399,9 @@ public class FastUPRCore {
 	}
 
 	public UnmodifiableTransFormula getResult() {
+		if (mResult == null) {
+			throw new UnsupportedOperationException("No Result found.");
+		}
 		return mResult;
 	}
 

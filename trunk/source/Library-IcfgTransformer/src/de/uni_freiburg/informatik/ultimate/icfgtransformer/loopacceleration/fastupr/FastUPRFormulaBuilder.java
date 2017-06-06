@@ -31,6 +31,7 @@ public class FastUPRFormulaBuilder {
 	private final Script mScript;
 	private final OctagonCalculator mCalculator;
 	private final OctagonTransformer mTransformer;
+	private final RealToIntTransformer mToIntTransformer;
 
 	public FastUPRFormulaBuilder(FastUPRUtils utils, ManagedScript mgdScript, OctagonCalculator calc,
 			OctagonTransformer transformer) {
@@ -39,11 +40,13 @@ public class FastUPRFormulaBuilder {
 		mScript = mgdScript.getScript();
 		mCalculator = calc;
 		mTransformer = transformer;
+		mToIntTransformer = new RealToIntTransformer(mScript);
 	}
 
 	public UnmodifiableTransFormula buildTransFormula(Term term, Map<IProgramVar, TermVariable> inVars,
 			Map<IProgramVar, TermVariable> outVars) {
-		final ModifiableTransFormula modFormula = new ModifiableTransFormula(term);
+		final Term withoutReal = mToIntTransformer.transformToInt(term);
+		final ModifiableTransFormula modFormula = new ModifiableTransFormula(withoutReal);
 		for (final IProgramVar p : inVars.keySet()) {
 			modFormula.addInVar(p, inVars.get(p));
 		}
@@ -63,7 +66,12 @@ public class FastUPRFormulaBuilder {
 			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars) {
 
 		mUtils.output("Returning Consistency Result");
-		return null;
+		final ArrayList<Term> orTerms = new ArrayList<>();
+		for (int i = 0; i <= count; i++) {
+			orTerms.add(mCalculator.sequentialize(conjunc, inVars, outVars, i).toTerm(mScript));
+		}
+		final Term orTerm = mScript.term("or", orTerms.toArray(new Term[0]));
+		return buildTransFormula(orTerm, inVars, outVars);
 	}
 
 	public Term toExistential(Term term) {

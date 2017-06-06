@@ -32,13 +32,10 @@ import java.util.Map;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctConjunction;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonCalculator;
-import de.uni_freiburg.informatik.ultimate.logic.SMTLIBException;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
@@ -62,6 +59,7 @@ public class TermChecker {
 	private final FastUPRFormulaBuilder mFormulaBuilder;
 	private final Script mScript;
 	private final IUltimateServiceProvider mServices;
+	private final RealToIntTransformer mRealToIntTransformer;
 
 	/**
 	 *
@@ -79,6 +77,7 @@ public class TermChecker {
 		mManagedScript = managedScript;
 		mUtils = utils;
 		mScript = mManagedScript.getScript();
+		mRealToIntTransformer = new RealToIntTransformer(mScript);
 	}
 
 	public void setConjunction(OctConjunction conjunc) {
@@ -129,8 +128,9 @@ public class TermChecker {
 	}
 
 	public boolean checkQuantifiedTerm(Term term) {
+		final Term withOutReal = mRealToIntTransformer.transformToInt(term);
 		final Term eliminated = PartialQuantifierElimination.tryToEliminate(mServices, mUtils.getLogger(),
-				mManagedScript, term, SimplificationTechnique.SIMPLIFY_DDA,
+				mManagedScript, withOutReal, SimplificationTechnique.SIMPLIFY_DDA,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		return SmtUtils.checkSatTerm(mScript, eliminated) == LBool.SAT;
 	}
@@ -141,18 +141,16 @@ public class TermChecker {
 	 * @return
 	 */
 	public boolean checkTerm(Term term) {
-		try {
-			final LBool result = Util.checkSat(mScript, term);
-			return result.equals(LBool.SAT);
-		} catch (final SMTLIBException e) {
-			mUtils.output(e.toString());
-			return checkQuantifiedTerm(term);
-		}
+
+		final Term withOutReal = mRealToIntTransformer.transformToInt(term);
+
+		final LBool result = SmtUtils.checkSatTerm(mScript, withOutReal);
+		return result.equals(LBool.SAT);
+
 	}
 
-	private Term getClosedTerm(Term term) {
-		final UnmodifiableTransFormula formula = mFormulaBuilder.buildTransFormula(term, mInVars, mOutVars);
-		return formula.getClosedFormula();
+	public Term toInt(Term term) {
+		return mRealToIntTransformer.transformToInt(term);
 	}
 
 }
