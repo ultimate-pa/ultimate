@@ -78,7 +78,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public EqState<ACTION> patch(EqState<ACTION> dominator) {
-		EqState<ACTION> newState = removeVariables(dominator.getVariables());
+		EqState<ACTION> newState = this.removeVariables(dominator.getVariables());
 		return newState.intersect(dominator);
 	}
 

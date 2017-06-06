@@ -37,8 +37,7 @@ public class EqPredicate<ACTION extends IIcfgTransition<IcfgLocation>> implement
 	}
 
 	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> getEqConstraint() {
-		// TODO Auto-generated method stub
-		return null;
+		return mConstraint;
 	}
 
 }

@@ -43,6 +43,11 @@ public class EqConstraint<
 	private Set<IProgramVar> mVariables;
 	private Set<IProgramVarOrConst> mPvocs;
 	
+	/**
+	 * Creates an empty constraint (i.e. it does not constrain anything, is equivalent to "true")
+	 * 
+	 * @param factory
+	 */
 	public EqConstraint(EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
 		mFactory = factory;
 		
@@ -406,6 +411,10 @@ public class EqConstraint<
 		allConjuncts.addAll(elementDisequalities);
 		allConjuncts.addAll(functionEqualities);
 		allConjuncts.addAll(functionDisequalities);
+		
+		if (allConjuncts.isEmpty()) {
+			return script.term("true");
+		}
 
 		return script.term("and", allConjuncts.toArray(new Term[allConjuncts.size()]));
 	}
@@ -427,5 +436,47 @@ public class EqConstraint<
 	public Set<IProgramVarOrConst> getPvocs() {
 		return mPvocs;
 	}
+
+	/**
+	 * all equalities that hold in this constraint
+	 * (transitive, symmetric closure)
+	 * @return
+	 */
+	public Set<VPDomainSymmetricPair<NODE>> getAllElementEqualities() {
+		Set<VPDomainSymmetricPair<NODE>> result = new HashSet<>();
+		final List<NODE> allNodes = new ArrayList<>(getAllNodes());
+		for (int i = 0; i < allNodes.size(); i++) {
+			for (int j = 0; j < i; j++) {
+				if (areEqual(allNodes.get(i), allNodes.get(i))) {
+					result.add(new VPDomainSymmetricPair<NODE>(allNodes.get(i), allNodes.get(j)));
+				}
+			}
+		}
+		return result;
+	}
+	
+	public Set<VPDomainSymmetricPair<NODE>> getAllElementDisequalities() {
+		Set<VPDomainSymmetricPair<NODE>> result = new HashSet<>();
+		final List<NODE> allNodes = new ArrayList<>(getAllNodes());
+		for (int i = 0; i < allNodes.size(); i++) {
+			for (int j = 0; j < i; j++) {
+				if (areUnequal(allNodes.get(i), allNodes.get(i))) {
+					result.add(new VPDomainSymmetricPair<NODE>(allNodes.get(i), allNodes.get(j)));
+				}
+			}
+		}
+		return result;
+	}
+
+	public Set<VPDomainSymmetricPair<FUNCTION>> getAllFunctionEqualities() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	public Set<VPDomainSymmetricPair<FUNCTION>> getAllFunctionDisequalities() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
 	
 }

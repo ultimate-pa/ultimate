@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -116,13 +117,18 @@ public class VPDomainPreanalysis {
 	 */
 	private final Set<EqNode> mAllEqNodes = new HashSet<>();
 
-	private EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
+	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 
-	public VPDomainPreanalysis(final IIcfg<?> root, final ILogger logger) {
+	private final IUltimateServiceProvider mServices;
+
+	public VPDomainPreanalysis(final IIcfg<?> root, final ILogger logger, IUltimateServiceProvider services) {
 		mManagedScript = root.getCfgSmtToolkit().getManagedScript();
 		mLogger = logger;
 		mSymboltable = root.getCfgSmtToolkit().getSymbolTable();
 		mSettings = new VPDomainPreanalysisSettings();
+		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(this, mManagedScript);
+		mServices = services;
+
 		mBenchmark = new Benchmark();
 		mBenchmark.start(VPSFO.overallFromPreAnalysis);
 		mBenchmark.register(VPSFO.vpStateEqualsClock);
@@ -130,7 +136,9 @@ public class VPDomainPreanalysis {
 		mBenchmark.register(VPSFO.propagateDisEqualitiesClock);
 		mBenchmark.register(VPSFO.applyClock);
 		mBenchmark.register(VPSFO.conjoinOverallClock);
+
 		process(RcfgUtils.getInitialEdges(root));
+		
 	}
 
 	private <T extends IcfgEdge> void process(final Collection<T> edges) {
@@ -574,48 +582,48 @@ public class VPDomainPreanalysis {
 		}
 		
 		
-		/*
-		 * Say the program equates two arrays, with or without stores in between. Then we want to have the same 
-		 * EqFunctionNodes for these symbols. 
-		 * 
-		 * E.g.
-		 *  We have (= a b), or (= a (store b i x)). Then for every node a[t] we also want to have the node b[t], and
-		 *  vice versa. Note that this introduces EqNode that do not correspond to any term in the formula.
-		 *  Why do we want those extra nodes?
-		 *  
-		 *  say we have a state where
-		 *   valid[p] == 1
-		 *  then we say
-		 *   valid' := valid
-		 *   assume valid'[m] == 0
-		 *  and we want to conclude 
-		 *   m != p
-		 *   Then we can conclude this from valid'[m] != valid'[p], but that we know from the fact that 
-		 *    valid'[p] == valid[p] (and valid[p] == 1 and 1 != 0 and valid'[m] == 0)
-		 *   However our program contains no term that triggers tracking of valid'[p] 
-		 */
-		final Set<ApplicationTerm> arrayEquations = mEquations.stream()
-				.filter(eq -> eq.getFunction().getParameterSorts()[0].isArraySort())
-				.collect(Collectors.toSet());
-		for (ApplicationTerm arrayEquation : arrayEquations) {
-			final Term arg1 = arrayEquation.getParameters()[0];
-			final Term arg2 = arrayEquation.getParameters()[1];
-
-			final EqFunction array1 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(
-					getOrConstructBoogieVarOrConst(VPDomainHelpers.getArrayTerm(arg1)));
-			final EqFunction array2 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(
-					getOrConstructBoogieVarOrConst(VPDomainHelpers.getArrayTerm(arg2)));
-			
-			/*
-			 * for each EqFunctionNode of the form array1[i1 .. in] create the node array2[i1 .. in] and vice versa
-			 */
-			for (EqFunctionNode eqfn : mArrayIdToFnNodes.getImage(array1.getPvoc())) {
-				getOrConstructEqFnNode(array2, eqfn.getArgs());
-			}
-			for (EqFunctionNode eqfn : mArrayIdToFnNodes.getImage(array2.getPvoc())) {
-				getOrConstructEqFnNode(array1, eqfn.getArgs());
-			}
-		}
+//		/*
+//		 * Say the program equates two arrays, with or without stores in between. Then we want to have the same 
+//		 * EqFunctionNodes for these symbols. 
+//		 * 
+//		 * E.g.
+//		 *  We have (= a b), or (= a (store b i x)). Then for every node a[t] we also want to have the node b[t], and
+//		 *  vice versa. Note that this introduces EqNode that do not correspond to any term in the formula.
+//		 *  Why do we want those extra nodes?
+//		 *  
+//		 *  say we have a state where
+//		 *   valid[p] == 1
+//		 *  then we say
+//		 *   valid' := valid
+//		 *   assume valid'[m] == 0
+//		 *  and we want to conclude 
+//		 *   m != p
+//		 *   Then we can conclude this from valid'[m] != valid'[p], but that we know from the fact that 
+//		 *    valid'[p] == valid[p] (and valid[p] == 1 and 1 != 0 and valid'[m] == 0)
+//		 *   However our program contains no term that triggers tracking of valid'[p] 
+//		 */
+//		final Set<ApplicationTerm> arrayEquations = mEquations.stream()
+//				.filter(eq -> eq.getFunction().getParameterSorts()[0].isArraySort())
+//				.collect(Collectors.toSet());
+//		for (ApplicationTerm arrayEquation : arrayEquations) {
+//			final Term arg1 = arrayEquation.getParameters()[0];
+//			final Term arg2 = arrayEquation.getParameters()[1];
+//
+//			final EqFunction array1 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(
+//					getOrConstructBoogieVarOrConst(VPDomainHelpers.getArrayTerm(arg1)));
+//			final EqFunction array2 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(
+//					getOrConstructBoogieVarOrConst(VPDomainHelpers.getArrayTerm(arg2)));
+//			
+//			/*
+//			 * for each EqFunctionNode of the form array1[i1 .. in] create the node array2[i1 .. in] and vice versa
+//			 */
+//			for (EqFunctionNode eqfn : mArrayIdToFnNodes.getImage(array1.getPvoc())) {
+//				getOrConstructEqFnNode(array2, eqfn.getArgs());
+//			}
+//			for (EqFunctionNode eqfn : mArrayIdToFnNodes.getImage(array2.getPvoc())) {
+//				getOrConstructEqFnNode(array1, eqfn.getArgs());
+//			}
+//		}
 		
 		mLogger.info("VPDomainPreanalysis finished.");
 		mLogger.info("tracked arrays: " + mArrayIdToFnNodes.getDomain());
@@ -742,6 +750,10 @@ public class VPDomainPreanalysis {
 
 	public boolean isElementTracked(Term term) {
 		return getEqNode(term) != null;
+	}
+
+	public IUltimateServiceProvider getServices() {
+		return mServices;
 	}
 }
 

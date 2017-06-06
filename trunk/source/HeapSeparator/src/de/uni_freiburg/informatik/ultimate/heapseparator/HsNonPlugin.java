@@ -26,7 +26,6 @@
  */
 package de.uni_freiburg.informatik.ultimate.heapseparator;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -194,7 +193,7 @@ public class HsNonPlugin {
 			
 			EqState<IcfgEdge> disjoinedState;
 			if (statesForCurrentEc.isEmpty()) {
-				disjoinedState = vpDomain.getEqStateFactory().getTopState(Collections.emptySet());
+				disjoinedState = vpDomain.getEqStateFactory().getTopState();
 			} else {
 				disjoinedState = vpDomain.getEqStateFactory().disjoinAll(statesForCurrentEc);
 			}

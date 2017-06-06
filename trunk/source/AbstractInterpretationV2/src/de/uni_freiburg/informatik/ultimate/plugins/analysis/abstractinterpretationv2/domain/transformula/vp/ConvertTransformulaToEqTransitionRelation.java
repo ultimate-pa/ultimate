@@ -37,10 +37,10 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 	
 	private final EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
-	private ManagedScript mMgdScript;
-	private IUltimateServiceProvider mServices;
+	private final ManagedScript mMgdScript;
+	private final IUltimateServiceProvider mServices;
 	
-	private VPDomainPreanalysis mPreAnalysis;
+	private final VPDomainPreanalysis mPreAnalysis;
 
 	/**
 	 * stores intermediate results of the "recursion"
@@ -49,10 +49,15 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 	
 	public ConvertTransformulaToEqTransitionRelation(TransFormula tf, 
 			EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory, 
-			EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
+			EqNodeAndFunctionFactory eqNodeAndFunctionFactory, VPDomainPreanalysis preAnalysis) {
 		mTf = tf;
 		mEqConstraintFactory = eqConstraintFactory;
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
+		
+		mPreAnalysis = preAnalysis;
+		mMgdScript = preAnalysis.getManagedScript();
+		mServices = preAnalysis.getServices();
+		
 		computeResult();
 	}
 	

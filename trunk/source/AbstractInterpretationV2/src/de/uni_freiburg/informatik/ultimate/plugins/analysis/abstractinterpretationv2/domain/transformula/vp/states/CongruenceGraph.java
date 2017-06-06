@@ -432,7 +432,15 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 	}
 
 	public HashRelation<NODE, NODE> getSupportingEqualities() {
+		final HashRelation<NODE, NODE> result = new HashRelation<>();
+
+		for (NODE node : mNodeToEqGraphNode.keySet()) {
+			NODE representative = find(node);
+			if (representative != node) {
+				result.addPair(node, representative);
+			}
+		}
 		
-		return null;
+		return result;
 	}
 }

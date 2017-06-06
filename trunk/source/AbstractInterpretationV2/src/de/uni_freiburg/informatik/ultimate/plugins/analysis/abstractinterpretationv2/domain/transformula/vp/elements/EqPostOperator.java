@@ -12,6 +12,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.TransFormulaConverterCache;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqConstraintFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqDisjunctiveConstraint;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states.EqOperationProvider;
@@ -25,8 +26,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implements
 		IAbstractPostOperator<EqState<ACTION>, ACTION, IProgramVarOrConst> {
 	
-	private ManagedScript mScript;
-	private EqOperationProvider<ACTION> operationProvider;
+	private final ManagedScript mMgdScript;
+	private final EqOperationProvider<ACTION> mOperationProvider;
 	
 	private final PredicateTransformer<
 			EqDisjunctiveConstraint<ACTION, EqNode, EqFunction>, 
@@ -34,27 +35,33 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 			EqTransitionRelation<ACTION>> mPredicateTransformer;
 	private final TransFormulaConverterCache<ACTION> mTransFormulaConverter;
 	private CfgSmtToolkit mCfgSmtToolkit;
-	private EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
-	private EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
+	private final EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
+	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
+	private final VPDomainPreanalysis mPreAnalysis;
 	
 	public EqPostOperator(EqNodeAndFunctionFactory eqNodeAndFunctionFactory, 
-			EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory) {
+			EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory, 
+			VPDomainPreanalysis preAnalysis) {
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
+		mPreAnalysis = preAnalysis;
+		mMgdScript = preAnalysis.getManagedScript();
 
-		mPredicateTransformer = new PredicateTransformer<>(mScript, operationProvider);	
+		mOperationProvider = new EqOperationProvider<>();
+
+		mPredicateTransformer = new PredicateTransformer<>(mMgdScript, mOperationProvider);	
 		mTransFormulaConverter = new TransFormulaConverterCache<ACTION>(mEqNodeAndFunctionFactory, 
-				mEqConstraintFactory);
+				mEqConstraintFactory, mPreAnalysis);
 	}
 
 	@Override
 	public List<EqState<ACTION>> apply(EqState<ACTION> oldstate, ACTION transition) {
 		
-		EqTransitionRelation<ACTION> transrel = null;
 
 		final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> postConstraint = 
 				mPredicateTransformer.strongestPostcondition(
-						oldstate.toEqPredicate(), transrel);
+						oldstate.toEqPredicate(), 
+						mTransFormulaConverter.getEqTransitionRelationFromTransformula(transition.getTransformula()));
 		return postConstraint.toEqStates();
 	}
 	@Override
