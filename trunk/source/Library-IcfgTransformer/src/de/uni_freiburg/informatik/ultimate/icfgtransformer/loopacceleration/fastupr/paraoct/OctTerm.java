@@ -1,6 +1,6 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct;
 
-import java.math.BigDecimal;
+import java.math.BigInteger;
 
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -46,16 +46,12 @@ public abstract class OctTerm {
 
 	protected Term leftTerm(Script script) {
 		if (isOneVar()) {
-			return script.term("*",
-					isFirstNegative() ? script.decimal((new BigDecimal("2")).negate()) : script.decimal("2"),
+			return script.term("*", isFirstNegative() ? script.numeral(new BigInteger("-2")) : script.numeral("2"),
 					mFirstVar);
 
 		} else {
-			return script.term("+",
-					isFirstNegative() ? script.term("*", script.decimal(BigDecimal.ONE.negate()), mFirstVar)
-							: mFirstVar,
-					isSecondNegative() ? script.term("*", script.decimal(BigDecimal.ONE.negate()), mSecondVar)
-							: mSecondVar);
+			return script.term("+", isFirstNegative() ? script.term("*", script.decimal("-1"), mFirstVar) : mFirstVar,
+					isSecondNegative() ? script.term("*", script.decimal("-1"), mSecondVar) : mSecondVar);
 		}
 	}
 

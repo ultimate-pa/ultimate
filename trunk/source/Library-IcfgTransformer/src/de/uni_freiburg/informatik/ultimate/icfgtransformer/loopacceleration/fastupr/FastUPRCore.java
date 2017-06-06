@@ -113,7 +113,7 @@ public class FastUPRCore {
 		mInVars = new HashMap<>(mFormula.getInVars());
 		mOutVars = new HashMap<>(mFormula.getOutVars());
 
-		mTermChecker.checkTerm(mRelation);
+		// mTermChecker.checkTerm(mRelation);
 
 		mVariables = new ArrayList<>();
 

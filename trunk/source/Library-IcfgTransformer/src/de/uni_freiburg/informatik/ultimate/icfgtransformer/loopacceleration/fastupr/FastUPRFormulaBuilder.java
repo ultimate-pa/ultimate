@@ -45,8 +45,8 @@ public class FastUPRFormulaBuilder {
 
 	public UnmodifiableTransFormula buildTransFormula(Term term, Map<IProgramVar, TermVariable> inVars,
 			Map<IProgramVar, TermVariable> outVars) {
-		final Term withoutReal = mToIntTransformer.transformToInt(term);
-		final ModifiableTransFormula modFormula = new ModifiableTransFormula(withoutReal);
+		final Term withoutInt = mToIntTransformer.transformToInt(term);
+		final ModifiableTransFormula modFormula = new ModifiableTransFormula(withoutInt);
 		for (final IProgramVar p : inVars.keySet()) {
 			modFormula.addInVar(p, inVars.get(p));
 		}
