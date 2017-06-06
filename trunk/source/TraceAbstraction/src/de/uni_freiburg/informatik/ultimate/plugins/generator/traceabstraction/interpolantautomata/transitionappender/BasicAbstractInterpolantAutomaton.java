@@ -48,7 +48,6 @@ public abstract class BasicAbstractInterpolantAutomaton<LETTER extends IAction>
 		extends AbstractInterpolantAutomaton<LETTER> {
 
 	protected final IPredicate mIaTrueState;
-	protected final IPredicateUnifier mPredicateUnifier;
 
 	public BasicAbstractInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker, final boolean useEfficientTotalAutomatonBookkeeping,
@@ -56,7 +55,6 @@ public abstract class BasicAbstractInterpolantAutomaton<LETTER extends IAction>
 			final INestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton) {
 		super(services, csToolkit, hoareTripleChecker, useEfficientTotalAutomatonBookkeeping,
 				predicateUnifier.getFalsePredicate(), inputInterpolantAutomaton);
-		mPredicateUnifier = predicateUnifier;
 		mIaTrueState = predicateUnifier.getTruePredicate();
 	}
 
