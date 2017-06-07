@@ -1,4 +1,4 @@
-
+//#Safe
 
 union mytype {
     int z;
@@ -14,5 +14,5 @@ int main() {
     u.z = 3;
     u.s.x = 20;
 
-    //@assert u.z == 3;
+    //@assert u.z == 20;
 }
