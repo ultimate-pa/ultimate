@@ -37,7 +37,6 @@ import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
@@ -69,6 +68,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	protected String[] mFiletypesToConsider;
 
 	public AbstractRegressionTestSuite() {
+		super();
 		mTimeout = 1000;
 		mExcludeFilterRegex = "";
 		mIncludeFilterRegex = "";
@@ -86,11 +86,9 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 			for (final File inputFile : inputFiles) {
 				final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile,
 						runConfiguration.getSettingsFile(), runConfiguration.getToolchainFile(), mTimeout);
-				final UltimateStarter starter = new UltimateStarter(urd);
-				rtr.add(new UltimateTestCase(
-						String.format("%s+%s: %s", runConfiguration.getToolchainFile().getName(),
-								runConfiguration.getSettingsFile().getName(), inputFile.getAbsolutePath()),
-						getTestResultDecider(urd), starter, urd, null));
+				final String name = String.format("%s+%s: %s", runConfiguration.getToolchainFile().getName(),
+						runConfiguration.getSettingsFile().getName(), inputFile.getAbsolutePath());
+				rtr.add(buildTestCase(urd, getTestResultDecider(urd), name));
 			}
 		}
 		return rtr;
