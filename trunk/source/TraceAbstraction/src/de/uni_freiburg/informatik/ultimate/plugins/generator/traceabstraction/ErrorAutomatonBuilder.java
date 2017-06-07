@@ -210,7 +210,8 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 						predicateUnifier.getOrConstructPredicate(newPostcondition), newIntermediatePredicates);
 
 		return new StraightLineInterpolantAutomatonBuilder<>(services, alphabet, predicateFactoryInterpolantAutomata,
-				trace, newPredicates, StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ALL)
+				trace, newPredicates,
+				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ALL_INITIAL_ALL_ACCEPTING)
 						.getResult();
 	}
 

@@ -64,7 +64,7 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER>
 		/**
 		 * All states become initial and accepting.
 		 */
-		ALL
+		ALL_INITIAL_ALL_ACCEPTING
 	}
 	
 	private final IUltimateServiceProvider mServices;
@@ -116,11 +116,26 @@ public class StraightLineInterpolantAutomatonBuilder<LETTER>
 	}
 
 	private void addStatesAndTransitions(final NestedWord<LETTER> trace, final TracePredicates tracePredicates,
-			final InitialAndAcceptingStateMode acceptingStateMode) {
-		final boolean isInitial = acceptingStateMode == InitialAndAcceptingStateMode.ALL ? true : false;
-		final boolean isAccepting = acceptingStateMode == InitialAndAcceptingStateMode.ALL ? true : false;
+			final InitialAndAcceptingStateMode initAndAcceptStateMode) {
+		final boolean isInitial;
+		final boolean isAccepting;
+		switch (initAndAcceptStateMode) {
+			case ONLY_FIRST_INITIAL_LAST_ACCEPTING:
+				isInitial = false;
+				isAccepting = false;
+				break;
+			case ALL_INITIAL_ALL_ACCEPTING:
+				isInitial = true;
+				isAccepting = true;
+				break;
+			default:
+				throw new IllegalArgumentException("Unknown mode: " + initAndAcceptStateMode);
+		}
 		mResult.addState(true, isAccepting, tracePredicates.getPrecondition());
-		mResult.addState(isInitial, true, tracePredicates.getPostcondition());
+		if (tracePredicates.getPrecondition() != tracePredicates.getPostcondition()) {
+			// only add if not a duplicate
+			mResult.addState(isInitial, true, tracePredicates.getPostcondition());
+		}
 		for (int i = 0; i < trace.length(); i++) {
 			final IPredicate pred = tracePredicates.getPredicate(i);
 			final IPredicate succ = tracePredicates.getPredicate(i + 1);
