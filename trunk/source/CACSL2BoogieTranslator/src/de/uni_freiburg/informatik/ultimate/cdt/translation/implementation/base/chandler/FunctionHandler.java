@@ -140,6 +140,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietransla
  * @author Alexander Nutz
  */
 public class FunctionHandler {
+	private static final String MSG_ONLY_ONE_ARG = " has only one argument";
+
 	/**
 	 * A map from procedure name to procedure declaration.
 	 */
@@ -312,8 +314,11 @@ public class FunctionHandler {
 			}
 
 			if (checkInParams) {
+				final ASTTypeComparisonVisitor comparer = new ASTTypeComparisonVisitor();
+
 				for (int i = 0; i < in.length; i++) {
-					if (!in[i].getType().toString().equals(proc.getInParams()[i].getType().toString())) {
+					final boolean isSimilar = comparer.isSimilar(in[i], proc.getInParams()[i]);
+					if (!isSimilar) {
 						final String msg = "Implementation does not match declaration! "
 								+ "Type missmatch on in-parameters! " + in.length + " arguments, "
 								+ proc.getInParams().length + " parameters, " + "first missmatch at position " + i
@@ -1133,7 +1138,7 @@ public class FunctionHandler {
 			return builder.build();
 		} else if ("__builtin_return_address".equals(methodName)) {
 			if (arguments.length != 1) {
-				throw new IllegalArgumentException(methodName + "has one argumens");
+				throw new IllegalArgumentException(methodName + MSG_ONLY_ONE_ARG);
 			}
 			main.dispatch(arguments[0]);
 			/*
@@ -1162,14 +1167,14 @@ public class FunctionHandler {
 			// throw new UnsupportedOperationException("function abs from stdlib.h not yet implemented");
 		} else if ("__builtin_bswap32".equals(methodName)) {
 			if (arguments.length != 1) {
-				throw new IllegalArgumentException(methodName + "has one argumens");
+				throw new IllegalArgumentException(methodName + MSG_ONLY_ONE_ARG);
 			}
 			main.dispatch(arguments[0]);
 			final CPrimitive resultType = new CPrimitive(CPrimitives.UINT);
 			return constructOverapproximationForFunctionCall(main, loc, methodName, resultType);
 		} else if ("__builtin_bswap64".equals(methodName)) {
 			if (arguments.length != 1) {
-				throw new IllegalArgumentException(methodName + "has one argumens");
+				throw new IllegalArgumentException(methodName + MSG_ONLY_ONE_ARG);
 			}
 			main.dispatch(arguments[0]);
 			final CPrimitive resultType = new CPrimitive(CPrimitives.ULONG);
@@ -1711,10 +1716,9 @@ public class FunctionHandler {
 		for (int i = 0; i < newCDecs.length - 1; i++) {
 			newCDecs[i] = calledFuncCFunction.getParameterTypes()[i];
 		}
-		newCDecs[newCDecs.length - 1] = new CDeclaration(new CPointer(new CPrimitive(CPrimitives.VOID)), "#fp"); // FIXME
-																													// string
-																													// to
-																													// SFO..?
+		// FIXME string to SFO..?
+		newCDecs[newCDecs.length - 1] = new CDeclaration(new CPointer(new CPrimitive(CPrimitives.VOID)), "#fp");
+
 		final CFunction cFuncWithFP = new CFunction(calledFuncCFunction.getResultType(), newCDecs, false);
 		return cFuncWithFP;
 	}
@@ -1834,9 +1838,8 @@ public class FunctionHandler {
 	public String getCurrentProcedureID() {
 		if (mCurrentProcedure == null) {
 			return null;
-		} else {
-			return mCurrentProcedure.getIdentifier();
 		}
+		return mCurrentProcedure.getIdentifier();
 	}
 
 	public boolean noCurrentProcedure() {
@@ -1896,7 +1899,7 @@ public class FunctionHandler {
 			}
 
 			if (one.getWhereClause() != null || other.getWhereClause() != null) {
-				throw new UnsupportedOperationException("Not yet implemented");
+				throw new UnsupportedOperationException("Not yet implemented: isSimilar for where clauses");
 			}
 			return isSimilar(one.getType(), other.getType());
 		}
@@ -2002,7 +2005,7 @@ public class FunctionHandler {
 				final VarList otherField = otherFields[i];
 
 				if (oneField.getWhereClause() != null || otherField.getWhereClause() != null) {
-					throw new UnsupportedOperationException("Not yet implemented");
+					throw new UnsupportedOperationException("Not yet implemented: where-clauses for struct nodes");
 				}
 
 				if (!isNonNull(oneField, otherField)) {
