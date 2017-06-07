@@ -180,9 +180,11 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 			}
 
 			final OUTLOC newSource = lst.createNewLocation(oldSource);
-			resultIcfg.addOrdinaryLocation(newSource);
+			resultIcfg.addOrdinaryLocation(newSource); // Needed?
 
 			createNewLocations(oldSource, newSource, closed, resultIcfg, lst, loopMapping);
+			// createNewLocationsSplit(oldSource, newSource, closed, resultIcfg,
+			// lst, loopMapping);
 		}
 	}
 
@@ -215,6 +217,64 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 
 		}
 
+	}
+
+	@SuppressWarnings("unchecked")
+	private void createNewLocationsSplit(final INLOC oldSource, OUTLOC newSource, final Set<INLOC> closed,
+			final BasicIcfg<OUTLOC> result, final TransformedIcfgBuilder<INLOC, OUTLOC> lst,
+			Map<IcfgEdge, UnmodifiableTransFormula> loopMapping) {
+
+		OUTLOC source = newSource;
+
+		for (final IcfgEdge oldEdge : oldSource.getOutgoingEdges()) {
+			if (loopMapping.containsKey(oldEdge)) {
+				final OUTLOC loopExit = createFreshLocation(oldSource, result);
+
+				final IcfgEdge newTrans = lst.createNewInternalTransition(newSource, loopExit, loopMapping.get(oldEdge),
+						false);
+				newSource.addOutgoing(newTrans);
+				loopExit.addIncoming(newTrans);
+				source = loopExit;
+				continue;
+			}
+		}
+
+		for (final IcfgEdge oldEdge : oldSource.getOutgoingEdges()) {
+			if (loopMapping.containsKey(oldEdge)) {
+				continue;
+			}
+			final INLOC oldTarget = (INLOC) oldEdge.getTarget();
+			final OUTLOC newTarget = lst.createNewLocation(oldTarget);
+			final IcfgEdge newEdge = lst.createNewTransition(source, newTarget, oldEdge);
+			source.addOutgoing(newEdge);
+			newTarget.addIncoming(newEdge);
+
+			if (!closed.add(oldTarget)) {
+				return;
+			}
+
+			createNewLocationsSplit(oldTarget, newTarget, closed, result, lst, loopMapping);
+
+		}
+	}
+
+	private OUTLOC createFreshLocation(INLOC oldLoc, BasicIcfg<OUTLOC> resultIcfg) {
+
+		final String proc = oldLoc.getProcedure();
+		final OUTLOC freshLoc = mLocationFactory.createLocation(oldLoc, oldLoc.getDebugIdentifier(), proc);
+
+		// determine attributes of location
+		final boolean isInitial = false;
+		final Set<INLOC> errorLocs = mOriginalIcfg.getProcedureErrorNodes().get(proc);
+		final boolean isError = errorLocs != null && errorLocs.contains(oldLoc);
+		final boolean isProcEntry = false;
+		final boolean isProcExit = false;
+		final boolean isLoopLocation = false;
+
+		// add fresh location to resultIcfg
+		resultIcfg.addLocation(freshLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation);
+
+		return freshLoc;
 	}
 
 	@Override

@@ -28,6 +28,9 @@ public final class OctagonFactory {
 	public static OctTerm createOctTerm(Object value, TermVariable firstVar, boolean firstNegative,
 			TermVariable secondVar, boolean secondNegative) {
 		if (firstVar.equals(secondVar)) {
+			if (firstNegative != secondNegative) {
+				throw new IllegalArgumentException("Can't create a term of the form x - x <= c");
+			}
 			return createOneVarOctTerm(value, firstVar, firstNegative);
 		}
 		return createTwoVarOctTerm(value, firstVar, firstNegative, secondVar, secondNegative);

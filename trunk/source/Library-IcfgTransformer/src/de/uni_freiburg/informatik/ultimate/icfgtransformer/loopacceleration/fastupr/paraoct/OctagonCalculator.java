@@ -324,8 +324,10 @@ public class OctagonCalculator extends NonRecursive {
 
 		mUtils.debug(">> Substitutions finished.");
 		final OctConjunction inputConstraints = getInputConstraints(first, inVarSet);
+		final OctConjunction outputConstraints = getOutputConstraints(second, outVarSet);
 		mUtils.debug(inputConstraints.toString());
-		final OctConjunction result = conjunction(firstFinal, secondSubstituted);
+		final OctConjunction constraints = conjunction(inputConstraints, outputConstraints);
+		final OctConjunction result = conjunction(secondSubstituted, constraints);
 		return result;
 	}
 
@@ -338,6 +340,16 @@ public class OctagonCalculator extends NonRecursive {
 			}
 		}
 
+		return result;
+	}
+
+	private static OctConjunction getOutputConstraints(OctConjunction second, HashSet<TermVariable> outVarSet) {
+		final OctConjunction result = new OctConjunction();
+		for (final OctTerm t : second.getTerms()) {
+			if (outVarSet.contains(t.getFirstVar()) && outVarSet.contains(t.getSecondVar())) {
+				result.addTerm(t);
+			}
+		}
 		return result;
 	}
 

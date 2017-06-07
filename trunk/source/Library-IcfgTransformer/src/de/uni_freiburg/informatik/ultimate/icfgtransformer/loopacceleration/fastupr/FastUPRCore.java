@@ -130,6 +130,9 @@ public class FastUPRCore {
 
 			mVariables = mOctagonCalculator.getSortedVariables(mInVars, mOutVars);
 
+			final ParametricOctMatrix testMatrix = mOctagonTransformer.getMatrix(mConjunc, mVariables);
+			final OctConjunction testConjunc = testMatrix.toOctConjunction();
+
 			mTermChecker.setConjunction(mConjunc, mInVars, mOutVars);
 
 			mUtils.output(">> IS OCTAGON: STARTING PREFIX LOOP");
@@ -298,7 +301,7 @@ public class FastUPRCore {
 
 	private boolean checkForAll(final ParametricOctMatrix difference, final int b, final int c) {
 		// if for all n>=0 : rho( n * difference + sigma(R^b))∘R^c
-		// <=> rho((n+1) * difference + sigma(R^b))∘R^c <=/=> false
+		// <=> rho((n+1) * difference + sigma(R^b)) <=/=> false
 
 		mUtils.output(">>> FOR ALL CHECK, b=" + b + ",c=" + c);
 		mUtils.setDetailed(true);
@@ -334,8 +337,9 @@ public class FastUPRCore {
 
 		intervalMatrix.setLogger(mUtils.getLogger());
 
-		final OctConjunction intervalBeginning = mOctagonCalculator
-				.binarySequentialize(intervalMatrix.toOctConjunction(), rC, mInVars, mOutVars);
+		final OctConjunction intervalMatrixConjunction = intervalMatrix.toOctConjunction();
+		final OctConjunction intervalBeginning = mOctagonCalculator.binarySequentialize(intervalMatrixConjunction, rC,
+				mInVars, mOutVars);
 		final OctConjunction intervalEnd = intervalMatrix.toOctConjunction(1);
 
 		mUtils.debug("Intervals:");

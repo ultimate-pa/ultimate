@@ -8,11 +8,10 @@ var x,y : int;
 procedure main() returns ()
 modifies x,y;
 {
-  assume(x == 9);
-  assume(y == 10);
+  x:=0;
+  y:=10;
   while (x < y) {
-    x := x + 1;
-    y := y + 1;
+    x := y + 1;
   }
   assert(x>=6 || x<=-5 || y <= 2);
 }

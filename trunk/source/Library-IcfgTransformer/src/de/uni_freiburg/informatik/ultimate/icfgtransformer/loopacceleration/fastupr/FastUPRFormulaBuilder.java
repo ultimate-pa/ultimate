@@ -70,7 +70,7 @@ public class FastUPRFormulaBuilder {
 		for (int i = 0; i <= count; i++) {
 			orTerms.add(mCalculator.sequentialize(conjunc, inVars, outVars, i).toTerm(mScript));
 		}
-		final Term orTerm = mScript.term("or", orTerms.toArray(new Term[0]));
+		final Term orTerm = orTerms.size() > 1 ? mScript.term("or", orTerms.toArray(new Term[0])) : orTerms.get(0);
 		return buildTransFormula(orTerm, inVars, outVars);
 	}
 
@@ -90,14 +90,15 @@ public class FastUPRFormulaBuilder {
 	public UnmodifiableTransFormula buildParametricSolution(OctConjunction conjunc, int b,
 			ParametricOctMatrix difference, Map<IProgramVar, TermVariable> inVars,
 			Map<IProgramVar, TermVariable> outVars, List<TermVariable> variables) {
-		// R* := OR(i=0->b-1) (R^i) or EXISTS k>=0. OR(i=0->b-1)
+		// R* := OR(i=0->b-1) (R^i) or EXISTS k>=0. OR(i=0->c-1)
 		// (pi(k*difference + sigma(R^b)) ○ R^i
 
 		final ArrayList<Term> firstOrTerms = new ArrayList<>();
 		for (int i = 0; i < b; i++) {
 			firstOrTerms.add(mCalculator.sequentialize(conjunc, inVars, outVars, i).toTerm(mScript));
 		}
-		final Term firstOr = mScript.term("or", firstOrTerms.toArray(new Term[0]));
+		final Term firstOr = firstOrTerms.size() > 1 ? mScript.term("or", firstOrTerms.toArray(new Term[0]))
+				: firstOrTerms.get(0);
 
 		final ArrayList<Term> secondOrTerms = new ArrayList<>();
 		final ParametricOctMatrix parametricDiff = difference.multiplyVar("k", mManagedScript);
@@ -105,7 +106,8 @@ public class FastUPRFormulaBuilder {
 			secondOrTerms
 					.add(getParametricSolutionRightSide(conjunc, b, i, parametricDiff, inVars, outVars, variables));
 		}
-		final Term secondOr = mScript.term("or", secondOrTerms.toArray(new Term[0]));
+		final Term secondOr = secondOrTerms.size() > 1 ? mScript.term("or", secondOrTerms.toArray(new Term[0]))
+				: secondOrTerms.get(0);
 		final Term secondOrQuantified = mScript.quantifier(QuantifiedFormula.EXISTS,
 				new TermVariable[] { parametricDiff.getParametricVar() },
 				mScript.term("and",
@@ -140,17 +142,20 @@ public class FastUPRFormulaBuilder {
 		for (int i = 0; i < b; i++) {
 			firstOrTerms.add(mCalculator.sequentialize(conjunc, inVars, outVars, i).toTerm(mScript));
 		}
-		final Term firstOr = mScript.term("or", firstOrTerms.toArray(new Term[0]));
+		final Term firstOr = firstOrTerms.size() > 1 ? mScript.term("or", firstOrTerms.toArray(new Term[0]))
+				: firstOrTerms.get(0);
 		final List<Term> outerOrTerms = new ArrayList<>();
 		for (int k = 0; k < n; k++) {
 			final List<Term> innerOrTerms = new ArrayList<>();
 			for (int i = 0; i < c; i++) {
 				innerOrTerms.add(getInnerOrTerm(conjunc, b, i, n, difference, inVars, outVars, variables));
 			}
-			final Term innerOr = mScript.term("or", innerOrTerms.toArray(new Term[0]));
+			final Term innerOr = innerOrTerms.size() > 1 ? mScript.term("or", innerOrTerms.toArray(new Term[0]))
+					: innerOrTerms.get(0);
 			outerOrTerms.add(innerOr);
 		}
-		final Term outerOr = mScript.term("or", outerOrTerms.toArray(new Term[0]));
+		final Term outerOr = outerOrTerms.size() > 1 ? mScript.term("or", outerOrTerms.toArray(new Term[0]))
+				: outerOrTerms.get(0);
 		final Term result = mScript.term("or", firstOr, outerOr);
 
 		mUtils.output("Returning Periodicity Result");

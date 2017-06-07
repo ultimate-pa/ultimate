@@ -125,6 +125,9 @@ public class OctConjunction {
 	 * @return fresh Term representing the conjunction
 	 */
 	public Term toTerm(Script script, FastUPRUtils utils) {
+		if (isEmpty()) {
+			return script.term("true");
+		}
 		final ArrayList<Term> terms = new ArrayList<>();
 		for (final OctTerm t : mTerms) {
 			utils.debug("OctTerm: " + t.toString());
@@ -152,6 +155,13 @@ public class OctConjunction {
 		}
 		Term[] termArray = new Term[terms.size()];
 		termArray = terms.toArray(termArray);
+		if (termArray.length == 1) {
+			return termArray[0];
+		}
 		return script.term("and", termArray);
+	}
+
+	public boolean isEmpty() {
+		return mTerms.isEmpty();
 	}
 }

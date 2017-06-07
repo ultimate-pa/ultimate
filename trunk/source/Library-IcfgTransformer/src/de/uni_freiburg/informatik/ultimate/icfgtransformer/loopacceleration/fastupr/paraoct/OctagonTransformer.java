@@ -148,7 +148,7 @@ public class OctagonTransformer extends NonRecursive {
 		mUtils.debug(">> Converting OctagonConjunction to Matrix");
 		mUtils.debug("> Conjunction: " + conjunc.toString());
 		final List<OctTerm> terms = conjunc.getTerms();
-		final ParametricOctMatrix result = new ParametricOctMatrix(variables.size() * 2);
+		final ParametricOctMatrix result = new ParametricOctMatrix(variables.size());
 		for (final TermVariable t : variables) {
 			result.addVar(t);
 		}
@@ -225,18 +225,20 @@ public class OctagonTransformer extends NonRecursive {
 
 			mUtils.debug(">> Application of type: " + functionName);
 
-			boolean swap = false;
+			Term term = t;
 
 			if (functionName.compareTo("<") == 0) {
 				mType = InequalityType.LESSER;
+				term = aT;
 			} else if (functionName.compareTo(">") == 0) {
 				mType = InequalityType.LESSER;
-				swap = true;
+				term = mScript.term("<", aT.getParameters()[1], aT.getParameters()[0]);
 			} else if (functionName.compareTo("<=") == 0) {
 				mType = InequalityType.LESSER_EQUAL;
+				term = aT;
 			} else if (functionName.compareTo(">=") == 0) {
 				mType = InequalityType.LESSER_EQUAL;
-				swap = true;
+				term = mScript.term("<=", aT.getParameters()[1], aT.getParameters()[0]);
 			} else if (functionName.compareTo("not") == 0) {
 				enqueueWalker(new OctagonTermWalker(aT.getParameters()[0], true));
 				return;
@@ -250,17 +252,22 @@ public class OctagonTransformer extends NonRecursive {
 				return;
 			}
 
+			ApplicationTerm appTerm = (ApplicationTerm) term;
+
 			if (negate) {
-				if (mType.equals(InequalityType.LESSER)) {
+				if (mType == InequalityType.LESSER) {
+					appTerm = (ApplicationTerm) mScript.term("<=", appTerm.getParameters()[1],
+							appTerm.getParameters()[0]);
 					mType = InequalityType.LESSER_EQUAL;
 				} else {
+					appTerm = (ApplicationTerm) mScript.term("<", appTerm.getParameters()[1],
+							appTerm.getParameters()[0]);
 					mType = InequalityType.LESSER;
 				}
-				swap = !swap;
 			}
 
-			final Term leftSide = swap ? aT.getParameters()[0] : aT.getParameters()[1];
-			final Term rightSide = swap ? aT.getParameters()[1] : aT.getParameters()[0];
+			final Term leftSide = appTerm.getParameters()[0];
+			final Term rightSide = appTerm.getParameters()[1];
 
 			enqueueWalker(new OctagonTermWalker(leftSide, InequalitySide.LEFT));
 			enqueueWalker(new OctagonTermWalker(rightSide, InequalitySide.RIGHT));
