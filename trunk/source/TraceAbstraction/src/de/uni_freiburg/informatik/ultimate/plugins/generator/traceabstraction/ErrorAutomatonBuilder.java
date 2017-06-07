@@ -193,7 +193,8 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final Iterator<IPredicate> spIt = spPredicates.getPredicates().iterator();
 			while (preIt.hasNext()) {
 				final IPredicate pred = predicateFactory.and(preIt.next(), spIt.next());
-				newIntermediatePredicates.add(predicateUnifier.getOrConstructPredicate(pred));
+				IPredicate unifiedPredicate = predicateUnifier.getOrConstructPredicate(pred);
+				newIntermediatePredicates.add(unifiedPredicate);
 			}
 			newPostcondition = spPredicates.getPostcondition();
 		} else {
@@ -243,7 +244,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory) {
 		// add 'false' state (required by the automaton builder)
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
-		assert !containsFalsePredicateState(straightLineAutomaton,
+		assert !containsPredicateState(straightLineAutomaton,
 				falsePredicate) : "The error trace is feasible; hence the predicate 'False' should not be present.";
 		straightLineAutomaton.addState(false, false, falsePredicate);
 
@@ -259,16 +260,14 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				straightLineAutomaton, predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
 	}
 
-	private boolean containsFalsePredicateState(final NestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton,
-			final IPredicate falsePredicate) {
-		boolean containsFalsePredicate = false;
+	private boolean containsPredicateState(final NestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton,
+			final IPredicate targetPredicate) {
 		for (final IPredicate pred : straightLineAutomaton.getStates()) {
-			if (pred == falsePredicate) {
-				containsFalsePredicate = true;
-				break;
+			if (pred == targetPredicate) {
+				return true;
 			}
 		}
-		return containsFalsePredicate;
+		return false;
 	}
 
 	/**
