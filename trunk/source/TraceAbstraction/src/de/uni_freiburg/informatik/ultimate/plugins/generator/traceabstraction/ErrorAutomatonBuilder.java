@@ -80,6 +80,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	/**
+	 * This is used to avoid 'strange' predicates. Consider the example trace
+	 * <p>
+	 * {@literal call f(); assume true; return; assume true}
+	 * <p>
+	 * The WP predicates along this trace starting from 'false' are (from end to front):
+	 * <p>
+	 * 'false', 'false', 'true', 'true', 'false'
+	 * <p>
+	 * Thus the PRE sequence would be the negation and hence we would have 'false' as a predicate along a feasible
+	 * trace.
+	 */
+	private static final boolean USE_TRUE_AS_CALL_PREDECESSOR_FOR_WP = true;
+
+	/**
 	 * Predicate transformer types.
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
@@ -193,7 +207,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final Iterator<IPredicate> spIt = spPredicates.getPredicates().iterator();
 			while (preIt.hasNext()) {
 				final IPredicate pred = predicateFactory.and(preIt.next(), spIt.next());
-				IPredicate unifiedPredicate = predicateUnifier.getOrConstructPredicate(pred);
+				final IPredicate unifiedPredicate = predicateUnifier.getOrConstructPredicate(pred);
 				newIntermediatePredicates.add(unifiedPredicate);
 			}
 			newPostcondition = spPredicates.getPostcondition();
@@ -229,7 +243,8 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		final TracePredicates predicates;
 		try {
 			predicates = (predicateTransformer == PredicateTransformerType.WP)
-					? ipt.computeWeakestPreconditionSequence(dtf, Collections.emptyList(), false, false)
+					? ipt.computeWeakestPreconditionSequence(dtf, Collections.emptyList(),
+							USE_TRUE_AS_CALL_PREDECESSOR_FOR_WP, false)
 					: ipt.computeStrongestPostconditionSequence(dtf, Collections.emptyList());
 		} catch (final TraceInterpolationException e) {
 			// TODO 2017-05-17 Christian: better error handling
