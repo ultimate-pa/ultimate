@@ -290,12 +290,13 @@ public class ParametricOctMatrix {
 		final OctMatrix newMatrix = mMatrix.copy();
 		for (int row = 0; row < 2 * mMatrix.variables(); ++row) {
 			for (int col = 0; col < (row / 2 + 1) * 2; ++col) {
-				newMatrix.set(row, col, mMatrix.get(row, col).isInfinity() ? OctValue.INFINITY
+				final OctValue newValue = (mMatrix.get(row, col).isInfinity() ? OctValue.INFINITY
 						: new OctValue(mMatrix.get(row, col).getValue().multiply(bigDecimal)));
+				newMatrix.set(row, col, newValue);
 			}
 		}
 		if (!mParametric) {
-			return new ParametricOctMatrix(mMatrix, mVariableMapping);
+			return new ParametricOctMatrix(newMatrix, mVariableMapping);
 		}
 		final OctMatrix newSummands = mSummands.copy();
 		for (int row = 0; row < 2 * mSummands.variables(); ++row) {
@@ -304,7 +305,7 @@ public class ParametricOctMatrix {
 						: new OctValue(mSummands.get(row, col).getValue().multiply(bigDecimal)));
 			}
 		}
-		return new ParametricOctMatrix(mMatrix, mSummands, mVariableMapping, mParametricVar);
+		return new ParametricOctMatrix(newMatrix, newSummands, mVariableMapping, mParametricVar);
 	}
 
 	public static final BiFunction<OctValue, OctValue, OctValue> sAddIgnoreInf = (x, y) -> {
@@ -491,8 +492,8 @@ public class ParametricOctMatrix {
 
 	private OctTerm toNonParametricTerm(OctValue value, int row, int col) {
 
-		final boolean firstNegative = (row % 2) == 0;
-		final boolean secondNegative = (col % 2) != 0;
+		final boolean firstNegative = (row % 2) != 0;
+		final boolean secondNegative = (col % 2) == 0;
 		if ((row & 1) != 0) {
 			row--;
 		}

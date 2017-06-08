@@ -211,6 +211,10 @@ public class OctagonCalculator extends NonRecursive {
 	public OctConjunction sequentialize(OctConjunction conjunc, Map<IProgramVar, TermVariable> inVars,
 			Map<IProgramVar, TermVariable> outVars, int count) {
 
+		if (count == 0) {
+			return new OctConjunction();
+		}
+
 		mUtils.debug("Sequentializing " + count + " times:" + conjunc.toString());
 
 		final HashSet<TermVariable> variables = new HashSet<>();

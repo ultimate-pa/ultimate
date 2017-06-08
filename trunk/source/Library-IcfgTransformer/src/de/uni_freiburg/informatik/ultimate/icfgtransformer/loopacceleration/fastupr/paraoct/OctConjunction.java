@@ -149,6 +149,9 @@ public class OctConjunction {
 	 * @return fresh Term representing the conjunction
 	 */
 	public Term toTerm(Script script) {
+		if (isEmpty()) {
+			return script.term("true");
+		}
 		final ArrayList<Term> terms = new ArrayList<>();
 		for (final OctTerm t : mTerms) {
 			terms.add(t.toTerm(script));

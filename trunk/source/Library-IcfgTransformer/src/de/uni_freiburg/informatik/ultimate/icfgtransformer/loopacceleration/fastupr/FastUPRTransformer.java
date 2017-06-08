@@ -162,6 +162,8 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 
 			if (loopEdge != null) {
 				loopMapping.put(loopEdge, resultFormula);
+				final String formulaString = resultFormula.getFormula().toStringDirect();
+				mLogger.debug("resultFormula: " + formulaString);
 			}
 
 		}

@@ -130,8 +130,7 @@ public class FastUPRCore {
 
 			mVariables = mOctagonCalculator.getSortedVariables(mInVars, mOutVars);
 
-			final ParametricOctMatrix testMatrix = mOctagonTransformer.getMatrix(mConjunc, mVariables);
-			final OctConjunction testConjunc = testMatrix.toOctConjunction();
+			final OctConjunction testConjunc = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, 2);
 
 			mTermChecker.setConjunction(mConjunc, mInVars, mOutVars);
 
@@ -190,11 +189,13 @@ public class FastUPRCore {
 	}
 
 	private boolean periodicityCalculation(ParametricOctMatrix difference, int b, int c) {
-		boolean inconsistent = false;
+		boolean consistent = true;
 		int n = 0;
 
+		mUtils.setDetailed(false);
+
 		// Find minimum n for which the period becomes inconsistent.
-		while (!inconsistent) {
+		while (consistent) {
 			final ParametricOctMatrix differenceN = difference.multiplyConstant(new BigDecimal(n));
 			final ParametricOctMatrix differenceN1 = difference.multiplyConstant(new BigDecimal(n + 1));
 			final OctConjunction rB = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, b);
@@ -203,8 +204,11 @@ public class FastUPRCore {
 			final OctConjunction interval = intervalMatrix.toOctConjunction();
 			final OctConjunction rC = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, c);
 			final OctConjunction intervalRC = mOctagonCalculator.binarySequentialize(interval, rC, mInVars, mOutVars);
-			inconsistent = !(mTermChecker.checkTerm(intervalRC.toTerm(mManagedScript.getScript())));
+			consistent = (mTermChecker.checkTerm(intervalRC.toTerm(mManagedScript.getScript())));
 			final OctConjunction interval1 = (differenceN1.add(rBMatrix)).toOctConjunction();
+
+			mUtils.output(intervalRC.toString());
+			mUtils.output(intervalRC.toTerm(mManagedScript.getScript()).toStringDirect());
 
 			if (!mTermChecker.checkTerm(mManagedScript.getScript().term("=",
 					intervalRC.toTerm(mManagedScript.getScript()), interval1.toTerm(mManagedScript.getScript())))) {
@@ -349,7 +353,14 @@ public class FastUPRCore {
 		// Equality Term (<=>)
 
 		final Term eqTerm = script.term("=", intervalBeginning.toTerm(script), intervalEnd.toTerm(script));
+		final String intervalBeginningString = intervalBeginning.toTerm(script).toStringDirect();
+		final String intervalEndString = intervalEnd.toTerm(script).toStringDirect();
 		mUtils.debug("eqTerm: " + eqTerm.toString());
+
+		final Term inconsistent = script.term("false");
+		final Term isInconsistent = script.term("=", intervalBeginning.toTerm(script), inconsistent);
+
+		final String isConsistentString = isInconsistent.toStringDirect();
 
 		// QuantifiedTerm (for all n >= 0)
 
@@ -361,9 +372,18 @@ public class FastUPRCore {
 				new TermVariable[] { differenceN.getParametricVar() }, script.term("or", greaterEqZero, lesserEqZero));
 		mUtils.debug("quantTerm: " + quantTerm.toString());
 
+		final Term greaterEqZeroConsistency = script.term("and",
+				script.term(">=", differenceN.getParametricVar(), script.decimal(BigDecimal.ZERO)), isInconsistent);
+
+		final Term quantTermConsistency = script.quantifier(QuantifiedFormula.EXISTS,
+				new TermVariable[] { differenceN.getParametricVar() }, greaterEqZeroConsistency);
+
+		final String quantTermConsisntencyString = quantTermConsistency.toStringDirect();
+
+		final boolean isConsistent = mTermChecker.checkQuantifiedTerm(quantTermConsistency);
 		final boolean isSat = mTermChecker.checkQuantifiedTerm(quantTerm);
 
-		return isSat;
+		return isSat && isConsistent;
 	}
 
 	private boolean isOctagon(final Term relation, final Script script) throws NotAffineException {
