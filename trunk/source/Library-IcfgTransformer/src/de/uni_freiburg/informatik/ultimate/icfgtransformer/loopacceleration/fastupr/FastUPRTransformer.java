@@ -155,16 +155,23 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 				final FastUPRCore fastUpr = new FastUPRCore(formula, mManagedScript, mLogger, mServices);
 				resultFormula = fastUpr.getResult();
 				mLogger.debug("Result Formula:" + resultFormula.toString());
+
+				if (loopEdge != null) {
+					loopMapping.put(loopEdge, resultFormula);
+					final String formulaString = resultFormula.getFormula().toStringDirect();
+					mLogger.debug("resultFormula: " + formulaString);
+				} else {
+					throw new IllegalArgumentException("FastUPR couldn't compute a loop acceleration.");
+				}
+
 			} catch (final Exception e) {
 				mLogger.error("", e);
 				loopEdge = null;
-				throw new IllegalArgumentException("FastUPR can't handle the loop given.");
-			}
+				// TODO: ADD SETTING TO throw exception or whatever when FastUPR
+				// couldn't handle the loop.
 
-			if (loopEdge != null) {
-				loopMapping.put(loopEdge, resultFormula);
-				final String formulaString = resultFormula.getFormula().toStringDirect();
-				mLogger.debug("resultFormula: " + formulaString);
+				// throw new IllegalArgumentException("FastUPR can't handle the
+				// loop given.");
 			}
 
 		}
