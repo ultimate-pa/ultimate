@@ -70,6 +70,10 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
  *            Source Expression. Type of expression in the source program model.
  * @param <TE>
  *            Target Expression. Type of expression in the target program model.
+ * @param <SVL>
+ *            Source vertex label. Type of the vertex label of a {@link IBacktranslatedCFG} in the source program model.
+ * @param <TVL>
+ *            Target vertex label. Type of the vertex label of a {@link IBacktranslatedCFG} in the target program model.
  */
 public class DefaultTranslator<STE, TTE, SE, TE, SVL, TVL> implements ITranslator<STE, TTE, SE, TE, SVL, TVL> {
 

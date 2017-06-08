@@ -2,27 +2,27 @@
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2013-2015 Jochen Hoenicke (hoenicke@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE Core.
- * 
+ *
  * The ULTIMATE Core is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE Core is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE Core. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE Core, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE Core grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE Core grant you additional permission
  * to convey the resulting work.
  */
 /**
@@ -127,16 +127,15 @@ public class BoogieOutput {
 
 	/**
 	 * Append a given expression.
-	 * 
+	 *
 	 * @param sb
 	 *            the StringBUilder to append to.
 	 * @param expr
 	 *            the expression to print.
 	 * @param precedence
-	 *            the precedence of the surrounding operator. 0: if and only if
-	 *            1: implies 3: logical or 4: logical and 5: comparison 6:
-	 *            bitvec concat 7: addition 8: multiplication 9: unary
-	 *            minus/logical not 10: struct/array/bitvector access 11: old
+	 *            the precedence of the surrounding operator. 0: if and only if 1: implies 3: logical or 4: logical and
+	 *            5: comparison 6: bitvec concat 7: addition 8: multiplication 9: unary minus/logical not 10:
+	 *            struct/array/bitvector access 11: old
 	 */
 	private void appendExpression(final StringBuilder sb, final Expression expr, int precedence) {
 		if (expr instanceof BinaryExpression) {
@@ -430,7 +429,7 @@ public class BoogieOutput {
 
 	/**
 	 * Appends a type.
-	 * 
+	 *
 	 * @param sb
 	 *            the StringBuilder to append to.
 	 * @param type
@@ -496,7 +495,7 @@ public class BoogieOutput {
 
 	/**
 	 * Append attributes.
-	 * 
+	 *
 	 * @param sb
 	 *            the StringBuilder to append to.
 	 * @param attributes
@@ -532,9 +531,8 @@ public class BoogieOutput {
 	}
 
 	/**
-	 * Append the string representation of vls (comma separated list of
-	 * declarations) to the stringbuilder sb.
-	 * 
+	 * Append the string representation of vls (comma separated list of declarations) to the stringbuilder sb.
+	 *
 	 * @param sb
 	 *            the string builder where we append to
 	 * @param vls
@@ -546,8 +544,7 @@ public class BoogieOutput {
 			sb.append(comma);
 			if (vl.getIdentifiers().length > 0) {
 				/*
-				 * identifiers array can only be empty for function parameters
-				 * (unnamed parameter).
+				 * identifiers array can only be empty for function parameters (unnamed parameter).
 				 */
 				String subcomma = "";
 				for (final String id : vl.getIdentifiers()) {
@@ -567,7 +564,7 @@ public class BoogieOutput {
 
 	/**
 	 * Print type declaration.
-	 * 
+	 *
 	 * @param decl
 	 *            the type declaration.
 	 */
@@ -593,7 +590,7 @@ public class BoogieOutput {
 
 	/**
 	 * Print function declaration.
-	 * 
+	 *
 	 * @param decl
 	 *            the function declaration.
 	 */
@@ -627,7 +624,7 @@ public class BoogieOutput {
 
 	/**
 	 * Print procedure.
-	 * 
+	 *
 	 * @param decl
 	 *            the procedure to print.
 	 */
@@ -677,7 +674,7 @@ public class BoogieOutput {
 
 	/**
 	 * Print specification.
-	 * 
+	 *
 	 * @param spec
 	 *            the specification to print.
 	 */
@@ -715,7 +712,7 @@ public class BoogieOutput {
 
 	/**
 	 * Print body.
-	 * 
+	 *
 	 * @param body
 	 *            the body to print.
 	 */
@@ -737,7 +734,7 @@ public class BoogieOutput {
 
 	/**
 	 * Print block.
-	 * 
+	 *
 	 * @param block
 	 *            the block to print.
 	 * @param indent
@@ -758,7 +755,7 @@ public class BoogieOutput {
 		for (final Statement s : block) {
 			if (s instanceof Label) {
 				// SF: Labels aren't on the first column anymore, they are
-				// treated as pragmas if they are. Added "  "
+				// treated as pragmas if they are. Added " "
 				sb.append(indent + "  " + ((Label) s).getName() + ":" + LINEBREAK);
 			} else {
 				appendStatement(sb, s, nextIndent);
@@ -773,7 +770,7 @@ public class BoogieOutput {
 
 	/**
 	 * Add the string representation of the statement to the string builder.
-	 * 
+	 *
 	 * @param sb
 	 *            the string builder where the string will be appended to.
 	 * @param s
@@ -907,7 +904,7 @@ public class BoogieOutput {
 
 	/**
 	 * Print statement.
-	 * 
+	 *
 	 * @param s
 	 *            the statement to print.
 	 * @param indent
@@ -921,7 +918,7 @@ public class BoogieOutput {
 
 	/**
 	 * Append left hand side.
-	 * 
+	 *
 	 * @param sb
 	 *            the StringBuilder to append to.
 	 * @param lhs
@@ -953,7 +950,7 @@ public class BoogieOutput {
 
 	/**
 	 * Print Axiom.
-	 * 
+	 *
 	 * @param decl
 	 *            the axiom to print.
 	 */
@@ -968,7 +965,7 @@ public class BoogieOutput {
 
 	/**
 	 * Print variable declaration.
-	 * 
+	 *
 	 * @param decl
 	 *            the variable declaration to print.
 	 * @param indent
@@ -980,7 +977,8 @@ public class BoogieOutput {
 		mWriter.println(sb.toString());
 	}
 
-	protected void appendVariableDeclaration(final StringBuilder sb, final VariableDeclaration decl, final String indent) {
+	protected void appendVariableDeclaration(final StringBuilder sb, final VariableDeclaration decl,
+			final String indent) {
 		sb.append(indent).append("var ");
 		appendAttributes(sb, decl.getAttributes());
 		appendVarList(sb, decl.getVariables());
@@ -994,7 +992,7 @@ public class BoogieOutput {
 
 	/**
 	 * Print constant declaration.
-	 * 
+	 *
 	 * @param decl
 	 *            the constant declaration to print.
 	 */
