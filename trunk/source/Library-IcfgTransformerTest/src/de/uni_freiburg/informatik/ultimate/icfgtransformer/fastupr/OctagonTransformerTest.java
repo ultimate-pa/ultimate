@@ -85,7 +85,7 @@ public class OctagonTransformerTest {
 	}
 
 	@Test
-	public void DetectorTest() {
+	public void testDetector() {
 
 		System.out.println("DetectorTest:");
 		final OctagonDetector detector = new OctagonDetector(mUtils, mMgdScript, mServices);
@@ -99,7 +99,7 @@ public class OctagonTransformerTest {
 	}
 
 	@Test
-	public void TermTransformationTest() {
+	public void testTermTransformation() {
 		System.out.println("TermTransformationTest:");
 		final OctagonDetector detector = new OctagonDetector(mUtils, mMgdScript, mServices);
 		final OctagonTransformer transformer = new OctagonTransformer(new FastUPRUtils(mLogger, false), mScript,
