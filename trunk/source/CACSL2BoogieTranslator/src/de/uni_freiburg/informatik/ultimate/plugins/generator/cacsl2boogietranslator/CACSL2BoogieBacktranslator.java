@@ -138,7 +138,7 @@ public class CACSL2BoogieBacktranslator
 	public void setExpressionTranslation(final AExpressionTranslation expressionTranslation) {
 		mExpressionTranslation = expressionTranslation;
 	}
-	
+
 	public void setLocationFactory(final LocationFactory locationFactory) {
 		mLocationFactory = locationFactory;
 	}
@@ -833,7 +833,6 @@ public class CACSL2BoogieBacktranslator
 				// (using ACSL).
 				translatedString = translatedString.replaceAll("old\\(", "\\\\old\\(")
 						.replaceAll("(\\\\)*old", "\\\\old").replaceAll("exists", "\\\\exists");
-
 				return new FakeExpression(translatedString);
 			}
 			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": Expression "
@@ -1125,8 +1124,11 @@ public class CACSL2BoogieBacktranslator
 			result = mBoogie2C.getVar2CVar().get(boogieId);
 		} else if (mBoogie2C.getInVar2CVar().containsKey(boogieId)) {
 			final Pair<String, CType> inVar = mBoogie2C.getInVar2CVar().get(boogieId);
-			final String cNameWithOld = "\\old(" + inVar.getFirst() + ")";
-			result = new Pair<>(cNameWithOld, inVar.getSecond());
+
+			// TODO: 20170608 Why should this be an old var? I changed it.
+			// final String cNameWithOld = "\\old(" + inVar.getFirst() + ")";
+			// result = new Pair<>(cNameWithOld, inVar.getSecond());
+			result = inVar;
 		} else if (mBoogie2C.getTempVar2Obj().containsKey(boogieId)) {
 			result = null;
 			reportUnfinishedBacktranslation("auxilliary boogie variable " + boogieId);
