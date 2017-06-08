@@ -62,7 +62,7 @@ public class FastUPRFormulaBuilder {
 		return buildTransFormula(conjunction.toTerm(mManagedScript.getScript()), inVars, outVars);
 	}
 
-	public UnmodifiableTransFormula buildConsistencyFormula(OctConjunction conjunc, int count,
+	public UnmodifiableTransFormula buildConsistencyResult(OctConjunction conjunc, int count,
 			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars) {
 
 		mUtils.output("Returning Consistency Result");
@@ -71,7 +71,7 @@ public class FastUPRFormulaBuilder {
 			orTerms.add(mCalculator.sequentialize(conjunc, inVars, outVars, i).toTerm(mScript));
 		}
 		final Term orTerm = orTerms.size() > 1 ? mScript.term("or", orTerms.toArray(new Term[0])) : orTerms.get(0);
-		return buildTransFormula(orTerm, inVars, outVars);
+		return buildTransFormula(addIdentityRelation(orTerm, inVars, outVars), inVars, outVars);
 	}
 
 	public Term toExistential(Term term) {
@@ -87,9 +87,9 @@ public class FastUPRFormulaBuilder {
 		return mScript.term("not", existentialTerm);
 	}
 
-	public UnmodifiableTransFormula buildParametricSolution(OctConjunction conjunc, int b,
-			ParametricOctMatrix difference, Map<IProgramVar, TermVariable> inVars,
-			Map<IProgramVar, TermVariable> outVars, List<TermVariable> variables) {
+	public UnmodifiableTransFormula buildParametricResult(OctConjunction conjunc, int b, ParametricOctMatrix difference,
+			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars,
+			List<TermVariable> variables) {
 		// R* := OR(i=0->b-1) (R^i) or EXISTS k>=0. OR(i=0->c-1)
 		// (pi(k*difference + sigma(R^b)) ○ R^i
 
@@ -116,7 +116,7 @@ public class FastUPRFormulaBuilder {
 		final Term result = mScript.term("or", firstOr, secondOrQuantified);
 
 		mUtils.output("Returning Parametric Result");
-		return buildTransFormula(result, inVars, outVars);
+		return buildTransFormula(addIdentityRelation(result, inVars, outVars), inVars, outVars);
 	}
 
 	private Term getParametricSolutionRightSide(OctConjunction conjunc, int b, int i,
@@ -160,7 +160,7 @@ public class FastUPRFormulaBuilder {
 
 		mUtils.output("Returning Periodicity Result");
 
-		return buildTransFormula(result, inVars, outVars);
+		return buildTransFormula(addIdentityRelation(result, inVars, outVars), inVars, outVars);
 	}
 
 	private Term getInnerOrTerm(OctConjunction conjunc, int b, int i, int n, ParametricOctMatrix difference,
@@ -174,6 +174,26 @@ public class FastUPRFormulaBuilder {
 		final OctConjunction result = mCalculator.binarySequentialize(firstPart,
 				mCalculator.sequentialize(conjunc, inVars, outVars, i), inVars, outVars);
 		return result.toTerm(mScript);
+	}
+
+	private Term addIdentityRelation(Term t, Map<IProgramVar, TermVariable> inVars,
+			Map<IProgramVar, TermVariable> outVars) {
+		final ArrayList<Term> terms = new ArrayList<>();
+		for (final IProgramVar p : inVars.keySet()) {
+			if (outVars.containsKey(p)) {
+				terms.add(mScript.term("=", inVars.get(p), outVars.get(p)));
+			}
+		}
+
+		Term identity = mScript.term("true");
+
+		if (terms.size() == 1) {
+			return terms.get(0);
+		} else if (!terms.isEmpty()) {
+			identity = mScript.term("and", terms.toArray(new Term[0]));
+		}
+
+		return mScript.term("or", t, identity);
 	}
 
 }

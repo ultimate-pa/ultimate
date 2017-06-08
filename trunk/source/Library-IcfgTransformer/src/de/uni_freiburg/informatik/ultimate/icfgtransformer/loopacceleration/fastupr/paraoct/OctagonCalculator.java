@@ -211,9 +211,9 @@ public class OctagonCalculator extends NonRecursive {
 	public OctConjunction sequentialize(OctConjunction conjunc, Map<IProgramVar, TermVariable> inVars,
 			Map<IProgramVar, TermVariable> outVars, int count) {
 
-		if (count == 0) {
-			return new OctConjunction();
-		}
+		// if (count == 0) {
+		// return new OctConjunction();
+		// }
 
 		mUtils.debug("Sequentializing " + count + " times:" + conjunc.toString());
 
@@ -536,7 +536,8 @@ public class OctagonCalculator extends NonRecursive {
 
 			for (final OctTerm tempTerm : tempResults) {
 				for (final OctagonSubstitutionTerm sub : subs) {
-					final OctTerm newTerm = getTermFromSubsitution(tempTerm, sub, 2);
+					final OctTerm newTerm = getTermFromSubsitution(tempTerm, sub,
+							(tempTerm.getFirstVar().equals(replaceSecond) ? 1 : 2));
 					if (newTerm != null) {
 						result.add(newTerm);
 					}

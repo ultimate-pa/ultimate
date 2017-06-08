@@ -158,6 +158,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 			} catch (final Exception e) {
 				mLogger.error("", e);
 				loopEdge = null;
+				throw new IllegalArgumentException("FastUPR can't handle the loop given.");
 			}
 
 			if (loopEdge != null) {

@@ -161,7 +161,7 @@ public class FastUPRCore {
 			final int k = mTermChecker.checkConsistency(b, c);
 			if (k >= 0) {
 				mUtils.output(">> NOT CONSISTENT FOR 2 ITERATIONS: RETURNING COMPOSITION RESULT");
-				mResult = mFormulaBuilder.buildConsistencyFormula(mConjunc, k * c + b - 1, mInVars, mOutVars);
+				mResult = mFormulaBuilder.buildConsistencyResult(mConjunc, k * c + b - 1, mInVars, mOutVars);
 				return true;
 			}
 			mUtils.output(">> CONSISTENT: CHECKING FOR PERIODICITY");
@@ -251,7 +251,7 @@ public class FastUPRCore {
 	}
 
 	private UnmodifiableTransFormula paramatericSolution(int b, ParametricOctMatrix difference) {
-		return mFormulaBuilder.buildParametricSolution(mConjunc, b, difference, mInVars, mOutVars, mVariables);
+		return mFormulaBuilder.buildParametricResult(mConjunc, b, difference, mInVars, mOutVars, mVariables);
 	}
 
 	private ParametricOctMatrix periodCheck(final int b, final int c) {
@@ -366,10 +366,10 @@ public class FastUPRCore {
 
 		final Term greaterEqZero = script.term("and",
 				script.term(">=", differenceN.getParametricVar(), script.decimal(BigDecimal.ZERO)), eqTerm);
-		final Term lesserEqZero = script.term("<", differenceN.getParametricVar(), script.decimal(BigDecimal.ZERO));
+		final Term lesserZero = script.term("<", differenceN.getParametricVar(), script.decimal(BigDecimal.ZERO));
 
 		final Term quantTerm = script.quantifier(QuantifiedFormula.FORALL,
-				new TermVariable[] { differenceN.getParametricVar() }, script.term("or", greaterEqZero, lesserEqZero));
+				new TermVariable[] { differenceN.getParametricVar() }, script.term("or", greaterEqZero, lesserZero));
 		mUtils.debug("quantTerm: " + quantTerm.toString());
 
 		final Term greaterEqZeroConsistency = script.term("and",
@@ -378,9 +378,17 @@ public class FastUPRCore {
 		final Term quantTermConsistency = script.quantifier(QuantifiedFormula.EXISTS,
 				new TermVariable[] { differenceN.getParametricVar() }, greaterEqZeroConsistency);
 
+		final Term isConsistentTerm = script.term("not", isInconsistent);
+		final Term isConsistentGreaterEq = script.term("and",
+				script.term(">=", differenceN.getParametricVar(), script.decimal(BigDecimal.ZERO)), isConsistentTerm);
+		final Term isConsistentQuant = script.quantifier(QuantifiedFormula.EXISTS,
+				new TermVariable[] { differenceN.getParametricVar() },
+				script.term("or", isConsistentGreaterEq, lesserZero));
+
 		final String quantTermConsisntencyString = quantTermConsistency.toStringDirect();
 
 		final boolean isConsistent = mTermChecker.checkQuantifiedTerm(quantTermConsistency);
+		final boolean isConsistent2 = mTermChecker.checkQuantifiedTerm(isConsistentQuant);
 		final boolean isSat = mTermChecker.checkQuantifiedTerm(quantTerm);
 
 		return isSat && isConsistent;
