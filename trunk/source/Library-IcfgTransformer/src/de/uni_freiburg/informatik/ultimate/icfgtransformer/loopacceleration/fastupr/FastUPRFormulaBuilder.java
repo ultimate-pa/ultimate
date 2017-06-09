@@ -2,7 +2,9 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fas
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -41,6 +43,23 @@ public class FastUPRFormulaBuilder {
 		mCalculator = calc;
 		mTransformer = transformer;
 		mToIntTransformer = new RealToIntTransformer(mScript);
+	}
+
+	private UnmodifiableTransFormula buildTransFormula(Term term, Map<IProgramVar, TermVariable> inVars,
+			Map<IProgramVar, TermVariable> outVars, TermVariable parametricVar) {
+		final Term withoutInt = mToIntTransformer.transformToInt(term);
+		final ModifiableTransFormula modFormula = new ModifiableTransFormula(withoutInt);
+		for (final IProgramVar p : inVars.keySet()) {
+			modFormula.addInVar(p, inVars.get(p));
+		}
+		for (final IProgramVar p : outVars.keySet()) {
+			modFormula.addOutVar(p, outVars.get(p));
+		}
+		if (parametricVar != null) {
+			modFormula.addAuxVars(new HashSet<>(Arrays.asList(parametricVar)));
+		}
+		return TransFormulaBuilder.constructCopy(mManagedScript, modFormula, Collections.emptySet(),
+				Collections.emptySet(), Collections.emptyMap());
 	}
 
 	public UnmodifiableTransFormula buildTransFormula(Term term, Map<IProgramVar, TermVariable> inVars,
@@ -116,7 +135,8 @@ public class FastUPRFormulaBuilder {
 		final Term result = mScript.term("or", firstOr, secondOrQuantified);
 
 		mUtils.output("Returning Parametric Result");
-		return buildTransFormula(addIdentityRelation(result, inVars, outVars), inVars, outVars);
+		return buildTransFormula(addIdentityRelation(result, inVars, outVars), inVars, outVars,
+				parametricDiff.getParametricVar());
 	}
 
 	private Term getParametricSolutionRightSide(OctConjunction conjunc, int b, int i,
@@ -188,7 +208,7 @@ public class FastUPRFormulaBuilder {
 		Term identity = mScript.term("true");
 
 		if (terms.size() == 1) {
-			return terms.get(0);
+			identity = terms.get(0);
 		} else if (!terms.isEmpty()) {
 			identity = mScript.term("and", terms.toArray(new Term[0]));
 		}

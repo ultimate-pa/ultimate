@@ -127,6 +127,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 			final IIcfg<INLOC> origIcfg, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
 
 		final Map<IcfgEdge, UnmodifiableTransFormula> loopMapping = new HashMap<>();
+		int i = 0;
 
 		for (final Deque<IcfgEdge> path : loopEdgePaths) {
 
@@ -167,6 +168,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 			} catch (final Exception e) {
 				mLogger.error("", e);
 				loopEdge = null;
+				i++;
 				// TODO: ADD SETTING TO throw exception or whatever when FastUPR
 				// couldn't handle the loop.
 
@@ -175,6 +177,9 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 			}
 
 		}
+
+		mLogger.debug("FastUPR found a total of " + loopEdgePaths.size()
+				+ " loops and computed accelerated formulas for " + (loopEdgePaths.size() - i) + " loops.");
 
 		final Set<INLOC> init = origIcfg.getInitialNodes();
 		final Deque<INLOC> open = new ArrayDeque<>(init);

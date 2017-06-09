@@ -109,7 +109,7 @@ public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLoc
 					loopHeads.add(target);
 					mLogger.debug("Loop head:" + target.toString());
 				} else {
-					open.addFirst(target);
+					open.addLast(target);
 				}
 			}
 		}
