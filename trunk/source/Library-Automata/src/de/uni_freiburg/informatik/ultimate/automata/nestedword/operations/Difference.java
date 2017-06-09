@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.automata.nestedword.operations;
 
+import java.util.Iterator;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
@@ -122,8 +123,13 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 
 	private <SF extends IIntersectionStateFactory<STATE> & IEmptyStackStateFactory<STATE>> void
 			computeDifference(final SF stateFactory, final boolean finalIsTrap) throws AutomataLibraryException {
-		if (mStateDeterminizer instanceof PowersetDeterminizer) {
+		if (hasSeveralInitialStates(mSndOperand)) {
+			if (mLogger.isInfoEnabled()) {
+				mLogger.info("Subtrahend was not deterministic. Computing result with determinization.");
+			}
+		} else if (mStateDeterminizer instanceof PowersetDeterminizer) {
 			final TotalizeNwa<LETTER, STATE> sndTotalized = new TotalizeNwa<>(mSndOperand, mStateFactory);
+			
 			final ComplementDeterministicNwa<LETTER, STATE> sndComplemented =
 					new ComplementDeterministicNwa<>(sndTotalized);
 			final IntersectNwa<LETTER, STATE> intersect =
@@ -151,6 +157,13 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 		mSndComplemented = new ComplementDeterministicNwa<>(mSndDeterminized);
 		mIntersect = new IntersectNwa<>(mFstOperand, mSndComplemented, stateFactory, finalIsTrap);
 		mResult = new NestedWordAutomatonReachableStates<>(mServices, mIntersect);
+	}
+
+	private boolean hasSeveralInitialStates(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton) {
+		final Iterator<STATE> iterator = automaton.getInitialStates().iterator();
+		assert iterator.hasNext() : "No initial state in automaton.";
+		iterator.next();
+		return iterator.hasNext();
 	}
 
 	@Override
