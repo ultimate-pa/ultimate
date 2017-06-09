@@ -1,37 +1,34 @@
 [L4]               int i;
 [L5]               int a[6] = {1,2,3,4,5,6};
-[L6]   EXPR        a[5]
 [L6]               a[5] = 10
 [L8]               i = 0
        VAL         [i=0]
 [L8]   COND TRUE   i < 5
-[L10]  EXPR        a[i]
 [L10]              a[i] = 0
+       VAL         [i=0]
 [L8]               i++
        VAL         [i=1]
 [L8]   COND TRUE   i < 5
-[L10]  EXPR        a[i]
 [L10]              a[i] = 0
+       VAL         [i=1]
 [L8]               i++
        VAL         [i=2]
 [L8]   COND TRUE   i < 5
-[L10]  EXPR        a[i]
 [L10]              a[i] = 0
+       VAL         [i=2]
 [L8]               i++
        VAL         [i=3]
 [L8]   COND TRUE   i < 5
-[L10]  EXPR        a[i]
 [L10]              a[i] = 0
+       VAL         [i=3]
 [L8]               i++
        VAL         [i=4]
 [L8]   COND TRUE   i < 5
-[L10]  EXPR        a[i]
 [L10]              a[i] = 0
+       VAL         [i=4]
 [L8]               i++
        VAL         [i=5]
 [L8]   COND FALSE  !(i < 5)
-       VAL         [i=5]
-[L13]  EXPR        a[5]
        VAL         [i=5]
 [L13]  COND TRUE   a[5] == 10
        VAL         [i=5]

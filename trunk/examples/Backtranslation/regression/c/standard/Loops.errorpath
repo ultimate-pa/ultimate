@@ -37,22 +37,27 @@
        VAL         [a=5, b=2]
 [L20]  COND TRUE   a>0
 [L21]              b++
+       VAL         [a=5, b=3]
 [L20]              a--
        VAL         [a=4, b=3]
 [L20]  COND TRUE   a>0
 [L21]              b++
+       VAL         [a=4, b=4]
 [L20]              a--
        VAL         [a=3, b=4]
 [L20]  COND TRUE   a>0
 [L21]              b++
+       VAL         [a=3, b=5]
 [L20]              a--
        VAL         [a=2, b=5]
 [L20]  COND TRUE   a>0
 [L21]              b++
+       VAL         [a=2, b=6]
 [L20]              a--
        VAL         [a=1, b=6]
 [L20]  COND TRUE   a>0
 [L21]              b++
+       VAL         [a=1, b=7]
 [L20]              a--
        VAL         [a=0, b=7]
 [L20]  COND FALSE  !(a>0)
