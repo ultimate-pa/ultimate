@@ -80,6 +80,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IncrementalHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder;
@@ -88,7 +90,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SolverBuilder.S
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.TermTransferrer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.MonolithicHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.AbstractInterpreter;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.tool.IAbstractInterpretationResult;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
@@ -109,6 +110,8 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Sum
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsGenerator;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.CachingHoareTripleCheckerMap;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.EfficientHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.InterpolationTechnique;
@@ -124,11 +127,11 @@ import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 /**
  *
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
  */
 public class CodeCheckObserver implements IUnmanagedObserver {
 
-	private static final boolean DEBUG = false;
 	private static final boolean OUTPUT_HOARE_ANNOTATION = true;
 	private static final SimplificationTechnique SIMPLIFICATION_TECHNIQUE = SimplificationTechnique.SIMPLIFY_DDA;
 	private static final XnfConversionTechnique XNF_CONVERSION_TECHNIQUE =
@@ -139,8 +142,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private final IToolchainStorage mToolchainStorage;
 
 	private PredicateUnifier mPredicateUnifier;
-
-	private CodeChecker mCodeChecker;
 
 	private IIcfg<IcfgLocation> mOriginalRoot;
 	private ImpRootNode mGraphRoot;
@@ -178,8 +179,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		mPredicateUnifier = new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
 				mOriginalRoot.getCfgSmtToolkit().getSymbolTable(), SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE);
 
-		final MonolithicHoareTripleChecker edgeChecker = new MonolithicHoareTripleChecker(mCsToolkit);
-
 		final Map<String, Set<IcfgLocation>> proc2errNodes = mOriginalRoot.getProcedureErrorNodes();
 		mErrNodesOfAllProc = new ArrayList<>();
 		for (final Set<IcfgLocation> errNodeOfProc : proc2errNodes.values()) {
@@ -214,18 +213,29 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		mGraphRoot = r2ar.convert(mOriginalRoot);
 
 		removeSummaryEdges();
-
-		if (mGlobalSettings.getChecker() == Checker.IMPULSE) {
-			mCodeChecker = new ImpulseChecker(root, mCsToolkit, mOriginalRoot, mGraphRoot, mGraphWriter, edgeChecker,
-					mPredicateUnifier, mLogger, mGlobalSettings);
-		} else {
-			mCodeChecker = new UltimateChecker(root, mCsToolkit, mOriginalRoot, mGraphRoot, mGraphWriter, edgeChecker,
-					mPredicateUnifier, mLogger, mGlobalSettings);
-		}
 		mIterationsLimit = mGlobalSettings.getIterations();
 		mLoopForever = mIterationsLimit == -1;
 
 		return false;
+	}
+
+	private CodeChecker createCodeChecker() {
+		final IHoareTripleChecker edgeChecker = createHoareTripleChecker();
+		if (mGlobalSettings.getChecker() == Checker.IMPULSE) {
+			return new ImpulseChecker(mCsToolkit, mOriginalRoot, mGraphRoot, mGraphWriter, edgeChecker,
+					mPredicateUnifier, mLogger, mGlobalSettings);
+		}
+		return new UltimateChecker(mCsToolkit, mOriginalRoot, mGraphRoot, mGraphWriter, edgeChecker, mPredicateUnifier,
+				mLogger, mGlobalSettings);
+	}
+
+	private IHoareTripleChecker createHoareTripleChecker() {
+		final IHoareTripleChecker smtBasedHoareTripleChecker = new IncrementalHoareTripleChecker(mCsToolkit);
+		final IHoareTripleChecker protectedHoareTripleChecker =
+				new EfficientHoareTripleChecker(smtBasedHoareTripleChecker, mCsToolkit, mPredicateUnifier);
+		final IHoareTripleChecker edgeChecker =
+				new CachingHoareTripleCheckerMap(mServices, protectedHoareTripleChecker, mPredicateUnifier);
+		return edgeChecker;
 	}
 
 	private void readPreferencePage() {
@@ -367,7 +377,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		int iterationsCount = 0;
 
 		InterpolatingTraceChecker traceChecker = null;
-
+		final CodeChecker codechecker = createCodeChecker();
 		for (final AnnotatedProgramPoint procedureRoot : procRootsToCheck) {
 			if (!mServices.getProgressMonitorService().continueProcessing()) {
 				verificationInterrupted = true;
@@ -378,9 +388,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 
 			final IEmptinessCheck emptinessCheck = new NWAEmptinessCheck(mServices);
 
-			if (DEBUG) {
-				mCodeChecker.debug();
-			}
 			while (mLoopForever || iterationsCount++ < mIterationsLimit) {
 				if (!mServices.getProgressMonitorService().continueProcessing()) {
 					verificationInterrupted = true;
@@ -406,13 +413,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 						String.format("graph_%s_%s_foundEP", mGraphWriter.getGraphCounter(),
 								procedureRoot.toString().substring(0, 5)),
 						errorRun.getStateSequence().toArray(new AnnotatedProgramPoint[] {}));
-
-				if (mGlobalSettings.getPredicateUnification() == PredicateUnification.PER_ITERATION) {
-					mPredicateUnifier =
-							new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
-									mCsToolkit.getSymbolTable(), SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE,
-									mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate());
-				}
 
 				ManagedScript mgdScriptTracechecks;
 				if (mGlobalSettings.isUseSeparateSolverForTracechecks()) {
@@ -472,8 +472,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					} else {
 						interpolants = traceChecker.getInterpolants();
 					}
-					mCodeChecker.codeCheck(errorRun, interpolants, procedureRoot);
-					benchmarkGenerator.addEdgeCheckerData(mCodeChecker.mEdgeChecker.getEdgeCheckerBenchmark());
+					codechecker.codeCheck(errorRun, interpolants, procedureRoot);
+					benchmarkGenerator.addEdgeCheckerData(codechecker.mEdgeChecker.getEdgeCheckerBenchmark());
 
 				} else if (isSafe == LBool.SAT) { // trace is feasible
 					mLogger.warn("This program is UNSAFE, Check terminated with " + iterationsCount + " iterations.");
@@ -485,29 +485,18 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 								TraceCheckerUtils.computeSomeIcfgProgramExecutionWithoutValues(errorRun.getWord());
 					}
 
-					if (DEBUG) {
-						mCodeChecker.debug();
-					}
 					break;
 				} else {
 					assert isSafe == LBool.UNKNOWN;
 					throw new UnsupportedOperationException("Solver said unknown");
 				}
-				if (DEBUG) {
-					mCodeChecker.debug();
-				}
 			}
 			// we need a fresh copy for each iteration because..??
 			mGraphRoot = copyGraph(originalGraphCopy);
-			mCodeChecker.mGraphRoot = mGraphRoot;
 
 			if (!allSafe) {
 				break;
 			}
-		}
-
-		if (DEBUG) {
-			mCodeChecker.debug();
 		}
 
 		Result overallResult = Result.UNKNOWN;
@@ -819,7 +808,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	}
 
 	public ImpRootNode getRoot() {
-		return mCodeChecker.mGraphRoot;
+		return mGraphRoot;
 	}
 
 	@Override

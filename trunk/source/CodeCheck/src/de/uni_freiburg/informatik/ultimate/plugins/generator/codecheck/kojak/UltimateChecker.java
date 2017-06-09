@@ -33,7 +33,6 @@ import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
@@ -64,12 +63,10 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  */
 public class UltimateChecker extends CodeChecker {
 
-	public UltimateChecker(final IElement root, final CfgSmtToolkit cfgSmtToolkit,
-			final IIcfg<IcfgLocation> originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
-			final IHoareTripleChecker edgeChecker, final PredicateUnifier predicateUnifier, final ILogger logger,
-			final CodeCheckSettings globalSettings) {
-		super(root, cfgSmtToolkit, originalRoot, graphRoot, graphWriter, edgeChecker, predicateUnifier, logger,
-				globalSettings);
+	public UltimateChecker(final CfgSmtToolkit cfgSmtToolkit, final IIcfg<IcfgLocation> originalRoot,
+			final ImpRootNode graphRoot, final GraphWriter graphWriter, final IHoareTripleChecker edgeChecker,
+			final PredicateUnifier predicateUnifier, final ILogger logger, final CodeCheckSettings globalSettings) {
+		super(cfgSmtToolkit, originalRoot, graphRoot, graphWriter, edgeChecker, predicateUnifier, logger, globalSettings);
 	}
 
 	/**

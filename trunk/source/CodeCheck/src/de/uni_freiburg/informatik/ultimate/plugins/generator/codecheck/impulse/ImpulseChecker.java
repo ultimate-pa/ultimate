@@ -32,7 +32,6 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
@@ -62,12 +61,10 @@ public class ImpulseChecker extends CodeChecker {
 	private final RedirectionFinder mCloneFinder;
 	private int mNodeId;
 
-	public ImpulseChecker(final IElement root, final CfgSmtToolkit cfgSmtToolkit,
-			final IIcfg<IcfgLocation> originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
-			final IHoareTripleChecker edgeChecker, final PredicateUnifier predicateUnifier, final ILogger logger,
-			final CodeCheckSettings globSettings) {
-		super(root, cfgSmtToolkit, originalRoot, graphRoot, graphWriter, edgeChecker, predicateUnifier, logger,
-				globSettings);
+	public ImpulseChecker(final CfgSmtToolkit cfgSmtToolkit, final IIcfg<IcfgLocation> originalRoot,
+			final ImpRootNode graphRoot, final GraphWriter graphWriter, final IHoareTripleChecker edgeChecker,
+			final PredicateUnifier predicateUnifier, final ILogger logger, final CodeCheckSettings globSettings) {
+		super(cfgSmtToolkit, originalRoot, graphRoot, graphWriter, edgeChecker, predicateUnifier, logger, globSettings);
 		mCloneFinder = new RedirectionFinder(this);
 		mNodeId = 0;
 	}

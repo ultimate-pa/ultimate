@@ -131,7 +131,8 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 	public Validity checkReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act,
 			final IPredicate succ) {
 		mHoareTripleCheckerStatistics.continueEdgeCheckerTime();
-		final Validity result = IHoareTripleChecker.convertLBool2Validity(isInductiveReturn(preLin, preHier, act, succ));
+		final Validity result =
+				IHoareTripleChecker.convertLBool2Validity(isInductiveReturn(preLin, preHier, act, succ));
 		mHoareTripleCheckerStatistics.stopEdgeCheckerTime();
 		switch (result) {
 		case INVALID:
@@ -478,7 +479,8 @@ public class MonolithicHoareTripleChecker implements IHoareTripleChecker {
 			final SdHoareTripleCheckerHelper sdhtch = new SdHoareTripleCheckerHelper(mCsToolkit, null);
 			final Validity testRes = sdhtch.sdecInternalSelfloop(ps1, ta);
 			if (testRes != null) {
-				assert testRes == IHoareTripleChecker.convertLBool2Validity(result) : "my internal dataflow check failed";
+				assert testRes == IHoareTripleChecker
+						.convertLBool2Validity(result) : "my internal dataflow check failed";
 				// if (testRes != result) {
 				// sdhtch.sdecReturn(ps1, psk, ta, ps2);
 				// }

@@ -32,7 +32,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
@@ -46,37 +45,30 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 
 public abstract class CodeChecker {
 
-	private CodeCheckSettings mGlobalSettings;
+	private final CodeCheckSettings mGlobalSettings;
 
 	protected IIcfg<IcfgLocation> mOriginalRoot;
 	protected CfgSmtToolkit mCfgToolkit;
-	protected ImpRootNode mGraphRoot;
+	protected final ImpRootNode mGraphRoot;
 
 	protected IHoareTripleChecker mEdgeChecker;
 	protected PredicateUnifier mPredicateUnifier;
 
 	protected GraphWriter mGraphWriter;
 
-	/**
-	 * Debugs all the nodes in a graph.
-	 */
-	private final Set<AnnotatedProgramPoint> mVisited = new HashSet<>();
 	protected final ILogger mLogger;
 
-	public CodeChecker(final IElement root, final CfgSmtToolkit csToolkit, final IIcfg<IcfgLocation> originalRoot,
+	public CodeChecker(final CfgSmtToolkit csToolkit, final IIcfg<IcfgLocation> originalRoot,
 			final ImpRootNode graphRoot, final GraphWriter graphWriter, final IHoareTripleChecker edgeChecker,
 			final PredicateUnifier predicateUnifier, final ILogger logger, final CodeCheckSettings globalSettings) {
 		mLogger = logger;
 		mCfgToolkit = csToolkit;
 		mOriginalRoot = originalRoot;
 		mGraphRoot = graphRoot;
-
 		mEdgeChecker = edgeChecker;
 		mPredicateUnifier = predicateUnifier;
-
 		mGraphWriter = graphWriter;
-
-		setG(globalSettings);
+		mGlobalSettings = globalSettings;
 	}
 
 	public abstract boolean codeCheck(NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
@@ -108,74 +100,7 @@ public abstract class CodeChecker {
 		return mPredicateUnifier.getOrConstructPredicate(pred);
 	}
 
-	public static String objectReference(final Object o) {
-		return Integer.toHexString(System.identityHashCode(o));
-	}
-
-	public void debug() {
-		mVisited.clear();
-		dfs(mGraphRoot);
-	}
-
-	protected boolean debugNode(final AnnotatedProgramPoint node) {
-		return debugNode(node, "");
-	}
-
-	/**
-	 * A method used for debugging, it prints all the connections of a given node. A message can be added to the printed
-	 * information.
-	 *
-	 * @param node
-	 * @param message
-	 * @return
-	 */
-	protected boolean debugNode(final AnnotatedProgramPoint node, final String message) {
-		String display = "";
-		/*
-		 * display += String.format("connected To: %s\n", node.getOutgoingNodes()); display += String.format(
-		 * "connected Fr: %s\n", node.getIncomingNodes());
-		 */
-		// if (node.moutgoingReturnCallPreds != null &&
-		// node.moutgoingReturnCallPreds.size() > 0) {
-		// display += String.format("outGoing: %s\n",
-		// node.moutgoingReturnCallPreds);
-		// }
-		// if (node.mnodesThatThisIsReturnCallPredOf != null &&
-		// node.mnodesThatThisIsReturnCallPredOf.size() > 0) {
-		// display += String.format("inHyperEdges: %s\n",
-		// node.mnodesThatThisIsReturnCallPredOf);
-		// }
-		if (display.length() > 0) {
-			display = String.format("%s\nNode %s:%n", message, node) + display;
-			mLogger.debug(display);
-		}
-		return false;
-	}
-
-	/**
-	 * Depth First Search algorithm that debugs all the nodes in a graph.
-	 *
-	 * @param node
-	 *            : The current Node being explored in the DFS.
-	 * @return
-	 */
-	private boolean dfs(final AnnotatedProgramPoint node) {
-		if (!mVisited.contains(node)) {
-			mVisited.add(node);
-			debugNode(node);
-			final AnnotatedProgramPoint[] adj = node.getOutgoingNodes().toArray(new AnnotatedProgramPoint[] {});
-			for (final AnnotatedProgramPoint child : adj) {
-				dfs(child);
-			}
-		}
-		return false;
-	}
-
 	public CodeCheckSettings getGlobalSettings() {
 		return mGlobalSettings;
-	}
-
-	public void setG(final CodeCheckSettings mGlobalSettings) {
-		this.mGlobalSettings = mGlobalSettings;
 	}
 }
