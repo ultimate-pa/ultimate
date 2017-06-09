@@ -88,7 +88,7 @@ public class OctagonTransformerTest {
 	public void testDetector() {
 
 		System.out.println("DetectorTest:");
-		final OctagonDetector detector = new OctagonDetector(mUtils, mMgdScript, mServices);
+		final OctagonDetector detector = new OctagonDetector(mLogger, mMgdScript, mServices);
 		final TermVariable inVarX = mMgdScript.constructFreshTermVariable("xin", mScript.sort("Int"));
 		final TermVariable outVarX = mMgdScript.constructFreshTermVariable("yout", mScript.sort("Int"));
 		final Term exampleTerm = mScript.term("=", mScript.term("+", inVarX, mScript.decimal(BigDecimal.ONE)), outVarX);
@@ -101,7 +101,7 @@ public class OctagonTransformerTest {
 	@Test
 	public void testTermTransformation() {
 		System.out.println("TermTransformationTest:");
-		final OctagonDetector detector = new OctagonDetector(mUtils, mMgdScript, mServices);
+		final OctagonDetector detector = new OctagonDetector(mLogger, mMgdScript, mServices);
 		final OctagonTransformer transformer = new OctagonTransformer(new FastUPRUtils(mLogger, false), mScript,
 				detector);
 		final TermVariable inVarX = mMgdScript.constructFreshTermVariable("xin", mScript.sort("Int"));

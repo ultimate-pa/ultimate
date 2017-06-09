@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.linearTerms.Not
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
+ * FastUPR Loop Acceleration - Main TransFormulaTranformation.
  *
  * @author Jill Enke (enkei@informatik.uni-freiburg.de)
  *
@@ -64,7 +65,6 @@ public class FastUPRCore {
 
 	private final Term mRelation;
 	private final UnmodifiableTransFormula mFormula;
-	private UnmodifiableTransFormula mResult;
 	private Term mResultTerm;
 	private final FastUPRUtils mUtils;
 
@@ -77,19 +77,27 @@ public class FastUPRCore {
 	private final Map<IProgramVar, TermVariable> mInVars;
 	private final Map<IProgramVar, TermVariable> mOutVars;
 	private List<TermVariable> mVariables;
-	private final TermChecker mTermChecker;
+	private final FastUPRTermChecker mTermChecker;
 	private final FastUPRFormulaBuilder mFormulaBuilder;
 
+	/**
+	 * Constructor to transform a TransFormula via FastUPR Loop Acceleration.
+	 *
+	 * @param formula
+	 *            The {@link UnmodifiableTransFormula} to be transformed.
+	 * @param managedScript
+	 *            The {@link ManagedScript} to use for {@link Term}
+	 *            transformation.
+	 * @param logger
+	 *            The {@link ILogger} used for Debug Logging.
+	 * @param services
+	 *            An {IUlitmateServiceProvider}
+	 * @throws NotAffineException
+	 *             If the Formula is not an Octagon an Exception will be thrown.
+	 */
 	public FastUPRCore(final UnmodifiableTransFormula formula, final ManagedScript managedScript, final ILogger logger,
 			final IUltimateServiceProvider services) throws NotAffineException {
 		mServices = services;
-
-		// Notes: Check timeout
-		// if(!services.getProgressMonitorService().continueProcessing()){
-		// throw new ToolchainCanceledException(new
-		// RunningTaskInfo(this.getClass(), "the current task"));
-		// }
-
 		mManagedScript = managedScript;
 		mUtils = new FastUPRUtils(logger, false);
 		mUtils.output("==================================================");
@@ -103,24 +111,22 @@ public class FastUPRCore {
 			mUtils.debug(p.getTermVariable().toString());
 		}
 
-		mOctagonDetector = new OctagonDetector(mUtils, managedScript, services);
+		mOctagonDetector = new OctagonDetector(logger, managedScript, services);
 		mOctagonTransformer = new OctagonTransformer(mUtils, managedScript.getScript(), mOctagonDetector);
 		mOctagonCalculator = new OctagonCalculator(mUtils, managedScript);
 		mFormulaBuilder = new FastUPRFormulaBuilder(mUtils, mManagedScript, mOctagonCalculator, mOctagonTransformer);
-		mTermChecker = new TermChecker(mUtils, mManagedScript, mOctagonCalculator, mFormulaBuilder, mServices);
+		mTermChecker = new FastUPRTermChecker(mUtils, mManagedScript, mOctagonCalculator, mFormulaBuilder, mServices);
 
 		mUtils.output("Formula:" + mFormula.toString());
 
 		mInVars = new HashMap<>(mFormula.getInVars());
 		mOutVars = new HashMap<>(mFormula.getOutVars());
 
-		// mTermChecker.checkTerm(mRelation);
-
 		mVariables = new ArrayList<>();
 
 		if (mOctagonCalculator.isTrivial(mInVars, mOutVars)) {
 			mUtils.output("Trivial TransFormula, loop does nothing.");
-			mResult = formula;
+			mResultTerm = formula.getFormula();
 		} else if (isOctagon(mRelation, managedScript.getScript())) {
 			mConjunc = mOctagonTransformer.transform(mRelation);
 
@@ -130,8 +136,6 @@ public class FastUPRCore {
 			mUtils.debug(mConjunc.toString());
 
 			mVariables = mOctagonCalculator.getSortedVariables(mInVars, mOutVars);
-
-			final OctConjunction testConjunc = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, 2);
 
 			mTermChecker.setConjunction(mConjunc, mInVars, mOutVars);
 
@@ -206,7 +210,7 @@ public class FastUPRCore {
 			final OctConjunction interval = intervalMatrix.toOctConjunction();
 			final OctConjunction rC = mOctagonCalculator.sequentialize(mConjunc, mInVars, mOutVars, c);
 			final OctConjunction intervalRC = mOctagonCalculator.binarySequentialize(interval, rC, mInVars, mOutVars);
-			consistent = (mTermChecker.checkTerm(intervalRC.toTerm(mManagedScript.getScript())));
+			consistent = mTermChecker.checkTerm(intervalRC.toTerm(mManagedScript.getScript()));
 			final OctConjunction interval1 = (differenceN1.add(rBMatrix)).toOctConjunction();
 
 			mUtils.output(intervalRC.toString());
@@ -348,14 +352,10 @@ public class FastUPRCore {
 		// Equality Term (<=>)
 
 		final Term eqTerm = script.term("=", intervalBeginning.toTerm(script), intervalEnd.toTerm(script));
-		final String intervalBeginningString = intervalBeginning.toTerm(script).toStringDirect();
-		final String intervalEndString = intervalEnd.toTerm(script).toStringDirect();
 		mUtils.debug("eqTerm: " + eqTerm.toString());
 
 		final Term inconsistent = script.term("false");
 		final Term isInconsistent = script.term("=", intervalBeginning.toTerm(script), inconsistent);
-
-		final String isConsistentString = isInconsistent.toStringDirect();
 
 		// QuantifiedTerm (for all n >= 0)
 
@@ -373,17 +373,7 @@ public class FastUPRCore {
 		final Term quantTermConsistency = script.quantifier(QuantifiedFormula.EXISTS,
 				new TermVariable[] { differenceN.getParametricVar() }, greaterEqZeroConsistency);
 
-		final Term isConsistentTerm = script.term("not", isInconsistent);
-		final Term isConsistentGreaterEq = script.term("and",
-				script.term(">=", differenceN.getParametricVar(), script.decimal(BigDecimal.ZERO)), isConsistentTerm);
-		final Term isConsistentQuant = script.quantifier(QuantifiedFormula.EXISTS,
-				new TermVariable[] { differenceN.getParametricVar() },
-				script.term("or", isConsistentGreaterEq, lesserZero));
-
-		final String quantTermConsisntencyString = quantTermConsistency.toStringDirect();
-
 		final boolean isConsistent = mTermChecker.checkQuantifiedTerm(quantTermConsistency);
-		final boolean isConsistent2 = mTermChecker.checkQuantifiedTerm(isConsistentQuant);
 		final boolean isSat = mTermChecker.checkQuantifiedTerm(quantTerm);
 
 		return isSat && isConsistent;
@@ -417,7 +407,7 @@ public class FastUPRCore {
 			// Check if Term is a possible OctagonTerm
 			// (is equal to a Term of the form: +-x +-y <= c)
 
-			if (!mOctagonDetector.isOctagonTerm(t)) {
+			if (!mOctagonDetector.isOctTerm(t)) {
 				return false;
 			}
 
@@ -432,6 +422,13 @@ public class FastUPRCore {
 		return mFormulaBuilder.buildTransFormula(mResultTerm, mInVars, mOutVars);
 	}
 
+	/**
+	 * Get a result merged with an ExitEdge.
+	 *
+	 * @param exitEdgeFormula
+	 *            The {@link UmodifiableTransFormula} of the exit edge.
+	 * @return accelerated result including the exit edge.
+	 */
 	public UnmodifiableTransFormula getExitEdgeResult(UnmodifiableTransFormula exitEdgeFormula) {
 		mResultTerm = mFormulaBuilder.getExitEdgeResult(exitEdgeFormula, mResultTerm, mInVars, mOutVars);
 		return getResult();

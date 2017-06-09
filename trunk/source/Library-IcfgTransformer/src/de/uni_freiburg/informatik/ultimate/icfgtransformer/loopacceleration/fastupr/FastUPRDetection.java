@@ -24,6 +24,7 @@
  * licensors of the ULTIMATE IcfgTransformer grant you additional permission
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr;
 
 import java.util.ArrayDeque;
@@ -38,13 +39,11 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
- * The main class for Fast Acceleration of Ultimately Periodic Relations
+ * Loop Detection of the FastUPR Loop Acceleration package.
  *
  * @param <INLOC>
  *            The type of the locations of the old IIcfg.
@@ -54,20 +53,22 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  * @author Jill Enke (enkei@informatik.uni-freiburg.de)
  *
  */
-
-public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
+public class FastUPRDetection<INLOC extends IcfgLocation> {
 
 	private final ILogger mLogger;
-	private final Map<INLOC, OUTLOC> mOldLoc2NewLoc;
-	private final Map<IIcfgCallTransition<INLOC>, IcfgCallTransition> mOldCalls2NewCalls;
 	private final List<INLOC> mLoopHeads;
 
-	public FastUPRDetection(final ILogger logger, final IIcfg<INLOC> originalIcfg, final Class<OUTLOC> outLocationClass,
-			final String newIcfgIdentifier) {
+	/**
+	 *
+	 * @param logger
+	 *            The {@link ILogger} used for Debug Output.
+	 * @param originalIcfg
+	 *            The {@link IIcfg} to be searched.
+	 * @param newIcfgIdentifier
+	 */
+	public FastUPRDetection(final ILogger logger, final IIcfg<INLOC> originalIcfg) {
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
 		mLogger = Objects.requireNonNull(logger);
-		mOldLoc2NewLoc = new HashMap<>();
-		mOldCalls2NewCalls = new HashMap<>();
 		mLoopHeads = getLoopHeads(origIcfg);
 	}
 
@@ -128,8 +129,6 @@ public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLoc
 		while (!currentPath.isEmpty()) {
 			if (currentPath.getLast().getOutgoingEdges().size() > currentPathIndices.getLast()) {
 
-				final IcfgEdge edge = currentPath.getLast().getOutgoingEdges().get(currentPathIndices.getLast());
-
 				final INLOC target = (INLOC) currentPath.getLast().getOutgoingEdges().get(currentPathIndices.getLast())
 						.getTarget();
 
@@ -153,7 +152,7 @@ public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLoc
 		return new ArrayDeque<>();
 	}
 
-	public Deque<IcfgEdge> getPathEdges(final INLOC loopHead) {
+	private Deque<IcfgEdge> getPathEdges(final INLOC loopHead) {
 		final Map<IcfgEdge, IcfgEdge> parentMap = new HashMap<>();
 		final HashSet<IcfgEdge> checked = new HashSet<>();
 		final Deque<IcfgEdge> toCheck = new ArrayDeque<>();

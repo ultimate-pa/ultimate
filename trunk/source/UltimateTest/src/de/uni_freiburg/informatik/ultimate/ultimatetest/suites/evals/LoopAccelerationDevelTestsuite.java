@@ -59,8 +59,8 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 			//			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Ahmed_Debug.epf"),
 			//			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
 			//			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing_Debug.epf"),
-			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
+			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr.epf"),
 			//			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
 			//			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
 			//			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
@@ -76,8 +76,8 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 	private static final String[] INPUT = new String[] {
 
 			// Normal regressions
-			//			"examples/programs/loopAcceleration",
-			"examples/programs/loopAcceleration/loopAccelerationFastUPR/OctagonTest_Default.bpl",
+			"examples/programs/loopAcceleration",
+			//			"examples/programs/loopAcceleration/loopAccelerationFastUPR/OctagonTest_Default.bpl",
 			//			"examples/programs/loopAcceleration/loopAccelerationBB/loop1.bpl",
 
 			//Errors in Woelfing

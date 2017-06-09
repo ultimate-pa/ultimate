@@ -48,7 +48,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
  * @author Jill Enke (enkei@informatik.uni-freiburg.de)
  *
  */
-public class TermChecker {
+public class FastUPRTermChecker {
 
 	private final FastUPRUtils mUtils;
 	private final ManagedScript mManagedScript;
@@ -56,10 +56,9 @@ public class TermChecker {
 	private Map<IProgramVar, TermVariable> mInVars;
 	private Map<IProgramVar, TermVariable> mOutVars;
 	private OctConjunction mConjunc;
-	private final FastUPRFormulaBuilder mFormulaBuilder;
 	private final Script mScript;
 	private final IUltimateServiceProvider mServices;
-	private final FastUPRTermTransformer mRealToIntTransformer;
+	private final FastUPRTermTransformer mTermTransformer;
 
 	/**
 	 *
@@ -69,15 +68,14 @@ public class TermChecker {
 	 * @param formulaBuilder
 	 * @param services
 	 */
-	public TermChecker(FastUPRUtils utils, ManagedScript managedScript, OctagonCalculator calc,
+	public FastUPRTermChecker(FastUPRUtils utils, ManagedScript managedScript, OctagonCalculator calc,
 			FastUPRFormulaBuilder formulaBuilder, IUltimateServiceProvider services) {
 		mServices = services;
-		mFormulaBuilder = formulaBuilder;
 		mCalc = calc;
 		mManagedScript = managedScript;
 		mUtils = utils;
 		mScript = mManagedScript.getScript();
-		mRealToIntTransformer = new FastUPRTermTransformer(mScript);
+		mTermTransformer = new FastUPRTermTransformer(mScript);
 	}
 
 	public void setConjunction(OctConjunction conjunc) {
@@ -127,8 +125,16 @@ public class TermChecker {
 
 	}
 
+	/**
+	 * Checks a term including Quantifiers for satisfiability.
+	 *
+	 * @param term
+	 *            The term to check.
+	 * @return TRUE if the term is satisfiable, FALSE if unknown or
+	 *         unsatisfiable.
+	 */
 	public boolean checkQuantifiedTerm(Term term) {
-		final Term withOutReal = mRealToIntTransformer.transformToInt(term);
+		final Term withOutReal = mTermTransformer.transformToInt(term);
 		final Term eliminated = PartialQuantifierElimination.tryToEliminate(mServices, mUtils.getLogger(),
 				mManagedScript, withOutReal, SimplificationTechnique.SIMPLIFY_DDA,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
@@ -136,21 +142,20 @@ public class TermChecker {
 	}
 
 	/**
+	 * Checks a term for satisfiability.
 	 *
 	 * @param term
-	 * @return
+	 *            The term to check.
+	 * @return TRUE if the term is satisfiable, FALSE if unknown or
+	 *         unsatisfiable.
 	 */
 	public boolean checkTerm(Term term) {
 
-		final Term withOutReal = mRealToIntTransformer.transformToInt(term);
+		final Term withOutReal = mTermTransformer.transformToInt(term);
 
 		final LBool result = SmtUtils.checkSatTerm(mScript, withOutReal);
 		return result.equals(LBool.SAT);
 
-	}
-
-	public Term toInt(Term term) {
-		return mRealToIntTransformer.transformToInt(term);
 	}
 
 }

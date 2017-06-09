@@ -27,11 +27,13 @@
 
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct;
 
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRUtils;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
@@ -56,11 +58,11 @@ public class OctagonDetector extends NonRecursive {
 	private boolean mIsOctTerm;
 	private final ManagedScript mManagedScript;
 	private final IUltimateServiceProvider mServices;
-	private final FastUPRUtils mUtils;
+	private final ILogger mLogger;
 
-	public OctagonDetector(FastUPRUtils utils, ManagedScript managedScript, IUltimateServiceProvider services) {
+	public OctagonDetector(ILogger logger, ManagedScript managedScript, IUltimateServiceProvider services) {
 		super();
-		mUtils = utils;
+		mLogger = logger;
 		mCheckedTerms = new HashSet<>();
 		mSubTerms = new HashSet<>();
 		mCurrentVars = new HashSet<>();
@@ -72,17 +74,13 @@ public class OctagonDetector extends NonRecursive {
 	private static class ConjunctionWalker implements NonRecursive.Walker {
 
 		private final Term mTerm;
-		private final FastUPRUtils mUtils;
 
-		public ConjunctionWalker(Term t, FastUPRUtils utils) {
+		public ConjunctionWalker(Term t) {
 			mTerm = t;
-			mUtils = utils;
-			mUtils.debug("New Concatination Walker for term:" + t.toString());
 		}
 
 		@Override
 		public void walk(NonRecursive engine) {
-			mUtils.debug("walk called");
 			((OctagonDetector) engine).addConjunctTerms(mTerm);
 		}
 
@@ -115,43 +113,51 @@ public class OctagonDetector extends NonRecursive {
 		final Term cnfRelation = SmtUtils.toCnf(mServices, mManagedScript, t,
 				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
 		mCheckedTerms.clear();
-		run(new ConjunctionWalker(cnfRelation, mUtils));
+		run(new ConjunctionWalker(cnfRelation));
 		return mSubTerms;
 	}
 
 	private void addConjunctTerms(Term t) {
-		mUtils.debug("Current Term:" + t.toString());
+		mLogger.debug("Current Term:" + t.toString());
 
 		if (mCheckedTerms.contains(t)) {
-			mUtils.debug("Already checked");
+			mLogger.debug("Already checked");
 			return;
 		}
 
 		if (t instanceof ApplicationTerm) {
-			mUtils.debug("ApplicationTerm");
+			mLogger.debug("ApplicationTerm");
 			final ApplicationTerm aT = (ApplicationTerm) t;
 			if ((aT).getFunction().getName().compareTo("and") == 0) {
 				mCheckedTerms.add(t);
-				mUtils.debug("> with function name = " + aT.getFunction().getName());
+				mLogger.debug("> with function name = " + aT.getFunction().getName());
 
 				for (final Term arg : (aT).getParameters()) {
-					enqueueWalker(new ConjunctionWalker(arg, mUtils));
+					enqueueWalker(new ConjunctionWalker(arg));
 				}
 				return;
 			}
 		}
 
-		mUtils.debug("Other Term or other Application Term");
+		mLogger.debug("Other Term or other Application Term");
 		mSubTerms.add(t);
 		mCheckedTerms.add(t);
 	}
 
-	public boolean isOctagonTerm(Term t) {
+	/**
+	 * Checks if a given Term t is a valid Term in the conjunction of an
+	 * Octagon.
+	 *
+	 * @param t
+	 *            The Term to check.
+	 * @return TRUE if the given term is a valid OctTerm.
+	 */
+	public boolean isOctTerm(Term t) {
 		mCheckedTerms.clear();
 		mIsOctTerm = true;
 		mCurrentVars.clear();
 		run(new OctagonDetectionWalker(t));
-		mUtils.debug(((mIsOctTerm) ? "Term is Oct" : "Term is NOT Oct"));
+		mLogger.debug(mIsOctTerm ? "Term is Oct" : "Term is NOT Oct");
 		return mIsOctTerm;
 	}
 
@@ -160,18 +166,18 @@ public class OctagonDetector extends NonRecursive {
 			return;
 		}
 
-		mUtils.debug("Checking Term:" + t.toString());
+		mLogger.debug("Checking Term:" + t.toString());
 
 		if (t instanceof TermVariable) {
 			mCurrentVars.add((TermVariable) t);
-			if (mCurrentVars.size() > 2)
+			if (mCurrentVars.size() > 2) {
 				mIsOctTerm = false;
+			}
 		} else if (t instanceof ApplicationTerm) {
 			final ApplicationTerm aT = (ApplicationTerm) t;
 			final String functionName = aT.getFunction().getName();
-			if (functionName.compareTo("<=") == 0 || functionName.compareTo("<") == 0
-					|| functionName.compareTo(">") == 0 || functionName.compareTo(">=") == 0
-					|| functionName.compareTo("=") == 0 || functionName.compareTo("+") == 0) {
+			final List<String> validNames = Arrays.asList("<=", "<", ">", ">=", "=", "+");
+			if (validNames.contains(functionName)) {
 				for (final Term arg : aT.getParameters()) {
 					enqueueWalker(new OctagonDetectionWalker(arg));
 				}

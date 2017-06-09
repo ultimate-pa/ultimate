@@ -24,6 +24,7 @@
  * licensors of the ULTIMATE IcfgTransformer grant you additional permission
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr;
 
 import java.util.ArrayDeque;
@@ -36,6 +37,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
@@ -76,6 +78,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 	private final FastUPRReplacementMethod mReplacementMethod;
 	private int mLoopFailures;
 	private int mLoops;
+	private final FastUPRBenchmark mBenchmark;
 
 	/**
 	 * Calls the FastUPR LoopAcceleration package - the transformed icfg is
@@ -108,6 +111,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 			String newIcfgIdentifier, ITransformulaTransformer transformer,
 			final IBacktranslationTracker backtranslationTracker, IUltimateServiceProvider services,
 			FastUPRReplacementMethod replaceMethod) {
+		mBenchmark = new FastUPRBenchmark();
 		mLoopFailures = 0;
 		mLoops = 0;
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
@@ -121,20 +125,9 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 		mLogger.debug("Starting fastUPR Transformation");
 		mResultIcfg = transform(origIcfg, Objects.requireNonNull(newIcfgIdentifier),
 				Objects.requireNonNull(outLocationClass), transformer);
-		reportResults();
-	}
-
-	private void reportResults() {
-		// final ICsvProviderProvider provider = new ;
-		// final String successLoopShort = (mLoops - mLoopFailures) + "/" +
-		// mLoops + " accelerated.";
-		// final String successLoopLong = "FastUPR accelerated " + (mLoops -
-		// mLoopFailures) + " out of " + mLoops
-		// + " total loops found.";
-		// final GenericResult successLoops = new GenericResult("fastUPR",
-		// successLoopShort, successLoopLong,
-		// Severity.INFO);
-		// mServices.getResultService().reportResult("fastUPR", successLoops);
+		mLogger.debug(mBenchmark.toString());
+		mServices.getResultService().reportResult(FastUPR.PLUGIN_ID,
+				new BenchmarkResult<>(FastUPR.PLUGIN_NAME, "FastUPR Benchmark Results:", mBenchmark));
 	}
 
 	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> originalIcfg, final String newIcfgIdentifier,
@@ -142,8 +135,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 
 		mLogger.debug("Getting List of loop paths ...");
 
-		final FastUPRDetection<INLOC, OUTLOC> loopDetection = new FastUPRDetection<>(mLogger, originalIcfg,
-				outLocationClass, newIcfgIdentifier);
+		final FastUPRDetection<INLOC> loopDetection = new FastUPRDetection<>(mLogger, originalIcfg);
 		final List<Deque<IcfgEdge>> loopEdgePaths = loopDetection.getLoopEdgePaths();
 
 		if (loopEdgePaths.isEmpty()) {
@@ -181,6 +173,8 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 
 			IcfgEdge loopEdge = path.getFirst();
 
+			mBenchmark.startRun(loopEdge.getSource());
+
 			final List<UnmodifiableTransFormula> formulas = new ArrayList<>();
 
 			UnmodifiableTransFormula resultFormula = null;
@@ -210,16 +204,18 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 				}
 
 				mLogger.debug("Result Formula:" + resultFormula.toString());
+				mBenchmark.endRun(true);
 
 			} catch (final Exception e) {
 				mLogger.error("", e);
 				loopEdge = null;
 				mLoopFailures++;
-
+				mBenchmark.endRun(false);
 				// TODO: ADD SETTING TO throw exception or whatever when FastUPR
 				// couldn't handle the loop.
 
-				throw new IllegalArgumentException("FastUPR can't handle the loop given.");
+				// throw new IllegalArgumentException("FastUPR can't handle the
+				// loop given.");
 			}
 
 			if (loopEdge != null) {
@@ -227,6 +223,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 				final String formulaString = resultFormula.getFormula().toStringDirect();
 				mLogger.debug("resultFormula: " + formulaString);
 			}
+
 		}
 
 		mLogger.debug("FastUPR found a total of " + loopEdgePaths.size()
@@ -260,7 +257,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 		final IcfgLocation loc = loopEdge.getSource();
 		if (loc.getOutgoingEdges().size() != 2) {
 			throw new IllegalArgumentException(
-					"Exit Edge Merging can only be done, if the loop head has two outgoing edges.");
+					"Exit Edge Merging can only be done if the loop head has two outgoing edges.");
 		}
 		for (final IcfgEdge e : loc.getOutgoingEdges()) {
 			if (!e.equals(loopEdge)) {

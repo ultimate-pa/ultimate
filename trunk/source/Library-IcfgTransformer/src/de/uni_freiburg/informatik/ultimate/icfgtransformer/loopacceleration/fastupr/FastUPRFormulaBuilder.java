@@ -1,10 +1,35 @@
+/*
+ * Copyright (C) 2017 Jill Enke (enkei@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 University of Freiburg
+ *
+ * This file is part of the ULTIMATE IcfgTransformer library.
+ *
+ * The ULTIMATE IcfgTransformer is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE IcfgTransformer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE IcfgTransformer library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -24,6 +49,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
+ * Class to build FastUPR results.
+ *
  * @author Jill Enke (enkei@informatik.uni-freiburg.de)
  *
  */
@@ -36,6 +63,18 @@ public class FastUPRFormulaBuilder {
 	private final OctagonTransformer mTransformer;
 	private final FastUPRTermTransformer mTermTransformer;
 
+	/**
+	 *
+	 * @param utils
+	 *            The {@link FastUPRUtils} used for debug output.
+	 * @param mgdScript
+	 *            The {@link ManagedScript} used for {@link Term}
+	 *            transformation.
+	 * @param calc
+	 *            An {@link OctagonCalculator}
+	 * @param transformer
+	 *            An {@link OctagonTransformer}
+	 */
 	public FastUPRFormulaBuilder(FastUPRUtils utils, ManagedScript mgdScript, OctagonCalculator calc,
 			OctagonTransformer transformer) {
 		mUtils = utils;
@@ -46,23 +85,20 @@ public class FastUPRFormulaBuilder {
 		mTermTransformer = new FastUPRTermTransformer(mScript);
 	}
 
-	private UnmodifiableTransFormula buildTransFormula(Term term, Map<IProgramVar, TermVariable> inVars,
-			Map<IProgramVar, TermVariable> outVars, TermVariable parametricVar) {
-		final Term withoutInt = mTermTransformer.transformToInt(term);
-		final ModifiableTransFormula modFormula = new ModifiableTransFormula(withoutInt);
-		for (final IProgramVar p : inVars.keySet()) {
-			modFormula.addInVar(p, inVars.get(p));
-		}
-		for (final IProgramVar p : outVars.keySet()) {
-			modFormula.addOutVar(p, outVars.get(p));
-		}
-		if (parametricVar != null) {
-			modFormula.addAuxVars(new HashSet<>(Arrays.asList(parametricVar)));
-		}
-		return TransFormulaBuilder.constructCopy(mManagedScript, modFormula, Collections.emptySet(),
-				Collections.emptySet(), Collections.emptyMap());
-	}
-
+	/**
+	 * Builds an {@link UnmodifiableTransFormula} from a given {@link Term} and
+	 * variable Mappings.
+	 *
+	 * @param term
+	 *            The {@link Term} of the TransFormula.
+	 * @param inVars
+	 *            An InVar-Mapping from {@link IProgramVar} to
+	 *            {@link TermVariable}.
+	 * @param outVars
+	 *            An OutVar-Mapping from {@link IProgramVar} to
+	 *            {@link TermVariable}.
+	 * @return new {@link UmodifiableTransFormula} based on the input.
+	 */
 	public UnmodifiableTransFormula buildTransFormula(Term term, Map<IProgramVar, TermVariable> inVars,
 			Map<IProgramVar, TermVariable> outVars) {
 		final Term withoutInt = mTermTransformer.transformToInt(term);
@@ -77,11 +113,22 @@ public class FastUPRFormulaBuilder {
 				Collections.emptySet(), Collections.emptyMap());
 	}
 
-	public UnmodifiableTransFormula buildTransFormula(OctConjunction conjunction, Map<IProgramVar, TermVariable> inVars,
-			Map<IProgramVar, TermVariable> outVars) {
-		return buildTransFormula(conjunction.toTerm(mManagedScript.getScript()), inVars, outVars);
-	}
-
+	/**
+	 * Build an Accelerated Loop Edge for Octagons that do not pass the
+	 * Consistency Check.
+	 *
+	 * @param conjunc
+	 *            The {@link OctConjunction} representing the Octagon.
+	 * @param count
+	 *            The last iteration where the Octagon is consistent.
+	 * @param inVars
+	 *            An InVar-Mapping from {@link IProgramVar} to
+	 *            {@link TermVariable}.
+	 * @param outVars
+	 *            An OutVar-Mapping from {@link IProgramVar} to
+	 *            {@link TermVariable}.
+	 * @return The Disjunction representing the Loop up to it's inconsistency.
+	 */
 	public Term buildConsistencyResult(OctConjunction conjunc, int count, Map<IProgramVar, TermVariable> inVars,
 			Map<IProgramVar, TermVariable> outVars) {
 
@@ -90,23 +137,31 @@ public class FastUPRFormulaBuilder {
 		for (int i = 0; i <= count; i++) {
 			orTerms.add(mCalculator.sequentialize(conjunc, inVars, outVars, i).toTerm(mScript));
 		}
-		final Term result = orTerms.size() > 1 ? mScript.term("or", orTerms.toArray(new Term[0])) : orTerms.get(0);
-		return result;
+		return orTerms.size() > 1 ? mScript.term("or", orTerms.toArray(new Term[0])) : orTerms.get(0);
 	}
 
-	public Term toExistential(Term term) {
-		if (!(term instanceof QuantifiedFormula)) {
-			return term;
-		}
-		final QuantifiedFormula quantTerm = (QuantifiedFormula) term;
-		if (quantTerm.getQuantifier() == QuantifiedFormula.EXISTS) {
-			return term;
-		}
-		final Term notTerm = mScript.term("not", quantTerm.getSubformula());
-		final Term existentialTerm = mScript.quantifier(QuantifiedFormula.EXISTS, quantTerm.getVariables(), notTerm);
-		return mScript.term("not", existentialTerm);
-	}
-
+	/**
+	 * Build an Accelerated Loop Edge for Octagons that are ultimately periodic
+	 * without inconsistency.
+	 *
+	 * @param conjunc
+	 *            The {@link OctConjunction} representing the Octagon.
+	 * @param b
+	 *            The length of the loop prefix.
+	 * @param difference
+	 *            The Matrix representing the difference between two loop
+	 *            periods.
+	 * @param inVars
+	 * @param outVars
+	 * @param variables
+	 * @param inVars
+	 *            An InVar-Mapping from {@link IProgramVar} to
+	 *            {@link TermVariable}.
+	 * @param outVars
+	 *            An OutVar-Mapping from {@link IProgramVar} to
+	 *            {@link TermVariable}.
+	 * @return The Disjunction representing the Loop
+	 */
 	public Term buildParametricResult(OctConjunction conjunc, int b, ParametricOctMatrix difference,
 			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars,
 			List<TermVariable> variables) {
@@ -152,6 +207,33 @@ public class FastUPRFormulaBuilder {
 		return result.toTerm(mScript);
 	}
 
+	/**
+	 * Build an Accelerated Loop Edge for Octagons, where a period was found but
+	 * also an inconsistency at some point.
+	 *
+	 * @param conjunc
+	 *            The {@link OctConjunction} representing the Octagon.
+	 *
+	 * @param difference
+	 *            The Matrix representing the difference between two loop
+	 *            periods.
+	 * @param b
+	 *            The length of the loop prefix.
+	 * @param c
+	 *            The length of a loop period.
+	 * @param n
+	 *            The largest amount of loop calls that are consistent.
+	 * @param inVars
+	 *            An InVar-Mapping from {@link IProgramVar} to
+	 *            {@link TermVariable}.
+	 * @param outVars
+	 *            An OutVar-Mapping from {@link IProgramVar} to
+	 *            {@link TermVariable}.
+	 * @param variables
+	 *            The Ordered List of {@link TermVariable}s to build a
+	 *            {@link ParametricOctMatrix}.
+	 * @return The Disjunction representing the Loop.
+	 */
 	public Term buildPeriodicityResult(OctConjunction conjunc, ParametricOctMatrix difference, int b, int c, int n,
 			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars,
 			List<TermVariable> variables) {
@@ -226,6 +308,21 @@ public class FastUPRFormulaBuilder {
 		return identityTerm;
 	}
 
+	/**
+	 * Builds a result including th exit edge
+	 *
+	 * @param exitEdgeFormula
+	 *            The {@link UmodifiableTransFormula} of the exit edge.
+	 * @param t
+	 *            The term to merge with the exit edge.
+	 * @param inVars
+	 *            An InVar-Mapping from {@link IProgramVar} to
+	 *            {@link TermVariable}.
+	 * @param outVars
+	 *            An OutVar-Mapping from {@link IProgramVar} to
+	 *            {@link TermVariable}.
+	 * @return Merged exit edge and Term t.
+	 */
 	public Term getExitEdgeResult(UnmodifiableTransFormula exitEdgeFormula, Term t,
 			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars) {
 		final Term identityRelation = getIdentityRelation(inVars, outVars);

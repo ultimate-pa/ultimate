@@ -25,36 +25,16 @@
  * to convey the resulting work.
  */
 
-package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct;
+package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr;
 
-import de.uni_freiburg.informatik.ultimate.logic.Script;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+/**
+ *
+ * @author unicorn
+ *
+ */
+public final class FastUPR {
 
-public class ParametricOctTerm extends OctTerm {
+	public static final String PLUGIN_ID = FastUPR.class.getPackage().getName();
 
-	public ParametricOctTerm(ParametricOctValue value, TermVariable firstVar, boolean firstNegative) {
-		super(value, firstVar, firstNegative);
-	}
-
-	public ParametricOctTerm(ParametricOctValue value, TermVariable firstVar, boolean firstNegative,
-			TermVariable secondVar, boolean secondNegative) {
-		super(value, firstVar, firstNegative, secondVar, secondNegative);
-	}
-
-	@Override
-	protected Term rightTerm(Script script) {
-		return getValue().getTerm(script);
-	}
-
-	@Override
-	public ParametricOctValue getValue() {
-		return (ParametricOctValue) mValue;
-	}
-
-	@Override
-	protected String rightString() {
-		return getValue().toString();
-	}
-
+	public static final String PLUGIN_NAME = "FastUPR-LoopAcceleration";
 }

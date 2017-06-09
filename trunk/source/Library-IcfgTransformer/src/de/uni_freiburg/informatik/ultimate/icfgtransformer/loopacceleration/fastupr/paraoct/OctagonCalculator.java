@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2017 Jill Enke (enkei@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 University of Freiburg
+ *
+ * This file is part of the ULTIMATE IcfgTransformer library.
+ *
+ * The ULTIMATE IcfgTransformer is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE IcfgTransformer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE IcfgTransformer library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct;
 
 import java.math.BigDecimal;
@@ -64,7 +91,7 @@ public class OctagonCalculator extends NonRecursive {
 				final TermVariable outVar = mManagedScript.constructFreshTermVariable(outName, varSort);
 
 				result = replaceInOutVars(result, e.getValue(), inVar);
-				result = getInOutVarTerms(result, e.getValue(), inVar, outVar);
+				result = getInOutVarTerms(result, inVar, outVar);
 				inVars.put(e.getKey(), inVar);
 				outVars.put(e.getKey(), outVar);
 
@@ -73,8 +100,7 @@ public class OctagonCalculator extends NonRecursive {
 		return result;
 	}
 
-	private static OctConjunction getInOutVarTerms(OctConjunction conjunc, TermVariable value, TermVariable inVar,
-			TermVariable outVar) {
+	private static OctConjunction getInOutVarTerms(OctConjunction conjunc, TermVariable inVar, TermVariable outVar) {
 		final OctConjunction result = conjunc;
 		result.addTerm(OctagonFactory.createTwoVarOctTerm(BigDecimal.ZERO, inVar, false, outVar, true));
 		result.addTerm(OctagonFactory.createTwoVarOctTerm(BigDecimal.ZERO, inVar, true, outVar, false));
@@ -211,10 +237,6 @@ public class OctagonCalculator extends NonRecursive {
 	public OctConjunction sequentialize(OctConjunction conjunc, Map<IProgramVar, TermVariable> inVars,
 			Map<IProgramVar, TermVariable> outVars, int count) {
 
-		// if (count == 0) {
-		// return new OctConjunction();
-		// }
-
 		mUtils.debug("Sequentializing " + count + " times:" + conjunc.toString());
 
 		final HashSet<TermVariable> variables = new HashSet<>();
@@ -297,22 +319,19 @@ public class OctagonCalculator extends NonRecursive {
 
 	}
 
-	OctConjunction binarySequentialize(OctConjunction first, OctConjunction second, HashSet<TermVariable> inVarSet,
-			HashSet<TermVariable> outVarSet, Map<TermVariable, TermVariable> variableMapping) {
+	private OctConjunction binarySequentialize(OctConjunction first, OctConjunction second,
+			HashSet<TermVariable> inVarSet, HashSet<TermVariable> outVarSet,
+			Map<TermVariable, TermVariable> variableMapping) {
 
 		final Map<TermVariable, OctagonSubstitution> firstSubstitutions = new HashMap<>();
-		final Map<TermVariable, OctagonSubstitution> secondSubstitutions = new HashMap<>();
 
 		for (final TermVariable t : outVarSet) {
 			firstSubstitutions.put(t, getSubstitution(t, first));
-			secondSubstitutions.put(t, getSubstitution(t, second));
 		}
 
 		mUtils.debug(firstSubstitutions.toString());
-		mUtils.debug(secondSubstitutions.toString());
 
 		HashSet<SubstitutionTermContainer> secondContainers = getContainers(second);
-		final HashSet<SubstitutionTermContainer> firstContainers = getContainers(first);
 
 		secondContainers = substituteInVars(secondContainers, inVarSet, variableMapping);
 
@@ -320,31 +339,15 @@ public class OctagonCalculator extends NonRecursive {
 		mUtils.debug(secondContainers.toString());
 
 		final OctConjunction secondSubstituted = substitute(secondContainers, outVarSet, firstSubstitutions);
-		final OctConjunction firstFinal = getInTerms(first, inVarSet);
 
 		mUtils.debug(second.toString());
-
-		// first = substitute(firstContainers, outVarSet, firstSubstitutions);
 
 		mUtils.debug(">> Substitutions finished.");
 		final OctConjunction inputConstraints = getInputConstraints(first, inVarSet);
 		final OctConjunction outputConstraints = getOutputConstraints(second, outVarSet);
 		mUtils.debug(inputConstraints.toString());
 		final OctConjunction constraints = conjunction(inputConstraints, outputConstraints);
-		final OctConjunction result = conjunction(secondSubstituted, constraints);
-		return result;
-	}
-
-	private OctConjunction getInTerms(OctConjunction first, HashSet<TermVariable> inVars) {
-		final OctConjunction result = new OctConjunction();
-
-		for (final OctTerm t : first.getTerms()) {
-			if (inVars.contains(t.getFirstVar()) && inVars.contains(t.getSecondVar())) {
-				result.addTerm(t);
-			}
-		}
-
-		return result;
+		return conjunction(secondSubstituted, constraints);
 	}
 
 	private static OctConjunction getOutputConstraints(OctConjunction second, HashSet<TermVariable> outVarSet) {
@@ -537,7 +540,7 @@ public class OctagonCalculator extends NonRecursive {
 			for (final OctTerm tempTerm : tempResults) {
 				for (final OctagonSubstitutionTerm sub : subs) {
 					final OctTerm newTerm = getTermFromSubsitution(tempTerm, sub,
-							(tempTerm.getFirstVar().equals(replaceSecond) ? 1 : 2));
+							tempTerm.getFirstVar().equals(replaceSecond) ? 1 : 2);
 					if (newTerm != null) {
 						result.add(newTerm);
 					}
@@ -589,31 +592,34 @@ public class OctagonCalculator extends NonRecursive {
 		return addValues(value1, value2, BigDecimal.ONE, new BigDecimal(2));
 	}
 
-	private Object addValues(Object value1, Object value2) {
+	private static Object addValues(Object value1, Object value2) {
 		return addValues(value1, value2, BigDecimal.ONE, BigDecimal.ONE);
 	}
 
 	private static Object addValues(Object value1, Object value2, BigDecimal one, BigDecimal two) {
-		if (value1 instanceof ParametricOctValue) {
-			value1 = ((ParametricOctValue) value1).multipy(one);
-			if (value2 instanceof ParametricOctValue) {
-				value2 = ((ParametricOctValue) value2).multipy(two);
+		Object finalValue1 = value1;
+		Object finalValue2 = value2;
+
+		if (finalValue1 instanceof ParametricOctValue) {
+			finalValue1 = ((ParametricOctValue) finalValue1).multipy(one);
+			if (finalValue2 instanceof ParametricOctValue) {
+				finalValue2 = ((ParametricOctValue) finalValue2).multipy(two);
 			} else {
-				value2 = ((BigDecimal) value2).multiply(two);
+				finalValue2 = ((BigDecimal) finalValue2).multiply(two);
 			}
-			return ((ParametricOctValue) value1).add(value2);
-		} else if (value2 instanceof ParametricOctValue) {
-			value2 = ((ParametricOctValue) value2).multipy(two);
-			if (value1 instanceof ParametricOctValue) {
-				value1 = ((ParametricOctValue) value1).multipy(one);
+			return ((ParametricOctValue) finalValue1).add(finalValue2);
+		} else if (finalValue2 instanceof ParametricOctValue) {
+			finalValue2 = ((ParametricOctValue) finalValue2).multipy(two);
+			if (finalValue1 instanceof ParametricOctValue) {
+				finalValue1 = ((ParametricOctValue) finalValue1).multipy(one);
 			} else {
-				value1 = ((BigDecimal) value1).multiply(one);
+				finalValue1 = ((BigDecimal) finalValue1).multiply(one);
 			}
-			return ((ParametricOctValue) value2).add(value1);
+			return ((ParametricOctValue) finalValue2).add(finalValue1);
 		}
-		value1 = ((BigDecimal) value1).multiply(one);
-		value2 = ((BigDecimal) value2).multiply(two);
-		return ((BigDecimal) value1).add((BigDecimal) value2);
+		finalValue1 = ((BigDecimal) finalValue1).multiply(one);
+		finalValue2 = ((BigDecimal) finalValue2).multiply(two);
+		return ((BigDecimal) finalValue1).add((BigDecimal) finalValue2);
 	}
 
 	/**
@@ -625,7 +631,7 @@ public class OctagonCalculator extends NonRecursive {
 	 *            second conjunction
 	 * @return conjunction of both OctagonConjunctions
 	 */
-	private OctConjunction conjunction(OctConjunction first, OctConjunction second) {
+	private static OctConjunction conjunction(OctConjunction first, OctConjunction second) {
 		final OctConjunction result = new OctConjunction();
 		for (final OctTerm t : first.getTerms()) {
 			result.addTerm(t);
@@ -667,7 +673,7 @@ public class OctagonCalculator extends NonRecursive {
 		return result;
 	}
 
-	private OctagonSubstitution getSubstitution(TermVariable var, OctConjunction conjunc) {
+	private static OctagonSubstitution getSubstitution(TermVariable var, OctConjunction conjunc) {
 		final OctagonSubstitution result = new OctagonSubstitution(var);
 		for (final OctTerm t : conjunc.getTerms()) {
 			result.addSubstitution(t);
@@ -676,7 +682,7 @@ public class OctagonCalculator extends NonRecursive {
 
 	}
 
-	private class SubstitutionTermContainer {
+	private static class SubstitutionTermContainer {
 		private final OctTerm mTerm;
 		private final boolean mFirstLocked;
 		private final boolean mSecondLocked;
@@ -766,6 +772,14 @@ public class OctagonCalculator extends NonRecursive {
 		return mUtils;
 	}
 
+	/**
+	 * Checks if the Mapping of a Transformula is Trival: It only contains
+	 * inOutVars;
+	 * 
+	 * @param inVars
+	 * @param outVars
+	 * @return
+	 */
 	public boolean isTrivial(Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars) {
 		for (final Entry<IProgramVar, TermVariable> e : inVars.entrySet()) {
 			if (!outVars.containsValue(e.getValue())) {
