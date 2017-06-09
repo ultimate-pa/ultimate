@@ -43,9 +43,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AnnotatedProgramPoint;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 
 public abstract class CodeChecker {
 
@@ -57,17 +54,6 @@ public abstract class CodeChecker {
 
 	protected IHoareTripleChecker mEdgeChecker;
 	protected PredicateUnifier mPredicateUnifier;
-
-	protected NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> mSatTriples;
-	protected NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> mUnsatTriples;
-	protected NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> mSatQuadruples;
-	protected NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> mUnsatQuadruples;
-
-	// stats
-	protected int mMemoizationHitsSat = 0;
-	protected int mMemoizationHitsUnsat = 0;
-	protected int mMemoizationReturnHitsSat = 0;
-	protected int mMemoizationReturnHitsUnsat = 0;
 
 	protected GraphWriter mGraphWriter;
 
@@ -96,18 +82,6 @@ public abstract class CodeChecker {
 	public abstract boolean codeCheck(NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
 			IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot);
 
-	public abstract boolean codeCheck(NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
-			IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot,
-			NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> satTriples,
-			NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> unsatTriples);
-
-	public abstract boolean codeCheck(NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
-			IPredicate[] interpolants, AnnotatedProgramPoint procedureRoot,
-			NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> satTriples,
-			NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> unsatTriples,
-			NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> satQuadruples,
-			NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> unsatQuadruples);
-
 	/**
 	 * Given 2 predicates, return a predicate which is the conjunction of both.
 	 *
@@ -118,8 +92,8 @@ public abstract class CodeChecker {
 	 */
 	protected IPredicate conjugatePredicates(final IPredicate a, final IPredicate b) {
 		final Set<IPredicate> preds = new HashSet<>(2, 1.0f);
-		preds.add(a);
-		preds.add(b);
+		preds.add(mPredicateUnifier.getOrConstructPredicate(a));
+		preds.add(mPredicateUnifier.getOrConstructPredicate(b));
 		return mPredicateUnifier.getOrConstructPredicateForConjunction(preds);
 	}
 
@@ -130,18 +104,8 @@ public abstract class CodeChecker {
 	 *            : The Predicate.
 	 */
 	protected IPredicate negatePredicate(final IPredicate a) {
-		final IPredicate tvp = mPredicateUnifier.getPredicateFactory().not(a);
-		return mPredicateUnifier.getOrConstructPredicate(tvp);
-	}
-
-	/**
-	 * Given a predicate, return a predicate which is the negation of it, not showing it to the PredicateUnifier
-	 *
-	 * @param a
-	 *            : The Predicate.
-	 */
-	protected IPredicate negatePredicateNoPU(final IPredicate a) {
-		return mPredicateUnifier.getPredicateFactory().not(a);
+		final IPredicate pred = mPredicateUnifier.getPredicateFactory().not(a);
+		return mPredicateUnifier.getOrConstructPredicate(pred);
 	}
 
 	public static String objectReference(final Object o) {

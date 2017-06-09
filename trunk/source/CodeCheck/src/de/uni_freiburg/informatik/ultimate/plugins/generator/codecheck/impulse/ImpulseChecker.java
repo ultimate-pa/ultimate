@@ -25,12 +25,11 @@
  * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.impulse;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.impulse;
 
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -57,15 +56,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheck
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GraphWriter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.RedirectionStrategy;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 
 public class ImpulseChecker extends CodeChecker {
 
 	private final RedirectionFinder mCloneFinder;
 	private int mNodeId;
-	private Set<AnnotatedProgramPoint> mVisited;
 
 	public ImpulseChecker(final IElement root, final CfgSmtToolkit cfgSmtToolkit,
 			final IIcfg<IcfgLocation> originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
@@ -279,19 +274,6 @@ public class ImpulseChecker extends CodeChecker {
 			return false;
 		}
 
-		if (getGlobalSettings().isMemoizeNormalEdgeChecks()) {
-			if (mSatTriples.get(sourceNode.getPredicate(), edgeLabel,
-					destinationNode.getPredicate()) == IsContained.IsContained) {
-				mMemoizationHitsSat++;
-				return true;
-			}
-			if (mUnsatTriples.get(sourceNode.getPredicate(), edgeLabel,
-					destinationNode.getPredicate()) == IsContained.IsContained) {
-				mMemoizationHitsUnsat++;
-				return false;
-			}
-		}
-
 		boolean result = true;
 		if (edgeLabel instanceof IIcfgCallTransition<?>) {
 			result = mEdgeChecker.checkCall(sourceNode.getPredicate(), (ICallAction) edgeLabel,
@@ -300,71 +282,14 @@ public class ImpulseChecker extends CodeChecker {
 			result = mEdgeChecker.checkInternal(sourceNode.getPredicate(), (IInternalAction) edgeLabel,
 					destinationNode.getPredicate()) == Validity.VALID;
 		}
-
-		if (getGlobalSettings().isMemoizeNormalEdgeChecks()) {
-			if (result) {
-				mSatTriples.put(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate(),
-						IsContained.IsContained);
-			} else {
-				mUnsatTriples.put(sourceNode.getPredicate(), edgeLabel, destinationNode.getPredicate(),
-						IsContained.IsContained);
-			}
-		}
-
 		return result;
 	}
 
 	public boolean isValidReturnEdge(final AnnotatedProgramPoint sourceNode, final IIcfgTransition<?> edgeLabel,
 			final AnnotatedProgramPoint destinationNode, final AnnotatedProgramPoint callNode) {
-		if (getGlobalSettings().isMemoizeReturnEdgeChecks()) {
-			if (mSatQuadruples.get(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel,
-					destinationNode.getPredicate()) == IsContained.IsContained) {
-				mMemoizationReturnHitsSat++;
-				return true;
-			}
-			if (mUnsatQuadruples.get(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel,
-					destinationNode.getPredicate()) == IsContained.IsContained) {
-				mMemoizationReturnHitsUnsat++;
-				return false;
-			}
-		}
-
 		final boolean result = mEdgeChecker.checkReturn(sourceNode.getPredicate(), callNode.getPredicate(),
 				(IReturnAction) edgeLabel, destinationNode.getPredicate()) == Validity.VALID;
-
-		if (getGlobalSettings().isMemoizeReturnEdgeChecks()) {
-			if (result) {
-				mSatQuadruples.put(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel,
-						destinationNode.getPredicate(), IsContained.IsContained);
-			} else {
-				mUnsatQuadruples.put(sourceNode.getPredicate(), callNode.getPredicate(), edgeLabel,
-						destinationNode.getPredicate(), IsContained.IsContained);
-			}
-		}
-
 		return result;
-	}
-
-	@Override
-	public boolean codeCheck(final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
-			final IPredicate[] interpolants, final AnnotatedProgramPoint procedureRoot,
-			final NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> satTriples,
-			final NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> unsatTriples) {
-		mSatTriples = satTriples;
-		mUnsatTriples = unsatTriples;
-		return this.codeCheck(errorRun, interpolants, procedureRoot);
-	}
-
-	@Override
-	public boolean codeCheck(final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
-			final IPredicate[] interpolants, final AnnotatedProgramPoint procedureRoot,
-			final NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> satTriples,
-			final NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> unsatTriples,
-			final NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> satQuadruples,
-			final NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> unsatQuadruples) {
-		mSatQuadruples = satQuadruples;
-		mUnsatQuadruples = unsatQuadruples;
-		return this.codeCheck(errorRun, interpolants, procedureRoot, satTriples, unsatTriples);
 	}
 
 	protected boolean connectOutgoingIfValid(final AnnotatedProgramPoint source, final IIcfgTransition<?> statement,
@@ -383,34 +308,6 @@ public class ImpulseChecker extends CodeChecker {
 			return true;
 		}
 		return false;
-	}
-
-	protected void dfsDEBUG(final AnnotatedProgramPoint node, final boolean print) {
-
-		if (mVisited.contains(node)) {
-			return;
-		}
-		mVisited.add(node);
-		if (print) {
-			System.err.println(String.format("%n%s%n", node));
-			System.err.print("[ ");
-			for (final AppEdge nextEdge : node.getOutgoingEdges()) {
-				System.err.print(
-						" << " + (nextEdge instanceof AppHyperEdge ? "return to " + ((AppHyperEdge) nextEdge).getHier()
-								: nextEdge.getStatement()) + " >> " + nextEdge.getTarget());
-				System.err.print(" , ");
-			}
-			System.err.println("]");
-
-			System.err.print("\nCopied From " + node.getParentCopy() + "\nCopies :: { ");
-			for (final AnnotatedProgramPoint copy : node.getNextClones()) {
-				System.err.print(copy + " , ");
-			}
-			System.err.println("}");
-		}
-		for (final AnnotatedProgramPoint nextNode : node.getOutgoingNodes()) {
-			dfsDEBUG(nextNode, print);
-		}
 	}
 
 	boolean isStrongerPredicate(final AnnotatedProgramPoint node1, final AnnotatedProgramPoint node2) {

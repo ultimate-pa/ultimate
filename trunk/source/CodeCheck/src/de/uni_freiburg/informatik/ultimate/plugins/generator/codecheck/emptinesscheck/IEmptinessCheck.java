@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.emptinesscheck;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;

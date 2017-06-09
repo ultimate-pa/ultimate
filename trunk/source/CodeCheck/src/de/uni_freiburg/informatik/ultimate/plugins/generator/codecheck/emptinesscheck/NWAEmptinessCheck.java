@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.emptinesscheck;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -39,8 +39,8 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -48,6 +48,8 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.DummyStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
+import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
@@ -67,24 +69,27 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 
 	@Override
 	public NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> checkForEmptiness(final AnnotatedProgramPoint root) {
-		final INwaOutgoingLetterAndTransitionProvider<IIcfgTransition<?>, AnnotatedProgramPoint> converted = new MyNWA(root);
+		final INwaOutgoingLetterAndTransitionProvider<IIcfgTransition<?>, AnnotatedProgramPoint> converted =
+				new MyNWA(root);
 		try {
 			return new IsEmpty<>(new AutomataLibraryServices(mServices),
 					new RemoveUnreachable<>(new AutomataLibraryServices(mServices), converted).getResult())
 							.getNestedRun();
 		} catch (final AutomataOperationCanceledException e) {
-			e.printStackTrace();
-			return null;
+			throw new ToolchainCanceledException(e,
+					new RunningTaskInfo(NWAEmptinessCheck.class, "checking for new error trace"));
 		}
 	}
 
-	private final class MyNWA implements INwaOutgoingLetterAndTransitionProvider<IIcfgTransition<?>, AnnotatedProgramPoint> {
+	private static final class MyNWA
+			implements INwaOutgoingLetterAndTransitionProvider<IIcfgTransition<?>, AnnotatedProgramPoint> {
 
 		private final Set<IIcfgTransition<?>> mAlphabet = new HashSet<>();
 		private final Set<IIcfgTransition<?>> mInternalAlphabet = new HashSet<>();
 		private final Set<IIcfgTransition<?>> mCallAlphabet = new HashSet<>();
 		private final Set<IIcfgTransition<?>> mReturnAlphabet = new HashSet<>();
-		private final VpAlphabet<IIcfgTransition<?>> mVpAlphabet = new VpAlphabet<IIcfgTransition<?>>(mInternalAlphabet, mCallAlphabet, mReturnAlphabet);
+		private final VpAlphabet<IIcfgTransition<?>> mVpAlphabet =
+				new VpAlphabet<>(mInternalAlphabet, mCallAlphabet, mReturnAlphabet);
 
 		private final IStateFactory<AnnotatedProgramPoint> mStateFactory = new DummyStateFactory<>();
 
@@ -223,7 +228,6 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 
 		@Override
 		public int size() {
-			assert false;
 			return mSize;
 		}
 
@@ -236,7 +240,7 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 		public String sizeInformation() {
 			return "no size info available";
 		}
-		
+
 		@Override
 		public VpAlphabet<IIcfgTransition<?>> getVpAlphabet() {
 			return mVpAlphabet;
@@ -288,15 +292,17 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 
 			return mStateToLetterToOutgoingCallTransitions.get(state).keySet();
 		}
-		
+
 		@Override
-		public Set<IIcfgTransition<?>> lettersReturn(final AnnotatedProgramPoint state, final AnnotatedProgramPoint hier) {
+		public Set<IIcfgTransition<?>> lettersReturn(final AnnotatedProgramPoint state,
+				final AnnotatedProgramPoint hier) {
 			final Map<AnnotatedProgramPoint, Map<IIcfgTransition<?>, List<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>>> hier2 =
 					mStateToHierToLetterToOutgoingReturnTransitions.get(state);
 			if (hier2 == null) {
 				return Collections.emptySet();
 			}
-			final Map<IIcfgTransition<?>, List<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>> letter2succ = hier2.get(hier2);
+			final Map<IIcfgTransition<?>, List<OutgoingReturnTransition<IIcfgTransition<?>, AnnotatedProgramPoint>>> letter2succ =
+					hier2.get(hier2);
 			return letter2succ.keySet();
 		}
 
@@ -404,8 +410,6 @@ public class NWAEmptinessCheck implements IEmptinessCheck {
 			// TODO Auto-generated method stub
 			return null;
 		}
-
-
 
 	}
 }

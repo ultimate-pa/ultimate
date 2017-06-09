@@ -26,13 +26,11 @@
  * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.kojak;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.kojak;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
@@ -57,9 +55,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheck
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.GraphWriter;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.PredicateUnifier;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 
 /**
  * UltimateChecker class, implements the model checker Ultimate.
@@ -68,9 +63,6 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMa
  *
  */
 public class UltimateChecker extends CodeChecker {
-
-	private HashMap<AnnotatedProgramPoint, HashMap<IIcfgTransition<?>, AnnotatedProgramPoint>> mPre2Stmt2Post;
-	private HashMap<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<IIcfgReturnTransition<?, ?>, AnnotatedProgramPoint>>> mPre2Hier2Stmt2Post;
 
 	public UltimateChecker(final IElement root, final CfgSmtToolkit cfgSmtToolkit,
 			final IIcfg<IcfgLocation> originalRoot, final ImpRootNode graphRoot, final GraphWriter graphWriter,
@@ -113,7 +105,7 @@ public class UltimateChecker extends CodeChecker {
 		final AnnotatedProgramPoint newNode1 =
 				new AnnotatedProgramPoint(oldNode, conjugatePredicates(oldNode.getPredicate(), predicate));
 		final AnnotatedProgramPoint newNode2 = new AnnotatedProgramPoint(oldNode,
-				conjugatePredicates(oldNode.getPredicate(), negatePredicateNoPU(predicate)));
+				conjugatePredicates(oldNode.getPredicate(), negatePredicate(predicate)));
 
 		// connect predecessors of old node to new nodes, disconnect them from
 		// old node
@@ -203,53 +195,6 @@ public class UltimateChecker extends CodeChecker {
 		}
 	}
 
-	@Override
-	public boolean codeCheck(final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
-			final IPredicate[] interpolants, final AnnotatedProgramPoint procedureRoot,
-			final NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> satTriples,
-			final NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> unsatTriples) {
-		mSatTriples = satTriples;
-		mUnsatTriples = unsatTriples;
-		return this.codeCheck(errorRun, interpolants, procedureRoot);
-	}
-
-	@Override
-	public boolean codeCheck(final NestedRun<IIcfgTransition<?>, AnnotatedProgramPoint> errorRun,
-			final IPredicate[] interpolants, final AnnotatedProgramPoint procedureRoot,
-			final NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> satTriples,
-			final NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> unsatTriples,
-			final NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> satQuadruples,
-			final NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> unsatQuadruples) {
-		mSatQuadruples = satQuadruples;
-		mUnsatQuadruples = unsatQuadruples;
-		return this.codeCheck(errorRun, interpolants, procedureRoot, satTriples, unsatTriples);
-	}
-
-	private void makeConnections() {
-		for (final Entry<AnnotatedProgramPoint, HashMap<IIcfgTransition<?>, AnnotatedProgramPoint>> pre2 : mPre2Stmt2Post
-				.entrySet()) {
-			for (final Entry<IIcfgTransition<?>, AnnotatedProgramPoint> stm2 : pre2.getValue().entrySet()) {
-				if (isSatEdge(pre2.getKey().getPredicate(), stm2.getKey(), stm2.getValue().getPredicate())) {
-					pre2.getKey().connectOutgoing(stm2.getKey(), stm2.getValue());
-				}
-			}
-		}
-
-		for (final Entry<AnnotatedProgramPoint, HashMap<AnnotatedProgramPoint, HashMap<IIcfgReturnTransition<?, ?>, AnnotatedProgramPoint>>> pre2 : mPre2Hier2Stmt2Post
-				.entrySet()) {
-			for (final Entry<AnnotatedProgramPoint, HashMap<IIcfgReturnTransition<?, ?>, AnnotatedProgramPoint>> hier2 : pre2
-					.getValue().entrySet()) {
-				for (final Entry<IIcfgReturnTransition<?, ?>, AnnotatedProgramPoint> stm2 : hier2.getValue()
-						.entrySet()) {
-					if (isSatRetEdge(pre2.getKey().getPredicate(), hier2.getKey().getPredicate(), stm2.getKey(),
-							stm2.getValue().getPredicate())) {
-						pre2.getKey().connectOutgoingReturn(hier2.getKey(), stm2.getKey(), stm2.getValue());
-					}
-				}
-			}
-		}
-	}
-
 	protected boolean connectOutgoingIfSat(final AnnotatedProgramPoint source, final IIcfgTransition<?> statement,
 			final AnnotatedProgramPoint target) {
 		if (isSatEdge(source.getPredicate(), statement, target.getPredicate())) {
@@ -283,33 +228,14 @@ public class UltimateChecker extends CodeChecker {
 			return false;
 		}
 
-		if (getGlobalSettings().isMemoizeNormalEdgeChecks()) {
-			if (mSatTriples.get(preCondition, statement, postCondition) == IsContained.IsContained) {
-				mMemoizationHitsSat++;
-				return true;
-			}
-			if (mUnsatTriples.get(preCondition, statement, postCondition) == IsContained.IsContained) {
-				mMemoizationHitsUnsat++;
-				return false;
-			}
-		}
-
 		final boolean result;
 		if (statement instanceof IIcfgCallTransition<?>) {
 			// result is true if pre /\ stm /\ post is sat or unknown, false if unsat
 			result = mEdgeChecker.checkCall(preCondition, (ICallAction) statement,
-					negatePredicateNoPU(postCondition)) != Validity.VALID;
+					negatePredicate(postCondition)) != Validity.VALID;
 		} else {
 			result = mEdgeChecker.checkInternal(preCondition, (IInternalAction) statement,
-					negatePredicateNoPU(postCondition)) != Validity.VALID;
-		}
-
-		if (getGlobalSettings().isMemoizeNormalEdgeChecks()) {
-			if (result) {
-				mSatTriples.put(preCondition, statement, postCondition, IsContained.IsContained);
-			} else {
-				mUnsatTriples.put(preCondition, statement, postCondition, IsContained.IsContained);
-			}
+					negatePredicate(postCondition)) != Validity.VALID;
 		}
 
 		return result;
@@ -326,29 +252,8 @@ public class UltimateChecker extends CodeChecker {
 	 */
 	protected boolean isSatRetEdge(final IPredicate preCondition, final IPredicate hier,
 			final IIcfgReturnTransition<?, ?> statement, final IPredicate postCondition) {
-		if (getGlobalSettings().isMemoizeReturnEdgeChecks()) {
-			if (mSatQuadruples.get(preCondition, hier, statement, postCondition) == IsContained.IsContained) {
-				mMemoizationReturnHitsSat++;
-				return true;
-			}
-			if (mUnsatQuadruples.get(preCondition, hier, statement, postCondition) == IsContained.IsContained) {
-				mMemoizationReturnHitsUnsat++;
-				return false;
-			}
-		}
-
-		final boolean result = mEdgeChecker.checkReturn(preCondition, hier, statement,
-				negatePredicateNoPU(postCondition)) != Validity.VALID;
-
-		if (getGlobalSettings().isMemoizeReturnEdgeChecks()) {
-			if (result) {
-				mSatQuadruples.put(preCondition, hier, statement, postCondition, IsContained.IsContained);
-			} else {
-				mUnsatQuadruples.put(preCondition, hier, statement, postCondition, IsContained.IsContained);
-			}
-		}
-
-		return result;
+		return mEdgeChecker.checkReturn(preCondition, hier, statement,
+				negatePredicate(postCondition)) != Validity.VALID;
 	}
 
 }

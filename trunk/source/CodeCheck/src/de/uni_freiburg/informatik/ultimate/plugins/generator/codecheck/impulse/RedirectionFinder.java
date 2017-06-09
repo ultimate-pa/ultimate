@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE CodeCheck plug-in grant you additional permission 
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.plugins.generator.impulse;
+package de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.impulse;
 
 import java.util.ArrayList;
 import java.util.HashSet;

@@ -96,15 +96,15 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.AppHyperEdge;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.ImpRootNode;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.appgraph.RCFG2AnnotatedRCFG;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.emptinesscheck.IEmptinessCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.emptinesscheck.NWAEmptinessCheck;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.impulse.ImpulseChecker;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.kojak.UltimateChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.Checker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.EdgeCheckOptimization;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.PredicateUnification;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.preferences.CodeCheckPreferenceInitializer.RedirectionStrategy;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.IEmptinessCheck;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.emptinesscheck.NWAEmptinessCheck;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.impulse.ImpulseChecker;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.kojak.UltimateChecker;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.cfg.Summary;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.IcfgProgramExecution;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CegarLoopStatisticsDefinitions;
@@ -120,9 +120,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerUtils;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.IsContained;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap3;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.NestedMap4;
 
 /**
  *
@@ -153,12 +150,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 	private CfgSmtToolkit mCsToolkit;
 
 	private GraphWriter mGraphWriter;
-
-	private NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> mSatTriples;
-	private NestedMap3<IPredicate, IIcfgTransition<?>, IPredicate, IsContained> mUnsatTriples;
-	private NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> mSatQuadruples;
-	private NestedMap4<IPredicate, IPredicate, IIcfgTransition<?>, IPredicate, IsContained> mUnsatQuadruples;
-
 	private Collection<IcfgLocation> mErrNodesOfAllProc;
 
 	private boolean mLoopForever = true;
@@ -195,14 +186,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 			mErrNodesOfAllProc.addAll(errNodeOfProc);
 		}
 
-		if (mGlobalSettings.isMemoizeNormalEdgeChecks()) {
-			mSatTriples = new NestedMap3<>();
-			mUnsatTriples = new NestedMap3<>();
-		}
-		if (mGlobalSettings.isMemoizeReturnEdgeChecks()) {
-			mSatQuadruples = new NestedMap4<>();
-			mUnsatQuadruples = new NestedMap4<>();
-		}
 		mGraphWriter = new GraphWriter(mGlobalSettings.getDotGraphPath(), true, true, true);
 
 		// AI Module
@@ -427,7 +410,8 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 				if (mGlobalSettings.getPredicateUnification() == PredicateUnification.PER_ITERATION) {
 					mPredicateUnifier =
 							new PredicateUnifier(mServices, mCsToolkit.getManagedScript(), mPredicateFactory,
-									mCsToolkit.getSymbolTable(), SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE);
+									mCsToolkit.getSymbolTable(), SIMPLIFICATION_TECHNIQUE, XNF_CONVERSION_TECHNIQUE,
+									mPredicateUnifier.getTruePredicate(), mPredicateUnifier.getFalsePredicate());
 				}
 
 				ManagedScript mgdScriptTracechecks;
@@ -488,17 +472,7 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 					} else {
 						interpolants = traceChecker.getInterpolants();
 					}
-
-					if (mGlobalSettings.isMemoizeNormalEdgeChecks() && mGlobalSettings.isMemoizeReturnEdgeChecks()) {
-						mCodeChecker.codeCheck(errorRun, interpolants, procedureRoot, mSatTriples, mUnsatTriples,
-								mSatQuadruples, mUnsatQuadruples);
-					} else if (mGlobalSettings.isMemoizeNormalEdgeChecks()
-							&& !mGlobalSettings.isMemoizeReturnEdgeChecks()) {
-						mCodeChecker.codeCheck(errorRun, interpolants, procedureRoot, mSatTriples, mUnsatTriples);
-					} else {
-						mCodeChecker.codeCheck(errorRun, interpolants, procedureRoot);
-					}
-
+					mCodeChecker.codeCheck(errorRun, interpolants, procedureRoot);
 					benchmarkGenerator.addEdgeCheckerData(mCodeChecker.mEdgeChecker.getEdgeCheckerBenchmark());
 
 				} else if (isSafe == LBool.SAT) { // trace is feasible
@@ -546,11 +520,6 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		} else {
 			reportTimeoutResult(mErrNodesOfAllProc);
 		}
-
-		mLogger.debug("MemoizationHitsSat: " + mCodeChecker.mMemoizationHitsSat);
-		mLogger.debug("MemoizationHitsUnsat: " + mCodeChecker.mMemoizationHitsUnsat);
-		mLogger.debug("MemoizationReturnHitsSat: " + mCodeChecker.mMemoizationReturnHitsSat);
-		mLogger.debug("MemoizationReturnHitsUnsat: " + mCodeChecker.mMemoizationReturnHitsUnsat);
 
 		// benchmark stuff
 		benchmarkGenerator.setResult(overallResult);
@@ -686,26 +655,11 @@ public class CodeCheckObserver implements IUnmanagedObserver {
 		}
 	}
 
-	private static String prettyPrintProgramPoint(final IcfgLocation pp) {
-		final ILocation loc = ILocation.getAnnotation(pp);
-		final int startLine = loc.getStartLine();
-		final int endLine = loc.getEndLine();
-		final StringBuilder sb = new StringBuilder();
-		sb.append(pp);
-		if (startLine == endLine) {
-			sb.append("(line " + startLine + ")");
-		} else {
-			sb.append("(lines " + startLine + " " + endLine + ")");
-		}
-		return sb.toString();
-	}
-
 	private Map<IcfgLocation, Term> computeHoareAnnotation(final AnnotatedProgramPoint pr) {
 		final Map<IcfgLocation, Term> pp2HoareAnnotation = new HashMap<>();
 		final Map<IcfgLocation, Set<AnnotatedProgramPoint>> pp2app = computeProgramPointToAnnotatedProgramPoints(pr);
 
-		final IPredicate falsePred =
-				mPredicateFactory.newPredicate(mCsToolkit.getManagedScript().getScript().term("false"));
+		final IPredicate falsePred = mPredicateUnifier.getFalsePredicate();
 
 		for (final Entry<IcfgLocation, Set<AnnotatedProgramPoint>> kvp : pp2app.entrySet()) {
 			IPredicate annot = falsePred;
