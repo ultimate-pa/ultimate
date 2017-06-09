@@ -203,7 +203,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		if (ADD_SP_PREDICATES) {
 			final TracePredicates spPredicates = getPredicates(services, csToolkit, predicateFactory,
 					simplificationTechnique, xnfConversionTechnique, symbolTable, truePredicate, trace, prePrecondition,
-					truePredicate, PredicateTransformerType.SP);
+					null, PredicateTransformerType.SP);
 			assert (preIntermediatePredicates.size() == spPredicates.getPredicates().size());
 			newIntermediatePredicates = new ArrayList<>(preIntermediatePredicates.size());
 			final Iterator<IPredicate> preIt = preIntermediatePredicates.iterator();

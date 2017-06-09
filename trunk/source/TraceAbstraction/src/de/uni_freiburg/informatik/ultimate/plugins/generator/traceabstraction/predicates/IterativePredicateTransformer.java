@@ -148,8 +148,12 @@ public class IterativePredicateTransformer {
 		final IPredicate[] spSequence = new IPredicate[mTrace.length() - 1];
 		final TracePredicates ipp =
 				new TracePredicates(mPrecondition, mPostcondition, Arrays.asList(spSequence));
+		
+		final boolean computePostcondition = mPostcondition == null;
+		final int positionOfLastPredicate = computePostcondition ? mTrace.length() : mTrace.length() - 1;
 
-		for (int i = 0; i < mTrace.length() - 1; i++) {
+		IPredicate computedPostcondition = null;
+		for (int i = 0; i < positionOfLastPredicate; i++) {
 			final IPredicate predecessor = ipp.getPredicate(i);
 			final Term spTerm;
 			if (mTrace.getSymbol(i) instanceof IIcfgCallTransition<?>) {
@@ -187,7 +191,15 @@ public class IterativePredicateTransformer {
 				spTerm = mPredicateTransformer.strongestPostcondition(predecessor, nf.getFormulaFromNonCallPos(i));
 			}
 			final IPredicate sp = constructPredicate(spTerm);
-			spSequence[i] = applyPostprocessors(postprocs, i + 1, sp);
+			final IPredicate postprocessed = applyPostprocessors(postprocs, i + 1, sp);
+			if (i == mTrace.length() - 1) {
+				computedPostcondition = postprocessed;
+			} else {
+				spSequence[i] = postprocessed;
+			}
+		}
+		if (computePostcondition) {
+			return new TracePredicates(mPrecondition, computedPostcondition, Arrays.asList(spSequence));
 		}
 		return ipp;
 	}
