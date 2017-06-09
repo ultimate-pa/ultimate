@@ -623,8 +623,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final boolean conservativeSuccessorCandidateSelection =
 				enhanceMode == InterpolantAutomatonEnhancement.EAGER_CONSERVATIVE;
 		final boolean secondChance = enhanceMode != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE;
+		final boolean addSelfLoopToTrueState = true;
 		return new NondeterministicInterpolantAutomaton<>(mServices, mCsToolkit, htc, inputInterpolantAutomaton,
-				predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
+				predicateUnifier, conservativeSuccessorCandidateSelection, secondChance, addSelfLoopToTrueState);
 	}
 
 	private DeterministicInterpolantAutomaton<LETTER>

@@ -73,15 +73,20 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 	 * change the language it only determines the amount of nondeterminism.
 	 */
 	protected final boolean mSecondChance;
+	/**
+	 * {@code true} iff 'True' state should get a self-loop with all transitions.
+	 */
+	private final boolean mAddSelfLoopToTrueState;
 
 	public NondeterministicInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker,
 			final INestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
 			final IPredicateUnifier predicateUnifier, final boolean conservativeSuccessorCandidateSelection,
-			final boolean secondChance) {
+			final boolean secondChance, final boolean addSelfLoopToTrueState) {
 		super(services, csToolkit, hoareTripleChecker, true, predicateUnifier, inputInterpolantAutomaton);
 		mConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
 		mSecondChance = secondChance;
+		mAddSelfLoopToTrueState = addSelfLoopToTrueState;
 		final Collection<IPredicate> allPredicates = inputInterpolantAutomaton.getStates();
 
 		assert SmtUtils.isTrue(mIaTrueState.getFormula());
@@ -171,8 +176,8 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 				// special case, call may have mIaTrueState as successor
 				inputSuccs.add(mIaTrueState);
 			}
-			if (resPred == mIaTrueState) {
-				// mIaTrueState will get a selfloop labeled with all statements
+			if (mAddSelfLoopToTrueState && resPred == mIaTrueState) {
+				// mIaTrueState will get a self-loop labeled with all statements
 				inputSuccs.add(mIaTrueState);
 			}
 		}
