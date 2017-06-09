@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctConjunction;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct.OctagonCalculator;
@@ -33,7 +34,7 @@ public class FastUPRFormulaBuilder {
 	private final Script mScript;
 	private final OctagonCalculator mCalculator;
 	private final OctagonTransformer mTransformer;
-	private final RealToIntTransformer mToIntTransformer;
+	private final FastUPRTermTransformer mTermTransformer;
 
 	public FastUPRFormulaBuilder(FastUPRUtils utils, ManagedScript mgdScript, OctagonCalculator calc,
 			OctagonTransformer transformer) {
@@ -42,12 +43,12 @@ public class FastUPRFormulaBuilder {
 		mScript = mgdScript.getScript();
 		mCalculator = calc;
 		mTransformer = transformer;
-		mToIntTransformer = new RealToIntTransformer(mScript);
+		mTermTransformer = new FastUPRTermTransformer(mScript);
 	}
 
 	private UnmodifiableTransFormula buildTransFormula(Term term, Map<IProgramVar, TermVariable> inVars,
 			Map<IProgramVar, TermVariable> outVars, TermVariable parametricVar) {
-		final Term withoutInt = mToIntTransformer.transformToInt(term);
+		final Term withoutInt = mTermTransformer.transformToInt(term);
 		final ModifiableTransFormula modFormula = new ModifiableTransFormula(withoutInt);
 		for (final IProgramVar p : inVars.keySet()) {
 			modFormula.addInVar(p, inVars.get(p));
@@ -64,7 +65,7 @@ public class FastUPRFormulaBuilder {
 
 	public UnmodifiableTransFormula buildTransFormula(Term term, Map<IProgramVar, TermVariable> inVars,
 			Map<IProgramVar, TermVariable> outVars) {
-		final Term withoutInt = mToIntTransformer.transformToInt(term);
+		final Term withoutInt = mTermTransformer.transformToInt(term);
 		final ModifiableTransFormula modFormula = new ModifiableTransFormula(withoutInt);
 		for (final IProgramVar p : inVars.keySet()) {
 			modFormula.addInVar(p, inVars.get(p));
@@ -81,16 +82,16 @@ public class FastUPRFormulaBuilder {
 		return buildTransFormula(conjunction.toTerm(mManagedScript.getScript()), inVars, outVars);
 	}
 
-	public UnmodifiableTransFormula buildConsistencyResult(OctConjunction conjunc, int count,
-			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars) {
+	public Term buildConsistencyResult(OctConjunction conjunc, int count, Map<IProgramVar, TermVariable> inVars,
+			Map<IProgramVar, TermVariable> outVars) {
 
 		mUtils.output("Returning Consistency Result");
 		final ArrayList<Term> orTerms = new ArrayList<>();
 		for (int i = 0; i <= count; i++) {
 			orTerms.add(mCalculator.sequentialize(conjunc, inVars, outVars, i).toTerm(mScript));
 		}
-		final Term orTerm = orTerms.size() > 1 ? mScript.term("or", orTerms.toArray(new Term[0])) : orTerms.get(0);
-		return buildTransFormula(addIdentityRelation(orTerm, inVars, outVars), inVars, outVars);
+		final Term result = orTerms.size() > 1 ? mScript.term("or", orTerms.toArray(new Term[0])) : orTerms.get(0);
+		return result;
 	}
 
 	public Term toExistential(Term term) {
@@ -106,7 +107,7 @@ public class FastUPRFormulaBuilder {
 		return mScript.term("not", existentialTerm);
 	}
 
-	public UnmodifiableTransFormula buildParametricResult(OctConjunction conjunc, int b, ParametricOctMatrix difference,
+	public Term buildParametricResult(OctConjunction conjunc, int b, ParametricOctMatrix difference,
 			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars,
 			List<TermVariable> variables) {
 		// R* := OR(i=0->b-1) (R^i) or EXISTS k>=0. OR(i=0->c-1)
@@ -135,8 +136,7 @@ public class FastUPRFormulaBuilder {
 		final Term result = mScript.term("or", firstOr, secondOrQuantified);
 
 		mUtils.output("Returning Parametric Result");
-		return buildTransFormula(addIdentityRelation(result, inVars, outVars), inVars, outVars,
-				parametricDiff.getParametricVar());
+		return result;
 	}
 
 	private Term getParametricSolutionRightSide(OctConjunction conjunc, int b, int i,
@@ -152,8 +152,8 @@ public class FastUPRFormulaBuilder {
 		return result.toTerm(mScript);
 	}
 
-	public UnmodifiableTransFormula buildPeriodicityResult(OctConjunction conjunc, ParametricOctMatrix difference,
-			int b, int c, int n, Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars,
+	public Term buildPeriodicityResult(OctConjunction conjunc, ParametricOctMatrix difference, int b, int c, int n,
+			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars,
 			List<TermVariable> variables) {
 		// R* := OR(i=0->b-1) (R^i) or OR(k=0->n0-1) OR (i=0->c-1)
 		// rho(k*difference + sigma(R^b)) ○ R^i
@@ -180,7 +180,7 @@ public class FastUPRFormulaBuilder {
 
 		mUtils.output("Returning Periodicity Result");
 
-		return buildTransFormula(addIdentityRelation(result, inVars, outVars), inVars, outVars);
+		return result;
 	}
 
 	private Term getInnerOrTerm(OctConjunction conjunc, int b, int i, int n, ParametricOctMatrix difference,
@@ -196,24 +196,56 @@ public class FastUPRFormulaBuilder {
 		return result.toTerm(mScript);
 	}
 
-	private Term addIdentityRelation(Term t, Map<IProgramVar, TermVariable> inVars,
-			Map<IProgramVar, TermVariable> outVars) {
+	private Term getIdentityRelation(Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars) {
 		final ArrayList<Term> terms = new ArrayList<>();
 		for (final IProgramVar p : inVars.keySet()) {
+			final TermVariable in = inVars.get(p);
+			TermVariable out;
 			if (outVars.containsKey(p)) {
-				terms.add(mScript.term("=", inVars.get(p), outVars.get(p)));
+				out = outVars.get(p);
+			} else {
+				out = mManagedScript.constructFreshTermVariable(in.getName() + "_out", in.getSort());
+				outVars.put(p, out);
+			}
+			terms.add(mScript.term("=", in, out));
+		}
+		for (final IProgramVar p : outVars.keySet()) {
+			if (!inVars.containsKey(p)) {
+				final TermVariable out = outVars.get(p);
+				final TermVariable in = mManagedScript.constructFreshTermVariable(out.getName() + "_in", out.getSort());
+				inVars.put(p, in);
+				terms.add(mScript.term("=", in, out));
 			}
 		}
+		if (terms.isEmpty()) {
+			return mScript.term("true");
+		} else if (terms.size() == 1) {
+			return terms.get(0);
+		}
+		final Term identityTerm = mScript.term("and", terms.toArray(new Term[0]));
+		return identityTerm;
+	}
 
-		Term identity = mScript.term("true");
+	public Term getExitEdgeResult(UnmodifiableTransFormula exitEdgeFormula, Term t,
+			Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars) {
+		final Term identityRelation = getIdentityRelation(inVars, outVars);
+		final Term loop = mScript.term("or", identityRelation, t);
 
-		if (terms.size() == 1) {
-			identity = terms.get(0);
-		} else if (!terms.isEmpty()) {
-			identity = mScript.term("and", terms.toArray(new Term[0]));
+		final Term exitTerm = buldExitRelation(inVars, outVars, exitEdgeFormula);
+
+		return mScript.term("and", loop, exitTerm);
+	}
+
+	private Term buldExitRelation(Map<IProgramVar, TermVariable> inVars, Map<IProgramVar, TermVariable> outVars,
+			UnmodifiableTransFormula exitEdgeFormula) {
+		Term exitTerm = exitEdgeFormula.getFormula();
+
+		for (final Entry<IProgramVar, TermVariable> e : exitEdgeFormula.getInVars().entrySet()) {
+			final TermVariable outVar = outVars.get(e.getKey());
+			exitTerm = mTermTransformer.replaceVar(exitTerm, e.getValue(), outVar);
 		}
 
-		return mScript.term("or", t, identity);
+		return exitTerm;
 	}
 
 }

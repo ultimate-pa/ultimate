@@ -73,13 +73,45 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 	private final IBacktranslationTracker mBacktranslationTracker;
 	private final ILocationFactory<INLOC, OUTLOC> mLocationFactory;
 	private final IUltimateServiceProvider mServices;
-	private final IIcfg<INLOC> mOriginalIcfg;
+	private final FastUPRReplacementMethod mReplacementMethod;
+	private int mLoopFailures;
+	private int mLoops;
 
+	/**
+	 * Calls the FastUPR LoopAcceleration package - the transformed icfg is
+	 * return by the getResult() Method.
+	 *
+	 * @param logger
+	 *            A {@link ILogger} for Debug Logging
+	 * @param originalIcfg
+	 *            The original {@link IIcfg} to be transformed.
+	 * @param outLocationClass
+	 *            The class type of the {@link IIcfg} Output.
+	 * @param locationFactory
+	 *            A location factory
+	 * @param newIcfgIdentifier
+	 *            The Identifier of the new {@link IIcfg}.
+	 * @param transformer
+	 *            The Transformer used to create locations and transitions for
+	 *            the new {@link IIcfg}.
+	 * @param backtranslationTracker
+	 *            A backtranslation tracker
+	 * @param services
+	 *            An {@link IUltimateServiceProvider}
+	 * @param replaceMethod
+	 *            {@link FastUPRReplacementMethod} to use: REPLACE_LOOP_EDGE
+	 *            replaces the loop edge with an accelerated edge (in place),
+	 *            REPLACE_EXIT_EDGE merges the loop edge with the exit edge.
+	 */
 	public FastUPRTransformer(final ILogger logger, final IIcfg<INLOC> originalIcfg,
 			final Class<OUTLOC> outLocationClass, final ILocationFactory<INLOC, OUTLOC> locationFactory,
 			String newIcfgIdentifier, ITransformulaTransformer transformer,
-			final IBacktranslationTracker backtranslationTracker, IUltimateServiceProvider services) {
+			final IBacktranslationTracker backtranslationTracker, IUltimateServiceProvider services,
+			FastUPRReplacementMethod replaceMethod) {
+		mLoopFailures = 0;
+		mLoops = 0;
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
+		mReplacementMethod = replaceMethod;
 		mLogger = Objects.requireNonNull(logger);
 		mLocationFactory = Objects.requireNonNull(locationFactory);
 		mManagedScript = origIcfg.getCfgSmtToolkit().getManagedScript();
@@ -87,9 +119,22 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 		mServices = services;
 		// perform transformation last
 		mLogger.debug("Starting fastUPR Transformation");
-		mOriginalIcfg = origIcfg;
 		mResultIcfg = transform(origIcfg, Objects.requireNonNull(newIcfgIdentifier),
 				Objects.requireNonNull(outLocationClass), transformer);
+		reportResults();
+	}
+
+	private void reportResults() {
+		// final ICsvProviderProvider provider = new ;
+		// final String successLoopShort = (mLoops - mLoopFailures) + "/" +
+		// mLoops + " accelerated.";
+		// final String successLoopLong = "FastUPR accelerated " + (mLoops -
+		// mLoopFailures) + " out of " + mLoops
+		// + " total loops found.";
+		// final GenericResult successLoops = new GenericResult("fastUPR",
+		// successLoopShort, successLoopLong,
+		// Severity.INFO);
+		// mServices.getResultService().reportResult("fastUPR", successLoops);
 	}
 
 	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> originalIcfg, final String newIcfgIdentifier,
@@ -99,13 +144,13 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 
 		final FastUPRDetection<INLOC, OUTLOC> loopDetection = new FastUPRDetection<>(mLogger, originalIcfg,
 				outLocationClass, newIcfgIdentifier);
-		// final List<Deque<INLOC>> loopPaths = loopDetection.getLoopPaths();
 		final List<Deque<IcfgEdge>> loopEdgePaths = loopDetection.getLoopEdgePaths();
 
 		if (loopEdgePaths.isEmpty()) {
 			mLogger.debug("No loop paths found");
 		} else {
 			mLogger.debug("Found " + loopEdgePaths.size() + " loop paths");
+			mLoops = loopEdgePaths.size();
 		}
 
 		final BasicIcfg<OUTLOC> resultIcfg = new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(),
@@ -114,7 +159,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(mLocationFactory,
 				mBacktranslationTracker, transformer, originalIcfg, resultIcfg);
 
-		mLogger.debug("Transforming loop into icfg...");
+		mLogger.debug("Transforming loops into icfg...");
 
 		getLoopIcfg(loopEdgePaths, resultIcfg, originalIcfg, lst);
 
@@ -127,7 +172,6 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 			final IIcfg<INLOC> origIcfg, final TransformedIcfgBuilder<INLOC, OUTLOC> lst) {
 
 		final Map<IcfgEdge, UnmodifiableTransFormula> loopMapping = new HashMap<>();
-		int i = 0;
 
 		for (final Deque<IcfgEdge> path : loopEdgePaths) {
 
@@ -154,32 +198,39 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 						mManagedScript, true, false, false, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION,
 						SimplificationTechnique.SIMPLIFY_DDA, formulas);
 				final FastUPRCore fastUpr = new FastUPRCore(formula, mManagedScript, mLogger, mServices);
-				resultFormula = fastUpr.getResult();
-				mLogger.debug("Result Formula:" + resultFormula.toString());
 
-				if (loopEdge != null) {
-					loopMapping.put(loopEdge, resultFormula);
-					final String formulaString = resultFormula.getFormula().toStringDirect();
-					mLogger.debug("resultFormula: " + formulaString);
-				} else {
+				if (mReplacementMethod == FastUPRReplacementMethod.REPLACE_LOOP_EDGE) {
+					resultFormula = fastUpr.getResult();
+				} else if (mReplacementMethod == FastUPRReplacementMethod.REPLACE_EXIT_EDGE) {
+					resultFormula = fastUpr.getExitEdgeResult(getExitEdgeFormula(loopEdge));
+				}
+
+				if (resultFormula == null) {
 					throw new IllegalArgumentException("FastUPR couldn't compute a loop acceleration.");
 				}
+
+				mLogger.debug("Result Formula:" + resultFormula.toString());
 
 			} catch (final Exception e) {
 				mLogger.error("", e);
 				loopEdge = null;
-				i++;
+				mLoopFailures++;
+
 				// TODO: ADD SETTING TO throw exception or whatever when FastUPR
 				// couldn't handle the loop.
 
-				// throw new IllegalArgumentException("FastUPR can't handle the
-				// loop given.");
+				throw new IllegalArgumentException("FastUPR can't handle the loop given.");
 			}
 
+			if (loopEdge != null) {
+				loopMapping.put(loopEdge, resultFormula);
+				final String formulaString = resultFormula.getFormula().toStringDirect();
+				mLogger.debug("resultFormula: " + formulaString);
+			}
 		}
 
 		mLogger.debug("FastUPR found a total of " + loopEdgePaths.size()
-				+ " loops and computed accelerated formulas for " + (loopEdgePaths.size() - i) + " loops.");
+				+ " loops and computed accelerated formulas for " + (mLoops - mLoopFailures) + " loops.");
 
 		final Set<INLOC> init = origIcfg.getInitialNodes();
 		final Deque<INLOC> open = new ArrayDeque<>(init);
@@ -197,10 +248,30 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 			final OUTLOC newSource = lst.createNewLocation(oldSource);
 			resultIcfg.addOrdinaryLocation(newSource); // Needed?
 
-			createNewLocations(oldSource, newSource, closed, resultIcfg, lst, loopMapping);
-			// createNewLocationsSplit(oldSource, newSource, closed, resultIcfg,
-			// lst, loopMapping);
+			if (mReplacementMethod.equals(FastUPRReplacementMethod.REPLACE_LOOP_EDGE)) {
+				createNewLocations(oldSource, newSource, closed, resultIcfg, lst, loopMapping);
+			} else if (mReplacementMethod.equals(FastUPRReplacementMethod.REPLACE_EXIT_EDGE)) {
+				createNewLocationsWithReplaceExit(oldSource, newSource, closed, resultIcfg, lst, loopMapping);
+			}
 		}
+	}
+
+	private static IcfgEdge getExitEdge(IcfgEdge loopEdge) {
+		final IcfgLocation loc = loopEdge.getSource();
+		if (loc.getOutgoingEdges().size() != 2) {
+			throw new IllegalArgumentException(
+					"Exit Edge Merging can only be done, if the loop head has two outgoing edges.");
+		}
+		for (final IcfgEdge e : loc.getOutgoingEdges()) {
+			if (!e.equals(loopEdge)) {
+				return e;
+			}
+		}
+		throw new IllegalArgumentException("Loop Edge exists twice.");
+	}
+
+	private UnmodifiableTransFormula getExitEdgeFormula(IcfgEdge loopEdge) {
+		return getExitEdge(loopEdge).getTransformula();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -235,61 +306,53 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 	}
 
 	@SuppressWarnings("unchecked")
-	private void createNewLocationsSplit(final INLOC oldSource, OUTLOC newSource, final Set<INLOC> closed,
-			final BasicIcfg<OUTLOC> result, final TransformedIcfgBuilder<INLOC, OUTLOC> lst,
+	private void createNewLocationsWithReplaceExit(final INLOC oldSource, final OUTLOC newSource,
+			final Set<INLOC> closed, final BasicIcfg<OUTLOC> result, final TransformedIcfgBuilder<INLOC, OUTLOC> lst,
 			Map<IcfgEdge, UnmodifiableTransFormula> loopMapping) {
 
-		OUTLOC source = newSource;
+		result.addOrdinaryLocation(newSource);
 
-		for (final IcfgEdge oldEdge : oldSource.getOutgoingEdges()) {
-			if (loopMapping.containsKey(oldEdge)) {
-				final OUTLOC loopExit = createFreshLocation(oldSource, result);
-
-				final IcfgEdge newTrans = lst.createNewInternalTransition(newSource, loopExit, loopMapping.get(oldEdge),
+		for (final IcfgEdge e : loopMapping.keySet()) {
+			if (e.getSource().equals(oldSource)) {
+				// IS A LOOP HEAD
+				final IcfgEdge exit = getExitEdge(e);
+				final INLOC oldTarget = (INLOC) exit.getTarget();
+				final OUTLOC newTarget = lst.createNewLocation(oldTarget);
+				final IcfgEdge newTrans = lst.createNewInternalTransition(newSource, newTarget, loopMapping.get(e),
 						false);
 				newSource.addOutgoing(newTrans);
-				loopExit.addIncoming(newTrans);
-				source = loopExit;
-				continue;
+				newTarget.addIncoming(newTrans);
+				if (!closed.add(oldTarget)) {
+					return;
+				} else {
+					createNewLocationsWithReplaceExit(oldTarget, newTarget, closed, result, lst, loopMapping);
+					return;
+				}
 			}
 		}
 
 		for (final IcfgEdge oldEdge : oldSource.getOutgoingEdges()) {
 			if (loopMapping.containsKey(oldEdge)) {
+				final IcfgEdge newTrans = lst.createNewInternalTransition(newSource, newSource,
+						loopMapping.get(oldEdge), false);
+				newSource.addOutgoing(newTrans);
+				newSource.addIncoming(newTrans);
 				continue;
 			}
 			final INLOC oldTarget = (INLOC) oldEdge.getTarget();
 			final OUTLOC newTarget = lst.createNewLocation(oldTarget);
-			final IcfgEdge newEdge = lst.createNewTransition(source, newTarget, oldEdge);
-			source.addOutgoing(newEdge);
+			final IcfgEdge newEdge = lst.createNewTransition(newSource, newTarget, oldEdge);
+			newSource.addOutgoing(newEdge);
 			newTarget.addIncoming(newEdge);
 
 			if (!closed.add(oldTarget)) {
 				return;
 			}
 
-			createNewLocationsSplit(oldTarget, newTarget, closed, result, lst, loopMapping);
+			createNewLocationsWithReplaceExit(oldTarget, newTarget, closed, result, lst, loopMapping);
 
 		}
-	}
 
-	private OUTLOC createFreshLocation(INLOC oldLoc, BasicIcfg<OUTLOC> resultIcfg) {
-
-		final String proc = oldLoc.getProcedure();
-		final OUTLOC freshLoc = mLocationFactory.createLocation(oldLoc, oldLoc.getDebugIdentifier(), proc);
-
-		// determine attributes of location
-		final boolean isInitial = false;
-		final Set<INLOC> errorLocs = mOriginalIcfg.getProcedureErrorNodes().get(proc);
-		final boolean isError = errorLocs != null && errorLocs.contains(oldLoc);
-		final boolean isProcEntry = false;
-		final boolean isProcExit = false;
-		final boolean isLoopLocation = false;
-
-		// add fresh location to resultIcfg
-		resultIcfg.addLocation(freshLoc, isInitial, isError, isProcEntry, isProcExit, isLoopLocation);
-
-		return freshLoc;
 	}
 
 	@Override
@@ -297,4 +360,25 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 		return mResultIcfg;
 	}
 	// add fresh location to resultIcfg
+
+	public int getSuccessfulAccelerations() {
+		return mLoops - mLoopFailures;
+	}
+
+	public int getTotalLoopsFound() {
+		return mLoops;
+	}
+
+	/**
+	 * REPLACE_LOOP_EDGE replaces the loop edge in place (might be slow),
+	 * REPLACE_EXIT_EDGE replaces the exit edge with a merge of the loop edge
+	 * and the exit edge (unknown behavior for already transformed Icfg - e.g.
+	 * if the exit edge was already merged with other edges)
+	 *
+	 * @author Jill Enke (enkei@informatik.uni-freiburg.de)
+	 *
+	 */
+	public enum FastUPRReplacementMethod {
+		REPLACE_LOOP_EDGE, REPLACE_EXIT_EDGE,
+	}
 }

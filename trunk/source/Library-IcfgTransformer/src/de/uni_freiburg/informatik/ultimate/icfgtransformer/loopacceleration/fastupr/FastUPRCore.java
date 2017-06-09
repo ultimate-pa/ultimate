@@ -65,6 +65,7 @@ public class FastUPRCore {
 	private final Term mRelation;
 	private final UnmodifiableTransFormula mFormula;
 	private UnmodifiableTransFormula mResult;
+	private Term mResultTerm;
 	private final FastUPRUtils mUtils;
 
 	private final ManagedScript mManagedScript;
@@ -139,7 +140,7 @@ public class FastUPRCore {
 
 			prefixLoop();
 		} else {
-			mResult = null;
+			mResultTerm = null;
 		}
 
 	}
@@ -161,7 +162,7 @@ public class FastUPRCore {
 			final int k = mTermChecker.checkConsistency(b, c);
 			if (k >= 0) {
 				mUtils.output(">> NOT CONSISTENT FOR 2 ITERATIONS: RETURNING COMPOSITION RESULT");
-				mResult = mFormulaBuilder.buildConsistencyResult(mConjunc, k * c + b - 1, mInVars, mOutVars);
+				mResultTerm = mFormulaBuilder.buildConsistencyResult(mConjunc, k * c + b - 1, mInVars, mOutVars);
 				return true;
 			}
 			mUtils.output(">> CONSISTENT: CHECKING FOR PERIODICITY");
@@ -174,7 +175,8 @@ public class FastUPRCore {
 			final boolean forAll = checkForAll(difference, b, c);
 			if (forAll) {
 				mUtils.output("ForAll Successful.");
-				mResult = paramatericSolution(b, difference);
+				mResultTerm = mFormulaBuilder.buildParametricResult(mConjunc, b, difference, mInVars, mOutVars,
+						mVariables);
 				return true;
 			}
 			mUtils.output("ForAll Unsuccessful. Periodicity until Inconsistency.");
@@ -222,12 +224,9 @@ public class FastUPRCore {
 
 		}
 
-		mResult = periodicityResult(difference, b, c, n);
+		mResultTerm = mFormulaBuilder.buildPeriodicityResult(mConjunc, difference, b, c, n, mInVars, mOutVars,
+				mVariables);
 		return true;
-	}
-
-	private UnmodifiableTransFormula periodicityResult(ParametricOctMatrix difference, int b, int c, int n) {
-		return mFormulaBuilder.buildPeriodicityResult(mConjunc, difference, b, c, n, mInVars, mOutVars, mVariables);
 	}
 
 	private boolean checkPeriodicity(ParametricOctMatrix difference, int b, int c) {
@@ -248,10 +247,6 @@ public class FastUPRCore {
 				script.term("and", script.term(">=", differenceN.getParametricVar(), script.decimal(BigDecimal.ZERO)),
 						interval.toTerm(script)));
 		return mTermChecker.checkQuantifiedTerm(quantified);
-	}
-
-	private UnmodifiableTransFormula paramatericSolution(int b, ParametricOctMatrix difference) {
-		return mFormulaBuilder.buildParametricResult(mConjunc, b, difference, mInVars, mOutVars, mVariables);
 	}
 
 	private ParametricOctMatrix periodCheck(final int b, final int c) {
@@ -431,10 +426,15 @@ public class FastUPRCore {
 	}
 
 	public UnmodifiableTransFormula getResult() {
-		if (mResult == null) {
+		if (mResultTerm == null) {
 			throw new UnsupportedOperationException("No Result found.");
 		}
-		return mResult;
+		return mFormulaBuilder.buildTransFormula(mResultTerm, mInVars, mOutVars);
+	}
+
+	public UnmodifiableTransFormula getExitEdgeResult(UnmodifiableTransFormula exitEdgeFormula) {
+		mResultTerm = mFormulaBuilder.getExitEdgeResult(exitEdgeFormula, mResultTerm, mInVars, mOutVars);
+		return getResult();
 	}
 
 }

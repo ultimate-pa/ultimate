@@ -59,7 +59,7 @@ public class TermChecker {
 	private final FastUPRFormulaBuilder mFormulaBuilder;
 	private final Script mScript;
 	private final IUltimateServiceProvider mServices;
-	private final RealToIntTransformer mRealToIntTransformer;
+	private final FastUPRTermTransformer mRealToIntTransformer;
 
 	/**
 	 *
@@ -77,7 +77,7 @@ public class TermChecker {
 		mManagedScript = managedScript;
 		mUtils = utils;
 		mScript = mManagedScript.getScript();
-		mRealToIntTransformer = new RealToIntTransformer(mScript);
+		mRealToIntTransformer = new FastUPRTermTransformer(mScript);
 	}
 
 	public void setConjunction(OctConjunction conjunc) {

@@ -68,7 +68,7 @@ public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLoc
 		mLogger = Objects.requireNonNull(logger);
 		mOldLoc2NewLoc = new HashMap<>();
 		mOldCalls2NewCalls = new HashMap<>();
-		mLoopHeads = getLoopHeads(originalIcfg);
+		mLoopHeads = getLoopHeads(origIcfg);
 	}
 
 	public List<Deque<IcfgEdge>> getLoopEdgePaths() {

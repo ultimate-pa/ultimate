@@ -14,12 +14,12 @@ import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
-public class RealToIntTransformer extends NonRecursive {
+public class FastUPRTermTransformer extends NonRecursive {
 
 	Term mCurrentTerm;
 	private final Script mScript;
 
-	public RealToIntTransformer(Script script) {
+	public FastUPRTermTransformer(Script script) {
 		mScript = script;
 	}
 
@@ -33,7 +33,7 @@ public class RealToIntTransformer extends NonRecursive {
 
 		@Override
 		public void walk(NonRecursive engine) {
-			((RealToIntTransformer) engine).realToIntWalk(mTerm);
+			((FastUPRTermTransformer) engine).realToIntWalk(mTerm);
 		}
 
 	}
@@ -138,6 +138,45 @@ public class RealToIntTransformer extends NonRecursive {
 
 		} else if (term instanceof TermVariable) {
 			mCurrentTerm = term;
+		}
+		return mCurrentTerm;
+	}
+
+	public Term replaceVar(Term term, TermVariable inVar, TermVariable outVar) {
+		if (term instanceof ConstantTerm) {
+			mCurrentTerm = term;
+		} else if (term instanceof ApplicationTerm) {
+			final ApplicationTerm appTerm = (ApplicationTerm) term;
+			final Term[] subTerms = new Term[appTerm.getParameters().length];
+			for (int i = 0; i < appTerm.getParameters().length; i++) {
+				subTerms[i] = replaceVar(appTerm.getParameters()[i], inVar, outVar);
+			}
+			mCurrentTerm = mScript.term(appTerm.getFunction().getName(), subTerms);
+		} else if (term instanceof LetTerm) {
+			final LetTerm letTerm = (LetTerm) term;
+			final Term[] subTerms = new Term[letTerm.getValues().length];
+			for (int i = 0; i < letTerm.getValues().length; i++) {
+				subTerms[i] = replaceVar(letTerm.getValues()[i], inVar, outVar);
+			}
+			final Term body = transformToInt(letTerm.getSubTerm());
+			mCurrentTerm = mScript.let(letTerm.getVariables(), subTerms, body);
+
+		} else if (term instanceof QuantifiedFormula) {
+			final QuantifiedFormula formula = (QuantifiedFormula) term;
+			final Term body = replaceVar(formula.getSubformula(), inVar, outVar);
+			mCurrentTerm = mScript.quantifier(formula.getQuantifier(), formula.getVariables(), body);
+
+		} else if (term instanceof AnnotatedTerm) {
+			final AnnotatedTerm annTerm = (AnnotatedTerm) term;
+			final Term body = replaceVar(annTerm.getSubterm(), inVar, outVar);
+			mCurrentTerm = mScript.annotate(body, annTerm.getAnnotations());
+
+		} else if (term instanceof TermVariable) {
+			if (term.equals(inVar)) {
+				mCurrentTerm = outVar;
+			} else {
+				mCurrentTerm = term;
+			}
 		}
 		return mCurrentTerm;
 	}
