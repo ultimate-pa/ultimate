@@ -73,6 +73,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.si
  * 'True'/'False' and constructing the {@link NondeterministicInterpolantAutomaton}.
  * <p>
  * TODO 2017-06-05 Christian: Should we apply simplifications?
+ * <p>
+ * TODO 2017-06-09 Christian: The successor 'True' (and 'False', but this does not matter) is never checked by the
+ * {@link NondeterministicInterpolantAutomaton}. Is this a problem?
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
