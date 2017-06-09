@@ -423,7 +423,7 @@ public class BoogieOutput {
 			appendExpression(sb, quant.getSubformula(), 0);
 			sb.append(")");
 		} else {
-			throw new IllegalArgumentException(expr.toString());
+			sb.append(expr.toString());
 		}
 	}
 

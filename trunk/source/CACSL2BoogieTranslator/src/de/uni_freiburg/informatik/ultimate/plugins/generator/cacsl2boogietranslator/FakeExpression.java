@@ -56,16 +56,14 @@ public class FakeExpression implements IASTExpression {
 	private final CType mCType;
 	private final IASTNode mBackingNode;
 
-	public FakeExpression(final String name) {
-		mName = name;
-		mBackingNode = null;
-		mCType = null;
-	}
-
 	public FakeExpression(final IASTNode actualNode, final String name, final CType cType) {
 		mBackingNode = actualNode;
 		mName = name;
 		mCType = cType;
+	}
+
+	public FakeExpression(final String name) {
+		this(null, name, null);
 	}
 
 	@Override
