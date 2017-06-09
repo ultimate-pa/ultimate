@@ -295,6 +295,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		private final MonolithicImplicationChecker mMic;
 		private final PredicateTransformer<Term, IPredicate, TransFormula> mPt;
 		private final PredicateFactory mPf;
+		// TODO 2017-06-09 Christian: Use the unifier here or not?
 		private final IPredicateUnifier mPu;
 		private final CfgSmtToolkit mCsToolkit;
 
@@ -312,20 +313,23 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		@Override
 		public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
 			final IPredicate preFormula = mPf.not(mPf.newPredicate(getWpInternal(act, succ)));
-			return checkImplication(pre, preFormula);
+			final Validity result = checkImplication(pre, preFormula);
+			return result;
 		}
 
 		@Override
 		public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
 			final IPredicate preFormula = mPf.not(mPf.newPredicate(getWpCall(act, succ)));
-			return checkImplication(pre, preFormula);
+			final Validity result = checkImplication(pre, preFormula);
+			return result;
 		}
 
 		@Override
 		public Validity checkReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act,
 				final IPredicate succ) {
 			final IPredicate preFormula = mPf.not(mPf.newPredicate(getWpReturn(preHier, act, succ)));
-			return checkImplication(preLin, preFormula);
+			final Validity result = checkImplication(preLin, preFormula);
+			return result;
 		}
 
 		@Override
@@ -358,6 +362,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 					oldVarAssignments, modifiableGlobals);
 		}
 
+		// TODO 2017-06-09 Christian: Do we need to change preHier to 'true'? See USE_TRUE_AS_CALL_PREDECESSOR_FOR_WP.
 		private Term getWpReturn(final IPredicate preHier, final IReturnAction act, final IPredicate succ) {
 			final TransFormula returnTf = act.getAssignmentOfReturn();
 			final TransFormula callTf = act.getLocalVarsAssignmentOfCall();
