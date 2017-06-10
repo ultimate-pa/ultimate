@@ -47,7 +47,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	private final Benchmark mBenchmark;
 	private boolean mRunning = false;
 	private int mTraceLength = -1;
-	private final List<AutomatonStatisticsList> mAutomatonStatistics = new LinkedList<>();
+	private final List<AutomatonStatisticsEntry> mAutomatonStatistics = new LinkedList<>();
 
 	public ErrorAutomatonStatisticsGenerator() {
 		mBenchmark = new Benchmark();
@@ -79,7 +79,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 				(long) mBenchmark.getElapsedTime(ERROR_AUTOMATON_CONSTRUCTION_TIME, TimeUnit.NANOSECONDS);
 		final int traceLength = mTraceLength;
 		mTraceLength = -1;
-		mAutomatonStatistics.add(new AutomatonStatisticsList(constructionTime, traceLength));
+		mAutomatonStatistics.add(new AutomatonStatisticsEntry(constructionTime, traceLength));
 	}
 
 	@Override
@@ -103,20 +103,28 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		}
 	}
 
-	private Object getAverageTraceLength() {
+	private Integer getAverageTraceLength() {
+		final int total = mAutomatonStatistics.size();
+		if (total == 0) {
+			return Integer.valueOf(0);
+		}
 		int result = 0;
-		for (final AutomatonStatisticsList stats : mAutomatonStatistics) {
+		for (final AutomatonStatisticsEntry stats : mAutomatonStatistics) {
 			result += stats.mTraceLength;
 		}
-		return result / mAutomatonStatistics.size();
+		return result / total;
 	}
 
-	private Object getAverageErrorAutomatonConstructionTime() {
+	private Long getAverageErrorAutomatonConstructionTime() {
+		final int total = mAutomatonStatistics.size();
+		if (total == 0) {
+			return Long.valueOf(0);
+		}
 		long time = 0L;
-		for (final AutomatonStatisticsList stats : mAutomatonStatistics) {
+		for (final AutomatonStatisticsEntry stats : mAutomatonStatistics) {
 			time += stats.mConstructionTime;
 		}
-		return time / mAutomatonStatistics.size();
+		return time / total;
 	}
 
 	@Override
@@ -129,11 +137,11 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
-	private static class AutomatonStatisticsList {
+	private static class AutomatonStatisticsEntry {
 		public final long mConstructionTime;
 		public final int mTraceLength;
 
-		public AutomatonStatisticsList(final long constructionTime, final int traceLength) {
+		public AutomatonStatisticsEntry(final long constructionTime, final int traceLength) {
 			mConstructionTime = constructionTime;
 			mTraceLength = traceLength;
 		}
