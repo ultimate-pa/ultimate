@@ -59,8 +59,10 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceS
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
+import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
@@ -104,6 +106,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tr
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.interactive.InteractiveRefinementStrategyFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.witnesschecking.WitnessProductAutomaton;
 import de.uni_freiburg.informatik.ultimate.util.HistogramOfIterable;
+import de.uni_freiburg.informatik.ultimate.util.statistics.StatisticsData;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessEdge;
 import de.uni_freiburg.informatik.ultimate.witnessparser.graph.WitnessNode;
 
@@ -153,6 +156,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	
 	private ErrorAutomatonBuilder<LETTER> mErrorAutomatonBuilder;
 	private final ErrorTraceContainer<LETTER> mErrorTraces = new ErrorTraceContainer<>();
+	private final ErrorAutomatonStatisticsGenerator mErrorAutomatonStatisticsGenerator;
 
 	public BasicCegarLoop(final String name, final IIcfg<?> rootNode, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final TAPreferences taPrefs,
@@ -185,6 +189,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		} else {
 			mHoareAnnotationLocations = Collections.emptySet();
 		}
+		mErrorAutomatonStatisticsGenerator = new ErrorAutomatonStatisticsGenerator();
 		mHaf = new HoareAnnotationFragments<>(mLogger, mHoareAnnotationLocations, mPref.getHoareAnnotationPositions());
 		mStateFactoryForRefinement = new PredicateFactoryRefinement(mServices, super.mCsToolkit.getManagedScript(),
 				predicateFactory, mPref.computeHoareAnnotation(), mHoareAnnotationLocations);
@@ -401,17 +406,39 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Constructing error automaton for trace of length " + trace.length());
 		}
-		mErrorAutomatonBuilder = new ErrorAutomatonBuilder<>(
-				mServices, mPredicateFactory, mTraceCheckAndRefinementEngine.getPredicateUnifier(), mCsToolkit,
-				mSimplificationTechnique, mXnfConversionTechnique, mIcfgContainer.getCfgSmtToolkit().getSymbolTable(),
-				mPredicateFactoryInterpolantAutomata, new VpAlphabet<>(mAbstraction), trace,
-				getErrorAutomatonEnhancementMode());
+
+		mErrorAutomatonStatisticsGenerator.reportTraceLength(trace.length());
+		mErrorAutomatonStatisticsGenerator.startErrorAutomatonConstructionTime();
+		
+		try {
+			mErrorAutomatonBuilder = new ErrorAutomatonBuilder<>(
+					mServices, mPredicateFactory, mTraceCheckAndRefinementEngine.getPredicateUnifier(), mCsToolkit,
+					mSimplificationTechnique, mXnfConversionTechnique,
+					mIcfgContainer.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata,
+					new VpAlphabet<>(mAbstraction), trace, getErrorAutomatonEnhancementMode());
+		} catch (final ToolchainCanceledException tce) {
+			mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
+			mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
+			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
+					"constructing error automaton for trace of length " + trace.length());
+			throw new ToolchainCanceledException(tce, rti);
+		}
 		mInterpolAutomaton = null;
+		mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
+		mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
+		
 		// TODO 2017-06-02 Christian: This does not hold in general. Is this a problem?
 		// assert isInterpolantAutomatonOfSingleStateType(mErrorAutomatonBuilder.getResultBeforeEnhancement());
-		// assert isInterpolantAutomatonOfSingleStateType(mErrorAutomatonBuilder.getResultAfterEnhancement());
 		// assert accepts(mServices, mErrorAutomatonBuilder.getResultBeforeEnhancement(), mCounterexample.getWord()) :
 		// 	"Error automaton broken!";
+	}
+
+	@Override
+	protected void reportErrorAutomatonBenchmarks() {
+		final StatisticsData stat = new StatisticsData();
+		stat.aggregateBenchmarkData(mErrorAutomatonStatisticsGenerator);
+		final IResult benchmarkResult = new BenchmarkResult<>(Activator.PLUGIN_NAME, "ErrorAutomatonStatistics", stat);
+		mServices.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);
 	}
 
 	private InterpolantAutomatonEnhancement getErrorAutomatonEnhancementMode() {

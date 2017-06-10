@@ -252,6 +252,11 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 * </ul>
 	 */
 	protected abstract void constructErrorAutomaton() throws AutomataOperationCanceledException;
+	
+	/**
+	 * Reports statistics for error automaton construction.
+	 */
+	protected abstract void reportErrorAutomatonBenchmarks();
 
 	/**
 	 * Construct a new automaton mAbstraction such that
@@ -471,6 +476,11 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 
 	private Result reportResult(final Result result) {
 		mCegarLoopBenchmark.setResult(result);
+		
+		if (CONTINUE_AFTER_ERROR_TRACE_FOUND) {
+			reportErrorAutomatonBenchmarks();
+		}
+		
 		return result;
 	}
 

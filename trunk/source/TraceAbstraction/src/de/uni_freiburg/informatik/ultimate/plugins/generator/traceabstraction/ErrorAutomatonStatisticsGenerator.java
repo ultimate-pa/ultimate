@@ -1,0 +1,141 @@
+/*
+ * Copyright (C) 2017 Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 Christian Schilling (schillic@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 University of Freiburg
+ * 
+ * This file is part of the ULTIMATE ModelCheckerUtils Library.
+ * 
+ * The ULTIMATE ModelCheckerUtils Library is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * The ULTIMATE ModelCheckerUtils Library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE ModelCheckerUtils Library. If not, see <http://www.gnu.org/licenses/>.
+ * 
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE ModelCheckerUtils Library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE ModelCheckerUtils Library grant you additional permission
+ * to convey the resulting work.
+ */
+package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
+
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
+import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
+
+/**
+ * Statistics provider for error automaton construction.
+ * 
+ * @author Matthias Heizmann (heizmann@informatik.uni-freiburg.de)
+ * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+ */
+public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvider {
+	private static final String ERROR_AUTOMATON_CONSTRUCTION_TIME = "ErrorAutomatonConstructionTime";
+	private final Benchmark mBenchmark;
+	private boolean mRunning = false;
+	private int mTraceLength = -1;
+	private final List<AutomatonStatisticsList> mAutomatonStatistics = new LinkedList<>();
+
+	public ErrorAutomatonStatisticsGenerator() {
+		mBenchmark = new Benchmark();
+		mBenchmark.register(ERROR_AUTOMATON_CONSTRUCTION_TIME);
+	}
+
+	public void startErrorAutomatonConstructionTime() {
+		assert !mRunning : "Timing already running";
+		mRunning = true;
+		mBenchmark.start(ERROR_AUTOMATON_CONSTRUCTION_TIME);
+	}
+
+	public void stopErrorAutomatonConstructionTime() {
+		assert mRunning : "Timing not running";
+		mRunning = false;
+		mBenchmark.pause(ERROR_AUTOMATON_CONSTRUCTION_TIME);
+	}
+
+	public void reportTraceLength(final int length) {
+		assert mTraceLength == -1 : "Length already reported";
+		mTraceLength = length;
+	}
+
+	public void finishAutomatonInstance() {
+		if (mRunning || mTraceLength == -1) {
+			throw new IllegalAccessError("Not all statistics data were provided.");
+		}
+		final long constructionTime =
+				(long) mBenchmark.getElapsedTime(ERROR_AUTOMATON_CONSTRUCTION_TIME, TimeUnit.NANOSECONDS);
+		final int traceLength = mTraceLength;
+		mTraceLength = -1;
+		mAutomatonStatistics.add(new AutomatonStatisticsList(constructionTime, traceLength));
+	}
+
+	@Override
+	public Collection<String> getKeys() {
+		return ErrorAutomatonStatisticsType.getInstance().getKeys();
+	}
+
+	@Override
+	public Object getValue(final String key) {
+		final ErrorAutomatonStatisticsDefinitions keyEnum =
+				Enum.valueOf(ErrorAutomatonStatisticsDefinitions.class, key);
+		switch (keyEnum) {
+			case TotalNumber:
+				return mAutomatonStatistics.size();
+			case TraceLengthAvg:
+				return getAverageTraceLength();
+			case ErrorAutomatonConstructionTimeAvg:
+				return getAverageErrorAutomatonConstructionTime();
+			default:
+				throw new AssertionError("Unknown key: " + key);
+		}
+	}
+
+	private Object getAverageTraceLength() {
+		int result = 0;
+		for (final AutomatonStatisticsList stats : mAutomatonStatistics) {
+			result += stats.mTraceLength;
+		}
+		return result / mAutomatonStatistics.size();
+	}
+
+	private Object getAverageErrorAutomatonConstructionTime() {
+		long time = 0L;
+		for (final AutomatonStatisticsList stats : mAutomatonStatistics) {
+			time += stats.mConstructionTime;
+		}
+		return time / mAutomatonStatistics.size();
+	}
+
+	@Override
+	public IStatisticsType getBenchmarkType() {
+		return ErrorAutomatonStatisticsType.getInstance();
+	}
+
+	/**
+	 * Statistics per error automaton construction.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	private static class AutomatonStatisticsList {
+		public final long mConstructionTime;
+		public final int mTraceLength;
+
+		public AutomatonStatisticsList(final long constructionTime, final int traceLength) {
+			mConstructionTime = constructionTime;
+			mTraceLength = traceLength;
+		}
+	}
+}
