@@ -34,8 +34,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 /**
  * {@link IResultService} allows tools to report results.
  * 
- * @author dietsch@informatik.uni-freiburg.de
- *
+ * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  */
 public interface IResultService {
 
@@ -45,10 +44,9 @@ public interface IResultService {
 	Map<String, List<IResult>> getResults();
 
 	/**
-	 * Report a result to the Ultimate result service. The result may not be
-	 * null and may not contain null values (i.e. at least
-	 * {@link IResult#getShortDescription()} and
-	 * {@link IResult#getLongDescription()} must not be null).
+	 * Report a result to the Ultimate result service. The result must not be {@code null} and must not contain
+	 * {@code null} values (i.e., at least {@link IResult#getShortDescription()} and
+	 * {@link IResult#getLongDescription()} must not be {@code null}).
 	 * 
 	 * @param pluginId
 	 *            The plugin ID of the tool which generated the result.
