@@ -334,7 +334,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		try {
 			getInitialAbstraction();
 		} catch (final AutomataOperationCanceledException e) {
-			return preformTimeoutActions(e);
+			return performTimeoutActions(e);
 		} catch (final AutomataLibraryException e) {
 			throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 		}
@@ -354,7 +354,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		try {
 			initalAbstractionCorrect = isAbstractionEmpty();
 		} catch (final AutomataOperationCanceledException e) {
-			return preformTimeoutActions(e);
+			return performTimeoutActions(e);
 		}
 		if (initalAbstractionCorrect) {
 			return reportResult(Result.SAFE);
@@ -395,7 +395,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 					constructInterpolantAutomaton();
 				}
 			} catch (final AutomataOperationCanceledException | ToolchainCanceledException e) {
-				return preformTimeoutActions(e);
+				return performTimeoutActions(e);
 			}
 
 			if (mInterpolAutomaton != null) {
@@ -416,7 +416,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 					throw new AssertionError("No progress! Counterexample is still accepted by refined abstraction.");
 				}
 			} catch (final ToolchainCanceledException | AutomataOperationCanceledException e) {
-				return preformTimeoutActions(e);
+				return performTimeoutActions(e);
 			} catch (final AutomataLibraryException e) {
 				throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 			}
@@ -453,7 +453,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 			try {
 				isAbstractionCorrect = isAbstractionEmpty();
 			} catch (final AutomataOperationCanceledException e) {
-				return preformTimeoutActions(e);
+				return performTimeoutActions(e);
 			}
 			if (isAbstractionCorrect) {
 				if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND)) {
@@ -474,7 +474,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		return result;
 	}
 
-	private Result preformTimeoutActions(final IRunningTaskStackProvider e) {
+	private Result performTimeoutActions(final IRunningTaskStackProvider e) {
 		mRunningTaskStackProvider = e;
 		mLogger.warn(MSG_VERIFICATION_CANCELED);
 		if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND)) {
