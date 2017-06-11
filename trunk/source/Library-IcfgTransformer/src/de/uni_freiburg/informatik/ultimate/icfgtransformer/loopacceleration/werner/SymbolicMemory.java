@@ -222,9 +222,6 @@ public class SymbolicMemory {
 		for (Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
 			result.put(entry.getKey(), entry.getValue());
 		}
-		for (Entry<IProgramVar, TermVariable> entry : tf.getOutVars().entrySet()) {
-			result.put(entry.getKey(), entry.getValue());
-		}
 		return result;
 	}
 

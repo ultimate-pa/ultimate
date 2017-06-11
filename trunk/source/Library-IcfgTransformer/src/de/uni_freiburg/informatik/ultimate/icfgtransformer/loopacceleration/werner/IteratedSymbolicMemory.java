@@ -42,7 +42,6 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -78,19 +77,14 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 	 *            list of pathcounters of the loops backbones
 	 */
 	public IteratedSymbolicMemory(final ManagedScript script, final ILogger logger, final TransFormula tf,
-			final IIcfgSymbolTable oldSymbolTable, final Loop loop, final List<TermVariable> pathCounters) {
+			final IIcfgSymbolTable oldSymbolTable, final Loop loop, final List<TermVariable> pathCounters,
+			final Map<TermVariable, TermVariable> newPathCounter) {
 
 		super(script, logger, tf, oldSymbolTable);
 		mIteratedMemory = new HashMap<>();
 		mPathCounters = pathCounters;
-		mNewPathCounters = new HashMap<>();
+		mNewPathCounters = newPathCounter;
 		mAbstractPathCondition = mScript.getScript().term("true");
-
-		for (int i = 0; i < pathCounters.size(); i++) {
-			final TermVariable newBackbonePathCounter = mScript.constructFreshTermVariable("tau",
-					mScript.getScript().sort(SmtSortUtils.INT_SORT));
-			mNewPathCounters.put(mPathCounters.get(i), newBackbonePathCounter);
-		}
 
 		for (final Entry<IProgramVar, Term> entry : mMemoryMapping.entrySet()) {
 			mIteratedMemory.put(entry.getKey(), null);

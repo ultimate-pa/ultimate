@@ -87,7 +87,6 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		}
 	}
 
-
 	private Deque<Loop> getLoop(final IIcfg<INLOC> originalIcfg) {
 		final Set<INLOC> loopHeads = originalIcfg.getLoopLocations();
 		final Deque<Loop> loopBodies = new ArrayDeque<>();

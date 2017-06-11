@@ -29,9 +29,12 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.wer
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -50,8 +53,11 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.SimultaneousUpdate;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
@@ -79,6 +85,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
 	private final IIcfgSymbolTable mOldSymbolTable;
+	private Map<IcfgLocation, Loop> mLoopMapping;
 
 	/**
 	 * Construct a new Loop Acceleration Icfg Transformer.
@@ -103,6 +110,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		mServices = services;
 		mLoopDetector = new LoopDetector<>(mLogger, origIcfg, mScript);
 		mOldSymbolTable = originalIcfg.getCfgSmtToolkit().getSymbolTable();
+		mLoopMapping = new HashMap<>();
 
 		mLoopBodies = mLoopDetector.getLoopBodies();
 
@@ -128,7 +136,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 				final SimultaneousUpdate update = new SimultaneousUpdate(tf, mScript);
 
-				mLogger.debug("updated vars: " + update.getUpdatedVars());
+				mLogger.debug("Updated vars: " + update.getUpdatedVars());
 
 				final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mLogger, tf, mOldSymbolTable);
 				symbolicMemory.updateVars(update.getUpdatedVars());
@@ -149,11 +157,26 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 				backbone.setSymbolicMemory(symbolicMemory);
 			}
 
+			final Map<TermVariable, TermVariable> newPathCounter = new HashMap<>();
+
+			for (int i = 0; i < pathCounter.size(); i++) {
+				final TermVariable newBackbonePathCounter = mScript.constructFreshTermVariable("tau",
+						mScript.getScript().sort(SmtSortUtils.INT_SORT));
+				newPathCounter.put(pathCounter.get(i), newBackbonePathCounter);
+			}
+			loop.addVar(pathCounter);
+			final ArrayList<TermVariable> newPathCounterVals = new ArrayList<>(newPathCounter.values());
+			loop.addVar(newPathCounterVals);
+
 			final IteratedSymbolicMemory iteratedSymbolicMemory = new IteratedSymbolicMemory(mScript, mLogger,
-					loop.getFormula(), mOldSymbolTable, loop, pathCounter);
+					loop.getFormula(), mOldSymbolTable, loop, pathCounter, newPathCounter);
 
 			iteratedSymbolicMemory.updateMemory();
 			iteratedSymbolicMemory.updateCondition();
+			loop.setIteratedSymbolicMemory(iteratedSymbolicMemory);
+			mLoopMapping.put(loop.getLoophead(), loop);
+			mLogger.debug(loop.getLoophead());
+			mLogger.debug(loop);
 
 			mLogger.debug("ABSTRACT PATH CONDITION: " + iteratedSymbolicMemory.getAbstractCondition());
 		}
@@ -174,16 +197,44 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 		while (!open.isEmpty()) {
 			final INLOC oldSource = open.removeFirst();
+
 			if (!closed.add(oldSource)) {
 				continue;
 			}
 
 			final OUTLOC newSource = lst.createNewLocation(oldSource);
-			for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
-				final INLOC oldTarget = (INLOC) oldTransition.getTarget();
-				open.add(oldTarget);
-				final OUTLOC newTarget = lst.createNewLocation(oldTarget);
-				lst.createNewTransition(newSource, newTarget, oldTransition);
+
+			if (mLoopMapping.containsKey(oldSource)) {
+				for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
+					if (oldTransition.getTarget().equals(oldSource)) {
+						continue;
+					}
+					final INLOC oldTarget = (INLOC) oldTransition.getTarget();
+					open.add(oldTarget);
+					final OUTLOC newTarget = lst.createNewLocation(oldTarget);
+					final Loop loop = mLoopMapping.get(oldSource);
+					final TransFormula formula = loop.getFormula();
+					final TransFormulaBuilder tfb = new TransFormulaBuilder(formula.getInVars(), formula.getInVars(),
+							false, formula.getNonTheoryConsts(), true, Collections.emptySet(), false);
+
+					tfb.setFormula(loop.getIteratedMemory().getAbstractCondition());
+
+					for (TermVariable var : loop.getVars()) {
+						tfb.addAuxVar(var);
+					}
+
+					tfb.setInfeasibility(Infeasibility.INFEASIBLE);
+					final UnmodifiableTransFormula tf = tfb.finishConstruction(mScript);
+					lst.createNewInternalTransition(newSource, newTarget, tf, true);
+				}
+
+			} else {
+				for (final IcfgEdge oldTransition : oldSource.getOutgoingEdges()) {
+					final INLOC oldTarget = (INLOC) oldTransition.getTarget();
+					open.add(oldTarget);
+					final OUTLOC newTarget = lst.createNewLocation(oldTarget);
+					lst.createNewTransition(newSource, newTarget, oldTransition);
+				}
 			}
 		}
 	}
