@@ -82,7 +82,7 @@ public class IcfgSizeBenchmark {
 	}
 	
 	public void reportBenchmarkResult(final IResultService resultService, final String pluginId, final String message) {
-		resultService.reportResult(pluginId, new de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult<>(
+		resultService.reportResult(pluginId, new de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult<>(
 				pluginId, message, mCsvProvider));
 	}
 }

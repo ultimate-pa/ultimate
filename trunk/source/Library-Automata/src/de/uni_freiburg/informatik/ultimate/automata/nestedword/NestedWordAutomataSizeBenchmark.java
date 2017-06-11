@@ -32,7 +32,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.Outgo
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingReturnTransition;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.SummaryReturnTransition;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.util.statistics.GraphSizeCsvProvider;
 
@@ -71,6 +71,6 @@ public class NestedWordAutomataSizeBenchmark<E, V> {
 	}
 
 	public void reportBenchmarkResult(final IResultService resultService, final String pluginId, final String message) {
-		resultService.reportResult(pluginId, new BenchmarkResult<>(pluginId, message, mCsvProvider));
+		resultService.reportResult(pluginId, new StatisticsResult<>(pluginId, message, mCsvProvider));
 	}
 }

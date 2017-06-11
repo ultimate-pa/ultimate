@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.cli.options.CommandLineOptions;
 import de.uni_freiburg.informatik.ultimate.cli.util.RcpUtils;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.BasicToolchainJob;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.toolchain.DefaultToolchainJob;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultSummarizer;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.RunDefinition;
@@ -292,8 +292,8 @@ public class CommandLineController implements IController<RunDefinition> {
 
 		// TODO: Add option to control the writing of .csv files
 		if (WRITE_CSV) {
-			final List<ICsvProviderProvider<?>> csvProviders = ResultUtil.filterResults(results, BenchmarkResult.class)
-					.stream().map(a -> a.getBenchmark()).collect(Collectors.toList());
+			final List<ICsvProviderProvider<?>> csvProviders = ResultUtil.filterResults(results, StatisticsResult.class)
+					.stream().map(a -> a.getStatistics()).collect(Collectors.toList());
 			writeCsvLogs(csvProviders);
 		}
 	}

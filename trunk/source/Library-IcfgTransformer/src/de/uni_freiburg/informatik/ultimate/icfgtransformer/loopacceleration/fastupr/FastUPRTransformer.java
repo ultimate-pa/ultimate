@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.IBacktranslationTracker;
@@ -127,7 +127,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 				Objects.requireNonNull(outLocationClass), transformer);
 		mLogger.debug(mBenchmark.toString());
 		mServices.getResultService().reportResult(FastUPR.PLUGIN_ID,
-				new BenchmarkResult<>(FastUPR.PLUGIN_NAME, "FastUPR Benchmark Results:", mBenchmark));
+				new StatisticsResult<>(FastUPR.PLUGIN_NAME, "FastUPR Benchmark Results:", mBenchmark));
 	}
 
 	private IIcfg<OUTLOC> transform(final IIcfg<INLOC> originalIcfg, final String newIcfgIdentifier,

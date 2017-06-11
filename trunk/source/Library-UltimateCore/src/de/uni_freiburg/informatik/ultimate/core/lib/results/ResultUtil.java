@@ -181,11 +181,11 @@ public final class ResultUtil {
 	@SuppressWarnings("rawtypes")
 	public static <E extends ICsvProviderProvider<?>> Collection<E> getCsvProviderProviderFromUltimateResults(
 			final Map<String, List<IResult>> ultimateIResults, final Class<E> benchmarkClass) {
-		final Collection<BenchmarkResult> benchmarks = filterResults(ultimateIResults, BenchmarkResult.class);
+		final Collection<StatisticsResult> benchmarks = filterResults(ultimateIResults, StatisticsResult.class);
 		final List<E> filteredList = new ArrayList<>();
-		for (final BenchmarkResult<?> benchmarkResult : benchmarks) {
+		for (final StatisticsResult<?> benchmarkResult : benchmarks) {
 			@SuppressWarnings("unchecked")
-			final E benchmark = (E) benchmarkResult.getBenchmark();
+			final E benchmark = (E) benchmarkResult.getStatistics();
 			if (benchmark.getClass().isAssignableFrom(benchmarkClass)) {
 				filteredList.add(benchmark);
 			}

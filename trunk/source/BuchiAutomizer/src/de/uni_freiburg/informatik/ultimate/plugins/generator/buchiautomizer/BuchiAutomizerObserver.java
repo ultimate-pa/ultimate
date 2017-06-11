@@ -40,7 +40,7 @@ import java.util.Map.Entry;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.boogie.annotation.LTLPropertyCheck;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.FixpointNonTerminationResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GeometricNonTerminationArgumentResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.LTLFiniteCounterExampleResult;
@@ -120,20 +120,20 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 		final BuchiCegarLoopBenchmarkGenerator benchGen = bcl.getBenchmarkGenerator();
 		benchGen.stop(CegarLoopStatisticsDefinitions.OverallTime.toString());
 
-		final IResult benchDecomp = new BenchmarkResult<>(Activator.PLUGIN_ID, "Constructed decomposition of program",
+		final IResult benchDecomp = new StatisticsResult<>(Activator.PLUGIN_ID, "Constructed decomposition of program",
 				bcl.getMDBenchmark());
 		reportResult(benchDecomp);
 
 		final boolean constructTermcompProof = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
 				.getBoolean(BuchiAutomizerPreferenceInitializer.LABEL_CONSTRUCT_TERMCOMP_PROOF);
 		if (constructTermcompProof) {
-			final IResult termcompProof = new BenchmarkResult<>(Activator.PLUGIN_ID,
+			final IResult termcompProof = new StatisticsResult<>(Activator.PLUGIN_ID,
 					"Constructed termination proof in form of nested word automata", bcl.getTermcompProofBenchmark());
 			reportResult(termcompProof);
 		}
 
 		final BuchiAutomizerTimingBenchmark timingBenchmark = new BuchiAutomizerTimingBenchmark(benchGen);
-		final IResult benchTiming = new BenchmarkResult<>(Activator.PLUGIN_ID, "Timing statistics", timingBenchmark);
+		final IResult benchTiming = new StatisticsResult<>(Activator.PLUGIN_ID, "Timing statistics", timingBenchmark);
 		reportResult(benchTiming);
 
 		interpretAndReportResult(bcl, result);
@@ -230,7 +230,7 @@ public class BuchiAutomizerObserver implements IUnmanagedObserver {
 			final IcfgLocation honda = ((ISLPredicate) hondaPredicate).getProgramPoint();
 			final NonTerminationArgument nta = bcl.getNonTerminationArgument();
 			reportNonTerminationResult(honda, nta);
-			reportResult(new BenchmarkResult<>(Activator.PLUGIN_NAME, "NonterminationBenchmark",
+			reportResult(new StatisticsResult<>(Activator.PLUGIN_NAME, "NonterminationBenchmark",
 					new NonterminationBenchmark(nta)));
 
 			final Map<Integer, ProgramState<Term>> partialProgramStateMapping = Collections.emptyMap();

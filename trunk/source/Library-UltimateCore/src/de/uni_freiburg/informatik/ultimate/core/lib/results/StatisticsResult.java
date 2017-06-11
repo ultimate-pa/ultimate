@@ -30,22 +30,22 @@ package de.uni_freiburg.informatik.ultimate.core.lib.results;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 
 /**
- * Result that should be used to report benchmark informations like (e.g., runtime, number of iterations, size of
- * automata, size of predicates, ...). These benchmark informations are stored in the mBenchmark object. The toString()
- * method of this object has to return the benchmark results in human readable form.
+ * Result that should be used to report statistic informations like (e.g., runtime, number of iterations, size of
+ * automata, size of predicates, ...). These statistic informations are stored in the mStatistics object. The toString()
+ * method of this object has to return the statistic results in human readable form.
  *
  * @author Matthias Heizmann
  * @param <T>
  */
-public class BenchmarkResult<T> extends AbstractResult {
+public class StatisticsResult<T> extends AbstractResult {
 
 	private final String mShortDescrption;
-	private final ICsvProviderProvider<T> mBenchmark;
+	private final ICsvProviderProvider<T> mStatistics;
 
-	public BenchmarkResult(final String plugin, final String shortDescrption, final ICsvProviderProvider<T> benchmark) {
+	public StatisticsResult(final String plugin, final String shortDescrption, final ICsvProviderProvider<T> statistics) {
 		super(plugin);
 		mShortDescrption = shortDescrption;
-		mBenchmark = benchmark;
+		mStatistics = statistics;
 	}
 
 	@Override
@@ -55,11 +55,11 @@ public class BenchmarkResult<T> extends AbstractResult {
 
 	@Override
 	public String getLongDescription() {
-		return mBenchmark.toString();
+		return mStatistics.toString();
 	}
 
-	public ICsvProviderProvider<T> getBenchmark() {
-		return mBenchmark;
+	public ICsvProviderProvider<T> getStatistics() {
+		return mStatistics;
 	}
 
 }

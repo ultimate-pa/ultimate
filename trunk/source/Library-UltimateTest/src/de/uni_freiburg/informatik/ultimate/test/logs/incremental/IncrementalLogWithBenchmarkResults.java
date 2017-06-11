@@ -30,8 +30,8 @@ package de.uni_freiburg.informatik.ultimate.test.logs.incremental;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
@@ -96,7 +96,7 @@ public class IncrementalLogWithBenchmarkResults extends DefaultIncrementalLogfil
 
 		private void interpretUltimateResults(final IResultService resultService) {
 
-			for (final IResult result : ResultUtil.filterResults(resultService.getResults(), BenchmarkResult.class)) {
+			for (final IResult result : ResultUtil.filterResults(resultService.getResults(), StatisticsResult.class)) {
 				final StringBuilder sb = new StringBuilder();
 				sb.append(result.getPlugin()).append(": ").append(result.getShortDescription()).append(": ").append(
 						CoreUtil.flatten(result.getLongDescription(), " # "));

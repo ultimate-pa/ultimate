@@ -26,7 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.test.decider;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IFailedAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -39,7 +39,7 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
  * success.
  *
  * If the test is a success, the message will contain all result short descriptions except the ones of
- * {@link BenchmarkResult}s.
+ * {@link StatisticsResult}s.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *

@@ -45,7 +45,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpt
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingInternalTransition;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IRelevanceInformation;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -147,7 +147,7 @@ public class FlowSensitiveFaultLocalizer<LETTER extends IIcfgTransition<?>> {
 		final StatisticsData stat = new StatisticsData();
 		stat.aggregateBenchmarkData(mErrorLocalizationStatisticsGenerator);
 		final IResult benchmarkResult =
-				new BenchmarkResult<>(Activator.PLUGIN_NAME, "ErrorLocalizationStatistics", stat);
+				new StatisticsResult<>(Activator.PLUGIN_NAME, "ErrorLocalizationStatistics", stat);
 		services.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);
 	}
 

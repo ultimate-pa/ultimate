@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.senwa.DifferenceS
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.RunningTaskInfo;
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
@@ -437,7 +437,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	protected void reportErrorAutomatonBenchmarks() {
 		final StatisticsData stat = new StatisticsData();
 		stat.aggregateBenchmarkData(mErrorAutomatonStatisticsGenerator);
-		final IResult benchmarkResult = new BenchmarkResult<>(Activator.PLUGIN_NAME, "ErrorAutomatonStatistics", stat);
+		final IResult benchmarkResult = new StatisticsResult<>(Activator.PLUGIN_NAME, "ErrorAutomatonStatistics", stat);
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);
 	}
 

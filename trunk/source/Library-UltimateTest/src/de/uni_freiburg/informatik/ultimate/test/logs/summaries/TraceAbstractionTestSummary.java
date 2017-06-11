@@ -33,8 +33,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
@@ -79,24 +79,24 @@ public class TraceAbstractionTestSummary extends BaseTestSummary {
 
 		if (resultService != null) {
 			addTraceAbstractionBenchmarks(ultimateRunDefinition,
-					ResultUtil.filterResults(resultService.getResults(), BenchmarkResult.class));
+					ResultUtil.filterResults(resultService.getResults(), StatisticsResult.class));
 		}
 
 	}
 
 	@SuppressWarnings("rawtypes")
 	public void addTraceAbstractionBenchmarks(final UltimateRunDefinition ultimateRunDefinition,
-			final Collection<BenchmarkResult> benchmarkResults) {
+			final Collection<StatisticsResult> benchmarkResults) {
 		assert !mTraceAbstractionBenchmarks.containsKey(ultimateRunDefinition) : "benchmarks already added";
 
 		if (benchmarkResults != null && !benchmarkResults.isEmpty()) {
 			final ArrayList<ICsvProvider<?>> providers = new ArrayList<>(benchmarkResults.size());
-			for (final BenchmarkResult result : benchmarkResults) {
+			for (final StatisticsResult result : benchmarkResults) {
 				// exclude the extensive ultimate benchmark object
-				if (result.getBenchmark().getClass() == Benchmark.class) {
+				if (result.getStatistics().getClass() == Benchmark.class) {
 					continue;
 				}
-				providers.add(result.getBenchmark().createCsvProvider());
+				providers.add(result.getStatistics().createCsvProvider());
 			}
 			if (!providers.isEmpty()) {
 				mTraceAbstractionBenchmarks.put(ultimateRunDefinition, providers);
