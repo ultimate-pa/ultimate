@@ -56,6 +56,7 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder.util.Ic
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TraceAbstractionPreferenceInitializer.AssertCodeBlockOrder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckReasonUnknown.Reason;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.tracehandling.TraceAbstractionRefinementEngine.ExceptionHandlingCategory;
 
 /**
  * Check if a trace fulfills a specification. Provides an execution (that violates the specification) if the check was
@@ -286,7 +287,13 @@ public class TraceChecker implements ITraceChecker {
 			}
 			result = new FeasibilityCheckResult(isSafe, tcru, false);
 		} catch (final SMTLIBException e) {
-			result = new FeasibilityCheckResult(LBool.UNKNOWN, TraceCheckerUtils.constructReasonUnknown(e), true);
+			if (!mServices.getProgressMonitorService().continueProcessing()) {
+				// there was a cancellation request, probably responsible for abnormal solver termination
+				result = new FeasibilityCheckResult(LBool.UNKNOWN, new TraceCheckReasonUnknown(Reason.ULTIMATE_TIMEOUT,
+						null, ExceptionHandlingCategory.KNOWN_IGNORE), true);
+			} else {
+				result = new FeasibilityCheckResult(LBool.UNKNOWN, TraceCheckerUtils.constructReasonUnknown(e), true);
+			}
 		} finally {
 			mTraceCheckerBenchmarkGenerator
 					.stop(TraceCheckerStatisticsDefinitions.SatisfiabilityAnalysisTime.toString());
