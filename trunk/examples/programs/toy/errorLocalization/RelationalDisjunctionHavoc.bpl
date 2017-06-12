@@ -15,8 +15,8 @@
 
 procedure main() returns () {
   var x, y : int;
-  havoc x;
-  havoc y;
+  havoc x;    // not responsible
+  havoc y;    // responsible
   assume(x != y);
   assert(false);
 }
