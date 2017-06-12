@@ -134,17 +134,6 @@ public class FastUPRTermChecker {
 		final Term withOutReal = mTermTransformer.transformToInt(term);
 		final LBool result = SmtUtils.checkSatTerm(mScript, withOutReal);
 		return result != LBool.UNSAT;
-		// try {
-		// final Term eliminated =
-		// PartialQuantifierElimination.tryToEliminate(mServices,
-		// mUtils.getLogger(),
-		// mManagedScript, withOutReal, SimplificationTechnique.SIMPLIFY_DDA,
-		// XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		// final String str2 = eliminated.toStringDirect();
-		// return SmtUtils.checkSatTerm(mScript, eliminated) == LBool.SAT;
-		// } catch (final Exception e) {
-		// return SmtUtils.checkSatTerm(mScript, withOutReal) == LBool.SAT;
-		// }
 	}
 
 	/**
