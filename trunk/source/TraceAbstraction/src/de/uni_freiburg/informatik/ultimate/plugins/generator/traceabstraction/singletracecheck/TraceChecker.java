@@ -205,6 +205,10 @@ public class TraceChecker implements ITraceChecker {
 		FeasibilityCheckResult feasibilityResult = null;
 		try { 
 			feasibilityResult = checkTrace();
+			if (feasibilityResult.getLBool() == LBool.UNKNOWN && 
+					feasibilityResult.getReasonUnknown().getReason() == Reason.ULTIMATE_TIMEOUT) {
+				throw new ToolchainCanceledException(getClass(), "checking feasibility of error trace");
+			}
 			if (feasibilityResult.getLBool() == LBool.UNSAT) {
 				if (unlockSmtSolverAlsoIfUnsat) {
 					mTraceCheckFinished = true;
@@ -226,7 +230,6 @@ public class TraceChecker implements ITraceChecker {
 			}
 		} catch (final ToolchainCanceledException tce) {
 			mToolchainCanceledException = tce;
-			feasibilityResult = null;
 		} finally {
 			mFeasibilityResult = feasibilityResult;
 			mProvidesIcfgProgramExecution = providesIcfgProgramExecution;
