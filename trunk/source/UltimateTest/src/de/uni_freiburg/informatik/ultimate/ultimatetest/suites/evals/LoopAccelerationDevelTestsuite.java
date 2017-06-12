@@ -72,12 +72,16 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 
 			//			new Triple<>("AutomizerCInline.xml", C, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
 			//			new Triple<>("AutomizerCInlineTransformed.xml", C, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
+
+			new Triple<>("AutomizerCInlineTransformed.xml", C, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
+			new Triple<>("AutomizerCInlineTransformed.xml", C, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_LE.epf"),
+			new Triple<>("AutomizerCInline.xml", C, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
 	};
 
 	private static final String[] INPUT = new String[] {
 
 			// Normal regressions
-			"examples/programs/loopAcceleration",
+//			"examples/programs/loopAcceleration",
 			//			"examples/programs/loopAcceleration/loopAccelerationFastUPR/OctagonTest_Default.bpl",
 			//			"examples/programs/loopAcceleration/loopAccelerationBB/loop1.bpl",
 
@@ -90,6 +94,9 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 
 			//example: cannot handle arrays
 			//			"examples/svcomp/bitvector-loops/verisec_sendmail__tTflag_arr_one_loop_false-unreach-call.i",
+
+			// errors in FastUPR
+			"examples/svcomp/loop-industry-pattern/nested_true-unreach-call.c"
 	};
 
 	// @formatter:on
