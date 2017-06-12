@@ -161,9 +161,13 @@ public final class Difference<LETTER, STATE> extends BinaryNwaOperation<LETTER, 
 
 	private boolean hasSeveralInitialStates(final INwaOutgoingLetterAndTransitionProvider<LETTER, STATE> automaton) {
 		final Iterator<STATE> iterator = automaton.getInitialStates().iterator();
-		assert iterator.hasNext() : "No initial state in automaton.";
-		iterator.next();
-		return iterator.hasNext();
+		if (!iterator.hasNext()) {
+			// No initial state. E.g., the empty automaton does not have an initial state. 
+			return false;
+		} else {
+			iterator.next();
+			return iterator.hasNext();
+		}
 	}
 
 	@Override
