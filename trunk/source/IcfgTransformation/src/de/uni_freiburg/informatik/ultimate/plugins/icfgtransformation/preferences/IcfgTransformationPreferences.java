@@ -31,6 +31,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.BaseUltimatePr
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.UltimatePreferenceItem;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRTransformer.FastUPRReplacementMethod;
 import de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation.Activator;
 
 /**
@@ -42,6 +43,13 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 
 	public static final String LABEL_TRANSFORMATION_TYPE = "TransformationType";
 	private static final String DESC_TRANSFORMATION_TYPE = "";
+
+	public static final String LABEL_FASTUPR_MODE = "FastUPR replacement mode";
+	private static final String DESC_FASTUPR_MODE =
+			"REPLACE_LOOP_EDGE replaces the loop edge in place (might be slow), "
+					+ "REPLACE_EXIT_EDGE replaces the exit edge with a merge of the loop edge and the exit edge "
+					+ "(unknown behavior for already transformed Icfg - "
+					+ "e.g. if the exit edge was already merged with other edges)";
 
 	/**
 	 * Select which transformation should be performed by this plugin.
@@ -81,9 +89,15 @@ public class IcfgTransformationPreferences extends UltimatePreferenceInitializer
 
 	@Override
 	protected UltimatePreferenceItem<?>[] initDefaultPreferences() {
-		return new UltimatePreferenceItem<?>[] { new UltimatePreferenceItem<>(LABEL_TRANSFORMATION_TYPE,
-				TransformationTestType.LOOP_ACCELERATION_EXAMPLE, DESC_TRANSFORMATION_TYPE, PreferenceType.Combo,
-				TransformationTestType.values()), };
+		return new UltimatePreferenceItem<?>[] {
+
+				new UltimatePreferenceItem<>(LABEL_TRANSFORMATION_TYPE,
+						TransformationTestType.LOOP_ACCELERATION_EXAMPLE, DESC_TRANSFORMATION_TYPE,
+						PreferenceType.Combo, TransformationTestType.values()),
+				new UltimatePreferenceItem<>(LABEL_FASTUPR_MODE, FastUPRReplacementMethod.REPLACE_EXIT_EDGE,
+						DESC_FASTUPR_MODE, PreferenceType.Combo, FastUPRReplacementMethod.values()),
+
+		};
 	}
 
 	public static IPreferenceProvider getPreferenceProvider(final IUltimateServiceProvider services) {

@@ -62,8 +62,16 @@ file_export_version=3.0
 /instance/de.uni_freiburg.informatik.ultimate.boogie.procedureinliner/to\ and\ inside\ polymorphic\ procedures=false
 
 
+#Fri Jun 05 02:20:55 CEST 2015
+file_export_version=3.0
+@UltimateCore=0.0.1
+/instance/UltimateCore/ultimate.logging.details=de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation\=DEBUG;de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction\=DEBUG;
+
+
 #Thu Mar 30 14:27:01 CEST 2017
 file_export_version=3.0
 @de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation=0.1.9
 \!/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation=
 /instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation/TransformationType=LOOP_ACCELERATION_FASTUPR
+/instance/de.uni_freiburg.informatik.ultimate.plugins.icfgtransformation/FastUPR\ replacement\ mode=REPLACE_EXIT_EDGE
+

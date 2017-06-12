@@ -148,8 +148,8 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		final ReplacementVarFactory fac = new ReplacementVarFactory(icfg.getCfgSmtToolkit(), false);
 
 		final IPreferenceProvider ups = IcfgTransformationPreferences.getPreferenceProvider(mServices);
-		final TransformationTestType transformation = ups
-				.getEnum(IcfgTransformationPreferences.LABEL_TRANSFORMATION_TYPE, TransformationTestType.class);
+		final TransformationTestType transformation =
+				ups.getEnum(IcfgTransformationPreferences.LABEL_TRANSFORMATION_TYPE, TransformationTestType.class);
 
 		switch (transformation) {
 		case LOOP_ACCELERATION_EXAMPLE:
@@ -217,8 +217,10 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
 		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
 				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
-		return new FastUPRTransformer<>(mLogger, icfg, outlocClass, locFac, icfg.getIdentifier() + "IcfgDuplicate",
-				transformer, backtranslationTracker, mServices, FastUPRReplacementMethod.REPLACE_EXIT_EDGE).getResult();
+		final FastUPRReplacementMethod replacementMetho = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getEnum(IcfgTransformationPreferences.LABEL_FASTUPR_MODE, FastUPRReplacementMethod.class);
+		return new FastUPRTransformer<>(mLogger, icfg, outlocClass, locFac, icfg.getIdentifier() + "FastUPR",
+				transformer, backtranslationTracker, mServices, replacementMetho).getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationWerner(
@@ -243,8 +245,8 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final IIcfg<INLOC> icfg, final ILocationFactory<INLOC, OUTLOC> locFac, final Class<OUTLOC> outlocClass,
 			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
 		IIcfg<OUTLOC> result;
-		final ITransformulaTransformer transformer = new LocalTransformer(new RewriteDivision(fac),
-				icfg.getCfgSmtToolkit().getManagedScript(), fac);
+		final ITransformulaTransformer transformer =
+				new LocalTransformer(new RewriteDivision(fac), icfg.getCfgSmtToolkit().getManagedScript(), fac);
 		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(icfg, locFac,
 				backtranslationTracker, outlocClass, icfg.getIdentifier() + "TransformedIcfg", transformer);
 		result = icfgTransformer.getResult();
@@ -262,8 +264,8 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		transitionPreprocessors.add(new ModuloNeighborTransformation(services, true));
 		transitionPreprocessors.add(new DNF(services, XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION));
 
-		final ITransformulaTransformer transformer = new LocalTransformer(transitionPreprocessors,
-				icfg.getCfgSmtToolkit().getManagedScript(), fac);
+		final ITransformulaTransformer transformer =
+				new LocalTransformer(transitionPreprocessors, icfg.getCfgSmtToolkit().getManagedScript(), fac);
 		final IcfgTransformer<INLOC, OUTLOC> icfgTransformer = new IcfgTransformer<>(icfg, locFac,
 				backtranslationTracker, outlocClass, icfg.getIdentifier() + "TransformedIcfg", transformer);
 		result = icfgTransformer.getResult();
@@ -278,9 +280,10 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 		final List<ITransformulaTransformer> transformers = new ArrayList<>();
 		transformers.add(new LocalTransformer(new DNF(mServices, mXnfConversionTechnique),
 				icfg.getCfgSmtToolkit().getManagedScript(), fac));
-		final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider = new DefaultEqualityAnalysisProvider<>();
-		final MapEliminationSettings settings = new MapEliminationSettings(false, true, true, true,
-				mSimplificationTechnique, mXnfConversionTechnique);
+		final IEqualityAnalysisResultProvider<IcfgLocation, IIcfg<?>> equalityProvider =
+				new DefaultEqualityAnalysisProvider<>();
+		final MapEliminationSettings settings =
+				new MapEliminationSettings(false, true, true, true, mSimplificationTechnique, mXnfConversionTechnique);
 		transformers.add(new MapEliminationTransformer(mServices, mLogger, icfg.getCfgSmtToolkit().getManagedScript(),
 				icfg.getCfgSmtToolkit().getSymbolTable(), fac, settings, equalityProvider));
 		return new IcfgTransformerSequence<>(icfg, locFac, (ILocationFactory<OUTLOC, OUTLOC>) locFac,

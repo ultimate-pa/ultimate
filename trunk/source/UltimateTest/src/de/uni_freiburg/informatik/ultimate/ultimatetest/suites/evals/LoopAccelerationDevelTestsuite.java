@@ -59,8 +59,9 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 			//			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Ahmed_Debug.epf"),
 			//			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Werner_Debug.epf"),
 			//			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing_Debug.epf"),
-			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr.epf"),
-			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr.epf"),
+			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
+			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_LE.epf"),
+			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
 			//			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_Debug.epf"),
 			//			new Triple<>("AutomizerBpl.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
 			//			new Triple<>("AutomizerBplTransformed.xml", BPL, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
@@ -96,7 +97,7 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 	@Override
 	protected long getTimeout() {
 		// timeout in ms
-		return 30 * 1000;
+		return 60 * 1000;
 	}
 
 	@Override
