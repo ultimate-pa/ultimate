@@ -37,10 +37,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Script.LBool;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
@@ -135,10 +132,19 @@ public class FastUPRTermChecker {
 	 */
 	public boolean checkQuantifiedTerm(Term term) {
 		final Term withOutReal = mTermTransformer.transformToInt(term);
-		final Term eliminated = PartialQuantifierElimination.tryToEliminate(mServices, mUtils.getLogger(),
-				mManagedScript, withOutReal, SimplificationTechnique.SIMPLIFY_DDA,
-				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
-		return SmtUtils.checkSatTerm(mScript, eliminated) == LBool.SAT;
+		final LBool result = SmtUtils.checkSatTerm(mScript, withOutReal);
+		return result != LBool.UNSAT;
+		// try {
+		// final Term eliminated =
+		// PartialQuantifierElimination.tryToEliminate(mServices,
+		// mUtils.getLogger(),
+		// mManagedScript, withOutReal, SimplificationTechnique.SIMPLIFY_DDA,
+		// XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		// final String str2 = eliminated.toStringDirect();
+		// return SmtUtils.checkSatTerm(mScript, eliminated) == LBool.SAT;
+		// } catch (final Exception e) {
+		// return SmtUtils.checkSatTerm(mScript, withOutReal) == LBool.SAT;
+		// }
 	}
 
 	/**

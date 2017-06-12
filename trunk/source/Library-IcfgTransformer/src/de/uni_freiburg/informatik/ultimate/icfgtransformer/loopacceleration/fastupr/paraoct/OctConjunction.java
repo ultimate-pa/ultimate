@@ -86,7 +86,7 @@ public class OctConjunction {
 		return getVariables().size();
 	}
 
-	private HashSet<TermVariable> getVariables() {
+	public HashSet<TermVariable> getVariables() {
 		if (mCachedVariables != null) {
 			return mCachedVariables;
 		}

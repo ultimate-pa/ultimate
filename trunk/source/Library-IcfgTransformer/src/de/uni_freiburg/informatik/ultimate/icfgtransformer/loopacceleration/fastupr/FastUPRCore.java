@@ -30,6 +30,7 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fas
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -354,29 +355,31 @@ public class FastUPRCore {
 		final Term eqTerm = script.term("=", intervalBeginning.toTerm(script), intervalEnd.toTerm(script));
 		mUtils.debug("eqTerm: " + eqTerm.toString());
 
-		final Term inconsistent = script.term("false");
-		final Term isInconsistent = script.term("=", intervalBeginning.toTerm(script), inconsistent);
-
 		// QuantifiedTerm (for all n >= 0)
 
 		final Term greaterEqZero = script.term("and",
 				script.term(">=", differenceN.getParametricVar(), script.decimal(BigDecimal.ZERO)), eqTerm);
 		final Term lesserZero = script.term("<", differenceN.getParametricVar(), script.decimal(BigDecimal.ZERO));
-
 		final Term quantTerm = script.quantifier(QuantifiedFormula.FORALL,
 				new TermVariable[] { differenceN.getParametricVar() }, script.term("or", greaterEqZero, lesserZero));
 		mUtils.debug("quantTerm: " + quantTerm.toString());
 
-		final Term greaterEqZeroConsistency = script.term("and",
-				script.term(">=", differenceN.getParametricVar(), script.decimal(BigDecimal.ZERO)), isInconsistent);
+		// INCONSISTENCY
 
-		final Term quantTermConsistency = script.quantifier(QuantifiedFormula.EXISTS,
-				new TermVariable[] { differenceN.getParametricVar() }, greaterEqZeroConsistency);
+		final HashSet<TermVariable> vars = intervalBeginning.getVariables();
+		final Term satisfiableVars = script.quantifier(QuantifiedFormula.EXISTS, vars.toArray(new TermVariable[0]),
+				intervalBeginning.toTerm(script));
 
-		final boolean isConsistent = mTermChecker.checkQuantifiedTerm(quantTermConsistency);
+		final Term satisfiable = script.quantifier(QuantifiedFormula.FORALL,
+				new TermVariable[] { differenceN.getParametricVar() }, script.term("or", lesserZero, satisfiableVars));
+
 		final boolean isSat = mTermChecker.checkQuantifiedTerm(quantTerm);
+		if (!isSat) {
+			return false;
+		}
+		final boolean isConsistent = mTermChecker.checkQuantifiedTerm(satisfiable);
 
-		return isSat && isConsistent;
+		return isConsistent;
 	}
 
 	private boolean isOctagon(final Term relation, final Script script) throws NotAffineException {
