@@ -73,20 +73,15 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 	 * change the language it only determines the amount of nondeterminism.
 	 */
 	protected final boolean mSecondChance;
-	/**
-	 * {@code true} iff 'True' state should get a self-loop with all transitions.
-	 */
-	private final boolean mAddSelfLoopToTrueState;
-
+	
 	public NondeterministicInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker,
 			final INestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
 			final IPredicateUnifier predicateUnifier, final boolean conservativeSuccessorCandidateSelection,
-			final boolean secondChance, final boolean addSelfLoopToTrueState) {
+			final boolean secondChance) {
 		super(services, csToolkit, hoareTripleChecker, true, predicateUnifier, inputInterpolantAutomaton);
 		mConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
 		mSecondChance = secondChance;
-		mAddSelfLoopToTrueState = addSelfLoopToTrueState;
 		final Collection<IPredicate> allPredicates = inputInterpolantAutomaton.getStates();
 
 		assert SmtUtils.isTrue(mIaTrueState.getFormula());
@@ -176,10 +171,14 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 				// special case, call may have mIaTrueState as successor
 				inputSuccs.add(mIaTrueState);
 			}
-			if (mAddSelfLoopToTrueState && resPred == mIaTrueState) {
-				// mIaTrueState will get a self-loop labeled with all statements
-				inputSuccs.add(mIaTrueState);
-			}
+			// mIaTrueState will get a self-loop labeled with all statements
+			addTargetStateTrueIfStateIsTrue(resPred, inputSuccs);
+		}
+	}
+
+	protected void addTargetStateTrueIfStateIsTrue(final IPredicate resPred, final Set<IPredicate> inputSuccs) {
+		if (resPred == mIaTrueState) {
+			inputSuccs.add(mIaTrueState);
 		}
 	}
 
@@ -204,7 +203,7 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 		}
 	}
 
-	private void copyAllButTrue(final Set<IPredicate> target, final Collection<IPredicate> source) {
+	protected void copyAllButTrue(final Set<IPredicate> target, final Collection<IPredicate> source) {
 		for (final IPredicate pred : source) {
 			if (pred == mIaTrueState) {
 				// do nothing, transition to the "true" state are useless

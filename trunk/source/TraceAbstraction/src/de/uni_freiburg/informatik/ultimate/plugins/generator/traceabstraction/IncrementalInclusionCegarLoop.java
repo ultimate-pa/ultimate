@@ -248,11 +248,10 @@ public class IncrementalInclusionCegarLoop<LETTER extends IIcfgTransition<?>> ex
 						mPref.interpolantAutomatonEnhancement() == mPref.interpolantAutomatonEnhancement();
 				final boolean secondChance =
 						mPref.interpolantAutomatonEnhancement() != InterpolantAutomatonEnhancement.NO_SECOND_CHANCE;
-				final boolean addSelfLoopToTrueState = true;
 				final NondeterministicInterpolantAutomaton<LETTER> nondet =
 						new NondeterministicInterpolantAutomaton<>(mServices, mCsToolkit, edgeChecker,
 								mInterpolAutomaton, mTraceCheckAndRefinementEngine.getPredicateUnifier(),
-								conservativeSuccessorCandidateSelection, secondChance, addSelfLoopToTrueState);
+								conservativeSuccessorCandidateSelection, secondChance);
 				switchAllInterpolantAutomataToOnTheFlyConstructionMode();
 				mInclusionCheck.addSubtrahend(nondet);
 				mInterpolantAutomata.add(nondet);

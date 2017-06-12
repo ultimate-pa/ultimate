@@ -375,7 +375,7 @@ public class RefineBuchi<LETTER extends IIcfgTransition<?>> {
 				mInterpolAutomaton.addState(false, true, pu.getFalsePredicate());
 			}
 			buchiInterpolantAutomatonForOnDemandConstruction = new NondeterministicInterpolantAutomaton<>(mServices,
-					mCsToolkit, bhtc, mInterpolAutomaton, pu, false, true, true);
+					mCsToolkit, bhtc, mInterpolAutomaton, pu, false, true);
 			break;
 		case ScroogeNondeterminism:
 		case Deterministic:

@@ -272,12 +272,8 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				new PredicateTransformer<>(mgdScript, new TermDomainOperationProvider(services, mgdScript));
 		final IHoareTripleChecker hoareTripleChecker =
 				new InclusionInPreChecker(mic, pt, predicateFactory, predicateUnifier, csToolkit);
-		final boolean conservativeSuccessorCandidateSelection = false;
-		final boolean secondChance = false;
-		final boolean addSelfLoopToTrueState = false;
-		return new NondeterministicInterpolantAutomaton<>(services, csToolkit, hoareTripleChecker,
-				straightLineAutomaton, predicateUnifier, conservativeSuccessorCandidateSelection, secondChance,
-				addSelfLoopToTrueState);
+		return new NondeterministicErrorAutomaton<>(services, csToolkit, hoareTripleChecker, straightLineAutomaton,
+				predicateUnifier);
 	}
 
 	private boolean containsPredicateState(final NestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton,
