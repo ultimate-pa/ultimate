@@ -134,4 +134,9 @@ public class ApplyConversionToInteractive<M, O> implements IInteractive<M> {
 	public IInteractiveQueue<Object> common() {
 		return mOriginal.common();
 	}
+
+	@Override
+	public <T> CompletableFuture<T> newFuture() {
+		return mOriginal.newFuture();
+	}
 }

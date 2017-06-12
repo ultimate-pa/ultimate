@@ -53,7 +53,8 @@ public abstract class Client<T> {
 
 	private boolean mIOExceptionOccurred = false;
 
-	Client(final Socket connectionSocket, final ILogger logger, final ITypeRegistry<T> typeRegistry, final IWrappedMessage<T> helloMessage) {
+	Client(final Socket connectionSocket, final ILogger logger, final ITypeRegistry<T> typeRegistry,
+			final IWrappedMessage<T> helloMessage) {
 		mLogger = logger;
 
 		mTypeRegistry = typeRegistry;
@@ -273,7 +274,8 @@ public abstract class Client<T> {
 		}
 
 		@Override
-		public <T1 extends T, D extends T> void register(final Class<T1> type, final Class<D> dataType, final Function<D, T1> supplier) {
+		public <T1 extends T, D extends T> void register(final Class<T1> type, final Class<D> dataType,
+				final Function<D, T1> supplier) {
 			mHandlerRegistry.register(type, dataType, supplier);
 		}
 
@@ -295,6 +297,11 @@ public abstract class Client<T> {
 		@Override
 		public IInteractiveQueue<Object> common() {
 			return mCommonInterface.getNow(IInteractiveQueue.dummy());
+		}
+
+		@Override
+		public <T> CompletableFuture<T> newFuture() {
+			return mQueue.newFuture();
 		}
 
 	}

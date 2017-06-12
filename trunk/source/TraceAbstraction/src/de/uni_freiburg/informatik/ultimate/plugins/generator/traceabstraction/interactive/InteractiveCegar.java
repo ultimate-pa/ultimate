@@ -124,7 +124,7 @@ public class InteractiveCegar {
 		synchronized (this) {
 			paused = isInteractiveMode() && mPreferences.isPaused();
 			if (paused)
-				mContinue = new CompletableFuture<Void>();
+				mContinue = mInteractiveInterface.newFuture();
 		}
 		if (paused) {
 			mLogger.info("Client has paused Trace Abstraction - waiting for resume");

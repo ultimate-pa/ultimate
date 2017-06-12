@@ -21,7 +21,7 @@ public interface IInteractive<M> extends IHandlerRegistry<M>, IInteractiveQueue<
 	}
 	
 	IInteractiveQueue<Object> common();
-
+	
 	static <M> IInteractive<M> getFromStorage(final IToolchainStorage storage, final Class<M> typeBound) {
 		return ToolchainStorageUtil.getInteractive(storage, typeBound);
 	}
