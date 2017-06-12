@@ -26,6 +26,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
+import java.util.Collection;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
@@ -62,6 +63,12 @@ public class NondeterministicErrorAutomaton<LETTER extends IAction>
 			final IHoareTripleChecker hoareTripleChecker, final INestedWordAutomaton<LETTER, IPredicate> inputAutomaton,
 			final IPredicateUnifier predicateUnifier) {
 		super(services, csToolkit, hoareTripleChecker, inputAutomaton, predicateUnifier, false, false);
+	}
+
+	@Override
+	protected void copyAllButTrue(final Set<IPredicate> target, final Collection<IPredicate> source) {
+		// we even copy transitions to true
+		target.addAll(source);
 	}
 
 	@Override
