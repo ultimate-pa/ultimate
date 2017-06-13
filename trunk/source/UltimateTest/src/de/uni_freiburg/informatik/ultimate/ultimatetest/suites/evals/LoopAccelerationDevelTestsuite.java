@@ -73,7 +73,7 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 			//			new Triple<>("AutomizerCInline.xml", C, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
 			//			new Triple<>("AutomizerCInlineTransformed.xml", C, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf"),
 
-			new Triple<>("AutomizerCInlineTransformed.xml", C, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
+//			new Triple<>("AutomizerCInlineTransformed.xml", C, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
 			new Triple<>("AutomizerCInlineTransformed.xml", C, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_LE.epf"),
 			new Triple<>("AutomizerCInline.xml", C, "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
 	};
@@ -82,6 +82,8 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 
 			// Normal regressions
 //			"examples/programs/loopAcceleration",
+//			"examples/programs/loopAcceleration/twoLoops.bpl",
+			"examples/svcomp/loops/sum03_true-unreach-call_false-termination.i",
 			//			"examples/programs/loopAcceleration/loopAccelerationFastUPR/OctagonTest_Default.bpl",
 			//			"examples/programs/loopAcceleration/loopAccelerationBB/loop1.bpl",
 
@@ -97,7 +99,14 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 
 			// errors in FastUPR
 //			"examples/svcomp/loop-industry-pattern/nested_true-unreach-call.c"
-			"examples/svcomp/loop-invgen/NetBSD_loop_true-unreach-call_true-termination.i"
+//			"examples/svcomp/loop-invgen/NetBSD_loop_true-unreach-call_true-termination.i",
+
+			//unsafe expected safe
+//			"examples/svcomp/loop-acceleration/functions_true-unreach-call1_true-termination.i",
+//			"examples/svcomp/loops/linear_sea.ch_true-unreach-call.i",
+//			"examples/svcomp/loops/nec40_true-unreach-call_true-termination.i",
+//			"examples/svcomp/loops/while_infinite_loop_3_true-unreach-call_false-termination.i",
+
 	};
 
 	// @formatter:on

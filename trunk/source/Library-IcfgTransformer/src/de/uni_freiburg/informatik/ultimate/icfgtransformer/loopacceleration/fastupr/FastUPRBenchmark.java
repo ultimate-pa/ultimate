@@ -52,11 +52,11 @@ public class FastUPRBenchmark implements ICsvProviderProvider<String> {
 		mRuns = new ArrayDeque<>();
 	}
 
-	public void startRun(IcfgLocation loopHead) {
+	public void startRun(final IcfgLocation loopHead) {
 		mRuns.add(new FastUPRRun(loopHead));
 	}
 
-	public void endRun(boolean success) {
+	public void endRun(final boolean success) {
 		mPathsTried++;
 		if (success) {
 			mSuccesses++;
@@ -64,7 +64,7 @@ public class FastUPRBenchmark implements ICsvProviderProvider<String> {
 		mRuns.getLast().endRun(success);
 	}
 
-	public void setPathsFound(int count) {
+	public void setPathsFound(final int count) {
 		mPathsFound = count;
 	}
 
@@ -98,34 +98,6 @@ public class FastUPRBenchmark implements ICsvProviderProvider<String> {
 		return sb.toString();
 	}
 
-	private static final class FastUPRRun {
-		public boolean mSuccessful;
-		public final IcfgLocation mLoopHead;
-		public long mTimeElapsed;
-		private final long mStartTime;
-
-		FastUPRRun(IcfgLocation head) {
-			mLoopHead = head;
-			mStartTime = System.nanoTime();
-		}
-
-		public void endRun(boolean success) {
-			mSuccessful = success;
-			mTimeElapsed = System.nanoTime() - mStartTime;
-		}
-
-		@Override
-		public String toString() {
-			final StringBuilder sb = new StringBuilder("Loop Head:" + mLoopHead.toString() + ", ");
-			sb.append("Success: " + mSuccessful + ", ");
-			sb.append("Time elapsed: "
-					+ Math.round(100.0 * FastUPRBenchmark.getNanosecondsToUnit(mTimeElapsed, TimeUnit.MILLISECONDS))
-							/ 100.0);
-			return sb.toString();
-		}
-
-	}
-
 	@Override
 	public ICsvProvider<String> createCsvProvider() {
 		final List<String> colHeaders = new ArrayList<>();
@@ -142,5 +114,32 @@ public class FastUPRBenchmark implements ICsvProviderProvider<String> {
 			prov.addRow(run.mLoopHead.toString(), values);
 		}
 		return prov;
+	}
+
+	private static final class FastUPRRun {
+		public boolean mSuccessful;
+		public final IcfgLocation mLoopHead;
+		public long mTimeElapsed;
+		private final long mStartTime;
+
+		FastUPRRun(final IcfgLocation head) {
+			mLoopHead = head;
+			mStartTime = System.nanoTime();
+		}
+
+		public void endRun(final boolean success) {
+			mSuccessful = success;
+			mTimeElapsed = System.nanoTime() - mStartTime;
+		}
+
+		@Override
+		public String toString() {
+			final StringBuilder sb = new StringBuilder("Loop Head:" + mLoopHead.toString() + ", ");
+			sb.append("Success: " + mSuccessful + ", ");
+			sb.append("Time elapsed: "
+					+ Math.round(100.0 * FastUPRBenchmark.getNanosecondsToUnit(mTimeElapsed, TimeUnit.MILLISECONDS))
+							/ 100.0);
+			return sb.toString();
+		}
 	}
 }
