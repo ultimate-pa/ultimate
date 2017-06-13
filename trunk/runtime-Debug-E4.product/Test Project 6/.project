@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>Test Project 6</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+	</buildSpec>
+	<natures>
+		<nature>org.eclipse.cdt.core.cnature</nature>
+	</natures>
+</projectDescription>
