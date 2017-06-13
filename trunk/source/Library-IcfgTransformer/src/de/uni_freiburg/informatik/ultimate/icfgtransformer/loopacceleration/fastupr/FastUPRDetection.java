@@ -181,11 +181,18 @@ public class FastUPRDetection<INLOC extends IcfgLocation> {
 
 	private static Deque<IcfgEdge> calculatePathEdges(IcfgEdge lastEdge, Map<IcfgEdge, IcfgEdge> parentMap) {
 		final Deque<IcfgEdge> result = new ArrayDeque<>();
+		final HashSet<IcfgEdge> added = new HashSet<>();
 		IcfgEdge current = lastEdge;
+		added.add(current);
 		result.add(current);
 		while (parentMap.containsKey(current)) {
 			current = parentMap.get(current);
-			result.addFirst(current);
+			if (!added.contains(current)) {
+				result.addFirst(current);
+				added.add(current);
+			} else {
+				return result;
+			}
 		}
 		return result;
 	}
