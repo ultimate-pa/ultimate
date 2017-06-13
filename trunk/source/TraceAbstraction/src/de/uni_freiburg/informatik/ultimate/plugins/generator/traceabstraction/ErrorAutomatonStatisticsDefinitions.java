@@ -37,6 +37,7 @@ public enum ErrorAutomatonStatisticsDefinitions implements IStatisticsElement {
 	TotalNumber(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 	TraceLengthAvg(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 	ErrorAutomatonConstructionTimeAvg(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	ErrorAutomatonConstructionTimeTotal(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
 	;
 
 	private final Class<?> mClazz;

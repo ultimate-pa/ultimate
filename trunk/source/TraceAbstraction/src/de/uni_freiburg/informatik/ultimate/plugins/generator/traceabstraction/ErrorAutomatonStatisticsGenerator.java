@@ -98,15 +98,17 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 				return getAverageTraceLength();
 			case ErrorAutomatonConstructionTimeAvg:
 				return getAverageErrorAutomatonConstructionTime();
+			case ErrorAutomatonConstructionTimeTotal:
+				return getTotalErrorAutomatonConstructionTime();
 			default:
 				throw new AssertionError("Unknown key: " + key);
 		}
 	}
 
-	private Integer getAverageTraceLength() {
+	private int getAverageTraceLength() {
 		final int total = mAutomatonStatistics.size();
 		if (total == 0) {
-			return Integer.valueOf(0);
+			return 0;
 		}
 		int result = 0;
 		for (final AutomatonStatisticsEntry stats : mAutomatonStatistics) {
@@ -115,16 +117,21 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		return result / total;
 	}
 
-	private Long getAverageErrorAutomatonConstructionTime() {
+	private long getAverageErrorAutomatonConstructionTime() {
 		final int total = mAutomatonStatistics.size();
 		if (total == 0) {
-			return Long.valueOf(0);
+			return 0L;
 		}
+		final long time = getTotalErrorAutomatonConstructionTime();
+		return time / total;
+	}
+
+	private long getTotalErrorAutomatonConstructionTime() {
 		long time = 0L;
 		for (final AutomatonStatisticsEntry stats : mAutomatonStatistics) {
 			time += stats.mConstructionTime;
 		}
-		return time / total;
+		return time;
 	}
 
 	@Override
@@ -138,8 +145,8 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	private static class AutomatonStatisticsEntry {
-		public final long mConstructionTime;
-		public final int mTraceLength;
+		private final long mConstructionTime;
+		private final int mTraceLength;
 
 		public AutomatonStatisticsEntry(final long constructionTime, final int traceLength) {
 			mConstructionTime = constructionTime;
