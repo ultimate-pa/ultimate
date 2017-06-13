@@ -36,6 +36,7 @@
 package de.uni_freiburg.informatik.ultimate.cdt.parser;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -44,8 +45,11 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
+import org.eclipse.cdt.internal.core.pdom.IPDOM;
+import org.eclipse.cdt.internal.core.pdom.PDOMManager;
 import org.eclipse.cdt.core.dom.parser.c.GCCParserExtensionConfiguration;
 import org.eclipse.cdt.core.dom.parser.c.GCCScannerExtensionConfiguration;
+import org.eclipse.cdt.core.model.ICProject;
 import org.eclipse.cdt.core.parser.DefaultLogService;
 import org.eclipse.cdt.core.parser.FileContent;
 import org.eclipse.cdt.core.parser.IParserLogService;
@@ -57,6 +61,10 @@ import org.eclipse.cdt.core.parser.ScannerInfo;
 import org.eclipse.cdt.internal.core.dom.parser.c.GNUCSourceParser;
 import org.eclipse.cdt.internal.core.indexer.StandaloneIndexerFallbackReaderFactory;
 import org.eclipse.cdt.internal.core.parser.scanner.CPreprocessor;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IProject;
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.OperationCanceledException;
 
 import de.uni_freiburg.informatik.ultimate.cdt.parser.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
@@ -127,13 +135,42 @@ public class CDTParser implements ISource {
 		}
 		return false;
 	}
+	
+	//created by Hamiz for entering multiple files
+	private IProject createCDTProjectFromFiles(File[] files)
+			throws OperationCanceledException, CoreException, FileNotFoundException {
+		IProject cdtProject = createNewCDTProject("Test Project 6");
+
+		for (File file : files) {
+			ResourceHelper.createFile(cdtProject, file);
+		}
+		
+		createPDOM(cdtProject);
+		
+		return cdtProject;
+	}
+	
+	private IProject createNewCDTProject(String name) throws OperationCanceledException, CoreException {
+		return ResourceHelper.createCDTProject(name);
+	}
+	
+	private void createPDOM(IProject cdtProject) throws CoreException {
+		PDOMManager pdomManager = new PDOMManager();
+		IPDOM ipdom = pdomManager.getPDOM((ICProject) cdtProject);
+		System.out.println("oo");
+	}
 
 	@Override
 	public IElement parseAST(final File[] files) throws Exception {
 		if (files.length == 1) {
 			return parseAST(files[0]);
 		}
-		throw new UnsupportedOperationException("Cannot parse multiple C files");
+		
+		createCDTProjectFromFiles(files);
+		
+//		throw new UnsupportedOperationException("Cannot parse multiple C files");
+		return null;
+		
 	}
 
 	private IElement parseAST(final File file) throws Exception {
