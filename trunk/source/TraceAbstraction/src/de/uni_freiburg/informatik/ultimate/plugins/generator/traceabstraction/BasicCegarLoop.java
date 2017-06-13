@@ -425,7 +425,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 		mInterpolAutomaton = null;
 		mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
-		mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
 		
 		// TODO 2017-06-02 Christian: This does not hold in general. Is this a problem?
 		// assert isInterpolantAutomatonOfSingleStateType(mErrorAutomatonBuilder.getResultBeforeEnhancement());
@@ -451,6 +450,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final IPredicateUnifier predicateUnifier = mTraceCheckAndRefinementEngine.getPredicateUnifier();
 		mStateFactoryForRefinement.setIteration(super.mIteration);
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
+		mErrorAutomatonStatisticsGenerator.startErrorAutomatonDifferenceTime();
 		final boolean exploitSigmaStarConcatOfIa = !mComputeHoareAnnotation;
 		final INestedWordAutomaton<LETTER, IPredicate> minuend =
 				(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction;
@@ -491,6 +491,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		computeAutomataDifference(minuend, subtrahend, subtrahendBeforeEnhancement,
 				predicateUnifier, exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);
 
+		mErrorAutomatonStatisticsGenerator.stopErrorAutomatonDifferenceTime();
+		mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
+		
 		mLogger.info(predicateUnifier.collectPredicateUnifierStatistics());
 
 		minimizeAbstractionIfEnabled();

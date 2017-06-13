@@ -38,12 +38,12 @@ public enum ErrorAutomatonStatisticsDefinitions implements IStatisticsElement {
 	TraceLengthAvg(Integer.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData),
 	ErrorAutomatonConstructionTimeAvg(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
 	ErrorAutomatonConstructionTimeTotal(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
-	;
+	ErrorAutomatonDifferenceTimeAvg(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	ErrorAutomatonDifferenceTimeTotal(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey);
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;
 	private final Function<String, Function<Object, String>> mPrettyprinter;
-
 
 	ErrorAutomatonStatisticsDefinitions(final Class<?> clazz, final Function<Object, Function<Object, Object>> aggr,
 			final Function<String, Function<Object, String>> prettyprinter) {

@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
@@ -44,8 +45,10 @@ import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
  */
 public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvider {
 	private static final String ERROR_AUTOMATON_CONSTRUCTION_TIME = "ErrorAutomatonConstructionTime";
+	private static final String ERROR_AUTOMATON_DIFFERENCE_TIME = "ErrorAutomatonDifferenceTime";
 	private final Benchmark mBenchmark;
-	private boolean mRunning = false;
+	private boolean mRunningConstruction = false;
+	private boolean mRunningDifference = false;
 	private int mTraceLength = -1;
 	private final List<AutomatonStatisticsEntry> mAutomatonStatistics = new LinkedList<>();
 
@@ -55,15 +58,27 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	}
 
 	public void startErrorAutomatonConstructionTime() {
-		assert !mRunning : "Timing already running";
-		mRunning = true;
+		assert !mRunningConstruction : "Timing already running";
+		mRunningConstruction = true;
 		mBenchmark.start(ERROR_AUTOMATON_CONSTRUCTION_TIME);
 	}
 
 	public void stopErrorAutomatonConstructionTime() {
-		assert mRunning : "Timing not running";
-		mRunning = false;
+		assert mRunningConstruction : "Timing not running";
+		mRunningConstruction = false;
 		mBenchmark.pause(ERROR_AUTOMATON_CONSTRUCTION_TIME);
+	}
+
+	public void startErrorAutomatonDifferenceTime() {
+		assert !mRunningDifference : "Timing already running";
+		mRunningDifference = true;
+		mBenchmark.start(ERROR_AUTOMATON_DIFFERENCE_TIME);
+	}
+
+	public void stopErrorAutomatonDifferenceTime() {
+		assert mRunningDifference : "Timing not running";
+		mRunningDifference = false;
+		mBenchmark.pause(ERROR_AUTOMATON_DIFFERENCE_TIME);
 	}
 
 	public void reportTraceLength(final int length) {
@@ -72,14 +87,16 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	}
 
 	public void finishAutomatonInstance() {
-		if (mRunning || mTraceLength == -1) {
+		if (mRunningConstruction || mRunningDifference || mTraceLength == -1) {
 			throw new IllegalAccessError("Not all statistics data were provided.");
 		}
 		final long constructionTime =
 				(long) mBenchmark.getElapsedTime(ERROR_AUTOMATON_CONSTRUCTION_TIME, TimeUnit.NANOSECONDS);
+		final long differenceTime =
+				(long) mBenchmark.getElapsedTime(ERROR_AUTOMATON_DIFFERENCE_TIME, TimeUnit.NANOSECONDS);
 		final int traceLength = mTraceLength;
 		mTraceLength = -1;
-		mAutomatonStatistics.add(new AutomatonStatisticsEntry(constructionTime, traceLength));
+		mAutomatonStatistics.add(new AutomatonStatisticsEntry(constructionTime, differenceTime, traceLength));
 	}
 
 	@Override
@@ -97,9 +114,13 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 			case TraceLengthAvg:
 				return getAverageTraceLength();
 			case ErrorAutomatonConstructionTimeAvg:
-				return getAverageErrorAutomatonConstructionTime();
+				return getAverageErrorAutomatonConstructionTime(stats -> stats.mConstructionTime);
 			case ErrorAutomatonConstructionTimeTotal:
-				return getTotalErrorAutomatonConstructionTime();
+				return getTotalErrorAutomatonConstructionTime(stats -> stats.mConstructionTime);
+			case ErrorAutomatonDifferenceTimeAvg:
+				return getAverageErrorAutomatonConstructionTime(stats -> stats.mDifferenceTime);
+			case ErrorAutomatonDifferenceTimeTotal:
+				return getTotalErrorAutomatonConstructionTime(stats -> stats.mDifferenceTime);
 			default:
 				throw new AssertionError("Unknown key: " + key);
 		}
@@ -117,19 +138,19 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		return result / total;
 	}
 
-	private long getAverageErrorAutomatonConstructionTime() {
+	private long getAverageErrorAutomatonConstructionTime(final Function<AutomatonStatisticsEntry, Long> stats2long) {
 		final int total = mAutomatonStatistics.size();
 		if (total == 0) {
 			return 0L;
 		}
-		final long time = getTotalErrorAutomatonConstructionTime();
+		final long time = getTotalErrorAutomatonConstructionTime(stats2long);
 		return time / total;
 	}
 
-	private long getTotalErrorAutomatonConstructionTime() {
+	private long getTotalErrorAutomatonConstructionTime(final Function<AutomatonStatisticsEntry, Long> stats2long) {
 		long time = 0L;
 		for (final AutomatonStatisticsEntry stats : mAutomatonStatistics) {
-			time += stats.mConstructionTime;
+			time += stats2long.apply(stats);
 		}
 		return time;
 	}
@@ -147,8 +168,10 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	private static class AutomatonStatisticsEntry {
 		private final long mConstructionTime;
 		private final int mTraceLength;
+		private final long mDifferenceTime;
 
-		public AutomatonStatisticsEntry(final long constructionTime, final int traceLength) {
+		public AutomatonStatisticsEntry(final long constructionTime, final long differenceTime, final int traceLength) {
+			mDifferenceTime = differenceTime;
 			mConstructionTime = constructionTime;
 			mTraceLength = traceLength;
 		}
