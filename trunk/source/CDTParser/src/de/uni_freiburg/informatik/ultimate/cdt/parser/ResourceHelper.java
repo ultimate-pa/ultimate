@@ -19,6 +19,8 @@ import java.util.UUID;
 
 import org.eclipse.cdt.core.CCorePlugin;
 import org.eclipse.cdt.core.dom.IPDOMManager;
+import org.eclipse.cdt.core.model.CoreModel;
+import org.eclipse.cdt.core.model.ICProject;
 import org.eclipse.cdt.core.settings.model.ICConfigurationDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescription;
 import org.eclipse.cdt.core.settings.model.ICProjectDescriptionManager;
@@ -118,6 +120,7 @@ public class ResourceHelper {
 		// Assert.assertNotNull(project);
 
 		project.open(null);
+		
 		// Assert.assertTrue(project.isOpen());
 
 		return project;

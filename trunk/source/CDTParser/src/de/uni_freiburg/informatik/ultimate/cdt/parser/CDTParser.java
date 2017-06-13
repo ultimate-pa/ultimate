@@ -44,11 +44,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.eclipse.cdt.core.dom.IPDOMIndexer;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.internal.core.pdom.IPDOM;
 import org.eclipse.cdt.internal.core.pdom.PDOMManager;
 import org.eclipse.cdt.core.dom.parser.c.GCCParserExtensionConfiguration;
 import org.eclipse.cdt.core.dom.parser.c.GCCScannerExtensionConfiguration;
+import org.eclipse.cdt.core.index.IIndex;
+import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.model.ICProject;
 import org.eclipse.cdt.core.parser.DefaultLogService;
 import org.eclipse.cdt.core.parser.FileContent;
@@ -137,7 +140,7 @@ public class CDTParser implements ISource {
 	}
 	
 	//created by Hamiz for entering multiple files
-	private IProject createCDTProjectFromFiles(File[] files)
+	private ICProject createCDTProjectFromFiles(File[] files)
 			throws OperationCanceledException, CoreException, FileNotFoundException {
 		IProject cdtProject = createNewCDTProject("Test Project 6");
 
@@ -145,18 +148,28 @@ public class CDTParser implements ISource {
 			ResourceHelper.createFile(cdtProject, file);
 		}
 		
-		createPDOM(cdtProject);
-		
-		return cdtProject;
+		CoreModel model = CoreModel.getDefault();
+		ICProject icdtProject =  model.create(cdtProject);
+		return icdtProject;
+	}
+	
+	private void performCDTProjectOperations(File[] files)
+			throws OperationCanceledException, FileNotFoundException, CoreException {
+		ICProject icdtProject = createCDTProjectFromFiles(files);
+		createPDOM(icdtProject);
 	}
 	
 	private IProject createNewCDTProject(String name) throws OperationCanceledException, CoreException {
 		return ResourceHelper.createCDTProject(name);
 	}
 	
-	private void createPDOM(IProject cdtProject) throws CoreException {
+	private void createPDOM(ICProject icdtProject) throws CoreException {
 		PDOMManager pdomManager = new PDOMManager();
-		IPDOM ipdom = pdomManager.getPDOM((ICProject) cdtProject);
+//		IPDOM ipdom = pdomManager.getPDOM(icdtProject);
+		pdomManager.startup();
+		pdomManager.reindex(icdtProject);
+		IIndex inde = pdomManager.getIndex(icdtProject);
+		boolean a = pdomManager.isProjectIndexed(icdtProject);
 		System.out.println("oo");
 	}
 
@@ -166,7 +179,7 @@ public class CDTParser implements ISource {
 			return parseAST(files[0]);
 		}
 		
-		createCDTProjectFromFiles(files);
+		performCDTProjectOperations(files);
 		
 //		throw new UnsupportedOperationException("Cannot parse multiple C files");
 		return null;
