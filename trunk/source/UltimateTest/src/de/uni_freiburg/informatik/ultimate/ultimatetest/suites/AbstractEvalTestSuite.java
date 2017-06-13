@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerModuleDecompositionBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
@@ -103,6 +104,7 @@ public abstract class AbstractEvalTestSuite extends AbstractModelCheckerTestSuit
 		benchmarks.add(CodeCheckBenchmarks.class);
 		benchmarks.add(BuchiAutomizerModuleDecompositionBenchmark.class);
 		benchmarks.add(GraphSizeCsvProvider.class);
+		benchmarks.add(FastUPRBenchmark.class);
 		return benchmarks;
 	}
 

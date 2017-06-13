@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerModuleDecompositionBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
@@ -52,6 +53,7 @@ import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDec
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithVMParameters;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvSummary;
@@ -62,7 +64,6 @@ import de.uni_freiburg.informatik.ultimate.test.logs.summaries.LatexOverviewSumm
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.SVCOMPTestSummary;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.StandingsSummary;
 import de.uni_freiburg.informatik.ultimate.test.logs.summaries.TraceAbstractionTestSummary;
-import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
@@ -92,13 +93,13 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 			final Collection<File> allInputFiles = getAllPotentialInputFiles(svcompRootDir);
 
 			if (testDefs == null || testDefs.isEmpty()) {
-				System.err.println("No test definitions given. Did you implement getTestDefinitions correctly?");
+				getLogger().error("No test definitions given. Did you implement getTestDefinitions correctly?");
 				return new ArrayList<>();
 			}
 
 			if (allInputFiles == null || allInputFiles.isEmpty() || setFiles == null || setFiles.isEmpty()) {
-				System.err
-						.println("inputFiles or setFiles are null: did you specify the svcomp root directory correctly?"
+				getLogger()
+						.error("inputFiles or setFiles are null: did you specify the svcomp root directory correctly?"
 								+ " Currently it is: " + svcompRootDir);
 				return new ArrayList<>();
 			}
@@ -113,7 +114,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 				final Collection<File> inputFiles = set2InputFiles.get(setFileName);
 				addTestCases(def, inputFiles, current, svcompRootDir);
 				if (current.isEmpty()) {
-					System.err.println("No input file for set " + setFileName);
+					getLogger().error("No input file for set " + setFileName);
 				}
 				mTestCases.addAll(current);
 			}
@@ -139,8 +140,8 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 						new UltimateRunDefinition(input, def.getSettings(), def.getToolchain(), def.getTimeout());
 				testcases.add(buildTestCase(urd, getTestResultDecider(urd), name));
 			} catch (final Throwable ex) {
-				System.err.println("Exception while creating test case, skipping this one: " + input.getAbsolutePath());
-				ex.printStackTrace();
+				getLogger().error("Exception while creating test case, skipping this one: " + input.getAbsolutePath(),
+						ex);
 			}
 		}
 	}
@@ -202,6 +203,7 @@ public abstract class AbstractSVCOMPTestSuite extends UltimateTestSuite {
 		benchmarks.add(CodeCheckBenchmarks.class);
 		benchmarks.add(BuchiAutomizerModuleDecompositionBenchmark.class);
 		benchmarks.add(GraphSizeCsvProvider.class);
+		benchmarks.add(FastUPRBenchmark.class);
 
 		final ColumnDefinition[] columnDef = new ColumnDefinition[] {
 				new ColumnDefinition("Runtime (ns)", "Avg. runtime", ConversionContext.Divide(1000000000, 2, " s"),

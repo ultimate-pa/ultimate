@@ -96,7 +96,8 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 			//			"examples/svcomp/bitvector-loops/verisec_sendmail__tTflag_arr_one_loop_false-unreach-call.i",
 
 			// errors in FastUPR
-			"examples/svcomp/loop-industry-pattern/nested_true-unreach-call.c"
+//			"examples/svcomp/loop-industry-pattern/nested_true-unreach-call.c"
+			"examples/svcomp/loop-invgen/NetBSD_loop_true-unreach-call_true-termination.i"
 	};
 
 	// @formatter:on
