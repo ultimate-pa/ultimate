@@ -86,27 +86,18 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 
 		assert SmtUtils.isTrue(mIaTrueState.getFormula());
 		assert allPredicates.contains(mIaTrueState);
-		// TODO 2017-06-02 Christian: removed special role of true and false state; remove after testing
-//		mAlreadyConstructedAutomaton.addState(true, false, mIaTrueState);
 		assert SmtUtils.isFalse(mIaFalseState.getFormula());
-		assert allPredicates.contains(mIaFalseState);
-//		mAlreadyConstructedAutomaton.addState(false, true, mIaFalseState);
+		assert isFalsePresent(allPredicates);
 
 		mNonTrivialPredicates = new HashSet<>();
 		for (final IPredicate state : allPredicates) {
-			if (state != mIaTrueState && state != mIaFalseState) {
-				mNonTrivialPredicates.add(state);
-			}
-			// TODO 2017-06-02 Christian: comment became redundant, remove when removing above commented code
-			// the following two lines are important if not (only)
-			// true/false are initial/final states of the automaton.
+			addIfNontrivialPredicate(state);
 			final boolean isInitial = inputInterpolantAutomaton.isInitial(state);
 			final boolean isFinal = inputInterpolantAutomaton.isFinal(state);
 			mAlreadyConstructedAutomaton.addState(isInitial, isFinal, state);
 		}
 
 		mLogger.info(startMessage());
-
 	}
 
 	@Override
@@ -176,6 +167,10 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 		}
 	}
 
+	protected boolean isFalsePresent(final Collection<IPredicate> allPredicates) {
+		return allPredicates.contains(mIaFalseState);
+	}
+
 	protected void addTargetStateTrueIfStateIsTrue(final IPredicate resPred, final Set<IPredicate> inputSuccs) {
 		if (resPred == mIaTrueState) {
 			inputSuccs.add(mIaTrueState);
@@ -210,6 +205,12 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 			} else {
 				target.add(pred);
 			}
+		}
+	}
+
+	protected void addIfNontrivialPredicate(final IPredicate state) {
+		if (state != mIaTrueState && state != mIaFalseState) {
+			mNonTrivialPredicates.add(state);
 		}
 	}
 

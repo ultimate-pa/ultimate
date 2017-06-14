@@ -36,6 +36,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IActi
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicateUnifier;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.AbstractInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 
 /**
@@ -66,13 +67,48 @@ public class NondeterministicErrorAutomaton<LETTER extends IAction>
 	}
 
 	@Override
+	protected String startMessage() {
+		final StringBuilder sb = new StringBuilder();
+		sb.append("Constructing nondeterministic error automaton ").append(" with ")
+				.append(mNonTrivialPredicates.size()).append(" predicates.");
+		return sb.toString();
+	}
+
+	@Override
+	protected boolean isFalsePresent(final Collection<IPredicate> allPredicates) {
+		// we actually do not want to have a 'False' state
+		return !super.isFalsePresent(allPredicates);
+	}
+
+	@Override
 	protected void copyAllButTrue(final Set<IPredicate> target, final Collection<IPredicate> source) {
 		// we even copy transitions to true
 		target.addAll(source);
 	}
 
 	@Override
+	protected void addIfNontrivialPredicate(final IPredicate state) {
+		// we add all states because we have no nontrivial predicates
+		mNonTrivialPredicates.add(state);
+	}
+
+	@Override
 	protected void addTargetStateTrueIfStateIsTrue(final IPredicate resPred, final Set<IPredicate> inputSuccs) {
 		// we do nothing here, 'True' does not play a special role here (in fact most self-loops for 'True' are wrong)
+	}
+
+	@Override
+	protected boolean chooseFalseSuccessor1(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
+			final AbstractInterpolantAutomaton<LETTER>.SuccessorComputationHelper sch) {
+		// we do not want to have a 'False' state
+		return false;
+	}
+
+	@Override
+	protected boolean chooseFalseSuccessor2(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
+			final AbstractInterpolantAutomaton<LETTER>.SuccessorComputationHelper sch,
+			final Set<IPredicate> inputSuccs) {
+		// we do not even have the 'False' state
+		return false;
 	}
 }

@@ -270,7 +270,6 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
 		assert !containsPredicateState(straightLineAutomaton,
 				falsePredicate) : "The error trace is feasible; hence the predicate 'False' should not be present.";
-		straightLineAutomaton.addState(false, false, falsePredicate);
 
 		final ManagedScript mgdScript = csToolkit.getManagedScript();
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);

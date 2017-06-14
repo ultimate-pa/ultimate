@@ -61,43 +61,49 @@ public abstract class BasicAbstractInterpolantAutomaton<LETTER extends IAction>
 	@Override
 	protected void computeSuccs(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
 			final SuccessorComputationHelper sch) {
-		// if (linear) predecessor is false, the successor is false
-		if (sch.isLinearPredecessorFalse(resPred)) {
-			sch.addTransition(resPred, resHier, letter, mIaFalseState);
-			sch.reportSuccsComputed(resPred, resHier, letter);
-			return;
-		}
-		// if (hierarchical) predecessor is false, the successor is false
-		if (sch.isHierarchicalPredecessorFalse(resHier)) {
-			sch.addTransition(resPred, resHier, letter, mIaFalseState);
-			sch.reportSuccsComputed(resPred, resHier, letter);
-			return;
-		}
-		// if the letter is already infeasible, the successor is false
-		if (letter.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE) {
-			sch.addTransition(resPred, resHier, letter, mIaFalseState);
-			sch.reportSuccsComputed(resPred, resHier, letter);
+		if (chooseFalseSuccessor1(resPred, resHier, letter, sch)) {
+			addTransitionToFalse(resPred, resHier, letter, sch);
 			return;
 		}
 		final Set<IPredicate> inputSuccs = new HashSet<>();
-		// get all successor whose inductivity we already know from the
-		// input interpolant automaton
+		// get all successors whose inductivity we already know from the input interpolant automaton
 		addInputAutomatonSuccs(resPred, resHier, letter, sch, inputSuccs);
 		// check if false is implied
-		if (inputSuccs.contains(mIaFalseState)) {
-			sch.addTransition(resPred, resHier, letter, mIaFalseState);
-			sch.reportSuccsComputed(resPred, resHier, letter);
-			return;
-		}
-		final Validity sat = sch.computeSuccWithSolver(resPred, resHier, letter, mIaFalseState);
-		if (sat == Validity.VALID) {
-			sch.addTransition(resPred, resHier, letter, mIaFalseState);
-			sch.reportSuccsComputed(resPred, resHier, letter);
+		if (chooseFalseSuccessor2(resPred, resHier, letter, sch, inputSuccs)) {
+			addTransitionToFalse(resPred, resHier, letter, sch);
 			return;
 		}
 		// check all other predicates
 		addOtherSuccessors(resPred, resHier, letter, sch, inputSuccs);
 		constructSuccessorsAndTransitions(resPred, resHier, letter, sch, inputSuccs);
+	}
+
+	private void addTransitionToFalse(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
+			final SuccessorComputationHelper sch) {
+		sch.addTransition(resPred, resHier, letter, mIaFalseState);
+		sch.reportSuccsComputed(resPred, resHier, letter);
+	}
+	
+	protected boolean chooseFalseSuccessor1(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
+			final AbstractInterpolantAutomaton<LETTER>.SuccessorComputationHelper sch) {
+		// if (linear) predecessor is false, the successor is false
+		if (sch.isLinearPredecessorFalse(resPred)) {
+			return true;
+		}
+		// if (hierarchical) predecessor is false, the successor is false
+		if (sch.isHierarchicalPredecessorFalse(resHier)) {
+			return true;
+		}
+		// if the letter is already infeasible, the successor is false
+		return letter.getTransformula().isInfeasible() == Infeasibility.INFEASIBLE;
+	}
+
+	protected boolean chooseFalseSuccessor2(final IPredicate resPred, final IPredicate resHier, final LETTER letter,
+			final SuccessorComputationHelper sch, final Set<IPredicate> inputSuccs) {
+		if (inputSuccs.contains(mIaFalseState)) {
+			return true;
+		}
+		return sch.computeSuccWithSolver(resPred, resHier, letter, mIaFalseState) == Validity.VALID;
 	}
 
 	protected abstract void addOtherSuccessors(IPredicate resPred, IPredicate resHier, LETTER letter,
