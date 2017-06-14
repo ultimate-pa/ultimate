@@ -208,6 +208,10 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 						loopExit = findLoopExit(edge, falseEdge);
 						formulas.add(edge.getTransformula());
 						path.pop();
+					} else if (!edge.equals(loopEdge) && edge.getSource().getOutgoingEdges().size() > 1) {
+
+						throw new IllegalArgumentException("Cannot compute nondeterministic paths.");
+
 					} else {
 						// Just an ordinary edge - those exist! At least, if you
 						// believe in the rumors.
