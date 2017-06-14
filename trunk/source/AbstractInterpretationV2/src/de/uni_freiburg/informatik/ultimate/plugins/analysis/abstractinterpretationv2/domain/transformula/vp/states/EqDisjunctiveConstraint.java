@@ -151,6 +151,18 @@ public class EqDisjunctiveConstraint<
 		return mConstraints.stream().map(cons -> cons.areUnequal(func1, func2)).reduce((a, b) -> (a || b)).get();
 	}
 	
+	@Override
+	public String toString() {
+		if (mConstraints.isEmpty()) {
+			return "EmptyDisjunction/False";
+		}
+		
+//		final StringBuilder sb = new StringBuilder();
+//		for (EqConstraint<ACTION, NODE, FUNCTION> c : mConstraints) {
+//			sb.append(str)
+//		}
+		return "\\/ " + mConstraints.toString();
+	}
 
 //	/**
 //	 * Only does the cast, other than that just calls @see AbstractMultistate.union

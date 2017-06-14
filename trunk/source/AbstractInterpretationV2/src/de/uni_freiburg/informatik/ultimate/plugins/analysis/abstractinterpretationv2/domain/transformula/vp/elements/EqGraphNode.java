@@ -27,9 +27,7 @@
  */
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +62,7 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTIO
 //	private HashRelation<FUNCTION, List<EqGraphNode<NODE, FUNCTION>>> mCcchild;
 	private HashRelation<FUNCTION, List<NODE>> mCcchild;
 
-	private Set<NODE> mInitCcpar;
+	private NODE mInitCcpar;
 //	private List<EqGraphNode<NODE, FUNCTION>> mInitCcchild;
 	private List<NODE> mInitCcchild;
 
@@ -77,33 +75,37 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTIO
 		this.mCcpar = new HashSet<>();
 		this.mCcchild = new HashRelation<>();
 		this.mInitCcpar = null;
-		this.mInitCcchild = null;
-	}
-	
-	/**
-	 * This may only be called when all EqGraphNodes for the given state (and thus mapping form Eqnodes to EqGraphNodes)
-	 * have been created.
-	 * Then this method sets up initCCpar and initCcchild according to the mapping and the parent/argument information in
-	 * the EqNode
-	 * @param eqNodeToEqGraphNode
-	 */
-	public void setupNode() {
-		mInitCcpar = new HashSet<>(this.mCcpar);
-		mInitCcpar = Collections.unmodifiableSet(mInitCcpar);
-		
-		if (mNodeIdentifier.isFunction()) {
-			FUNCTION arrayId = mNodeIdentifier.getFunction();
-			assert this.mCcchild.getImage(arrayId).size() == 1;
-			mInitCcchild = new ArrayList<>(this.mCcchild.getImage(arrayId).iterator().next());
-			mInitCcchild = Collections.unmodifiableList(mInitCcchild);
+		if (id.isFunction()) {
+			this.mInitCcchild = id.getArgs();
 		}
 	}
+	
+//	/**
+//	 * This may only be called when all EqGraphNodes for the given state (and thus mapping form Eqnodes to EqGraphNodes)
+//	 * have been created.
+//	 * Then this method sets up initCCpar and initCcchild according to the mapping and the parent/argument information in
+//	 * the EqNode
+//	 * @param eqNodeToEqGraphNode
+//	 */
+//	public void setupNode() {
+//		mInitCcpar = new HashSet<>(this.mCcpar);
+//		mInitCcpar = Collections.unmodifiableSet(mInitCcpar);
+//		
+//		if (mNodeIdentifier.isFunction()) {
+//			FUNCTION arrayId = mNodeIdentifier.getFunction();
+//			assert this.mCcchild.getImage(arrayId).size() == 1;
+//			mInitCcchild = new ArrayList<>(this.mCcchild.getImage(arrayId).iterator().next());
+//			mInitCcchild = Collections.unmodifiableList(mInitCcchild);
+//		}
+//	}
 
 	public void setNodeToInitial() {
 		this.mRepresentative = this;
 		this.mReverseRepresentative.clear();
 		this.mCcpar.clear();
-		this.mCcpar.addAll(mInitCcpar);
+		if (mInitCcpar != null) {
+			this.mCcpar.add(mInitCcpar);
+		}
 
 		this.mCcchild = new HashRelation<>();
 		/*
@@ -198,6 +200,10 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTIO
 	public void setCcpar(Set<NODE> ccpar) {
 		this.mCcpar = ccpar;
 	}
+	
+	public void setCcchild(HashRelation<FUNCTION, List<NODE>> ccchild) {
+		this.mCcchild = ccchild;
+	}
 
 	public void addToCcpar(NODE ccpar) {
 		this.mCcpar.add(ccpar);
@@ -223,7 +229,11 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTIO
 		}
 	}
 
-	public Set<NODE> getInitCcpar() {
+	/**
+	 * this is a set just for compatibility with "normal" ccPar, right? (EDIT no more..)
+	 * @return
+	 */
+	public NODE getInitCcpar() {
 		return mInitCcpar;
 	}
 
@@ -231,9 +241,9 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTIO
 		return mInitCcchild;
 	}
 
-	public void setInitCcchild(List<NODE> initCcchild) {
-		this.mInitCcchild = initCcchild;
-	}
+//	public void setInitCcchild(List<NODE> initCcchild) {
+//		this.mInitCcchild = initCcchild;
+//	}
 
 	public NODE getNode() {
 		return mNodeIdentifier;
@@ -275,5 +285,11 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTIO
 	public EqGraphNode<NODE, FUNCTION> renameVariables(Map<Term, Term> substitutionMapping) {
 		// TODO Auto-generated method stub
 		return null;
+	}
+
+	public void setInitCcpar(NODE initCCpar) {
+//		assert mInitCcpar.isEmpty() : "init ccpar should never change, except from no parent to some parent";
+		assert mInitCcpar == null : "init ccpar should never change, except from no parent to some parent";
+		mInitCcpar = initCCpar;
 	}
 }

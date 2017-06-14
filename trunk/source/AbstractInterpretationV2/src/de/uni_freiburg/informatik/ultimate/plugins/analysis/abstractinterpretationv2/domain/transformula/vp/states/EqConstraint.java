@@ -42,6 +42,11 @@ public class EqConstraint<
 
 	private Set<IProgramVar> mVariables;
 	private Set<IProgramVarOrConst> mPvocs;
+
+	/**
+	 * All (element) nodes that this constraint currently knows about
+	 */
+	private Set<NODE> mNodes = new HashSet<>();
 	
 	/**
 	 * Creates an empty constraint (i.e. it does not constrain anything, is equivalent to "true")
@@ -55,6 +60,27 @@ public class EqConstraint<
 		mFunctionEqualities = new UnionFind<>();
 		mFunctionDisequalities = new HashSet<>();
 
+	}
+
+	/**
+	 * copy constructor
+	 * @param constraint
+	 */
+	public EqConstraint(EqConstraint<ACTION, NODE, FUNCTION> constraint) {
+		mFactory = constraint.mFactory;
+		mElementCongruenceGraph = new CongruenceGraph<>(constraint.mElementCongruenceGraph);
+
+		// copy the union find containing array equalities
+		mFunctionEqualities = new UnionFind<>();
+		for (FUNCTION rep : constraint.mFunctionEqualities.getAllRepresentatives()) {
+			mFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(rep);
+			for (FUNCTION mem : constraint.mFunctionEqualities.getEquivalenceClassMembers(rep)) {
+				mFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(mem);
+				mFunctionEqualities.union(mem, rep);
+			}
+		}
+
+		mFunctionDisequalities = new HashSet<>(constraint.mFunctionDisequalities);
 	}
 
 	/**
@@ -188,6 +214,13 @@ public class EqConstraint<
 		return mIsFrozen;
 	}
 	
+	/**
+	 * 
+	 * 
+	 * TODO: should we also remove the nodes that we project, here??
+	 * @param varsToProjectAway
+	 * @return
+	 */
 	public EqConstraint<ACTION, NODE, FUNCTION> projectExistentially(Set<TermVariable> varsToProjectAway) {
 		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = mFactory.unfreeze(this);
 
@@ -478,5 +511,53 @@ public class EqConstraint<
 		return null;
 	}
 	
+	@Override
+	public String toString() {
+		// (adapted from getTerm())
+		final List<String> elementEqualities = getSupportingElementEqualities().entrySet().stream()
+			.map(en -> String.format("(%s = %s)", en.getKey().getTerm(), en.getValue().getTerm())).collect(Collectors.toList());
+		final List<String> elementDisequalities = getElementDisequalities().stream()
+				.map(pair -> String.format("(%s != %s)", pair.getFirst().getTerm(), pair.getSecond().getTerm()))
+				.collect(Collectors.toList());
+		final List<String> functionEqualities = getSupportingFunctionEqualities().entrySet().stream()
+			.map(en -> String.format("(%s = %s)", en.getKey().getTerm(), en.getValue().getTerm())).collect(Collectors.toList());
+		final List<String> functionDisequalities = getFunctionDisequalites().stream()
+				.map(pair -> String.format("(%s != %s)", pair.getFirst().getTerm(), pair.getSecond().getTerm()))
+				.collect(Collectors.toList());
+		
+		final List<String> allConjuncts = new ArrayList<>();
+		allConjuncts.addAll(elementEqualities);
+		allConjuncts.addAll(elementDisequalities);
+		allConjuncts.addAll(functionEqualities);
+		allConjuncts.addAll(functionDisequalities);
+		
+		if (allConjuncts.isEmpty()) {
+			return "Top";
+		}
+		
+		final StringBuilder sb = new StringBuilder();
+		for (String s : allConjuncts) {
+			sb.append(s);
+		}
+
+
+		return sb.toString();
+	}
+	
+	public boolean hasNode(NODE node) {
+		return mNodes.contains(node);
+	}
+
+	/**
+	 * Add a node to this constraint. Does not do any propagations that might be a consequence of adding this node.
+	 * @param nodeToAdd
+	 */
+	public void addNodeRaw(NODE nodeToAdd) {
+		if (hasNode(nodeToAdd)) {
+			return;
+		}
+		mNodes.add(nodeToAdd);
+		mElementCongruenceGraph.addNode(nodeToAdd, null);
+	}
 	
 }

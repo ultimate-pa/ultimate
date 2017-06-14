@@ -468,20 +468,11 @@ public class VPDomainPreanalysis {
 		return result;
 	}
 
-	public HashRelation<IProgramVarOrConst, EqFunctionNode> getArrayIdToFnNodeMap() {
-		assert mArrayIdToFnNodes != null;
-		return mArrayIdToFnNodes;
-	}
-
 	@Override
 	public String toString() {
-		return "-RCFGArrayIndexCollector-";
+		return "-VPDomainPreanalysis-";
 	}
 
-	public Map<Term, EqNode> getTermToEqNodeMap() {
-		return mTermToEqNode;
-	}
-	
 	public Set<EqNode> getAllEqNodes() {
 		return Collections.unmodifiableSet(mAllEqNodes);
 	}
@@ -639,10 +630,7 @@ public class VPDomainPreanalysis {
 		final EqNode result = mTermToEqNode.get(term);
 		return result;
 	}
-	
-	public EqFunctionNode getEqFunctionNode(EqFunction function, List<EqNode> children) {
-		return mEqFunctionNodeStore.get(function, children);
-	}
+
 
 	/**
 	 *
@@ -659,10 +647,6 @@ public class VPDomainPreanalysis {
 		} else {
 			return getEqNode(term);
 		}
-	}
-	
-	public EqNode getEqNode(IProgramVarOrConst pvoc) {
-		return getEqNode(pvoc.getTerm(), Collections.emptyMap());
 	}
 	
 	public VPDomainPreanalysisSettings getSettings() {
@@ -719,37 +703,10 @@ public class VPDomainPreanalysis {
 		return mSymboltable;
 	}
 
-	/**
-	 * @param proc
-	 * @return all the EqNodes that only use symbols that are visible in the scope of the given proc.
-	 */
-	public Set<EqNode> getEqNodesForScope(String proc) {
-		assert proc != null;
-		final Set<EqNode> result = new HashSet<>();
-		result.addAll(mGlobalEqNodes);
-		result.addAll(mProcToLocalEqNodes.getImage(proc));
-		return result;
-	}
-	
-	
-	/**
-	 * @param proc
-	 * @return all the EqNodes that only use symbols that are visible in the intersection of the scopes of the given 
-	 *  procedures.
-	 */
-	public Set<EqNode> getEqNodesForScope(String proc1, String proc2) {
-		assert proc1 != null;
-		assert proc2 != null;
-		final Set<EqNode> result = new HashSet<>();
-		result.addAll(mGlobalEqNodes);
-		final Set<EqNode> locals = new HashSet<>(mProcToLocalEqNodes.getImage(proc1));
-		locals.retainAll(mProcToLocalEqNodes.getImage(proc2));
-		result.addAll(locals);
-		return result;
-	}
-
-	public boolean isElementTracked(Term term) {
-		return getEqNode(term) != null;
+	public boolean isElementTracked(Term term, TransFormula tf) {
+		final Term normalizedTerm = 
+				new Substitution(mManagedScript, VPDomainHelpers.computeNormalizingSubstitution(tf)).transform(term);
+		return getEqNode(normalizedTerm) != null;
 	}
 
 	public IUltimateServiceProvider getServices() {

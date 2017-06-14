@@ -17,6 +17,7 @@ public class EqTransitionRelation<ACTION extends IIcfgTransition<IcfgLocation>> 
 	
 
 	private final TransFormula mTf;
+	private final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> mConstraint;
 
 	public EqTransitionRelation(EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> constraint, TransFormula tf) {
 		/* 
@@ -24,6 +25,8 @@ public class EqTransitionRelation<ACTION extends IIcfgTransition<IcfgLocation>> 
 		 * constructed from (see corresponding getters..)
 		 */
 		mTf = tf;
+		
+		mConstraint = constraint;
 	}
 
 	@Override
@@ -62,7 +65,11 @@ public class EqTransitionRelation<ACTION extends IIcfgTransition<IcfgLocation>> 
 	}
 
 	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> getEqConstraint() {
-		// TODO Auto-generated method stub
-		return null;
+		return mConstraint;
+	}
+	
+	@Override
+	public String toString() {
+		return "EqTransRel: " + mConstraint.toString();
 	}
 }

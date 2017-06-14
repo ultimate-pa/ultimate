@@ -135,6 +135,11 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	public String toLogString() {
 		return mConstraint.toString();
 	}
+	
+	@Override 
+	public String toString() {
+		return toLogString();
+	}
 
 	public EqConstraint<ACTION, EqNode, EqFunction> getConstraint() {
 		return mConstraint;

@@ -88,5 +88,10 @@ public class EqFunction implements IEqFunctionIdentifier<EqFunction> {
 		assert false : "TODO";
 		return 0;
 	}
+	
+	@Override
+	public String toString() {
+		return mTerm.toString();
+	}
 
 }

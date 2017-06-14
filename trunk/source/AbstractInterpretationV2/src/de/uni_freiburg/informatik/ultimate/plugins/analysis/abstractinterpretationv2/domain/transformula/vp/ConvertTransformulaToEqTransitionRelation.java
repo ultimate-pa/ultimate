@@ -191,7 +191,7 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 		}
 
 		private boolean isElementTracked(Term term) {
-			return mPreAnalysis.isElementTracked(term);
+			return mPreAnalysis.isElementTracked(term, mTf);
 		}
 
 		private boolean isFunctionTracked(Term term) {

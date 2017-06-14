@@ -74,10 +74,10 @@ public class EqNodeAndFunctionFactory {
 
 	public EqNode getOrConstructEqNode(Term term) {
 		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0) {
-			if (((ApplicationTerm) term).getFunction().isIntern()) {
-				return getOrConstructNonAtomicBaseNode(term);
-			} else if ("select".equals(((ApplicationTerm) term).getFunction().getName())) {
+			if ("select".equals(((ApplicationTerm) term).getFunction().getName())) {
 				return getOrConstructEqFunctionNode((ApplicationTerm) term);
+			} else if (((ApplicationTerm) term).getFunction().isIntern()) {
+				return getOrConstructNonAtomicBaseNode(term);
 			} else {
 				throw new UnsupportedOperationException();
 			}

@@ -23,6 +23,9 @@ public class EqConstraintFactory<
 			FUNCTION extends IEqFunctionIdentifier<FUNCTION>> {
 
 	private EqConstraint<ACTION, NODE, FUNCTION> mBottomConstraint = new EqBottomConstraint<>(this);
+	{
+		mBottomConstraint.freeze();
+	}
 	private EqStateFactory<ACTION> mEqStateFactory;
 	
 	public EqConstraintFactory() {
@@ -30,7 +33,9 @@ public class EqConstraintFactory<
 	}
 
 	public EqConstraint<ACTION, NODE, FUNCTION> getEmptyConstraint() {
-		return new EqConstraint<>(this);
+		final EqConstraint<ACTION, NODE, FUNCTION> result = new EqConstraint<>(this);
+		result.freeze();
+		return result;
 	}
 
 	public EqConstraint<ACTION, NODE, FUNCTION> getBottomConstraint() {
@@ -41,8 +46,7 @@ public class EqConstraintFactory<
 
 	public EqConstraint<ACTION, NODE, FUNCTION> unfreeze(EqConstraint<ACTION, NODE, FUNCTION> constraint) {
 		assert constraint.isFrozen();
-		// TODO Auto-generated method stub
-		return null;
+		return new EqConstraint<>(constraint);
 	}
 
 //	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> unfreeze(
@@ -681,8 +685,13 @@ public class EqConstraintFactory<
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addNode(NODE nodeToAdd, 
 			EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> constraint) {
 
-		// TODO
-		return null;
+		final Set<EqConstraint<ACTION, NODE, FUNCTION>> newConstraints = new HashSet<>();
+
+		for (EqConstraint<ACTION, NODE, FUNCTION> cons : constraint.getConstraints()) {
+			newConstraints.add(addNodeFlat(nodeToAdd, cons));
+		}
+		
+		return getDisjunctiveConstraint(newConstraints);
 	}
 	
 	/**
@@ -701,8 +710,11 @@ public class EqConstraintFactory<
 	 */
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addNode(NODE nodeToAdd, 
 			EqConstraint<ACTION, NODE, FUNCTION> constraint) {
+		final EqConstraint<ACTION, NODE, FUNCTION> unf = unfreeze(constraint);
+		unf.addNodeRaw(nodeToAdd);
+		unf.freeze();
+		return getDisjunctiveConstraint(Collections.singleton(unf));
 		
-		return null;
 	}
 	
 	public EqConstraint<ACTION, NODE, FUNCTION> addNodeFlat(NODE nodeToAdd, 
