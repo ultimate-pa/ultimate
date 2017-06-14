@@ -225,6 +225,10 @@ public class TraceChecker implements ITraceChecker {
 					if (!feasibilityResult.isSolverCrashed()) {
 						mTraceCheckFinished = true;
 						cleanupAndUnlockSolver();
+					} else {
+						if (feasibilityResult.getReasonUnknown().getExceptionHandlingCategory() != ExceptionHandlingCategory.KNOWN_IGNORE) {
+							throw new AssertionError(feasibilityResult.getReasonUnknown().getException());
+						}
 					}
 				}
 			}
