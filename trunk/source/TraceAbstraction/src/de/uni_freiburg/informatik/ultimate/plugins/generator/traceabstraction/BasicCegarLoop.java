@@ -402,6 +402,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	@Override
 	protected void constructErrorAutomaton() throws AutomataOperationCanceledException {
+		mErrorTraces.addTrace(mCounterexample);
+		
 		final NestedWord<LETTER> trace = (NestedWord<LETTER>) mCounterexample.getWord();
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Constructing error automaton for trace of length " + trace.length());
@@ -425,6 +427,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		}
 		mInterpolAutomaton = null;
 		mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
+		mErrorTraces.addPrecondition(mErrorAutomatonBuilder.getErrorPrecondition());
 		
 		// TODO 2017-06-02 Christian: This does not hold in general. Is this a problem?
 		// assert isInterpolantAutomatonOfSingleStateType(mErrorAutomatonBuilder.getResultBeforeEnhancement());
@@ -822,15 +825,18 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	}
 
 	@Override
-	protected boolean isResultUnsafe(final boolean reportErrorStatistics) {
-		if (mErrorTraces.isEmpty()) {
+	protected boolean isResultUnsafe(final boolean errorGeneralizationEnabled) {
+		if (!errorGeneralizationEnabled || mErrorTraces.isEmpty()) {
 			return false;
 		}
 		if (mLogger.isInfoEnabled()) {
 			mLogger.info("Found " + mErrorTraces.size() + " different error traces in total:");
 			for (final ErrorTrace<LETTER> errorTrace : mErrorTraces) {
-				mLogger.info(" Error trace of length " + errorTrace.getTrace().getLength() + " has precondition "
-						+ errorTrace.getPrecondition().getFormula() + ".");
+				final IPredicate precondition = errorTrace.getPrecondition();
+				// TODO 2017-06-14 Christian: Do not print error precondition on info level after testing phase.
+				mLogger.info("Error trace of length " + errorTrace.getTrace().getLength() + (precondition == null
+						? " (precondition not computed yet)."
+						: " has precondition " + precondition.getFormula() + "."));
 			}
 		}
 		return true;

@@ -116,6 +116,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 	private final NestedWordAutomaton<LETTER, IPredicate> mResultBeforeEnhancement;
 	private final NondeterministicInterpolantAutomaton<LETTER> mResultAfterEnhancement;
+	private IPredicate mErrorPrecondition;
 
 	/**
 	 * @param services
@@ -174,6 +175,11 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		return mResultAfterEnhancement;
 	}
 
+	public IPredicate getErrorPrecondition() {
+		assert mErrorPrecondition != null : "Precondition was not computed yet.";
+		return mErrorPrecondition;
+	}
+
 	@SuppressWarnings("squid:S00107")
 	private NestedWordAutomaton<LETTER, IPredicate> constructStraightLineAutomaton(
 			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
@@ -223,9 +229,9 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		}
 
 		// final predicates (unified)
-		final TracePredicates newPredicates =
-				new TracePredicates(predicateUnifier.getOrConstructPredicate(prePrecondition),
-						predicateUnifier.getOrConstructPredicate(newPostcondition), newIntermediatePredicates);
+		mErrorPrecondition = predicateUnifier.getOrConstructPredicate(prePrecondition);
+		final TracePredicates newPredicates = new TracePredicates(mErrorPrecondition,
+				predicateUnifier.getOrConstructPredicate(newPostcondition), newIntermediatePredicates);
 
 		return new StraightLineInterpolantAutomatonBuilder<>(services, alphabet, predicateFactoryInterpolantAutomata,
 				trace, newPredicates,

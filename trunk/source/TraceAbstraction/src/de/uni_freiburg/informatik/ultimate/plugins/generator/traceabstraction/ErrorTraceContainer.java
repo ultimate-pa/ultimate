@@ -62,6 +62,11 @@ public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>>
 		addTrace(trace, null);
 	}
 
+	public void addPrecondition(final IPredicate precondition) {
+		assert precondition != null : "Precondition should not be null.";
+		mTraces.get(mTraces.size() - 1).mPrecondition = precondition;
+	}
+
 	/**
 	 * @return {@code true} iff there is no error trace.
 	 */
@@ -90,7 +95,7 @@ public class ErrorTraceContainer<LETTER> implements Iterable<ErrorTrace<LETTER>>
 	 */
 	public static final class ErrorTrace<LETTER> {
 		private final IRun<LETTER, IPredicate, ?> mTrace;
-		private final IPredicate mPrecondition;
+		private IPredicate mPrecondition;
 
 		/**
 		 * @param trace
