@@ -294,6 +294,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 			final INLOC oldT = (INLOC) oldEdge.getTarget();
 			final OUTLOC newT = lst.createNewLocation(oldT);
 			final IcfgEdge newEdge = lst.createNewTransition(newS, newT, oldEdge);
+			mBacktranslationTracker.rememberRelation(oldEdge, newEdge);
 			newS.addOutgoing(newEdge);
 			newT.addIncoming(newEdge);
 
@@ -364,6 +365,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 					final INLOC oldTarget = (INLOC) element.getExitEdge().getTarget();
 					final OUTLOC newTarget = lst.createNewLocation(oldTarget);
 					final IcfgEdge exitEdge = lst.createNewTransition(newSource, newTarget, element.getExitEdge());
+					mBacktranslationTracker.rememberRelation(element.getExitEdge(), exitEdge);
 					newSource.addOutgoing(exitEdge);
 					newTarget.addIncoming(exitEdge);
 
@@ -385,6 +387,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 			final INLOC oldTarget = (INLOC) oldEdge.getTarget();
 			final OUTLOC newTarget = lst.createNewLocation(oldTarget);
 			final IcfgEdge newEdge = lst.createNewTransition(newSource, newTarget, oldEdge);
+			mBacktranslationTracker.rememberRelation(oldEdge, newEdge);
 			newSource.addOutgoing(newEdge);
 			newTarget.addIncoming(newEdge);
 
@@ -434,6 +437,7 @@ public class FastUPRTransformer<INLOC extends IcfgLocation, OUTLOC extends IcfgL
 			final INLOC oldTarget = (INLOC) oldEdge.getTarget();
 			final OUTLOC newTarget = lst.createNewLocation(oldTarget);
 			final IcfgEdge newEdge = lst.createNewTransition(newSource, newTarget, oldEdge);
+			mBacktranslationTracker.rememberRelation(oldEdge, newEdge);
 			newSource.addOutgoing(newEdge);
 			newTarget.addIncoming(newEdge);
 
