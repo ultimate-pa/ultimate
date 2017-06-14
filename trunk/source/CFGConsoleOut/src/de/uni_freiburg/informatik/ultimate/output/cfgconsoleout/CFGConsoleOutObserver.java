@@ -38,6 +38,9 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
@@ -81,6 +84,8 @@ public class CFGConsoleOutObserver extends BaseObserver {
 			final IcfgEdge current = iter.next();
 			mLogger.info(toString(current));
 		}
+
+		mLogger.info(getNwa(icfg));
 	}
 
 	private INestedWordAutomaton<IIcfgTransition<?>, IPredicate> getNwa(final IIcfg<?> icfg) {
@@ -103,7 +108,19 @@ public class CFGConsoleOutObserver extends BaseObserver {
 
 		sb.append(current.getSource());
 		sb.append(" -- ");
-		sb.append(current.getTransformula());
+		if (current instanceof IIcfgInternalTransition<?>) {
+			sb.append(current.getTransformula());
+		} else if (current instanceof IIcfgCallTransition<?>) {
+			final IIcfgCallTransition<?> call = (IIcfgCallTransition<?>) current;
+			sb.append(call.getLocalVarsAssignment());
+		} else if (current instanceof IIcfgReturnTransition<?, ?>) {
+			final IIcfgReturnTransition<?, ?> ret = (IIcfgReturnTransition<?, ?>) current;
+			sb.append("(");
+			sb.append(ret.getCallerProgramPoint());
+			sb.append(") ");
+			sb.append(ret.getAssignmentOfReturn());
+		}
+
 		sb.append(" -- ");
 		sb.append(current.getTarget());
 
