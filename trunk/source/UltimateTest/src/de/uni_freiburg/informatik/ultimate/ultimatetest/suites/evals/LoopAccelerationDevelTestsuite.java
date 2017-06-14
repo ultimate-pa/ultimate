@@ -99,13 +99,21 @@ public class LoopAccelerationDevelTestsuite extends AbstractEvalTestSuite {
 			// new Triple<>("AutomizerCInline.xml", C,
 			// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf"),
 
+			new Triple<>("AutomizerCInlineTransformed.xml", C,
+					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_EE.epf"),
+			new Triple<>("AutomizerCInlineTransformed.xml", C,
+					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_LE.epf"),
+			new Triple<>("AutomizerCInline.xml", C,
+					"loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_EE.epf"),
+
 	};
 
 	private static final String[] INPUT = new String[] {
 
 			// Normal regressions
-			"examples/programs/loopAcceleration",
+			// "examples/programs/loopAcceleration",
 			// "examples/programs/loopAcceleration/twoLoops.bpl",
+			"examples/svcomp/loop-acceleration/const_false-unreach-call1.i",
 			// "examples/svcomp/loops/sum03_true-unreach-call_false-termination.i",
 			// "examples/programs/loopAcceleration/loopAccelerationFastUPR/OctagonTest_Default.bpl",
 			// "examples/programs/loopAcceleration/loopAccelerationBB/loop1.bpl",
