@@ -24,7 +24,7 @@
  * licensors of the ULTIMATE IcfgTransformer grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.icfgtransformer;
+package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner;
 
 import java.io.IOException;
 

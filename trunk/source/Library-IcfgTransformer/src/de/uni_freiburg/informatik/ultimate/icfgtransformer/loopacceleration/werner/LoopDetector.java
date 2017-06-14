@@ -52,8 +52,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Extracts the loops from an {@link IIcfg}. And calculates its backbones, which
- * are acyclic paths in the loop.
+ * Extracts the loops from an {@link IIcfg}. And calculates its backbones, which are acyclic paths in the loop.
  *
  * @param <INLOC>
  *
@@ -67,13 +66,13 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 
 	/**
 	 * Loop Detector for retrieving loops in an {@link IIcfg}.
-	 * 
+	 *
 	 * @param logger
 	 * @param originalIcfg
 	 * @param services
 	 * @param script
 	 */
-	public LoopDetector(final ILogger logger, final IIcfg<INLOC> originalIcfg, ManagedScript script) {
+	public LoopDetector(final ILogger logger, final IIcfg<INLOC> originalIcfg, final ManagedScript script) {
 		mLogger = Objects.requireNonNull(logger);
 		mScript = script;
 		mLogger.debug("Loop detector constructed.");
@@ -139,8 +138,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	}
 
 	/**
-	 * Try to find a path back to the loopheader. If there is one return true,
-	 * else false.
+	 * Try to find a path back to the loopheader. If there is one return true, else false.
 	 *
 	 * @param path
 	 *            path to check
@@ -213,14 +211,14 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 		return backbones;
 	}
 
-	private TransFormula calculateFormula(Deque<IcfgEdge> path) {
+	private TransFormula calculateFormula(final Deque<IcfgEdge> path) {
 		Term term = mScript.getScript().term("true");
 		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
 		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
 
-		List<UnmodifiableTransFormula> transformula = new ArrayList<>();
+		final List<UnmodifiableTransFormula> transformula = new ArrayList<>();
 
-		for (IcfgEdge edge : path) {
+		for (final IcfgEdge edge : path) {
 			term = Util.and(mScript.getScript(), term, edge.getTransformula().getFormula());
 
 			for (final Entry<IProgramVar, TermVariable> entry : edge.getTransformula().getInVars().entrySet()) {

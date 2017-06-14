@@ -62,10 +62,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtSortUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * A basic IcfgTransformer that applies the
- * {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
- * transformulas of an {@link IIcfg} with a new instance. + First tries for loop
- * acceleration.
+ * A basic IcfgTransformer that applies the {@link ExampleLoopAccelerationTransformulaTransformer}, i.e., replaces all
+ * transformulas of an {@link IIcfg} with a new instance. + First tries for loop acceleration.
  *
  * @param <INLOC>
  *            The type of the locations of the old IIcfg.
@@ -85,11 +83,11 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 	private final ManagedScript mScript;
 	private final IUltimateServiceProvider mServices;
 	private final IIcfgSymbolTable mOldSymbolTable;
-	private Map<IcfgLocation, Loop> mLoopMapping;
+	private final Map<IcfgLocation, Loop> mLoopMapping;
 
 	/**
 	 * Construct a new Loop Acceleration Icfg Transformer.
-	 * 
+	 *
 	 * @param logger
 	 * @param originalIcfg
 	 * @param funLocFac
@@ -141,11 +139,11 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 				final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mLogger, tf, mOldSymbolTable);
 				symbolicMemory.updateVars(update.getUpdatedVars());
 
-				final Term condition = symbolicMemory
-						.updateCondition(TransFormulaUtils.computeGuard(tf, mScript, mServices, mLogger));
+				final Term condition =
+						symbolicMemory.updateCondition(TransFormulaUtils.computeGuard(tf, mScript, mServices, mLogger));
 
-				final TermVariable backbonePathCounter = mScript.constructFreshTermVariable("kappa",
-						mScript.getScript().sort(SmtSortUtils.INT_SORT));
+				final TermVariable backbonePathCounter =
+						mScript.constructFreshTermVariable("kappa", mScript.getScript().sort(SmtSortUtils.INT_SORT));
 
 				pathCounter.add(backbonePathCounter);
 				mLogger.debug(backbonePathCounter);
@@ -160,8 +158,8 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			final Map<TermVariable, TermVariable> newPathCounter = new HashMap<>();
 
 			for (int i = 0; i < pathCounter.size(); i++) {
-				final TermVariable newBackbonePathCounter = mScript.constructFreshTermVariable("tau",
-						mScript.getScript().sort(SmtSortUtils.INT_SORT));
+				final TermVariable newBackbonePathCounter =
+						mScript.constructFreshTermVariable("tau", mScript.getScript().sort(SmtSortUtils.INT_SORT));
 				newPathCounter.put(pathCounter.get(i), newBackbonePathCounter);
 			}
 			loop.addVar(pathCounter);
@@ -181,10 +179,10 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 			mLogger.debug("ABSTRACT PATH CONDITION: " + iteratedSymbolicMemory.getAbstractCondition());
 		}
 
-		final BasicIcfg<OUTLOC> resultIcfg = new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(),
-				outLocationClass);
-		final TransformedIcfgBuilder<INLOC, OUTLOC> lst = new TransformedIcfgBuilder<>(funLocFac,
-				backtranslationTracker, transformer, originalIcfg, resultIcfg);
+		final BasicIcfg<OUTLOC> resultIcfg =
+				new BasicIcfg<>(newIcfgIdentifier, originalIcfg.getCfgSmtToolkit(), outLocationClass);
+		final TransformedIcfgBuilder<INLOC, OUTLOC> lst =
+				new TransformedIcfgBuilder<>(funLocFac, backtranslationTracker, transformer, originalIcfg, resultIcfg);
 		processLocations(originalIcfg.getInitialNodes(), lst);
 		lst.finish();
 
@@ -219,7 +217,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 					tfb.setFormula(loop.getIteratedMemory().getAbstractCondition());
 
-					for (TermVariable var : loop.getVars()) {
+					for (final TermVariable var : loop.getVars()) {
 						tfb.addAuxVar(var);
 					}
 
@@ -234,6 +232,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 					open.add(oldTarget);
 					final OUTLOC newTarget = lst.createNewLocation(oldTarget);
 					lst.createNewTransition(newSource, newTarget, oldTransition);
+
 				}
 			}
 		}
