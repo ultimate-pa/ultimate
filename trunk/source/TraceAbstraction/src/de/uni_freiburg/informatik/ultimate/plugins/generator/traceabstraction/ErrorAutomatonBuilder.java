@@ -266,10 +266,8 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final IUltimateServiceProvider services,
 			final NestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton, final CfgSmtToolkit csToolkit,
 			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory) {
-		// add 'false' state (required by the automaton builder)
-		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
-		assert !containsPredicateState(straightLineAutomaton,
-				falsePredicate) : "The error trace is feasible; hence the predicate 'False' should not be present.";
+		assert !containsPredicateState(straightLineAutomaton, predicateUnifier
+				.getFalsePredicate()) : "The error trace is feasible; hence the predicate 'False' should not be present.";
 
 		final ManagedScript mgdScript = csToolkit.getManagedScript();
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
@@ -376,7 +374,8 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 					mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(act.getSucceedingProcedure());
 			final Set<IProgramNonOldVar> modifiableGlobals =
 					mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(act.getSucceedingProcedure());
-			return mPt.weakestPreconditionReturn(succ, preHier, returnTf, callTf, oldVarAssignments, modifiableGlobals);
+			return mPt.weakestPreconditionReturn(mPf.not(succ), preHier, returnTf, callTf, oldVarAssignments,
+					modifiableGlobals);
 		}
 	}
 }
