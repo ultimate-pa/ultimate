@@ -450,7 +450,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final IPredicateUnifier predicateUnifier = mTraceCheckAndRefinementEngine.getPredicateUnifier();
 		mStateFactoryForRefinement.setIteration(super.mIteration);
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-		mErrorAutomatonStatisticsGenerator.startErrorAutomatonDifferenceTime();
+		if (mErrorAutomatonBuilder != null) {
+			mErrorAutomatonStatisticsGenerator.startErrorAutomatonDifferenceTime();
+		}
 		final boolean exploitSigmaStarConcatOfIa = !mComputeHoareAnnotation;
 		final INestedWordAutomaton<LETTER, IPredicate> minuend =
 				(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction;
@@ -491,8 +493,10 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		computeAutomataDifference(minuend, subtrahend, subtrahendBeforeEnhancement,
 				predicateUnifier, exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);
 
-		mErrorAutomatonStatisticsGenerator.stopErrorAutomatonDifferenceTime();
-		mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
+		if (mErrorAutomatonBuilder != null) {
+			mErrorAutomatonStatisticsGenerator.stopErrorAutomatonDifferenceTime();
+			mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
+		}
 		
 		mLogger.info(predicateUnifier.collectPredicateUnifierStatistics());
 
