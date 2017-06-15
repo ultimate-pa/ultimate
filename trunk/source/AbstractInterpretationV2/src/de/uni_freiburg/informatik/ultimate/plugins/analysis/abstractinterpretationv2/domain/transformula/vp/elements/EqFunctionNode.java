@@ -33,10 +33,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 
@@ -170,10 +170,15 @@ public class EqFunctionNode extends EqNode {
 	@Override
 	public EqNode renameVariables(Map<Term, Term> substitutionMapping) {
 		
-		final List<EqNode> renamedArgs = mArgs.stream()
-				.map(argNode -> argNode.renameVariables(substitutionMapping))
-				.collect(Collectors.toList());
+//		final List<EqNode> renamedArgs = mArgs.stream()
+//				.map(argNode -> argNode.renameVariables(substitutionMapping))
+//				.collect(Collectors.toList());
 
-		return mEqNodeFactory.getOrConstructEqFunctionNode(mFunction.renameVariables(substitutionMapping), renamedArgs);
+//		return mEqNodeFactory.getOrConstructEqFunctionNode(mFunction.renameVariables(substitutionMapping), renamedArgs);
+		// TODO not so nice, maybe move into a method of EqNodeAndFunctionFactory
+		final Term substitutedTerm = 
+				new Substitution(mEqNodeFactory.mMgdScript, substitutionMapping).transform(getTerm());
+		
+		return mEqNodeFactory.getOrConstructEqNode(substitutedTerm);
 	}
 }

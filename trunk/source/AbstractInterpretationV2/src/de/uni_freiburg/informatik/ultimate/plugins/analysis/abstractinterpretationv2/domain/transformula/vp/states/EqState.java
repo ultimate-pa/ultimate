@@ -163,24 +163,24 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	public boolean areEqual(final Term term1, final Term term2) {
 		if (term1.getSort().isArraySort()) {
 			assert term2.getSort().isArraySort();
-			final EqFunction node1 = mFactory.getEqNodeAndFunctionFactory().getEqFunction(term1);
-			final EqFunction node2 = mFactory.getEqNodeAndFunctionFactory().getEqFunction(term2);
+			final EqFunction node1 = mFactory.getEqNodeAndFunctionFactory().getExistingEqFunction(term1);
+			final EqFunction node2 = mFactory.getEqNodeAndFunctionFactory().getExistingEqFunction(term2);
 			return mConstraint.areEqual(node1, node2);
 		}
-		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getEqNode(term1);
-		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getEqNode(term2);
+		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingEqNode(term1);
+		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingEqNode(term2);
 		return mConstraint.areEqual(node1, node2);
 	}
 
 	public boolean areUnequal(final Term term1, final Term term2) {
 		if (term1.getSort().isArraySort()) {
 			assert term2.getSort().isArraySort();
-			final EqFunction node1 = mFactory.getEqNodeAndFunctionFactory().getEqFunction(term1);
-			final EqFunction node2 = mFactory.getEqNodeAndFunctionFactory().getEqFunction(term2);
+			final EqFunction node1 = mFactory.getEqNodeAndFunctionFactory().getExistingEqFunction(term1);
+			final EqFunction node2 = mFactory.getEqNodeAndFunctionFactory().getExistingEqFunction(term2);
 			return mConstraint.areUnequal(node1, node2);
 		}
-		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getEqNode(term1);
-		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getEqNode(term2);
+		final EqNode node1 = mFactory.getEqNodeAndFunctionFactory().getExistingEqNode(term1);
+		final EqNode node2 = mFactory.getEqNodeAndFunctionFactory().getExistingEqNode(term2);
 		return mConstraint.areUnequal(node1, node2);
 	}
 

@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -112,6 +113,7 @@ public class EqNodeAndFunctionFactory {
 			}
 			
 			result = new EqFunctionNode(function, args, selectTerm, this);
+			mTermToEqNode.put(selectTerm, result);
 		}
 		assert result instanceof EqFunctionNode;
 		return result;
@@ -121,6 +123,7 @@ public class EqNodeAndFunctionFactory {
 		EqNode result = mTermToEqNode.get(term);
 		if (result == null) {
 			result = new EqAtomicBaseNode(term, this);
+			mTermToEqNode.put(term, result);
 		}
 		assert result instanceof EqAtomicBaseNode;
 		return result;
@@ -176,8 +179,8 @@ public class EqNodeAndFunctionFactory {
 	}
 
 	public EqFunction constructRenamedEqFunction(EqFunction eqFunction, Map<Term, Term> substitutionMapping) {
-		// TODO Auto-generated method stub
-		return null;
+		final Term substitutedTerm = new Substitution(mMgdScript, substitutionMapping).transform(eqFunction.getTerm());
+		return getOrConstructEqFunction(substitutedTerm);
 	}
 
 	/**
@@ -185,7 +188,7 @@ public class EqNodeAndFunctionFactory {
 	 * @param term
 	 * @return
 	 */
-	public EqNode getEqNode(Term term) {
+	public EqNode getExistingEqNode(Term term) {
 		return mTermToEqNode.get(term);
 	}
 	
@@ -194,7 +197,7 @@ public class EqNodeAndFunctionFactory {
 	 * @param term
 	 * @return
 	 */
-	public EqFunction getEqFunction(Term term) {
+	public EqFunction getExistingEqFunction(Term term) {
 		return mTermToEqFunction.get(term);
 	}
 	

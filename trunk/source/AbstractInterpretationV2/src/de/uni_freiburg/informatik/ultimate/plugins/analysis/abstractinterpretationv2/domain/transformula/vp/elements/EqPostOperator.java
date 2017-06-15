@@ -47,7 +47,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 		mPreAnalysis = preAnalysis;
 		mMgdScript = preAnalysis.getManagedScript();
 
-		mOperationProvider = new EqOperationProvider<>();
+		mOperationProvider = new EqOperationProvider<>(eqConstraintFactory);
 
 		mPredicateTransformer = new PredicateTransformer<>(mMgdScript, mOperationProvider);	
 		mTransFormulaConverter = new TransFormulaConverterCache<ACTION>(mEqNodeAndFunctionFactory, 
@@ -57,11 +57,12 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 	@Override
 	public List<EqState<ACTION>> apply(EqState<ACTION> oldstate, ACTION transition) {
 		
+		final EqTransitionRelation<ACTION> transitionRelation = 
+				mTransFormulaConverter.getEqTransitionRelationFromTransformula(transition.getTransformula());
 
 		final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> postConstraint = 
 				mPredicateTransformer.strongestPostcondition(
-						oldstate.toEqPredicate(), 
-						mTransFormulaConverter.getEqTransitionRelationFromTransformula(transition.getTransformula()));
+						oldstate.toEqPredicate(), transitionRelation);
 		return postConstraint.toEqStates();
 	}
 	@Override

@@ -79,8 +79,9 @@ public class EqFunction implements IEqFunctionIdentifier<EqFunction> {
 	}
 
 	public String getFunctionName() {
-		assert false : "what's the right string here?";
-		return mPvoc.toString();
+//		assert false : "what's the right string here?";
+//		return mPvoc.toString();
+		return mTerm.toString();
 	}
 
 	@Override

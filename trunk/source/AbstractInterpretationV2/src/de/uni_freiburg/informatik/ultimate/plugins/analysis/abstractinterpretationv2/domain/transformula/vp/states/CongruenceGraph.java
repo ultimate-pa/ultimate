@@ -49,6 +49,10 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 		mDisequalities = new HashSet<>(original.mDisequalities);
 	}
 
+	private void copyFields(final EqGraphNode<NODE, FUNCTION> newEqgn, final EqGraphNode<NODE, FUNCTION> oldEqgn) {
+		copyFields(newEqgn, oldEqgn, null, null);
+	}
+
 	/**
 	 * 
 	 * Copies over the values from the following fields from oldEqgn to newEqgn
@@ -63,10 +67,23 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 	 * 
 	 * @param newEqgn
 	 * @param oldEqgn
+	 * @param oldNodeToSubstitutedNode 
+	 * @param newNodeToEqGraphNodeMap 
 	 */
-	private void copyFields(final EqGraphNode<NODE, FUNCTION> newEqgn, final EqGraphNode<NODE, FUNCTION> oldEqgn) {
+	private void copyFields(final EqGraphNode<NODE, FUNCTION> newEqgn, 
+			final EqGraphNode<NODE, FUNCTION> oldEqgn, 
+			final Map<NODE, NODE> oldNodeToSubstitutedNode, 
+			final Map<NODE, EqGraphNode<NODE, FUNCTION>> newNodeToEqGraphNodeMap) {
+		final NODE oldRepresentativeSubstituted;
+		if (oldNodeToSubstitutedNode != null) {
+			oldRepresentativeSubstituted = oldNodeToSubstitutedNode.get(oldEqgn.getRepresentative().getNode());
+			assert oldRepresentativeSubstituted != null;
+		} else {
+			oldRepresentativeSubstituted = oldEqgn.getRepresentative().getNode();
+		}
+		
 		final EqGraphNode<NODE, FUNCTION> newRepresentative = 
-				getOrConstructEqGraphNode(oldEqgn.getRepresentative().getNode());
+				getOrConstructEqGraphNode(oldRepresentativeSubstituted, newNodeToEqGraphNodeMap);
 		newEqgn.setRepresentative(newRepresentative);
 		newRepresentative.addToReverseRepresentative(newEqgn);
 		newEqgn.setCcpar(new HashSet<>(oldEqgn.getCcpar()));
@@ -452,10 +469,10 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 		
 		for (Entry<NODE, EqGraphNode<NODE, FUNCTION>> en : mNodeToEqGraphNode.entrySet()) {
 			final NODE newNode = oldNodeToSubstitutedNode.get(en.getKey());
-			final EqGraphNode<NODE, FUNCTION> newEqgn = getOrConstructEqGraphNode(newNode);
-			copyFields(newEqgn, en.getValue());
+			final EqGraphNode<NODE, FUNCTION> newEqgn = getOrConstructEqGraphNode(newNode, newNodeToEqGraphNodeMap);
+			copyFields(newEqgn, en.getValue(), oldNodeToSubstitutedNode, newNodeToEqGraphNodeMap);
 			
-			newNodeToEqGraphNodeMap.put(newNode, newEqgn);
+//			newNodeToEqGraphNodeMap.put(newNode, newEqgn);
 		}
 
 		mNodeToEqGraphNode = newNodeToEqGraphNodeMap;
@@ -510,13 +527,36 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 		mNodeToEqGraphNode.put(node, eqgn);
 	}
 
+	/**
+	 * version that updates mNodeToEqGraphNodeMap
+	 * @param node
+	 * @return
+	 */
 	private EqGraphNode<NODE, FUNCTION> getOrConstructEqGraphNode(NODE node) {
-		EqGraphNode<NODE, FUNCTION> result = mNodeToEqGraphNode.get(node);
+		return getOrConstructEqGraphNode(node, null);
+	}
+
+	/**
+	 * version that updates the given map, mNodeToEqGraphNodeMap only if the given map is null
+	 * @param node
+	 * @param newNodeToEqGraphNodeMap
+	 * @return
+	 */
+	private EqGraphNode<NODE, FUNCTION> getOrConstructEqGraphNode(NODE node, Map<NODE, 
+			EqGraphNode<NODE, FUNCTION>> newNodeToEqGraphNodeMap) {
+		EqGraphNode<NODE, FUNCTION> result;
+		if (newNodeToEqGraphNodeMap == null) {
+			result = mNodeToEqGraphNode.get(node);
+		} else {
+			result = newNodeToEqGraphNodeMap.get(node);
+		}
+
 		if (result == null) {
 			result = new EqGraphNode<>(node);
 			if (node.isFunction()) {
 				for (NODE child : result.getInitCcchild()) {
-					final EqGraphNode<NODE, FUNCTION> childEqgn = getOrConstructEqGraphNode(child);
+					final EqGraphNode<NODE, FUNCTION> childEqgn = getOrConstructEqGraphNode(child, 
+							newNodeToEqGraphNodeMap);
 					if (childEqgn.getInitCcpar() == null) {
 						childEqgn.setInitCcpar(node);
 					} else {
@@ -526,7 +566,11 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 					}
 				}
 			}
-			mNodeToEqGraphNode.put(node, result);
+			if (newNodeToEqGraphNodeMap == null) {
+				mNodeToEqGraphNode.put(node, result);
+			} else {
+				newNodeToEqGraphNodeMap.put(node, result);
+			}
 		}
 		return result;
 	}

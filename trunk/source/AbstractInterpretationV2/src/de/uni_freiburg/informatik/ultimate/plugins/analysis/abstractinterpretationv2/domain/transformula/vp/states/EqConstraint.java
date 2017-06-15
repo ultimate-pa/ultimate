@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.logic.Util;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
@@ -121,8 +122,7 @@ public class EqConstraint<
 
 
 	public Set<NODE> getAllNodes() {
-		// TODO Auto-generated method stub
-		return null;
+		return mNodes;
 	}
 
 
@@ -445,11 +445,7 @@ public class EqConstraint<
 		allConjuncts.addAll(functionEqualities);
 		allConjuncts.addAll(functionDisequalities);
 		
-		if (allConjuncts.isEmpty()) {
-			return script.term("true");
-		}
-
-		return script.term("and", allConjuncts.toArray(new Term[allConjuncts.size()]));
+		return Util.and(script, allConjuncts.toArray(new Term[allConjuncts.size()]));
 	}
 
 	public boolean areEqual(FUNCTION node1, FUNCTION node2) {
@@ -462,10 +458,23 @@ public class EqConstraint<
 		return mFunctionDisequalities.contains(new VPDomainSymmetricPair<FUNCTION>(rep1, rep2));
 	}
 
+	/**
+	 * This only really makes sense when this constraint is in a renaming state such that the TermVariables are 
+	 * "normalized" to the TermVariables that are associated to IProgramVars.
+	 * 
+	 * I.e. when it is the constraint of a EqPredicate or an EqState
+	 * 
+	 * @return
+	 */
 	public Set<IProgramVar> getVariables() {
 		return mVariables;
 	}
 	
+	/**
+	 * We expect this to only be called when this constraint is the constraint of an EqState.
+	 * 
+	 * @return
+	 */
 	public Set<IProgramVarOrConst> getPvocs() {
 		return mPvocs;
 	}

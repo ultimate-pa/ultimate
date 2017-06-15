@@ -24,12 +24,16 @@ public class EqDisjunctiveConstraint<
 
 	Set<EqConstraint<ACTION, NODE, FUNCTION>> mConstraints;
 
-	private EqConstraintFactory<ACTION, NODE, FUNCTION> mFactory;
+	private final EqConstraintFactory<ACTION, NODE, FUNCTION> mFactory;
 
-	public EqDisjunctiveConstraint(Collection<EqConstraint<ACTION, NODE, FUNCTION>> constraintList) {
+	public EqDisjunctiveConstraint(Collection<EqConstraint<ACTION, NODE, FUNCTION>> constraintList, 
+			EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
 		assert !constraintList.stream().filter(cons -> (cons instanceof EqBottomConstraint)).findAny().isPresent() 
 		  : "we filter out EqBottomConstraints up front, right? (could also do it here..)";
+		assert !constraintList.stream().filter(cons -> !cons.isFrozen()).findAny().isPresent() 
+		  : "all the constraints inside a disjunctive constraint should be frozen";
 		mConstraints = new HashSet<>(constraintList);
+		mFactory = factory;
 	}
 
 	public boolean isBottom() {
@@ -38,10 +42,14 @@ public class EqDisjunctiveConstraint<
 	}
 
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> renameVariables(Map<Term, Term> substitutionMapping) {
+		final Collection<EqConstraint<ACTION, NODE, FUNCTION>> constraintList = new HashSet<>();
 		for (EqConstraint<ACTION, NODE, FUNCTION> constraint : mConstraints) {
-			constraint.renameVariables(substitutionMapping);
+			final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = mFactory.unfreeze(constraint);
+			newConstraint.renameVariables(substitutionMapping);
+			newConstraint.freeze();
+			constraintList.add(newConstraint);
 		}
-		return this;
+		return mFactory.getDisjunctiveConstraint(constraintList);
 	}
 
 

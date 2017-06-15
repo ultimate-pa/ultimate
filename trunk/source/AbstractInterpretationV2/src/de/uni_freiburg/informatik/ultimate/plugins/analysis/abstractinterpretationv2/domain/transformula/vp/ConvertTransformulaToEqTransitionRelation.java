@@ -45,6 +45,7 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 	/**
 	 * stores intermediate results of the "recursion"
 	 */
+//	private final ArrayDeque<EqDisjunctiveConstraint<ACTION, EqNode, EqFunction>> mResultStack = new ArrayDeque<>();
 	private final ArrayDeque<EqDisjunctiveConstraint<ACTION, EqNode, EqFunction>> mResultStack = new ArrayDeque<>();
 	
 	public ConvertTransformulaToEqTransitionRelation(TransFormula tf, 
@@ -176,16 +177,19 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 //				}
 
 
-				final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> newConstraint;
+//				final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> newConstraint;
+				final EqConstraint<ACTION, EqNode, EqFunction> newConstraint;
 				if (polarity) {
 					newConstraint = 
-							mEqConstraintFactory.addEquality(node1, node2, emptyConstraint);
+//							mEqConstraintFactory.addEquality(node1, node2, emptyConstraint);
+							mEqConstraintFactory.addEqualityFlat(node1, node2, emptyConstraint);
 				} else {
 					newConstraint = 
-							mEqConstraintFactory.addDisequality(node1, node2, emptyConstraint);
+							mEqConstraintFactory.addDisequalityFlat(node1, node2, emptyConstraint);
 				}
 
-				mResultStack.push(newConstraint);
+//				mResultStack.push(newConstraint);
+				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(newConstraint)));
 				return;
 			}
 		}

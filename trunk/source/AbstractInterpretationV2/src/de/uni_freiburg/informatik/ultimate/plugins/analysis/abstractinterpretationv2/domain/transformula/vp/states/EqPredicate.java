@@ -11,9 +11,9 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 public class EqPredicate<ACTION extends IIcfgTransition<IcfgLocation>> implements IAbstractPredicate {
 
-	private EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> mConstraint;
-	private String[] mProcedures;
-	private Set<IProgramVar> mVars;
+	private final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> mConstraint;
+	private final String[] mProcedures;
+	private final Set<IProgramVar> mVars;
 	
 //	public EqPredicate(EqConstraint<ACTION, EqNode, EqFunction> constraint) {
 //
@@ -21,6 +21,7 @@ public class EqPredicate<ACTION extends IIcfgTransition<IcfgLocation>> implement
 
 	public EqPredicate(EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> constraint, Set<IProgramVar> vars, 
 			String[] procedures) {
+		assert vars != null;
 		mConstraint = constraint;
 		mVars = vars;
 		mProcedures = procedures;
