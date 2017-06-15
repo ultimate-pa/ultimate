@@ -44,8 +44,9 @@ public final class Util {
 	 *  free variables).
 	 * @return the satisfiability status (SAT, UNSAT or UNKNOWN).
 	 */
-	public static LBool checkSat(Script script, Term term) {
+	public static LBool checkSat(final Script script, Term term) {
 		script.push(1);
+		SMTLIBException checkSatException = null;
 		try {
 			final TermVariable[] vars = term.getFreeVars();
 			final Term[] values = new Term[vars.length];
@@ -58,12 +59,20 @@ public final class Util {
 				result = script.checkSat();
 			}
 			return result;
+		} catch (final SMTLIBException e) {
+			checkSatException = e;
 		} finally {
-			script.pop(1);
+			try {
+				script.pop(1);
+			} catch (final SMTLIBException popException) {
+				// ignore popException and throw the check-sat exception
+				throw checkSatException;
+			}
 		}
+		throw new AssertionError("This is dead code");
 	}
 	
-	private static Term termVariable2constant(Script script, TermVariable tv) {
+	private static Term termVariable2constant(final Script script, final TermVariable tv) {
 		final String name = tv.getName() + "_const_" + tv.hashCode();
 		final Sort resultSort = tv.getSort();
 		script.declareFun(name, Script.EMPTY_SORT_ARRAY, resultSort);
@@ -77,7 +86,7 @@ public final class Util {
 	 * @param f the term to negate
 	 * @return a term logically equivalent to (not f).
 	 */
-	public static Term not(Script script, Term f) {
+	public static Term not(final Script script, final Term f) {
 		if (f == script.term("true")) {
 			return script.term("false");
 		}
@@ -99,7 +108,7 @@ public final class Util {
 	 * @param subforms the sub formulas that are conjoined.
 	 * @return a term logically equivalent to (and subforms).
 	 */
-	public static Term and(Script script, Term... subforms) {
+	public static Term and(final Script script, final Term... subforms) {
 		return simplifyAndOr(script, "and", subforms);
 	}
 	
@@ -111,12 +120,12 @@ public final class Util {
 	 * @param subforms the sub formulas that are disjoined.
 	 * @return a term logically equivalent to (or subforms).
 	 */
-	public static Term or(Script script, Term... subforms) {
+	public static Term or(final Script script, final Term... subforms) {
 		return simplifyAndOr(script, "or", subforms);
 	}
 	
 	private static Term simplifyAndOr(
-			Script script, String connector, Term... subforms) {
+			final Script script, final String connector, final Term... subforms) {
 		final Term trueTerm = script.term("true");
 		final Term falseTerm = script.term("false");
 		Term neutral, absorbing;
@@ -170,7 +179,7 @@ public final class Util {
 	 * @return the simplified if-then-else term.
 	 */
 	public static Term ite(
-			Script script, Term cond, Term thenPart, Term elsePart) {
+			final Script script, final Term cond, final Term thenPart, final Term elsePart) {
 		final Term trueTerm = script.term("true");
 		final Term falseTerm = script.term("false");
 		if (cond == trueTerm || thenPart == elsePart) {
@@ -198,7 +207,7 @@ public final class Util {
 	 * @param subforms the sub formulas.
 	 * @return A simplified version of <code>(=&gt; subforms...)</code>.
 	 */
-	public static Term implies(Script script, Term... subforms) {
+	public static Term implies(final Script script, final Term... subforms) {
 		final Term trueTerm = script.term("true");
 		final Term lastFormula = subforms[subforms.length - 1];
 		if (lastFormula == trueTerm) {
