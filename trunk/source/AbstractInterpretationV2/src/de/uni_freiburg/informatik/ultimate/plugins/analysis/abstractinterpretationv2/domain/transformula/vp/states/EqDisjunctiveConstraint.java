@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
@@ -129,8 +130,10 @@ public class EqDisjunctiveConstraint<
 	public List<EqState<ACTION>> toEqStates() {
 //		EqConstraint<ACTION, NODE, FUNCTION> cons = mConstraints.iterator().next();
 //		Object st = mEqConstraintFactory.getEqStateFactory().getEqState(cons, cons.getPvocs());
+		final IIcfgSymbolTable symbolTable = mFactory.getEqStateFactory().getSymbolTable();
 		return mConstraints.stream()
-			.map(cons -> mFactory.getEqStateFactory().getEqState(cons, cons.getPvocs()))
+			.map(cons -> mFactory.getEqStateFactory().getEqState(cons, 
+					cons.getPvocs(symbolTable)))
 			.collect(Collectors.toList());
 	}
 

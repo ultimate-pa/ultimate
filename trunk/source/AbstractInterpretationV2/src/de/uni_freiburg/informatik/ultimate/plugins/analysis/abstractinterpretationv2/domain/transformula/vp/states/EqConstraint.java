@@ -1,6 +1,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.states;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -9,16 +10,20 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.ConstantFinder;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
@@ -31,7 +36,7 @@ public class EqConstraint<
 
 	private boolean mIsFrozen = false;
 
-	CongruenceGraph<NODE, FUNCTION> mElementCongruenceGraph;
+	CongruenceGraph<ACTION, NODE, FUNCTION> mElementCongruenceGraph;
 
 	UnionFind<FUNCTION> mFunctionEqualities;
 	
@@ -43,11 +48,15 @@ public class EqConstraint<
 
 	private Set<IProgramVar> mVariables;
 	private Set<IProgramVarOrConst> mPvocs;
+	
+	private Term mTerm;
 
 	/**
 	 * All (element) nodes that this constraint currently knows about
 	 */
-	private Set<NODE> mNodes = new HashSet<>();
+	private final Set<NODE> mNodes = new HashSet<>();
+	
+	private final Set<FUNCTION> mFunctions = new HashSet();
 	
 	/**
 	 * Creates an empty constraint (i.e. it does not constrain anything, is equivalent to "true")
@@ -57,7 +66,7 @@ public class EqConstraint<
 	public EqConstraint(EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
 		mFactory = factory;
 		
-		mElementCongruenceGraph = new CongruenceGraph<>();
+		mElementCongruenceGraph = new CongruenceGraph<>(this);
 		mFunctionEqualities = new UnionFind<>();
 		mFunctionDisequalities = new HashSet<>();
 
@@ -97,6 +106,9 @@ public class EqConstraint<
 
 	public void havoc(NODE node) {
 		assert !mIsFrozen;
+		if (!mNodes.contains(node)) {
+			return;
+		}
 		if (isBottom()) {
 			return;
 		}
@@ -105,7 +117,26 @@ public class EqConstraint<
 	
 	public void havocFunction(FUNCTION func) {
 		assert !mIsFrozen;
+		final Set<NODE> nodesWithFunc = mNodes.stream()
+			.filter(node -> ((node instanceof EqFunctionNode) && ((EqFunctionNode) node).getFunction().equals(func)))
+			.collect(Collectors.toSet());
+		nodesWithFunc.stream().forEach(node -> havoc(node));
 		
+		mFunctionDisequalities.removeIf(pair -> pair.contains(func));
+		
+		// union find has no remove -> has to be built anew
+		final UnionFind<FUNCTION> newFunctionEqualities = new UnionFind<>();
+		for (Set<FUNCTION> eqc : mFunctionEqualities.getAllEquivalenceClasses()) {
+			final FUNCTION first = eqc.iterator().next();
+			for (FUNCTION el : eqc) {
+				if (el == func) {
+					continue;
+				}
+				newFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(el);
+				newFunctionEqualities.union(first, el);
+			}
+		}
+		mFunctionEqualities = newFunctionEqualities;
 	}
 	
 	public void freeze() {
@@ -178,9 +209,10 @@ public class EqConstraint<
 	}
 
 
-	public void addFunctionEquality(FUNCTION key, FUNCTION value) {
-		mFunctionEqualities.union(mFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(key),
-				mFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(value));
+	public void addFunctionEqualityRaw(FUNCTION func1, FUNCTION func2) {
+		assert !areUnequal(func1, func2);
+		mFunctionEqualities.union(mFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(func1),
+				mFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(func2));
 		
 		// TODO: adding a function equality can have consequences for the elements --> implement
 	}
@@ -192,8 +224,11 @@ public class EqConstraint<
 
 
 	public void addFunctionDisequality(FUNCTION first, FUNCTION second) {
-		assert false : "TODO: work with UF-representatives..";//TODO
-		mFunctionDisequalities.add(new VPDomainSymmetricPair<FUNCTION>(first, second));
+		final FUNCTION firstRep = mFunctionEqualities.find(first);
+		final FUNCTION secondRep = mFunctionEqualities.find(second);
+
+		mFunctionDisequalities.add(new VPDomainSymmetricPair<FUNCTION>(firstRep, secondRep));
+//		mFunctionDisequalities.add(new VPDomainSymmetricPair<FUNCTION>(first, second));
 	}
 
 
@@ -217,7 +252,7 @@ public class EqConstraint<
 	/**
 	 * 
 	 * 
-	 * TODO: should we also remove the nodes that we project, here??
+	 * TDO: should we also remove the nodes that we project, here?? edit: yes, havoc does remove the nodes
 	 * @param varsToProjectAway
 	 * @return
 	 */
@@ -225,16 +260,24 @@ public class EqConstraint<
 		final EqConstraint<ACTION, NODE, FUNCTION> unfrozen = mFactory.unfreeze(this);
 
 		for (TermVariable var : varsToProjectAway) {
-			NODE nodeCorrespondingToVariable = getNodeForTerm(var);
-			unfrozen.havoc(nodeCorrespondingToVariable);
+			if (var.getSort().isArraySort()) {
+				FUNCTION funcCorrespondingToVariable = getFunctionForTerm(var);
+				unfrozen.havocFunction(funcCorrespondingToVariable);
+			} else {
+				NODE nodeCorrespondingToVariable = getNodeForTerm(var);
+				unfrozen.havoc(nodeCorrespondingToVariable);
+			}
 		}
 		unfrozen.freeze();
 		return unfrozen;
 	}
 
-	private NODE getNodeForTerm(TermVariable var) {
-		// TODO Auto-generated method stub
-		return null;
+	private FUNCTION getFunctionForTerm(Term var) {
+		return (FUNCTION) mFactory.getEqStateFactory().getEqNodeAndFunctionFactory().getExistingEqFunction(var);
+	}
+
+	private NODE getNodeForTerm(Term var) {
+		return (NODE) mFactory.getEqStateFactory().getEqNodeAndFunctionFactory().getExistingEqNode(var);
 	}
 
 //	/*
@@ -428,33 +471,45 @@ public class EqConstraint<
 
 	
 	public Term getTerm(Script script) {
-		final List<Term> elementEqualities = getSupportingElementEqualities().entrySet().stream()
-			.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm())).collect(Collectors.toList());
-		final List<Term> elementDisequalities = getElementDisequalities().stream()
-				.map(pair -> script.term("distinct", pair.getFirst().getTerm(), pair.getSecond().getTerm()))
-				.collect(Collectors.toList());
-		final List<Term> functionEqualities = getSupportingFunctionEqualities().entrySet().stream()
-			.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm())).collect(Collectors.toList());
-		final List<Term> functionDisequalities = getFunctionDisequalites().stream()
-				.map(pair -> script.term("distinct", pair.getFirst().getTerm(), pair.getSecond().getTerm()))
-				.collect(Collectors.toList());
-		
-		final List<Term> allConjuncts = new ArrayList<>();
-		allConjuncts.addAll(elementEqualities);
-		allConjuncts.addAll(elementDisequalities);
-		allConjuncts.addAll(functionEqualities);
-		allConjuncts.addAll(functionDisequalities);
-		
-		return Util.and(script, allConjuncts.toArray(new Term[allConjuncts.size()]));
+		assert mIsFrozen : "not yet frozen, term may not be final..";
+		if (mTerm == null) {
+			final List<Term> elementEqualities = getSupportingElementEqualities().entrySet().stream()
+					.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm())).collect(Collectors.toList());
+			final List<Term> elementDisequalities = getElementDisequalities().stream()
+					.map(pair -> script.term("distinct", pair.getFirst().getTerm(), pair.getSecond().getTerm()))
+					.collect(Collectors.toList());
+			final List<Term> functionEqualities = getSupportingFunctionEqualities().entrySet().stream()
+					.map(en -> script.term("=", en.getKey().getTerm(), en.getValue().getTerm())).collect(Collectors.toList());
+			final List<Term> functionDisequalities = getFunctionDisequalites().stream()
+					.map(pair -> script.term("distinct", pair.getFirst().getTerm(), pair.getSecond().getTerm()))
+					.collect(Collectors.toList());
+
+			final List<Term> allConjuncts = new ArrayList<>();
+			allConjuncts.addAll(elementEqualities);
+			allConjuncts.addAll(elementDisequalities);
+			allConjuncts.addAll(functionEqualities);
+			allConjuncts.addAll(functionDisequalities);
+
+			mTerm = Util.and(script, allConjuncts.toArray(new Term[allConjuncts.size()]));
+		}
+		return mTerm;
 	}
 
-	public boolean areEqual(FUNCTION node1, FUNCTION node2) {
-		return mFunctionEqualities.find(node1).equals(mFunctionEqualities.find(node2));
+	public boolean areEqual(FUNCTION func1, FUNCTION func2) {
+		FUNCTION func1rep = mFunctionEqualities.find(func1);
+		FUNCTION func2rep = mFunctionEqualities.find(func2);
+		if (func1rep == null || func2rep == null) {
+			return false;
+		}
+		return func1rep.equals(func2rep);
 	}
 	
 	public boolean areUnequal(FUNCTION node1, FUNCTION node2) {
 		final FUNCTION rep1 = mFunctionEqualities.find(node1);
 		final FUNCTION rep2 = mFunctionEqualities.find(node2);
+		if (rep1 == null || rep2 == null) {
+			return false;
+		}
 		return mFunctionDisequalities.contains(new VPDomainSymmetricPair<FUNCTION>(rep1, rep2));
 	}
 
@@ -466,16 +521,46 @@ public class EqConstraint<
 	 * 
 	 * @return
 	 */
-	public Set<IProgramVar> getVariables() {
+	public Set<IProgramVar> getVariables(IIcfgSymbolTable symbolTable) {
+		assert mIsFrozen;
+		if (mVariables == null) {
+			Set<TermVariable> allTvs = new HashSet<>();
+			mNodes.stream().forEach(node -> allTvs.addAll(Arrays.asList(node.getTerm().getFreeVars())));
+			
+			mFunctions.stream().forEach(func -> allTvs.addAll(Arrays.asList(func.getTerm().getFreeVars())));
+
+			/* 
+			 * note this will probably crash if this method is called on an EqConstraint that does not belong to 
+			 * a predicate or state
+			 */
+			mVariables = allTvs.stream().map(tv -> symbolTable.getProgramVar(tv)).collect(Collectors.toSet());
+		}
+		
 		return mVariables;
 	}
 	
 	/**
 	 * We expect this to only be called when this constraint is the constraint of an EqState.
+	 * @param symbolTable 
 	 * 
 	 * @return
 	 */
-	public Set<IProgramVarOrConst> getPvocs() {
+	public Set<IProgramVarOrConst> getPvocs(IIcfgSymbolTable symbolTable) {
+		assert mIsFrozen;
+		if (mPvocs == null) {
+			mPvocs = new HashSet<>();
+			mPvocs.addAll(getVariables(symbolTable));
+			
+			final Set<ApplicationTerm> constants = new HashSet<>();
+			mNodes.stream().forEach(node ->
+				constants.addAll(new ConstantFinder().findConstants(node.getTerm(), false)));
+			// TODO do we need to find literals here, too?? (i.e. ConstantTerms)
+
+			mFunctions.stream().forEach(func ->
+				constants.addAll(new ConstantFinder().findConstants(func.getTerm(), false)));
+			
+			mPvocs.addAll(constants.stream().map(c -> symbolTable.getProgramConst(c)).collect(Collectors.toSet()));
+		}
 		return mPvocs;
 	}
 
@@ -567,6 +652,19 @@ public class EqConstraint<
 		}
 		mNodes.add(nodeToAdd);
 		mElementCongruenceGraph.addNode(nodeToAdd, null);
+		
+	}
+
+	/**
+	 * called from ElementCongruenceGraph.havoc on every node that was havocced.
+	 * @param node
+	 */
+	public void removeNode(NODE node) {
+		mNodes.remove(node);
+	}
+	
+	public void addFunctionRaw(FUNCTION func) {
+		mFunctions.add(func);
 	}
 	
 }

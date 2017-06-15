@@ -654,9 +654,18 @@ public class VPDomainPreanalysis {
 	}
 
 	public boolean isArrayTracked(Term arrayid, Map<TermVariable, IProgramVar> tvToPvMap) {
-		IProgramVarOrConst pvoc = getIProgramVarOrConstOrLiteral(arrayid, tvToPvMap);
-		assert pvoc != null : "perhaps implement this case?";
-	    return isArrayTracked(pvoc);
+		if (arrayid instanceof ApplicationTerm && "store".equals(((ApplicationTerm) arrayid).getFunction().getName())) {
+			final ApplicationTerm at = (ApplicationTerm) arrayid;
+			boolean result = true;
+			result &= isArrayTracked(at.getParameters()[0], tvToPvMap);
+			result &= isElementTracked(at.getParameters()[1], tvToPvMap);
+			result &= isElementTracked(at.getParameters()[2], tvToPvMap);
+			return result;
+		} else {
+			IProgramVarOrConst pvoc = getIProgramVarOrConstOrLiteral(arrayid, tvToPvMap);
+			assert pvoc != null : "perhaps implement this case?";
+			return isArrayTracked(pvoc);
+		}
 	}
 
 //	public boolean isArrayTracked(Term arrayid, Map<TermVariable, IProgramVar> tvToPvMap) {
@@ -703,10 +712,17 @@ public class VPDomainPreanalysis {
 		return mSymboltable;
 	}
 
-	public boolean isElementTracked(Term term, TransFormula tf) {
+	private boolean isElementTracked(Term term, Map<TermVariable, IProgramVar> tvToPvMap) {
 		final Term normalizedTerm = 
-				new Substitution(mManagedScript, VPDomainHelpers.computeNormalizingSubstitution(tf)).transform(term);
+				new Substitution(mManagedScript, VPDomainHelpers.computeNormalizingSubstitution(tvToPvMap))
+				.transform(term);
 		return getEqNode(normalizedTerm) != null;
+
+	}
+
+	public boolean isElementTracked(Term term, TransFormula tf) {
+		return isElementTracked(term, VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(
+				tf.getInVars(), tf.getOutVars()));
 	}
 
 	public IUltimateServiceProvider getServices() {

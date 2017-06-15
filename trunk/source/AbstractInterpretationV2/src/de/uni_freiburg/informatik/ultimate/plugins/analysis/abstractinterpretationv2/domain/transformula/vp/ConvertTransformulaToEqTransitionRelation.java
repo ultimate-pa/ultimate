@@ -147,16 +147,18 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 				final EqFunction func2 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg2);
 				
 			
-				final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> newConstraint;
+//				final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> newConstraint;
+				final EqConstraint<ACTION, EqNode, EqFunction> newConstraint;
 				if (polarity) {
 					newConstraint = 
-							mEqConstraintFactory.addFunctionEquality(func1, func2, emptyConstraint);
+							mEqConstraintFactory.addFunctionEqualityFlat(func1, func2, emptyConstraint);
 				} else {
 					newConstraint = 
-							mEqConstraintFactory.addFunctionDisequality(func1, func2, emptyConstraint);
+							mEqConstraintFactory.addFunctionDisequalityFlat(func1, func2, emptyConstraint);
 				}
 				
-				mResultStack.push(newConstraint);
+//				mResultStack.push(newConstraint);
+				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(newConstraint)));
 				return;
 			} else {
 				// we have an "normal", element equality

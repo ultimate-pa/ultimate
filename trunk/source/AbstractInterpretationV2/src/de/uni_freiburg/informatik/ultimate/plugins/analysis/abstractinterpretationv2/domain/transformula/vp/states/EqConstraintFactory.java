@@ -159,12 +159,40 @@ public class EqConstraintFactory<
 			return result;
 	}
 
-	public EqConstraint<ACTION, NODE, FUNCTION> addFunctionDisequalityFlat(FUNCTION first, FUNCTION second,
-			EqConstraint<ACTION, NODE, FUNCTION> newConstraint) {
-		// TODO Auto-generated method stub
-		return null;
+	public EqConstraint<ACTION, NODE, FUNCTION> addFunctionDisequalityFlat(FUNCTION func1, FUNCTION func2,
+			EqConstraint<ACTION, NODE, FUNCTION> originalState) {
+		if (originalState.isBottom()) {
+//			factory.getBenchmark().stop(VPSFO.addEqualityClock);
+			return originalState;
+		}
+
+		if (func1 == func2 || func1.equals(func2)) {
+//			factory.getBenchmark().stop(VPSFO.addEqualityClock);
+			return originalState;
+		}
+		
+		if (originalState.areUnequal(func1, func2)) {
+			// the given identifiers are already equal in the originalState
+			return originalState;
+		}
+		
+		if (originalState.areEqual(func1, func2)) {
+			return getBottomConstraint();
+		}
+		
+		final EqConstraint<ACTION, NODE, FUNCTION> funct1Added = addFunctionFlat(func1, originalState);
+		final EqConstraint<ACTION, NODE, FUNCTION> funct2Added = addFunctionFlat(func2, funct1Added);	
+		
+		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(funct2Added);
+		newConstraint.addFunctionDisequality(func1, func2);
+		
+		// TODO propagations
+		
+		newConstraint.freeze();
+		return newConstraint;
 	}
 
+	@Deprecated
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> addFunctionEquality(FUNCTION f1, FUNCTION f2,
 			EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> inputConstraint) {
 
@@ -258,10 +286,37 @@ public class EqConstraintFactory<
 			return result;
 	}
 
-	public EqConstraint<ACTION, NODE, FUNCTION> addFunctionEqualityFlat(FUNCTION first, FUNCTION second,
-			EqConstraint<ACTION, NODE, FUNCTION> newConstraint) {
-		// TODO Auto-generated method stub
-		return null;
+	public EqConstraint<ACTION, NODE, FUNCTION> addFunctionEqualityFlat(FUNCTION func1, FUNCTION func2,
+			EqConstraint<ACTION, NODE, FUNCTION> originalState) {
+		if (originalState.isBottom()) {
+//			factory.getBenchmark().stop(VPSFO.addEqualityClock);
+			return originalState;
+		}
+
+		if (func1 == func2 || func1.equals(func2)) {
+//			factory.getBenchmark().stop(VPSFO.addEqualityClock);
+			return originalState;
+		}
+		
+		if (originalState.areEqual(func1, func2)) {
+			// the given identifiers are already equal in the originalState
+			return originalState;
+		}
+		
+		if (originalState.areUnequal(func1, func2)) {
+			return getBottomConstraint();
+		}
+		
+		final EqConstraint<ACTION, NODE, FUNCTION> funct1Added = addFunctionFlat(func1, originalState);
+		final EqConstraint<ACTION, NODE, FUNCTION> funct2Added = addFunctionFlat(func2, funct1Added);	
+		
+		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(funct2Added);
+		newConstraint.addFunctionEqualityRaw(func1, func2);
+		
+		// TODO propagations
+		
+		newConstraint.freeze();
+		return newConstraint;
 	}
 
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjoinDisjunctiveConstraints(
@@ -460,6 +515,10 @@ public class EqConstraintFactory<
 			// the given identifiers are already equal in the originalState
 			return originalState;
 		}
+		
+		if (originalState.areUnequal(node1, node2)) {
+			return getBottomConstraint();
+		}
 
 		
 		EqConstraint<ACTION, NODE, FUNCTION> nodesAdded = addNodeFlat(node1, originalState);
@@ -584,6 +643,10 @@ public class EqConstraintFactory<
 //			factory.getLogger().debug("VPFactoryHelpers: addDisEquality(..)");
 //		}
 		if (originalState.isBottom()) {
+			return originalState;
+		}
+		
+		if (originalState.areUnequal(node1, node2)) {
 			return originalState;
 		}
 
@@ -775,6 +838,15 @@ public class EqConstraintFactory<
 	}
 	
 	
+	private EqConstraint<ACTION, NODE, FUNCTION> addFunctionFlat(FUNCTION func,
+			EqConstraint<ACTION, NODE, FUNCTION> constraint) {
+		EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(constraint);
+		newConstraint.addFunctionRaw(func);
+		// TODO propagations
+		newConstraint.freeze();
+		return newConstraint;
+	}
+
 	public EqStateFactory<ACTION> getEqStateFactory() {
 		return mEqStateFactory;
 	}

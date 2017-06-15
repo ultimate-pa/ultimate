@@ -9,14 +9,19 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqAtomicBaseNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNonAtomicBaseNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
-public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTION> {
+public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
+		NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
+		FUNCTION extends IEqFunctionIdentifier<FUNCTION>> {
 	
 	private boolean mIsFrozen = false;
 	
@@ -24,19 +29,27 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 	
 	
 	private Set<VPDomainSymmetricPair<NODE>> mDisequalities;
+
+	/**
+	 * The EqConstraint that this cGraph belongs to.
+	 */
+	private final EqConstraint<ACTION, NODE, FUNCTION> mOwningConstraint;
 	
 	/**
 	 * constructs an empty CongruenceGraph
 	 */
-	public CongruenceGraph() {
+	public CongruenceGraph(EqConstraint<ACTION, NODE, FUNCTION> owningConstraint) {
 //		mNodeToEqGraphNode = new HashMap<>();
 		mDisequalities = new HashSet<>();
+		mOwningConstraint = owningConstraint;
 	}
 	
 	/**
 	 * 
 	 */
-	public CongruenceGraph(CongruenceGraph<NODE, FUNCTION> original) {
+	public CongruenceGraph(CongruenceGraph<ACTION, NODE, FUNCTION> original) {
+		
+		mOwningConstraint = original.mOwningConstraint;
 		
 		// make copies of the EqGraphNodes
 		for (Entry<NODE, EqGraphNode<NODE, FUNCTION>> en : original.mNodeToEqGraphNode.entrySet()) {
@@ -271,7 +284,7 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 	 * @param originalState
 	 * @return 
 	 */
-	public void havoc (NODE nodeToBeHavocced) {
+	public void havoc(NODE nodeToBeHavocced) {
 		assert !mIsFrozen;
 
 		assert !nodeToBeHavocced.isLiteral() : "cannot havoc a literal";
@@ -396,6 +409,8 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 				havoc((NODE) dependentNode);
 			}
 		}
+		
+		mOwningConstraint.removeNode(nodeToBeHavocced);
 	}
 	
 	

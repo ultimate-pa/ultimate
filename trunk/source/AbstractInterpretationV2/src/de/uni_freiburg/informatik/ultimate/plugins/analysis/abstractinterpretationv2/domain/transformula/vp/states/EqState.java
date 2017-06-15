@@ -20,7 +20,11 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		implements IAbstractState<EqState<ACTION>, IProgramVarOrConst> {
 
-	Set<IProgramVarOrConst> mVariables = new HashSet<>();
+	/**
+	 * The variables and constants that this state has "for the abstract interpretation"/"as an IAbstractState".
+	 * Note that these should be related but need not be identical to mConstraint.getPvocs(..).
+	 */
+	private final Set<IProgramVarOrConst> mPvocs;
 
 	// private final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> mConstraint;
 	private final EqConstraint<ACTION, EqNode, EqFunction> mConstraint;
@@ -28,26 +32,29 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	private final EqStateFactory<ACTION> mFactory;
 
 	public EqState(final EqConstraint<ACTION, EqNode, EqFunction> constraint,
-			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, final EqStateFactory<ACTION> eqStateFactory) {
+			final EqNodeAndFunctionFactory eqNodeAndFunctionFactory, 
+			final EqStateFactory<ACTION> eqStateFactory,
+			final Set<IProgramVarOrConst> variables) {
 		mConstraint = constraint;
 		mFactory = eqStateFactory;
+		mPvocs = new HashSet<>(variables);
 	}
 
 	@Override
 	public EqState<ACTION> addVariable(final IProgramVarOrConst variable) {
-		mVariables.add(variable);
+		mPvocs.add(variable);
 		return this;
 	}
 
 	@Override
 	public EqState<ACTION> removeVariable(final IProgramVarOrConst variable) {
-		mVariables.remove(variable);
+		mPvocs.remove(variable);
 		return this;
 	}
 
 	@Override
 	public EqState<ACTION> addVariables(final Collection<IProgramVarOrConst> variables) {
-		mVariables.addAll(variables);
+		mPvocs.addAll(variables);
 		return this;
 	}
 
@@ -58,7 +65,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		final EqConstraint<ACTION, EqNode, EqFunction> projectedConstraint =
 				mConstraint.projectExistentially(termVariablesFromPvocs);
 
-		final Set<IProgramVarOrConst> newVariables = new HashSet<>(mVariables);
+		final Set<IProgramVarOrConst> newVariables = new HashSet<>(mPvocs);
 		newVariables.removeAll(variables);
 
 		return mFactory.getEqState(projectedConstraint, newVariables);
@@ -66,12 +73,12 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 
 	@Override
 	public boolean containsVariable(final IProgramVarOrConst var) {
-		return mVariables.contains(var);
+		return mPvocs.contains(var);
 	}
 
 	@Override
 	public Set<IProgramVarOrConst> getVariables() {
-		return Collections.unmodifiableSet(mVariables);
+		return Collections.unmodifiableSet(mPvocs);
 	}
 
 	@Override
@@ -85,7 +92,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		final EqConstraint<ACTION, EqNode, EqFunction> newConstraint =
 				mFactory.getEqConstraintFactory().conjoinFlat(this.getConstraint(), other.getConstraint());
 
-		return mFactory.getEqState(newConstraint, newConstraint.getPvocs());
+		return mFactory.getEqState(newConstraint, newConstraint.getPvocs(mFactory.getSymbolTable()));
 	}
 
 	@Override
@@ -93,13 +100,13 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 		final EqConstraint<ACTION, EqNode, EqFunction> newConstraint =
 				mFactory.getEqConstraintFactory().disjoinFlat(this.getConstraint(), other.getConstraint());
 
-		return mFactory.getEqState(newConstraint, newConstraint.getPvocs());
+		return mFactory.getEqState(newConstraint, newConstraint.getPvocs(mFactory.getSymbolTable()));
 
 	}
 
 	@Override
 	public boolean isEmpty() {
-		return mVariables.isEmpty();
+		return mPvocs.isEmpty();
 	}
 
 	@Override
@@ -148,7 +155,7 @@ public class EqState<ACTION extends IIcfgTransition<IcfgLocation>>
 	public EqPredicate<ACTION> toEqPredicate() {
 		return new EqPredicate<>(
 				mFactory.getEqConstraintFactory().getDisjunctiveConstraint(Collections.singleton(mConstraint)),
-				mConstraint.getVariables(),
+				mConstraint.getVariables(mFactory.getSymbolTable()),
 				// mVariables.stream() // TODO: maybe ask the constraint for its variables?
 				// .filter(pvoc -> (pvoc instanceof IProgramVar))
 				// .map(pvoc -> ((IProgramVar) pvoc))
