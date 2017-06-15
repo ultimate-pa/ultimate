@@ -69,7 +69,8 @@ public final class Util {
 				throw checkSatException;
 			}
 		}
-		throw new AssertionError("This is dead code");
+		// 2017-06-15 Matthias: I think this is unreachable
+		throw new AssertionError("Unreachable code, but the Java compiler cannot detect this unreachability.");
 	}
 	
 	private static Term termVariable2constant(final Script script, final TermVariable tv) {
