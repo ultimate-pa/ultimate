@@ -429,10 +429,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
 		mErrorTraces.addPrecondition(mErrorAutomatonBuilder.getErrorPrecondition());
 		
-		// TODO 2017-06-02 Christian: This does not hold in general. Is this a problem?
-		// assert isInterpolantAutomatonOfSingleStateType(mErrorAutomatonBuilder.getResultBeforeEnhancement());
-		// assert accepts(mServices, mErrorAutomatonBuilder.getResultBeforeEnhancement(), mCounterexample.getWord()) :
-		// 	"Error automaton broken!";
+		 assert isInterpolantAutomatonOfSingleStateType(mErrorAutomatonBuilder.getResultBeforeEnhancement());
+		 assert accepts(mServices, mErrorAutomatonBuilder.getResultBeforeEnhancement(), mCounterexample.getWord()) :
+		 	"Error automaton broken!";
 	}
 
 	@Override
