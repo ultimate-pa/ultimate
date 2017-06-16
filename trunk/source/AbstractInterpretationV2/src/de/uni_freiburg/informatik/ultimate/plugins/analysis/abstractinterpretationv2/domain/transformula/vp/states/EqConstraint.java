@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -400,12 +399,20 @@ public class EqConstraint<
 		mElementCongruenceGraph.renameVariables(substitutionMapping);
 		
 		final UnionFind<FUNCTION> newFunctionUF = new UnionFind<>();
-		for (Entry<FUNCTION, FUNCTION> fEq : getSupportingFunctionEqualities()) {
-			FUNCTION renamedF1 = newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
-					fEq.getKey().renameVariables(substitutionMapping));
-			FUNCTION renamedF2 = newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
-					fEq.getKey().renameVariables(substitutionMapping));
-			newFunctionUF.union(renamedF1, renamedF2);
+//		for (Entry<FUNCTION, FUNCTION> fEq : getSupportingFunctionEqualities()) {
+		for (Set<FUNCTION> eqc : mFunctionEqualities.getAllEquivalenceClasses()) {
+			FUNCTION first = newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
+					eqc.iterator().next().renameVariables(substitutionMapping));
+			for (FUNCTION f : eqc) {
+				FUNCTION renamedF = newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
+						f.renameVariables(substitutionMapping));
+				newFunctionUF.union(first, renamedF);
+//				FUNCTION renamedF1 = newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
+//						fEq.getKey().renameVariables(substitutionMapping));
+//				FUNCTION renamedF2 = newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
+//						fEq.getKey().renameVariables(substitutionMapping));
+//				newFunctionUF.union(renamedF1, renamedF2);
+			}
 		}
 		mFunctionEqualities = newFunctionUF;
 		

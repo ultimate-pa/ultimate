@@ -153,6 +153,7 @@ public class EqNodeAndFunctionFactory {
 		EqFunction result = mTermToEqFunction.get(term);
 		if (result == null) {
 			result = new EqFunction(term, this);
+			mTermToEqFunction.put(term, result);
 		}
 		assert !(result instanceof EqStoreFunction);
 		return result;
@@ -174,6 +175,7 @@ public class EqNodeAndFunctionFactory {
 			final EqNode value = getOrConstructEqNode(mds.getValue());
 
 			result = new EqStoreFunction(function, indices, value, storeTerm, this);
+			mTermToEqFunction.put(storeTerm, result);
 		}
 		return result;
 	}

@@ -41,4 +41,9 @@ public class EqPredicate<ACTION extends IIcfgTransition<IcfgLocation>> implement
 		return mConstraint;
 	}
 
+	
+	@Override
+	public String toString() {
+		return mConstraint.toString();
+	}
 }
