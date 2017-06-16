@@ -830,13 +830,17 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			return false;
 		}
 		if (mLogger.isInfoEnabled()) {
-			mLogger.info("Found " + mErrorTraces.size() + " different error traces in total:");
+			mLogger.info("Found " + mErrorTraces.size() + (mErrorTraces.size() == 1
+					? " error trace:"
+					: " different error traces in total:"));
+			int i = 0;
 			for (final ErrorTrace<LETTER> errorTrace : mErrorTraces) {
 				final IPredicate precondition = errorTrace.getPrecondition();
 				// TODO 2017-06-14 Christian: Do not print error precondition on info level after testing phase.
-				mLogger.info("Error trace of length " + errorTrace.getTrace().getLength() + (precondition == null
-						? " (precondition not computed yet)."
-						: " has precondition " + precondition.getFormula() + "."));
+				mLogger.info(++i + ": Error trace of length " + errorTrace.getTrace().getLength()
+						+ (precondition == null
+								? " (precondition not computed yet)."
+								: " has precondition " + precondition.getFormula() + '.'));
 			}
 		}
 		return true;
