@@ -106,7 +106,7 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 		mScript = origIcfg.getCfgSmtToolkit().getManagedScript();
 		mLogger = Objects.requireNonNull(logger);
 		mServices = services;
-		mLoopDetector = new LoopDetector<>(mLogger, origIcfg, mScript);
+		mLoopDetector = new LoopDetector<>(mLogger, origIcfg, mScript, mServices);
 		mOldSymbolTable = originalIcfg.getCfgSmtToolkit().getSymbolTable();
 		mLoopMapping = new HashMap<>();
 
@@ -130,11 +130,9 @@ public class WernerLoopAccelerationIcfgTransformer<INLOC extends IcfgLocation, O
 
 				final UnmodifiableTransFormula tf = (UnmodifiableTransFormula) backbone.getFormula();
 
-				mLogger.debug("Backbone Formula: " + tf);
-
 				final SimultaneousUpdate update = new SimultaneousUpdate(tf, mScript);
 
-				mLogger.debug("Updated vars: " + update.getUpdatedVars());
+				mLogger.debug("UPDATED VARS: " + update.getUpdatedVars());
 
 				final SymbolicMemory symbolicMemory = new SymbolicMemory(mScript, mLogger, tf, mOldSymbolTable);
 				symbolicMemory.updateVars(update.getUpdatedVars());

@@ -55,13 +55,14 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 public class IteratedSymbolicMemory extends SymbolicMemory {
 
 	private final Map<IProgramVar, Term> mIteratedMemory;
+	private final TransFormula mFormula;
 	private final Loop mLoop;
 	private final List<TermVariable> mPathCounters;
 	private final Map<TermVariable, TermVariable> mNewPathCounters;
 	private Term mAbstractPathCondition;
 
 	private enum mCaseType {
-		NOT_CHANGED, ADDITION, CONSTANT_ASSIGNMENT, CONSTANT_ASSIGNMENT_PATHCOUNTER
+		NOT_CHANGED, ADDITION, SUBTRACTION, CONSTANT_ASSIGNMENT, CONSTANT_ASSIGNMENT_PATHCOUNTER
 	}
 
 	/**
@@ -85,6 +86,7 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 		mPathCounters = pathCounters;
 		mNewPathCounters = newPathCounter;
 		mAbstractPathCondition = mScript.getScript().term("true");
+		mFormula = tf;
 
 		for (final Entry<IProgramVar, Term> entry : mMemoryMapping.entrySet()) {
 			mIteratedMemory.put(entry.getKey(), null);
@@ -124,7 +126,10 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 					continue;
 				}
 
+				mLogger.debug("SYMBOLIC MEMORY: " + mMemoryMapping);
 				mLogger.debug("Symbol: " + mMemoryMapping.get(entry.getKey()));
+				mLogger.debug("FORMULA: " + mFormula);
+				mLogger.debug("ITERATED MEMORY: " + backbone.getSymbolicMemory().getMemory());
 				mLogger.debug("BackMem: " + memory);
 
 				// @Todo:
@@ -133,9 +138,9 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 					continue;
 				}
 
-				// Case 2: if the variable is changed from its symbol by adding
+				// Case 2.1: if the variable is changed from its symbol by
+				// adding
 				// a constant for each backbone.
-				// TODO ADDING CASE FOR SUBTRACTION
 				if ("+".equals(((ApplicationTerm) memory).getFunction().getName())
 						&& Arrays.asList(((ApplicationTerm) memory).getParameters()).contains(symbol)) {
 
@@ -147,7 +152,22 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 					prevCase = caseType;
 					caseType = mCaseType.ADDITION;
 
-					mLogger.debug("Update: " + update);
+				}
+
+				// Case 2.2: if the variable is changed from its symbol by
+				// subtracting
+				// a constant for each backbone.
+				if ("-".equals(((ApplicationTerm) memory).getFunction().getName())
+						&& Arrays.asList(((ApplicationTerm) memory).getParameters()).contains(symbol)) {
+					
+					mLogger.debug("Subtraction");
+
+					update = mScript.getScript().term("-", update, mScript.getScript().term("*",
+							((ApplicationTerm) memory).getParameters()[1], backbone.getPathCounter()));
+
+					prevCase = caseType;
+					caseType = mCaseType.SUBTRACTION;
+
 				}
 
 				// Case 3:
@@ -280,7 +300,7 @@ public class IteratedSymbolicMemory extends SymbolicMemory {
 		final Map<Term, Term> result = new HashMap<>();
 		if (term instanceof TermVariable) {
 			final TermVariable tv = (TermVariable) term;
-			for (Entry<IProgramVar, Term> entry : mSymbols.entrySet()) {
+			for (Entry<IProgramVar, Term> entry : mMemoryMapping.entrySet()) {
 				if (tv.equals(entry.getValue())) {
 					result.put(term, mIteratedMemory.get(entry.getKey()));
 					break;

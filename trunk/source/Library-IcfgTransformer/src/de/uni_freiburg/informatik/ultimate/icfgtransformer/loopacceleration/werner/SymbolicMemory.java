@@ -51,7 +51,6 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 public class SymbolicMemory {
 
 	protected final Map<IProgramVar, Term> mMemoryMapping;
-	protected final Map<IProgramVar, Term> mSymbols;
 	protected final ManagedScript mScript;
 	protected final ILogger mLogger;
 	protected final IIcfgSymbolTable mOldSymbolTable;
@@ -81,8 +80,7 @@ public class SymbolicMemory {
 		mOldSymbolTable = oldSymbolTable;
 
 		// set all variables to the InVars (symbols):
-		mSymbols = calculateSymbolTable(tf);
-		mMemoryMapping = mSymbols;
+		mMemoryMapping = calculateSymbolTable(tf);
 	}
 
 	/**
@@ -220,7 +218,7 @@ public class SymbolicMemory {
 	public static Map<IProgramVar, Term> calculateSymbolTable(final TransFormula tf) {
 		final Map<IProgramVar, Term> result = new HashMap<>();
 		for (Entry<IProgramVar, TermVariable> entry : tf.getInVars().entrySet()) {
-			result.put(entry.getKey(), entry.getValue());
+			result.put(entry.getKey(), entry.getKey().getTermVariable());
 		}
 		return result;
 	}

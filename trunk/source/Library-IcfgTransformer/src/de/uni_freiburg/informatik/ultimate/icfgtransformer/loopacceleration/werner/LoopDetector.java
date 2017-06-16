@@ -28,31 +28,26 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.wer
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Deque;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
-import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.logic.Util;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaBuilder;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormulaUtils;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.UnmodifiableTransFormula.Infeasibility;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVar;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
 /**
- * Extracts the loops from an {@link IIcfg}. And calculates its backbones, which are acyclic paths in the loop.
+ * Extracts the loops from an {@link IIcfg}. And calculates its backbones, which
+ * are acyclic paths in the loop.
  *
  * @param <INLOC>
  *
@@ -63,6 +58,7 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	private final ILogger mLogger;
 	private final ManagedScript mScript;
 	private final Deque<Loop> mLoopBodies;
+	private final IUltimateServiceProvider mServices;
 
 	/**
 	 * Loop Detector for retrieving loops in an {@link IIcfg}.
@@ -72,17 +68,19 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	 * @param services
 	 * @param script
 	 */
-	public LoopDetector(final ILogger logger, final IIcfg<INLOC> originalIcfg, final ManagedScript script) {
+	public LoopDetector(final ILogger logger, final IIcfg<INLOC> originalIcfg, final ManagedScript script,
+			final IUltimateServiceProvider services) {
 		mLogger = Objects.requireNonNull(logger);
+		mServices = services;
 		mScript = script;
 		mLogger.debug("Loop detector constructed.");
 		mLoopBodies = getLoop(originalIcfg);
+
 		for (final Loop loop : mLoopBodies) {
 			final Deque<Backbone> backbones = getBackbonePath(loop.getPath());
 			for (final Backbone backbone : backbones) {
 				loop.addBackbone(backbone);
 			}
-			mLogger.debug(loop.getBackbones());
 		}
 	}
 
@@ -96,6 +94,8 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 			for (final INLOC loopHead : loopHeads) {
 				final Deque<IcfgEdge> path = getPath(loopHead);
 				final TransFormula tf = calculateFormula(path);
+
+				mLogger.debug("LOOP: " + tf);
 
 				final Loop loop = new Loop(path, loopHead, tf);
 				loopBodies.add(loop);
@@ -138,7 +138,8 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 	}
 
 	/**
-	 * Try to find a path back to the loopheader. If there is one return true, else false.
+	 * Try to find a path back to the loopheader. If there is one return true,
+	 * else false.
 	 *
 	 * @param path
 	 *            path to check
@@ -204,40 +205,26 @@ public class LoopDetector<INLOC extends IcfgLocation> {
 
 			final TransFormula tf = calculateFormula(backbone);
 
+			mLogger.debug("BACKBONE: " + tf);
+
 			final Backbone newBackbone = new Backbone(backbone, tf);
 			backbones.addLast(newBackbone);
 		}
-		mLogger.debug("Found Backbones: " + backbones.toString());
 		return backbones;
 	}
 
 	private TransFormula calculateFormula(final Deque<IcfgEdge> path) {
-		Term term = mScript.getScript().term("true");
-		final Map<IProgramVar, TermVariable> inVars = new HashMap<>();
-		final Map<IProgramVar, TermVariable> outVars = new HashMap<>();
 
-		final List<UnmodifiableTransFormula> transformula = new ArrayList<>();
+		final List<UnmodifiableTransFormula> transformulas = new ArrayList<>();
 
 		for (final IcfgEdge edge : path) {
-			term = Util.and(mScript.getScript(), term, edge.getTransformula().getFormula());
 
-			for (final Entry<IProgramVar, TermVariable> entry : edge.getTransformula().getInVars().entrySet()) {
-				inVars.put(entry.getKey(), entry.getValue());
-			}
-
-			for (final Entry<IProgramVar, TermVariable> entry : edge.getTransformula().getOutVars().entrySet()) {
-				outVars.put(entry.getKey(), entry.getValue());
-			}
-
-			transformula.add(edge.getTransformula());
+			transformulas.add(edge.getTransformula());
 		}
 
-		final TransFormulaBuilder tfb = new TransFormulaBuilder(inVars, outVars, false,
-				path.getFirst().getTransformula().getNonTheoryConsts(), true, Collections.emptySet(), false);
-
-		tfb.setFormula(term);
-		tfb.setInfeasibility(Infeasibility.NOT_DETERMINED);
-		return tfb.finishConstruction(mScript);
+		return TransFormulaUtils.sequentialComposition(mLogger, mServices, mScript, true, true, false,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION, SimplificationTechnique.SIMPLIFY_DDA,
+				transformulas);
 	}
 
 	/**
