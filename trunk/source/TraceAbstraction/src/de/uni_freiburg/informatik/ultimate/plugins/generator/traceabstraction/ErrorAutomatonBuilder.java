@@ -95,6 +95,10 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	 * trace.
 	 */
 	private static final boolean USE_TRUE_AS_CALL_PREDECESSOR_FOR_WP = true;
+	/**
+	 * {@code true} iff predicates are unified.
+	 */
+	private static final boolean UNIFY_PREDICATES = true;
 
 	/**
 	 * Predicate transformer types.
@@ -150,13 +154,16 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final PredicateFactoryForInterpolantAutomata predicateFactoryErrorAutomaton,
 			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace,
 			final InterpolantAutomatonEnhancement enhanceMode) {
+		final PredicateUnificationMechanism internalPredicateUnifier =
+				new PredicateUnificationMechanism(predicateUnifier);
+
 		mResultBeforeEnhancement = constructStraightLineAutomaton(services, csToolkit, predicateFactory,
-				predicateUnifier, simplificationTechnique, xnfConversionTechnique, symbolTable,
+				internalPredicateUnifier, simplificationTechnique, xnfConversionTechnique, symbolTable,
 				predicateFactoryErrorAutomaton, alphabet, trace);
 
 		mResultAfterEnhancement = enhanceMode != InterpolantAutomatonEnhancement.NONE
-				? constructNondeterministicAutomaton(services, mResultBeforeEnhancement, csToolkit, predicateUnifier,
-						predicateFactory)
+				? constructNondeterministicAutomaton(services, mResultBeforeEnhancement, csToolkit,
+						internalPredicateUnifier, predicateFactory)
 				: null;
 	}
 
@@ -183,7 +190,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	@SuppressWarnings("squid:S00107")
 	private NestedWordAutomaton<LETTER, IPredicate> constructStraightLineAutomaton(
 			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final IPredicateUnifier predicateUnifier,
+			final PredicateFactory predicateFactory, final PredicateUnificationMechanism predicateUnifier,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfgSymbolTable symbolTable,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
@@ -207,6 +214,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		final List<IPredicate> newIntermediatePredicates;
 		final IPredicate newPostcondition;
 		if (ADD_SP_PREDICATES) {
+			// compute 'sp' sequence from error precondition
 			final TracePredicates spPredicates = getPredicates(services, csToolkit, predicateFactory,
 					simplificationTechnique, xnfConversionTechnique, symbolTable, truePredicate, trace, prePrecondition,
 					null, PredicateTransformerType.SP);
@@ -216,8 +224,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final Iterator<IPredicate> spIt = spPredicates.getPredicates().iterator();
 			while (preIt.hasNext()) {
 				final IPredicate pred = predicateFactory.and(preIt.next(), spIt.next());
-				final IPredicate unifiedPredicate = predicateUnifier.getOrConstructPredicate(pred);
-				newIntermediatePredicates.add(unifiedPredicate);
+				newIntermediatePredicates.add(predicateUnifier.getOrConstructPredicate(pred));
 			}
 			newPostcondition = spPredicates.getPostcondition();
 		} else {
@@ -265,10 +272,10 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private NondeterministicInterpolantAutomaton<LETTER> constructNondeterministicAutomaton(
 			final IUltimateServiceProvider services,
 			final NestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton, final CfgSmtToolkit csToolkit,
-			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory) {
+			final PredicateUnificationMechanism predicateUnifier, final PredicateFactory predicateFactory) {
 		assert !containsPredicateState(straightLineAutomaton, predicateUnifier
 				.getFalsePredicate()) : "The error trace is feasible; hence the predicate 'False' should not be present.";
-		
+
 		// 'True' state is needed by automaton construction
 		final IPredicate truePredicate = predicateUnifier.getTruePredicate();
 		if (!containsPredicateState(straightLineAutomaton, truePredicate)) {
@@ -279,10 +286,9 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
 				new PredicateTransformer<>(mgdScript, new TermDomainOperationProvider(services, mgdScript));
-		final IHoareTripleChecker hoareTripleChecker =
-				new InclusionInPreChecker(mic, pt, predicateFactory, predicateUnifier, csToolkit);
+		final IHoareTripleChecker hoareTripleChecker = new InclusionInPreChecker(mic, pt, predicateFactory, csToolkit);
 		return new NondeterministicErrorAutomaton<>(services, csToolkit, hoareTripleChecker, straightLineAutomaton,
-				predicateUnifier);
+				predicateUnifier.getPredicateUnifier());
 	}
 
 	private boolean containsPredicateState(final NestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton,
@@ -305,18 +311,14 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		private final MonolithicImplicationChecker mMic;
 		private final PredicateTransformer<Term, IPredicate, TransFormula> mPt;
 		private final PredicateFactory mPf;
-		// TODO 2017-06-09 Christian: Use the unifier here or not?
-		private final IPredicateUnifier mPu;
 		private final CfgSmtToolkit mCsToolkit;
 
 		public InclusionInPreChecker(final MonolithicImplicationChecker mic,
 				final PredicateTransformer<Term, IPredicate, TransFormula> predTransformer,
-				final PredicateFactory predFactory, final IPredicateUnifier predUnifier,
-				final CfgSmtToolkit csToolkit) {
+				final PredicateFactory predFactory, final CfgSmtToolkit csToolkit) {
 			mMic = mic;
 			mPt = predTransformer;
 			mPf = predFactory;
-			mPu = predUnifier;
 			mCsToolkit = csToolkit;
 		}
 
@@ -382,6 +384,40 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 					mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(act.getSucceedingProcedure());
 			return mPt.weakestPreconditionReturn(mPf.not(succ), preHier, returnTf, callTf, oldVarAssignments,
 					modifiableGlobals);
+		}
+	}
+
+	/**
+	 * A class that helps fast enabling/disabling of predicate unification. It will unify iff the flag is enabled.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	private class PredicateUnificationMechanism {
+		private final IPredicateUnifier mPredicateUnifier;
+
+		public PredicateUnificationMechanism(final IPredicateUnifier predicateUnifier) {
+			mPredicateUnifier = predicateUnifier;
+		}
+
+		public IPredicateUnifier getPredicateUnifier() {
+			return mPredicateUnifier;
+		}
+
+		public IPredicate getTruePredicate() {
+			return mPredicateUnifier.getTruePredicate();
+		}
+
+		public IPredicate getFalsePredicate() {
+			return mPredicateUnifier.getFalsePredicate();
+		}
+
+		/**
+		 * @param predicate
+		 *            Predicate.
+		 * @return original or unified predicate
+		 */
+		public IPredicate getOrConstructPredicate(final IPredicate predicate) {
+			return UNIFY_PREDICATES ? mPredicateUnifier.getOrConstructPredicate(predicate) : predicate;
 		}
 	}
 }
