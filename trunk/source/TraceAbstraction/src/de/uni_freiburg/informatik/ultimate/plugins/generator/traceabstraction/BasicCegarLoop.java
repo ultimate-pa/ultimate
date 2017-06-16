@@ -417,12 +417,13 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 					mServices, mPredicateFactory, mTraceCheckAndRefinementEngine.getPredicateUnifier(), mCsToolkit,
 					mSimplificationTechnique, mXnfConversionTechnique,
 					mIcfgContainer.getCfgSmtToolkit().getSymbolTable(), mPredicateFactoryInterpolantAutomata,
-					new VpAlphabet<>(mAbstraction), trace, getErrorAutomatonEnhancementMode());
+					new VpAlphabet<>(mAbstraction), trace, mIteration, getErrorAutomatonEnhancementMode());
 		} catch (final ToolchainCanceledException tce) {
 			mErrorAutomatonStatisticsGenerator.stopErrorAutomatonConstructionTime();
 			mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
 			final RunningTaskInfo rti = new RunningTaskInfo(getClass(),
-					"constructing error automaton for trace of length " + trace.length());
+					"constructing error automaton for trace of length " + trace.length() + " (spent "
+							+ mErrorAutomatonStatisticsGenerator.getLastConstructionTime() + " nanoseconds)");
 			throw new ToolchainCanceledException(tce, rti);
 		}
 		mInterpolAutomaton = null;
@@ -450,11 +451,9 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	@Override
 	protected boolean refineAbstraction() throws AutomataLibraryException {
 		final IPredicateUnifier predicateUnifier = mTraceCheckAndRefinementEngine.getPredicateUnifier();
-		mStateFactoryForRefinement.setIteration(super.mIteration);
+		mStateFactoryForRefinement.setIteration(mIteration);
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
-		if (mErrorAutomatonBuilder != null) {
-			mErrorAutomatonStatisticsGenerator.startErrorAutomatonDifferenceTime();
-		}
+		
 		final boolean exploitSigmaStarConcatOfIa = !mComputeHoareAnnotation;
 		final INestedWordAutomaton<LETTER, IPredicate> minuend =
 				(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction;
@@ -464,8 +463,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			htc = mTraceCheckAndRefinementEngine.getHoareTripleChecker();
 		} else {
 			htc = TraceAbstractionUtils.constructEfficientHoareTripleCheckerWithCaching(mServices,
-					mPref.getHoareTripleChecks(), super.mCsToolkit,
-					mTraceCheckAndRefinementEngine.getPredicateUnifier());
+					mPref.getHoareTripleChecks(), mCsToolkit, mTraceCheckAndRefinementEngine.getPredicateUnifier());
 		}
 		
 		final String automatonType;
@@ -473,7 +471,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final NestedWordAutomaton<LETTER, IPredicate> subtrahendBeforeEnhancement;
 		final InterpolantAutomatonEnhancement enhanceMode;
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahend;
-		if (mErrorAutomatonBuilder != null) {
+		if (mErrorAutomatonBuilder != null && mErrorAutomatonBuilder.hasAutomatonInIteration(mIteration)) {
+			mErrorAutomatonStatisticsGenerator.startErrorAutomatonDifferenceTime();
 			automatonType = "error";
 			useErrorAutomaton = true;
 			subtrahendBeforeEnhancement = mErrorAutomatonBuilder.getResultBeforeEnhancement();
@@ -495,7 +494,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		computeAutomataDifference(minuend, subtrahend, subtrahendBeforeEnhancement,
 				predicateUnifier, exploitSigmaStarConcatOfIa, htc, enhanceMode, useErrorAutomaton, automatonType);
 
-		if (mErrorAutomatonBuilder != null) {
+		if (mErrorAutomatonBuilder != null && mErrorAutomatonBuilder.hasAutomatonInIteration(mIteration)) {
 			mErrorAutomatonStatisticsGenerator.stopErrorAutomatonDifferenceTime();
 			mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
 		}

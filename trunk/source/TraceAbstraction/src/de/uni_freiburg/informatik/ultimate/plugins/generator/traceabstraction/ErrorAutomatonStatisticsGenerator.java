@@ -90,13 +90,19 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		if (mRunningConstruction || mRunningDifference || mTraceLength == -1) {
 			throw new IllegalAccessError("Not all statistics data were provided.");
 		}
-		final long constructionTime =
-				(long) mBenchmark.getElapsedTime(ERROR_AUTOMATON_CONSTRUCTION_TIME, TimeUnit.NANOSECONDS);
+		final long constructionTime = getLastConstructionTime();
 		final long differenceTime =
 				(long) mBenchmark.getElapsedTime(ERROR_AUTOMATON_DIFFERENCE_TIME, TimeUnit.NANOSECONDS);
 		final int traceLength = mTraceLength;
 		mTraceLength = -1;
 		mAutomatonStatistics.add(new AutomatonStatisticsEntry(constructionTime, differenceTime, traceLength));
+	}
+
+	/**
+	 * @return Construction time of last (previous) error automaton (in nanoseconds).
+	 */
+	public long getLastConstructionTime() {
+		return (long) mBenchmark.getElapsedTime(ERROR_AUTOMATON_CONSTRUCTION_TIME, TimeUnit.NANOSECONDS);
 	}
 
 	@Override

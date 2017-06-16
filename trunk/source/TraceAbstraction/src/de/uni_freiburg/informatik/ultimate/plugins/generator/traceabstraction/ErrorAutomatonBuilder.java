@@ -121,6 +121,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	private final NestedWordAutomaton<LETTER, IPredicate> mResultBeforeEnhancement;
 	private final NondeterministicInterpolantAutomaton<LETTER> mResultAfterEnhancement;
 	private IPredicate mErrorPrecondition;
+	private final int mLastIteration;
 
 	/**
 	 * @param services
@@ -152,8 +153,9 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfgSymbolTable symbolTable,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryErrorAutomaton,
-			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace,
+			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace, final int iteration,
 			final InterpolantAutomatonEnhancement enhanceMode) {
+		mLastIteration = iteration;
 		final PredicateUnificationMechanism internalPredicateUnifier =
 				new PredicateUnificationMechanism(predicateUnifier);
 
@@ -185,6 +187,15 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	public IPredicate getErrorPrecondition() {
 		assert mErrorPrecondition != null : "Precondition was not computed yet.";
 		return mErrorPrecondition;
+	}
+
+	/**
+	 * @param iteration
+	 *            Iteration of CEGAR loop.
+	 * @return {@code true} iff iteration of last error automaton construction coincides with passed iteration
+	 */
+	public boolean hasAutomatonInIteration(final int iteration) {
+		return mLastIteration == iteration;
 	}
 
 	@SuppressWarnings("squid:S00107")
