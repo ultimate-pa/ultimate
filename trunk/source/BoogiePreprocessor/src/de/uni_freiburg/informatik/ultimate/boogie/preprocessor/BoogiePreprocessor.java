@@ -20,14 +20,15 @@
  * 
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE BoogiePreprocessor plug-in, or any covered work, by linking
- * or combining it with Eclipse RCP (or a modified version of Eclipse RCP), 
- * containing parts covered by the terms of the Eclipse Public License, the 
- * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission 
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE BoogiePreprocessor plug-in grant you additional permission
  * to convey the resulting work.
  */
 package de.uni_freiburg.informatik.ultimate.boogie.preprocessor;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.boogie.preferences.PreferenceInitializer;
@@ -63,6 +64,7 @@ public class BoogiePreprocessor implements IAnalysis {
 
 	@Override
 	public void init() {
+		// not needed
 	}
 
 	/**
@@ -78,7 +80,7 @@ public class BoogiePreprocessor implements IAnalysis {
 	 */
 	@Override
 	public List<String> getDesiredToolIds() {
-		return null;
+		return Collections.emptyList();
 	}
 
 	@Override
@@ -88,7 +90,7 @@ public class BoogiePreprocessor implements IAnalysis {
 	}
 
 	@Override
-	public void setInputDefinition(ModelType graphType) {
+	public void setInputDefinition(final ModelType graphType) {
 		// not required.
 	}
 
@@ -103,8 +105,9 @@ public class BoogiePreprocessor implements IAnalysis {
 		final BoogieSymbolTableConstructor symb = new BoogieSymbolTableConstructor(logger);
 		backTranslator.setSymbolTable(symb.getSymbolTable());
 
-		final ArrayList<IObserver> observers = new ArrayList<IObserver>();
-		// observers.add(new DebugObserver(logger));
+		final ArrayList<IObserver> observers = new ArrayList<>();
+		observers.add(new EnsureBoogieModelObserver());
+		// You can use the DebugObserver here if needed
 		observers.add(new TypeChecker(mServices));
 		observers.add(new ConstExpander(backTranslator));
 		observers.add(new StructExpander(backTranslator, logger));
@@ -125,19 +128,17 @@ public class BoogiePreprocessor implements IAnalysis {
 	}
 
 	@Override
-	public void setToolchainStorage(IToolchainStorage storage) {
+	public void setToolchainStorage(final IToolchainStorage storage) {
 		// storage is not used by this plugin
 	}
 
 	@Override
-	public void setServices(IUltimateServiceProvider services) {
+	public void setServices(final IUltimateServiceProvider services) {
 		mServices = services;
-
 	}
 
 	@Override
 	public void finish() {
-		// TODO Auto-generated method stub
-
+		// not needed
 	}
 }
