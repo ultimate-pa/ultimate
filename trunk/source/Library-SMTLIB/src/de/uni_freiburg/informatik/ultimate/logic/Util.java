@@ -44,11 +44,11 @@ public final class Util {
 	 *            the term to check for satisfiability (possibly containing free variables).
 	 * @return the satisfiability status (SAT, UNSAT or UNKNOWN).
 	 */
-	@SuppressWarnings("unused")
 	public static LBool checkSat(final Script script, Term term) {
 		script.push(1);
 		Throwable checkSatException = null;
 		SMTLIBException popException = null;
+		LBool result = null;
 		try {
 			final TermVariable[] vars = term.getFreeVars();
 			final Term[] values = new Term[vars.length];
@@ -56,11 +56,10 @@ public final class Util {
 				values[i] = termVariable2constant(script, vars[i]);
 			}
 			term = script.let(vars, values, term);
-			LBool result = script.assertTerm(term);
+			result = script.assertTerm(term);
 			if (result == LBool.UNKNOWN) {
 				result = script.checkSat();
 			}
-			return result;
 		} catch (final Throwable e) {
 			checkSatException = e;
 		} finally {
@@ -77,8 +76,11 @@ public final class Util {
 				throw (SMTLIBException) checkSatException;
 			}
 			throw new RuntimeException(checkSatException);
+		} else if (popException != null) {
+			throw popException;
+		} else {
+			return result;
 		}
-		throw popException;
 	}
 
 	private static Term termVariable2constant(final Script script, final TermVariable tv) {
