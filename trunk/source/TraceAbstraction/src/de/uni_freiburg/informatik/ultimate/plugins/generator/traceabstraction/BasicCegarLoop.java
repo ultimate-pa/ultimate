@@ -512,7 +512,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	}
 
 	private void computeAutomataDifference(final INestedWordAutomaton<LETTER, IPredicate> minuend,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> substrahend,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahend,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahendBeforeEnhancement,
 			final IPredicateUnifier predicateUnifier, final boolean explointSigmaStarConcatOfIA,
 			final IHoareTripleChecker htc, final InterpolantAutomatonEnhancement enhanceMode,
@@ -521,38 +521,38 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		try {
 			mLogger.debug("Start constructing difference");
 			final PowersetDeterminizer<LETTER, IPredicate> psd =
-					new PowersetDeterminizer<>(substrahend, true, mPredicateFactoryInterpolantAutomata);
+					new PowersetDeterminizer<>(subtrahend, true, mPredicateFactoryInterpolantAutomata);
 			IOpWithDelayedDeadEndRemoval<LETTER, IPredicate> diff;
 			try {
 				if (mPref.differenceSenwa()) {
 					diff = new DifferenceSenwa<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-							minuend, substrahend, psd, false);
+							minuend, subtrahend, psd, false);
 				} else {
 					diff = new Difference<>(new AutomataLibraryServices(mServices), mStateFactoryForRefinement,
-							minuend, substrahend, psd, explointSigmaStarConcatOfIA);
+							minuend, subtrahend, psd, explointSigmaStarConcatOfIA);
 				}
 			} catch (final AutomataOperationCanceledException aoce) {
-				final RunningTaskInfo runningTaskInfo = getDifferenceTimeoutRunningTaskInfo(minuend, substrahend,
+				final RunningTaskInfo runningTaskInfo = getDifferenceTimeoutRunningTaskInfo(minuend, subtrahend,
 						subtrahendBeforeEnhancement, automatonType);
 				aoce.addRunningTaskInfo(runningTaskInfo);
 				throw aoce;
 			} catch (final ToolchainCanceledException tce) {
-				final RunningTaskInfo runningTaskInfo = getDifferenceTimeoutRunningTaskInfo(minuend, substrahend,
+				final RunningTaskInfo runningTaskInfo = getDifferenceTimeoutRunningTaskInfo(minuend, subtrahend,
 						subtrahendBeforeEnhancement, automatonType);
 				tce.addRunningTaskInfo(runningTaskInfo);
 				throw tce;
 			} finally {
 				if (!useErrorAutomaton && enhanceMode != InterpolantAutomatonEnhancement.NONE) {
-					assert substrahend instanceof AbstractInterpolantAutomaton :
+					assert subtrahend instanceof AbstractInterpolantAutomaton :
 						"if enhancement is used, we need AbstractInterpolantAutomaton";
-					((AbstractInterpolantAutomaton<LETTER>) substrahend).switchToReadonlyMode();
+					((AbstractInterpolantAutomaton<LETTER>) subtrahend).switchToReadonlyMode();
 				}
 			}
 
-			dumpAutomatonIfEnabled(substrahend, "", automatonType);
+			dumpAutomatonIfEnabled(subtrahend, "", automatonType);
 
 			if (!useErrorAutomaton) {
-				checkEnhancement(subtrahendBeforeEnhancement, substrahend);
+				checkEnhancement(subtrahendBeforeEnhancement, subtrahend);
 			}
 
 			if (REMOVE_DEAD_ENDS) {
@@ -576,21 +576,21 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	}
 
 	private RunningTaskInfo getDifferenceTimeoutRunningTaskInfo(final INestedWordAutomaton<LETTER, IPredicate> minuend,
-			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> substrahend,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahend,
 			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahendBeforeEnhancement,
 			final String automatonType) {
 		final String taskDescription = "constructing difference of abstraction (" + minuend.size() + "states) and "
-				+ automatonType + " automaton (currently " + substrahend.size() + " states, "
+				+ automatonType + " automaton (currently " + subtrahend.size() + " states, "
 				+ subtrahendBeforeEnhancement.size() + " states before enhancement)";
 		return new RunningTaskInfo(getClass(), taskDescription);
 	}
 
-	private void dumpAutomatonIfEnabled(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> substrahend,
+	private void dumpAutomatonIfEnabled(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahend,
 			final String prefix, final String automatonType) {
 		if (mPref.dumpAutomata()) {
 			final String type = Character.toUpperCase(automatonType.charAt(0)) + automatonType.substring(1);
 			final String filename = prefix + type + "Automaton_Iteration" + mIteration;
-			super.writeAutomatonToFile(substrahend, filename);
+			super.writeAutomatonToFile(subtrahend, filename);
 		}
 	}
 
