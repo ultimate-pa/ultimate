@@ -530,16 +530,14 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 							minuend, substrahend, psd, explointSigmaStarConcatOfIA);
 				}
 			} catch (final AutomataOperationCanceledException aoce) {
-				final String taskDescription = "constructing difference of abstraction (" + minuend.size()
-						+ "states) and " + automatonType + " automaton (currently " + substrahend.size()
-						+ " states, " + subtrahendBeforeEnhancement.size() + " states before enhancement)";
-				aoce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+				final RunningTaskInfo runningTaskInfo = getDifferenceTimeoutRunningTaskInfo(minuend, substrahend,
+						subtrahendBeforeEnhancement, automatonType);
+				aoce.addRunningTaskInfo(runningTaskInfo);
 				throw aoce;
 			} catch (final ToolchainCanceledException tce) {
-				final String taskDescription = "constructing difference of abstraction (" + minuend.size()
-						+ "states) and " + automatonType + " automaton (currently " + substrahend.size()
-						+ " states, " + subtrahendBeforeEnhancement.size() + " states before enhancement)";
-				tce.addRunningTaskInfo(new RunningTaskInfo(getClass(), taskDescription));
+				final RunningTaskInfo runningTaskInfo = getDifferenceTimeoutRunningTaskInfo(minuend, substrahend,
+						subtrahendBeforeEnhancement, automatonType);
+				tce.addRunningTaskInfo(runningTaskInfo);
 				throw tce;
 			} finally {
 				if (!useErrorAutomaton && enhanceMode != InterpolantAutomatonEnhancement.NONE) {
@@ -573,6 +571,16 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			mCegarLoopBenchmark.addPredicateUnifierData(predicateUnifier.getPredicateUnifierBenchmark());
 			mCegarLoopBenchmark.stop(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		}
+	}
+
+	private RunningTaskInfo getDifferenceTimeoutRunningTaskInfo(final INestedWordAutomaton<LETTER, IPredicate> minuend,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> substrahend,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahendBeforeEnhancement,
+			final String automatonType) {
+		final String taskDescription = "constructing difference of abstraction (" + minuend.size() + "states) and "
+				+ automatonType + " automaton (currently " + substrahend.size() + " states, "
+				+ subtrahendBeforeEnhancement.size() + " states before enhancement)";
+		return new RunningTaskInfo(getClass(), taskDescription);
 	}
 
 	private void dumpAutomatonIfEnabled(final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> substrahend,
@@ -847,7 +855,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 
 	public void setWitnessAutomaton(final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
 		mWitnessAutomaton = witnessAutomaton;
-
 	}
 
 	private final static boolean checkStoreCounterExamples(final TAPreferences pref) {
