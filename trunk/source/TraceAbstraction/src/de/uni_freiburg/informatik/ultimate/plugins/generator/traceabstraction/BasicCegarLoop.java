@@ -835,7 +835,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 			for (final ErrorTrace<LETTER> errorTrace : mErrorTraces) {
 				final IPredicate precondition = errorTrace.getPrecondition();
 				// TODO 2017-06-14 Christian: Do not print error precondition on info level after testing phase.
-				mLogger.info(++i + ": Error trace of length " + errorTrace.getTrace().getLength()
+				mLogger.info(++i + ": Error trace of length " + errorTrace.getTrace().getWord().length()
 						+ (precondition == null
 								? " (precondition not computed yet)."
 								: " has precondition " + precondition.getFormula() + '.'));
