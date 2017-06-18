@@ -39,7 +39,8 @@ public enum ErrorAutomatonStatisticsDefinitions implements IStatisticsElement {
 	ErrorAutomatonConstructionTimeAvg(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
 	ErrorAutomatonConstructionTimeTotal(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
 	ErrorAutomatonDifferenceTimeAvg(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
-	ErrorAutomatonDifferenceTimeTotal(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey);
+	ErrorAutomatonDifferenceTimeTotal(Long.class, AStatisticsType.sLongAddition, AStatisticsType.sTimeBeforeKey),
+	AcceptsSingleTrace(Boolean.class, AStatisticsType.sIntegerAddition, AStatisticsType.sKeyBeforeData);
 
 	private final Class<?> mClazz;
 	private final Function<Object, Function<Object, Object>> mAggr;

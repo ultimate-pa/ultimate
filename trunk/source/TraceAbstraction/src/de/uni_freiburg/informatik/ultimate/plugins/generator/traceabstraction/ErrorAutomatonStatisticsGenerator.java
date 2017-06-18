@@ -33,6 +33,16 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
+import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
@@ -51,6 +61,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	private boolean mRunningDifference = false;
 	private int mTraceLength = -1;
 	private final List<AutomatonStatisticsEntry> mAutomatonStatistics = new LinkedList<>();
+	private Boolean mAcceptsSingleTrace;
 
 	public ErrorAutomatonStatisticsGenerator() {
 		mBenchmark = new Benchmark();
@@ -86,16 +97,32 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		mTraceLength = length;
 	}
 
+	public <LETTER extends IIcfgTransition<?>> void evaluateFinalErrorAutomaton(final AutomataLibraryServices services,
+			final ErrorAutomatonBuilder<LETTER> errorAutomatonBuilder,
+			final PredicateFactoryForInterpolantAutomata predicateFactory,
+			final PredicateFactoryRefinement stateFactory) throws AutomataLibraryException {
+		final NondeterministicInterpolantAutomaton<LETTER> minuend = errorAutomatonBuilder.getResultAfterEnhancement();
+		minuend.switchToReadonlyMode();
+		final NestedWordAutomaton<LETTER, IPredicate> subtrahend = errorAutomatonBuilder.getResultBeforeEnhancement();
+		final PowersetDeterminizer<LETTER, IPredicate> psd =
+				new PowersetDeterminizer<>(subtrahend, true, predicateFactory);
+		final IDoubleDeckerAutomaton<LETTER, IPredicate> diff =
+				new Difference<>(services, stateFactory, minuend, subtrahend, psd, false).getResult();
+		mAcceptsSingleTrace = new IsEmpty<>(services, diff).getResult();
+	}
+
 	public void finishAutomatonInstance() {
-		if (mRunningConstruction || mRunningDifference || mTraceLength == -1) {
+		if (mRunningConstruction || mRunningDifference || mTraceLength == -1 || mAcceptsSingleTrace == null) {
 			throw new IllegalAccessError("Not all statistics data were provided.");
 		}
 		final long constructionTime = getLastConstructionTime();
 		final long differenceTime =
 				(long) mBenchmark.getElapsedTime(ERROR_AUTOMATON_DIFFERENCE_TIME, TimeUnit.NANOSECONDS);
 		final int traceLength = mTraceLength;
+		final boolean acceptsSingleTrace = mAcceptsSingleTrace;
 		mTraceLength = -1;
-		mAutomatonStatistics.add(new AutomatonStatisticsEntry(constructionTime, differenceTime, traceLength));
+		mAutomatonStatistics
+				.add(new AutomatonStatisticsEntry(constructionTime, differenceTime, traceLength, acceptsSingleTrace));
 	}
 
 	/**
@@ -127,6 +154,8 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 				return getAverageErrorAutomatonConstructionTime(stats -> stats.mDifferenceTime);
 			case ErrorAutomatonDifferenceTimeTotal:
 				return getTotalErrorAutomatonConstructionTime(stats -> stats.mDifferenceTime);
+			case AcceptsSingleTrace:
+				return getTotalNumberOfSingleTraceAcceptance();
 			default:
 				throw new AssertionError("Unknown key: " + key);
 		}
@@ -142,6 +171,16 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 			result += stats.mTraceLength;
 		}
 		return result / total;
+	}
+
+	private Object getTotalNumberOfSingleTraceAcceptance() {
+		int result = 0;
+		for (final AutomatonStatisticsEntry stats : mAutomatonStatistics) {
+			if (stats.mAcceptsSingleTrace) {
+				++result;
+			}
+		}
+		return result;
 	}
 
 	private long getAverageErrorAutomatonConstructionTime(final Function<AutomatonStatisticsEntry, Long> stats2long) {
@@ -175,11 +214,14 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		private final long mConstructionTime;
 		private final int mTraceLength;
 		private final long mDifferenceTime;
+		private final boolean mAcceptsSingleTrace;
 
-		public AutomatonStatisticsEntry(final long constructionTime, final long differenceTime, final int traceLength) {
+		public AutomatonStatisticsEntry(final long constructionTime, final long differenceTime, final int traceLength,
+				final boolean acceptsSingleTrace) {
 			mDifferenceTime = differenceTime;
 			mConstructionTime = constructionTime;
 			mTraceLength = traceLength;
+			mAcceptsSingleTrace = acceptsSingleTrace;
 		}
 	}
 }
