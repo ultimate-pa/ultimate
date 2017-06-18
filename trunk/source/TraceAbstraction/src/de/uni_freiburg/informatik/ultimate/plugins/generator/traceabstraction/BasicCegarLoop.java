@@ -497,7 +497,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		if (mErrorAutomatonBuilder != null && mErrorAutomatonBuilder.hasAutomatonInIteration(mIteration)) {
 			mErrorAutomatonStatisticsGenerator.stopErrorAutomatonDifferenceTime();
 			mErrorAutomatonStatisticsGenerator.evaluateFinalErrorAutomaton(new AutomataLibraryServices(mServices),
-					mErrorAutomatonBuilder, mPredicateFactoryInterpolantAutomata, mStateFactoryForRefinement);
+					mErrorAutomatonBuilder, mPredicateFactoryInterpolantAutomata, mPredicateFactoryResultChecking);
 			mErrorAutomatonStatisticsGenerator.finishAutomatonInstance();
 		}
 		

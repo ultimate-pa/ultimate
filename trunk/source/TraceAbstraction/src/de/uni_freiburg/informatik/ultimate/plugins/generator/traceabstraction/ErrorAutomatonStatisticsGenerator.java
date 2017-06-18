@@ -100,14 +100,14 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	public <LETTER extends IIcfgTransition<?>> void evaluateFinalErrorAutomaton(final AutomataLibraryServices services,
 			final ErrorAutomatonBuilder<LETTER> errorAutomatonBuilder,
 			final PredicateFactoryForInterpolantAutomata predicateFactory,
-			final PredicateFactoryRefinement stateFactory) throws AutomataLibraryException {
+			final PredicateFactoryResultChecking predicateFactoryResultChecking) throws AutomataLibraryException {
 		final NondeterministicInterpolantAutomaton<LETTER> minuend = errorAutomatonBuilder.getResultAfterEnhancement();
 		minuend.switchToReadonlyMode();
 		final NestedWordAutomaton<LETTER, IPredicate> subtrahend = errorAutomatonBuilder.getResultBeforeEnhancement();
 		final PowersetDeterminizer<LETTER, IPredicate> psd =
 				new PowersetDeterminizer<>(subtrahend, true, predicateFactory);
 		final IDoubleDeckerAutomaton<LETTER, IPredicate> diff =
-				new Difference<>(services, stateFactory, minuend, subtrahend, psd, false).getResult();
+				new Difference<>(services, predicateFactoryResultChecking, minuend, subtrahend, psd, false).getResult();
 		mAcceptsSingleTrace = new IsEmpty<>(services, diff).getResult();
 	}
 
