@@ -277,11 +277,13 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 * run into termination issues, but it has already found out that the program contains errors. This method can be
 	 * used to ask for such results whenever the analysis terminates.
 	 * 
-	 * @param reportErrorStatistics
-	 * 	          {@code true} iff statistics should be reported
+	 * @param errorGeneralizationEnabled
+	 * 	          {@code true} iff error generalization is enabled
+	 * @param abstractResult
+	 *            result that would be reported by {@link AbstractCegarLoop}
 	 * @return {@code true} if at least one feasible counterexample was detected
 	 */
-	protected abstract boolean isResultUnsafe(boolean reportErrorStatistics);
+	protected abstract boolean isResultUnsafe(boolean errorGeneralizationEnabled, Result abstractResult);
 
 	/**
 	 * Add Hoare annotation to the control flow graph. Use the information computed so far annotate the ProgramPoints of
@@ -389,7 +391,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 						return reportResult(Result.UNSAFE);
 					}
 				} else if (isCounterexampleFeasible == Script.LBool.UNKNOWN) {
-					if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND)) {
+					if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.UNKNOWN)) {
 						return reportResult(Result.UNSAFE);
 					}
 					mReasonUnknown = new UnprovabilityReason("unable to decide satisfiability of path constraint");
@@ -461,14 +463,14 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				return performTimeoutActions(e);
 			}
 			if (isAbstractionCorrect) {
-				if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND)) {
+				if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.SAFE)) {
 					return reportResult(Result.UNSAFE);
 				}
 				return reportResult(Result.SAFE);
 			}
 			mInteractive.send(mCegarLoopBenchmark);
 		}
-		if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND)) {
+		if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.TIMEOUT)) {
 			return reportResult(Result.UNSAFE);
 		}
 		return reportResult(Result.TIMEOUT);
@@ -487,7 +489,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	private Result performTimeoutActions(final IRunningTaskStackProvider e) {
 		mRunningTaskStackProvider = e;
 		mLogger.warn(MSG_VERIFICATION_CANCELED);
-		if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND)) {
+		if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.TIMEOUT)) {
 			return reportResult(Result.UNSAFE);
 		}
 		return reportResult(Result.TIMEOUT);

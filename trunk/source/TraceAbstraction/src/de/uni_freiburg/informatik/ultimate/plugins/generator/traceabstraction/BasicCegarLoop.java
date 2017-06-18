@@ -823,7 +823,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 	}
 
 	@Override
-	protected boolean isResultUnsafe(final boolean errorGeneralizationEnabled) {
+	protected boolean isResultUnsafe(final boolean errorGeneralizationEnabled, final Result abstractResult) {
 		if (!errorGeneralizationEnabled || mErrorTraces.isEmpty()) {
 			return false;
 		}
@@ -841,7 +841,8 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 								: " has precondition " + precondition.getFormula() + '.'));
 			}
 		}
-		return true;
+		// TODO 2017-06-18 Christian: Currently we want to run the CEGAR loop until the abstraction is empty.
+		return abstractResult == Result.SAFE;
 	}
 
 	public void setWitnessAutomaton(final INwaOutgoingLetterAndTransitionProvider<WitnessEdge, WitnessNode> witnessAutomaton) {
