@@ -1,9 +1,7 @@
-//???safe
+//Safe
 /* 
  * Author: heizmann@informatik.uni-freiburg.de
  * Date: 2017-06-15
- * 
- * Simplified version of RelevantVariablesBug01.c
  * 
  * java.lang.AssertionError: notEqual
  *  at de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.RelevantVariables.computePredecessorRvCall_NonPending(RelevantVariables.java:627)
@@ -13,41 +11,41 @@
  *  at de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp.computeInterpolantsUsingUnsatCore(TraceCheckerSpWp.java:266)
  * 
  * settings/svcomp2017/automizer/svcomp-Reach-32bit-Automizer_Bitvector.epf
- * toolchains/AutomizerBpl.xml
+ * toolchains/AutomizerC.xml
  * 
  */
 
 
-implementation ULTIMATE.start() returns (){
-    assume(mem[g] == 0bv32);
-    call list_add(g);
-    assert mem[0bv32] != 0bv32;
-    return;
+
+struct list_head {
+ int  next,  prev;
+};
+ 
+int gl_list  ;
+void inspect(const struct list_head *head)
+{
+
+        if (! head->prev     ) __VERIFIER_error();;       
+
 }
+void __list_add(int  new,
+         int  prev,
+         struct list_head *next)
+{
+ next->prev = 1;
 
-implementation foo(p : bv32) returns (){
-    mem := mem[p := 1bv32];
-    return;
 }
-
-implementation list_add(p : bv32) returns (){
-    var tmp : bv32;
-    tmp := mem[p];
-    call foo(tmp);
-    return;
+ 
+void list_add(int  new, struct list_head *head)
+{
+ __list_add(0, 0, head->next);
 }
+ 
 
-var g : bv32;
 
-var mem : [bv32]bv32;
+void main()
+{
+    list_add( 0, &gl_list);
+    inspect(0);
 
-procedure foo(p : bv32) returns ();
-modifies mem;
-
-procedure list_add(p : bv32) returns ();
-modifies mem;
-
-procedure ULTIMATE.start() returns ();
-modifies g, mem;
-modifies mem;
-
+}
