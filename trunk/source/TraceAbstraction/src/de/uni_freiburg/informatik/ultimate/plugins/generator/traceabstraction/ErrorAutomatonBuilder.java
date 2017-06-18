@@ -35,6 +35,7 @@ import java.util.Set;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
@@ -58,6 +59,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Term
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.IPredicatePostprocessor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.QuantifierEliminationPostprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
@@ -99,6 +102,14 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	 * {@code true} iff predicates are unified.
 	 */
 	private static final boolean UNIFY_PREDICATES = true;
+	/**
+	 * {@code true} iff formulas are postprocessed (i.e., simplified).
+	 */
+	private static final boolean APPLY_FORMULA_POSTPROCESSOR = true;
+	/**
+	 * {@code true} iff SP predicates are used.
+	 */
+	private static final boolean ADD_SP_PREDICATES = true;
 
 	/**
 	 * Predicate transformer types.
@@ -115,8 +126,6 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		 */
 		SP
 	}
-
-	private static final boolean ADD_SP_PREDICATES = true;
 
 	private final NestedWordAutomaton<LETTER, IPredicate> mResultBeforeEnhancement;
 	private final NondeterministicInterpolantAutomaton<LETTER> mResultAfterEnhancement;
@@ -155,11 +164,12 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final PredicateFactoryForInterpolantAutomata predicateFactoryErrorAutomaton,
 			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace, final int iteration,
 			final InterpolantAutomatonEnhancement enhanceMode) {
+		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 		mLastIteration = iteration;
 		final PredicateUnificationMechanism internalPredicateUnifier =
 				new PredicateUnificationMechanism(predicateUnifier);
 
-		mResultBeforeEnhancement = constructStraightLineAutomaton(services, csToolkit, predicateFactory,
+		mResultBeforeEnhancement = constructStraightLineAutomaton(services, logger, csToolkit, predicateFactory,
 				internalPredicateUnifier, simplificationTechnique, xnfConversionTechnique, symbolTable,
 				predicateFactoryErrorAutomaton, alphabet, trace);
 
@@ -200,7 +210,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 	@SuppressWarnings("squid:S00107")
 	private NestedWordAutomaton<LETTER, IPredicate> constructStraightLineAutomaton(
-			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
+			final IUltimateServiceProvider services, final ILogger logger, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final PredicateUnificationMechanism predicateUnifier,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
 			final IIcfgSymbolTable symbolTable,
@@ -208,11 +218,19 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace) throws AssertionError {
 		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
 		final IPredicate truePredicate = predicateUnifier.getTruePredicate();
+		final List<IPredicatePostprocessor> postprocessors;
+		if (APPLY_FORMULA_POSTPROCESSOR) {
+			final QuantifierEliminationPostprocessor qepp = new QuantifierEliminationPostprocessor(services, logger,
+					csToolkit.getManagedScript(), predicateFactory, simplificationTechnique, xnfConversionTechnique);
+			postprocessors = Collections.singletonList(qepp);
+		} else {
+			postprocessors = Collections.emptyList();
+		}
 
 		// compute 'wp' sequence from 'false'
-		final TracePredicates wpPredicates =
-				getPredicates(services, csToolkit, predicateFactory, simplificationTechnique, xnfConversionTechnique,
-						symbolTable, truePredicate, trace, null, falsePredicate, PredicateTransformerType.WP);
+		final TracePredicates wpPredicates = getPredicates(services, csToolkit, predicateFactory,
+				simplificationTechnique, xnfConversionTechnique, symbolTable, truePredicate, trace, null,
+				falsePredicate, postprocessors, PredicateTransformerType.WP);
 
 		// negate 'wp' sequence to get 'pre'
 		final List<IPredicate> wpIntermediatePredicates = wpPredicates.getPredicates();
@@ -228,7 +246,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			// compute 'sp' sequence from error precondition
 			final TracePredicates spPredicates = getPredicates(services, csToolkit, predicateFactory,
 					simplificationTechnique, xnfConversionTechnique, symbolTable, truePredicate, trace, prePrecondition,
-					null, PredicateTransformerType.SP);
+					null, postprocessors, PredicateTransformerType.SP);
 			assert (preIntermediatePredicates.size() == spPredicates.getPredicates().size());
 			newIntermediatePredicates = new ArrayList<>(preIntermediatePredicates.size());
 			final Iterator<IPredicate> preIt = preIntermediatePredicates.iterator();
@@ -261,7 +279,8 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			final PredicateFactory predicateFactory, final SimplificationTechnique simplificationTechnique,
 			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
 			final IPredicate truePredicate, final NestedWord<LETTER> trace, final IPredicate precondition,
-			final IPredicate postcondition, final PredicateTransformerType predicateTransformer) throws AssertionError {
+			final IPredicate postcondition, final List<IPredicatePostprocessor> postprocessors,
+			final PredicateTransformerType predicateTransformer) throws AssertionError {
 		final DefaultTransFormulas dtf = new DefaultTransFormulas(trace, precondition, postcondition,
 				Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
 		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(predicateFactory,
@@ -269,10 +288,11 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				postcondition, null, truePredicate, simplificationTechnique, xnfConversionTechnique, symbolTable);
 		final TracePredicates predicates;
 		try {
-			predicates = (predicateTransformer == PredicateTransformerType.WP)
-					? ipt.computeWeakestPreconditionSequence(dtf, Collections.emptyList(),
-							USE_TRUE_AS_CALL_PREDECESSOR_FOR_WP, false)
-					: ipt.computeStrongestPostconditionSequence(dtf, Collections.emptyList());
+			predicates =
+					(predicateTransformer == PredicateTransformerType.WP)
+							? ipt.computeWeakestPreconditionSequence(dtf, postprocessors,
+									USE_TRUE_AS_CALL_PREDECESSOR_FOR_WP, false)
+							: ipt.computeStrongestPostconditionSequence(dtf, postprocessors);
 		} catch (final TraceInterpolationException e) {
 			// TODO 2017-05-17 Christian: better error handling
 			throw new AssertionError();
