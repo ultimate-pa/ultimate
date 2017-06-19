@@ -35,24 +35,31 @@
  */
 package de.uni_freiburg.informatik.ultimate.cdt.parser;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.stream.Collectors;
 
-import org.eclipse.cdt.core.dom.IPDOMIndexer;
+import org.eclipse.cdt.core.CCorePlugin;
+import org.eclipse.cdt.core.dom.IPDOMManager;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
-import org.eclipse.cdt.internal.core.pdom.IPDOM;
-import org.eclipse.cdt.internal.core.pdom.PDOMManager;
 import org.eclipse.cdt.core.dom.parser.c.GCCParserExtensionConfiguration;
 import org.eclipse.cdt.core.dom.parser.c.GCCScannerExtensionConfiguration;
 import org.eclipse.cdt.core.index.IIndex;
+import org.eclipse.cdt.core.index.IIndexManager;
 import org.eclipse.cdt.core.model.CoreModel;
+import org.eclipse.cdt.core.model.ICElementVisitor;
 import org.eclipse.cdt.core.model.ICProject;
+import org.eclipse.cdt.core.model.ITranslationUnit;
 import org.eclipse.cdt.core.parser.DefaultLogService;
 import org.eclipse.cdt.core.parser.FileContent;
 import org.eclipse.cdt.core.parser.IParserLogService;
@@ -64,10 +71,23 @@ import org.eclipse.cdt.core.parser.ScannerInfo;
 import org.eclipse.cdt.internal.core.dom.parser.c.GNUCSourceParser;
 import org.eclipse.cdt.internal.core.indexer.StandaloneIndexerFallbackReaderFactory;
 import org.eclipse.cdt.internal.core.parser.scanner.CPreprocessor;
+import org.eclipse.cdt.internal.core.pdom.indexer.IndexerPreferences;
+import org.eclipse.cdt.internal.core.pdom.indexer.TranslationUnitCollector;
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
+import org.eclipse.core.resources.IProjectDescription;
+import org.eclipse.core.resources.IWorkspace;
+import org.eclipse.core.resources.IWorkspaceRoot;
+import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.core.runtime.Path;
+import org.eclipse.core.runtime.jobs.Job;
 
 import de.uni_freiburg.informatik.ultimate.cdt.parser.preferences.PreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.lib.models.WrapperNode;
@@ -86,27 +106,17 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceP
  * @author Oleksii Saukh
  * @date 02.02.2012
  */
-@SuppressWarnings({ "deprecation", "restriction" })
 public class CDTParser implements ISource {
-	/**
-	 * Supported file types.
-	 */
-	protected String[] mFileTypes;
-	/**
-	 * The logger instance.
-	 */
-	protected ILogger mLogger;
-	/**
-	 * List of file names.
-	 */
-	protected List<String> mFileNames;
-	private IUltimateServiceProvider mServices;
 
-	/**
-	 * Public constructor of this parser.
-	 */
+	private static final IProgressMonitor NULL_MONITOR = new NullProgressMonitor();
+	private final String[] mFileTypes;
+	private ILogger mLogger;
+	private List<String> mFileNames;
+	private IUltimateServiceProvider mServices;
+	private IProject mCdtProject;
+
 	public CDTParser() {
-		mFileTypes = new String[] { "c", "i" };
+		mFileTypes = new String[] { "c", "i", "h" };
 	}
 
 	@Override
@@ -138,52 +148,49 @@ public class CDTParser implements ISource {
 		}
 		return false;
 	}
-	
-	//created by Hamiz for entering multiple files
-	private ICProject createCDTProjectFromFiles(File[] files)
-			throws OperationCanceledException, CoreException, FileNotFoundException {
-		IProject cdtProject = createNewCDTProject("Test Project 6");
-
-		for (File file : files) {
-			ResourceHelper.createFile(cdtProject, file);
-		}
-		
-		CoreModel model = CoreModel.getDefault();
-		ICProject icdtProject =  model.create(cdtProject);
-		return icdtProject;
-	}
-	
-	private void performCDTProjectOperations(File[] files)
-			throws OperationCanceledException, FileNotFoundException, CoreException {
-		ICProject icdtProject = createCDTProjectFromFiles(files);
-		createPDOM(icdtProject);
-	}
-	
-	private IProject createNewCDTProject(String name) throws OperationCanceledException, CoreException {
-		return ResourceHelper.createCDTProject(name);
-	}
-	
-	private void createPDOM(ICProject icdtProject) throws CoreException {
-		PDOMManager pdomManager = new PDOMManager();
-//		IPDOM ipdom = pdomManager.getPDOM(icdtProject);
-		pdomManager.startup();
-		pdomManager.reindex(icdtProject);
-		IIndex inde = pdomManager.getIndex(icdtProject);
-		boolean a = pdomManager.isProjectIndexed(icdtProject);
-		System.out.println("oo");
-	}
 
 	@Override
 	public IElement parseAST(final File[] files) throws Exception {
 		if (files.length == 1) {
 			return parseAST(files[0]);
 		}
-		
+
 		performCDTProjectOperations(files);
-		
-//		throw new UnsupportedOperationException("Cannot parse multiple C files");
+
+		// throw new UnsupportedOperationException("Cannot parse multiple C files");
 		return null;
-		
+
+	}
+
+	// created by Hamiz for entering multiple files
+	private ICProject createCDTProjectFromFiles(final File[] files)
+			throws OperationCanceledException, CoreException, FileNotFoundException {
+		final IProject proj = createCDTProject("Test Project 6");
+		mCdtProject = proj;
+		mLogger.info("Created temporary CDT project at " + getFullPath(mCdtProject));
+
+		for (final File file : files) {
+			createFile(mCdtProject, file);
+		}
+
+		final CoreModel model = CoreModel.getDefault();
+		final ICProject icdtProject = model.create(mCdtProject);
+		return icdtProject;
+	}
+
+	private void performCDTProjectOperations(final File[] files)
+			throws OperationCanceledException, FileNotFoundException, CoreException {
+		final ICProject icdtProject = createCDTProjectFromFiles(files);
+
+		final IIndexManager indexManager = CCorePlugin.getIndexManager();
+		final boolean isIndexed = indexManager.isProjectIndexed(icdtProject);
+		final IIndex index = indexManager.getIndex(icdtProject);
+		final Collection<ITranslationUnit> sources = new HashSet<>();
+		final Collection<ITranslationUnit> headers = new HashSet<ITranslationUnit>();
+		final ICElementVisitor visitor = new TranslationUnitCollector(sources, headers, NULL_MONITOR);
+		icdtProject.accept(visitor);
+
+		mLogger.info("IsIndexed: " + isIndexed);
 	}
 
 	private IElement parseAST(final File file) throws Exception {
@@ -271,6 +278,111 @@ public class CDTParser implements ISource {
 
 	@Override
 	public void finish() {
-		// not necessary
+		if (mCdtProject != null) {
+			try {
+				mCdtProject.delete(true, true, null);
+				mLogger.info("Deleted temporary CDT project at " + getFullPath(mCdtProject));
+			} catch (final CoreException e) {
+				mLogger.fatal("Failed to delete temporary CDT project:", e);
+			}
+		}
+	}
+
+	private static String getFullPath(final IProject project) {
+		if (project == null) {
+			return "NULL";
+		}
+		final IPath outerPath = project.getWorkspace().getRoot().getLocation();
+		final IPath innerPath = project.getFullPath();
+		return outerPath.append(innerPath).toOSString();
+	}
+
+	private static IProject createCDTProject(final String projectName)
+			throws OperationCanceledException, CoreException {
+		final CCorePlugin cdtCorePlugin = CCorePlugin.getDefault();
+		final IWorkspace workspace = ResourcesPlugin.getWorkspace();
+		final IWorkspaceRoot root = workspace.getRoot();
+
+		IProject project = root.getProject(projectName);
+		IndexerPreferences.set(project, IndexerPreferences.KEY_INDEX_ALL_FILES, IPDOMManager.ID_FAST_INDEXER);
+
+		final IProjectDescription prjDescription = workspace.newProjectDescription(projectName);
+
+		project = cdtCorePlugin.createCDTProject(prjDescription, project, NULL_MONITOR);
+		waitForProjectRefreshToFinish();
+		// Assert.assertNotNull(project);
+
+		project.open(null);
+
+		// Assert.assertTrue(project.isOpen());
+
+		return project;
+	}
+
+	public static IFile createFile(final IProject project, final File file)
+			throws CoreException, FileNotFoundException {
+		if (new Path(file.getName()).segmentCount() > 1) {
+			createFolder(project, new Path(file.getName()).removeLastSegments(1).toString());
+		}
+		final String content = new Scanner(file).useDelimiter("\\Z").next();
+		return createFile(project.getFile(file.getName()), content);
+	}
+
+	private static void waitForProjectRefreshToFinish() {
+		try {
+			// CDT opens the Project with BACKGROUND_REFRESH enabled which
+			// causes the
+			// refresh manager to refresh the project 200ms later. This Job
+			// interferes
+			// with the resource change handler firing see: bug 271264
+			Job.getJobManager().join(ResourcesPlugin.FAMILY_AUTO_REFRESH, null);
+		} catch (final Exception e) {
+			// Ignore
+		}
+	}
+
+	/**
+	 * Creates new folder from project root. The folder name can include relative path as a part of the name.
+	 * Nonexistent parent directories are being created.
+	 *
+	 * @param project
+	 *            - project where to create the folder.
+	 * @param name
+	 *            - folder name.
+	 * @return folder handle.
+	 * @throws CoreException
+	 *             if something goes wrong.
+	 */
+	private static IFolder createFolder(final IProject project, final String name) throws CoreException {
+		final IPath p = new Path(name);
+		IContainer folder = project;
+		for (final String seg : p.segments()) {
+			folder = folder.getFolder(new Path(seg));
+			if (!folder.exists()) {
+				((IFolder) folder).create(true, true, NULL_MONITOR);
+			}
+		}
+		return (IFolder) folder;
+	}
+
+	/**
+	 * Creates a file with specified content.
+	 *
+	 * @param file
+	 *            - file name.
+	 * @param contents
+	 *            - contents of the file.
+	 * @return file handle.
+	 * @throws CoreException
+	 *             - if the file can't be created.
+	 */
+	private static IFile createFile(final IFile file, String contents) throws CoreException {
+		if (contents == null) {
+			contents = "";
+		}
+
+		final InputStream inputStream = new ByteArrayInputStream(contents.getBytes());
+		file.create(inputStream, true, NULL_MONITOR);
+		return file;
 	}
 }
