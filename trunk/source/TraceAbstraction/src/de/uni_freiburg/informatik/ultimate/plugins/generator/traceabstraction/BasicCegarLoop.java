@@ -454,7 +454,6 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		mStateFactoryForRefinement.setIteration(mIteration);
 		mCegarLoopBenchmark.start(CegarLoopStatisticsDefinitions.AutomataDifference.toString());
 		
-		final boolean exploitSigmaStarConcatOfIa = !mComputeHoareAnnotation;
 		final INestedWordAutomaton<LETTER, IPredicate> minuend =
 				(INestedWordAutomaton<LETTER, IPredicate>) mAbstraction;
 
@@ -471,10 +470,12 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		final NestedWordAutomaton<LETTER, IPredicate> subtrahendBeforeEnhancement;
 		final InterpolantAutomatonEnhancement enhanceMode;
 		final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> subtrahend;
+		final boolean exploitSigmaStarConcatOfIa;
 		if (mErrorAutomatonBuilder != null && mErrorAutomatonBuilder.hasAutomatonInIteration(mIteration)) {
 			mErrorAutomatonStatisticsGenerator.startErrorAutomatonDifferenceTime();
 			automatonType = "error";
 			useErrorAutomaton = true;
+			exploitSigmaStarConcatOfIa = false;
 			subtrahendBeforeEnhancement = mErrorAutomatonBuilder.getResultBeforeEnhancement();
 			enhanceMode = getErrorAutomatonEnhancementMode();
 			subtrahend = (enhanceMode == InterpolantAutomatonEnhancement.NONE)
@@ -483,6 +484,7 @@ public class BasicCegarLoop<LETTER extends IIcfgTransition<?>> extends AbstractC
 		} else {
 			automatonType = "interpolant";
 			useErrorAutomaton = false;
+			exploitSigmaStarConcatOfIa = !mComputeHoareAnnotation;
 			subtrahendBeforeEnhancement = mInterpolAutomaton;
 			enhanceMode = mPref.interpolantAutomatonEnhancement();
 			subtrahend = enhanceMode == InterpolantAutomatonEnhancement.NONE
