@@ -390,15 +390,11 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		/*
 		 * havoc the function nodes which nodeToBeHavocced was an index of
 		 */
-//		if (!graphNodeForNodeToBeHavocced.getInitCcpar().isEmpty()) {
-//			for (final NODE initCcpar : graphNodeForNodeToBeHavocced.getInitCcpar()) {
-//				havoc(initCcpar);
-//			}
-			final NODE initCcpar = graphNodeForNodeToBeHavocced.getInitCcpar();
-			if (initCcpar != null) {
+		if (!graphNodeForNodeToBeHavocced.getInitCcpar().isEmpty()) {
+			for (final NODE initCcpar : graphNodeForNodeToBeHavocced.getInitCcpar()) {
 				havoc(initCcpar);
 			}
-//		}
+		}
 		
 		/*
 		 * havoc all the non-atomic EqNodes which depend on this one
@@ -523,7 +519,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 			final EqGraphNode<NODE, FUNCTION> eqgn = mNodeToEqGraphNode.get(node);
 //			if (initCCpar != null && eqgn.getInitCcpar().isEmpty()) {
 			if (initCCpar != null && eqgn.getInitCcpar() != null) {
-				eqgn.setInitCcpar(initCCpar);
+				eqgn.addToInitCcpar(initCCpar);
 			}
 			return;
 		}
@@ -536,7 +532,7 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		
 		final EqGraphNode<NODE, FUNCTION> eqgn = getOrConstructEqGraphNode(node);//new EqGraphNode<NODE, FUNCTION>(node);
 		if (initCCpar != null) {
-			eqgn.setInitCcpar(initCCpar);
+			eqgn.addToInitCcpar(initCCpar);
 		}
 		
 		mNodeToEqGraphNode.put(node, eqgn);
@@ -572,13 +568,13 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 				for (NODE child : result.getInitCcchild()) {
 					final EqGraphNode<NODE, FUNCTION> childEqgn = getOrConstructEqGraphNode(child, 
 							newNodeToEqGraphNodeMap);
-					if (childEqgn.getInitCcpar() == null) {
-						childEqgn.setInitCcpar(node);
-					} else {
-//						assert childEqgn.getInitCcpar().size() == 1 
-//								&& childEqgn.getInitCcpar().iterator().next() == node;
-						assert childEqgn.getInitCcpar() == node;
-					}
+//					if (childEqgn.getInitCcpar().contains(node)) {
+						childEqgn.addToInitCcpar(node);
+//					} else {
+////						assert childEqgn.getInitCcpar().size() == 1 
+////								&& childEqgn.getInitCcpar().iterator().next() == node;
+//						assert childEqgn.getInitCcpar() == node;
+//					}
 				}
 			}
 			if (newNodeToEqGraphNodeMap == null) {

@@ -18,26 +18,23 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainPreanalysis;
 
 public class EqNodeAndFunctionFactory {
-	
+
 	ManagedScript mMgdScript;
 
-	
 	private final Map<Term, EqNode> mTermToEqNode = new HashMap<>();
 
-
 	private final Map<Term, EqFunction> mTermToEqFunction = new HashMap<>();
-	
+
 	private final VPDomainPreanalysis mPreAnalysis;
-	
+
 	public EqNodeAndFunctionFactory(VPDomainPreanalysis preAnalysis, ManagedScript script) {
 		mPreAnalysis = preAnalysis;
 		mMgdScript = script;
 	}
-	
 
 	@Deprecated
 	public EqAtomicBaseNode getOrConstructEqAtomicNode(IProgramVarOrConst varOrConst, Term substitutedTerm) {
-		
+
 		return new EqAtomicBaseNode(varOrConst, substitutedTerm, this);
 	}
 
@@ -46,13 +43,11 @@ public class EqNodeAndFunctionFactory {
 
 		final List<Term> paramTerms = args.stream().map(eqNode -> eqNode.getTerm()).collect(Collectors.toList());
 		mMgdScript.lock(this);
-		final Term term = mMgdScript.term(this, 
-				function.getFunctionName(), 
+		final Term term = mMgdScript.term(this, function.getFunctionName(),
 				paramTerms.toArray(new Term[paramTerms.size()]));
 		mMgdScript.unlock(this);
-		
-		
-		return  new EqFunctionNode(function, args, term, this);
+
+		return new EqFunctionNode(function, args, term, this);
 	}
 
 	public ManagedScript getScript() {
@@ -69,9 +64,10 @@ public class EqNodeAndFunctionFactory {
 		return new EqFunction(pvoc, this);
 	}
 
-//	public EqFunction getOrConstructEqFunction(IProgramVarOrConst pvoc, Term term) {
-//		return new EqFunction(pvoc, term, this);
-//	}
+	// public EqFunction getOrConstructEqFunction(IProgramVarOrConst pvoc, Term
+	// term) {
+	// return new EqFunction(pvoc, term, this);
+	// }
 
 	public EqNode getOrConstructEqNode(Term term) {
 		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0) {
@@ -106,12 +102,12 @@ public class EqNodeAndFunctionFactory {
 			final MultiDimensionalSelect mds = new MultiDimensionalSelect(selectTerm);
 
 			final EqFunction function = getOrConstructEqFunction(mds.getArray());
-			
+
 			final List<EqNode> args = new ArrayList<>();
 			for (Term index : mds.getIndex()) {
 				args.add(getOrConstructEqNode(index));
 			}
-			
+
 			result = new EqFunctionNode(function, args, selectTerm, this);
 			mTermToEqNode.put(selectTerm, result);
 		}
@@ -127,7 +123,7 @@ public class EqNodeAndFunctionFactory {
 		}
 		assert result instanceof EqAtomicBaseNode;
 		return result;
-		
+
 	}
 
 	public EqFunction getOrConstructEqFunction(Term term) {
@@ -164,7 +160,7 @@ public class EqNodeAndFunctionFactory {
 		EqFunction result = mTermToEqFunction.get(storeTerm);
 		if (result == null) {
 			final MultiDimensionalStore mds = new MultiDimensionalStore(storeTerm);
-			
+
 			final EqFunction function = getOrConstructEqFunction(mds.getArray());
 
 			final List<EqNode> indices = new ArrayList<>();
@@ -193,7 +189,7 @@ public class EqNodeAndFunctionFactory {
 	public EqNode getExistingEqNode(Term term) {
 		return mTermToEqNode.get(term);
 	}
-	
+
 	/**
 	 * 
 	 * @param term
@@ -202,6 +198,5 @@ public class EqNodeAndFunctionFactory {
 	public EqFunction getExistingEqFunction(Term term) {
 		return mTermToEqFunction.get(term);
 	}
-	
 
 }

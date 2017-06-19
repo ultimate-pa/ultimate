@@ -31,4 +31,16 @@ public class EqStoreFunction extends EqFunction {
 		}
 		return mFunction.equals(f);
 	}
+
+	public EqFunction getFunction() {
+		return mFunction;
+	}
+
+	public List<EqNode> getIndices() {
+		return mIndices;
+	}
+
+	public EqNode getValue() {
+		return mValue;
+	}
 }

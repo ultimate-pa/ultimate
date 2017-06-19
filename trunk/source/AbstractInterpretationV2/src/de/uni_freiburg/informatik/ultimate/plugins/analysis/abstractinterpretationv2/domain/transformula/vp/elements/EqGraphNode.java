@@ -30,11 +30,9 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -63,7 +61,12 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 //	private HashRelation<FUNCTION, List<EqGraphNode<NODE, FUNCTION>>> mCcchild;
 	private HashRelation<FUNCTION, List<NODE>> mCcchild;
 
-	private NODE mInitCcpar;
+//	private NODE mInitCcpar;
+	/**
+	 * the parents that this nodes has in the function application graph
+	 * example: we have nodes a[i], b[i], i; then initCcpar of i are the other two nodes
+	 */
+	private Set<NODE> mInitCcpar;
 //	private List<EqGraphNode<NODE, FUNCTION>> mInitCcchild;
 	private List<NODE> mInitCcchild;
 
@@ -75,7 +78,8 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 		this.mReverseRepresentative = new HashSet<>();
 		this.mCcpar = new HashSet<>();
 		this.mCcchild = new HashRelation<>();
-		this.mInitCcpar = null;
+//		this.mInitCcpar = null;
+		this.mInitCcpar = new HashSet<>();
 		if (id.isFunction()) {
 			this.mInitCcchild = id.getArgs();
 		}
@@ -105,7 +109,7 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 		this.mReverseRepresentative.clear();
 		this.mCcpar.clear();
 		if (mInitCcpar != null) {
-			this.mCcpar.add(mInitCcpar);
+			this.mCcpar.addAll(mInitCcpar);
 		}
 
 		this.mCcchild = new HashRelation<>();
@@ -231,10 +235,12 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 	}
 
 	/**
-	 * this is a set just for compatibility with "normal" ccPar, right? (EDIT no more..)
+	 * this is a set just for compatibility with "normal" ccPar, right? (EDIT no more.. EDIT no!, this must be a set!!
+	 *  see documentation of mInitCcpar)
 	 * @return
 	 */
-	public NODE getInitCcpar() {
+//	public NODE getInitCcpar() {
+	public Set<NODE> getInitCcpar() {
 		return mInitCcpar;
 	}
 
@@ -283,14 +289,19 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 		return sb.toString();
 	}
 
-	public EqGraphNode<NODE, FUNCTION> renameVariables(Map<Term, Term> substitutionMapping) {
-		// TODO Auto-generated method stub
-		return null;
-	}
+//	public EqGraphNode<NODE, FUNCTION> renameVariables(Map<Term, Term> substitutionMapping) {
+//		// TODO Auto-generated method stub
+//		return null;
+//	}
 
-	public void setInitCcpar(NODE initCCpar) {
-//		assert mInitCcpar.isEmpty() : "init ccpar should never change, except from no parent to some parent";
-		assert mInitCcpar == null : "init ccpar should never change, except from no parent to some parent";
-		mInitCcpar = initCCpar;
+//	public void setInitCcpar(NODE initCCpar) {
+////		assert mInitCcpar.isEmpty() : "init ccpar should never change, except from no parent to some parent";
+//		assert mInitCcpar == null : "init ccpar should never change, except from no parent to some parent";
+//		mInitCcpar = initCCpar;
+//	}
+
+	public void addToInitCcpar(NODE initCCpar) {
+		// TODO Auto-generated method stub
+		
 	}
 }

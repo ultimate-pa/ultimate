@@ -9,11 +9,15 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqStoreFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
@@ -25,10 +29,14 @@ public class EqConstraintFactory<
 	private final EqConstraint<ACTION, NODE, FUNCTION> mBottomConstraint;
 
 	private EqStateFactory<ACTION> mEqStateFactory;
+
+	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 	
-	public EqConstraintFactory() {
+	public EqConstraintFactory(EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
 		mBottomConstraint = new EqBottomConstraint<>(this);
 		mBottomConstraint.freeze();
+
+		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 	}
 
 	public EqConstraint<ACTION, NODE, FUNCTION> getEmptyConstraint() {
@@ -238,12 +246,42 @@ public class EqConstraintFactory<
 		
 		final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(funct2Added);
 		newConstraint.addFunctionEqualityRaw(func1, func2);
+		newConstraint.freeze();
 		
 		// TODO propagations
 		
-		newConstraint.freeze();
-		return newConstraint;
+		EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithPropagations = newConstraint;
+		// propagate read-over-write
+		newConstraintWithPropagations = propagateIdx(func1, newConstraintWithPropagations);
+		newConstraintWithPropagations = propagateIdx(func2, newConstraintWithPropagations);
+		
+		return newConstraintWithPropagations;
 	}
+
+	EqConstraint<ACTION, NODE, FUNCTION> propagateIdx(FUNCTION func1, EqConstraint<ACTION, NODE, FUNCTION> orig) {
+		if (!(func1 instanceof EqStoreFunction)) {
+			return orig;
+		}
+		// idx axiom: ( a[i:=v][i] == v )
+		EqStoreFunction store = (EqStoreFunction) func1;
+
+		final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
+		mgdScript.lock(this);
+
+		assert store.getIndices().size() == 1 : "TODO: deal with multidimensional case";
+		Term selectTerm = mgdScript.term(this, 
+				"select", 
+				func1.getTerm(), 
+				store.getIndices().iterator().next().getTerm());
+		mgdScript.unlock(this);
+
+		final NODE selectIdxNode = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(selectTerm);
+		final NODE storeValueNode = 
+				(NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(store.getValue().getTerm());
+
+		return addEqualityFlat(selectIdxNode, storeValueNode, orig);
+	}
+
 
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjoinDisjunctiveConstraints(
 			EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> disjunct1,
@@ -662,5 +700,9 @@ public class EqConstraintFactory<
 
 	public void setEqStateFactory(EqStateFactory<ACTION> eqStateFactory) {
 		mEqStateFactory = eqStateFactory;
+	}
+
+	public EqNodeAndFunctionFactory getEqNodeAndFunctionFactory() {
+		return mEqNodeAndFunctionFactory;
 	}
 }

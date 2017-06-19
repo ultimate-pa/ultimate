@@ -241,7 +241,11 @@ public class EqConstraint<
 				mFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(func2));
 		
 		// TODO: adding a function equality can have consequences for the elements --> implement
+		
+
 	}
+	
+	
 
 
 	public  Set<VPDomainSymmetricPair<FUNCTION>> getFunctionDisequalites() {
