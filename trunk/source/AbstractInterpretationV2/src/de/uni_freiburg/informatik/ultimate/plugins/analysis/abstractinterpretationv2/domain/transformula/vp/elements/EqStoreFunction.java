@@ -23,4 +23,12 @@ public class EqStoreFunction extends EqFunction {
 		assert false : "does not make sense, here";
 		return super.getFunctionName();
 	}
+
+	@Override
+	public boolean dependsOn(EqFunction f) {
+		if ((mFunction instanceof EqStoreFunction)) {
+			return mFunction.dependsOn(f);
+		}
+		return mFunction.equals(f);
+	}
 }

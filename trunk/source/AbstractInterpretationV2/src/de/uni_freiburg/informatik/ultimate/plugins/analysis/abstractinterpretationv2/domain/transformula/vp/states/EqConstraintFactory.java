@@ -527,6 +527,7 @@ public class EqConstraintFactory<
 		final EqConstraint<ACTION, NODE, FUNCTION> constraintAfterMerge = unfreeze(nodesAdded);
 		
 		final HashRelation<NODE, NODE> mergeHistory = constraintAfterMerge.merge(node1, node2);
+		constraintAfterMerge.freeze();
 		final boolean contradiction = constraintAfterMerge.checkForContradiction();
 		if (contradiction) {
 			return getBottomConstraint();
@@ -554,7 +555,7 @@ public class EqConstraintFactory<
 				resultConstraint = propagateDisequalitesFlat(resultConstraint, pair.getValue(), other);
 			}
 		}
-		resultConstraint.freeze();
+//		resultConstraint.freeze();
 //		factory.getBenchmark().stop(VPSFO.addEqualityClock);
 		return resultConstraint;
 	}
@@ -671,7 +672,7 @@ public class EqConstraintFactory<
 		 */
 		EqConstraint<ACTION, NODE, FUNCTION> result = propagateDisequalitesFlat(unfrozen, node1, node2);
 
-		result.freeze();
+//		result.freeze();
 		return result;
 	}
 	

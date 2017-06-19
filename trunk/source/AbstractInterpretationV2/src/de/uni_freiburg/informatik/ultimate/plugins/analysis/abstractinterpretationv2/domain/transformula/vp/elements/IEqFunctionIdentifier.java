@@ -11,4 +11,6 @@ public interface IEqFunctionIdentifier<FUNCTION extends IEqFunctionIdentifier<FU
 	int getArity();
 	
 	Term getTerm();
+	
+	boolean dependsOn(FUNCTION f);
 }

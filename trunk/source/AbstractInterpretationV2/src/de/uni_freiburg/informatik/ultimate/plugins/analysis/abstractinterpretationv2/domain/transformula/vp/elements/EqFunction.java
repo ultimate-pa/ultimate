@@ -59,6 +59,8 @@ public class EqFunction implements IEqFunctionIdentifier<EqFunction> {
 		return null;
 	}
 
+
+
 	@Override
 	public Term getTerm() {
 		return mTerm;
@@ -93,6 +95,11 @@ public class EqFunction implements IEqFunctionIdentifier<EqFunction> {
 	@Override
 	public String toString() {
 		return mTerm.toString();
+	}
+
+	@Override
+	public boolean dependsOn(EqFunction f) {
+		return this.equals(f);
 	}
 
 }

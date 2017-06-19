@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,9 +54,9 @@ public class EqConstraint<
 	/**
 	 * All (element) nodes that this constraint currently knows about
 	 */
-	private final Set<NODE> mNodes = new HashSet<>();
+	private final Set<NODE> mNodes;
 	
-	private final Set<FUNCTION> mFunctions = new HashSet();
+	private final Set<FUNCTION> mFunctions;
 	
 	/**
 	 * Creates an empty constraint (i.e. it does not constrain anything, is equivalent to "true")
@@ -69,6 +70,8 @@ public class EqConstraint<
 		mFunctionEqualities = new UnionFind<>();
 		mFunctionDisequalities = new HashSet<>();
 
+		mNodes = new HashSet<>();
+		mFunctions = new HashSet<>();
 	}
 
 	/**
@@ -90,6 +93,9 @@ public class EqConstraint<
 		}
 
 		mFunctionDisequalities = new HashSet<>(constraint.mFunctionDisequalities);
+		
+		mNodes = new HashSet<>(constraint.mNodes);
+		mFunctions = new HashSet<>(constraint.mFunctions);
 	}
 
 	/**
@@ -116,26 +122,47 @@ public class EqConstraint<
 	
 	public void havocFunction(FUNCTION func) {
 		assert !mIsFrozen;
+		
+		// havoc all dependent nodes
 		final Set<NODE> nodesWithFunc = mNodes.stream()
-			.filter(node -> ((node instanceof EqFunctionNode) && ((EqFunctionNode) node).getFunction().equals(func)))
+			.filter(node -> ((node instanceof EqFunctionNode) && ((NODE) node).getFunction().dependsOn(func)))
 			.collect(Collectors.toSet());
 		nodesWithFunc.stream().forEach(node -> havoc(node));
 		
+		// remove from function disequalities
 		mFunctionDisequalities.removeIf(pair -> pair.contains(func));
 		
-		// union find has no remove -> has to be built anew
+		// remove from function equalities
 		final UnionFind<FUNCTION> newFunctionEqualities = new UnionFind<>();
+		// (union find has no remove -> has to be built anew)
 		for (Set<FUNCTION> eqc : mFunctionEqualities.getAllEquivalenceClasses()) {
-			final FUNCTION first = eqc.iterator().next();
-			for (FUNCTION el : eqc) {
-				if (el == func) {
+			// look for an element that is not func --> everything but func will be merged with it
+			Iterator<FUNCTION> eqcIt = eqc.iterator();
+			FUNCTION first = eqcIt.next();
+			while (first.dependsOn(func)) {
+				if (eqcIt.hasNext()) {
+					first = eqcIt.next();
+				} else {
+					// equivalence class has only elements that need to be havocced
+					for (FUNCTION el : eqc) {
+						newFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(el);
+					}
 					continue;
 				}
+			}
+			assert !first.dependsOn(func);
+
+			for (FUNCTION el : eqc) {
 				newFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(el);
+				if (el.dependsOn(func)) {
+					// el is havocced --> don't merge its equivalence class
+					continue;
+				}
 				newFunctionEqualities.union(first, el);
 			}
 		}
 		mFunctionEqualities = newFunctionEqualities;
+		
 	}
 	
 	public void freeze() {

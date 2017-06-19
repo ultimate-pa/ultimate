@@ -100,26 +100,32 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 		public void walk(NonRecursive walker, ApplicationTerm term) {
 			if ("=".equals(term.getFunction().getName())) {
 				handleXquality(term.getParameters()[0], term.getParameters()[1], true);
-			} else if ("distinct".equals(term.getFunction())) {
+			} else if ("distinct".equals(term.getFunction().getName())) {
 				handleXquality(term.getParameters()[0], term.getParameters()[1], false);
-			} else if ("!".equals(term.getFunction()) 
+			} else if ("not".equals(term.getFunction().getName()) 
 							&& term.getParameters()[0] instanceof ApplicationTerm
 							&& "=".equals(((ApplicationTerm) term.getParameters()[0]).getFunction().getName())) {
 				final ApplicationTerm innerEqualsTerm = (ApplicationTerm) term.getParameters()[0];
 				handleXquality(innerEqualsTerm.getParameters()[0], innerEqualsTerm.getParameters()[1], false);
-			} else if ("or".equals(term.getFunction())) {
+			} else if ("or".equals(term.getFunction().getName())) {
 				for (Term param : term.getParameters()) {
 					walker.enqueueWalker(new ConvertTfToEqDisjConsWalker(param));
 				}
 				
 				walker.enqueueWalker(new MakeDisjunctionWalker(term.getParameters().length));
-			} else if ("and".equals(term.getFunction())) {
+			} else if ("and".equals(term.getFunction().getName())) {
 				for (Term param : term.getParameters()) {
 					walker.enqueueWalker(new ConvertTfToEqDisjConsWalker(param));
 				}
 				
 				walker.enqueueWalker(new MakeConjunctionWalker(term.getParameters().length));
 
+			} else if ("false".equals(term.getFunction().getName())) {
+				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
+						Collections.emptySet()));
+			} else if ("true".equals(term.getFunction().getName())) {
+				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(
+						Collections.singleton(mEqConstraintFactory.getEmptyConstraint())));
 			} else {
 				assert false : "TODO";
 			}

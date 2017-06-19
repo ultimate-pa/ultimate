@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 
 /**
  * 
@@ -39,7 +40,7 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
  *
  * @param <ARRAYID>
  */
-public interface IEqNodeIdentifier<NODE, FUNCTION> {
+public interface IEqNodeIdentifier<NODE, FUNCTION extends IEqFunctionIdentifier<FUNCTION>> {
 	 //extends IEqNodeIdentifier<NODE, FUNCTION>
 	boolean isFunction();
 

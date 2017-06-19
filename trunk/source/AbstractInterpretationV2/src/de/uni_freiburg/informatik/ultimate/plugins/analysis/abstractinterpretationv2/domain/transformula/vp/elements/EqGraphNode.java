@@ -49,7 +49,8 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRela
  * @author Alexander Nutz (nutz@informatik.uni-freiburg.de)
  *
  */
-public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTION> {
+public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
+		FUNCTION extends IEqFunctionIdentifier<FUNCTION>> {
 
 	/**
 	 * identifies an EqGraphNode uniquely _within one state or transitionstate_
