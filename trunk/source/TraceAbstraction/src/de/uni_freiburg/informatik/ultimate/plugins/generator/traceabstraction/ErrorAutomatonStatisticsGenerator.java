@@ -132,6 +132,13 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		return (long) mBenchmark.getElapsedTime(ERROR_AUTOMATON_CONSTRUCTION_TIME, TimeUnit.NANOSECONDS);
 	}
 
+	/**
+	 * @return Total number of error automata/traces.
+	 */
+	public Object getTotalNumber() {
+		return mAutomatonStatistics.size();
+	}
+
 	@Override
 	public Collection<String> getKeys() {
 		return ErrorAutomatonStatisticsType.getInstance().getKeys();
@@ -143,7 +150,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 				Enum.valueOf(ErrorAutomatonStatisticsDefinitions.class, key);
 		switch (keyEnum) {
 			case TotalNumber:
-				return mAutomatonStatistics.size();
+				return getTotalNumber();
 			case TraceLengthAvg:
 				return getAverageTraceLength();
 			case ErrorAutomatonConstructionTimeAvg:
