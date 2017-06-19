@@ -61,6 +61,7 @@ public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 
 	private final Map<Set<IPredicate>, IPredicate> mInputPreds2ResultPreds = new HashMap<>();
 	private final HashRelation<IPredicate, IPredicate> mResPred2InputPreds = new HashRelation<>();
+	private final IPredicateUnifier mPredicateUnifier;
 
 	protected final Set<IPredicate> mNonTrivialPredicates;
 
@@ -79,6 +80,7 @@ public class DeterministicInterpolantAutomaton<LETTER extends IAction>
 			final IPredicateUnifier predicateUnifier, final boolean conservativeSuccessorCandidateSelection,
 			final boolean cannibalize) {
 		super(services, csToolkit, hoareTripleChecker, true, predicateUnifier, inputInterpolantAutomaton);
+		mPredicateUnifier = predicateUnifier;
 		mCannibalize = cannibalize;
 		mConservativeSuccessorCandidateSelection = conservativeSuccessorCandidateSelection;
 		if (mConservativeSuccessorCandidateSelection && mCannibalize) {

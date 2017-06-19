@@ -154,7 +154,7 @@ public class FixpointEngineParameterFactory {
 	}
 
 	private IAbstractDomain<?, IcfgEdge, IProgramVarOrConst> createEqualityDomain(final ILogger logger) {
-		final VPDomainPreanalysis preAnalysis = new VPDomainPreanalysis(mRoot, logger);
+		final VPDomainPreanalysis preAnalysis = new VPDomainPreanalysis(mRoot, logger, mServices);
 		preAnalysis.postProcess();
 //		final VPTfStateBuilderPreparer tfPreparer =
 //				new VPTfStateBuilderPreparer(preAnalysis, mRoot, logger);

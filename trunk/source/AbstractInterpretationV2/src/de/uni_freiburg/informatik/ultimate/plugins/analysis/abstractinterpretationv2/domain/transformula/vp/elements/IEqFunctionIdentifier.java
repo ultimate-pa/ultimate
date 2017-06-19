@@ -6,7 +6,9 @@ import de.uni_freiburg.informatik.ultimate.logic.Term;
 
 public interface IEqFunctionIdentifier<FUNCTION extends IEqFunctionIdentifier<FUNCTION>> {
 
-	public FUNCTION renameVariables(Map<Term, Term> substitutionMapping);
+	FUNCTION renameVariables(Map<Term, Term> substitutionMapping);
 	
-	public int getArity();
+	int getArity();
+	
+	Term getTerm();
 }

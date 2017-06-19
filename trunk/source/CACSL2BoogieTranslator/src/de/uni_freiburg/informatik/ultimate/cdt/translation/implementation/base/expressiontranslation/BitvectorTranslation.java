@@ -331,7 +331,7 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		return func;
 	}
 
-	private void declareBitvectorFunction(final ILocation loc, final String smtFunctionName,
+	public void declareBitvectorFunction(final ILocation loc, final String smtFunctionName,
 			final String boogieFunctionName, final boolean boogieResultTypeBool, final CPrimitive resultCType,
 			final int[] indices, final CPrimitive... paramCType) {
 		if (mFunctionDeclarations.getDeclaredFunctions()
@@ -429,6 +429,37 @@ public class BitvectorTranslation extends AExpressionTranslation {
 			operand.lrVal = rVal;
 		}
 	}
+	
+	
+	@Override
+	public void convertFloatToInt_NonBool(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
+		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		final Expression oldExpression = rexp.lrVal.getValue();
+		final IdentifierExpression roundingMode = new IdentifierExpression(null, BitvectorTranslation.BOOGIE_ROUNDING_MODE_RTZ);
+		roundingMode.setDeclarationInformation(new DeclarationInformation(StorageClass.GLOBAL, null));
+		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {roundingMode, oldExpression});
+		final RValue rValue = new RValue(resultExpression, newType, false, false);
+		rexp.lrVal = rValue;
+	}
+
+	@Override
+	public void convertIntToFloat(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
+		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		final Expression oldExpression = rexp.lrVal.getValue();
+		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] {getRoundingMode(), oldExpression});
+		final RValue rValue = new RValue(resultExpression, newType, false, false);
+		rexp.lrVal = rValue;
+	}
+	
+	@Override
+	public void convertFloatToFloat(final ILocation loc, final ExpressionResult rexp, final CPrimitive newType) {
+		final String prefixedFunctionName = declareConversionFunction(loc, (CPrimitive) rexp.lrVal.getCType(), newType);
+		final Expression oldExpression = rexp.lrVal.getValue();
+		final Expression resultExpression = new FunctionApplication(loc, prefixedFunctionName, new Expression[] { getRoundingMode(), oldExpression});
+		final RValue rValue = new RValue(resultExpression, newType, false, false);
+		rexp.lrVal = rValue;
+	}
+	
 
 	@Override
 	public Expression extractBits(final ILocation loc, final Expression operand, final int high, final int low) {
@@ -911,6 +942,30 @@ public class BitvectorTranslation extends AExpressionTranslation {
 		final Expression result = new FunctionApplication(loc,
 				boogieFunctionName, new Expression[] { value });
 		return result;
+	}
+
+
+	/**
+	 * Declare a given list of binary bitvector functions for all integer datatypes.
+	 * We use this as a workaround for the following problem.
+	 * Usually, we only declare the bitvector functions that occur in the program.
+	 * However, if an analysis constructs a proof in form of a Hoare annotation, 
+	 * this proof may also use other functions and our backtranslation crashes.
+	 * 2017-05-03 Matthias: Currently it seems that it is sufficient to add 
+	 * only bvadd for all integer datatypes. 
+	 */
+	public void declareBinaryBitvectorFunctionsForAllIntegerDatatypes(final ILocation loc,
+			final String[] bitvectorFunctions) {
+		for (final String funcname : bitvectorFunctions) {
+			for (final CPrimitive.CPrimitives cPrimitive : CPrimitive.CPrimitives.values()) {
+				final CPrimitive cPrimitiveO = new CPrimitive(cPrimitive);
+				if (cPrimitiveO.getGeneralType() == CPrimitiveCategory.INTTYPE) {
+					declareBitvectorFunction(loc, funcname,
+							funcname + mFunctionDeclarations.computeBitvectorSuffix(loc, cPrimitiveO, cPrimitiveO),
+							false, cPrimitiveO, null, cPrimitiveO, cPrimitiveO);
+				}
+			}
+		}
 	}
 
 }

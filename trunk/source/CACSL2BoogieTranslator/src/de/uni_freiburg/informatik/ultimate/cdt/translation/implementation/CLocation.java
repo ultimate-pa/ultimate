@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2014-2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CACSL2BoogieTranslator plug-in.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CACSL2BoogieTranslator plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CACSL2BoogieTranslator plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CACSL2BoogieTranslator plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -44,7 +44,8 @@ public class CLocation extends CACSLLocation {
 	private final IASTNode mNode;
 	private final LineDirectiveMapping mLineDirectiveMapping;
 
-	protected CLocation(final IASTNode node, final Check checkedSpec, final boolean ignoreDuringBacktranslation, final LineDirectiveMapping lineDirectiveMapping) {
+	protected CLocation(final IASTNode node, final Check checkedSpec, final boolean ignoreDuringBacktranslation,
+			final LineDirectiveMapping lineDirectiveMapping) {
 		super(checkedSpec, ignoreDuringBacktranslation);
 		mNode = node;
 		mLineDirectiveMapping = lineDirectiveMapping;
@@ -55,11 +56,10 @@ public class CLocation extends CACSLLocation {
 		if (mNode != null) {
 			if (mLineDirectiveMapping == null) {
 				return mNode.getFileLocation().getFileName();
-			} else {
-				final int currentLineNumber = mNode.getFileLocation().getStartingLineNumber();
-				final String currentFilename = mNode.getFileLocation().getFileName();
-				return mLineDirectiveMapping.getOriginal(currentLineNumber, currentFilename).getSecond();
 			}
+			final int currentLineNumber = mNode.getFileLocation().getStartingLineNumber();
+			final String currentFilename = mNode.getFileLocation().getFileName();
+			return mLineDirectiveMapping.getOriginal(currentLineNumber, currentFilename).getSecond();
 		}
 		return null;
 	}
@@ -69,11 +69,10 @@ public class CLocation extends CACSLLocation {
 		if (mNode != null) {
 			if (mLineDirectiveMapping == null) {
 				return mNode.getFileLocation().getStartingLineNumber();
-			} else {
-				final int currentLineNumber = mNode.getFileLocation().getStartingLineNumber();
-				final String currentFilename = mNode.getFileLocation().getFileName();
-				return mLineDirectiveMapping.getOriginal(currentLineNumber, currentFilename).getFirst();
 			}
+			final int currentLineNumber = mNode.getFileLocation().getStartingLineNumber();
+			final String currentFilename = mNode.getFileLocation().getFileName();
+			return mLineDirectiveMapping.getOriginal(currentLineNumber, currentFilename).getFirst();
 		}
 		return -1;
 	}
@@ -83,11 +82,10 @@ public class CLocation extends CACSLLocation {
 		if (mNode != null) {
 			if (mLineDirectiveMapping == null) {
 				return mNode.getFileLocation().getEndingLineNumber();
-			} else {
-				final int currentLineNumber = mNode.getFileLocation().getEndingLineNumber();
-				final String currentFilename = mNode.getFileLocation().getFileName();
-				return mLineDirectiveMapping.getOriginal(currentLineNumber, currentFilename).getFirst();
 			}
+			final int currentLineNumber = mNode.getFileLocation().getEndingLineNumber();
+			final String currentFilename = mNode.getFileLocation().getFileName();
+			return mLineDirectiveMapping.getOriginal(currentLineNumber, currentFilename).getFirst();
 		}
 		return -1;
 	}
@@ -110,7 +108,7 @@ public class CLocation extends CACSLLocation {
 	public IASTNode getNode() {
 		return mNode;
 	}
-	
+
 	public LineDirectiveMapping getLineDirectiveMapping() {
 		return mLineDirectiveMapping;
 	}
@@ -145,11 +143,7 @@ public class CLocation extends CACSLLocation {
 			final Check mergedCheck = Check.mergeCheck(getCheck(), otherCloc.getCheck());
 			final boolean ignoreDuringBacktranslation =
 					ignoreDuringBacktranslation() && otherCloc.ignoreDuringBacktranslation();
-
-			final Collection<IASTNode> nodes = new HashSet<>();
-			nodes.add(getNode());
-			nodes.add(otherCloc.getNode());
-			final IASTNode node = CdtASTUtils.findCommonParent(nodes);
+			final IASTNode node = getMergedNode(otherCloc);
 			LineDirectiveMapping resultLineDirectiveMapping;
 			if (mLineDirectiveMapping == null) {
 				resultLineDirectiveMapping = otherCloc.getLineDirectiveMapping();
@@ -161,6 +155,25 @@ public class CLocation extends CACSLLocation {
 			return MergedLocation.mergeToMergeLocation(this, (ILocation) other);
 		}
 		throw new UnmergeableAnnotationsException(this, other);
+	}
+
+	private IASTNode getMergedNode(final CLocation otherCloc) {
+		final IASTNode node;
+		if (getNode() != null || otherCloc.getNode() != null) {
+			if (getNode() == null) {
+				node = otherCloc.getNode();
+			} else if (otherCloc.getNode() == null) {
+				node = getNode();
+			} else {
+				final Collection<IASTNode> nodes = new HashSet<>();
+				nodes.add(getNode());
+				nodes.add(otherCloc.getNode());
+				node = CdtASTUtils.findCommonParent(nodes);
+			}
+		} else {
+			node = null;
+		}
+		return node;
 	}
 
 }

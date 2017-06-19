@@ -104,6 +104,7 @@ public final class SmtUtils {
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("simplifying formula of DAG size {0}", new DagSizePrinter(formula)));
 		}
+		final long startTime = System.nanoTime();
 		final Term simplified;
 		switch (simplificationTechnique) {
 		case SIMPLIFY_BDD_PROP:
@@ -126,6 +127,16 @@ public final class SmtUtils {
 		if (logger.isDebugEnabled()) {
 			logger.debug(new DebugMessage("DAG size before simplification {0}, DAG size after simplification {1}",
 					new DagSizePrinter(formula), new DagSizePrinter(simplified)));
+		}
+		final long endTime = System.nanoTime();
+		final long overallTimeMs = (endTime - startTime) / 1_000_000;
+		if (formula.equals(simplified) && overallTimeMs >= 100) {
+			logger.warn("Spent " + overallTimeMs + "ms on a formula simplification that was a NOOP. DAG size: "
+					+ new DagSizePrinter(formula));
+		} else if (overallTimeMs >= 100) {
+			logger.warn("Spent " + overallTimeMs + "ms on a formula simplification. DAG size of input: "
+					+ new DagSizePrinter(formula) + " DAG size of output " + new DagSizePrinter(simplified));
+			
 		}
 		return simplified;
 	}
@@ -473,10 +484,12 @@ public final class SmtUtils {
 	public static Term binaryEquality(final Script script, final Term lhs, final Term rhs) {
 		if (lhs == rhs) {
 			return script.term("true");
-		} else if (twoConstantTermsWithDifferentValue(lhs, rhs)) {
-			return script.term("false");
+		} else if (lhs.getSort().isNumericSort()) {
+			return numericEquality(script, lhs, rhs);
 		} else if (SmtSortUtils.isBoolSort(lhs.getSort())) {
 			return booleanEquality(script, lhs, rhs);
+		} else if (SmtSortUtils.isBitvecSort(lhs.getSort())) {
+			return bitvectorEquality(script, lhs, rhs);
 		} else {
 			return script.term("=", lhs, rhs);
 		}
@@ -486,64 +499,76 @@ public final class SmtUtils {
 	 * Returns the equality ("=" lhs rhs), but checks if one of the arguments is true/false and simplifies accordingly.
 	 */
 	private static Term booleanEquality(final Script script, final Term lhs, final Term rhs) {
-		final Term trueTerm = script.term("true");
-		final Term falseTerm = script.term("false");
-		if (lhs.equals(trueTerm)) {
+		if (isTrue(lhs)) {
 			return rhs;
-		} else if (lhs.equals(falseTerm)) {
+		} else if (isFalse(lhs)) {
 			return SmtUtils.not(script, rhs);
-		} else if (rhs.equals(trueTerm)) {
+		} else if (isTrue(rhs)) {
 			return lhs;
-		} else if (rhs.equals(falseTerm)) {
+		} else if (isFalse(rhs)) {
 			return SmtUtils.not(script, lhs);
 		} else {
 			return script.term("=", lhs, rhs);
 		}
 	}
-
+	
 	/**
-	 * Returns true iff. fst and snd are different literals of the same numeric sort ("Int" or "Real").
-	 *
-	 * @exception Throws
-	 *                UnsupportedOperationException if both arguments do not have the same Sort.
+	 * Returns the equality ("=" lhs rhs), for inputs of sort BitVec.
+	 * Simplifies if both inputs are literals.
 	 */
-	private static boolean twoConstantTermsWithDifferentValue(final Term fst, final Term snd) {
-		if (!fst.getSort().equals(snd.getSort())) {
-			throw new UnsupportedOperationException("arguments sort different");
+	private static Term bitvectorEquality(final Script script, final Term lhs, final Term rhs) {
+		if (!SmtSortUtils.isBitvecSort(lhs.getSort())) {
+			throw new UnsupportedOperationException("need BitVec sort");
 		}
-		final BitvectorConstant fstbw = BitvectorUtils.constructBitvectorConstant(fst);
+		if (!SmtSortUtils.isBitvecSort(rhs.getSort())) {
+			throw new UnsupportedOperationException("need BitVec sort");
+		}
+		final BitvectorConstant fstbw = BitvectorUtils.constructBitvectorConstant(lhs);
 		if (fstbw != null) {
-			final BitvectorConstant sndbw = BitvectorUtils.constructBitvectorConstant(snd);
+			final BitvectorConstant sndbw = BitvectorUtils.constructBitvectorConstant(rhs);
 			if (sndbw != null) {
-				return !fstbw.equals(sndbw);
+				if (fstbw.equals(sndbw)) {
+					return script.term("true");
+				}
 			}
 		}
-		if (!(fst instanceof ConstantTerm)) {
-			return false;
-		}
-		if (!(snd instanceof ConstantTerm)) {
-			return false;
-		}
-		if (!fst.getSort().isNumericSort()) {
-			return false;
-		}
-		final ConstantTerm fstConst = (ConstantTerm) fst;
-		final ConstantTerm sndConst = (ConstantTerm) snd;
-		Object fstValue = fstConst.getValue();
-		Object sndValue = sndConst.getValue();
-		if (fstValue instanceof BigInteger && sndValue instanceof Rational) {
-			fstValue = Rational.valueOf((BigInteger) fstValue, BigInteger.ONE);
-		} else if (fstValue instanceof Rational && sndValue instanceof BigInteger) {
-			sndValue = Rational.valueOf((BigInteger) sndValue, BigInteger.ONE);
-		}
-		if (!fstValue.getClass().isAssignableFrom(sndValue.getClass())
-				&& sndValue.getClass().isAssignableFrom(fst.getClass())) {
-			throw new UnsupportedOperationException("Incompatible classes. " + "First value is "
-					+ fstValue.getClass().getSimpleName() + " second value is " + sndValue.getClass().getSimpleName());
-		}
-		return !fstValue.equals(sndValue);
+		return script.term("=", lhs, rhs);
 	}
-
+	
+	
+	/**
+	 * Returns the equality ("=" lhs rhs), for inputs of numeric sort (int, real)
+	 * Simplifies if both inputs are literals.
+	 */
+	private static Term numericEquality(final Script script, final Term lhs, final Term rhs) {
+		if (!lhs.getSort().isNumericSort()) {
+			throw new UnsupportedOperationException("need numeric sort");
+		}
+		if (!rhs.getSort().isNumericSort()) {
+			throw new UnsupportedOperationException("need numeric sort");
+		}
+		if (!(lhs instanceof ConstantTerm)) {
+			return script.term("=", lhs, rhs);
+		}
+		if (!(rhs instanceof ConstantTerm)) {
+			return script.term("=", lhs, rhs);
+		}
+		final ConstantTerm lhsConst = (ConstantTerm) lhs;
+		final ConstantTerm rhsConst = (ConstantTerm) rhs;
+		final Rational lhsValue = convertConstantTermToRational(lhsConst);
+		final Rational rhsValue = convertConstantTermToRational(rhsConst);
+		if (!lhsValue.getClass().isAssignableFrom(rhsValue.getClass())
+				&& rhsValue.getClass().isAssignableFrom(lhs.getClass())) {
+			throw new UnsupportedOperationException("Incompatible classes. " + "First value is "
+					+ lhsValue.getClass().getSimpleName() + " second value is " + rhsValue.getClass().getSimpleName());
+		}
+		if (lhsValue.equals(rhsValue)) {
+			return script.term("true");
+		} else {
+			return script.term("false");
+		}
+	}
+	
 	public static List<Term> substitutionElementwise(final List<Term> subtituents, final Substitution subst) {
 		final List<Term> result = new ArrayList<>();
 		for (int i = 0; i < subtituents.size(); i++) {
@@ -796,7 +821,9 @@ public final class SmtUtils {
 	 * @return Rational from the value of ct
 	 * @throws IllegalArgumentException
 	 *             if ct does not represent a Rational.
+	 * @deprecated replace this method by convertConstantTermToRational()
 	 */
+	@Deprecated
 	public static Rational convertCT(final ConstantTerm ct) throws IllegalArgumentException {
 		if (SmtSortUtils.isRealSort(ct.getSort())) {
 			if (ct.getValue() instanceof Rational) {
@@ -882,6 +909,44 @@ public final class SmtUtils {
 			}
 			result = comparison(script, funcname, params[0], params[1]);
 			break;
+		case "store": {
+			final Term array = params[0];
+			final Term idx = params[1];
+			final Term nestedIdx = getArrayStoreIdx(array);
+			if (nestedIdx != null) {
+				// Check for store-over-store
+				if (nestedIdx.equals(idx)) {
+					// Found store-over-store => ignore inner store
+					final ApplicationTerm appArray = (ApplicationTerm) array;
+					result = script.term(funcname,
+							appArray.getParameters()[0], params[1], params[2]);
+				} else {
+					result = script.term(funcname, indices, null, params);
+				} 
+			} else {
+				result = script.term(funcname, indices, null, params);
+			}
+			break;
+		}
+		case "select": {
+			final Term array = params[0];
+			final Term idx = params[1];
+			final Term nestedIdx = getArrayStoreIdx(array);
+			if (nestedIdx != null) {
+				// Check for store-over-store
+				if (nestedIdx.equals(idx)) {
+					// Found store-over-store => ignore inner store
+					final ApplicationTerm appArray = (ApplicationTerm) array;
+					// => transform into value
+					result = appArray.getParameters()[2];
+				} else {
+					result = script.term(funcname, indices, null, params);
+				} 
+			} else {
+				result = script.term(funcname, indices, null, params);
+			}
+			break;
+		}
 		case "zero_extend":
 		case "extract":
 		case "bvsub":
@@ -916,6 +981,22 @@ public final class SmtUtils {
 			break;
 		}
 		return result;
+	}
+	
+	/**
+	 * @return idx if array has form (store a idx v) return null if array has
+	 * a different form
+	 */
+	private final static Term getArrayStoreIdx(final Term array) {
+		if (array instanceof ApplicationTerm) {
+			final ApplicationTerm appArray = (ApplicationTerm) array;
+			final FunctionSymbol arrayFunc = appArray.getFunction();
+			if (arrayFunc.isIntern() &&	arrayFunc.getName().equals("store")) {
+				// (store a i v)
+				return appArray.getParameters()[1];
+			}
+		}
+		return null;
 	}
 
 	/**

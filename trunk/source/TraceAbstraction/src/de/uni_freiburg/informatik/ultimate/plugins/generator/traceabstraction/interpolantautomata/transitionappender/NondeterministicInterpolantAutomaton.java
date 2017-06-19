@@ -73,7 +73,7 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 	 * change the language it only determines the amount of nondeterminism.
 	 */
 	protected final boolean mSecondChance;
-
+	
 	public NondeterministicInterpolantAutomaton(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final IHoareTripleChecker hoareTripleChecker,
 			final INestedWordAutomaton<LETTER, IPredicate> inputInterpolantAutomaton,
@@ -86,25 +86,18 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 
 		assert SmtUtils.isTrue(mIaTrueState.getFormula());
 		assert allPredicates.contains(mIaTrueState);
-		mAlreadyConstructedAutomaton.addState(true, false, mIaTrueState);
 		assert SmtUtils.isFalse(mIaFalseState.getFormula());
-		assert allPredicates.contains(mIaFalseState);
-		mAlreadyConstructedAutomaton.addState(false, true, mIaFalseState);
+		assert isFalsePresent(allPredicates);
 
 		mNonTrivialPredicates = new HashSet<>();
 		for (final IPredicate state : allPredicates) {
-			if (state != mIaTrueState && state != mIaFalseState) {
-				mNonTrivialPredicates.add(state);
-				// the following two lines are important if not (only)
-				// true/false are initial/final states of the automaton.
-				final boolean isInitial = inputInterpolantAutomaton.isInitial(state);
-				final boolean isFinal = inputInterpolantAutomaton.isFinal(state);
-				mAlreadyConstructedAutomaton.addState(isInitial, isFinal, state);
-			}
+			addIfNontrivialPredicate(state);
+			final boolean isInitial = inputInterpolantAutomaton.isInitial(state);
+			final boolean isFinal = inputInterpolantAutomaton.isFinal(state);
+			mAlreadyConstructedAutomaton.addState(isInitial, isFinal, state);
 		}
 
 		mLogger.info(startMessage());
-
 	}
 
 	@Override
@@ -169,10 +162,18 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 				// special case, call may have mIaTrueState as successor
 				inputSuccs.add(mIaTrueState);
 			}
-			if (resPred == mIaTrueState) {
-				// mIaTrueState will get a selfloop labeled with all statements
-				inputSuccs.add(mIaTrueState);
-			}
+			// mIaTrueState will get a self-loop labeled with all statements
+			addTargetStateTrueIfStateIsTrue(resPred, inputSuccs);
+		}
+	}
+
+	protected boolean isFalsePresent(final Collection<IPredicate> allPredicates) {
+		return allPredicates.contains(mIaFalseState);
+	}
+
+	protected void addTargetStateTrueIfStateIsTrue(final IPredicate resPred, final Set<IPredicate> inputSuccs) {
+		if (resPred == mIaTrueState) {
+			inputSuccs.add(mIaTrueState);
 		}
 	}
 
@@ -197,13 +198,19 @@ public class NondeterministicInterpolantAutomaton<LETTER extends IAction>
 		}
 	}
 
-	private void copyAllButTrue(final Set<IPredicate> target, final Collection<IPredicate> source) {
+	protected void copyAllButTrue(final Set<IPredicate> target, final Collection<IPredicate> source) {
 		for (final IPredicate pred : source) {
 			if (pred == mIaTrueState) {
 				// do nothing, transition to the "true" state are useless
 			} else {
 				target.add(pred);
 			}
+		}
+	}
+
+	protected void addIfNontrivialPredicate(final IPredicate state) {
+		if (state != mIaTrueState && state != mIaFalseState) {
+			mNonTrivialPredicates.add(state);
 		}
 	}
 

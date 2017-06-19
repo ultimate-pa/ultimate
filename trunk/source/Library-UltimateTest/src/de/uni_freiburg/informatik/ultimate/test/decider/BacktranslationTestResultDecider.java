@@ -40,11 +40,11 @@ import org.eclipse.core.runtime.IPath;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExternalWitnessValidationResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.ExternalWitnessValidationResult.WitnessVerificationStatus;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.SyntaxErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TypeErrorResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ExternalWitnessValidationResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.ExternalWitnessValidationResult.WitnessVerificationStatus;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IResultService;
@@ -153,11 +153,9 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		// so far so good, now we compare the error path with the expected
 		// error path
 		boolean fail = false;
-		final File inputFile = mRunDefinition.selectPrimaryInputFile();
-		final File settingsFile = mRunDefinition.getSettings();
 		String desiredCounterExample = null;
 		try {
-			desiredCounterExample = getDesiredCounterExample(inputFile, settingsFile);
+			desiredCounterExample = getDesiredCounterExample(mRunDefinition);
 		} catch (final IOException e) {
 			setResultCategory(e.getMessage());
 			setResultMessage(e.toString());
@@ -225,17 +223,21 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 		return fail ? TestResult.FAIL : TestResult.SUCCESS;
 	}
 
-	private static String getDesiredCounterExample(final File inputFile, final File settingsFile) throws IOException {
+	private static String getDesiredCounterExample(final UltimateRunDefinition rundefinition) throws IOException {
+		final File inputFile = rundefinition.selectPrimaryInputFile();
+		final String inputDir = inputFile.getParentFile().getAbsolutePath();
 		final String inputFileNameWithoutEnding = removeFileEnding(inputFile);
-		final String settingsFileNameWithoutEnding = removeFileEnding(settingsFile);
+		final String settingsFileNameWithoutEnding = removeFileEnding(rundefinition.getSettings());
+		final String toolchainFileNameWithoutEnding = removeFileEnding(rundefinition.getToolchain());
 
 		// order some candidates which we would like, we take the first that
 		// matches
 		final List<File> candidates = new ArrayList<>();
-		candidates.add(new File(String.format("%s%s%s%s", inputFile.getParentFile().getAbsolutePath(), IPath.SEPARATOR,
-				inputFileNameWithoutEnding + "_" + settingsFileNameWithoutEnding, ".errorpath")));
-		candidates.add(new File(String.format("%s%s%s%s", inputFile.getParentFile().getAbsolutePath(), IPath.SEPARATOR,
-				inputFileNameWithoutEnding, ".errorpath")));
+		candidates.add(getDesiredCounterExampleCandidate(inputDir, inputFileNameWithoutEnding + "_"
+				+ toolchainFileNameWithoutEnding + "_" + settingsFileNameWithoutEnding));
+		candidates.add(getDesiredCounterExampleCandidate(inputDir,
+				inputFileNameWithoutEnding + "_" + settingsFileNameWithoutEnding));
+		candidates.add(getDesiredCounterExampleCandidate(inputDir, inputFileNameWithoutEnding));
 
 		for (final File candidate : candidates) {
 			if (candidate.canRead()) {
@@ -243,6 +245,10 @@ public class BacktranslationTestResultDecider extends TestResultDecider {
 			}
 		}
 		return null;
+	}
+
+	private static File getDesiredCounterExampleCandidate(final String inputDir, final String filename) {
+		return new File(String.format("%s%s%s%s", inputDir, IPath.SEPARATOR, filename, ".errorpath"));
 	}
 
 	private static String removeFileEnding(final File file) {

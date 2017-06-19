@@ -9,25 +9,98 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqAtomicBaseNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqGraphNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNonAtomicBaseNode;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
-public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUNCTION> {
+public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
+		NODE extends IEqNodeIdentifier<NODE, FUNCTION>, 
+		FUNCTION extends IEqFunctionIdentifier<FUNCTION>> {
 	
 	private boolean mIsFrozen = false;
 	
-	private Map<NODE, EqGraphNode<NODE, FUNCTION>> mNodeToEqGraphNode;
+	private Map<NODE, EqGraphNode<NODE, FUNCTION>> mNodeToEqGraphNode = new HashMap<>();
 	
 	
 	private Set<VPDomainSymmetricPair<NODE>> mDisequalities;
+
+	/**
+	 * The EqConstraint that this cGraph belongs to.
+	 */
+	private final EqConstraint<ACTION, NODE, FUNCTION> mOwningConstraint;
 	
-	public CongruenceGraph() {
-		mNodeToEqGraphNode = new HashMap<>();
+	/**
+	 * constructs an empty CongruenceGraph
+	 */
+	public CongruenceGraph(EqConstraint<ACTION, NODE, FUNCTION> owningConstraint) {
+//		mNodeToEqGraphNode = new HashMap<>();
 		mDisequalities = new HashSet<>();
+		mOwningConstraint = owningConstraint;
+	}
+	
+	/**
+	 * 
+	 */
+	public CongruenceGraph(CongruenceGraph<ACTION, NODE, FUNCTION> original) {
+		
+		mOwningConstraint = original.mOwningConstraint;
+		
+		// make copies of the EqGraphNodes
+		for (Entry<NODE, EqGraphNode<NODE, FUNCTION>> en : original.mNodeToEqGraphNode.entrySet()) {
+			final EqGraphNode<NODE, FUNCTION> newEqgn = getOrConstructEqGraphNode(en.getKey());
+			final EqGraphNode<NODE, FUNCTION> oldEqgn = en.getValue();
+			copyFields(newEqgn, oldEqgn);
+		}
+		
+		// copy the disequality set
+		mDisequalities = new HashSet<>(original.mDisequalities);
+	}
+
+	private void copyFields(final EqGraphNode<NODE, FUNCTION> newEqgn, final EqGraphNode<NODE, FUNCTION> oldEqgn) {
+		copyFields(newEqgn, oldEqgn, null, null);
+	}
+
+	/**
+	 * 
+	 * Copies over the values from the following fields from oldEqgn to newEqgn
+	 * <ul>
+	 *  <li> representative (also updates reverseRepresentative in the representative)
+	 *  <li> ccpar
+	 *  <li> ccchild
+	 * </ul>
+	 *  
+	 * initCcpar and initCchild should be set by getOrConstructEqGraphNode and addNode, making for a complete copy
+	 * of the EqGraphNode when we need one.
+	 * 
+	 * @param newEqgn
+	 * @param oldEqgn
+	 * @param oldNodeToSubstitutedNode 
+	 * @param newNodeToEqGraphNodeMap 
+	 */
+	private void copyFields(final EqGraphNode<NODE, FUNCTION> newEqgn, 
+			final EqGraphNode<NODE, FUNCTION> oldEqgn, 
+			final Map<NODE, NODE> oldNodeToSubstitutedNode, 
+			final Map<NODE, EqGraphNode<NODE, FUNCTION>> newNodeToEqGraphNodeMap) {
+		final NODE oldRepresentativeSubstituted;
+		if (oldNodeToSubstitutedNode != null) {
+			oldRepresentativeSubstituted = oldNodeToSubstitutedNode.get(oldEqgn.getRepresentative().getNode());
+			assert oldRepresentativeSubstituted != null;
+		} else {
+			oldRepresentativeSubstituted = oldEqgn.getRepresentative().getNode();
+		}
+		
+		final EqGraphNode<NODE, FUNCTION> newRepresentative = 
+				getOrConstructEqGraphNode(oldRepresentativeSubstituted, newNodeToEqGraphNodeMap);
+		newEqgn.setRepresentative(newRepresentative);
+		newRepresentative.addToReverseRepresentative(newEqgn);
+		newEqgn.setCcpar(new HashSet<>(oldEqgn.getCcpar()));
+		newEqgn.setCcchild(new HashRelation<>(oldEqgn.getCcchild()));
 	}
 	
 	/**
@@ -211,7 +284,7 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 	 * @param originalState
 	 * @return 
 	 */
-	public void havoc (NODE nodeToBeHavocced) {
+	public void havoc(NODE nodeToBeHavocced) {
 		assert !mIsFrozen;
 
 		assert !nodeToBeHavocced.isLiteral() : "cannot havoc a literal";
@@ -317,11 +390,15 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 		/*
 		 * havoc the function nodes which nodeToBeHavocced was an index of
 		 */
-		if (!graphNodeForNodeToBeHavocced.getInitCcpar().isEmpty()) {
-			for (final NODE initCcpar : graphNodeForNodeToBeHavocced.getInitCcpar()) {
+//		if (!graphNodeForNodeToBeHavocced.getInitCcpar().isEmpty()) {
+//			for (final NODE initCcpar : graphNodeForNodeToBeHavocced.getInitCcpar()) {
+//				havoc(initCcpar);
+//			}
+			final NODE initCcpar = graphNodeForNodeToBeHavocced.getInitCcpar();
+			if (initCcpar != null) {
 				havoc(initCcpar);
 			}
-		}
+//		}
 		
 		/*
 		 * havoc all the non-atomic EqNodes which depend on this one
@@ -332,6 +409,8 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 				havoc((NODE) dependentNode);
 			}
 		}
+		
+		mOwningConstraint.removeNode(nodeToBeHavocced);
 	}
 	
 	
@@ -401,14 +480,25 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 			oldNodeToSubstitutedNode.put(oldNode, oldNode.renameVariables(substitutionMapping));
 		}
 		
-		Map<NODE, EqGraphNode<NODE, FUNCTION>> newNodeToEqGraphNodeMap = new HashMap<>();
+		final Map<NODE, EqGraphNode<NODE, FUNCTION>> newNodeToEqGraphNodeMap = new HashMap<>();
 		
 		for (Entry<NODE, EqGraphNode<NODE, FUNCTION>> en : mNodeToEqGraphNode.entrySet()) {
+			final NODE newNode = oldNodeToSubstitutedNode.get(en.getKey());
+			final EqGraphNode<NODE, FUNCTION> newEqgn = getOrConstructEqGraphNode(newNode, newNodeToEqGraphNodeMap);
+			copyFields(newEqgn, en.getValue(), oldNodeToSubstitutedNode, newNodeToEqGraphNodeMap);
 			
+//			newNodeToEqGraphNodeMap.put(newNode, newEqgn);
 		}
 
 		mNodeToEqGraphNode = newNodeToEqGraphNodeMap;
 		
+		final Set<VPDomainSymmetricPair<NODE>> newDisequalities = new HashSet<>();
+		
+		for (VPDomainSymmetricPair<NODE> deq : mDisequalities) {
+			newDisequalities.add(new VPDomainSymmetricPair<NODE>(oldNodeToSubstitutedNode.get(deq.getFirst()),
+					oldNodeToSubstitutedNode.get(deq.getSecond())));
+		}
+		mDisequalities = newDisequalities;
 	}
 
 	public void addDisequality(NODE find, NODE find2) {
@@ -418,13 +508,86 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 
 
 //	public void addNodes(Collection<NODE> allNodes) {
-//		// TODO Auto-generated method stub
+//		// TOD Auto-generated method stub
 //		assert false;
 //	}
-	
-	private void addNode(NODE node) {
-		// TODO
-		assert false;
+
+	/**
+	 * Add a node to the congruence graph.
+	 * This does not do any propagations but may allow some.
+	 * @param node
+	 * @param initCCpar the parent node, use null for 'no parent'
+	 */
+	public void addNode(NODE node, NODE initCCpar) {
+		if (mNodeToEqGraphNode.containsKey(node)) {
+			final EqGraphNode<NODE, FUNCTION> eqgn = mNodeToEqGraphNode.get(node);
+//			if (initCCpar != null && eqgn.getInitCcpar().isEmpty()) {
+			if (initCCpar != null && eqgn.getInitCcpar() != null) {
+				eqgn.setInitCcpar(initCCpar);
+			}
+			return;
+		}
+		
+		if (node.isFunction()) {
+			for (NODE child : node.getArgs()) {
+				addNode(child, node);
+			}
+		}
+		
+		final EqGraphNode<NODE, FUNCTION> eqgn = getOrConstructEqGraphNode(node);//new EqGraphNode<NODE, FUNCTION>(node);
+		if (initCCpar != null) {
+			eqgn.setInitCcpar(initCCpar);
+		}
+		
+		mNodeToEqGraphNode.put(node, eqgn);
+	}
+
+	/**
+	 * version that updates mNodeToEqGraphNodeMap
+	 * @param node
+	 * @return
+	 */
+	private EqGraphNode<NODE, FUNCTION> getOrConstructEqGraphNode(NODE node) {
+		return getOrConstructEqGraphNode(node, null);
+	}
+
+	/**
+	 * version that updates the given map, mNodeToEqGraphNodeMap only if the given map is null
+	 * @param node
+	 * @param newNodeToEqGraphNodeMap
+	 * @return
+	 */
+	private EqGraphNode<NODE, FUNCTION> getOrConstructEqGraphNode(NODE node, Map<NODE, 
+			EqGraphNode<NODE, FUNCTION>> newNodeToEqGraphNodeMap) {
+		EqGraphNode<NODE, FUNCTION> result;
+		if (newNodeToEqGraphNodeMap == null) {
+			result = mNodeToEqGraphNode.get(node);
+		} else {
+			result = newNodeToEqGraphNodeMap.get(node);
+		}
+
+		if (result == null) {
+			result = new EqGraphNode<>(node);
+			if (node.isFunction()) {
+				for (NODE child : result.getInitCcchild()) {
+					final EqGraphNode<NODE, FUNCTION> childEqgn = getOrConstructEqGraphNode(child, 
+							newNodeToEqGraphNodeMap);
+					if (childEqgn.getInitCcpar() == null) {
+						childEqgn.setInitCcpar(node);
+					} else {
+//						assert childEqgn.getInitCcpar().size() == 1 
+//								&& childEqgn.getInitCcpar().iterator().next() == node;
+						assert childEqgn.getInitCcpar() == node;
+					}
+				}
+			}
+			if (newNodeToEqGraphNodeMap == null) {
+				mNodeToEqGraphNode.put(node, result);
+			} else {
+				newNodeToEqGraphNodeMap.put(node, result);
+			}
+		}
+		return result;
 	}
 
 	public HashRelation<FUNCTION, List<NODE>> getCCChild(NODE representative1) {
@@ -432,7 +595,20 @@ public class CongruenceGraph<NODE extends IEqNodeIdentifier<NODE, FUNCTION>, FUN
 	}
 
 	public HashRelation<NODE, NODE> getSupportingEqualities() {
+		final HashRelation<NODE, NODE> result = new HashRelation<>();
+
+		for (NODE node : mNodeToEqGraphNode.keySet()) {
+			NODE representative = find(node);
+			if (representative != node) {
+				result.addPair(node, representative);
+			}
+		}
 		
-		return null;
+		return result;
+	}
+	
+	@Override
+	public String toString() {
+		return String.format("Nodes: %s \n Disequalities: %s", mNodeToEqGraphNode, mDisequalities);
 	}
 }

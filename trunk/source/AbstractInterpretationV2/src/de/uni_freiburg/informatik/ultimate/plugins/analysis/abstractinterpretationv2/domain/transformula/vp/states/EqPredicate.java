@@ -11,25 +11,34 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 
 public class EqPredicate<ACTION extends IIcfgTransition<IcfgLocation>> implements IAbstractPredicate {
 
-	public EqPredicate(EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> constraint) {
-		// TODO Auto-generated constructor stub
+	private final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> mConstraint;
+	private final String[] mProcedures;
+	private final Set<IProgramVar> mVars;
+	
+//	public EqPredicate(EqConstraint<ACTION, EqNode, EqFunction> constraint) {
+//
+//	}
+
+	public EqPredicate(EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> constraint, Set<IProgramVar> vars, 
+			String[] procedures) {
+		assert vars != null;
+		mConstraint = constraint;
+		mVars = vars;
+		mProcedures = procedures;
 	}
 
 	@Override
 	public String[] getProcedures() {
-		// TODO Auto-generated method stub
-		return null;
+		return mProcedures;
 	}
 
 	@Override
 	public Set<IProgramVar> getVars() {
-		// TODO Auto-generated method stub
-		return null;
+		return mVars;
 	}
 
 	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> getEqConstraint() {
-		// TODO Auto-generated method stub
-		return null;
+		return mConstraint;
 	}
 
 }

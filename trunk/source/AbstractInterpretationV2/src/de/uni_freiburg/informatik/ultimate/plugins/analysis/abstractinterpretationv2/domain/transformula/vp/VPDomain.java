@@ -71,8 +71,9 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 //	private final VPTfStateBuilderPreparer mTfPreparer;
 	private final boolean mDebugMode;
 
-	private EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
-	private EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
+	private final EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
+	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
+	private final EqStateFactory<ACTION> mEqStateFactory;
 
 	public VPDomain(final ILogger logger, final ManagedScript mgdScript, final IUltimateServiceProvider services,
 			final IIcfgSymbolTable symbolTable, final VPDomainPreanalysis preAnalysis) {
@@ -88,8 +89,10 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		
 		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(preAnalysis, mgdScript);
 		mEqConstraintFactory = new EqConstraintFactory<>();
+		mEqStateFactory = new EqStateFactory<>(mEqNodeAndFunctionFactory, mEqConstraintFactory, symbolTable);
+		mEqConstraintFactory.setEqStateFactory(mEqStateFactory);
 
-		mPost = new EqPostOperator<>(mEqNodeAndFunctionFactory, mEqConstraintFactory);
+		mPost = new EqPostOperator<>(mEqNodeAndFunctionFactory, mEqConstraintFactory, mPreAnalysis);
 
 		mDebugMode = mPreAnalysis.isDebugMode();
 	}
@@ -155,7 +158,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	@Override
 	public EqState<ACTION> createTopState() {
 //		return getVpStateFactory().createEmptyStateBuilder().build();
-		return null;
+		return mEqStateFactory.getTopState();
 	}
 
 	@Override
@@ -171,8 +174,7 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 		return mPreAnalysis.getBenchmark();
 	}
 
-	public EqStateFactory getEqStateFactory() {
-		// TODO Auto-generated method stub
-		return null;
+	public EqStateFactory<ACTION> getEqStateFactory() {
+		return mEqStateFactory;
 	}
 }

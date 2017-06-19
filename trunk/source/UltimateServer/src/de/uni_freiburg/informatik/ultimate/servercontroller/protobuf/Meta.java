@@ -180,7 +180,7 @@ public final class Meta {
         implements com.google.protobuf.ProtocolMessageEnum {
       /**
        * <pre>
-       * used to indicate that the connection will be terminated
+       * indicates that the connection will be terminated
        * </pre>
        *
        * <code>QUIT = 0;</code>
@@ -188,7 +188,7 @@ public final class Meta {
       QUIT(0),
       /**
        * <pre>
-       * used for an initial message from Server to Client
+       * initiates communication on connection
        * </pre>
        *
        * <code>HELLO = 1;</code>
@@ -196,7 +196,7 @@ public final class Meta {
       HELLO(1),
       /**
        * <pre>
-       * Not data, just logging
+       * no data, just logging
        * </pre>
        *
        * <code>LOGGING = 2;</code>
@@ -204,7 +204,7 @@ public final class Meta {
       LOGGING(2),
       /**
        * <pre>
-       * sending data only (handle by reference)
+       * send data only
        * </pre>
        *
        * <code>SEND = 3;</code>
@@ -231,7 +231,7 @@ public final class Meta {
 
       /**
        * <pre>
-       * used to indicate that the connection will be terminated
+       * indicates that the connection will be terminated
        * </pre>
        *
        * <code>QUIT = 0;</code>
@@ -239,7 +239,7 @@ public final class Meta {
       public static final int QUIT_VALUE = 0;
       /**
        * <pre>
-       * used for an initial message from Server to Client
+       * initiates communication on connection
        * </pre>
        *
        * <code>HELLO = 1;</code>
@@ -247,7 +247,7 @@ public final class Meta {
       public static final int HELLO_VALUE = 1;
       /**
        * <pre>
-       * Not data, just logging
+       * no data, just logging
        * </pre>
        *
        * <code>LOGGING = 2;</code>
@@ -255,7 +255,7 @@ public final class Meta {
       public static final int LOGGING_VALUE = 2;
       /**
        * <pre>
-       * sending data only (handle by reference)
+       * send data only
        * </pre>
        *
        * <code>SEND = 3;</code>

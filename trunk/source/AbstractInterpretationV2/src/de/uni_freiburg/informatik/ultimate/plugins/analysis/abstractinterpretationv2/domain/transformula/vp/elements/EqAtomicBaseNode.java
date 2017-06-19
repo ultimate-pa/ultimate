@@ -83,7 +83,8 @@ public class EqAtomicBaseNode extends EqNode {
 
 	@Override
 	public String toString() {
-		return mVarOrConst.toString();
+//		return mVarOrConst.toString();
+		return mTerm.toString();
 	}
 
 	@Override

@@ -47,7 +47,7 @@ public interface IRefinementEngine<T> {
 	LBool getCounterexampleFeasibility();
 
 	/**
-	 * This method must only be called if {@link #getCounterexampleFeasibility()} returns {@code UNSAT}.
+	 * This method may only be called if {@link #getCounterexampleFeasibility()} returns {@code UNSAT}.
 	 *
 	 * @return Proof of infeasibility.
 	 */

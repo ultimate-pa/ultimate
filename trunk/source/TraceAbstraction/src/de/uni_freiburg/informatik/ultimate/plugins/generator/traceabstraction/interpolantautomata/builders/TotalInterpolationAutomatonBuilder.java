@@ -42,11 +42,11 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataOperationCanceledException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomatonEpimorphism;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomataUtils;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.ITransitionlet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.transitions.OutgoingCallTransition;
@@ -130,8 +130,8 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 		mPredicateFactory = (PredicateFactory) mPredicateUnifier.getPredicateFactory();
 		mAbstraction = abstraction;
 		final VpAlphabet<LETTER> alphabet = new VpAlphabet<>(abstraction);
-		mIA = new StraightLineInterpolantAutomatonBuilder<>(mServices, alphabet, interpolantGenerator, predicateFactory)
-				.getResult();
+		mIA = new StraightLineInterpolantAutomatonBuilder<>(mServices, alphabet, interpolantGenerator, predicateFactory,
+				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ONLY_FIRST_INITIAL_LAST_ACCEPTING).getResult();
 		mModifiedGlobals = modifiableGlobalsTable;
 		mInterpolation = interpolation;
 		mEpimorphism = new AutomatonEpimorphism<>(new AutomataLibraryServices(mServices));
@@ -200,26 +200,36 @@ public class TotalInterpolationAutomatonBuilder<LETTER extends IIcfgTransition<?
 
 	}
 
+	
+	/**
+	 * Check if automaton contains transition 
+	 * (predItp, internalTrans.getLetter(), succItp)
+	 * We take from the transition only the letter!
+	 */
 	private boolean interpolantAutomatonContainsTransition(final IPredicate predItp,
 			final ITransitionlet<LETTER, IPredicate> transition, final IPredicate succItp) {
 		if (transition instanceof OutgoingInternalTransition) {
 			final OutgoingInternalTransition<LETTER, IPredicate> internalTrans =
 					(OutgoingInternalTransition<LETTER, IPredicate>) transition;
-			return mIA.succInternal(predItp, internalTrans.getLetter()).contains(succItp);
+			final Set<IPredicate> succs = mIA.succInternal(predItp, internalTrans.getLetter());
+			return succs != null && succs.contains(succItp);
 		} else if (transition instanceof OutgoingCallTransition) {
 			final OutgoingCallTransition<LETTER, IPredicate> callTrans =
 					(OutgoingCallTransition<LETTER, IPredicate>) transition;
-			return mIA.succCall(predItp, callTrans.getLetter()).contains(succItp);
+			final Set<IPredicate> succs = mIA.succCall(predItp, callTrans.getLetter());
+			return succs != null && succs.contains(succItp);
 		} else if (transition instanceof OutgoingReturnTransition) {
 			final OutgoingReturnTransition<LETTER, IPredicate> returnTrans =
 					(OutgoingReturnTransition<LETTER, IPredicate>) transition;
 			final IPredicate hierPredItp = mEpimorphism.getMapping(returnTrans.getHierPred());
-			return mIA.succReturn(predItp, hierPredItp, returnTrans.getLetter()).contains(succItp);
+			final Set<IPredicate> succs = mIA.succReturn(predItp, hierPredItp, returnTrans.getLetter());
+			return succs != null && succs.contains(succItp);
 		} else if (transition instanceof SummaryReturnTransition) {
 			final SummaryReturnTransition<LETTER, IPredicate> summaryTrans =
 					(SummaryReturnTransition<LETTER, IPredicate>) transition;
 			final IPredicate linPredItp = mEpimorphism.getMapping(summaryTrans.getLinPred());
-			return mIA.succReturn(linPredItp, predItp, summaryTrans.getLetter()).contains(succItp);
+			final Set<IPredicate> succs = mIA.succReturn(linPredItp, predItp, summaryTrans.getLetter());
+			return succs != null && succs.contains(succItp);
 		} else {
 			throw new AssertionError("unsupported" + transition.getClass());
 		}

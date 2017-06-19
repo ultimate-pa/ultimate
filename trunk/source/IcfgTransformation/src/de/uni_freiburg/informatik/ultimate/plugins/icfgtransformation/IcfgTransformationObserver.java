@@ -48,6 +48,7 @@ import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.Exam
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.ahmed.AhmedLoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.biesenbach.LoopDetectionBB;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRTransformer;
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRTransformer.FastUPRReplacementMethod;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.mohr.IcfgLoopTransformerMohr;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner.WernerLoopAccelerationIcfgTransformer;
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.woelfing.LoopAccelerationIcfgTransformer;
@@ -216,8 +217,10 @@ public class IcfgTransformationObserver implements IUnmanagedObserver {
 			final IBacktranslationTracker backtranslationTracker, final ReplacementVarFactory fac) {
 		final ITransformulaTransformer transformer = new ExampleLoopAccelerationTransformulaTransformer(mLogger,
 				icfg.getCfgSmtToolkit().getManagedScript(), icfg.getCfgSmtToolkit().getSymbolTable(), fac);
-		return new FastUPRTransformer<>(mLogger, icfg, outlocClass, locFac, icfg.getIdentifier() + "IcfgDuplicate",
-				transformer, backtranslationTracker, mServices).getResult();
+		final FastUPRReplacementMethod replacementMetho = mServices.getPreferenceProvider(Activator.PLUGIN_ID)
+				.getEnum(IcfgTransformationPreferences.LABEL_FASTUPR_MODE, FastUPRReplacementMethod.class);
+		return new FastUPRTransformer<>(mLogger, icfg, outlocClass, locFac, icfg.getIdentifier() + "FastUPR",
+				transformer, backtranslationTracker, mServices, replacementMetho).getResult();
 	}
 
 	private <INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> IIcfg<OUTLOC> applyLoopAccelerationWerner(

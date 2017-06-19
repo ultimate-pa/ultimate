@@ -74,7 +74,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.StringFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.Tree;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AutomataScriptInterpreterOverallResult.OverallResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResultAtElement;
 import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceProvider;
@@ -681,8 +681,8 @@ public class TestFileInterpreter implements IMessagePrinter {
 				}
 				statistics.addKeyValuePair(StatisticsType.ATS_ID, oe.getAsString());
 				statistics.addKeyValuePair(StatisticsType.OPERATION_NAME, oe.getOperationName());
-				statistics.addKeyValuePair(StatisticsType.RUNTIME_TOTAL, timer.checkTime() / 1_000_000);
-				final BenchmarkResult<?> br = new BenchmarkResult<>(Activator.PLUGIN_ID,
+				statistics.addKeyValuePair(StatisticsType.RUNTIME_TOTAL_MS, timer.checkTime() / 1_000_000);
+				final StatisticsResult<?> br = new StatisticsResult<>(Activator.PLUGIN_ID,
 						"automata script interpreter benchmark results", statistics);
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID, br);
 			}

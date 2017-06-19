@@ -7,11 +7,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
 
 public class EqDisjunctiveConstraint<
@@ -22,12 +25,16 @@ public class EqDisjunctiveConstraint<
 
 	Set<EqConstraint<ACTION, NODE, FUNCTION>> mConstraints;
 
-	private EqConstraintFactory<ACTION, NODE, FUNCTION> mEqConstraintFactory;
+	private final EqConstraintFactory<ACTION, NODE, FUNCTION> mFactory;
 
-	public EqDisjunctiveConstraint(Collection<EqConstraint<ACTION, NODE, FUNCTION>> constraintList) {
+	public EqDisjunctiveConstraint(Collection<EqConstraint<ACTION, NODE, FUNCTION>> constraintList, 
+			EqConstraintFactory<ACTION, NODE, FUNCTION> factory) {
 		assert !constraintList.stream().filter(cons -> (cons instanceof EqBottomConstraint)).findAny().isPresent() 
 		  : "we filter out EqBottomConstraints up front, right? (could also do it here..)";
+		assert !constraintList.stream().filter(cons -> !cons.isFrozen()).findAny().isPresent() 
+		  : "all the constraints inside a disjunctive constraint should be frozen";
 		mConstraints = new HashSet<>(constraintList);
+		mFactory = factory;
 	}
 
 	public boolean isBottom() {
@@ -36,15 +43,19 @@ public class EqDisjunctiveConstraint<
 	}
 
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> renameVariables(Map<Term, Term> substitutionMapping) {
+		final Collection<EqConstraint<ACTION, NODE, FUNCTION>> constraintList = new HashSet<>();
 		for (EqConstraint<ACTION, NODE, FUNCTION> constraint : mConstraints) {
-			constraint.renameVariables(substitutionMapping);
+			final EqConstraint<ACTION, NODE, FUNCTION> newConstraint = mFactory.unfreeze(constraint);
+			newConstraint.renameVariables(substitutionMapping);
+			newConstraint.freeze();
+			constraintList.add(newConstraint);
 		}
-		return this;
+		return mFactory.getDisjunctiveConstraint(constraintList);
 	}
 
 
 	public EqDisjunctiveConstraint<ACTION, NODE, FUNCTION> projectExistentially(Set<TermVariable> varsToProjectAway) {
-		return mEqConstraintFactory.getDisjunctiveConstraint(
+		return mFactory.getDisjunctiveConstraint(
 				mConstraints.stream()
 					.map(conjConstraint -> conjConstraint.projectExistentially(varsToProjectAway))
 					.collect(Collectors.toSet()));
@@ -59,17 +70,109 @@ public class EqDisjunctiveConstraint<
 	 * @return
 	 */
 	public EqConstraint<ACTION, NODE, FUNCTION> flatten() {
-		// TODO Auto-generated method stub
-		return null;
+		
+		Set<VPDomainSymmetricPair<NODE>> elementEqualities = null;
+		Set<VPDomainSymmetricPair<NODE>> elementDisequalities = null;
+		Set<VPDomainSymmetricPair<FUNCTION>> functionEqualities = null;
+		Set<VPDomainSymmetricPair<FUNCTION>> functionDisequalities = null;
+
+		for (EqConstraint<ACTION, NODE, FUNCTION> constraint : mConstraints) {
+
+			final Set<VPDomainSymmetricPair<NODE>> currentElementEqualities = constraint.getAllElementEqualities();
+			if (elementEqualities == null) {
+				elementEqualities = currentElementEqualities;
+			} else {
+				elementEqualities.retainAll(currentElementEqualities);
+			}
+			
+			final Set<VPDomainSymmetricPair<NODE>> currentElementDisequalities = 
+					constraint.getAllElementDisequalities();
+			if (elementDisequalities == null) {
+				elementDisequalities = currentElementDisequalities;
+			} else {
+				elementDisequalities.retainAll(currentElementDisequalities);
+			}
+			
+			final Set<VPDomainSymmetricPair<FUNCTION>> currentFunctionEqualities = constraint.getAllFunctionEqualities();
+			if (functionEqualities == null) {
+				functionEqualities = currentFunctionEqualities;
+			} else {
+				functionEqualities.retainAll(currentFunctionEqualities);
+			}
+			
+			final Set<VPDomainSymmetricPair<FUNCTION>> currentFunctionDisequalities = 
+					constraint.getAllFunctionDisequalities();
+			if (functionDisequalities == null) {
+				functionDisequalities = currentFunctionDisequalities;
+			} else {
+				functionDisequalities.retainAll(currentFunctionDisequalities);
+			}
+		}
+		
+		EqConstraint<ACTION, NODE, FUNCTION> newConstraint = mFactory.getEmptyConstraint();
+		
+		for (VPDomainSymmetricPair<NODE> elEq : elementEqualities) {
+			newConstraint = mFactory.addEqualityFlat(elEq.getFirst(), elEq.getSecond(), newConstraint);
+		}
+		for (VPDomainSymmetricPair<NODE> elDeq : elementDisequalities) {
+			newConstraint = mFactory.addDisequalityFlat(elDeq.getFirst(), elDeq.getSecond(), newConstraint);
+		}
+		for (VPDomainSymmetricPair<FUNCTION> fnEq : functionEqualities) {
+			newConstraint = mFactory.addFunctionEqualityFlat(fnEq.getFirst(), fnEq.getSecond(), newConstraint);
+		}
+		for (VPDomainSymmetricPair<FUNCTION> fnDeq : functionDisequalities) {
+			newConstraint = mFactory.addFunctionDisequalityFlat(fnDeq.getFirst(), fnDeq.getSecond(), newConstraint);
+		}
+		
+		return newConstraint;
 	}
 
 	public List<EqState<ACTION>> toEqStates() {
-		// TODO Auto-generated method stub
-		return null;
+//		EqConstraint<ACTION, NODE, FUNCTION> cons = mConstraints.iterator().next();
+//		Object st = mEqConstraintFactory.getEqStateFactory().getEqState(cons, cons.getPvocs());
+		final IIcfgSymbolTable symbolTable = mFactory.getEqStateFactory().getSymbolTable();
+		return mConstraints.stream()
+			.map(cons -> mFactory.getEqStateFactory().getEqState(cons, 
+					cons.getPvocs(symbolTable)))
+			.collect(Collectors.toList());
 	}
 
 	public boolean isEmpty() {
 		return mConstraints.isEmpty();
+	}
+
+	public Term getTerm(Script script) {
+		List<Term> disjuncts = mConstraints.stream().map(cons -> cons.getTerm(script)).collect(Collectors.toList());
+		return script.term("or", disjuncts.toArray(new Term[disjuncts.size()]));
+	}
+
+	public boolean areEqual(NODE node1, NODE node2) {
+		return mConstraints.stream().map(cons -> cons.areEqual(node1, node2)).reduce((a, b) -> (a || b)).get();
+	}
+
+	public boolean areUnequal(NODE node1, NODE node2) {
+		return mConstraints.stream().map(cons -> cons.areUnequal(node1, node2)).reduce((a, b) -> (a || b)).get();
+	}
+
+	public boolean areEqual(FUNCTION func1, FUNCTION func2) {
+		return mConstraints.stream().map(cons -> cons.areEqual(func1, func2)).reduce((a, b) -> (a || b)).get();
+	}
+
+	public boolean areUnequal(FUNCTION func1, FUNCTION func2) {
+		return mConstraints.stream().map(cons -> cons.areUnequal(func1, func2)).reduce((a, b) -> (a || b)).get();
+	}
+	
+	@Override
+	public String toString() {
+		if (mConstraints.isEmpty()) {
+			return "EmptyDisjunction/False";
+		}
+		
+//		final StringBuilder sb = new StringBuilder();
+//		for (EqConstraint<ACTION, NODE, FUNCTION> c : mConstraints) {
+//			sb.append(str)
+//		}
+		return "\\/ " + mConstraints.toString();
 	}
 
 //	/**

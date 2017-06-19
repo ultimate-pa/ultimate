@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
+import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
@@ -116,13 +117,18 @@ public class VPDomainPreanalysis {
 	 */
 	private final Set<EqNode> mAllEqNodes = new HashSet<>();
 
-	private EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
+	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
 
-	public VPDomainPreanalysis(final IIcfg<?> root, final ILogger logger) {
+	private final IUltimateServiceProvider mServices;
+
+	public VPDomainPreanalysis(final IIcfg<?> root, final ILogger logger, IUltimateServiceProvider services) {
 		mManagedScript = root.getCfgSmtToolkit().getManagedScript();
 		mLogger = logger;
 		mSymboltable = root.getCfgSmtToolkit().getSymbolTable();
 		mSettings = new VPDomainPreanalysisSettings();
+		mEqNodeAndFunctionFactory = new EqNodeAndFunctionFactory(this, mManagedScript);
+		mServices = services;
+
 		mBenchmark = new Benchmark();
 		mBenchmark.start(VPSFO.overallFromPreAnalysis);
 		mBenchmark.register(VPSFO.vpStateEqualsClock);
@@ -130,7 +136,9 @@ public class VPDomainPreanalysis {
 		mBenchmark.register(VPSFO.propagateDisEqualitiesClock);
 		mBenchmark.register(VPSFO.applyClock);
 		mBenchmark.register(VPSFO.conjoinOverallClock);
+
 		process(RcfgUtils.getInitialEdges(root));
+		
 	}
 
 	private <T extends IcfgEdge> void process(final Collection<T> edges) {
@@ -460,20 +468,11 @@ public class VPDomainPreanalysis {
 		return result;
 	}
 
-	public HashRelation<IProgramVarOrConst, EqFunctionNode> getArrayIdToFnNodeMap() {
-		assert mArrayIdToFnNodes != null;
-		return mArrayIdToFnNodes;
-	}
-
 	@Override
 	public String toString() {
-		return "-RCFGArrayIndexCollector-";
+		return "-VPDomainPreanalysis-";
 	}
 
-	public Map<Term, EqNode> getTermToEqNodeMap() {
-		return mTermToEqNode;
-	}
-	
 	public Set<EqNode> getAllEqNodes() {
 		return Collections.unmodifiableSet(mAllEqNodes);
 	}
@@ -574,48 +573,48 @@ public class VPDomainPreanalysis {
 		}
 		
 		
-		/*
-		 * Say the program equates two arrays, with or without stores in between. Then we want to have the same 
-		 * EqFunctionNodes for these symbols. 
-		 * 
-		 * E.g.
-		 *  We have (= a b), or (= a (store b i x)). Then for every node a[t] we also want to have the node b[t], and
-		 *  vice versa. Note that this introduces EqNode that do not correspond to any term in the formula.
-		 *  Why do we want those extra nodes?
-		 *  
-		 *  say we have a state where
-		 *   valid[p] == 1
-		 *  then we say
-		 *   valid' := valid
-		 *   assume valid'[m] == 0
-		 *  and we want to conclude 
-		 *   m != p
-		 *   Then we can conclude this from valid'[m] != valid'[p], but that we know from the fact that 
-		 *    valid'[p] == valid[p] (and valid[p] == 1 and 1 != 0 and valid'[m] == 0)
-		 *   However our program contains no term that triggers tracking of valid'[p] 
-		 */
-		final Set<ApplicationTerm> arrayEquations = mEquations.stream()
-				.filter(eq -> eq.getFunction().getParameterSorts()[0].isArraySort())
-				.collect(Collectors.toSet());
-		for (ApplicationTerm arrayEquation : arrayEquations) {
-			final Term arg1 = arrayEquation.getParameters()[0];
-			final Term arg2 = arrayEquation.getParameters()[1];
-
-			final EqFunction array1 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(
-					getOrConstructBoogieVarOrConst(VPDomainHelpers.getArrayTerm(arg1)));
-			final EqFunction array2 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(
-					getOrConstructBoogieVarOrConst(VPDomainHelpers.getArrayTerm(arg2)));
-			
-			/*
-			 * for each EqFunctionNode of the form array1[i1 .. in] create the node array2[i1 .. in] and vice versa
-			 */
-			for (EqFunctionNode eqfn : mArrayIdToFnNodes.getImage(array1.getPvoc())) {
-				getOrConstructEqFnNode(array2, eqfn.getArgs());
-			}
-			for (EqFunctionNode eqfn : mArrayIdToFnNodes.getImage(array2.getPvoc())) {
-				getOrConstructEqFnNode(array1, eqfn.getArgs());
-			}
-		}
+//		/*
+//		 * Say the program equates two arrays, with or without stores in between. Then we want to have the same 
+//		 * EqFunctionNodes for these symbols. 
+//		 * 
+//		 * E.g.
+//		 *  We have (= a b), or (= a (store b i x)). Then for every node a[t] we also want to have the node b[t], and
+//		 *  vice versa. Note that this introduces EqNode that do not correspond to any term in the formula.
+//		 *  Why do we want those extra nodes?
+//		 *  
+//		 *  say we have a state where
+//		 *   valid[p] == 1
+//		 *  then we say
+//		 *   valid' := valid
+//		 *   assume valid'[m] == 0
+//		 *  and we want to conclude 
+//		 *   m != p
+//		 *   Then we can conclude this from valid'[m] != valid'[p], but that we know from the fact that 
+//		 *    valid'[p] == valid[p] (and valid[p] == 1 and 1 != 0 and valid'[m] == 0)
+//		 *   However our program contains no term that triggers tracking of valid'[p] 
+//		 */
+//		final Set<ApplicationTerm> arrayEquations = mEquations.stream()
+//				.filter(eq -> eq.getFunction().getParameterSorts()[0].isArraySort())
+//				.collect(Collectors.toSet());
+//		for (ApplicationTerm arrayEquation : arrayEquations) {
+//			final Term arg1 = arrayEquation.getParameters()[0];
+//			final Term arg2 = arrayEquation.getParameters()[1];
+//
+//			final EqFunction array1 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(
+//					getOrConstructBoogieVarOrConst(VPDomainHelpers.getArrayTerm(arg1)));
+//			final EqFunction array2 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(
+//					getOrConstructBoogieVarOrConst(VPDomainHelpers.getArrayTerm(arg2)));
+//			
+//			/*
+//			 * for each EqFunctionNode of the form array1[i1 .. in] create the node array2[i1 .. in] and vice versa
+//			 */
+//			for (EqFunctionNode eqfn : mArrayIdToFnNodes.getImage(array1.getPvoc())) {
+//				getOrConstructEqFnNode(array2, eqfn.getArgs());
+//			}
+//			for (EqFunctionNode eqfn : mArrayIdToFnNodes.getImage(array2.getPvoc())) {
+//				getOrConstructEqFnNode(array1, eqfn.getArgs());
+//			}
+//		}
 		
 		mLogger.info("VPDomainPreanalysis finished.");
 		mLogger.info("tracked arrays: " + mArrayIdToFnNodes.getDomain());
@@ -631,10 +630,7 @@ public class VPDomainPreanalysis {
 		final EqNode result = mTermToEqNode.get(term);
 		return result;
 	}
-	
-	public EqFunctionNode getEqFunctionNode(EqFunction function, List<EqNode> children) {
-		return mEqFunctionNodeStore.get(function, children);
-	}
+
 
 	/**
 	 *
@@ -653,18 +649,23 @@ public class VPDomainPreanalysis {
 		}
 	}
 	
-	public EqNode getEqNode(IProgramVarOrConst pvoc) {
-		return getEqNode(pvoc.getTerm(), Collections.emptyMap());
-	}
-	
 	public VPDomainPreanalysisSettings getSettings() {
 		return mSettings;
 	}
 
 	public boolean isArrayTracked(Term arrayid, Map<TermVariable, IProgramVar> tvToPvMap) {
-		IProgramVarOrConst pvoc = getIProgramVarOrConstOrLiteral(arrayid, tvToPvMap);
-		assert pvoc != null : "perhaps implement this case?";
-	    return isArrayTracked(pvoc);
+		if (arrayid instanceof ApplicationTerm && "store".equals(((ApplicationTerm) arrayid).getFunction().getName())) {
+			final ApplicationTerm at = (ApplicationTerm) arrayid;
+			boolean result = true;
+			result &= isArrayTracked(at.getParameters()[0], tvToPvMap);
+			result &= isElementTracked(at.getParameters()[1], tvToPvMap);
+			result &= isElementTracked(at.getParameters()[2], tvToPvMap);
+			return result;
+		} else {
+			IProgramVarOrConst pvoc = getIProgramVarOrConstOrLiteral(arrayid, tvToPvMap);
+			assert pvoc != null : "perhaps implement this case?";
+			return isArrayTracked(pvoc);
+		}
 	}
 
 //	public boolean isArrayTracked(Term arrayid, Map<TermVariable, IProgramVar> tvToPvMap) {
@@ -711,37 +712,21 @@ public class VPDomainPreanalysis {
 		return mSymboltable;
 	}
 
-	/**
-	 * @param proc
-	 * @return all the EqNodes that only use symbols that are visible in the scope of the given proc.
-	 */
-	public Set<EqNode> getEqNodesForScope(String proc) {
-		assert proc != null;
-		final Set<EqNode> result = new HashSet<>();
-		result.addAll(mGlobalEqNodes);
-		result.addAll(mProcToLocalEqNodes.getImage(proc));
-		return result;
-	}
-	
-	
-	/**
-	 * @param proc
-	 * @return all the EqNodes that only use symbols that are visible in the intersection of the scopes of the given 
-	 *  procedures.
-	 */
-	public Set<EqNode> getEqNodesForScope(String proc1, String proc2) {
-		assert proc1 != null;
-		assert proc2 != null;
-		final Set<EqNode> result = new HashSet<>();
-		result.addAll(mGlobalEqNodes);
-		final Set<EqNode> locals = new HashSet<>(mProcToLocalEqNodes.getImage(proc1));
-		locals.retainAll(mProcToLocalEqNodes.getImage(proc2));
-		result.addAll(locals);
-		return result;
+	private boolean isElementTracked(Term term, Map<TermVariable, IProgramVar> tvToPvMap) {
+		final Term normalizedTerm = 
+				new Substitution(mManagedScript, VPDomainHelpers.computeNormalizingSubstitution(tvToPvMap))
+				.transform(term);
+		return getEqNode(normalizedTerm) != null;
+
 	}
 
-	public boolean isElementTracked(Term term) {
-		return getEqNode(term) != null;
+	public boolean isElementTracked(Term term, TransFormula tf) {
+		return isElementTracked(term, VPDomainHelpers.computeProgramVarMappingFromInVarOutVarMappings(
+				tf.getInVars(), tf.getOutVars()));
+	}
+
+	public IUltimateServiceProvider getServices() {
+		return mServices;
 	}
 }
 

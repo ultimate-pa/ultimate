@@ -611,7 +611,7 @@ public class RelevantVariables {
 
 		final Set<IProgramVar> result = new HashSet<>();
 		for (final IProgramVar bv : returnPredRv) {
-			if (!returnTF.getAssignedVars().contains(bv) && !isHavoced(globalVarAssignment, oldVarAssignment, bv)) {
+			if (!returnTF.getAssignedVars().contains(bv) && !globalVarAssignment.getAssignedVars().contains(bv)) {
 				result.add(bv);
 			}
 		}

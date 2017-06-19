@@ -395,18 +395,18 @@ public class MemoryHandler {
 		final VarList inParamPtrVl =
 				new VarList(ignoreLoc, new String[] { inParamPtr }, mTypeHandler.constructPointerType(ignoreLoc));
 		final VarList inParamAmountOfFieldsVl = new VarList(ignoreLoc, new String[] { inParamAmountOfFields },
-				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSize_T()));
+				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSizeT()));
 		final VarList inParamSizeOfFieldsVl = new VarList(ignoreLoc, new String[] { inParamSizeOfFields },
-				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSize_T()));
+				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSizeT()));
 		final VarList inParamProductVl = new VarList(ignoreLoc, new String[] { inParamProduct },
-				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSize_T()));
+				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSizeT()));
 
 		final VarList[] inParams =
 				new VarList[] { inParamPtrVl, inParamAmountOfFieldsVl, inParamSizeOfFieldsVl, inParamProductVl };
 		final VarList[] outParams = new VarList[] {};
 
 		final List<VariableDeclaration> decl = new ArrayList<>();
-		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSize_T();
+		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSizeT();
 		final String loopCtr = mNameHandler.getTempVarUID(SFO.AUXVAR.LOOPCTR, sizeT);
 		final ASTType astType = mTypeHandler.cType2AstType(ignoreLoc, sizeT);
 		final VarList lcvl = new VarList(ignoreLoc, new String[] { loopCtr }, astType);
@@ -501,14 +501,14 @@ public class MemoryHandler {
 		final VarList inPSrc =
 				new VarList(ignoreLoc, new String[] { memcpyInParamSrc }, mTypeHandler.constructPointerType(ignoreLoc));
 		final VarList inPSize = new VarList(ignoreLoc, new String[] { memcpyInParamSize },
-				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSize_T()));
+				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSizeT()));
 		final VarList outP =
 				new VarList(ignoreLoc, new String[] { memcpyOutParam }, mTypeHandler.constructPointerType(ignoreLoc));
 		final VarList[] inParams = new VarList[] { inPDest, inPSrc, inPSize };
 		final VarList[] outParams = new VarList[] { outP };
 
 		final List<VariableDeclaration> decl = new ArrayList<>();
-		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSize_T();
+		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSizeT();
 		final String loopCtr = mNameHandler.getTempVarUID(SFO.AUXVAR.LOOPCTR, sizeT);
 		final ASTType astType = mTypeHandler.cType2AstType(ignoreLoc, sizeT);
 		final VarList lcvl = new VarList(ignoreLoc, new String[] { loopCtr }, astType);
@@ -599,15 +599,15 @@ public class MemoryHandler {
 
 		// initialize the counter to 0
 		final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(ignoreLoc,
-				mTypeSizeAndOffsetComputer.getSize_T(), BigInteger.ZERO);
+				mTypeSizeAndOffsetComputer.getSizeT(), BigInteger.ZERO);
 		stmt.add(new AssignmentStatement(ignoreLoc,
 				new LeftHandSide[] { new VariableLHS(ignoreLoc, loopCounterVariableId) }, new Expression[] { zero }));
 
 		final IdentifierExpression loopCounterVariableExpr = new IdentifierExpression(ignoreLoc, loopCounterVariableId);
 
 		final Expression condition = mExpressionTranslation.constructBinaryComparisonExpression(ignoreLoc,
-				IASTBinaryExpression.op_lessThan, loopCounterVariableExpr, mTypeSizeAndOffsetComputer.getSize_T(),
-				loopBoundVariableExpr, mTypeSizeAndOffsetComputer.getSize_T());
+				IASTBinaryExpression.op_lessThan, loopCounterVariableExpr, mTypeSizeAndOffsetComputer.getSizeT(),
+				loopBoundVariableExpr, mTypeSizeAndOffsetComputer.getSizeT());
 
 		final ArrayList<Statement> bodyStmt = new ArrayList<>();
 		bodyStmt.addAll(loopBody);
@@ -773,7 +773,7 @@ public class MemoryHandler {
 		final VarList inParamValueVl = new VarList(ignoreLoc, new String[] { inParamValue },
 				mTypeHandler.cType2AstType(ignoreLoc, new CPrimitive(CPrimitives.INT)));
 		final VarList inParamAmountVl = new VarList(ignoreLoc, new String[] { inParamAmount },
-				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSize_T()));
+				mTypeHandler.cType2AstType(ignoreLoc, mTypeSizeAndOffsetComputer.getSizeT()));
 		final VarList outParamResultVl =
 				new VarList(ignoreLoc, new String[] { outParamResult }, mTypeHandler.constructPointerType(ignoreLoc));
 
@@ -781,7 +781,7 @@ public class MemoryHandler {
 		final VarList[] outParams = new VarList[] { outParamResultVl };
 
 		final List<VariableDeclaration> decl = new ArrayList<>();
-		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSize_T();
+		final CPrimitive sizeT = mTypeSizeAndOffsetComputer.getSizeT();
 		final String loopCtr = mNameHandler.getTempVarUID(SFO.AUXVAR.LOOPCTR, sizeT);
 		final ASTType astType = mTypeHandler.cType2AstType(ignoreLoc, sizeT);
 		final VarList lcvl = new VarList(ignoreLoc, new String[] { loopCtr }, astType);
@@ -799,7 +799,7 @@ public class MemoryHandler {
 		final List<Statement> loopBody = constructMemsetLoopBody(heapDataArrays, loopCtr, inParamPtr, convertedValue);
 
 		final Expression one = mExpressionTranslation.constructLiteralForIntegerType(ignoreLoc,
-				mTypeSizeAndOffsetComputer.getSize_T(), BigInteger.ONE);
+				mTypeSizeAndOffsetComputer.getSizeT(), BigInteger.ONE);
 		final IdentifierExpression inParamAmountExpr = new IdentifierExpression(ignoreLoc, inParamAmount);
 		final List<Statement> stmt = constructCountingLoop(inParamAmountExpr, loopCtr, one, loopBody);
 
@@ -883,7 +883,7 @@ public class MemoryHandler {
 		final String inPtr = "#ptr";
 		final String writtenTypeSize = "#sizeOfWrittenType";
 
-		final ASTType sizetType = mTypeHandler.cType2AstType(loc, mTypeSizeAndOffsetComputer.getSize_T());
+		final ASTType sizetType = mTypeHandler.cType2AstType(loc, mTypeSizeAndOffsetComputer.getSizeT());
 		final VarList[] inWrite = new VarList[] { new VarList(loc, new String[] { "#value" }, valueAstType),
 				new VarList(loc, new String[] { inPtr }, mTypeHandler.constructPointerType(loc)),
 				new VarList(loc, new String[] { writtenTypeSize }, sizetType) };
@@ -980,7 +980,7 @@ public class MemoryHandler {
 		final ASTType valueAstType = rda.getASTType();
 		final String ptrId = "#ptr";
 		final String readTypeSize = "#sizeOfReadType";
-		final ASTType sizetType = mTypeHandler.cType2AstType(loc, mTypeSizeAndOffsetComputer.getSize_T());
+		final ASTType sizetType = mTypeHandler.cType2AstType(loc, mTypeSizeAndOffsetComputer.getSizeT());
 		final VarList[] inRead =
 				new VarList[] { new VarList(loc, new String[] { ptrId }, mTypeHandler.constructPointerType(loc)),
 						new VarList(loc, new String[] { readTypeSize }, sizetType) };
@@ -1037,10 +1037,10 @@ public class MemoryHandler {
 		final Expression base = getPointerBaseAddress(ptrExpr, loc);
 		final Expression offset = getPointerOffset(ptrExpr, loc);
 		final Expression addition = mExpressionTranslation.constructLiteralForIntegerType(loc,
-				mTypeSizeAndOffsetComputer.getSize_T(), integerConstant);
+				mTypeSizeAndOffsetComputer.getSizeT(), integerConstant);
 		final Expression offsetPlus =
 				mExpressionTranslation.constructArithmeticExpression(loc, IASTBinaryExpression.op_plus, offset,
-						mTypeSizeAndOffsetComputer.getSize_T(), addition, mTypeSizeAndOffsetComputer.getSize_T());
+						mTypeSizeAndOffsetComputer.getSizeT(), addition, mTypeSizeAndOffsetComputer.getSizeT());
 		return constructPointerFromBaseAndOffset(base, offsetPlus, loc);
 	}
 

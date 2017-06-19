@@ -11,11 +11,15 @@ dietsch@informatik.uni-freiburg.de
 heizmann@informatik.uni-freiburg.de
 nutz@informatik.uni-freiburg.de
 greitsch@informatik.uni-freiburg.de
+schillic@informatik.uni-freiburg.de
 
 This archive also contains binaries for different theorem provers:
- * Z3 (https://github.com/Z3Prover, master b70f1f0319a0d7f607f3f752e21a4957ee020645)
+ * Z3 (https://github.com/Z3Prover/z3 master 870017e2ceb5da85f5c7314bd7b35ca865af9a97)
  * CVC4 (http://cvc4.cs.nyu.edu/, 04-Aug-2016 05:31)
- * MathSAT5 (http://mathsat.fbk.eu, version 5.3.14 (0b98b661254c) (Nov 17 2016 10:59:45, gmp 5.1.3, gcc 4.8.5, 64-bit))
+ * MathSAT5 (http://mathsat.fbk.eu)  
+	Windows: version 5.4.1 (3ca22be05d13) (May 11 2017 17:30:42, gmp 5.1.3/mpir 2.7.0, msvc 18.00, 64-bit)
+	Linux: version 5.4.1 (3ca22be05d13) (May 11 2017 17:18:01, gmp 6.1.0, gcc 4.8.5, 64-bit)
+
 
 --------------------------------------------------------------------------------
 

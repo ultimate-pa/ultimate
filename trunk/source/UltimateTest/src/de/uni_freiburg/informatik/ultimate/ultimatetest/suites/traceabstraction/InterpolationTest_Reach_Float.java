@@ -52,6 +52,7 @@ public class InterpolationTest_Reach_Float extends AbstractTraceAbstractionTestS
 			new DirectoryFileEndingsPair("examples/svcomp/floats-cdfpl/", new String[]{ ".i", }, mFilesPerDirectoryLimit) ,
 			new DirectoryFileEndingsPair("examples/svcomp/floats-cbmc-regression/", new String[]{ ".i", }, mFilesPerDirectoryLimit) ,
 			new DirectoryFileEndingsPair("examples/svcomp/float-benchs/", new String[]{ ".c" }, mFilesPerDirectoryLimit) ,
+			new DirectoryFileEndingsPair("examples/svcomp/floats-esbmc-regression/", new String[]{ ".i" }, mFilesPerDirectoryLimit) ,
 	};
 	
 	
@@ -69,8 +70,10 @@ public class InterpolationTest_Reach_Float extends AbstractTraceAbstractionTestS
 	}
 
 	private static final String[] mSettings = {
+		"automizer/interpolation/float/Reach-32bit-Z3-IcSpLv-Float-FakeNi.epf",
 		"automizer/interpolation/float/Reach-32bit-Z3-IcSpLv-Float.epf",
 		"automizer/interpolation/float/Reach-32bit-Z3-IcWpLv-Float.epf",
+		"automizer/interpolation/float/Reach-32bit-MathSAT-IcSpLv-Float-FakeNi.epf",
 		"automizer/interpolation/float/Reach-32bit-MathSAT-IcSpLv-Float.epf",
 		"automizer/interpolation/float/Reach-32bit-MathSAT-IcWpLv-Float.epf",
 		"automizer/FloatTranslationWithOverapproximation.epf"

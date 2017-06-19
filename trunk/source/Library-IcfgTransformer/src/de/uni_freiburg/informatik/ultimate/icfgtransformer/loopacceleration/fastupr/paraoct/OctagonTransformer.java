@@ -1,9 +1,37 @@
+/*
+ * Copyright (C) 2017 Jill Enke (enkei@informatik.uni-freiburg.de)
+ * Copyright (C) 2017 University of Freiburg
+ *
+ * This file is part of the ULTIMATE IcfgTransformer library.
+ *
+ * The ULTIMATE IcfgTransformer is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * The ULTIMATE IcfgTransformer is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with the ULTIMATE IcfgTransformer library. If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Additional permission under GNU GPL version 3 section 7:
+ * If you modify the ULTIMATE IcfgTransformer library, or any covered work, by linking
+ * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
+ * containing parts covered by the terms of the Eclipse Public License, the
+ * licensors of the ULTIMATE IcfgTransformer grant you additional permission
+ * to convey the resulting work.
+ */
+
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.paraoct;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRUtils;
 import de.uni_freiburg.informatik.ultimate.logic.AnnotatedTerm;
@@ -11,10 +39,15 @@ import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.NonRecursive;
 import de.uni_freiburg.informatik.ultimate.logic.Rational;
+import de.uni_freiburg.informatik.ultimate.logic.Script;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
 
+/**
+ *
+ * @author Jill Enke (enkei@informatik.uni-freiburg.de)
+ *
+ */
 public class OctagonTransformer extends NonRecursive {
 
 	private enum InequalitySide {
@@ -30,24 +63,22 @@ public class OctagonTransformer extends NonRecursive {
 	private TermVariable mSecondVar;
 	private boolean mFirstNegative;
 	private boolean mSecondNegative;
-	private BigDecimal mFirstCoefficient;
-	private BigDecimal mSecondCoefficient;
 	private final OctagonDetector mOctagonDetector;
 
 	private BigDecimal mValue;
 
 	private InequalityType mType;
 
-	private final ManagedScript mManagedScript;
+	private final Script mScript;
 	private final HashSet<Term> mAdditionalTerms;
 	private final FastUPRUtils mUtils;
 
-	public OctagonTransformer(FastUPRUtils utils, ManagedScript managedScript, OctagonDetector detector) {
+	public OctagonTransformer(FastUPRUtils utils, Script script, OctagonDetector detector) {
 		mOctagonDetector = detector;
 		mUtils = utils;
 		mCheckedTerms = new HashSet<>();
 		mValue = new BigDecimal(0);
-		mManagedScript = managedScript;
+		mScript = script;
 		mAdditionalTerms = new HashSet<>();
 	}
 
@@ -73,7 +104,6 @@ public class OctagonTransformer extends NonRecursive {
 
 		@Override
 		public void walk(NonRecursive engine) {
-			// TODO Auto-generated method stub
 			if (mSide == InequalitySide.NONE) {
 				((OctagonTransformer) engine).transformTerm(mTerm, mNegate);
 			} else {
@@ -83,16 +113,16 @@ public class OctagonTransformer extends NonRecursive {
 
 	}
 
-	public OctagonConjunction transform(Term term) {
+	public OctConjunction transform(Term term) {
 		return transform(mOctagonDetector.getConjunctSubTerms(term));
 	}
 
-	public OctagonConjunction transform(HashSet<Term> terms) {
+	public OctConjunction transform(Set<Term> terms) {
 		mCheckedTerms.clear();
 		mAdditionalTerms.clear();
 		mUtils.debug("Starting Term to OctagonTransformation");
 
-		final OctagonConjunction octagon = new OctagonConjunction();
+		final OctConjunction octagon = new OctConjunction();
 
 		for (final Term t : terms) {
 			mUtils.debug("Getting Value from:" + t.toString());
@@ -107,9 +137,10 @@ public class OctagonTransformer extends NonRecursive {
 				mUtils.debug("ERROR");
 			} else if (mSecondVar == null) {
 				mValue = mValue.multiply(new BigDecimal(2));
-				octagon.addTerm(new OneVarOctTerm(mValue, mFirstVar, mFirstNegative));
+				octagon.addTerm(OctagonFactory.createOneVarOctTerm(mValue, mFirstVar, mFirstNegative));
 			} else {
-				octagon.addTerm(new TwoVarOctTerm(mValue, mFirstVar, mFirstNegative, mSecondVar, mSecondNegative));
+				octagon.addTerm(OctagonFactory.createTwoVarOctTerm(mValue, mFirstVar, mFirstNegative, mSecondVar,
+						mSecondNegative));
 			}
 		}
 
@@ -118,17 +149,19 @@ public class OctagonTransformer extends NonRecursive {
 			resetTerm();
 			run(new OctagonTermWalker(t, InequalitySide.NONE));
 
-			if (mType == InequalityType.LESSER)
+			if (mType == InequalityType.LESSER) {
 				mValue = mValue.subtract(new BigDecimal(1));
+			}
 			mUtils.debug("Value is:" + mValue.toString());
 
 			if (mFirstVar == null) {
 				mUtils.debug("ERROR");
 			} else if (mSecondVar == null) {
 				mValue = mValue.multiply(new BigDecimal(2));
-				octagon.addTerm(new OneVarOctTerm(mValue, mFirstVar, mFirstNegative));
+				octagon.addTerm(OctagonFactory.createOneVarOctTerm(mValue, mFirstVar, mFirstNegative));
 			} else {
-				octagon.addTerm(new TwoVarOctTerm(mValue, mFirstVar, mFirstNegative, mSecondVar, mSecondNegative));
+				octagon.addTerm(OctagonFactory.createTwoVarOctTerm(mValue, mFirstVar, mFirstNegative, mSecondVar,
+						mSecondNegative));
 			}
 		}
 
@@ -138,11 +171,11 @@ public class OctagonTransformer extends NonRecursive {
 		return octagon;
 	}
 
-	public ParametricOctMatrix getMatrix(OctagonConjunction conjunc, ArrayList<TermVariable> variables) {
+	public ParametricOctMatrix getMatrix(OctConjunction conjunc, List<TermVariable> variables) {
 		mUtils.debug(">> Converting OctagonConjunction to Matrix");
 		mUtils.debug("> Conjunction: " + conjunc.toString());
-		final ArrayList<OctagonTerm> terms = conjunc.getTerms();
-		final ParametricOctMatrix result = new ParametricOctMatrix(variables.size() * 2);
+		final List<OctTerm> terms = conjunc.getTerms();
+		final ParametricOctMatrix result = new ParametricOctMatrix(variables.size());
 		for (final TermVariable t : variables) {
 			result.addVar(t);
 		}
@@ -151,14 +184,18 @@ public class OctagonTransformer extends NonRecursive {
 
 		mUtils.debug("Created ParametricOctMatrix of size " + variables.size() * 2);
 
-		for (final OctagonTerm t : terms) {
-			if (t instanceof OneVarOctTerm) {
+		for (final OctTerm t : terms) {
+
+			if (t instanceof ParametricOctTerm) {
+				mUtils.getLogger().fatal("Parametric to Matrix Conversion not supported",
+						new UnsupportedOperationException());
+			}
+
+			if (t.isOneVar()) {
 				result.setValue(t.getValue(), t.getFirstVar(), t.isFirstNegative());
-			} else if (t instanceof TwoVarOctTerm) {
+			} else {
 				result.setValue(t.getValue(), t.getFirstVar(), t.isFirstNegative(), t.getSecondVar(),
 						t.isSecondNegative());
-			} else {
-				throw new UnsupportedOperationException();
 			}
 		}
 		return result;
@@ -175,8 +212,9 @@ public class OctagonTransformer extends NonRecursive {
 		} else if (t.getValue() instanceof BigInteger) {
 			value = new BigDecimal((BigInteger) t.getValue());
 		}
-		if (negate)
+		if (negate) {
 			value = value.negate();
+		}
 		mValue = mValue.add(value);
 	}
 
@@ -195,8 +233,6 @@ public class OctagonTransformer extends NonRecursive {
 	private void resetTerm() {
 		mFirstVar = null;
 		mSecondVar = null;
-		mFirstCoefficient = null;
-		mSecondCoefficient = null;
 		mFirstNegative = false;
 		mSecondNegative = false;
 		mValue = new BigDecimal(0);
@@ -204,7 +240,7 @@ public class OctagonTransformer extends NonRecursive {
 
 	private void transformTerm(Term t, boolean negate) {
 
-		mUtils.debug(("> Walking over neutral Term: " + (negate ? "not: " : "") + t.toString()));
+		mUtils.debug("> Walking over neutral Term: " + (negate ? "not: " : (" " + t.toString())));
 
 		if (mCheckedTerms.contains(t)) {
 			return;
@@ -216,44 +252,49 @@ public class OctagonTransformer extends NonRecursive {
 
 			mUtils.debug(">> Application of type: " + functionName);
 
-			boolean swap = false;
+			Term term = t;
 
 			if (functionName.compareTo("<") == 0) {
 				mType = InequalityType.LESSER;
+				term = aT;
 			} else if (functionName.compareTo(">") == 0) {
 				mType = InequalityType.LESSER;
-				swap = true;
+				term = mScript.term("<", aT.getParameters()[1], aT.getParameters()[0]);
 			} else if (functionName.compareTo("<=") == 0) {
 				mType = InequalityType.LESSER_EQUAL;
+				term = aT;
 			} else if (functionName.compareTo(">=") == 0) {
 				mType = InequalityType.LESSER_EQUAL;
-				swap = true;
+				term = mScript.term("<=", aT.getParameters()[1], aT.getParameters()[0]);
 			} else if (functionName.compareTo("not") == 0) {
 				enqueueWalker(new OctagonTermWalker(aT.getParameters()[0], true));
 				return;
 			} else if (functionName.compareTo("=") == 0) {
 				mUtils.debug(">> EQUALITY");
-				final Term first = mManagedScript.getScript().term("<=", aT.getParameters()[0], aT.getParameters()[1]);
-				final Term second = mManagedScript.getScript().term("<=", aT.getParameters()[1], aT.getParameters()[0]);
+				final Term first = mScript.term("<=", aT.getParameters()[0], aT.getParameters()[1]);
+				final Term second = mScript.term("<=", aT.getParameters()[1], aT.getParameters()[0]);
 
 				enqueueWalker(new OctagonTermWalker(first, false));
 				mAdditionalTerms.add(second);
 				return;
-			} else {
-
 			}
+
+			ApplicationTerm appTerm = (ApplicationTerm) term;
 
 			if (negate) {
-				if (mType.equals(InequalityType.LESSER)) {
+				if (mType == InequalityType.LESSER) {
+					appTerm = (ApplicationTerm) mScript.term("<=", appTerm.getParameters()[1],
+							appTerm.getParameters()[0]);
 					mType = InequalityType.LESSER_EQUAL;
 				} else {
+					appTerm = (ApplicationTerm) mScript.term("<", appTerm.getParameters()[1],
+							appTerm.getParameters()[0]);
 					mType = InequalityType.LESSER;
 				}
-				swap = !swap;
 			}
 
-			final Term leftSide = (swap ? aT.getParameters()[0] : aT.getParameters()[1]);
-			final Term rightSide = (swap ? aT.getParameters()[1] : aT.getParameters()[0]);
+			final Term leftSide = appTerm.getParameters()[0];
+			final Term rightSide = appTerm.getParameters()[1];
 
 			enqueueWalker(new OctagonTermWalker(leftSide, InequalitySide.LEFT));
 			enqueueWalker(new OctagonTermWalker(rightSide, InequalitySide.RIGHT));

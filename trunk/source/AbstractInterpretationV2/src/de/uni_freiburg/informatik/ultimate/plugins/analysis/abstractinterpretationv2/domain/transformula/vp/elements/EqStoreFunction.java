@@ -18,4 +18,9 @@ public class EqStoreFunction extends EqFunction {
 		mValue = value;
 	}
 
+	@Override
+	public String getFunctionName() {
+		assert false : "does not make sense, here";
+		return super.getFunctionName();
+	}
 }

@@ -41,7 +41,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.TimeUnit;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.NoResult;
@@ -132,9 +132,9 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 
 		// get benchmark result stuff
 		for (final IResult r : mResults) {
-			if (r instanceof BenchmarkResult) {
-				final BenchmarkResult<?> br = (BenchmarkResult<?>) r;
-				final ICsvProviderProvider<?> ic = br.getBenchmark();
+			if (r instanceof StatisticsResult) {
+				final StatisticsResult<?> br = (StatisticsResult<?>) r;
+				final ICsvProviderProvider<?> ic = br.getStatistics();
 
 				if (ic instanceof Benchmark) {
 					final Benchmark benchmark = (Benchmark) ic;
@@ -316,10 +316,10 @@ public class AbstractInterpretationTestResultDecider extends TestResultDecider {
 	private ActualResult getActualResult(final Collection<IResult> results) {
 		final ActualResult returnValue;
 		final Map<ActualResultType, ActualResult> resultSet = new HashMap<>();
-		BenchmarkResult<?> benchmark = null;
+		StatisticsResult<?> benchmark = null;
 		for (final IResult result : results) {
-			if (result instanceof BenchmarkResult) {
-				benchmark = (BenchmarkResult<?>) result;
+			if (result instanceof StatisticsResult) {
+				benchmark = (StatisticsResult<?>) result;
 			}
 			final ActualResult extracted = extractResult(result);
 			if (extracted != null) {

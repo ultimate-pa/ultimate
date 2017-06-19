@@ -11,6 +11,7 @@ import de.uni_freiburg.informatik.ultimate.logic.ConstantTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramVarOrConst;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.Substitution;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalSelect;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.arrays.MultiDimensionalStore;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -74,10 +75,10 @@ public class EqNodeAndFunctionFactory {
 
 	public EqNode getOrConstructEqNode(Term term) {
 		if (term instanceof ApplicationTerm && ((ApplicationTerm) term).getParameters().length > 0) {
-			if (((ApplicationTerm) term).getFunction().isIntern()) {
-				return getOrConstructNonAtomicBaseNode(term);
-			} else if ("select".equals(((ApplicationTerm) term).getFunction().getName())) {
+			if ("select".equals(((ApplicationTerm) term).getFunction().getName())) {
 				return getOrConstructEqFunctionNode((ApplicationTerm) term);
+			} else if (((ApplicationTerm) term).getFunction().isIntern()) {
+				return getOrConstructNonAtomicBaseNode(term);
 			} else {
 				throw new UnsupportedOperationException();
 			}
@@ -112,6 +113,7 @@ public class EqNodeAndFunctionFactory {
 			}
 			
 			result = new EqFunctionNode(function, args, selectTerm, this);
+			mTermToEqNode.put(selectTerm, result);
 		}
 		assert result instanceof EqFunctionNode;
 		return result;
@@ -121,6 +123,7 @@ public class EqNodeAndFunctionFactory {
 		EqNode result = mTermToEqNode.get(term);
 		if (result == null) {
 			result = new EqAtomicBaseNode(term, this);
+			mTermToEqNode.put(term, result);
 		}
 		assert result instanceof EqAtomicBaseNode;
 		return result;
@@ -176,10 +179,27 @@ public class EqNodeAndFunctionFactory {
 	}
 
 	public EqFunction constructRenamedEqFunction(EqFunction eqFunction, Map<Term, Term> substitutionMapping) {
-		// TODO Auto-generated method stub
-		return null;
+		final Term substitutedTerm = new Substitution(mMgdScript, substitutionMapping).transform(eqFunction.getTerm());
+		return getOrConstructEqFunction(substitutedTerm);
+	}
+
+	/**
+	 * 
+	 * @param term
+	 * @return
+	 */
+	public EqNode getExistingEqNode(Term term) {
+		return mTermToEqNode.get(term);
 	}
 	
+	/**
+	 * 
+	 * @param term
+	 * @return
+	 */
+	public EqFunction getExistingEqFunction(Term term) {
+		return mTermToEqFunction.get(term);
+	}
 	
 
 }

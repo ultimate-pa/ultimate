@@ -44,15 +44,15 @@ import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.AutomataScriptTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.AutomataScriptTestSummary;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.LatexOverviewSummary;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.AutomataScriptTestSummary;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition.Aggregate;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ConversionContext;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.CsvConcatenator;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.LatexOverviewSummary;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderColumnFilter;
 import de.uni_freiburg.informatik.ultimate.util.csv.CsvProviderRowFilter;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
@@ -91,7 +91,7 @@ public class BuchiIsIncludedTestSuite extends UltimateTestSuite {
 			// "Settings",
 			// StatisticsType.ATS_ID.toString(),
 			StatisticsType.OPERATION_NAME.toString(),
-			StatisticsType.RUNTIME_TOTAL.toString(),
+			StatisticsType.RUNTIME_TOTAL_MS.toString(),
 			StatisticsType.STATES_LHS.toString(),
 			StatisticsType.STATES_RHS.toString(),
 			StatisticsType.RHS_IS_DETERMINISTIC.toString(),

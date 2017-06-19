@@ -46,7 +46,7 @@ import de.uni_freiburg.informatik.ultimate.core.coreplugin.exceptions.StoreObjec
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.preferences.CorePreferenceInitializer;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.GenericServiceProvider;
 import de.uni_freiburg.informatik.ultimate.core.coreplugin.services.ProgressMonitorService;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.GenericResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ResultUtil;
 import de.uni_freiburg.informatik.ultimate.core.lib.toolchain.PluginType;
@@ -337,7 +337,7 @@ public class ToolchainManager {
 
 					// report benchmark results
 					resultService.reportResult(Activator.PLUGIN_ID,
-							new BenchmarkResult<>(Activator.PLUGIN_ID, "Toolchain Benchmarks", mBenchmark));
+							new StatisticsResult<>(Activator.PLUGIN_ID, "Toolchain Benchmarks", mBenchmark));
 
 				}
 

@@ -28,21 +28,24 @@ package de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWord;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IIcfgSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.ICallAction;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IInternalAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IReturnAction;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProgramNonOldVar;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.MonolithicImplicationChecker;
@@ -56,112 +59,277 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.Term
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.builders.StraightLineInterpolantAutomatonBuilder;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.IPredicatePostprocessor;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.QuantifierEliminationPostprocessor;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.preferences.TAPreferences.InterpolantAutomatonEnhancement;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.DefaultTransFormulas;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
  * Constructs an error automaton for a given error trace.
+ * <p>
+ * TODO 2017-06-05 Christian: Why do I use two different predicate factories? Do I use them correctly?
+ * <p>
+ * TODO 2017-06-05 Christian: Should we use predicate unification or not? For which parts? Currently we need it only for
+ * 'True'/'False' and constructing the {@link NondeterministicInterpolantAutomaton}.
+ * <p>
+ * TODO 2017-06-05 Christian: Should we apply simplifications?
+ * <p>
+ * TODO 2017-06-09 Christian: The successor 'True' (and 'False', but this does not matter) is never checked by the
+ * {@link NondeterministicInterpolantAutomaton}. Is this a problem?
  * 
  * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
  * @param <LETTER>
  *            letter type in the trace
  */
 public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
-	// TODO 2017-05-17 Christian: Make this a setting?
-	private static final boolean USE_NONDET_AUTOMATON_ENHANCEMENT = false;
+	/**
+	 * This is used to avoid 'strange' predicates. Consider the example trace
+	 * <p>
+	 * {@literal call f(); assume true; return; assume true}
+	 * <p>
+	 * The WP predicates along this trace starting from 'false' are (from end to front):
+	 * <p>
+	 * 'false', 'false', 'true', 'true', 'false'
+	 * <p>
+	 * Thus the PRE sequence would be the negation and hence we would have 'false' as a predicate along a feasible
+	 * trace.
+	 */
+	private static final boolean USE_TRUE_AS_CALL_PREDECESSOR_FOR_WP = true;
+	/**
+	 * {@code true} iff predicates are unified.
+	 */
+	private static final boolean UNIFY_PREDICATES = true;
+	/**
+	 * {@code true} iff formulas are postprocessed (i.e., simplified).
+	 */
+	private static final boolean APPLY_FORMULA_POSTPROCESSOR = true;
+	/**
+	 * {@code true} iff SP predicates are used.
+	 */
+	private static final boolean ADD_SP_PREDICATES = true;
 
-	private final NestedWordAutomaton<LETTER, IPredicate> mResult;
+	/**
+	 * Predicate transformer types.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	private enum PredicateTransformerType {
+		/**
+		 * Weakest precondition.
+		 */
+		WP,
+		/**
+		 * Strongest postcondition.
+		 */
+		SP
+	}
 
-	public ErrorAutomatonBuilder(final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory,
-			final CfgSmtToolkit csToolkit, final IUltimateServiceProvider services,
+	private final NestedWordAutomaton<LETTER, IPredicate> mResultBeforeEnhancement;
+	private final NondeterministicInterpolantAutomaton<LETTER> mResultAfterEnhancement;
+	private IPredicate mErrorPrecondition;
+	private final int mLastIteration;
+
+	/**
+	 * @param services
+	 *            Ultimate services.
+	 * @param predicateFactory
+	 *            predicate factory
+	 * @param predicateUnifier
+	 *            predicate unifier
+	 * @param csToolkit
+	 *            SMT toolkit
+	 * @param simplificationTechnique
+	 *            simplification technique
+	 * @param xnfConversionTechnique
+	 *            XNF conversion technique
+	 * @param symbolTable
+	 *            symbol table
+	 * @param predicateFactoryErrorAutomaton
+	 *            predicate factory for the error automaton
+	 * @param alphabet
+	 *            alphabet
+	 * @param trace
+	 *            error trace
+	 * @param enhanceMode
+	 *            mode for automaton enhancement
+	 */
+	@SuppressWarnings("squid:S00107")
+	public ErrorAutomatonBuilder(final IUltimateServiceProvider services, final PredicateFactory predicateFactory,
+			final IPredicateUnifier predicateUnifier, final CfgSmtToolkit csToolkit,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IIcfg<?> icfgContainer,
-			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
-			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace) {
-		final NestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton = constructStraightLineAutomaton(services,
-				csToolkit, predicateFactory, predicateUnifier.getFalsePredicate(), simplificationTechnique,
-				xnfConversionTechnique, icfgContainer, predicateFactoryInterpolantAutomata, alphabet, trace);
+			final IIcfgSymbolTable symbolTable,
+			final PredicateFactoryForInterpolantAutomata predicateFactoryErrorAutomaton,
+			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace, final int iteration,
+			final InterpolantAutomatonEnhancement enhanceMode) {
+		final ILogger logger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
+		mLastIteration = iteration;
+		final PredicateUnificationMechanism internalPredicateUnifier =
+				new PredicateUnificationMechanism(predicateUnifier);
 
-		if (USE_NONDET_AUTOMATON_ENHANCEMENT) {
-			mResult = constructNondeterministicAutomaton(services, straightLineAutomaton, csToolkit, predicateUnifier,
-					predicateFactory);
-		} else {
-			mResult = straightLineAutomaton;
+		mResultBeforeEnhancement = constructStraightLineAutomaton(services, logger, csToolkit, predicateFactory,
+				internalPredicateUnifier, simplificationTechnique, xnfConversionTechnique, symbolTable,
+				predicateFactoryErrorAutomaton, alphabet, trace);
+
+		mResultAfterEnhancement = enhanceMode != InterpolantAutomatonEnhancement.NONE
+				? constructNondeterministicAutomaton(services, mResultBeforeEnhancement, csToolkit,
+						internalPredicateUnifier, predicateFactory)
+				: null;
+	}
+
+	public NestedWordAutomaton<LETTER, IPredicate> getResultBeforeEnhancement() {
+		return mResultBeforeEnhancement;
+	}
+
+	/**
+	 * @return Automaton after (on-demand) enhancement. The additional transitions are not explicitly added. They will
+	 *         be computed when asking for successors.
+	 */
+	public NondeterministicInterpolantAutomaton<LETTER> getResultAfterEnhancement() {
+		if (mResultAfterEnhancement == null) {
+			throw new UnsupportedOperationException("No enhancement was requested.");
 		}
+		return mResultAfterEnhancement;
 	}
 
-	public NestedWordAutomaton<LETTER, IPredicate> getResult() {
-		return mResult;
+	public IPredicate getErrorPrecondition() {
+		assert mErrorPrecondition != null : "Precondition was not computed yet.";
+		return mErrorPrecondition;
 	}
 
+	/**
+	 * @param iteration
+	 *            Iteration of CEGAR loop.
+	 * @return {@code true} iff iteration of last error automaton construction coincides with passed iteration
+	 */
+	public boolean hasAutomatonInIteration(final int iteration) {
+		return mLastIteration == iteration;
+	}
+
+	@SuppressWarnings("squid:S00107")
 	private NestedWordAutomaton<LETTER, IPredicate> constructStraightLineAutomaton(
-			final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
-			final PredicateFactory predicateFactory, final IPredicate falsePredicate,
+			final IUltimateServiceProvider services, final ILogger logger, final CfgSmtToolkit csToolkit,
+			final PredicateFactory predicateFactory, final PredicateUnificationMechanism predicateUnifier,
 			final SimplificationTechnique simplificationTechnique, final XnfConversionTechnique xnfConversionTechnique,
-			final IIcfg<?> icfgContainer,
+			final IIcfgSymbolTable symbolTable,
 			final PredicateFactoryForInterpolantAutomata predicateFactoryInterpolantAutomata,
 			final VpAlphabet<LETTER> alphabet, final NestedWord<LETTER> trace) throws AssertionError {
+		final IPredicate falsePredicate = predicateUnifier.getFalsePredicate();
+		final IPredicate truePredicate = predicateUnifier.getTruePredicate();
+		final List<IPredicatePostprocessor> postprocessors;
+		if (APPLY_FORMULA_POSTPROCESSOR) {
+			final QuantifierEliminationPostprocessor qepp = new QuantifierEliminationPostprocessor(services, logger,
+					csToolkit.getManagedScript(), predicateFactory, simplificationTechnique, xnfConversionTechnique);
+			postprocessors = Collections.singletonList(qepp);
+		} else {
+			postprocessors = Collections.emptyList();
+		}
+
 		// compute 'wp' sequence from 'false'
-		final IPredicate postcondition = falsePredicate;
-		final TracePredicates wpPredicates = getWpPredicates(services, csToolkit, predicateFactory,
-				simplificationTechnique, xnfConversionTechnique, icfgContainer, trace, postcondition);
+		final TracePredicates wpPredicates = getPredicates(services, csToolkit, predicateFactory,
+				simplificationTechnique, xnfConversionTechnique, symbolTable, truePredicate, trace, null,
+				falsePredicate, postprocessors, PredicateTransformerType.WP);
 
 		// negate 'wp' sequence to get 'pre'
-		final List<IPredicate> oldIntermediatePredicates = wpPredicates.getPredicates();
-		final List<IPredicate> newIntermediatePredicates = new ArrayList<>(oldIntermediatePredicates.size());
-		for (final IPredicate pred : oldIntermediatePredicates) {
-			newIntermediatePredicates.add(predicateFactory.not(pred));
+		final List<IPredicate> wpIntermediatePredicates = wpPredicates.getPredicates();
+		final List<IPredicate> preIntermediatePredicates = new ArrayList<>(wpIntermediatePredicates.size());
+		for (final IPredicate wpPred : wpIntermediatePredicates) {
+			preIntermediatePredicates.add(predicateFactory.not(wpPred));
 		}
-		final IPredicate newPrecondition = predicateFactory.not(wpPredicates.getPrecondition());
-		final IPredicate newPostcondition = predicateFactory.not(wpPredicates.getPostcondition());
-		final TracePredicates newPredicates =
-				new TracePredicates(newPrecondition, newPostcondition, newIntermediatePredicates);
+		final IPredicate prePrecondition = predicateFactory.not(wpPredicates.getPrecondition());
 
-		// TODO 2017-05-17 Christian: additionally compute 'sp' sequence and intersect
+		final List<IPredicate> newIntermediatePredicates;
+		final IPredicate newPostcondition;
+		if (ADD_SP_PREDICATES) {
+			// compute 'sp' sequence from error precondition
+			final TracePredicates spPredicates = getPredicates(services, csToolkit, predicateFactory,
+					simplificationTechnique, xnfConversionTechnique, symbolTable, truePredicate, trace, prePrecondition,
+					null, postprocessors, PredicateTransformerType.SP);
+			assert (preIntermediatePredicates.size() == spPredicates.getPredicates().size());
+			newIntermediatePredicates = new ArrayList<>(preIntermediatePredicates.size());
+			final Iterator<IPredicate> preIt = preIntermediatePredicates.iterator();
+			final Iterator<IPredicate> spIt = spPredicates.getPredicates().iterator();
+			while (preIt.hasNext()) {
+				final IPredicate pred = predicateFactory.and(preIt.next(), spIt.next());
+				newIntermediatePredicates.add(predicateUnifier.getOrConstructPredicate(pred));
+			}
+			newPostcondition = spPredicates.getPostcondition();
+		} else {
+			newIntermediatePredicates = new ArrayList<>(preIntermediatePredicates.size());
+			for (final IPredicate pred : preIntermediatePredicates) {
+				newIntermediatePredicates.add(predicateUnifier.getOrConstructPredicate(pred));
+			}
+			newPostcondition = truePredicate;
+		}
+
+		// final predicates (unified)
+		mErrorPrecondition = predicateUnifier.getOrConstructPredicate(prePrecondition);
+		final TracePredicates newPredicates = new TracePredicates(mErrorPrecondition,
+				predicateUnifier.getOrConstructPredicate(newPostcondition), newIntermediatePredicates);
 
 		return new StraightLineInterpolantAutomatonBuilder<>(services, alphabet, predicateFactoryInterpolantAutomata,
-				trace, newPredicates).getResult();
+				trace, newPredicates,
+				StraightLineInterpolantAutomatonBuilder.InitialAndAcceptingStateMode.ALL_INITIAL_ALL_ACCEPTING)
+						.getResult();
 	}
 
-	private TracePredicates getWpPredicates(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
+	private TracePredicates getPredicates(final IUltimateServiceProvider services, final CfgSmtToolkit csToolkit,
 			final PredicateFactory predicateFactory, final SimplificationTechnique simplificationTechnique,
-			final XnfConversionTechnique xnfConversionTechnique, final IIcfg<?> icfgContainer,
-			final NestedWord<LETTER> trace, final IPredicate postcondition) throws AssertionError {
-		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(predicateFactory,
-				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), services, trace, null,
-				postcondition, null, null, simplificationTechnique, xnfConversionTechnique,
-				icfgContainer.getCfgSmtToolkit().getSymbolTable());
-		final DefaultTransFormulas dtf = new DefaultTransFormulas(trace, null, postcondition,
+			final XnfConversionTechnique xnfConversionTechnique, final IIcfgSymbolTable symbolTable,
+			final IPredicate truePredicate, final NestedWord<LETTER> trace, final IPredicate precondition,
+			final IPredicate postcondition, final List<IPredicatePostprocessor> postprocessors,
+			final PredicateTransformerType predicateTransformer) throws AssertionError {
+		final DefaultTransFormulas dtf = new DefaultTransFormulas(trace, precondition, postcondition,
 				Collections.emptySortedMap(), csToolkit.getOldVarsAssignmentCache(), false);
-		final TracePredicates wpPredicate;
+		final IterativePredicateTransformer ipt = new IterativePredicateTransformer(predicateFactory,
+				csToolkit.getManagedScript(), csToolkit.getModifiableGlobalsTable(), services, trace, precondition,
+				postcondition, null, truePredicate, simplificationTechnique, xnfConversionTechnique, symbolTable);
+		final TracePredicates predicates;
 		try {
-			wpPredicate = ipt.computeWeakestPreconditionSequence(dtf, Collections.emptyList(), false, false);
+			predicates =
+					(predicateTransformer == PredicateTransformerType.WP)
+							? ipt.computeWeakestPreconditionSequence(dtf, postprocessors,
+									USE_TRUE_AS_CALL_PREDECESSOR_FOR_WP, false)
+							: ipt.computeStrongestPostconditionSequence(dtf, postprocessors);
 		} catch (final TraceInterpolationException e) {
 			// TODO 2017-05-17 Christian: better error handling
 			throw new AssertionError();
 		}
-		return wpPredicate;
+		return predicates;
 	}
 
-	private NestedWordAutomaton<LETTER, IPredicate> constructNondeterministicAutomaton(
+	private NondeterministicInterpolantAutomaton<LETTER> constructNondeterministicAutomaton(
 			final IUltimateServiceProvider services,
-			final INestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton, final CfgSmtToolkit csToolkit,
-			final IPredicateUnifier predicateUnifier, final PredicateFactory predicateFactory) {
+			final NestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton, final CfgSmtToolkit csToolkit,
+			final PredicateUnificationMechanism predicateUnifier, final PredicateFactory predicateFactory) {
+		assert !containsPredicateState(straightLineAutomaton, predicateUnifier
+				.getFalsePredicate()) : "The error trace is feasible; hence the predicate 'False' should not be present.";
+
+		// 'True' state is needed by automaton construction
+		final IPredicate truePredicate = predicateUnifier.getTruePredicate();
+		if (!containsPredicateState(straightLineAutomaton, truePredicate)) {
+			straightLineAutomaton.addState(true, true, truePredicate);
+		}
+
 		final ManagedScript mgdScript = csToolkit.getManagedScript();
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
 				new PredicateTransformer<>(mgdScript, new TermDomainOperationProvider(services, mgdScript));
-		final IHoareTripleChecker hoareTripleChecker =
-				new InclusionInPreChecker(mic, pt, predicateFactory, predicateUnifier);
-		final boolean conservativeSuccessorCandidateSelection = false;
-		final boolean secondChance = false;
-		final NondeterministicInterpolantAutomaton<LETTER> result =
-				new NondeterministicInterpolantAutomaton<>(services, csToolkit, hoareTripleChecker,
-						straightLineAutomaton, predicateUnifier, conservativeSuccessorCandidateSelection, secondChance);
-		// TODO 2017-05-17 Christian: How do we get the correct type here? Should the CEGAR class be refactored?
-		return null;
+		final IHoareTripleChecker hoareTripleChecker = new InclusionInPreChecker(mic, pt, predicateFactory, csToolkit);
+		return new NondeterministicErrorAutomaton<>(services, csToolkit, hoareTripleChecker, straightLineAutomaton,
+				predicateUnifier.getPredicateUnifier());
+	}
+
+	private boolean containsPredicateState(final NestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton,
+			final IPredicate targetPredicate) {
+		for (final IPredicate pred : straightLineAutomaton.getStates()) {
+			if (pred == targetPredicate) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
@@ -170,50 +338,41 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	 * 
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
-	private class InclusionInPreChecker implements IHoareTripleChecker {
+	private static class InclusionInPreChecker implements IHoareTripleChecker {
 		private final MonolithicImplicationChecker mMic;
 		private final PredicateTransformer<Term, IPredicate, TransFormula> mPt;
 		private final PredicateFactory mPf;
-		private final IPredicateUnifier mPu;
+		private final CfgSmtToolkit mCsToolkit;
 
 		public InclusionInPreChecker(final MonolithicImplicationChecker mic,
-				final PredicateTransformer<Term, IPredicate, TransFormula> pt, final PredicateFactory pf,
-				final IPredicateUnifier pu) {
+				final PredicateTransformer<Term, IPredicate, TransFormula> predTransformer,
+				final PredicateFactory predFactory, final CfgSmtToolkit csToolkit) {
 			mMic = mic;
-			mPt = pt;
-			mPf = pf;
-			mPu = pu;
+			mPt = predTransformer;
+			mPf = predFactory;
+			mCsToolkit = csToolkit;
 		}
 
 		@Override
 		public Validity checkInternal(final IPredicate pre, final IInternalAction act, final IPredicate succ) {
-			return checkTransition(pre, getWpInternal(act, succ));
+			final IPredicate preFormula = mPf.not(mPf.newPredicate(getWpInternal(act, succ)));
+			final Validity result = checkImplication(pre, preFormula);
+			return result;
 		}
 
 		@Override
 		public Validity checkCall(final IPredicate pre, final ICallAction act, final IPredicate succ) {
-//			final TransFormula globalVarsAssignments;
-//			final TransFormula oldVarAssignments;
-//			final Set<IProgramNonOldVar> modifiableGlobals;
-//			final IPredicate preFormula = mPf.not(mPu.getOrConstructPredicate(mPt.weakestPreconditionCall(mPf.not(succ),
-//					act.getTransformula(), globalVarsAssignments, oldVarAssignments, modifiableGlobals)));
-//			return checkImplication(pre, preFormula);
-			// TODO calls
-			return null;
+			final IPredicate preFormula = mPf.not(mPf.newPredicate(getWpCall(act, succ)));
+			final Validity result = checkImplication(pre, preFormula);
+			return result;
 		}
 
 		@Override
 		public Validity checkReturn(final IPredicate preLin, final IPredicate preHier, final IReturnAction act,
 				final IPredicate succ) {
-//			final TransFormula returnTF;
-//			final TransFormula callTF;
-//			final TransFormula oldVarAssignments;
-//			final Set<IProgramNonOldVar> modifiableGlobals;
-//			final IPredicate preFormula = mPf.not(mPu.getOrConstructPredicate(mPt.weakestPreconditionReturn(succ,
-//					preHier, returnTF, callTF, oldVarAssignments, modifiableGlobals)));
-//			return checkImplication(pre, preFormula);
-			// TODO returns
-			return null;
+			final IPredicate preFormula = mPf.not(mPf.newPredicate(getWpReturn(preHier, act, succ)));
+			final Validity result = checkImplication(preLin, preFormula);
+			return result;
 		}
 
 		@Override
@@ -231,13 +390,65 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 			return mMic.checkImplication(pre, false, succ, false);
 		}
 
-		private Validity checkTransition(final IPredicate pre, final Term wpInternal) {
-			final IPredicate preFormula = mPf.not(mPf.newPredicate(wpInternal));
-			return checkImplication(pre, preFormula);
-		}
-
 		private Term getWpInternal(final IInternalAction act, final IPredicate succ) {
 			return mPt.weakestPrecondition(mPf.not(succ), act.getTransformula());
+		}
+
+		private Term getWpCall(final ICallAction act, final IPredicate succ) {
+			final TransFormula globalVarsAssignments =
+					mCsToolkit.getOldVarsAssignmentCache().getGlobalVarsAssignment(act.getSucceedingProcedure());
+			final TransFormula oldVarAssignments =
+					mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(act.getSucceedingProcedure());
+			final Set<IProgramNonOldVar> modifiableGlobals =
+					mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(act.getSucceedingProcedure());
+			return mPt.weakestPreconditionCall(mPf.not(succ), act.getTransformula(), globalVarsAssignments,
+					oldVarAssignments, modifiableGlobals);
+		}
+
+		// TODO 2017-06-09 Christian: Do we need to change preHier to 'true'? See USE_TRUE_AS_CALL_PREDECESSOR_FOR_WP.
+		private Term getWpReturn(final IPredicate preHier, final IReturnAction act, final IPredicate succ) {
+			final TransFormula returnTf = act.getAssignmentOfReturn();
+			final TransFormula callTf = act.getLocalVarsAssignmentOfCall();
+			final TransFormula oldVarAssignments =
+					mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(act.getSucceedingProcedure());
+			final Set<IProgramNonOldVar> modifiableGlobals =
+					mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(act.getSucceedingProcedure());
+			return mPt.weakestPreconditionReturn(mPf.not(succ), preHier, returnTf, callTf, oldVarAssignments,
+					modifiableGlobals);
+		}
+	}
+
+	/**
+	 * A class that helps fast enabling/disabling of predicate unification. It will unify iff the flag is enabled.
+	 * 
+	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
+	 */
+	private class PredicateUnificationMechanism {
+		private final IPredicateUnifier mPredicateUnifier;
+
+		public PredicateUnificationMechanism(final IPredicateUnifier predicateUnifier) {
+			mPredicateUnifier = predicateUnifier;
+		}
+
+		public IPredicateUnifier getPredicateUnifier() {
+			return mPredicateUnifier;
+		}
+
+		public IPredicate getTruePredicate() {
+			return mPredicateUnifier.getTruePredicate();
+		}
+
+		public IPredicate getFalsePredicate() {
+			return mPredicateUnifier.getFalsePredicate();
+		}
+
+		/**
+		 * @param predicate
+		 *            Predicate.
+		 * @return original or unified predicate
+		 */
+		public IPredicate getOrConstructPredicate(final IPredicate predicate) {
+			return UNIFY_PREDICATES ? mPredicateUnifier.getOrConstructPredicate(predicate) : predicate;
 		}
 	}
 }

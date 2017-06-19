@@ -168,7 +168,7 @@ public class TypeSizeAndOffsetComputer {
 	    }
 	    
 	    private void declareConstant(ILocation loc, String id) {
-	    	final ASTType astType =  mTypeHandler.cType2AstType(loc, getSize_T());
+	    	final ASTType astType =  mTypeHandler.cType2AstType(loc, getSizeT());
 	    	final VarList varList = new VarList(loc, new String[] { id }, astType);
 	    	final ConstDeclaration decl = new ConstDeclaration(loc, 
 	    			new Attribute[0], false, varList, null, false);
@@ -231,8 +231,8 @@ public class TypeSizeAndOffsetComputer {
 				final Expression sizeConstant = constructTypeSizeConstant(loc, cArray);
 				result = new SizeTValue_Expression(sizeConstant);
 				final Expression equality = mExpressionTranslation.constructBinaryComparisonExpression(
-						loc, IASTBinaryExpression.op_equals, sizeConstant, getSize_T(), 
-						size.asExpression(loc), getSize_T());
+						loc, IASTBinaryExpression.op_equals, sizeConstant, getSizeT(), 
+						size.asExpression(loc), getSizeT());
 				final Axiom axiom = new Axiom(loc, new Attribute[0], equality);
 				mAxioms.add(axiom);
 			} else {
@@ -257,7 +257,7 @@ public class TypeSizeAndOffsetComputer {
 
  				final Expression offset;
  				if (cStruct instanceof CUnion) {
- 					offset = mExpressionTranslation.constructLiteralForIntegerType(loc, getSize_T(), BigInteger.ZERO);
+ 					offset = mExpressionTranslation.constructLiteralForIntegerType(loc, getSizeT(), BigInteger.ZERO);
  				} else {
  					final SizeTValue sumOfPreceedingFields = (new SizeTValueAggregator_Add()).aggregate(loc, fieldTypeSizes);
  					offset = sumOfPreceedingFields.asExpression(loc);
@@ -266,8 +266,8 @@ public class TypeSizeAndOffsetComputer {
  				if (mPreferConstantsOverValues) {
  					final Expression fieldConstant = constructTypeSizeConstantForStructField(loc, cStruct, i);
  					final Expression equality = mExpressionTranslation.constructBinaryComparisonExpression(
- 							loc, IASTBinaryExpression.op_equals, fieldConstant, getSize_T(), 
- 							offset, getSize_T());
+ 							loc, IASTBinaryExpression.op_equals, fieldConstant, getSizeT(), 
+ 							offset, getSizeT());
  					final Axiom axiom = new Axiom(loc, new Attribute[0], equality);
  					mAxioms.add(axiom);
  					offsets[i] = fieldConstant;
@@ -303,10 +303,10 @@ public class TypeSizeAndOffsetComputer {
 
 		private Axiom constructNonNegativeAxiom(ILocation loc, Expression sizeConstant) {
 			final Expression zero = mExpressionTranslation.constructLiteralForIntegerType(
-					loc, getSize_T(), BigInteger.ZERO);
+					loc, getSizeT(), BigInteger.ZERO);
 			final Expression isNonNegative = mExpressionTranslation.constructBinaryComparisonExpression(
-					loc, IASTBinaryExpression.op_greaterEqual, sizeConstant, getSize_T(), 
-					zero, getSize_T());
+					loc, IASTBinaryExpression.op_greaterEqual, sizeConstant, getSizeT(), 
+					zero, getSizeT());
 			final Axiom axiom = new Axiom(loc, new Attribute[0], isNonNegative);
 			return axiom;
 		}
@@ -377,7 +377,7 @@ public class TypeSizeAndOffsetComputer {
 			protected Expression aggregateExpressions(ILocation loc, Expression op1, Expression op2) {
 				return mExpressionTranslation.constructArithmeticExpression(
 						loc, IASTBinaryExpression.op_plus, op1, 
-						getSize_T(), op2, getSize_T());
+						getSizeT(), op2, getSizeT());
 			}
 
 			@Override
@@ -397,7 +397,7 @@ public class TypeSizeAndOffsetComputer {
 			protected Expression aggregateExpressions(ILocation loc, Expression op1, Expression op2) {
 				return mExpressionTranslation.constructArithmeticExpression(
 						loc, IASTBinaryExpression.op_multiply, op1, 
-						getSize_T(), op2, getSize_T());
+						getSizeT(), op2, getSizeT());
 			}
 
 			@Override
@@ -418,7 +418,7 @@ public class TypeSizeAndOffsetComputer {
 			protected Expression aggregateExpressions(ILocation loc, Expression op1, Expression op2) {
 				final Expression firstIsGreater = mExpressionTranslation.constructBinaryComparisonExpression(
 						loc, IASTBinaryExpression.op_greaterEqual, 
-						op1, getSize_T(), op2, getSize_T());
+						op1, getSizeT(), op2, getSizeT());
 				final Expression result = ExpressionFactory.newIfThenElseExpression(loc, firstIsGreater, op1, op2);
 				return result;
 			}
@@ -447,7 +447,7 @@ public class TypeSizeAndOffsetComputer {
 			
 			@Override
 			public Expression asExpression(ILocation loc) {
-				return mExpressionTranslation.constructLiteralForIntegerType(loc, getSize_T(), mValue);
+				return mExpressionTranslation.constructLiteralForIntegerType(loc, getSizeT(), mValue);
 			}
 			public BigInteger getInteger() {
 				return mValue;
@@ -481,7 +481,7 @@ public class TypeSizeAndOffsetComputer {
 		 * uint (no wraparound). 
 		 * TODO: maybe this class is not the right place. 
 		 */
-		public CPrimitive getSize_T() {
+		public CPrimitive getSizeT() {
 			return new CPrimitive(CPrimitives.INT);
 		}
 

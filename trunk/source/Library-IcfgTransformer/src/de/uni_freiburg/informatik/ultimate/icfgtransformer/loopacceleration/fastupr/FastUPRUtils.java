@@ -66,12 +66,17 @@ public class FastUPRUtils {
 	 * @param msg
 	 */
 	public void debug(Object msg) {
-		if (mDetailed)
+		if (mDetailed) {
 			mLogger.debug(msg);
+		}
 	}
 
 	public void setDetailed(boolean detailed) {
 		mDetailed = detailed;
+	}
+
+	public ILogger getLogger() {
+		return mLogger;
 	}
 
 }

@@ -61,10 +61,8 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPre
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.PredicateTransformer;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.TermDomainOperationProvider;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Activator;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.FlowSensitiveFaultLocalizer;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.IterativePredicateTransformer.TraceInterpolationException.Reason;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.NestedFormulas;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TraceCheckerSpWp;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.singletracecheck.TracePredicates;
 
 /**
@@ -87,12 +85,7 @@ public class IterativePredicateTransformer {
 	private final IPredicate mPrecondition;
 	private final IPredicate mPostcondition;
 	protected final SortedMap<Integer, IPredicate> mPendingContexts;
-	/**
-	 * TODO 2017-05-22 Christian&Matthias: Not sure about this field. There are two users, {@link TraceCheckerSpWp} and
-	 *      {@link FlowSensitiveFaultLocalizer}. The further passe {@code null}, which should, if this field is read,
-	 *      result in a {@code NullPointerException}. The latter passes a predicate for {@code true}, which is counter-
-	 *      intuitive.
-	 */
+
 	private final IPredicate mTruePredicate;
 
 	private final IIcfgSymbolTable mSymbolTable;
@@ -155,8 +148,12 @@ public class IterativePredicateTransformer {
 		final IPredicate[] spSequence = new IPredicate[mTrace.length() - 1];
 		final TracePredicates ipp =
 				new TracePredicates(mPrecondition, mPostcondition, Arrays.asList(spSequence));
+		
+		final boolean computePostcondition = mPostcondition == null;
+		final int positionOfLastPredicate = computePostcondition ? mTrace.length() : mTrace.length() - 1;
 
-		for (int i = 0; i < mTrace.length() - 1; i++) {
+		IPredicate computedPostcondition = null;
+		for (int i = 0; i < positionOfLastPredicate; i++) {
 			final IPredicate predecessor = ipp.getPredicate(i);
 			final Term spTerm;
 			if (mTrace.getSymbol(i) instanceof IIcfgCallTransition<?>) {
@@ -194,7 +191,15 @@ public class IterativePredicateTransformer {
 				spTerm = mPredicateTransformer.strongestPostcondition(predecessor, nf.getFormulaFromNonCallPos(i));
 			}
 			final IPredicate sp = constructPredicate(spTerm);
-			spSequence[i] = applyPostprocessors(postprocs, i + 1, sp);
+			final IPredicate postprocessed = applyPostprocessors(postprocs, i + 1, sp);
+			if (i == mTrace.length() - 1) {
+				computedPostcondition = postprocessed;
+			} else {
+				spSequence[i] = postprocessed;
+			}
+		}
+		if (computePostcondition) {
+			return new TracePredicates(mPrecondition, computedPostcondition, Arrays.asList(spSequence));
 		}
 		return ipp;
 	}

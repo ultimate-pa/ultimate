@@ -161,7 +161,7 @@ public class FixpointEngineFutureParameterFactory {
 
 	public static VPDomain<IcfgEdge> createEqualityDomain(final ILogger logger, final IIcfg<?> root,
 			final IUltimateServiceProvider services) {
-		final VPDomainPreanalysis preAnalysis = new VPDomainPreanalysis(root, logger);
+		final VPDomainPreanalysis preAnalysis = new VPDomainPreanalysis(root, logger, services);
 		preAnalysis.postProcess();
 //		final VPTfStateBuilderPreparer tfPreparer =
 //				new VPTfStateBuilderPreparer(preAnalysis, root, logger);

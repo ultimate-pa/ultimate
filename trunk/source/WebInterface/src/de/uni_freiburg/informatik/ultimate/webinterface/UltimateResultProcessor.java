@@ -9,7 +9,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.results.AllSpecificationsHoldResult;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.CounterExampleResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.ExceptionOrErrorResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.InvariantResult;
@@ -47,7 +47,7 @@ public class UltimateResultProcessor {
 		final List<JSONObject> jsonResults = new ArrayList<>();
 		for (final List<IResult> toolResults : results.values()) {
 			for (final IResult result : toolResults) {
-				if (result instanceof BenchmarkResult<?>) {
+				if (result instanceof StatisticsResult<?>) {
 					SimpleLogger.log("skipping result " + result);
 					continue;
 				}
@@ -77,7 +77,7 @@ public class UltimateResultProcessor {
 		} else if (r instanceof PositiveResult || r instanceof TerminationAnalysisResult) {
 			type = "positive";
 			packagedResult.logLvl = LVL_INFO;
-		} else if (r instanceof BenchmarkResult) {
+		} else if (r instanceof StatisticsResult) {
 			type = "benchmark";
 			packagedResult.logLvl = LVL_INFO;
 		} else if (r instanceof UnprovableResult) {

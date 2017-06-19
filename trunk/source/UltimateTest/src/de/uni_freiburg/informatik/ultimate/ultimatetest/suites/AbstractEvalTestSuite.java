@@ -29,6 +29,7 @@ package de.uni_freiburg.informatik.ultimate.ultimatetest.suites;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr.FastUPRBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerModuleDecompositionBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.buchiautomizer.BuchiAutomizerTimingBenchmark;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.codecheck.CodeCheckBenchmarks;
@@ -36,20 +37,20 @@ import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.Tr
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
 import de.uni_freiburg.informatik.ultimate.test.decider.SafetyCheckTestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogCsv;
+import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithBenchmarkResults;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvSummary;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.HTMLSummary;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.KingOfTheHillSummary;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.LatexDetailedSummary;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.LatexOverviewSummary;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.StandingsSummary;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.logs.IncrementalLogCsv;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.logs.IncrementalLogWithBenchmarkResults;
 import de.uni_freiburg.informatik.ultimate.ultimatetest.suites.evals.InterpolationTestSuite;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.CsvConcatenator;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.CsvSummary;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.HTMLSummary;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.KingOfTheHillSummary;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.LatexDetailedSummary;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.LatexOverviewSummary;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.StandingsSummary;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.statistics.GraphSizeCsvProvider;
@@ -103,6 +104,7 @@ public abstract class AbstractEvalTestSuite extends AbstractModelCheckerTestSuit
 		benchmarks.add(CodeCheckBenchmarks.class);
 		benchmarks.add(BuchiAutomizerModuleDecompositionBenchmark.class);
 		benchmarks.add(GraphSizeCsvProvider.class);
+		benchmarks.add(FastUPRBenchmark.class);
 		return benchmarks;
 	}
 

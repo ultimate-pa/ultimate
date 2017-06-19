@@ -55,10 +55,11 @@ public class EqFunction implements IEqFunctionIdentifier<EqFunction> {
 			return ((IProgramVar) mPvoc).getProcedure();
 		}
 
-		assert false : "how to determine the procedure of a non-global constant??";
+		assert false : "how to determine the procedure of a non-global constant?? -- if that makes sense..";
 		return null;
 	}
 
+	@Override
 	public Term getTerm() {
 		return mTerm;
 	}
@@ -78,14 +79,20 @@ public class EqFunction implements IEqFunctionIdentifier<EqFunction> {
 	}
 
 	public String getFunctionName() {
-		assert false : "what's the right string here?";
-		return mPvoc.toString();
+//		assert false : "what's the right string here?";
+//		return mPvoc.toString();
+		return mTerm.toString();
 	}
 
 	@Override
 	public int getArity() {
 		assert false : "TODO";
 		return 0;
+	}
+	
+	@Override
+	public String toString() {
+		return mTerm.toString();
 	}
 
 }

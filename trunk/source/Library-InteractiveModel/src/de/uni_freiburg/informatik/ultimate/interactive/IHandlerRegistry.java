@@ -54,5 +54,5 @@ public interface IHandlerRegistry<M> {
 	 *            a supplier that will generate the type if requested by the
 	 *            Client depending on data sent with the request.
 	 */
-	<D extends M, T extends M> void register(Class<T> type, Class<D> dataType, Function<D, T> supplier);
+	<T extends M, D extends M> void register(Class<T> type, Class<D> dataType, Function<D, T> supplier);
 }

@@ -5,16 +5,16 @@ import java.util.Collection;
 
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.TraceAbstractionBenchmarks;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ConversionContext;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.CsvConcatenator;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.KingOfTheHillSummary;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.LatexOverviewSummary;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.StandingsSummary;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.TraceAbstractionTestSummary;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.DirectoryFileEndingsPair;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ConversionContext;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.CsvConcatenator;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.KingOfTheHillSummary;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.LatexOverviewSummary;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.StandingsSummary;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.TraceAbstractionTestSummary;
-import de.uni_freiburg.informatik.ultimate.ultimatetest.summaries.ColumnDefinition.Aggregate;
 import de.uni_freiburg.informatik.ultimate.util.csv.ICsvProviderProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 

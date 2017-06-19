@@ -1,9 +1,10 @@
 [L4]               int a, b;
 [L6]   COND FALSE  !(a > 10)
+       VAL         [a=0]
 [L13]  COND TRUE   a < 5
 [L14]              b = 3
-       VAL         [a=4, b=3]
+       VAL         [a=0, b=3]
 [L20]  COND TRUE   b == 3
-       VAL         [a=4, b=3]
+       VAL         [a=0, b=3]
 [L26]              __VERIFIER_error()
-       VAL         [a=4, b=3]
+       VAL         [a=0, b=3]

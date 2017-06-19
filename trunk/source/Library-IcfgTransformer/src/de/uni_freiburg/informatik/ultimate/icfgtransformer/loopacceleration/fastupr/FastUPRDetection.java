@@ -24,6 +24,7 @@
  * licensors of the ULTIMATE IcfgTransformer grant you additional permission
  * to convey the resulting work.
  */
+
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fastupr;
 
 import java.util.ArrayDeque;
@@ -38,13 +39,11 @@ import java.util.Set;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
-import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgCallTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 
 /**
- * The main class for Fast Acceleration of Ultimately Periodic Relations
+ * Loop Detection of the FastUPR Loop Acceleration package.
  *
  * @param <INLOC>
  *            The type of the locations of the old IIcfg.
@@ -54,60 +53,72 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgL
  * @author Jill Enke (enkei@informatik.uni-freiburg.de)
  *
  */
-
-public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLocation> {
+public class FastUPRDetection<INLOC extends IcfgLocation> {
 
 	private final ILogger mLogger;
-	private final List<Deque<INLOC>> mLoopPaths;
-	private final Map<INLOC, OUTLOC> mOldLoc2NewLoc;
-	private final Map<IIcfgCallTransition<INLOC>, IcfgCallTransition> mOldCalls2NewCalls;
+	private final List<INLOC> mLoopHeads;
 
-	public FastUPRDetection(final ILogger logger, final IIcfg<INLOC> originalIcfg, final Class<OUTLOC> outLocationClass,
-			final String newIcfgIdentifier) {
+	/**
+	 *
+	 * @param logger
+	 *            The {@link ILogger} used for Debug Output.
+	 * @param originalIcfg
+	 *            The {@link IIcfg} to be searched.
+	 * @param newIcfgIdentifier
+	 */
+	public FastUPRDetection(final ILogger logger, final IIcfg<INLOC> originalIcfg) {
 		final IIcfg<INLOC> origIcfg = Objects.requireNonNull(originalIcfg);
 		mLogger = Objects.requireNonNull(logger);
-		mOldLoc2NewLoc = new HashMap<>();
-		mOldCalls2NewCalls = new HashMap<>();
-
-		mLoopPaths = getLoops(originalIcfg);
+		mLoopHeads = getLoopHeads(origIcfg);
 	}
 
-	private List<Deque<INLOC>> getLoops(final IIcfg<INLOC> originalIcfg) {
-		final HashSet<INLOC> loopHeads = getLoopHeads(originalIcfg);
+	public List<Deque<IcfgEdge>> getLoopEdgePaths() {
+		final List<Deque<IcfgEdge>> result = new ArrayList<>();
+		for (final INLOC loopHead : mLoopHeads) {
+			result.add(getPathEdges(loopHead));
+		}
+		return result;
+	}
+
+	List<Deque<INLOC>> getLoopPaths() {
 		final List<Deque<INLOC>> loopPaths = new ArrayList<>();
-		for (final INLOC loopHead : loopHeads) {
-			loopPaths.add(getPath(loopHead));
+		for (final INLOC loopHead : mLoopHeads) {
+			loopPaths.add(getPathLocs(loopHead));
 		}
 		return loopPaths;
 	}
 
 	@SuppressWarnings("unchecked")
-	private HashSet<INLOC> getLoopHeads(final IIcfg<INLOC> originalIcfg) {
+	private List<INLOC> getLoopHeads(final IIcfg<INLOC> originalIcfg) {
 
-		final HashSet<INLOC> loopHeads = new HashSet<>();
+		final List<INLOC> loopHeads = new ArrayList<>();
 		final Set<INLOC> init = originalIcfg.getInitialNodes();
 		final Set<INLOC> closed = new HashSet<>();
+		final Set<IcfgEdge> closedEdges = new HashSet<>();
 		final Deque<INLOC> open = new ArrayDeque<>(init);
 
 		while (!open.isEmpty()) {
 			final INLOC currentNode = open.removeFirst();
 			closed.add(currentNode);
 			for (final IcfgEdge transition : currentNode.getOutgoingEdges()) {
+				if (!closedEdges.add(transition)) {
+					continue;
+				}
 				final INLOC target = (INLOC) transition.getTarget();
 				mLogger.debug("Current target:" + target.toString());
 				if (closed.contains(target)) {
 					loopHeads.add(target);
 					mLogger.debug("Loop head:" + target.toString());
 				} else {
-					open.addFirst(target);
+					open.addLast(target);
 				}
 			}
 		}
 		return loopHeads;
 	}
 
-	@SuppressWarnings({ "unused", "unchecked" })
-	private Deque<INLOC> getPath(final INLOC loopHead) {
+	@SuppressWarnings("unchecked")
+	private Deque<INLOC> getPathLocs(final INLOC loopHead) {
 
 		final Deque<INLOC> currentPath = new ArrayDeque<>();
 		final Deque<Integer> currentPathIndices = new ArrayDeque<>();
@@ -116,19 +127,10 @@ public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLoc
 		currentPathIndices.addLast(0);
 
 		while (!currentPath.isEmpty()) {
-			// mLogger.debug("Outgoing Edges:");
-			// mLogger.debug(currentPath.getLast().getOutgoingEdges().size());
-			// mLogger.debug("Path/Indices");
-			// mLogger.debug(currentPath.size());
-			// mLogger.debug(currentPathIndices.size());
 			if (currentPath.getLast().getOutgoingEdges().size() > currentPathIndices.getLast()) {
 
 				final INLOC target = (INLOC) currentPath.getLast().getOutgoingEdges().get(currentPathIndices.getLast())
 						.getTarget();
-
-				// mLogger.debug("Current node: " +
-				// currentPath.getLast().toString());
-				// mLogger.debug("Target node: " + target.toString());
 
 				final int index = currentPathIndices.removeLast();
 
@@ -147,12 +149,56 @@ public class FastUPRDetection<INLOC extends IcfgLocation, OUTLOC extends IcfgLoc
 			}
 		}
 
-		return null;
+		return new ArrayDeque<>();
 	}
 
-	public List<Deque<INLOC>> getLoopPaths() {
+	private Deque<IcfgEdge> getPathEdges(final INLOC loopHead) {
+		final Map<IcfgEdge, IcfgEdge> parentMap = new HashMap<>();
+		final HashSet<IcfgEdge> checked = new HashSet<>();
+		final Deque<IcfgEdge> toCheck = new ArrayDeque<>();
+		toCheck.addAll(loopHead.getOutgoingEdges());
 
-		return mLoopPaths;
+		while (!toCheck.isEmpty()) {
+			final IcfgEdge current = toCheck.pop();
+
+			if (current.getTarget().equals(loopHead)) {
+				return calculatePathEdges(current, parentMap);
+			}
+
+			if (!checked.add(current)) {
+				continue;
+			}
+
+			for (final IcfgEdge child : current.getTarget().getOutgoingEdges()) {
+				if (!current.equals(child)) {
+					parentMap.put(child, current);
+					toCheck.add(child);
+				}
+			}
+		}
+		return new ArrayDeque<>();
+	}
+
+	private static Deque<IcfgEdge> calculatePathEdges(IcfgEdge lastEdge, Map<IcfgEdge, IcfgEdge> parentMap) {
+		final Deque<IcfgEdge> result = new ArrayDeque<>();
+		final HashSet<IcfgEdge> added = new HashSet<>();
+		IcfgEdge current = lastEdge;
+		added.add(current);
+		result.add(current);
+		while (parentMap.containsKey(current)) {
+			current = parentMap.get(current);
+			if (!added.contains(current)) {
+				result.addFirst(current);
+				added.add(current);
+			} else {
+				return result;
+			}
+		}
+		return result;
+	}
+
+	public List<INLOC> getLoopHeads() {
+		return mLoopHeads;
 	}
 
 }

@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.BiFunction;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.logic.Script;
@@ -49,7 +50,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
  * @author Jill Enke (enkei@informatik.uni-freiburg.de)
  *
  */
-
 public class ParametricOctMatrix {
 
 	private ILogger mLogger;
@@ -70,7 +70,7 @@ public class ParametricOctMatrix {
 		this(0);
 	}
 
-	public ParametricOctMatrix(final int size) {
+	public ParametricOctMatrix(int size) {
 		mNextMaxValue = 0;
 		mVariableMapping = new HashMap<>();
 		mReverseMapping = new HashMap<>();
@@ -80,7 +80,7 @@ public class ParametricOctMatrix {
 		mMatrix.fill(OctValue.INFINITY);
 	}
 
-	public ParametricOctMatrix(final OctMatrix matrix, final Map<TermVariable, Integer> mapping) {
+	public ParametricOctMatrix(OctMatrix matrix, Map<TermVariable, Integer> mapping) {
 		mNextMaxValue = 0;
 		mSize = matrix.getSize();
 		mMatrix = matrix.copy();
@@ -90,7 +90,7 @@ public class ParametricOctMatrix {
 		mParametric = false;
 	}
 
-	public ParametricOctMatrix(final OctMatrix matrix, final Map<TermVariable, Integer> mapping, final TermVariable var) {
+	public ParametricOctMatrix(OctMatrix matrix, Map<TermVariable, Integer> mapping, TermVariable var) {
 		mNextMaxValue = 0;
 		mSize = matrix.getSize();
 		mMatrix = matrix.copy();
@@ -98,13 +98,14 @@ public class ParametricOctMatrix {
 		mReverseMapping = new HashMap<>();
 		reverseMapping();
 		mParametric = true;
-		mSummands = new OctMatrix(mSize);
+		mSummands = new OctMatrix(matrix.variables());
 		mSummands.fill(OctValue.INFINITY);
 		mParametricVar = var;
 	}
 
-	public ParametricOctMatrix(final OctMatrix matrix, final OctMatrix summands, final Map<TermVariable, Integer> mapping) {
-		this(matrix, mapping);
+	public ParametricOctMatrix(OctMatrix matrix, OctMatrix summands, Map<TermVariable, Integer> mapping,
+			TermVariable var) {
+		this(matrix, mapping, var);
 		mSummands = summands.copy();
 		mParametric = true;
 	}
@@ -114,7 +115,7 @@ public class ParametricOctMatrix {
 	 *
 	 * @param logger
 	 */
-	public void setLogger(final ILogger logger) {
+	public void setLogger(ILogger logger) {
 		mLogger = logger;
 	}
 
@@ -137,25 +138,29 @@ public class ParametricOctMatrix {
 	 *            the Matrix to be added.
 	 * @return the sum as a new ParametricOctMatrix.
 	 */
-	public ParametricOctMatrix add(final ParametricOctMatrix summand) {
+	public ParametricOctMatrix add(ParametricOctMatrix summand) {
 		if (!mappingMatch(summand)) {
 			throw new IllegalArgumentException("Matrices need equal Mapping");
 		}
-		if (mParametric || summand.isParametric()) {
+		if (isParametric() || summand.isParametric()) {
 			return parametricAdd(summand);
 		}
 		return new ParametricOctMatrix(mMatrix.add(summand.getMatrix()), mVariableMapping);
 	}
 
-	private ParametricOctMatrix parametricAdd(final ParametricOctMatrix summand) {
+	// TODO: addMatrices() for other
+	private ParametricOctMatrix parametricAdd(ParametricOctMatrix summand) {
 		final ParametricOctMatrix result;
 		if (mParametric && !summand.isParametric()) {
-			result = copy();
-			result.mSummands = mSummands.add(summand.getMatrix());
+			result = new ParametricOctMatrix(getMatrix(), addMatrices(getSummands(), summand.getMatrix(), true),
+					getMapping(), getParametricVar());
+			debug("Set Summands of result");
 		} else if (!mParametric && summand.isParametric()) {
+			debug("Matrix is not parametric, summand is.");
 			result = summand.copy();
 			result.mSummands = mMatrix.add(summand.getSummands());
 		} else {
+			debug("Both are parametric.");
 			if (!mParametricVar.equals(summand.getParametricVar())) {
 				throw new IllegalArgumentException("Matrices need the same parametric variable");
 			} else {
@@ -168,14 +173,13 @@ public class ParametricOctMatrix {
 	}
 
 	/**
-	 * Subtracts one (non-parametric) Matrix from another. (TODO: Implement for
-	 * parametric)
+	 * Subtracts one (non-parametric) Matrix from another.
 	 *
 	 * @param matrix
 	 *            the subtrahend.
 	 * @return a new ParametricOctMatrix of the difference.
 	 */
-	public ParametricOctMatrix subtract(final ParametricOctMatrix matrix) {
+	public ParametricOctMatrix subtract(ParametricOctMatrix matrix) {
 		if (mParametric || matrix.isParametric()) {
 			throw new UnsupportedOperationException("Matrix is parametric");
 		}
@@ -193,7 +197,7 @@ public class ParametricOctMatrix {
 		return result;
 	}
 
-	private OctMatrix negateOctMatrix(final OctMatrix matrix) {
+	private static OctMatrix negateOctMatrix(OctMatrix matrix) {
 		final OctMatrix result = matrix.copy();
 		for (int row = 0; row < 2 * matrix.variables(); ++row) {
 			for (int col = 0; col < (row / 2 + 1) * 2; ++col) {
@@ -210,32 +214,39 @@ public class ParametricOctMatrix {
 	 *            ParametricOctMatrix to compare with
 	 * @return true if all elements of the matrices are equal.
 	 */
-	public boolean equals(final ParametricOctMatrix other) {
+	public boolean isEqualTo(ParametricOctMatrix other) {
 
-		debug("Equals called");
-
-		if (isParametric() != other.isParametric()) {
+		if (other == null) {
 			return false;
 		}
-		debug("1");
-		if (!getMatrix().isEqualTo(other.getMatrix())) {
+
+		if (!(this.getClass().equals(other.getClass()))) {
 			return false;
 		}
-		debug("2");
+
+		final ParametricOctMatrix otherMatrix = other;
+		if (isParametric() != otherMatrix.isParametric()) {
+			return false;
+		}
+		if (!getMatrix().isEqualTo(otherMatrix.getMatrix())) {
+			return false;
+		}
 		debug(isParametric());
 		debug(getParametricVar() == null);
-		if (isParametric() && other.isParametric()) {
-			if (!getParametricVar().equals(other.getParametricVar())) {
+		if (isParametric() && otherMatrix.isParametric()) {
+			if (!getParametricVar().equals(otherMatrix.getParametricVar())) {
 				return false;
 			}
-			if (!getSummands().isEqualTo(other.getSummands())) {
+			if (!getSummands().isEqualTo(otherMatrix.getSummands())) {
 				return false;
 			}
 		}
-		if (!mVariableMapping.equals(other.getMapping())) {
+		if (!mVariableMapping.equals(otherMatrix.getMapping())) {
 			return false;
 		}
-		debug("5");
+
+		final Object j = new Object();
+		j.hashCode();
 
 		return true;
 
@@ -252,12 +263,11 @@ public class ParametricOctMatrix {
 	 *            the current Script.
 	 * @return a new ParamametricOctMatrix, multiplied with the new variable.
 	 */
-	public ParametricOctMatrix multiplyVar(final String varname, final ManagedScript mManagedScript) {
-		if (isParametric()) {
+	public ParametricOctMatrix multiplyVar(String varname, ManagedScript mManagedScript) {
+		if (isParametric())
 			throw new IllegalArgumentException("Octagon already parametric.");
-		}
 		final TermVariable var = mManagedScript.constructFreshTermVariable(varname,
-				SmtSortUtils.getIntSort(mManagedScript));
+				mManagedScript.getScript().sort(SmtSortUtils.INT_SORT));
 		return multipyVar(var);
 
 	}
@@ -272,9 +282,46 @@ public class ParametricOctMatrix {
 	 *            the current Script.
 	 * @return a new ParamametricOctMatrix, multiplied with the new variable.
 	 */
-	public ParametricOctMatrix multipyVar(final TermVariable var) {
-		final ParametricOctMatrix result = new ParametricOctMatrix(mMatrix, mVariableMapping, var);
-		return result;
+	public ParametricOctMatrix multipyVar(TermVariable var) {
+		return new ParametricOctMatrix(mMatrix, mVariableMapping, var);
+	}
+
+	public ParametricOctMatrix multiplyConstant(BigDecimal bigDecimal) {
+		final OctMatrix newMatrix = mMatrix.copy();
+		for (int row = 0; row < 2 * mMatrix.variables(); ++row) {
+			for (int col = 0; col < (row / 2 + 1) * 2; ++col) {
+				final OctValue newValue = (mMatrix.get(row, col).isInfinity() ? OctValue.INFINITY
+						: new OctValue(mMatrix.get(row, col).getValue().multiply(bigDecimal)));
+				newMatrix.set(row, col, newValue);
+			}
+		}
+		if (!mParametric) {
+			return new ParametricOctMatrix(newMatrix, mVariableMapping);
+		}
+		final OctMatrix newSummands = mSummands.copy();
+		for (int row = 0; row < 2 * mSummands.variables(); ++row) {
+			for (int col = 0; col < (row / 2 + 1) * 2; ++col) {
+				newSummands.set(row, col, mSummands.get(row, col).isInfinity() ? OctValue.INFINITY
+						: new OctValue(mSummands.get(row, col).getValue().multiply(bigDecimal)));
+			}
+		}
+		return new ParametricOctMatrix(newMatrix, newSummands, mVariableMapping, mParametricVar);
+	}
+
+	public static final BiFunction<OctValue, OctValue, OctValue> sAddIgnoreInf = (x, y) -> {
+		if (x.isInfinity() && y.isInfinity()) {
+			return OctValue.INFINITY;
+		}
+		final OctValue newX = x.isInfinity() ? OctValue.ZERO : x;
+		final OctValue newY = y.isInfinity() ? OctValue.ZERO : y;
+		return newX.add(newY);
+	};
+
+	private OctMatrix addMatrices(OctMatrix first, OctMatrix second, boolean infAsZero) {
+		if (!infAsZero) {
+			return first.add(second);
+		}
+		return first.elementwiseOperation(second, sAddIgnoreInf);
 	}
 
 	// ********************************
@@ -288,14 +335,14 @@ public class ParametricOctMatrix {
 	 *            the variable to be added.
 	 * @return the position of the new variable.
 	 */
-	public int addVar(final TermVariable var) {
+	public int addVar(TermVariable var) {
 		debug("Adding " + var.toString() + " to Mapping");
 		mVariableMapping.put(var, mNextMaxValue);
 		reverseMapping(var);
-		if (mSize < mVariableMapping.size() * 2) {
+		if (mSize < mVariableMapping.size()) {
 			debug("Size too small. " + mSize + " " + mVariableMapping.size() * 2);
 			mMatrix = mMatrix.addVariables(1);
-			mSize = mVariableMapping.size() * 2;
+			mSize = mVariableMapping.size();
 			assert mSize == mMatrix.getSize() : "ERROR MATRIX SIZES DO NOT MATCH";
 		}
 		mNextMaxValue = mNextMaxValue + 2;
@@ -312,7 +359,7 @@ public class ParametricOctMatrix {
 	 * @param negative
 	 *            true if the Variable x has a negative coefficient.
 	 */
-	public void setValue(final Object value, final TermVariable var, final boolean negative) {
+	public void setValue(Object value, TermVariable var, boolean negative) {
 		setValue(value, var, negative, var, negative);
 	}
 
@@ -332,13 +379,13 @@ public class ParametricOctMatrix {
 	 * @param secondNegative
 	 *            true if y has a negative coefficient.
 	 */
-	public void setValue(final Object value, final TermVariable firstVar, final boolean firstNegative, final TermVariable secondVar,
-			final boolean secondNegative) {
+	public void setValue(Object value, TermVariable firstVar, boolean firstNegative, TermVariable secondVar,
+			boolean secondNegative) {
 		debug("Setting value: " + value.toString());
 		debug("FirstVar: " + firstVar.toString());
 		debug("SecondVar: " + secondVar.toString());
-		int row = -1;
-		int column = -1;
+		int row;
+		int column;
 		if (mVariableMapping.containsKey(firstVar)) {
 			row = mVariableMapping.get(firstVar);
 			debug("Row already known: " + row);
@@ -350,7 +397,7 @@ public class ParametricOctMatrix {
 			column = row;
 		} else {
 			if (mVariableMapping.containsKey(secondVar)) {
-				column = mVariableMapping.get(firstVar);
+				column = mVariableMapping.get(secondVar);
 				debug("Column already known: " + column);
 			} else {
 				column = addVar(secondVar);
@@ -361,7 +408,7 @@ public class ParametricOctMatrix {
 		if (firstNegative) {
 			row += 1;
 		}
-		if (secondNegative) {
+		if (!secondNegative) {
 			column += 1;
 		}
 
@@ -371,7 +418,7 @@ public class ParametricOctMatrix {
 
 	}
 
-	private void setValue(final int row, final int column, final BigDecimal value) {
+	private void setValue(int row, int column, BigDecimal value) {
 		mMatrix.setMin(row, column, new OctValue(value));
 	}
 
@@ -381,7 +428,7 @@ public class ParametricOctMatrix {
 		}
 	}
 
-	private void reverseMapping(final TermVariable t) {
+	private void reverseMapping(TermVariable t) {
 		mReverseMapping.put(mVariableMapping.get(t), t);
 	}
 
@@ -389,13 +436,15 @@ public class ParametricOctMatrix {
 	// TRANSFORMATION FUNCTIONS
 	// ********************************
 
+	// TODO: FIX TO ROW - COLUMN
+
 	/**
 	 * Transform the matrix into an OctagonConcatination.
 	 *
 	 * @return OctagonConcatination equivalent to the ParametricOctMatrix
 	 */
-	public OctagonConjunction toOctagonConjunction() {
-		return toOctagonConjunction(0);
+	public OctConjunction toOctConjunction() {
+		return toOctConjunction(0);
 	}
 
 	/**
@@ -406,10 +455,10 @@ public class ParametricOctMatrix {
 	 *
 	 * @return OctagonConcatination equivalent to the ParametricOctMatrix
 	 */
-	public OctagonConjunction toOctagonConjunction(final int i) {
+	public OctConjunction toOctConjunction(int i) {
 		debug("Converting to Octagon conjunction");
-		final OctagonConjunction conjunct = new OctagonConjunction();
-		final ArrayList<OctagonTerm> conjunctTerms = new ArrayList<>();
+		final OctConjunction conjunct = new OctConjunction();
+		final ArrayList<OctTerm> conjunctTerms = new ArrayList<>();
 		for (int row = 0; row < 2 * varCount(); ++row) {
 
 			for (int col = 0; col < (row / 2 + 1) * 2; ++col) {
@@ -418,89 +467,59 @@ public class ParametricOctMatrix {
 				final OctValue coefficient = mMatrix.get(row, col);
 				debug(coefficient.toString());
 
-				final OctValue summand = (mParametric ? mSummands.get(row, col) : OctValue.INFINITY);
+				final OctValue summand = mParametric ? mSummands.get(row, col) : OctValue.INFINITY;
 
 				if (coefficient.isInfinity() && summand.isInfinity()) {
 					continue;
 				} else if (coefficient.isInfinity()) {
 					conjunctTerms.add(toNonParametricTerm(summand, row, col));
+				} else if (mParametric) {
+					conjunctTerms.add(toParametricTerm(coefficient, summand, row, col, i));
 				} else if (summand.isInfinity()) {
-					debug(summand.toString());
-					debug(summand.isInfinity());
-					if (mParametric) {
-						conjunctTerms.add(toParametricTerm(coefficient, summand, row, col, i));
-
-					} else {
-						conjunctTerms.add(toNonParametricTerm(coefficient, row, col));
-					}
-				} else {
-					if (mParametric) {
-						conjunctTerms.add(toParametricTerm(coefficient, summand, row, col, i));
-					}
+					conjunctTerms.add(toNonParametricTerm(coefficient, row, col));
 				}
-
-				debug(conjunctTerms.get(conjunctTerms.size() - 1).toString());
 			}
 
 		}
 
-		debug(conjunctTerms.toString());
-
-		for (final OctagonTerm t : conjunctTerms) {
+		for (final OctTerm t : conjunctTerms) {
 			conjunct.addTerm(t);
 		}
-
-		debug(conjunct.toString());
 
 		return conjunct;
 
 	}
 
-	private OctagonTerm toNonParametricTerm(final OctValue coefficient, int row, int col) {
-		if (row == col) {
-			final boolean negative = ((row % 2) == 0);
-			if ((row & 1) != 0) {
-				row--;
-			}
-			debug(row);
-			debug(coefficient.getValue().toString() + ", " + mReverseMapping.get(row).toString() + ", " + negative);
-			return new OneVarOctTerm(coefficient.getValue(), mReverseMapping.get(row), negative);
-		} else {
-			final boolean firstNegative = ((row % 2) == 0);
-			final boolean secondNegative = ((col % 2) == 0);
-			if ((row & 1) != 0) {
-				row--;
-			}
-			if ((col & 1) != 0) {
-				col--;
-			}
+	private OctTerm toNonParametricTerm(OctValue value, int row, int col) {
 
-			return new TwoVarOctTerm(coefficient.getValue(), mReverseMapping.get(row), firstNegative,
-					mReverseMapping.get(col), secondNegative);
+		final boolean firstNegative = (row % 2) != 0;
+		final boolean secondNegative = (col % 2) == 0;
+		if ((row & 1) != 0) {
+			row--;
 		}
+		if ((col & 1) != 0) {
+			col--;
+		}
+		return OctagonFactory.createTwoVarOctTerm(value.getValue(), mReverseMapping.get(row), firstNegative,
+				mReverseMapping.get(col), secondNegative);
 	}
 
-	private ParametricOctagonTerm toParametricTerm(final OctValue coefficient, final OctValue summand, int row, int col, final int i) {
-		if (row == col) {
-			final boolean negative = ((row % 2) == 0);
-			if ((row & 1) != 0) {
-				row--;
-			}
-			return new OneVarParaOctTerm(coefficient.getValue(), mReverseMapping.get(row), negative, mParametricVar,
-					(summand.isInfinity() ? BigDecimal.ZERO : summand.getValue()), new BigDecimal(i));
-		} else {
-			final boolean firstNegative = ((row % 2) == 0);
-			final boolean secondNegative = ((col % 2) == 0);
-			final BigDecimal summ = (summand.isInfinity() ? BigDecimal.ZERO : summand.getValue());
-			if ((row & 1) != 0) {
-				row--;
-			}
-			if ((col & 1) != 0) {
-				col--;
-			}
-			return new TwoVarParaOctTerm(coefficient.getValue(), mReverseMapping.get(row), firstNegative,
-					mReverseMapping.get(col), secondNegative, mParametricVar, summ, new BigDecimal(i));
+	private OctTerm toParametricTerm(OctValue coefficient, OctValue summand, int row, int col, int i) {
+
+		final boolean firstNegative = (row % 2) != 0;
+		final boolean secondNegative = (col % 2) == 0;
+		if ((row & 1) != 0) {
+			row--;
 		}
+		if ((col & 1) != 0) {
+			col--;
+		}
+
+		final ParametricOctValue value = new ParametricOctValue(coefficient.getValue(),
+				summand.isInfinity() ? BigDecimal.ZERO : summand.getValue(), mParametricVar, new BigDecimal(i));
+
+		return OctagonFactory.createTwoVarOctTerm(value, mReverseMapping.get(row), firstNegative,
+				mReverseMapping.get(col), secondNegative);
 	}
 
 	/**
@@ -510,8 +529,8 @@ public class ParametricOctMatrix {
 	 *            the current Script.
 	 * @return Term equivalent to the ParametricOctMatrix
 	 */
-	public Term toTerm(final Script script) {
-		return toOctagonConjunction().toTerm(script);
+	public Term toTerm(Script script) {
+		return toOctConjunction().toTerm(script);
 	}
 
 	// ********************************
@@ -586,13 +605,13 @@ public class ParametricOctMatrix {
 	 * @return ParametricOctValue if the Matrix is parametric, BigDecimal if
 	 *         not.
 	 */
-	public Object getValue(final int row, final int col) {
+	public Object getValue(int row, int col) {
 		if (mParametric) {
 			final OctValue value1 = mMatrix.get(row, col);
-			final OctValue value2 = mSummands.get(row, col);
 			if (value1.equals(OctValue.INFINITY)) {
 				return null;
 			}
+			final OctValue value2 = mSummands.get(row, col);
 			if (value2.equals(OctValue.INFINITY)) {
 				return new ParametricOctValue(value1.getValue(), BigDecimal.ZERO, mParametricVar);
 			}
@@ -621,7 +640,7 @@ public class ParametricOctMatrix {
 	 */
 	public ParametricOctMatrix copy() {
 		if (mParametric) {
-			return new ParametricOctMatrix(mMatrix, mSummands, mVariableMapping);
+			return new ParametricOctMatrix(mMatrix, mSummands, mVariableMapping, mParametricVar);
 		}
 		return new ParametricOctMatrix(mMatrix, mVariableMapping);
 	}
@@ -644,11 +663,11 @@ public class ParametricOctMatrix {
 		return result;
 	}
 
-	private boolean mappingMatch(final ParametricOctMatrix summand) {
+	private boolean mappingMatch(ParametricOctMatrix summand) {
 		return summand.getMapping().equals(mVariableMapping);
 	}
 
-	private void debug(final Object obj) {
+	private void debug(Object obj) {
 		if (mLogger != null) {
 			mLogger.debug(obj);
 		}

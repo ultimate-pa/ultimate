@@ -305,7 +305,7 @@ public enum StatisticsType {
 	/**
 	 * Total runtime.
 	 */
-	RUNTIME_TOTAL,
+	RUNTIME_TOTAL_MS,
 	/**
 	 * Amount of SCCs the game graph has (used in simulation, for compatibility with {@link ECountingMeasure}).
 	 */

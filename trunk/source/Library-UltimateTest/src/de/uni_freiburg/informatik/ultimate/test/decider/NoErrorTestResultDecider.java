@@ -33,7 +33,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult;
 import de.uni_freiburg.informatik.ultimate.core.lib.results.TerminationAnalysisResult.Termination;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IFailedAnalysisResult;
@@ -49,7 +49,7 @@ import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
  * {@link TerminationAnalysisResult} with Unknown occurs. Every other result will be a success.
  *
  * If the test is a success, the message will contain all result short descriptions except the ones of
- * {@link BenchmarkResult}s.
+ * {@link StatisticsResult}s.
  *
  * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  *
@@ -85,7 +85,7 @@ public class NoErrorTestResultDecider extends TestResultDecider {
 					fail = true;
 					break;
 				}
-				if (result instanceof BenchmarkResult<?>) {
+				if (result instanceof StatisticsResult<?>) {
 					continue;
 				}
 				customMessages.add(result.getShortDescription());

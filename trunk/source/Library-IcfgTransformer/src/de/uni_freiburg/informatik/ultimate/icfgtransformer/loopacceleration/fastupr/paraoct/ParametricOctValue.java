@@ -29,6 +29,8 @@ package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.fas
 
 import java.math.BigDecimal;
 
+import de.uni_freiburg.informatik.ultimate.logic.Script;
+import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 
 /**
@@ -38,19 +40,83 @@ import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
  */
 public class ParametricOctValue {
 
-	private final BigDecimal mA;
-	private final BigDecimal mB;
-	private final TermVariable mK;
+	private final BigDecimal mCoefficient;
+	private final BigDecimal mSummand;
+	private final TermVariable mVar;
+	private final BigDecimal mIncrement;
 
 	ParametricOctValue() {
-		mA = new BigDecimal("0");
-		mB = new BigDecimal("0");
-		mK = null;
+		mCoefficient = new BigDecimal("0");
+		mSummand = new BigDecimal("0");
+		mVar = null;
+		mIncrement = null;
 	}
 
-	ParametricOctValue(BigDecimal coefficient, BigDecimal summant, TermVariable parametricVar) {
-		mA = coefficient;
-		mB = summant;
-		mK = parametricVar;
+	ParametricOctValue(BigDecimal coefficient, BigDecimal summand, TermVariable parametricVar) {
+		this(coefficient, summand, parametricVar, BigDecimal.ZERO);
+	}
+
+	ParametricOctValue(BigDecimal coefficient, BigDecimal summand, TermVariable parametricVar, BigDecimal increment) {
+		mCoefficient = coefficient;
+		mSummand = summand;
+		mVar = parametricVar;
+		mIncrement = increment;
+	}
+
+	BigDecimal getCoefficient() {
+		return mCoefficient;
+	}
+
+	BigDecimal getSummand() {
+		return mSummand;
+	}
+
+	TermVariable getVariable() {
+		return mVar;
+	}
+
+	BigDecimal getIncrement() {
+		return mIncrement;
+	}
+
+	@Override
+	public String toString() {
+		final StringBuilder sb = new StringBuilder(mCoefficient.toString() + " * ");
+		if (mIncrement.equals(BigDecimal.ZERO)) {
+			sb.append(mVar.toString());
+		} else {
+			sb.append("(" + mVar.toString() + "+" + mIncrement.toString() + ")");
+		}
+		sb.append(" + " + mSummand.toString());
+		return sb.toString();
+	}
+
+	public ParametricOctValue add(ParametricOctValue value) {
+		return new ParametricOctValue(mCoefficient.add(value.getCoefficient()), mSummand.add(value.getSummand()), mVar,
+				mIncrement);
+	}
+
+	public ParametricOctValue add(BigDecimal value) {
+		return new ParametricOctValue(mCoefficient, mSummand.add(value), mVar, mIncrement);
+	}
+
+	public ParametricOctValue multipy(BigDecimal value) {
+		return new ParametricOctValue(mCoefficient.multiply(value), mSummand.multiply(value), mVar, mIncrement);
+	}
+
+	public Object add(Object value) {
+		if (value instanceof ParametricOctValue) {
+			return add((ParametricOctValue) value);
+		} else {
+			return add((BigDecimal) value);
+		}
+	}
+
+	public Term getTerm(Script script) {
+		final Term inner = mIncrement.equals(BigDecimal.ZERO) ? mVar
+				: script.term("+", mVar, script.decimal(mIncrement));
+		final Term coeff = mCoefficient.equals(BigDecimal.ZERO) ? script.decimal(BigDecimal.ZERO)
+				: script.term("*", script.decimal(mCoefficient), inner);
+		return mSummand.equals(BigDecimal.ZERO) ? coeff : script.term("+", coeff, script.decimal(mSummand));
 	}
 }

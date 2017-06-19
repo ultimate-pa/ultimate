@@ -37,6 +37,7 @@ public class VPDomainSymmetricPair<T> {
 	T mFst, mSnd;
 
 	public VPDomainSymmetricPair(final T f, final T s) {
+		assert f != null && s != null;
 		mFst = f;
 		mSnd = s;
 	}

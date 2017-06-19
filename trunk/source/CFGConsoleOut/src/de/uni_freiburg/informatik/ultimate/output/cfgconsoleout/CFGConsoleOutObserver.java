@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2015 Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
  * Copyright (C) 2015 University of Freiburg
- * 
+ *
  * This file is part of the ULTIMATE CFGConsoleOut plug-in.
- * 
+ *
  * The ULTIMATE CFGConsoleOut plug-in is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published
  * by the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * The ULTIMATE CFGConsoleOut plug-in is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU Lesser General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Lesser General Public License
  * along with the ULTIMATE CFGConsoleOut plug-in. If not, see <http://www.gnu.org/licenses/>.
- * 
+ *
  * Additional permission under GNU GPL version 3 section 7:
  * If you modify the ULTIMATE CFGConsoleOut plug-in, or any covered work, by linking
  * or combining it with Eclipse RCP (or a modified version of Eclipse RCP),
@@ -26,102 +26,105 @@
  */
 package de.uni_freiburg.informatik.ultimate.output.cfgconsoleout;
 
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Collections;
+import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
+import de.uni_freiburg.informatik.ultimate.core.lib.observers.BaseObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.models.IElement;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IPayload;
-import de.uni_freiburg.informatik.ultimate.core.model.models.IWalkable;
-import de.uni_freiburg.informatik.ultimate.core.model.models.ModelType;
-import de.uni_freiburg.informatik.ultimate.core.model.models.annotation.IAnnotations;
-import de.uni_freiburg.informatik.ultimate.core.model.observers.IUnmanagedObserver;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.logic.PrintTerm;
-import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.CfgSmtToolkit;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.IcfgUtils;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfg;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgCallTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgInternalTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgReturnTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdgeIterator;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.CFG2NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.PredicateFactoryRefinement;
+import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.predicates.PredicateFactory;
 
-public class CFGConsoleOutObserver implements IUnmanagedObserver {
+public class CFGConsoleOutObserver extends BaseObserver {
 
-	private Map<IElement, String> mSeenList;
-	private int mNumRoots;
 	private final ILogger mLogger;
 	private final IUltimateServiceProvider mServices;
-	private final PrintWriter mWriter;
 
 	public CFGConsoleOutObserver(final IUltimateServiceProvider services) {
 		mServices = services;
-		mLogger = mServices.getLoggingService().getLogger(Activator.PLUGIN_ID);
-		mWriter = new PrintWriter(System.out);
-	}
-
-	@Override
-	public void init(final ModelType modelType, final int currentModelIndex, final int numberOfModels) throws Throwable {
-		mSeenList = new HashMap<IElement, String>();
-		mNumRoots = -1;
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override
 	public boolean process(final IElement root) {
-		if (root instanceof IWalkable) {
-			dfstraverse((IWalkable) root, Integer.toString(++mNumRoots));
+		if (root instanceof IIcfg<?>) {
+			processIcfg((IIcfg<?>) root);
 		}
 		return false;
 	}
 
-	@Override
-	public void finish() {
-	}
+	private void processIcfg(final IIcfg<?> icfg) {
+		final IcfgEdgeIterator iter = new IcfgEdgeIterator(icfg);
 
-	private void dfstraverse(final IWalkable node, final String numbering) {
-		if(!mLogger.isInfoEnabled()){
-			return;
-		}
-		
-		mSeenList.put(node, numbering);
-		mWriter.println("Node " + numbering + ";Annotations: ");
-		if (node.hasPayload()) {
-			final IPayload payload = node.getPayload();
-			if (payload.hasAnnotation()) {
-				for (final Entry<String, IAnnotations> annotation : payload.getAnnotations().entrySet()) {
-					mWriter.println("  " + annotation.getKey());
-					for (final Entry<String, Object> keyvalue : annotation.getValue().getAnnotationsAsMap().entrySet()) {
-						mWriter.print("    " + keyvalue.getKey() + ": ");
-						if (keyvalue.getValue() instanceof Term) {
-							new PrintTerm().append(mWriter, (Term) keyvalue.getValue());
-						} else {
-							mWriter.print(keyvalue.getValue());
-						}
-						mWriter.println();
-					}
-				}
-			}
+		mLogger.info(
+				"InitLocs: " + icfg.getInitialNodes().stream().map(a -> a.toString()).collect(Collectors.joining(",")));
+		mLogger.info("LoopLocs: "
+				+ icfg.getLoopLocations().stream().map(a -> a.toString()).collect(Collectors.joining(",")));
+		mLogger.info("ErrorLocs: "
+				+ IcfgUtils.getErrorLocations(icfg).stream().map(a -> a.toString()).collect(Collectors.joining(",")));
+		mLogger.info("Axioms: " + icfg.getCfgSmtToolkit().getAxioms());
+
+		while (iter.hasNext()) {
+			final IcfgEdge current = iter.next();
+			mLogger.info(toString(current));
 		}
 
-		final List<IWalkable> newnodes = new ArrayList<IWalkable>();
-		final List<IWalkable> children = node.getSuccessors();
-		int num = -1;
-		// Add new nodes and detect back edges...
-		for (final IWalkable n : children) {
-			final String backedge = mSeenList.get(n);
-			if (backedge != null) {
-				mWriter.println("Back edge from " + numbering + " to " + backedge);
-			} else {
-				final String newnumbering = numbering + "." + (++num);
-				mSeenList.put(n, newnumbering);
-				newnodes.add(n);
-			}
-		}
-		for (final IWalkable n : newnodes) {
-			dfstraverse(n, mSeenList.get(n));
-		}
+		mLogger.info(getNwa(icfg));
 	}
 
-	@Override
-	public boolean performedChanges() {
-		return false;
+	private INestedWordAutomaton<IIcfgTransition<?>, IPredicate> getNwa(final IIcfg<?> icfg) {
+		final CfgSmtToolkit toolkit = icfg.getCfgSmtToolkit();
+		final PredicateFactory predicateFactory = new PredicateFactory(mServices, toolkit.getManagedScript(),
+				toolkit.getSymbolTable(), SimplificationTechnique.SIMPLIFY_DDA,
+				XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+		final CFG2NestedWordAutomaton<IIcfgTransition<?>> cfg2nwa =
+				new CFG2NestedWordAutomaton<>(mServices, true, toolkit, predicateFactory, mLogger);
+		final IStateFactory<IPredicate> stateFac = new PredicateFactoryRefinement(mServices, toolkit.getManagedScript(),
+				predicateFactory, false, Collections.emptySet());
+
+		final INestedWordAutomaton<IIcfgTransition<?>, IPredicate> nwa =
+				cfg2nwa.getNestedWordAutomaton(icfg, stateFac, IcfgUtils.getErrorLocations(icfg));
+		return nwa;
 	}
+
+	private String toString(final IcfgEdge current) {
+		final StringBuilder sb = new StringBuilder();
+
+		sb.append(current.getSource());
+		sb.append(" -- ");
+		if (current instanceof IIcfgInternalTransition<?>) {
+			sb.append(current.getTransformula());
+		} else if (current instanceof IIcfgCallTransition<?>) {
+			final IIcfgCallTransition<?> call = (IIcfgCallTransition<?>) current;
+			sb.append(call.getLocalVarsAssignment());
+		} else if (current instanceof IIcfgReturnTransition<?, ?>) {
+			final IIcfgReturnTransition<?, ?> ret = (IIcfgReturnTransition<?, ?>) current;
+			sb.append("(");
+			sb.append(ret.getCallerProgramPoint());
+			sb.append(") ");
+			sb.append(ret.getAssignmentOfReturn());
+		}
+
+		sb.append(" -- ");
+		sb.append(current.getTarget());
+
+		return sb.toString();
+	}
+
 }

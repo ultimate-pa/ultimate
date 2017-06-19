@@ -72,13 +72,13 @@ public class ExampleTest {
 	}
 
 	@Test
-	public void Sometest() {
+	public void someTest() {
 		mLogger.info("Sometest");
 		Assert.assertThat(true, Is.is(true));
 	}
 
 	@Test
-	public void SomeOtherTest() {
+	public void someOtherTest() {
 		mLogger.info("SomeOtherTest");
 		Assert.assertThat(true, Is.is(true));
 	}

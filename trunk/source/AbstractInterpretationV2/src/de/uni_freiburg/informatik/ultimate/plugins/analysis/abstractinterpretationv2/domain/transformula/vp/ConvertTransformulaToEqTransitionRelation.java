@@ -37,22 +37,28 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 	
 	private final EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
 	private final EqNodeAndFunctionFactory mEqNodeAndFunctionFactory;
-	private ManagedScript mMgdScript;
-	private IUltimateServiceProvider mServices;
+	private final ManagedScript mMgdScript;
+	private final IUltimateServiceProvider mServices;
 	
-	private VPDomainPreanalysis mPreAnalysis;
+	private final VPDomainPreanalysis mPreAnalysis;
 
 	/**
 	 * stores intermediate results of the "recursion"
 	 */
+//	private final ArrayDeque<EqDisjunctiveConstraint<ACTION, EqNode, EqFunction>> mResultStack = new ArrayDeque<>();
 	private final ArrayDeque<EqDisjunctiveConstraint<ACTION, EqNode, EqFunction>> mResultStack = new ArrayDeque<>();
 	
 	public ConvertTransformulaToEqTransitionRelation(TransFormula tf, 
 			EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory, 
-			EqNodeAndFunctionFactory eqNodeAndFunctionFactory) {
+			EqNodeAndFunctionFactory eqNodeAndFunctionFactory, VPDomainPreanalysis preAnalysis) {
 		mTf = tf;
 		mEqConstraintFactory = eqConstraintFactory;
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
+		
+		mPreAnalysis = preAnalysis;
+		mMgdScript = preAnalysis.getManagedScript();
+		mServices = preAnalysis.getServices();
+		
 		computeResult();
 	}
 	
@@ -141,16 +147,18 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 				final EqFunction func2 = mEqNodeAndFunctionFactory.getOrConstructEqFunction(arg2);
 				
 			
-				final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> newConstraint;
+//				final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> newConstraint;
+				final EqConstraint<ACTION, EqNode, EqFunction> newConstraint;
 				if (polarity) {
 					newConstraint = 
-							mEqConstraintFactory.addFunctionEquality(func1, func2, emptyConstraint);
+							mEqConstraintFactory.addFunctionEqualityFlat(func1, func2, emptyConstraint);
 				} else {
 					newConstraint = 
-							mEqConstraintFactory.addFunctionDisequality(func1, func2, emptyConstraint);
+							mEqConstraintFactory.addFunctionDisequalityFlat(func1, func2, emptyConstraint);
 				}
 				
-				mResultStack.push(newConstraint);
+//				mResultStack.push(newConstraint);
+				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(newConstraint)));
 				return;
 			} else {
 				// we have an "normal", element equality
@@ -171,22 +179,25 @@ public class ConvertTransformulaToEqTransitionRelation<ACTION extends IIcfgTrans
 //				}
 
 
-				final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> newConstraint;
+//				final EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> newConstraint;
+				final EqConstraint<ACTION, EqNode, EqFunction> newConstraint;
 				if (polarity) {
 					newConstraint = 
-							mEqConstraintFactory.addEquality(node1, node2, emptyConstraint);
+//							mEqConstraintFactory.addEquality(node1, node2, emptyConstraint);
+							mEqConstraintFactory.addEqualityFlat(node1, node2, emptyConstraint);
 				} else {
 					newConstraint = 
-							mEqConstraintFactory.addDisequality(node1, node2, emptyConstraint);
+							mEqConstraintFactory.addDisequalityFlat(node1, node2, emptyConstraint);
 				}
 
-				mResultStack.push(newConstraint);
+//				mResultStack.push(newConstraint);
+				mResultStack.push(mEqConstraintFactory.getDisjunctiveConstraint(Collections.singleton(newConstraint)));
 				return;
 			}
 		}
 
 		private boolean isElementTracked(Term term) {
-			return mPreAnalysis.isElementTracked(term);
+			return mPreAnalysis.isElementTracked(term, mTf);
 		}
 
 		private boolean isFunctionTracked(Term term) {

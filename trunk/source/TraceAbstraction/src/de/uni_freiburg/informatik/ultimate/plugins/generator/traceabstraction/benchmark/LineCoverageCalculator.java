@@ -41,7 +41,7 @@ import de.uni_freiburg.informatik.ultimate.boogie.ast.AssumeStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.CallStatement;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Statement;
 import de.uni_freiburg.informatik.ultimate.boogie.output.BoogiePrettyPrinter;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.models.ILocation;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
@@ -104,7 +104,7 @@ public class LineCoverageCalculator<LETTER extends IIcfgTransition<?>> {
 
 	private void reportResult(final int current, final int total, final String description) {
 		mServices.getResultService().reportResult(Activator.PLUGIN_ID,
-				new BenchmarkResult<>(Activator.PLUGIN_ID, description, new LineCoverageResult(total, current)));
+				new StatisticsResult<>(Activator.PLUGIN_ID, description, new LineCoverageResult(total, current)));
 	}
 
 	private int getLineCount() {

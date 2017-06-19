@@ -41,7 +41,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.lib.exceptions.ToolchainCanceledException;
-import de.uni_freiburg.informatik.ultimate.core.lib.results.BenchmarkResult;
+import de.uni_freiburg.informatik.ultimate.core.lib.results.StatisticsResult;
 import de.uni_freiburg.informatik.ultimate.core.model.results.IResult;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IProgressAwareTimer;
@@ -148,7 +148,7 @@ public final class CFGInvariantsGenerator {
 	private final InvariantSynthesisSettings mInvariantSynthesisSettings;
 	private final CfgSmtToolkit mCsToolKit;
 	/**
-	 * Report a {@link BenchmarkResult} for every round.
+	 * Report a {@link StatisticsResult} for every round.
 	 */
 	private static final boolean TEMPLATE_STATISTICS_MODE = true;
 
@@ -636,7 +636,7 @@ public final class CFGInvariantsGenerator {
 			if (TEMPLATE_STATISTICS_MODE) {
 				final StatisticsData stat = new StatisticsData();
 				stat.aggregateBenchmarkData(mRound2PathInvariantsStatistics.get(round));
-				final IResult benchmarkResult =	new BenchmarkResult<>(Activator.PLUGIN_ID, "InvariantSynthesisStatistics", stat);
+				final IResult benchmarkResult =	new StatisticsResult<>(Activator.PLUGIN_ID, "InvariantSynthesisStatistics", stat);
 				mServices.getResultService().reportResult(Activator.PLUGIN_ID, benchmarkResult);
 			}
 

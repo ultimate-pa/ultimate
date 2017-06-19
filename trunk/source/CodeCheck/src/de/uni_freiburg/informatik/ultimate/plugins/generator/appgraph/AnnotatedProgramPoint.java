@@ -177,7 +177,7 @@ public class AnnotatedProgramPoint
 
 	@Override
 	public String toString() {
-		final String ref = CodeChecker.objectReference(this);
+		final String ref = Integer.toHexString(System.identityHashCode(this));
 		return mProgramPoint.toString() + ref.substring(Math.max(ref.length() - 3, 0)) + ":"
 				+ mPredicate.getFormula().toString();
 	}

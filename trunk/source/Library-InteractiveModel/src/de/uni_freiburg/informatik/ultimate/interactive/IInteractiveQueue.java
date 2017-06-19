@@ -48,16 +48,28 @@ public interface IInteractiveQueue<M> {
 
 			@Override
 			public <T extends M> CompletableFuture<T> request(final Class<T> type) {
-				final CompletableFuture<T> result = new CompletableFuture<>();
-				result.completeExceptionally(new IllegalAccessError(ERROR_MSG));
-				return result;
+				return newFuture();
 			}
 
 			@Override
 			public <T extends M> CompletableFuture<T> request(final Class<T> type, final M data) {
-				return request(type);
+				return newFuture();
+			}
+
+			@Override
+			public <V> CompletableFuture<V> newFuture() {
+				final CompletableFuture<V> result = new CompletableFuture<>();
+				result.completeExceptionally(new IllegalAccessError(ERROR_MSG));
+				return result;
 			}
 		};
 	}
 
+	/**
+	 * returns a new CompletableFuture that is registered with the Server and will automatically be cancelled in case of
+	 * a connection problem.
+	 * 
+	 * @return
+	 */
+	<V> CompletableFuture<V> newFuture();
 }

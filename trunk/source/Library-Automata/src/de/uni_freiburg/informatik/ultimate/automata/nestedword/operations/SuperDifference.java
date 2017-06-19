@@ -59,7 +59,7 @@ import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
  *            String as STATE and your states are labeled e.g. with "q0", "q1", ...
  */
 
-public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
+public final class SuperDifference<LETTER, STATE, FAC extends IIntersectionStateFactory<STATE> & ISinkStateFactory<STATE>> extends BinaryNwaOperation<LETTER, STATE, IStateFactory<STATE>> {
 	private static final String FOLLOW_LABEL = "follow label ";
 	private static final String ADD_TARGET_SINK_STATE_Q2 = "add target (sink) state q2: ";
 	private static final String TRAVERSE_IN_SINK_STATE = "Traverse in sink state ";
@@ -72,7 +72,7 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 	private final NestedWordAutomaton<LETTER, STATE> mResult;
 	private final STATE mSinkState;
 	private final HashMap<String, STATE> mContainedStatesHashMap;
-	private final IIntersectionStateFactory<STATE> mStateFactory;
+	private final FAC mStateFactory;
 
 	/**
 	 * Computes the an automaton A' which is the over approximation of the difference of the two automatons minuend and
@@ -92,7 +92,7 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 	 * @throws AutomataOperationCanceledException
 	 *             if timeout exceeds
 	 */
-	public SuperDifference(final AutomataLibraryServices services, final INestedWordAutomaton<LETTER, STATE> minuend,
+	public SuperDifference(final AutomataLibraryServices services, final FAC stateFactory, final INestedWordAutomaton<LETTER, STATE> minuend,
 			final INestedWordAutomaton<LETTER, STATE> subtrahend,
 			final AutomatonEpimorphism<STATE> automatonEpimorhpism, final boolean minimize)
 			throws AutomataOperationCanceledException {
@@ -100,9 +100,7 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 		mMinuend = minuend;
 		mSubtrahend = subtrahend;
 		mEpimorphism = automatonEpimorhpism;
-		// TODO Christian 2017-02-15 Casts are temporary workarounds until state factory becomes constructor parameter
-		final ISinkStateFactory<STATE> sinkStateFactory = (ISinkStateFactory<STATE>) minuend.getStateFactory();
-		mStateFactory = (IIntersectionStateFactory<STATE>) minuend.getStateFactory();
+		mStateFactory = stateFactory;
 		mContainedStatesHashMap = new HashMap<>();
 		if (minimize && mLogger.isErrorEnabled()) {
 			mLogger.error("Minimization not implemented.");
@@ -114,7 +112,7 @@ public final class SuperDifference<LETTER, STATE> extends BinaryNwaOperation<LET
 
 		// initialize the result with the empty automaton
 		mResult = new NestedWordAutomaton<>(mServices, minuend.getVpAlphabet(), mStateFactory);
-		mSinkState = sinkStateFactory.createSinkStateContent();
+		mSinkState = mStateFactory.createSinkStateContent();
 		if (mLogger.isDebugEnabled()) {
 			mLogger.debug("Created Sink-State: " + mSinkState.toString());
 		}

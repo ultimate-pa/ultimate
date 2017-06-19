@@ -27,9 +27,12 @@
 package de.uni_freiburg.informatik.ultimate.icfgtransformer.loopacceleration.werner;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 
 import de.uni_freiburg.informatik.ultimate.logic.Term;
+import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgEdge;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.transitions.TransFormula;
@@ -48,6 +51,7 @@ public class Loop {
 	private final TransFormula mFormula;
 	private Term mCondition;
 	private IteratedSymbolicMemory mIteratedMemory;
+	private List<TermVariable> mAuxVars;
 
 	/**
 	 * Construct a new loop.
@@ -67,6 +71,7 @@ public class Loop {
 		mFormula = tf;
 		mCondition = null;
 		mIteratedMemory = null;
+		mAuxVars = new ArrayList<>();
 	}
 
 	/**
@@ -108,6 +113,10 @@ public class Loop {
 		return mIteratedMemory;
 	}
 
+	public List<TermVariable> getVars() {
+		return mAuxVars;
+	}
+
 	/**
 	 * Get the loophead as IcfgLocation
 	 */
@@ -121,6 +130,14 @@ public class Loop {
 
 	public void setIteratedSymbolicMemory(IteratedSymbolicMemory memory) {
 		mIteratedMemory = memory;
+	}
+	
+	/**
+	 * add a var
+	 * @param vars
+	 */
+	public void addVar(List<TermVariable> vars) {
+		mAuxVars.addAll(vars);
 	}
 
 	@Override

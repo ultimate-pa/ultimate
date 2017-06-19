@@ -1,6 +1,8 @@
 package de.uni_freiburg.informatik.ultimate.server;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
@@ -8,6 +10,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.interactive.IInteractiveQueue;
@@ -18,8 +21,9 @@ import de.uni_freiburg.informatik.ultimate.interactive.IWrappedMessage.Writer;
 public class MessageQueue<T> implements IInteractiveQueue<T> {
 	private static final int QUEUE_SIZE = 1000;
 
-	protected BlockingQueue<IWrappedMessage<T>> mOutputBuffer;
-	protected Map<String, CompletableFuture<? extends T>> mFutureMap;
+	protected final BlockingQueue<IWrappedMessage<T>> mOutputBuffer;
+	protected final Map<String, CompletableFuture<? extends T>> mFutureMap;
+	protected final List<CompletableFuture<?>> mRegisteredFutures;
 
 	private final ILogger mLogger;
 
@@ -30,6 +34,7 @@ public class MessageQueue<T> implements IInteractiveQueue<T> {
 		mFactory = factory;
 
 		mOutputBuffer = new ArrayBlockingQueue<>(QUEUE_SIZE);
+		mRegisteredFutures = new ArrayList<>();
 		mFutureMap = new HashMap<>();
 	}
 
@@ -94,8 +99,7 @@ public class MessageQueue<T> implements IInteractiveQueue<T> {
 			return false;
 		final CompletableFuture<? extends T> future = mFutureMap.remove(qid);
 		@SuppressWarnings("unchecked")
-		final
-		CompletableFuture<T1> castedFuture = (CompletableFuture<T1>) future;
+		final CompletableFuture<T1> castedFuture = (CompletableFuture<T1>) future;
 		final boolean result = e == null ? castedFuture.complete(data) : castedFuture.completeExceptionally(e);
 		if (!result) {
 			mLogger.error("failed to complete request future, as it was already completed, but still registered with "
@@ -105,6 +109,14 @@ public class MessageQueue<T> implements IInteractiveQueue<T> {
 	}
 
 	public boolean completeAllFuturesExceptionally(final Throwable ex) {
-		return mFutureMap.values().stream().reduce(false, (r, f) -> f.completeExceptionally(ex), Boolean::logicalOr);
+		return Stream.concat(mFutureMap.values().stream(), mRegisteredFutures.stream()).reduce(false,
+				(r, f) -> f.completeExceptionally(ex), Boolean::logicalOr);
+	}
+
+	@Override
+	public <V> CompletableFuture<V> newFuture() {
+		final CompletableFuture<V> result = new CompletableFuture<V>();
+		mRegisteredFutures.add(result);
+		return result;
 	}
 }

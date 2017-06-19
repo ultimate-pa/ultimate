@@ -19,19 +19,21 @@ public class TransFormulaConverterCache<ACTION extends IIcfgTransition<IcfgLocat
 	
 	private final Map<TransFormula, EqTransitionRelation<ACTION>> mTransformulaToEqTransitionRelationCache =
 			new HashMap<>();
+	private final VPDomainPreanalysis mPreAnalysis;
 	
 	public TransFormulaConverterCache(EqNodeAndFunctionFactory eqNodeAndFunctionFactory, 
-			EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory) {
+			EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory, VPDomainPreanalysis preAnalysis) {
 		
 		mEqNodeAndFunctionFactory = eqNodeAndFunctionFactory;
 		mEqConstraintFactory = eqConstraintFactory;
+		mPreAnalysis = preAnalysis;
 	}
 
 	public EqTransitionRelation<ACTION> getEqTransitionRelationFromTransformula(TransFormula tf) {
 		EqTransitionRelation<ACTION> result = mTransformulaToEqTransitionRelationCache.get(tf);
 		if (result == null) {
 			result = new ConvertTransformulaToEqTransitionRelation<ACTION>(tf, 
-					mEqConstraintFactory, mEqNodeAndFunctionFactory)
+					mEqConstraintFactory, mEqNodeAndFunctionFactory, mPreAnalysis)
 				.getResult();
 			mTransformulaToEqTransitionRelationCache.put(tf, result);
 		}

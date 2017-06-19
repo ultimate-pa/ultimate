@@ -41,7 +41,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -118,6 +117,32 @@ import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.Pair;
 public class CACSL2BoogieBacktranslator
 		extends DefaultTranslator<BoogieASTNode, CACSLLocation, Expression, IASTExpression, String, String> {
 
+	/**
+	 * {@link VariableType} is used to distinguish various special variables after they are converted to strings.
+	 *
+	 * @author Daniel Dietsch (dietsch@informatik.uni-freiburg.de)
+	 *
+	 */
+	private enum VariableType {
+		RESULT,
+
+		OLD,
+
+		INVAR,
+
+		NORMAL,
+
+		AUX,
+
+		VALID,
+
+		POINTER_BASE,
+
+		POINTER_OFFSET,
+
+		UNKNOWN
+	}
+
 	private static final String UNFINISHED_BACKTRANSLATION = "Unfinished Backtranslation";
 
 	private final Boogie2C mBoogie2C;
@@ -138,7 +163,7 @@ public class CACSL2BoogieBacktranslator
 	public void setExpressionTranslation(final AExpressionTranslation expressionTranslation) {
 		mExpressionTranslation = expressionTranslation;
 	}
-	
+
 	public void setLocationFactory(final LocationFactory locationFactory) {
 		mLocationFactory = locationFactory;
 	}
@@ -480,13 +505,11 @@ public class CACSL2BoogieBacktranslator
 	 *            May not be null
 	 */
 	private ProgramState<Expression> compressProgramState(final ProgramState<Expression> programState) {
-		final List<Entry<Expression, Collection<Expression>>> oldEntries = new ArrayList<>();
-		final List<Entry<Expression, Collection<Expression>>> newEntries = new ArrayList<>();
+		final List<Pair<Expression, Collection<Expression>>> oldEntries = new ArrayList<>();
+		final List<Pair<Expression, Collection<Expression>>> newEntries = new ArrayList<>();
 
 		for (final Expression var : programState.getVariables()) {
-			final MyEntry<Expression, Collection<Expression>> entry = new MyEntry<>();
-			entry.mKey = var;
-			entry.mValue = programState.getValues(var);
+			final Pair<Expression, Collection<Expression>> entry = new Pair<>(var, programState.getValues(var));
 			oldEntries.add(entry);
 		}
 
@@ -501,9 +524,9 @@ public class CACSL2BoogieBacktranslator
 
 		newEntries.addAll(oldEntries);
 		final Map<Expression, Collection<Expression>> map = new HashMap<>();
-		for (final Entry<Expression, Collection<Expression>> entry : newEntries) {
-			final Collection<Expression> newValues = entry.getValue();
-			final Collection<Expression> oldValues = map.put(entry.getKey(), entry.getValue());
+		for (final Pair<Expression, Collection<Expression>> entry : newEntries) {
+			final Collection<Expression> newValues = entry.getSecond();
+			final Collection<Expression> oldValues = map.put(entry.getFirst(), entry.getSecond());
 			if (oldValues != null) {
 				newValues.addAll(oldValues);
 			}
@@ -512,38 +535,37 @@ public class CACSL2BoogieBacktranslator
 		return new ProgramState<>(map);
 	}
 
-	private void extractTemporaryPointerExpression(final List<Entry<Expression, Collection<Expression>>> oldEntries,
-			final List<Entry<Expression, Collection<Expression>>> newEntries) {
+	private void extractTemporaryPointerExpression(final List<Pair<Expression, Collection<Expression>>> oldEntries,
+			final List<Pair<Expression, Collection<Expression>>> newEntries) {
 		for (int i = oldEntries.size() - 1; i >= 0; i--) {
-			final Entry<Expression, Collection<Expression>> entry = oldEntries.get(i);
-			final String str = BoogiePrettyPrinter.print(entry.getKey());
-			if (entry.getKey() instanceof IdentifierExpression && str.endsWith(SFO.POINTER_BASE)) {
+			final Pair<Expression, Collection<Expression>> entry = oldEntries.get(i);
+			final String str = BoogiePrettyPrinter.print(entry.getFirst());
+			if (entry.getFirst() instanceof IdentifierExpression && str.endsWith(SFO.POINTER_BASE)) {
 				final String name = str.substring(0, str.length() - SFO.POINTER_BASE.length());
 				for (int j = oldEntries.size() - 1; j >= 0; j--) {
-					final Entry<Expression, Collection<Expression>> otherentry = oldEntries.get(j);
-					final String other = BoogiePrettyPrinter.print(otherentry.getKey());
-					if (otherentry.getKey() instanceof IdentifierExpression && other.endsWith(SFO.POINTER_OFFSET)
+					final Pair<Expression, Collection<Expression>> otherentry = oldEntries.get(j);
+					final String other = BoogiePrettyPrinter.print(otherentry.getFirst());
+					if (otherentry.getFirst() instanceof IdentifierExpression && other.endsWith(SFO.POINTER_OFFSET)
 							&& other.startsWith(name)) {
 						final TemporaryPointerExpression tmpPointerVar =
-								new TemporaryPointerExpression(entry.getKey().getLocation());
-						tmpPointerVar.setBase(entry.getKey());
-						tmpPointerVar.setOffset(otherentry.getKey());
-						if (entry.getValue().size() != 1 || otherentry.getValue().size() != 1) {
+								new TemporaryPointerExpression(entry.getFirst().getLocation());
+						tmpPointerVar.setBase(entry.getFirst());
+						tmpPointerVar.setOffset(otherentry.getFirst());
+						if (entry.getSecond().size() != 1 || otherentry.getSecond().size() != 1) {
 							reportUnfinishedBacktranslation(
 									UNFINISHED_BACKTRANSLATION + " Pointers with multiple values");
 						}
 						final TemporaryPointerExpression tmpPointerValue =
-								new TemporaryPointerExpression(entry.getKey().getLocation());
-						for (final Expression baseValue : entry.getValue()) {
+								new TemporaryPointerExpression(entry.getFirst().getLocation());
+						for (final Expression baseValue : entry.getSecond()) {
 							tmpPointerValue.setBase(baseValue);
 						}
-						for (final Expression offsetValue : otherentry.getValue()) {
+						for (final Expression offsetValue : otherentry.getSecond()) {
 							tmpPointerValue.setOffset(offsetValue);
 						}
-						final MyEntry<Expression, Collection<Expression>> newEntry = new MyEntry<>();
-						newEntry.mKey = tmpPointerVar;
-						newEntry.mValue = new ArrayList<>();
-						newEntry.mValue.add(tmpPointerValue);
+						final Pair<Expression, Collection<Expression>> newEntry =
+								new Pair<>(tmpPointerVar, new ArrayList<>());
+						newEntry.getSecond().add(tmpPointerValue);
 						newEntries.add(newEntry);
 						oldEntries.remove(entry);
 						oldEntries.remove(otherentry);
@@ -779,9 +801,9 @@ public class CACSL2BoogieBacktranslator
 			} else if (cnode instanceof CASTFunctionDefinition) {
 				if (expression instanceof IdentifierExpression) {
 					final IdentifierExpression orgidexp = (IdentifierExpression) expression;
-					final Pair<String, CType> origName = translateIdentifierExpression(orgidexp);
+					final TranslatedVariable origName = translateIdentifierExpression(orgidexp);
 					if (origName != null) {
-						return new FakeExpression(cnode, origName.getFirst(), origName.getSecond());
+						return new FakeExpression(cnode, origName.toString(), origName.getCType());
 					}
 				}
 				reportUnfinishedBacktranslation(
@@ -796,9 +818,9 @@ public class CACSL2BoogieBacktranslator
 
 				if (expression instanceof IdentifierExpression) {
 					final IdentifierExpression iexpr = (IdentifierExpression) expression;
-					final Pair<String, CType> origName = translateIdentifierExpression(iexpr);
+					final TranslatedVariable origName = translateIdentifierExpression(iexpr);
 					if (origName != null) {
-						return new FakeExpression(cnode, origName.getFirst(), origName.getSecond());
+						return new FakeExpression(cnode, origName.getName(), origName.getCType());
 					}
 				}
 				reportUnfinishedBacktranslation(
@@ -833,7 +855,6 @@ public class CACSL2BoogieBacktranslator
 				// (using ACSL).
 				translatedString = translatedString.replaceAll("old\\(", "\\\\old\\(")
 						.replaceAll("(\\\\)*old", "\\\\old").replaceAll("exists", "\\\\exists");
-
 				return new FakeExpression(translatedString);
 			}
 			reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": Expression "
@@ -1075,26 +1096,26 @@ public class CACSL2BoogieBacktranslator
 
 		if (decls.getDeclarators().length == 1) {
 			final IdentifierExpression orgidexp = (IdentifierExpression) expression;
-			final Pair<String, CType> origName = translateIdentifierExpression(orgidexp);
+			final TranslatedVariable origName = translateIdentifierExpression(orgidexp);
 			if (origName == null) {
 				reportUnfinishedBacktranslation(UNFINISHED_BACKTRANSLATION + ": No BoogieVar found for "
 						+ BoogiePrettyPrinter.print(expression));
 				return null;
 			}
 			return new FakeExpression(decls, decls.getDeclarators()[0].getName().getRawSignature(),
-					origName.getSecond());
+					origName.getCType());
 		}
 		// ok, this is a declaration ala "int a,b;", so we use
 		// our backtranslation map to get the real name
 		final IdentifierExpression orgidexp = (IdentifierExpression) expression;
-		final Pair<String, CType> origName = translateIdentifierExpression(orgidexp);
+		final TranslatedVariable origName = translateIdentifierExpression(orgidexp);
 		if (origName == null) {
 			reportUnfinishedBacktranslation(
 					UNFINISHED_BACKTRANSLATION + ": No BoogieVar found for " + BoogiePrettyPrinter.print(expression));
 			return null;
 		}
 		for (final IASTDeclarator decl : decls.getDeclarators()) {
-			if (origName.getFirst().indexOf(decl.getName().getRawSignature()) != -1) {
+			if (origName.getName().indexOf(decl.getName().getRawSignature()) != -1) {
 				return new FakeExpression(decl.getName().getRawSignature());
 			}
 		}
@@ -1113,35 +1134,39 @@ public class CACSL2BoogieBacktranslator
 		}
 	}
 
-	private Pair<String, CType> translateIdentifierExpression(final IdentifierExpression expr) {
+	private TranslatedVariable translateIdentifierExpression(final IdentifierExpression expr) {
 		return translateBoogieIdentifier(expr.getIdentifier());
 	}
 
-	private Pair<String, CType> translateBoogieIdentifier(final String boogieId) {
-		final Pair<String, CType> result;
+	private TranslatedVariable translateBoogieIdentifier(final String boogieId) {
+		final TranslatedVariable result;
 		if (boogieId.equals(SFO.RES)) {
-			result = new Pair<>("\\result", null);
+			result = new TranslatedVariable("\\result", null, VariableType.RESULT);
 		} else if (mBoogie2C.getVar2CVar().containsKey(boogieId)) {
-			result = mBoogie2C.getVar2CVar().get(boogieId);
+			final Pair<String, CType> pair = mBoogie2C.getVar2CVar().get(boogieId);
+			result = new TranslatedVariable(pair.getFirst(), pair.getSecond(), VariableType.NORMAL);
 		} else if (mBoogie2C.getInVar2CVar().containsKey(boogieId)) {
-			final Pair<String, CType> inVar = mBoogie2C.getInVar2CVar().get(boogieId);
-			final String cNameWithOld = "\\old(" + inVar.getFirst() + ")";
-			result = new Pair<>(cNameWithOld, inVar.getSecond());
+			// invars can only occur in expressions as part of synthetic expressions, and then they represent oldvars
+			final Pair<String, CType> pair = mBoogie2C.getInVar2CVar().get(boogieId);
+			result = new TranslatedVariable(pair.getFirst(), pair.getSecond(), VariableType.INVAR);
 		} else if (mBoogie2C.getTempVar2Obj().containsKey(boogieId)) {
-			result = null;
-			reportUnfinishedBacktranslation("auxilliary boogie variable " + boogieId);
+			final SFO.AUXVAR purpose = mBoogie2C.getTempVar2Obj().get(boogieId);
+			result = new TranslatedVariable(boogieId, null, VariableType.AUX);
+			reportUnfinishedBacktranslation("auxilliary boogie variable " + boogieId + "(" + purpose + ")");
 		} else if (boogieId.equals(SFO.VALID)) {
-			result = new Pair<>("\\valid", null);
+			result = new TranslatedVariable("\\valid", null, VariableType.VALID);
 		} else {
 			// if its base or offset, try again with them stripped
 			if (boogieId.endsWith(SFO.POINTER_BASE)) {
-				result = translateBoogieIdentifier(
+				final TranslatedVariable base = translateBoogieIdentifier(
 						boogieId.substring(0, boogieId.length() - SFO.POINTER_BASE.length() - 1));
+				result = new TranslatedVariable(base.getName(), base.getCType(), VariableType.POINTER_BASE);
 			} else if (boogieId.endsWith(SFO.POINTER_OFFSET)) {
-				result = translateBoogieIdentifier(
+				final TranslatedVariable offset = translateBoogieIdentifier(
 						boogieId.substring(0, boogieId.length() - SFO.POINTER_OFFSET.length() - 1));
+				result = new TranslatedVariable(offset.getName(), offset.getCType(), VariableType.POINTER_OFFSET);
 			} else {
-				result = null;
+				result = new TranslatedVariable(boogieId, null, VariableType.UNKNOWN);
 				reportUnfinishedBacktranslation("unknown boogie variable " + boogieId);
 			}
 		}
@@ -1271,11 +1296,9 @@ public class CACSL2BoogieBacktranslator
 				final IdentifierExpression ident = (IdentifierExpression) expr;
 				final ILocation loc = ident.getLocation();
 				if (loc instanceof CACSLLocation) {
-					final IASTExpression translated = translateExpression(ident);
+					final TranslatedVariable translated = translateIdentifierExpression(ident);
 					if (translated != null) {
-						final String raw = translated.getRawSignature();
-						return new IdentifierExpression(ident.getLocation(), ident.getType(), raw,
-								ident.getDeclarationInformation());
+						return translated;
 					}
 				}
 			}
@@ -1325,7 +1348,7 @@ public class CACSL2BoogieBacktranslator
 
 		private final Map<String, Pair<String, CType>> mInVar2CVar;
 		private final Map<String, Pair<String, CType>> mVar2CVar;
-		private final Map<String, Object> mTempVar2Obj;
+		private final Map<String, SFO.AUXVAR> mTempVar2Obj;
 		private final Map<String, String> mFunctionId2Operator;
 
 		private Boogie2C() {
@@ -1343,7 +1366,7 @@ public class CACSL2BoogieBacktranslator
 			return mVar2CVar;
 		}
 
-		private Map<String, Object> getTempVar2Obj() {
+		private Map<String, SFO.AUXVAR> getTempVar2Obj() {
 			return mTempVar2Obj;
 		}
 
@@ -1400,7 +1423,7 @@ public class CACSL2BoogieBacktranslator
 
 		@Override
 		public void accept(final GeneratedBoogieAstVisitor visitor) {
-
+			// nothing to accept here
 		}
 
 		@Override
@@ -1409,26 +1432,62 @@ public class CACSL2BoogieBacktranslator
 		}
 	}
 
-	private static final class MyEntry<K, T> implements Entry<K, T> {
+	private static final class TranslatedVariable extends Expression {
+		private static final long serialVersionUID = 1L;
+		private final String mName;
+		private final CType mCType;
+		private final VariableType mVarType;
 
-		private K mKey;
-		private T mValue;
+		public TranslatedVariable(final String name, final CType cType, final VariableType varType) {
+			super(null);
+			mName = name;
+			mCType = cType;
+			mVarType = varType;
+		}
 
-		@Override
-		public K getKey() {
-			return mKey;
+		public String getName() {
+			return mName;
+		}
+
+		public CType getCType() {
+			return mCType;
+		}
+
+		public VariableType getVarType() {
+			return mVarType;
 		}
 
 		@Override
-		public T getValue() {
-			return mValue;
+		public void accept(final GeneratedBoogieAstVisitor visitor) {
+			// nothing to accept here
 		}
 
 		@Override
-		public T setValue(final T value) {
-			final T oldValue = mValue;
-			mValue = value;
-			return oldValue;
+		public Expression accept(final GeneratedBoogieAstTransformer visitor) {
+			return null;
+		}
+
+		@Override
+		public String toString() {
+			switch (mVarType) {
+			case OLD:
+			case INVAR:
+				return "\\old(" + mName + ")";
+			case NORMAL:
+			case POINTER_BASE:
+			case POINTER_OFFSET:
+				return mName;
+			case RESULT:
+				return "\\result";
+			case VALID:
+				return "\\valid";
+			case AUX:
+				return "aux-" + mName + "-aux";
+			case UNKNOWN:
+				return "unknown-" + mName + "-unknown";
+			default:
+				throw new UnsupportedOperationException("VariableType " + mVarType + " not yet implemented");
+			}
 		}
 	}
 

@@ -41,6 +41,7 @@ public class FloatSupportInUltimate {
 	
 	private final static String[] SUPPORTED_FLOAT_OPERATIONS_ARRAY = new String[] {
 			"sqrt",
+			"signbit",
 			"__isinf",
 			"__finite",
 			"isinf",

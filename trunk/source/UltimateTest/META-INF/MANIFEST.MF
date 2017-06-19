@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: UltimateTest
 Bundle-SymbolicName: de.uni_freiburg.informatik.ultimate.ultimatetest;singleton:=true
-Bundle-Version: 0.1.15
+Bundle-Version: 0.1.17
 Bundle-RequiredExecutionEnvironment: JavaSE-1.8
 Bundle-ActivationPolicy: lazy
 Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
@@ -15,6 +15,7 @@ Require-Bundle: de.uni_freiburg.informatik.ultimate.lib.core,
  de.uni_freiburg.informatik.ultimate.lib.lassoranker,
  de.uni_freiburg.informatik.ultimate.boogie.preprocessor,
  de.uni_freiburg.informatik.ultimate.lib.modelcheckerutils,
+ de.uni_freiburg.informatik.ultimate.lib.icfgtransformer,
  de.uni_freiburg.informatik.ultimate.plugins.generator.rcfgbuilder,
  de.uni_freiburg.informatik.ultimate.plugins.generator.cacsl2boogietranslator,
  de.uni_freiburg.informatik.ultimate.plugins.generator.blockencoding,

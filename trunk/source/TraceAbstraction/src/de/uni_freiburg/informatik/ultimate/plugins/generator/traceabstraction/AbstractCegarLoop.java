@@ -252,6 +252,11 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 * </ul>
 	 */
 	protected abstract void constructErrorAutomaton() throws AutomataOperationCanceledException;
+	
+	/**
+	 * Reports statistics for error automaton construction.
+	 */
+	protected abstract void reportErrorAutomatonBenchmarks();
 
 	/**
 	 * Construct a new automaton mAbstraction such that
@@ -272,11 +277,13 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 	 * run into termination issues, but it has already found out that the program contains errors. This method can be
 	 * used to ask for such results whenever the analysis terminates.
 	 * 
-	 * @param reportErrorStatistics 
-	 * 	          {@code true} iff statistics should be reported
+	 * @param errorGeneralizationEnabled
+	 * 	          {@code true} iff error generalization is enabled
+	 * @param abstractResult
+	 *            result that would be reported by {@link AbstractCegarLoop}
 	 * @return {@code true} if at least one feasible counterexample was detected
 	 */
-	protected abstract boolean isResultUnsafe(boolean reportErrorStatistics);
+	protected abstract boolean isResultUnsafe(boolean errorGeneralizationEnabled, Result abstractResult);
 
 	/**
 	 * Add Hoare annotation to the control flow graph. Use the information computed so far annotate the ProgramPoints of
@@ -334,7 +341,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		try {
 			getInitialAbstraction();
 		} catch (final AutomataOperationCanceledException e) {
-			return preformTimeoutActions(e);
+			return performTimeoutActions(e);
 		} catch (final AutomataLibraryException e) {
 			throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 		}
@@ -354,7 +361,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 		try {
 			initalAbstractionCorrect = isAbstractionEmpty();
 		} catch (final AutomataOperationCanceledException e) {
-			return preformTimeoutActions(e);
+			return performTimeoutActions(e);
 		}
 		if (initalAbstractionCorrect) {
 			return reportResult(Result.SAFE);
@@ -375,7 +382,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 				if (isCounterexampleFeasible == Script.LBool.SAT) {
 					if (CONTINUE_AFTER_ERROR_TRACE_FOUND) {
 						if (mLogger.isInfoEnabled()) {
-							mLogger.info("trying to exclude counterexample and continue analysis now");
+							mLogger.info("Generalizing and excluding counterexample to continue analysis");
 						}
 						mInteractive.waitIfPaused();
 						automatonType = "Error";
@@ -384,7 +391,7 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 						return reportResult(Result.UNSAFE);
 					}
 				} else if (isCounterexampleFeasible == Script.LBool.UNKNOWN) {
-					if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND)) {
+					if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.UNKNOWN)) {
 						return reportResult(Result.UNSAFE);
 					}
 					mReasonUnknown = new UnprovabilityReason("unable to decide satisfiability of path constraint");
@@ -395,16 +402,17 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 					constructInterpolantAutomaton();
 				}
 			} catch (final AutomataOperationCanceledException | ToolchainCanceledException e) {
-				return preformTimeoutActions(e);
+				return performTimeoutActions(e);
 			}
 
-			mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.getStates().size() + " states");
-
-			if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON) {
-				mArtifactAutomaton = mInterpolAutomaton;
-			}
-			if (mPref.dumpAutomata()) {
-				writeAutomatonToFile(mInterpolAutomaton, automatonType + "Automaton_Iteration" + mIteration);
+			if (mInterpolAutomaton != null) {
+				mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.getStates().size() + " states");
+				if (mIteration <= mPref.watchIteration() && mPref.artifact() == Artifact.INTERPOLANT_AUTOMATON) {
+					mArtifactAutomaton = mInterpolAutomaton;
+				}
+				if (mPref.dumpAutomata()) {
+					writeAutomatonToFile(mInterpolAutomaton, automatonType + "Automaton_Iteration" + mIteration);
+				}
 			}
 
 			mInteractive.waitIfPaused();
@@ -415,14 +423,16 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 					throw new AssertionError("No progress! Counterexample is still accepted by refined abstraction.");
 				}
 			} catch (final ToolchainCanceledException | AutomataOperationCanceledException e) {
-				return preformTimeoutActions(e);
+				return performTimeoutActions(e);
 			} catch (final AutomataLibraryException e) {
 				throw new ToolchainExceptionWrapper(Activator.PLUGIN_ID, e);
 			}
 
-			mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
-			mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.sizeInformation());
-			mInteractive.reportSizeInfo(mAbstraction.sizeInformation(), mInterpolAutomaton.sizeInformation());
+			if (mInterpolAutomaton != null) {
+				mLogger.info("Abstraction has " + mAbstraction.sizeInformation());
+				mLogger.info(automatonType + " automaton has " + mInterpolAutomaton.sizeInformation());
+				mInteractive.reportSizeInfo(mAbstraction.sizeInformation(), mInterpolAutomaton.sizeInformation());
+			}
 
 			if (mPref.computeHoareAnnotation() && mPref.getHoareAnnotationPositions() == HoareAnnotationPositions.All) {
 				assert new InductivityCheck<>(mServices, (INestedWordAutomaton<LETTER, IPredicate>) mAbstraction, false,
@@ -450,17 +460,17 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 			try {
 				isAbstractionCorrect = isAbstractionEmpty();
 			} catch (final AutomataOperationCanceledException e) {
-				return preformTimeoutActions(e);
+				return performTimeoutActions(e);
 			}
 			if (isAbstractionCorrect) {
-				if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND)) {
+				if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.SAFE)) {
 					return reportResult(Result.UNSAFE);
 				}
 				return reportResult(Result.SAFE);
 			}
 			mInteractive.send(mCegarLoopBenchmark);
 		}
-		if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND)) {
+		if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.TIMEOUT)) {
 			return reportResult(Result.UNSAFE);
 		}
 		return reportResult(Result.TIMEOUT);
@@ -468,13 +478,18 @@ public abstract class AbstractCegarLoop<LETTER extends IAction> {
 
 	private Result reportResult(final Result result) {
 		mCegarLoopBenchmark.setResult(result);
+		
+		if (CONTINUE_AFTER_ERROR_TRACE_FOUND) {
+			reportErrorAutomatonBenchmarks();
+		}
+		
 		return result;
 	}
 
-	private Result preformTimeoutActions(final IRunningTaskStackProvider e) {
+	private Result performTimeoutActions(final IRunningTaskStackProvider e) {
 		mRunningTaskStackProvider = e;
 		mLogger.warn(MSG_VERIFICATION_CANCELED);
-		if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND)) {
+		if (isResultUnsafe(CONTINUE_AFTER_ERROR_TRACE_FOUND, Result.TIMEOUT)) {
 			return reportResult(Result.UNSAFE);
 		}
 		return reportResult(Result.TIMEOUT);

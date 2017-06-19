@@ -37,10 +37,12 @@ import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.test.UltimateRunDefinition;
-import de.uni_freiburg.informatik.ultimate.test.UltimateStarter;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestCase;
 import de.uni_freiburg.informatik.ultimate.test.UltimateTestSuite;
 import de.uni_freiburg.informatik.ultimate.test.decider.ITestResultDecider;
+import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithBenchmarkResults;
+import de.uni_freiburg.informatik.ultimate.test.logs.incremental.IncrementalLogWithVMParameters;
+import de.uni_freiburg.informatik.ultimate.test.logs.summaries.TraceAbstractionTestSummary;
 import de.uni_freiburg.informatik.ultimate.test.reporting.IIncrementalLog;
 import de.uni_freiburg.informatik.ultimate.test.reporting.ITestSummary;
 import de.uni_freiburg.informatik.ultimate.test.util.TestUtil;
@@ -66,6 +68,7 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 	protected String[] mFiletypesToConsider;
 
 	public AbstractRegressionTestSuite() {
+		super();
 		mTimeout = 1000;
 		mExcludeFilterRegex = "";
 		mIncludeFilterRegex = "";
@@ -83,11 +86,9 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 			for (final File inputFile : inputFiles) {
 				final UltimateRunDefinition urd = new UltimateRunDefinition(inputFile,
 						runConfiguration.getSettingsFile(), runConfiguration.getToolchainFile(), mTimeout);
-				final UltimateStarter starter = new UltimateStarter(urd);
-				rtr.add(new UltimateTestCase(
-						String.format("%s+%s: %s", runConfiguration.getToolchainFile().getName(),
-								runConfiguration.getSettingsFile().getName(), inputFile.getAbsolutePath()),
-						getTestResultDecider(urd), starter, urd, null));
+				final String name = String.format("%s+%s: %s", runConfiguration.getToolchainFile().getName(),
+						runConfiguration.getSettingsFile().getName(), inputFile.getAbsolutePath());
+				rtr.add(buildTestCase(urd, getTestResultDecider(urd), name));
 			}
 		}
 		return rtr;
@@ -147,12 +148,26 @@ public abstract class AbstractRegressionTestSuite extends UltimateTestSuite {
 
 	@Override
 	protected ITestSummary[] constructTestSummaries() {
+		if (createLogs()) {
+			return new ITestSummary[] { new TraceAbstractionTestSummary(this.getClass()) };
+		}
 		return new ITestSummary[0];
 	}
 
 	@Override
 	protected IIncrementalLog[] constructIncrementalLog() {
+		if (createLogs()) {
+			return new IIncrementalLog[] { new IncrementalLogWithBenchmarkResults(this.getClass()),
+					new IncrementalLogWithVMParameters(this.getClass(), mTimeout) };
+		}
 		return new IIncrementalLog[0];
+	}
+
+	/**
+	 * @return true if you want to create standard summaries and logs for our regression test suite, false otherwise.
+	 */
+	protected boolean createLogs() {
+		return false;
 	}
 
 	/***

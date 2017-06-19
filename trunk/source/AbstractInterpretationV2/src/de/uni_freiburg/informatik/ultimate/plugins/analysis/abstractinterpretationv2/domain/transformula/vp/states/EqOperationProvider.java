@@ -18,7 +18,11 @@ public class EqOperationProvider<ACTION extends IIcfgTransition<IcfgLocation>> i
  			EqPredicate<ACTION>, 
  			EqTransitionRelation<ACTION>> {
 	
-	EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
+	private final EqConstraintFactory<ACTION, EqNode, EqFunction> mEqConstraintFactory;
+	
+	public EqOperationProvider(EqConstraintFactory<ACTION, EqNode, EqFunction> eqConstraintFactory) {
+		mEqConstraintFactory = eqConstraintFactory;
+	}
 
 	@Override
 	public EqDisjunctiveConstraint<ACTION, EqNode, EqFunction> getConstraint(EqPredicate<ACTION> p) {

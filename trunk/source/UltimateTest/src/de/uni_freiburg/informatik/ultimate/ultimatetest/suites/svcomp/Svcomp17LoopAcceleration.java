@@ -48,7 +48,7 @@ public class Svcomp17LoopAcceleration extends AbstractSVCOMPTestSuite {
 	@Override
 	protected long getTimeout() {
 		// Timeout for each test case in milliseconds
-		return 30 * 1000;
+		return 90 * 1000;
 	}
 
 	@Override
@@ -102,10 +102,24 @@ public class Svcomp17LoopAcceleration extends AbstractSVCOMPTestSuite {
 			final boolean arch32) {
 		final List<SVCOMPTestDefinition> rtr = new ArrayList<>();
 
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml",
+		// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf", timeout, limit));
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInlineTransformed.xml",
+		// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf", timeout, limit));
+
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml",
+		// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf", timeout, limit));
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInlineTransformed.xml",
+		// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_EE.epf", timeout, limit));
+		// rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInlineTransformed.xml",
+		// "loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_LE.epf", timeout, limit));
+		//
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInline.xml",
-				"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf", timeout, limit));
+				"loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_EE.epf", timeout, limit));
 		rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInlineTransformed.xml",
-				"loopacceleration/svcomp-Reach-32bit-Automizer_Default_Woelfing.epf", timeout, limit));
+				"loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_EE.epf", timeout, limit));
+		rtr.add(getTestDefinitionFromExamples(set, "AutomizerCInlineTransformed.xml",
+				"loopacceleration/svcomp-Reach-32bit-Automizer_Default_FastUpr_noMod_LE.epf", timeout, limit));
 
 		return rtr;
 	}
