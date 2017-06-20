@@ -2,7 +2,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -123,7 +122,7 @@ public class EqConstraint<
 		nodesWithFunc.stream().forEach(node -> havoc(node));
 		
 		// remove from function disequalities
-		mFunctionDisequalities.removeIf(pair -> pair.contains(func));
+//		mFunctionDisequalities.removeIf(pair -> pair.contains(func));
 		
 		// remove from function equalities
 //		final UnionFind<FUNCTION> newFunctionEqualities = new UnionFind<>();
@@ -163,7 +162,7 @@ public class EqConstraint<
 		assert !mIsFrozen;
 		mIsFrozen = true;
 		mElementCongruenceGraph.freeze();
-		mFunctionDisequalities = Collections.unmodifiableSet(mFunctionDisequalities);
+//		mFunctionDisequalities = Collections.unmodifiableSet(mFunctionDisequalities);
 	}
 
 
@@ -243,7 +242,8 @@ public class EqConstraint<
 
 
 	public  Set<VPDomainSymmetricPair<FUNCTION>> getFunctionDisequalites() {
-		return mFunctionDisequalities;
+//		return mFunctionDisequalities;
+		return null;
 	}
 
 
@@ -251,8 +251,7 @@ public class EqConstraint<
 		final FUNCTION firstRep = mFunctionEqualities.find(first);
 		final FUNCTION secondRep = mFunctionEqualities.find(second);
 
-		mFunctionDisequalities.add(new VPDomainSymmetricPair<FUNCTION>(firstRep, secondRep));
-//		mFunctionDisequalities.add(new VPDomainSymmetricPair<FUNCTION>(first, second));
+//		mFunctionDisequalities.add(new VPDomainSymmetricPair<FUNCTION>(firstRep, secondRep));
 	}
 
 
@@ -260,11 +259,14 @@ public class EqConstraint<
 		if (mElementCongruenceGraph.checkContradiction()) {
 			return true;
 		}
-		for (VPDomainSymmetricPair<FUNCTION> fDeq : mFunctionDisequalities) {
-			if (mFunctionEqualities.find(fDeq.getFirst()).equals(mFunctionEqualities.find(fDeq.getSecond()))) {
-				return true;
-			}
+		if (mFunctionEqualities.checkContradiction()) {
+			return true;
 		}
+//		for (VPDomainSymmetricPair<FUNCTION> fDeq : mFunctionDisequalities) {
+//			if (mFunctionEqualities.find(fDeq.getFirst()).equals(mFunctionEqualities.find(fDeq.getSecond()))) {
+//				return true;
+//			}
+//		}
 		return false;
 	}
 
@@ -442,13 +444,13 @@ public class EqConstraint<
 		}
 		mFunctionEqualities = newFunctionUF;
 		
-		Set<VPDomainSymmetricPair<FUNCTION>> newFunctionDisequalites = new HashSet<>();
-		for (VPDomainSymmetricPair<FUNCTION> fDeq : mFunctionDisequalities) {
-			newFunctionDisequalites.add(new VPDomainSymmetricPair<FUNCTION>(
-					fDeq.getFirst().renameVariables(substitutionMapping), 
-					fDeq.getSecond().renameVariables(substitutionMapping)));
-		}
-		mFunctionDisequalities = newFunctionDisequalites;
+//		Set<VPDomainSymmetricPair<FUNCTION>> newFunctionDisequalites = new HashSet<>();
+//		for (VPDomainSymmetricPair<FUNCTION> fDeq : mFunctionDisequalities) {
+//			newFunctionDisequalites.add(new VPDomainSymmetricPair<FUNCTION>(
+//					fDeq.getFirst().renameVariables(substitutionMapping), 
+//					fDeq.getSecond().renameVariables(substitutionMapping)));
+//		}
+//		mFunctionDisequalities = newFunctionDisequalites;
 	}
 
 	/**
@@ -543,7 +545,8 @@ public class EqConstraint<
 		if (rep1 == null || rep2 == null) {
 			return false;
 		}
-		return mFunctionDisequalities.contains(new VPDomainSymmetricPair<FUNCTION>(rep1, rep2));
+//		return mFunctionDisequalities.contains(new VPDomainSymmetricPair<FUNCTION>(rep1, rep2));
+		return false;
 	}
 
 	/**
