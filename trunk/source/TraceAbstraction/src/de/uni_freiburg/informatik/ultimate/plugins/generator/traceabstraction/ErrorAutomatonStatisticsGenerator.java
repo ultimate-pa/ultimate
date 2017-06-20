@@ -39,10 +39,12 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAuto
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Determinize;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveDeadEnds;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
@@ -110,9 +112,11 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		errorAutomatonBuilder.getResultAfterEnhancement().switchToReadonlyMode();
 		final NestedWordAutomatonReachableStates<LETTER, IPredicate> errorAutomatonAfterEnhancement =
 				new RemoveUnreachable<>(services, errorAutomatonBuilder.getResultAfterEnhancement()).getResult();
-		final INestedWordAutomaton<LETTER, IPredicate> effectiveErrorAutomaton =
+		final INestedWordAutomaton<LETTER, IPredicate> intersection =
 				new Intersect<>(services, predicateFactoryResultChecking, abstraction, errorAutomatonAfterEnhancement)
 						.getResult();
+		final INestedWordAutomaton<LETTER, IPredicate> withoutDeadEnds = new RemoveDeadEnds<LETTER, IPredicate>(services, intersection).getResult();
+		final INestedWordAutomaton<LETTER, IPredicate> effectiveErrorAutomaton = new Determinize<>(services, predicateFactoryResultChecking, withoutDeadEnds).getResult();
 		final NestedWordAutomaton<LETTER, IPredicate> subtrahend = errorAutomatonBuilder.getResultBeforeEnhancement();
 		final PowersetDeterminizer<LETTER, IPredicate> psd =
 				new PowersetDeterminizer<>(subtrahend, true, predicateFactory);
@@ -120,8 +124,11 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 				predicateFactoryResultChecking, effectiveErrorAutomaton, subtrahend, psd, false).getResult();
 		mAcceptsSingleTrace = new IsEmpty<>(services, diff).getResult();
 		if (mAcceptsSingleTrace) {
-			logger.warn("Enhancement did not add additional edges.");
+			logger.warn("Enhancement did not add additional traces.");
 		}
+		final NestedWordAutomatonReachableStates<LETTER, IPredicate> nwars = new NestedWordAutomatonReachableStates<>(services, effectiveErrorAutomaton);
+		nwars.computeAcceptingComponents();
+		logger.info("Effective error automaton size information: " + nwars.sizeInformation());
 	}
 
 	public void finishAutomatonInstance() {
