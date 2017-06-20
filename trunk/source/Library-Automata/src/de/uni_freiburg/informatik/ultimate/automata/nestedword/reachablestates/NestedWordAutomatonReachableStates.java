@@ -50,8 +50,8 @@ import de.uni_freiburg.informatik.ultimate.automata.LibraryIdentifiers;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.DownStateConsistencyCheck;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingTransitionProvider;
-import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedRun;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.VpAlphabet;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.BuchiAccepts;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.buchi.NestedLassoRun;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Accepts;
@@ -322,7 +322,7 @@ public class NestedWordAutomatonReachableStates<LETTER, STATE>
 		if (mAcceptingComponentsAnalysis != null) {
 			final int transitions = mNumberTransitions.getSum();
 			final int cyclomaticComplexity =
-					computeCyclomaticComplexity(transitions, states, mAcceptingComponentsAnalysis.getNumberOfAllSccs());
+					computeCyclomaticComplexity(transitions, states, mAcceptingComponentsAnalysis.getSccComputation().getBalls().size());
 			result += " cyclomatic complexity: " + cyclomaticComplexity;
 		}
 		return result;
