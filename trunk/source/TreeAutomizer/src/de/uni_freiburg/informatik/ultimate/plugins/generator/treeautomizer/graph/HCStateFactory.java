@@ -292,7 +292,7 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		Set<IPredicate> ps = new HashSet<IPredicate>();
 		ps.add(state1);
 		ps.add(state2);
-		int dontCare = sumDontCares(ps);
+		int dontCare = constructFreshSerialNumber();//sumDontCares(ps);
 		HCPredicate res = mPredicateFactory.newHCPredicate(state1PredSymbols, conjoinedFormula,
 				Arrays.asList(state1.getFormula().getFreeVars()), dontCare);
 		//if (state2 == mPredicateFactory.getDontCarePredicate()) {
@@ -302,6 +302,11 @@ public class HCStateFactory implements IMergeStateFactory<IPredicate>, IIntersec
 		//		res, ((HCPredicate) res).isDontCare());
 		System.err.printf("%s && %s = %s\n", state1, state2, res);
 		return res;
+	}
+
+	int mSer = 0;
+	protected int constructFreshSerialNumber() {
+		return ++mSer;
 	}
 
 	/*

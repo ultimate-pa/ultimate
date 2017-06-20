@@ -128,14 +128,10 @@ public class HCPredicateFactory extends PredicateFactory {
 		return newPredicate(Collections.singleton(loc), term, vars, dontCare);
 	}
 
-	int mSer = 0;
-	protected int constructFreshSerialNumber() {
-		return ++mSer;
-	}
 	private HCPredicate newPredicate(Set<HornClausePredicateSymbol> loc, Term term, List<TermVariable> vars, int dontCare) {
 		final ComputeHcOutVarsAndNormalizeTerm chovant = new ComputeHcOutVarsAndNormalizeTerm(term, vars);
 
-		return new HCPredicate(loc, constructFreshSerialNumber(), chovant.getNormalizedTerm(), chovant.getProgramVars(),
+		return new HCPredicate(loc, chovant.getNormalizedTerm(), chovant.getProgramVars(),
 				computeClosedFormula(chovant.getNormalizedTerm()), vars, dontCare);
 	}
 
