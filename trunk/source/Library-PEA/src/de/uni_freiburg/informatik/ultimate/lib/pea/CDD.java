@@ -28,7 +28,10 @@ package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 
@@ -901,7 +904,10 @@ try_next:
     }
 
     private CDD primeCache;
-    public CDD prime() {
+    public CDD prime(){
+    	return this.prime(null);
+    }
+    public CDD prime(String ignore) {
         if ((this == CDD.TRUE) || (this == CDD.FALSE)) {
             return this;
         }
@@ -919,7 +925,7 @@ try_next:
             newChildren[i] = children[i].prime();
         }
 
-        newDecision = decision.prime();
+        newDecision = decision.prime(ignore);
 
         primeCache = CDD.create(newDecision, newChildren);
         return primeCache;
@@ -940,7 +946,10 @@ try_next:
             cdd.isAtomic());
     }
 
-    public CDD unprime() {
+    public CDD unprime(){
+    	return this.unprime(null);
+    }
+    public CDD unprime(String ignore) {
         if ((this == CDD.TRUE) || (this == CDD.FALSE)) {
             return this;
         }
@@ -952,12 +961,38 @@ try_next:
         final CDD[] newChildren = new CDD[children.length];
 
         for (int i = 0; i < children.length; i++) {
+
             newChildren[i] = children[i].unprime();
         }
 
-        newDecision = decision.unprime();
+        newDecision = decision.unprime(ignore);
 
         return CDD.create(newDecision, newChildren);
+    }
+    
+    /***
+     * Collect Identifiers from the whole CDD
+     * @return
+     * 	set containing all variables in the CDD
+     */
+    public Set<String> getIdents(){
+    	Set<String> idents = new HashSet<String>();
+    	if (this.childs == null){ // empty cdds may happen
+    		return idents;
+    	}
+    	for(CDD child: this.getChilds()){
+    		if(child != null){    		
+    			idents.addAll(child.getIdents());
+    		}
+    	}
+    	if(this.decision == null){
+    		return idents;
+    	} else if(this.decision instanceof BoogieBooleanExpressionDecision){
+    		idents.addAll(((BoogieBooleanExpressionDecision) this.decision).getVars().keySet());
+    	} else {
+    		idents.add(this.decision.getVar());
+    	}
+    	return idents;
     }
 
     // XXX: Testing

@@ -1,5 +1,9 @@
 package de.uni_freiburg.informatik.ultimate.lib.srparse;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.Vector;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
@@ -20,6 +24,7 @@ public class srParsePattern {
 	
 	protected static CDD q_cdd_default = BooleanDecision.create("Q");
 	protected static CDD r_cdd_default = BooleanDecision.create("R");
+	
 	
 	public int getDuration() {
 		return duration;
@@ -210,7 +215,7 @@ public class srParsePattern {
 				}
 				//CASE: AFTER Q UNTIL R
 					else 
-						if (scope instanceof srParseScopeAfter && ((srParseScopeAfter)scope).isUntil() ){
+						if (scope instanceof srParseScopeAfterUntil){
 						if (cdds.size() !=1){
 							//Das AbsentPattern besitzt nur zwei-drei nonLiteralTerminals!
 							System.out.println("ERROR: Wrong number of nonLiteralTerminals for the absentPattern");

@@ -10,11 +10,9 @@ public abstract class srParseScope {
 	@Override
 	public abstract String toString();
 	
+	//note that q is always first, and r always second var in pattern (in contrast to dokumentation)
 	protected CDD cdd1;
 	protected CDD cdd2;
-	
-	public static CDD q_cdd_default = BooleanDecision.create("Q");
-	public static CDD r_cdd_default = BooleanDecision.create("R");
 	
 	public srParseScope()
 	{

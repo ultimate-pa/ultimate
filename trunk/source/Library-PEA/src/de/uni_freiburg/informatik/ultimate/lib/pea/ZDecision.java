@@ -21,13 +21,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
  */
-package de.uni_freiburg.informatik.ultimate.lib.pea;
+package pea;
 
-import de.uni_freiburg.informatik.ultimate.lib.pea.util.z.PrimeVisitor;
-import de.uni_freiburg.informatik.ultimate.lib.pea.util.z.ZTerm;
-import de.uni_freiburg.informatik.ultimate.lib.pea.util.z.ZWrapper;
+import java.util.List;
+
 import net.sourceforge.czt.parser.util.ParseException;
 import net.sourceforge.czt.z.util.ZString;
+import pea.util.z.PrimeVisitor;
+import pea.util.z.ZTerm;
+import pea.util.z.ZWrapper;
 
 
 /**
@@ -356,6 +358,15 @@ public final class ZDecision extends Decision {
     @Override
     public String toTexString(final int child) {
         return (child == 0) ? predicate : (ZString.NOT + predicate);
+    }
+    
+    @Override
+    public Decision unprime(String ignore){
+    	return this.unprime();
+    }
+    @Override
+    public Decision prime(String ignore){
+    	return this.prime();
     }
 
     @Override
