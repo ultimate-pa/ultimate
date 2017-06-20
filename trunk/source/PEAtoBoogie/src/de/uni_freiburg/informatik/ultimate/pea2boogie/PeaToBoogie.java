@@ -56,12 +56,12 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public String getPluginName() {
-		return "PEA to Boogie";
+		return Activator.PLUGIN_NAME;
 	}
 
 	@Override
 	public String getPluginID() {
-		return Activator.s_PLUGIN_ID;
+		return Activator.PLUGIN_ID;
 	}
 
 	@Override
@@ -129,7 +129,7 @@ public class PeaToBoogie implements ISource {
 
 	@Override
 	public void setServices(final IUltimateServiceProvider services) {
-		mLogger = services.getLoggingService().getLogger(Activator.s_PLUGIN_ID);
+		mLogger = services.getLoggingService().getLogger(Activator.PLUGIN_ID);
 	}
 
 	@Override

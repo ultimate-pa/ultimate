@@ -7,28 +7,27 @@ import com.github.jhoenicke.javacup.runtime.Symbol;
 
 import de.uni_freiburg.informatik.ultimate.lib.pea.CDD;
 import de.uni_freiburg.informatik.ultimate.lib.pea.BooleanDecision;
-import srParse.pattern.BndEntryConditionPattern;
-import srParse.pattern.BndExistencePattern;
-import srParse.pattern.BndInvariancePattern;
-import srParse.pattern.BndPossResponsePattern;
-import srParse.pattern.BndReccurrencePattern;
-import srParse.pattern.BndResponsePattern;
-import srParse.pattern.ConstrainedChainPattern;
-import srParse.pattern.InstAbsPattern;
-import srParse.pattern.InvariantPattern;
-import srParse.pattern.MaxDurationPattern;
-import srParse.pattern.MinDurationPattern;
-import srParse.pattern.PatternType;
-import srParse.pattern.PrecedenceChain12Pattern;
-import srParse.pattern.PrecedenceChain21Pattern;
-import srParse.pattern.PrecedencePattern;
-import srParse.pattern.ResponseChain12Pattern;
-import srParse.pattern.ResponseChain21Pattern;
-import srParse.pattern.ResponsePattern;
-import srParse.pattern.UniversalityPattern;
-import srParse.pattern.InitializationPattern;
-
-import pea.BoogieBooleanExpressionDecision;
+import de.uni_freiburg.informatik.ultimate.lib.pea.BoogieBooleanExpressionDecision;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndEntryConditionPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndExistencePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndInvariancePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndPossResponsePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndReccurrencePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.BndResponsePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ConstrainedChainPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InstAbsPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InvariantPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.MaxDurationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.MinDurationPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedenceChain12Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedenceChain21Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PrecedencePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseChain12Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponseChain21Pattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.ResponsePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.UniversalityPattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.InitializationPattern;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.BinaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.UnaryExpression;
 import de.uni_freiburg.informatik.ultimate.boogie.ast.Expression;
@@ -94,9 +93,6 @@ parser code {:
 		}
 		return token;
 	}
-	
-
-	
 :}
 
 action code {:

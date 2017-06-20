@@ -34,7 +34,7 @@ import com.github.jhoenicke.javacup.runtime.Symbol;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.J2UPPAALConverter;
-import de.uni_freiburg.informatik.ultimate.lib.pea.reqCheck.PatternToPEA;
+import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.srParsePattern;
 
