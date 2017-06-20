@@ -218,8 +218,8 @@ public class TreeRun<LETTER, STATE> implements ITreeRun<LETTER, STATE> {
 			res.append(st.toString());
 		}
 		if (res.length() > 0) {
-			res.append("(");
-			res.append(res);
+			res.insert(0, "(");
+			//res.append(res);
 			res.append(")");
 		}
 		return String.format("%s[%s]%s", mLetter, mState, res);

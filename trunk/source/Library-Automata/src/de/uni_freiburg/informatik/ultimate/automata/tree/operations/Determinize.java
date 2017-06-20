@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IMergeStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
@@ -59,13 +60,13 @@ public class Determinize<LETTER, STATE> implements IOperation<LETTER, STATE, ISt
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
 	private final IMergeStateFactory<STATE> mStateFactoryMerge;
-	private final IEmptyStackStateFactory<STATE> mStateFactoryEmptyStack;
+	private final ISinkStateFactory<STATE> mStateFactoryEmptyStack;
 	private final Map<Set<STATE>, STATE> mReducedStates;
 
 	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
 	private final AutomataLibraryServices mServices;
 
-	public <SF extends IMergeStateFactory<STATE> & IEmptyStackStateFactory<STATE>> Determinize(
+	public <SF extends IMergeStateFactory<STATE> & ISinkStateFactory<STATE>> Determinize(
 			final AutomataLibraryServices services, final SF factory,
 			final ITreeAutomatonBU<LETTER, STATE> tree) {
 		mServices = services;

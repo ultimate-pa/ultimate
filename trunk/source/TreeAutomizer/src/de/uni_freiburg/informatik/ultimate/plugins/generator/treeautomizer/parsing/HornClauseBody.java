@@ -36,6 +36,7 @@ import java.util.stream.Collectors;
 import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.logic.TermVariable;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCPredicateSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HCSymbolTable;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClause;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hornutil.HornClausePredicateSymbol;
@@ -75,7 +76,7 @@ public class HornClauseBody {
 	 * @param symbolTable
 	 * @return
 	 */
-	public HornClause convertToHornClause(final ManagedScript script, final HCSymbolTable symbolTable) {
+	public HornClause convertToHornClause(final ManagedScript script, final HCSymbolTable symbolTable, final HCPredicateSymbolTable predicateSymbolTable) {
 //		assert tt.size() <= 1;
 //		final Map<HornClausePredicateSymbol, List<TermVariable>> tt = getBodyPredicateToVars(symbolTable);
 //		final HornClausePredicateSymbol bodySymbol = tt.keySet().iterator().hasNext() ? tt.keySet().iterator().next()
@@ -112,7 +113,7 @@ public class HornClauseBody {
 		List<List<TermVariable>> cobobodyVars = mCobody.getPredicateToVars(symbolTable);
 		
 		
-		return new HornClause(script, symbolTable, 
+		return new HornClause(script, symbolTable, predicateSymbolTable,
 				getTransitionFormula(script),
 				bodySymbol,
 				bodyVars,

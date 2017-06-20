@@ -79,8 +79,17 @@ public class HornClausePredicateSymbol {
 //	public List<HCVar> getHCVars() {
 //		return mVars;
 //	}
+	
+	public abstract static class HornClauseConstantPredicateSymbol extends HornClausePredicateSymbol {
 
-	public static class HornClauseFalsePredicateSymbol extends HornClausePredicateSymbol {
+		public HornClauseConstantPredicateSymbol(HCSymbolTable symbolTable, String functionName,
+				List<Sort> functionParameters) {
+			super(symbolTable, functionName, functionParameters);
+		}
+		
+	}
+
+	public static class HornClauseFalsePredicateSymbol extends HornClauseConstantPredicateSymbol {
 		public HornClauseFalsePredicateSymbol() {
 			super(null, "false", Collections.emptyList());
 		}
@@ -101,7 +110,7 @@ public class HornClausePredicateSymbol {
 		}
 	}
 
-	public static class HornClauseTruePredicateSymbol extends HornClausePredicateSymbol {
+	public static class HornClauseTruePredicateSymbol extends HornClauseConstantPredicateSymbol {
 		public HornClauseTruePredicateSymbol() {
 			super(null, "true", Collections.emptyList());
 		}
@@ -121,9 +130,17 @@ public class HornClausePredicateSymbol {
 		}
 	}
 
-	public static class HornClauseDontCareSymbol extends HornClausePredicateSymbol {
+	public static class HornClauseDontCareSymbol extends HornClauseConstantPredicateSymbol {
+		//private int mVersion;
+		
+		public HornClauseDontCareSymbol nextVersion() {
+			HornClauseDontCareSymbol ret = new HornClauseDontCareSymbol();
+			//ret.mVersion = mVersion + 1;
+			return ret;
+		}
 		public HornClauseDontCareSymbol() {
 			super(null, "€", Collections.emptyList());
+			//mVersion = 0;
 		}
 
 		@Override
@@ -138,7 +155,7 @@ public class HornClausePredicateSymbol {
 
 		@Override
 		public String toString() {
-			return "€";
+			return "€";// + mVersion;
 		}
 	}
 }

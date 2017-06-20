@@ -38,7 +38,7 @@ import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.GeneralOperation;
 import de.uni_freiburg.informatik.ultimate.automata.IOperation;
-import de.uni_freiburg.informatik.ultimate.automata.statefactory.IEmptyStackStateFactory;
+import de.uni_freiburg.informatik.ultimate.automata.statefactory.ISinkStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.statefactory.IStateFactory;
 import de.uni_freiburg.informatik.ultimate.automata.tree.ITreeAutomatonBU;
 import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonBU;
@@ -54,7 +54,7 @@ import de.uni_freiburg.informatik.ultimate.automata.tree.TreeAutomatonRule;
 public class Totalize<LETTER, STATE> extends GeneralOperation<LETTER, STATE, IStateFactory<STATE>> implements IOperation<LETTER, STATE, IStateFactory<STATE>> {
 
 	private final ITreeAutomatonBU<LETTER, STATE> mTreeAutomaton;
-	private final IEmptyStackStateFactory<STATE> mStateFactory;
+	private final ISinkStateFactory<STATE> mStateFactory;
 
 	protected final ITreeAutomatonBU<LETTER, STATE> mResult;
 	private final Map<Integer, List<List<STATE>>> mMemCombinations;
@@ -69,13 +69,13 @@ public class Totalize<LETTER, STATE> extends GeneralOperation<LETTER, STATE, ISt
 	 * @param factory
 	 * @param tree
 	 */
-	public Totalize(final AutomataLibraryServices services, final IEmptyStackStateFactory<STATE> factory,
+	public Totalize(final AutomataLibraryServices services, final ISinkStateFactory<STATE> factory,
 			final ITreeAutomatonBU<LETTER, STATE> tree) {
 		super(services);
 		mTreeAutomaton = tree;
 		mStateFactory = factory;
 		mMemCombinations = new HashMap<>();
-		mDummyState = mStateFactory.createEmptyStackState();
+		mDummyState = mStateFactory.createSinkStateContent();
 		mStates = new HashSet<>();
 		mStates.add(mDummyState);
 		mStates.addAll(tree.getStates());
@@ -154,11 +154,22 @@ public class Totalize<LETTER, STATE> extends GeneralOperation<LETTER, STATE, ISt
 				continue;
 			}
 			*/
+			int arity;
 			if (!arityMap.containsKey(sym)) {
-				continue;
+
+				Object symbol = sym;
+				Method getAr = null;
+				try {
+					getAr = sym.getClass().getMethod("getHeadPredicate");
+					symbol = getAr.invoke(symbol);
+					getAr = symbol.getClass().getMethod("getArity");
+					arity = (int) getAr.invoke(symbol);
+				} catch (final Exception e) {
+					continue;
+				}
+			} else {
+				arity = arityMap.get(sym);
 			}
-			
-			int arity = arityMap.get(sym);
 			for (final List<STATE> srcSt : combinations(arity)) {
 				final Iterable<STATE> st = mTreeAutomaton.getSuccessors(srcSt, sym);
 				if (arity >= 0 && st != null && !st.iterator().hasNext()) {

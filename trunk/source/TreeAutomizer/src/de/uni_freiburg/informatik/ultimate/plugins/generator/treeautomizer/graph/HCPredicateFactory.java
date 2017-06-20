@@ -80,7 +80,8 @@ public class HCPredicateFactory extends PredicateFactory {
 
 		mBackendSmtSolverScript.lock(this);
 		mDontCarePredicate = newPredicate(symbolTable.getDontCareHornClausePredicateSymbol(),
-				mBackendSmtSolverScript.term(this, "false"), Collections.emptyList());
+				mBackendSmtSolverScript.term(this, "true"), Collections.emptyList(), 1);
+		System.err.println(mDontCarePredicate + ":" + mDontCarePredicate.isDontCare());
 		mFalsePredicate = newPredicate(symbolTable.getFalseHornClausePredicateSymbol(),
 				mBackendSmtSolverScript.term(this, "true"), Collections.emptyList());
 		mTruePredicate = newPredicate(symbolTable.getTrueHornClausePredicateSymbol(),
@@ -119,16 +120,23 @@ public class HCPredicateFactory extends PredicateFactory {
 	// return newPredicate(mSymbolTable.getDontCareHornClausePredicateSymbol(),
 	// p.getFormula(), new HashMap<>());
 	// }
-	
+
 	private HCPredicate newPredicate(HornClausePredicateSymbol loc, Term term, List<TermVariable> vars) {
-		return newPredicate(Collections.singleton(loc), term, vars);
+		return newPredicate(Collections.singleton(loc), term, vars, 0);
+	}
+	private HCPredicate newPredicate(HornClausePredicateSymbol loc, Term term, List<TermVariable> vars, int dontCare) {
+		return newPredicate(Collections.singleton(loc), term, vars, dontCare);
 	}
 
-	private HCPredicate newPredicate(Set<HornClausePredicateSymbol> loc, Term term, List<TermVariable> vars) {
+	int mSer = 0;
+	protected int constructFreshSerialNumber() {
+		return ++mSer;
+	}
+	private HCPredicate newPredicate(Set<HornClausePredicateSymbol> loc, Term term, List<TermVariable> vars, int dontCare) {
 		final ComputeHcOutVarsAndNormalizeTerm chovant = new ComputeHcOutVarsAndNormalizeTerm(term, vars);
 
-		return new HCPredicate(loc, chovant.getNormalizedTerm(), chovant.getProgramVars(),
-				computeClosedFormula(chovant.getNormalizedTerm()), vars);
+		return new HCPredicate(loc, constructFreshSerialNumber(), chovant.getNormalizedTerm(), chovant.getProgramVars(),
+				computeClosedFormula(chovant.getNormalizedTerm()), vars, dontCare);
 	}
 
 //	public HCPredicate newHCPredicate(HornClausePredicateSymbol loc, Term term, List<TermVariable> vars) {
@@ -136,7 +144,11 @@ public class HCPredicateFactory extends PredicateFactory {
 //	}
 
 	public HCPredicate newHCPredicate(Set<HornClausePredicateSymbol> loc, Term term, List<TermVariable> vars) {
-		return newPredicate(loc, term, vars);
+		return newPredicate(loc, term, vars, 0);
+	}
+	
+	public HCPredicate newHCPredicate(Set<HornClausePredicateSymbol> loc, Term term, List<TermVariable> vars, int dontCare) {
+		return newPredicate(loc, term, vars, dontCare);
 	}
 
 	// /**

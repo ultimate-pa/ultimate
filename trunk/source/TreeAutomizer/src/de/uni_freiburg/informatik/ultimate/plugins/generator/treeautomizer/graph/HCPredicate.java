@@ -59,38 +59,68 @@ public class HCPredicate extends BasicPredicate {
 	protected final Set<HornClausePredicateSymbol> mHcPredicateSymbols;
 
 	private final List<TermVariable> mVariables;
+	
+	private final int mDontCare;
 
 	protected HCPredicate(final HornClausePredicateSymbol programPoint, final int serialNumber, final Term term,
 			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables) {
+		this(programPoint, serialNumber, term, vars, closedFormula, variables, 0);
+	}
+	protected HCPredicate(final HornClausePredicateSymbol programPoint, final int serialNumber, final Term term,
+			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables, int dontCare) {
 		super(serialNumber, new String[0], term, vars, closedFormula);
 		mHcPredicateSymbols = Collections.singleton(programPoint);
 		mVariables = variables;
+		mDontCare = dontCare;
+	}
+
+	protected int isDontCare() {
+		return mDontCare;
+	}
+
+	protected HCPredicate(final HornClausePredicateSymbol programPoint, final Term term, final Set<IProgramVar> vars,
+			final Term closedFormula, final List<TermVariable> variables, int dontCare) {
+		this(programPoint, HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoint, term, variables, dontCare), term, vars,
+				closedFormula, variables, dontCare);
 	}
 
 	protected HCPredicate(final HornClausePredicateSymbol programPoint, final Term term, final Set<IProgramVar> vars,
 			final Term closedFormula, final List<TermVariable> variables) {
-		this(programPoint, HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoint, term, variables), term, vars,
-				closedFormula, variables);
+		//this(programPoint, HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoint, term, variables), term, vars,
+		//		closedFormula, variables);
+		this(programPoint, term, vars, closedFormula, variables, 0);
 	}
 
 	protected HCPredicate(final Set<HornClausePredicateSymbol> programPoints, final int serialNumber, final Term term,
-			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables) {
+			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables, int dontCare) {
 		super(serialNumber, new String[0], term, vars, closedFormula);
 		mHcPredicateSymbols = programPoints;
 		mVariables = variables;
+		mDontCare = dontCare;
 	}
 
+	
+	protected HCPredicate(final Set<HornClausePredicateSymbol> programPoints, final int serialNumber, final Term term,
+			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables) {
+		this(programPoints, serialNumber, term, vars, closedFormula, variables, 0);
+	}
+	
+	//here
+	protected HCPredicate(final Set<HornClausePredicateSymbol> programPoints, final Term term,
+			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables, int dontCare) {
+		this(programPoints, HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoints, term, variables, dontCare), term, vars,
+				closedFormula, variables, dontCare);
+	}
 	protected HCPredicate(final Set<HornClausePredicateSymbol> programPoints, final Term term,
 			final Set<IProgramVar> vars, final Term closedFormula, final List<TermVariable> variables) {
-		this(programPoints, HashUtils.hashHsieh(SERIAL_HCPREDICATE, programPoints, term, variables), term, vars,
-				closedFormula, variables);
+		this(programPoints, term, vars, closedFormula, variables, 0);
 	}
 
 	@Override
 	public String toString() {
 		String result = "#";
-		result += mHcPredicateSymbols;
-		result += "@(" + mFormula.toString() + ")";
+		result += mHcPredicateSymbols + "{" + (mDontCare > 0 ? ("€:" + mDontCare) : "") + "}";
+		result += "@(" +  mFormula.toString() + ")";
 		return result;
 	}
 
