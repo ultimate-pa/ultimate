@@ -548,7 +548,7 @@ public class BoogiePreprocessorBacktranslator
 				final IdentifierExpression inputExp) {
 			final String inputName = inputExp.getIdentifier();
 			for (final String name : list.getIdentifiers()) {
-				if (inputName.contains(name)) {
+				if (inputName.equals(name)) {
 					return new IdentifierExpression(mappedLoc, list.getType().getBoogieType(), name,
 							inputExp.getDeclarationInformation());
 				}
@@ -563,7 +563,7 @@ public class BoogiePreprocessorBacktranslator
 				// its the struct itself
 				final String inputName = inputExp.getIdentifier();
 				for (final String name : list.getIdentifiers()) {
-					if (inputName.contains(name)) {
+					if (inputName.equals(name)) {
 						return new IdentifierExpression(mappedLoc, type, name, inputExp.getDeclarationInformation());
 					}
 				}

@@ -135,7 +135,7 @@
 		<!-- use -XX:+HeapDumpOnOutOfMemoryError if you want to generate dumps 
 			on OutOfMemory exceptions -->
 		<manualtest-argline>-Xmx4g </manualtest-argline>
-		<coverage-argline>-Xmx4g -ea</coverage-argline>
+		<coverage-argline>-Xmx4g</coverage-argline>
 
 	</properties>
 
@@ -144,6 +144,14 @@
 			<id>eclipse-mars</id>
 			<layout>p2</layout>
 			<url>http://download.eclipse.org/releases/mars</url>
+			<snapshots>
+				<enabled>false</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>eclipse-luna</id>
+			<layout>p2</layout>
+			<url>http://download.eclipse.org/releases/luna</url>
 			<snapshots>
 				<enabled>false</enabled>
 			</snapshots>
@@ -323,6 +331,8 @@
 		<module>../SmtParser</module>
 		<module>../SyntaxChecker</module>
 		<module>../HeapSeparator</module>
+
+		<module>../PEATestTransofrmer</module>
 		<module>../TreeAutomizer</module>
 		<module>../UltimateDeltaDebugger</module>
 		<module>../InvariantSynthesis</module>

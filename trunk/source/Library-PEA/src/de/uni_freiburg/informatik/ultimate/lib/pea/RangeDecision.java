@@ -27,6 +27,7 @@
 package de.uni_freiburg.informatik.ultimate.lib.pea;
 
 import java.util.HashMap;
+import java.util.List;
 
 public class RangeDecision extends Decision {
     public static final int OP_LT = -2;
@@ -560,7 +561,10 @@ public class RangeDecision extends Decision {
     }
 
     @Override
-    public Decision prime() {
+    public Decision prime(String ignore) {
+    	if (ignore != null && this.var.equals(ignore)){
+    		return this;
+    	}
         final String primed = var + RangeDecision.PRIME;
         final int[] limits = this.limits.clone();
 
@@ -569,7 +573,10 @@ public class RangeDecision extends Decision {
 
     //by Ami
     @Override
-    public Decision unprime() {
+    public Decision unprime(String ignore) {
+    	if (ignore != null && this.var.equals(ignore)){
+    		return this;
+    	}
         String unprimed = var;
 
         if (var.endsWith(PRIME)) {
@@ -602,5 +609,14 @@ public class RangeDecision extends Decision {
         (((limits[childs - 1] & 1) == 1) ? " < " : " \\leq ") + var +
         (((limits[childs] & 1) == 0) ? " < " : " \\leq ") +
         (limits[childs] / 2);
+    }
+    
+    @Override
+    public Decision unprime(){
+    	return this.unprime(null);
+    }
+    @Override
+    public Decision prime(){
+    	return this.prime(null);
     }
 }
