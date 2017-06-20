@@ -40,6 +40,7 @@ import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomat
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
 import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
@@ -98,6 +99,7 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	}
 
 	public <LETTER extends IIcfgTransition<?>> void evaluateFinalErrorAutomaton(final AutomataLibraryServices services,
+			final ILogger logger,
 			final ErrorAutomatonBuilder<LETTER> errorAutomatonBuilder,
 			final PredicateFactoryForInterpolantAutomata predicateFactory,
 			final PredicateFactoryResultChecking predicateFactoryResultChecking) throws AutomataLibraryException {
@@ -109,6 +111,9 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 		final IDoubleDeckerAutomaton<LETTER, IPredicate> diff =
 				new Difference<>(services, predicateFactoryResultChecking, minuend, subtrahend, psd, false).getResult();
 		mAcceptsSingleTrace = new IsEmpty<>(services, diff).getResult();
+		if (mAcceptsSingleTrace) {
+			logger.warn("Enhancement did not add additional edges.");
+		}
 	}
 
 	public void finishAutomatonInstance() {
