@@ -33,7 +33,7 @@ public class PatternType {
 
 	/***
 	 * Requirement has an effect on a set of Variables such as
-	 * 
+	 *
 	 * @param effectOffset
 	 *            is the number of the effect phase counted from the last phase (most times -3 with upper bounds -2, -1
 	 *            is always the last [true] phase)
@@ -57,7 +57,7 @@ public class PatternType {
 
 	/***
 	 * Determine if a variable name is in the set of variables that are affected by the requirement.
-	 * 
+	 *
 	 * @param ident
 	 *            identifier of variable
 	 * @return true if the Variable's value is determined by this requirements effect.
