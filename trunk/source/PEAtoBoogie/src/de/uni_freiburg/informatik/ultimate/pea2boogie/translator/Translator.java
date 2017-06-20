@@ -66,7 +66,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.Phase;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseBits;
 import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.Transition;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.srParsePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.generator.ConditionGenerator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.Permutation;
@@ -121,7 +121,7 @@ public class Translator {
 	/**
 	 * The array of input requirements.
 	 */
-	public srParsePattern[] mRequirements;
+	public PatternType[] mRequirements;
 
 	/**
 	 * The properties for which we check for vacuity.
@@ -918,11 +918,11 @@ public class Translator {
 		}
 	}
 
-	public srParsePattern getRequirement(final int i) {
+	public PatternType getRequirement(final int i) {
 		return mRequirements[i];
 	}
 
-	public Unit genBoogie(final srParsePattern[] patterns) {
+	public Unit genBoogie(final PatternType[] patterns) {
 		mRequirements = patterns;
 		return genBoogie(new ReqToPEA(mLogger).genPEA(patterns));
 	}

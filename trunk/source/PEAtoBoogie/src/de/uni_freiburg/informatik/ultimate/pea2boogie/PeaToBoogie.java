@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import de.uni_freiburg.informatik.ultimate.core.model.ISource;
@@ -41,7 +42,7 @@ import de.uni_freiburg.informatik.ultimate.core.model.preferences.IPreferenceIni
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.srParsePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Translator;
 
@@ -82,13 +83,17 @@ public class PeaToBoogie implements ISource {
 		throw new UnsupportedOperationException("Cannot parse more than one file");
 	}
 
-	private IElement parseAST(final File file) {
+	private IElement parseAST(final File file) throws Exception {
 		final Translator translator = new Translator(mLogger);
 		final String inputPath = file.getAbsolutePath();
 		mFileNames = new ArrayList<>();
 		mFileNames.add(inputPath);
 		mLogger.info("Parsing: '" + inputPath + "'");
-		final srParsePattern[] patterns = new ReqToPEA(mLogger).genPatterns(inputPath);
+		final PatternType[] patterns = new ReqToPEA(mLogger).genPatterns(inputPath);
+
+		if (Arrays.stream(patterns).anyMatch(Objects::isNull)) {
+			throw new Exception("The parser had errors but didnt tell anyone");
+		}
 
 		// TODO: Add options to this cruel program
 		final BitSet vacuityChecks = new BitSet(patterns.length);

@@ -36,7 +36,7 @@ import de.uni_freiburg.informatik.ultimate.lib.pea.PhaseEventAutomata;
 import de.uni_freiburg.informatik.ultimate.lib.pea.modelchecking.J2UPPAALConverter;
 import de.uni_freiburg.informatik.ultimate.lib.pea.reqcheck.PatternToPEA;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.ReqParser;
-import de.uni_freiburg.informatik.ultimate.lib.srparse.srParsePattern;
+import de.uni_freiburg.informatik.ultimate.lib.srparse.pattern.PatternType;
 
 public class ReqToPEA {
 	private ILogger mLogger = null;
@@ -45,23 +45,18 @@ public class ReqToPEA {
 		mLogger = logger;
 	}
 
-	public srParsePattern[] genPatterns(final String reqFileName) {
-		try {
-			final ReqParser parser = new ReqParser(reqFileName);
-			final Symbol goal = parser.parse();
-			final srParsePattern[] patterns = (srParsePattern[]) goal.value;
-			return patterns;
-		} catch (final Exception ex) {
-			ex.printStackTrace();
-			return new srParsePattern[0];
-		}
+	public PatternType[] genPatterns(final String reqFileName) throws Exception {
+		final ReqParser parser = new ReqParser(reqFileName);
+		final Symbol goal = parser.parse();
+		final PatternType[] patterns = (PatternType[]) goal.value;
+		return patterns;
 	}
 
-	public PhaseEventAutomata[] genPEA(final srParsePattern[] patterns) {
+	public PhaseEventAutomata[] genPEA(final PatternType[] patterns) {
 		final List<PhaseEventAutomata> peaList = new ArrayList<>();
 
 		final PatternToPEA peaTrans = new PatternToPEA(mLogger);
-		for (final srParsePattern pat : patterns) {
+		for (final PatternType pat : patterns) {
 			// ignore patterns with syntax errors
 			if (pat == null) {
 				continue;
@@ -75,13 +70,13 @@ public class ReqToPEA {
 		return peaArray;
 	}
 
-	public void genPEAforUPPAAL(final srParsePattern[] patterns, final String xmlFilePath) {
+	public void genPEAforUPPAAL(final PatternType[] patterns, final String xmlFilePath) {
 
 		PhaseEventAutomata pea = null;
 
 		final PatternToPEA peaTrans = new PatternToPEA(mLogger);
 
-		for (final srParsePattern pat : patterns) {
+		for (final PatternType pat : patterns) {
 			pat.setPeaTransformator(peaTrans);
 			if (pea == null) {
 				pea = pat.transformToPea();
