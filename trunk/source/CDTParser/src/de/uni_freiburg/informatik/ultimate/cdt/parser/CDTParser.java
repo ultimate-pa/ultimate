@@ -68,6 +68,9 @@ import org.eclipse.cdt.core.parser.IncludeFileContentProvider;
 import org.eclipse.cdt.core.parser.ParserLanguage;
 import org.eclipse.cdt.core.parser.ParserMode;
 import org.eclipse.cdt.core.parser.ScannerInfo;
+import org.eclipse.cdt.core.settings.model.CSourceEntry;
+import org.eclipse.cdt.core.settings.model.ICSettingEntry;
+import org.eclipse.cdt.core.settings.model.ICSourceEntry;
 import org.eclipse.cdt.internal.core.dom.parser.c.GNUCSourceParser;
 import org.eclipse.cdt.internal.core.indexer.StandaloneIndexerFallbackReaderFactory;
 import org.eclipse.cdt.internal.core.parser.scanner.CPreprocessor;
@@ -169,8 +172,14 @@ public class CDTParser implements ISource {
 		mCdtProject = proj;
 		mLogger.info("Created temporary CDT project at " + getFullPath(mCdtProject));
 
+		final IFolder sourceFolder = mCdtProject.getFolder("src");
+		sourceFolder.create(true, true, NULL_MONITOR);
+		final ICSourceEntry entrySrc = new CSourceEntry(sourceFolder, null, ICSettingEntry.RESOLVED);
+		// CDataUtil.createEntry(CDataUtil., String name, String value, IPath[] exclusionPatterns, int flags)
+		// CDataUtil
+		// entrySrc.
 		for (final File file : files) {
-			createFile(mCdtProject, file);
+			createCopyOfFileInProject(mCdtProject, sourceFolder, file);
 		}
 
 		final CoreModel model = CoreModel.getDefault();
@@ -182,11 +191,13 @@ public class CDTParser implements ISource {
 			throws OperationCanceledException, FileNotFoundException, CoreException {
 		final ICProject icdtProject = createCDTProjectFromFiles(files);
 
+		// useful: http://cdt-devel-faq.wikidot.com/#toc23
+
 		final IIndexManager indexManager = CCorePlugin.getIndexManager();
 		final boolean isIndexed = indexManager.isProjectIndexed(icdtProject);
 		final IIndex index = indexManager.getIndex(icdtProject);
 		final Collection<ITranslationUnit> sources = new HashSet<>();
-		final Collection<ITranslationUnit> headers = new HashSet<ITranslationUnit>();
+		final Collection<ITranslationUnit> headers = new HashSet<>();
 		final ICElementVisitor visitor = new TranslationUnitCollector(sources, headers, NULL_MONITOR);
 		icdtProject.accept(visitor);
 
@@ -319,13 +330,22 @@ public class CDTParser implements ISource {
 		return project;
 	}
 
-	public static IFile createFile(final IProject project, final File file)
+	public static IFile createCopyOfFileInProject(final IProject project, final IFolder sourceFolder, final File file)
 			throws CoreException, FileNotFoundException {
-		if (new Path(file.getName()).segmentCount() > 1) {
-			createFolder(project, new Path(file.getName()).removeLastSegments(1).toString());
+
+		final Path filePath = new Path(file.getName());
+		if (filePath.segmentCount() > 1) {
+			throw new IllegalArgumentException("File has to be a single file");
 		}
+
+		final IPath relativeFilePath = sourceFolder.getProjectRelativePath().append(filePath);
+
+		// TODO: Do not copy file, use links instead
 		final String content = new Scanner(file).useDelimiter("\\Z").next();
-		return createFile(project.getFile(file.getName()), content);
+		final IFile file1 = project.getFile(relativeFilePath);
+		final InputStream inputStream = new ByteArrayInputStream(content.getBytes());
+		file1.create(inputStream, true, NULL_MONITOR);
+		return file1;
 	}
 
 	private static void waitForProjectRefreshToFinish() {
@@ -363,26 +383,5 @@ public class CDTParser implements ISource {
 			}
 		}
 		return (IFolder) folder;
-	}
-
-	/**
-	 * Creates a file with specified content.
-	 *
-	 * @param file
-	 *            - file name.
-	 * @param contents
-	 *            - contents of the file.
-	 * @return file handle.
-	 * @throws CoreException
-	 *             - if the file can't be created.
-	 */
-	private static IFile createFile(final IFile file, String contents) throws CoreException {
-		if (contents == null) {
-			contents = "";
-		}
-
-		final InputStream inputStream = new ByteArrayInputStream(contents.getBytes());
-		file.create(inputStream, true, NULL_MONITOR);
-		return file;
 	}
 }
