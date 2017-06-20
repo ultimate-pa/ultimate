@@ -65,6 +65,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 						oldstate.toEqPredicate(), transitionRelation);
 		return postConstraint.toEqStates();
 	}
+
 	@Override
 	public List<EqState<ACTION>> apply(EqState<ACTION> stateBeforeLeaving, EqState<ACTION> stateAfterLeaving,
 			ACTION transition) {

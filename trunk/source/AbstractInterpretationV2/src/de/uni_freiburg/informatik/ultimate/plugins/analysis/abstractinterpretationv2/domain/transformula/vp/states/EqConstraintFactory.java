@@ -251,10 +251,7 @@ public class EqConstraintFactory<
 		// TODO propagations
 		
 		EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithPropagations = newConstraint;
-		// propagate read-over-write
-		newConstraintWithPropagations = propagateIdx(func1, newConstraintWithPropagations);
-		newConstraintWithPropagations = propagateIdx(func2, newConstraintWithPropagations);
-		
+	
 		return newConstraintWithPropagations;
 	}
 
@@ -689,9 +686,14 @@ public class EqConstraintFactory<
 			EqConstraint<ACTION, NODE, FUNCTION> constraint) {
 		EqConstraint<ACTION, NODE, FUNCTION> newConstraint = unfreeze(constraint);
 		newConstraint.addFunctionRaw(func);
-		// TODO propagations
 		newConstraint.freeze();
-		return newConstraint;
+		// TODO propagations
+
+		// propagate read-over-write
+		EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithPropagations = propagateIdx(func, newConstraint);
+	
+		
+		return newConstraintWithPropagations;
 	}
 
 	public EqStateFactory<ACTION> getEqStateFactory() {
