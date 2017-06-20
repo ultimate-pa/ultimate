@@ -9,6 +9,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import de.uni_freiburg.informatik.ultimate.logic.ApplicationTerm;
 import de.uni_freiburg.informatik.ultimate.logic.Term;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IcfgLocation;
@@ -16,6 +17,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.M
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.IEqNodeIdentifier;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainHelpers;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
+import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqNodeAndFunctionFactory;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqStoreFunction;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
@@ -249,8 +251,46 @@ public class EqConstraintFactory<
 		newConstraint.freeze();
 		
 		// TODO propagations
-		
 		EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithPropagations = newConstraint;
+		
+		// TODO: which nodes to take here??
+		final Set<NODE> nodesWithFunc1 = newConstraint.getAllNodes().stream()
+			.filter(node -> ((node instanceof EqFunctionNode) && ((NODE) node).getFunction().equals(func1)))
+			.collect(Collectors.toSet());
+		final Set<NODE> nodesWithFunc2 = newConstraint.getAllNodes().stream()
+			.filter(node -> ((node instanceof EqFunctionNode) && ((NODE) node).getFunction().equals(func2)))
+			.collect(Collectors.toSet());
+		
+		HashSet<NODE> selectNodes1 = new HashSet<>(nodesWithFunc1);
+		HashSet<NODE> selectNodes2 = new HashSet<>(nodesWithFunc2);
+		
+		// add for each node func1(t) a node func2(t) and vice versa
+		final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
+		mgdScript.lock(this);
+
+		for (NODE node : nodesWithFunc1) {
+			final EqFunctionNode efn = (EqFunctionNode) node;
+			final ApplicationTerm at = (ApplicationTerm) efn.getTerm();
+			assert "select".equals(at.getFunction().getName());
+			final Term newTerm = mgdScript.term(this, "select", func2.getTerm(), at.getParameters()[1]);
+			selectNodes2.add((NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(newTerm));
+		}
+		
+		for (NODE node : nodesWithFunc2) {
+			final EqFunctionNode efn = (EqFunctionNode) node;
+			final ApplicationTerm at = (ApplicationTerm) efn.getTerm();
+			assert "select".equals(at.getFunction().getName());
+			final Term newTerm = mgdScript.term(this, "select", func1.getTerm(), at.getParameters()[1]);
+			selectNodes1.add((NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(newTerm));
+		}
+		mgdScript.unlock(this);
+		
+		// add the equalities due to array extensionality (or element congruence)
+		for (NODE node1 : selectNodes1) {
+			for (NODE node2 : selectNodes2) {
+				newConstraintWithPropagations = addEqualityFlat(node1, node2, newConstraintWithPropagations);
+			}
+		}
 	
 		return newConstraintWithPropagations;
 	}
@@ -389,11 +429,13 @@ public class EqConstraintFactory<
 		EqConstraint<ACTION, NODE, FUNCTION> resultConstraint = constraintAfterMerge;
 		for (Entry<NODE, NODE> pair : mergeHistory.entrySet()) {
 			
-			for (final NODE other : originalState.getDisequalities(pair.getKey())) {
+//			for (final NODE other : originalState.getDisequalities(pair.getKey())) {
+			for (final NODE other : constraintAfterMerge.getDisequalities(pair.getKey())) {
 				//			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 				resultConstraint = propagateDisequalitesFlat(resultConstraint, pair.getKey(), other);
 			}
-			for (final NODE other : originalState.getDisequalities(pair.getValue())) {
+//			for (final NODE other : originalState.getDisequalities(pair.getValue())) {
+			for (final NODE other : constraintAfterMerge.getDisequalities(pair.getValue())) {
 				//			factory.getBenchmark().stop(VPSFO.addEqualityClock);
 				resultConstraint = propagateDisequalitesFlat(resultConstraint, pair.getValue(), other);
 			}
@@ -675,10 +717,27 @@ public class EqConstraintFactory<
 	
 	public EqConstraint<ACTION, NODE, FUNCTION> addNodeFlat(NODE nodeToAdd, 
 			EqConstraint<ACTION, NODE, FUNCTION> constraint) {
+		if (constraint.getAllNodes().contains(nodeToAdd)) {
+			return constraint;
+		}
+		
 		final EqConstraint<ACTION, NODE, FUNCTION> unf = unfreeze(constraint);
 		unf.addNodeRaw(nodeToAdd);
 		unf.freeze();
-		return unf;
+		
+		// introduce disequalities if we have a literal TODO: disequality treatment might need reworking
+		EqConstraint<ACTION, NODE, FUNCTION> newConstraintWithPropagations = unf;
+		if (nodeToAdd.isLiteral()) {
+			for (NODE otherNode : newConstraintWithPropagations.getAllNodes()) {
+				if (otherNode.equals(nodeToAdd) || !otherNode.isLiteral()) {
+					continue;
+				}
+				newConstraintWithPropagations = addDisequalityFlat(nodeToAdd, otherNode, newConstraintWithPropagations);
+			}
+		}
+		
+		return newConstraintWithPropagations;
+//		return unf;
 	}
 	
 	

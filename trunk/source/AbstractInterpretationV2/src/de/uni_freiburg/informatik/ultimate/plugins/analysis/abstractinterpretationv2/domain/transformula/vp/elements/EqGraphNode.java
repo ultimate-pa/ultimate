@@ -28,6 +28,7 @@
 package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
@@ -82,6 +83,7 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 		this.mInitCcpar = new HashSet<>();
 		if (id.isFunction()) {
 			this.mInitCcchild = id.getArgs();
+			mCcchild.addPair(mNodeIdentifier.getFunction(), id.getArgs());
 		}
 	}
 	
@@ -107,10 +109,9 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 	public void setNodeToInitial() {
 		this.mRepresentative = this;
 		this.mReverseRepresentative.clear();
+
 		this.mCcpar.clear();
-		if (mInitCcpar != null) {
-			this.mCcpar.addAll(mInitCcpar);
-		}
+		this.mCcpar.addAll(mInitCcpar);
 
 		this.mCcchild = new HashRelation<>();
 		/*
@@ -198,7 +199,7 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 
 //	public Set<EqGraphNode<NODE, FUNCTION>> getCcpar() {
 	public Set<NODE> getCcpar() {
-		return mCcpar;
+		return Collections.unmodifiableSet(mCcpar);
 	}
 
 //	public void setCcpar(Set<EqGraphNode<NODE, FUNCTION>> ccpar) {
@@ -241,11 +242,11 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 	 */
 //	public NODE getInitCcpar() {
 	public Set<NODE> getInitCcpar() {
-		return mInitCcpar;
+		return Collections.unmodifiableSet(mInitCcpar);
 	}
 
 	public List<NODE> getInitCcchild() {
-		return mInitCcchild;
+		return Collections.unmodifiableList(mInitCcchild);
 	}
 
 //	public void setInitCcchild(List<NODE> initCcchild) {
@@ -300,8 +301,8 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 //		mInitCcpar = initCCpar;
 //	}
 
-	public void addToInitCcpar(NODE initCCpar) {
-		// TODO Auto-generated method stub
-		
+	public void addToInitCcpar(NODE node) {
+		mInitCcpar.add(node);
+		mCcpar.add(node);
 	}
 }

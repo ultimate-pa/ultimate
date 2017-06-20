@@ -238,6 +238,12 @@ public class EqConstraint<
 		mFunctionEquivalenceGraph.union(func1, func2);
 		
 		// TODO: adding a function equality can have consequences for the elements --> implement
+
+		
+
+		
+//		nodesWithFunc.stream().forEach(node -> havoc(node));
+	
 		
 
 	}
@@ -497,11 +503,21 @@ public class EqConstraint<
 	 */
 	public Set<NODE> getDisequalities(NODE node) {
 		final Set<NODE> result = new HashSet<>();
-		for (VPDomainSymmetricPair<NODE> deq : mElementCongruenceGraph.getDisequalities()) {
-			if (deq.contains(node)) {
-				result.add(deq.getOther(node));
+		
+//		if (node.isLiteral()) {
+//			// towards symbolic treatment of literal disequalities between literals
+//			result.addAll(mNodes.stream()
+//					.filter(n -> (!n.equals(node) && n.isLiteral())) // keep only literals unequal to node
+//					.map(n -> mElementCongruenceGraph.find(node)) // take their representatives
+//					.filter(n -> n != null)
+//					.collect(Collectors.toSet()));
+//		} else {
+			for (VPDomainSymmetricPair<NODE> deq : mElementCongruenceGraph.getDisequalities()) {
+				if (deq.contains(node)) {
+					result.add(deq.getOther(node));
+				}
 			}
-		}
+//		}
 		return result;
 	}
 

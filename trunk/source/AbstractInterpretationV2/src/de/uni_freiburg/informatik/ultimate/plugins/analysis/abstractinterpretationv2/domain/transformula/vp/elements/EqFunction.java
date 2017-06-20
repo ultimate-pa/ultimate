@@ -88,8 +88,8 @@ public class EqFunction implements IEqFunctionIdentifier<EqFunction> {
 
 	@Override
 	public int getArity() {
-		assert false : "TODO";
-		return 0;
+		assert mTerm.getSort().isArraySort();
+		return mTerm.getSort().getArguments().length - 1;
 	}
 	
 	@Override
