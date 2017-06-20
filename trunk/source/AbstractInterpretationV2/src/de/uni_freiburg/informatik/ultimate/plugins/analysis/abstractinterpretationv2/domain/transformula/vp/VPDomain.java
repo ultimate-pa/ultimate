@@ -177,4 +177,11 @@ public class VPDomain<ACTION extends IIcfgTransition<IcfgLocation>>
 	public EqStateFactory<ACTION> getEqStateFactory() {
 		return mEqStateFactory;
 	}
+
+	@Override
+	public boolean useHierachicalPre() {
+		return true;
+	}
+	
+	
 }
