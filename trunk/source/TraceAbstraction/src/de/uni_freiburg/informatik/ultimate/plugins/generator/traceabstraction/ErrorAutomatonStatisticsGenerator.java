@@ -36,14 +36,18 @@ import java.util.function.Function;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryException;
 import de.uni_freiburg.informatik.ultimate.automata.AutomataLibraryServices;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.IDoubleDeckerAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INestedWordAutomaton;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.INwaOutgoingLetterAndTransitionProvider;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.NestedWordAutomaton;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Difference;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.Intersect;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.IsEmpty;
 import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.PowersetDeterminizer;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.operations.RemoveUnreachable;
+import de.uni_freiburg.informatik.ultimate.automata.nestedword.reachablestates.NestedWordAutomatonReachableStates;
 import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.structure.IIcfgTransition;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.predicates.IPredicate;
-import de.uni_freiburg.informatik.ultimate.plugins.generator.traceabstraction.interpolantautomata.transitionappender.NondeterministicInterpolantAutomaton;
 import de.uni_freiburg.informatik.ultimate.util.statistics.Benchmark;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsDataProvider;
 import de.uni_freiburg.informatik.ultimate.util.statistics.IStatisticsType;
@@ -99,17 +103,21 @@ public class ErrorAutomatonStatisticsGenerator implements IStatisticsDataProvide
 	}
 
 	public <LETTER extends IIcfgTransition<?>> void evaluateFinalErrorAutomaton(final AutomataLibraryServices services,
-			final ILogger logger,
-			final ErrorAutomatonBuilder<LETTER> errorAutomatonBuilder,
+			final ILogger logger, final ErrorAutomatonBuilder<LETTER> errorAutomatonBuilder,
+			final INwaOutgoingLetterAndTransitionProvider<LETTER, IPredicate> abstraction,
 			final PredicateFactoryForInterpolantAutomata predicateFactory,
 			final PredicateFactoryResultChecking predicateFactoryResultChecking) throws AutomataLibraryException {
-		final NondeterministicInterpolantAutomaton<LETTER> minuend = errorAutomatonBuilder.getResultAfterEnhancement();
-		minuend.switchToReadonlyMode();
+		errorAutomatonBuilder.getResultAfterEnhancement().switchToReadonlyMode();
+		final NestedWordAutomatonReachableStates<LETTER, IPredicate> errorAutomatonAfterEnhancement =
+				new RemoveUnreachable<>(services, errorAutomatonBuilder.getResultAfterEnhancement()).getResult();
+		final INestedWordAutomaton<LETTER, IPredicate> effectiveErrorAutomaton =
+				new Intersect<>(services, predicateFactoryResultChecking, abstraction, errorAutomatonAfterEnhancement)
+						.getResult();
 		final NestedWordAutomaton<LETTER, IPredicate> subtrahend = errorAutomatonBuilder.getResultBeforeEnhancement();
 		final PowersetDeterminizer<LETTER, IPredicate> psd =
 				new PowersetDeterminizer<>(subtrahend, true, predicateFactory);
-		final IDoubleDeckerAutomaton<LETTER, IPredicate> diff =
-				new Difference<>(services, predicateFactoryResultChecking, minuend, subtrahend, psd, false).getResult();
+		final IDoubleDeckerAutomaton<LETTER, IPredicate> diff = new Difference<>(services,
+				predicateFactoryResultChecking, effectiveErrorAutomaton, subtrahend, psd, false).getResult();
 		mAcceptsSingleTrace = new IsEmpty<>(services, diff).getResult();
 		if (mAcceptsSingleTrace) {
 			logger.warn("Enhancement did not add additional edges.");
