@@ -25,7 +25,7 @@
  * licensors of the ULTIMATE PEAtoBoogie plug-in grant you additional permission
  * to convey the resulting work.
  */
-package de.uni_freiburg.informatik.ultimate.pea2boogie.main;
+package de.uni_freiburg.informatik.ultimate.pea2boogie;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -42,13 +42,12 @@ import de.uni_freiburg.informatik.ultimate.core.model.services.ILogger;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IToolchainStorage;
 import de.uni_freiburg.informatik.ultimate.core.model.services.IUltimateServiceProvider;
 import de.uni_freiburg.informatik.ultimate.lib.srparse.srParsePattern;
-import de.uni_freiburg.informatik.ultimate.pea2boogie.Activator;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.req2pea.ReqToPEA;
 import de.uni_freiburg.informatik.ultimate.pea2boogie.translator.Translator;
 
 public class PeaToBoogie implements ISource {
-	protected ILogger mLogger;
-	List<String> mFileNames = new ArrayList<>();
+	private ILogger mLogger;
+	private List<String> mFileNames = new ArrayList<>();
 
 	@Override
 	public void init() {
@@ -83,18 +82,20 @@ public class PeaToBoogie implements ISource {
 		throw new UnsupportedOperationException("Cannot parse more than one file");
 	}
 
-	private IElement parseAST(final File file) throws Exception {
+	private IElement parseAST(final File file) {
 		final Translator translator = new Translator(mLogger);
 		final String inputPath = file.getAbsolutePath();
 		mFileNames = new ArrayList<>();
 		mFileNames.add(inputPath);
 		mLogger.info("Parsing: '" + inputPath + "'");
 		final srParsePattern[] patterns = new ReqToPEA(mLogger).genPatterns(inputPath);
+
 		// TODO: Add options to this cruel program
 		final BitSet vacuityChecks = new BitSet(patterns.length);
 		vacuityChecks.set(0, patterns.length);
 
-		final int combinationNum = Math.min(patterns.length, 2); // TODO preference
+		// TODO preference
+		final int combinationNum = Math.min(patterns.length, 2);
 		translator.setVacuityChecks(vacuityChecks);
 		translator.setCombinationNum(combinationNum);
 		translator.setInputFilePath(inputPath);
