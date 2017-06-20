@@ -54,12 +54,17 @@ public class TreeAutomizerPreferenceInitializer extends UltimatePreferenceInitia
 	 * new preferences that belong to the RCFG Builder
 	 */
 	public static final String LABEL_Solver = "SMT solver";
-	public static final SolverMode DEF_Solver = SolverMode.External_ModelsAndUnsatCoreMode;
 	public static final String LABEL_ExtSolverCommand = "Command for external solver";
-	public static final String DEF_ExtSolverCommand = Z3_DEFAULT;
-
 	public static final String LABEL_ExtSolverLogic = "Logic for external solver";
+	public static final String LABEL_DumpPath = "Dump smtlib scripts to";
+
+	//defaults
+	public static final SolverMode DEF_Solver = SolverMode.External_ModelsAndUnsatCoreMode;
+	public static final String DEF_ExtSolverCommand = Z3_DEFAULT;
 	public static final String DEF_ExtSolverLogic = "AUFNIRA";
+	public static final String DEF_DumpPath = "";
+	
+	
 	public TreeAutomizerPreferenceInitializer() {
 		super(Activator.PLUGIN_ID, Activator.PLUGIN_NAME);
 	}
@@ -69,7 +74,9 @@ public class TreeAutomizerPreferenceInitializer extends UltimatePreferenceInitia
 				new UltimatePreferenceItem<SolverMode>(LABEL_Solver, DEF_Solver, PreferenceType.Combo,
 						SolverMode.values()),
 				new UltimatePreferenceItem<String>(LABEL_ExtSolverCommand, DEF_ExtSolverCommand, PreferenceType.String),
-				new UltimatePreferenceItem<String>(LABEL_ExtSolverLogic, DEF_ExtSolverLogic, PreferenceType.String), };
+				new UltimatePreferenceItem<String>(LABEL_ExtSolverLogic, DEF_ExtSolverLogic, PreferenceType.String),
+				new UltimatePreferenceItem<String>(LABEL_DumpPath, DEF_DumpPath, PreferenceType.String), 
+				};
 	}
 
 	// new UltimatePreferenceItem<SolverMode>(LABEL_Solver,
