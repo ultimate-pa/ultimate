@@ -107,6 +107,11 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 		mServices = services;
 		mLogger = Objects.requireNonNull(logger);
 		mDomain = Objects.requireNonNull(domain);
+		if (mDomain.useHierachicalPre()) {
+			throw new UnsupportedOperationException(
+					"AbsIntHoareTripleChecker does not support domains that require hierachical pre states in their post operator");
+		}
+
 		mPostOp = Objects.requireNonNull(mDomain.getPostOperator());
 		mPredicateUnifier = Objects.requireNonNull(predicateUnifer);
 		mVarProvider = Objects.requireNonNull(varProvider.createNewVariableProvider(csToolkit));
@@ -321,6 +326,7 @@ public class AbsIntHoareTripleChecker<STATE extends IAbstractState<STATE, VARDEC
 			return Validity.VALID;
 		}
 
+		// TODO: Take mDomain.useHierachicalPre() into account
 		final AbstractMultiState<STATE, VARDECL> calculatedPost =
 				stateAfterLeaving.apply(mPostOp, stateBeforeLeaving, act);
 		return comparePostAndCalculatedPost(act, postState, calculatedPost);

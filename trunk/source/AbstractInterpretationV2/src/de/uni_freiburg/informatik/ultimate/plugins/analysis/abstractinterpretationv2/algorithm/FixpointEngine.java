@@ -76,6 +76,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 
 	private AbsIntResult<STATE, ACTION, VARDECL, LOC> mResult;
 	private final SummaryMap<STATE, ACTION, VARDECL, LOC> mSummaryMap;
+	private final boolean mUseHierachicalPre;
 
 	public FixpointEngine(final FixpointEngineParameters<STATE, ACTION, VARDECL, LOC> params) {
 		if (params == null || !params.isValid()) {
@@ -92,6 +93,7 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 		mMaxUnwindings = params.getMaxUnwindings();
 		mMaxParallelStates = params.getMaxParallelStates();
 		mSummaryMap = new SummaryMap<>(mTransitionProvider, mLogger);
+		mUseHierachicalPre = mDomain.useHierachicalPre();
 	}
 
 	@Override
@@ -237,7 +239,11 @@ public class FixpointEngine<STATE extends IAbstractState<STATE, VARDECL>, ACTION
 			postState = preStateWithFreshVariables.apply(postOp, currentAction);
 		} else {
 			// a context switch happened
-			postState = preStateWithFreshVariables.apply(postOp, preState, currentAction);
+			if (mUseHierachicalPre) {
+				postState = preStateWithFreshVariables.apply(postOp, hierachicalPreState, currentAction);
+			} else {
+				postState = preStateWithFreshVariables.apply(postOp, preState, currentAction);
+			}
 			isHierachicalPostResultBottom(postState, currentItem);
 		}
 		assert postState != null;
