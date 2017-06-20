@@ -25,7 +25,6 @@ import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretati
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.VPDomainSymmetricPair;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.EqFunctionNode;
 import de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretationv2.domain.transformula.vp.elements.IEqFunctionIdentifier;
-import de.uni_freiburg.informatik.ultimate.util.datastructures.UnionFind;
 import de.uni_freiburg.informatik.ultimate.util.datastructures.relation.HashRelation;
 
 public class EqConstraint<
@@ -38,9 +37,11 @@ public class EqConstraint<
 
 	CongruenceGraph<ACTION, NODE, FUNCTION> mElementCongruenceGraph;
 
-	UnionFind<FUNCTION> mFunctionEqualities;
+//	UnionFind<FUNCTION> mFunctionEqualities;
+//	
+//	Set<VPDomainSymmetricPair<FUNCTION>> mFunctionDisequalities;
 	
-	Set<VPDomainSymmetricPair<FUNCTION>> mFunctionDisequalities;
+	ArrayEquivalenceGraph<ACTION, NODE, FUNCTION> mFunctionEqualities;
 
 	private EqConstraintFactory<ACTION, NODE, FUNCTION> mFactory;
 
@@ -67,8 +68,9 @@ public class EqConstraint<
 		mFactory = factory;
 		
 		mElementCongruenceGraph = new CongruenceGraph<>(this);
-		mFunctionEqualities = new UnionFind<>();
-		mFunctionDisequalities = new HashSet<>();
+//		mFunctionEqualities = new UnionFind<>();
+		mFunctionEqualities = new ArrayEquivalenceGraph<>();
+//		mFunctionDisequalities = new HashSet<>();
 
 		mNodes = new HashSet<>();
 		mFunctions = new HashSet<>();
@@ -83,16 +85,7 @@ public class EqConstraint<
 		mElementCongruenceGraph = new CongruenceGraph<>(constraint.mElementCongruenceGraph);
 
 		// copy the union find containing array equalities
-		mFunctionEqualities = new UnionFind<>();
-		for (FUNCTION rep : constraint.mFunctionEqualities.getAllRepresentatives()) {
-			mFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(rep);
-			for (FUNCTION mem : constraint.mFunctionEqualities.getEquivalenceClassMembers(rep)) {
-				mFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(mem);
-				mFunctionEqualities.union(mem, rep);
-			}
-		}
-
-		mFunctionDisequalities = new HashSet<>(constraint.mFunctionDisequalities);
+		mFunctionEqualities = new ArrayEquivalenceGraph<>(constraint.mFunctionEqualities);
 		
 		mNodes = new HashSet<>(constraint.mNodes);
 		mFunctions = new HashSet<>(constraint.mFunctions);
@@ -133,7 +126,8 @@ public class EqConstraint<
 		mFunctionDisequalities.removeIf(pair -> pair.contains(func));
 		
 		// remove from function equalities
-		final UnionFind<FUNCTION> newFunctionEqualities = new UnionFind<>();
+//		final UnionFind<FUNCTION> newFunctionEqualities = new UnionFind<>();
+		final ArrayEquivalenceGraph<ACTION, NODE, FUNCTION> newFunctionEqualities = new ArrayEquivalenceGraph<>();
 		// (union find has no remove -> has to be built anew)
 		for (Set<FUNCTION> eqc : mFunctionEqualities.getAllEquivalenceClasses()) {
 			// look for an element that is not func --> everything but func will be merged with it
@@ -429,7 +423,8 @@ public class EqConstraint<
 		
 		mElementCongruenceGraph.renameVariables(substitutionMapping);
 		
-		final UnionFind<FUNCTION> newFunctionUF = new UnionFind<>();
+//		final UnionFind<FUNCTION> newFunctionUF = new UnionFind<>();
+		final ArrayEquivalenceGraph<ACTION, NODE, FUNCTION> newFunctionUF = new ArrayEquivalenceGraph<>();
 //		for (Entry<FUNCTION, FUNCTION> fEq : getSupportingFunctionEqualities()) {
 		for (Set<FUNCTION> eqc : mFunctionEqualities.getAllEquivalenceClasses()) {
 			FUNCTION first = newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
