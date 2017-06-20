@@ -49,6 +49,7 @@ import de.uni_freiburg.informatik.ultimate.modelcheckerutils.cfg.variables.IProg
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.HoareTripleCheckerStatisticsGenerator;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.hoaretriple.IHoareTripleChecker;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.MonolithicImplicationChecker;
+import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.PartialQuantifierElimination;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.SimplificationTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.SmtUtils.XnfConversionTechnique;
 import de.uni_freiburg.informatik.ultimate.modelcheckerutils.smt.managedscript.ManagedScript;
@@ -174,7 +175,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 				predicateFactoryErrorAutomaton, alphabet, trace);
 
 		mResultAfterEnhancement = enhanceMode != InterpolantAutomatonEnhancement.NONE
-				? constructNondeterministicAutomaton(services, mResultBeforeEnhancement, csToolkit,
+				? constructNondeterministicAutomaton(services, logger, mResultBeforeEnhancement, csToolkit,
 						internalPredicateUnifier, predicateFactory)
 				: null;
 	}
@@ -302,6 +303,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 	private NondeterministicInterpolantAutomaton<LETTER> constructNondeterministicAutomaton(
 			final IUltimateServiceProvider services,
+			final ILogger logger,
 			final NestedWordAutomaton<LETTER, IPredicate> straightLineAutomaton, final CfgSmtToolkit csToolkit,
 			final PredicateUnificationMechanism predicateUnifier, final PredicateFactory predicateFactory) {
 		assert !containsPredicateState(straightLineAutomaton, predicateUnifier
@@ -317,7 +319,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		final MonolithicImplicationChecker mic = new MonolithicImplicationChecker(services, mgdScript);
 		final PredicateTransformer<Term, IPredicate, TransFormula> pt =
 				new PredicateTransformer<>(mgdScript, new TermDomainOperationProvider(services, mgdScript));
-		final IHoareTripleChecker hoareTripleChecker = new InclusionInPreChecker(mic, pt, predicateFactory, csToolkit);
+		final IHoareTripleChecker hoareTripleChecker = new InclusionInPreChecker(services, null, mic, pt, predicateFactory, csToolkit);
 		return new NondeterministicErrorAutomaton<>(services, csToolkit, hoareTripleChecker, straightLineAutomaton,
 				predicateUnifier.getPredicateUnifier());
 	}
@@ -339,14 +341,23 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	 * @author Christian Schilling (schillic@informatik.uni-freiburg.de)
 	 */
 	private static class InclusionInPreChecker implements IHoareTripleChecker {
+		private final IUltimateServiceProvider mServices;
+		private final ILogger mLogger;
 		private final MonolithicImplicationChecker mMic;
 		private final PredicateTransformer<Term, IPredicate, TransFormula> mPt;
 		private final PredicateFactory mPf;
 		private final CfgSmtToolkit mCsToolkit;
+		/**
+		 * Apply nontrivial quantifier elimination.
+		 */
+		private final boolean mExpensivePqeForWpResults = true;
 
-		public InclusionInPreChecker(final MonolithicImplicationChecker mic,
+		public InclusionInPreChecker(final IUltimateServiceProvider services, final ILogger logger,
+				final MonolithicImplicationChecker mic,
 				final PredicateTransformer<Term, IPredicate, TransFormula> predTransformer,
 				final PredicateFactory predFactory, final CfgSmtToolkit csToolkit) {
+			mServices = services;
+			mLogger = logger;
 			mMic = mic;
 			mPt = predTransformer;
 			mPf = predFactory;
@@ -391,7 +402,14 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 		}
 
 		private Term getWpInternal(final IInternalAction act, final IPredicate succ) {
-			return mPt.weakestPrecondition(mPf.not(succ), act.getTransformula());
+			Term result = mPt.weakestPrecondition(mPf.not(succ), act.getTransformula());
+			if (mExpensivePqeForWpResults) {
+				result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, 
+						mCsToolkit.getManagedScript(),
+						result, SimplificationTechnique.SIMPLIFY_DDA, 
+						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			}
+			return result;
 		}
 
 		private Term getWpCall(final ICallAction act, final IPredicate succ) {
@@ -401,8 +419,15 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 					mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(act.getSucceedingProcedure());
 			final Set<IProgramNonOldVar> modifiableGlobals =
 					mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(act.getSucceedingProcedure());
-			return mPt.weakestPreconditionCall(mPf.not(succ), act.getTransformula(), globalVarsAssignments,
+			Term result = mPt.weakestPreconditionCall(mPf.not(succ), act.getTransformula(), globalVarsAssignments,
 					oldVarAssignments, modifiableGlobals);
+			if (mExpensivePqeForWpResults) {
+				result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, 
+						mCsToolkit.getManagedScript(),
+						result, SimplificationTechnique.SIMPLIFY_DDA, 
+						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			}
+			return result;
 		}
 
 		// TODO 2017-06-09 Christian: Do we need to change preHier to 'true'? See USE_TRUE_AS_CALL_PREDECESSOR_FOR_WP.
@@ -413,8 +438,15 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 					mCsToolkit.getOldVarsAssignmentCache().getOldVarsAssignment(act.getSucceedingProcedure());
 			final Set<IProgramNonOldVar> modifiableGlobals =
 					mCsToolkit.getModifiableGlobalsTable().getModifiedBoogieVars(act.getSucceedingProcedure());
-			return mPt.weakestPreconditionReturn(mPf.not(succ), preHier, returnTf, callTf, oldVarAssignments,
+			Term result = mPt.weakestPreconditionReturn(mPf.not(succ), preHier, returnTf, callTf, oldVarAssignments,
 					modifiableGlobals);
+			if (mExpensivePqeForWpResults) {
+				result = PartialQuantifierElimination.tryToEliminate(mServices, mLogger, 
+						mCsToolkit.getManagedScript(),
+						result, SimplificationTechnique.SIMPLIFY_DDA, 
+						XnfConversionTechnique.BOTTOM_UP_WITH_LOCAL_SIMPLIFICATION);
+			}
+			return result;
 		}
 	}
 
