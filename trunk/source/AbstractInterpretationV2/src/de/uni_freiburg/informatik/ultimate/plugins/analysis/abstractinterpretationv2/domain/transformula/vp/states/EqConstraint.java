@@ -3,7 +3,6 @@ package de.uni_freiburg.informatik.ultimate.plugins.analysis.abstractinterpretat
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +39,7 @@ public class EqConstraint<
 //	
 //	Set<VPDomainSymmetricPair<FUNCTION>> mFunctionDisequalities;
 	
-	ArrayEquivalenceGraph<ACTION, NODE, FUNCTION> mFunctionEqualities;
+	ArrayEquivalenceGraph<ACTION, NODE, FUNCTION> mFunctionEquivalenceGraph;
 
 	private EqConstraintFactory<ACTION, NODE, FUNCTION> mFactory;
 
@@ -68,7 +67,7 @@ public class EqConstraint<
 		
 		mElementCongruenceGraph = new CongruenceGraph<>(this);
 //		mFunctionEqualities = new UnionFind<>();
-		mFunctionEqualities = new ArrayEquivalenceGraph<>();
+		mFunctionEquivalenceGraph = new ArrayEquivalenceGraph<>();
 //		mFunctionDisequalities = new HashSet<>();
 
 		mNodes = new HashSet<>();
@@ -84,7 +83,7 @@ public class EqConstraint<
 		mElementCongruenceGraph = new CongruenceGraph<>(constraint.mElementCongruenceGraph);
 
 		// copy the union find containing array equalities
-		mFunctionEqualities = new ArrayEquivalenceGraph<>(constraint.mFunctionEqualities);
+		mFunctionEquivalenceGraph = new ArrayEquivalenceGraph<>(constraint.mFunctionEquivalenceGraph);
 		
 		mNodes = new HashSet<>(constraint.mNodes);
 		mFunctions = new HashSet<>(constraint.mFunctions);
@@ -121,40 +120,43 @@ public class EqConstraint<
 			.collect(Collectors.toSet());
 		nodesWithFunc.stream().forEach(node -> havoc(node));
 		
-		// remove from function disequalities
-//		mFunctionDisequalities.removeIf(pair -> pair.contains(func));
 		
-		// remove from function equalities
-//		final UnionFind<FUNCTION> newFunctionEqualities = new UnionFind<>();
-		final ArrayEquivalenceGraph<ACTION, NODE, FUNCTION> newFunctionEqualities = new ArrayEquivalenceGraph<>();
-		// (union find has no remove -> has to be built anew)
-		for (Set<FUNCTION> eqc : mFunctionEqualities.getAllEquivalenceClasses()) {
-			// look for an element that is not func --> everything but func will be merged with it
-			Iterator<FUNCTION> eqcIt = eqc.iterator();
-			FUNCTION first = eqcIt.next();
-			while (first.dependsOn(func)) {
-				if (eqcIt.hasNext()) {
-					first = eqcIt.next();
-				} else {
-					// equivalence class has only elements that need to be havocced
-					for (FUNCTION el : eqc) {
-						newFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(el);
-					}
-					continue;
-				}
-			}
-			assert !first.dependsOn(func);
-
-			for (FUNCTION el : eqc) {
-				newFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(el);
-				if (el.dependsOn(func)) {
-					// el is havocced --> don't merge its equivalence class
-					continue;
-				}
-				newFunctionEqualities.union(first, el);
-			}
-		}
-		mFunctionEqualities = newFunctionEqualities;
+		mFunctionEquivalenceGraph.havocFunction(func);
+		
+//		// remove from function disequalities
+////		mFunctionDisequalities.removeIf(pair -> pair.contains(func));
+//		
+//		// remove from function equalities
+////		final UnionFind<FUNCTION> newFunctionEqualities = new UnionFind<>();
+//		final ArrayEquivalenceGraph<ACTION, NODE, FUNCTION> newFunctionEqualities = new ArrayEquivalenceGraph<>();
+//		// (union find has no remove -> has to be built anew)
+//		for (Set<FUNCTION> eqc : mFunctionEqualities.getAllEquivalenceClasses()) {
+//			// look for an element that is not func --> everything but func will be merged with it
+//			Iterator<FUNCTION> eqcIt = eqc.iterator();
+//			FUNCTION first = eqcIt.next();
+//			while (first.dependsOn(func)) {
+//				if (eqcIt.hasNext()) {
+//					first = eqcIt.next();
+//				} else {
+//					// equivalence class has only elements that need to be havocced
+//					for (FUNCTION el : eqc) {
+//						newFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(el);
+//					}
+//					continue;
+//				}
+//			}
+//			assert !first.dependsOn(func);
+//
+//			for (FUNCTION el : eqc) {
+//				newFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(el);
+//				if (el.dependsOn(func)) {
+//					// el is havocced --> don't merge its equivalence class
+//					continue;
+//				}
+//				newFunctionEqualities.union(first, el);
+//			}
+//		}
+//		mFunctionEqualities = newFunctionEqualities;
 		
 	}
 	
@@ -162,6 +164,7 @@ public class EqConstraint<
 		assert !mIsFrozen;
 		mIsFrozen = true;
 		mElementCongruenceGraph.freeze();
+		mFunctionEquivalenceGraph.freeze();
 //		mFunctionDisequalities = Collections.unmodifiableSet(mFunctionDisequalities);
 	}
 
@@ -212,7 +215,7 @@ public class EqConstraint<
 		 *  elements
 		 */
 		HashRelation<FUNCTION, FUNCTION> result = new HashRelation<>();
-		for (Set<FUNCTION> eqClass : mFunctionEqualities.getAllEquivalenceClasses()) {
+		for (Set<FUNCTION> eqClass : mFunctionEquivalenceGraph.getAllEquivalenceClasses()) {
 			FUNCTION lastElement;
 			FUNCTION currentElement = null;
 			for (FUNCTION el : eqClass) {
@@ -229,9 +232,10 @@ public class EqConstraint<
 
 
 	public void addFunctionEqualityRaw(FUNCTION func1, FUNCTION func2) {
-		assert !areUnequal(func1, func2);
-		mFunctionEqualities.union(mFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(func1),
-				mFunctionEqualities.findAndConstructEquivalenceClassIfNeeded(func2));
+		assert !areUnequal(func1, func2) : "check before!?";
+//		mFunctionEquivalenceGraph.union(mFunctionEquivalenceGraph.findAndConstructEquivalenceClassIfNeeded(func1),
+//				mFunctionEquivalenceGraph.findAndConstructEquivalenceClassIfNeeded(func2));
+		mFunctionEquivalenceGraph.union(func1, func2);
 		
 		// TODO: adding a function equality can have consequences for the elements --> implement
 		
@@ -242,16 +246,16 @@ public class EqConstraint<
 
 
 	public  Set<VPDomainSymmetricPair<FUNCTION>> getFunctionDisequalites() {
-//		return mFunctionDisequalities;
-		return null;
+		return mFunctionEquivalenceGraph.getFunctionDisequalities();
 	}
 
 
 	public void addFunctionDisequality(FUNCTION first, FUNCTION second) {
-		final FUNCTION firstRep = mFunctionEqualities.find(first);
-		final FUNCTION secondRep = mFunctionEqualities.find(second);
+//		final FUNCTION firstRep = mFunctionEquivalenceGraph.find(first);
+//		final FUNCTION secondRep = mFunctionEquivalenceGraph.find(second);
 
 //		mFunctionDisequalities.add(new VPDomainSymmetricPair<FUNCTION>(firstRep, secondRep));
+		mFunctionEquivalenceGraph.addFunctionDisequality(first, second);
 	}
 
 
@@ -259,14 +263,10 @@ public class EqConstraint<
 		if (mElementCongruenceGraph.checkContradiction()) {
 			return true;
 		}
-		if (mFunctionEqualities.checkContradiction()) {
+		if (mFunctionEquivalenceGraph.checkContradiction()) {
 			return true;
 		}
-//		for (VPDomainSymmetricPair<FUNCTION> fDeq : mFunctionDisequalities) {
-//			if (mFunctionEqualities.find(fDeq.getFirst()).equals(mFunctionEqualities.find(fDeq.getSecond()))) {
-//				return true;
-//			}
-//		}
+
 		return false;
 	}
 
@@ -425,24 +425,25 @@ public class EqConstraint<
 		
 		mElementCongruenceGraph.renameVariables(substitutionMapping);
 		
-//		final UnionFind<FUNCTION> newFunctionUF = new UnionFind<>();
-		final ArrayEquivalenceGraph<ACTION, NODE, FUNCTION> newFunctionUF = new ArrayEquivalenceGraph<>();
-//		for (Entry<FUNCTION, FUNCTION> fEq : getSupportingFunctionEqualities()) {
-		for (Set<FUNCTION> eqc : mFunctionEqualities.getAllEquivalenceClasses()) {
-			FUNCTION first = newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
-					eqc.iterator().next().renameVariables(substitutionMapping));
-			for (FUNCTION f : eqc) {
-				FUNCTION renamedF = newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
-						f.renameVariables(substitutionMapping));
-				newFunctionUF.union(first, renamedF);
-//				FUNCTION renamedF1 = newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
-//						fEq.getKey().renameVariables(substitutionMapping));
-//				FUNCTION renamedF2 = newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
-//						fEq.getKey().renameVariables(substitutionMapping));
-//				newFunctionUF.union(renamedF1, renamedF2);
-			}
-		}
-		mFunctionEqualities = newFunctionUF;
+////		final UnionFind<FUNCTION> newFunctionUF = new UnionFind<>();
+//		final ArrayEquivalenceGraph<ACTION, NODE, FUNCTION> newFunctionUF = new ArrayEquivalenceGraph<>();
+////		for (Entry<FUNCTION, FUNCTION> fEq : getSupportingFunctionEqualities()) {
+//		for (Set<FUNCTION> eqc : mFunctionEquivalenceGraph.getAllEquivalenceClasses()) {
+//			FUNCTION first = newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
+//					eqc.iterator().next().renameVariables(substitutionMapping));
+//			for (FUNCTION f : eqc) {
+//				FUNCTION renamedF = newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
+//						f.renameVariables(substitutionMapping));
+//				newFunctionUF.union(first, renamedF);
+////				FUNCTION renamedF1 = newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
+////						fEq.getKey().renameVariables(substitutionMapping));
+////				FUNCTION renamedF2 = newFunctionUF.findAndConstructEquivalenceClassIfNeeded(
+////						fEq.getKey().renameVariables(substitutionMapping));
+////				newFunctionUF.union(renamedF1, renamedF2);
+//			}
+//		}
+//		mFunctionEquivalenceGraph = newFunctionUF;
+		mFunctionEquivalenceGraph.renameVariables(substitutionMapping);
 		
 //		Set<VPDomainSymmetricPair<FUNCTION>> newFunctionDisequalites = new HashSet<>();
 //		for (VPDomainSymmetricPair<FUNCTION> fDeq : mFunctionDisequalities) {
@@ -531,22 +532,11 @@ public class EqConstraint<
 	}
 
 	public boolean areEqual(FUNCTION func1, FUNCTION func2) {
-		FUNCTION func1rep = mFunctionEqualities.find(func1);
-		FUNCTION func2rep = mFunctionEqualities.find(func2);
-		if (func1rep == null || func2rep == null) {
-			return false;
-		}
-		return func1rep.equals(func2rep);
+		return mFunctionEquivalenceGraph.areEqual(func1, func2);
 	}
 	
-	public boolean areUnequal(FUNCTION node1, FUNCTION node2) {
-		final FUNCTION rep1 = mFunctionEqualities.find(node1);
-		final FUNCTION rep2 = mFunctionEqualities.find(node2);
-		if (rep1 == null || rep2 == null) {
-			return false;
-		}
-//		return mFunctionDisequalities.contains(new VPDomainSymmetricPair<FUNCTION>(rep1, rep2));
-		return false;
+	public boolean areUnequal(FUNCTION func1, FUNCTION func2) {
+		return mFunctionEquivalenceGraph.areUnequal(func1, func2);
 	}
 
 	/**
@@ -701,6 +691,7 @@ public class EqConstraint<
 	
 	public void addFunctionRaw(FUNCTION func) {
 		mFunctions.add(func);
+		mFunctionEquivalenceGraph.addFunction(func);
 	}
 	
 }

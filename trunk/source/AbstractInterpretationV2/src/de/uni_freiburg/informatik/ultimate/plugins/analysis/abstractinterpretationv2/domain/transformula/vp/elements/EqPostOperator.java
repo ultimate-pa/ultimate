@@ -67,7 +67,7 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 	}
 
 	@Override
-	public List<EqState<ACTION>> apply(EqState<ACTION> stateBeforeLeaving, EqState<ACTION> stateAfterLeaving,
+	public List<EqState<ACTION>> apply(EqState<ACTION> stateBeforeLeaving, EqState<ACTION> hierarchicalPre,
 			ACTION transition) {
 		if (transition instanceof Call) {
 			final String calledProcedure = transition.getSucceedingProcedure();
@@ -95,12 +95,8 @@ public class EqPostOperator<ACTION extends IIcfgTransition<IcfgLocation>> implem
 			return apply(stateBeforeLeaving, transition);
 		} else if (transition instanceof Return) {
 
-			/*
-			 *  TODO: this is probably problematic because stateBeforeLeaving and stateAfterLeaving do not correspond
-			 *   exactly to returnPred and callPred.
-			 */
-			EqPredicate<ACTION> returnPred = stateBeforeLeaving.toEqPredicate();
-			EqPredicate<ACTION> callPred = stateAfterLeaving.toEqPredicate();
+			final EqPredicate<ACTION> returnPred = stateBeforeLeaving.toEqPredicate();
+			final EqPredicate<ACTION> callPred = hierarchicalPre.toEqPredicate();
 
 			EqTransitionRelation<ACTION> returnTF = mTransFormulaConverter
 					.getEqTransitionRelationFromTransformula(((Return) transition).getAssignmentOfReturn());
