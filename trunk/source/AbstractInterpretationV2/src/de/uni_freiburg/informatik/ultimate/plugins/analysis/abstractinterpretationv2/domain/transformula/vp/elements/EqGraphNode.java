@@ -305,4 +305,12 @@ public class EqGraphNode<NODE extends IEqNodeIdentifier<NODE, FUNCTION>,
 		mInitCcpar.add(node);
 		mCcpar.add(node);
 	}
+
+	public void removeFromCcpar(Set<NODE> nodes) {
+		mCcpar.removeAll(nodes);
+	}
+
+	public void removeFromCcchild(HashRelation<FUNCTION, List<NODE>> ccchild) {
+		mCcchild.removeAllPairs(ccchild);
+	}
 }

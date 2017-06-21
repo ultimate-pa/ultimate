@@ -315,8 +315,8 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		}
 		assert nextRepresentative != graphNodeForNodeToBeHavocced : "do we need a special case, here?";
 		// one more step is needed for the last element of the representative chain
-		nextRepresentative.getCcpar().removeAll(graphNodeForNodeToBeHavocced.getCcpar());
-		nextRepresentative.getCcchild().removeAllPairs(graphNodeForNodeToBeHavocced.getCcchild());
+		nextRepresentative.removeFromCcpar(graphNodeForNodeToBeHavocced.getCcpar());
+		nextRepresentative.removeFromCcchild(graphNodeForNodeToBeHavocced.getCcchild());
 
 		/*
 		 * 2. Handling the incoming edges (reverseRepresentative). Point nodes in reverseRepresentative to the
