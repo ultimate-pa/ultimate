@@ -404,6 +404,7 @@
 				<module>../Library-IcfgTransformerTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-SMTLIBTest</module>
+				<module>../Library-srParseTest</module>
 				<module>../Library-UltimateTestTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../SMTInterpolTest</module>
@@ -497,6 +498,7 @@
 				<module>../Library-IcfgTransformerTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-SMTLIBTest</module>
+				<module>../Library-srParseTest</module>
 				<module>../Library-UltimateTestTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../SMTInterpolTest</module>
@@ -571,6 +573,7 @@
 				<module>../Library-IcfgTransformerTest</module>
 				<module>../Library-ModelCheckerUtilsTest</module>
 				<module>../Library-SMTLIBTest</module>
+				<module>../Library-srParseTest</module>
 				<module>../Library-UltimateTestTest</module>
 				<module>../Library-UltimateUtilTest</module>
 				<module>../SMTInterpolTest</module>
