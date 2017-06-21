@@ -110,7 +110,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 	/**
 	 * {@code true} iff SP predicates are used.
 	 */
-	private static final boolean ADD_SP_PREDICATES = true;
+	private static final boolean INTERSECT_WITH_SP_PREDICATES = false;
 
 	/**
 	 * Predicate transformer types.
@@ -243,7 +243,7 @@ public class ErrorAutomatonBuilder<LETTER extends IIcfgTransition<?>> {
 
 		final List<IPredicate> newIntermediatePredicates;
 		final IPredicate newPostcondition;
-		if (ADD_SP_PREDICATES) {
+		if (INTERSECT_WITH_SP_PREDICATES) {
 			// compute 'sp' sequence from error precondition
 			final TracePredicates spPredicates = getPredicates(services, csToolkit, predicateFactory,
 					simplificationTechnique, xnfConversionTechnique, symbolTable, truePredicate, trace, prePrecondition,
