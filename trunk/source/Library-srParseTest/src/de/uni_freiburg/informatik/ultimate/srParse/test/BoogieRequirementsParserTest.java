@@ -18,13 +18,13 @@ public class BoogieRequirementsParserTest {
 
 	/**
 	 * Use to supply a string (instead of file) to parser.
-	 * 
+	 *
 	 * @param reqFileName
 	 * @return
 	 * @throws Exception
-	 * 
+	 *
 	 */
-	private PatternType[] GenPatterns(final String testInput) throws Exception {
+	private PatternType[] genPatterns(final String testInput) throws Exception {
 		final StringReader sr = new StringReader(testInput);
 		final ReqLexer lexer = new ReqLexer(sr);
 		final ReqParser parser = new ReqParser(lexer);
@@ -37,13 +37,13 @@ public class BoogieRequirementsParserTest {
 
 	/**
 	 * Test if single Requirement with comparison and . operator is korrectly parsed
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
-	public void TestGlobalInvariantBoogie() throws Exception {
+	public void testGlobalInvariantBoogie() throws Exception {
 		final String testString = "Globally, it is always the case that \"ABC_curr.I >=  BCD_MAX\" holds.";
-		final PatternType[] parsedPatterns = GenPatterns(testString);
+		final PatternType[] parsedPatterns = genPatterns(testString);
 
 		System.out.println(parsedPatterns[0].toString());
 		Assert.assertNotNull("Parser did not return anything!", parsedPatterns);
@@ -53,14 +53,14 @@ public class BoogieRequirementsParserTest {
 	}
 
 	/**
-	 * Test if single Requirement with comparison and . operator is korrectly parsed
-	 * 
+	 * Test if single Requirement with comparison and . operator is correctly parsed
+	 *
 	 * @throws Exception
 	 */
 	@Test
-	public void TestBooleanLiterals() throws Exception {
+	public void testBooleanLiterals() throws Exception {
 		final String testString = "Globally, it is always the case that \"true == false\" holds.";
-		final PatternType[] parsedPatterns = GenPatterns(testString);
+		final PatternType[] parsedPatterns = genPatterns(testString);
 
 		System.out.println(parsedPatterns[0].toString());
 		Assert.assertNotNull("Parser did not return anything!", parsedPatterns);
@@ -71,14 +71,14 @@ public class BoogieRequirementsParserTest {
 
 	/**
 	 * Test if single requirement with comparison, logical operator and calculation is parsed correctly
-	 * 
+	 *
 	 * @throws Exception
 	 */
 	@Test
-	public void TestGlobalInvariantBoogieComplexExpression() throws Exception {
+	public void testGlobalInvariantBoogieComplexExpression() throws Exception {
 		final String testString = "Globally, it is always the case that \"(ABC_curr >=  BCD_MAX &&"
 				+ " diddlidu + 3 == A_bli -3) || a \" holds";
-		final PatternType[] parsedPatterns = GenPatterns(testString);
+		final PatternType[] parsedPatterns = genPatterns(testString);
 
 		System.out.println(parsedPatterns[0].toString());
 		Assert.assertNotNull("Parser did not return anything!", parsedPatterns);
@@ -88,10 +88,10 @@ public class BoogieRequirementsParserTest {
 	}
 
 	@Test
-	public void TestListOfRequirements() throws Exception {
+	public void testListOfRequirements() throws Exception {
 		final String testString = "Globally, it is always the case that \"ABC_curr.I >=  BCD_MAX\" holds.\n"
 				+ "Globally, it is always the case that \"EFG_min >=  X + 3\" holds.\n";
-		final PatternType[] parsedPatterns = GenPatterns(testString);
+		final PatternType[] parsedPatterns = genPatterns(testString);
 
 		System.out.println(parsedPatterns[0].toString());
 		Assert.assertNotNull("Parser did not return anything!", parsedPatterns);
@@ -100,14 +100,14 @@ public class BoogieRequirementsParserTest {
 	}
 
 	/**
-	 * Test if old behaviour is still correctly working
-	 * 
+	 * Test if old behavior is still correctly working
+	 *
 	 * @throws Exception
 	 */
 	// @Test
-	public void TestOldBehaviour() throws Exception {
+	public void testOldBehaviour() throws Exception {
 		final String testString = "Globally, it is always the case that \"a\" holds";
-		final PatternType[] parsedPatterns = GenPatterns(testString);
+		final PatternType[] parsedPatterns = genPatterns(testString);
 
 		System.out.println(parsedPatterns[0].toString());
 		Assert.assertNotNull("Parser did not return anything!", parsedPatterns);

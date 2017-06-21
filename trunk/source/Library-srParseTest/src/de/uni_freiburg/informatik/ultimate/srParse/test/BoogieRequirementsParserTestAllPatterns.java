@@ -31,8 +31,8 @@ public class BoogieRequirementsParserTestAllPatterns {
 	}
 
 	@Test
-	public void TestPatternParse() throws Exception {
-		final PatternType[] parsedPatterns = GenPatterns(t.testString);
+	public void testPatternParse() throws Exception {
+		final PatternType[] parsedPatterns = genPatterns(t.testString);
 
 		Assert.assertNotNull(t.testString, parsedPatterns);
 		Assert.assertNotNull("failed parsing: " + t.testString, parsedPatterns[0]);
@@ -44,12 +44,12 @@ public class BoogieRequirementsParserTestAllPatterns {
 
 	/**
 	 * Use to supply a string (instead of file) to parser.
-	 * 
+	 *
 	 * @param reqFileName
 	 * @return
 	 * @throws Exception
 	 */
-	private PatternType[] GenPatterns(final String testInput) throws Exception {
+	private PatternType[] genPatterns(final String testInput) throws Exception {
 		final StringReader sr = new StringReader(testInput);
 		final ReqLexer lexer = new ReqLexer(sr);
 		final ReqParser parser = new ReqParser(lexer);
@@ -77,7 +77,7 @@ public class BoogieRequirementsParserTestAllPatterns {
 
 	@Parameters
 	public static Collection<Object[]> data() {
-		final Collection<Object[]> data = new ArrayList<Object[]>();
+		final Collection<Object[]> data = new ArrayList<>();
 		// definition of all patterns
 		final String[] scope = new String[] { "Globally,", "Before \" x > 0 \", ", "After \" x > 0\", ",
 				"Between \"x > 0\" and \" x < 0\", " };
