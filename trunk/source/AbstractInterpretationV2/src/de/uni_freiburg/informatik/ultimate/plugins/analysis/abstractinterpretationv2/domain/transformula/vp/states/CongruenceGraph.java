@@ -309,14 +309,19 @@ public class CongruenceGraph<ACTION extends IIcfgTransition<IcfgLocation>,
 		// remove the outgoing equality edge from the nodeToBeHavocced
 		nextRepresentative.getReverseRepresentative().remove(graphNodeForNodeToBeHavocced);
 		while (!(nextRepresentative.equals(nextRepresentative.getRepresentative()))) {
-			nextRepresentative.getCcpar().removeAll(graphNodeForNodeToBeHavocced.getCcpar());
-			nextRepresentative.getCcchild().removeAllPairs(graphNodeForNodeToBeHavocced.getCcchild());
+			nextRepresentative.removeFromCcpar(graphNodeForNodeToBeHavocced.getCcpar());
+			nextRepresentative.removeFromCcchild(graphNodeForNodeToBeHavocced.getCcchild());
 			nextRepresentative = nextRepresentative.getRepresentative();
 		}
-		assert nextRepresentative != graphNodeForNodeToBeHavocced : "do we need a special case, here?";
-		// one more step is needed for the last element of the representative chain
-		nextRepresentative.removeFromCcpar(graphNodeForNodeToBeHavocced.getCcpar());
-		nextRepresentative.removeFromCcchild(graphNodeForNodeToBeHavocced.getCcchild());
+		/*
+		 *  if nextRepresentativ == graphNodeForNodeToBeHavocced then graphNodeForNodeToBeHavocced was its own 
+		 *  representative --> we do nothing in this step
+		 */
+		if (nextRepresentative != graphNodeForNodeToBeHavocced) {
+			// one more step is needed for the last element of the representative chain
+			nextRepresentative.removeFromCcpar(graphNodeForNodeToBeHavocced.getCcpar());
+			nextRepresentative.removeFromCcchild(graphNodeForNodeToBeHavocced.getCcchild());
+		}
 
 		/*
 		 * 2. Handling the incoming edges (reverseRepresentative). Point nodes in reverseRepresentative to the

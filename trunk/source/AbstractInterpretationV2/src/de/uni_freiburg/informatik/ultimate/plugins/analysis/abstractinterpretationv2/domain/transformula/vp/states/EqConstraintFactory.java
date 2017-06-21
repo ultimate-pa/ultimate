@@ -264,33 +264,42 @@ public class EqConstraintFactory<
 		HashSet<NODE> selectNodes1 = new HashSet<>(nodesWithFunc1);
 		HashSet<NODE> selectNodes2 = new HashSet<>(nodesWithFunc2);
 		
-		// add for each node func1(t) a node func2(t) and vice versa
+		/*
+		 *  add for each node func1(t) a node func2(t) and vice versa
+		 */
 		final ManagedScript mgdScript = mEqNodeAndFunctionFactory.getScript();
 		mgdScript.lock(this);
-
-		for (NODE node : nodesWithFunc1) {
-			final EqFunctionNode efn = (EqFunctionNode) node;
+		for (NODE func1Node : nodesWithFunc1) {
+			final EqFunctionNode efn = (EqFunctionNode) func1Node;
 			final ApplicationTerm at = (ApplicationTerm) efn.getTerm();
 			assert "select".equals(at.getFunction().getName());
-			final Term newTerm = mgdScript.term(this, "select", func2.getTerm(), at.getParameters()[1]);
-			selectNodes2.add((NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(newTerm));
+			final Term func2AtIndexTerm = mgdScript.term(this, "select", func2.getTerm(), at.getParameters()[1]);
+			final NODE func2AtIndex = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(func2AtIndexTerm);
+			newConstraintWithPropagations = addEqualityFlat(func1Node, func2AtIndex, newConstraintWithPropagations);
 		}
-		
-		for (NODE node : nodesWithFunc2) {
-			final EqFunctionNode efn = (EqFunctionNode) node;
+		for (NODE func2Node : nodesWithFunc2) {
+			final EqFunctionNode efn = (EqFunctionNode) func2Node;
 			final ApplicationTerm at = (ApplicationTerm) efn.getTerm();
 			assert "select".equals(at.getFunction().getName());
-			final Term newTerm = mgdScript.term(this, "select", func1.getTerm(), at.getParameters()[1]);
-			selectNodes1.add((NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(newTerm));
+			final Term func1AtIndexTerm = mgdScript.term(this, "select", func1.getTerm(), at.getParameters()[1]);
+			final NODE func1AtIndex = (NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(func1AtIndexTerm);
+			newConstraintWithPropagations = addEqualityFlat(func2Node, func1AtIndex, newConstraintWithPropagations);
 		}
 		mgdScript.unlock(this);
+//		for (NODE node : nodesWithFunc2) {
+//			final EqFunctionNode efn = (EqFunctionNode) node;
+//			final ApplicationTerm at = (ApplicationTerm) efn.getTerm();
+//			assert "select".equals(at.getFunction().getName());
+//			final Term newTerm = mgdScript.term(this, "select", func1.getTerm(), at.getParameters()[1]);
+//			selectNodes1.add((NODE) mEqNodeAndFunctionFactory.getOrConstructEqNode(newTerm));
+//		}
 		
-		// add the equalities due to array extensionality (or element congruence)
-		for (NODE node1 : selectNodes1) {
-			for (NODE node2 : selectNodes2) {
-				newConstraintWithPropagations = addEqualityFlat(node1, node2, newConstraintWithPropagations);
-			}
-		}
+//		// add the equalities due to array extensionality (or element congruence)
+//		for (NODE node1 : selectNodes1) {
+//			for (NODE node2 : selectNodes2) {
+//				newConstraintWithPropagations = addEqualityFlat(node1, node2, newConstraintWithPropagations);
+//			}
+//		}
 	
 		return newConstraintWithPropagations;
 	}
